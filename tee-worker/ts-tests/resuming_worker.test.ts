@@ -9,7 +9,7 @@ import { assert } from 'chai';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { initWorkerConnection, sleep } from './common/utils';
 
-export type WorkerConfig = {
+type WorkerConfig = {
     untrusted_ws_port: number;
     commands: {
         first_launch: string;
@@ -17,7 +17,7 @@ export type WorkerConfig = {
     };
 };
 
-function genCommands(nodeUrl: string, nodePort: string): { worker0: WorkerConfig; worker1: WorkerConfig } {
+function genCommands(nodeUrl: string, nodePort: number): { worker0: WorkerConfig; worker1: WorkerConfig } {
     return {
         worker0: {
             untrusted_ws_port: 3000,
@@ -70,35 +70,114 @@ function genCommands(nodeUrl: string, nodePort: string): { worker0: WorkerConfig
     };
 }
 
+type WorkerParams = {
+    muRaPort: number;
+    untrustedHttpPort: number;
+    trustedWorkerPort: number;
+    untrustedWorkerPort: number;
+};
+
+const worker0Params: WorkerParams = {
+    muRaPort: 3443,
+    untrustedHttpPort: 4545,
+    trustedWorkerPort: 2000,
+    untrustedWorkerPort: 3000,
+};
+
+const worker1Params: WorkerParams = {
+    muRaPort: 3444,
+    untrustedHttpPort: 4546,
+    trustedWorkerPort: 2001,
+    untrustedWorkerPort: 3001,
+};
+
+type WorkerCommandParams = WorkerParams & {
+    enableMockServer: boolean;
+    cleanReset: boolean;
+    requestState: boolean;
+    dev: boolean;
+};
+
+const worker0LaunchParams: WorkerCommandParams = {
+    ...worker0Params,
+    cleanReset: true,
+    dev: true,
+    enableMockServer: true,
+    requestState: false,
+};
+
+const worker1LaunchParams: WorkerCommandParams = {
+    ...worker1Params,
+    cleanReset: true,
+    dev: true,
+    enableMockServer: false,
+    requestState: true,
+};
+
+const worker0ResumeParams: WorkerCommandParams = {
+    ...worker0Params,
+    cleanReset: false,
+    dev: false,
+    enableMockServer: false,
+    requestState: false,
+};
+
+const worker1ResumeParams: WorkerCommandParams = {
+    ...worker1Params,
+    cleanReset: false,
+    dev: false,
+    enableMockServer: false,
+    requestState: false,
+};
+
+function generateWorkerCommandArguments(nodeUrl: string, nodePort: number, params: WorkerCommandParams): string {
+    return [
+        '--running-mode mock',
+        ...(params.enableMockServer ? ['--enable-mock-server'] : []),
+        ...(params.cleanReset ? ['--clean-reset'] : []),
+        '--mu-ra-external-address localhost',
+        `--mu-ra-port ${params.muRaPort}`,
+        `--untrusted-http-port ${params.untrustedHttpPort}`,
+        '--ws-external',
+        '--trusted-external-address wss://localhost',
+        `--trusted-worker-port ${params.trustedWorkerPort}`,
+        '--untrusted-external-address wss://localhost',
+        `--untrusted-worker-port ${params.untrustedWorkerPort}`,
+        `--node-url ${nodeUrl}`,
+        `--node-port ${nodePort}`,
+        `run`,
+        `--skip-ra`,
+        ...(params.requestState ? ['--request-state'] : []),
+        ...(params.dev ? ['--dev'] : []),
+    ].join(' ');
+}
+
 async function launchWorker(
     name: string,
     binaryDir: string,
     workingDir: string,
-    command: string,
-    initFiles: boolean
+    command: string
 ): Promise<{ shard: `0x${string}`; process: ChildProcess }> {
-    if (initFiles) {
-        fs.mkdirSync(workingDir, { recursive: true });
-        fs.copyFileSync(path.join(binaryDir, 'enclave.signed.so'), path.join(workingDir, 'enclave.signed.so'));
-        fs.copyFileSync(path.join(binaryDir, 'integritee-service'), path.join(workingDir, 'integritee-service'));
-        fs.closeSync(fs.openSync(path.join(workingDir, 'spid.txt'), 'w'));
-        fs.closeSync(fs.openSync(path.join(workingDir, 'key.txt'), 'w'));
-        const data = JSON.stringify(
-            {
-                twitter_official_url: 'http://localhost:19527',
-                twitter_litentry_url: 'http://localhost:19527',
-                twitter_auth_token: '',
-                discord_official_url: 'http://localhost:19527',
-                discord_litentry_url: 'http://localhost:19527',
-                discord_auth_token: '',
-                graphql_url: 'http://localhost:19527',
-                graphql_auth_key: '',
-            },
-            null,
-            4
-        );
-        fs.writeFileSync(`${workingDir}/worker-config-mock.json`, data);
-    }
+    fs.mkdirSync(workingDir, { recursive: true });
+    fs.copyFileSync(path.join(binaryDir, 'enclave.signed.so'), path.join(workingDir, 'enclave.signed.so'));
+    fs.copyFileSync(path.join(binaryDir, 'integritee-service'), path.join(workingDir, 'integritee-service'));
+    fs.closeSync(fs.openSync(path.join(workingDir, 'spid.txt'), 'w'));
+    fs.closeSync(fs.openSync(path.join(workingDir, 'key.txt'), 'w'));
+    const data = JSON.stringify(
+        {
+            twitter_official_url: 'http://localhost:19527',
+            twitter_litentry_url: 'http://localhost:19527',
+            twitter_auth_token: '',
+            discord_official_url: 'http://localhost:19527',
+            discord_litentry_url: 'http://localhost:19527',
+            discord_auth_token: '',
+            graphql_url: 'http://localhost:19527',
+            graphql_auth_key: '',
+        },
+        null,
+        4
+    );
+    fs.writeFileSync(`${workingDir}/worker-config-mock.json`, data);
 
     const job = await new Promise<ChildProcessWithoutNullStreams>((resolve, reject) => {
         const childProcess = spawn(`./integritee-service`, [command], {
@@ -163,10 +242,63 @@ async function launchWorker(
     });
 }
 
+async function resumeWorker(
+    name: string,
+    binaryDir: string,
+    workingDir: string,
+    command: string
+): Promise<ChildProcess> {
+    const job = await new Promise<ChildProcessWithoutNullStreams>((resolve, reject) => {
+        const childProcess = spawn(`./integritee-service`, [command], {
+            cwd: workingDir,
+            shell: '/bin/sh',
+            env: {
+                RUST_LOG: 'warn,sp_io::storage=error,substrate_api_client=warn',
+                ...process.env,
+            },
+            detached: true,
+        });
+
+        if (childProcess.pid !== undefined) {
+            resolve(childProcess);
+            return;
+        }
+
+        childProcess.on('error', (error) => reject(error));
+    });
+
+    job.stderr.setEncoding('utf8');
+    const errorStream = readline.createInterface(job.stderr);
+    errorStream.on('line', (line: string) => {
+        console.warn(name, line);
+    });
+
+    job.stdout.setEncoding('utf8');
+    const outputStream = readline.createInterface(job.stdout);
+
+    job.on('close', (code) => {
+        console.log(`${name} close: ${code}`);
+    });
+
+    return await new Promise<ChildProcess>((resolve, reject) => {
+        outputStream.on('line', (line: string) => {
+            console.log(name, line);
+
+            if (line.includes('Successfully initialized shard')) {
+                reject(new Error('Shard should have been there from the previous run'));
+            }
+
+            if (line.includes('Untrusted RPC server is spawned on')) {
+                resolve(job);
+            }
+        });
+    });
+}
+
 function killWorker(worker: ChildProcess): Promise<void> {
     const pid = worker.pid;
 
-    if (pid == undefined) {
+    if (pid === undefined) {
         return Promise.reject(new Error('Attempted to kill an unspawned worker?'));
     }
 
@@ -207,7 +339,7 @@ async function waitWorkerProducingBlock(
         const resp = await latestBlock(connection, shard);
         if (resp.result) {
             block_number = resp.result.number;
-            if (start_block_number == 0) {
+            if (start_block_number === 0) {
                 start_block_number = block_number;
             }
 
@@ -218,18 +350,19 @@ async function waitWorkerProducingBlock(
     return block_number;
 }
 
-function getConfiguration(): { binaryDir: string; nodeUrl: string; nodePort: string } {
+function getConfiguration(): { binaryDir: string; nodeUrl: string; nodePort: number } {
     const binaryDir = process.env.BINARY_DIR;
     if (binaryDir === undefined) {
         throw new Error('Environment variable BINARY_DIR not defined');
     }
 
-    const [, nodeUrl, nodePort] = process.env.SUBSTRATE_END_POINT!.split(':');
-    if (nodeUrl === undefined || nodePort === undefined) {
+    const [, nodeHost, nodePortRaw] = process.env.SUBSTRATE_END_POINT!.split(':');
+    const nodePort = Number.parseInt(nodePortRaw);
+    if (nodeHost === undefined || Number.isNaN(nodePort)) {
         throw new Error('Environment variable SUBSTRATE_END_POINT undefined or malformed');
     }
 
-    return { binaryDir, nodeUrl, nodePort };
+    return { binaryDir, nodeUrl: `ws:${nodeHost}`, nodePort };
 }
 
 describe('Resume worker', function () {
@@ -238,16 +371,19 @@ describe('Resume worker', function () {
     const { binaryDir, nodeUrl, nodePort } = getConfiguration();
     const worker0Dir = path.join(__dirname, './tmp/worker0');
     const worker1Dir = path.join(__dirname, './tmp/worker1');
-    const commands = genCommands(`ws:${nodeUrl}`, nodePort);
+    const commands = genCommands(nodeUrl, nodePort);
 
     step('One worker', async function () {
+        assert.strictEqual(
+            commands.worker0.commands.first_launch,
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker0LaunchParams)
+        );
         // first launch worker
         const { shard: shard, process: worker0 } = await launchWorker(
             'worker0',
             binaryDir,
             worker0Dir,
-            commands.worker0.commands.first_launch,
-            true
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker0LaunchParams)
         );
         const worker0Conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`);
         const currentBlock = await waitWorkerProducingBlock(worker0Conn, shard, 4);
@@ -255,7 +391,16 @@ describe('Resume worker', function () {
         console.log('=========== worker stopped ==================');
 
         // resume worker
-        await launchWorker('worker0', binaryDir, worker0Dir, commands.worker0.commands.resume, false);
+        assert.strictEqual(
+            commands.worker0.commands.resume,
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker0ResumeParams)
+        );
+        await resumeWorker(
+            'worker0',
+            binaryDir,
+            worker0Dir,
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker0ResumeParams)
+        );
         await worker0Conn.open(); //reopen connection
         const resumeBlock = await latestBlock(worker0Conn, shard);
         // TODO compare the block hash
@@ -267,12 +412,15 @@ describe('Resume worker', function () {
     step('Two workers & resume worker1', async function () {
         // 2 workers were actually launched
         // first launch worker1
+        assert.strictEqual(
+            commands.worker1.commands.first_launch,
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker1LaunchParams)
+        );
         const { shard: shard, process: worker1 } = await launchWorker(
             'worker1',
             binaryDir,
             worker1Dir,
-            commands.worker1.commands.first_launch,
-            true
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker1LaunchParams)
         );
         const worker1Conn = await initWorkerConnection(`ws://localhost:${commands.worker1.untrusted_ws_port}`);
         const worker1CurrentBlock = await waitWorkerProducingBlock(worker1Conn, shard, 4);
@@ -281,7 +429,16 @@ describe('Resume worker', function () {
         await sleep(20); // @fixme is this to allow `worker0` to get ahead? Does it need to be that long?
 
         // resume worker1
-        await launchWorker('worker1', binaryDir, worker1Dir, commands.worker1.commands.resume, false);
+        assert.strictEqual(
+            commands.worker1.commands.resume,
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker1ResumeParams)
+        );
+        await resumeWorker(
+            'worker1',
+            binaryDir,
+            worker1Dir,
+            generateWorkerCommandArguments(nodeUrl, nodePort, worker1ResumeParams)
+        );
         await worker1Conn.open(); //reopen connection
         const resumeBlock = await latestBlock(worker1Conn, shard);
         assert.isNotEmpty(resumeBlock.result, "the latest block can't be empty");
