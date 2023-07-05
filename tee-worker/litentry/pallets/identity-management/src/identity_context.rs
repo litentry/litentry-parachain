@@ -14,51 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use crate::{BlockNumberOf, Config};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
-use crate::{Config, MetadataOf};
-use litentry_primitives::ParentchainBlockNumber;
+#[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub enum IdentityStatus {
+	#[default]
+	Active,
+	Inactive,
+}
 
 // The context associated with the (litentry-account, did) pair
-// TODO: maybe we have better naming
-#[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct IdentityContext<T: Config> {
-	// the metadata
-	pub metadata: Option<MetadataOf<T>>,
-	// the block number (of parent chain) where the creation was intially requested
-	pub creation_request_block: Option<ParentchainBlockNumber>,
-	// the block number (of parent chain) where the verification was intially requested
-	pub verification_request_block: Option<ParentchainBlockNumber>,
-	// if this did is verified
-	pub is_verified: bool,
-}
-
-// rust imposes overly restrictive bounds sometimes, see
-// https://github.com/rust-lang/rust/issues/99463
-impl<T: Config> Default for IdentityContext<T> {
-	fn default() -> Self {
-		Self {
-			metadata: None,
-			creation_request_block: None,
-			verification_request_block: None,
-			is_verified: false,
-		}
-	}
+	// the sidechain block number at which the identity is linked
+	pub link_block: BlockNumberOf<T>,
+	// the identity status
+	pub status: IdentityStatus,
 }
 
 impl<T: Config> IdentityContext<T> {
-	pub fn new(
-		creation_request_block: ParentchainBlockNumber,
-		verification_request_block: ParentchainBlockNumber,
-	) -> Self {
-		Self {
-			metadata: None,
-			creation_request_block: Some(creation_request_block),
-			verification_request_block: Some(verification_request_block),
-			is_verified: false,
-		}
+	pub fn new(link_block: BlockNumberOf<T>) -> Self {
+		Self { link_block, status: IdentityStatus::Active }
 	}
 }

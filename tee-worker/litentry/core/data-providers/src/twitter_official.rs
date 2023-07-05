@@ -133,6 +133,26 @@ pub struct TwitterOfficialClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
+pub enum TargetUser {
+	Name(Vec<u8>),
+	Id(Vec<u8>),
+}
+
+impl TargetUser {
+	pub fn to_query_param(self) -> Result<(String, String), Error> {
+		match self {
+			Self::Id(v) => {
+				let id_as_string = vec_to_string(v)?;
+				Ok(("target_id".to_string(), id_as_string))
+			},
+			Self::Name(v) => {
+				let name_as_string = vec_to_string(v)?;
+				Ok(("target_screen_name".to_string(), name_as_string))
+			},
+		}
+	}
+}
+
 /// rate limit: https://developer.twitter.com/en/docs/twitter-api/rate-limits
 impl TwitterOfficialClient {
 	pub fn v1_1() -> Self {
@@ -185,7 +205,7 @@ impl TwitterOfficialClient {
 			if tweet_users.users.is_empty() {
 				return Err(Error::RequestError("user not found from tweet".to_string()))
 			}
-			tweet.author_id = tweet_users.users[0].username.clone();
+			tweet.author_id = tweet_users.users[0].id.clone();
 		}
 
 		Ok(tweet)
@@ -211,9 +231,9 @@ impl TwitterOfficialClient {
 	}
 
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
-	pub fn query_user(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
+	pub fn query_user_by_name(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user_name)?;
-		debug!("Twitter query user, user: {}", user);
+		debug!("Twitter query user by name, name: {}", user);
 
 		let query = vec![("user.fields", "public_metrics")];
 		let resp = self
@@ -228,19 +248,40 @@ impl TwitterOfficialClient {
 		Ok(user)
 	}
 
+	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
+	pub fn query_user_by_id(&mut self, id: Vec<u8>) -> Result<TwitterUser, Error> {
+		let id = vec_to_string(id)?;
+		debug!("Twitter query user by id, id: {}", id);
+
+		let query = vec![("user.fields", "public_metrics")];
+		let resp = self
+			.client
+			.get_with::<String, TwitterAPIV2Response<TwitterUser>>(
+				format!("/2/users/{}", id),
+				query.as_slice(),
+			)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
+
+		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
+		Ok(user)
+	}
+
 	/// V1.1, https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-friendships-show
 	/// rate limit: 15/15min(per App) 180/15min(per User)
 	pub fn query_friendship(
 		&mut self,
 		source_user_name: Vec<u8>,
-		target_user_id: Vec<u8>,
+		target_user: TargetUser,
 	) -> Result<Relationship, Error> {
 		let source = vec_to_string(source_user_name)?;
-		let target_id = vec_to_string(target_user_id)?;
-		debug!("Twitter query_friendship, source user: {}, target user: {}", source, target_id);
+		let target_param = target_user.to_query_param()?;
+		debug!(
+			"Twitter query_friendship, source user: {}, target user: {}",
+			source, target_param.1
+		);
 
 		let query: Vec<(&str, &str)> =
-			vec![("source_screen_name", source.as_str()), ("target_id", target_id.as_str())];
+			vec![("source_screen_name", source.as_str()), (&target_param.0, &target_param.1)];
 
 		let resp = self
 			.client
@@ -258,23 +299,28 @@ impl TwitterOfficialClient {
 mod tests {
 	use super::*;
 	use itp_stf_primitives::types::AccountId;
-	use lc_mock_server::run;
-	use litentry_primitives::{ChallengeCode, Identity};
+	use lc_mock_server::{default_getter, run};
 	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(|_: &AccountId, _: &Identity| ChallengeCode::default()), 0).unwrap();
+		let url = run(Arc::new(default_getter), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_twitter_official_url(url.clone());
 	}
 
 	#[test]
 	fn query_tweet_work() {
 		init();
+		let tweet_id = "100";
 
 		let mut client = TwitterOfficialClient::v2();
-		let result = client.query_tweet("100".as_bytes().to_vec());
+		let result = client.query_tweet(tweet_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
+		let tweet = result.unwrap();
+
+		assert_eq!(tweet.id, tweet_id);
+		assert_eq!(tweet.author_id, "mock_user_id");
+		assert_eq!(tweet.text, "38336b4b37f7d61060c3a490d978efb44af5bc78ec8e418b44ffce649f25455d")
 	}
 
 	#[test]
@@ -294,20 +340,45 @@ mod tests {
 
 		let user = "twitterdev";
 		let mut client = TwitterOfficialClient::v2();
-		let result = client.query_user(user.as_bytes().to_vec());
+		let result = client.query_user_by_name(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
-		// task.abort();
 	}
 
 	#[test]
-	fn query_friendship_work() {
+	fn query_user_by_id_work() {
+		init();
+
+		let user_id = "2244994945";
+		let mut client = TwitterOfficialClient::v2();
+		let result = client.query_user_by_id(user_id.as_bytes().to_vec());
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
+
+	#[test]
+	fn query_friendship_by_id_work() {
 		init();
 
 		let source = "twitterdev";
 		let target_id = "783214"; //user: twitter
 		let mut client = TwitterOfficialClient::v1_1();
-		let result =
-			client.query_friendship(source.as_bytes().to_vec(), target_id.as_bytes().to_vec());
+		let result = client.query_friendship(
+			source.as_bytes().to_vec(),
+			TargetUser::Id(target_id.as_bytes().to_vec()),
+		);
+		assert!(result.is_ok(), "error: {:?}", result);
+	}
+
+	#[test]
+	fn query_friendship_by_name_work() {
+		init();
+
+		let source = "twitterdev";
+		let target_name = "twitter"; //user: twitter
+		let mut client = TwitterOfficialClient::v1_1();
+		let result = client.query_friendship(
+			source.as_bytes().to_vec(),
+			TargetUser::Name(target_name.as_bytes().to_vec()),
+		);
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 }

@@ -1,11 +1,14 @@
-import { Metadata } from '@polkadot/types';
-import { HexString } from '@polkadot/util/types';
 import { u8aToHex, u8aConcat } from '@polkadot/util';
 import { xxhashAsU8a } from '@polkadot/util-crypto';
 import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
-import { IntegrationTestContext, IdentityContext } from '../type-definitions';
+import type { IntegrationTestContext } from '../type-definitions';
+import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { HexString } from '@polkadot/util/types';
+import type { Metadata } from '@polkadot/types';
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const base58 = require('micro-base58');
 
@@ -35,7 +38,8 @@ export function buildStorageKey(
 ): Uint8Array {
     let storageKey = u8aConcat(xxhashAsU8a(prefix, 128), xxhashAsU8a(method, 128));
     if (keyTypeId && hashers && input) {
-        let keyTypeIds = hashers.length === 1 ? [keyTypeId] : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
+        const keyTypeIds =
+            hashers.length === 1 ? [keyTypeId] : metadata.registry.lookup.getSiType(keyTypeId).def.asTuple;
         for (let i = 0; i < keyTypeIds.length; i++) {
             const theKeyTypeId = keyTypeIds[i];
             const theHasher = hashers[i].toString();
@@ -69,18 +73,16 @@ export async function buildStorageHelper(
     if (!storageEntry) {
         throw new Error('Can not find the storage entry from metadata');
     }
-    let storageKey, valueType;
+    let storageKey;
 
     if (storageEntry.type.isPlain) {
         storageKey = buildStorageKey(metadata, prefix, method);
-        valueType = metadata.registry.createLookupType(storageEntry.type.asPlain);
     } else if (storageEntry.type.isMap) {
-        const { hashers, key, value } = storageEntry.type.asMap;
+        const { hashers, key } = storageEntry.type.asMap;
         if (input.length != hashers.length) {
             throw new Error('The `input` param is not correct');
         }
         storageKey = buildStorageKey(metadata, prefix, method, key, hashers, input);
-        valueType = metadata.registry.createLookupType(value);
     } else {
         throw new Error('Only support plain and map type');
     }
@@ -94,59 +96,44 @@ export async function checkUserShieldingKeys(
     method: string,
     address: HexString
 ): Promise<string> {
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address);
+    await sleep(6000);
 
-    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, address);
 
-    let request = {
+    const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+
+    const request = {
         jsonrpc: '2.0',
         method: 'state_getStorage',
         params: [base58mrEnclave, storageKey],
         id: 1,
     };
-    let resp = await sendRequest(context.tee, request, context.api);
+    const resp = await sendRequest(context.tee, request, context.api);
     return resp.value.toHex();
 }
 
-export async function checkUserChallengeCode(
+export async function checkIdGraph(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
     address: HexString,
     identity: HexString
-): Promise<string> {
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
+): Promise<PalletIdentityManagementTeeIdentityContext> {
+    await sleep(6000);
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, address, identity);
 
-    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+    const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
-    let request = {
+    const request = {
         jsonrpc: '2.0',
         method: 'state_getStorage',
         params: [base58mrEnclave, storageKey],
         id: 1,
     };
-    let resp = await sendRequest(context.tee, request, context.api);
-    return resp.value.toHex();
-}
-
-export async function checkIDGraph(
-    context: IntegrationTestContext,
-    pallet: string,
-    method: string,
-    address: HexString,
-    identity: HexString
-): Promise<IdentityContext> {
-    const storageKey = await buildStorageHelper(context.metaData, pallet, method, address, identity);
-
-    let base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-
-    let request = {
-        jsonrpc: '2.0',
-        method: 'state_getStorage',
-        params: [base58mrEnclave, storageKey],
-        id: 1,
-    };
-    let resp = await sendRequest(context.tee, request, context.api);
-    const IDGraph = context.api.createType('IdentityContext', resp.value).toJSON() as IdentityContext;
-    return IDGraph;
+    const resp = await sendRequest(context.tee, request, context.api);
+    const idGraph = context.sidechainRegistry.createType(
+        'PalletIdentityManagementTeeIdentityContext',
+        resp.value
+    ) as unknown as PalletIdentityManagementTeeIdentityContext;
+    return idGraph;
 }

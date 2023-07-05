@@ -23,8 +23,10 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use crate::{ensure, get_expected_raw_message, AccountId, ChallengeCode, Error, Result};
+use crate::{ensure, AccountId, Error, Result};
+use ita_stf::helpers::get_expected_raw_message;
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
+use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
@@ -33,7 +35,7 @@ use lc_data_providers::{
 };
 use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
-	Web2Network, Web2ValidationData,
+	UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network, Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -44,37 +46,43 @@ pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
 
 fn payload_from_tweet(tweet: &Tweet) -> Result<Vec<u8>> {
 	hex::decode(tweet.text.strip_prefix("0x").unwrap_or(tweet.text.as_str()))
-		.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::ParseError))
+		.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))
 }
 
 fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 	let data = &discord.content;
 	hex::decode(data.strip_prefix("0x").unwrap_or(data.as_str()))
-		.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::ParseError))
+		.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))
 }
 
 pub fn verify(
 	who: &AccountId,
 	identity: &Identity,
-	code: &ChallengeCode,
+	sidechain_nonce: Index,
+	key: UserShieldingKeyType,
+	nonce: UserShieldingKeyNonceType,
 	data: &Web2ValidationData,
 ) -> Result<()> {
 	debug!("verify web2 identity, who: {}", account_id_to_string(who));
 
-	let (user_id, payload) = match data {
+	let (user_name, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
 			let mut client = TwitterOfficialClient::v2();
 			let tweet: Tweet = client
 				.query_tweet(tweet_id.to_vec())
-				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
+				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
 			let user_id = tweet
 				.get_user_id()
-				.ok_or(Error::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle))?;
+				.ok_or(Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle))?;
+			let user = client
+				.query_user_by_id(user_id.into_bytes())
+				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
+			let user_name = user.username;
 
 			let payload = payload_from_tweet(&tweet)?;
 
-			Ok((user_id, payload))
+			Ok((user_name, payload))
 		},
 		Web2ValidationData::Discord(DiscordValidationData {
 			ref channel_id,
@@ -84,18 +92,18 @@ pub fn verify(
 			let mut client = DiscordOfficialClient::new();
 			let message: DiscordMessage = client
 				.query_message(channel_id.to_vec(), message_id.to_vec())
-				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
+				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
 			let user = client
 				.get_user_info(message.author.id.clone())
-				.map_err(|e| Error::VerifyIdentityFailed(e.into_error_detail()))?;
+				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let mut user_id = message.author.username.clone();
-			user_id.push_str(&'#'.to_string());
-			user_id.push_str(&user.discriminator);
+			let mut user_name_with_discriminator = message.author.username.clone();
+			user_name_with_discriminator.push_str(&'#'.to_string());
+			user_name_with_discriminator.push_str(&user.discriminator);
 
 			let payload = payload_from_discord(&message)?;
-			Ok((user_id, payload))
+			Ok((user_name_with_discriminator, payload))
 		},
 	}?;
 
@@ -104,27 +112,27 @@ pub fn verify(
 	// - discord's username (with 4 digit discriminator) is case sensitive
 	if let Identity::Web2 { ref network, ref address } = identity {
 		let handle = std::str::from_utf8(address.as_slice())
-			.map_err(|_| Error::VerifyIdentityFailed(ErrorDetail::ParseError))?;
+			.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 		match network {
 			Web2Network::Twitter => ensure!(
-				user_id.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
-				Error::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle)
+				user_name.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
+				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
 			),
 			Web2Network::Discord => ensure!(
-				user_id.eq(handle),
-				Error::VerifyIdentityFailed(ErrorDetail::WrongWeb2Handle)
+				user_name.eq(handle),
+				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
 			),
 			_ => (),
 		}
 	} else {
-		return Err(Error::VerifyIdentityFailed(ErrorDetail::InvalidIdentity))
+		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
 	}
 
 	// the payload must match
 	// TODO: maybe move it to common place
 	ensure!(
-		payload == get_expected_raw_message(who, identity, code),
-		Error::VerifyIdentityFailed(ErrorDetail::UnexpectedMessage)
+		payload == get_expected_raw_message(who, identity, sidechain_nonce, key, nonce),
+		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
 	);
 	Ok(())
 }

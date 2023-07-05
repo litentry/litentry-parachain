@@ -16,7 +16,7 @@ export type WorkerConfig = {
     };
 };
 
-function genCommands(node_url: string, node_port: string): { worker0: WorkerConfig; worker1: WorkerConfig } {
+function genCommands(nodeUrl: string, nodePort: string): { worker0: WorkerConfig; worker1: WorkerConfig } {
     return {
         worker0: {
             untrusted_ws_port: 3000,
@@ -26,9 +26,9 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +
-                    node_url +
+                    nodeUrl +
                     ' --node-port ' +
-                    node_port +
+                    nodePort +
                     ' run --skip-ra --dev',
 
                 resume:
@@ -36,9 +36,9 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' --untrusted-http-port 4545 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2000 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3000 --node-url ' +
-                    node_url +
+                    nodeUrl +
                     ' --node-port ' +
-                    node_port +
+                    nodePort +
                     ' run --skip-ra',
             },
         },
@@ -50,9 +50,9 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2001 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3001 --node-url ' +
-                    node_url +
+                    nodeUrl +
                     ' --node-port ' +
-                    node_port +
+                    nodePort +
                     ' run --skip-ra --request-state --dev',
 
                 resume:
@@ -60,9 +60,9 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
                     ' --untrusted-http-port 4546 --ws-external --trusted-external-address wss://localhost' +
                     ' --trusted-worker-port 2001 --untrusted-external-address ws://localhost' +
                     ' --untrusted-worker-port 3001 --node-url ' +
-                    node_url +
+                    nodeUrl +
                     ' --node-port ' +
-                    node_port +
+                    nodePort +
                     ' run --skip-ra',
             },
         },
@@ -71,19 +71,19 @@ function genCommands(node_url: string, node_port: string): { worker0: WorkerConf
 
 async function launchWorker(
     name: string,
-    binary_dir: string,
-    working_dir: string,
+    binaryDir: string,
+    workingDir: string,
     command: string,
-    init_files: boolean
+    initFiles: boolean
 ): Promise<{ shard: string; process: ChildProcess }> {
     // const logging = fs.createWriteStream(log, {flags: 'w+'});
-    if (init_files) {
-        fs.mkdirSync(working_dir, { recursive: true });
-        fs.copyFileSync(`${binary_dir}/enclave.signed.so`, `${working_dir}/enclave.signed.so`);
-        fs.copyFileSync(`${binary_dir}/integritee-service`, `${working_dir}/integritee-service`);
-        fs.closeSync(fs.openSync(`${working_dir}/spid.txt`, 'w'));
-        fs.closeSync(fs.openSync(`${working_dir}/key.txt`, 'w'));
-        let data = JSON.stringify(
+    if (initFiles) {
+        fs.mkdirSync(workingDir, { recursive: true });
+        fs.copyFileSync(`${binaryDir}/enclave.signed.so`, `${workingDir}/enclave.signed.so`);
+        fs.copyFileSync(`${binaryDir}/integritee-service`, `${workingDir}/integritee-service`);
+        fs.closeSync(fs.openSync(`${workingDir}/spid.txt`, 'w'));
+        fs.closeSync(fs.openSync(`${workingDir}/key.txt`, 'w'));
+        const data = JSON.stringify(
             {
                 twitter_official_url: 'http://localhost:19527',
                 twitter_litentry_url: 'http://localhost:19527',
@@ -97,12 +97,12 @@ async function launchWorker(
             null,
             4
         );
-        fs.writeFileSync(`${working_dir}/worker-config-mock.json`, data);
+        fs.writeFileSync(`${workingDir}/worker-config-mock.json`, data);
     }
 
-    return new Promise<{ shard: string; process: ChildProcess }>(async (resolve, reject) => {
+    return new Promise<{ shard: string; process: ChildProcess }>((resolve) => {
         const job = spawn(`./integritee-service`, [command], {
-            cwd: working_dir,
+            cwd: workingDir,
             shell: '/bin/sh',
             env: {
                 RUST_LOG: 'warn,sp_io::storage=error,substrate_api_client=warn',
@@ -163,7 +163,8 @@ async function waitWorkerProducingBlock(
     shard: string,
     atLeast: number
 ): Promise<number> {
-    return new Promise<number>(async (resolve, reject) => {
+    // eslint-disable-next-line no-async-promise-executor
+    return new Promise<number>(async (resolve) => {
         let block_number = 0;
         let start_block_number = 0;
         do {
@@ -186,39 +187,33 @@ async function waitWorkerProducingBlock(
 describe('Resume worker', function () {
     this.timeout(6000000);
 
-    let binary_dir = process.env.BINARY_DIR!;
-    let [_, node_url, node_port] = process.env.SUBSTRATE_END_POINT!.split(':');
-    let worker0_dir = path.join(__dirname, './tmp/worker0');
-    let worker1_dir = path.join(__dirname, './tmp/worker1');
-    let commands = genCommands(`ws:${node_url}`, node_port);
+    const binaryDir = process.env.BINARY_DIR!;
+    const [, nodeUrl, nodePort] = process.env.SUBSTRATE_END_POINT!.split(':');
+    const worker0Dir = path.join(__dirname, './tmp/worker0');
+    const worker1Dir = path.join(__dirname, './tmp/worker1');
+    const commands = genCommands(`ws:${nodeUrl}`, nodePort);
 
     step('One worker', async function () {
         // first launch worker
-        let { shard: shard, process: worker0 } = await launchWorker(
+        const { shard: shard, process: worker0 } = await launchWorker(
             'worker0',
-            binary_dir,
-            worker0_dir,
+            binaryDir,
+            worker0Dir,
             commands.worker0.commands.first_launch,
             true
         );
-        let worker0_conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`);
-        const current_block = await waitWorkerProducingBlock(worker0_conn, shard, 4);
+        const worker0Conn = await initWorkerConnection(`ws://localhost:${commands.worker0.untrusted_ws_port}`);
+        const currentBlock = await waitWorkerProducingBlock(worker0Conn, shard, 4);
         await killWorker(worker0);
         console.log('=========== worker stopped ==================');
 
         // resume worker
-        let { process: r_worker0 } = await launchWorker(
-            'worker0',
-            binary_dir,
-            worker0_dir,
-            commands.worker0.commands.resume,
-            false
-        );
-        await worker0_conn.open(); //reopen connection
-        const resume_block = await latestBlock(worker0_conn, shard);
+        await launchWorker('worker0', binaryDir, worker0Dir, commands.worker0.commands.resume, false);
+        await worker0Conn.open(); //reopen connection
+        const resumeBlock = await latestBlock(worker0Conn, shard);
         // TODO compare the block hash
-        assert.isNotEmpty(resume_block.result, "the latest block can't be empty");
-        assert.isTrue(resume_block!.result!.number >= current_block, 'failed to resume worker');
+        assert.isNotEmpty(resumeBlock.result, "the latest block can't be empty");
+        assert.isTrue(resumeBlock!.result!.number >= currentBlock, 'failed to resume worker');
         // await killWorker(r_worker)
         await sleep(1);
     });
@@ -227,31 +222,25 @@ describe('Resume worker', function () {
     step('Two workers & resume worker1', async function () {
         // 2 workers were actually launched
         // first launch worker1
-        let { shard: shard, process: worker1 } = await launchWorker(
+        const { shard: shard, process: worker1 } = await launchWorker(
             'worker1',
-            binary_dir,
-            worker1_dir,
+            binaryDir,
+            worker1Dir,
             commands.worker1.commands.first_launch,
             true
         );
-        let worker1_conn = await initWorkerConnection(`ws://localhost:${commands.worker1.untrusted_ws_port}`);
-        const worker1_current_block = await waitWorkerProducingBlock(worker1_conn, shard, 4);
+        const worker1Conn = await initWorkerConnection(`ws://localhost:${commands.worker1.untrusted_ws_port}`);
+        const worker1CurrentBlock = await waitWorkerProducingBlock(worker1Conn, shard, 4);
         await killWorker(worker1);
         console.log('=========== worker1 stopped ==================');
         await sleep(20);
 
         // resume worker1
-        let { process: r_worker1 } = await launchWorker(
-            'worker1',
-            binary_dir,
-            worker1_dir,
-            commands.worker1.commands.resume,
-            false
-        );
-        await worker1_conn.open(); //reopen connection
-        const resume_block = await latestBlock(worker1_conn, shard);
-        assert.isNotEmpty(resume_block.result, "the latest block can't be empty");
-        assert.isTrue(resume_block!.result!.number >= worker1_current_block, 'failed to resume worker');
+        await launchWorker('worker1', binaryDir, worker1Dir, commands.worker1.commands.resume, false);
+        await worker1Conn.open(); //reopen connection
+        const resumeBlock = await latestBlock(worker1Conn, shard);
+        assert.isNotEmpty(resumeBlock.result, "the latest block can't be empty");
+        assert.isTrue(resumeBlock!.result!.number >= worker1CurrentBlock, 'failed to resume worker');
         await sleep(60);
     });
 });

@@ -34,7 +34,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use hex_literal::hex;
 
 use runtime_common::EnsureEnclaveSigner;
@@ -149,7 +149,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9160,
+	spec_version: 9166,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -909,19 +909,12 @@ impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
-impl pallet_identity_management_mock::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
-	// intentionally use ALICE for the IMP mock
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
-	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
-}
-
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 
@@ -1012,9 +1005,6 @@ construct_runtime! {
 		Sidechain: pallet_sidechain = 91,
 		Teeracle: pallet_teeracle = 92,
 
-		// Mock
-		IdentityManagementMock: pallet_identity_management_mock = 100,
-
 		// TMP
 		Sudo: pallet_sudo = 255,
 	}
@@ -1077,8 +1067,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Session(_) |
 			// Balance
 			RuntimeCall::Balances(_) |
-			// IMP Mock, only allowed on rococo for testing
-			RuntimeCall::IdentityManagementMock(_) |
+			// IMP and VCMP
 			RuntimeCall::IdentityManagement(_) |
 			RuntimeCall::VCManagement(_) |
 			// TEE pallets

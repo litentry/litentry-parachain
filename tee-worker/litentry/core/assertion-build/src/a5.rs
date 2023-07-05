@@ -25,7 +25,10 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::{twitter_official::TwitterOfficialClient, vec_to_string};
+use lc_data_providers::{
+	twitter_official::{TargetUser, TwitterOfficialClient},
+	vec_to_string,
+};
 use log::*;
 use std::{format, vec::Vec};
 
@@ -74,7 +77,10 @@ pub fn build(
 					})?;
 
 				let relationship = twitter_official_v1_1
-					.query_friendship(twitter_handler.clone(), tweet.author_id.as_bytes().to_vec())
+					.query_friendship(
+						twitter_handler.clone(),
+						TargetUser::Id(tweet.author_id.as_bytes().to_vec()),
+					)
 					.map_err(|e| {
 						// invalid permissions, rate limitation, etc
 						log::warn!("Assertion5 query_friendship error:{:?}", e);
@@ -118,7 +124,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A5_SUBJECT_DESCRIPTION,

@@ -1,19 +1,19 @@
-import { HexString } from '@polkadot/util/types';
-import { decryptWithAES } from './crypto';
+import type { HexString } from '@polkadot/util/types';
+import { decryptWithAes } from './crypto';
 
 export async function handleVcEvents(
     aesKey: HexString,
     events: any[],
     method: 'VCIssued' | 'VCDisabled' | 'VCRevoked' | 'Failed'
 ): Promise<any> {
-    let results: any = [];
+    const results: any = [];
     for (let k = 0; k < events.length; k++) {
         switch (method) {
             case 'VCIssued':
                 results.push({
                     account: events[k].data.account.toHex(),
                     index: events[k].data.index.toHex(),
-                    vc: decryptWithAES(aesKey, events[k].data.vc, 'utf-8'),
+                    vc: decryptWithAes(aesKey, events[k].data.vc, 'utf-8'),
                 });
                 break;
             case 'VCDisabled':

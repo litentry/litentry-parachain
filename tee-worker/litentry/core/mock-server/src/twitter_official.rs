@@ -15,10 +15,11 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use crate::mock_tweet_payload;
+use crate::{UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
+use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{ChallengeCode, Identity, IdentityString, Web2Network};
-use sp_core::crypto::AccountId32 as AccountId;
+use litentry_primitives::{Identity, IdentityString, Web2Network};
+use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
 use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
 
@@ -26,43 +27,52 @@ pub(crate) fn query_tweet<F>(
 	func: Arc<F>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
 where
-	F: Fn(&AccountId, &Identity) -> ChallengeCode + Send + Sync + 'static,
+	F: Fn(&Sr25519Pair) -> UserShieldingKeyType + Send + Sync + 'static,
 {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
 		.and(warp::query::<HashMap<String, String>>())
-		.map(move |_tweet_id, p: HashMap<String, String>| {
-			log::info!("query_tweet");
+		.map(move |tweet_id: u32, p: HashMap<String, String>| {
+			println!("query_tweet, tweet_id: {}", tweet_id);
 			let default = String::default();
-			let ids = "100".to_string();
+			let id = tweet_id.to_string();
 			let expansions = p.get("expansions").unwrap_or(&default);
+
+			let tweet_author_name = "mock_user";
+			let tweet_author_id = "mock_user_id";
 
 			if expansions.as_str() != "author_id" {
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
-				let account_id = AccountId::new([
-					212, 53, 147, 199, 21, 253, 211, 28, 97, 20, 26, 189, 4, 169, 159, 214, 130,
-					44, 133, 88, 133, 76, 205, 227, 154, 86, 132, 231, 165, 109, 162, 125,
-				]); // Alice
+				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
 				let twitter_identity = Identity::Web2 {
 					network: Web2Network::Twitter,
-					address: IdentityString::try_from("mock_user".as_bytes().to_vec()).unwrap(),
+					address: IdentityString::try_from(tweet_author_name.as_bytes().to_vec())
+						.unwrap(),
 				};
-				let chanllenge_code = func(&account_id, &twitter_identity);
-				log::info!(
-					"query_tweet, challenge_code:{:?}",
-					sp_core::hexdisplay::HexDisplay::from(&chanllenge_code)
-				);
-				let payload = mock_tweet_payload(&account_id, &twitter_identity, &chanllenge_code);
+				let key = func(&alice);
+				let payload = hex::encode(get_expected_raw_message(
+					&alice.public(),
+					&twitter_identity,
+					// the tweet_id is used as sidechain_nonce
+					// it's a bit tricky to get the nonce from the getter: you need to know
+					// the enclave signer account when launching the mock-server thread
+					// the enclaveApi doesn't provide such interface
+					tweet_id,
+					key,
+					MOCK_VERIFICATION_NONCE,
+				));
 
-				let tweet = Tweet { author_id: "mock_user".into(), id: ids.clone(), text: payload };
+				println!("query_tweet, payload: {}", payload);
+
+				let tweet = Tweet { author_id: tweet_author_id.into(), id, text: payload };
 				let twitter_users = TwitterUsers {
 					users: vec![TwitterUser {
-						id: ids,
-						name: "mock_user".to_string(),
+						id: tweet_author_id.to_string(),
+						name: tweet_author_name.to_string(),
 						// intentionally return username with a different case, which shouldn't fail the verification
 						// see https://github.com/litentry/litentry-parachain/issues/1680
-						username: "Mock_User".to_string(),
+						username: tweet_author_name.to_string().to_uppercase(),
 						public_metrics: None,
 					}],
 				};
@@ -109,34 +119,42 @@ pub(crate) fn query_friendship(
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |p: HashMap<String, String>| {
 			log::info!("query_friendship");
-			let default = String::default();
-			let source = p.get("source_screen_name").unwrap_or(&default);
-			let target_id = p.get("target_id").unwrap_or(&default);
+			if let Some(target_id) = p.get("target_id") {
+				if target_id == "783214" {
+					return Response::builder()
+						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
+				}
+			};
 
-			if source != "twitterdev" || target_id != "783214" {
-				Response::builder().status(400).body(String::from("Error query"))
-			} else {
-				let source_user = SourceTwitterUser {
-					id_str: "2244994945".into(),
-					screen_name: "TwitterDev".into(),
-					following: true,
-					followed_by: false,
-				};
-
-				let target_user = TargetTwitterUser {
-					id_str: "783214".into(),
-					screen_name: "Twitter".into(),
-					following: false,
-					followed_by: true,
-				};
-
-				let body = Relationship { source: source_user, target: target_user };
-				Response::builder().body(serde_json::to_string(&body).unwrap())
+			if let Some(target_screen_name) = p.get("target_screen_name") {
+				if target_screen_name == "twitter" {
+					return Response::builder()
+						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
+				}
 			}
+			Response::builder().status(400).body(String::from("Error query"))
 		})
 }
 
-pub(crate) fn query_user(
+fn prepare_mocked_relationship() -> Relationship {
+	let source_user = SourceTwitterUser {
+		id_str: "2244994945".into(),
+		screen_name: "TwitterDev".into(),
+		following: true,
+		followed_by: false,
+	};
+
+	let target_user = TargetTwitterUser {
+		id_str: "783214".into(),
+		screen_name: "Twitter".into(),
+		following: false,
+		followed_by: true,
+	};
+
+	Relationship { source: source_user, target: target_user }
+}
+
+pub(crate) fn query_user_by_name(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
 		.and(warp::path!("2" / "users" / "by" / "username" / String))
@@ -154,6 +172,45 @@ pub(crate) fn query_user(
 					id: "2244994945".into(),
 					name: "TwitterDev".to_string(),
 					username: "TwitterDev".to_string(),
+					public_metrics: Some(TwitterUserPublicMetrics {
+						followers_count: 100_u32,
+						following_count: 99_u32,
+					}),
+				};
+				let body = TwitterAPIV2Response {
+					data: Some(twitter_user_data),
+					meta: None,
+					includes: None,
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			}
+		})
+}
+
+pub(crate) fn query_user_by_id(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+	warp::get()
+		.and(warp::path!("2" / "users" / String))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |id, p: HashMap<String, String>| {
+			let expected_user_ids = vec!["2244994945".to_string(), "mock_user_id".to_string()];
+
+			let mut user_names = HashMap::new();
+			user_names.insert("2244994945", "TwitterDev".to_string());
+			user_names.insert("mock_user_id", "mock_user".to_string());
+
+			let default = String::default();
+			let user_fields = p.get("user.fields").unwrap_or(&default);
+
+			if user_fields.as_str() != "public_metrics" || !expected_user_ids.contains(&id) {
+				Response::builder().status(400).body(String::from("Error query"))
+			} else {
+				let user_name = user_names.get(id.as_str()).unwrap().to_string();
+
+				let twitter_user_data = TwitterUser {
+					id,
+					name: user_name.clone(),
+					username: user_name,
 					public_metrics: Some(TwitterUserPublicMetrics {
 						followers_count: 100_u32,
 						following_count: 99_u32,

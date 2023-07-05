@@ -25,13 +25,16 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{DirectRequestStatus, Request, ShardIdentifier, H256};
+use itp_types::{
+	DirectRequestStatus, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
+};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
 use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
+use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::debug;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
@@ -198,6 +201,47 @@ where
 			Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 		}
 	});
+
+	if cfg!(not(feature = "production")) {
+		// state_updateScheduledEnclave
+		// params: sidechainBlockNumber, hex encoded mrenclave
+		let mrenclave_update_scheduled_name: &str = "state_updateScheduledEnclave";
+		io.add_sync_method(mrenclave_update_scheduled_name, move |params: Params| {
+			match params.parse::<(SidechainBlockNumber, String)>() {
+				Ok((bn, mrenclave)) =>
+					return match hex::decode(&mrenclave) {
+						Ok(mrenclave) => {
+							let mut enclave_to_set: MrEnclave = [0u8; 32];
+							if mrenclave.len() != enclave_to_set.len() {
+								return Ok(json!(compute_hex_encoded_return_error(
+									"mrenclave len mismatch, expected 32 bytes long"
+								)))
+							}
+
+							enclave_to_set.copy_from_slice(&mrenclave);
+							return match GLOBAL_SCHEDULED_ENCLAVE.update(bn, enclave_to_set) {
+								Ok(()) => Ok(json!(RpcReturnValue::new(
+									vec![],
+									false,
+									DirectRequestStatus::Ok
+								)
+								.to_hex())),
+								Err(e) => {
+									let error_msg =
+										format!("Failed to set scheduled mrenclave {:?}", e);
+									Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+								},
+							}
+						},
+						Err(e) => {
+							let error_msg = format!("Failed to decode mrenclave {:?}", e);
+							Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					},
+				Err(_) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
+			}
+		});
+	}
 
 	// system_health
 	let state_health_name: &str = "system_health";

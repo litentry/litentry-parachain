@@ -82,8 +82,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 // litentry
-use litentry_primitives::MINUTES;
-pub use pallet_imt::{self, Call as IdentityManagementCall};
+pub use pallet_imt::{self, Call as IdentityManagementCall, IdentityStatus};
 
 /// Block type as expected by this sgx-runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
@@ -272,8 +271,6 @@ impl pallet_parentchain::Config for Runtime {
 impl pallet_imt::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type ManageOrigin = EnsureRoot<AccountId>;
-	type MaxMetadataLength = ConstU32<128>;
-	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
 	type MaxIDGraphLength = ConstU32<64>;
 }
 

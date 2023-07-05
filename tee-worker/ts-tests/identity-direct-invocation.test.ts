@@ -6,10 +6,10 @@ import { hexToU8a } from '@polkadot/util';
 import { initIntegrationTestContext } from './common/utils';
 import {
     createSignedTrustedGetterUserShieldingKey,
-    getTEEShieldingKey,
-    sendRequestFromTrustedGetter,
+    getTeeShieldingKey,
+    sendRequestFromGetter,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
-import { IntegrationTestContext } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/type-definitions';
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -23,7 +23,7 @@ describe('Test Identity (direct invocation)', function () {
             process.env.SUBSTRATE_END_POINT!, // @fixme evil assertion; centralize env access
             0
         );
-        teeShieldingKey = await getTEEShieldingKey(context.tee, context.api);
+        teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
     });
 
     it('needs a lot more work to be complete');
@@ -34,7 +34,7 @@ describe('Test Identity (direct invocation)', function () {
             context.substrateWallet.alice
         );
 
-        const shieldingKeyGetResult = await sendRequestFromTrustedGetter(
+        const shieldingKeyGetResult = await sendRequestFromGetter(
             context.tee,
             context.api,
             context.mrEnclave,

@@ -22,10 +22,8 @@ use crate::{
 		litentry::{
 			id_graph_stats::IDGraphStats,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
-			set_challenge_code::SetChallengeCodeCommand,
-			set_scheduled_mrenclave::SetScheduledMrenclaveCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
-			user_shielding_key::UserShiledingKeyCommand, verify_identity::VerifyIdentityCommand,
+			user_shielding_key::UserShieldingKeyCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
@@ -70,11 +68,7 @@ pub enum TrustedBaseCommand {
 	// Litentry's commands below
 	// for commands that should trigger parentchain extrins, check non-trusted commands
 	/// query a user's shielding key, the setter is non-trusted command
-	UserShieldingKey(UserShiledingKeyCommand),
-
-	SetChallengeCode(SetChallengeCodeCommand),
-
-	VerifyIdentity(VerifyIdentityCommand),
+	UserShieldingKey(UserShieldingKeyCommand),
 
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
@@ -84,8 +78,6 @@ pub enum TrustedBaseCommand {
 
 	/// get count of all keys account + identity in the IDGraphs
 	IDGraphStats(IDGraphStats),
-
-	SetScheduledMrenclave(SetScheduledMrenclaveCommand),
 }
 
 impl TrustedBaseCommand {
@@ -100,13 +92,10 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			// Litentry's commands below
 			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::SetChallengeCode(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::VerifyIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::SetScheduledMrenclave(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

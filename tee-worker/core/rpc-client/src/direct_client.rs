@@ -18,8 +18,10 @@
 //! Interface for direct access to a workers rpc.
 
 use crate::ws_client::{WsClient, WsClientControl};
-use codec::Decode;
+use codec::{Decode, Encode};
+use ita_stf::Getter;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
@@ -33,6 +35,7 @@ use std::{
 	thread::JoinHandle,
 };
 use substrate_api_client::RuntimeMetadataPrefixed;
+use teerex_primitives::Request;
 
 pub use crate::error::{Error, Result};
 
@@ -61,6 +64,42 @@ pub trait DirectApi {
 impl DirectClient {
 	pub fn new(url: String) -> Self {
 		Self { url, web_socket_control: Default::default() }
+	}
+
+	// litentry: moved from `cli/src/trusted_operation.rs` as it's more widely used
+	pub fn get_state(&self, shard: ShardIdentifier, getter: &Getter) -> Option<Vec<u8>> {
+		// Compose jsonrpc call.
+		let data = Request { shard, cyphertext: getter.encode() };
+		let rpc_method = "state_executeGetter".to_owned();
+		let jsonrpc_call: String =
+			RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
+
+		let rpc_response_str = self.get(&jsonrpc_call).unwrap();
+
+		// Decode RPC response.
+		let rpc_response: RpcResponse = serde_json::from_str(&rpc_response_str).ok()?;
+		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result)
+			// Replace with `inspect_err` once it's stable.
+			.map_err(|e| {
+				error!("Failed to decode RpcReturnValue: {:?}", e);
+				e
+			})
+			.ok()?;
+
+		if rpc_return_value.status == DirectRequestStatus::Error {
+			println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+			return None
+		}
+
+		let maybe_state = Option::decode(&mut rpc_return_value.value.as_slice())
+			// Replace with `inspect_err` once it's stable.
+			.map_err(|e| {
+				error!("Failed to decode return value: {:?}", e);
+				e
+			})
+			.ok()?;
+
+		maybe_state
 	}
 }
 

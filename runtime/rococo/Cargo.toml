@@ -8,7 +8,7 @@ version = '0.9.16'
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len", "full"] }
 hex-literal = { version = '0.4.1' }
 log = { version = "0.4", default-features = false }
-scale-info = { version = "2.7.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.9.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 smallvec = "1.9.0"
 
@@ -94,7 +94,6 @@ pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-featu
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
-pallet-identity-management-mock = { path = "../../pallets/identity-management-mock", default-features = false }
 pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
 pallet-vc-management = { path = "../../pallets/vc-management", default-features = false }
 runtime-common = { path = '../common', default-features = false }
@@ -230,7 +229,6 @@ std = [
     "pallet-extrinsic-filter/std",
     "pallet-group/std",
     "pallet-identity-management/std",
-    "pallet-identity-management-mock/std",
     "pallet-teerex/std",
     "pallet-sidechain/std",
     "pallet-teeracle/std",
@@ -265,7 +263,6 @@ try-runtime = [
     "pallet-drop3/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
     "pallet-identity-management/try-runtime",
-    "pallet-identity-management-mock/try-runtime",
     "pallet-membership/try-runtime",
     "pallet-multisig/try-runtime",
     "pallet-parachain-staking/try-runtime",

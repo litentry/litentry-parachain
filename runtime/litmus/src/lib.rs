@@ -26,7 +26,7 @@ extern crate frame_benchmarking;
 use codec::{Decode, Encode, MaxEncodedLen};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
-	construct_runtime, ord_parameter_types, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{
 		ConstU128, ConstU32, ConstU64, ConstU8, Contains, Everything, InstanceFilter,
 		SortedMembers, WithdrawReasons,
@@ -34,7 +34,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
+use frame_system::EnsureRoot;
 use hex_literal::hex;
 
 use runtime_common::EnsureEnclaveSigner;
@@ -150,7 +150,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9160,
+	spec_version: 9166,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -827,23 +827,12 @@ impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
-ord_parameter_types! {
-	pub const ALICE: AccountId = sp_runtime::AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
-}
-
-impl pallet_identity_management_mock::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type MaxVerificationDelay = ConstU32<{ 30 * MINUTES }>;
-	// intentionally use ALICE for the IMP mock
-	type TEECallOrigin = EnsureSignedBy<ALICE, AccountId>;
-	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
-}
-
 impl pallet_vc_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
 }
 
@@ -931,9 +920,6 @@ construct_runtime! {
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
 		Teeracle: pallet_teeracle = 92,
-
-		// Mock
-		IdentityManagementMock: pallet_identity_management_mock = 100,
 	}
 }
 

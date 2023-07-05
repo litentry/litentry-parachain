@@ -173,7 +173,6 @@ impl pallet_group::Config for Test {
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-
 	let eddie: SystemAccountId = test_utils::get_signer(&[5u8; 32]);
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {

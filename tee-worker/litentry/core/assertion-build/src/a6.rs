@@ -58,7 +58,7 @@ pub fn build(
 		if let Identity::Web2 { network, address } = identity {
 			if matches!(network, Web2Network::Twitter) {
 				let twitter_handler = address.to_vec();
-				match client.query_user(twitter_handler) {
+				match client.query_user_by_name(twitter_handler) {
 					Ok(user) =>
 						if let Some(metrics) = user.public_metrics {
 							sum += metrics.followers_count;
@@ -108,7 +108,7 @@ pub fn build(
 		},
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(who, shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A6_SUBJECT_DESCRIPTION,
