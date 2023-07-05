@@ -532,11 +532,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set env
-        run: |
-          version=$RANDOM
-          echo "VERSION=dev.$version" >> $GITHUB_ENV
-
       - name: Pull polkadot image
         run: |
           docker pull parity/polkadot

@@ -1,6 +1,6 @@
 services:
   demo-sidechain:
-    image: integritee-cli:${VERSION:-dev}
+    image: integritee-cli:dev
     devices:
       - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
       - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
@@ -12,11 +12,11 @@ services:
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      integritee-node-${VERSION}:
+      integritee-node:
         condition: service_healthy
-      integritee-worker-1-${VERSION}:
+      integritee-worker-1:
         condition: service_healthy
-      integritee-worker-2-${VERSION}:
+      integritee-worker-2:
         condition: service_healthy
     networks:
       - integritee-test-network
