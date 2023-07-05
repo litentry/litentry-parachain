@@ -96,6 +96,7 @@ pub unsafe extern "C" fn init(
 	untrusted_worker_addr: *const u8,
 	untrusted_worker_addr_size: u32,
 ) -> sgx_status_t {
+	info!("enclave runtime start");
 	let mu_ra_url =
 		match String::decode(&mut slice::from_raw_parts(mu_ra_addr, mu_ra_addr_size as usize))
 			.map_err(Error::Codec)
@@ -104,6 +105,7 @@ pub unsafe extern "C" fn init(
 			Err(e) => return e.into(),
 		};
 
+	info!("enclave runtime start 2");
 	let untrusted_worker_url = match String::decode(&mut slice::from_raw_parts(
 		untrusted_worker_addr,
 		untrusted_worker_addr_size as usize,
@@ -114,6 +116,7 @@ pub unsafe extern "C" fn init(
 		Err(e) => return e.into(),
 	};
 
+	info!("enclave runtime start 3");
 	match initialization::init_enclave(mu_ra_url, untrusted_worker_url) {
 		Err(e) => e.into(),
 		Ok(()) => sgx_status_t::SGX_SUCCESS,
