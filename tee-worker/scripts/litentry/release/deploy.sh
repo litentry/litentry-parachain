@@ -17,7 +17,7 @@ function display_help() {
   echo "  -d, --discard      Clean the existing state for Parachain and Worker."
   echo "  -c, --config [Config.json] Config file for the worker."
   echo "  -a, --only-worker   Start only the worker"
-  echo "  -c, --chain        Chain to use for Parachain Deployment"
+  echo "  -x, --chain        Chain to use for Parachain Deployment"
   echo "  -p, --parachain-port  Parachain Port Number (default: 9944)"
   echo "  -h, --parachain-host  Parachain Host Url (default: localhost)"
   echo "  -v, --copy-from-docker Copy the binary for Parachain from a docker image (default: litentry/litentry-parachain:tee-prod)"
@@ -27,9 +27,9 @@ function display_help() {
   echo "  upgrade-worker     Upgrade the worker."
   echo ""
   echo "Examples:"
-  echo "  ./release.sh restart --v --build --config github-staging-one-worker.json"
-  echo "  ./release.sh restart --v --build --config github-staging-one-worker.json --discard"
-  echo "  ./release.sh upgrade-worker --v --build --config github-staging-one-worker.json"
+  echo "  ./deploy.sh restart --v --build --config github-staging-one-worker.json"
+  echo "  ./deploy.sh restart --v --build --config github-staging-one-worker.json --discard"
+  echo "  ./deploy.sh upgrade-worker --v --build --config github-staging-one-worker.json"
   echo ""
   echo "Additional Information:"
   echo "  - This script requires an OS that supports systemd."
@@ -586,7 +586,7 @@ while [[ $# -gt 0 ]]; do
       export ONLY_WORKER=true
       shift
       ;;
-    -c| --chain)
+    -x| --chain)
       export CHAIN="$2"
       shift
       ;;
