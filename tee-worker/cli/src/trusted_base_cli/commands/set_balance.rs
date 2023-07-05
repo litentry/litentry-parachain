@@ -49,7 +49,7 @@ impl SetBalanceCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args);
 		let worker_api_direct = get_worker_api_direct(cli);
-		let nonce = worker_api_direct.get_next_nonce(&shard, &(who.public().into())).unwrap();
+		let nonce = worker_api_direct.get_next_nonce(&shard, &(signer.public().into())).unwrap();
 		info!("nonce {:?} ", nonce);
 		let top: TrustedOperation = TrustedCall::balance_set_balance(
 			signer.public().into(),
