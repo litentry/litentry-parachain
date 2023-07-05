@@ -29,7 +29,7 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 ENV CARGO_NET_GIT_FETCH_WITH_CLI true
 ENV SGX_MODE SW
 
-ENV HOME=/root/work
+ENV HOME=/home/ubuntu/repo
 
 ARG WORKER_MODE_ARG
 ENV WORKER_MODE=$WORKER_MODE_ARG
@@ -67,8 +67,7 @@ ENV SGX_MODE=$SGX_MODE
 ARG WORKER_FEATURES_ARG
 ENV WORKER_FEATURES=$WORKER_FEATURES_ARG
 
-ENV WORKHOME=/home/ubuntu/work
-ENV HOME=/home/ubuntu
+ENV HOME=/home/ubuntu/repo
 
 RUN rustup default stable
 RUN cargo install sccache
@@ -84,9 +83,8 @@ ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
 ARG FINGERPRINT=none
 
-WORKDIR $WORKHOME/tee-worker
-
-COPY . .
+WORKDIR $HOME/tee-worker
+COPY . $HOME
 
 RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
 	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db \
@@ -115,8 +113,8 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-COPY --from=builder /home/ubuntu/work/tee-worker/bin/integritee-cli /usr/local/bin
-COPY --from=builder /home/ubuntu/work/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=builder /home/ubuntu/repo/tee-worker/bin/integritee-cli /usr/local/bin
+COPY --from=builder /home/ubuntu/repo/tee-worker/cli/*.sh /usr/local/worker-cli/
 
 RUN chmod +x /usr/local/bin/integritee-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
@@ -133,8 +131,8 @@ FROM runner AS deployed-worker
 LABEL maintainer="zoltan@integritee.network"
 
 COPY --from=builder /opt/sgxsdk /opt/sgxsdk
-COPY --from=builder /home/ubuntu/work/tee-worker/bin/* /usr/local/bin
-COPY --from=builder /home/ubuntu/work/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=builder /home/ubuntu/repo/tee-worker/bin/* /usr/local/bin
+COPY --from=builder /home/ubuntu/repo/tee-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
