@@ -37,7 +37,7 @@ impl NonceCommand {
 		let worker_api_direct = get_worker_api_direct(cli);
 		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &(who.public().into()));
 		let nonce = nonce_ret.unwrap();
-		worker_api_direct.close().unwrap();
 		println!("{}", nonce);
+		worker_api_direct.close().unwrap();
 	}
 }
