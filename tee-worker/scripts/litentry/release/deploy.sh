@@ -265,8 +265,17 @@ function register_parachain() {
 }
 
 setup_working_dir() {
+    local CONFIG_DIR=~/configs
+
     source_dir=$1
     target_dir=$2
+
+    cd $source_dir
+    ./integritee-service signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
+    echo "Enclave account is prepared inside enclave_account.txt"
+
+    export ENCLAVE_ACCOUNT=$(cat enclave_account.txt)
+    echo "Enclave Account: $ENCLAVE_ACCOUNT"
 
     optional=("key.txt" "spid.txt")
 
@@ -281,18 +290,10 @@ setup_working_dir() {
         fi
     done
 
-    mandatory=("enclave.signed.so" "integritee-service")
-
-    for file in "${mandatory[@]}"; do
-        source="${source_dir}/${file}"
-        target="${target_dir}/${file}"
-
-        if [ -f "$source" ]; then
-            cp "$source" "$target"
-        else
-            echo "$source does not exist. Did you run make?"
-        fi
+    for Item in 'enclave.signed.so' 'integritee-service' 'aes_key_sealed.bin' 'ed25519_key_sealed.bin' 'enclave-shielding-pubkey.json' 'enclave-signing-pubkey.bin' 'rsa3072_key_sealed.bin' 'sidechain_db'; do
+      cp -r "${Item}" "${target_dir}"
     done
+
 }
 
 function restart_worker() {
@@ -308,6 +309,13 @@ function restart_worker() {
     # Prepare the Worker Directory before restarting
     mkdir -p $ROOTDIR/tee-worker/tmp/w${i}
     setup_working_dir $ROOTDIR/tee-worker/bin $ROOTDIR/tee-worker/tmp/w$i
+
+    # Transfer balance to the enclave account that is generated
+    echo "Transferring balance to the enclave account"
+    cd $ROOTDIR/scripts/ts-utils/
+    yarn install
+    npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
+
     source=$(echo "$CONFIG" | jq -r ".workers[$i].source")
     flags=$(echo "$CONFIG" | jq -r ".workers[$i].flags[]")
     subcommand_flags=$(echo "$CONFIG" | jq -r ".workers[$i].subcommand_flags[]")
