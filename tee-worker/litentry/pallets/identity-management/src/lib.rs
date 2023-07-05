@@ -43,7 +43,8 @@ use frame_system::pallet_prelude::*;
 use log::debug;
 
 pub use litentry_primitives::{
-	get_all_web3networks, Identity, ParentchainBlockNumber, UserShieldingKeyType, Web3Network,
+	get_all_web3networks, BoundedWeb3Network, Identity, ParentchainBlockNumber,
+	UserShieldingKeyType, Web3Network,
 };
 use sp_std::vec::Vec;
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -52,7 +53,6 @@ pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use litentry_primitives::Address32;
 	use log::warn;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -71,10 +71,6 @@ pub mod pallet {
 		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
 		#[pallet::constant]
 		type MaxIDGraphLength: Get<u32>;
-		/// maximum number of web3 networks an `IdentityContext` can have, if should be greater than
-		/// the number of Web3Network enum items
-		#[pallet::constant]
-		type MaxWeb3NetworkLength: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -141,12 +137,12 @@ pub mod pallet {
 			let prime_id = Self::build_prime_identity(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
 				// TODO: shall we activate all available networks for the prime id?
-				let bounded_web3networks = get_all_web3networks()
+				let web3networks = get_all_web3networks()
 					.try_into()
 					.map_err(|_| Error::<T>::Web3NetworkLenLimitReached)?;
 				let context = <IdentityContext<T>>::new(
 					<frame_system::Pallet<T>>::block_number(),
-					bounded_web3networks,
+					web3networks,
 				);
 				Self::insert_identity_with_limit(&who, &prime_id, context)?;
 			}
@@ -163,7 +159,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
-			web3networks: Vec<Web3Network>,
+			web3networks: BoundedWeb3Network,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
@@ -204,8 +200,6 @@ pub mod pallet {
 		fn build_prime_identity(who: &T::AccountId) -> Result<Identity, DispatchError> {
 			let address_raw: [u8; 32] =
 				who.encode().try_into().map_err(|_| DispatchError::Other("Invalid AccountId"))?;
-			let address: Address32 = address_raw.into();
-
 			Ok(Identity::Substrate(address_raw.into()))
 		}
 

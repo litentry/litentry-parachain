@@ -15,7 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	mock::*, Error, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType, Web3Network,
+	mock::*, BoundedWeb3Network, Error, Identity, IdentityContext, IdentityStatus,
+	UserShieldingKeyType, Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::USER_SHIELDING_KEY_LEN;
@@ -47,13 +48,12 @@ fn set_user_shielding_key_works() {
 #[test]
 fn link_identity_works() {
 	new_test_ext(true).execute_with(|| {
-		let web3networks: BoundedVec<Web3Network, <Test as crate::Config>::MaxWeb3NetworkLength> =
-			BoundedVec::truncate_from(vec![Web3Network::Litentry]);
+		let web3networks: BoundedWeb3Network = vec![Web3Network::Litentry].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
 			alice_web3_identity(),
-			web3networks,
+			web3networks.clone(),
 		));
 		assert_eq!(
 			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
@@ -72,7 +72,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				alice_twitter_identity(i),
-				vec![],
+				BoundedWeb3Network::default(),
 			));
 		}
 		assert_err!(
@@ -80,7 +80,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				alice_twitter_identity(65),
-				vec![],
+				BoundedWeb3Network::default(),
 			),
 			Error::<Test>::IDGraphLenLimitReached
 		);
@@ -105,7 +105,7 @@ fn remove_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			BOB,
 			alice_web3_identity(),
-			vec![],
+			BoundedWeb3Network::default(),
 		));
 		assert_eq!(
 			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
@@ -146,7 +146,7 @@ fn get_id_graph_works() {
 				RuntimeOrigin::signed(ALICE),
 				BOB,
 				alice_twitter_identity(i.try_into().unwrap()),
-				vec![],
+				BoundedWeb3Network::default(),
 			));
 		}
 		// the full id_graph should have 22 elements, including the prime_id
@@ -184,13 +184,13 @@ fn id_graph_stats_works() {
 			RuntimeOrigin::signed(ALICE),
 			ALICE,
 			alice_web3_identity(),
-			vec![],
+			BoundedWeb3Network::default(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			ALICE,
 			alice_twitter_identity(1),
-			vec![],
+			BoundedWeb3Network::default(),
 		));
 
 		let stats = IMT::id_graph_stats().unwrap();

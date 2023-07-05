@@ -14,10 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{BlockNumberOf, Config, Web3Network};
+use crate::{BlockNumberOf, BoundedWeb3Network, Config};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::ConstU32, BoundedVec};
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub enum IdentityStatus {
@@ -34,16 +33,13 @@ pub struct IdentityContext<T: Config> {
 	// the sidechain block number at which the identity is linked
 	pub link_block: BlockNumberOf<T>,
 	// a list of web3 networks on which the identity should be used
-	pub web3networks: BoundedVec<Web3Network, T::MaxWeb3NetworkLength>,
+	pub web3networks: BoundedWeb3Network,
 	// the identity status
 	pub status: IdentityStatus,
 }
 
 impl<T: Config> IdentityContext<T> {
-	pub fn new(
-		link_block: BlockNumberOf<T>,
-		web3networks: BoundedVec<Web3Network, T::MaxWeb3NetworkLength>,
-	) -> Self {
+	pub fn new(link_block: BlockNumberOf<T>, web3networks: BoundedWeb3Network) -> Self {
 		Self { link_block, web3networks, status: IdentityStatus::Active }
 	}
 }
