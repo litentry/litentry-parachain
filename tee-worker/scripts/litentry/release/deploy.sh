@@ -267,6 +267,10 @@ function register_parachain() {
 setup_working_dir() {
     local CONFIG_DIR=~/configs
 
+    local INTEL_KEY=$CONFIG_DIR/key_production.txt
+    local INTEL_SPID=$CONFIG_DIR/spid_production.txt
+    local MODE_CONFIG=$CONFIG_DIR/mode_config.json
+
     source_dir=$1
     target_dir=$2
 
@@ -293,6 +297,11 @@ setup_working_dir() {
     for Item in 'enclave.signed.so' 'integritee-service' 'aes_key_sealed.bin' 'ed25519_key_sealed.bin' 'enclave-shielding-pubkey.json' 'enclave-signing-pubkey.bin' 'rsa3072_key_sealed.bin' 'sidechain_db'; do
       cp -r "${Item}" "${target_dir}"
     done
+
+    # Only possible in TEE-Internal
+    cp $CONFIG "${target_dir}/mode_config.json"
+    cp $INTEL_KEY "${target_dir}/key_production.txt"
+    cp $INTEL_SPID "${target_dir}/spid_production.txt"
 
 }
 
