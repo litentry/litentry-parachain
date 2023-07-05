@@ -91,8 +91,8 @@ async function launchWorker(
                 discord_official_url: 'http://localhost:19527',
                 discord_litentry_url: 'http://localhost:19527',
                 discord_auth_token: '',
-                graphql_url: 'http://localhost:19527',
-                graphql_auth_key: '',
+                achainable_url: 'http://localhost:19527',
+                achainable_auth_key: '',
             },
             null,
             4

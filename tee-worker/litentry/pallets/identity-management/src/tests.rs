@@ -16,7 +16,7 @@
 
 use crate::{mock::*, Error, IdentityContext, IdentityStatus, UserShieldingKeyType};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{Identity, IdentityString, Web2Network, USER_SHIELDING_KEY_LEN};
+use litentry_primitives::USER_SHIELDING_KEY_LEN;
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
