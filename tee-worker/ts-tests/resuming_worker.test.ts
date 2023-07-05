@@ -1,12 +1,13 @@
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess, ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import * as readline from 'readline';
 import fs from 'fs';
-import { initWorkerConnection, sleep } from './common/utils';
 import * as path from 'path';
 import * as process from 'process';
 import { describe } from 'mocha';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import WebSocketAsPromised from 'websocket-as-promised';
+import { initWorkerConnection, sleep } from './common/utils';
 
 export type WorkerConfig = {
     untrusted_ws_port: number;
@@ -75,8 +76,7 @@ async function launchWorker(
     workingDir: string,
     command: string,
     initFiles: boolean
-): Promise<{ shard: string; process: ChildProcess }> {
-    // const logging = fs.createWriteStream(log, {flags: 'w+'});
+): Promise<{ shard: `0x${string}`; process: ChildProcess }> {
     if (initFiles) {
         fs.mkdirSync(workingDir, { recursive: true });
         fs.copyFileSync(path.join(binaryDir, 'enclave.signed.so'), path.join(workingDir, 'enclave.signed.so'));
@@ -100,8 +100,8 @@ async function launchWorker(
         fs.writeFileSync(`${workingDir}/worker-config-mock.json`, data);
     }
 
-    return new Promise<{ shard: string; process: ChildProcess }>((resolve) => {
-        const job = spawn(`./integritee-service`, [command], {
+    const job = await new Promise<ChildProcessWithoutNullStreams>((resolve, reject) => {
+        const childProcess = spawn(`./integritee-service`, [command], {
             cwd: workingDir,
             shell: '/bin/sh',
             env: {
@@ -110,42 +110,80 @@ async function launchWorker(
             },
             detached: true,
         });
-        job.stdout.setEncoding('utf8');
-        let shard = '';
-        job.stdout.on('data', (data: string) => {
-            if (data.includes('Successfully initialized shard')) {
-                const regex = /^Successfully initialized shard (0x[\w\d]{64}).*/g;
-                const groups = regex.exec(data);
-                if (groups) {
-                    shard = groups[1];
-                }
+
+        if (childProcess.pid !== undefined) {
+            resolve(childProcess);
+            return;
+        }
+
+        childProcess.on('error', (error) => reject(error));
+    });
+
+    job.stderr.setEncoding('utf8');
+    const errorStream = readline.createInterface(job.stderr);
+    errorStream.on('line', (line: string) => {
+        console.warn(name, line);
+    });
+
+    job.stdout.setEncoding('utf8');
+    const outputStream = readline.createInterface(job.stdout);
+
+    job.on('close', (code) => {
+        console.log(`${name} close: ${code}`);
+    });
+
+    return await new Promise<{ shard: `0x${string}`; process: ChildProcess }>((resolve, reject) => {
+        let shard: `0x${string}` | undefined = undefined;
+
+        outputStream.on('line', (line: string) => {
+            console.log(name, line);
+
+            const match = line.match(/^Successfully initialized shard (?<shard>0x[\w\d]{64}).*/);
+            if (match !== null) {
+                /**
+                 * Assertions needed because regex contents aren't reflected in function typing;
+                 * see e.g. https://github.com/microsoft/TypeScript/issues/32098.
+                 *
+                 * If the regexp match succeeds, the `groups` property is guaranteed to be present,
+                 * as well as the corresponding named capturing groups. See
+                 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
+                 */
+                shard = match.groups!.shard as `0x${string}`;
+                return;
             }
-            if (data.includes('Untrusted RPC server is spawned on')) {
+
+            if (line.includes('Untrusted RPC server is spawned on')) {
+                if (shard === undefined) {
+                    reject(new Error('RPC server spawned before shard initialization'));
+                    return;
+                }
                 resolve({ shard, process: job });
             }
-            console.log(name, data);
-        });
-        job.stderr.setEncoding('utf8');
-        job.stderr.on('data', (data: string) => {
-            console.log(name, data);
-        });
-        job.on('close', (code) => {
-            console.log(`${name} close: ${code}`);
         });
     });
 }
 
-async function killWorker(worker: ChildProcess) {
-    // https://azimi.me/2014/12/31/kill-child_process-node-js.html
-    if (worker.pid) {
-        process.kill(-worker.pid, 9);
-        await sleep(2);
+function killWorker(worker: ChildProcess): Promise<void> {
+    const pid = worker.pid;
+
+    if (pid == undefined) {
+        return Promise.reject(new Error('Attempted to kill an unspawned worker?'));
     }
+
+    return new Promise((resolve, reject) => {
+        /**
+         * Kill each process in the worker's group;
+         * see https://www.man7.org/linux/man-pages/man2/kill.2.html
+         */
+        process.kill(-pid, 'SIGKILL');
+        worker.on('exit', () => resolve());
+        worker.on('error', (error) => reject(error));
+    });
 }
 
 async function latestBlock(
     connection: WebSocketAsPromised,
-    shard: string
+    shard: `0x${string}`
 ): Promise<{ result: undefined | { number: number; hash: string } }> {
     return await connection.sendRequest(
         {
@@ -160,36 +198,44 @@ async function latestBlock(
 
 async function waitWorkerProducingBlock(
     connection: WebSocketAsPromised,
-    shard: string,
+    shard: `0x${string}`,
     atLeast: number
 ): Promise<number> {
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise<number>(async (resolve) => {
-        let block_number = 0;
-        let start_block_number = 0;
-        do {
-            const resp = await latestBlock(connection, shard);
-            console.log(JSON.stringify({ DEBUG_LATEST_BLOCK_PROBE: resp }, null, 4));
-            if (resp.result) {
-                block_number = resp.result.number;
-                if (start_block_number == 0) {
-                    start_block_number = block_number;
-                }
-
-                console.log(`${connection.ws.url} current block: ${block_number}`);
+    let block_number = 0;
+    let start_block_number = 0;
+    do {
+        const resp = await latestBlock(connection, shard);
+        if (resp.result) {
+            block_number = resp.result.number;
+            if (start_block_number == 0) {
+                start_block_number = block_number;
             }
-            await sleep(2);
-            // console.log(block_number >= (start_block_number + atLeast))
-        } while (block_number < start_block_number + atLeast);
-        resolve(block_number);
-    });
+
+            console.log(`${connection.ws.url} current block: ${block_number}`);
+        }
+        await sleep(2);
+    } while (block_number < start_block_number + atLeast);
+    return block_number;
+}
+
+function getConfiguration(): { binaryDir: string; nodeUrl: string; nodePort: string } {
+    const binaryDir = process.env.BINARY_DIR;
+    if (binaryDir === undefined) {
+        throw new Error('Environment variable BINARY_DIR not defined');
+    }
+
+    const [, nodeUrl, nodePort] = process.env.SUBSTRATE_END_POINT!.split(':');
+    if (nodeUrl === undefined || nodePort === undefined) {
+        throw new Error('Environment variable SUBSTRATE_END_POINT undefined or malformed');
+    }
+
+    return { binaryDir, nodeUrl, nodePort };
 }
 
 describe('Resume worker', function () {
     this.timeout(6000000);
 
-    const binaryDir = process.env.BINARY_DIR!;
-    const [, nodeUrl, nodePort] = process.env.SUBSTRATE_END_POINT!.split(':');
+    const { binaryDir, nodeUrl, nodePort } = getConfiguration();
     const worker0Dir = path.join(__dirname, './tmp/worker0');
     const worker1Dir = path.join(__dirname, './tmp/worker1');
     const commands = genCommands(`ws:${nodeUrl}`, nodePort);
@@ -215,8 +261,6 @@ describe('Resume worker', function () {
         // TODO compare the block hash
         assert.isNotEmpty(resumeBlock.result, "the latest block can't be empty");
         assert.isTrue(resumeBlock!.result!.number >= currentBlock, 'failed to resume worker');
-        // await killWorker(r_worker)
-        await sleep(1);
     });
 
     // Continue with the above test case to test
@@ -234,7 +278,7 @@ describe('Resume worker', function () {
         const worker1CurrentBlock = await waitWorkerProducingBlock(worker1Conn, shard, 4);
         await killWorker(worker1);
         console.log('=========== worker1 stopped ==================');
-        await sleep(20);
+        await sleep(20); // @fixme is this to allow `worker0` to get ahead? Does it need to be that long?
 
         // resume worker1
         await launchWorker('worker1', binaryDir, worker1Dir, commands.worker1.commands.resume, false);
@@ -242,6 +286,7 @@ describe('Resume worker', function () {
         const resumeBlock = await latestBlock(worker1Conn, shard);
         assert.isNotEmpty(resumeBlock.result, "the latest block can't be empty");
         assert.isTrue(resumeBlock!.result!.number >= worker1CurrentBlock, 'failed to resume worker');
-        await sleep(60);
     });
+
+    // @fixme don't we need to kill the children after the test!?!?
 });
