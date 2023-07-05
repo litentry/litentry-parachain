@@ -25,7 +25,7 @@ use log::debug;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct UpdateScheduledEnclaveArgs {
-	sbn: codec::Compat<SidechainBlockNumber>,
+	sbn: codec::Compact<SidechainBlockNumber>,
 	mrenclave: MrEnclave,
 }
 
