@@ -224,15 +224,14 @@ impl DirectApi for DirectClient {
 	}
 }
 
-fn decode_from_rpc_response<T : Decode + std::fmt::Display>(json_rpc_response: &str) -> Result<T> {
+fn decode_from_rpc_response<T: Decode + std::fmt::Display>(json_rpc_response: &str) -> Result<T> {
 	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
 	let rpc_return_value =
 		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
 	let response_message = T::decode(&mut rpc_return_value.value.as_slice())?;
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_message),
-		_ => Err(Error::Status(format!("decode_response failed to decode {}",
-		response_message))),
+		_ => Err(Error::Status(format!("decode_response failed to decode {}", response_message))),
 	}
 }
 
