@@ -7,8 +7,8 @@
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "graphql_url": "https://graph.tdf-labs.io/",
-        "graphql_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "http://localhost:9933",
         "achainable_rest_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     },
@@ -20,8 +20,8 @@
         "discord_official_url": "http://localhost:19527",
         "discord_litentry_url": "http://localhost:19527",
         "discord_auth_token": "",
-        "graphql_url": "http://localhost:19527",
-        "graphql_auth_key": "",
+        "achainable_url": "http://localhost:19527",
+        "achainable_auth_key": "",
         "credential_endpoint": "http://localhost:9933",
         "achainable_rest_key": ""
     },
@@ -33,8 +33,8 @@
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "graphql_url": "https://graph.tdf-labs.io/",
-        "graphql_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "",
         "achainable_rest_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     },
@@ -46,8 +46,8 @@
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "graphql_url": "https://graph.tdf-labs.io/",
-        "graphql_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "wss://tee-staging.litentry.io",
         "achainable_rest_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     }

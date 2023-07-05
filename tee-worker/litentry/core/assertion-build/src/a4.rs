@@ -69,8 +69,8 @@ use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_data_providers::{
-	graphql::{
-		AchainableQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsIsHodlerIn,
+	achainable::{
+		AchainableClient, AchainableQuery, GetSupportedNetworks, VerifiedCredentialsIsHodlerIn,
 	},
 	vec_to_string,
 };
@@ -106,7 +106,7 @@ pub fn build(
 		Error::RequestVCFailed(Assertion::A4(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
-	let mut client = GraphQLClient::new();
+	let mut client = AchainableClient::new();
 	let mut networks: HashMap<SupportedNetwork, HashSet<String>> = HashMap::new();
 
 	identities.iter().for_each(|identity| {
