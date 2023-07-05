@@ -316,6 +316,8 @@ function restart_worker() {
     yarn install
     npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
 
+    cd $ROOTDIR/tee-worker
+
     source=$(echo "$CONFIG" | jq -r ".workers[$i].source")
     flags=$(echo "$CONFIG" | jq -r ".workers[$i].flags[]")
     subcommand_flags=$(echo "$CONFIG" | jq -r ".workers[$i].subcommand_flags[]")
@@ -646,7 +648,13 @@ if [ "$discard" = true ]; then
   echo "Cleaning the existing state for Parachain and Worker."
   stop_running_services
   rm -rf /tmp/parachain_dev/
-  rm -rf $ROOTDIR/tee-worker/tmp
+  worker_count=$(echo "$CONFIG" | jq '.workers | length')
+  for ((i = 0; i < worker_count; i++)); do
+      if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
+          echo "Deleting Previous worker $ROOTDIR/tmp/w$i"
+          rm -r "$ROOTDIR/tee-worker/tmp/w$i"
+      fi
+  done
 fi
 
 # Get old MRENCLAVE
