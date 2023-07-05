@@ -25,15 +25,15 @@ use log::debug;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct UpdateScheduledEnclaveArgs {
-	sbn: SidechainBlockNumber,
+	sbn: codec::Compat<SidechainBlockNumber>,
 	mrenclave: MrEnclave,
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for UpdateScheduledEnclaveArgs {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {}, mrenclave: {:?}", self.sbn, self.mrenclave);
-		GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn, self.mrenclave)?;
+		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {:?}, mrenclave: {:?}", self.sbn, self.mrenclave);
+		GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn.into(), self.mrenclave)?;
 		Ok(())
 	}
 }
