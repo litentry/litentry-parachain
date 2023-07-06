@@ -1,7 +1,7 @@
 services:
-  lit-id-graph-stats:
+  lit-nonce:
     image: integritee-cli:dev
-    container_name: litentry-id-graph-stats
+    container_name: litentry-nonce
     build:
       context: ..
       dockerfile: build.Dockerfile
