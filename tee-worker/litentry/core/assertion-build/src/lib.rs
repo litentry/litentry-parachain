@@ -108,4 +108,38 @@ pub fn transpose_identity(
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+	use super::*;
+	use itp_utils::ToHexPrefixed;
+
+	#[test]
+	fn transpose_identity_works() {
+		let mut identities: Vec<(Identity, Vec<Web3Network>)> = vec![];
+		let id1 = Identity::Twitter("alice1".as_bytes().to_vec().try_into().unwrap());
+		let id2 = Identity::Substrate([2u8; 32].into());
+		let id3 = Identity::Substrate([3u8; 32].into());
+		let id4 = Identity::Evm([4u8; 20].into());
+
+		let network1: Vec<Web3Network> = vec![];
+		let network2 = vec![Web3Network::Polkadot, Web3Network::Litentry];
+		let network3 = vec![Web3Network::Litentry, Web3Network::Khala, Web3Network::Kusama];
+		let network4 = vec![Web3Network::BSC];
+
+		identities.push((id1, network1));
+		identities.push((id2, network2));
+		identities.push((id3, network3));
+		identities.push((id4, network4));
+
+		let mut result = transpose_identity(&identities);
+		result.sort();
+		assert_eq!(result.len(), 5);
+		assert_eq!(result.get(0).unwrap(), &(Web3Network::Polkadot, vec![[2u8; 32].to_hex()]));
+		assert_eq!(result.get(1).unwrap(), &(Web3Network::Kusama, vec![[3u8; 32].to_hex()]));
+		assert_eq!(
+			result.get(2).unwrap(),
+			&(Web3Network::Litentry, vec![[2u8; 32].to_hex(), [3u8; 32].to_hex()])
+		);
+		assert_eq!(result.get(3).unwrap(), &(Web3Network::Khala, vec![[3u8; 32].to_hex()]));
+		assert_eq!(result.get(4).unwrap(), &(Web3Network::BSC, vec![[4u8; 20].to_hex()]));
+	}
+}

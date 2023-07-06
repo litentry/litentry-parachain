@@ -32,7 +32,19 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 /// }
 /// TODO: theoretically this should the the union of the supported networks of all data providers
 #[derive(
-	Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, Hash, TypeInfo, MaxEncodedLen, EnumIter,
+	Encode,
+	Decode,
+	Copy,
+	Clone,
+	Debug,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Hash,
+	TypeInfo,
+	MaxEncodedLen,
+	EnumIter,
 )]
 pub enum Web3Network {
 	// substrate
