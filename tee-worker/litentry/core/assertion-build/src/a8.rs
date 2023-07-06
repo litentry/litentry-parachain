@@ -24,8 +24,8 @@ use crate::*;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
-use lc_data_providers::graphql::{
-	AchainableQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsTotalTxs,
+use lc_data_providers::achainable::{
+	AchainableClient, AchainableQuery, GetSupportedNetworks, VerifiedCredentialsTotalTxs,
 };
 use litentry_primitives::{IndexingNetworks, LitentryMultiAddress, SupportedNetwork};
 use log::*;
@@ -66,7 +66,7 @@ pub fn build(
 
 	let networks = filter_networks(&index_networks);
 
-	let mut client = GraphQLClient::new();
+	let mut client = AchainableClient::new();
 	let mut total_txs: u64 = 0;
 
 	let mut verified_addresses = HashSet::<String>::new();

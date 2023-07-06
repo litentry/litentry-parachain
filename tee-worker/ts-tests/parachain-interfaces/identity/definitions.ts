@@ -55,7 +55,7 @@ export default {
                 link_identity:
                     '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
                 remove_identity: '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, H256)',
-                request_vc: '(LitentryMultiAddress, LitentryMultiAddress, Assertion, u32, H256)',
+                request_vc: '(LitentryMultiAddress, LitentryMultiAddress, Assertion, H256)',
             },
         },
         UserShieldingKeyType: '[u8; 32]',
