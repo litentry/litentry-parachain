@@ -40,20 +40,20 @@ pub use identity_context::*;
 
 use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
-use log::debug;
 
 pub use litentry_primitives::{
 	get_all_web3networks, BoundedWeb3Network, Identity, ParentchainBlockNumber,
 	UserShieldingKeyType, Web3Network,
 };
 use sp_std::vec::Vec;
+
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use log::warn;
+	use log::{debug, warn};
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 

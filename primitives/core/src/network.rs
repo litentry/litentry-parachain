@@ -17,7 +17,7 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::vec::Vec;
+use sp_std::{hash::Hash, vec::Vec};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -31,7 +31,9 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 /// 	Evm(EvmNetwork),
 /// `
 /// TODO: theoretically this should the the union of the supported networks of all data providers
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, EnumIter)]
+#[derive(
+	Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, Hash, TypeInfo, MaxEncodedLen, EnumIter,
+)]
 pub enum Web3Network {
 	// substrate
 	Polkadot,

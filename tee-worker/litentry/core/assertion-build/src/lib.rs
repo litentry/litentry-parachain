@@ -46,8 +46,66 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 
+use itp_types::AccountId;
+use itp_utils::stringify::account_id_to_string;
+use lc_credentials::Credential;
+use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
-	Assertion, ErrorDetail, ErrorString, EvmNetwork, Identity, IntoErrorDetail, ParameterString,
-	SubstrateNetwork, VCMPError as Error, Web2Network, ASSERTION_FROM_DATE,
+	Assertion, ErrorDetail, ErrorString, Identity, IntoErrorDetail, ParameterString,
+	VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
 };
+use log::*;
+use std::{
+	collections::HashSet,
+	format,
+	string::{String, ToString},
+	vec,
+	vec::Vec,
+};
+
 pub type Result<T> = core::result::Result<T, Error>;
+
+/// Transpose a vector of identities with web3network information, which is Vec<(Identity, Vec<Web3Network>)>,
+/// to the vector of hex addresses which share the same network type, which is Vec<(Web3Network, Vec<String>)>.
+///
+/// TODO: improve the logic
+pub fn transpose_identity(
+	identities: &Vec<(Identity, Vec<Web3Network>)>,
+) -> Vec<(Web3Network, Vec<String>)> {
+	let mut addresses: Vec<(String, Web3Network)> = vec![];
+	let mut networks_set: HashSet<Web3Network> = HashSet::new();
+	for (id, networks) in identities {
+		networks.clone().into_iter().for_each(|n| {
+			match id {
+				Identity::Substrate(address) => {
+					let mut address = account_id_to_string(address.as_ref());
+					address.insert_str(0, "0x");
+					addresses.push((address, n));
+					networks_set.insert(n);
+				},
+				Identity::Evm(address) => {
+					let mut address = account_id_to_string(address.as_ref());
+					address.insert_str(0, "0x");
+					addresses.push((address, n));
+					networks_set.insert(n);
+				},
+				_ => {},
+			};
+		});
+	}
+
+	networks_set
+		.iter()
+		.map(|n| {
+			let address: Vec<String> = addresses
+				.iter()
+				.filter(|(_, network)| n == network)
+				.map(|(addr, _)| addr.clone())
+				.collect();
+			(*n, address)
+		})
+		.collect()
+}
+
+#[cfg(test)]
+mod tests {}

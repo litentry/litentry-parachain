@@ -17,7 +17,7 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{AccountId, Web3Network};
+use crate::{AccountId, BoundedWeb3Network, Web3Network};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -35,7 +35,7 @@ pub enum Assertion {
 	A5(ParameterString),               	                    // (original_tweet_id)
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
-	A8(BoundedVec<Web3Network, ConstU32<64>>),              // litentry, litmus, polkadot, kusama, khala, ethereum
+	A8(BoundedWeb3Network),             					// litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
@@ -60,7 +60,7 @@ impl Assertion {
 	// the broader `Web3Network` (see network.rs)
 	pub fn get_supported_web3networks(&self) -> Vec<Web3Network> {
 		match self {
-			// LIT holder
+			// LIT holder, not including `LitentryRococo` as it's not supported by any data provider
 			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
 			// DOT holder
 			Self::A7(..) => vec![Web3Network::Polkadot],

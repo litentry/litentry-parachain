@@ -66,6 +66,7 @@ impl LinkIdentityCommand {
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
 
+		// TODO: the params are incorrect - and need to be reworked too
 		let vdata: Option<Vec<u8>> = None;
 		pub type LinkIdentityFn = (CallIndex, H256, Address32, Vec<u8>, Option<Vec<u8>>);
 		let xt: UncheckedExtrinsicV4<LinkIdentityFn, _> = compose_extrinsic!(

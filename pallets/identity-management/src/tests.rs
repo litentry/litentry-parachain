@@ -55,6 +55,7 @@ fn link_identity_without_delegatee_works() {
 			alice,
 			vec![1u8; 2048],
 			vec![1u8; 2048],
+			vec![1u8; 2048],
 			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
@@ -73,6 +74,7 @@ fn link_identity_with_authorized_delegatee_works() {
 			RuntimeOrigin::signed(eddie), // authorized delegatee set in initialisation
 			shard,
 			alice,
+			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			UserShieldingKeyNonceType::default(),
@@ -94,6 +96,7 @@ fn link_identity_with_unauthorized_delegatee_fails() {
 				RuntimeOrigin::signed(bob),
 				shard,
 				alice,
+				vec![1u8; 2048],
 				vec![1u8; 2048],
 				vec![1u8; 2048],
 				UserShieldingKeyNonceType::default(),

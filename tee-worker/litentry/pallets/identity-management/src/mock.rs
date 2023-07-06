@@ -131,11 +131,7 @@ pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 
 		if set_shielding_key {
 			let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-			let _ = IMT::set_user_shielding_key(
-				RuntimeOrigin::signed(ALICE),
-				BOB,
-				shielding_key.clone(),
-			);
+			let _ = IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key);
 		}
 	});
 	ext

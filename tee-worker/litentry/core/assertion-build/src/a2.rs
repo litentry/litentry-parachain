@@ -21,30 +21,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
-use log::*;
-use std::vec::Vec;
 
 const VC_A2_SUBJECT_DESCRIPTION: &str =
 	"The user has obtained an ID-Hubber role in a Litentry Discord channel";
 const VC_A2_SUBJECT_TYPE: &str = "Discord ID-Hubber Role Verification";
 const VC_A2_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
-pub fn build(
-	identities: Vec<Identity>,
-	guild_id: ParameterString,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!(
-		"Assertion A2 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
-	);
+pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<Credential> {
+	debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who));
 
 	let mut discord_cnt: i32 = 0;
 	let mut has_joined: bool = false;
@@ -54,24 +39,19 @@ pub fn build(
 	})?;
 
 	let mut client = DiscordLitentryClient::new();
-	for identity in identities {
-		if let Identity::Web2 { network, address } = identity {
-			if matches!(network, Web2Network::Discord) {
-				discord_cnt += 1;
-				if let Ok(response) = client.check_join(guild_id.to_vec(), address.to_vec()) {
-					if response.data {
-						has_joined = true;
+	for identity in &req.vec_identity {
+		if let Identity::Discord(address) = &identity.0 {
+			discord_cnt += 1;
+			if let Ok(response) = client.check_join(guild_id.to_vec(), address.to_vec()) {
+				if response.data {
+					has_joined = true;
 
-						//Assign role "ID-Hubber" to each discord account
-						if let Ok(response) =
-							client.assign_id_hubber(guild_id.to_vec(), address.to_vec())
-						{
-							if !response.data {
-								error!(
-									"assign_id_hubber {} {}",
-									response.message, response.msg_code
-								);
-							}
+					//Assign role "ID-Hubber" to each discord account
+					if let Ok(response) =
+						client.assign_id_hubber(guild_id.to_vec(), address.to_vec())
+					{
+						if !response.data {
+							error!("assign_id_hubber {} {}", response.message, response.msg_code);
 						}
 					}
 				}
@@ -79,7 +59,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, shard) {
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A2_SUBJECT_DESCRIPTION,
@@ -100,17 +80,17 @@ pub fn build(
 
 #[cfg(test)]
 mod tests {
-	use crate::a2::build;
+	use crate::{a2::build, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
 	use lc_data_providers::G_DATA_PROVIDERS;
-	use litentry_primitives::{Identity, IdentityString, Web2Network};
+	use litentry_primitives::{Assertion, Identity, IdentityString, Web3Network};
 	use log;
 	use std::{format, vec, vec::Vec};
 
 	#[test]
-	fn assertion2_verification_works() {
+	fn build_a2_works() {
 		G_DATA_PROVIDERS
 			.write()
 			.unwrap()
@@ -119,16 +99,19 @@ mod tests {
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 
 		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
-		let identities = vec![Identity::Web2 {
-			network: Web2Network::Discord,
-			address: IdentityString::truncate_from(handler_vec.clone()),
-		}];
+		let vec_identity: Vec<(Identity, Vec<Web3Network>)> =
+			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec.clone())), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
-		let who = AccountId::from([0; 32]);
-		let shard = ShardIdentifier::default();
+		let req = AssertionBuildRequest {
+			shard: ShardIdentifier::default(),
+			who: AccountId::from([0; 32]),
+			assertion: Assertion::A2(guild_id),
+			vec_identity,
+			hash: Default::default(),
+		};
 
-		let _ = build(identities, guild_id, &shard, &who);
-		log::info!("assertion2 test");
+		let _ = build(&req, guild_id);
+		log::info!("build A2 done");
 	}
 }

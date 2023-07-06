@@ -52,91 +52,37 @@ where
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
+		// TODO: maybe we can further simplify this
 		let mut credential = match self.req.assertion.clone() {
-			Assertion::A1 => lc_assertion_build::a1::build(
-				self.req.vec_identity.to_vec(),
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A1 => lc_assertion_build::a1::build(&self.req),
 
-			Assertion::A2(guild_id) => lc_assertion_build::a2::build(
-				self.req.vec_identity.to_vec(),
-				guild_id,
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A2(guild_id) => lc_assertion_build::a2::build(&self.req, guild_id),
 
-			Assertion::A3(guild_id, channel_id, role_id) => lc_assertion_build::a3::build(
-				self.req.vec_identity.to_vec(),
-				guild_id,
-				channel_id,
-				role_id,
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A3(guild_id, channel_id, role_id) =>
+				lc_assertion_build::a3::build(&self.req, guild_id, channel_id, role_id),
 
-			Assertion::A4(min_balance) => lc_assertion_build::a4::build(
-				self.req.vec_identity.to_vec(),
-				min_balance,
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A4(min_balance) => lc_assertion_build::a4::build(&self.req, min_balance),
 
-			Assertion::A5(original_tweet_id) => lc_assertion_build::a5::build(
-				self.req.vec_identity.to_vec(),
-				original_tweet_id,
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A5(original_tweet_id) =>
+				lc_assertion_build::a5::build(&self.req, original_tweet_id),
 
-			Assertion::A6 => lc_assertion_build::a6::build(
-				self.req.vec_identity.to_vec(),
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A6 => lc_assertion_build::a6::build(&self.req),
 
-			Assertion::A7(min_balance) => lc_assertion_build::a7::build(
-				self.req.vec_identity.to_vec(),
-				min_balance,
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A7(min_balance) => lc_assertion_build::a7::build(&self.req, min_balance),
 
-			Assertion::A8(networks) => lc_assertion_build::a8::build(
-				self.req.vec_identity.to_vec(),
-				networks,
-				&self.req.shard,
-				&self.req.who,
-			),
+			// no need to pass `networks` again because it's the same as the `get_supported_web3networks`
+			Assertion::A8(_networks) => lc_assertion_build::a8::build(&self.req),
 
-			Assertion::A10(min_balance) => lc_assertion_build::a10::build(
-				self.req.vec_identity.to_vec(),
-				min_balance,
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A10(min_balance) => lc_assertion_build::a10::build(&self.req, min_balance),
 
-			Assertion::A11(min_balance) => lc_assertion_build::a11::build(
-				self.req.vec_identity.to_vec(),
-				min_balance,
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A11(min_balance) => lc_assertion_build::a11::build(&self.req, min_balance),
 
-			Assertion::A12(s) => lc_assertion_build::a12::build(
-				s,
-				self.req.vec_identity.to_vec(),
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A12(twitter_screen_name) =>
+				lc_assertion_build::a12::build(&self.req, twitter_screen_name),
 
-			Assertion::A13(owner) => lc_assertion_build::a13::build(&self.req.shard, &owner),
+			Assertion::A13(owner) => lc_assertion_build::a13::build(&self.req, &owner),
 
-			Assertion::A14 => lc_assertion_build::a14::build(
-				self.req.vec_identity.to_vec(),
-				&self.req.shard,
-				&self.req.who,
-			),
+			Assertion::A14 => lc_assertion_build::a14::build(&self.req),
 
 			_ => {
 				unimplemented!()

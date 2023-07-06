@@ -31,12 +31,8 @@ fn set_user_shielding_key_works() {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 		assert_eq!(IMT::user_shielding_keys(BOB), None);
 
-		assert_ok!(IMT::set_user_shielding_key(
-			RuntimeOrigin::signed(ALICE),
-			BOB,
-			shielding_key.clone(),
-		));
-		assert_eq!(IMT::user_shielding_keys(BOB), Some(shielding_key.clone()));
+		assert_ok!(IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key,));
+		assert_eq!(IMT::user_shielding_keys(BOB), Some(shielding_key));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
 			who: BOB,
 			key: shielding_key,
@@ -92,11 +88,7 @@ fn remove_identity_works() {
 	new_test_ext(false).execute_with(|| {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
-		assert_ok!(IMT::set_user_shielding_key(
-			RuntimeOrigin::signed(ALICE),
-			BOB,
-			shielding_key.clone(),
-		));
+		assert_ok!(IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key,));
 		assert_noop!(
 			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity(),),
 			Error::<Test>::IdentityNotExist
