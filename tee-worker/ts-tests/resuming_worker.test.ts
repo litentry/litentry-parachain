@@ -75,6 +75,7 @@ type WorkerParams = {
     untrustedHttpPort: number;
     trustedWorkerPort: number;
     untrustedWorkerPort: number;
+    enableMockServer: boolean;
 };
 
 const worker0Params: WorkerParams = {
@@ -82,6 +83,7 @@ const worker0Params: WorkerParams = {
     untrustedHttpPort: 4545,
     trustedWorkerPort: 2000,
     untrustedWorkerPort: 3000,
+    enableMockServer: true,
 };
 
 const worker1Params: WorkerParams = {
@@ -89,10 +91,10 @@ const worker1Params: WorkerParams = {
     untrustedHttpPort: 4546,
     trustedWorkerPort: 2001,
     untrustedWorkerPort: 3001,
+    enableMockServer: false,
 };
 
 type WorkerCommandParams = WorkerParams & {
-    enableMockServer: boolean;
     cleanReset: boolean;
     requestState: boolean;
     dev: boolean;
@@ -102,7 +104,6 @@ const worker0LaunchParams: WorkerCommandParams = {
     ...worker0Params,
     cleanReset: true,
     dev: true,
-    enableMockServer: true,
     requestState: false,
 };
 
@@ -110,7 +111,6 @@ const worker1LaunchParams: WorkerCommandParams = {
     ...worker1Params,
     cleanReset: true,
     dev: true,
-    enableMockServer: false,
     requestState: true,
 };
 
@@ -118,7 +118,6 @@ const worker0ResumeParams: WorkerCommandParams = {
     ...worker0Params,
     cleanReset: false,
     dev: false,
-    enableMockServer: false,
     requestState: false,
 };
 
@@ -126,7 +125,6 @@ const worker1ResumeParams: WorkerCommandParams = {
     ...worker1Params,
     cleanReset: false,
     dev: false,
-    enableMockServer: false,
     requestState: false,
 };
 
