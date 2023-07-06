@@ -60,7 +60,7 @@ impl DirectClientMock {
 		self
 	}
 
-	pub fn with_metadata(mut self, metadata: Vec<u8>) -> Self {
+	pub fn with_metadata(mut self, metadata: String) -> Self {
 		self.metadata = metadata;
 		self
 	}
@@ -93,7 +93,7 @@ impl DirectApi for DirectClientMock {
 	}
 
 	fn get_state_metadata(&self) -> Result<Metadata> {
-		let metadata = RuntimeMetadataPrefixed::decode(&mut self.metadata.as_slice())?;
+		let metadata = RuntimeMetadataPrefixed::decode(&mut self.metadata.as_bytes())?;
 		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
@@ -109,7 +109,7 @@ impl DirectApi for DirectClientMock {
 		unimplemented!()
 	}
 
-	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
+	fn get_next_nonce(&self, _shard: &ShardIdentifier, _account: &AccountId) -> Result<u32> {
 		Ok(self.nonce)
 	}
 }
