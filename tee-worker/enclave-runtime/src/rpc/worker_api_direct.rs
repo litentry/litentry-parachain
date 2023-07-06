@@ -138,8 +138,6 @@ where
 							value: (nonce + pending_tx_count).encode(),
 							status: DirectRequestStatus::Ok,
 						};
-						// debug!("query storage value:{:?}", &value);
-						// let json_value = RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
 						Ok(json!(json_value.to_hex()))
 					},
 					Err(e) => {
