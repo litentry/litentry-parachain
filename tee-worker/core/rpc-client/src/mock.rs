@@ -22,6 +22,7 @@ use crate::{
 	error::Result,
 };
 use codec::Decode;
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{sync::mpsc::Sender as MpscSender, thread::JoinHandle};
 use substrate_api_client::{FromHexString, RuntimeMetadataPrefixed};
@@ -32,6 +33,7 @@ pub struct DirectClientMock {
 	mu_ra_url: String,
 	untrusted_worker_url: String,
 	metadata: String,
+	nonce: u32,
 }
 
 impl DirectClientMock {
@@ -40,8 +42,9 @@ impl DirectClientMock {
 		mu_ra_url: String,
 		untrusted_worker_url: String,
 		metadata: String,
+		nonce: u32,
 	) -> Self {
-		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata }
+		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata, nonce }
 	}
 
 	pub fn with_rsa_pubkey(mut self, key: Rsa3072PubKey) -> Self {
@@ -61,6 +64,11 @@ impl DirectClientMock {
 
 	pub fn with_metadata(mut self, hex_metadata: String) -> Self {
 		self.metadata = hex_metadata;
+		self
+	}
+
+	pub fn with_nonce(mut self, nonce: u32) -> Self {
+		self.nonce = nonce;
 		self
 	}
 }
@@ -105,5 +113,9 @@ impl DirectApi for DirectClientMock {
 
 	fn close(&self) -> Result<()> {
 		unimplemented!()
+	}
+
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
+		Ok(self.nonce)
 	}
 }

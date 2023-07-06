@@ -503,7 +503,7 @@ pub mod pallet {
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
-			sidechain_block_number: SidechainBlockNumber,
+			#[pallet::compact] sidechain_block_number: SidechainBlockNumber,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
