@@ -3974,8 +3974,8 @@ declare module '@polkadot/api-base/types/submittable' {
                 [Bytes, Bytes, Bytes]
             >;
             removeScheduledEnclave: AugmentedSubmittable<
-                (sidechainBlockNumber: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
+                (sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
+                [Compact<u64>]
             >;
             /**
              * Change the admin account

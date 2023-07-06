@@ -4275,7 +4275,7 @@ export default {
                 certificateChain: 'Bytes',
             },
             remove_scheduled_enclave: {
-                sidechainBlockNumber: 'u64',
+                sidechainBlockNumber: 'Compact<u64>',
             },
             register_tcb_info: {
                 tcbInfo: 'Bytes',

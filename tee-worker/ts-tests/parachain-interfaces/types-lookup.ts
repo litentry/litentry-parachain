@@ -5142,7 +5142,7 @@ declare module '@polkadot/types/lookup' {
         } & Struct;
         readonly isRemoveScheduledEnclave: boolean;
         readonly asRemoveScheduledEnclave: {
-            readonly sidechainBlockNumber: u64;
+            readonly sidechainBlockNumber: Compact<u64>;
         } & Struct;
         readonly isRegisterTcbInfo: boolean;
         readonly asRegisterTcbInfo: {

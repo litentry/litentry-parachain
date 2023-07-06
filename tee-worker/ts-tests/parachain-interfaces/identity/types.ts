@@ -180,7 +180,7 @@ export interface TrustedCall extends Enum {
     readonly isRemoveIdentity: boolean;
     readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[AccountId, AccountId, Assertion, u32, H256]>;
+    readonly asRequestVc: ITuple<[AccountId, AccountId, Assertion, H256]>;
     readonly type:
         | 'BalanceSetBalance'
         | 'BalanceTransfer'
