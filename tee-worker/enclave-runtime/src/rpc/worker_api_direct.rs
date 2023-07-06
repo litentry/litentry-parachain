@@ -24,17 +24,18 @@ use crate::{
 };
 use codec::Encode;
 use core::result::Result;
-use ita_sgx_runtime::Runtime;
+use ita_sgx_runtime::{Runtime, System};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
+use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	DirectRequestStatus, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
+	DirectRequestStatus, Index, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
 };
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
@@ -73,6 +74,7 @@ where
 	S::StateT: SgxExternalitiesTrait,
 {
 	let io = IoHandler::new();
+	let pool_author = top_pool_author.clone();
 
 	// Add direct TOP pool rpc methods
 	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author, io);
@@ -99,6 +101,65 @@ where
 		let json_value =
 			RpcReturnValue::new(rsa_pubkey_json.encode(), false, DirectRequestStatus::Ok);
 		Ok(json!(json_value.to_hex()))
+	});
+
+	// author_getNextNonce
+	let state_storage = state.clone();
+
+	let author_get_next_nonce: &str = "author_getNextNonce";
+	io.add_sync_method(author_get_next_nonce, move |params: Params| {
+		let state_nonce = state.clone();
+		if state_nonce.is_none() {
+			return Ok(json!(compute_hex_encoded_return_error(
+				"author_getNextNonce is not avaiable"
+			)))
+		}
+		let state_nonce_unwrap = state_nonce.unwrap();
+		match params.parse::<(String, String)>() {
+			Ok((shard_base58, account_hex)) => {
+				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
+					Ok(id) => id,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+				let account = match AccountId::from_hex(account_hex.as_str()) {
+					Ok(acc) => acc,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+
+				match state_nonce_unwrap.load_cloned(&shard) {
+					Ok((_state, _hash)) => {
+						let trusted_calls =
+							pool_author.get_pending_trusted_calls_for(shard, &account);
+						let pending_tx_count = trusted_calls.len();
+						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+						let nonce = System::account_nonce(&account);
+						let json_value = RpcReturnValue {
+							do_watch: false,
+							value: (nonce + pending_tx_count).encode(),
+							status: DirectRequestStatus::Ok,
+						};
+						Ok(json!(json_value.to_hex()))
+					},
+					Err(e) => {
+						let error_msg = format!("load shard failure due to: {:?}", e);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				}
+			},
+			Err(e) => {
+				let error_msg: String =
+					format!("Could not retrieve author_getNextNonce calls due to: {}", e);
+				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		}
 	});
 
 	let mu_ra_url_name: &str = "author_getMuRaUrl";
@@ -169,10 +230,10 @@ where
 	// state_getStorage
 	let state_get_storage = "state_getStorage";
 	io.add_sync_method(state_get_storage, move |params: Params| {
-		if state.is_none() {
+		if state_storage.is_none() {
 			return Ok(json!(compute_hex_encoded_return_error("state_getStorage is not avaiable")))
 		}
-		let state = state.clone().unwrap();
+		let state_storage = state_storage.clone().unwrap();
 		match params.parse::<(String, String)>() {
 			Ok((shard_str, key_hash)) => {
 				let key_hash = if key_hash.starts_with("0x") {
@@ -193,10 +254,11 @@ where
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
-				match state.load_cloned(&shard) {
-					Ok((state, _hash)) => {
+				match state_storage.load_cloned(&shard) {
+					Ok((state_storage, _hash)) => {
 						// Get storage by key hash
-						let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
+						let value =
+							state_storage.get(key_hash.as_slice()).cloned().unwrap_or_default();
 						debug!("query storage value:{:?}", &value);
 						let json_value = RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
 						Ok(json!(json_value.to_hex()))
