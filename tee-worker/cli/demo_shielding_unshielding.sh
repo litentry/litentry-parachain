@@ -79,21 +79,41 @@ CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1UR
 WAIT_INTERVAL_SECONDS=10
 WAIT_ROUNDS=20
 
-# Poll until the given account's state is equal to expected, with timeout WAIT_INTERVAL_SECONDS * WAIT_ROUNDS
+# Do a live query and assert the given account's balance is equal to expected
 # usage:
-#   poll_account_state <mrenclave> <account-pub-key> <jq-filter> <expected-state>
-function poll_account_state()
+#   assert_account_balance <mrenclave> <account> <expected-balance>
+function assert_account_balance()
 {
     for i in $(seq 1 $WAIT_ROUNDS); do
-        state=$(${CLIENT} trusted --mrenclave "$1" get-storage System Account "$2" | jq "$3")
-        if [ $state -eq "$4" ]; then
+        state=$(${CLIENT} trusted --mrenclave "$1" balance "$2")
+        if [ $state -eq "$3" ]; then
             return
         else
             sleep $WAIT_INTERVAL_SECONDS
         fi
     done
     echo
-    echo "Assert $2 $3 failed, expected = $4, actual = $state"
+    echo "Assert $2 failed, expected = $3, actual = $state"
+    exit 1
+}
+
+
+# Do a live query and assert the given account's nonce is equal to expected
+# usage:
+#   assert_account_nonce <mrenclave> <account> <expected-nonce>
+function assert_account_nonce()
+{
+    for i in $(seq 1 $WAIT_ROUNDS); do
+        state=$(${CLIENT} trusted --mrenclave "$1" nonce "$2")
+        echo $state
+        if [ $state -eq "$3" ]; then
+            return
+        else
+            sleep $WAIT_INTERVAL_SECONDS
+        fi
+    done
+    echo
+    echo "Assert $2 failed, expected = $3, actual = $state"
     exit 1
 }
 
@@ -118,6 +138,7 @@ function assert_account_state()
 }
 
 echo "* Query on-chain enclave registry:"
+echo ${CLIENT}
 ${CLIENT} list-workers
 echo ""
 
@@ -134,7 +155,6 @@ fi
 
 echo "* Create a new incognito account for Alice"
 ICGACCOUNTALICE=//AliceIncognito
-ICGACCOUNTALICE_PUBKEY=0x50503350955afe8a107d6f115dc253eb5d75a3fe37a90b373db26cc12e3c6661
 echo "  Alice's incognito account = ${ICGACCOUNTALICE}"
 echo ""
 
@@ -143,14 +163,12 @@ echo ""
 BALANCE_INCOGNITO_ALICE=0
 case $TEST in
     first)
-        poll_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" 0
-        ICGACCOUNTBOB=//BobIncognitoFirst
-        ICGACCOUNTBOB_PUBKEY=0xf073e0349517dcd85f4058d22d8bf585e3027b0d9826a4e2294c407aa55b7605 ;;
+        assert_account_balance ${MRENCLAVE} ${ICGACCOUNTALICE} 0
+        ICGACCOUNTBOB=//BobIncognitoFirst ;;
     second)
-        poll_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" $(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
+        assert_account_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
         BALANCE_INCOGNITO_ALICE=$(( AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
-        ICGACCOUNTBOB=//BobIncognitoSecond
-        ICGACCOUNTBOB_PUBKEY=0x061d0c6eb3e940c885626236050a469eb2d44222f17d80e38d72a9379a073f46 ;;
+        ICGACCOUNTBOB=//BobIncognitoSecond ;;
     *)
         echo "unsupported test mode"
         exit 1 ;;
@@ -165,11 +183,11 @@ ${CLIENT} shield-funds //Alice ${ICGACCOUNTALICE} ${AMOUNT_SHIELD} ${MRENCLAVE}
 echo ""
 
 echo "* Wait and assert Alice's incognito account balance... "
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD ))
+assert_account_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD ))
 echo "✔ ok"
 
 echo "* Wait and assert Bob's incognito account balance... "
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".data.free" 0
+assert_account_balance ${MRENCLAVE} ${ICGACCOUNTBOB} 0
 echo "✔ ok"
 echo ""
 
@@ -178,11 +196,11 @@ $CLIENT trusted --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTALICE} ${ICGACCOUN
 echo ""
 
 echo "* Wait and assert Alice's incognito account balance... "
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER ))
+assert_account_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER ))
 echo "✔ ok"
 
 echo "* Wait and assert Bob's incognito account balance... "
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".data.free" ${AMOUNT_TRANSFER}
+assert_account_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
 echo "✔ ok"
 echo ""
 
@@ -191,11 +209,11 @@ ${CLIENT} trusted --mrenclave ${MRENCLAVE} --xt-signer //Alice unshield-funds ${
 echo ""
 
 echo "* Wait and assert Alice's incognito account balance... "
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTALICE_PUBKEY} ".data.free" $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
+assert_account_balance ${MRENCLAVE} ${ICGACCOUNTALICE} $(( BALANCE_INCOGNITO_ALICE + AMOUNT_SHIELD - AMOUNT_TRANSFER - AMOUNT_UNSHIELD ))
 echo "✔ ok"
 
 echo "* Wait and assert Bob's incognito account balance... "
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".data.free" ${AMOUNT_TRANSFER}
+assert_account_balance ${MRENCLAVE} ${ICGACCOUNTBOB} ${AMOUNT_TRANSFER}
 echo "✔ ok"
 
 # Test the nonce handling, using Bob's incognito account as the sender as Alice's
@@ -207,7 +225,7 @@ echo "  Charlie's incognito account = ${ICGACCOUNTCHARLIE}"
 echo ""
 
 echo "* Assert Bob's incognito initial nonce..."
-assert_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".nonce" 0
+assert_account_nonce ${MRENCLAVE} ${ICGACCOUNTBOB} 0
 echo "✔ ok"
 echo ""
 
@@ -219,7 +237,7 @@ done
 echo ""
 
 echo "* Assert Bob's incognito current nonce..."
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".nonce" 3
+assert_account_nonce ${MRENCLAVE} ${ICGACCOUNTBOB} 3
 echo "✔ ok"
 echo ""
 
@@ -229,7 +247,7 @@ echo ""
 
 echo "* Assert Bob's incognito nonce..."
 # the nonce should be increased nontheless, even for the failed tx
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".nonce" 4
+assert_account_nonce ${MRENCLAVE} ${ICGACCOUNTBOB} 4
 echo "✔ ok"
 echo ""
 
@@ -238,13 +256,13 @@ $CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${IC
 echo ""
 
 echo "* Assert Bob's incognito nonce..."
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".nonce" 5
+assert_account_nonce ${MRENCLAVE} ${ICGACCOUNTBOB} 5
 echo "✔ ok"
 echo ""
 
 echo "* Wait and assert Bob's incognito account balance... "
 # in total 4 balance transfer should go through => 1.2 UNIT remaining
-poll_account_state ${MRENCLAVE} ${ICGACCOUNTBOB_PUBKEY} ".data.free" $(( AMOUNT_TRANSFER * 6 / 10 ))
+assert_account_balance ${MRENCLAVE} ${ICGACCOUNTBOB} $(( AMOUNT_TRANSFER * 6 / 10 ))
 echo "✔ ok"
 
 echo ""
