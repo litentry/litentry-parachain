@@ -18,10 +18,11 @@
 //! Interface for direct access to a workers rpc.
 
 use crate::ws_client::{WsClient, WsClientControl};
+use base58::ToBase58;
 use codec::{Decode, Encode};
 use ita_stf::Getter;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
@@ -55,6 +56,7 @@ pub trait DirectApi {
 	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed>;
 	// litentry
 	fn get_state_metadata_raw(&self) -> Result<String>;
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
 
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
@@ -142,7 +144,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let shielding_pubkey_string = decode_from_rpc_response(&response_str)?;
+		let shielding_pubkey_string = decode_from_rpc_response::<String>(&response_str)?;
 		let shielding_pubkey: Rsa3072PubKey = serde_json::from_str(&shielding_pubkey_string)?;
 
 		info!("[+] Got RSA public key of enclave");
@@ -156,7 +158,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let mu_ra_url: String = decode_from_rpc_response(&response_str)?;
+		let mu_ra_url: String = decode_from_rpc_response::<String>(&response_str)?;
 
 		info!("[+] Got mutual remote attestation url of enclave: {}", mu_ra_url);
 		Ok(mu_ra_url)
@@ -171,7 +173,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let untrusted_url: String = decode_from_rpc_response(&response_str)?;
+		let untrusted_url: String = decode_from_rpc_response::<String>(&response_str)?;
 
 		info!("[+] Got untrusted websocket url of worker: {}", untrusted_url);
 		Ok(untrusted_url)
@@ -200,6 +202,19 @@ impl DirectApi for DirectClient {
 		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			"author_getNextNonce".to_owned(),
+			vec![shard.encode().to_base58(), account.to_hex()],
+		)
+		.unwrap();
+		debug!("[+] get_next_nonce jsonrpc_call: {}", jsonrpc_call);
+		// Send json rpc call to ws server.
+		let response_str = self.get(&jsonrpc_call)?;
+		debug!("[+] get_next_nonce response_str: {}", response_str);
+		decode_from_rpc_response::<u32>(&response_str)
+	}
+
 	fn send(&self, request: &str) -> Result<()> {
 		self.web_socket_control.send(request)
 	}
@@ -209,14 +224,14 @@ impl DirectApi for DirectClient {
 	}
 }
 
-fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
+fn decode_from_rpc_response<T: Decode + std::fmt::Display>(json_rpc_response: &str) -> Result<T> {
 	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
 	let rpc_return_value =
 		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
-	let response_message = String::decode(&mut rpc_return_value.value.as_slice())?;
+	let response_message = T::decode(&mut rpc_return_value.value.as_slice())?;
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_message),
-		_ => Err(Error::Status(response_message)),
+		_ => Err(Error::Status(format!("decode_response failed to decode {}", response_message))),
 	}
 }
 
