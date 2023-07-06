@@ -543,15 +543,29 @@ function build_parachain(){
     docker cp $img_id:/usr/local/bin/litentry-collator $ROOTDIR/
     docker rm -v $img_id
   else
-    cd $ROOTDIR
-    make build-node
+    if [ "$PRODUCTION" = 1 ]; then
+      cd $ROOTDIR
+      # It builds without the `tee-dev` feature
+      make "build-runtime-$CHAIN"
+    else
+      cd $ROOTDIR
+      make build-node
+    fi
   fi
 }
 
 function build_worker(){
-  cd $ROOTDIR/tee-worker/
-  source /opt/intel/sgxsdk/environment
-  SGX_COMMERCIAL_KEY=$ROOTDIR/tee-worker/enclave-runtime/Enclave_private.pem SGX_PRODUCTION=1 make
+  if [ "$PRODUCTION" = 1 ]; then
+    cd $ROOTDIR/tee-worker/
+    source /opt/intel/sgxsdk/environment
+    SGX_COMMERCIAL_KEY=$ROOTDIR/tee-worker/enclave-runtime/Enclave_private.pem SGX_PRODUCTION=1 make
+  else
+    cd $ROOTDIR/tee-worker/
+    source /opt/intel/sgxsdk/environment
+    # It builds in only H/W mode when Non-Production
+    make
+  fi
+
 }
 
 # Default values
