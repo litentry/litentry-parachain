@@ -67,7 +67,7 @@ impl Assertion {
 			// WBTC/ETH holder
 			Self::A10(..) | Self::A11(..) => vec![Web3Network::Ethereum],
 			// total tx over `networks`
-			Self::A8(network) => network.to_vec().into(),
+			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
 			Self::A14 => vec![Web3Network::Polkadot],
 			// we don't care about any specific web3 network

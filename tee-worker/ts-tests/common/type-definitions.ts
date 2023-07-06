@@ -4,22 +4,13 @@ import WebSocketAsPromised from 'websocket-as-promised';
 import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import { Call } from '@polkadot/types/interfaces';
-import type {
-    LitentryPrimitivesIdentitySubstrateNetwork,
-    LitentryPrimitivesIdentityEvmNetwork,
-    LitentryPrimitivesIdentityWeb2Network,
-    PalletIdentityManagementTeeIdentityContext,
-    LitentryPrimitivesIdentity,
-} from '@polkadot/types/lookup';
+import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
-import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
+import type { Assertion as GenericAssertion, Web3Network } from '../parachain-interfaces/identity/types';
 import type { AnyTuple, IMethod } from '@polkadot/types/types';
 
-export type Web2Network = LitentryPrimitivesIdentityWeb2Network['type'];
-export type SubstrateNetwork = LitentryPrimitivesIdentitySubstrateNetwork['type'];
-export type EvmNetwork = LitentryPrimitivesIdentityEvmNetwork['type'];
 export type ParachainAssertion = GenericAssertion['type'];
 
 export type BatchCall = Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[];
@@ -88,14 +79,6 @@ export type VcRequested = {
     assertion: Assertion;
 };
 
-export enum IndexingNetwork {
-    Litentry = 'Litentry',
-    Litmus = 'Litmus',
-    Polkadot = 'Polkadot',
-    Kusama = 'Kusama',
-    Khala = 'Khala',
-    Ethereum = 'Ethereum',
-}
 export enum RequestEvent {
     LinkIdentityRequested = 'LinkIdentityRequested',
     SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
@@ -113,7 +96,7 @@ export type Assertion =
     | { A5: [string, string] }
     | { A6: string }
     | { A7: string }
-    | { A8: [IndexingNetwork] }
+    | { A8: [Web3Network] }
     | { A9: string }
     | { A10: string }
     | { A11: string };

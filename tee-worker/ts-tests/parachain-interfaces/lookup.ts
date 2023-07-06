@@ -1985,6 +1985,7 @@ export default {
             VerifySubstrateSignatureFailed: 'Null',
             VerifyEvmSignatureFailed: 'Null',
             RecoverEvmAddressFailed: 'Null',
+            Web3NetworkOutOfBounds: 'Null',
         },
     },
     /**
@@ -2127,7 +2128,7 @@ export default {
             A5: 'Bytes',
             A6: 'Null',
             A7: 'Bytes',
-            A8: 'Vec<CorePrimitivesAssertionSupportedNetwork>',
+            A8: 'Vec<CorePrimitivesNetworkWeb3Network>',
             A9: 'Null',
             A10: 'Bytes',
             A11: 'Bytes',
@@ -2137,10 +2138,21 @@ export default {
         },
     },
     /**
-     * Lookup149: core_primitives::assertion::SupportedNetwork
+     * Lookup149: core_primitives::network::Web3Network
      **/
-    CorePrimitivesAssertionSupportedNetwork: {
-        _enum: ['Litentry', 'Litmus', 'LitentryRococo', 'Polkadot', 'Kusama', 'Khala', 'Ethereum', 'TestNet'],
+    CorePrimitivesNetworkWeb3Network: {
+        _enum: [
+            'Polkadot',
+            'Kusama',
+            'Litentry',
+            'Litmus',
+            'LitentryRococo',
+            'Khala',
+            'SubstrateTestnet',
+            'Ethereum',
+            'Polygon',
+            'BSC',
+        ],
     },
     /**
      * Lookup151: pallet_group::pallet::Event<T, I>
@@ -3999,6 +4011,7 @@ export default {
                 user: 'AccountId32',
                 encryptedIdentity: 'Bytes',
                 encryptedValidationData: 'Bytes',
+                encryptedWeb3networks: 'Bytes',
                 nonce: '[u8;12]',
             },
             remove_identity: {

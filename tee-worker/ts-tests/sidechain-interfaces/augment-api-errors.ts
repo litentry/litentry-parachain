@@ -71,6 +71,10 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             RemovePrimeIdentityDisallowed: AugmentedError<ApiType>;
             /**
+             * Web3Network len limit reached
+             **/
+            Web3NetworkLenLimitReached: AugmentedError<ApiType>;
+            /**
              * Generic error
              **/
             [key: string]: AugmentedError<ApiType>;

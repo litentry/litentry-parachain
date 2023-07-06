@@ -26,10 +26,10 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 
 /// supported web3 networks
 /// use a flattened style to avoid overly nested structure like:
-/// `
-/// 	Substrate(SubstrateNetwork),
-/// 	Evm(EvmNetwork),
-/// `
+/// {
+///   Substrate(SubstrateNetwork),
+///   Evm(EvmNetwork),
+/// }
 /// TODO: theoretically this should the the union of the supported networks of all data providers
 #[derive(
 	Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, Hash, TypeInfo, MaxEncodedLen, EnumIter,

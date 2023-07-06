@@ -2625,6 +2625,7 @@ declare module '@polkadot/types/lookup' {
         readonly isVerifySubstrateSignatureFailed: boolean;
         readonly isVerifyEvmSignatureFailed: boolean;
         readonly isRecoverEvmAddressFailed: boolean;
+        readonly isWeb3NetworkOutOfBounds: boolean;
         readonly type:
             | 'ImportError'
             | 'UnauthorizedSigner'
@@ -2639,7 +2640,8 @@ declare module '@polkadot/types/lookup' {
             | 'WrongSignatureType'
             | 'VerifySubstrateSignatureFailed'
             | 'VerifyEvmSignatureFailed'
-            | 'RecoverEvmAddressFailed';
+            | 'RecoverEvmAddressFailed'
+            | 'Web3NetworkOutOfBounds';
     }
 
     /** @name PalletAssetManagerEvent (141) */
@@ -2819,7 +2821,7 @@ declare module '@polkadot/types/lookup' {
         readonly isA7: boolean;
         readonly asA7: Bytes;
         readonly isA8: boolean;
-        readonly asA8: Vec<CorePrimitivesAssertionSupportedNetwork>;
+        readonly asA8: Vec<CorePrimitivesNetworkWeb3Network>;
         readonly isA9: boolean;
         readonly isA10: boolean;
         readonly asA10: Bytes;
@@ -2847,25 +2849,29 @@ declare module '@polkadot/types/lookup' {
             | 'A14';
     }
 
-    /** @name CorePrimitivesAssertionSupportedNetwork (149) */
-    interface CorePrimitivesAssertionSupportedNetwork extends Enum {
+    /** @name CorePrimitivesNetworkWeb3Network (149) */
+    interface CorePrimitivesNetworkWeb3Network extends Enum {
+        readonly isPolkadot: boolean;
+        readonly isKusama: boolean;
         readonly isLitentry: boolean;
         readonly isLitmus: boolean;
         readonly isLitentryRococo: boolean;
-        readonly isPolkadot: boolean;
-        readonly isKusama: boolean;
         readonly isKhala: boolean;
+        readonly isSubstrateTestnet: boolean;
         readonly isEthereum: boolean;
-        readonly isTestNet: boolean;
+        readonly isPolygon: boolean;
+        readonly isBsc: boolean;
         readonly type:
+            | 'Polkadot'
+            | 'Kusama'
             | 'Litentry'
             | 'Litmus'
             | 'LitentryRococo'
-            | 'Polkadot'
-            | 'Kusama'
             | 'Khala'
+            | 'SubstrateTestnet'
             | 'Ethereum'
-            | 'TestNet';
+            | 'Polygon'
+            | 'Bsc';
     }
 
     /** @name PalletGroupEvent (151) */
@@ -4851,6 +4857,7 @@ declare module '@polkadot/types/lookup' {
             readonly user: AccountId32;
             readonly encryptedIdentity: Bytes;
             readonly encryptedValidationData: Bytes;
+            readonly encryptedWeb3networks: Bytes;
             readonly nonce: U8aFixed;
         } & Struct;
         readonly isRemoveIdentity: boolean;

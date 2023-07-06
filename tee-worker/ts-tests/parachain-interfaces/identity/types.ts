@@ -38,6 +38,9 @@ export interface Assertion extends Enum {
     readonly type: 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11' | 'A13';
 }
 
+/** @name BoundedWeb3Network */
+export interface BoundedWeb3Network extends Vec<Web3Network> {}
+
 /** @name DirectRequestStatus */
 export interface DirectRequestStatus extends Enum {
     readonly isOk: boolean;
@@ -57,19 +60,6 @@ export interface DiscordValidationData extends Struct {
 /** @name EthereumSignature */
 export interface EthereumSignature extends U8aFixed {}
 
-/** @name EvmIdentity */
-export interface EvmIdentity extends Struct {
-    readonly network: EvmNetwork;
-    readonly address: Address20;
-}
-
-/** @name EvmNetwork */
-export interface EvmNetwork extends Enum {
-    readonly isEthereum: boolean;
-    readonly isBsc: boolean;
-    readonly type: 'Ethereum' | 'Bsc';
-}
-
 /** @name GenericEventWithAccount */
 export interface GenericEventWithAccount extends Struct {
     readonly account: AccountId;
@@ -87,6 +77,7 @@ export interface Getter extends Enum {
 /** @name IdentityContext */
 export interface IdentityContext extends Struct {
     readonly link_block: BlockNumber;
+    readonly web3networks: BoundedWeb3Network;
     readonly status: IdentityStatus;
 }
 
@@ -122,13 +113,17 @@ export interface IdentityString extends Bytes {}
 
 /** @name LitentryIdentity */
 export interface LitentryIdentity extends Enum {
+    readonly isTwitter: boolean;
+    readonly asTwitter: IdentityString;
+    readonly isDiscord: boolean;
+    readonly asDiscord: IdentityString;
+    readonly isGithub: boolean;
+    readonly asGithub: IdentityString;
     readonly isSubstrate: boolean;
-    readonly asSubstrate: SubstrateIdentity;
+    readonly asSubstrate: Address32;
     readonly isEvm: boolean;
-    readonly asEvm: EvmIdentity;
-    readonly isWeb2: boolean;
-    readonly asWeb2: Web2Identity;
-    readonly type: 'Substrate' | 'Evm' | 'Web2';
+    readonly asEvm: Address20;
+    readonly type: 'Twitter' | 'Discord' | 'Github' | 'Substrate' | 'Evm';
 }
 
 /** @name LitentryValidationData */
@@ -158,24 +153,6 @@ export interface Request extends Struct {
 /** @name ShardIdentifier */
 export interface ShardIdentifier extends H256 {}
 
-/** @name SubstrateIdentity */
-export interface SubstrateIdentity extends Struct {
-    readonly network: SubstrateNetwork;
-    readonly address: Address32;
-}
-
-/** @name SubstrateNetwork */
-export interface SubstrateNetwork extends Enum {
-    readonly isPolkadot: boolean;
-    readonly isKusama: boolean;
-    readonly isLitentry: boolean;
-    readonly isLitmus: boolean;
-    readonly isLitentryRococo: boolean;
-    readonly isKhala: boolean;
-    readonly isTestNet: boolean;
-    readonly type: 'Polkadot' | 'Kusama' | 'Litentry' | 'Litmus' | 'LitentryRococo' | 'Khala' | 'TestNet';
-}
-
 /** @name TrustedCall */
 export interface TrustedCall extends Enum {
     readonly isBalanceSetBalance: boolean;
@@ -190,7 +167,15 @@ export interface TrustedCall extends Enum {
     readonly asSetUserShieldingKey: ITuple<[AccountId, AccountId, UserShieldingKeyType, H256]>;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<
-        [AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256]
+        [
+            AccountId,
+            AccountId,
+            LitentryIdentity,
+            LitentryValidationData,
+            Vec<Web3Network>,
+            UserShieldingKeyNonceType,
+            H256
+        ]
     >;
     readonly isRemoveIdentity: boolean;
     readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
@@ -292,20 +277,6 @@ export interface VCRequested extends Struct {
     readonly assertion: Assertion;
 }
 
-/** @name Web2Identity */
-export interface Web2Identity extends Struct {
-    readonly network: Web2Network;
-    readonly address: IdentityString;
-}
-
-/** @name Web2Network */
-export interface Web2Network extends Enum {
-    readonly isTwitter: boolean;
-    readonly isDiscord: boolean;
-    readonly isGithub: boolean;
-    readonly type: 'Twitter' | 'Discord' | 'Github';
-}
-
 /** @name Web2ValidationData */
 export interface Web2ValidationData extends Enum {
     readonly isTwitter: boolean;
@@ -319,6 +290,31 @@ export interface Web2ValidationData extends Enum {
 export interface Web3CommonValidationData extends Struct {
     readonly message: Bytes;
     readonly signature: IdentityMultiSignature;
+}
+
+/** @name Web3Network */
+export interface Web3Network extends Enum {
+    readonly isPolkadot: boolean;
+    readonly isKusama: boolean;
+    readonly isLitentry: boolean;
+    readonly isLitmus: boolean;
+    readonly isLitentryRococo: boolean;
+    readonly isKhala: boolean;
+    readonly isSubstrateTestnet: boolean;
+    readonly isEthereum: boolean;
+    readonly isPolygon: boolean;
+    readonly isBsc: boolean;
+    readonly type:
+        | 'Polkadot'
+        | 'Kusama'
+        | 'Litentry'
+        | 'Litmus'
+        | 'LitentryRococo'
+        | 'Khala'
+        | 'SubstrateTestnet'
+        | 'Ethereum'
+        | 'Polygon'
+        | 'Bsc';
 }
 
 /** @name Web3ValidationData */
