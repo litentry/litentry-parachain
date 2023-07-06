@@ -4,7 +4,6 @@
 		"rootDir": ".",
 		"outDir": "../../build/sidechain",
 		"paths": {
-			"@sidechain/api-augment/*": ["src/sidechain/*"],
 			"@polkadot/api/augment": ["src/sidechain/interfaces/augment-api.ts"],
 			"@polkadot/types/augment": ["src/sidechain/interfaces/augment-types.ts"],
 			"@polkadot/types/lookup": ["src/sidechain/interfaces/types-lookup.ts"]
