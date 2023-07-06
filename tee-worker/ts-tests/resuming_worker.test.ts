@@ -141,7 +141,7 @@ function generateWorkerCommandArguments(nodeUrl: string, nodePort: number, param
         '--ws-external',
         '--trusted-external-address wss://localhost',
         `--trusted-worker-port ${params.trustedWorkerPort}`,
-        '--untrusted-external-address wss://localhost',
+        '--untrusted-external-address ws://localhost',
         `--untrusted-worker-port ${params.untrustedWorkerPort}`,
         `--node-url ${nodeUrl}`,
         `--node-port ${nodePort}`,
