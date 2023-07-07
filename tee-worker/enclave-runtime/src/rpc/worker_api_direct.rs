@@ -135,12 +135,12 @@ where
 				};
 
 				match state_nonce_unwrap.load_cloned(&shard) {
-					Ok((_state, _hash)) => {
+					Ok((mut state, _hash)) => {
 						let trusted_calls =
 							pool_author.get_pending_trusted_calls_for(shard, &account);
 						let pending_tx_count = trusted_calls.len();
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-						let nonce = System::account_nonce(&account);
+						let nonce = state.execute_with(|| System::account_nonce(&account));
 						let json_value = RpcReturnValue {
 							do_watch: false,
 							value: (nonce + pending_tx_count).encode(),
