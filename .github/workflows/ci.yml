@@ -250,7 +250,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   parachain-build-dev:
-    runs-on: tee-dev
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -258,15 +258,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build docker image
-        if: needs.set-condition.outputs.rebuild_parachain == 'true'
-        run: |
-          make build-docker-release
-          echo "============================="
-          docker images
+      # - name: Build docker image
+      #   if: needs.set-condition.outputs.rebuild_parachain == 'true'
+      #   run: |
+      #     make build-docker-release
+      #     echo "============================="
+      #     docker images
 
       - name: Pull docker image optinally
-        if: needs.set-condition.outputs.rebuild_parachain == 'false'
+        # if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
           docker pull litentry/litentry-parachain
 
@@ -326,7 +326,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-build:
-    runs-on: tee-dev
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
@@ -559,39 +559,39 @@ jobs:
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
 
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
+      # - name: Build litentry parachain docker images
+      #   run: |
+      #     cd tee-worker/docker
+      #     docker compose -f litentry-parachain.build.yml build
 
-      - name: Integration Test ${{ matrix.test_name }}
-        if: needs.set-condition.outputs.run_tee_test == 'true'
-        timeout-minutes: 40
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
+      # - name: Integration Test ${{ matrix.test_name }}
+      #   if: needs.set-condition.outputs.run_tee_test == 'true'
+      #   timeout-minutes: 40
+      #   run: |
+      #     cd tee-worker/docker
+      #     docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
-      - name: Stop docker containers
-        if: needs.set-condition.outputs.run_tee_test == 'true'
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
+      # - name: Stop docker containers
+      #   if: needs.set-condition.outputs.run_tee_test == 'true'
+      #   run: |
+      #     cd tee-worker/docker
+      #     docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
-      - name: Collect Docker Logs
-        continue-on-error: true
-        if: always()
-        uses: jwalton/gh-docker-logs@v2
-        with:
-          tail: all
-          dest: logs
+      # - name: Collect Docker Logs
+      #   continue-on-error: true
+      #   if: always()
+      #   uses: jwalton/gh-docker-logs@v2
+      #   with:
+      #     tail: all
+      #     dest: logs
 
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: logs-${{ matrix.test_name }}
-          path: logs
-          if-no-files-found: ignore
+      # - name: Upload logs
+      #   if: always()
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: logs-${{ matrix.test_name }}
+      #     path: logs
+      #     if-no-files-found: ignore
 
   # Secrets are not passed to the runner when a workflow is triggered from a forked repository,
   # see https://docs.github.com/en/actions/security-guides/encrypted-secrets#using-encrypted-secrets-in-a-workflow

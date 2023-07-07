@@ -70,11 +70,11 @@ ENV WORKER_FEATURES=$WORKER_FEATURES_ARG
 ENV HOME=/home/ubuntu/repo
 
 RUN rustup default stable
-RUN cargo install sccache
+# RUN cargo install sccache
 
-ENV SCCACHE_CACHE_SIZE="20G"
-ENV SCCACHE_DIR=$HOME/.cache/sccache
-ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
+# ENV SCCACHE_CACHE_SIZE="20G"
+# ENV SCCACHE_DIR=$HOME/.cache/sccache
+# ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
 
 ARG WORKER_MODE_ARG
 ARG ADDITIONAL_FEATURES_ARG
@@ -86,10 +86,11 @@ ARG FINGERPRINT=none
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
-RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
-	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db \
-	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
-	echo ${FINGERPRINT} && make && cargo test --release && sccache --show-stats
+# RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
+# 	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db \
+# 	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
+# 	echo ${FINGERPRINT} && make && cargo test --release && sccache --show-stats
+RUN make && cargo test --release
 
 ### Base Runner Stage
 ##################################################
