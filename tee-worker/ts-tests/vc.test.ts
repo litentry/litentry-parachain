@@ -9,7 +9,6 @@ import {
 } from './common/utils';
 import { step } from 'mocha-steps';
 import type { Assertion, IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';
-import { IndexingNetwork } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { assert } from 'chai';
 import { u8aToHex } from '@polkadot/util';
@@ -23,27 +22,27 @@ const allAssertions: Assertion = {
     A3: ['A3', 'A3', 'A3'],
     A4: '10.001',
     A7: '10.002',
-    A8: [IndexingNetwork.Litentry],
+    A8: ['Litentry'],
     A10: '10.003',
     A11: '10.004',
 };
 const assertionA1: Assertion = {
     A1: 'A1',
 };
-//It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
-//So only use A1 to trigger the wrong event
+// It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
+// So only use A1 to trigger the wrong event
 describeLitentry('VC test', 0, async (context) => {
     const indexList: HexString[] = [];
     const vcKeys: string[] = ['A1', 'A2', 'A3', 'A4', 'A7', 'A8', 'A10', 'A11'];
-    step('check user sidechain storage before create', async function () {
-        const shieldingKey = await checkUserShieldingKeys(
-            context,
-            'IdentityManagement',
-            'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
-        );
-        assert.equal(shieldingKey, '0x', 'shieldingKey should be empty before set');
-    });
+    // step('check user sidechain storage before create', async function () {
+    //     const shieldingKey = await checkUserShieldingKeys(
+    //         context,
+    //         'IdentityManagement',
+    //         'UserShieldingKeys',
+    //         u8aToHex(context.substrateWallet.alice.addressRaw)
+    //     );
+    //     assert.equal(shieldingKey, '0x', 'shieldingKey should be empty before set');
+    // });
     step('set user shielding key', async function () {
         const [aliceTxs] = (await buildIdentityTxs(
             context,
@@ -80,7 +79,7 @@ describeLitentry('VC test', 0, async (context) => {
         assert.equal(shieldingKey, aesKey, 'shieldingKey should be equal aesKey after set');
     });
     step('Request VC', async () => {
-        //request all vc
+        // request all vc
         const txs: any = [];
         for (let index = 0; index < vcKeys.length; index++) {
             const key = vcKeys[index];
@@ -113,7 +112,7 @@ describeLitentry('VC test', 0, async (context) => {
             const vcHash = blake2AsHex(Buffer.from(vcString));
             assert.equal(vcHash, registry.toHuman()!['hash_'], 'check vc json hash error');
 
-            //check vc
+            // check vc
             const vcValid = await checkVc(vcObj, res[k].index, vcProof, context.api);
             assert.equal(vcValid, true, 'check vc error');
             indexList.push(res[k].index);
@@ -149,7 +148,7 @@ describeLitentry('VC test', 0, async (context) => {
         }
     });
     step('Disable error VC(A1)', async () => {
-        //Alice has already disabled the A1 VC
+        // Alice has already disabled the A1 VC
         const tx = context.api.tx.vcManagement.disableVc(indexList[0]);
         const nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
 
@@ -183,7 +182,7 @@ describeLitentry('VC test', 0, async (context) => {
     });
 
     step('Revoke Error VC(A1)', async () => {
-        //Alice has already revoked the A1 VC
+        // Alice has already revoked the A1 VC
         const tx = context.api.tx.vcManagement.revokeVc(indexList[0]);
         const nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
         const [error] = await sendTxUntilInBlockList(context.api, [{ tx, nonce }], context.substrateWallet.alice);

@@ -8,7 +8,7 @@ import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIden
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
-import type { Assertion as GenericAssertion, Web3Network } from '../parachain-interfaces/identity/types';
+import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
 import type { AnyTuple, IMethod } from '@polkadot/types/types';
 
 export type ParachainAssertion = GenericAssertion['type'];
@@ -96,7 +96,7 @@ export type Assertion =
     | { A5: [string, string] }
     | { A6: string }
     | { A7: string }
-    | { A8: [Web3Network] }
+    | { A8: [string] }
     | { A9: string }
     | { A10: string }
     | { A11: string };

@@ -100,4 +100,46 @@ mod tests {
 		let bsc_network = Web3Network::BSC;
 		assert!(bsc_network.is_evm());
 	}
+
+	#[test]
+	fn is_evm_works() {
+		Web3Network::iter().for_each(|network| {
+			assert_eq!(
+				network.is_evm(),
+				match network {
+					Web3Network::Polkadot => false,
+					Web3Network::Kusama => false,
+					Web3Network::Litentry => false,
+					Web3Network::Litmus => false,
+					Web3Network::LitentryRococo => false,
+					Web3Network::Khala => false,
+					Web3Network::SubstrateTestnet => false,
+					Web3Network::Ethereum => true,
+					Web3Network::Polygon => true,
+					Web3Network::BSC => true,
+				}
+			)
+		})
+	}
+
+	#[test]
+	fn is_substrate_works() {
+		Web3Network::iter().for_each(|network| {
+			assert_eq!(
+				network.is_substrate(),
+				match network {
+					Web3Network::Polkadot => true,
+					Web3Network::Kusama => true,
+					Web3Network::Litentry => true,
+					Web3Network::Litmus => true,
+					Web3Network::LitentryRococo => true,
+					Web3Network::Khala => true,
+					Web3Network::SubstrateTestnet => true,
+					Web3Network::Ethereum => false,
+					Web3Network::Polygon => false,
+					Web3Network::BSC => false,
+				}
+			)
+		})
+	}
 }
