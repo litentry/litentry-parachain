@@ -130,6 +130,8 @@ ENTRYPOINT ["/usr/local/bin/integritee-cli"]
 FROM runner AS deployed-worker
 LABEL maintainer="zoltan@integritee.network"
 
+WORKDIR /usr/local/bin
+
 COPY --from=builder /opt/sgxsdk /opt/sgxsdk
 COPY --from=builder /home/ubuntu/repo/tee-worker/bin/* /usr/local/bin
 COPY --from=builder /home/ubuntu/repo/tee-worker/cli/*.sh /usr/local/worker-cli/
