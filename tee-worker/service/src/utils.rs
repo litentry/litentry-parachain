@@ -24,18 +24,20 @@ use log::info;
 pub fn extract_shard<E: EnclaveBase>(
 	maybe_shard_str: &Option<String>,
 	enclave_api: &E,
-) -> ShardIdentifier {
+) -> Result<ShardIdentifier, String> {
 	match maybe_shard_str {
 		Some(value) => {
 			let shard_vec = value.from_base58().expect("shard must be hex encoded");
 			let mut shard = [0u8; 32];
 			shard.copy_from_slice(&shard_vec[..]);
-			shard.into()
+			Ok(shard.into())
 		},
 		_ => {
-			let mrenclave = enclave_api.get_mrenclave().unwrap();
+			let mrenclave = enclave_api
+				.get_mrenclave()
+				.map_err(|e| format!("Could not get mr_enclave: {:?}", e))?;
 			info!("no shard specified. using mrenclave as id: {}", mrenclave.to_base58());
-			ShardIdentifier::from_slice(&mrenclave[..])
+			Ok(ShardIdentifier::from_slice(&mrenclave[..]))
 		},
 	}
 }

@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	error::{Error, ServiceResult},
+	error::{Error, Error::ApplicationSetup, ServiceResult},
 	parentchain_handler::HandleParentchain,
 	Config,
 };
@@ -48,9 +48,12 @@ pub(crate) fn sidechain_start_untrusted_rpc_server<Enclave, SidechainStorage>(
 	let untrusted_url = config.untrusted_worker_url();
 	println!("[+] Untrusted RPC server listening on {}", &untrusted_url);
 	let _untrusted_rpc_join_handle = tokio_handle.spawn(async move {
-		itc_rpc_server::run_server(&untrusted_url, enclave, sidechain_storage)
-			.await
-			.unwrap();
+		#[allow(clippy::unwrap_used)]
+		{
+			itc_rpc_server::run_server(&untrusted_url, enclave, sidechain_storage)
+				.await
+				.unwrap();
+		}
 	});
 }
 
@@ -75,16 +78,20 @@ where
 		info!(
 			"We're the first validateer to be registered, syncing parentchain blocks until the one we have registered ourselves on."
 		);
+		let until_header = &register_enclave_xt_header.ok_or(ApplicationSetup)?;
 		updated_header = Some(parentchain_handler.sync_and_import_parentchain_until(
 			last_synced_header,
-			&register_enclave_xt_header.unwrap(),
+			until_header,
 			overriden_start_block,
 		)?);
 	}
 
 	// ------------------------------------------------------------------------
 	// Initialize sidechain components (has to be AFTER init_parentchain_components()
-	enclave.init_enclave_sidechain_components().unwrap();
+	enclave.init_enclave_sidechain_components().map_err(|e| {
+		println!("[+] Could not init enclave sidechain components: {:?}", e);
+		ApplicationSetup
+	})?;
 
 	// ------------------------------------------------------------------------
 	// Start interval sidechain block production (execution of trusted calls, sidechain block production).

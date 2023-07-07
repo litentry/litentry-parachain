@@ -47,8 +47,11 @@ pub(crate) fn initialize_shard_and_keys(
 	init_shard(enclave, shard_identifier);
 
 	println!("[+] Generate key files");
-	generate_signing_key_file(enclave);
-	generate_shielding_key_file(enclave);
+	#[allow(clippy::unwrap_used)]
+	{
+		generate_signing_key_file(enclave).unwrap();
+		generate_shielding_key_file(enclave).unwrap();
+	}
 
 	Ok(())
 }
@@ -82,9 +85,11 @@ pub(crate) fn migrate_shard(
 	}
 }
 
-pub(crate) fn generate_signing_key_file(enclave: &Enclave) {
+pub(crate) fn generate_signing_key_file(enclave: &Enclave) -> Result<(), String> {
 	info!("*** Get the signing key from the TEE\n");
-	let pubkey = enclave.get_ecc_signing_pubkey().unwrap();
+	let pubkey = enclave
+		.get_ecc_signing_pubkey()
+		.map_err(|e| format!("Could not get ecc signing pubkey: {:?}", e))?;
 	debug!("[+] Signing key raw: {:?}", pubkey);
 	match fs::write(SIGNING_KEY_FILE, pubkey) {
 		Err(x) => {
@@ -94,12 +99,16 @@ pub(crate) fn generate_signing_key_file(enclave: &Enclave) {
 			println!("[+] File '{}' written successfully", SIGNING_KEY_FILE);
 		},
 	}
+	Ok(())
 }
 
-pub(crate) fn generate_shielding_key_file(enclave: &Enclave) {
+pub(crate) fn generate_shielding_key_file(enclave: &Enclave) -> Result<(), String> {
 	info!("*** Get the public key from the TEE\n");
-	let pubkey = enclave.get_rsa_shielding_pubkey().unwrap();
-	let file = File::create(SHIELDING_KEY_FILE).unwrap();
+	let pubkey = enclave
+		.get_rsa_shielding_pubkey()
+		.map_err(|e| format!("Could not get rsa shielding pubkey: {:?}", e))?;
+	let file = File::create(SHIELDING_KEY_FILE)
+		.map_err(|e| format!("Could not create rsa shielding key file: {:?}", e))?;
 	match serde_json::to_writer(file, &pubkey) {
 		Err(x) => {
 			error!("[-] Failed to write '{}'. {}", SHIELDING_KEY_FILE, x);
@@ -108,6 +117,7 @@ pub(crate) fn generate_shielding_key_file(enclave: &Enclave) {
 			println!("[+] File '{}' written successfully", SHIELDING_KEY_FILE);
 		},
 	}
+	Ok(())
 }
 
 /// Purge all worker files in a given path.

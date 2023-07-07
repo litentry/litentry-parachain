@@ -15,7 +15,6 @@
 
 */
 
-// use codec::Encode;
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};

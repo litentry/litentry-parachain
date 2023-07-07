@@ -18,7 +18,7 @@
 
 use crate::{
 	enclave::tls_ra::enclave_request_state_provisioning,
-	error::{Error, ServiceResult as Result},
+	error::{Error, Error::ApplicationSetup, ServiceResult as Result},
 };
 use futures::executor;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
@@ -38,7 +38,7 @@ pub(crate) fn sync_state<
 	shard: &ShardIdentifier,
 	enclave_api: &E,
 	skip_ra: bool,
-) {
+) -> Result<()> {
 	// FIXME: we now assume that keys are equal for all shards.
 	let provider_url = match WorkerModeProvider::worker_mode() {
 		WorkerMode::Sidechain =>
@@ -57,8 +57,12 @@ pub(crate) fn sync_state<
 		shard,
 		skip_ra,
 	)
-	.unwrap();
+	.map_err(|e| {
+		println!("[+] State provisioning error: {:?}", e);
+		ApplicationSetup
+	})?;
 	println!("[+] State provisioning successfully performed.");
+	Ok(())
 }
 
 /// Returns the url of the last sidechain block author that has been stored
