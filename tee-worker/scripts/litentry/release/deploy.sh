@@ -300,8 +300,12 @@ setup_working_dir() {
 
     # Only possible in TEE-Internal
     cp $CONFIG "${target_dir}/mode_config.json"
-    cp $INTEL_KEY "${target_dir}/key_production.txt"
-    cp $INTEL_SPID "${target_dir}/spid_production.txt"
+    if [ "$PRODUCTION" = true ]; then
+      cp $INTEL_KEY "${target_dir}/key_production.txt"
+      cp $INTEL_SPID "${target_dir}/spid_production.txt"
+    else
+      cp $INTEL_KEY "${target_dir}/key.txt"
+      cp $INTEL_SPID "${target_dir}/spid.txt"
 
 }
 
