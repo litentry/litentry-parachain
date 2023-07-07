@@ -306,7 +306,7 @@ setup_working_dir() {
     else
       cp $INTEL_KEY "${target_dir}/key.txt"
       cp $INTEL_SPID "${target_dir}/spid.txt"
-
+    fi
 }
 
 function restart_worker() {
