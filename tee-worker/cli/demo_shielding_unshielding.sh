@@ -138,7 +138,6 @@ function assert_account_state()
 }
 
 echo "* Query on-chain enclave registry:"
-echo ${CLIENT}
 ${CLIENT} list-workers
 echo ""
 
