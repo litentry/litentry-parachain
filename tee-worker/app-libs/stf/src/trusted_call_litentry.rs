@@ -30,8 +30,8 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
 use litentry_primitives::{
-	Assertion, BoundedWeb3Network, ErrorDetail, Identity, UserShieldingKeyType, ValidationData,
-	Web3Network,
+	Assertion, BoundedWeb3Network, ErrorDetail, Identity, IdentityNetworkTuple,
+	UserShieldingKeyType, ValidationData, Web3Network,
 };
 use log::*;
 use std::vec::Vec;
@@ -134,7 +134,7 @@ impl TrustedCallSigned {
 
 		let id_graph = IMT::get_id_graph(&who, usize::MAX);
 		let assertion_networks = assertion.get_supported_web3networks();
-		let vec_identity: Vec<(Identity, Vec<Web3Network>)> = id_graph
+		let vec_identity: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
 			.filter(|item| item.1.status == IdentityStatus::Active)
 			.map(|item| {

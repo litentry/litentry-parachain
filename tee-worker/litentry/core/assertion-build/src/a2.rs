@@ -85,7 +85,7 @@ mod tests {
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
 	use lc_data_providers::G_DATA_PROVIDERS;
-	use litentry_primitives::{Assertion, Identity, IdentityString, Web3Network};
+	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
 	use std::{format, vec, vec::Vec};
 
@@ -99,7 +99,7 @@ mod tests {
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 
 		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
-		let vec_identity: Vec<(Identity, Vec<Web3Network>)> =
+		let vec_identity: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec.clone())), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();

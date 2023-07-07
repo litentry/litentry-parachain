@@ -2943,6 +2943,8 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]

@@ -42,7 +42,7 @@ use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	get_all_web3networks, BoundedWeb3Network, Identity, ParentchainBlockNumber,
+	all_substrate_web3networks, BoundedWeb3Network, Identity, ParentchainBlockNumber,
 	UserShieldingKeyType, Web3Network,
 };
 use sp_std::vec::Vec;
@@ -98,6 +98,8 @@ pub mod pallet {
 		IDGraphLenLimitReached,
 		/// Web3Network len limit reached
 		Web3NetworkLenLimitReached,
+		/// identity doesn't match the network types
+		WrongWeb3NetworkTypes,
 	}
 
 	/// user shielding key is per Litentry account
@@ -137,7 +139,7 @@ pub mod pallet {
 			let prime_id = Self::build_prime_identity(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
 				// TODO: shall we activate all available networks for the prime id?
-				let web3networks = get_all_web3networks()
+				let web3networks = all_substrate_web3networks()
 					.try_into()
 					.map_err(|_| Error::<T>::Web3NetworkLenLimitReached)?;
 				let context = <IdentityContext<T>>::new(
@@ -169,6 +171,11 @@ pub mod pallet {
 			);
 			let prime_id = Self::build_prime_identity(&who)?;
 			ensure!(identity != prime_id, Error::<T>::LinkPrimeIdentityDisallowed);
+
+			ensure!(
+				identity.matches_web3networks(web3networks.as_ref()),
+				Error::<T>::WrongWeb3NetworkTypes
+			);
 
 			let context =
 				<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), web3networks);

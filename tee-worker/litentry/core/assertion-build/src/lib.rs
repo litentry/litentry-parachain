@@ -51,8 +51,8 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
-	Assertion, ErrorDetail, ErrorString, Identity, IntoErrorDetail, ParameterString,
-	VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
+	Assertion, ErrorDetail, ErrorString, Identity, IdentityNetworkTuple, IntoErrorDetail,
+	ParameterString, VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{
@@ -65,12 +65,12 @@ use std::{
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-/// Transpose a vector of identities with web3network information, which is Vec<(Identity, Vec<Web3Network>)>,
+/// Transpose a vector of identities with web3network information, which is Vec<IdentityNetworkTuple>,
 /// to the vector of hex addresses which share the same network type, which is Vec<(Web3Network, Vec<String>)>.
 ///
 /// TODO: improve the logic
 pub fn transpose_identity(
-	identities: &Vec<(Identity, Vec<Web3Network>)>,
+	identities: &Vec<IdentityNetworkTuple>,
 ) -> Vec<(Web3Network, Vec<String>)> {
 	let mut addresses: Vec<(String, Web3Network)> = vec![];
 	let mut networks_set: HashSet<Web3Network> = HashSet::new();
@@ -114,7 +114,7 @@ mod tests {
 
 	#[test]
 	fn transpose_identity_works() {
-		let mut identities: Vec<(Identity, Vec<Web3Network>)> = vec![];
+		let mut identities: Vec<IdentityNetworkTuple> = vec![];
 		let id1 = Identity::Twitter("alice1".as_bytes().to_vec().try_into().unwrap());
 		let id2 = Identity::Substrate([2u8; 32].into());
 		let id3 = Identity::Substrate([3u8; 32].into());

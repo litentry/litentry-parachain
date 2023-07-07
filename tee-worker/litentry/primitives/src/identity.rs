@@ -21,13 +21,16 @@ extern crate sgx_tstd as std;
 use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use parentchain_primitives::Web3Network;
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_std::vec::Vec;
+use strum_macros::EnumIter;
 
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityString = BoundedVec<u8, MaxStringLength>;
 
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Address20([u8; 20]);
 
@@ -43,7 +46,7 @@ impl From<[u8; 20]> for Address20 {
 	}
 }
 
-#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Address32([u8; 32]);
 impl AsRef<[u8; 32]> for Address32 {
@@ -61,7 +64,7 @@ impl From<[u8; 32]> for Address32 {
 /// Web2 and Web3 Identity based on handle/public key
 /// We only include the network categories (substrate/evm) without concrete types
 /// see https://github.com/litentry/litentry-parachain/issues/1841
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, EnumIter)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Identity {
 	// web2
@@ -90,27 +93,110 @@ impl Identity {
 	pub fn is_evm(&self) -> bool {
 		matches!(self, Self::Evm(..))
 	}
+
+	// check if the given web3networks match the identity
+	pub fn matches_web3networks(&self, networks: &Vec<Web3Network>) -> bool {
+		(self.is_substrate() && !networks.is_empty() && networks.iter().all(|n| n.is_substrate()))
+			|| (self.is_evm() && !networks.is_empty() && networks.iter().all(|n| n.is_evm()))
+			|| (self.is_web2() && networks.is_empty())
+	}
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use sp_core::Pair;
+	use sp_std::vec;
+	use strum::IntoEnumIterator;
 
 	#[test]
-	fn identity_parsing_works() {
-		let pair = sp_core::sr25519::Pair::from_string("//Alice", None).unwrap();
-		let twitter_identity =
-			Identity::Twitter(IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap());
-		let substrate_identity = Identity::Substrate(pair.public().0.into());
-		let evm_identity = Identity::Evm([2u8; 20].into());
+	fn is_web2_works() {
+		Identity::iter().for_each(|identity| {
+			assert_eq!(
+				identity.is_web2(),
+				match identity {
+					Identity::Twitter(..) => true,
+					Identity::Discord(..) => true,
+					Identity::Github(..) => true,
+					Identity::Substrate(..) => false,
+					Identity::Evm(..) => false,
+				}
+			)
+		})
+	}
 
-		assert!(twitter_identity.is_web2());
+	#[test]
+	fn is_web3_works() {
+		Identity::iter().for_each(|identity| {
+			assert_eq!(
+				identity.is_web3(),
+				match identity {
+					Identity::Twitter(..) => false,
+					Identity::Discord(..) => false,
+					Identity::Github(..) => false,
+					Identity::Substrate(..) => true,
+					Identity::Evm(..) => true,
+				}
+			)
+		})
+	}
 
-		assert!(substrate_identity.is_web3());
-		assert!(substrate_identity.is_substrate());
+	#[test]
+	fn is_substrate_works() {
+		Identity::iter().for_each(|identity| {
+			assert_eq!(
+				identity.is_substrate(),
+				match identity {
+					Identity::Twitter(..) => false,
+					Identity::Discord(..) => false,
+					Identity::Github(..) => false,
+					Identity::Substrate(..) => true,
+					Identity::Evm(..) => false,
+				}
+			)
+		})
+	}
 
-		assert!(evm_identity.is_web3());
-		assert!(evm_identity.is_evm());
+	#[test]
+	fn is_evm_works() {
+		Identity::iter().for_each(|identity| {
+			assert_eq!(
+				identity.is_evm(),
+				match identity {
+					Identity::Twitter(..) => false,
+					Identity::Discord(..) => false,
+					Identity::Github(..) => false,
+					Identity::Substrate(..) => false,
+					Identity::Evm(..) => true,
+				}
+			)
+		})
+	}
+
+	#[test]
+	fn matches_web3networks_works() {
+		// web2 identity
+		let mut id = Identity::Twitter("alice".as_bytes().to_vec().try_into().unwrap());
+		let mut networks: Vec<Web3Network> = vec![];
+		assert!(id.matches_web3networks(&networks));
+		networks = vec![Web3Network::Litentry];
+		assert!(!id.matches_web3networks(&networks));
+
+		// substrate identity
+		id = Identity::Substrate(Default::default());
+		networks = vec![];
+		assert!(!id.matches_web3networks(&networks));
+		networks = vec![Web3Network::BSC, Web3Network::Litentry];
+		assert!(!id.matches_web3networks(&networks));
+		networks = vec![Web3Network::Litentry, Web3Network::Kusama];
+		assert!(id.matches_web3networks(&networks));
+
+		// evm identity
+		id = Identity::Evm(Default::default());
+		networks = vec![];
+		assert!(!id.matches_web3networks(&networks));
+		networks = vec![Web3Network::BSC, Web3Network::Litentry];
+		assert!(!id.matches_web3networks(&networks));
+		networks = vec![Web3Network::BSC, Web3Network::Ethereum];
+		assert!(id.matches_web3networks(&networks));
 	}
 }

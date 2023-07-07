@@ -38,8 +38,8 @@ pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::Index;
 use litentry_primitives::{
-	Assertion, BoundedWeb3Network, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
-	ValidationData, Web3Network,
+	Assertion, BoundedWeb3Network, Identity, IdentityNetworkTuple, UserShieldingKeyNonceType,
+	UserShieldingKeyType, ValidationData,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -88,7 +88,7 @@ pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
 	pub who: AccountId,
 	pub assertion: Assertion,
-	pub vec_identity: Vec<(Identity, Vec<Web3Network>)>,
+	pub vec_identity: Vec<IdentityNetworkTuple>,
 	pub hash: H256,
 }
 

@@ -78,8 +78,16 @@ impl Web3Network {
 	}
 }
 
-pub fn get_all_web3networks() -> Vec<Web3Network> {
+pub fn all_web3networks() -> Vec<Web3Network> {
 	Web3Network::iter().collect()
+}
+
+pub fn all_substrate_web3networks() -> Vec<Web3Network> {
+	Web3Network::iter().filter(|n| n.is_substrate()).collect()
+}
+
+pub fn all_evm_web3networks() -> Vec<Web3Network> {
+	Web3Network::iter().filter(|n| n.is_evm()).collect()
 }
 
 #[cfg(test)]
@@ -90,15 +98,6 @@ mod tests {
 	fn web3network_length_ok() {
 		let networks: Vec<Web3Network> = Web3Network::iter().collect();
 		assert!(networks.len() < MAX_WEB3NETWORK_LEN.try_into().unwrap());
-	}
-
-	#[test]
-	fn web3network_parsing_works() {
-		let litentry_network = Web3Network::Litentry;
-		assert!(litentry_network.is_substrate());
-
-		let bsc_network = Web3Network::BSC;
-		assert!(bsc_network.is_evm());
 	}
 
 	#[test]

@@ -24,14 +24,17 @@ mod validation_data;
 pub use aes::*;
 pub use ethereum_signature::*;
 pub use identity::*;
+use sp_std::vec::Vec;
 pub use validation_data::*;
 
 pub use parentchain_primitives::{
-	get_all_web3networks, AccountId as ParentchainAccountId, AesOutput, Assertion,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BoundedWeb3Network,
-	ErrorDetail, ErrorString, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
-	Index as ParentchainIndex, IntoErrorDetail, ParameterString, SchemaContentString,
-	SchemaIdString, Signature as ParentchainSignature, UserShieldingKeyNonceType,
-	UserShieldingKeyType, VCMPError, Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES,
-	NONCE_LEN, USER_SHIELDING_KEY_LEN,
+	all_evm_web3networks, all_substrate_web3networks, all_web3networks,
+	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
+	BlockNumber as ParentchainBlockNumber, BoundedWeb3Network, ErrorDetail, ErrorString,
+	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
+	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
+	Signature as ParentchainSignature, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError,
+	Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
 };
+
+pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);

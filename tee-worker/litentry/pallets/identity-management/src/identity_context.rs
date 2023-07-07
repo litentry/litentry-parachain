@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{BlockNumberOf, BoundedWeb3Network, Config};
+use crate::{BlockNumberOf, BoundedWeb3Network, Config, Web3Network};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use sp_std::vec::Vec;
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub enum IdentityStatus {
@@ -40,6 +41,11 @@ pub struct IdentityContext<T: Config> {
 
 impl<T: Config> IdentityContext<T> {
 	pub fn new(link_block: BlockNumberOf<T>, web3networks: BoundedWeb3Network) -> Self {
-		Self { link_block, web3networks, status: IdentityStatus::Active }
+		// deduplicate the netowrks, the `unwrap()` below should never fail
+		let mut web3networks_vec: Vec<Web3Network> = web3networks.into();
+		web3networks_vec.sort();
+		web3networks_vec.dedup();
+		let web3networks_dedup = web3networks_vec.try_into().unwrap();
+		Self { link_block, web3networks: web3networks_dedup, status: IdentityStatus::Active }
 	}
 }
