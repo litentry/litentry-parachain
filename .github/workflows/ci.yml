@@ -210,13 +210,13 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-clippy:
-    runs-on: tee-dev
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: "litentry/litentry-tee-dev:edge"
+    container: "integritee/integritee-dev:0.1.13"
     steps:
       - uses: actions/checkout@v3
 
