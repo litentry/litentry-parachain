@@ -111,13 +111,17 @@ pub fn alice_twitter_identity(suffix: u32) -> Identity {
 	Identity::Twitter(address)
 }
 
-pub fn alice_web3_identity() -> Identity {
+pub fn alice_substrate_identity() -> Identity {
 	let alice_key_hex: [u8; 32] =
 		hex::decode(ALICE_KEY.strip_prefix("0x").unwrap()).unwrap().try_into().unwrap();
 	Identity::Substrate(alice_key_hex.into())
 }
 
-pub fn bob_web3_identity() -> Identity {
+pub fn alice_evm_identity() -> Identity {
+	Identity::Evm(Default::default())
+}
+
+pub fn bob_substrate_identity() -> Identity {
 	let bob_key_hex = [2u8; 32];
 	Identity::Substrate(bob_key_hex.into())
 }

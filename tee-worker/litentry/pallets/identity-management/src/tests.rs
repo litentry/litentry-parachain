@@ -20,7 +20,7 @@ use crate::{
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::USER_SHIELDING_KEY_LEN;
-use sp_runtime::{AccountId32, BoundedVec};
+use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
@@ -42,20 +42,76 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn link_identity_works() {
+fn link_twitter_identity_works() {
+	new_test_ext(true).execute_with(|| {
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			alice_twitter_identity(1),
+			BoundedWeb3Network::default(),
+		));
+		assert_eq!(
+			IMT::id_graphs(BOB, alice_twitter_identity(1)).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: BoundedWeb3Network::default(),
+				status: IdentityStatus::Active
+			}
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
+	});
+}
+
+#[test]
+fn link_substrate_identity_works() {
 	new_test_ext(true).execute_with(|| {
 		let web3networks: BoundedWeb3Network = vec![Web3Network::Litentry].try_into().unwrap();
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
-			alice_web3_identity(),
+			alice_substrate_identity(),
 			web3networks.clone(),
 		));
 		assert_eq!(
-			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
+			IMT::id_graphs(BOB, alice_substrate_identity()).unwrap(),
 			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
+	});
+}
+
+#[test]
+fn link_evm_identity_works() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: BoundedWeb3Network =
+			vec![Web3Network::Ethereum, Web3Network::Polygon].try_into().unwrap();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			alice_evm_identity(),
+			web3networks.clone(),
+		));
+		assert_eq!(
+			IMT::id_graphs(BOB, alice_evm_identity()).unwrap(),
+			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
+	});
+}
+
+#[test]
+fn link_identity_with_wrong_network_fails() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: BoundedWeb3Network = vec![Web3Network::BSC].try_into().unwrap();
+		assert_noop!(
+			IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				BOB,
+				alice_substrate_identity(),
+				web3networks.clone(),
+			),
+			Error::<Test>::WrongWeb3NetworkTypes
+		);
 	});
 }
 
@@ -90,20 +146,20 @@ fn remove_identity_works() {
 
 		assert_ok!(IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key,));
 		assert_noop!(
-			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity(),),
+			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_substrate_identity(),),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			BOB,
-			alice_web3_identity(),
-			BoundedWeb3Network::default(),
+			alice_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_eq!(
-			IMT::id_graphs(BOB, alice_web3_identity()).unwrap(),
+			IMT::id_graphs(BOB, alice_substrate_identity()).unwrap(),
 			IdentityContext {
 				link_block: 1,
-				web3networks: BoundedVec::default(),
+				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
 				status: IdentityStatus::Active
 			}
 		);
@@ -112,8 +168,12 @@ fn remove_identity_works() {
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 2);
 
-		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_web3_identity(),));
-		assert_eq!(IMT::id_graphs(BOB, alice_web3_identity()), None);
+		assert_ok!(IMT::remove_identity(
+			RuntimeOrigin::signed(ALICE),
+			BOB,
+			alice_substrate_identity(),
+		));
+		assert_eq!(IMT::id_graphs(BOB, alice_substrate_identity()), None);
 
 		let id_graph = IMT::get_id_graph(&BOB, usize::MAX);
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
@@ -121,7 +181,7 @@ fn remove_identity_works() {
 		assert_eq!(crate::IDGraphLens::<Test>::get(&BOB), 1);
 
 		assert_noop!(
-			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, bob_web3_identity(),),
+			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, bob_substrate_identity(),),
 			Error::<Test>::RemovePrimeIdentityDisallowed
 		);
 	});
@@ -175,8 +235,8 @@ fn id_graph_stats_works() {
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			ALICE,
-			alice_web3_identity(),
-			BoundedWeb3Network::default(),
+			alice_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
