@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, Error, IdentityContext, IdentityStatus, UserShieldingKeyType};
-use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{
-	Address32, Identity, IdentityString, LitentryMultiAddress, Web2Network, USER_SHIELDING_KEY_LEN,
+use crate::{
+	mock::*, BoundedWeb3Network, Error, Identity, IdentityContext, IdentityStatus,
+	UserShieldingKeyType, Web3Network,
 };
+use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
+use litentry_primitives::{Address32, LitentryMultiAddress, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
@@ -32,14 +33,12 @@ fn set_user_shielding_key_works() {
 
 		assert_eq!(IMT::user_shielding_keys(who.clone()), None);
 
-		let ss58_prefix = 131_u16;
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
-			shielding_key.clone(),
-			ss58_prefix
+			shielding_key,
 		));
-		assert_eq!(IMT::user_shielding_keys(who.clone()), Some(shielding_key.clone()));
+		assert_eq!(IMT::user_shielding_keys(who.clone()), Some(shielding_key));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
 			who: who.clone(),
 			key: shielding_key,
@@ -49,21 +48,81 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
-fn link_identity_works() {
+fn link_twitter_identity_works() {
 	new_test_ext(true).execute_with(|| {
-		let ss58_prefix = 131_u16;
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			alice_twitter_identity(1),
+			BoundedWeb3Network::default(),
+		));
+		assert_eq!(
+			IMT::id_graphs(who.clone(), alice_twitter_identity(1)).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: BoundedWeb3Network::default(),
+				status: IdentityStatus::Active
+			}
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
+	});
+}
+
+#[test]
+fn link_substrate_identity_works() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: BoundedWeb3Network = vec![Web3Network::Litentry].try_into().unwrap();
 		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
-			alice_web3_identity(),
-			ss58_prefix
+			alice_substrate_identity(),
+			web3networks.clone(),
 		));
 		assert_eq!(
-			IMT::id_graphs(who.clone(), alice_web3_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active }
+			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
+			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
+	});
+}
+
+#[test]
+fn link_evm_identity_works() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: BoundedWeb3Network =
+			vec![Web3Network::Ethereum, Web3Network::Polygon].try_into().unwrap();
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			alice_evm_identity(),
+			web3networks.clone(),
+		));
+		assert_eq!(
+			IMT::id_graphs(who.clone(), alice_evm_identity()).unwrap(),
+			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
+	});
+}
+
+#[test]
+fn link_identity_with_wrong_network_fails() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: BoundedWeb3Network = vec![Web3Network::BSC].try_into().unwrap();
+		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		assert_noop!(
+			IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				who,
+				alice_substrate_identity(),
+				web3networks.clone(),
+			),
+			Error::<Test>::WrongWeb3NetworkTypes
+		);
 	});
 }
 
@@ -78,7 +137,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_twitter_identity(i),
-				131_u16,
+				BoundedWeb3Network::default(),
 			));
 		}
 		assert_err!(
@@ -86,7 +145,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_twitter_identity(65),
-				131_u16,
+				BoundedWeb3Network::default(),
 			),
 			Error::<Test>::IDGraphLenLimitReached
 		);
@@ -96,34 +155,35 @@ fn cannot_create_more_identities_for_account_than_limit() {
 #[test]
 fn remove_identity_works() {
 	new_test_ext(false).execute_with(|| {
-		let ss58_prefix = 31_u16;
 		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
 		assert_ok!(IMT::set_user_shielding_key(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
-			shielding_key.clone(),
-			ss58_prefix.clone()
+			shielding_key,
 		));
 		assert_noop!(
 			IMT::remove_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
-				alice_web3_identity(),
-				ss58_prefix
+				alice_substrate_identity(),
 			),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
-			alice_web3_identity(),
-			ss58_prefix,
+			alice_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_eq!(
-			IMT::id_graphs(who.clone(), alice_web3_identity()).unwrap(),
-			IdentityContext { link_block: 1, status: IdentityStatus::Active }
+			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
+				status: IdentityStatus::Active
+			}
 		);
 
 		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
@@ -133,10 +193,9 @@ fn remove_identity_works() {
 		assert_ok!(IMT::remove_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
-			alice_web3_identity(),
-			ss58_prefix
+			alice_substrate_identity(),
 		));
-		assert_eq!(IMT::id_graphs(&who.clone(), alice_web3_identity()), None);
+		assert_eq!(IMT::id_graphs(who.clone(), alice_substrate_identity()), None);
 
 		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
@@ -147,8 +206,7 @@ fn remove_identity_works() {
 			IMT::remove_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
-				bob_web3_identity(),
-				ss58_prefix
+				bob_substrate_identity(),
 			),
 			Error::<Test>::RemovePrimeIdentityDisallowed
 		);
@@ -158,36 +216,7 @@ fn remove_identity_works() {
 #[test]
 fn get_id_graph_works() {
 	new_test_ext(true).execute_with(|| {
-		let ss58_prefix = 131_u16;
 		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			alice_web3_identity(),
-			ss58_prefix,
-		));
-
-		let alice_web2_identity = Identity::Web2 {
-			network: Web2Network::Twitter,
-			address: IdentityString::try_from("litentry".as_bytes().to_vec()).unwrap(),
-		};
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			alice_web2_identity.clone(),
-			ss58_prefix,
-		));
-
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
-		// "+1": because of the main id is added by default when first calling creat_identity.
-		assert_eq!(id_graph.len(), 2 + 1);
-	});
-}
-
-#[test]
-fn get_id_graph_with_max_len_works() {
-	new_test_ext(true).execute_with(|| {
-		let who = LitentryMultiAddress::Substrate ( Address32::from(BOB));
 
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		// set the block number too as it's used to tell "recent"
@@ -197,56 +226,60 @@ fn get_id_graph_with_max_len_works() {
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_twitter_identity(i.try_into().unwrap()),
-				131_u16,
+				BoundedWeb3Network::default(),
 			));
 		}
 		// the full id_graph should have 22 elements, including the prime_id
-		assert_eq!(IMT::get_id_graph(&who.clone(), usize::MAX).len(), 22);
+		assert_eq!(IMT::get_id_graph(&who, usize::MAX).len(), 22);
 
 		// only get the recent 15 identities
-		let id_graph = IMT::get_id_graph(&who.clone(), 15);
-		for i in id_graph.clone() {
-			println!("{:?}", String::from_utf8(i.0.flat()).unwrap());
-		}
+		let id_graph = IMT::get_id_graph(&who, 15);
 		assert_eq!(id_graph.len(), 15);
 		// index 0 has the most recent identity
-		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
+		assert_eq!(
+			id_graph.get(0).unwrap().0,
+			Identity::Twitter("alice21".as_bytes().to_vec().try_into().unwrap())
+		);
 		// index 14 has the least recent identity
-		assert_eq!(String::from_utf8(id_graph.get(14).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice7");
+		assert_eq!(
+			id_graph.get(14).unwrap().0,
+			Identity::Twitter("alice7".as_bytes().to_vec().try_into().unwrap())
+		);
 
 		// try to get more than id_graph length
-		let id_graph = IMT::get_id_graph(&who.clone(), 30);
+		let id_graph = IMT::get_id_graph(&who, 30);
 		assert_eq!(id_graph.len(), 22);
-		assert_eq!(String::from_utf8(id_graph.get(0).unwrap().0.flat()).unwrap(), "did:twitter:web2:_:alice21");
-		assert_eq!(String::from_utf8(id_graph.get(21).unwrap().0.flat()).unwrap(), "did:litmus:web3:substrate:0x0202020202020202020202020202020202020202020202020202020202020202");
+		assert_eq!(
+			id_graph.get(0).unwrap().0,
+			Identity::Twitter("alice21".as_bytes().to_vec().try_into().unwrap())
+		);
+		assert_eq!(id_graph.get(21).unwrap().0, Identity::Substrate([2u8; 32].into()));
 	});
 }
 
 #[test]
 fn id_graph_stats_works() {
 	new_test_ext(true).execute_with(|| {
-		let ss58_prefix = 131_u16;
-
 		let alice = LitentryMultiAddress::Substrate(Address32::from(ALICE));
 		let bob = LitentryMultiAddress::Substrate(Address32::from(BOB));
 
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
-			alice_web3_identity(),
-			ss58_prefix,
+			alice_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
 			alice_twitter_identity(1),
-			ss58_prefix,
+			BoundedWeb3Network::default(),
 		));
 
 		let stats = IMT::id_graph_stats().unwrap();
 		assert_eq!(stats.len(), 2);
 		assert!(stats.contains(&(alice.clone(), 2)));
-		//bob identity is created by setting shielding key
+		// bob's identity is created when setting shielding key
 		assert!(stats.contains(&(bob.clone(), 1)));
 	});
 }

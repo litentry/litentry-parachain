@@ -11,7 +11,6 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../../common/call';
-import { substrateNetworkMapping } from '../../common/helpers';
 import colors from 'colors';
 
 export async function assertInitialIdGraphCreated(
@@ -28,12 +27,7 @@ export async function assertInitialIdGraphCreated(
         assert.equal(who, u8aToHex(signer[index].addressRaw));
 
         // Check identity in idgraph
-        const expectedIdentity = await buildIdentityHelper(
-            u8aToHex(signer[index].addressRaw),
-            substrateNetworkMapping[context.chainIdentifier],
-            'Substrate',
-            context
-        );
+        const expectedIdentity = await buildIdentityHelper(u8aToHex(signer[index].addressRaw), 'Substrate', context);
         const expectedTarget = expectedIdentity[`as${expectedIdentity.type}`];
         const idGraphTarget = idGraphData[0][0][`as${idGraphData[0][0].type}`];
         assert.equal(expectedTarget.toString(), idGraphTarget.toString());
@@ -67,12 +61,7 @@ export async function assertIdentityLinked(
         const who = eventData.account.toHex();
 
         // Check prime identity in idGraph
-        const expectedPrimeIdentity = await buildIdentityHelper(
-            u8aToHex(signer.addressRaw),
-            substrateNetworkMapping[context.chainIdentifier],
-            'Substrate',
-            context
-        );
+        const expectedPrimeIdentity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'Substrate', context);
         assert.equal(
             expectedPrimeIdentity.toString(),
             eventIdGraph[events.length][0].toString(),

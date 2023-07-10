@@ -97,7 +97,7 @@ async function runDirectCall(keyPairType: KeypairType) {
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceAddress);
 
     console.log('Send direct linkIdentity call... hash:', hash);
-    const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2', context);
+    const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
         parachainApi,
         mrenclave,
@@ -114,6 +114,7 @@ async function runDirectCall(keyPairType: KeypairType) {
                 },
             })
             .toHex(),
+        parachainApi.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']).toHex(),
         keyNonce,
         hash
     );
@@ -137,14 +138,12 @@ async function runDirectCall(keyPairType: KeypairType) {
     ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
     assert.equal(idgraphArray.length, 2);
     // the first identity is the twitter identity
-    assert.isTrue(idgraphArray[0][0].isWeb2);
-    assert.isTrue(idgraphArray[0][0].asWeb2.network.isTwitter);
-    assert.equal(u8aToString(idgraphArray[0][0].asWeb2.address.toU8a()), '$mock_user');
+    assert.isTrue(idgraphArray[0][0].isTwitter);
+    assert.equal(u8aToString(idgraphArray[0][0].asTwitter.toU8a()), '$mock_user');
     assert.isTrue(idgraphArray[0][1].status.isActive);
     // the second identity is the substrate identity (prime identity)
     assert.isTrue(idgraphArray[1][0].isSubstrate);
-    assert.isTrue(idgraphArray[1][0].asSubstrate.network.isLitentryRococo);
-    assert.equal(idgraphArray[1][0].asSubstrate.address.toHex(), u8aToHex(alice.publicKey));
+    assert.equal(idgraphArray[1][0].asSubstrate.toHex(), u8aToHex(alice.publicKey));
     assert.isTrue(idgraphArray[1][1].status.isActive);
 
     console.log('Send UserShieldingKey getter for alice ...');

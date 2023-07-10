@@ -1972,7 +1972,7 @@ export default {
     CorePrimitivesErrorErrorDetail: {
         _enum: {
             ImportError: 'Null',
-            UnauthorisedSigner: 'Null',
+            UnauthorizedSigner: 'Null',
             StfError: 'Bytes',
             SendStfRequestFailed: 'Null',
             UserShieldingKeyNotFound: 'Null',
@@ -1985,6 +1985,7 @@ export default {
             VerifySubstrateSignatureFailed: 'Null',
             VerifyEvmSignatureFailed: 'Null',
             RecoverEvmAddressFailed: 'Null',
+            Web3NetworkOutOfBounds: 'Null',
         },
     },
     /**
@@ -2127,19 +2128,31 @@ export default {
             A5: 'Bytes',
             A6: 'Null',
             A7: 'Bytes',
-            A8: 'Vec<CorePrimitivesAssertionSupportedNetwork>',
+            A8: 'Vec<CorePrimitivesNetworkWeb3Network>',
             A9: 'Null',
             A10: 'Bytes',
             A11: 'Bytes',
             A12: 'Bytes',
             A13: 'AccountId32',
+            A14: 'Null',
         },
     },
     /**
-     * Lookup149: core_primitives::assertion::SupportedNetwork
+     * Lookup149: core_primitives::network::Web3Network
      **/
-    CorePrimitivesAssertionSupportedNetwork: {
-        _enum: ['Litentry', 'Litmus', 'LitentryRococo', 'Polkadot', 'Kusama', 'Khala', 'Ethereum', 'TestNet'],
+    CorePrimitivesNetworkWeb3Network: {
+        _enum: [
+            'Polkadot',
+            'Kusama',
+            'Litentry',
+            'Litmus',
+            'LitentryRococo',
+            'Khala',
+            'SubstrateTestnet',
+            'Ethereum',
+            'Polygon',
+            'BSC',
+        ],
     },
     /**
      * Lookup151: pallet_group::pallet::Event<T, I>
@@ -2174,6 +2187,9 @@ export default {
                 mrEnclave: '[u8;32]',
                 hash_: 'H256',
                 data: 'Bytes',
+            },
+            NewMrenclaveSet: {
+                newMrenclave: '[u8;32]',
             },
         },
     },
@@ -3995,6 +4011,7 @@ export default {
                 user: 'AccountId32',
                 encryptedIdentity: 'Bytes',
                 encryptedValidationData: 'Bytes',
+                encryptedWeb3networks: 'Bytes',
                 nonce: '[u8;12]',
             },
             remove_identity: {
@@ -4258,7 +4275,7 @@ export default {
                 certificateChain: 'Bytes',
             },
             remove_scheduled_enclave: {
-                sidechainBlockNumber: 'u64',
+                sidechainBlockNumber: 'Compact<u64>',
             },
             register_tcb_info: {
                 tcbInfo: 'Bytes',
@@ -4278,6 +4295,25 @@ export default {
                     new_: 'new',
                 },
                 new_: 'AccountId32',
+            },
+            __Unused14: 'Null',
+            __Unused15: 'Null',
+            __Unused16: 'Null',
+            __Unused17: 'Null',
+            __Unused18: 'Null',
+            __Unused19: 'Null',
+            __Unused20: 'Null',
+            __Unused21: 'Null',
+            __Unused22: 'Null',
+            __Unused23: 'Null',
+            __Unused24: 'Null',
+            __Unused25: 'Null',
+            __Unused26: 'Null',
+            __Unused27: 'Null',
+            __Unused28: 'Null',
+            __Unused29: 'Null',
+            set_mrenclave: {
+                newMrenclave: '[u8;32]',
             },
         },
     },
@@ -5362,7 +5398,7 @@ export default {
      * Lookup527: pallet_identity_management::pallet::Error<T>
      **/
     PalletIdentityManagementError: {
-        _enum: ['DelegateeNotExist', 'UnauthorisedUser'],
+        _enum: ['DelegateeNotExist', 'UnauthorizedUser'],
     },
     /**
      * Lookup528: pallet_asset_manager::pallet::Error<T>
@@ -5409,7 +5445,7 @@ export default {
     PalletVcManagementError: {
         _enum: [
             'DelegateeNotExist',
-            'UnauthorisedUser',
+            'UnauthorizedUser',
             'VCAlreadyExists',
             'VCNotExist',
             'VCSubjectMismatch',

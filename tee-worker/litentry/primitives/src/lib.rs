@@ -30,18 +30,19 @@ mod validation_data;
 pub use aes::*;
 pub use ethereum_signature::*;
 pub use identity::*;
+use sp_std::vec::Vec;
 pub use validation_data::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use log::error;
 pub use parentchain_primitives::{
+	all_evm_web3networks, all_substrate_web3networks, all_web3networks,
 	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
-	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
-	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IndexingNetworks,
+	BlockNumber as ParentchainBlockNumber, BoundedWeb3Network, ErrorDetail, ErrorString,
+	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
 	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
-	Signature as ParentchainSignature, SupportedNetwork, UserShieldingKeyNonceType,
-	UserShieldingKeyType, VCMPError, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN,
-	USER_SHIELDING_KEY_LEN,
+	Signature as ParentchainSignature, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError,
+	Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
 };
 use scale_info::TypeInfo;
 use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, Hasher};
@@ -176,3 +177,5 @@ pub fn recover_evm_address(
 	addr[..20].copy_from_slice(&hashed_pk[12..32]);
 	Ok(addr)
 }
+
+pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);

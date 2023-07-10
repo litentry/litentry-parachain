@@ -21,36 +21,27 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use lc_credentials::Credential;
-use litentry_primitives::LitentryMultiAddress;
-use log::*;
-use std::vec::Vec;
 
 const VC_A1_SUBJECT_DESCRIPTION: &str =
 	"The user has verified one identity in Web 2 and one identity in Web 3";
 const VC_A1_SUBJECT_TYPE: &str = "Basic Identity Verification";
 const VC_A1_SUBJECT_TAG: [&str; 1] = ["Litentry Network"];
 
-pub fn build(
-	identities: Vec<Identity>,
-	shard: &ShardIdentifier,
-	who: &LitentryMultiAddress,
-) -> Result<Credential> {
-	debug!("Assertion A1 build, who: {:?}", who);
+pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+	debug!("Assertion A1 build, who: {:?}", account_id_to_string(&req.who));
 
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
 
-	for identity in &identities {
-		if identity.is_web2() {
+	for identity in &req.vec_identity {
+		if identity.0.is_web2() {
 			web2_cnt += 1;
-		} else if identity.is_web3() {
+		} else if identity.0.is_web3() {
 			web3_cnt += 1;
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

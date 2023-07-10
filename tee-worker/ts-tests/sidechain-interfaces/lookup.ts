@@ -287,40 +287,15 @@ export default {
      **/
     LitentryPrimitivesIdentity: {
         _enum: {
-            Substrate: {
-                network: 'LitentryPrimitivesIdentitySubstrateNetwork',
-                address: 'LitentryPrimitivesIdentityAddress32',
-            },
-            Evm: {
-                network: 'LitentryPrimitivesIdentityEvmNetwork',
-                address: 'LitentryPrimitivesIdentityAddress20',
-            },
-            Web2: {
-                network: 'LitentryPrimitivesIdentityWeb2Network',
-                address: 'Bytes',
-            },
+            Twitter: 'Bytes',
+            Discord: 'Bytes',
+            Github: 'Bytes',
+            Substrate: 'LitentryPrimitivesIdentityAddress32',
+            Evm: 'LitentryPrimitivesIdentityAddress20',
         },
     },
     /**
-     * Lookup42: litentry_primitives::identity::SubstrateNetwork
-     **/
-    LitentryPrimitivesIdentitySubstrateNetwork: {
-        _enum: ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'TestNet'],
-    },
-    /**
-     * Lookup43: litentry_primitives::identity::EvmNetwork
-     **/
-    LitentryPrimitivesIdentityEvmNetwork: {
-        _enum: ['Ethereum', 'BSC'],
-    },
-    /**
-     * Lookup44: litentry_primitives::identity::Web2Network
-     **/
-    LitentryPrimitivesIdentityWeb2Network: {
-        _enum: ['Twitter', 'Discord', 'Github'],
-    },
-    /**
-     * Lookup46: frame_system::Phase
+     * Lookup43: frame_system::Phase
      **/
     FrameSystemPhase: {
         _enum: {
@@ -330,14 +305,14 @@ export default {
         },
     },
     /**
-     * Lookup50: frame_system::LastRuntimeUpgradeInfo
+     * Lookup47: frame_system::LastRuntimeUpgradeInfo
      **/
     FrameSystemLastRuntimeUpgradeInfo: {
         specVersion: 'Compact<u32>',
         specName: 'Text',
     },
     /**
-     * Lookup54: frame_system::pallet::Call<T>
+     * Lookup51: frame_system::pallet::Call<T>
      **/
     FrameSystemCall: {
         _enum: {
@@ -372,7 +347,7 @@ export default {
         },
     },
     /**
-     * Lookup58: frame_system::limits::BlockWeights
+     * Lookup55: frame_system::limits::BlockWeights
      **/
     FrameSystemLimitsBlockWeights: {
         baseBlock: 'SpWeightsWeightV2Weight',
@@ -380,7 +355,7 @@ export default {
         perClass: 'FrameSupportDispatchPerDispatchClassWeightsPerClass',
     },
     /**
-     * Lookup59: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+     * Lookup56: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
      **/
     FrameSupportDispatchPerDispatchClassWeightsPerClass: {
         normal: 'FrameSystemLimitsWeightsPerClass',
@@ -388,7 +363,7 @@ export default {
         mandatory: 'FrameSystemLimitsWeightsPerClass',
     },
     /**
-     * Lookup60: frame_system::limits::WeightsPerClass
+     * Lookup57: frame_system::limits::WeightsPerClass
      **/
     FrameSystemLimitsWeightsPerClass: {
         baseExtrinsic: 'SpWeightsWeightV2Weight',
@@ -397,13 +372,13 @@ export default {
         reserved: 'Option<SpWeightsWeightV2Weight>',
     },
     /**
-     * Lookup62: frame_system::limits::BlockLength
+     * Lookup59: frame_system::limits::BlockLength
      **/
     FrameSystemLimitsBlockLength: {
         max: 'FrameSupportDispatchPerDispatchClassU32',
     },
     /**
-     * Lookup63: frame_support::dispatch::PerDispatchClass<T>
+     * Lookup60: frame_support::dispatch::PerDispatchClass<T>
      **/
     FrameSupportDispatchPerDispatchClassU32: {
         normal: 'u32',
@@ -411,14 +386,14 @@ export default {
         mandatory: 'u32',
     },
     /**
-     * Lookup64: sp_weights::RuntimeDbWeight
+     * Lookup61: sp_weights::RuntimeDbWeight
      **/
     SpWeightsRuntimeDbWeight: {
         read: 'u64',
         write: 'u64',
     },
     /**
-     * Lookup65: sp_version::RuntimeVersion
+     * Lookup62: sp_version::RuntimeVersion
      **/
     SpVersionRuntimeVersion: {
         specName: 'Text',
@@ -431,7 +406,7 @@ export default {
         stateVersion: 'u8',
     },
     /**
-     * Lookup71: frame_system::pallet::Error<T>
+     * Lookup68: frame_system::pallet::Error<T>
      **/
     FrameSystemError: {
         _enum: [
@@ -444,7 +419,7 @@ export default {
         ],
     },
     /**
-     * Lookup72: pallet_timestamp::pallet::Call<T>
+     * Lookup69: pallet_timestamp::pallet::Call<T>
      **/
     PalletTimestampCall: {
         _enum: {
@@ -454,7 +429,7 @@ export default {
         },
     },
     /**
-     * Lookup74: pallet_balances::BalanceLock<Balance>
+     * Lookup71: pallet_balances::BalanceLock<Balance>
      **/
     PalletBalancesBalanceLock: {
         id: '[u8;8]',
@@ -462,20 +437,20 @@ export default {
         reasons: 'PalletBalancesReasons',
     },
     /**
-     * Lookup75: pallet_balances::Reasons
+     * Lookup72: pallet_balances::Reasons
      **/
     PalletBalancesReasons: {
         _enum: ['Fee', 'Misc', 'All'],
     },
     /**
-     * Lookup78: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+     * Lookup75: pallet_balances::ReserveData<ReserveIdentifier, Balance>
      **/
     PalletBalancesReserveData: {
         id: '[u8;8]',
         amount: 'u128',
     },
     /**
-     * Lookup80: pallet_balances::pallet::Call<T, I>
+     * Lookup77: pallet_balances::pallet::Call<T, I>
      **/
     PalletBalancesCall: {
         _enum: {
@@ -508,7 +483,7 @@ export default {
         },
     },
     /**
-     * Lookup84: pallet_balances::pallet::Error<T, I>
+     * Lookup81: pallet_balances::pallet::Error<T, I>
      **/
     PalletBalancesError: {
         _enum: [
@@ -523,13 +498,13 @@ export default {
         ],
     },
     /**
-     * Lookup86: pallet_transaction_payment::Releases
+     * Lookup83: pallet_transaction_payment::Releases
      **/
     PalletTransactionPaymentReleases: {
         _enum: ['V1Ancient', 'V2'],
     },
     /**
-     * Lookup87: pallet_sudo::pallet::Call<T>
+     * Lookup84: pallet_sudo::pallet::Call<T>
      **/
     PalletSudoCall: {
         _enum: {
@@ -553,7 +528,7 @@ export default {
         },
     },
     /**
-     * Lookup89: pallet_parentchain::pallet::Call<T>
+     * Lookup86: pallet_parentchain::pallet::Call<T>
      **/
     PalletParentchainCall: {
         _enum: {
@@ -563,7 +538,7 @@ export default {
         },
     },
     /**
-     * Lookup90: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
+     * Lookup87: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
      **/
     SpRuntimeHeader: {
         parentHash: 'H256',
@@ -573,30 +548,45 @@ export default {
         digest: 'SpRuntimeDigest',
     },
     /**
-     * Lookup91: sp_runtime::traits::BlakeTwo256
+     * Lookup88: sp_runtime::traits::BlakeTwo256
      **/
     SpRuntimeBlakeTwo256: 'Null',
     /**
-     * Lookup92: pallet_identity_management_tee::pallet::Call<T>
+     * Lookup89: pallet_identity_management_tee::pallet::Call<T>
      **/
     PalletIdentityManagementTeeCall: {
         _enum: {
             set_user_shielding_key: {
                 who: 'LitentryPrimitivesLitentryMultiAddress',
                 key: '[u8;32]',
-                parentSs58Prefix: 'u16',
             },
             link_identity: {
                 who: 'LitentryPrimitivesLitentryMultiAddress',
                 identity: 'LitentryPrimitivesIdentity',
-                parentSs58Prefix: 'u16',
+                web3networks: 'Vec<CorePrimitivesNetworkWeb3Network>',
             },
             remove_identity: {
                 who: 'LitentryPrimitivesLitentryMultiAddress',
                 identity: 'LitentryPrimitivesIdentity',
-                parentSs58Prefix: 'u16',
             },
         },
+    },
+    /**
+     * Lookup91: core_primitives::network::Web3Network
+     **/
+    CorePrimitivesNetworkWeb3Network: {
+        _enum: [
+            'Polkadot',
+            'Kusama',
+            'Litentry',
+            'Litmus',
+            'LitentryRococo',
+            'Khala',
+            'SubstrateTestnet',
+            'Ethereum',
+            'Polygon',
+            'BSC',
+        ],
     },
     /**
      * Lookup93: pallet_sudo::pallet::Error<T>
@@ -609,6 +599,7 @@ export default {
      **/
     PalletIdentityManagementTeeIdentityContext: {
         linkBlock: 'u32',
+        web3networks: 'Vec<CorePrimitivesNetworkWeb3Network>',
         status: 'PalletIdentityManagementTeeIdentityContextIdentityStatus',
     },
     /**
@@ -627,6 +618,8 @@ export default {
             'LinkPrimeIdentityDisallowed',
             'RemovePrimeIdentityDisallowed',
             'IDGraphLenLimitReached',
+            'Web3NetworkLenLimitReached',
+            'WrongWeb3NetworkTypes',
         ],
     },
     /**

@@ -175,6 +175,7 @@ export function createSignedTrustedCallLinkIdentity(
     address: Address,
     identity: string,
     validationData: string,
+    web3networks: string,
     keyNonce: string,
     hash: string
 ) {
@@ -182,12 +183,12 @@ export function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+            '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
         ],
         who,
         mrenclave,
         nonce,
-        [address, address, identity, validationData, keyNonce, hash]
+        [address, address, identity, validationData, web3networks, keyNonce, hash]
     );
 }
 

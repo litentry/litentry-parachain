@@ -444,6 +444,7 @@ jobs:
       - name: Run unittests
         run: |
           rustup show
+          cargo test --locked --release -p core-primitives --lib
           # no `skip-ias-check` feature
           cargo test --locked --release -p pallet-* --lib
           # with `skip-ias-check` feature only

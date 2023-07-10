@@ -11,10 +11,11 @@ import type {
     SubmittableExtrinsic,
     SubmittableExtrinsicFunction,
 } from '@polkadot/api-base/types';
-import type { Bytes, Compact, U8aFixed, Vec, bool, u128, u16, u32, u64 } from '@polkadot/types-codec';
+import type { Bytes, Compact, U8aFixed, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
 import type { Call, MultiAddress } from '@polkadot/types/interfaces/runtime';
 import type {
+    CorePrimitivesNetworkWeb3Network,
     LitentryPrimitivesIdentity,
     LitentryPrimitivesLitentryMultiAddress,
     SpRuntimeHeader,
@@ -216,14 +217,36 @@ declare module '@polkadot/api-base/types/submittable' {
                         | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
-                        | { Web2: any }
                         | string
                         | Uint8Array,
-                    parentSs58Prefix: u16 | AnyNumber | Uint8Array
+                    web3networks:
+                        | Vec<CorePrimitivesNetworkWeb3Network>
+                        | (
+                              | CorePrimitivesNetworkWeb3Network
+                              | 'Polkadot'
+                              | 'Kusama'
+                              | 'Litentry'
+                              | 'Litmus'
+                              | 'LitentryRococo'
+                              | 'Khala'
+                              | 'SubstrateTestnet'
+                              | 'Ethereum'
+                              | 'Polygon'
+                              | 'BSC'
+                              | number
+                              | Uint8Array
+                          )[]
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesLitentryMultiAddress, LitentryPrimitivesIdentity, u16]
+                [
+                    LitentryPrimitivesLitentryMultiAddress,
+                    LitentryPrimitivesIdentity,
+                    Vec<CorePrimitivesNetworkWeb3Network>
+                ]
             >;
             removeIdentity: AugmentedSubmittable<
                 (
@@ -235,14 +258,15 @@ declare module '@polkadot/api-base/types/submittable' {
                         | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
-                        | { Web2: any }
                         | string
-                        | Uint8Array,
-                    parentSs58Prefix: u16 | AnyNumber | Uint8Array
+                        | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesLitentryMultiAddress, LitentryPrimitivesIdentity, u16]
+                [LitentryPrimitivesLitentryMultiAddress, LitentryPrimitivesIdentity]
             >;
             setUserShieldingKey: AugmentedSubmittable<
                 (
@@ -252,10 +276,9 @@ declare module '@polkadot/api-base/types/submittable' {
                         | { Evm: any }
                         | string
                         | Uint8Array,
-                    key: U8aFixed | string | Uint8Array,
-                    parentSs58Prefix: u16 | AnyNumber | Uint8Array
+                    key: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesLitentryMultiAddress, U8aFixed, u16]
+                [LitentryPrimitivesLitentryMultiAddress, U8aFixed]
             >;
             /**
              * Generic tx

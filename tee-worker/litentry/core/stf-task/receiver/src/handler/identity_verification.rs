@@ -58,6 +58,7 @@ where
 				LitentryMultiAddress::Substrate(enclave_signer.into()),
 				self.req.who.clone(),
 				self.req.identity.clone(),
+				self.req.bounded_web3networks.clone(),
 				self.req.hash,
 			);
 			let _ = self

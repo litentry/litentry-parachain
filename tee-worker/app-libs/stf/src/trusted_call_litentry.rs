@@ -30,7 +30,8 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
 use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, LitentryMultiAddress, UserShieldingKeyType, ValidationData,
+	Assertion, BoundedWeb3Network, ErrorDetail, Identity, IdentityNetworkTuple,
+	LitentryMultiAddress, UserShieldingKeyType, ValidationData, Web3Network,
 };
 use log::*;
 use std::vec::Vec;
@@ -40,13 +41,12 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: LitentryMultiAddress,
 		key: UserShieldingKeyType,
-		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
 			is_authorized_signer(&signer, &(&who).into()),
 			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
 		);
-		IMTCall::set_user_shielding_key { who, key, parent_ss58_prefix }
+		IMTCall::set_user_shielding_key { who, key }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
 	}
@@ -57,6 +57,7 @@ impl TrustedCallSigned {
 		who: LitentryMultiAddress,
 		identity: Identity,
 		validation_data: ValidationData,
+		web3networks: Vec<Web3Network>,
 		nonce: UserShieldingKeyNonceType,
 		hash: H256,
 		shard: &ShardIdentifier,
@@ -69,6 +70,10 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
+		let bounded_web3networks = web3networks
+			.try_into()
+			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::Web3NetworkOutOfBounds))?;
+
 		// note it's the signer's nonce, not `who`
 		// we intentionally use `System::account_nonce - 1` to make up for the increment at the
 		// beginning of STF execution, otherwise it might be unexpected that we were hoping
@@ -80,6 +85,7 @@ impl TrustedCallSigned {
 			who,
 			identity,
 			validation_data,
+			bounded_web3networks,
 			sidechain_nonce,
 			key_nonce: nonce,
 			key,
@@ -95,7 +101,6 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: LitentryMultiAddress,
 		identity: Identity,
-		parent_ss58_prefix: u16,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
 			is_authorized_signer(&signer, &(&who).into()),
@@ -104,7 +109,7 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::remove_identity { who, identity, parent_ss58_prefix }
+		IMTCall::remove_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
 
@@ -128,10 +133,20 @@ impl TrustedCallSigned {
 		);
 
 		let id_graph = IMT::get_id_graph(&who, usize::MAX);
-		let vec_identity: Vec<Identity> = id_graph
+		let assertion_networks = assertion.get_supported_web3networks();
+		let vec_identity: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
 			.filter(|item| item.1.status == IdentityStatus::Active)
-			.map(|item| item.0)
+			.map(|item| {
+				let mut networks = item.1.web3networks.to_vec();
+				// filter out the web3networks which are not supported by this specific `assertion`.
+				// We do it here before every request sending because:
+				// - it's a common step for all assertion buildings, for those assertions which only
+				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
+				// - it helps to reduce the request size a bit
+				networks.retain(|n| assertion_networks.contains(n));
+				(item.0, networks)
+			})
 			.collect();
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
@@ -152,7 +167,7 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: LitentryMultiAddress,
 		identity: Identity,
-		parent_ss58_prefix: u16,
+		web3networks: BoundedWeb3Network,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer)
@@ -161,7 +176,7 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::link_identity { who, identity, parent_ss58_prefix }
+		IMTCall::link_identity { who, identity, web3networks }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::LinkIdentityFailed(e.into()))?;
 

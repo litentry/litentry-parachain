@@ -53,7 +53,7 @@ export default {
                 balance_shield: '(LitentryMultiAddress, AccountId, Balance)',
                 set_user_shielding_key: '(LitentryMultiAddress, LitentryMultiAddress, UserShieldingKeyType, H256)',
                 link_identity:
-                    '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+                    '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
                 remove_identity: '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, H256)',
                 request_vc: '(LitentryMultiAddress, LitentryMultiAddress, Assertion, H256)',
             },
@@ -93,34 +93,29 @@ export default {
         // identity management
         LitentryIdentity: {
             _enum: {
-                Substrate: 'SubstrateIdentity',
-                Evm: 'EvmIdentity',
-                Web2: 'Web2Identity',
+                Twitter: 'IdentityString',
+                Discord: 'IdentityString',
+                Github: 'IdentityString',
+                Substrate: 'Address32',
+                Evm: 'Address20',
             },
-        },
-        SubstrateIdentity: {
-            network: 'SubstrateNetwork',
-            address: 'Address32',
-        },
-        EvmIdentity: {
-            network: 'EvmNetwork',
-            address: 'Address20',
-        },
-        Web2Identity: {
-            network: 'Web2Network',
-            address: 'IdentityString',
         },
         Address32: '[u8;32]',
         Address20: '[u8;20]',
         IdentityString: 'Vec<u8>',
-        Web2Network: {
-            _enum: ['Twitter', 'Discord', 'Github'],
-        },
-        SubstrateNetwork: {
-            _enum: ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'TestNet'],
-        },
-        EvmNetwork: {
-            _enum: ['Ethereum', 'BSC'],
+        Web3Network: {
+            _enum: [
+                'Polkadot',
+                'Kusama',
+                'Litentry',
+                'Litmus',
+                'LitentryRococo',
+                'Khala',
+                'SubstrateTestnet',
+                'Ethereum',
+                'Polygon',
+                'BSC',
+            ],
         },
         LitentryValidationData: {
             _enum: {
@@ -175,8 +170,10 @@ export default {
 
         IdentityContext: {
             link_block: 'BlockNumber',
+            web3networks: 'BoundedWeb3Network',
             status: 'IdentityStatus',
         },
+        BoundedWeb3Network: 'BoundedVec<Web3Network, ConstU32<128>>',
 
         // teerex
         ShardIdentifier: 'H256',

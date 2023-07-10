@@ -22,9 +22,10 @@ use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, LitentryMultiAddress, ValidationData};
+use litentry_primitives::{
+	Identity, LitentryMultiAddress, UserShieldingKeyNonceType, ValidationData, Web3Network,
+};
 use log::debug;
-use parachain_core_primitives::UserShieldingKeyNonceType;
 use std::vec::Vec;
 use substrate_api_client::GenericAddress;
 
@@ -34,6 +35,7 @@ pub struct LinkIdentityArgs {
 	account: AccountId,
 	encrypted_identity: Vec<u8>,
 	encrypted_validation_data: Vec<u8>,
+	encrypted_web3networks: Vec<u8>,
 	nonce: UserShieldingKeyNonceType,
 }
 
@@ -49,6 +51,8 @@ impl LinkIdentityArgs {
 		let validation_data = ValidationData::decode(
 			&mut executor.decrypt(&self.encrypted_validation_data)?.as_slice(),
 		)?;
+		let web3networks: Vec<Web3Network> =
+			Decode::decode(&mut executor.decrypt(&self.encrypted_web3networks)?.as_slice())?;
 
 		if address.is_some() {
 			debug!(
@@ -65,6 +69,7 @@ impl LinkIdentityArgs {
 				LitentryMultiAddress::Substrate(self.account.clone().into()),
 				identity,
 				validation_data,
+				web3networks,
 				self.nonce,
 				hash,
 			);

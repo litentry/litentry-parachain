@@ -15,6 +15,7 @@
 
 */
 
+use litentry_primitives::BoundedWeb3Network;
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
@@ -39,7 +40,7 @@ use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
-	VCMPError, ValidationData,
+	VCMPError, ValidationData, Web3Network,
 };
 use log::*;
 use sp_core::crypto::AccountId32;
@@ -119,6 +120,7 @@ pub enum TrustedCall {
 		LitentryMultiAddress,
 		Identity,
 		ValidationData,
+		Vec<Web3Network>,
 		UserShieldingKeyNonceType,
 		H256,
 	),
@@ -126,7 +128,13 @@ pub enum TrustedCall {
 	request_vc(LitentryMultiAddress, LitentryMultiAddress, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(LitentryMultiAddress, LitentryMultiAddress, Identity, H256),
+	link_identity_callback(
+		LitentryMultiAddress,
+		LitentryMultiAddress,
+		Identity,
+		BoundedWeb3Network,
+		H256,
+	),
 	request_vc_callback(
 		LitentryMultiAddress,
 		LitentryMultiAddress,
@@ -482,17 +490,10 @@ where
 			// handle it here to be able to send error events to the parachain
 			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
 				debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
 				let account = SgxParentchainTypeConverter::convert((&who).into());
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
-				match Self::set_user_shielding_key_internal(
-					signer.into(),
-					who.clone(),
-					key,
-					parent_ss58_prefix,
-				) {
+				match Self::set_user_shielding_key_internal(signer.into(), who.clone(), key) {
 					Ok(key) => {
 						debug!("pushing user_shielding_key_set event ...");
 						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
@@ -516,7 +517,15 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity(signer, who, identity, validation_data, nonce, hash) => {
+			TrustedCall::link_identity(
+				signer,
+				who,
+				identity,
+				validation_data,
+				web3networks,
+				nonce,
+				hash,
+			) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
 
 				if let Err(e) = Self::link_identity_internal(
@@ -524,6 +533,7 @@ where
 					who.clone(),
 					identity,
 					validation_data,
+					web3networks,
 					nonce,
 					hash,
 					shard,
@@ -544,15 +554,7 @@ where
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
 
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-
-				match Self::remove_identity_internal(
-					signer.into(),
-					who,
-					identity.clone(),
-					parent_ss58_prefix,
-				) {
+				match Self::remove_identity_internal(signer.into(), who, identity.clone()) {
 					Ok(key) => {
 						debug!("pushing identity_removed event ...");
 						calls.push(OpaqueCall::from_tuple(&(
@@ -575,20 +577,23 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity_callback(signer, who, identity, hash) => {
+			TrustedCall::link_identity_callback(
+				signer,
+				who,
+				identity,
+				bounded_web3networks,
+				hash,
+			) => {
 				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert((&who).into());
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-
 				match Self::link_identity_callback_internal(
 					signer.into(),
 					who.clone(),
 					identity.clone(),
-					parent_ss58_prefix,
+					bounded_web3networks,
 				) {
 					Ok(key) => {
 						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);

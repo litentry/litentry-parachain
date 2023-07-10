@@ -121,9 +121,11 @@ declare module '@polkadot/api-base/types/storage' {
                         | Uint8Array,
                     arg2:
                         | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
-                        | { Web2: any }
                         | string
                         | Uint8Array
                 ) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>,

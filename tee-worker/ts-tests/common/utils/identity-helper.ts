@@ -6,20 +6,14 @@ import { assert } from 'chai';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
-import type { LitentryValidationData } from '../../parachain-interfaces/identity/types';
+import type { LitentryValidationData, Web3Network } from '../../parachain-interfaces/identity/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import type {
-    EvmNetwork,
-    IdentityGenericEvent,
-    IntegrationTestContext,
-    SubstrateNetwork,
-    Web2Network,
-} from '../type-definitions';
+import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
 import { aesKey, keyNonce } from '../call';
 
-// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
+// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary AccountId> + <identity-to-be-linked>).ciphertext)
 export function generateVerificationMessage(
     context: IntegrationTestContext,
     signerAddress: Uint8Array,
@@ -36,15 +30,11 @@ export function generateVerificationMessage(
 
 export async function buildIdentityHelper(
     address: HexString | string,
-    network: SubstrateNetwork | EvmNetwork | Web2Network,
     type: LitentryPrimitivesIdentity['type'],
     context: IntegrationTestContext
 ): Promise<LitentryPrimitivesIdentity> {
     const identity = {
-        [type]: {
-            address,
-            network,
-        },
+        [type]: address,
     };
 
     const encodedIdentity = context.sidechainRegistry.createType(
@@ -85,7 +75,8 @@ export async function buildIdentityTxs(
     signers: KeyringPair[] | KeyringPair,
     identities: LitentryPrimitivesIdentity[],
     method: 'setUserShieldingKey' | 'linkIdentity' | 'removeIdentity',
-    validations?: LitentryValidationData[]
+    validations?: LitentryValidationData[],
+    web3networks?: Web3Network[][]
 ): Promise<any[]> {
     const txs: any[] = [];
     const api = context.api;
@@ -110,15 +101,17 @@ export async function buildIdentityTxs(
                 break;
             }
             case 'linkIdentity': {
-                const data = validations![k];
-                const validation = api.createType('LitentryValidationData', data).toU8a();
+                const validation = api.createType('LitentryValidationData', validations![k]).toU8a();
+                const networks = api.createType('Vec<Web3Network>', web3networks![k]).toU8a();
                 const ciphertextValidation = encryptWithTeeShieldingKey(teeShieldingKey, validation).toString('hex');
+                const ciphertextNetworks = encryptWithTeeShieldingKey(teeShieldingKey, networks).toString('hex');
 
                 tx = api.tx.identityManagement.linkIdentity(
                     mrEnclave,
                     signer.address,
                     `0x${ciphertextIdentity}`,
                     `0x${ciphertextValidation}`,
+                    `0x${ciphertextNetworks}`,
                     keyNonce
                 );
                 break;
@@ -236,24 +229,23 @@ export function createIdentityEvent(
 
 export async function buildValidations(
     context: IntegrationTestContext,
+    primeIdentityAddresses: Uint8Array[],
     identities: LitentryPrimitivesIdentity[],
     startingSidechainNonce: number,
     network: 'ethereum' | 'substrate' | 'twitter',
-    substrateSigners: KeyringPair[] | KeyringPair,
-    ethereumSigners: ethers.Wallet[]
+    substrateSigners?: KeyringPair[] | KeyringPair,
+    ethereumSigners?: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
     let ethereumSignature: HexString;
     let substrateSignature: Uint8Array;
     const validations: LitentryValidationData[] = [];
 
     for (let index = 0; index < identities.length; index++) {
-        const substrateSigner = Array.isArray(substrateSigners) ? substrateSigners[index] : substrateSigners;
-        const ethereumSigner = network === 'ethereum' ? ethereumSigners![index] : undefined;
         const validationNonce = startingSidechainNonce + index;
 
         const msg = generateVerificationMessage(
             context,
-            substrateSigner.addressRaw,
+            primeIdentityAddresses[index],
             identities[index],
             validationNonce
         );
@@ -271,8 +263,9 @@ export async function buildValidations(
             console.log('post verification msg to ethereum: ', msg);
             ethereumValidationData.Web3Validation.Evm.message = msg;
             const msgHash = ethers.utils.arrayify(msg);
-            ethereumSignature = (await ethereumSigner!.signMessage(msgHash)) as HexString;
-            console.log('ethereumSignature', ethereumSigners![index].address, ethereumSignature);
+            const ethereumSigner = ethereumSigners![index];
+            ethereumSignature = (await ethereumSigner.signMessage(msgHash)) as HexString;
+            console.log('ethereumSignature', ethereumSigner.address, ethereumSignature);
 
             ethereumValidationData!.Web3Validation.Evm.signature.Ethereum = ethereumSignature;
             console.log('ethereumValidationData', ethereumValidationData);
@@ -295,6 +288,7 @@ export async function buildValidations(
             };
             console.log('post verification msg to substrate: ', msg);
             substrateValidationData.Web3Validation.Substrate.message = msg;
+            const substrateSigner = Array.isArray(substrateSigners!) ? substrateSigners![index] : substrateSigners!;
             substrateSignature = substrateSigner.sign(msg) as Uint8Array;
             substrateValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(substrateSignature);
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
