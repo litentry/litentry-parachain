@@ -84,25 +84,6 @@ impl From<&LitentryMultiAddress> for AccountId32 {
 	}
 }
 
-impl LitentryMultiAddress {
-	pub fn to_account_id(&self) -> AccountId {
-		match self {
-			Self::Substrate(address) => {
-				let mut account_id_slice: [u8; 32] = [0; 32];
-				account_id_slice.copy_from_slice(address.as_ref());
-				AccountId32::from(account_id_slice)
-			},
-			Self::Evm(address) => {
-				let mut data = [0u8; 24];
-				data[0..4].copy_from_slice(b"evm:");
-				data[4..24].copy_from_slice(address.as_ref());
-				let hash = BlakeTwo256::hash(&data);
-				AccountId::from(Into::<[u8; 32]>::into(hash))
-			},
-		}
-	}
-}
-
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum LitentryMultiSignature {
