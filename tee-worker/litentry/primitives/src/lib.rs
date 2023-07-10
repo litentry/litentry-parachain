@@ -35,6 +35,7 @@ pub use validation_data::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use log::error;
+use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 pub use parentchain_primitives::{
 	all_evm_web3networks, all_substrate_web3networks, all_web3networks,
 	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
@@ -45,9 +46,11 @@ pub use parentchain_primitives::{
 	Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
 };
 use scale_info::TypeInfo;
-use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, Hasher};
+use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, H160};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::{BlakeTwo256, Verify};
+
+pub type HashedAddressMapping = GenericHashedAddressMapping<BlakeTwo256>;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -74,11 +77,9 @@ impl From<&LitentryMultiAddress> for AccountId32 {
 				Self::from(data)
 			},
 			LitentryMultiAddress::Evm(address) => {
-				let mut data = [0u8; 24];
-				data[0..4].copy_from_slice(b"evm:");
-				data[4..24].copy_from_slice(address.as_ref());
-				let hash = BlakeTwo256::hash(&data);
-				Self::from(Into::<[u8; 32]>::into(hash))
+				let substrate_version =
+					HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()));
+				Self::from(Into::<[u8; 32]>::into(substrate_version))
 			},
 		}
 	}

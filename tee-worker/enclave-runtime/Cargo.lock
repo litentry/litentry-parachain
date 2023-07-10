@@ -2938,6 +2938,7 @@ dependencies = [
  "chrono 0.4.11",
  "core-primitives",
  "log",
+ "pallet-evm",
  "parity-scale-codec",
  "rand 0.7.3",
  "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
