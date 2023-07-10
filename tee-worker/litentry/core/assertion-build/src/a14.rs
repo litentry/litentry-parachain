@@ -23,9 +23,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{
-	Assertion, Error, ErrorDetail, ErrorString, Identity, IntoErrorDetail, Result, SubstrateNetwork,
-};
+use crate::*;
 use blake2_rfc::blake2b::Blake2b;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -35,16 +33,10 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::{build_client, G_DATA_PROVIDERS};
-use log::*;
 use rust_base58::ToBase58;
 use serde::{Deserialize, Serialize};
 use ss58_registry::Ss58AddressFormat;
-use std::{format, string::String, vec, vec::Vec};
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
 	"The user has participated in any Polkadot on-chain governance events";
@@ -148,17 +140,13 @@ impl A14Client {
 	}
 }
 
-pub fn build(
-	identities: Vec<Identity>,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!("Assertion A14 build, who: {:?}", account_id_to_string(&who));
+pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+	debug!("Assertion A14 build, who: {:?}", account_id_to_string(&req.who));
 
 	// achainable expects polkadot addresses (those start with 1...)
 	let mut polkadot_addresses = vec![];
-	for id in identities {
-		if let Identity::Substrate { network: SubstrateNetwork::Polkadot, address } = id {
+	for identity in &req.vec_identity {
+		if let Identity::Substrate(address) = identity.0 {
 			let address = ss58_address_of(address.as_ref(), "polkadot")
 				.map_err(|_| Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;
 			polkadot_addresses.push(address);
@@ -187,7 +175,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(who, &shard.clone()) {
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

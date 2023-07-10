@@ -18,7 +18,7 @@
 use lc_data_providers::achainable::{
 	ToAchainable, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
 };
-use litentry_primitives::SupportedNetwork;
+use litentry_primitives::Web3Network;
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
 
@@ -32,7 +32,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 
 			let expected_query_total_txs = VerifiedCredentialsTotalTxs::new(
 				vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-				vec![SupportedNetwork::Kusama, SupportedNetwork::Polkadot],
+				vec![Web3Network::Kusama, Web3Network::Polkadot],
 			)
 			.to_achainable();
 
@@ -42,7 +42,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 					"0x3394caf8e5ccaffb936e6407599543af46525e0b".to_string(),
 				],
 				"2022-10-16T00:00:00Z".to_string(),
-				SupportedNetwork::Ethereum,
+				Web3Network::Ethereum,
 				"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723".to_string(),
 				"0.00000056".into(),
 			)

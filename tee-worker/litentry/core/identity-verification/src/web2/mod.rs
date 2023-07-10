@@ -35,7 +35,7 @@ use lc_data_providers::{
 };
 use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
-	UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network, Web2ValidationData,
+	UserShieldingKeyNonceType, UserShieldingKeyType, Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -110,22 +110,21 @@ pub fn verify(
 	// compare the username:
 	// - twitter's username is case insensitive
 	// - discord's username (with 4 digit discriminator) is case sensitive
-	if let Identity::Web2 { ref network, ref address } = identity {
-		let handle = std::str::from_utf8(address.as_slice())
-			.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
-		match network {
-			Web2Network::Twitter => ensure!(
+	match identity {
+		Identity::Twitter(address) => {
+			let handle = std::str::from_utf8(address.as_slice())
+				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
+			ensure!(
 				user_name.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
 				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
-			),
-			Web2Network::Discord => ensure!(
-				user_name.eq(handle),
-				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
-			),
-			_ => (),
-		}
-	} else {
-		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
+			);
+		},
+		Identity::Discord(address) => {
+			let handle = std::str::from_utf8(address.as_slice())
+				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
+			ensure!(user_name.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));
+		},
+		_ => return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity)),
 	}
 
 	// the payload must match

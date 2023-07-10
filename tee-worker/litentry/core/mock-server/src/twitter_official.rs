@@ -18,7 +18,7 @@
 use crate::{UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
 use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{Identity, IdentityString, Web2Network};
+use litentry_primitives::{Identity, IdentityString};
 use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
 use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
@@ -45,11 +45,9 @@ where
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
 				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
-				let twitter_identity = Identity::Web2 {
-					network: Web2Network::Twitter,
-					address: IdentityString::try_from(tweet_author_name.as_bytes().to_vec())
-						.unwrap(),
-				};
+				let twitter_identity = Identity::Twitter(
+					IdentityString::try_from(tweet_author_name.as_bytes().to_vec()).unwrap(),
+				);
 				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
 					&alice.public(),

@@ -68,6 +68,7 @@ impl LinkIdentityCommand {
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
 
+		// TODO: the params are incorrect - and need to be reworked too
 		let vdata: Option<Vec<u8>> = None;
 		let xt = compose_extrinsic!(
 			chain_api,

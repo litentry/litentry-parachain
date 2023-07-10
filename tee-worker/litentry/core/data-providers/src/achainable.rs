@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath, RestPost,
 };
-use litentry_primitives::{EvmNetwork, SubstrateNetwork, SupportedNetwork};
+use litentry_primitives::Web3Network;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -133,34 +133,6 @@ impl<Query: ToAchainable> AchainableQuery<Query> for AchainableClient {
 	}
 }
 
-pub trait GetSupportedNetworks {
-	fn get(&self) -> SupportedNetwork;
-}
-
-impl GetSupportedNetworks for SubstrateNetwork {
-	fn get(&self) -> SupportedNetwork {
-		match self {
-			SubstrateNetwork::Litmus => SupportedNetwork::Litmus,
-			SubstrateNetwork::Litentry => SupportedNetwork::Litentry,
-			SubstrateNetwork::LitentryRococo => SupportedNetwork::LitentryRococo,
-			SubstrateNetwork::Polkadot => SupportedNetwork::Polkadot,
-			SubstrateNetwork::Kusama => SupportedNetwork::Kusama,
-			SubstrateNetwork::Khala => SupportedNetwork::Khala,
-			SubstrateNetwork::TestNet => SupportedNetwork::TestNet,
-		}
-	}
-}
-
-impl GetSupportedNetworks for EvmNetwork {
-	fn get(&self) -> SupportedNetwork {
-		match self {
-			EvmNetwork::Ethereum => SupportedNetwork::Ethereum,
-			// TODO: how about BSC?
-			EvmNetwork::BSC => unreachable!("support BSC?"),
-		}
-	}
-}
-
 pub trait ToAchainable {
 	fn path(&self) -> String {
 		"latest/achainable".to_string()
@@ -173,7 +145,7 @@ pub trait ToAchainable {
 pub struct VerifiedCredentialsIsHodlerIn {
 	pub addresses: Vec<String>,
 	pub from_date: String,
-	pub network: SupportedNetwork,
+	pub network: Web3Network,
 	pub token_address: String,
 	pub min_balance: String,
 }
@@ -182,7 +154,7 @@ impl VerifiedCredentialsIsHodlerIn {
 	pub fn new(
 		addresses: Vec<String>,
 		from_date: String,
-		network: SupportedNetwork,
+		network: Web3Network,
 		token_address: String,
 		min_balance: String,
 	) -> Self {
@@ -205,11 +177,11 @@ impl ToAchainable for VerifiedCredentialsIsHodlerIn {
 #[derive(Debug)]
 pub struct VerifiedCredentialsTotalTxs {
 	addresses: Vec<String>,
-	networks: Vec<SupportedNetwork>,
+	networks: Vec<Web3Network>,
 }
 
 impl VerifiedCredentialsTotalTxs {
-	pub fn new(addresses: Vec<String>, networks: Vec<SupportedNetwork>) -> Self {
+	pub fn new(addresses: Vec<String>, networks: Vec<Web3Network>) -> Self {
 		VerifiedCredentialsTotalTxs { addresses, networks }
 	}
 }
@@ -680,10 +652,11 @@ impl RestPath<String> for ParamsAccount {
 mod tests {
 	use crate::achainable::{
 		AchainableClient, AchainableQuery, AchainableTagAccount, AchainableTagBalance,
-		AchainableTagDeFi, AchainableTagDotsama, SupportedNetwork, VerifiedCredentialsIsHodlerIn,
+		AchainableTagDeFi, AchainableTagDotsama, VerifiedCredentialsIsHodlerIn,
 		VerifiedCredentialsTotalTxs, G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::{default_getter, run};
+	use litentry_primitives::Web3Network;
 	use std::sync::Arc;
 
 	const ACCOUNT_ADDRESS1: &str = "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad";
@@ -693,7 +666,7 @@ mod tests {
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_achainable_url(url.clone());
+		G_DATA_PROVIDERS.write().unwrap().set_achainable_url(url);
 	}
 
 	#[test]
@@ -704,7 +677,7 @@ mod tests {
 		let credentials = VerifiedCredentialsIsHodlerIn {
 			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
 			from_date: "2022-10-16T00:00:00Z".to_string(),
-			network: SupportedNetwork::Ethereum,
+			network: Web3Network::Ethereum,
 			token_address: LIT_TOKEN_ADDRESS.to_string(),
 			min_balance: "0.00000056".into(),
 		};
@@ -721,7 +694,7 @@ mod tests {
 
 		let query = VerifiedCredentialsTotalTxs {
 			addresses: vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-			networks: vec![SupportedNetwork::Kusama, SupportedNetwork::Polkadot],
+			networks: vec![Web3Network::Kusama, Web3Network::Polkadot],
 		};
 		let mut client = AchainableClient::new();
 		let r = client.verified_credentials_total_transactions(query);
