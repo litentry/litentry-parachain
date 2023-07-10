@@ -270,8 +270,8 @@ async function waitForBlock(
     shard: `0x${string}`,
     lowerBound: number
 ): Promise<number> {
-    let waitIntervalSeconds = 2;
-    const waitIncreaseFactor = 5;
+    let waitIntervalSeconds = 5;
+    const waitIncreaseFactor = 1.1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
         const resp = await latestBlock(connection, shard);
