@@ -15,6 +15,7 @@
 
 */
 
+use litentry_primitives::BoundedWeb3Network;
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
@@ -36,7 +37,7 @@ use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
-	VCMPError, ValidationData,
+	VCMPError, ValidationData, Web3Network,
 };
 use log::*;
 use sp_io::hashing::blake2_256;
@@ -46,8 +47,6 @@ use std::{format, prelude::v1::*, sync::Arc};
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 use itp_node_api::metadata::NodeMetadataTrait;
-use itp_types::{MrEnclave, SidechainBlockNumber};
-use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -111,17 +110,24 @@ pub enum TrustedCall {
 	),
 	// litentry
 	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType, H256),
-	link_identity(AccountId, AccountId, Identity, ValidationData, UserShieldingKeyNonceType, H256),
+	link_identity(
+		AccountId,
+		AccountId,
+		Identity,
+		ValidationData,
+		Vec<Web3Network>,
+		UserShieldingKeyNonceType,
+		H256,
+	),
 	remove_identity(AccountId, AccountId, Identity, H256),
 	request_vc(AccountId, AccountId, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(AccountId, AccountId, Identity, H256),
+	link_identity_callback(AccountId, AccountId, Identity, BoundedWeb3Network, H256),
 	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
 	send_erroneous_parentchain_call(AccountId),
-	set_scheduled_mrenclave(AccountId, SidechainBlockNumber, MrEnclave),
 }
 
 impl TrustedCall {
@@ -149,7 +155,6 @@ impl TrustedCall {
 			TrustedCall::handle_imp_error(account, ..) => account,
 			TrustedCall::handle_vcmp_error(account, ..) => account,
 			TrustedCall::send_erroneous_parentchain_call(account) => account,
-			TrustedCall::set_scheduled_mrenclave(account, ..) => account,
 		}
 	}
 
@@ -462,18 +467,11 @@ where
 			// handle it here to be able to send error events to the parachain
 			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
 				debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
 
-				match Self::set_user_shielding_key_internal(
-					signer,
-					who.clone(),
-					key,
-					parent_ss58_prefix,
-				) {
+				match Self::set_user_shielding_key_internal(signer, who.clone(), key) {
 					Ok(key) => {
 						debug!("pushing user_shielding_key_set event ...");
 						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
@@ -497,21 +495,26 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity(signer, who, identity, validation_data, nonce, hash) => {
+			TrustedCall::link_identity(
+				signer,
+				who,
+				identity,
+				validation_data,
+				web3networks,
+				nonce,
+				hash,
+			) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
-
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
 
 				if let Err(e) = Self::link_identity_internal(
 					signer,
 					who.clone(),
 					identity,
 					validation_data,
+					web3networks,
 					nonce,
 					hash,
 					shard,
-					parent_ss58_prefix,
 				) {
 					add_call_from_imp_error(
 						calls,
@@ -529,15 +532,7 @@ where
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
 
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-
-				match Self::remove_identity_internal(
-					signer,
-					who,
-					identity.clone(),
-					parent_ss58_prefix,
-				) {
+				match Self::remove_identity_internal(signer, who, identity.clone()) {
 					Ok(key) => {
 						debug!("pushing identity_removed event ...");
 						calls.push(OpaqueCall::from_tuple(&(
@@ -560,20 +555,23 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity_callback(signer, who, identity, hash) => {
+			TrustedCall::link_identity_callback(
+				signer,
+				who,
+				identity,
+				bounded_web3networks,
+				hash,
+			) => {
 				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-
 				match Self::link_identity_callback_internal(
 					signer,
 					who.clone(),
 					identity.clone(),
-					parent_ss58_prefix,
+					bounded_web3networks,
 				) {
 					Ok(key) => {
 						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
@@ -684,17 +682,6 @@ where
 				)));
 				Ok(())
 			},
-			TrustedCall::set_scheduled_mrenclave(account_id, bn, mrenclave) => {
-				ensure!(
-					is_root::<Runtime, AccountId>(&account_id),
-					Self::Error::MissingPrivileges(account_id)
-				);
-				GLOBAL_SCHEDULED_ENCLAVE.update(bn, mrenclave).map_err(|e| {
-					error!("Failed to set scheduled mr_enclave {:?}", e);
-					StfError::SetScheduledMrEnclaveFailed
-				})?;
-				Ok(())
-			},
 		}?;
 		Ok(())
 	}
@@ -717,7 +704,6 @@ where
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>
 				debug!("No storage updates needed..."),
-			TrustedCall::set_scheduled_mrenclave(..) => debug!("No storage updates needed..."),
 			#[cfg(feature = "evm")]
 			_ => debug!("No storage updates needed..."),
 		};

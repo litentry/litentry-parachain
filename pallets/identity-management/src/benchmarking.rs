@@ -59,8 +59,9 @@ benchmarks! {
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
+		let encrypted_web3networks = vec![1u8; 2048];
 		let nonce = UserShieldingKeyNonceType::default();
-	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, nonce)
+	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, encrypted_web3networks, nonce)
 	verify {
 		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
 	}
@@ -72,8 +73,9 @@ benchmarks! {
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
+		let encrypted_web3networks = vec![1u8; 2048];
 		let nonce = UserShieldingKeyNonceType::default();
-		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, nonce)?;
+		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks, nonce)?;
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
 	verify {
 		assert_last_event::<T>(Event::RemoveIdentityRequested{ shard }.into());

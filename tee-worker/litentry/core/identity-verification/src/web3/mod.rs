@@ -69,7 +69,7 @@ fn verify_substrate_signature(
 		raw_msg.as_slice() == validation_data.message.as_slice(),
 		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
 	);
-	let substrate_address = if let Identity::Substrate { address, .. } = identity {
+	let substrate_address = if let Identity::Substrate(address) = identity {
 		address.as_ref()
 	} else {
 		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
@@ -128,7 +128,7 @@ fn verify_evm_signature(
 ) -> Result<()> {
 	let msg = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 	let digest = compute_evm_msg_digest(&msg);
-	let evm_address = if let Identity::Evm { address, .. } = identity {
+	let evm_address = if let Identity::Evm(address) = identity {
 		address
 	} else {
 		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))

@@ -139,7 +139,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9165,
+	spec_version: 9166,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -667,10 +667,20 @@ parameter_types! {
 	pub const DefaultCollatorCommission: Perbill = Perbill::from_percent(33);
 	/// Default percent of inflation set aside for parachain bond every round
 	pub const DefaultParachainBondReservePercent: Percent = Percent::from_percent(0);
-	pub const MinCollatorStk: Balance = 5000 * DOLLARS;
-	pub const MinCandidateStk: Balance = 5000 * DOLLARS;
 	pub const MinDelegation: Balance = 50 * DOLLARS;
 	pub const MinDelegatorStk: Balance = 50 * DOLLARS;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+parameter_types! {
+	pub const MinCollatorStk: Balance = 50 * DOLLARS;
+	pub const MinCandidateStk: Balance = 50 * DOLLARS;
+}
+
+#[cfg(not(feature = "runtime-benchmarks"))]
+parameter_types! {
+	pub const MinCollatorStk: Balance = 5000 * DOLLARS;
+	pub const MinCandidateStk: Balance = 5000 * DOLLARS;
 }
 
 parameter_types! {

@@ -9,10 +9,9 @@ import type {
     Address20,
     Address32,
     Assertion,
+    BoundedWeb3Network,
     DirectRequestStatus,
     DiscordValidationData,
-    EvmIdentity,
-    EvmNetwork,
     GenericEventWithAccount,
     Getter,
     IdentityContext,
@@ -25,8 +24,6 @@ import type {
     PublicGetter,
     Request,
     ShardIdentifier,
-    SubstrateIdentity,
-    SubstrateNetwork,
     TrustedCall,
     TrustedCallSigned,
     TrustedGetter,
@@ -37,10 +34,9 @@ import type {
     UserShieldingKeyNonceType,
     UserShieldingKeyType,
     VCRequested,
-    Web2Identity,
-    Web2Network,
     Web2ValidationData,
     Web3CommonValidationData,
+    Web3Network,
     Web3ValidationData,
     WorkerRpcReturnValue,
 } from './identity';
@@ -1322,6 +1318,7 @@ declare module '@polkadot/types/types/registry' {
         BodyPart: BodyPart;
         bool: bool;
         Bool: Bool;
+        BoundedWeb3Network: BoundedWeb3Network;
         Bounty: Bounty;
         BountyIndex: BountyIndex;
         BountyStatus: BountyStatus;
@@ -1573,9 +1570,7 @@ declare module '@polkadot/types/types/registry' {
         EvmAccount: EvmAccount;
         EvmCallInfo: EvmCallInfo;
         EvmCreateInfo: EvmCreateInfo;
-        EvmIdentity: EvmIdentity;
         EvmLog: EvmLog;
-        EvmNetwork: EvmNetwork;
         EvmVicinity: EvmVicinity;
         ExecReturnValue: ExecReturnValue;
         ExitError: ExitError;
@@ -2190,8 +2185,6 @@ declare module '@polkadot/types/types/registry' {
         StrikeCount: StrikeCount;
         SubId: SubId;
         SubmissionIndicesOf: SubmissionIndicesOf;
-        SubstrateIdentity: SubstrateIdentity;
-        SubstrateNetwork: SubstrateNetwork;
         Supports: Supports;
         SyncState: SyncState;
         SystemInherentData: SystemInherentData;
@@ -2304,10 +2297,9 @@ declare module '@polkadot/types/types/registry' {
         VrfData: VrfData;
         VrfOutput: VrfOutput;
         VrfProof: VrfProof;
-        Web2Identity: Web2Identity;
-        Web2Network: Web2Network;
         Web2ValidationData: Web2ValidationData;
         Web3CommonValidationData: Web3CommonValidationData;
+        Web3Network: Web3Network;
         Web3ValidationData: Web3ValidationData;
         Weight: Weight;
         WeightLimitV2: WeightLimitV2;

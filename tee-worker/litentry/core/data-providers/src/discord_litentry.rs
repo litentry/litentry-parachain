@@ -146,15 +146,13 @@ impl DiscordLitentryClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use itp_stf_primitives::types::AccountId;
 	use lc_mock_server::{default_getter, run};
-	use litentry_primitives::{Identity, UserShieldingKeyNonceType};
 	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_discord_litentry_url(url.clone());
+		G_DATA_PROVIDERS.write().unwrap().set_discord_litentry_url(url);
 	}
 
 	#[test]

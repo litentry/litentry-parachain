@@ -21,92 +21,36 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
-use lc_data_providers::graphql::{
-	AchainableQuery, GetSupportedNetworks, GraphQLClient, VerifiedCredentialsTotalTxs,
+use lc_data_providers::achainable::{
+	AchainableClient, AchainableQuery, VerifiedCredentialsTotalTxs,
 };
-use litentry_primitives::{IndexingNetworks, SupportedNetwork};
-use log::*;
-use std::{collections::HashSet, string::String, vec::Vec};
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available networks (including invalid transactions)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
 const VC_A8_SUBJECT_TAG: [&str; 6] =
 	["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"];
 
-pub const INDEXING_NETWORKS: [SupportedNetwork; 6] = [
-	SupportedNetwork::Litentry,
-	SupportedNetwork::Litmus,
-	SupportedNetwork::Polkadot,
-	SupportedNetwork::Khala,
-	SupportedNetwork::Ethereum,
-	SupportedNetwork::Kusama,
-];
-pub trait GetIndexNetworks {
-	fn get_indexing_networks() -> Vec<SupportedNetwork>;
-}
-impl GetIndexNetworks for SupportedNetwork {
-	fn get_indexing_networks() -> Vec<SupportedNetwork> {
-		INDEXING_NETWORKS.to_vec()
-	}
-}
+pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+	debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who),);
 
-pub fn build(
-	identities: Vec<Identity>,
-	index_networks: IndexingNetworks,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!(
-		"Assertion A8 build, who: {:?}, identities: {:?}, networks:{:?}",
-		account_id_to_string(&who),
-		identities,
-		index_networks
-	);
-
-	let networks = filter_networks(&index_networks);
-
-	let mut client = GraphQLClient::new();
+	let mut client = AchainableClient::new();
 	let mut total_txs: u64 = 0;
 
-	let mut verified_addresses = HashSet::<String>::new();
-	let mut verified_networks = HashSet::<SupportedNetwork>::new();
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.vec_identity);
+	let mut addresses_set: HashSet<String> = HashSet::new();
+	let mut networks_set: HashSet<Web3Network> = HashSet::new();
 
-	identities.iter().for_each(|identity| match identity {
-		Identity::Substrate { network, address } => {
-			let mut address = account_id_to_string(address.as_ref());
-			address.insert_str(0, "0x");
-
-			if_match_network_collect_address(
-				&networks,
-				network.get(),
-				address,
-				&mut verified_networks,
-				&mut verified_addresses,
-			);
-		},
-		Identity::Evm { network, address } => {
-			let mut address = account_id_to_string(address.as_ref());
-			address.insert_str(0, "0x");
-
-			if_match_network_collect_address(
-				&networks,
-				network.get(),
-				address,
-				&mut verified_networks,
-				&mut verified_addresses,
-			);
-		},
-		_ => {},
+	identities.into_iter().for_each(|(network, addresses)| {
+		addresses_set.extend(addresses);
+		networks_set.insert(network);
 	});
 
-	if !verified_addresses.is_empty() && !verified_networks.is_empty() {
-		let addresses = verified_addresses.into_iter().collect();
-		let networks = verified_networks.into_iter().collect();
-		let query = VerifiedCredentialsTotalTxs::new(addresses, networks);
+	let addresses = addresses_set.into_iter().collect::<Vec<String>>();
+	let networks = networks_set.into_iter().collect::<Vec<Web3Network>>();
+
+	if !addresses.is_empty() && !networks.is_empty() {
+		// TODO: I fail to understand why both args are Vec<> so I just leave it as it is
+		let query = VerifiedCredentialsTotalTxs::new(addresses, networks.clone());
 		debug!("Assertion A8 query: {:?}", query);
 
 		match client.verified_credentials_total_transactions(query) {
@@ -124,7 +68,7 @@ pub fn build(
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new_default(who, shard) {
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A8_SUBJECT_DESCRIPTION,
@@ -137,36 +81,11 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A8(index_networks), e.into_error_detail()))
+			// In fact, it should never fail
+			let bounded_web3networks =
+				req.assertion.get_supported_web3networks().try_into().unwrap();
+			Err(Error::RequestVCFailed(Assertion::A8(bounded_web3networks), e.into_error_detail()))
 		},
-	}
-}
-
-fn filter_networks(index_networks: &IndexingNetworks) -> Vec<SupportedNetwork> {
-	let supported_networks = SupportedNetwork::get_indexing_networks();
-	let networks = if index_networks.is_empty() {
-		supported_networks
-	} else {
-		index_networks
-			.iter()
-			.filter(|n| supported_networks.contains(n))
-			.cloned()
-			.collect()
-	};
-
-	networks
-}
-
-fn if_match_network_collect_address(
-	target_networks: &[SupportedNetwork],
-	network: SupportedNetwork,
-	address: String,
-	verified_networks: &mut HashSet<SupportedNetwork>,
-	verified_addresses: &mut HashSet<String>,
-) {
-	if target_networks.contains(&network) {
-		verified_networks.insert(network);
-		verified_addresses.insert(address);
 	}
 }
 
@@ -223,61 +142,8 @@ fn get_total_tx_ranges(total_txs: u64) -> (u64, u64) {
 
 #[cfg(test)]
 mod tests {
-	use core::assert_eq;
-
 	use super::*;
-
-	#[test]
-	fn assertion_networks_if_match_network_collect_address_works() {
-		let mut verified_addresses = HashSet::<String>::new();
-		let mut verified_networks = HashSet::<SupportedNetwork>::new();
-
-		let mut address_litentry =
-			"44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b9".to_string();
-		address_litentry.insert_str(0, "0x");
-
-		let mut address_polkadot =
-			"44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b1".to_string();
-		address_polkadot.insert_str(0, "0x");
-
-		let mut target_networks = IndexingNetworks::with_bounded_capacity(6);
-		target_networks.try_push(SupportedNetwork::Litentry).unwrap();
-		target_networks.try_push(SupportedNetwork::Litmus).unwrap();
-		target_networks.try_push(SupportedNetwork::Polkadot).unwrap();
-		target_networks.try_push(SupportedNetwork::Khala).unwrap();
-		target_networks.try_push(SupportedNetwork::Ethereum).unwrap();
-		target_networks.try_push(SupportedNetwork::Kusama).unwrap();
-
-		let networks: [SupportedNetwork; 2] =
-			[SupportedNetwork::Litentry, SupportedNetwork::Polkadot];
-		let addresses = [
-			"0x44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b9".to_string(),
-			"0x44f0633d7273a1e5bee1e54937dbb1cdfc0b210582b913c0fb3c7c7b9cdca9b1".to_string(),
-		];
-
-		if_match_network_collect_address(
-			&target_networks,
-			SupportedNetwork::Litentry,
-			address_litentry,
-			&mut verified_networks,
-			&mut verified_addresses,
-		);
-		if_match_network_collect_address(
-			&target_networks,
-			SupportedNetwork::Polkadot,
-			address_polkadot,
-			&mut verified_networks,
-			&mut verified_addresses,
-		);
-
-		verified_networks
-			.iter()
-			.for_each(|network| assert!(networks.contains(&network)));
-
-		verified_addresses
-			.iter()
-			.for_each(|address| assert!(addresses.contains(&address)));
-	}
+	use core::assert_eq;
 
 	#[test]
 	fn get_total_tx_ranges_works() {
@@ -292,23 +158,5 @@ mod tests {
 		let (min, max) = get_total_tx_ranges(10);
 		assert_eq!(min, 10);
 		assert_eq!(max, 100);
-	}
-
-	#[test]
-	fn filter_networks_works() {
-		let mut index_networks = IndexingNetworks::with_bounded_capacity(1);
-		index_networks.try_push(SupportedNetwork::Ethereum).unwrap();
-
-		let network = filter_networks(&index_networks);
-		assert_eq!(network.len(), 1);
-		assert_eq!(*network.first().unwrap(), SupportedNetwork::Ethereum);
-
-		// is empty, return all 6 networks
-		let index_networks = IndexingNetworks::with_bounded_capacity(1);
-		let network = filter_networks(&index_networks);
-		assert_eq!(network.len(), 6);
-		INDEXING_NETWORKS.iter().for_each(|net| {
-			assert!(network.contains(&net));
-		});
 	}
 }

@@ -21,64 +21,48 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::{
-	graphql::{AchainableQuery, GraphQLClient, VerifiedCredentialsIsHodlerIn},
+	achainable::{AchainableClient, AchainableQuery, VerifiedCredentialsIsHodlerIn},
 	vec_to_string,
 };
-use litentry_primitives::SupportedNetwork;
-use log::*;
-use std::{string::ToString, vec, vec::Vec};
 
 const VC_A7_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
 const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Assertion";
 const VC_A7_SUBJECT_TAG: [&str; 1] = ["Polkadot"];
 
-pub fn build(
-	identities: Vec<Identity>,
-	min_balance: ParameterString,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!(
-		"Assertion A7 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
-	);
+pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
+	debug!("Assertion A7 build, who: {:?}", account_id_to_string(&req.who),);
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A7(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
-	let mut client = GraphQLClient::new();
-	let mut addresses = vec![];
-
-	for id in identities {
-		if let Identity::Substrate { network, address } = id {
-			if matches!(network, SubstrateNetwork::Polkadot) {
-				let mut address = account_id_to_string(address.as_ref());
-				address.insert_str(0, "0x");
-				debug!("Assertion A7 Polkadot address : {}", address);
-
-				addresses.push(address);
-			}
-		}
-	}
+	let mut client = AchainableClient::new();
+	let identities = transpose_identity(&req.vec_identity);
 
 	let mut is_hold = false;
-	let mut optimal_hold_index = 0_usize;
+	let mut optimal_hold_index = usize::MAX;
 
-	if !addresses.is_empty() {
+	for (network, addresses) in identities {
+		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
+		// there is no need to query other networks.
+		if optimal_hold_index == 0 {
+			break
+		}
+
+		// Each query loop needs to reset is_hold to false
+		is_hold = false;
+
+		let addresses: Vec<String> = addresses.into_iter().collect();
+		let token_address = "";
+
 		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			let vch = VerifiedCredentialsIsHodlerIn::new(
 				addresses.clone(),
 				from_date.to_string(),
-				SupportedNetwork::Polkadot,
-				"".into(),
+				network,
+				token_address.to_string(),
 				q_min_balance.to_string(),
 			);
 			match client.verified_credentials_is_hodler(vch) {
@@ -93,13 +77,24 @@ pub fn build(
 			}
 
 			if is_hold {
-				optimal_hold_index = index;
+				if index < optimal_hold_index {
+					optimal_hold_index = index;
+				}
+
 				break
 			}
 		}
 	}
 
-	match Credential::new_default(who, shard) {
+	// Found the optimal hold index, set the is_hold to true, otherwise
+	// the optimal_hold_index is always 0 (2017-01-01)
+	if optimal_hold_index != usize::MAX {
+		is_hold = true;
+	} else {
+		optimal_hold_index = 0;
+	}
+
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A7_SUBJECT_DESCRIPTION,
