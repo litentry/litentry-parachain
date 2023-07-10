@@ -15,7 +15,6 @@
 
 */
 
-use litentry_primitives::BoundedWeb3Network;
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
@@ -35,7 +34,7 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
+	aes_encrypt_default, AesOutput, Assertion, BoundedWeb3Network, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
 	VCMPError, ValidationData, Web3Network,
 };
@@ -121,6 +120,7 @@ pub enum TrustedCall {
 	),
 	remove_identity(AccountId, AccountId, Identity, H256),
 	request_vc(AccountId, AccountId, Assertion, H256),
+	set_identity_networks(AccountId, AccountId, Identity, Vec<Web3Network>),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	link_identity_callback(AccountId, AccountId, Identity, BoundedWeb3Network, H256),
@@ -150,6 +150,7 @@ impl TrustedCall {
 			TrustedCall::link_identity(account, ..) => account,
 			TrustedCall::remove_identity(account, ..) => account,
 			TrustedCall::request_vc(account, ..) => account,
+			TrustedCall::set_identity_networks(account, ..) => account,
 			TrustedCall::link_identity_callback(account, ..) => account,
 			TrustedCall::request_vc_callback(account, ..) => account,
 			TrustedCall::handle_imp_error(account, ..) => account,
@@ -252,6 +253,9 @@ where
 	// - we should return Err() if the STF execution fails
 	// - the failed top should be removed from the tool
 	// - however, the failed top hash needs to be included in the sidechain block
+	//
+	// Update2:
+	// for DI trusted calls we should return Err() to signal the errors synchronously
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
@@ -661,6 +665,14 @@ where
 				}
 				Ok(())
 			},
+			TrustedCall::set_identity_networks(signer, who, identity, web3networks) => {
+				debug!("set_identity_networks, networks: {:?}", web3networks.clone());
+				ensure!(signer == who, Self::Error::Dispatch(format!("unauthorized signer")));
+				IMTCall::set_identity_networks { who, identity, web3networks }
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
+				Ok(())
+			},
 			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
@@ -700,6 +712,7 @@ where
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>

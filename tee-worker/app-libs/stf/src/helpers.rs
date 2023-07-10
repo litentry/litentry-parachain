@@ -110,7 +110,7 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
-pub fn is_authorized_signer<AccountId: Encode + Decode + PartialEq>(
+pub fn ensure_enclave_signer_account_or_self<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
 	who: &AccountId,
 ) -> bool {
