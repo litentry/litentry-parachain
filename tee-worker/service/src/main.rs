@@ -642,14 +642,27 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		);
 
 		// Syncing all parentchain blocks, this might take a while..
-		let mut last_synced_header = parentchain_handler
+		let mut last_synced_header = match parentchain_handler
 			.sync_parentchain(last_synced_header, parentchain_start_block)
-			.unwrap();
+		{
+			Ok(value) => value,
+			Err(error) => {
+				println!("sync_parentchain error: {:?}", error);
+				let dummy_header = Header {
+					parent_hash: Default::default(),
+					number: 0,
+					extrinsics_root: Default::default(),
+					state_root: Default::default(),
+					digest: Default::default(),
+				};
+				dummy_header
+			},
+		};
 
 		// ------------------------------------------------------------------------
 		// Initialize the sidechain
 		if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
-			last_synced_header = sidechain_init_block_production(
+			last_synced_header = match sidechain_init_block_production(
 				enclave,
 				register_enclave_xt_header,
 				we_are_primary_validateer,
@@ -657,8 +670,20 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				sidechain_storage,
 				&last_synced_header,
 				parentchain_start_block,
-			)
-			.unwrap();
+			) {
+				Ok(value) => value,
+				Err(error) => {
+					println!("sidechain_init_block_production error: {:?}", error);
+					let dummy_header = Header {
+						parent_hash: Default::default(),
+						number: 0,
+						extrinsics_root: Default::default(),
+						state_root: Default::default(),
+						digest: Default::default(),
+					};
+					dummy_header
+				},
+			};
 		}
 
 		// ------------------------------------------------------------------------
