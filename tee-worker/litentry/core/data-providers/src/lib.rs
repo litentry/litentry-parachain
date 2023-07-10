@@ -63,7 +63,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 pub mod discord_litentry;
 pub mod discord_official;
-pub mod twitter_litentry;
 pub mod twitter_official;
 
 pub mod achainable;
@@ -75,7 +74,6 @@ pub struct DataProvidersStatic {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,
 	pub twitter_auth_token_v2: String,
-	pub twitter_auth_token_v1_1: String,
 	pub discord_official_url: String,
 	pub discord_litentry_url: String,
 	pub discord_auth_token: String,
@@ -95,7 +93,6 @@ impl DataProvidersStatic {
 			twitter_official_url: "https://api.twitter.com".to_string(),
 			twitter_litentry_url: "".to_string(),
 			twitter_auth_token_v2: "Bearer ".to_string(),
-			twitter_auth_token_v1_1: "Bearer ".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
 			discord_litentry_url: "".to_string(),
 			discord_auth_token: "".to_string(),
@@ -116,10 +113,6 @@ impl DataProvidersStatic {
 	pub fn set_twitter_auth_token_v2(&mut self, v: String) {
 		debug!("set_twitter_auth_token_v2: {:?}", v);
 		self.twitter_auth_token_v2 = v;
-	}
-	pub fn set_twitter_auth_token_v1_1(&mut self, v: String) {
-		debug!("set_twitter_auth_token_v1_1: {:?}", v);
-		self.twitter_auth_token_v1_1 = v;
 	}
 	pub fn set_discord_official_url(&mut self, v: String) {
 		debug!("set_discord_official_url: {:?}", v);

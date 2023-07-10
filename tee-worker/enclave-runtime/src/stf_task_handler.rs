@@ -48,7 +48,6 @@ pub unsafe extern "C" fn run_stf_task_handler(
 	let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
 	mut_handle.set_twitter_official_url(data_providers_static.twitter_official_url);
 	mut_handle.set_twitter_litentry_url(data_providers_static.twitter_litentry_url);
-	mut_handle.set_twitter_auth_token_v1_1(data_providers_static.twitter_auth_token_v1_1);
 	mut_handle.set_twitter_auth_token_v2(data_providers_static.twitter_auth_token_v2);
 	mut_handle.set_discord_official_url(data_providers_static.discord_official_url);
 	mut_handle.set_discord_litentry_url(data_providers_static.discord_litentry_url);
