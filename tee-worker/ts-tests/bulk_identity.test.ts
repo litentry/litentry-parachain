@@ -9,6 +9,8 @@ import type { Vec } from '@polkadot/types';
 import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
 import { SubmittableResult } from '@polkadot/api';
+import type { Web3Network } from './parachain-interfaces/identity/types';
+
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
 //2.Each time the test code is executed, new wallet account will be used.
@@ -56,21 +58,35 @@ describeLitentry('multiple accounts test', 2, async (context) => {
 
     //test identity with multiple accounts
     step('test linkIdentity with multiple accounts', async () => {
+        let web3networks: Web3Network[][] = [];
+        let primeIdentityAddresses: Uint8Array[] = [];
+        const default_networks = context.api.createType('Vec<Web3Network>', ['Ethereum']) as unknown as Web3Network[];
+
         for (let index = 0; index < ethereumSigners.length; index++) {
-            const identity = await buildIdentityHelper(ethereumSigners[index].address, 'Ethereum', 'Evm', context);
+            const identity = await buildIdentityHelper(ethereumSigners[index].address, 'Evm', context);
             identities.push(identity);
+            web3networks.push(default_networks);
+            primeIdentityAddresses.push(substrateSigners[index].addressRaw);
         }
 
         const validations = await buildValidations(
             context,
+            primeIdentityAddresses,
             identities,
             2,
             'ethereum',
-            substrateSigners,
+            undefined,
             ethereumSigners
         );
 
-        const txs = await buildIdentityTxs(context, substrateSigners, identities, 'linkIdentity', validations);
+        const txs = await buildIdentityTxs(
+            context,
+            substrateSigners,
+            identities,
+            'linkIdentity',
+            validations,
+            web3networks
+        );
 
         const events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
             'IdentityLinked',

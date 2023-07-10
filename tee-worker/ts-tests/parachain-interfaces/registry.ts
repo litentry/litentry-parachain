@@ -7,11 +7,11 @@ import '@polkadot/types/types/registry';
 
 import type {
     CorePrimitivesAssertion,
-    CorePrimitivesAssertionSupportedNetwork,
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesErrorImpError,
     CorePrimitivesErrorVcmpError,
     CorePrimitivesKeyAesOutput,
+    CorePrimitivesNetworkWeb3Network,
     CumulusPalletDmpQueueCall,
     CumulusPalletDmpQueueConfigData,
     CumulusPalletDmpQueueError,
@@ -330,11 +330,11 @@ import type {
 declare module '@polkadot/types/types/registry' {
     interface InterfaceTypes {
         CorePrimitivesAssertion: CorePrimitivesAssertion;
-        CorePrimitivesAssertionSupportedNetwork: CorePrimitivesAssertionSupportedNetwork;
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;
         CorePrimitivesErrorImpError: CorePrimitivesErrorImpError;
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;
         CorePrimitivesKeyAesOutput: CorePrimitivesKeyAesOutput;
+        CorePrimitivesNetworkWeb3Network: CorePrimitivesNetworkWeb3Network;
         CumulusPalletDmpQueueCall: CumulusPalletDmpQueueCall;
         CumulusPalletDmpQueueConfigData: CumulusPalletDmpQueueConfigData;
         CumulusPalletDmpQueueError: CumulusPalletDmpQueueError;

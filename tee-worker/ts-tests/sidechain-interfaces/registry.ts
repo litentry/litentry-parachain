@@ -6,6 +6,7 @@
 import '@polkadot/types/types/registry';
 
 import type {
+    CorePrimitivesNetworkWeb3Network,
     FrameSupportDispatchDispatchClass,
     FrameSupportDispatchDispatchInfo,
     FrameSupportDispatchPays,
@@ -33,9 +34,6 @@ import type {
     LitentryPrimitivesIdentity,
     LitentryPrimitivesIdentityAddress20,
     LitentryPrimitivesIdentityAddress32,
-    LitentryPrimitivesIdentityEvmNetwork,
-    LitentryPrimitivesIdentitySubstrateNetwork,
-    LitentryPrimitivesIdentityWeb2Network,
     PalletBalancesAccountData,
     PalletBalancesBalanceLock,
     PalletBalancesCall,
@@ -76,6 +74,7 @@ import type {
 
 declare module '@polkadot/types/types/registry' {
     interface InterfaceTypes {
+        CorePrimitivesNetworkWeb3Network: CorePrimitivesNetworkWeb3Network;
         FrameSupportDispatchDispatchClass: FrameSupportDispatchDispatchClass;
         FrameSupportDispatchDispatchInfo: FrameSupportDispatchDispatchInfo;
         FrameSupportDispatchPays: FrameSupportDispatchPays;
@@ -103,9 +102,6 @@ declare module '@polkadot/types/types/registry' {
         LitentryPrimitivesIdentity: LitentryPrimitivesIdentity;
         LitentryPrimitivesIdentityAddress20: LitentryPrimitivesIdentityAddress20;
         LitentryPrimitivesIdentityAddress32: LitentryPrimitivesIdentityAddress32;
-        LitentryPrimitivesIdentityEvmNetwork: LitentryPrimitivesIdentityEvmNetwork;
-        LitentryPrimitivesIdentitySubstrateNetwork: LitentryPrimitivesIdentitySubstrateNetwork;
-        LitentryPrimitivesIdentityWeb2Network: LitentryPrimitivesIdentityWeb2Network;
         PalletBalancesAccountData: PalletBalancesAccountData;
         PalletBalancesBalanceLock: PalletBalancesBalanceLock;
         PalletBalancesCall: PalletBalancesCall;

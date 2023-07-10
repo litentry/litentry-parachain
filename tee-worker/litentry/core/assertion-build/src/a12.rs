@@ -21,32 +21,20 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::{
 	twitter_official::{TargetUser, TwitterOfficialClient},
 	vec_to_string,
 };
-use log::*;
-use std::{format, vec::Vec};
 
 const VC_SUBJECT_DESCRIPTION: &str = "The user has followed a specific user";
 const VC_SUBJECT_TYPE: &str = "A follower of the twitter user";
 const VC_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 
 pub fn build(
+	req: &AssertionBuildRequest,
 	twitter_screen_name: ParameterString,
-	identities: Vec<Identity>,
-	shard: &ShardIdentifier,
-	who: &AccountId,
 ) -> Result<Credential> {
-	debug!(
-		"Assertion 12 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
-	);
+	debug!("Assertion 12 build, who: {:?}", account_id_to_string(&req.who),);
 
 	let twitter_screen_name_s = vec_to_string(twitter_screen_name.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A12(twitter_screen_name.clone()), ErrorDetail::ParseError)
@@ -55,36 +43,34 @@ pub fn build(
 	let mut result = false;
 
 	let mut twitter_official_v1_1 = TwitterOfficialClient::v1_1();
-	for identity in identities {
-		if let Identity::Web2 { network, address } = identity {
-			if matches!(network, Web2Network::Twitter) {
-				let twitter_handler = address.to_vec();
+	for identity in &req.vec_identity {
+		if let Identity::Twitter(address) = &identity.0 {
+			let twitter_handler = address.to_vec();
 
-				let relationship = twitter_official_v1_1
-					.query_friendship(
-						twitter_handler.clone(),
-						TargetUser::Name(twitter_screen_name.to_vec()),
+			let relationship = twitter_official_v1_1
+				.query_friendship(
+					twitter_handler.clone(),
+					TargetUser::Name(twitter_screen_name.to_vec()),
+				)
+				.map_err(|e| {
+					// invalid permissions, rate limitation, etc
+					log::warn!("A12 query_friendship error:{:?}", e);
+					Error::RequestVCFailed(
+						Assertion::A12(twitter_screen_name.clone()),
+						ErrorDetail::StfError(ErrorString::truncate_from(
+							format!("{:?}", e).into(),
+						)),
 					)
-					.map_err(|e| {
-						// invalid permissions, rate limitation, etc
-						log::warn!("A12 query_friendship error:{:?}", e);
-						Error::RequestVCFailed(
-							Assertion::A12(twitter_screen_name.clone()),
-							ErrorDetail::StfError(ErrorString::truncate_from(
-								format!("{:?}", e).into(),
-							)),
-						)
-					})?;
+				})?;
 
-				if relationship.source.following {
-					result = true;
-					break
-				}
+			if relationship.source.following {
+				result = true;
+				break
 			}
 		}
 	}
 
-	match Credential::new_default(who, shard) {
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_SUBJECT_DESCRIPTION,

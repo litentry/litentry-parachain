@@ -173,6 +173,7 @@ export function createSignedTrustedCallLinkIdentity(
     who: KeyringPair,
     identity: string,
     validationData: string,
+    web3networks: string,
     keyNonce: string,
     hash: string
 ) {
@@ -180,12 +181,12 @@ export function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, UserShieldingKeyNonceType, H256)',
+            '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
         ],
         who,
         mrenclave,
         nonce,
-        [who.address, who.address, identity, validationData, keyNonce, hash]
+        [who.address, who.address, identity, validationData, web3networks, keyNonce, hash]
     );
 }
 
