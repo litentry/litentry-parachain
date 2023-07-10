@@ -275,16 +275,9 @@ async function waitForBlock(
     // eslint-disable-next-line no-constant-condition
     while (true) {
         const resp = await latestBlock(connection, shard);
-        // lax comparison because `resp.result` could be `null` instead of `undefined` :P
-        if (resp.result == undefined) {
-            console.log(`${connection.ws.url} current block: undefined`);
-            continue;
-        }
-
-        const blockNumber = resp.result.number;
+        const blockNumber = resp.result?.number;
         console.log(`${connection.ws.url} current block: ${blockNumber}`);
-
-        if (blockNumber >= lowerBound) {
+        if (blockNumber != undefined && blockNumber >= lowerBound) {
             return blockNumber;
         }
 
