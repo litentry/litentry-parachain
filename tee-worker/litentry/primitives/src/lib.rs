@@ -34,7 +34,6 @@ pub use validation_data::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use log::error;
-use parentchain_primitives::AccountId;
 pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
 	BlockNumber as ParentchainBlockNumber, ErrorDetail, ErrorString, Hash as ParentchainHash,
