@@ -1,7 +1,7 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
+import { default as teeTypes } from '../../../parachain-api/build/interfaces/identity/definitions';
 import { HexString } from '@polkadot/util/types';
 import {
     createSignedTrustedCallSetUserShieldingKey,
@@ -16,17 +16,19 @@ import {
 import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
-import sidechainMetaData from '../../litentry-sidechain-metadata.json';
+import sidechainMetaData from '../../litentry-sidechain-metadata.json' assert { type: "json" };
 import { hexToU8a, u8aToString, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
-import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
-
+import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import Options from 'websocket-as-promised/types/options';
+import crypto from 'crypto';
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const webSocketAsPromised = require('websocket-as-promised');
-const webSocket = require('ws');
+import WebSocketAsPromised from 'websocket-as-promised';
+import webSocket from 'ws';
+
 const keyring = new Keyring({ type: 'sr25519' });
 
 const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
@@ -45,14 +47,14 @@ async function runDirectCall() {
     const context = await initIntegrationTestContext(WORKER_TRUSTED_WS_ENDPOINT, PARACHAIN_WS_ENDPINT, 0);
 
     await cryptoWaitReady();
-    const wsp = new webSocketAsPromised(WORKER_TRUSTED_WS_ENDPOINT, {
+    const wsp = new WebSocketAsPromised(WORKER_TRUSTED_WS_ENDPOINT, <Options>(<unknown>{
         createWebSocket: (url: any) => new webSocket(url),
         extractMessageData: (event: any) => event,
         packMessage: (data: any) => JSON.stringify(data),
         unpackMessage: (data: string) => JSON.parse(data),
         attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id,
-    });
+    }));
     await wsp.open();
 
     const key = await getTeeShieldingKey(wsp, parachainApi);
@@ -66,7 +68,7 @@ async function runDirectCall() {
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
     // a trusted call, hence a random number is used here - better ideas are welcome
-    let hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    let hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     console.log('Send direct setUserShieldingKey call for alice ... hash:', hash);
     let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
@@ -81,7 +83,7 @@ async function runDirectCall() {
 
     await sleep(10);
 
-    hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, alice.address);
 
     console.log('Send direct linkIdentity call... hash:', hash);
@@ -161,7 +163,7 @@ async function runDirectCall() {
 
     // set bob's shielding key, with wrapped bytes
     const keyBob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
-    hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
+    hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     console.log('Send direct setUserShieldingKey call for bob, with wrapped bytes... hash:', hash);
     setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
         parachainApi,

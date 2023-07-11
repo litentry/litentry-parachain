@@ -41,15 +41,15 @@ describeLitentry('Test Identity', 0, (context) => {
     let bobValidations: LitentryValidationData[] = [];
     let web3networks: Web3Network[][] = [];
 
-    // step('check user sidechain storage before create', async function () {
-    //     const respShieldingKey = await checkUserShieldingKeys(
-    //         context,
-    //         'IdentityManagement',
-    //         'UserShieldingKeys',
-    //         u8aToHex(context.substrateWallet.alice.addressRaw)
-    //     );
-    //     assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
-    // });
+    step('check user sidechain storage before create', async function () {
+        const respShieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
+    });
 
     step('Invalid user shielding key', async function () {
 

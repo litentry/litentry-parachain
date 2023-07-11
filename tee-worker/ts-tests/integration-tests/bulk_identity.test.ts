@@ -3,13 +3,13 @@ import { buildValidations, describeLitentry, buildIdentityTxs, buildIdentityHelp
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import type { BatchCall } from './common/type-definitions';
-import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { Call } from '@polkadot/types/interfaces/types';
 import type { Vec } from '@polkadot/types';
 import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
 import { SubmittableResult } from '@polkadot/api';
-import type { Web3Network } from './parachain-interfaces/identity/types';
+import type { Web3Network } from '../parachain-api/build/interfaces/identity/types';
 
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.
@@ -58,14 +58,14 @@ describeLitentry('multiple accounts test', 2, async (context) => {
 
     //test identity with multiple accounts
     step('test linkIdentity with multiple accounts', async () => {
-        let web3networks: Web3Network[][] = [];
-        let primeIdentityAddresses: Uint8Array[] = [];
-        const default_networks = context.api.createType('Vec<Web3Network>', ['Ethereum']) as unknown as Web3Network[];
+        const web3networks: Web3Network[][] = [];
+        const primeIdentityAddresses: Uint8Array[] = [];
+        const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']) as unknown as Web3Network[];
 
         for (let index = 0; index < ethereumSigners.length; index++) {
             const identity = await buildIdentityHelper(ethereumSigners[index].address, 'Evm', context);
             identities.push(identity);
-            web3networks.push(default_networks);
+            web3networks.push(defaultNetworks);
             primeIdentityAddresses.push(substrateSigners[index].addressRaw);
         }
 
