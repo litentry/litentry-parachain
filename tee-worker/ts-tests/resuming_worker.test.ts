@@ -163,11 +163,16 @@ async function spawnWorkerJob(
             );
 
             job.on('error', (error) => reject(error));
-            if (!job.pid) {
+
+            const pid = job.pid;
+            if (!pid) {
                 return;
             }
 
-            subprocessTracker.add(job.pid);
+            subprocessTracker.add(pid);
+            job.on('exit', () => {
+                subprocessTracker.delete(pid);
+            });
 
             job.on('close', (code) => {
                 console.log(`${name} close: ${code}`);
@@ -257,7 +262,7 @@ async function resumeWorker(
     return job;
 }
 
-function killWorker(worker: ChildProcess, subprocessTracker: Set<number>): Promise<void> {
+function killWorker(worker: ChildProcess): Promise<void> {
     const pid = worker.pid;
 
     if (pid === undefined) {
@@ -271,7 +276,6 @@ function killWorker(worker: ChildProcess, subprocessTracker: Set<number>): Promi
          */
         process.kill(-pid, 'SIGKILL');
         worker.on('exit', () => {
-            subprocessTracker.delete(pid);
             resolve();
         });
         worker.on('error', (error) => reject(error));
@@ -371,7 +375,7 @@ describe('Resume worker', function () {
         console.log('=========== worker0 launched and produced blocks ==================');
 
         // kill worker0
-        await killWorker(worker0State.job, subprocessTracker);
+        await killWorker(worker0State.job);
         console.log('=========== worker0 stopped ==================');
 
         // resume worker0
@@ -397,7 +401,7 @@ describe('Resume worker', function () {
         console.log('=========== worker1 launched and produced blocks ==================');
 
         // kill worker1
-        await killWorker(worker1State.job, subprocessTracker);
+        await killWorker(worker1State.job);
         console.log('=========== worker1 stopped ==================');
 
         // let worker0 produce
@@ -426,9 +430,9 @@ describe('Resume worker', function () {
         assert(worker1State);
 
         // kill both workers
-        await killWorker(worker0State.job, subprocessTracker);
+        await killWorker(worker0State.job);
         console.log('=========== worker0 stopped ==================');
-        await killWorker(worker1State.job, subprocessTracker);
+        await killWorker(worker1State.job);
         console.log('=========== worker1 stopped ==================');
 
         // resume and check worker1
@@ -463,11 +467,11 @@ describe('Resume worker', function () {
     step('Tidy up', async function () {
         // kill both workers
         if (worker0State) {
-            await killWorker(worker0State.job, subprocessTracker);
+            await killWorker(worker0State.job);
             console.log('=========== worker0 stopped ==================');
         }
         if (worker1State) {
-            await killWorker(worker1State.job, subprocessTracker);
+            await killWorker(worker1State.job);
             console.log('=========== worker1 stopped ==================');
         }
     });
