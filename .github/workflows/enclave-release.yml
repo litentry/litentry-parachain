@@ -20,8 +20,11 @@ jobs:
         with:
           ref: ${{ github.event.inputs.manual_trigger }}
 
+      - name: Use SGX Environment
+        run: source /opt/intel/sgxsdk/environment
+
       - name: Generate Package
-        run: sh -c "source /opt/intel/sgxsdk/environment && ./tee-worker/scripts/litentry/release/generate_release_pkg.sh"
+        run: sh -c "./tee-worker/scripts/litentry/release/generate_release_pkg.sh"
 
       - name: Archive Package
         uses: actions/upload-artifact@v2
