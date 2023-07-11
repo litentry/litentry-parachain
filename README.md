@@ -1,6 +1,5 @@
 # litentry-parachain
-[![parachain](https://github.com/litentry/litentry-parachain/actions/workflows/parachain-ci.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/parachain-ci.yml)
-[![tee-worker](https://github.com/litentry/litentry-parachain/actions/workflows/tee-worker-ci.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/tee-worker-ci.yml)
+[![general ci](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml)
 [![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
 [![runtime upgrade](https://github.com/litentry/litentry-parachain/actions/workflows/runtime-upgrade-simulation.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/runtime-upgrade-simulation.yml)
 
