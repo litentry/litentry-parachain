@@ -6,14 +6,19 @@ on:
       manual_trigger:
         description: 'Manual trigger'
         default: ''
+  push:
+    branches:
+      - 1628-fx-release-enclave
 
 jobs:
   generate_package_and_artifact:
-    runs-on: ubuntu-latest
+    runs-on: prod-tee-1
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.manual_trigger }}
 
       - name: Generate Package
         run: sh -c "./tee-worker/scripts/litentry/release/generate_pkg.sh"
