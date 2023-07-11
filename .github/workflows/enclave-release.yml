@@ -21,10 +21,10 @@ jobs:
           ref: ${{ github.event.inputs.manual_trigger }}
 
       - name: Generate Package
-        run: sh -c "./tee-worker/scripts/litentry/release/generate_pkg.sh"
+        run: sh -c "./tee-worker/scripts/litentry/release/generate_release_pkg.sh"
 
       - name: Archive Package
         uses: actions/upload-artifact@v2
         with:
           name: release-${{ github.actor }}
-          path: ./target/*.tar.gz
+          path: ./tee-worker/target/*.tar.gz
