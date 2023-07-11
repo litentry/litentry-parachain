@@ -1,4 +1,4 @@
-import { ChildProcess, ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import * as readline from 'readline';
 import fs from 'fs';
 import * as path from 'path';
@@ -98,57 +98,121 @@ function initializeFiles(workingDir: string, binaryDir: string) {
     fs.writeFileSync(`${workingDir}/worker-config-mock.json`, data);
 }
 
+type RetryConfig = {
+    isRetriable: (err: unknown) => boolean;
+    maxRetries: number;
+    initialDelaySeconds: number;
+    backoffFactor: number;
+};
+
+async function withRetry<T>(
+    task: () => Promise<T>,
+    { isRetriable, maxRetries, initialDelaySeconds, backoffFactor }: RetryConfig
+): Promise<T> {
+    let attempt = 0;
+    let delaySeconds = initialDelaySeconds;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        try {
+            return await task();
+        } catch (err) {
+            if (attempt > maxRetries || !isRetriable(err)) {
+                throw err;
+            }
+            attempt += 1;
+            await sleep(delaySeconds);
+            delaySeconds *= backoffFactor;
+        }
+    }
+}
+
 type JobConfig = {
     workerConfig: WorkerConfig;
     nodeConfig: NodeConfig;
     workingDir: string;
 };
 
+class SidechainDbLockUnavailable extends Error {
+    constructor() {
+        super('sidechain_db lock unavailable');
+    }
+}
+
 async function spawnWorkerJob(
     command: Command,
     { workingDir, nodeConfig, workerConfig }: JobConfig,
     subprocessTracker: Set<number>
-) {
+): Promise<{ job: ChildProcess; shard: `0x${string}` | undefined }> {
     const { name } = workerConfig;
+    const task = () =>
+        new Promise<{ job: ChildProcess; shard: `0x${string}` | undefined }>((resolve, reject) => {
+            let shard: `0x${string}` | undefined = undefined;
 
-    const job = await new Promise<ChildProcessWithoutNullStreams>((resolve, reject) => {
-        const childProcess = spawn(
-            `./integritee-service`,
-            [generateWorkerCommandArguments(command, nodeConfig, workerConfig)],
-            {
-                cwd: workingDir,
-                shell: '/bin/sh',
-                env: {
-                    RUST_LOG: 'warn,sp_io::storage=error,substrate_api_client=warn',
-                    ...process.env,
-                },
-                detached: true,
+            const job = spawn(
+                `./integritee-service`,
+                [generateWorkerCommandArguments(command, nodeConfig, workerConfig)],
+                {
+                    cwd: workingDir,
+                    shell: '/bin/sh',
+                    env: {
+                        RUST_LOG: 'warn,sp_io::storage=error,substrate_api_client=warn',
+                        ...process.env,
+                    },
+                    detached: true,
+                }
+            );
+
+            job.on('error', (error) => reject(error));
+            if (!job.pid) {
+                return;
             }
-        );
 
-        if (childProcess.pid !== undefined) {
-            subprocessTracker.add(childProcess.pid);
-            resolve(childProcess);
-            return;
-        }
+            subprocessTracker.add(job.pid);
 
-        childProcess.on('error', (error) => reject(error));
+            job.on('close', (code) => {
+                console.log(`${name} close: ${code}`);
+            });
+
+            job.stderr.setEncoding('utf8');
+            const errorStream = readline.createInterface(job.stderr);
+            errorStream.on('line', (line: string) => {
+                console.warn(name, line);
+                if (line.includes('lock file: sidechain_db/LOCK: Resource temporarily unavailable')) {
+                    reject(new SidechainDbLockUnavailable());
+                }
+            });
+
+            job.stdout.setEncoding('utf8');
+            const outputStream = readline.createInterface(job.stdout);
+            outputStream.on('line', (line: string) => {
+                console.log(name, line);
+
+                const match = line.match(/^Successfully initialized shard (?<shard>0x[\w\d]{64}).*/);
+                if (match !== null) {
+                    /**
+                     * Assertions needed because regex contents aren't reflected in function typing;
+                     * see e.g. https://github.com/microsoft/TypeScript/issues/32098.
+                     *
+                     * If the regexp match succeeds, the `groups` property is guaranteed to be present,
+                     * as well as the corresponding named capturing groups. See
+                     * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
+                     */
+                    shard = match.groups!.shard as `0x${string}`;
+                    return;
+                }
+
+                if (line.includes('Untrusted RPC server is spawned on')) {
+                    resolve({ job, shard });
+                }
+            });
+        });
+
+    return withRetry(task, {
+        isRetriable: (err) => err instanceof SidechainDbLockUnavailable,
+        maxRetries: 3,
+        initialDelaySeconds: 10,
+        backoffFactor: 1.5,
     });
-
-    job.stderr.setEncoding('utf8');
-    const errorStream = readline.createInterface(job.stderr);
-    errorStream.on('line', (line: string) => {
-        console.warn(name, line);
-    });
-
-    job.stdout.setEncoding('utf8');
-    const outputStream = readline.createInterface(job.stdout);
-
-    job.on('close', (code) => {
-        console.log(`${name} close: ${code}`);
-    });
-
-    return { outputStream, job };
 }
 
 type WorkerState = {
@@ -165,37 +229,11 @@ async function launchWorker(
 ): Promise<WorkerState> {
     initializeFiles(jobConfig.workingDir, binaryDir);
 
-    const { outputStream, job } = await spawnWorkerJob('launch', jobConfig, subprocessTracker);
+    const { shard, job } = await spawnWorkerJob('launch', jobConfig, subprocessTracker);
 
-    const shard = await new Promise<`0x${string}`>((resolve, reject) => {
-        let shard: `0x${string}` | undefined = undefined;
-
-        outputStream.on('line', (line: string) => {
-            console.log(jobConfig.workerConfig.name, line);
-
-            const match = line.match(/^Successfully initialized shard (?<shard>0x[\w\d]{64}).*/);
-            if (match !== null) {
-                /**
-                 * Assertions needed because regex contents aren't reflected in function typing;
-                 * see e.g. https://github.com/microsoft/TypeScript/issues/32098.
-                 *
-                 * If the regexp match succeeds, the `groups` property is guaranteed to be present,
-                 * as well as the corresponding named capturing groups. See
-                 * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
-                 */
-                shard = match.groups!.shard as `0x${string}`;
-                return;
-            }
-
-            if (line.includes('Untrusted RPC server is spawned on')) {
-                if (shard === undefined) {
-                    reject(new Error('RPC server spawned before shard initialization'));
-                    return;
-                }
-                resolve(shard);
-            }
-        });
-    });
+    if (shard === undefined) {
+        throw new Error('RPC server spawned before shard initialization');
+    }
 
     const connection = await initWorkerConnection(`ws://localhost:${jobConfig.workerConfig.untrustedWorkerPort}`);
     const latestSeenBlock = await waitWorkerProducingBlock(connection, shard, 4);
@@ -208,21 +246,11 @@ async function resumeWorker(
     connection: WebSocketAsPromised,
     subprocessTracker: Set<number>
 ): Promise<ChildProcess> {
-    const { outputStream, job } = await spawnWorkerJob('resume', jobConfig, subprocessTracker);
+    const { shard, job } = await spawnWorkerJob('resume', jobConfig, subprocessTracker);
 
-    await new Promise<void>((resolve, reject) => {
-        outputStream.on('line', (line: string) => {
-            console.log(jobConfig.workerConfig.name, line);
-
-            if (line.includes('Successfully initialized shard')) {
-                reject(new Error('Shard should have been there from the previous run'));
-            }
-
-            if (line.includes('Untrusted RPC server is spawned on')) {
-                resolve();
-            }
-        });
-    });
+    if (shard !== undefined) {
+        throw new Error('Shard should have been reused from the previous run');
+    }
 
     await connection.open();
 
@@ -270,20 +298,17 @@ async function waitForBlock(
     shard: `0x${string}`,
     lowerBound: number
 ): Promise<number> {
-    let waitIntervalSeconds = 5;
-    const waitIncreaseFactor = 1.1;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    const task = async () => {
         const resp = await latestBlock(connection, shard);
         const blockNumber = resp.result?.number;
         console.log(`${connection.ws.url} current block: ${blockNumber}`);
         if (blockNumber != undefined && blockNumber >= lowerBound) {
             return blockNumber;
         }
+        throw new Error(`waiting for block ${lowerBound}; got ${blockNumber} instead`);
+    };
 
-        await sleep(waitIntervalSeconds);
-        waitIntervalSeconds = waitIntervalSeconds * waitIncreaseFactor;
-    }
+    return withRetry(task, { isRetriable: () => true, maxRetries: 10, initialDelaySeconds: 5, backoffFactor: 1.5 });
 }
 
 async function waitWorkerProducingBlock(
