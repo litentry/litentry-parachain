@@ -648,14 +648,13 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			Ok(value) => value,
 			Err(error) => {
 				println!("sync_parentchain error: {:?}", error);
-				let dummy_header = Header {
+				Header {
 					parent_hash: Default::default(),
 					number: 0,
 					extrinsics_root: Default::default(),
 					state_root: Default::default(),
 					digest: Default::default(),
-				};
-				dummy_header
+				}
 			},
 		};
 
@@ -674,14 +673,13 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				Ok(value) => value,
 				Err(error) => {
 					println!("sidechain_init_block_production error: {:?}", error);
-					let dummy_header = Header {
+					Header {
 						parent_hash: Default::default(),
 						number: 0,
 						extrinsics_root: Default::default(),
 						state_root: Default::default(),
 						digest: Default::default(),
-					};
-					dummy_header
+					}
 				},
 			};
 		}
