@@ -29,5 +29,5 @@ jobs:
       - name: Archive Package
         uses: actions/upload-artifact@v2
         with:
-          name: release-${{ github.actor }}
+          name: enclave-binary.tar.gz
           path: ./tee-worker/target/*.tar.gz
