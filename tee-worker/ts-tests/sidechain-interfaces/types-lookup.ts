@@ -680,44 +680,44 @@ declare module '@polkadot/types/lookup' {
             | 'Bsc';
     }
 
-    /** @name PalletSudoError (92) */
+    /** @name PalletSudoError (91) */
     interface PalletSudoError extends Enum {
         readonly isRequireSudo: boolean;
         readonly type: 'RequireSudo';
     }
 
-    /** @name PalletIdentityManagementTeeIdentityContext (94) */
+    /** @name PalletIdentityManagementTeeIdentityContext (93) */
     interface PalletIdentityManagementTeeIdentityContext extends Struct {
         readonly linkBlock: u32;
         readonly web3networks: Vec<CorePrimitivesNetworkWeb3Network>;
         readonly status: PalletIdentityManagementTeeIdentityContextIdentityStatus;
     }
 
-    /** @name PalletIdentityManagementTeeIdentityContextIdentityStatus (95) */
+    /** @name PalletIdentityManagementTeeIdentityContextIdentityStatus (94) */
     interface PalletIdentityManagementTeeIdentityContextIdentityStatus extends Enum {
         readonly isActive: boolean;
         readonly isInactive: boolean;
         readonly type: 'Active' | 'Inactive';
     }
 
-    /** @name PalletIdentityManagementTeeError (96) */
+    /** @name PalletIdentityManagementTeeError (95) */
     interface PalletIdentityManagementTeeError extends Enum {
         readonly isIdentityAlreadyLinked: boolean;
         readonly isIdentityNotExist: boolean;
         readonly isLinkPrimeIdentityDisallowed: boolean;
         readonly isRemovePrimeIdentityDisallowed: boolean;
         readonly isIdGraphLenLimitReached: boolean;
-        readonly isWeb3NetworkLenLimitReached: boolean;
+        readonly isWrongWeb3NetworkTypes: boolean;
         readonly type:
             | 'IdentityAlreadyLinked'
             | 'IdentityNotExist'
             | 'LinkPrimeIdentityDisallowed'
             | 'RemovePrimeIdentityDisallowed'
             | 'IdGraphLenLimitReached'
-            | 'Web3NetworkLenLimitReached';
+            | 'WrongWeb3NetworkTypes';
     }
 
-    /** @name SpRuntimeMultiSignature (98) */
+    /** @name SpRuntimeMultiSignature (97) */
     interface SpRuntimeMultiSignature extends Enum {
         readonly isEd25519: boolean;
         readonly asEd25519: SpCoreEd25519Signature;
@@ -728,36 +728,36 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
     }
 
-    /** @name SpCoreEd25519Signature (99) */
+    /** @name SpCoreEd25519Signature (98) */
     interface SpCoreEd25519Signature extends U8aFixed {}
 
-    /** @name SpCoreSr25519Signature (101) */
+    /** @name SpCoreSr25519Signature (100) */
     interface SpCoreSr25519Signature extends U8aFixed {}
 
-    /** @name SpCoreEcdsaSignature (102) */
+    /** @name SpCoreEcdsaSignature (101) */
     interface SpCoreEcdsaSignature extends U8aFixed {}
 
-    /** @name FrameSystemExtensionsCheckNonZeroSender (105) */
+    /** @name FrameSystemExtensionsCheckNonZeroSender (104) */
     type FrameSystemExtensionsCheckNonZeroSender = Null;
 
-    /** @name FrameSystemExtensionsCheckSpecVersion (106) */
+    /** @name FrameSystemExtensionsCheckSpecVersion (105) */
     type FrameSystemExtensionsCheckSpecVersion = Null;
 
-    /** @name FrameSystemExtensionsCheckTxVersion (107) */
+    /** @name FrameSystemExtensionsCheckTxVersion (106) */
     type FrameSystemExtensionsCheckTxVersion = Null;
 
-    /** @name FrameSystemExtensionsCheckGenesis (108) */
+    /** @name FrameSystemExtensionsCheckGenesis (107) */
     type FrameSystemExtensionsCheckGenesis = Null;
 
-    /** @name FrameSystemExtensionsCheckNonce (111) */
+    /** @name FrameSystemExtensionsCheckNonce (110) */
     interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
-    /** @name FrameSystemExtensionsCheckWeight (112) */
+    /** @name FrameSystemExtensionsCheckWeight (111) */
     type FrameSystemExtensionsCheckWeight = Null;
 
-    /** @name PalletTransactionPaymentChargeTransactionPayment (113) */
+    /** @name PalletTransactionPaymentChargeTransactionPayment (112) */
     interface PalletTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-    /** @name ItaSgxRuntimeRuntime (114) */
+    /** @name ItaSgxRuntimeRuntime (113) */
     type ItaSgxRuntimeRuntime = Null;
 } // declare module

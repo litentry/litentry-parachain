@@ -95,8 +95,6 @@ pub mod pallet {
 		RemovePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
-		/// Web3Network len limit reached
-		Web3NetworkLenLimitReached,
 		/// identity doesn't match the network types
 		WrongWeb3NetworkTypes,
 	}
@@ -138,9 +136,7 @@ pub mod pallet {
 			let prime_id = Self::build_prime_identity(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
 				// TODO: shall we activate all available networks for the prime id?
-				let web3networks = all_substrate_web3networks()
-					.try_into()
-					.map_err(|_| Error::<T>::Web3NetworkLenLimitReached)?;
+				let web3networks = all_substrate_web3networks();
 				let context = <IdentityContext<T>>::new(
 					<frame_system::Pallet<T>>::block_number(),
 					web3networks,

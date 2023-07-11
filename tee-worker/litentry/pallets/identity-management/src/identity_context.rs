@@ -41,9 +41,9 @@ pub struct IdentityContext<T: Config> {
 
 impl<T: Config> IdentityContext<T> {
 	pub fn new(link_block: BlockNumberOf<T>, web3networks: Vec<Web3Network>) -> Self {
-		let mut web3networks_cloned = web3networks.clone();
-		web3networks_cloned.sort();
-		web3networks_cloned.dedup();
-		Self { link_block, web3networks: web3networks_cloned, status: IdentityStatus::Active }
+		let mut web3networks_mut = web3networks;
+		web3networks_mut.sort();
+		web3networks_mut.dedup();
+		Self { link_block, web3networks: web3networks_mut, status: IdentityStatus::Active }
 	}
 }
