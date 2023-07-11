@@ -313,32 +313,41 @@ pub trait AchainablePost {
 }
 
 impl AchainablePost for AchainableClient {
-	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error> {
+	fn  post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error> {
 		let response =
 			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, body);
 		debug!("ReqBody response: {:?}", response);
+		// match response {
+		// 	Ok(res) =>
+		// 		if let Some(value) = res.get("result") {
+		// 			Ok(value.clone())
+		// 		} else {
+		// 			Err(Error::AchainableError("Invalid response".to_string()))
+		// 		},
+		// 	Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		// }
+
 		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					Ok(value.clone())
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
+			Ok(res) => Ok(res),
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
 	}
 }
 
-pub trait AchainableResultParser {
+pub trait AchainableSystemLabelParser {
 	type Item;
 	fn parse(value: serde_json::Value) -> Result<Self::Item, Error>;
 }
 
-impl AchainableResultParser for AchainableClient {
+impl AchainableSystemLabelParser for AchainableClient {
 	type Item = bool;
-	fn parse(value: serde_json::Value) -> Result<Self::Item, Error> {
-		if let Some(b) = value.as_bool() {
-			Ok(b)
+	fn parse(response: serde_json::Value) -> Result<Self::Item, Error> {
+		if let Some(value) = response.get("result") {
+			if let Some(b) = value.as_bool() {
+				Ok(b)
+			} else {
+				Err(Error::AchainableError("Invalid response".to_string()))
+			}
 		} else {
 			Err(Error::AchainableError("Invalid response".to_string()))
 		}
@@ -354,6 +363,85 @@ fn check_achainable_label(
 	let body = ParamsAccount::new(address).into();
 	let resp = client.post(params, &body)?;
 	AchainableClient::parse(resp)
+}
+
+pub trait AchainableTotalTransactions {
+	// Currently, supported networks: ["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"]
+	fn total_transactions(&mut self, address: &str, network: &Web3Network) -> Result<u64, Error>;
+}
+
+// TODO:
+// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api 
+// currently only judges the range of a single account, so the current approach is to parse the returned data through 
+// an assertion such as under 1 to calculate the sum, and then perform interval judgment.
+pub trait AchainableTotalTransactionsParser {
+	fn parse_total_transactions(response: serde_json::Value) -> Result<u64, Error> {
+		if let Some(value) = response.get("label") {
+			if let Some(value) = value.get("display") {
+				if let Some(displays) = value.as_array() {
+					let mut display_text = "";
+
+					for v in displays.iter() {
+						if let Some(text) = v.get("text") {
+							if let Some(text) = text.as_str() {
+								display_text = text
+							} else {
+								return Err(Error::AchainableError("Invalid bool".to_string()))
+							}				
+						} else {
+							return Err(Error::AchainableError("Invalid result".to_string()))
+						}
+					}
+					debug!("Total txs, display text: {display_text}");
+
+					// TODO: 
+					// text field format: Total transactions under 1 (Transactions: 0)
+					let split_text = display_text.split(": ").collect::<Vec<&str>>();
+					if split_text.len() != 2 {
+						return Err(Error::AchainableError("Invalid array".to_string()))
+					} 
+					
+					let mut value_text = split_text[1].to_string();
+
+					// pop the last char: ")"
+					value_text.pop();
+
+					let value: u64 = value_text.parse::<u64>().unwrap_or_default();
+					
+					Ok(value)
+				} else {
+					Err(Error::AchainableError("Invalid array".to_string()))
+				}	
+			} else {
+				Err(Error::AchainableError("Invalid display".to_string()))
+			}
+		} else {
+			Err(Error::AchainableError("Invalid response".to_string()))
+		}
+	}
+}
+impl AchainableTotalTransactionsParser for AchainableClient {}
+
+impl AchainableTotalTransactions for AchainableClient {
+	fn total_transactions(&mut self, address: &str, network: &Web3Network) -> Result<u64, Error> {
+		let mut path = "";
+
+		match network {
+			Web3Network::Litentry => path = "/v1/run/label/74655d14-3abd-4a25-b3a4-cd592ae26f4c",
+			Web3Network::Litmus => path = "/v1/run/label/b94fedfc-cb7b-4e59-a7a9-121550acd1c4",
+			Web3Network::Polkadot => path = "/v1/run/label/046e8968-d585-4421-8064-d48b58c75b9a",
+			Web3Network::Kusama => path = "/v1/run/label/060e12c8-b84e-4284-bab3-9a014d41266b",
+			Web3Network::Ethereum => path = "/v1/run/label/8e19fb04-57fc-4537-ac93-d6fa7cff5bbe",
+			Web3Network::Khala => path = "/v1/run/label/f6a5cbe7-605a-4f9f-8763-67f90f943fb4",
+			_ => debug!("Unsupported network: {:?}", network)
+		}
+		
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse_total_transactions(resp)
+	}
 }
 
 impl AchainableTagAccount for AchainableClient {
