@@ -81,7 +81,8 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			// In fact, it should never fail
+			// It should never fail because `req.assertion.get_supported_web3networks()`
+			// returns the vector which is converted from a BoundedVec
 			let bounded_web3networks =
 				req.assertion.get_supported_web3networks().try_into().unwrap();
 			Err(Error::RequestVCFailed(Assertion::A8(bounded_web3networks), e.into_error_detail()))
