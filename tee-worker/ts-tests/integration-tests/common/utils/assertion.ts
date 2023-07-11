@@ -10,7 +10,7 @@ import type { EnclaveResult, IntegrationTestContext } from '../type-definitions'
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
-import { aesKey } from '../../common/call';
+import { aesKey } from '../call';
 import colors from 'colors';
 
 export async function assertInitialIdGraphCreated(
@@ -198,8 +198,8 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

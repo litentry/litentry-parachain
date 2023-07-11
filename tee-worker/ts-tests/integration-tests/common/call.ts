@@ -2,7 +2,7 @@ import { ApiPromise } from '@polkadot/api';
 import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { HexString } from '@polkadot/util/types';
-import type { RequestBody } from '../common/type-definitions';
+import type { RequestBody } from './type-definitions';
 import type { WorkerRpcReturnValue } from '../parachain-interfaces/identity/types';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import type { Bytes } from '@polkadot/types-codec';
