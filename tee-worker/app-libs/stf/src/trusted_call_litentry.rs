@@ -30,8 +30,8 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
 };
 use litentry_primitives::{
-	Assertion, BoundedWeb3Network, ErrorDetail, Identity, IdentityNetworkTuple,
-	UserShieldingKeyType, ValidationData, Web3Network,
+	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, UserShieldingKeyType, ValidationData,
+	Web3Network,
 };
 use log::*;
 use std::vec::Vec;
@@ -70,10 +70,6 @@ impl TrustedCallSigned {
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		let bounded_web3networks = web3networks
-			.try_into()
-			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::Web3NetworkOutOfBounds))?;
-
 		// note it's the signer's nonce, not `who`
 		// we intentionally use `System::account_nonce - 1` to make up for the increment at the
 		// beginning of STF execution, otherwise it might be unexpected that we were hoping
@@ -85,7 +81,7 @@ impl TrustedCallSigned {
 			who,
 			identity,
 			validation_data,
-			bounded_web3networks,
+			web3networks,
 			sidechain_nonce,
 			key_nonce: nonce,
 			key,
@@ -134,7 +130,7 @@ impl TrustedCallSigned {
 
 		let id_graph = IMT::get_id_graph(&who, usize::MAX);
 		let assertion_networks = assertion.get_supported_web3networks();
-		let vec_identity: Vec<IdentityNetworkTuple> = id_graph
+		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
 			.filter(|item| item.1.status == IdentityStatus::Active)
 			.map(|item| {
@@ -152,7 +148,7 @@ impl TrustedCallSigned {
 			shard: *shard,
 			who,
 			assertion: assertion.clone(),
-			vec_identity,
+			identities,
 			hash,
 		}
 		.into();
@@ -167,7 +163,7 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: AccountId,
 		identity: Identity,
-		web3networks: BoundedWeb3Network,
+		web3networks: Vec<Web3Network>,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer(&signer)

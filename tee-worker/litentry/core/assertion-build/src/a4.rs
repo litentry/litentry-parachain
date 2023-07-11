@@ -85,7 +85,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 	})?;
 
 	let mut client = AchainableClient::new();
-	let identities = transpose_identity(&req.vec_identity);
+	let identities = transpose_identity(&req.identities);
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = usize::MAX;

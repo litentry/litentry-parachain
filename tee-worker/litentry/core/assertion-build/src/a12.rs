@@ -43,7 +43,7 @@ pub fn build(
 	let mut result = false;
 
 	let mut twitter_official_v1_1 = TwitterOfficialClient::v1_1();
-	for identity in &req.vec_identity {
+	for identity in &req.identities {
 		if let Identity::Twitter(address) = &identity.0 {
 			let twitter_handler = address.to_vec();
 
