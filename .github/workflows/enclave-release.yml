@@ -21,7 +21,7 @@ jobs:
           ref: ${{ github.event.inputs.manual_trigger }}
 
       - name: Generate Package
-        run: sh -c "./tee-worker/scripts/litentry/release/generate_release_pkg.sh"
+        run: sh -c "source /opt/intel/sgxsdk/environment && ./tee-worker/scripts/litentry/release/generate_release_pkg.sh"
 
       - name: Archive Package
         uses: actions/upload-artifact@v2
