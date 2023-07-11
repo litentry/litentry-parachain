@@ -230,7 +230,7 @@ fn tls_client_config<A: EnclaveAttestationOCallApi + 'static>(
 	let mut cfg = rustls::ClientConfig::new();
 	let certs = vec![rustls::Certificate(cert_der)];
 	let privkey = rustls::PrivateKey(key_der);
-
+	#[allow(clippy::unwrap_used)]
 	cfg.set_single_client_cert(certs, privkey).unwrap();
 	cfg.dangerous()
 		.set_certificate_verifier(Arc::new(ServerAuth::new(true, skip_ra, ocall_api)));

@@ -44,7 +44,7 @@ pub unsafe extern "C" fn run_stf_task_handler(
 		Ok(dps) => dps,
 		Err(e) => return Error::Codec(e).into(),
 	};
-
+	#[allow(clippy::unwrap_used)]
 	let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
 	mut_handle.set_twitter_official_url(data_providers_static.twitter_official_url);
 	mut_handle.set_twitter_litentry_url(data_providers_static.twitter_litentry_url);
@@ -76,6 +76,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;

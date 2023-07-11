@@ -105,6 +105,7 @@ where
 				"author_getNextNonce is not avaiable"
 			)))
 		}
+		#[allow(clippy::unwrap_used)]
 		let state_nonce_unwrap = state_nonce.unwrap();
 		match params.parse::<(String, String)>() {
 			Ok((shard_base58, account_hex)) => {
@@ -130,6 +131,7 @@ where
 						let trusted_calls =
 							pool_author.get_pending_trusted_calls_for(shard, &account);
 						let pending_tx_count = trusted_calls.len();
+						#[allow(clippy::unwrap_used)]
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
 						let nonce = System::account_nonce(&account);
 						let json_value = RpcReturnValue {
@@ -224,10 +226,12 @@ where
 		if state_storage.is_none() {
 			return Ok(json!(compute_hex_encoded_return_error("state_getStorage is not avaiable")))
 		}
+		#[allow(clippy::unwrap_used)]
 		let state_storage = state_storage.clone().unwrap();
 		match params.parse::<(String, String)>() {
 			Ok((shard_str, key_hash)) => {
 				let key_hash = if key_hash.starts_with("0x") {
+					#[allow(clippy::unwrap_used)]
 					key_hash.strip_prefix("0x").unwrap()
 				} else {
 					key_hash.as_str()

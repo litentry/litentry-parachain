@@ -75,6 +75,7 @@ pub fn test_creates_ipfs_content_struct_works() {
 	let content: Vec<u8> = vec![20; 512 * 1024];
 	let ipfs_content = IpfsContent::new(cid, content.clone());
 
+	#[allow(clippy::unwrap_used)]
 	let cid_str = Base::Base58Btc.encode(ipfs_content.cid.as_ref().unwrap().hash().as_bytes());
 	assert_eq!(cid_str, cid);
 	assert_eq!(ipfs_content.file_content, content);
@@ -95,5 +96,8 @@ pub fn test_verification_fails_for_incorrect_content() {
 	let content: Vec<u8> = vec![10; 512 * 1024];
 	let mut ipfs_content = IpfsContent::new(cid, content);
 	let verification = ipfs_content.verify();
-	assert_eq!(verification.unwrap_err(), IpfsError::Verification);
+	#[allow(clippy::unwrap_used)]
+	{
+		assert_eq!(verification.unwrap_err(), IpfsError::Verification);
+	}
 }

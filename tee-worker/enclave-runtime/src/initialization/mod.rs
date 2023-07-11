@@ -126,6 +126,7 @@ pub(crate) fn init_enclave(mu_ra_url: String, untrusted_worker_url: String) -> E
 	GLOBAL_OCALL_API_COMPONENT.initialize(ocall_api.clone());
 
 	// For debug purposes, list shards. no problem to panic if fails.
+	#[allow(clippy::unwrap_used)]
 	let shards = state_handler.list_shards().unwrap();
 	debug!("found the following {} shards on disk:", shards.len());
 	for s in shards {

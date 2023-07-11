@@ -16,7 +16,6 @@
 */
 
 #![cfg_attr(test, feature(assert_matches))]
-#![deny(clippy::unwrap_used)]
 
 #[cfg(feature = "teeracle")]
 use crate::teeracle::start_interval_market_update;
@@ -163,22 +162,17 @@ fn main() {
 
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
-		#[allow(clippy::unwrap_used)]
-		{
-			setup::purge_files_from_cwd().unwrap();
-		}
+		setup::purge_files_from_cwd().unwrap();
 	}
 
 	// build the entire dependency tree
 	let tokio_handle = Arc::new(GlobalTokioHandle {});
-	#[allow(clippy::unwrap_used)]
 	let sidechain_blockstorage = Arc::new(
 		SidechainStorageLock::<SignedSidechainBlock>::new(PathBuf::from(&SIDECHAIN_STORAGE_PATH))
 			.unwrap(),
 	);
 	let node_api_factory =
 		Arc::new(NodeApiFactory::new(config.node_url(), AccountKeyring::Alice.pair()));
-	#[allow(clippy::unwrap_used)]
 	let enclave = Arc::new(enclave_init(&config).unwrap());
 	let initialization_handler = Arc::new(InitializationHandler::default());
 	let worker = Arc::new(EnclaveWorker::new(
@@ -211,8 +205,7 @@ fn main() {
 	let data_provider_config = data_provider(&config);
 
 	if let Some(run_config) = &config.run_config {
-		#[allow(clippy::unwrap_used)]
-		let shard = extract_shard(&run_config.shard, enclave.as_ref()).unwrap();
+		let shard = extract_shard(&run_config.shard, enclave.as_ref());
 
 		println!("Worker Config: {:?}", config);
 
@@ -240,7 +233,6 @@ fn main() {
 		}
 
 		if clean_reset {
-			#[allow(clippy::unwrap_used)]
 			setup::initialize_shard_and_keys(enclave.as_ref(), &shard).unwrap();
 		}
 
@@ -248,14 +240,12 @@ fn main() {
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
 
 		if run_config.request_state {
-			#[allow(clippy::unwrap_used)]
 			sync_state::sync_state::<_, _, WorkerModeProvider>(
 				&node_api,
 				&shard,
 				enclave.as_ref(),
 				run_config.skip_ra,
-			)
-			.unwrap();
+			);
 		}
 
 		start_worker::<_, _, _, _, WorkerModeProvider>(
@@ -272,27 +262,21 @@ fn main() {
 		println!("*** Requesting state from a registered worker \n");
 		let node_api =
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
-		#[allow(clippy::unwrap_used)]
 		sync_state::sync_state::<_, _, WorkerModeProvider>(
 			&node_api,
-			&extract_shard(&smatches.value_of("shard").map(|s| s.to_string()), enclave.as_ref())
-				.unwrap(),
+			&extract_shard(&smatches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
 			enclave.as_ref(),
 			smatches.is_present("skip-ra"),
-		)
-		.unwrap();
+		);
 	} else if matches.is_present("shielding-key") {
-		#[allow(clippy::unwrap_used)]
-		setup::generate_shielding_key_file(enclave.as_ref()).unwrap();
+		setup::generate_shielding_key_file(enclave.as_ref());
 	} else if matches.is_present("signing-key") {
-		#[allow(clippy::unwrap_used)]
-		setup::generate_signing_key_file(enclave.as_ref()).unwrap();
+		setup::generate_signing_key_file(enclave.as_ref());
 		let tee_accountid = enclave_account(enclave.as_ref());
 		println!("Enclave account: {:}", &tee_accountid.to_ss58check());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
 		#[cfg(not(feature = "dcap"))]
-		#[allow(clippy::unwrap_used)]
 		enclave.dump_ias_ra_cert_to_disk().unwrap();
 		#[cfg(feature = "dcap")]
 		{
@@ -303,15 +287,12 @@ fn main() {
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
 	} else if matches.is_present("mrenclave") {
-		#[allow(clippy::unwrap_used)]
-		let mrenclave = enclave.get_mrenclave().unwrap().encode().to_base58();
-		println!("{}", mrenclave);
+		println!("{}", enclave.get_mrenclave().unwrap().encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
-		#[allow(clippy::unwrap_used)]
-		let shard_identifier =
-			extract_shard(&sub_matches.value_of("shard").map(|s| s.to_string()), enclave.as_ref())
-				.unwrap();
-		setup::init_shard(enclave.as_ref(), &shard_identifier);
+		setup::init_shard(
+			enclave.as_ref(),
+			&extract_shard(&sub_matches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
+		);
 	} else if let Some(sub_matches) = matches.subcommand_matches("test") {
 		if sub_matches.is_present("provisioning-server") {
 			println!("*** Running Enclave MU-RA TLS server\n");
@@ -324,10 +305,10 @@ fn main() {
 			println!("[+] Done!");
 		} else if sub_matches.is_present("provisioning-client") {
 			println!("*** Running Enclave MU-RA TLS client\n");
-			#[allow(clippy::unwrap_used)]
-			let shard = extract_shard(&sub_matches.value_of("shard").map(|s| s.to_string()), enclave.as_ref())
-				.unwrap();
-			#[allow(clippy::unwrap_used)]
+			let shard = extract_shard(
+				&sub_matches.value_of("shard").map(|s| s.to_string()),
+				enclave.as_ref(),
+			);
 			enclave_request_state_provisioning(
 				enclave.as_ref(),
 				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
@@ -342,7 +323,6 @@ fn main() {
 		}
 	} else if let Some(sub_matches) = matches.subcommand_matches("migrate-shard") {
 		// This subcommand `migrate-shard` is only used for manual testing. Maybe deleted later.
-		#[allow(clippy::unwrap_used)]
 		let old_shard = sub_matches
 			.value_of("old-shard")
 			.map(|value| {
@@ -352,7 +332,7 @@ fn main() {
 				ShardIdentifier::from_slice(&shard)
 			})
 			.unwrap();
-		#[allow(clippy::unwrap_used)]
+
 		let new_shard: ShardIdentifier = sub_matches
 			.value_of("new-shard")
 			.map(|value| {
@@ -411,7 +391,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	}
 	// ------------------------------------------------------------------------
 	// initialize the enclave
-	#[allow(clippy::unwrap_used)]
 	let mrenclave = enclave.get_mrenclave().unwrap();
 	println!("MRENCLAVE={}", mrenclave.to_base58());
 	println!("MRENCLAVE in hex {:?}", hex::encode(mrenclave));
@@ -485,7 +464,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				"[+] Trusted RPC direct invocation server listening on {}",
 				direct_invocation_server_addr
 			);
-			#[allow(clippy::unwrap_used)]
 			enclave_for_direct_invocation
 				.init_direct_invocation_server(direct_invocation_server_addr)
 				.unwrap();
@@ -507,7 +485,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// ------------------------------------------------------------------------
 	// Init parentchain specific stuff. Needed for parentchain communication.
-	#[allow(clippy::unwrap_used)]
 	let parentchain_handler = Arc::new(
 		ParentchainHandler::new_with_automatic_light_client_allocation(
 			node_api.clone(),
@@ -515,10 +492,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		)
 		.unwrap(),
 	);
-	#[allow(clippy::unwrap_used)]
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
 	info!("Last synced parachain block = {:?}", &last_synced_header.number);
-	#[allow(clippy::unwrap_used)]
 	let nonce = node_api.get_nonce_of(&tee_accountid).unwrap();
 	info!("Enclave nonce = {:?}", nonce);
 	enclave
@@ -563,7 +538,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		println!("[!] creating remote attestation report and create enclave register extrinsic.");
 	};
 	#[cfg(not(feature = "dcap"))]
-	#[allow(clippy::unwrap_used)]
 	let uxt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 	#[cfg(feature = "dcap")]
 	let uxt = enclave.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
@@ -592,10 +566,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			for key in keys {
 				let key = if key.starts_with("0x") {
 					let bytes = &key.as_bytes()[b"0x".len()..];
-					#[allow(clippy::unwrap_used)]
 					hex::decode(bytes).unwrap()
 				} else {
-					#[allow(clippy::unwrap_used)]
 					hex::decode(key.as_bytes()).unwrap()
 				};
 				match node_api.get_storage_by_key_hash::<TeerexEnclave<AccountId32, Vec<u8>>>(
@@ -622,25 +594,18 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			}
 			if !found {
 				println!("[>] Register the enclave (send the extrinsic)");
-				#[allow(clippy::unwrap_used)]
-				let register_enclave_xt_hash = node_api.send_extrinsic(xthex, XtStatus::Finalized).unwrap();
+				let register_enclave_xt_hash =
+					node_api.send_extrinsic(xthex, XtStatus::Finalized).unwrap();
 				println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
-				#[allow(clippy::unwrap_used)]
-				{
-					register_enclave_xt_header =
-						node_api.get_header(register_enclave_xt_hash).unwrap();
-				}
+				register_enclave_xt_header = node_api.get_header(register_enclave_xt_hash).unwrap();
 			}
 		},
 		_ => panic!("unknown error"),
 	}
 
 	if let Some(register_enclave_xt_header) = register_enclave_xt_header.clone() {
-		#[allow(clippy::unwrap_used)]
-		{
-			we_are_primary_validateer =
-				check_we_are_primary_validateer(&node_api, &register_enclave_xt_header).unwrap();
-		}
+		we_are_primary_validateer =
+			check_we_are_primary_validateer(&node_api, &register_enclave_xt_header).unwrap();
 	}
 
 	if we_are_primary_validateer {
@@ -656,7 +621,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let enclave_api_stf_task_handler = enclave.clone();
 	let data_provider_config = data_provider_config.clone();
 	thread::spawn(move || {
-		#[allow(clippy::unwrap_used)]
 		enclave_api_stf_task_handler.run_stf_task_handler(data_provider_config).unwrap();
 	});
 
@@ -683,14 +647,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		);
 
 		// Syncing all parentchain blocks, this might take a while..
-		#[allow(clippy::unwrap_used)]
 		let mut last_synced_header = parentchain_handler
 			.sync_parentchain(last_synced_header, parentchain_start_block)
 			.unwrap();
 
 		// ------------------------------------------------------------------------
 		// Initialize the sidechain
-		#[allow(clippy::unwrap_used)]
 		if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
 			last_synced_header = sidechain_init_block_production(
 				enclave,
@@ -706,7 +668,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 		// ------------------------------------------------------------------------
 		// start parentchain syncing loop (subscribe to header updates)
-		#[allow(clippy::unwrap_used)]
 		thread::Builder::new()
 			.name("parentchain_sync_loop".to_owned())
 			.spawn(move || {
@@ -730,7 +691,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	println!("*** Subscribing to events");
 	let (sender, receiver) = channel();
 	let metadata = node_api.metadata.clone();
-	#[allow(clippy::unwrap_used)]
 	let _ = thread::Builder::new()
 		.name("event_subscriber".to_owned())
 		.spawn(move || {
@@ -742,12 +702,10 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let timeout = Duration::from_secs(600);
 	loop {
 		if let Ok(events_str) = receiver.recv_timeout(timeout) {
-			#[allow(clippy::unwrap_used)]
 			let event_bytes = Vec::from_hex(events_str).unwrap();
 			let events = Events::new(metadata.clone(), Default::default(), event_bytes);
 
 			for maybe_event_details in events.iter() {
-				#[allow(clippy::unwrap_used)]
 				let event_details = maybe_event_details.unwrap();
 				let _ = print_event(&event_details);
 			}
@@ -923,7 +881,6 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 
 /// Get the public signing key of the TEE.
 fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
-	#[allow(clippy::unwrap_used)]
 	let tee_public = enclave_api.get_ecc_signing_pubkey().unwrap();
 	trace!("[+] Got ed25519 account of TEE = {}", tee_public.to_ss58check());
 	AccountId32::from(*tee_public.as_array_ref())
@@ -939,7 +896,6 @@ fn check_we_are_primary_validateer(
 	Ok(enclave_count_of_previous_block == 0)
 }
 
-#[allow(clippy::unwrap_used)]
 fn data_provider(config: &Config) -> DataProvidersStatic {
 	let built_in_modes = vec!["dev", "staging", "prod", "mock"];
 	let built_in_config: Value =

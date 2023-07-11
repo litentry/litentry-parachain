@@ -52,9 +52,10 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 	if use_token {
 		match File::open(&token_file) {
 			Err(_) => {
-				#[allow(clippy::unwrap_used)]
-				let file_str = token_file.as_path().to_str().unwrap();
-				info!("[-] Token file {} not found! Will create one.", file_str);
+				info!(
+					"[-] Token file {} not found! Will create one.",
+					token_file.as_path().to_str().unwrap()
+				);
 			},
 			Ok(mut f) => {
 				info!("[+] Open token file success! ");

@@ -37,7 +37,6 @@ pub struct GlobalTokioHandle;
 /// reduce their usage where possible and use an instance of TokioHandleAccessorImpl or the trait
 impl GlobalTokioHandle {
 	/// this needs to be called once at application startup!
-	#[allow(clippy::unwrap_used)]
 	pub fn initialize() {
 		let rt = tokio::runtime::Builder::new_multi_thread()
 			.enable_all()
@@ -72,7 +71,6 @@ pub struct ScopedTokioHandle {
 }
 
 impl Default for ScopedTokioHandle {
-	#[allow(clippy::unwrap_used)]
 	fn default() -> Self {
 		ScopedTokioHandle { tokio_runtime: tokio::runtime::Runtime::new().unwrap() }
 	}
