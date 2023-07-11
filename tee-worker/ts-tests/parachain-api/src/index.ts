@@ -11,7 +11,7 @@ export type {
     Assertion,
     LitentryIdentity,
     LitentryValidationData,
-    SubstrateNetwork,
+    Web3Network,
     WorkerRpcReturnValue,
 } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";

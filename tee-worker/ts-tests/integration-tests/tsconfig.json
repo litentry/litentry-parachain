@@ -1,20 +1,26 @@
 {
 	"compilerOptions": {
-		// this is specific with augmented overrides
-		"paths": {
-			"@polkadot/api/augment": ["./parachain-interfaces/augment-api.ts"],
-			"@polkadot/types/augment": ["./parachain-interfaces/augment-types.ts"],
-			"@polkadot/types/lookup": ["./sidechain-interfaces/types-lookup.ts"]
-		},
-		"target": "es2017",
-		"module": "commonjs",
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Node",
 		"declaration": true,
-		"outDir": "./lib",
 		"strict": true,
 		"skipLibCheck": true,
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": true,
 		"baseUrl": "."
+	},
+	"paths": {
+		"@polkadot/api/augment": ["../parachain-api/build/interfaces/augment-api.ts"],
+		"@polkadot/types/augment": ["../parachain-api/build/interfaces/augment-types.ts"],
+		"parachain-api/*": ["../parachain-api/src/*", "../parachain-api/build/*"],
+		"sidechain-api/*": ["../sidechain-api/src/*", "../sidechain-api/build/*"]
+	},
+	"references": [{ "path": "../parachain-api" }, { "path": "../sidechain-api" }],
+	"ts-node": {
+		"esm": true,
+		"experimentalResolver": true,
+		"experimentalSpecifierResolution": "node"
 	}
 }

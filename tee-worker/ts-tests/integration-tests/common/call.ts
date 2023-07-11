@@ -3,7 +3,7 @@ import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { HexString } from '@polkadot/util/types';
 import type { RequestBody } from './type-definitions';
-import type { WorkerRpcReturnValue } from '../parachain-interfaces/identity/types';
+import type { WorkerRpcReturnValue } from '..../../parachain-api/build/interfaces/identity/types';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import type { Bytes } from '@polkadot/types-codec';
 
@@ -25,7 +25,7 @@ export async function sendRequest(
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const rawRes = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
-    const res = api.createType('WorkerRpcReturnValue', rawRes.result) as unknown as WorkerRpcReturnValue;
+    const res: any = api.createType('WorkerRpcReturnValue', rawRes.result) as WorkerRpcReturnValue;
     if (res.status.isError) {
         console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
     }
@@ -53,6 +53,7 @@ export async function getSidechainMetadata(
     const resp = await sendRequest(wsClient, request, api);
     const sidechainRegistry = new TypeRegistry();
     const sidechainMetaData = new Metadata(sidechainRegistry, resp.value);
+
     sidechainRegistry.setMetadata(sidechainMetaData);
     return { sidechainMetaData, sidechainRegistry };
 }

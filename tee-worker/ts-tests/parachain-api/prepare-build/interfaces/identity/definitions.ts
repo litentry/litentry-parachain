@@ -41,7 +41,6 @@ export default {
                 reserved_balance: "(AccountId)",
                 user_shielding_key: "(AccountId)",
                 id_graph: "(AccountId)",
-                challenge_code: "(AccountId, LitentryIdentity)",
                 id_graph_stats: "(AccountId)",
             },
         },
@@ -53,15 +52,14 @@ export default {
                 balance_unshield: "(AccountId, AccountId, Balance, ShardIdentifier)",
                 balance_shield: "(AccountId, AccountId, Balance)",
                 set_user_shielding_key: "(AccountId, AccountId, UserShieldingKeyType, H256)",
-                create_identity:
-                    "(AccountId, AccountId, LitentryIdentity, Option<Vec<u8>>, u32, H256)",
+                link_identity:
+                    "(AccountId, AccountId, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
                 remove_identity: "(AccountId, AccountId, LitentryIdentity, H256)",
-                verify_identity:
-                    "(AccountId, AccountId, LitentryIdentity, LitentryValidationData, u32, H256)",
-                request_vc: "(AccountId, AccountId, Assertion, u32, H256)",
+                request_vc: "(AccountId, AccountId, Assertion, H256)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
+        UserShieldingKeyNonceType: "[u8; 12]",
         DirectRequestStatus: {
             _enum: {
                 Ok: null,
@@ -88,30 +86,17 @@ export default {
         // identity management
         LitentryIdentity: {
             _enum: {
-                Substrate: "SubstrateIdentity",
-                Evm: "EvmIdentity",
-                Web2: "Web2Identity",
+                Twitter: "IdentityString",
+                Discord: "IdentityString",
+                Github: "IdentityString",
+                Substrate: "Address32",
+                Evm: "Address20",
             },
-        },
-        SubstrateIdentity: {
-            network: "SubstrateNetwork",
-            address: "Address32",
-        },
-        EvmIdentity: {
-            network: "EvmNetwork",
-            address: "Address20",
-        },
-        Web2Identity: {
-            network: "Web2Network",
-            address: "IdentityString",
         },
         Address32: "[u8;32]",
         Address20: "[u8;20]",
         IdentityString: "Vec<u8>",
-        Web2Network: {
-            _enum: ["Twitter", "Discord", "Github"],
-        },
-        SubstrateNetwork: {
+        Web3Network: {
             _enum: [
                 "Polkadot",
                 "Kusama",
@@ -119,11 +104,11 @@ export default {
                 "Litmus",
                 "LitentryRococo",
                 "Khala",
-                "TestNet",
+                "SubstrateTestnet",
+                "Ethereum",
+                "Polygon",
+                "BSC",
             ],
-        },
-        EvmNetwork: {
-            _enum: ["Ethereum", "BSC"],
         },
         LitentryValidationData: {
             _enum: {
@@ -171,12 +156,17 @@ export default {
             identity: "LitentryIdentity",
             id_graph: "Vec<(LitentryIdentity, IdentityContext)>",
         },
-        IdentityContext: {
-            metadata: "Option<Vec<u8>>",
-            linking_request_block: "Option<BlockNumber>",
-            verification_request_block: "Option<BlockNumber>",
-            is_verified: "bool",
+
+        IdentityStatus: {
+            _enum: ["Active", "Inactive"],
         },
+
+        IdentityContext: {
+            link_block: "BlockNumber",
+            web3networks: "BoundedWeb3Network",
+            status: "IdentityStatus",
+        },
+        BoundedWeb3Network: "BoundedVec<Web3Network, ConstU32<128>>",
 
         // teerex
         ShardIdentifier: "H256",

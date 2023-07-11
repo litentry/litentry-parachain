@@ -4,11 +4,11 @@ import WebSocketAsPromised from 'websocket-as-promised';
 import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import { Call } from '@polkadot/types/interfaces';
-import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
-import type { Assertion as GenericAssertion } from '../parachain-interfaces/identity/types';
+import type { Assertion as GenericAssertion } from 'parachain-api';
 import type { AnyTuple, IMethod } from '@polkadot/types/types';
 
 export type ParachainAssertion = GenericAssertion['type'];

@@ -4,13 +4,13 @@ import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polk
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
 import type { IntegrationTestContext } from '../type-definitions';
-import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import type { HexString } from '@polkadot/util/types';
 import type { Metadata } from '@polkadot/types';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const base58 = require('micro-base58');
+import * as base58 from 'micro-base58'
 
 //sidechain storage utils
 export function buildStorageEntry(metadata: Metadata, prefix: string, method: string): StorageEntryMetadataV14 | null {

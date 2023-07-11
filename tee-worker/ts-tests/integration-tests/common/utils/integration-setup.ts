@@ -28,6 +28,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
 
         before('Starting Litentry(parachain&tee)', async function () {
             //env url
+
             const tmp = await initIntegrationTestContext(
                 process.env.WORKER_END_POINT!,
                 process.env.SUBSTRATE_END_POINT!,

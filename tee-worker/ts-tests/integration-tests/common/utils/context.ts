@@ -8,7 +8,7 @@ import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
 import { getEthereumSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
-import { default as teeTypes } from '../../parachain-interfaces/identity/definitions';
+import { default as teeTypes } from '../../../parachain-api/build/interfaces/identity/definitions';
 import crypto from 'crypto';
 
 // maximum block number that we wait in listening events before we timeout
@@ -32,7 +32,10 @@ export async function initIntegrationTestContext(
     substrateEndpoint: string,
     walletsNumber: number
 ): Promise<IntegrationTestContext> {
+
     const provider = new WsProvider(substrateEndpoint);
+    await cryptoWaitReady();
+
     const ethersWallet = {
         alice: new ethers.Wallet(getEthereumSigner().alice),
         bob: new ethers.Wallet(getEthereumSigner().bob),
@@ -40,6 +43,7 @@ export async function initIntegrationTestContext(
         dave: new ethers.Wallet(getEthereumSigner().dave),
         eve: new ethers.Wallet(getEthereumSigner().eve),
     };
+
     const substrateWallet = getSubstrateSigner();
 
     const { types } = teeTypes;
@@ -49,7 +53,6 @@ export async function initIntegrationTestContext(
     });
 
     const chainIdentifier = api.registry.chainSS58 as number;
-    await cryptoWaitReady();
 
     const wsp = await initWorkerConnection(workerEndpoint);
 

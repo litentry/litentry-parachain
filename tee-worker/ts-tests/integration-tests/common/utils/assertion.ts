@@ -5,7 +5,7 @@ import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
 import { buildIdentityHelper, parseIdGraph, parseIdentity } from './identity-helper';
-import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
+import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { EnclaveResult, IntegrationTestContext } from '../type-definitions';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';

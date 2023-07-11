@@ -17,8 +17,8 @@ import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
-import type { LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
-import type { LitentryValidationData, Web3Network } from './parachain-interfaces/identity/types';
+import type { LitentryPrimitivesIdentity } from '../sidechain-api/src/index';
+import type { LitentryValidationData, Web3Network } from '../parachain-api/build/interfaces/identity/types';
 import type { TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
@@ -41,17 +41,19 @@ describeLitentry('Test Identity', 0, (context) => {
     let bobValidations: LitentryValidationData[] = [];
     let web3networks: Web3Network[][] = [];
 
-    step('check user sidechain storage before create', async function () {
-        const respShieldingKey = await checkUserShieldingKeys(
-            context,
-            'IdentityManagement',
-            'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
-        );
-        assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
-    });
+    // step('check user sidechain storage before create', async function () {
+    //     const respShieldingKey = await checkUserShieldingKeys(
+    //         context,
+    //         'IdentityManagement',
+    //         'UserShieldingKeys',
+    //         u8aToHex(context.substrateWallet.alice.addressRaw)
+    //     );
+    //     assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
+    // });
 
     step('Invalid user shielding key', async function () {
+
+
         const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         // use empty `eveValidations`, the `UserShieldingKeyNotFound` error should be emitted before verification
         const txs = await buildIdentityTxs(

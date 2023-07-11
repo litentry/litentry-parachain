@@ -2,8 +2,7 @@ import type { HexString } from '@polkadot/util/types';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { AesOutput } from '../type-definitions';
-
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
@@ -21,7 +20,7 @@ export function encryptWithAes(key: HexString, nonce: Uint8Array, cleartext: Buf
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce, {
         authTagLength: 16,
-    });
+    }) as any;
     let encrypted = cipher.update(cleartext, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     encrypted += cipher.getAuthTag().toString('hex');
@@ -43,7 +42,7 @@ export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: strin
 
         const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
             authTagLength: 16,
-        });
+        }) as any;
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 

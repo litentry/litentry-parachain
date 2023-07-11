@@ -3,7 +3,13 @@ import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type { Assertion, LitentryIdentity, LitentryValidationData, SubstrateNetwork, WorkerRpcReturnValue, } from "parachain-api/interfaces";
+export type {
+    Assertion,
+    LitentryIdentity,
+    LitentryValidationData,
+    Web3Network,
+    WorkerRpcReturnValue,
+} from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -48,7 +54,6 @@ export declare const definitions: {
                 reserved_balance: string;
                 user_shielding_key: string;
                 id_graph: string;
-                challenge_code: string;
                 id_graph_stats: string;
             };
         };
@@ -59,13 +64,13 @@ export declare const definitions: {
                 balance_unshield: string;
                 balance_shield: string;
                 set_user_shielding_key: string;
-                create_identity: string;
+                link_identity: string;
                 remove_identity: string;
-                verify_identity: string;
                 request_vc: string;
             };
         };
         UserShieldingKeyType: string;
+        UserShieldingKeyNonceType: string;
         DirectRequestStatus: {
             _enum: {
                 Ok: null;
@@ -90,33 +95,17 @@ export declare const definitions: {
         };
         LitentryIdentity: {
             _enum: {
+                Twitter: string;
+                Discord: string;
+                Github: string;
                 Substrate: string;
                 Evm: string;
-                Web2: string;
             };
-        };
-        SubstrateIdentity: {
-            network: string;
-            address: string;
-        };
-        EvmIdentity: {
-            network: string;
-            address: string;
-        };
-        Web2Identity: {
-            network: string;
-            address: string;
         };
         Address32: string;
         Address20: string;
         IdentityString: string;
-        Web2Network: {
-            _enum: string[];
-        };
-        SubstrateNetwork: {
-            _enum: string[];
-        };
-        EvmNetwork: {
+        Web3Network: {
             _enum: string[];
         };
         LitentryValidationData: {
@@ -163,12 +152,15 @@ export declare const definitions: {
             identity: string;
             id_graph: string;
         };
-        IdentityContext: {
-            metadata: string;
-            linking_request_block: string;
-            verification_request_block: string;
-            is_verified: string;
+        IdentityStatus: {
+            _enum: string[];
         };
+        IdentityContext: {
+            link_block: string;
+            web3networks: string;
+            status: string;
+        };
+        BoundedWeb3Network: string;
         ShardIdentifier: string;
         Request: {
             shard: string;
