@@ -39,7 +39,7 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 	})?;
 
 	let mut client = DiscordLitentryClient::new();
-	for identity in &req.vec_identity {
+	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			discord_cnt += 1;
 			if let Ok(response) = client.check_join(guild_id.to_vec(), address.to_vec()) {
@@ -99,7 +99,7 @@ mod tests {
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 
 		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
-		let vec_identity: Vec<IdentityNetworkTuple> =
+		let identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec.clone())), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
@@ -107,7 +107,7 @@ mod tests {
 			shard: ShardIdentifier::default(),
 			who: AccountId::from([0; 32]),
 			assertion: Assertion::A2(guild_id.clone()),
-			vec_identity,
+			identities,
 			hash: Default::default(),
 		};
 

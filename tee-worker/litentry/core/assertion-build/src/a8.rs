@@ -36,7 +36,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let mut client = AchainableClient::new();
 	let mut total_txs: u64 = 0;
 
-	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.vec_identity);
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let mut addresses_set: HashSet<String> = HashSet::new();
 	let mut networks_set: HashSet<Web3Network> = HashSet::new();
 

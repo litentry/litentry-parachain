@@ -130,7 +130,7 @@ impl TrustedCallSigned {
 
 		let id_graph = IMT::get_id_graph(&who, usize::MAX);
 		let assertion_networks = assertion.get_supported_web3networks();
-		let vec_identity: Vec<IdentityNetworkTuple> = id_graph
+		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
 			.filter(|item| item.1.status == IdentityStatus::Active)
 			.map(|item| {
@@ -148,7 +148,7 @@ impl TrustedCallSigned {
 			shard: *shard,
 			who,
 			assertion: assertion.clone(),
-			vec_identity,
+			identities,
 			hash,
 		}
 		.into();
