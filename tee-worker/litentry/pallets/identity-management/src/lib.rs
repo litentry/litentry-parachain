@@ -42,8 +42,7 @@ use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	all_substrate_web3networks, BoundedWeb3Network, Identity, ParentchainBlockNumber,
-	UserShieldingKeyType, Web3Network,
+	all_substrate_web3networks, Identity, ParentchainBlockNumber, UserShieldingKeyType, Web3Network,
 };
 use sp_std::vec::Vec;
 
@@ -58,8 +57,8 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
@@ -161,7 +160,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
-			web3networks: BoundedWeb3Network,
+			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
