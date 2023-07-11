@@ -368,6 +368,7 @@ describe('Resume worker', function () {
     step('One worker', async function () {
         // first launch worker0
         worker0State = await launchWorker(binaryDir, jobConfig.worker0, subprocessTracker);
+        console.log('=========== worker0 launched and produced blocks ==================');
 
         // kill worker0
         await killWorker(worker0State.job, subprocessTracker);
@@ -375,6 +376,7 @@ describe('Resume worker', function () {
 
         // resume worker0
         worker0State.job = await resumeWorker(jobConfig.worker0, worker0State.connection, subprocessTracker);
+        console.log('=========== worker0 resumed ==================');
 
         // check block production
         worker0State.latestSeenBlock = await waitForBlock(
@@ -382,6 +384,7 @@ describe('Resume worker', function () {
             worker0State.shard,
             worker0State.latestSeenBlock + 1
         );
+        console.log('=========== worker0 produced blocks ==================');
     });
 
     let worker1State: WorkerState | undefined = undefined;
@@ -391,6 +394,7 @@ describe('Resume worker', function () {
 
         // first launch worker1
         worker1State = await launchWorker(binaryDir, jobConfig.worker1, subprocessTracker);
+        console.log('=========== worker1 launched and produced blocks ==================');
 
         // kill worker1
         await killWorker(worker1State.job, subprocessTracker);
@@ -402,9 +406,11 @@ describe('Resume worker', function () {
             worker0State.shard,
             worker0State.latestSeenBlock + 1
         );
+        console.log('=========== worker0 still produces blocks ==================');
 
         // resume worker1
         worker1State.job = await resumeWorker(jobConfig.worker1, worker1State.connection, subprocessTracker);
+        console.log('=========== worker1 resumed ==================');
 
         // check block production
         worker1State.latestSeenBlock = await waitForBlock(
@@ -412,6 +418,7 @@ describe('Resume worker', function () {
             worker1State.shard,
             worker1State.latestSeenBlock + 1
         );
+        console.log('=========== worker1 produced blocks ==================');
     });
 
     step('Kill and resume both workers', async function () {
@@ -426,18 +433,42 @@ describe('Resume worker', function () {
 
         // resume and check worker1
         worker1State.job = await resumeWorker(jobConfig.worker1, worker1State.connection, subprocessTracker);
+        console.log('=========== worker1 resumed ==================');
         worker1State.latestSeenBlock = await waitForBlock(
             worker1State.connection,
             worker1State.shard,
             worker1State.latestSeenBlock + 1
         );
+        console.log('=========== worker1 produced blocks ==================');
 
         // resume and check worker0
         worker0State.job = await resumeWorker(jobConfig.worker0, worker0State.connection, subprocessTracker);
+        console.log('=========== worker0 resumed ==================');
         worker0State.latestSeenBlock = await waitForBlock(
             worker0State.connection,
             worker0State.shard,
             worker0State.latestSeenBlock + 1
         );
+        console.log('=========== worker0 produced blocks ==================');
+
+        // check worker1 health
+        worker1State.latestSeenBlock = await waitForBlock(
+            worker1State.connection,
+            worker1State.shard,
+            worker1State.latestSeenBlock + 1
+        );
+        console.log('=========== worker1 still produces blocks ==================');
+    });
+
+    step('Tidy up', async function () {
+        // kill both workers
+        if (worker0State) {
+            await killWorker(worker0State.job, subprocessTracker);
+            console.log('=========== worker0 stopped ==================');
+        }
+        if (worker1State) {
+            await killWorker(worker1State.job, subprocessTracker);
+            console.log('=========== worker1 stopped ==================');
+        }
     });
 });
