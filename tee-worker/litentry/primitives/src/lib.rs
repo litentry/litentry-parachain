@@ -35,7 +35,6 @@ pub use validation_data::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use log::error;
-use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 pub use parentchain_primitives::{
 	all_evm_web3networks, all_substrate_web3networks, all_web3networks,
 	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
@@ -46,44 +45,12 @@ pub use parentchain_primitives::{
 	Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
 };
 use scale_info::TypeInfo;
-use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, H160};
+use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
-use sp_runtime::traits::{BlakeTwo256, Verify};
-
-pub type HashedAddressMapping = GenericHashedAddressMapping<BlakeTwo256>;
+use sp_runtime::traits::Verify;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum LitentryMultiAddress {
-	Substrate(Address32),
-	Evm(Address20),
-}
-
-impl From<LitentryMultiAddress> for AccountId32 {
-	fn from(value: LitentryMultiAddress) -> Self {
-		(&value).into()
-	}
-}
-
-impl From<&LitentryMultiAddress> for AccountId32 {
-	fn from(value: &LitentryMultiAddress) -> Self {
-		match value {
-			LitentryMultiAddress::Substrate(address) => {
-				let mut data = [0u8; 32];
-				data.copy_from_slice(address.as_ref());
-				Self::from(data)
-			},
-			LitentryMultiAddress::Evm(address) => {
-				let substrate_version =
-					HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()));
-				Self::from(Into::<[u8; 32]>::into(substrate_version))
-			},
-		}
-	}
-}
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -99,10 +66,11 @@ pub enum LitentryMultiSignature {
 }
 
 impl LitentryMultiSignature {
-	pub fn verify(&self, msg: &[u8], signer: &LitentryMultiAddress) -> bool {
+	pub fn verify(&self, msg: &[u8], signer: &Identity) -> bool {
 		match signer {
-			LitentryMultiAddress::Substrate(address) => self.verify_substrate(msg, address),
-			LitentryMultiAddress::Evm(address) => self.verify_evm(msg, address),
+			Identity::Substrate(address) => self.verify_substrate(msg, address),
+			Identity::Evm(address) => self.verify_evm(msg, address),
+			_ => false,
 		}
 	}
 

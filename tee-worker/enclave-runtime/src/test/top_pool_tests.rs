@@ -63,7 +63,7 @@ use itp_types::{
 	ShieldFundsFn, H256,
 };
 use jsonrpc_core::futures::executor;
-use litentry_primitives::LitentryMultiAddress;
+use litentry_primitives::Identity;
 use log::*;
 use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
@@ -172,7 +172,7 @@ fn encrypted_indirect_call<
 	let receiver = unendowed_account();
 
 	let call = TrustedCall::balance_transfer(
-		LitentryMultiAddress::Substrate(sender.public().into()),
+		Identity::Substrate(sender.public().into()),
 		receiver.public().into(),
 		10000u128,
 	);

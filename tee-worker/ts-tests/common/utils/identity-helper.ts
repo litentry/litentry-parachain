@@ -1,8 +1,8 @@
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { Address, AesOutput } from '../type-definitions';
+import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
+import { AesOutput } from '../type-definitions';
 import { decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey } from './crypto';
-import { assert } from 'chai';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
@@ -10,7 +10,6 @@ import type { LitentryValidationData, Web3Network } from '../../parachain-interf
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
 import { aesKey, keyNonce } from '../call';
 
 // blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary AccountId> + <identity-to-be-linked>).ciphertext)
@@ -37,14 +36,16 @@ export async function buildIdentityHelper(
         [type]: address,
     };
 
-    const encodedIdentity = context.sidechainRegistry.createType(
+    return context.sidechainRegistry.createType(
         'LitentryPrimitivesIdentity',
         identity
     ) as unknown as LitentryPrimitivesIdentity;
-    return encodedIdentity;
 }
 
-export async function buildAddressHelper(keyringPair: KeyringPair): Promise<Address> {
+export async function buildIdentityFromKeypair(
+    keyringPair: KeyringPair,
+    context: IntegrationTestContext
+): Promise<LitentryPrimitivesIdentity> {
     let type: string = (() => {
         switch (keyringPair.type) {
             case 'ethereum':
@@ -60,10 +61,14 @@ export async function buildAddressHelper(keyringPair: KeyringPair): Promise<Addr
         }
     })();
     let address = keyringPair.addressRaw;
-    const identifier: Address = {
+    const identity = {
         [type]: address,
     };
-    return identifier;
+
+    return context.sidechainRegistry.createType(
+        'LitentryPrimitivesIdentity',
+        identity
+    ) as unknown as LitentryPrimitivesIdentity;
 }
 
 // If multiple transactions are built from multiple accounts, pass the signers as an array.

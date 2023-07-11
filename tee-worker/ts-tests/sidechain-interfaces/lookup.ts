@@ -252,38 +252,21 @@ export default {
     PalletIdentityManagementTeeEvent: {
         _enum: {
             UserShieldingKeySet: {
-                who: 'LitentryPrimitivesLitentryMultiAddress',
+                who: 'LitentryPrimitivesIdentity',
                 key: '[u8;32]',
             },
             IdentityLinked: {
-                who: 'LitentryPrimitivesLitentryMultiAddress',
+                who: 'LitentryPrimitivesIdentity',
                 identity: 'LitentryPrimitivesIdentity',
             },
             IdentityRemoved: {
-                who: 'LitentryPrimitivesLitentryMultiAddress',
+                who: 'LitentryPrimitivesIdentity',
                 identity: 'LitentryPrimitivesIdentity',
             },
         },
     },
     /**
-     * Lookup37: litentry_primitives::LitentryMultiAddress
-     **/
-    LitentryPrimitivesLitentryMultiAddress: {
-        _enum: {
-            Substrate: 'LitentryPrimitivesIdentityAddress32',
-            Evm: 'LitentryPrimitivesIdentityAddress20',
-        },
-    },
-    /**
-     * Lookup38: litentry_primitives::identity::Address32
-     **/
-    LitentryPrimitivesIdentityAddress32: '[u8;32]',
-    /**
-     * Lookup39: litentry_primitives::identity::Address20
-     **/
-    LitentryPrimitivesIdentityAddress20: '[u8;20]',
-    /**
-     * Lookup41: litentry_primitives::identity::Identity
+     * Lookup37: litentry_primitives::identity::Identity
      **/
     LitentryPrimitivesIdentity: {
         _enum: {
@@ -295,7 +278,15 @@ export default {
         },
     },
     /**
-     * Lookup43: frame_system::Phase
+     * Lookup39: litentry_primitives::identity::Address32
+     **/
+    LitentryPrimitivesIdentityAddress32: '[u8;32]',
+    /**
+     * Lookup40: litentry_primitives::identity::Address20
+     **/
+    LitentryPrimitivesIdentityAddress20: '[u8;20]',
+    /**
+     * Lookup42: frame_system::Phase
      **/
     FrameSystemPhase: {
         _enum: {
@@ -305,14 +296,14 @@ export default {
         },
     },
     /**
-     * Lookup47: frame_system::LastRuntimeUpgradeInfo
+     * Lookup46: frame_system::LastRuntimeUpgradeInfo
      **/
     FrameSystemLastRuntimeUpgradeInfo: {
         specVersion: 'Compact<u32>',
         specName: 'Text',
     },
     /**
-     * Lookup51: frame_system::pallet::Call<T>
+     * Lookup50: frame_system::pallet::Call<T>
      **/
     FrameSystemCall: {
         _enum: {
@@ -347,7 +338,7 @@ export default {
         },
     },
     /**
-     * Lookup55: frame_system::limits::BlockWeights
+     * Lookup54: frame_system::limits::BlockWeights
      **/
     FrameSystemLimitsBlockWeights: {
         baseBlock: 'SpWeightsWeightV2Weight',
@@ -355,7 +346,7 @@ export default {
         perClass: 'FrameSupportDispatchPerDispatchClassWeightsPerClass',
     },
     /**
-     * Lookup56: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+     * Lookup55: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
      **/
     FrameSupportDispatchPerDispatchClassWeightsPerClass: {
         normal: 'FrameSystemLimitsWeightsPerClass',
@@ -363,7 +354,7 @@ export default {
         mandatory: 'FrameSystemLimitsWeightsPerClass',
     },
     /**
-     * Lookup57: frame_system::limits::WeightsPerClass
+     * Lookup56: frame_system::limits::WeightsPerClass
      **/
     FrameSystemLimitsWeightsPerClass: {
         baseExtrinsic: 'SpWeightsWeightV2Weight',
@@ -372,13 +363,13 @@ export default {
         reserved: 'Option<SpWeightsWeightV2Weight>',
     },
     /**
-     * Lookup59: frame_system::limits::BlockLength
+     * Lookup58: frame_system::limits::BlockLength
      **/
     FrameSystemLimitsBlockLength: {
         max: 'FrameSupportDispatchPerDispatchClassU32',
     },
     /**
-     * Lookup60: frame_support::dispatch::PerDispatchClass<T>
+     * Lookup59: frame_support::dispatch::PerDispatchClass<T>
      **/
     FrameSupportDispatchPerDispatchClassU32: {
         normal: 'u32',
@@ -386,14 +377,14 @@ export default {
         mandatory: 'u32',
     },
     /**
-     * Lookup61: sp_weights::RuntimeDbWeight
+     * Lookup60: sp_weights::RuntimeDbWeight
      **/
     SpWeightsRuntimeDbWeight: {
         read: 'u64',
         write: 'u64',
     },
     /**
-     * Lookup62: sp_version::RuntimeVersion
+     * Lookup61: sp_version::RuntimeVersion
      **/
     SpVersionRuntimeVersion: {
         specName: 'Text',
@@ -406,7 +397,7 @@ export default {
         stateVersion: 'u8',
     },
     /**
-     * Lookup68: frame_system::pallet::Error<T>
+     * Lookup67: frame_system::pallet::Error<T>
      **/
     FrameSystemError: {
         _enum: [
@@ -419,7 +410,7 @@ export default {
         ],
     },
     /**
-     * Lookup69: pallet_timestamp::pallet::Call<T>
+     * Lookup68: pallet_timestamp::pallet::Call<T>
      **/
     PalletTimestampCall: {
         _enum: {
@@ -429,7 +420,7 @@ export default {
         },
     },
     /**
-     * Lookup71: pallet_balances::BalanceLock<Balance>
+     * Lookup70: pallet_balances::BalanceLock<Balance>
      **/
     PalletBalancesBalanceLock: {
         id: '[u8;8]',
@@ -437,20 +428,20 @@ export default {
         reasons: 'PalletBalancesReasons',
     },
     /**
-     * Lookup72: pallet_balances::Reasons
+     * Lookup71: pallet_balances::Reasons
      **/
     PalletBalancesReasons: {
         _enum: ['Fee', 'Misc', 'All'],
     },
     /**
-     * Lookup75: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+     * Lookup74: pallet_balances::ReserveData<ReserveIdentifier, Balance>
      **/
     PalletBalancesReserveData: {
         id: '[u8;8]',
         amount: 'u128',
     },
     /**
-     * Lookup77: pallet_balances::pallet::Call<T, I>
+     * Lookup76: pallet_balances::pallet::Call<T, I>
      **/
     PalletBalancesCall: {
         _enum: {
@@ -483,7 +474,7 @@ export default {
         },
     },
     /**
-     * Lookup81: pallet_balances::pallet::Error<T, I>
+     * Lookup80: pallet_balances::pallet::Error<T, I>
      **/
     PalletBalancesError: {
         _enum: [
@@ -498,13 +489,13 @@ export default {
         ],
     },
     /**
-     * Lookup83: pallet_transaction_payment::Releases
+     * Lookup82: pallet_transaction_payment::Releases
      **/
     PalletTransactionPaymentReleases: {
         _enum: ['V1Ancient', 'V2'],
     },
     /**
-     * Lookup84: pallet_sudo::pallet::Call<T>
+     * Lookup83: pallet_sudo::pallet::Call<T>
      **/
     PalletSudoCall: {
         _enum: {
@@ -528,7 +519,7 @@ export default {
         },
     },
     /**
-     * Lookup86: pallet_parentchain::pallet::Call<T>
+     * Lookup85: pallet_parentchain::pallet::Call<T>
      **/
     PalletParentchainCall: {
         _enum: {
@@ -538,7 +529,7 @@ export default {
         },
     },
     /**
-     * Lookup87: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
+     * Lookup86: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
      **/
     SpRuntimeHeader: {
         parentHash: 'H256',
@@ -548,31 +539,31 @@ export default {
         digest: 'SpRuntimeDigest',
     },
     /**
-     * Lookup88: sp_runtime::traits::BlakeTwo256
+     * Lookup87: sp_runtime::traits::BlakeTwo256
      **/
     SpRuntimeBlakeTwo256: 'Null',
     /**
-     * Lookup89: pallet_identity_management_tee::pallet::Call<T>
+     * Lookup88: pallet_identity_management_tee::pallet::Call<T>
      **/
     PalletIdentityManagementTeeCall: {
         _enum: {
             set_user_shielding_key: {
-                who: 'LitentryPrimitivesLitentryMultiAddress',
+                who: 'LitentryPrimitivesIdentity',
                 key: '[u8;32]',
             },
             link_identity: {
-                who: 'LitentryPrimitivesLitentryMultiAddress',
+                who: 'LitentryPrimitivesIdentity',
                 identity: 'LitentryPrimitivesIdentity',
                 web3networks: 'Vec<CorePrimitivesNetworkWeb3Network>',
             },
             remove_identity: {
-                who: 'LitentryPrimitivesLitentryMultiAddress',
+                who: 'LitentryPrimitivesIdentity',
                 identity: 'LitentryPrimitivesIdentity',
             },
         },
     },
     /**
-     * Lookup91: core_primitives::network::Web3Network
+     * Lookup90: core_primitives::network::Web3Network
      **/
     CorePrimitivesNetworkWeb3Network: {
         _enum: [
@@ -589,13 +580,13 @@ export default {
         ],
     },
     /**
-     * Lookup93: pallet_sudo::pallet::Error<T>
+     * Lookup92: pallet_sudo::pallet::Error<T>
      **/
     PalletSudoError: {
         _enum: ['RequireSudo'],
     },
     /**
-     * Lookup95: pallet_identity_management_tee::identity_context::IdentityContext<T>
+     * Lookup94: pallet_identity_management_tee::identity_context::IdentityContext<T>
      **/
     PalletIdentityManagementTeeIdentityContext: {
         linkBlock: 'u32',
@@ -603,13 +594,13 @@ export default {
         status: 'PalletIdentityManagementTeeIdentityContextIdentityStatus',
     },
     /**
-     * Lookup96: pallet_identity_management_tee::identity_context::IdentityStatus
+     * Lookup95: pallet_identity_management_tee::identity_context::IdentityStatus
      **/
     PalletIdentityManagementTeeIdentityContextIdentityStatus: {
         _enum: ['Active', 'Inactive'],
     },
     /**
-     * Lookup97: pallet_identity_management_tee::pallet::Error<T>
+     * Lookup96: pallet_identity_management_tee::pallet::Error<T>
      **/
     PalletIdentityManagementTeeError: {
         _enum: [
@@ -620,10 +611,11 @@ export default {
             'IDGraphLenLimitReached',
             'Web3NetworkLenLimitReached',
             'WrongWeb3NetworkTypes',
+            'NotSupportedIdentity',
         ],
     },
     /**
-     * Lookup99: sp_runtime::MultiSignature
+     * Lookup98: sp_runtime::MultiSignature
      **/
     SpRuntimeMultiSignature: {
         _enum: {
@@ -633,47 +625,47 @@ export default {
         },
     },
     /**
-     * Lookup100: sp_core::ed25519::Signature
+     * Lookup99: sp_core::ed25519::Signature
      **/
     SpCoreEd25519Signature: '[u8;64]',
     /**
-     * Lookup102: sp_core::sr25519::Signature
+     * Lookup101: sp_core::sr25519::Signature
      **/
     SpCoreSr25519Signature: '[u8;64]',
     /**
-     * Lookup103: sp_core::ecdsa::Signature
+     * Lookup102: sp_core::ecdsa::Signature
      **/
     SpCoreEcdsaSignature: '[u8;65]',
     /**
-     * Lookup106: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
+     * Lookup105: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
      **/
     FrameSystemExtensionsCheckNonZeroSender: 'Null',
     /**
-     * Lookup107: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+     * Lookup106: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
      **/
     FrameSystemExtensionsCheckSpecVersion: 'Null',
     /**
-     * Lookup108: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+     * Lookup107: frame_system::extensions::check_tx_version::CheckTxVersion<T>
      **/
     FrameSystemExtensionsCheckTxVersion: 'Null',
     /**
-     * Lookup109: frame_system::extensions::check_genesis::CheckGenesis<T>
+     * Lookup108: frame_system::extensions::check_genesis::CheckGenesis<T>
      **/
     FrameSystemExtensionsCheckGenesis: 'Null',
     /**
-     * Lookup112: frame_system::extensions::check_nonce::CheckNonce<T>
+     * Lookup111: frame_system::extensions::check_nonce::CheckNonce<T>
      **/
     FrameSystemExtensionsCheckNonce: 'Compact<u32>',
     /**
-     * Lookup113: frame_system::extensions::check_weight::CheckWeight<T>
+     * Lookup112: frame_system::extensions::check_weight::CheckWeight<T>
      **/
     FrameSystemExtensionsCheckWeight: 'Null',
     /**
-     * Lookup114: pallet_transaction_payment::ChargeTransactionPayment<T>
+     * Lookup113: pallet_transaction_payment::ChargeTransactionPayment<T>
      **/
     PalletTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
     /**
-     * Lookup115: ita_sgx_runtime::Runtime
+     * Lookup114: ita_sgx_runtime::Runtime
      **/
     ItaSgxRuntimeRuntime: 'Null',
 };

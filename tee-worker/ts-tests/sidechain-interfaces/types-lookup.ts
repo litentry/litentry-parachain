@@ -322,38 +322,23 @@ declare module '@polkadot/types/lookup' {
     interface PalletIdentityManagementTeeEvent extends Enum {
         readonly isUserShieldingKeySet: boolean;
         readonly asUserShieldingKeySet: {
-            readonly who: LitentryPrimitivesLitentryMultiAddress;
+            readonly who: LitentryPrimitivesIdentity;
             readonly key: U8aFixed;
         } & Struct;
         readonly isIdentityLinked: boolean;
         readonly asIdentityLinked: {
-            readonly who: LitentryPrimitivesLitentryMultiAddress;
+            readonly who: LitentryPrimitivesIdentity;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
         readonly isIdentityRemoved: boolean;
         readonly asIdentityRemoved: {
-            readonly who: LitentryPrimitivesLitentryMultiAddress;
+            readonly who: LitentryPrimitivesIdentity;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
         readonly type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved';
     }
 
-    /** @name LitentryPrimitivesLitentryMultiAddress (37) */
-    interface LitentryPrimitivesLitentryMultiAddress extends Enum {
-        readonly isSubstrate: boolean;
-        readonly asSubstrate: LitentryPrimitivesIdentityAddress32;
-        readonly isEvm: boolean;
-        readonly asEvm: LitentryPrimitivesIdentityAddress20;
-        readonly type: 'Substrate' | 'Evm';
-    }
-
-    /** @name LitentryPrimitivesIdentityAddress32 (38) */
-    interface LitentryPrimitivesIdentityAddress32 extends U8aFixed {}
-
-    /** @name LitentryPrimitivesIdentityAddress20 (39) */
-    interface LitentryPrimitivesIdentityAddress20 extends U8aFixed {}
-
-    /** @name LitentryPrimitivesIdentity (41) */
+    /** @name LitentryPrimitivesIdentity (37) */
     interface LitentryPrimitivesIdentity extends Enum {
         readonly isTwitter: boolean;
         readonly asTwitter: Bytes;
@@ -368,7 +353,13 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'Twitter' | 'Discord' | 'Github' | 'Substrate' | 'Evm';
     }
 
-    /** @name FrameSystemPhase (43) */
+    /** @name LitentryPrimitivesIdentityAddress32 (39) */
+    interface LitentryPrimitivesIdentityAddress32 extends U8aFixed {}
+
+    /** @name LitentryPrimitivesIdentityAddress20 (40) */
+    interface LitentryPrimitivesIdentityAddress20 extends U8aFixed {}
+
+    /** @name FrameSystemPhase (42) */
     interface FrameSystemPhase extends Enum {
         readonly isApplyExtrinsic: boolean;
         readonly asApplyExtrinsic: u32;
@@ -377,13 +368,13 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
     }
 
-    /** @name FrameSystemLastRuntimeUpgradeInfo (47) */
+    /** @name FrameSystemLastRuntimeUpgradeInfo (46) */
     interface FrameSystemLastRuntimeUpgradeInfo extends Struct {
         readonly specVersion: Compact<u32>;
         readonly specName: Text;
     }
 
-    /** @name FrameSystemCall (51) */
+    /** @name FrameSystemCall (50) */
     interface FrameSystemCall extends Enum {
         readonly isRemark: boolean;
         readonly asRemark: {
@@ -429,21 +420,21 @@ declare module '@polkadot/types/lookup' {
             | 'RemarkWithEvent';
     }
 
-    /** @name FrameSystemLimitsBlockWeights (55) */
+    /** @name FrameSystemLimitsBlockWeights (54) */
     interface FrameSystemLimitsBlockWeights extends Struct {
         readonly baseBlock: SpWeightsWeightV2Weight;
         readonly maxBlock: SpWeightsWeightV2Weight;
         readonly perClass: FrameSupportDispatchPerDispatchClassWeightsPerClass;
     }
 
-    /** @name FrameSupportDispatchPerDispatchClassWeightsPerClass (56) */
+    /** @name FrameSupportDispatchPerDispatchClassWeightsPerClass (55) */
     interface FrameSupportDispatchPerDispatchClassWeightsPerClass extends Struct {
         readonly normal: FrameSystemLimitsWeightsPerClass;
         readonly operational: FrameSystemLimitsWeightsPerClass;
         readonly mandatory: FrameSystemLimitsWeightsPerClass;
     }
 
-    /** @name FrameSystemLimitsWeightsPerClass (57) */
+    /** @name FrameSystemLimitsWeightsPerClass (56) */
     interface FrameSystemLimitsWeightsPerClass extends Struct {
         readonly baseExtrinsic: SpWeightsWeightV2Weight;
         readonly maxExtrinsic: Option<SpWeightsWeightV2Weight>;
@@ -451,25 +442,25 @@ declare module '@polkadot/types/lookup' {
         readonly reserved: Option<SpWeightsWeightV2Weight>;
     }
 
-    /** @name FrameSystemLimitsBlockLength (59) */
+    /** @name FrameSystemLimitsBlockLength (58) */
     interface FrameSystemLimitsBlockLength extends Struct {
         readonly max: FrameSupportDispatchPerDispatchClassU32;
     }
 
-    /** @name FrameSupportDispatchPerDispatchClassU32 (60) */
+    /** @name FrameSupportDispatchPerDispatchClassU32 (59) */
     interface FrameSupportDispatchPerDispatchClassU32 extends Struct {
         readonly normal: u32;
         readonly operational: u32;
         readonly mandatory: u32;
     }
 
-    /** @name SpWeightsRuntimeDbWeight (61) */
+    /** @name SpWeightsRuntimeDbWeight (60) */
     interface SpWeightsRuntimeDbWeight extends Struct {
         readonly read: u64;
         readonly write: u64;
     }
 
-    /** @name SpVersionRuntimeVersion (62) */
+    /** @name SpVersionRuntimeVersion (61) */
     interface SpVersionRuntimeVersion extends Struct {
         readonly specName: Text;
         readonly implName: Text;
@@ -481,7 +472,7 @@ declare module '@polkadot/types/lookup' {
         readonly stateVersion: u8;
     }
 
-    /** @name FrameSystemError (68) */
+    /** @name FrameSystemError (67) */
     interface FrameSystemError extends Enum {
         readonly isInvalidSpecName: boolean;
         readonly isSpecVersionNeedsToIncrease: boolean;
@@ -498,7 +489,7 @@ declare module '@polkadot/types/lookup' {
             | 'CallFiltered';
     }
 
-    /** @name PalletTimestampCall (69) */
+    /** @name PalletTimestampCall (68) */
     interface PalletTimestampCall extends Enum {
         readonly isSet: boolean;
         readonly asSet: {
@@ -507,14 +498,14 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'Set';
     }
 
-    /** @name PalletBalancesBalanceLock (71) */
+    /** @name PalletBalancesBalanceLock (70) */
     interface PalletBalancesBalanceLock extends Struct {
         readonly id: U8aFixed;
         readonly amount: u128;
         readonly reasons: PalletBalancesReasons;
     }
 
-    /** @name PalletBalancesReasons (72) */
+    /** @name PalletBalancesReasons (71) */
     interface PalletBalancesReasons extends Enum {
         readonly isFee: boolean;
         readonly isMisc: boolean;
@@ -522,13 +513,13 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'Fee' | 'Misc' | 'All';
     }
 
-    /** @name PalletBalancesReserveData (75) */
+    /** @name PalletBalancesReserveData (74) */
     interface PalletBalancesReserveData extends Struct {
         readonly id: U8aFixed;
         readonly amount: u128;
     }
 
-    /** @name PalletBalancesCall (77) */
+    /** @name PalletBalancesCall (76) */
     interface PalletBalancesCall extends Enum {
         readonly isTransfer: boolean;
         readonly asTransfer: {
@@ -571,7 +562,7 @@ declare module '@polkadot/types/lookup' {
             | 'ForceUnreserve';
     }
 
-    /** @name PalletBalancesError (81) */
+    /** @name PalletBalancesError (80) */
     interface PalletBalancesError extends Enum {
         readonly isVestingBalance: boolean;
         readonly isLiquidityRestrictions: boolean;
@@ -592,14 +583,14 @@ declare module '@polkadot/types/lookup' {
             | 'TooManyReserves';
     }
 
-    /** @name PalletTransactionPaymentReleases (83) */
+    /** @name PalletTransactionPaymentReleases (82) */
     interface PalletTransactionPaymentReleases extends Enum {
         readonly isV1Ancient: boolean;
         readonly isV2: boolean;
         readonly type: 'V1Ancient' | 'V2';
     }
 
-    /** @name PalletSudoCall (84) */
+    /** @name PalletSudoCall (83) */
     interface PalletSudoCall extends Enum {
         readonly isSudo: boolean;
         readonly asSudo: {
@@ -622,7 +613,7 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'Sudo' | 'SudoUncheckedWeight' | 'SetKey' | 'SudoAs';
     }
 
-    /** @name PalletParentchainCall (86) */
+    /** @name PalletParentchainCall (85) */
     interface PalletParentchainCall extends Enum {
         readonly isSetBlock: boolean;
         readonly asSetBlock: {
@@ -631,7 +622,7 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'SetBlock';
     }
 
-    /** @name SpRuntimeHeader (87) */
+    /** @name SpRuntimeHeader (86) */
     interface SpRuntimeHeader extends Struct {
         readonly parentHash: H256;
         readonly number: Compact<u32>;
@@ -640,31 +631,31 @@ declare module '@polkadot/types/lookup' {
         readonly digest: SpRuntimeDigest;
     }
 
-    /** @name SpRuntimeBlakeTwo256 (88) */
+    /** @name SpRuntimeBlakeTwo256 (87) */
     type SpRuntimeBlakeTwo256 = Null;
 
-    /** @name PalletIdentityManagementTeeCall (89) */
+    /** @name PalletIdentityManagementTeeCall (88) */
     interface PalletIdentityManagementTeeCall extends Enum {
         readonly isSetUserShieldingKey: boolean;
         readonly asSetUserShieldingKey: {
-            readonly who: LitentryPrimitivesLitentryMultiAddress;
+            readonly who: LitentryPrimitivesIdentity;
             readonly key: U8aFixed;
         } & Struct;
         readonly isLinkIdentity: boolean;
         readonly asLinkIdentity: {
-            readonly who: LitentryPrimitivesLitentryMultiAddress;
+            readonly who: LitentryPrimitivesIdentity;
             readonly identity: LitentryPrimitivesIdentity;
             readonly web3networks: Vec<CorePrimitivesNetworkWeb3Network>;
         } & Struct;
         readonly isRemoveIdentity: boolean;
         readonly asRemoveIdentity: {
-            readonly who: LitentryPrimitivesLitentryMultiAddress;
+            readonly who: LitentryPrimitivesIdentity;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
         readonly type: 'SetUserShieldingKey' | 'LinkIdentity' | 'RemoveIdentity';
     }
 
-    /** @name CorePrimitivesNetworkWeb3Network (91) */
+    /** @name CorePrimitivesNetworkWeb3Network (90) */
     interface CorePrimitivesNetworkWeb3Network extends Enum {
         readonly isPolkadot: boolean;
         readonly isKusama: boolean;
@@ -689,27 +680,27 @@ declare module '@polkadot/types/lookup' {
             | 'Bsc';
     }
 
-    /** @name PalletSudoError (93) */
+    /** @name PalletSudoError (92) */
     interface PalletSudoError extends Enum {
         readonly isRequireSudo: boolean;
         readonly type: 'RequireSudo';
     }
 
-    /** @name PalletIdentityManagementTeeIdentityContext (95) */
+    /** @name PalletIdentityManagementTeeIdentityContext (94) */
     interface PalletIdentityManagementTeeIdentityContext extends Struct {
         readonly linkBlock: u32;
         readonly web3networks: Vec<CorePrimitivesNetworkWeb3Network>;
         readonly status: PalletIdentityManagementTeeIdentityContextIdentityStatus;
     }
 
-    /** @name PalletIdentityManagementTeeIdentityContextIdentityStatus (96) */
+    /** @name PalletIdentityManagementTeeIdentityContextIdentityStatus (95) */
     interface PalletIdentityManagementTeeIdentityContextIdentityStatus extends Enum {
         readonly isActive: boolean;
         readonly isInactive: boolean;
         readonly type: 'Active' | 'Inactive';
     }
 
-    /** @name PalletIdentityManagementTeeError (97) */
+    /** @name PalletIdentityManagementTeeError (96) */
     interface PalletIdentityManagementTeeError extends Enum {
         readonly isIdentityAlreadyLinked: boolean;
         readonly isIdentityNotExist: boolean;
@@ -718,6 +709,7 @@ declare module '@polkadot/types/lookup' {
         readonly isIdGraphLenLimitReached: boolean;
         readonly isWeb3NetworkLenLimitReached: boolean;
         readonly isWrongWeb3NetworkTypes: boolean;
+        readonly isNotSupportedIdentity: boolean;
         readonly type:
             | 'IdentityAlreadyLinked'
             | 'IdentityNotExist'
@@ -725,10 +717,11 @@ declare module '@polkadot/types/lookup' {
             | 'RemovePrimeIdentityDisallowed'
             | 'IdGraphLenLimitReached'
             | 'Web3NetworkLenLimitReached'
-            | 'WrongWeb3NetworkTypes';
+            | 'WrongWeb3NetworkTypes'
+            | 'NotSupportedIdentity';
     }
 
-    /** @name SpRuntimeMultiSignature (99) */
+    /** @name SpRuntimeMultiSignature (98) */
     interface SpRuntimeMultiSignature extends Enum {
         readonly isEd25519: boolean;
         readonly asEd25519: SpCoreEd25519Signature;
@@ -739,36 +732,36 @@ declare module '@polkadot/types/lookup' {
         readonly type: 'Ed25519' | 'Sr25519' | 'Ecdsa';
     }
 
-    /** @name SpCoreEd25519Signature (100) */
+    /** @name SpCoreEd25519Signature (99) */
     interface SpCoreEd25519Signature extends U8aFixed {}
 
-    /** @name SpCoreSr25519Signature (102) */
+    /** @name SpCoreSr25519Signature (101) */
     interface SpCoreSr25519Signature extends U8aFixed {}
 
-    /** @name SpCoreEcdsaSignature (103) */
+    /** @name SpCoreEcdsaSignature (102) */
     interface SpCoreEcdsaSignature extends U8aFixed {}
 
-    /** @name FrameSystemExtensionsCheckNonZeroSender (106) */
+    /** @name FrameSystemExtensionsCheckNonZeroSender (105) */
     type FrameSystemExtensionsCheckNonZeroSender = Null;
 
-    /** @name FrameSystemExtensionsCheckSpecVersion (107) */
+    /** @name FrameSystemExtensionsCheckSpecVersion (106) */
     type FrameSystemExtensionsCheckSpecVersion = Null;
 
-    /** @name FrameSystemExtensionsCheckTxVersion (108) */
+    /** @name FrameSystemExtensionsCheckTxVersion (107) */
     type FrameSystemExtensionsCheckTxVersion = Null;
 
-    /** @name FrameSystemExtensionsCheckGenesis (109) */
+    /** @name FrameSystemExtensionsCheckGenesis (108) */
     type FrameSystemExtensionsCheckGenesis = Null;
 
-    /** @name FrameSystemExtensionsCheckNonce (112) */
+    /** @name FrameSystemExtensionsCheckNonce (111) */
     interface FrameSystemExtensionsCheckNonce extends Compact<u32> {}
 
-    /** @name FrameSystemExtensionsCheckWeight (113) */
+    /** @name FrameSystemExtensionsCheckWeight (112) */
     type FrameSystemExtensionsCheckWeight = Null;
 
-    /** @name PalletTransactionPaymentChargeTransactionPayment (114) */
+    /** @name PalletTransactionPaymentChargeTransactionPayment (113) */
     interface PalletTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-    /** @name ItaSgxRuntimeRuntime (115) */
+    /** @name ItaSgxRuntimeRuntime (114) */
     type ItaSgxRuntimeRuntime = Null;
 } // declare module

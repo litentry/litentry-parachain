@@ -16,7 +16,6 @@ import type {
     FrameSystemLastRuntimeUpgradeInfo,
     FrameSystemPhase,
     LitentryPrimitivesIdentity,
-    LitentryPrimitivesLitentryMultiAddress,
     PalletBalancesAccountData,
     PalletBalancesBalanceLock,
     PalletBalancesReserveData,
@@ -101,20 +100,26 @@ declare module '@polkadot/api-base/types/storage' {
                 ApiType,
                 (
                     arg:
-                        | LitentryPrimitivesLitentryMultiAddress
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
                         | string
                         | Uint8Array
                 ) => Observable<u32>,
-                [LitentryPrimitivesLitentryMultiAddress]
+                [LitentryPrimitivesIdentity]
             > &
-                QueryableStorageEntry<ApiType, [LitentryPrimitivesLitentryMultiAddress]>;
+                QueryableStorageEntry<ApiType, [LitentryPrimitivesIdentity]>;
             idGraphs: AugmentedQuery<
                 ApiType,
                 (
                     arg1:
-                        | LitentryPrimitivesLitentryMultiAddress
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
                         | string
@@ -129,22 +134,25 @@ declare module '@polkadot/api-base/types/storage' {
                         | string
                         | Uint8Array
                 ) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>,
-                [LitentryPrimitivesLitentryMultiAddress, LitentryPrimitivesIdentity]
+                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity]
             > &
-                QueryableStorageEntry<ApiType, [LitentryPrimitivesLitentryMultiAddress, LitentryPrimitivesIdentity]>;
+                QueryableStorageEntry<ApiType, [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity]>;
             userShieldingKeys: AugmentedQuery<
                 ApiType,
                 (
                     arg:
-                        | LitentryPrimitivesLitentryMultiAddress
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
                         | string
                         | Uint8Array
                 ) => Observable<Option<U8aFixed>>,
-                [LitentryPrimitivesLitentryMultiAddress]
+                [LitentryPrimitivesIdentity]
             > &
-                QueryableStorageEntry<ApiType, [LitentryPrimitivesLitentryMultiAddress]>;
+                QueryableStorageEntry<ApiType, [LitentryPrimitivesIdentity]>;
             /**
              * Generic query
              **/

@@ -24,7 +24,7 @@ use ita_stf::{
 };
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::state_getter::{GetState, StfStateGetter};
-use litentry_primitives::LitentryMultiAddress;
+use litentry_primitives::Identity;
 use sp_core::Pair;
 
 type TestState = SgxExternalities;
@@ -33,9 +33,8 @@ type TestStfStateGetter = StfStateGetter<TestStf>;
 
 pub fn state_getter_works() {
 	let sender = endowed_account();
-	let signed_getter =
-		TrustedGetter::free_balance(LitentryMultiAddress::Substrate(sender.public().into()))
-			.sign(&sender.into());
+	let signed_getter = TrustedGetter::free_balance(Identity::Substrate(sender.public().into()))
+		.sign(&sender.into());
 	let mut state = test_state();
 
 	let encoded_balance = TestStfStateGetter::get_state(signed_getter.into(), &mut state)

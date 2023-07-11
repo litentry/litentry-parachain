@@ -22,10 +22,7 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-use crate::{
-	helpers::ensure_enclave_signer_account, LitentryMultiAddress, Runtime, StfError, System,
-	TrustedOperation,
-};
+use crate::{helpers::ensure_enclave_signer_account, Runtime, StfError, System, TrustedOperation};
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
@@ -66,16 +63,16 @@ pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
-	balance_set_balance(LitentryMultiAddress, AccountId, Balance, Balance),
-	balance_transfer(LitentryMultiAddress, AccountId, Balance),
-	balance_unshield(LitentryMultiAddress, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
-	balance_shield(LitentryMultiAddress, AccountId, Balance), // (Root, AccountIncognito, Amount)
+	balance_set_balance(Identity, AccountId, Balance, Balance),
+	balance_transfer(Identity, AccountId, Balance),
+	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
+	balance_shield(Identity, AccountId, Balance),                    // (Root, AccountIncognito, Amount)
 	#[cfg(feature = "evm")]
-	evm_withdraw(LitentryMultiAddress, H160, Balance), // (Origin, Address EVM Account, Value)
+	evm_withdraw(Identity, H160, Balance),  // (Origin, Address EVM Account, Value)
 	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_call(
-		LitentryMultiAddress,
+		Identity,
 		H160,
 		H160,
 		Vec<u8>,
@@ -89,7 +86,7 @@ pub enum TrustedCall {
 	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_create(
-		LitentryMultiAddress,
+		Identity,
 		H160,
 		Vec<u8>,
 		U256,
@@ -102,7 +99,7 @@ pub enum TrustedCall {
 	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_create2(
-		LitentryMultiAddress,
+		Identity,
 		H160,
 		Vec<u8>,
 		H256,
@@ -114,66 +111,52 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key(LitentryMultiAddress, LitentryMultiAddress, UserShieldingKeyType, H256),
+	set_user_shielding_key(Identity, Identity, UserShieldingKeyType, H256),
 	link_identity(
-		LitentryMultiAddress,
-		LitentryMultiAddress,
+		Identity,
+		Identity,
 		Identity,
 		ValidationData,
 		Vec<Web3Network>,
 		UserShieldingKeyNonceType,
 		H256,
 	),
-	remove_identity(LitentryMultiAddress, LitentryMultiAddress, Identity, H256),
-	request_vc(LitentryMultiAddress, LitentryMultiAddress, Assertion, H256),
+	remove_identity(Identity, Identity, Identity, H256),
+	request_vc(Identity, Identity, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(
-		LitentryMultiAddress,
-		LitentryMultiAddress,
-		Identity,
-		BoundedWeb3Network,
-		H256,
-	),
-	request_vc_callback(
-		LitentryMultiAddress,
-		LitentryMultiAddress,
-		Assertion,
-		[u8; 32],
-		[u8; 32],
-		Vec<u8>,
-		H256,
-	),
-	handle_imp_error(LitentryMultiAddress, Option<LitentryMultiAddress>, IMPError, H256),
-	handle_vcmp_error(LitentryMultiAddress, Option<LitentryMultiAddress>, VCMPError, H256),
-	send_erroneous_parentchain_call(LitentryMultiAddress),
+	link_identity_callback(Identity, Identity, Identity, BoundedWeb3Network, H256),
+	request_vc_callback(Identity, Identity, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
+	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
+	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
+	send_erroneous_parentchain_call(Identity),
 }
 
 impl TrustedCall {
-	pub fn sender_address(&self) -> &LitentryMultiAddress {
+	pub fn sender_identity(&self) -> &Identity {
 		match self {
-			TrustedCall::balance_set_balance(sender_address, ..) => sender_address,
-			TrustedCall::balance_transfer(sender_address, ..) => sender_address,
-			TrustedCall::balance_unshield(sender_address, ..) => sender_address,
-			TrustedCall::balance_shield(sender_address, ..) => sender_address,
+			TrustedCall::balance_set_balance(sender_identity, ..) => sender_identity,
+			TrustedCall::balance_transfer(sender_identity, ..) => sender_identity,
+			TrustedCall::balance_unshield(sender_identity, ..) => sender_identity,
+			TrustedCall::balance_shield(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_withdraw(sender_address, ..) => sender_address,
+			TrustedCall::evm_withdraw(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_call(sender_address, ..) => sender_address,
+			TrustedCall::evm_call(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_create(sender_address, ..) => sender_address,
+			TrustedCall::evm_create(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_create2(sender_address, ..) => sender_address,
+			TrustedCall::evm_create2(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedCall::set_user_shielding_key(sender_address, ..) => sender_address,
-			TrustedCall::link_identity(sender_address, ..) => sender_address,
-			TrustedCall::remove_identity(sender_address, ..) => sender_address,
-			TrustedCall::request_vc(sender_address, ..) => sender_address,
-			TrustedCall::link_identity_callback(sender_address, ..) => sender_address,
-			TrustedCall::request_vc_callback(sender_address, ..) => sender_address,
-			TrustedCall::handle_imp_error(sender_address, ..) => sender_address,
-			TrustedCall::handle_vcmp_error(sender_address, ..) => sender_address,
-			TrustedCall::send_erroneous_parentchain_call(sender_address) => sender_address,
+			TrustedCall::set_user_shielding_key(sender_identity, ..) => sender_identity,
+			TrustedCall::link_identity(sender_identity, ..) => sender_identity,
+			TrustedCall::remove_identity(sender_identity, ..) => sender_identity,
+			TrustedCall::request_vc(sender_identity, ..) => sender_identity,
+			TrustedCall::link_identity_callback(sender_identity, ..) => sender_identity,
+			TrustedCall::request_vc_callback(sender_identity, ..) => sender_identity,
+			TrustedCall::handle_imp_error(sender_identity, ..) => sender_identity,
+			TrustedCall::handle_vcmp_error(sender_identity, ..) => sender_identity,
+			TrustedCall::send_erroneous_parentchain_call(sender_identity) => sender_identity,
 		}
 	}
 
@@ -215,8 +198,8 @@ impl TrustedCallSigned {
 		// wallet extension, we need to support it as well
 		let wrapped_payload =
 			["<Bytes>".as_bytes(), payload.as_slice(), "</Bytes>".as_bytes()].concat();
-		self.signature.verify(payload.as_slice(), self.call.sender_address())
-			|| self.signature.verify(wrapped_payload.as_slice(), self.call.sender_address())
+		self.signature.verify(payload.as_slice(), self.call.sender_identity())
+			|| self.signature.verify(wrapped_payload.as_slice(), self.call.sender_identity())
 	}
 
 	pub fn into_trusted_operation(self, direct: bool) -> TrustedOperation {
@@ -275,9 +258,9 @@ where
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<(), Self::Error> {
-		let sender = self.call.sender_address().clone();
+		let sender = self.call.sender_identity().clone();
 		let call_hash = blake2_256(&self.call.encode());
-		let account_id: AccountId = sender.into();
+		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 		let system_nonce = System::account_nonce(&account_id);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 
@@ -288,7 +271,8 @@ where
 		// TODO: maybe we can further simplify this by effacing the duplicate code
 		match self.call {
 			TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
-				let root_account_id: AccountId = root.clone().into();
+				let root_account_id: AccountId =
+					root.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 				ensure!(
 					is_root::<Runtime, AccountId>(&root_account_id),
 					Self::Error::MissingPrivileges(root)
@@ -318,7 +302,9 @@ where
 				Ok::<(), Self::Error>(())
 			},
 			TrustedCall::balance_transfer(from, to, value) => {
-				let origin = ita_sgx_runtime::RuntimeOrigin::signed(from.clone().into());
+				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				debug!(
 					"balance_transfer({}, {}, {})",
 					account_id_to_string(&from),
@@ -343,7 +329,10 @@ where
 					value,
 					shard
 				);
-				unshield_funds(account_incognito.into(), value)?;
+				unshield_funds(
+					account_incognito.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					value,
+				)?;
 				calls.push(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
 					beneficiary,
@@ -354,7 +343,8 @@ where
 				Ok(())
 			},
 			TrustedCall::balance_shield(enclave_account, who, value) => {
-				let account_id: AccountId32 = enclave_account.into();
+				let account_id: AccountId32 =
+					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 				ensure_enclave_signer_account(&account_id)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
@@ -372,7 +362,9 @@ where
 			TrustedCall::evm_withdraw(from, address, value) => {
 				debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
 				ita_sgx_runtime::EvmCall::<Runtime>::withdraw { address, value }
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from.into()))
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+						from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					))
 					.map_err(|e| {
 						Self::Error::Dispatch(format!("Evm Withdraw error: {:?}", e.error))
 					})?;
@@ -408,7 +400,9 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from.into()))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Call error: {:?}", e.error)))?;
 				Ok(())
 			},
@@ -442,7 +436,9 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from.into()))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create error: {:?}", e.error)))?;
 				let contract_address = evm_create_address(source, nonce_evm_account);
 				info!("Trying to create evm contract with address {:?}", contract_address);
@@ -479,7 +475,9 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from.into()))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create2 error: {:?}", e.error)))?;
 				let contract_address = evm_create2_address(source, salt, code_hash);
 				info!("Trying to create evm contract with address {:?}", contract_address);
@@ -490,10 +488,16 @@ where
 			// handle it here to be able to send error events to the parachain
 			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
 				debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert((&who).into());
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
-				match Self::set_user_shielding_key_internal(signer.into(), who.clone(), key) {
+				match Self::set_user_shielding_key_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who.clone(),
+					key,
+				) {
 					Ok(key) => {
 						debug!("pushing user_shielding_key_set event ...");
 						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
@@ -529,7 +533,7 @@ where
 				debug!("link_identity, who: {}", account_id_to_string(&who));
 
 				if let Err(e) = Self::link_identity_internal(
-					signer.into(),
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					identity,
 					validation_data,
@@ -541,7 +545,9 @@ where
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who.into())),
+						Some(SgxParentchainTypeConverter::convert(
+							who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+						)),
 						e.to_imp_error(),
 						hash,
 					);
@@ -550,11 +556,17 @@ where
 			},
 			TrustedCall::remove_identity(signer, who, identity, hash) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert((&who).into());
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
 
-				match Self::remove_identity_internal(signer.into(), who, identity.clone()) {
+				match Self::remove_identity_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who,
+					identity.clone(),
+				) {
 					Ok(key) => {
 						debug!("pushing identity_removed event ...");
 						calls.push(OpaqueCall::from_tuple(&(
@@ -585,12 +597,14 @@ where
 				hash,
 			) => {
 				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert((&who).into());
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
 				match Self::link_identity_callback_internal(
-					signer.into(),
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					identity.clone(),
 					bounded_web3networks,
@@ -626,14 +640,20 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
-				if let Err(e) =
-					Self::request_vc_internal(signer.into(), who.clone(), assertion, hash, shard)
-				{
+				if let Err(e) = Self::request_vc_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who.clone(),
+					assertion,
+					hash,
+					shard,
+				) {
 					debug!("pushing error event ... error: {}", e);
 					add_call_from_vcmp_error(
 						calls,
 						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who.into())),
+						Some(SgxParentchainTypeConverter::convert(
+							who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+						)),
 						e.to_vcmp_error(),
 						hash,
 					);
@@ -654,11 +674,17 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
-				let account = SgxParentchainTypeConverter::convert((&who).into());
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index =
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
-				match Self::request_vc_callback_internal(signer.into(), who, assertion.clone()) {
+				match Self::request_vc_callback_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who,
+					assertion.clone(),
+				) {
 					Ok(key) => {
 						calls.push(OpaqueCall::from_tuple(&(
 							call_index,
@@ -689,7 +715,7 @@ where
 				add_call_from_imp_error(
 					calls,
 					node_metadata_repo,
-					account.map(|g| g.into()),
+					account.and_then(|g| g.to_account_id()),
 					e,
 					hash,
 				);
@@ -702,7 +728,7 @@ where
 				add_call_from_vcmp_error(
 					calls,
 					node_metadata_repo,
-					account.map(|g| g.into()),
+					account.and_then(|g| g.to_account_id()),
 					e,
 					hash,
 				);
@@ -835,7 +861,7 @@ mod tests {
 		let shard = ShardIdentifier::default();
 
 		let call = TrustedCall::balance_set_balance(
-			LitentryMultiAddress::Substrate(AccountKeyring::Alice.public().into()),
+			Identity::Substrate(AccountKeyring::Alice.public().into()),
 			AccountKeyring::Alice.public().into(),
 			42,
 			42,

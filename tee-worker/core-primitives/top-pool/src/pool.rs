@@ -481,7 +481,7 @@ pub mod tests {
 	use ita_stf::{Index, TrustedCall, TrustedCallSigned, TrustedOperation};
 	use itp_types::Header;
 	use jsonrpc_core::{futures, futures::executor::block_on};
-	use litentry_primitives::{LitentryMultiAddress, LitentryMultiSignature};
+	use litentry_primitives::{Identity, LitentryMultiSignature};
 	use parity_util_mem::MallocSizeOf;
 	use serde::Serialize;
 	use sp_application_crypto::ed25519;
@@ -665,7 +665,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -691,9 +691,7 @@ pub mod tests {
 		let shard = ShardIdentifier::default();
 		let top = to_top(
 			TrustedCall::balance_transfer(
-				LitentryMultiAddress::Substrate(
-					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-				),
+				Identity::Substrate(tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into()),
 				tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 				5,
 			),
@@ -724,7 +722,7 @@ pub mod tests {
 				SOURCE,
 				to_top(
 					TrustedCall::balance_transfer(
-						LitentryMultiAddress::Substrate(
+						Identity::Substrate(
 							tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 						),
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -740,7 +738,7 @@ pub mod tests {
 				SOURCE,
 				to_top(
 					TrustedCall::balance_transfer(
-						LitentryMultiAddress::Substrate(
+						Identity::Substrate(
 							tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 						),
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -757,7 +755,7 @@ pub mod tests {
 				SOURCE,
 				to_top(
 					TrustedCall::balance_transfer(
-						LitentryMultiAddress::Substrate(
+						Identity::Substrate(
 							tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 						),
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -792,7 +790,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -808,7 +806,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -824,7 +822,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -858,7 +856,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -894,7 +892,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -913,7 +911,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -948,7 +946,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
@@ -977,7 +975,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					LitentryMultiAddress::Substrate(
+					Identity::Substrate(
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),

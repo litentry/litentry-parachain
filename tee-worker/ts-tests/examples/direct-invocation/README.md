@@ -13,7 +13,7 @@ cd <path-to-tee-worker>
 
 ```
 cd <path-to-tee-worker/ts-tests>
-yarn run di-examples
+yarn run substrate-di-examples
 ```
 
 ### Notes

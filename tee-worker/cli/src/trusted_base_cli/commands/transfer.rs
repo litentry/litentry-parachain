@@ -25,7 +25,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{LitentryMultiAddress, ParentchainBalance as Balance};
+use litentry_primitives::{Identity, ParentchainBalance as Balance};
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
 use std::boxed::Box;
@@ -59,7 +59,7 @@ impl TransferCommand {
 			nonce
 		);
 		let top: TrustedOperation = TrustedCall::balance_transfer(
-			LitentryMultiAddress::Substrate(from.public().into()),
+			Identity::Substrate(from.public().into()),
 			to,
 			self.amount,
 		)

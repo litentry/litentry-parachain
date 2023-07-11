@@ -12,7 +12,6 @@ import type {
     FrameSupportDispatchDispatchInfo,
     FrameSupportTokensMiscBalanceStatus,
     LitentryPrimitivesIdentity,
-    LitentryPrimitivesLitentryMultiAddress,
     SpRuntimeDispatchError,
 } from '@polkadot/types/lookup';
 
@@ -104,24 +103,24 @@ declare module '@polkadot/api-base/types/events' {
              **/
             IdentityLinked: AugmentedEvent<
                 ApiType,
-                [who: LitentryPrimitivesLitentryMultiAddress, identity: LitentryPrimitivesIdentity],
-                { who: LitentryPrimitivesLitentryMultiAddress; identity: LitentryPrimitivesIdentity }
+                [who: LitentryPrimitivesIdentity, identity: LitentryPrimitivesIdentity],
+                { who: LitentryPrimitivesIdentity; identity: LitentryPrimitivesIdentity }
             >;
             /**
              * an identity was removed
              **/
             IdentityRemoved: AugmentedEvent<
                 ApiType,
-                [who: LitentryPrimitivesLitentryMultiAddress, identity: LitentryPrimitivesIdentity],
-                { who: LitentryPrimitivesLitentryMultiAddress; identity: LitentryPrimitivesIdentity }
+                [who: LitentryPrimitivesIdentity, identity: LitentryPrimitivesIdentity],
+                { who: LitentryPrimitivesIdentity; identity: LitentryPrimitivesIdentity }
             >;
             /**
              * user shielding key was set
              **/
             UserShieldingKeySet: AugmentedEvent<
                 ApiType,
-                [who: LitentryPrimitivesLitentryMultiAddress, key: U8aFixed],
-                { who: LitentryPrimitivesLitentryMultiAddress; key: U8aFixed }
+                [who: LitentryPrimitivesIdentity, key: U8aFixed],
+                { who: LitentryPrimitivesIdentity; key: U8aFixed }
             >;
             /**
              * Generic event

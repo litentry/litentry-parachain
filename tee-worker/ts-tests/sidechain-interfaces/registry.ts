@@ -34,7 +34,6 @@ import type {
     LitentryPrimitivesIdentity,
     LitentryPrimitivesIdentityAddress20,
     LitentryPrimitivesIdentityAddress32,
-    LitentryPrimitivesLitentryMultiAddress,
     PalletBalancesAccountData,
     PalletBalancesBalanceLock,
     PalletBalancesCall,
@@ -103,7 +102,6 @@ declare module '@polkadot/types/types/registry' {
         LitentryPrimitivesIdentity: LitentryPrimitivesIdentity;
         LitentryPrimitivesIdentityAddress20: LitentryPrimitivesIdentityAddress20;
         LitentryPrimitivesIdentityAddress32: LitentryPrimitivesIdentityAddress32;
-        LitentryPrimitivesLitentryMultiAddress: LitentryPrimitivesLitentryMultiAddress;
         PalletBalancesAccountData: PalletBalancesAccountData;
         PalletBalancesBalanceLock: PalletBalancesBalanceLock;
         PalletBalancesCall: PalletBalancesCall;

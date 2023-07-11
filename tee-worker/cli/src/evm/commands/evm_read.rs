@@ -23,7 +23,7 @@ use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use itp_types::AccountId;
-use litentry_primitives::LitentryMultiAddress;
+use litentry_primitives::Identity;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair, H160, H256};
 use std::{boxed::Box, vec::Vec};
@@ -56,7 +56,7 @@ impl EvmReadCommands {
 			H160::from_slice(&Vec::from_hex(self.execution_address.to_string()).unwrap());
 
 		let top: TrustedOperation = TrustedGetter::evm_account_storages(
-			LitentryMultiAddress::Substrate(sender_acc.into()),
+			Identity::Substrate(sender_acc.into()),
 			execution_address,
 			H256::zero(),
 		)

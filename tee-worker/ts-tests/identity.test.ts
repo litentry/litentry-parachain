@@ -11,7 +11,7 @@ import {
     assertIdentityLinked,
     assertIdentityRemoved,
     assertInitialIdGraphCreated,
-    buildAddressHelper,
+    buildIdentityFromKeypair,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -43,12 +43,12 @@ describeLitentry('Test Identity', 0, (context) => {
     let web3networks: Web3Network[][] = [];
 
     step('check user sidechain storage before create', async function () {
-        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
+        let aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            aliceAddress
+            aliceSubject
         );
         assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
     });
@@ -100,18 +100,18 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
+        let aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            aliceAddress
+            aliceSubject
         );
         assert.equal(respShieldingKey, aesKey, 'respShieldingKey should be equal aesKey after set');
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
-        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
+        let aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
         // the main address should be already inside the IDGraph
         const mainIdentity = await buildIdentityHelper(
@@ -120,7 +120,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context
         );
         const identityHex = mainIdentity.toHex();
-        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceAddress, identityHex);
+        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0 for main address');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
@@ -272,9 +272,9 @@ describeLitentry('Test Identity', 0, (context) => {
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const identityHex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
-        let aliceAddress = await buildAddressHelper(context.substrateWallet.alice);
+        let aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
-        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceAddress, identityHex);
+        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active');
     });

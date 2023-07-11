@@ -19,8 +19,8 @@ use ita_stf::helpers::{get_expected_raw_message, get_expected_wrapped_message};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	recover_evm_address, ErrorDetail, Identity, LitentryMultiAddress, LitentryMultiSignature,
-	UserShieldingKeyNonceType, UserShieldingKeyType, Web3CommonValidationData, Web3ValidationData,
+	recover_evm_address, ErrorDetail, Identity, LitentryMultiSignature, UserShieldingKeyNonceType,
+	UserShieldingKeyType, Web3CommonValidationData, Web3ValidationData,
 };
 use log::*;
 use sp_core::{ed25519, sr25519};
@@ -30,7 +30,7 @@ use sp_io::{
 };
 
 pub fn verify(
-	who: &LitentryMultiAddress,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
@@ -53,7 +53,7 @@ pub fn verify(
 }
 
 fn verify_substrate_signature(
-	who: &LitentryMultiAddress,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
@@ -117,7 +117,7 @@ fn verify_substrate_signature_internal(
 }
 
 fn verify_evm_signature(
-	who: &LitentryMultiAddress,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,

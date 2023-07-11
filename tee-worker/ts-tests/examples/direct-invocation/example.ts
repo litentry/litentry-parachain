@@ -19,7 +19,7 @@ import {
     sleep,
     buildIdentityHelper,
     initIntegrationTestContext,
-    buildAddressHelper,
+    buildIdentityFromKeypair,
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
@@ -39,7 +39,7 @@ const webSocket = require('ws');
 const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
 const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
-async function runDirectCall(keyPairType: KeypairType) {
+export async function runExamples(keyPairType: KeypairType) {
     const keyring = new Keyring({ type: keyPairType });
     const parachainWs = new WsProvider(PARACHAIN_WS_ENDPINT);
     const sidechainRegistry = new TypeRegistry();
@@ -69,10 +69,10 @@ async function runDirectCall(keyPairType: KeypairType) {
     const bob: KeyringPair = getKeyPair('Bob', keyring);
     const mrenclave = (await getEnclave(parachainApi)).mrEnclave;
 
-    let aliceAddress = await buildAddressHelper(alice);
-    let bobAddress = await buildAddressHelper(bob);
+    let aliceSubject = await buildIdentityFromKeypair(alice, context);
+    let bobSubject = await buildIdentityFromKeypair(bob, context);
 
-    let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceAddress);
+    let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
 
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
@@ -84,7 +84,7 @@ async function runDirectCall(keyPairType: KeypairType) {
         mrenclave,
         nonce,
         alice,
-        aliceAddress,
+        aliceSubject,
         aesKey,
         hash
     );
@@ -94,7 +94,7 @@ async function runDirectCall(keyPairType: KeypairType) {
     await sleep(10);
 
     hash = `0x${require('crypto').randomBytes(32).toString('hex')}`;
-    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceAddress);
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
 
     console.log('Send direct linkIdentity call... hash:', hash);
     const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
@@ -103,7 +103,7 @@ async function runDirectCall(keyPairType: KeypairType) {
         mrenclave,
         nonce,
         alice,
-        aliceAddress,
+        aliceSubject,
         sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex(),
         parachainApi
             .createType('LitentryValidationData', {
@@ -126,7 +126,7 @@ async function runDirectCall(keyPairType: KeypairType) {
     await sleep(30);
 
     console.log('Send IDGraph getter for alice ...');
-    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice, aliceAddress);
+    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     console.log('IDGraph getter returned', res.toHuman());
     // somehow createType('Option<Vec<(....)>>') doesn't work, why?
@@ -147,7 +147,7 @@ async function runDirectCall(keyPairType: KeypairType) {
     assert.isTrue(idgraphArray[1][1].status.isActive);
 
     console.log('Send UserShieldingKey getter for alice ...');
-    let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceAddress);
+    let UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
@@ -162,7 +162,7 @@ async function runDirectCall(keyPairType: KeypairType) {
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
-    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobAddress);
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
@@ -170,7 +170,7 @@ async function runDirectCall(keyPairType: KeypairType) {
 
     await sleep(10);
 
-    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, bobAddress);
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, bobSubject);
 
     // set bob's shielding key, with wrapped bytes
     const keyBob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
@@ -181,7 +181,7 @@ async function runDirectCall(keyPairType: KeypairType) {
         mrenclave,
         nonce,
         bob,
-        bobAddress,
+        bobSubject,
         keyBob,
         hash,
         true // with wrapped bytes
@@ -191,17 +191,10 @@ async function runDirectCall(keyPairType: KeypairType) {
 
     // verify that bob's key is set
     console.log('Send UserShieldingKey getter for bob ...');
-    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobAddress);
+    UserShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, UserShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), keyBob);
 }
-
-(async () => {
-    await runDirectCall('sr25519').catch((e) => {
-        console.error(e);
-    });
-    process.exit(0);
-})();

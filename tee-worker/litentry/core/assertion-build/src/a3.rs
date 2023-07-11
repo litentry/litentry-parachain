@@ -106,7 +106,7 @@ mod tests {
 	use itp_stf_primitives::types::ShardIdentifier;
 	use lc_data_providers::G_DATA_PROVIDERS;
 	use litentry_primitives::{
-		Address32, Assertion, Identity, IdentityNetworkTuple, IdentityString, LitentryMultiAddress,
+		Address32, Assertion, Identity, IdentityNetworkTuple, IdentityString,
 	};
 	use log;
 	use std::{format, vec, vec::Vec};
@@ -135,7 +135,7 @@ mod tests {
 
 		let req = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
-			who: LitentryMultiAddress::Substrate(Address32::from([0; 32])),
+			who: Identity::Substrate(Address32::from([0; 32])),
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			vec_identity,
 			hash: Default::default(),

@@ -19,7 +19,7 @@ use crate::{
 	UserShieldingKeyType, Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{Address32, LitentryMultiAddress, USER_SHIELDING_KEY_LEN};
+use litentry_primitives::{Address32, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
@@ -29,7 +29,7 @@ pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 fn set_user_shielding_key_works() {
 	new_test_ext(false).execute_with(|| {
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 
 		assert_eq!(IMT::user_shielding_keys(who.clone()), None);
 
@@ -50,7 +50,7 @@ fn set_user_shielding_key_works() {
 #[test]
 fn link_twitter_identity_works() {
 	new_test_ext(true).execute_with(|| {
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -74,7 +74,7 @@ fn link_twitter_identity_works() {
 fn link_substrate_identity_works() {
 	new_test_ext(true).execute_with(|| {
 		let web3networks: BoundedWeb3Network = vec![Web3Network::Litentry].try_into().unwrap();
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
@@ -94,7 +94,7 @@ fn link_evm_identity_works() {
 	new_test_ext(true).execute_with(|| {
 		let web3networks: BoundedWeb3Network =
 			vec![Web3Network::Ethereum, Web3Network::Polygon].try_into().unwrap();
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
@@ -113,7 +113,7 @@ fn link_evm_identity_works() {
 fn link_identity_with_wrong_network_fails() {
 	new_test_ext(true).execute_with(|| {
 		let web3networks: BoundedWeb3Network = vec![Web3Network::BSC].try_into().unwrap();
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 		assert_noop!(
 			IMT::link_identity(
 				RuntimeOrigin::signed(ALICE),
@@ -130,7 +130,7 @@ fn link_identity_with_wrong_network_fails() {
 fn cannot_create_more_identities_for_account_than_limit() {
 	new_test_ext(true).execute_with(|| {
 		let max_id_graph_len = <<Test as crate::Config>::MaxIDGraphLength as Get<u32>>::get();
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 
 		for i in 1..max_id_graph_len {
 			assert_ok!(IMT::link_identity(
@@ -155,7 +155,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 #[test]
 fn remove_identity_works() {
 	new_test_ext(false).execute_with(|| {
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
 		assert_ok!(IMT::set_user_shielding_key(
@@ -216,7 +216,7 @@ fn remove_identity_works() {
 #[test]
 fn get_id_graph_works() {
 	new_test_ext(true).execute_with(|| {
-		let who = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let who = Identity::Substrate(Address32::from(BOB));
 
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		// set the block number too as it's used to tell "recent"
@@ -260,8 +260,8 @@ fn get_id_graph_works() {
 #[test]
 fn id_graph_stats_works() {
 	new_test_ext(true).execute_with(|| {
-		let alice = LitentryMultiAddress::Substrate(Address32::from(ALICE));
-		let bob = LitentryMultiAddress::Substrate(Address32::from(BOB));
+		let alice = Identity::Substrate(Address32::from(ALICE));
+		let bob = Identity::Substrate(Address32::from(BOB));
 
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),

@@ -4,7 +4,7 @@ import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polk
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity } from '../helpers';
 import type { Address, IntegrationTestContext } from '../type-definitions';
-import type { PalletIdentityManagementTeeIdentityContext } from '@polkadot/types/lookup';
+import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from '@polkadot/types/lookup';
 import type { HexString } from '@polkadot/util/types';
 import type { Metadata } from '@polkadot/types';
 
@@ -94,11 +94,11 @@ export async function checkUserShieldingKeys(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
-    address: Address
+    subject: LitentryPrimitivesIdentity
 ): Promise<string> {
     await sleep(6000);
 
-    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, address);
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, subject);
 
     const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
@@ -116,11 +116,11 @@ export async function checkIdGraph(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
-    address: Address,
+    subject: LitentryPrimitivesIdentity,
     identity: HexString
 ): Promise<PalletIdentityManagementTeeIdentityContext> {
     await sleep(6000);
-    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, address, identity);
+    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, subject, identity);
 
     const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 

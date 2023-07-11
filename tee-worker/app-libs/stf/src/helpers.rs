@@ -22,8 +22,7 @@ use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, St
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_nonce, Identity, LitentryMultiAddress, UserShieldingKeyNonceType,
-	UserShieldingKeyType,
+	aes_encrypt_nonce, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
 };
 use log::*;
 use sp_core::blake2_256;
@@ -113,9 +112,12 @@ pub fn set_block_number(block_number: u32) {
 
 pub fn is_authorized_signer<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
-	who: &AccountId,
+	who: Option<AccountId>,
 ) -> bool {
-	signer == &enclave_signer_account::<AccountId>() || signer == who
+	match who {
+		Some(ref who) => signer == &enclave_signer_account::<AccountId>() || signer == who,
+		None => false,
+	}
 }
 
 // verification message format:
@@ -123,15 +125,16 @@ pub fn is_authorized_signer<AccountId: Encode + Decode + PartialEq>(
 // where <> means SCALE-encoded
 // see https://github.com/litentry/litentry-parachain/issues/1739
 pub fn get_expected_raw_message(
-	who: &LitentryMultiAddress,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 ) -> Vec<u8> {
 	let mut data = match who {
-		LitentryMultiAddress::Substrate(address) => address.encode(),
-		LitentryMultiAddress::Evm(address) => address.encode(),
+		Identity::Substrate(address) => address.encode(),
+		Identity::Evm(address) => address.encode(),
+		_ => Vec::default(),
 	};
 	data.append(&mut identity.encode());
 	let mut encrypted_data = aes_encrypt_nonce(&key, &data, nonce).ciphertext;

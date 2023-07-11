@@ -19,7 +19,6 @@ import type {
     IdentityStatus,
     IdentityString,
     LitentryIdentity,
-    LitentryMultiAddress,
     LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
@@ -1750,7 +1749,6 @@ declare module '@polkadot/types/types/registry' {
         Limits: Limits;
         LimitsTo264: LimitsTo264;
         LitentryIdentity: LitentryIdentity;
-        LitentryMultiAddress: LitentryMultiAddress;
         LitentryMultiSignature: LitentryMultiSignature;
         LitentryValidationData: LitentryValidationData;
         LocalValidationData: LocalValidationData;

@@ -20,7 +20,7 @@ use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::AccountId;
 use itp_types::{Balance, ShardIdentifier};
-use litentry_primitives::LitentryMultiAddress;
+use litentry_primitives::Identity;
 use log::{debug, info};
 use std::vec::Vec;
 
@@ -44,7 +44,7 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for ShiedFundsArgs {
 
 		let enclave_account_id = executor.get_enclave_account()?;
 		let trusted_call = TrustedCall::balance_shield(
-			LitentryMultiAddress::Substrate(enclave_account_id.into()),
+			Identity::Substrate(enclave_account_id.into()),
 			account,
 			self.amount,
 		);

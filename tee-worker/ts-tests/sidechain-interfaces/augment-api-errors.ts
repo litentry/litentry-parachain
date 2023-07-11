@@ -51,11 +51,11 @@ declare module '@polkadot/api-base/types/errors' {
         };
         identityManagement: {
             /**
-             * the pair (address, identity) already linked
+             * the pair (Identity, Identity) already linked
              **/
             IdentityAlreadyLinked: AugmentedError<ApiType>;
             /**
-             * the pair (address, identity) doesn't exist
+             * the pair (Identity, Identity) doesn't exist
              **/
             IdentityNotExist: AugmentedError<ApiType>;
             /**
@@ -66,6 +66,10 @@ declare module '@polkadot/api-base/types/errors' {
              * creating the prime identity manually is disallowed
              **/
             LinkPrimeIdentityDisallowed: AugmentedError<ApiType>;
+            /**
+             * identity cannot be used to build prime identity
+             **/
+            NotSupportedIdentity: AugmentedError<ApiType>;
             /**
              * remove prime identity should be disallowed
              **/

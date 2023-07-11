@@ -18,7 +18,7 @@
 use crate::{UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
 use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{Identity, IdentityString, LitentryMultiAddress};
+use litentry_primitives::{Identity, IdentityString};
 use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
 use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
@@ -50,7 +50,7 @@ where
 				);
 				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
-					&LitentryMultiAddress::Substrate(alice.public().into()),
+					&Identity::Substrate(alice.public().into()),
 					&twitter_identity,
 					// the tweet_id is used as sidechain_nonce
 					// it's a bit tricky to get the nonce from the getter: you need to know

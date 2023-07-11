@@ -63,7 +63,7 @@ mod tests {
 	use itp_sgx_externalities::SgxExternalitiesDiffType;
 	use itp_stf_interface::mocks::StateInterfaceMock;
 	use itp_types::AccountId;
-	use litentry_primitives::LitentryMultiAddress;
+	use litentry_primitives::Identity;
 	use sp_core::{ed25519, Pair};
 
 	type TestStf = StateInterfaceMock<SgxExternalities, SgxExternalitiesDiffType>;
@@ -73,9 +73,8 @@ mod tests {
 	fn upon_false_signature_get_stf_state_errs() {
 		let sender = AccountId::from([0; 32]);
 		let wrong_signer = ed25519::Pair::from_seed(b"12345678901234567890123456789012");
-		let signed_getter =
-			TrustedGetter::free_balance(LitentryMultiAddress::Substrate(sender.into()))
-				.sign(&wrong_signer.into());
+		let signed_getter = TrustedGetter::free_balance(Identity::Substrate(sender.into()))
+			.sign(&wrong_signer.into());
 		let mut state = SgxExternalities::default();
 
 		assert_matches!(
@@ -88,7 +87,7 @@ mod tests {
 	fn state_getter_is_executed_if_signature_is_correct() {
 		let sender = ed25519::Pair::from_seed(b"12345678901234567890123456789012");
 		let signed_getter =
-			TrustedGetter::free_balance(LitentryMultiAddress::Substrate(sender.public().into()))
+			TrustedGetter::free_balance(Identity::Substrate(sender.public().into()))
 				.sign(&sender.into());
 		let mut state = SgxExternalities::default();
 		assert!(TestStateGetter::get_state(signed_getter.into(), &mut state).is_ok());

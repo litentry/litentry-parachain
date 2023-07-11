@@ -28,7 +28,7 @@ use ita_stf::{
 };
 use itp_stf_primitives::types::KeyPair;
 use itp_types::AccountId;
-use litentry_primitives::LitentryMultiAddress;
+use litentry_primitives::Identity;
 use log::*;
 use pallet_evm::{AddressMapping, HashedAddressMapping};
 use sp_core::{crypto::Ss58Codec, Pair, H160, U256};
@@ -69,7 +69,7 @@ impl EvmCreateCommands {
 		let evm_account_nonce = get_layer_two_evm_nonce!(from, cli, trusted_args);
 
 		let top = TrustedCall::evm_create(
-			LitentryMultiAddress::Substrate(from_acc.into()),
+			Identity::Substrate(from_acc.into()),
 			sender_evm_acc,
 			Vec::from_hex(self.smart_contract.to_string()).unwrap(),
 			U256::from(0),

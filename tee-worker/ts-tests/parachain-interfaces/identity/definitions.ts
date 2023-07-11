@@ -26,7 +26,7 @@ export default {
         PublicGetter: {
             _enum: {
                 some_value: 'u32',
-                nonce: '(LitentryMultiAddress)',
+                nonce: '(LitentryIdentity)',
             },
         },
         TrustedGetterSigned: {
@@ -37,25 +37,25 @@ export default {
         //important
         TrustedGetter: {
             _enum: {
-                free_balance: '(LitentryMultiAddress)',
-                reserved_balance: '(LitentryMultiAddress)',
-                user_shielding_key: '(LitentryMultiAddress)',
-                id_graph: '(LitentryMultiAddress)',
-                id_graph_stats: '(LitentryMultiAddress)',
+                free_balance: '(LitentryIdentity)',
+                reserved_balance: '(LitentryIdentity)',
+                user_shielding_key: '(LitentryIdentity)',
+                id_graph: '(LitentryIdentity)',
+                id_graph_stats: '(LitentryIdentity)',
             },
         },
         //important
         TrustedCall: {
             _enum: {
-                balance_set_balance: '(LitentryMultiAddress, AccountId, Balance, Balance)',
-                balance_transfer: '(LitentryMultiAddress, AccountId, Balance)',
-                balance_unshield: '(LitentryMultiAddress, AccountId, Balance, ShardIdentifier)',
-                balance_shield: '(LitentryMultiAddress, AccountId, Balance)',
-                set_user_shielding_key: '(LitentryMultiAddress, LitentryMultiAddress, UserShieldingKeyType, H256)',
+                balance_set_balance: '(LitentryIdentity, AccountId, Balance, Balance)',
+                balance_transfer: '(LitentryIdentity, AccountId, Balance)',
+                balance_unshield: '(LitentryIdentity, AccountId, Balance, ShardIdentifier)',
+                balance_shield: '(LitentryIdentity, AccountId, Balance)',
+                set_user_shielding_key: '(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)',
                 link_identity:
-                    '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
-                remove_identity: '(LitentryMultiAddress, LitentryMultiAddress, LitentryIdentity, H256)',
-                request_vc: '(LitentryMultiAddress, LitentryMultiAddress, Assertion, H256)',
+                    '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
+                remove_identity: '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)',
+                request_vc: '(LitentryIdentity, LitentryIdentity, Assertion, H256)',
             },
         },
         UserShieldingKeyType: '[u8; 32]',
@@ -80,13 +80,6 @@ export default {
                 Usurped: null,
                 Dropped: null,
                 Invalid: null,
-            },
-        },
-
-        LitentryMultiAddress: {
-            _enum: {
-                Substrate: 'Address32',
-                Evm: 'Address20',
             },
         },
 

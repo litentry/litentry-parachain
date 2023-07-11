@@ -24,7 +24,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{LitentryMultiAddress, UserShieldingKeyType};
+use litentry_primitives::{Identity, UserShieldingKeyType};
 use log::*;
 use sp_core::Pair;
 
@@ -39,7 +39,7 @@ pub struct SetUserShieldingKeyCommand {
 impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_pair_from_str(trusted_cli, self.account.as_str());
-		let address = LitentryMultiAddress::Substrate(who.public().into());
+		let identity = Identity::Substrate(who.public().into());
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let nonce = get_layer_two_nonce!(who, cli, trusted_cli);
@@ -48,10 +48,14 @@ impl SetUserShieldingKeyCommand {
 
 		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
 
-		let top: TrustedOperation =
-			TrustedCall::set_user_shielding_key(address.clone(), address, key, Default::default())
-				.sign(&KeyPair::Sr25519(Box::new(who)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let top: TrustedOperation = TrustedCall::set_user_shielding_key(
+			identity.clone(),
+			identity,
+			key,
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(who)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
 		perform_trusted_operation(cli, trusted_cli, &top);
 	}
 }

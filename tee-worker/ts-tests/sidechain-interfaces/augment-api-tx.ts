@@ -17,7 +17,6 @@ import type { Call, MultiAddress } from '@polkadot/types/interfaces/runtime';
 import type {
     CorePrimitivesNetworkWeb3Network,
     LitentryPrimitivesIdentity,
-    LitentryPrimitivesLitentryMultiAddress,
     SpRuntimeHeader,
     SpWeightsWeightV2Weight,
 } from '@polkadot/types/lookup';
@@ -210,7 +209,10 @@ declare module '@polkadot/api-base/types/submittable' {
             linkIdentity: AugmentedSubmittable<
                 (
                     who:
-                        | LitentryPrimitivesLitentryMultiAddress
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
                         | string
@@ -242,16 +244,15 @@ declare module '@polkadot/api-base/types/submittable' {
                               | Uint8Array
                           )[]
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    LitentryPrimitivesLitentryMultiAddress,
-                    LitentryPrimitivesIdentity,
-                    Vec<CorePrimitivesNetworkWeb3Network>
-                ]
+                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity, Vec<CorePrimitivesNetworkWeb3Network>]
             >;
             removeIdentity: AugmentedSubmittable<
                 (
                     who:
-                        | LitentryPrimitivesLitentryMultiAddress
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
                         | string
@@ -266,19 +267,22 @@ declare module '@polkadot/api-base/types/submittable' {
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesLitentryMultiAddress, LitentryPrimitivesIdentity]
+                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity]
             >;
             setUserShieldingKey: AugmentedSubmittable<
                 (
                     who:
-                        | LitentryPrimitivesLitentryMultiAddress
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
                         | { Substrate: any }
                         | { Evm: any }
                         | string
                         | Uint8Array,
                     key: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesLitentryMultiAddress, U8aFixed]
+                [LitentryPrimitivesIdentity, U8aFixed]
             >;
             /**
              * Generic tx
