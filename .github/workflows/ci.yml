@@ -209,7 +209,7 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  tee-worker-clippy:
+  tee-worker-clippy-p1:
     runs-on: ubuntu-latest
     needs:
       - fmt
@@ -232,6 +232,31 @@ jobs:
           cargo clippy -- -D warnings
           cargo clippy --features evm -- -D warnings
           cargo clippy --features sidechain -- -D warnings
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  tee-worker-clippy-p2:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    if: needs.set-condition.outputs.rebuild_tee == 'true'
+    container: "litentry/litentry-tee-dev:edge"
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+      - name: Tee-worker clippy
+        working-directory: ./tee-worker
+        run: |
+          rustup show
           cargo clippy --features teeracle -- -D warnings
           cargo clippy --features offchain-worker -- -D warnings
 
