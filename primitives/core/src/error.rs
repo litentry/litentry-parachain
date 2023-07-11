@@ -49,6 +49,7 @@ pub enum ErrorDetail {
 	VerifySubstrateSignatureFailed,
 	VerifyEvmSignatureFailed,
 	RecoverEvmAddressFailed,
+	Web3NetworkOutOfBounds,
 }
 
 // We could have used Into<ErrorDetail>, but we want it to be more explicit, similar to `into_iter`

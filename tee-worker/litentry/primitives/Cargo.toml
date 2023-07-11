@@ -19,6 +19,8 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
+strum = { version = "0.25.0", default-features = false }
+strum_macros = { version = "0.25.0", default-features = false }
 
 # sgx dependencies
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
@@ -36,6 +38,7 @@ sgx = [
     "chrono_sgx",
 ]
 std = [
+    "strum/std",
     "hex/std",
     "base64/std",
     "serde/std",
