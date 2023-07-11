@@ -21,7 +21,7 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-use crate::{helpers::ensure_enclave_signer_account, Runtime, StfError, System, TrustedOperation};
+use crate::{helpers::ensure_enclave_signer, Runtime, StfError, System, TrustedOperation};
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
@@ -336,7 +336,7 @@ where
 				Ok(())
 			},
 			TrustedCall::balance_shield(enclave_account, who, value) => {
-				ensure_enclave_signer_account(&enclave_account)?;
+				ensure_enclave_signer(&enclave_account)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
@@ -666,8 +666,9 @@ where
 				Ok(())
 			},
 			TrustedCall::set_identity_networks(signer, who, identity, web3networks) => {
-				debug!("set_identity_networks, networks: {:?}", web3networks.clone());
-				ensure!(signer == who, Self::Error::Dispatch(format!("unauthorized signer")));
+				debug!("set_identity_networks, networks: {:?}", web3networks);
+				// only support DI requests from the signer but we leave the room for changes
+				ensure!(signer == who, Self::Error::Dispatch("Unauthorized signer".to_string()));
 				IMTCall::set_identity_networks { who, identity, web3networks }
 					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;

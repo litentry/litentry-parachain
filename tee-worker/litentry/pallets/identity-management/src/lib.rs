@@ -221,7 +221,7 @@ pub mod pallet {
 					web3networks.try_into().map_err(|_| Error::<T>::Web3NetworkLenLimitReached)?;
 				c.web3networks = bounded_web3networks;
 				*context = Some(c);
-				Ok(().into())
+				Ok(())
 			})
 		}
 	}

@@ -19,7 +19,7 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{ensure_enclave_signer_account, ensure_enclave_signer_account_or_self},
+	helpers::{ensure_enclave_signer, ensure_enclave_signer_or_self},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -43,7 +43,7 @@ impl TrustedCallSigned {
 		key: UserShieldingKeyType,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			ensure_enclave_signer_account_or_self(&signer, &who),
+			ensure_enclave_signer_or_self(&signer, &who),
 			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
 		);
 		IMTCall::set_user_shielding_key { who, key }
@@ -63,7 +63,7 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
-			ensure_enclave_signer_account_or_self(&signer, &who),
+			ensure_enclave_signer_or_self(&signer, &who),
 			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
@@ -103,7 +103,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			ensure_enclave_signer_account_or_self(&signer, &who),
+			ensure_enclave_signer_or_self(&signer, &who),
 			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 		let key = IdentityManagement::user_shielding_keys(&who)
@@ -124,7 +124,7 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
-			ensure_enclave_signer_account_or_self(&signer, &who),
+			ensure_enclave_signer_or_self(&signer, &who),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
 		);
 		ensure!(
@@ -170,7 +170,7 @@ impl TrustedCallSigned {
 		web3networks: BoundedWeb3Network,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer_account(&signer)
+		ensure_enclave_signer(&signer)
 			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 
 		let key = IdentityManagement::user_shielding_keys(&who)
@@ -189,7 +189,7 @@ impl TrustedCallSigned {
 		assertion: Assertion,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer_account(&signer).map_err(|_| {
+		ensure_enclave_signer(&signer).map_err(|_| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
 		})?;
 
