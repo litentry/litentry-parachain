@@ -32,7 +32,6 @@ pub enum Assertion {
 	A2(ParameterString),                                    // (guild_id)
 	A3(ParameterString, ParameterString, ParameterString),  // (guild_id, channel_id, role_id)
 	A4(ParameterString),                                    // (minimum_amount)
-	A5(ParameterString),               	                    // (original_tweet_id)
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
 	A8(BoundedWeb3Network),             					// litentry, litmus, polkadot, kusama, khala, ethereum
@@ -41,7 +40,6 @@ pub enum Assertion {
 	A11(ParameterString),                                   // (minimum_amount)
 
 	// ----- begin polkadot decoded 2023 -----
-	A12(ParameterString),                                   // (target_twitter_screen_name)
 	A13(AccountId),                                         // (participant_account), can only be requested by delegatee
 	A14,
 	// for Holder assertions we'll reuse A4/A7
