@@ -44,7 +44,7 @@ pub fn propose_state_update_executes_all_calls_given_enough_time() {
 	let (_, shard) = init_state_and_shard_with_state_handler(state_handler.as_ref());
 	let sender = endowed_account();
 	let signed_call_1 = TrustedCall::balance_transfer(
-		Identity::Substrate(sender.public().into()),
+		sender.public().into(),
 		sender.public().into(),
 		42,
 	)
@@ -52,7 +52,7 @@ pub fn propose_state_update_executes_all_calls_given_enough_time() {
 	let trusted_operation_1 = signed_call_1.into_trusted_operation(true);
 	let call_operation_hash_1: H256 = blake2_256(&trusted_operation_1.encode()).into();
 	let signed_call_2 = TrustedCall::balance_transfer(
-		Identity::Substrate(sender.public().into()),
+		sender.public().into(),
 		sender.public().into(),
 		100,
 	)
@@ -94,7 +94,7 @@ pub fn propose_state_update_executes_only_one_trusted_call_given_not_enough_time
 	let (_, shard) = init_state_and_shard_with_state_handler(state_handler.as_ref());
 	let sender = endowed_account();
 	let signed_call_1 = TrustedCall::balance_transfer(
-		Identity::Substrate(sender.public().into()),
+		sender.public().into(),
 		sender.public().into(),
 		42,
 	)
@@ -103,7 +103,7 @@ pub fn propose_state_update_executes_only_one_trusted_call_given_not_enough_time
 	let call_operation_hash_1: H256 = blake2_256(&trusted_operation_1.encode()).into();
 
 	let signed_call_2 = TrustedCall::balance_transfer(
-		Identity::Substrate(sender.public().into()),
+		sender.public().into(),
 		sender.public().into(),
 		100,
 	)
@@ -141,7 +141,7 @@ pub fn propose_state_update_executes_no_trusted_calls_given_no_time() {
 	let (_, shard) = init_state_and_shard_with_state_handler(state_handler.as_ref());
 	let sender = endowed_account();
 	let signed_call_1 = TrustedCall::balance_transfer(
-		Identity::Substrate(sender.public().into()),
+		sender.public().into(),
 		sender.public().into(),
 		42,
 	)

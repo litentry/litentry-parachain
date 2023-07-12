@@ -665,9 +665,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -691,7 +689,7 @@ pub mod tests {
 		let shard = ShardIdentifier::default();
 		let top = to_top(
 			TrustedCall::balance_transfer(
-				Identity::Substrate(tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into()),
+				tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 				tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 				5,
 			),
@@ -722,9 +720,7 @@ pub mod tests {
 				SOURCE,
 				to_top(
 					TrustedCall::balance_transfer(
-						Identity::Substrate(
-							tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-						),
+						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 						5,
 					),
@@ -738,9 +734,7 @@ pub mod tests {
 				SOURCE,
 				to_top(
 					TrustedCall::balance_transfer(
-						Identity::Substrate(
-							tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-						),
+						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 						5,
 					),
@@ -755,9 +749,7 @@ pub mod tests {
 				SOURCE,
 				to_top(
 					TrustedCall::balance_transfer(
-						Identity::Substrate(
-							tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-						),
+						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 						5,
 					),
@@ -790,9 +782,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -806,9 +796,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -822,9 +810,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -856,9 +842,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -892,9 +876,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -911,9 +893,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -946,9 +926,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),
@@ -975,9 +953,7 @@ pub mod tests {
 			SOURCE,
 			to_top(
 				TrustedCall::balance_transfer(
-					Identity::Substrate(
-						tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
-					),
+					tests::AccountId::from_h256(from_low_u64_to_be_h256(1)).into(),
 					tests::AccountId::from_h256(from_low_u64_to_be_h256(2)).into(),
 					5,
 				),

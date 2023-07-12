@@ -39,7 +39,7 @@ pub struct SetUserShieldingKeyCommand {
 impl SetUserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_pair_from_str(trusted_cli, self.account.as_str());
-		let identity = Identity::Substrate(who.public().into());
+		let identity: Identity = who.public().into();
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let nonce = get_layer_two_nonce!(who, cli, trusted_cli);

@@ -320,7 +320,7 @@ mod tests {
 		let receiver = ed25519::Pair::from_seed(b"14565678901234567890123456789012");
 
 		let trusted_call = TrustedCall::balance_transfer(
-			Identity::Substrate(sender.public().into()),
+			sender.public().into(),
 			receiver.public().into(),
 			10000u128,
 		);

@@ -21,7 +21,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{Identity, UserShieldingKeyType};
+use litentry_primitives::UserShieldingKeyType;
 use sp_core::Pair;
 
 #[derive(Parser)]
@@ -33,10 +33,9 @@ pub struct UserShieldingKeyCommand {
 impl UserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
 		let who = get_pair_from_str(trusted_cli, &self.account);
-		let top: TrustedOperation =
-			TrustedGetter::user_shielding_key(Identity::Substrate(who.public().into()))
-				.sign(&KeyPair::Sr25519(Box::new(who)))
-				.into();
+		let top: TrustedOperation = TrustedGetter::user_shielding_key(who.public().into())
+			.sign(&KeyPair::Sr25519(Box::new(who)))
+			.into();
 		let key = perform_trusted_operation(cli, trusted_cli, &top)
 			.and_then(|v| UserShieldingKeyType::decode(&mut v.as_slice()).ok());
 		println!("{}", hex::encode(key.unwrap()));

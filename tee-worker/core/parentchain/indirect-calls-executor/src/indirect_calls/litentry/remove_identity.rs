@@ -56,8 +56,8 @@ impl RemoveIdentityArgs {
 
 			let enclave_account_id = executor.get_enclave_account()?;
 			let trusted_call = TrustedCall::remove_identity(
-				Identity::Substrate(enclave_account_id.into()),
-				Identity::Substrate(account.into()),
+				enclave_account_id.into(),
+				account.into(),
 				identity,
 				hash,
 			);

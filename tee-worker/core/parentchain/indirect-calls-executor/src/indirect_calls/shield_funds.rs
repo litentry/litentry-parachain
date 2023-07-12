@@ -20,7 +20,6 @@ use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::AccountId;
 use itp_types::{Balance, ShardIdentifier};
-use litentry_primitives::Identity;
 use log::{debug, info};
 use std::vec::Vec;
 
@@ -43,11 +42,8 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for ShiedFundsArgs {
 		let account = AccountId::decode(&mut account_vec.as_slice())?;
 
 		let enclave_account_id = executor.get_enclave_account()?;
-		let trusted_call = TrustedCall::balance_shield(
-			Identity::Substrate(enclave_account_id.into()),
-			account,
-			self.amount,
-		);
+		let trusted_call =
+			TrustedCall::balance_shield(enclave_account_id.into(), account, self.amount);
 		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 		let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 

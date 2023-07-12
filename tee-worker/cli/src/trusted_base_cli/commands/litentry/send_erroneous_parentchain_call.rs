@@ -24,7 +24,6 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::Identity;
 use log::*;
 use sp_core::Pair;
 
@@ -39,7 +38,7 @@ impl SendErroneousParentchainCallCommand {
 		let nonce = get_layer_two_nonce!(root, cli, trusted_cli);
 
 		let top: TrustedOperation =
-			TrustedCall::send_erroneous_parentchain_call(Identity::Substrate(root.public().into()))
+			TrustedCall::send_erroneous_parentchain_call(root.public().into())
 				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
 		perform_trusted_operation(cli, trusted_cli, &top);

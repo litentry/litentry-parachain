@@ -854,7 +854,7 @@ mod tests {
 		let shard = ShardIdentifier::default();
 
 		let call = TrustedCall::balance_set_balance(
-			Identity::Substrate(AccountKeyring::Alice.public().into()),
+			AccountKeyring::Alice.public().into(),
 			AccountKeyring::Alice.public().into(),
 			42,
 			42,

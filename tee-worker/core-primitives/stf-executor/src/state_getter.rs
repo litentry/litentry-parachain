@@ -73,8 +73,7 @@ mod tests {
 	fn upon_false_signature_get_stf_state_errs() {
 		let sender = AccountId::from([0; 32]);
 		let wrong_signer = ed25519::Pair::from_seed(b"12345678901234567890123456789012");
-		let signed_getter = TrustedGetter::free_balance(Identity::Substrate(sender.into()))
-			.sign(&wrong_signer.into());
+		let signed_getter = TrustedGetter::free_balance(sender.into()).sign(&wrong_signer.into());
 		let mut state = SgxExternalities::default();
 
 		assert_matches!(
@@ -87,8 +86,7 @@ mod tests {
 	fn state_getter_is_executed_if_signature_is_correct() {
 		let sender = ed25519::Pair::from_seed(b"12345678901234567890123456789012");
 		let signed_getter =
-			TrustedGetter::free_balance(Identity::Substrate(sender.public().into()))
-				.sign(&sender.into());
+			TrustedGetter::free_balance(sender.public().into()).sign(&sender.into());
 		let mut state = SgxExternalities::default();
 		assert!(TestStateGetter::get_state(signed_getter.into(), &mut state).is_ok());
 	}

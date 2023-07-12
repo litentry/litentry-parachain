@@ -157,6 +157,48 @@ impl Identity {
 	}
 }
 
+impl From<ed25519::Public> for Identity {
+	fn from(value: ed25519::Public) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<sr25519::Public> for Identity {
+	fn from(value: sr25519::Public) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<AccountId32> for Identity {
+	fn from(value: AccountId32) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<Address32> for Identity {
+	fn from(value: Address32) -> Self {
+		Identity::Substrate(value)
+	}
+}
+
+impl From<Address20> for Identity {
+	fn from(value: Address20) -> Self {
+		Identity::Evm(value)
+	}
+}
+
+impl From<[u8; 32]> for Identity {
+	fn from(value: [u8; 32]) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<[u8; 20]> for Identity {
+	fn from(value: [u8; 20]) -> Self {
+		Identity::Evm(value.into())
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;

@@ -29,7 +29,7 @@ use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::{Identity, ParentchainBalance as Balance};
+use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_application_crypto::sr25519;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
@@ -70,10 +70,9 @@ const TRUSTED_KEYSTORE_PATH: &str = "my_trusted_keystore";
 pub(crate) fn get_balance(cli: &Cli, trusted_args: &TrustedCli, arg_who: &str) -> Option<u128> {
 	debug!("arg_who = {:?}", arg_who);
 	let who = get_pair_from_str(trusted_args, arg_who);
-	let top: TrustedOperation =
-		TrustedGetter::free_balance(Identity::Substrate(who.public().into()))
-			.sign(&KeyPair::Sr25519(Box::new(who)))
-			.into();
+	let top: TrustedOperation = TrustedGetter::free_balance(who.public().into())
+		.sign(&KeyPair::Sr25519(Box::new(who)))
+		.into();
 	let res = perform_trusted_operation(cli, trusted_args, &top);
 	debug!("received result for balance");
 	decode_balance(res)

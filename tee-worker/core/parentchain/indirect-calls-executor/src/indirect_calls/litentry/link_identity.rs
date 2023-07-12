@@ -63,8 +63,8 @@ impl LinkIdentityArgs {
 
 			let enclave_account_id = executor.get_enclave_account()?;
 			let trusted_call = TrustedCall::link_identity(
-				Identity::Substrate(enclave_account_id.into()),
-				Identity::Substrate(self.account.clone().into()),
+				enclave_account_id.into(),
+				self.account.clone().into(),
 				identity,
 				validation_data,
 				web3networks,

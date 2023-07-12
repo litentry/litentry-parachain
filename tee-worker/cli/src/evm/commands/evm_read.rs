@@ -23,7 +23,6 @@ use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use itp_types::AccountId;
-use litentry_primitives::Identity;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair, H160, H256};
 use std::{boxed::Box, vec::Vec};
@@ -55,13 +54,10 @@ impl EvmReadCommands {
 		let execution_address =
 			H160::from_slice(&Vec::from_hex(self.execution_address.to_string()).unwrap());
 
-		let top: TrustedOperation = TrustedGetter::evm_account_storages(
-			Identity::Substrate(sender_acc.into()),
-			execution_address,
-			H256::zero(),
-		)
-		.sign(&KeyPair::Sr25519(Box::new(sender)))
-		.into();
+		let top: TrustedOperation =
+			TrustedGetter::evm_account_storages(sender_acc.into(), execution_address, H256::zero())
+				.sign(&KeyPair::Sr25519(Box::new(sender)))
+				.into();
 		let res = perform_trusted_operation(cli, trusted_args, &top);
 
 		debug!("received result for balance");

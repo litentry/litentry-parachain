@@ -135,7 +135,7 @@ mod tests {
 
 		let req = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
-			who: Identity::Substrate(Address32::from([0; 32])),
+			who: Address32::from([0; 32]).into(),
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			identities,
 			hash: Default::default(),

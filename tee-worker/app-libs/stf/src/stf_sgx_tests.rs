@@ -50,7 +50,7 @@ pub fn shield_funds_increments_signer_account_nonce() {
 
 	let shield_funds_call = TrustedCallSigned::new(
 		TrustedCall::balance_shield(
-			Identity::Substrate(enclave_call_signer.public().into()),
+			enclave_call_signer.public().into(),
 			AccountId::new([1u8; 32]),
 			500u128,
 		),

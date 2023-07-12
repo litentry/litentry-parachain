@@ -529,7 +529,7 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
-		let identity = Identity::Substrate(Address32::from(who.clone()));
+		let identity = who.clone().into();
 
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
@@ -543,7 +543,7 @@ mod tests {
 	#[test]
 	fn update_holder_works() {
 		let who = AccountId::from([0; 32]);
-		let identity = Identity::Substrate(Address32::from(who));
+		let identity = who.into();
 		let shard = ShardIdentifier::default();
 		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();

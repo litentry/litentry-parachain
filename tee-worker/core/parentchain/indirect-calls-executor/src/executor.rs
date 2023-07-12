@@ -36,7 +36,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{OpaqueCall, ShardIdentifier, H256};
-use litentry_primitives::{Identity, ParentchainBlockNumber};
+use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
@@ -217,15 +217,15 @@ impl<
 		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
 		let trusted_call = match err {
 			Error::IMPHandlingError(e) => TrustedCall::handle_imp_error(
-				Identity::Substrate(enclave_account.into()),
-				account.map(|a| Identity::Substrate(a.into())),
+				enclave_account.into(),
+				account.map(|a| a.into()),
 				e.clone(),
 				hash,
 			),
 
 			Error::VCMPHandlingError(e) => TrustedCall::handle_vcmp_error(
-				Identity::Substrate(enclave_account.into()),
-				account.map(|a| Identity::Substrate(a.into())),
+				enclave_account.into(),
+				account.map(|a| a.into()),
 				e.clone(),
 				hash,
 			),

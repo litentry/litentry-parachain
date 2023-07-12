@@ -25,7 +25,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{Identity, ParentchainBalance as Balance};
+use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
 use std::boxed::Box;
@@ -58,13 +58,10 @@ impl TransferCommand {
 			self.amount,
 			nonce
 		);
-		let top: TrustedOperation = TrustedCall::balance_transfer(
-			Identity::Substrate(from.public().into()),
-			to,
-			self.amount,
-		)
-		.sign(&KeyPair::Sr25519(Box::new(from)), nonce, &mrenclave, &shard)
-		.into_trusted_operation(trusted_args.direct);
+		let top: TrustedOperation =
+			TrustedCall::balance_transfer(from.public().into(), to, self.amount)
+				.sign(&KeyPair::Sr25519(Box::new(from)), nonce, &mrenclave, &shard)
+				.into_trusted_operation(trusted_args.direct);
 		let _ = perform_trusted_operation(cli, trusted_args, &top);
 		info!("trusted call transfer executed");
 	}

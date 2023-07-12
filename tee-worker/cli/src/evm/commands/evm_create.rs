@@ -69,7 +69,7 @@ impl EvmCreateCommands {
 		let evm_account_nonce = get_layer_two_evm_nonce!(from, cli, trusted_args);
 
 		let top = TrustedCall::evm_create(
-			Identity::Substrate(from_acc.into()),
+			from_acc.into(),
 			sender_evm_acc,
 			Vec::from_hex(self.smart_contract.to_string()).unwrap(),
 			U256::from(0),

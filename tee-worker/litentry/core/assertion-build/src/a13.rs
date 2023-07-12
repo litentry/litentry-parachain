@@ -30,9 +30,7 @@ const VC_A13_SUBJECT_TAG: [&str; 2] = ["Polkadot decoded 2023", "Litentry"];
 
 pub fn build(req: &AssertionBuildRequest, who: &AccountId) -> Result<Credential> {
 	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
-
-	let who_identity = Identity::Substrate(Address32::from(who.clone()));
-	match Credential::new_default(&who_identity, &req.shard) {
+	match Credential::new_default(&Address32::from(who.clone()).into(), &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(
