@@ -23,6 +23,17 @@ jobs:
       - name: Use SGX Environment
         run: source /opt/intel/sgxsdk/environment
 
+      - name: Prepare tooling
+        run: |
+          cd tee-worker/scripts/changelog
+          gem install bundler changelogerator:0.9.1
+          bundle install
+          changelogerator --help
+          URL=https://github.com/chevdor/tera-cli/releases/download/v0.2.1/tera-cli_linux_amd64.deb
+          wget $URL -O tera.deb
+          sudo dpkg -i tera.deb
+          tera --version
+
       - name: Generate Package
         run: source /opt/intel/sgxsdk/environment && ./tee-worker/scripts/litentry/release/generate_release_pkg.sh
 
@@ -31,22 +42,6 @@ jobs:
         with:
           name: enclave-binary.tar.gz
           path: ./tee-worker/target/*.tar.gz
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 3.0.0
-
-      - name: Prepare tooling
-        run: |
-          cd worker/scripts/changelog
-          gem install bundler changelogerator:0.9.1
-          bundle install
-          changelogerator --help
-          URL=https://github.com/chevdor/tera-cli/releases/download/v0.2.1/tera-cli_linux_amd64.deb
-          wget $URL -O tera.deb
-          sudo dpkg -i tera.deb
-          tera --version
           
       - name: Generate release notes
         env:
@@ -56,7 +51,7 @@ jobs:
         run: |
           find ${{env.GITHUB_WORKSPACE}} -type f -name "*_srtool_output.json"
 
-          cd worker/scripts/changelog
+          cd tee-worker/scripts/changelog
 
           ./bin/changelog ${GITHUB_REF}
           ls -al release-notes.md
