@@ -6,6 +6,7 @@ import * as process from 'process';
 import { describe } from 'mocha';
 import { step } from 'mocha-steps';
 import WebSocketAsPromised from 'websocket-as-promised';
+import os from 'os';
 import { initWorkerConnection, sleep } from './common/utils';
 import { assert } from 'chai';
 
@@ -329,14 +330,19 @@ describe('Resume worker', function () {
 
     const { binaryDir, nodeUrl, nodePort } = getConfiguration();
     const nodeConfig = { nodeUrl, nodePort };
+
+    const tempDir = os.tmpdir();
+    const worker0Dir = fs.mkdtempSync(path.join(tempDir, 'worker0-'));
+    const worker1Dir = fs.mkdtempSync(path.join(tempDir, 'worker1-'));
+
     const jobConfig: Record<'worker0' | 'worker1', JobConfig> = {
         worker0: {
-            workingDir: path.join(__dirname, './tmp/worker0'),
+            workingDir: worker0Dir,
             nodeConfig,
             workerConfig: workerConfig.worker0,
         },
         worker1: {
-            workingDir: path.join(__dirname, './tmp/worker1'),
+            workingDir: worker1Dir,
             nodeConfig,
             workerConfig: workerConfig.worker1,
         },
@@ -345,6 +351,8 @@ describe('Resume worker', function () {
     const subprocessTracker: Set<number> = new Set();
 
     after(() => {
+        fs.rmSync(worker0Dir, { recursive: true, force: true });
+        fs.rmSync(worker1Dir, { recursive: true, force: true });
         subprocessTracker.forEach((pid) => {
             if (pid !== undefined) {
                 try {
