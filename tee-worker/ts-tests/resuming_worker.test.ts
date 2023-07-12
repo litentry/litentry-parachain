@@ -81,21 +81,6 @@ function initializeFiles(workingDir: string, binaryDir: string) {
     fs.copyFileSync(path.join(binaryDir, 'integritee-service'), path.join(workingDir, 'integritee-service'));
     fs.closeSync(fs.openSync(path.join(workingDir, 'spid.txt'), 'w'));
     fs.closeSync(fs.openSync(path.join(workingDir, 'key.txt'), 'w'));
-    const data = JSON.stringify(
-        {
-            twitter_official_url: 'http://localhost:19527',
-            twitter_litentry_url: 'http://localhost:19527',
-            twitter_auth_token: '',
-            discord_official_url: 'http://localhost:19527',
-            discord_litentry_url: 'http://localhost:19527',
-            discord_auth_token: '',
-            achainable_url: 'http://localhost:19527',
-            achainable_auth_key: '',
-        },
-        null,
-        4
-    );
-    fs.writeFileSync(path.join(workingDir, 'worker-config-mock.json'), data);
 }
 
 type RetryConfig = {
