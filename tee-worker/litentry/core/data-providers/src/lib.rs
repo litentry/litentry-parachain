@@ -70,7 +70,7 @@ pub mod twitter_official;
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
-pub struct DataProvidersStatic {
+pub struct DataProviderConfig {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,
 	pub twitter_auth_token_v2: String,
@@ -84,15 +84,15 @@ pub struct DataProvidersStatic {
 	pub achainable_rest_key: String,
 }
 
-impl Default for DataProvidersStatic {
+impl Default for DataProviderConfig {
 	fn default() -> Self {
 		Self::new()
 	}
 }
 
-impl DataProvidersStatic {
+impl DataProviderConfig {
 	pub fn new() -> Self {
-		DataProvidersStatic {
+		DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
 			twitter_litentry_url: "".to_string(),
 			twitter_auth_token_v2: "Bearer ".to_string(),
@@ -153,8 +153,8 @@ impl DataProvidersStatic {
 }
 
 lazy_static! {
-	pub static ref GLOBAL_DATA_PROVIDER: RwLock<DataProvidersStatic> =
-		RwLock::new(DataProvidersStatic::new());
+	pub static ref GLOBAL_DATA_PROVIDER_CONFIG: RwLock<DataProviderConfig> =
+		RwLock::new(DataProviderConfig::new());
 }
 
 #[derive(Debug, thiserror::Error, Clone)]

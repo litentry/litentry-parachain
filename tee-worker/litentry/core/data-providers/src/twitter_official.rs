@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER};
+use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER_CONFIG};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -160,10 +160,20 @@ impl TwitterOfficialClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER.read().unwrap().twitter_auth_token_v1_1.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG
+				.read()
+				.unwrap()
+				.twitter_auth_token_v1_1
+				.clone()
+				.as_str(),
 		);
 		let client = build_client(
-			GLOBAL_DATA_PROVIDER.read().unwrap().twitter_official_url.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG
+				.read()
+				.unwrap()
+				.twitter_official_url
+				.clone()
+				.as_str(),
 			headers.clone(),
 		);
 
@@ -175,10 +185,20 @@ impl TwitterOfficialClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER.read().unwrap().twitter_auth_token_v2.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG
+				.read()
+				.unwrap()
+				.twitter_auth_token_v2
+				.clone()
+				.as_str(),
 		);
 		let client = build_client(
-			GLOBAL_DATA_PROVIDER.read().unwrap().twitter_official_url.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG
+				.read()
+				.unwrap()
+				.twitter_official_url
+				.clone()
+				.as_str(),
 			headers.clone(),
 		);
 
@@ -304,7 +324,7 @@ mod tests {
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
-		GLOBAL_DATA_PROVIDER.write().unwrap().set_twitter_official_url(url);
+		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_twitter_official_url(url);
 	}
 
 	#[test]
