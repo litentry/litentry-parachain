@@ -47,7 +47,7 @@
 		"@types/ws": "^8.5.3",
 		"@typescript-eslint/eslint-plugin": "^5.60.0",
 		"@typescript-eslint/parser": "^5.60.0",
-		"yarn eslint . && cross-env": "^7.0.3",
+		"cross-env": "^7.0.3",
 		"dotenv": "^16.0.3",
 		"eslint": "^8.43.0",
 		"ethers": "^5.7.2",
