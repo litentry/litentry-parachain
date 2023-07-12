@@ -45,7 +45,6 @@ pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -
 		Ok(mut dpc) => {
 			dpc.set_twitter_official_url(data_provider_config.twitter_official_url);
 			dpc.set_twitter_litentry_url(data_provider_config.twitter_litentry_url);
-			dpc.set_twitter_auth_token_v1_1(data_provider_config.twitter_auth_token_v1_1);
 			dpc.set_twitter_auth_token_v2(data_provider_config.twitter_auth_token_v2);
 			dpc.set_discord_official_url(data_provider_config.discord_official_url);
 			dpc.set_discord_litentry_url(data_provider_config.discord_litentry_url);

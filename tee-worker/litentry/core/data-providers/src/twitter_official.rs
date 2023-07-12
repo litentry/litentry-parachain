@@ -155,31 +155,6 @@ impl TargetUser {
 
 /// rate limit: https://developer.twitter.com/en/docs/twitter-api/rate-limits
 impl TwitterOfficialClient {
-	pub fn v1_1() -> Self {
-		let mut headers = Headers::new();
-		headers.insert(CONNECTION.as_str(), "close");
-		headers.insert(
-			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER_CONFIG
-				.read()
-				.unwrap()
-				.twitter_auth_token_v1_1
-				.clone()
-				.as_str(),
-		);
-		let client = build_client(
-			GLOBAL_DATA_PROVIDER_CONFIG
-				.read()
-				.unwrap()
-				.twitter_official_url
-				.clone()
-				.as_str(),
-			headers.clone(),
-		);
-
-		TwitterOfficialClient { client }
-	}
-
 	pub fn v2() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
@@ -285,34 +260,6 @@ impl TwitterOfficialClient {
 		let user = resp.data.ok_or_else(|| Error::RequestError("user not found".to_string()))?;
 		Ok(user)
 	}
-
-	/// V1.1, https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-friendships-show
-	/// rate limit: 15/15min(per App) 180/15min(per User)
-	pub fn query_friendship(
-		&mut self,
-		source_user_name: Vec<u8>,
-		target_user: TargetUser,
-	) -> Result<Relationship, Error> {
-		let source = vec_to_string(source_user_name)?;
-		let target_param = target_user.to_query_param()?;
-		debug!(
-			"Twitter query_friendship, source user: {}, target user: {}",
-			source, target_param.1
-		);
-
-		let query: Vec<(&str, &str)> =
-			vec![("source_screen_name", source.as_str()), (&target_param.0, &target_param.1)];
-
-		let resp = self
-			.client
-			.get_with::<String, Relationship>(
-				"/1.1/friendships/show.json".to_string(),
-				query.as_slice(),
-			)
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
-
-		Ok(resp)
-	}
 }
 
 #[cfg(test)]
@@ -370,34 +317,6 @@ mod tests {
 		let user_id = "2244994945";
 		let mut client = TwitterOfficialClient::v2();
 		let result = client.query_user_by_id(user_id.as_bytes().to_vec());
-		assert!(result.is_ok(), "error: {:?}", result);
-	}
-
-	#[test]
-	fn query_friendship_by_id_work() {
-		init();
-
-		let source = "twitterdev";
-		let target_id = "783214"; //user: twitter
-		let mut client = TwitterOfficialClient::v1_1();
-		let result = client.query_friendship(
-			source.as_bytes().to_vec(),
-			TargetUser::Id(target_id.as_bytes().to_vec()),
-		);
-		assert!(result.is_ok(), "error: {:?}", result);
-	}
-
-	#[test]
-	fn query_friendship_by_name_work() {
-		init();
-
-		let source = "twitterdev";
-		let target_name = "twitter"; //user: twitter
-		let mut client = TwitterOfficialClient::v1_1();
-		let result = client.query_friendship(
-			source.as_bytes().to_vec(),
-			TargetUser::Name(target_name.as_bytes().to_vec()),
-		);
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 }

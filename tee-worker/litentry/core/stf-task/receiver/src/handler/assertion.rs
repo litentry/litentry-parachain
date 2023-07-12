@@ -63,9 +63,6 @@ where
 
 			Assertion::A4(min_balance) => lc_assertion_build::a4::build(&self.req, min_balance),
 
-			Assertion::A5(original_tweet_id) =>
-				lc_assertion_build::a5::build(&self.req, original_tweet_id),
-
 			Assertion::A6 => lc_assertion_build::a6::build(&self.req),
 
 			Assertion::A7(min_balance) => lc_assertion_build::a7::build(&self.req, min_balance),
@@ -76,9 +73,6 @@ where
 			Assertion::A10(min_balance) => lc_assertion_build::a10::build(&self.req, min_balance),
 
 			Assertion::A11(min_balance) => lc_assertion_build::a11::build(&self.req, min_balance),
-
-			Assertion::A12(twitter_screen_name) =>
-				lc_assertion_build::a12::build(&self.req, twitter_screen_name),
 
 			Assertion::A13(owner) => lc_assertion_build::a13::build(&self.req, &owner),
 
