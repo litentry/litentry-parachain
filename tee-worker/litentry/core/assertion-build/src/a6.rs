@@ -40,7 +40,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let mut client = TwitterOfficialClient::v2();
 	let mut sum: u32 = 0;
 
-	for identity in &req.vec_identity {
+	for identity in &req.identities {
 		if let Identity::Twitter(address) = &identity.0 {
 			let twitter_handler = address.to_vec();
 			match client.query_user_by_name(twitter_handler) {
