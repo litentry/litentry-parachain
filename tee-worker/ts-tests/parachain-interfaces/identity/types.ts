@@ -77,7 +77,7 @@ export interface Getter extends Enum {
 /** @name IdentityContext */
 export interface IdentityContext extends Struct {
     readonly link_block: BlockNumber;
-    readonly web3networks: BoundedWeb3Network;
+    readonly web3networks: Vec<Web3Network>;
     readonly status: IdentityStatus;
 }
 

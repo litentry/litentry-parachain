@@ -145,7 +145,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	// achainable expects polkadot addresses (those start with 1...)
 	let mut polkadot_addresses = vec![];
-	for identity in &req.vec_identity {
+	for identity in &req.identities {
 		if let Identity::Substrate(address) = identity.0 {
 			let address = ss58_address_of(address.as_ref(), "polkadot")
 				.map_err(|_| Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;

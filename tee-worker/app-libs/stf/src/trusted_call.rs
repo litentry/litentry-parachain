@@ -15,7 +15,6 @@
 
 */
 
-use litentry_primitives::BoundedWeb3Network;
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
@@ -123,7 +122,7 @@ pub enum TrustedCall {
 	request_vc(AccountId, AccountId, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(AccountId, AccountId, Identity, BoundedWeb3Network, H256),
+	link_identity_callback(AccountId, AccountId, Identity, Vec<Web3Network>, H256),
 	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
 	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
 	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
@@ -555,13 +554,7 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity_callback(
-				signer,
-				who,
-				identity,
-				bounded_web3networks,
-				hash,
-			) => {
+			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) => {
 				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(who.clone());
 				let call_index = node_metadata_repo
@@ -571,7 +564,7 @@ where
 					signer,
 					who.clone(),
 					identity.clone(),
-					bounded_web3networks,
+					web3networks,
 				) {
 					Ok(key) => {
 						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
