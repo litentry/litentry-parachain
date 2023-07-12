@@ -212,7 +212,7 @@ pub mod pallet {
 					identity.matches_web3networks(web3networks.as_ref()),
 					Error::<T>::WrongWeb3NetworkTypes
 				);
-				c.web3networks = web3networks;
+				c.set_web3networks(web3networks);
 				*context = Some(c);
 				Ok(())
 			})
