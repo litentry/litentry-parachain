@@ -44,7 +44,7 @@ jobs:
 
           cd tee-worker/scripts/changelog
 
-          ./bin/changelog ${GITHUB_REF}
+          ./bin/changelog
           ls -al release-notes.md
           ls -al context.json
           cat release-notes.md
