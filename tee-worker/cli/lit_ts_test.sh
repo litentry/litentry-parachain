@@ -11,8 +11,6 @@ function usage() {
     echo "  test-identity: "
     echo "  test-vc: "
     echo "  test-resuming-worker: "
-    echo "  test-bulk-identity: "
-    echo "  test-bulk-vc: "
     echo ""
     echo "Please try to extend the above list when adding new ts-test."
 }
@@ -20,11 +18,7 @@ function usage() {
 [ $# -ne 1 ] && (usage; exit 1)
 TEST=$1
 
-echo "workspace integration-tests $TEST:staging"
-
-cd /ts-tests/integration-tests
-
-echo "workspace integration-tests $TEST:staging"
+cd /ts-tests
 
 yarn install
 yarn run $TEST:staging
