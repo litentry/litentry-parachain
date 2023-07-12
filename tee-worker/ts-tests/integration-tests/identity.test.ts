@@ -17,8 +17,8 @@ import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
-import type { LitentryPrimitivesIdentity } from '../sidechain-api/src/index';
-import type { LitentryValidationData, Web3Network } from '../parachain-api/build/interfaces/identity/types';
+import type { LitentryPrimitivesIdentity } from 'sidechain-api';
+import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';

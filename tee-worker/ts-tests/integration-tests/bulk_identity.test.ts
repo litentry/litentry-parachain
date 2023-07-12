@@ -9,7 +9,7 @@ import type { Vec } from '@polkadot/types';
 import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
 import { SubmittableResult } from '@polkadot/api';
-import type { Web3Network } from '../parachain-api/build/interfaces/identity/types';
+import type { Web3Network } from 'parachain-api';
 
 //Explain how to use this test, which has two important parameters:
 //1.The "number" parameter in describeLitentry represents the number of accounts generated, including Substrate wallets and Ethereum wallets.If you want to use a large number of accounts for testing, you can modify this parameter.

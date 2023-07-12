@@ -14,7 +14,7 @@ import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions'
 import { generateWeb3Wallets, assertIdentityLinked, assertIdentityRemoved } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
-import type { LitentryValidationData, Web3Network } from '../parachain-api/build/interfaces/identity/types';
+import type { LitentryValidationData, Web3Network } from 'parachain-api';
 
 describeLitentry('Test Batch Utility', 0, (context) => {
     const identities: LitentryPrimitivesIdentity[] = [];

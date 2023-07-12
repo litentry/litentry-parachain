@@ -5,7 +5,7 @@ import { decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey } from './cr
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
-import type { LitentryValidationData, Web3Network } from '../../../parachain-api/build/interfaces/identity/types';
+import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';

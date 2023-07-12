@@ -8,10 +8,7 @@ import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIden
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
-import type { Assertion as GenericAssertion } from 'parachain-api';
 import type { AnyTuple, IMethod } from '@polkadot/types/types';
-
-export type ParachainAssertion = GenericAssertion['type'];
 
 export type BatchCall = Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[];
 

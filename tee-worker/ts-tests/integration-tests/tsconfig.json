@@ -12,8 +12,6 @@
 		"baseUrl": "."
 	},
 	"paths": {
-		"@polkadot/api/augment": ["../parachain-api/build/interfaces/augment-api.ts"],
-		"@polkadot/types/augment": ["../parachain-api/build/interfaces/augment-types.ts"],
 		"parachain-api/*": ["../parachain-api/src/*", "../parachain-api/build/*"],
 		"sidechain-api/*": ["../sidechain-api/src/*", "../sidechain-api/build/*"]
 	},

@@ -1,5 +1,3 @@
-// import "@polkadot/api/augment";
-// import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise } from "@polkadot/api";
 
