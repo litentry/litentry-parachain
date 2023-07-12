@@ -42,8 +42,7 @@ use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	all_substrate_web3networks, BoundedWeb3Network, Identity, ParentchainBlockNumber,
-	UserShieldingKeyType, Web3Network,
+	all_substrate_web3networks, Identity, ParentchainBlockNumber, UserShieldingKeyType, Web3Network,
 };
 use sp_std::vec::Vec;
 
@@ -58,8 +57,8 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
@@ -96,8 +95,6 @@ pub mod pallet {
 		RemovePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
-		/// Web3Network len limit reached
-		Web3NetworkLenLimitReached,
 		/// identity doesn't match the network types
 		WrongWeb3NetworkTypes,
 	}
@@ -139,9 +136,7 @@ pub mod pallet {
 			let prime_id = Self::build_prime_identity(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
 				// TODO: shall we activate all available networks for the prime id?
-				let web3networks = all_substrate_web3networks()
-					.try_into()
-					.map_err(|_| Error::<T>::Web3NetworkLenLimitReached)?;
+				let web3networks = all_substrate_web3networks();
 				let context = <IdentityContext<T>>::new(
 					<frame_system::Pallet<T>>::block_number(),
 					web3networks,
@@ -161,7 +156,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: T::AccountId,
 			identity: Identity,
-			web3networks: BoundedWeb3Network,
+			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
