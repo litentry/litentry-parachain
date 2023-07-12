@@ -59,11 +59,7 @@ fn link_twitter_identity_works() {
 		));
 		assert_eq!(
 			IMT::id_graphs(who.clone(), alice_twitter_identity(1)).unwrap(),
-			IdentityContext {
-				link_block: 1,
-				web3networks: vec![],
-				status: IdentityStatus::Active
-			}
+			IdentityContext { link_block: 1, web3networks: vec![], status: IdentityStatus::Active }
 		);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
 	});
