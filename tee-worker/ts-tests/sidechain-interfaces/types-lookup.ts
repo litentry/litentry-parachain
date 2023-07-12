@@ -652,13 +652,7 @@ declare module '@polkadot/types/lookup' {
             readonly who: AccountId32;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
-        readonly isSetIdentityNetworks: boolean;
-        readonly asSetIdentityNetworks: {
-            readonly who: AccountId32;
-            readonly identity: LitentryPrimitivesIdentity;
-            readonly web3networks: Vec<CorePrimitivesNetworkWeb3Network>;
-        } & Struct;
-        readonly type: 'SetUserShieldingKey' | 'LinkIdentity' | 'RemoveIdentity' | 'SetIdentityNetworks';
+        readonly type: 'SetUserShieldingKey' | 'LinkIdentity' | 'RemoveIdentity';
     }
 
     /** @name CorePrimitivesNetworkWeb3Network (90) */
