@@ -124,7 +124,7 @@ mod tests {
 		let channel_id_vec: Vec<u8> = format!("{}", channel_id_u).as_bytes().to_vec();
 		let role_id_vec: Vec<u8> = format!("{}", role_id_u).as_bytes().to_vec();
 
-		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
+		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
 		let identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec.clone())), vec![])];
 

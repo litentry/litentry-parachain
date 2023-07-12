@@ -40,8 +40,6 @@ pub struct DiscordMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessageAuthor {
 	pub id: String, //user_id
-	// NOTE: username doesn't contain discriminator(the user's 4-digit discord-tag),
-	// so it can't compared with user handler
 	pub username: String,
 }
 
