@@ -26,23 +26,14 @@ jobs:
       - name: Prepare tooling
         run: |
           cd tee-worker/scripts/changelog
-          gem install bundler changelogerator:0.9.1
-          bundle install
-          changelogerator --help
+          gem install --user-install bundler changelogerator:0.9.1
+          bundle install --path ~/.gem
+          ~/.gem/ruby/3.0.0/bin/changelogerator --help
           URL=https://github.com/chevdor/tera-cli/releases/download/v0.2.1/tera-cli_linux_amd64.deb
           wget $URL -O tera.deb
-          sudo dpkg -i tera.deb
-          tera --version
+          dpkg-deb -x tera.deb tera
+          ./tera/usr/bin/tera --version
 
-      - name: Generate Package
-        run: source /opt/intel/sgxsdk/environment && ./tee-worker/scripts/litentry/release/generate_release_pkg.sh
-
-      - name: Archive Package
-        uses: actions/upload-artifact@v2
-        with:
-          name: enclave-binary.tar.gz
-          path: ./tee-worker/target/*.tar.gz
-          
       - name: Generate release notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,4 +48,14 @@ jobs:
           ls -al release-notes.md
           ls -al context.json
           cat release-notes.md
+
+
+      - name: Generate Package
+        run: source /opt/intel/sgxsdk/environment && ./tee-worker/scripts/litentry/release/generate_release_pkg.sh
+
+      - name: Archive Package
+        uses: actions/upload-artifact@v2
+        with:
+          name: enclave-binary.tar.gz
+          path: ./tee-worker/target/*.tar.gz
 
