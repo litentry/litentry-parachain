@@ -34,15 +34,15 @@ const assertionA1: Assertion = {
 describeLitentry('VC test', 0, async (context) => {
     const indexList: HexString[] = [];
     const vcKeys: string[] = ['A1', 'A2', 'A3', 'A4', 'A7', 'A8', 'A10', 'A11'];
-    // step('check user sidechain storage before create', async function () {
-    //     const shieldingKey = await checkUserShieldingKeys(
-    //         context,
-    //         'IdentityManagement',
-    //         'UserShieldingKeys',
-    //         u8aToHex(context.substrateWallet.alice.addressRaw)
-    //     );
-    //     assert.equal(shieldingKey, '0x', 'shieldingKey should be empty before set');
-    // });
+    step('check user sidechain storage before create', async function () {
+        const shieldingKey = await checkUserShieldingKeys(
+            context,
+            'IdentityManagement',
+            'UserShieldingKeys',
+            u8aToHex(context.substrateWallet.alice.addressRaw)
+        );
+        assert.equal(shieldingKey, '0x', 'shieldingKey should be empty before set');
+    });
     step('set user shielding key', async function () {
         const [aliceTxs] = (await buildIdentityTxs(
             context,

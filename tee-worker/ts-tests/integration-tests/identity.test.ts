@@ -52,8 +52,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('Invalid user shielding key', async function () {
-
-
         const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         // use empty `eveValidations`, the `UserShieldingKeyNotFound` error should be emitted before verification
         const txs = await buildIdentityTxs(

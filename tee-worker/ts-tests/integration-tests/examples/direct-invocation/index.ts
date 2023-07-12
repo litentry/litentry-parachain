@@ -16,7 +16,7 @@ import {
 import { getEnclave, sleep, buildIdentityHelper, initIntegrationTestContext } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
-import sidechainMetaData from '../../litentry-sidechain-metadata.json' assert { type: "json" };
+import sidechainMetaData from '../../litentry-sidechain-metadata.json' assert { type: 'json' };
 import { hexToU8a, u8aToString, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';

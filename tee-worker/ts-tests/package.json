@@ -8,5 +8,5 @@
 			"integration-tests"
 		]
 	},
-	"packageManager": "yarn@3.6.0"
+	"packageManager": "yarn@3.6.1"
 }

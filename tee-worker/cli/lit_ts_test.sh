@@ -21,4 +21,6 @@ TEST=$1
 cd /ts-tests
 
 yarn install
+yarn build:sidechain-api
+yarn build:parachain-api
 yarn run $TEST:staging

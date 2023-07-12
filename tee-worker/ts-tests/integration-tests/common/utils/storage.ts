@@ -10,7 +10,7 @@ import type { Metadata } from '@polkadot/types';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-import * as base58 from 'micro-base58'
+import * as base58 from 'micro-base58';
 
 //sidechain storage utils
 export function buildStorageEntry(metadata: Metadata, prefix: string, method: string): StorageEntryMetadataV14 | null {
