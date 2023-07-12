@@ -26,7 +26,7 @@ use itc_rest_client::{
 	RestGet, RestPath, RestPost,
 };
 use litentry_primitives::Web3Network;
-use log::debug;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::{
 	collections::HashMap,
@@ -370,6 +370,15 @@ pub trait AchainableTotalTransactions {
 	fn total_transactions(&mut self, address: &str, network: &Web3Network) -> Result<u64, Error>;
 }
 
+pub trait AchainableHolder {
+	// Return Index from 2017 - 2018 ... 2022 - 2023
+	fn is_hodler(&mut self, address: &str, token_address: &str, network: &Web3Network) -> Result<usize, Error>;
+}
+
+pub trait AchainableHolderParser {
+	fn parse_holder_result(response: serde_json::Value) -> Result<usize, Error>;
+}
+
 // TODO:
 // This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api 
 // currently only judges the range of a single account, so the current approach is to parse the returned data through 
@@ -441,6 +450,57 @@ impl AchainableTotalTransactions for AchainableClient {
 		let resp = self.post(params, &body)?;
 
 		Self::parse_total_transactions(resp)
+	}
+}
+
+impl AchainableHolderParser for AchainableClient {
+	fn parse_holder_result(response: serde_json::Value) -> Result<usize, Error> {
+		if let Some(value) = response.get("label") {
+			if let Some(value) = value.get("display") {
+				if let Some(displays) = value.as_array() {
+					let mut longest_holder_index = usize::MAX;
+
+					for v in displays.iter() {
+						// TODO:
+						// Find the first `true` and assign the index to longest_holder_index
+						longest_holder_index = 0;
+					}
+					debug!("longest_holder_index: {longest_holder_index}");
+					
+					Ok(longest_holder_index)
+				} else {
+					Err(Error::AchainableError("Invalid array".to_string()))
+				}	
+			} else {
+				Err(Error::AchainableError("Invalid display".to_string()))
+			}
+		} else {
+			Err(Error::AchainableError("Invalid response".to_string()))
+		}
+	}
+}
+
+impl AchainableHolder for AchainableClient {
+	fn is_hodler(&mut self, address: &str, token_address: &str, network: &Web3Network) -> Result<usize, Error> {
+		let mut path = "";
+
+		// A4: ["Ethereum", "Litmus", "Litentry"]; LIT
+		// A7: ["Polkadot"]; DOT
+		// A10: ["Ethereum"]; WBTC
+		// A11: ["Ethereum"]; ETH
+		match network {
+			Web3Network::Ethereum => path = "",
+			Web3Network::Litentry => path = "",
+			Web3Network::Litmus => path = "",
+			Web3Network::Polkadot => path = "",
+			_ => error!("Achainable holder Unsupported network: {:?}", network),
+		}
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse_holder_result(resp)
 	}
 }
 
