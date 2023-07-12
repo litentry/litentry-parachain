@@ -190,6 +190,27 @@ export function createSignedTrustedCallLinkIdentity(
     );
 }
 
+export function createSignedTrustedCallSetIdentityNetworks(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    who: KeyringPair,
+    identity: string,
+    web3networks: string,
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        [
+            'set_identity_networks',
+            '(AccountId, AccountId, Identity, Vec<Web3Network>)',
+        ],
+        who,
+        mrenclave,
+        nonce,
+        [who.address, who.address, identity, web3networks]
+    );
+}
+
 export function createSignedTrustedGetterUserShieldingKey(parachainApi: ApiPromise, who: KeyringPair) {
     const getterSigned = createSignedTrustedGetter(
         parachainApi,

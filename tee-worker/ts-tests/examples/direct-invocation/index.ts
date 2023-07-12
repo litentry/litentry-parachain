@@ -9,6 +9,7 @@ import {
     getTeeShieldingKey,
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterUserShieldingKey,
+    createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedGetterIdGraph,
     sendRequestFromGetter,
     getSidechainNonce,
@@ -146,6 +147,10 @@ async function runDirectCall() {
     let k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), aesKey);
+
+    // set web3networks to alice
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, alice.address);
+    // let setIdentityNetworksCall = createSignedTrustedCallSetIdentityNetworks(parachainApi, mrenclave, nonce, alice, 
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
