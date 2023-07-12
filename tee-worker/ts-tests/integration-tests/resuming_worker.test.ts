@@ -7,6 +7,11 @@ import { describe } from 'mocha';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import WebSocketAsPromised from 'websocket-as-promised';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const fileName = fileURLToPath(import.meta.url);
+const dirName = dirname(fileName);
 
 export type WorkerConfig = {
     untrusted_ws_port: number;
@@ -189,8 +194,8 @@ describe('Resume worker', function () {
 
     const binaryDir = process.env.BINARY_DIR!;
     const [, nodeUrl, nodePort] = process.env.SUBSTRATE_END_POINT!.split(':');
-    const worker0Dir = path.join(__dirname, './tmp/worker0');
-    const worker1Dir = path.join(__dirname, './tmp/worker1');
+    const worker0Dir = path.join(dirName, './tmp/worker0');
+    const worker1Dir = path.join(dirName, './tmp/worker1');
     const commands = genCommands(`ws:${nodeUrl}`, nodePort);
 
     step('One worker', async function () {
