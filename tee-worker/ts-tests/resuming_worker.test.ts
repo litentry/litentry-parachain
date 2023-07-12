@@ -95,7 +95,7 @@ function initializeFiles(workingDir: string, binaryDir: string) {
         null,
         4
     );
-    fs.writeFileSync(`${workingDir}/worker-config-mock.json`, data);
+    fs.writeFileSync(path.join(workingDir, 'worker-config-mock.json'), data);
 }
 
 type RetryConfig = {
@@ -362,7 +362,14 @@ describe('Resume worker', function () {
     after(() => {
         subprocessTracker.forEach((pid) => {
             if (pid !== undefined) {
-                process.kill(-pid, 'SIGTERM');
+                try {
+                    process.kill(-pid, 'SIGTERM');
+                } catch (error) {
+                    if ((error as { code: unknown }).code === 'ESRCH') {
+                        return; // Process has already died; nothing to do
+                    }
+                    console.warn(error);
+                }
             }
         });
     });
