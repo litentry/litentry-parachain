@@ -61,12 +61,11 @@ use url::Url;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod twitter_litentry;
 pub mod twitter_official;
-
-pub mod achainable;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
@@ -84,11 +83,13 @@ pub struct DataProvidersStatic {
 	pub credential_endpoint: String,
 	pub achainable_rest_key: String,
 }
+
 impl Default for DataProvidersStatic {
 	fn default() -> Self {
 		Self::new()
 	}
 }
+
 impl DataProvidersStatic {
 	pub fn new() -> Self {
 		DataProvidersStatic {
