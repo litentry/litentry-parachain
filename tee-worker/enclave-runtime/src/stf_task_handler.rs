@@ -56,7 +56,6 @@ pub unsafe extern "C" fn run_stf_task_handler(
 	mut_handle.set_achainable_url(data_providers_static.achainable_url);
 	mut_handle.set_achainable_auth_key(data_providers_static.achainable_auth_key);
 	mut_handle.set_credential_endpoint(data_providers_static.credential_endpoint);
-	mut_handle.set_achainable_rest_key(data_providers_static.achainable_rest_key);
 
 	if let Err(e) = run_stf_task_handler_internal() {
 		error!("Error while running stf task handler thread: {:?}", e);
