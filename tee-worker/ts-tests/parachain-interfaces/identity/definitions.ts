@@ -188,7 +188,6 @@ export default {
                 A2: 'Bytes',
                 A3: '(Bytes,Bytes,Bytes)',
                 A4: 'u128',
-                A5: '(Bytes,Bytes)',
                 A6: 'Null',
                 A7: 'u128',
                 A8: 'Vec<Bytes>',

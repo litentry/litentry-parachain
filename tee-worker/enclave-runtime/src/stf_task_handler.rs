@@ -18,7 +18,7 @@ use crate::utils::DecodeRaw;
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
-use lc_data_providers::{DataProvidersStatic, G_DATA_PROVIDERS};
+use lc_data_providers::{DataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
 use sgx_types::sgx_status_t;
@@ -35,28 +35,30 @@ use crate::{
 };
 
 #[no_mangle]
-pub unsafe extern "C" fn run_stf_task_handler(
-	dps_to_sync: *const u8,
-	dps_to_sync_size: usize,
-) -> sgx_status_t {
-	let data_providers_static = match DataProvidersStatic::decode_raw(dps_to_sync, dps_to_sync_size)
-	{
-		Ok(dps) => dps,
+pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -> sgx_status_t {
+	let data_provider_config = match DataProviderConfig::decode_raw(dpc, dpc_size) {
+		Ok(data_provider_config) => data_provider_config,
 		Err(e) => return Error::Codec(e).into(),
 	};
 
-	let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
-	mut_handle.set_twitter_official_url(data_providers_static.twitter_official_url);
-	mut_handle.set_twitter_litentry_url(data_providers_static.twitter_litentry_url);
-	mut_handle.set_twitter_auth_token_v1_1(data_providers_static.twitter_auth_token_v1_1);
-	mut_handle.set_twitter_auth_token_v2(data_providers_static.twitter_auth_token_v2);
-	mut_handle.set_discord_official_url(data_providers_static.discord_official_url);
-	mut_handle.set_discord_litentry_url(data_providers_static.discord_litentry_url);
-	mut_handle.set_discord_auth_token(data_providers_static.discord_auth_token);
-	mut_handle.set_achainable_url(data_providers_static.achainable_url);
-	mut_handle.set_achainable_auth_key(data_providers_static.achainable_auth_key);
-	mut_handle.set_credential_endpoint(data_providers_static.credential_endpoint);
-	mut_handle.set_achainable_rest_key(data_providers_static.achainable_rest_key);
+	match GLOBAL_DATA_PROVIDER_CONFIG.write() {
+		Ok(mut dpc) => {
+			dpc.set_twitter_official_url(data_provider_config.twitter_official_url);
+			dpc.set_twitter_litentry_url(data_provider_config.twitter_litentry_url);
+			dpc.set_twitter_auth_token_v2(data_provider_config.twitter_auth_token_v2);
+			dpc.set_discord_official_url(data_provider_config.discord_official_url);
+			dpc.set_discord_litentry_url(data_provider_config.discord_litentry_url);
+			dpc.set_discord_auth_token(data_provider_config.discord_auth_token);
+			dpc.set_achainable_url(data_provider_config.achainable_url);
+			dpc.set_achainable_auth_key(data_provider_config.achainable_auth_key);
+			dpc.set_credential_endpoint(data_provider_config.credential_endpoint);
+			dpc.set_achainable_rest_key(data_provider_config.achainable_rest_key);
+		},
+		Err(e) => {
+			error!("Error while setting data provider config: {:?}", e);
+			return Error::MutexAccess.into()
+		},
+	}
 
 	if let Err(e) = run_stf_task_handler_internal() {
 		error!("Error while running stf task handler thread: {:?}", e);
