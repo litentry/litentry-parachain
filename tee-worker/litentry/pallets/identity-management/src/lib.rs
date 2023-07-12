@@ -212,9 +212,7 @@ pub mod pallet {
 					identity.matches_web3networks(web3networks.as_ref()),
 					Error::<T>::WrongWeb3NetworkTypes
 				);
-				let bounded_web3networks =
-					web3networks.try_into().map_err(|_| Error::<T>::Web3NetworkLenLimitReached)?;
-				c.web3networks = bounded_web3networks;
+				c.web3networks = web3networks;
 				*context = Some(c);
 				Ok(())
 			})

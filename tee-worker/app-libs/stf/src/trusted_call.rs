@@ -120,7 +120,11 @@ pub enum TrustedCall {
 	),
 	remove_identity(AccountId, AccountId, Identity, H256),
 	request_vc(AccountId, AccountId, Assertion, H256),
+	// no `H256` in parameter because:
+	// - it only works in DI now
+	// - the response is syncrhonous
 	set_identity_networks(AccountId, AccountId, Identity, Vec<Web3Network>),
+
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	link_identity_callback(AccountId, AccountId, Identity, Vec<Web3Network>, H256),

@@ -181,6 +181,8 @@ export interface TrustedCall extends Enum {
     readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
     readonly isRequestVc: boolean;
     readonly asRequestVc: ITuple<[AccountId, AccountId, Assertion, H256]>;
+    readonly isSetIdentityNetworks: boolean;
+    readonly asSetIdentityNetworks: ITuple<[AccountId, AccountId, LitentryIdentity, Vec<Web3Network>]>;
     readonly type:
         | 'BalanceSetBalance'
         | 'BalanceTransfer'
@@ -189,7 +191,8 @@ export interface TrustedCall extends Enum {
         | 'SetUserShieldingKey'
         | 'LinkIdentity'
         | 'RemoveIdentity'
-        | 'RequestVc';
+        | 'RequestVc'
+        | 'SetIdentityNetworks';
 }
 
 /** @name TrustedCallSigned */

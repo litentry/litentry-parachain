@@ -253,6 +253,38 @@ declare module '@polkadot/api-base/types/submittable' {
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, LitentryPrimitivesIdentity]
             >;
+            setIdentityNetworks: AugmentedSubmittable<
+                (
+                    who: AccountId32 | string | Uint8Array,
+                    identity:
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | string
+                        | Uint8Array,
+                    web3networks:
+                        | Vec<CorePrimitivesNetworkWeb3Network>
+                        | (
+                              | CorePrimitivesNetworkWeb3Network
+                              | 'Polkadot'
+                              | 'Kusama'
+                              | 'Litentry'
+                              | 'Litmus'
+                              | 'LitentryRococo'
+                              | 'Khala'
+                              | 'SubstrateTestnet'
+                              | 'Ethereum'
+                              | 'Polygon'
+                              | 'BSC'
+                              | number
+                              | Uint8Array
+                          )[]
+                ) => SubmittableExtrinsic<ApiType>,
+                [AccountId32, LitentryPrimitivesIdentity, Vec<CorePrimitivesNetworkWeb3Network>]
+            >;
             setUserShieldingKey: AugmentedSubmittable<
                 (
                     who: AccountId32 | string | Uint8Array,

@@ -560,6 +560,11 @@ export default {
                 who: 'AccountId32',
                 identity: 'LitentryPrimitivesIdentity',
             },
+            set_identity_networks: {
+                who: 'AccountId32',
+                identity: 'LitentryPrimitivesIdentity',
+                web3networks: 'Vec<CorePrimitivesNetworkWeb3Network>',
+            },
         },
     },
     /**
