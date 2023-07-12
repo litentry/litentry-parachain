@@ -33,7 +33,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let mut web2_cnt = 0;
 	let mut web3_cnt = 0;
 
-	for identity in &req.vec_identity {
+	for identity in &req.identities {
 		if identity.0.is_web2() {
 			web2_cnt += 1;
 		} else if identity.0.is_web3() {

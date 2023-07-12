@@ -15,7 +15,6 @@
 
 */
 
-use litentry_primitives::BoundedWeb3Network;
 #[cfg(feature = "evm")]
 use sp_core::{H160, U256};
 
@@ -125,7 +124,7 @@ pub enum TrustedCall {
 	request_vc(Identity, Identity, Assertion, H256),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(Identity, Identity, Identity, BoundedWeb3Network, H256),
+	link_identity_callback(Identity, Identity, Identity, Vec<Web3Network>, H256),
 	request_vc_callback(Identity, Identity, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
@@ -193,6 +192,7 @@ impl TrustedCallSigned {
 		payload.append(&mut self.nonce.encode());
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
+
 		// litentry: https://github.com/litentry/litentry-parachain/issues/1752
 		// the raw message is always wrapped up with `<Bytes></Bytes>` when using browser
 		// wallet extension, we need to support it as well
@@ -589,13 +589,7 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::link_identity_callback(
-				signer,
-				who,
-				identity,
-				bounded_web3networks,
-				hash,
-			) => {
+			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) => {
 				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -607,7 +601,7 @@ where
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					identity.clone(),
-					bounded_web3networks,
+					web3networks,
 				) {
 					Ok(key) => {
 						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
@@ -724,7 +718,6 @@ where
 			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				//todo: when to call it ? only for substrate accounts ?
 				add_call_from_vcmp_error(
 					calls,
 					node_metadata_repo,

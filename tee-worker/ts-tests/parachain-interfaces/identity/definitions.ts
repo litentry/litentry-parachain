@@ -163,7 +163,7 @@ export default {
 
         IdentityContext: {
             link_block: 'BlockNumber',
-            web3networks: 'BoundedWeb3Network',
+            web3networks: 'Vec<Web3Network>',
             status: 'IdentityStatus',
         },
         BoundedWeb3Network: 'BoundedVec<Web3Network, ConstU32<128>>',
