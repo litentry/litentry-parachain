@@ -16,7 +16,7 @@
 #![allow(opaque_hidden_inferred_bound)]
 
 use lc_data_providers::achainable::{
-	ToAchainable, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
+	ToAchainable, VerifiedCredentialsIsHodlerIn,
 };
 use litentry_primitives::Web3Network;
 use std::collections::HashMap;
@@ -30,12 +30,6 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			let default = String::default();
 			let query = p.get("query").unwrap_or(&default);
 
-			let expected_query_total_txs = VerifiedCredentialsTotalTxs::new(
-				vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-				vec![Web3Network::Kusama, Web3Network::Polkadot],
-			)
-			.to_achainable();
-
 			let expected_query_is_hodler = VerifiedCredentialsIsHodlerIn::new(
 				vec![
 					"0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad".to_string(),
@@ -48,26 +42,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			)
 			.to_achainable();
 
-			if query == &expected_query_total_txs {
-				let body = r#"
-{
-	"data": {
-		"kusama": [
-			{
-				"address": "EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg",
-				"totalTransactions": 42
-			}
-		],
-		"polkadot": [
-			{
-				"address": "EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg",
-				"totalTransactions": 0
-			}
-		]
-	}
-}"#;
-				Response::builder().body(body.to_string())
-			} else if query == &expected_query_is_hodler {
+			if query == &expected_query_is_hodler {
 				let body = r#"
 {
   "data": {
@@ -116,6 +91,25 @@ pub mod tag {
 		{
 			"result": true
 		}"#;
+
+				if path == "/v1/run/label/74655d14-3abd-4a25-b3a4-cd592ae26f4c" {
+					// total transactions
+					let total_txs = r#"
+					"label": {
+						"name": "Total-tx-On-Litentry",
+						"description": "Get total txs On Litentry (workaround)",
+						"result": true,
+						"display": [
+							{
+								"text": "Total transactions under 1 (Transactions: 41)",
+								"result": true
+							}
+						],
+						"runningCost": 1
+					}"#;
+
+					return Response::builder().body(total_txs.to_string())
+				}
 
 				// false
 				if (path == "/v1/run/label/1de85e1d215868788dfc91a9f04d7afd"
