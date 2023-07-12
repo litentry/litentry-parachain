@@ -48,7 +48,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     });
 
     step('batch test: link identities', async function () {
-        const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']) as unknown as Web3Network[];
+        const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
 
         for (let index = 0; index < ethereumSigners.length; index++) {
             const signer = ethereumSigners[index];

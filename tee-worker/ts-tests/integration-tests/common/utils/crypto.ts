@@ -17,17 +17,18 @@ export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext
 
 // A lazy version without aad. Append the tag to be consistent with rust implementation
 export function encryptWithAes(key: HexString, nonce: Uint8Array, cleartext: Buffer): HexString {
+
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce, {
         authTagLength: 16,
-    }) as any;
-    let encrypted = cipher.update(cleartext, 'utf8', 'hex');
+    });
+    let encrypted = cipher.update(cleartext.toString('hex'), 'hex', 'hex');
     encrypted += cipher.final('hex');
     encrypted += cipher.getAuthTag().toString('hex');
     return `0x${encrypted}`;
 }
 
-export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: string): HexString {
+export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex' | 'utf-8'): HexString {
     if (aesOutput.ciphertext && aesOutput.nonce) {
         const secretKey = crypto.createSecretKey(hexToU8a(key));
         const tagSize = 16;
@@ -42,7 +43,7 @@ export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: strin
 
         const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
             authTagLength: 16,
-        }) as any;
+        });
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);
 
