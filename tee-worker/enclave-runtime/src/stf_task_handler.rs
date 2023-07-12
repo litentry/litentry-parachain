@@ -18,7 +18,7 @@ use crate::utils::DecodeRaw;
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::Rsa3072Seal;
 use itp_sgx_io::StaticSealedIO;
-use lc_data_providers::{DataProvidersStatic, G_DATA_PROVIDERS};
+use lc_data_providers::{DataProvidersStatic, GLOBAL_DATA_PROVIDER};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
 use sgx_types::sgx_status_t;
@@ -45,7 +45,7 @@ pub unsafe extern "C" fn run_stf_task_handler(
 		Err(e) => return Error::Codec(e).into(),
 	};
 
-	let mut mut_handle = G_DATA_PROVIDERS.write().unwrap();
+	let mut mut_handle = GLOBAL_DATA_PROVIDER.write().unwrap();
 	mut_handle.set_twitter_official_url(data_providers_static.twitter_official_url);
 	mut_handle.set_twitter_litentry_url(data_providers_static.twitter_litentry_url);
 	mut_handle.set_twitter_auth_token_v1_1(data_providers_static.twitter_auth_token_v1_1);

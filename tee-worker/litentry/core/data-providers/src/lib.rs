@@ -153,7 +153,7 @@ impl DataProvidersStatic {
 }
 
 lazy_static! {
-	pub static ref G_DATA_PROVIDERS: RwLock<DataProvidersStatic> =
+	pub static ref GLOBAL_DATA_PROVIDER: RwLock<DataProvidersStatic> =
 		RwLock::new(DataProvidersStatic::new());
 }
 

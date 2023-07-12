@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, G_DATA_PROVIDERS};
+use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -86,10 +86,10 @@ impl DiscordOfficialClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().discord_auth_token.clone().as_str(),
+			GLOBAL_DATA_PROVIDER.read().unwrap().discord_auth_token.clone().as_str(),
 		);
 		let client = build_client(
-			G_DATA_PROVIDERS.read().unwrap().discord_official_url.clone().as_str(),
+			GLOBAL_DATA_PROVIDER.read().unwrap().discord_official_url.clone().as_str(),
 			headers,
 		);
 		DiscordOfficialClient { client }
@@ -131,7 +131,7 @@ mod tests {
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_discord_official_url(url);
+		GLOBAL_DATA_PROVIDER.write().unwrap().set_discord_official_url(url);
 	}
 
 	#[test]
