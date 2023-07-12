@@ -34,7 +34,7 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, BoundedWeb3Network, ErrorDetail, IMPError, Identity,
+	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
 	VCMPError, ValidationData, Web3Network,
 };
