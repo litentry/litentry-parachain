@@ -21,8 +21,6 @@ export interface Assertion extends Enum {
     readonly asA3: ITuple<[Bytes, Bytes, Bytes]>;
     readonly isA4: boolean;
     readonly asA4: u128;
-    readonly isA5: boolean;
-    readonly asA5: ITuple<[Bytes, Bytes]>;
     readonly isA6: boolean;
     readonly isA7: boolean;
     readonly asA7: u128;
@@ -35,7 +33,7 @@ export interface Assertion extends Enum {
     readonly asA11: u128;
     readonly isA13: boolean;
     readonly asA13: u32;
-    readonly type: 'A1' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11' | 'A13';
+    readonly type: 'A1' | 'A2' | 'A3' | 'A4' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11' | 'A13';
 }
 
 /** @name BoundedWeb3Network */
