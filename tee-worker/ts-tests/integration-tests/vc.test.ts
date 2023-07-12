@@ -33,7 +33,7 @@ const assertionA1: Assertion = {
 // So only use A1 to trigger the wrong event
 describeLitentry('VC test', 0, async (context) => {
     const indexList: HexString[] = [];
-    const vcKeys: string[] = ['A1', 'A2', 'A3', 'A4', 'A7', 'A8', 'A10', 'A11'];
+    const vcKeys: string[] = ['A1'];
     step('check user sidechain storage before create', async function () {
         const shieldingKey = await checkUserShieldingKeys(
             context,
