@@ -391,22 +391,23 @@ pub trait AchainableA10Holder {
 	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
 }
 impl AchainableA10Holder for AchainableClient {
+	// consistently holding at least 0.001 WBTC tokens
 	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
 		let path;
 		if index == 0 {
-			path = "/v1/run/label/1dd4a933-894c-4dfa-9275-25fe3eeecaf1";
+			path = "/v1/run/label/5a936ecc-abfd-4bbd-8e62-55a8fc7c4a6a";
 		} else if index == 1 {
-			path = "";
+			path = "/v1/run/label/50e9f706-c610-4a21-b611-65052381061d";
 		} else if index == 2 {
-			path = "2019";
+			path = "/v1/run/label/32184172-5316-4a95-b0d2-6d5a50b0eba3";
 		} else if index == 3 {
-			path = "2020";
+			path = "/v1/run/label/4b4e0d0a-812e-4861-8361-b76cd357d20c";
 		} else if index == 4 {
-			path = "2021";
+			path = "/v1/run/label/dbdbef34-35e3-4542-a50c-b40356747588";
 		} else if index == 5 {
-			path = "2022";
+			path = "/v1/run/label/4a75aaaa-a4f0-4512-8200-3d259d7dac27";
 		} else {
-			path = "2023";
+			path = "/v1/run/label/bd84b478-baea-4e2c-8e4d-0cf2eaeadb63";
 		}
 
 		let params = ReqParams::new(path);
@@ -421,6 +422,7 @@ pub trait AchainableA11Holder {
 	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
 }
 impl AchainableA11Holder for AchainableClient {
+	// consistently holding at least 0.01 ETH tokens
 	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
 		let path;
 		if index == 0 {
