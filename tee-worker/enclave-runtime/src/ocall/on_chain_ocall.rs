@@ -109,7 +109,7 @@ impl EnclaveOnChainOCallApi for OcallApi {
 	}
 
 	fn get_storage_keys(&self, key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>> {
-		let mut requests = Vec::<WorkerRequest>::new();
+		let mut requests = vec![];
 		// TODO: accept header instead of always using the latest state
 		requests.push(WorkerRequest::ChainStorageKeys(key_prefix, None));
 

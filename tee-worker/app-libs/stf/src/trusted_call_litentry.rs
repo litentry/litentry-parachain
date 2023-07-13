@@ -119,10 +119,15 @@ impl TrustedCallSigned {
 		hash: H256,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
-		ensure!(
-			is_authorized_signer(&signer, &who),
-			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
-		);
+		match assertion {
+			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
+			Assertion::A13(_) => (),
+			_ => ensure!(
+				is_authorized_signer(&signer, &who),
+				StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
+			),
+		}
+
 		ensure!(
 			UserShieldingKeys::<Runtime>::contains_key(&who),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
@@ -146,6 +151,7 @@ impl TrustedCallSigned {
 			.collect();
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
+			signer,
 			who,
 			assertion: assertion.clone(),
 			identities,

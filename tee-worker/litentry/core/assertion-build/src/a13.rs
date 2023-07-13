@@ -38,7 +38,6 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
 
 	let key_prefix = storage_prefix(b"VCManagement", b"Delegatee");
-	warn!("A13 key_prefix = {}", hex::encode(key_prefix));
 	let response = ocall_api.get_storage_keys(key_prefix.into()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A13(who.clone()), ErrorDetail::ParseError)
 	})?;
@@ -47,7 +46,13 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 		.map(|r| String::decode(&mut r.as_slice()).unwrap_or_default())
 		.collect();
 
-	warn!("keys are: {:?}", keys);
+	// if the signer can't be found in the delegatee list
+	if !keys.iter().any(|k| k.ends_with(hex::encode(&req.signer).as_str())) {
+		return Err(Error::RequestVCFailed(
+			Assertion::A13(who.clone()),
+			ErrorDetail::UnauthorizedSigner,
+		))
+	}
 
 	match Credential::new_default(who, &req.shard) {
 		Ok(mut credential_unsigned) => {
