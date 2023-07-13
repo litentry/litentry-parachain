@@ -218,7 +218,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	// state_getRuntimeVersion
+	// get_mrenclave
 	let get_mrenclave_name: &str = "get_mrenclave";
 	io.add_sync_method(get_mrenclave_name, |_: Params| {
 		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
