@@ -20,35 +20,6 @@ jobs:
         with:
           ref: ${{ github.event.inputs.manual_trigger }}
 
-      - name: Use SGX Environment
-        run: source /opt/intel/sgxsdk/environment
-
-      - name: Prepare tooling
-        run: |
-          cd tee-worker/scripts/changelog
-          gem install --user-install bundler changelogerator:0.9.1
-          bundle install --path ~/.gem
-          ~/.gem/ruby/3.0.0/bin/changelogerator --help
-          URL=https://github.com/chevdor/tera-cli/releases/download/v0.2.1/tera-cli_linux_amd64.deb
-          wget $URL -O tera.deb
-          dpkg-deb -x tera.deb tera
-          ./tera/usr/bin/tera --version
-
-      - name: Generate release notes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEBUG: 1
-          PRE_RELEASE: ${{ github.event.inputs.pre_release }}
-        run: |
-          find ${{env.GITHUB_WORKSPACE}} -type f -name "*_srtool_output.json"
-
-          cd tee-worker/scripts/changelog
-
-          ./bin/changelog
-          ls -al release-notes.md
-          ls -al context.json
-          cat release-notes.md
-
 
       - name: Generate Package
         run: source /opt/intel/sgxsdk/environment && ./tee-worker/scripts/litentry/release/generate_release_pkg.sh
@@ -58,4 +29,32 @@ jobs:
         with:
           name: enclave-binary.tar.gz
           path: ./tee-worker/target/*.tar.gz
+
+  start_worker_and_parachain:
+    runs-on: prod-tee-1
+    needs: generate_package_and_artifact
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.manual_trigger }}
+
+
+      - name: Deploy worker and Parachain
+        run: | 
+          source /opt/intel/sgxsdk/environment 
+          ./tee-worker/scripts/litentry/release/deploy.sh restart --build --config tee-worker/local-setup/github-action-config-one-worker.json --discard
+          echo "Sleeping for 30s" 
+
+  clean_services:
+    runs-on: prod-tee-1
+    needs: start_worker_and_parachain
+
+    steps:
+      - name: Deploy worker and Parachain
+        run: |
+          cd ~/.config/systemd/user
+          systemctl stop para-alice.service relay-bob.service relay-alice.service worker0.service 
+
 
