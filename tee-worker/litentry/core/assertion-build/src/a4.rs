@@ -117,64 +117,25 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 			break
 		}
 
-		let addresses: Vec<String> = addresses.into_iter().collect();		
+		let addresses: Vec<String> = addresses.into_iter().collect();
 		for index in 0..ASSERTION_FROM_DATE.len() {
 			for address in &addresses {
-				if network == Web3Network::Ethereum {
-					match client.erc20_lit_holder_on_ethereum(address, index) {
-						Ok(is_lit_holder) => {
-							if is_lit_holder {
-								if index < optimal_hold_index {
-									optimal_hold_index = index;
-								}
-				
-								is_hold = true;
-		
-								break;
+				match client.lit_holder_on_network(&network, address, index) {
+					Ok(is_lit_holder) => {
+						if is_lit_holder {
+							if index < optimal_hold_index {
+								optimal_hold_index = index;
 							}
-						},
-						Err(e) => error!(
-							"Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}",
-							e
-						),
-					}
-				} else if network == Web3Network::Litentry {
-					match client.erc20_lit_holder_on_litentry(address, index) {
-						Ok(is_lit_holder) => {
-							if is_lit_holder {
-								if index < optimal_hold_index {
-									optimal_hold_index = index;
-								}
-				
-								is_hold = true;
-		
-								break;
-							}
-						},
-						Err(e) => error!(
-							"Assertion A4 request erc20_lit_holder_on_litentry error: {:?}",
-							e
-						),
-					}
-				} else {
-					// On Litmus
-					match client.erc20_lit_holder_on_litmus(address, index) {
-						Ok(is_lit_holder) => {
-							if is_lit_holder {
-								if index < optimal_hold_index {
-									optimal_hold_index = index;
-								}
-				
-								is_hold = true;
-		
-								break;
-							}
-						},
-						Err(e) => error!(
-							"Assertion A4 request erc20_lit_holder_on_litmus error: {:?}",
-							e
-						),
-					}
+
+							is_hold = true;
+
+							break;
+						}
+					},
+					Err(e) => error!(
+						"Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}",
+						e
+					),
 				}
 			}
 		}

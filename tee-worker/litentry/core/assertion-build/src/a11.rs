@@ -22,8 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableA11Holder},
-	vec_to_string,
+	achainable::{AchainableClient, AchainableA11Holder}, vec_to_string,
 };
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =

@@ -186,78 +186,52 @@ pub trait AchainableTotalTransactions {
 
 pub trait AchainableA4Holder {
 	// Currently, supported networks: ["Litentry", "Litmus", "Ethereum"]
-	fn erc20_lit_holder_on_ethereum(&mut self, address: &str, index: usize) -> Result<bool, Error>;
-	fn erc20_lit_holder_on_litentry(&mut self, address: &str, index: usize) -> Result<bool, Error>;
-	fn erc20_lit_holder_on_litmus(&mut self, address: &str, index: usize) -> Result<bool, Error>;
+	fn lit_holder_on_network(&mut self, network: &Web3Network, address: &str, index: usize) -> Result<bool, Error>;
 }
+
+const PATH_LENS: usize = 7;
+const A4_ERC20_LIT_ETHEREUM_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/b65b955c-63eb-4cdf-acd9-46863f9362f2",
+	"/v1/run/label/02b46446-e0ce-43ac-83f1-7e55a2f590dd",
+	"/v1/run/label/3075da9e-a426-4fe6-bd49-2e0624374326",
+	"/v1/run/label/00b52b3f-da38-4ef1-aeb3-3b5fdb508cfb",
+	"/v1/run/label/61105e67-a432-454b-b7e0-1b67d4a37ac9",
+	"/v1/run/label/79237456-bc9a-4a70-a235-09c0e1d138d2",
+	"/v1/run/label/c9149a7e-ef69-4ae2-83e6-dbf6ebe0f796",
+];
+const A4_LIT_LITENTRY_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/2e7e4efb-f64f-4c05-8535-efa14915a566",
+	"/v1/run/label/3268a2f3-b6a5-4055-a7ba-0de414e47b73",
+	"/v1/run/label/7c7dcc3b-7cea-4180-841f-fb4c920afb69",
+	"/v1/run/label/1e40a32d-5da7-4969-9648-b391eab33da7",
+	"/v1/run/label/65796b73-92fd-456e-aa28-75862c1c0cb0",
+	"/v1/run/label/7365f0a2-b69f-465d-b48f-5fe4495bfcaf",
+	"/v1/run/label/dd1bddeb-723a-48e6-b9f0-174b67bd0ff5",
+];
+const A4_LIT_LITMUS_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/a3f4d87f-d10e-4e0c-9d1a-e05f7e89ea6b",
+	"/v1/run/label/45c636e1-c34f-4d91-aa84-186ca0ebb3aa",
+	"/v1/run/label/ad95aceb-603d-41c4-997d-df196d9b1f94",
+	"/v1/run/label/10b1725a-eafb-4ee1-bace-ed754e98d309",
+	"/v1/run/label/33ccc2bd-ae38-4e41-82d3-fe522880443b",
+	"/v1/run/label/b8bccd1a-ab90-48c3-bc8b-aca3c0d011a3",
+	"/v1/run/label/38ad2b09-4851-44c7-add5-619499788db0",
+];
+
 impl AchainableA4Holder for AchainableClient {
-	fn erc20_lit_holder_on_ethereum(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		let path;
-		if index == 0 {
-			path = "2017";
-		} else if index == 1 {
-			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
-		} else if index == 2 {
-			path = "2019";
-		} else if index == 3 {
-			path = "2020";
-		} else if index == 4 {
-			path = "2021";
-		} else if index == 5 {
-			path = "2022";
-		} else {
-			path = "2023";
+	// consistently holding at least 10 LIT tokens
+	fn lit_holder_on_network(&mut self, network: &Web3Network, address: &str, index: usize) -> Result<bool, Error> {
+		if index >= PATH_LENS {
+			return Err(Error::AchainableError("Wrong index".to_string()));
 		}
 
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse(resp)
-	}
-
-	fn erc20_lit_holder_on_litentry(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		let path;
-		if index == 0 {
-			path = "2017";
-		} else if index == 1 {
-			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
-		} else if index == 2 {
-			path = "2019";
-		} else if index == 3 {
-			path = "2020";
-		} else if index == 4 {
-			path = "2021";
-		} else if index == 5 {
-			path = "2022";
+		let path = if *network == Web3Network::Ethereum {
+			A4_ERC20_LIT_ETHEREUM_PATHS[index]
+		} else if *network == Web3Network::Litentry {
+			A4_LIT_LITENTRY_PATHS[index]
 		} else {
-			path = "2023";
-		}
-
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse(resp)
-	}
-
-	fn erc20_lit_holder_on_litmus(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		let path;
-		if index == 0 {
-			path = "2017";
-		} else if index == 1 {
-			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
-		} else if index == 2 {
-			path = "2019";
-		} else if index == 3 {
-			path = "2020";
-		} else if index == 4 {
-			path = "2021";
-		} else if index == 5 {
-			path = "2022";
-		} else {
-			path = "2023";
-		}
+			A4_LIT_LITMUS_PATHS[index]
+		};
 
 		let params = ReqParams::new(path);
 		let body = ParamsAccount::new(address).into();
@@ -361,6 +335,7 @@ pub trait AchainableA7Holder {
 	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
 }
 impl AchainableA7Holder for AchainableClient {
+	// consistently holding at least 5 DOT tokens
 	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
 		let path;
 		if index == 0 {
@@ -387,29 +362,27 @@ impl AchainableA7Holder for AchainableClient {
 	}
 }
 
+const A10_WBTC_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/5a936ecc-abfd-4bbd-8e62-55a8fc7c4a6a",
+	"/v1/run/label/50e9f706-c610-4a21-b611-65052381061d",
+	"/v1/run/label/32184172-5316-4a95-b0d2-6d5a50b0eba3",
+	"/v1/run/label/4b4e0d0a-812e-4861-8361-b76cd357d20c",
+	"/v1/run/label/dbdbef34-35e3-4542-a50c-b40356747588",
+	"/v1/run/label/4a75aaaa-a4f0-4512-8200-3d259d7dac27",
+	"/v1/run/label/bd84b478-baea-4e2c-8e4d-0cf2eaeadb63",
+];
+
 pub trait AchainableA10Holder {
 	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
 }
 impl AchainableA10Holder for AchainableClient {
 	// consistently holding at least 0.001 WBTC tokens
 	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		let path;
-		if index == 0 {
-			path = "/v1/run/label/5a936ecc-abfd-4bbd-8e62-55a8fc7c4a6a";
-		} else if index == 1 {
-			path = "/v1/run/label/50e9f706-c610-4a21-b611-65052381061d";
-		} else if index == 2 {
-			path = "/v1/run/label/32184172-5316-4a95-b0d2-6d5a50b0eba3";
-		} else if index == 3 {
-			path = "/v1/run/label/4b4e0d0a-812e-4861-8361-b76cd357d20c";
-		} else if index == 4 {
-			path = "/v1/run/label/dbdbef34-35e3-4542-a50c-b40356747588";
-		} else if index == 5 {
-			path = "/v1/run/label/4a75aaaa-a4f0-4512-8200-3d259d7dac27";
-		} else {
-			path = "/v1/run/label/bd84b478-baea-4e2c-8e4d-0cf2eaeadb63";
+		if index >= PATH_LENS {
+			return Err(Error::AchainableError("Wrong index".to_string()));
 		}
-
+		
+		let path = A10_WBTC_PATHS[index];
 		let params = ReqParams::new(path);
 		let body = ParamsAccount::new(address).into();
 		let resp = self.post(params, &body)?;
@@ -418,29 +391,26 @@ impl AchainableA10Holder for AchainableClient {
 	}
 }
 
+const A11_ETH_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/1e6053c6-1d09-42ee-9074-a4664957f9a7",
+	"/v1/run/label/060acc81-a9b0-4997-8f4b-b8d7953fe44b",
+	"/v1/run/label/892d4ddc-f70c-4fc2-acfc-1891099db41e",
+	"/v1/run/label/eb2f0c07-c3a4-48dc-a194-c254b26ff581",
+	"/v1/run/label/7f28c5cb-64c4-4880-9242-3cde638a57d4",
+	"/v1/run/label/0afc7c00-a1be-47aa-9903-2d99d2970091",
+	"/v1/run/label/078b2f54-4515-4513-9c67-33c30081b758",
+];
 pub trait AchainableA11Holder {
 	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
 }
 impl AchainableA11Holder for AchainableClient {
 	// consistently holding at least 0.01 ETH tokens
 	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		let path;
-		if index == 0 {
-			path = "/v1/run/label/1e6053c6-1d09-42ee-9074-a4664957f9a7";
-		} else if index == 1 {
-			path = "/v1/run/label/060acc81-a9b0-4997-8f4b-b8d7953fe44b";
-		} else if index == 2 {
-			path = "/v1/run/label/892d4ddc-f70c-4fc2-acfc-1891099db41e";
-		} else if index == 3 {
-			path = "/v1/run/label/eb2f0c07-c3a4-48dc-a194-c254b26ff581";
-		} else if index == 4 {
-			path = "/v1/run/label/7f28c5cb-64c4-4880-9242-3cde638a57d4";
-		} else if index == 5 {
-			path = "/v1/run/label/0afc7c00-a1be-47aa-9903-2d99d2970091";
-		} else {
-			path = "/v1/run/label/078b2f54-4515-4513-9c67-33c30081b758";
+		if index >= PATH_LENS {
+			return Err(Error::AchainableError("Wrong index".to_string()));
 		}
-
+		
+		let path = A11_ETH_PATHS[index];
 		let params = ReqParams::new(path);
 		let body = ParamsAccount::new(address).into();
 		let resp = self.post(params, &body)?;
