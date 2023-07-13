@@ -427,11 +427,41 @@ pub trait AchainableA7Holder {
 }
 impl AchainableA7Holder for AchainableClient {
 	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		let mut path = "";
+		let path;
 		if index == 0 {
 			path = "2017";
 		} else if index == 1 {
 			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
+		} else if index == 2 {
+			path = "2019";
+		} else if index == 3 {
+			path = "2020";
+		} else if index == 4 {
+			path = "2021";
+		} else if index == 5 {
+			path = "2022";
+		} else {
+			path = "2023";
+		}
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+}
+
+pub trait AchainableA10Holder {
+	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
+}
+impl AchainableA10Holder for AchainableClient {
+	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
+		let path;
+		if index == 0 {
+			path = "/v1/run/label/1dd4a933-894c-4dfa-9275-25fe3eeecaf1";
+		} else if index == 1 {
+			path = "";
 		} else if index == 2 {
 			path = "2019";
 		} else if index == 3 {
