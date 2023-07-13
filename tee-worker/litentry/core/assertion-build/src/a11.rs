@@ -22,7 +22,8 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHoldingAssertion}, vec_to_string,
+	achainable::{AchainableClient, AchainableHoldingAssertion},
+	vec_to_string,
 };
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
@@ -39,7 +40,11 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.vec_identity);
-	let addresses = identities.into_iter().filter(|(network, _)| *network == Web3Network::Ethereum).flat_map(|(_, addresses)| addresses ).collect::<Vec<String>>();
+	let addresses = identities
+		.into_iter()
+		.filter(|(network, _)| *network == Web3Network::Ethereum)
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = 0_usize;
@@ -50,20 +55,16 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 		for address in &addresses {
 			match client.is_holder("A11", address, index) {
-				Ok(is_eth_holder) => {
+				Ok(is_eth_holder) =>
 					if is_eth_holder {
 						optimal_hold_index = index;
 						is_hold = true;
 
-						break;
-					}
-				},
-				Err(e) => error!(
-					"Assertion A11 request eth_holder error: {:?}",
-					e
-				),
+						break
+					},
+				Err(e) => error!("Assertion A11 request eth_holder error: {:?}", e),
 			}
-		}	
+		}
 	}
 
 	match Credential::new_default(&req.who, &req.shard) {

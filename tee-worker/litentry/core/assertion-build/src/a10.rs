@@ -44,7 +44,11 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.vec_identity);
-	let addresses = identities.into_iter().filter(|(network, _)| *network == Web3Network::Ethereum).flat_map(|(_, addresses)| addresses ).collect::<Vec<String>>();
+	let addresses = identities
+		.into_iter()
+		.filter(|(network, _)| *network == Web3Network::Ethereum)
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = 0;
@@ -55,20 +59,16 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 		for address in &addresses {
 			match client.is_holder("A10", address, index) {
-				Ok(is_wbtc_holder) => {
+				Ok(is_wbtc_holder) =>
 					if is_wbtc_holder {
 						optimal_hold_index = index;
 						is_hold = true;
 
-						break;
-					}
-				},
-				Err(e) => error!(
-					"Assertion A10 request wbtc_holder error: {:?}",
-					e
-				),
+						break
+					},
+				Err(e) => error!("Assertion A10 request wbtc_holder error: {:?}", e),
 			}
-		}	
+		}
 	}
 
 	match Credential::new_default(&req.who, &req.shard) {

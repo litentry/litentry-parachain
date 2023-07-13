@@ -65,7 +65,7 @@ extern crate sgx_tstd as std;
 ///  
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableA4Holder},
+	achainable::{AchainableA4Holder, AchainableClient},
 	vec_to_string,
 };
 
@@ -107,8 +107,11 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 	//    value: true
 	// ]
 	for (network, addresses) in identities {
-		if network != Web3Network::Ethereum || network != Web3Network::Litentry || network != Web3Network::Litmus {
-			break;
+		if network != Web3Network::Ethereum
+			|| network != Web3Network::Litentry
+			|| network != Web3Network::Litmus
+		{
+			break
 		}
 
 		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
@@ -121,7 +124,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		for index in 0..ASSERTION_FROM_DATE.len() {
 			for address in &addresses {
 				match client.lit_holder_on_network(&network, address, index) {
-					Ok(is_lit_holder) => {
+					Ok(is_lit_holder) =>
 						if is_lit_holder {
 							if index < optimal_hold_index {
 								optimal_hold_index = index;
@@ -129,13 +132,10 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 							is_hold = true;
 
-							break;
-						}
-					},
-					Err(e) => error!(
-						"Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}",
-						e
-					),
+							break
+						},
+					Err(e) =>
+						error!("Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}", e),
 				}
 			}
 		}

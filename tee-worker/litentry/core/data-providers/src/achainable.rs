@@ -137,7 +137,7 @@ pub trait AchainablePost {
 }
 
 impl AchainablePost for AchainableClient {
-	fn  post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error> {
+	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error> {
 		let response =
 			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, body);
 		debug!("ReqBody response: {:?}", response);
@@ -181,7 +181,11 @@ fn check_achainable_label(
 
 pub trait AchainableTotalTransactions {
 	// Currently, supported networks: ["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"]
-	fn total_transactions(&mut self, network: &Web3Network, addresses: &Vec<String>) -> Result<u64, Error>;
+	fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error>;
 }
 
 const PATH_LENS: usize = 7;
@@ -214,13 +218,23 @@ const A4_LIT_LITMUS_PATHS: [&str; PATH_LENS] = [
 ];
 pub trait AchainableA4Holder {
 	// Currently, supported networks: ["Litentry", "Litmus", "Ethereum"]
-	fn lit_holder_on_network(&mut self, network: &Web3Network, address: &str, index: usize) -> Result<bool, Error>;
+	fn lit_holder_on_network(
+		&mut self,
+		network: &Web3Network,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error>;
 }
 impl AchainableA4Holder for AchainableClient {
 	// consistently holding at least 10 LIT tokens
-	fn lit_holder_on_network(&mut self, network: &Web3Network, address: &str, index: usize) -> Result<bool, Error> {
+	fn lit_holder_on_network(
+		&mut self,
+		network: &Web3Network,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error> {
 		if index >= PATH_LENS {
-			return Err(Error::AchainableError("Wrong index".to_string()));
+			return Err(Error::AchainableError("Wrong index".to_string()))
 		}
 
 		let path = if *network == Web3Network::Ethereum {
@@ -278,9 +292,9 @@ pub trait AchainableHoldingAssertion {
 impl AchainableHoldingAssertion for AchainableClient {
 	fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error> {
 		if index >= PATH_LENS {
-			return Err(Error::AchainableError("Wrong index".to_string()));
+			return Err(Error::AchainableError("Wrong index".to_string()))
 		}
-		
+
 		let path = if holder_type == "A7" {
 			A7_DOT_PATHS[index]
 		} else if holder_type == "A10" {
@@ -298,8 +312,8 @@ impl AchainableHoldingAssertion for AchainableClient {
 }
 
 // TODO:
-// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api 
-// currently only judges the range of a single account, so the current approach is to parse the returned data through 
+// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api
+// currently only judges the range of a single account, so the current approach is to parse the returned data through
 // an assertion such as under 1 to calculate the sum, and then perform interval judgment.
 pub trait AchainableTotalTransactionsParser {
 	fn parse_total_transactions(response: serde_json::Value) -> Result<u64, Error> {
@@ -314,31 +328,31 @@ pub trait AchainableTotalTransactionsParser {
 								display_text = text
 							} else {
 								return Err(Error::AchainableError("Invalid bool".to_string()))
-							}				
+							}
 						} else {
 							return Err(Error::AchainableError("Invalid result".to_string()))
 						}
 					}
 					debug!("Total txs, display text: {display_text}");
 
-					// TODO: 
+					// TODO:
 					// text field format: Total transactions under 1 (Transactions: 0)
 					let split_text = display_text.split(": ").collect::<Vec<&str>>();
 					if split_text.len() != 2 {
 						return Err(Error::AchainableError("Invalid array".to_string()))
-					} 
-					
+					}
+
 					let mut value_text = split_text[1].to_string();
 
 					// pop the last char: ")"
 					value_text.pop();
 
 					let value: u64 = value_text.parse::<u64>().unwrap_or_default();
-					
+
 					Ok(value)
 				} else {
 					Err(Error::AchainableError("Invalid array".to_string()))
-				}	
+				}
 			} else {
 				Err(Error::AchainableError("Invalid display".to_string()))
 			}
@@ -350,7 +364,11 @@ pub trait AchainableTotalTransactionsParser {
 impl AchainableTotalTransactionsParser for AchainableClient {}
 
 impl AchainableTotalTransactions for AchainableClient {
-	fn total_transactions(&mut self, network: &Web3Network, addresses: &Vec<String>) -> Result<u64, Error> {
+	fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error> {
 		let mut path = "";
 		let mut is_unsupported_network = false;
 
@@ -367,9 +385,9 @@ impl AchainableTotalTransactions for AchainableClient {
 			},
 		}
 		if is_unsupported_network {
-			return Err(Error::AchainableError("Unsupported network".to_string()));
+			return Err(Error::AchainableError("Unsupported network".to_string()))
 		}
-		
+
 		let mut txs = 0_u64;
 		addresses.iter().for_each(|address| {
 			let params = ReqParams::new(path);
@@ -682,9 +700,8 @@ impl RestPath<String> for ParamsAccount {
 #[cfg(test)]
 mod tests {
 	use crate::achainable::{
-		AchainableClient, AchainableTagAccount, AchainableTagBalance,
-		AchainableTagDeFi, AchainableTagDotsama,
-		G_DATA_PROVIDERS, AchainableTotalTransactions,
+		AchainableClient, AchainableTagAccount, AchainableTagBalance, AchainableTagDeFi,
+		AchainableTagDotsama, AchainableTotalTransactions, G_DATA_PROVIDERS,
 	};
 	use lc_mock_server::{default_getter, run};
 	use litentry_primitives::Web3Network;
