@@ -101,7 +101,6 @@ mod tests {
 	use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedGetter};
 	use itp_stf_primitives::types::KeyPair;
 	use itp_types::ShardIdentifier;
-	use litentry_primitives::Identity;
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::traits::{BlakeTwo256, Hash};
 	use std::{

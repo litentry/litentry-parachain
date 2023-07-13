@@ -524,7 +524,6 @@ pub fn format_assertion_to_date() -> String {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use litentry_primitives::{Address32, Identity};
 
 	#[test]
 	fn eval_simple_success() {

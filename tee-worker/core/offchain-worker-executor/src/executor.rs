@@ -214,7 +214,6 @@ mod tests {
 	use itp_test::mock::handle_state_mock::HandleStateMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::Block as ParentchainBlock;
-	use litentry_primitives::Identity;
 	use sp_core::{ed25519, Pair};
 	use std::boxed::Box;
 

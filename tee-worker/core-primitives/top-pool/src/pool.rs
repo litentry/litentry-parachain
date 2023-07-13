@@ -481,7 +481,7 @@ pub mod tests {
 	use ita_stf::{Index, TrustedCall, TrustedCallSigned, TrustedOperation};
 	use itp_types::Header;
 	use jsonrpc_core::{futures, futures::executor::block_on};
-	use litentry_primitives::{Identity, LitentryMultiSignature};
+	use litentry_primitives::LitentryMultiSignature;
 	use parity_util_mem::MallocSizeOf;
 	use serde::Serialize;
 	use sp_application_crypto::ed25519;

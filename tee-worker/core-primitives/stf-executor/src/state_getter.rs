@@ -63,7 +63,6 @@ mod tests {
 	use itp_sgx_externalities::SgxExternalitiesDiffType;
 	use itp_stf_interface::mocks::StateInterfaceMock;
 	use itp_types::AccountId;
-	use litentry_primitives::Identity;
 	use sp_core::{ed25519, Pair};
 
 	type TestStf = StateInterfaceMock<SgxExternalities, SgxExternalitiesDiffType>;
