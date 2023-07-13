@@ -61,6 +61,7 @@ export declare const definitions: {
                 link_identity: string;
                 remove_identity: string;
                 request_vc: string;
+                set_identity_networks: string;
             };
         };
         UserShieldingKeyType: string;
