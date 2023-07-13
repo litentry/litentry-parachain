@@ -98,18 +98,20 @@ pub fn verify(
 				.get_user_info(message.author.id.clone())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let mut user_name_with_discriminator = message.author.username.clone();
-			user_name_with_discriminator.push_str(&'#'.to_string());
-			user_name_with_discriminator.push_str(&user.discriminator);
-
+			let mut user_name = message.author.username.clone();
+			// if discord user's username is upgraded complete, the discriminator value from api will be "0".
+			if user.discriminator != "0" {
+				user_name.push_str(&'#'.to_string());
+				user_name.push_str(&user.discriminator);
+			}
 			let payload = payload_from_discord(&message)?;
-			Ok((user_name_with_discriminator, payload))
+			Ok((user_name, payload))
 		},
 	}?;
 
 	// compare the username:
 	// - twitter's username is case insensitive
-	// - discord's username (with 4 digit discriminator) is case sensitive
+	// - discord's username is case sensitive
 	if let Identity::Web2 { ref network, ref address } = identity {
 		let handle = std::str::from_utf8(address.as_slice())
 			.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
