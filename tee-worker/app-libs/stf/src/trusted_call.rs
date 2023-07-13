@@ -21,7 +21,10 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-use crate::{helpers::ensure_enclave_signer, Runtime, StfError, System, TrustedOperation};
+use crate::{
+	helpers::{ensure_enclave_signer, ensure_self},
+	Runtime, StfError, System, TrustedOperation,
+};
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
@@ -122,7 +125,7 @@ pub enum TrustedCall {
 	request_vc(AccountId, AccountId, Assertion, H256),
 	// no `H256` in parameter because:
 	// - it only works in DI now
-	// - the response is syncrhonous
+	// - the response is synchronous
 	set_identity_networks(AccountId, AccountId, Identity, Vec<Web3Network>),
 
 	// the following trusted calls should not be requested directly from external
@@ -255,7 +258,7 @@ where
 	// see discussion in https://github.com/integritee-network/worker/issues/1232
 	// my current thoughts are:
 	// - we should return Err() if the STF execution fails
-	// - the failed top should be removed from the tool
+	// - the failed top should be removed from the pool
 	// - however, the failed top hash needs to be included in the sidechain block
 	//
 	// Update2:
@@ -666,7 +669,10 @@ where
 			TrustedCall::set_identity_networks(signer, who, identity, web3networks) => {
 				debug!("set_identity_networks, networks: {:?}", web3networks);
 				// only support DI requests from the signer but we leave the room for changes
-				ensure!(signer == who, Self::Error::Dispatch("Unauthorized signer".to_string()));
+				ensure!(
+					ensure_self(&signer, &who),
+					Self::Error::Dispatch("Unauthorized signer".to_string())
+				);
 				IMTCall::set_identity_networks { who, identity, web3networks }
 					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;

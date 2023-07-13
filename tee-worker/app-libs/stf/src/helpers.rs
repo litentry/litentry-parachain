@@ -114,7 +114,14 @@ pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
 	who: &AccountId,
 ) -> bool {
-	signer == &enclave_signer_account::<AccountId>() || signer == who
+	signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who)
+}
+
+pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
+	signer: &AccountId,
+	who: &AccountId,
+) -> bool {
+	signer == who
 }
 
 // verification message format:
