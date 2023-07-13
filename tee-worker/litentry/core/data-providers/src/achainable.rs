@@ -50,12 +50,10 @@ impl AchainableClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			// G_DATA_PROVIDERS.read().unwrap().achainable_auth_key.clone().as_str(),
-			"26353d4c-b01c-4466-98a5-80d3fc53a9d8",
+			G_DATA_PROVIDERS.read().unwrap().achainable_auth_key.clone().as_str(),
 		);
 		let client =
-			// build_client(G_DATA_PROVIDERS.read().unwrap().achainable_url.clone().as_str(), headers);
-			build_client("https://label-production.graph.tdf-labs.io", headers);
+			build_client(G_DATA_PROVIDERS.read().unwrap().achainable_url.clone().as_str(), headers);
 
 		AchainableClient { client }
 	}
@@ -720,7 +718,7 @@ mod tests {
 		let addresses = vec!["0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string()];
 
 		let mut client = AchainableClient::new();
-		let r = client.total_transactions(&Web3Network::Ethereum, &addresses);
+		let r = client.total_transactions(&Web3Network::Litentry, &addresses);
 		assert!(r.is_ok());
 		let r = r.unwrap();
 		assert!(r == 41)

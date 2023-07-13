@@ -45,17 +45,17 @@ pub mod tag {
 				if path == "/v1/run/label/74655d14-3abd-4a25-b3a4-cd592ae26f4c" {
 					// total transactions
 					let total_txs = r#"
-					"label": {
-						"name": "Total-tx-On-Litentry",
-						"description": "Get total txs On Litentry (workaround)",
-						"result": true,
-						"display": [
-							{
-								"text": "Total transactions under 1 (Transactions: 41)",
-								"result": true
-							}
-						],
-						"runningCost": 1
+					{
+						"label": {
+							"result": true,
+							"display": [
+								{
+									"text": "Total transactions under 1 (Transactions: 41)",
+									"result": true
+								}
+							],
+							"runningCost": 1
+						}
 					}"#;
 
 					return Response::builder().body(total_txs.to_string())
