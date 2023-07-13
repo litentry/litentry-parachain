@@ -29,7 +29,7 @@ pub(crate) fn check_join(
 			let guild_id = p.get("guildid").unwrap_or(&default);
 			let handler = p.get("handler").unwrap_or(&default);
 			let expected_guild_id = "919848390156767232";
-			let expected_handler = "againstwar#4779";
+			let expected_handler = "againstwar";
 
 			if expected_guild_id == guild_id.as_str() && expected_handler == handler.as_str() {
 				let body = DiscordResponse {
@@ -60,7 +60,7 @@ pub(crate) fn check_id_hubber(
 			let expected_guild_id = "919848390156767232";
 			let expected_channel_id = "919848392035794945";
 			let expected_role_id = "1034083718425493544";
-			let expected_handler = "ericzhang.eth#0114";
+			let expected_handler = "ericzhang.eth";
 
 			if expected_guild_id == guild_id.as_str()
 				&& expected_handler == handler.as_str()
