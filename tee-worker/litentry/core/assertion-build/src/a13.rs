@@ -46,7 +46,7 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 		.map(|r| String::decode(&mut r.as_slice()).unwrap_or_default())
 		.collect();
 
-	// if the signer can't be found in the delegatee list
+	// if the signer can't be found in the delegatee list OR not the enclave account
 	if !(keys.iter().any(|k| k.ends_with(hex::encode(&req.signer).as_str()))
 		|| req.signer == req.enclave_account)
 	{
