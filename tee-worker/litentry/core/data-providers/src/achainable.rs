@@ -482,6 +482,36 @@ impl AchainableA10Holder for AchainableClient {
 	}
 }
 
+pub trait AchainableA11Holder {
+	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
+}
+impl AchainableA11Holder for AchainableClient {
+	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
+		let path;
+		if index == 0 {
+			path = "/v1/run/label/1e6053c6-1d09-42ee-9074-a4664957f9a7";
+		} else if index == 1 {
+			path = "";
+		} else if index == 2 {
+			path = "2019";
+		} else if index == 3 {
+			path = "2020";
+		} else if index == 4 {
+			path = "2021";
+		} else if index == 5 {
+			path = "2022";
+		} else {
+			path = "2023";
+		}
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+}
+
 impl AchainableHolder for AchainableClient {
 	fn is_hodler(&mut self, address: &str, token_address: &str, network: &Web3Network) -> Result<usize, Error> {
 		let mut path = "";
