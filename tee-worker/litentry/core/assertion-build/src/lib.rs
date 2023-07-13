@@ -58,7 +58,7 @@ use log::*;
 use std::{
 	collections::HashSet,
 	format,
-	string::{String, ToString},
+	string::String,
 	vec,
 	vec::Vec,
 };

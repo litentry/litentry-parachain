@@ -23,7 +23,7 @@ use http_req::response::Headers;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPath, RestPost,
+	RestPath, RestPost,
 };
 use litentry_primitives::Web3Network;
 use log::{debug, error};
@@ -31,13 +31,8 @@ use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
 	string::{String, ToString},
-	vec,
 	vec::Vec,
 };
-
-pub trait AchainableQuery<Query: ToAchainable> {
-	fn verified_credentials_is_hodler(&mut self, params: Query) -> Result<IsHodlerOut, Error>;
-}
 
 pub struct AchainableClient {
 	client: RestClient<HttpClient<DefaultSend>>,
@@ -64,103 +59,6 @@ impl AchainableClient {
 
 		AchainableClient { client }
 	}
-}
-
-impl<Query: ToAchainable> AchainableQuery<Query> for AchainableClient {
-	fn verified_credentials_is_hodler(&mut self, query: Query) -> Result<IsHodlerOut, Error> {
-		let path = query.path();
-		let query_value = query.to_achainable();
-		debug!("verified_credentials_is_hodler query: {}", query_value);
-
-		let query = vec![("query", query_value.as_str())];
-		match self.client.get_with::<String, AchainableResponse>(path, query.as_slice()) {
-			Ok(response) =>
-				if let Some(value) = response.data.get("data") {
-					debug!("	[Achainable] value: {:?}", value);
-
-					serde_json::from_value(value.clone()).map_err(|e| {
-						let error_msg = format!("Deserialize Achainable response error: {:?}", e);
-						Error::AchainableError(error_msg)
-					})
-				} else {
-					Err(Error::AchainableError("Invalid Achainable response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
-	}
-}
-
-pub trait ToAchainable {
-	fn path(&self) -> String {
-		"latest/achainable".to_string()
-	}
-
-	fn to_achainable(&self) -> String;
-}
-
-#[derive(Debug)]
-pub struct VerifiedCredentialsIsHodlerIn {
-	pub addresses: Vec<String>,
-	pub from_date: String,
-	pub network: Web3Network,
-	pub token_address: String,
-	pub min_balance: String,
-}
-
-impl VerifiedCredentialsIsHodlerIn {
-	pub fn new(
-		addresses: Vec<String>,
-		from_date: String,
-		network: Web3Network,
-		token_address: String,
-		min_balance: String,
-	) -> Self {
-		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, min_balance }
-	}
-}
-
-impl ToAchainable for VerifiedCredentialsIsHodlerIn {
-	fn to_achainable(&self) -> String {
-		let addresses_str = format!("{:?}", self.addresses);
-		let network = format!("{:?}", self.network).to_lowercase();
-		if self.token_address.is_empty() {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
-		} else {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
-		}
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct AchainableResponse {
-	#[serde(flatten)]
-	data: serde_json::Value,
-}
-impl RestPath<String> for AchainableResponse {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
-		Ok(path)
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct IsHodlerOut {
-	#[serde(rename = "VerifiedCredentialsIsHodler")]
-	pub hodlers: Vec<IsHodlerOutStruct>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct IsHodlerOutStruct {
-	pub address: String,
-	pub is_hodler: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct TotalTxsStruct {
-	pub address: String,
-	pub total_transactions: u64,
 }
 
 pub trait AchainableTagAccount {
@@ -243,16 +141,6 @@ impl AchainablePost for AchainableClient {
 		let response =
 			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, body);
 		debug!("ReqBody response: {:?}", response);
-		// match response {
-		// 	Ok(res) =>
-		// 		if let Some(value) = res.get("result") {
-		// 			Ok(value.clone())
-		// 		} else {
-		// 			Err(Error::AchainableError("Invalid response".to_string()))
-		// 		},
-		// 	Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		// }
-
 		match response {
 			Ok(res) => Ok(res),
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
@@ -296,13 +184,87 @@ pub trait AchainableTotalTransactions {
 	fn total_transactions(&mut self, network: &Web3Network, addresses: &Vec<String>) -> Result<u64, Error>;
 }
 
-pub trait AchainableHolder {
-	// Return Index from 2017 - 2018 ... 2022 - 2023
-	fn is_hodler(&mut self, address: &str, token_address: &str, network: &Web3Network) -> Result<usize, Error>;
+pub trait AchainableA4Holder {
+	// Currently, supported networks: ["Litentry", "Litmus", "Ethereum"]
+	fn erc20_lit_holder_on_ethereum(&mut self, address: &str, index: usize) -> Result<bool, Error>;
+	fn erc20_lit_holder_on_litentry(&mut self, address: &str, index: usize) -> Result<bool, Error>;
+	fn erc20_lit_holder_on_litmus(&mut self, address: &str, index: usize) -> Result<bool, Error>;
 }
+impl AchainableA4Holder for AchainableClient {
+	fn erc20_lit_holder_on_ethereum(&mut self, address: &str, index: usize) -> Result<bool, Error> {
+		let path;
+		if index == 0 {
+			path = "2017";
+		} else if index == 1 {
+			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
+		} else if index == 2 {
+			path = "2019";
+		} else if index == 3 {
+			path = "2020";
+		} else if index == 4 {
+			path = "2021";
+		} else if index == 5 {
+			path = "2022";
+		} else {
+			path = "2023";
+		}
 
-pub trait AchainableHolderParser {
-	fn parse_holder_result(response: serde_json::Value) -> Result<usize, Error>;
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+
+	fn erc20_lit_holder_on_litentry(&mut self, address: &str, index: usize) -> Result<bool, Error> {
+		let path;
+		if index == 0 {
+			path = "2017";
+		} else if index == 1 {
+			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
+		} else if index == 2 {
+			path = "2019";
+		} else if index == 3 {
+			path = "2020";
+		} else if index == 4 {
+			path = "2021";
+		} else if index == 5 {
+			path = "2022";
+		} else {
+			path = "2023";
+		}
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+
+	fn erc20_lit_holder_on_litmus(&mut self, address: &str, index: usize) -> Result<bool, Error> {
+		let path;
+		if index == 0 {
+			path = "2017";
+		} else if index == 1 {
+			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
+		} else if index == 2 {
+			path = "2019";
+		} else if index == 3 {
+			path = "2020";
+		} else if index == 4 {
+			path = "2021";
+		} else if index == 5 {
+			path = "2022";
+		} else {
+			path = "2023";
+		}
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
 }
 
 // TODO:
@@ -395,33 +357,6 @@ impl AchainableTotalTransactions for AchainableClient {
 	}
 }
 
-impl AchainableHolderParser for AchainableClient {
-	fn parse_holder_result(response: serde_json::Value) -> Result<usize, Error> {
-		if let Some(value) = response.get("label") {
-			if let Some(value) = value.get("display") {
-				if let Some(displays) = value.as_array() {
-					let mut longest_holder_index = usize::MAX;
-
-					for v in displays.iter() {
-						// TODO:
-						// Find the first `true` and assign the index to longest_holder_index
-						longest_holder_index = 0;
-					}
-					debug!("longest_holder_index: {longest_holder_index}");
-					
-					Ok(longest_holder_index)
-				} else {
-					Err(Error::AchainableError("Invalid array".to_string()))
-				}	
-			} else {
-				Err(Error::AchainableError("Invalid display".to_string()))
-			}
-		} else {
-			Err(Error::AchainableError("Invalid response".to_string()))
-		}
-	}
-}
-
 pub trait AchainableA7Holder {
 	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
 }
@@ -509,30 +444,6 @@ impl AchainableA11Holder for AchainableClient {
 		let resp = self.post(params, &body)?;
 
 		Self::parse(resp)
-	}
-}
-
-impl AchainableHolder for AchainableClient {
-	fn is_hodler(&mut self, address: &str, token_address: &str, network: &Web3Network) -> Result<usize, Error> {
-		let mut path = "";
-
-		// A4: ["Ethereum", "Litmus", "Litentry"]; LIT
-		// A7: ["Polkadot"]; DOT
-		// A10: ["Ethereum"]; WBTC
-		// A11: ["Ethereum"]; ETH
-		match network {
-			Web3Network::Ethereum => path = "",
-			Web3Network::Litentry => path = "",
-			Web3Network::Litmus => path = "",
-			Web3Network::Polkadot => path = "",
-			_ => error!("Achainable holder Unsupported network: {:?}", network),
-		}
-
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse_holder_result(resp)
 	}
 }
 
@@ -831,41 +742,18 @@ impl RestPath<String> for ParamsAccount {
 #[cfg(test)]
 mod tests {
 	use crate::achainable::{
-		AchainableClient, AchainableQuery, AchainableTagAccount, AchainableTagBalance,
-		AchainableTagDeFi, AchainableTagDotsama, VerifiedCredentialsIsHodlerIn,
+		AchainableClient, AchainableTagAccount, AchainableTagBalance,
+		AchainableTagDeFi, AchainableTagDotsama,
 		G_DATA_PROVIDERS, AchainableTotalTransactions,
 	};
 	use lc_mock_server::{default_getter, run};
 	use litentry_primitives::Web3Network;
 	use std::sync::Arc;
 
-	const ACCOUNT_ADDRESS1: &str = "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad";
-	const ACCOUNT_ADDRESS2: &str = "0x3394caf8e5ccaffb936e6407599543af46525e0b";
-	const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
-
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
 		G_DATA_PROVIDERS.write().unwrap().set_achainable_url(url);
-	}
-
-	#[test]
-	fn verified_credentials_is_hodler_work() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let credentials = VerifiedCredentialsIsHodlerIn {
-			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
-			from_date: "2022-10-16T00:00:00Z".to_string(),
-			network: Web3Network::Ethereum,
-			token_address: LIT_TOKEN_ADDRESS.to_string(),
-			min_balance: "0.00000056".into(),
-		};
-		let response = client.verified_credentials_is_hodler(credentials);
-		assert!(response.is_ok(), "due to error:{:?}", response.unwrap_err());
-		let is_hodler_out = response.unwrap();
-		assert_eq!(is_hodler_out.hodlers[0].is_hodler, false);
-		assert_eq!(is_hodler_out.hodlers[1].is_hodler, false);
 	}
 
 	#[test]
