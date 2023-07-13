@@ -110,48 +110,6 @@ pub(crate) fn query_retweeted_by(
 		})
 }
 
-pub(crate) fn query_friendship(
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-	warp::get()
-		.and(warp::path!("1.1" / "friendships" / "show.json"))
-		.and(warp::query::<HashMap<String, String>>())
-		.map(move |p: HashMap<String, String>| {
-			log::info!("query_friendship");
-			if let Some(target_id) = p.get("target_id") {
-				if target_id == "783214" {
-					return Response::builder()
-						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
-				}
-			};
-
-			if let Some(target_screen_name) = p.get("target_screen_name") {
-				if target_screen_name == "twitter" {
-					return Response::builder()
-						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
-				}
-			}
-			Response::builder().status(400).body(String::from("Error query"))
-		})
-}
-
-fn prepare_mocked_relationship() -> Relationship {
-	let source_user = SourceTwitterUser {
-		id_str: "2244994945".into(),
-		screen_name: "TwitterDev".into(),
-		following: true,
-		followed_by: false,
-	};
-
-	let target_user = TargetTwitterUser {
-		id_str: "783214".into(),
-		screen_name: "Twitter".into(),
-		following: false,
-		followed_by: true,
-	};
-
-	Relationship { source: source_user, target: target_user }
-}
-
 pub(crate) fn query_user_by_name(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()

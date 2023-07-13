@@ -22,7 +22,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_utils::stringify::account_id_to_string;
-use lc_data_providers::G_DATA_PROVIDERS;
+use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Assertion, ErrorDetail, ErrorString, VCMPError};
 use log::*;
@@ -63,9 +63,6 @@ where
 
 			Assertion::A4(min_balance) => lc_assertion_build::a4::build(&self.req, min_balance),
 
-			Assertion::A5(original_tweet_id) =>
-				lc_assertion_build::a5::build(&self.req, original_tweet_id),
-
 			Assertion::A6 => lc_assertion_build::a6::build(&self.req),
 
 			Assertion::A7(min_balance) => lc_assertion_build::a7::build(&self.req, min_balance),
@@ -76,9 +73,6 @@ where
 			Assertion::A10(min_balance) => lc_assertion_build::a10::build(&self.req, min_balance),
 
 			Assertion::A11(min_balance) => lc_assertion_build::a11::build(&self.req, min_balance),
-
-			Assertion::A12(twitter_screen_name) =>
-				lc_assertion_build::a12::build(&self.req, twitter_screen_name),
 
 			Assertion::A13(owner) => lc_assertion_build::a13::build(&self.req, &owner),
 
@@ -98,7 +92,8 @@ where
 			)
 		})?;
 
-		let credential_endpoint = G_DATA_PROVIDERS.read().unwrap().credential_endpoint.clone();
+		let credential_endpoint =
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().credential_endpoint.clone();
 		credential.credential_subject.set_endpoint(credential_endpoint);
 
 		credential.issuer.id = account_id_to_string(&enclave_account);

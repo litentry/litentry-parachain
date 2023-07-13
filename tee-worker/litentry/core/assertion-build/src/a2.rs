@@ -83,7 +83,7 @@ mod tests {
 	use crate::{a2::build, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
-	use lc_data_providers::G_DATA_PROVIDERS;
+	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use litentry_primitives::{
 		Address32, Assertion, Identity, IdentityNetworkTuple, IdentityString,
 	};
@@ -92,7 +92,7 @@ mod tests {
 
 	#[test]
 	fn build_a2_works() {
-		G_DATA_PROVIDERS
+		GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()
 			.set_discord_litentry_url("http://localhost:19527".to_string());
