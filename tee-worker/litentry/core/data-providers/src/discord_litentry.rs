@@ -164,7 +164,7 @@ mod tests {
 	fn check_join_work() {
 		init();
 		let guild_id = "919848390156767232".as_bytes().to_vec();
-		let handler = "againstwar#4779".as_bytes().to_vec();
+		let handler = "againstwar".as_bytes().to_vec();
 		let mut client = DiscordLitentryClient::new();
 		let response = client.check_join(guild_id, handler);
 		assert!(response.is_ok(), "check join discord error: {:?}", response);
@@ -176,7 +176,7 @@ mod tests {
 		let guild_id = "919848390156767232".as_bytes().to_vec();
 		let channel_id = "919848392035794945".as_bytes().to_vec();
 		let role_id = "1034083718425493544".as_bytes().to_vec();
-		let handler = "ericzhang.eth#0114".as_bytes().to_vec();
+		let handler = "ericzhang.eth".as_bytes().to_vec();
 		let mut client = DiscordLitentryClient::new();
 		let response = client.check_id_hubber(guild_id, channel_id, role_id, handler);
 		assert!(response.is_ok(), "check discord id hubber error: {:?}", response);
