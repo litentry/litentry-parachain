@@ -88,7 +88,8 @@ RUN apt update && apt install -y libssl-dev iproute2 curl
 ## ts-tests
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
 RUN apt-get install -y nodejs jq
-RUN npm install -g yarn
+RUN npm install -g yarn 
+RUN yarn set version stable
 
 ### Deployed CLI client
 ##################################################
@@ -108,7 +109,7 @@ RUN chmod +x /usr/local/bin/integritee-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
 
 RUN ldd /usr/local/bin/integritee-cli && \
-	/usr/local/bin/integritee-cli --version
+    /usr/local/bin/integritee-cli --version
 
 ENTRYPOINT ["/usr/local/bin/integritee-cli"]
 
@@ -135,6 +136,6 @@ RUN ls -al /usr/local/bin
 
 # checks
 RUN ldd /usr/local/bin/integritee-service && \
-	/usr/local/bin/integritee-service --version
+    /usr/local/bin/integritee-service --version
 
 ENTRYPOINT ["/usr/local/bin/integritee-service"]
