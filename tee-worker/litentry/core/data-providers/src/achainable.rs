@@ -426,17 +426,17 @@ impl AchainableA11Holder for AchainableClient {
 		if index == 0 {
 			path = "/v1/run/label/1e6053c6-1d09-42ee-9074-a4664957f9a7";
 		} else if index == 1 {
-			path = "";
+			path = "/v1/run/label/060acc81-a9b0-4997-8f4b-b8d7953fe44b";
 		} else if index == 2 {
-			path = "2019";
+			path = "/v1/run/label/892d4ddc-f70c-4fc2-acfc-1891099db41e";
 		} else if index == 3 {
-			path = "2020";
+			path = "/v1/run/label/eb2f0c07-c3a4-48dc-a194-c254b26ff581";
 		} else if index == 4 {
-			path = "2021";
+			path = "/v1/run/label/7f28c5cb-64c4-4880-9242-3cde638a57d4";
 		} else if index == 5 {
-			path = "2022";
+			path = "/v1/run/label/0afc7c00-a1be-47aa-9903-2d99d2970091";
 		} else {
-			path = "2023";
+			path = "/v1/run/label/078b2f54-4515-4513-9c67-33c30081b758";
 		}
 
 		let params = ReqParams::new(path);

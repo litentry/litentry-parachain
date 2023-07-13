@@ -51,8 +51,8 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 		for address in &addresses {
 			match client.eth_holder(address, index) {
-				Ok(is_wbtc_holder) => {
-					if is_wbtc_holder {
+				Ok(is_eth_holder) => {
+					if is_eth_holder {
 						optimal_hold_index = index;
 						is_hold = true;
 
