@@ -84,14 +84,14 @@ mod tests {
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
-	use lc_data_providers::G_DATA_PROVIDERS;
+	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
 	use std::{format, vec, vec::Vec};
 
 	#[test]
 	fn build_a2_works() {
-		G_DATA_PROVIDERS
+		GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()
 			.set_discord_litentry_url("http://localhost:19527".to_string());

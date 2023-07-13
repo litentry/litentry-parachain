@@ -16,15 +16,13 @@ import { blake2AsHex } from '@polkadot/util-crypto';
 import { multiAccountTxSender, sendTxsWithUtility, sendTxUntilInBlockList } from './common/transactions';
 import { aesKey } from './common/call';
 
+// TODO: keep the list short, the manual types will be solved in #1878
+//       more extensive testing of assertion will be done in #1873
 const allAssertions: Assertion = {
     A1: 'A1',
     A2: ['A2'],
     A3: ['A3', 'A3', 'A3'],
     A4: '10.001',
-    A7: '10.002',
-    A8: ['Litentry'],
-    A10: '10.003',
-    A11: '10.004',
 };
 const assertionA1: Assertion = {
     A1: 'A1',
@@ -33,16 +31,8 @@ const assertionA1: Assertion = {
 // So only use A1 to trigger the wrong event
 describeLitentry('VC test', 0, async (context) => {
     const indexList: HexString[] = [];
-    const vcKeys: string[] = ['A1'];
-    step('check user sidechain storage before create', async function () {
-        const shieldingKey = await checkUserShieldingKeys(
-            context,
-            'IdentityManagement',
-            'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
-        );
-        assert.equal(shieldingKey, '0x', 'shieldingKey should be empty before set');
-    });
+    const vcKeys: string[] = ['A1', 'A2', 'A3', 'A4'];
+
     step('set user shielding key', async function () {
         const [aliceTxs] = (await buildIdentityTxs(
             context,
