@@ -13,7 +13,7 @@ import {
     createSignedTrustedGetterIdGraph,
     sendRequestFromGetter,
     getSidechainNonce,
-    decodeIDGraph,
+    decodeIdGraph,
 } from './util';
 import {
     getEnclave,
@@ -25,7 +25,7 @@ import {
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json' assert { type: 'json' };
-import { hexToU8a, u8aToString, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import Options from 'websocket-as-promised/types/options';
 import crypto from 'crypto';
@@ -125,7 +125,7 @@ async function runDirectCall() {
     const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     console.log('IDGraph getter returned', res.toHuman());
-    let idgraph = decodeIDGraph(sidechainRegistry, res.value);
+    let idgraph = decodeIdGraph(sidechainRegistry, res.value);
     assert.equal(idgraph.length, 2);
     // the first identity is the bob substrate identity
     assert.isTrue(idgraph[0][0].isSubstrate);
@@ -169,7 +169,7 @@ async function runDirectCall() {
     res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, setIdentityNetworksCall);
     console.log('setIdentityNetworks call returned', res.toHuman());
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
-    idgraph = decodeIDGraph(sidechainRegistry, res.value);
+    idgraph = decodeIdGraph(sidechainRegistry, res.value);
     assert.equal(idgraph.length, 2);
     assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Litentry', 'Khala'].toString());
 
@@ -189,7 +189,7 @@ async function runDirectCall() {
     assert.isTrue!(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid); // invalid status
     // idgraph should be unchanged
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
-    idgraph = decodeIDGraph(sidechainRegistry, res.value);
+    idgraph = decodeIdGraph(sidechainRegistry, res.value);
     assert.equal(idgraph.length, 2);
     assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Litentry', 'Khala'].toString());
 

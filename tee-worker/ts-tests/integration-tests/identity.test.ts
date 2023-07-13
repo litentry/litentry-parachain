@@ -381,9 +381,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check IDGraph after removeIdentity', async function () {
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const identityHex = twitterIdentity.toHex();
-
         // TODO: we should verify the IDGraph is empty
     });
 

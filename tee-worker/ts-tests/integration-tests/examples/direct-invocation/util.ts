@@ -332,8 +332,8 @@ export function decodeNonce(nonceInHex: string) {
     return nonce;
 }
 
-export function decodeIDGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
-    let idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(value.toHex()));
+export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
+    const idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(value.toHex()));
     return sidechainRegistry.createType(
         'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idgraphBytes.unwrap()

@@ -13,6 +13,8 @@ export type {
     LitentryValidationData,
     Web3Network,
     WorkerRpcReturnValue,
+    TrustedCallSigned,
+    Getter,
 } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
