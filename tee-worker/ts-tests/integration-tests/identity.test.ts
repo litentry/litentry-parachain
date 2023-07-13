@@ -148,9 +148,10 @@ describeLitentry('Test Identity', 0, (context) => {
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const twitterValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [twitterIdentity],
             3,
             'twitter'
@@ -158,7 +159,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const evmValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [evmIdentity],
             4,
             'ethereum',
@@ -168,7 +169,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const eveSubstrateValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [eveSubstrateIdentity],
             5,
             'substrate',
@@ -217,9 +218,11 @@ describeLitentry('Test Identity', 0, (context) => {
                 },
             },
         };
+        const bobSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+
         const msg = generateVerificationMessage(
             context,
-            context.substrateWallet.bob.addressRaw,
+            bobSubject,
             aliceSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall

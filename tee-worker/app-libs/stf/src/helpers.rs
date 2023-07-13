@@ -131,11 +131,7 @@ pub fn get_expected_raw_message(
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 ) -> Vec<u8> {
-	let mut data = match who {
-		Identity::Substrate(address) => address.encode(),
-		Identity::Evm(address) => address.encode(),
-		_ => Vec::default(),
-	};
+	let mut data = who.encode();
 	data.append(&mut identity.encode());
 	let mut encrypted_data = aes_encrypt_nonce(&key, &data, nonce).ciphertext;
 	let mut payload = sidechain_nonce.encode();

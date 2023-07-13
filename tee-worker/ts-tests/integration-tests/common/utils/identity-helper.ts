@@ -15,12 +15,13 @@ import { aesKey, keyNonce } from '../call';
 // blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary AccountId> + <identity-to-be-linked>).ciphertext)
 export function generateVerificationMessage(
     context: IntegrationTestContext,
-    signerAddress: Uint8Array,
+    signer: LitentryPrimitivesIdentity,
     identity: LitentryPrimitivesIdentity,
     sidechainNonce: number
 ): HexString {
     const encodedIdentity = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
-    const payload = Buffer.concat([signerAddress, encodedIdentity]);
+    const encodedWho = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', signer).toU8a();
+    const payload = Buffer.concat([encodedWho, encodedIdentity]);
     const encryptedPayload = hexToU8a(encryptWithAes(aesKey, hexToU8a(keyNonce), payload));
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
     const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encryptedPayload]);
@@ -233,7 +234,7 @@ export function createIdentityEvent(
 
 export async function buildValidations(
     context: IntegrationTestContext,
-    primeIdentityAddresses: Uint8Array[],
+    signerIdentities: LitentryPrimitivesIdentity[],
     identities: LitentryPrimitivesIdentity[],
     startingSidechainNonce: number,
     network: 'ethereum' | 'substrate' | 'twitter',
@@ -249,7 +250,7 @@ export async function buildValidations(
 
         const msg = generateVerificationMessage(
             context,
-            primeIdentityAddresses[index],
+            signerIdentities[index],
             identities[index],
             validationNonce
         );
