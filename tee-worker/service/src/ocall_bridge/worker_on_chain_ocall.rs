@@ -68,6 +68,13 @@ where
 						|read_proof| read_proof.proof.into_iter().map(|bytes| bytes.0).collect(),
 					),
 				),
+				WorkerRequest::ChainStorageKeys(key, hash) => {
+					let keys: Vec<Vec<u8>> = match api.get_keys(StorageKey(key), hash) {
+						Ok(Some(keys)) => keys.iter().map(String::encode).collect(),
+						_ => Default::default(),
+					};
+					WorkerResponse::ChainStorageKeys(keys)
+				},
 			})
 			.collect();
 

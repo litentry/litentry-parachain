@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, StfTaskContext, TrustedCall};
+use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -34,18 +34,20 @@ pub(crate) struct AssertionHandler<
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
+	O: EnclaveOnChainOCallApi,
 > {
 	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<K, A, S, H>>,
+	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
 }
 
-impl<K, A, S, H> TaskHandler for AssertionHandler<K, A, S, H>
+impl<K, A, S, H, O> TaskHandler for AssertionHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi,
 {
 	type Error = VCMPError;
 	type Result = ([u8; 32], [u8; 32], Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
@@ -130,7 +132,13 @@ where
 				&self.req.who,
 			),
 
-			Assertion::A13(owner) => lc_assertion_build::a13::build(&self.req.shard, &owner),
+			Assertion::A13(owner) => lc_assertion_build::a13::build(
+				&self.req.shard,
+				&self.req.signer,
+				&self.req.enclave_account,
+				&owner,
+				self.context.ocall_api.clone(),
+			),
 
 			Assertion::A14 => lc_assertion_build::a14::build(
 				self.req.vec_identity.to_vec(),

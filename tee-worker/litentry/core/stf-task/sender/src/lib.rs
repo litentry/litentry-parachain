@@ -85,6 +85,8 @@ pub type MaxIdentityLength = ConstU32<64>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
+	pub signer: AccountId,
+	pub enclave_account: AccountId,
 	pub who: AccountId,
 	pub assertion: Assertion,
 	pub vec_identity: Vec<Identity>,
