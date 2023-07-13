@@ -105,9 +105,9 @@ mod tests {
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let req = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
-			signer: AccountId::default(),
-			enclave_account: AccountId::default(),
-			who: AccountId::default(),
+			signer: AccountId::from([0; 32]),
+			enclave_account: AccountId::from([0; 32]),
+			who: AccountId::from([0; 32]),
 			assertion: Assertion::A2(guild_id.clone()),
 			identities,
 			hash: Default::default(),

@@ -134,9 +134,9 @@ mod tests {
 
 		let req = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
-			signer: AccountId::default(),
-			enclave_account: AccountId::default(),
-			who: AccountId::default(),
+			signer: AccountId::from([0; 32]),
+			enclave_account: AccountId::from([0; 32]),
+			who: AccountId::from([0; 32]),
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			identities,
 			hash: Default::default(),
