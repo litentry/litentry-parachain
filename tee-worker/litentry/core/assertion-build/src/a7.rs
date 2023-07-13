@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableQuery, VerifiedCredentialsIsHodlerIn},
+	achainable::{AchainableClient, AchainableA7Holder},
 	vec_to_string,
 };
 
@@ -40,58 +40,31 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.vec_identity);
+	let addresses = identities.into_iter().filter(|(network, _)| *network == Web3Network::Polkadot).flat_map(|(_, addresses)| addresses ).collect::<Vec<String>>();
 
 	let mut is_hold = false;
-	let mut optimal_hold_index = usize::MAX;
-
-	for (network, addresses) in identities {
-		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
-		// there is no need to query other networks.
-		if optimal_hold_index == 0 {
+	let mut optimal_hold_index = 0_usize;
+	for index in 0..ASSERTION_FROM_DATE.len() {
+		if is_hold {
 			break
 		}
 
-		// Each query loop needs to reset is_hold to false
-		is_hold = false;
+		for address in &addresses {
+			match client.polkadot_holder(address, index) {
+				Ok(is_polkadot_holder) => {
+					if is_polkadot_holder {
+						optimal_hold_index = index;
+						is_hold = true;
 
-		let addresses: Vec<String> = addresses.into_iter().collect();
-		let token_address = "";
-
-		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-			let vch = VerifiedCredentialsIsHodlerIn::new(
-				addresses.clone(),
-				from_date.to_string(),
-				network,
-				token_address.to_string(),
-				q_min_balance.to_string(),
-			);
-			match client.verified_credentials_is_hodler(vch) {
-				Ok(is_hodler_out) =>
-					for hodler in is_hodler_out.hodlers.iter() {
-						is_hold = is_hold || hodler.is_hodler;
-					},
+						break;
+					}
+				},
 				Err(e) => error!(
-					"Assertion A7 request check_verified_credentials_is_hodler error: {:?}",
+					"Assertion A7 request polkadot_holder error: {:?}",
 					e
 				),
 			}
-
-			if is_hold {
-				if index < optimal_hold_index {
-					optimal_hold_index = index;
-				}
-
-				break
-			}
-		}
-	}
-
-	// Found the optimal hold index, set the is_hold to true, otherwise
-	// the optimal_hold_index is always 0 (2017-01-01)
-	if optimal_hold_index != usize::MAX {
-		is_hold = true;
-	} else {
-		optimal_hold_index = 0;
+		}	
 	}
 
 	match Credential::new_default(&req.who, &req.shard) {

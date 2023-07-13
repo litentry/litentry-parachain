@@ -422,6 +422,36 @@ impl AchainableHolderParser for AchainableClient {
 	}
 }
 
+pub trait AchainableA7Holder {
+	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
+}
+impl AchainableA7Holder for AchainableClient {
+	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
+		let mut path = "";
+		if index == 0 {
+			path = "2017";
+		} else if index == 1 {
+			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
+		} else if index == 2 {
+			path = "2019";
+		} else if index == 3 {
+			path = "2020";
+		} else if index == 4 {
+			path = "2021";
+		} else if index == 5 {
+			path = "2022";
+		} else {
+			path = "2023";
+		}
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+}
+
 impl AchainableHolder for AchainableClient {
 	fn is_hodler(&mut self, address: &str, token_address: &str, network: &Web3Network) -> Result<usize, Error> {
 		let mut path = "";
