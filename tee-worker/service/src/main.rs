@@ -81,7 +81,7 @@ use its_peer_fetch::{
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
-use lc_data_providers::DataProvidersStatic;
+use lc_data_providers::DataProviderConfig;
 use litentry_primitives::{ParentchainHeader as Header, UserShieldingKeyType};
 use log::*;
 use my_node_runtime::{Hash, RuntimeEvent};
@@ -197,7 +197,7 @@ fn main() {
 		enclave_metrics_receiver,
 	)));
 
-	let data_provider_config = data_provider(&config);
+	let data_provider_config = get_data_provider_config(&config);
 
 	if let Some(run_config) = &config.run_config {
 		let shard = extract_shard(&run_config.shard, enclave.as_ref());
@@ -353,7 +353,7 @@ fn main() {
 fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	config: Config,
 	shard: &ShardIdentifier,
-	data_provider_config: &DataProvidersStatic,
+	data_provider_config: &DataProviderConfig,
 	enclave: Arc<E>,
 	sidechain_storage: Arc<D>,
 	node_api: ParentchainApi,
@@ -1027,14 +1027,14 @@ fn check_we_are_primary_validateer(
 	Ok(enclave_count_of_previous_block == 0)
 }
 
-fn data_provider(config: &Config) -> DataProvidersStatic {
+fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	let built_in_modes = vec!["dev", "staging", "prod", "mock"];
 	let built_in_config: Value =
 		serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
 
 	let mut data_provider_config = if built_in_modes.contains(&config.running_mode.as_str()) {
 		let config = built_in_config.get(config.running_mode.as_str()).unwrap();
-		serde_json::from_value::<DataProvidersStatic>(config.clone()).unwrap()
+		serde_json::from_value::<DataProviderConfig>(config.clone()).unwrap()
 	} else {
 		let file_path = config.running_mode.as_str();
 		let mut file = File::open(file_path)
@@ -1042,7 +1042,7 @@ fn data_provider(config: &Config) -> DataProvidersStatic {
 			.unwrap();
 		let mut data = String::new();
 		file.read_to_string(&mut data).unwrap();
-		serde_json::from_str::<DataProvidersStatic>(data.as_str()).unwrap()
+		serde_json::from_str::<DataProviderConfig>(data.as_str()).unwrap()
 	};
 	if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
 		data_provider_config.set_twitter_official_url(v);
@@ -1052,9 +1052,6 @@ fn data_provider(config: &Config) -> DataProvidersStatic {
 	}
 	// Bearer Token is as same as App only Access Token on Twitter (https://developer.twitter.com/en/docs/authentication/oauth-2-0/application-only),
 	// that is for developers that just need read-only access to public information.
-	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V1_1") {
-		data_provider_config.set_twitter_auth_token_v1_1(v);
-	}
 	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
 		data_provider_config.set_twitter_auth_token_v2(v);
 	}

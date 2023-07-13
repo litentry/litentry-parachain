@@ -2815,8 +2815,6 @@ declare module '@polkadot/types/lookup' {
         readonly asA3: ITuple<[Bytes, Bytes, Bytes]>;
         readonly isA4: boolean;
         readonly asA4: Bytes;
-        readonly isA5: boolean;
-        readonly asA5: Bytes;
         readonly isA6: boolean;
         readonly isA7: boolean;
         readonly asA7: Bytes;
@@ -2827,26 +2825,10 @@ declare module '@polkadot/types/lookup' {
         readonly asA10: Bytes;
         readonly isA11: boolean;
         readonly asA11: Bytes;
-        readonly isA12: boolean;
-        readonly asA12: Bytes;
         readonly isA13: boolean;
         readonly asA13: AccountId32;
         readonly isA14: boolean;
-        readonly type:
-            | 'A1'
-            | 'A2'
-            | 'A3'
-            | 'A4'
-            | 'A5'
-            | 'A6'
-            | 'A7'
-            | 'A8'
-            | 'A9'
-            | 'A10'
-            | 'A11'
-            | 'A12'
-            | 'A13'
-            | 'A14';
+        readonly type: 'A1' | 'A2' | 'A3' | 'A4' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11' | 'A13' | 'A14';
     }
 
     /** @name CorePrimitivesNetworkWeb3Network (149) */
