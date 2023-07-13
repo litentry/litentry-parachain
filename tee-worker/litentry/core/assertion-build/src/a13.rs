@@ -47,7 +47,9 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 		.collect();
 
 	// if the signer can't be found in the delegatee list
-	if !keys.iter().any(|k| k.ends_with(hex::encode(&req.signer).as_str())) {
+	if !(keys.iter().any(|k| k.ends_with(hex::encode(&req.signer).as_str()))
+		|| req.signer == req.enclave_account)
+	{
 		return Err(Error::RequestVCFailed(
 			Assertion::A13(who.clone()),
 			ErrorDetail::UnauthorizedSigner,

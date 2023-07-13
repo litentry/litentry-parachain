@@ -269,6 +269,10 @@ pub mod pallet {
 			assertion: Assertion,
 		) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			// special handling for A13, where the origin is required to be one of the delegatees
+			if let Assertion::A13(_owner) = assertion.clone() {
+				ensure!(Delegatee::<T>::contains_key(&who), Error::<T>::UnauthorizedUser);
+			}
 			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
 			Ok(().into())
 		}

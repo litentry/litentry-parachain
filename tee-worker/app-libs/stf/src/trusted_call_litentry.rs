@@ -19,7 +19,7 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{ensure_enclave_signer_account, is_authorized_signer},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account, is_authorized_signer},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -152,6 +152,7 @@ impl TrustedCallSigned {
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			signer,
+			enclave_account: enclave_signer_account(),
 			who,
 			assertion: assertion.clone(),
 			identities,
