@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableA11Holder}, vec_to_string,
+	achainable::{AchainableClient, AchainableHoldingAssertion}, vec_to_string,
 };
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
@@ -49,7 +49,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
-			match client.eth_holder(address, index) {
+			match client.is_holder("A11", address, index) {
 				Ok(is_eth_holder) => {
 					if is_eth_holder {
 						optimal_hold_index = index;

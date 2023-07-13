@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableA10Holder},
+	achainable::{AchainableClient, AchainableHoldingAssertion},
 	vec_to_string,
 };
 
@@ -54,7 +54,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
-			match client.wbtc_holder(address, index) {
+			match client.is_holder("A10", address, index) {
 				Ok(is_wbtc_holder) => {
 					if is_wbtc_holder {
 						optimal_hold_index = index;

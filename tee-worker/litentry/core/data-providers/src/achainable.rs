@@ -184,11 +184,6 @@ pub trait AchainableTotalTransactions {
 	fn total_transactions(&mut self, network: &Web3Network, addresses: &Vec<String>) -> Result<u64, Error>;
 }
 
-pub trait AchainableA4Holder {
-	// Currently, supported networks: ["Litentry", "Litmus", "Ethereum"]
-	fn lit_holder_on_network(&mut self, network: &Web3Network, address: &str, index: usize) -> Result<bool, Error>;
-}
-
 const PATH_LENS: usize = 7;
 const A4_ERC20_LIT_ETHEREUM_PATHS: [&str; PATH_LENS] = [
 	"/v1/run/label/b65b955c-63eb-4cdf-acd9-46863f9362f2",
@@ -217,7 +212,10 @@ const A4_LIT_LITMUS_PATHS: [&str; PATH_LENS] = [
 	"/v1/run/label/b8bccd1a-ab90-48c3-bc8b-aca3c0d011a3",
 	"/v1/run/label/38ad2b09-4851-44c7-add5-619499788db0",
 ];
-
+pub trait AchainableA4Holder {
+	// Currently, supported networks: ["Litentry", "Litmus", "Ethereum"]
+	fn lit_holder_on_network(&mut self, network: &Web3Network, address: &str, index: usize) -> Result<bool, Error>;
+}
 impl AchainableA4Holder for AchainableClient {
 	// consistently holding at least 10 LIT tokens
 	fn lit_holder_on_network(&mut self, network: &Web3Network, address: &str, index: usize) -> Result<bool, Error> {
@@ -231,6 +229,64 @@ impl AchainableA4Holder for AchainableClient {
 			A4_LIT_LITENTRY_PATHS[index]
 		} else {
 			A4_LIT_LITMUS_PATHS[index]
+		};
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+}
+
+// consistently holding at least 5 DOT tokens
+const A7_DOT_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/7bb7b42e-088d-46d5-9deb-b0e4f02a817d",
+	"/v1/run/label/b7426872-abdf-4680-9d74-0abe8904e410",
+	"/v1/run/label/23120e2b-1f2b-40c4-83b6-2836558506f0",
+	"/v1/run/label/a3df0656-af20-4d83-8ea6-fbbe9ccd0c1b",
+	"/v1/run/label/3674490b-e986-4cf2-a7ce-6358a6df238b",
+	"/v1/run/label/0d60bb2c-de34-4575-9997-69f7dec7daf7",
+	"/v1/run/label/05b87f44-bfab-46ca-a917-062a4064d9f0",
+];
+
+// consistently holding at least 0.001 WBTC tokens
+const A10_WBTC_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/5a936ecc-abfd-4bbd-8e62-55a8fc7c4a6a",
+	"/v1/run/label/50e9f706-c610-4a21-b611-65052381061d",
+	"/v1/run/label/32184172-5316-4a95-b0d2-6d5a50b0eba3",
+	"/v1/run/label/4b4e0d0a-812e-4861-8361-b76cd357d20c",
+	"/v1/run/label/dbdbef34-35e3-4542-a50c-b40356747588",
+	"/v1/run/label/4a75aaaa-a4f0-4512-8200-3d259d7dac27",
+	"/v1/run/label/bd84b478-baea-4e2c-8e4d-0cf2eaeadb63",
+];
+
+// consistently holding at least 0.01 ETH tokens
+const A11_ETH_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/1e6053c6-1d09-42ee-9074-a4664957f9a7",
+	"/v1/run/label/060acc81-a9b0-4997-8f4b-b8d7953fe44b",
+	"/v1/run/label/892d4ddc-f70c-4fc2-acfc-1891099db41e",
+	"/v1/run/label/eb2f0c07-c3a4-48dc-a194-c254b26ff581",
+	"/v1/run/label/7f28c5cb-64c4-4880-9242-3cde638a57d4",
+	"/v1/run/label/0afc7c00-a1be-47aa-9903-2d99d2970091",
+	"/v1/run/label/078b2f54-4515-4513-9c67-33c30081b758",
+];
+
+pub trait AchainableHoldingAssertion {
+	fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error>;
+}
+impl AchainableHoldingAssertion for AchainableClient {
+	fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error> {
+		if index >= PATH_LENS {
+			return Err(Error::AchainableError("Wrong index".to_string()));
+		}
+		
+		let path = if holder_type == "A7" {
+			A7_DOT_PATHS[index]
+		} else if holder_type == "A10" {
+			A10_WBTC_PATHS[index]
+		} else {
+			A11_ETH_PATHS[index]
 		};
 
 		let params = ReqParams::new(path);
@@ -328,94 +384,6 @@ impl AchainableTotalTransactions for AchainableClient {
 		});
 
 		Ok(txs)
-	}
-}
-
-pub trait AchainableA7Holder {
-	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
-}
-impl AchainableA7Holder for AchainableClient {
-	// consistently holding at least 5 DOT tokens
-	fn polkadot_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		let path;
-		if index == 0 {
-			path = "2017";
-		} else if index == 1 {
-			path = "/v1/run/label/5c24b114-2118-4507-af16-e41853de9efc";
-		} else if index == 2 {
-			path = "2019";
-		} else if index == 3 {
-			path = "2020";
-		} else if index == 4 {
-			path = "2021";
-		} else if index == 5 {
-			path = "2022";
-		} else {
-			path = "2023";
-		}
-
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse(resp)
-	}
-}
-
-const A10_WBTC_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/label/5a936ecc-abfd-4bbd-8e62-55a8fc7c4a6a",
-	"/v1/run/label/50e9f706-c610-4a21-b611-65052381061d",
-	"/v1/run/label/32184172-5316-4a95-b0d2-6d5a50b0eba3",
-	"/v1/run/label/4b4e0d0a-812e-4861-8361-b76cd357d20c",
-	"/v1/run/label/dbdbef34-35e3-4542-a50c-b40356747588",
-	"/v1/run/label/4a75aaaa-a4f0-4512-8200-3d259d7dac27",
-	"/v1/run/label/bd84b478-baea-4e2c-8e4d-0cf2eaeadb63",
-];
-
-pub trait AchainableA10Holder {
-	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
-}
-impl AchainableA10Holder for AchainableClient {
-	// consistently holding at least 0.001 WBTC tokens
-	fn wbtc_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		if index >= PATH_LENS {
-			return Err(Error::AchainableError("Wrong index".to_string()));
-		}
-		
-		let path = A10_WBTC_PATHS[index];
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse(resp)
-	}
-}
-
-const A11_ETH_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/label/1e6053c6-1d09-42ee-9074-a4664957f9a7",
-	"/v1/run/label/060acc81-a9b0-4997-8f4b-b8d7953fe44b",
-	"/v1/run/label/892d4ddc-f70c-4fc2-acfc-1891099db41e",
-	"/v1/run/label/eb2f0c07-c3a4-48dc-a194-c254b26ff581",
-	"/v1/run/label/7f28c5cb-64c4-4880-9242-3cde638a57d4",
-	"/v1/run/label/0afc7c00-a1be-47aa-9903-2d99d2970091",
-	"/v1/run/label/078b2f54-4515-4513-9c67-33c30081b758",
-];
-pub trait AchainableA11Holder {
-	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error>;
-}
-impl AchainableA11Holder for AchainableClient {
-	// consistently holding at least 0.01 ETH tokens
-	fn eth_holder(&mut self, address: &str, index: usize) -> Result<bool, Error> {
-		if index >= PATH_LENS {
-			return Err(Error::AchainableError("Wrong index".to_string()));
-		}
-		
-		let path = A11_ETH_PATHS[index];
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse(resp)
 	}
 }
 
