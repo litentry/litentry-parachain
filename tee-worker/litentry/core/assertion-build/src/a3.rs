@@ -126,7 +126,7 @@ mod tests {
 
 		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
 		let identities: Vec<IdentityNetworkTuple> =
-			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec.clone())), vec![])];
+			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec)), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let channel_id = BoundedVec::try_from(channel_id_vec).unwrap();
