@@ -22,7 +22,6 @@ use itp_node_api::api_client::{
 	Address, CallIndex, PairSignature, ParentchainSignedExtra, Signature, UncheckedExtrinsicV4,
 };
 use itp_types::H256;
-use sp_std::vec::Vec;
 
 pub struct ExtrinsicParser<SignedExtra> {
 	_phantom: PhantomData<SignedExtra>,

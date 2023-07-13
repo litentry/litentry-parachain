@@ -172,9 +172,6 @@ where
 			//
 			// TODO:
 			// 	1. further simplify the logic below, e.g. with `filter`
-			//  2. remove `fill_opaque_extrinsic_with_status` completely, we used it as a hacky around to
-			//     append an extra `status` flag to `OpaqueExtrinsic` (Vec<u8>) and adjust the codec of it.
-			//     However, it doesn't work anymore due to type change, now `Block` expects UncheckedExtrinsic
 			//  3. add a test to verify the failed parachain extrinsic won't cause any sidechain state mutation
 			let mut events = vec![];
 			for block in &block_chunk_to_sync {
