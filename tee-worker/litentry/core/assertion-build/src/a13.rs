@@ -55,8 +55,9 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 		.collect();
 
 	// if the signer can't be found in the delegatee list
-	// or, if the signer isn't the enclave account
-	if !keys.iter().any(|k| k.ends_with(hex::encode(signer).as_str())) || signer != enclave_account
+	// AND if the signer isn't the enclave account
+	if !(keys.iter().any(|k| k.ends_with(hex::encode(signer).as_str()))
+		|| signer == enclave_account)
 	{
 		return Err(Error::RequestVCFailed(
 			Assertion::A13(who.clone()),
