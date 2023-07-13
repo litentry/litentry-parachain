@@ -25,12 +25,16 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use hex_sgx as hex;
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use rust_base58_sgx as rust_base58;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
 
 pub mod a1;
 pub mod a10;
@@ -57,6 +61,7 @@ use std::{
 	collections::HashSet,
 	format,
 	string::{String, ToString},
+	sync::Arc,
 	vec,
 	vec::Vec,
 };

@@ -21,14 +21,33 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use codec::Decode;
+use frame_support::storage::storage_prefix;
+use itp_ocall_api::EnclaveOnChainOCallApi;
 
 const VC_A13_SUBJECT_DESCRIPTION: &str =
 	"The user has a Polkadot Decoded 2023 Litentry Booth Special Badge";
 const VC_A13_SUBJECT_TYPE: &str = "Decoded 2023 Basic Special Badge";
 const VC_A13_SUBJECT_TAG: [&str; 2] = ["Polkadot decoded 2023", "Litentry"];
 
-pub fn build(req: &AssertionBuildRequest, who: &AccountId) -> Result<Credential> {
+pub fn build<O: EnclaveOnChainOCallApi>(
+	req: &AssertionBuildRequest,
+	ocall_api: Arc<O>,
+	who: &AccountId,
+) -> Result<Credential> {
 	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
+
+	let key_prefix = storage_prefix(b"VCManagement", b"Delegatee");
+	warn!("A13 key_prefix = {}", hex::encode(key_prefix));
+	let response = ocall_api.get_storage_keys(key_prefix.into()).map_err(|_| {
+		Error::RequestVCFailed(Assertion::A13(who.clone()), ErrorDetail::ParseError)
+	})?;
+	let keys: Vec<String> = response
+		.into_iter()
+		.map(|r| String::decode(&mut r.as_slice()).unwrap_or_default())
+		.collect();
+
+	warn!("keys are: {:?}", keys);
 
 	match Credential::new_default(who, &req.shard) {
 		Ok(mut credential_unsigned) => {

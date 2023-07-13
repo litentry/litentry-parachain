@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, StfTaskContext, TrustedCall};
+use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -31,18 +31,20 @@ pub(crate) struct IdentityVerificationHandler<
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
+	O: EnclaveOnChainOCallApi,
 > {
 	pub(crate) req: IdentityVerificationRequest,
-	pub(crate) context: Arc<StfTaskContext<K, A, S, H>>,
+	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
 }
 
-impl<K, A, S, H> TaskHandler for IdentityVerificationHandler<K, A, S, H>
+impl<K, A, S, H, O> TaskHandler for IdentityVerificationHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi,
 {
 	type Error = IMPError;
 	type Result = ();
