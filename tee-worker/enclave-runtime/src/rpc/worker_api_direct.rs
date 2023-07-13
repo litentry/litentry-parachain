@@ -218,6 +218,25 @@ where
 		Ok(json!(json_value))
 	});
 
+	// state_getRuntimeVersion
+	let get_mrenclave_name: &str = "get_mrenclave";
+	io.add_sync_method(get_mrenclave_name, |_: Params| {
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
+			Ok(mrenclave) => RpcReturnValue {
+				do_watch: false,
+				value: mrenclave.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex(),
+			Err(error) => {
+				let error_msg: String =
+					format!("Could not get current mrenclave due to: {}", error);
+				compute_hex_encoded_return_error(error_msg.as_str())
+			},
+		};
+		Ok(json!(json_value))
+	});
+
 	if cfg!(not(feature = "production")) {
 		// state_updateScheduledEnclave
 		// params: sidechainBlockNumber, hex encoded mrenclave
