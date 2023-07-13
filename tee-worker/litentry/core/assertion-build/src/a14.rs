@@ -33,7 +33,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use lc_data_providers::{build_client, G_DATA_PROVIDERS};
+use lc_data_providers::{build_client, GLOBAL_DATA_PROVIDER_CONFIG};
 use rust_base58::ToBase58;
 use serde::{Deserialize, Serialize};
 use ss58_registry::Ss58AddressFormat;
@@ -119,7 +119,7 @@ impl A14Client {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().achainable_rest_key.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_rest_key.clone().as_str(),
 		);
 		let client =
 			build_client("https://label-production.graph.tdf-labs.io/v1/run/label/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
@@ -145,7 +145,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	// achainable expects polkadot addresses (those start with 1...)
 	let mut polkadot_addresses = vec![];
-	for identity in &req.vec_identity {
+	for identity in &req.identities {
 		if let Identity::Substrate(address) = identity.0 {
 			let address = ss58_address_of(address.as_ref(), "polkadot")
 				.map_err(|_| Error::RequestVCFailed(Assertion::A14, ErrorDetail::ParseError))?;

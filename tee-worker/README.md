@@ -10,9 +10,9 @@ source /opt/intel/sgxsdk/environment
 # run clean if only SGX_MODE change
 make clean
 make SGX_MODE=SW
-./local-setup/launch.py local-setup/github-action-config-one-worker.json
+./local-setup/launch.py local-setup/development-worker.json local-docker
 # run the ts test script below if container started
-cd  ./tee-worker/ts-tests
+cd ./tee-worker/ts-tests
 yarn
 yarn run test-identity:local
 # other ts test
