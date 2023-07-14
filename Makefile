@@ -229,7 +229,7 @@ update:
 shellcheck:
 	@set -e
 	@echo "checking parachain scripts..."
-	@find scripts -name "*.sh" | xargs shellcheck -S warning
+	@find scripts/ -name "*.sh" | xargs shellcheck -S warning
 	@echo "checking tee-worker scripts..."
 	@find tee-worker/scripts/litentry/ -name "*.sh" | xargs shellcheck -S warning
 	@echo "Ok"

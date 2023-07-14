@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export ROOTDIR=$(git rev-parse --show-toplevel)
-
+ROOTDIR=$(git rev-parse --show-toplevel)
+export ROOTDIR
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -111,7 +111,7 @@ function restart(){
 }
 
 function stop_running_services() {
-  cd ~/.config/systemd/user
+  cd ~/.config/systemd/user || exit 
   if [ "$ONLY_WORKER" = true ]; then
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
@@ -138,7 +138,7 @@ function restart_parachain() {
   export TMPDIR=/tmp/parachain_dev
   [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 
-  cd "$ROOTDIR"
+  cd "$ROOTDIR" || exit
   PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_specs/$CHAIN.rs  | grep u32 | sed 's/.* = //;s/\;//')
   export PARACHAIN_ID
   echo "Parachain ID: $PARACHAIN_ID"
@@ -175,7 +175,7 @@ function restart_parachain() {
     exit 1
   fi
 
-  cd "$TMPDIR"
+  cd "$TMPDIR" || exit 
 
   echo "starting dev network with binaries ..."
   ROCOCO_CHAINSPEC=rococo-local-chain-spec.json
@@ -236,7 +236,7 @@ function restart_parachain() {
 
 function register_parachain() {
   echo "register parathread now ..."
-  cd "$ROOTDIR/ts-tests"
+  cd "$ROOTDIR/ts-tests" || exit 
   if [[ -z "${NODE_ENV}" ]]; then
       echo "NODE_ENV=ci" > .env
   else
@@ -249,7 +249,7 @@ function register_parachain() {
   echo "upgrade parathread to parachain now ..."
   # Wait for 90s to allow onboarding finish, after that we do the upgrade
   sleep 90
-  cd "$ROOTDIR/ts-tests"
+  cd "$ROOTDIR/ts-tests" || exit 
   if [[ -z "${NODE_ENV}" ]]; then
       echo "NODE_ENV=ci" > .env
   else
@@ -269,16 +269,16 @@ setup_working_dir() {
 
     local INTEL_KEY=$CONFIG_DIR/key_production.txt
     local INTEL_SPID=$CONFIG_DIR/spid_production.txt
-    local MODE_CONFIG=$CONFIG_DIR/mode_config.json
 
     source_dir=$1
     target_dir=$2
 
-    cd $source_dir
+    cd $source_dir || exit
     ./integritee-service signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
     echo "Enclave account is prepared inside enclave_account.txt"
 
-    export ENCLAVE_ACCOUNT=$(cat enclave_account.txt)
+    ENCLAVE_ACCOUNT=$(cat enclave_account.txt)
+    export ENCLAVE_ACCOUNT
     echo "Enclave Account: $ENCLAVE_ACCOUNT"
 
     optional=("key.txt" "spid.txt")
@@ -311,8 +311,7 @@ setup_working_dir() {
 
 function restart_worker() {
   # Need to make sure we have the JSON
-  cd $ROOTDIR
-  commands=()
+  cd $ROOTDIR || exit 
   worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
   for ((i = 0; i < worker_count; i++)); do
@@ -325,11 +324,11 @@ function restart_worker() {
 
     # Transfer balance to the enclave account that is generated
     echo "Transferring balance to the enclave account"
-    cd $ROOTDIR/scripts/ts-utils/
+    cd $ROOTDIR/scripts/ts-utils/ || exit 
     yarn install
     npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
 
-    cd $ROOTDIR/tee-worker
+    cd $ROOTDIR/tee-worker || exit 
 
     source=$(echo "$CONFIG" | jq -r ".workers[$i].source")
     flags=$(echo "$CONFIG" | jq -r ".workers[$i].flags[]")
@@ -359,7 +358,7 @@ function restart_worker() {
     cp -r "worker${i}.service" ~/.config/systemd/user
     systemctl --user daemon-reload
     echo "Starting worker service"
-    cd ~/.config/systemd/user/
+    cd ~/.config/systemd/user/ || exit 
     systemctl --user start "worker${i}".service
   done
 }
@@ -367,7 +366,7 @@ function restart_worker() {
 # Function responsible for upgrading worker
 function upgrade_worker(){
   echo "Upgrading Worker"
-  cd $ROOTDIR/tee-worker
+  cd $ROOTDIR/tee-worker || exit 
   echo "Fetching New MRENCLAVE Value"
   output=$(make mrenclave 2>&1)
   if [[ $? -eq 0 ]]; then
@@ -392,7 +391,7 @@ function upgrade_worker(){
   latest_parentchain_sync_block
 
   echo "Setting up the new Worker on Chain"
-  cd $ROOTDIR/scripts/ts-utils/
+  cd $ROOTDIR/scripts/ts-utils/ || exit 
   yarn install
   npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
 
@@ -403,8 +402,7 @@ function upgrade_worker(){
   migrate_worker
 
 
-  cd $ROOTDIR
-  commands=()
+  cd $ROOTDIR || exit 
   worker_count=$(echo "$CONFIG" | jq '.workers | length')
   echo "Worker Count is: ${worker_count}"
 
@@ -468,7 +466,7 @@ function upgrade_worker(){
       cp -r "worker${i}.service" ~/.config/systemd/user
       systemctl --user daemon-reload
       echo "Starting worker service"
-      cd ~/.config/systemd/user/
+      cd ~/.config/systemd/user/ || exit 
       systemctl --user start "worker${i}".service
     done
 }
@@ -493,7 +491,7 @@ function stop_old_worker(){
 }
 
 function migrate_worker(){
-  cd $ROOTDIR/tee-worker
+  cd $ROOTDIR/tee-worker || exit 
   # Copy integritee-service binary and enclave_signed.so to ./tmp/w0
   cp ./bin/integritee-service ./tmp/w0
   cp ./bin/enclave.signed.so  ./tmp/w0
@@ -548,11 +546,11 @@ function build_parachain(){
     docker rm -v $img_id
   else
     if [ "$PRODUCTION" = 1 ]; then
-      cd $ROOTDIR
+      cd $ROOTDIR || exit 
       # It builds without the `tee-dev` feature
       make "build-runtime-$CHAIN"
     else
-      cd $ROOTDIR
+      cd $ROOTDIR || exit 
       make build-node
     fi
   fi
@@ -560,11 +558,11 @@ function build_parachain(){
 
 function build_worker(){
   if [ "$PRODUCTION" = 1 ]; then
-    cd $ROOTDIR/tee-worker/
+    cd $ROOTDIR/tee-worker/ || exit 
     source /opt/intel/sgxsdk/environment
     SGX_COMMERCIAL_KEY=$ROOTDIR/tee-worker/enclave-runtime/Enclave_private.pem SGX_PRODUCTION=1 make
   else
-    cd $ROOTDIR/tee-worker/
+    cd $ROOTDIR/tee-worker/ || exit 
     source /opt/intel/sgxsdk/environment
     # It builds in only H/W mode when Non-Production
     make
@@ -573,11 +571,9 @@ function build_worker(){
 }
 
 # Default values
-verbose=false
 build=false
 discard=false
 config=""
-auto_start=false
 export CHAIN=rococo
 export ONLY_WORKER=false
 export PARACHAIN_HOST="localhost"
@@ -621,7 +617,7 @@ while [[ $# -gt 0 ]]; do
       export PARACHAIN_PORT="$2"
       shift
       ;;
-    -h| --parachain-host)
+    -z| --parachain-host)
       export PARACHAIN_HOST="$2"
       shift
       ;;
@@ -649,7 +645,8 @@ if [ -n "$config" ]; then
   echo "Config file: $config"
 fi
 
-export CONFIG=$(cat $config)
+CONFIG=$(cat $config)
+export CONFIG
 
 # Move log files to log-backup
 if [ -d "$ROOTDIR/tee-worker/log" ]; then
@@ -686,7 +683,7 @@ fi
 
 # Get old MRENCLAVE
 if [ "$action" = "upgrade-worker" ]; then
-  cd $ROOTDIR/tee-worker
+  cd $ROOTDIR/tee-worker || exit 
   output=$(make mrenclave 2>&1)
   if [[ $? -eq 0 ]]; then
     mrenclave_value=$(echo "$output" | awk '{print $2}')
@@ -698,8 +695,9 @@ if [ "$action" = "upgrade-worker" ]; then
   fi
 
   # Fetch Base58 value for MRENCLAVE
-  cd $ROOTDIR/tee-worker/bin
-  export OLD_SHARD=$(./integritee-service mrenclave)
+  cd $ROOTDIR/tee-worker/bin || exit 
+  OLD_SHARD=$(./integritee-service mrenclave)
+  export OLD_SHARD
   echo "Old Shard value: ${OLD_SHARD}"
 fi
 
