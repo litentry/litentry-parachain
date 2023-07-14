@@ -193,8 +193,10 @@ export interface TrustedCall extends Enum {
             H256
         ]
     >;
-    readonly isRemoveIdentity: boolean;
-    readonly asRemoveIdentity: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]>;
+    readonly isDeactivateIdentity: boolean;
+    readonly asDeactivateIdentity: ITuple<
+        [LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]
+    >;
     readonly isRequestVc: boolean;
     readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, H256]>;
     readonly isSetIdentityNetworks: boolean;
@@ -208,7 +210,7 @@ export interface TrustedCall extends Enum {
         | "BalanceShield"
         | "SetUserShieldingKey"
         | "LinkIdentity"
-        | "RemoveIdentity"
+        | "DeactivateIdentity"
         | "RequestVc"
         | "SetIdentityNetworks";
 }

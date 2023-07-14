@@ -55,7 +55,7 @@ export default {
                     "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
                 link_identity:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
-                remove_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
+                deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
                 set_identity_networks:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)",

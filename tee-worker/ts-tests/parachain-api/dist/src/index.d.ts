@@ -3,7 +3,15 @@ import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "parachain-api/interfaces";
+export type {
+    Assertion,
+    LitentryIdentity,
+    LitentryValidationData,
+    Web3Network,
+    WorkerRpcReturnValue,
+    TrustedCallSigned,
+    Getter,
+} from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -59,7 +67,7 @@ export declare const definitions: {
                 balance_shield: string;
                 set_user_shielding_key: string;
                 link_identity: string;
-                remove_identity: string;
+                deactivate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
             };

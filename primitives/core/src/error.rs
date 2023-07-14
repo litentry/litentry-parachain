@@ -84,7 +84,8 @@ pub enum IMPError {
 	// errors when executing individual error
 	SetUserShieldingKeyFailed(ErrorDetail),
 	LinkIdentityFailed(ErrorDetail),
-	RemoveIdentityFailed(ErrorDetail),
+	DeactivateIdentityFailed(ErrorDetail),
+	ActivateIdentityFailed(ErrorDetail),
 	// scheduled encalve import error
 	ImportScheduledEnclaveFailed,
 

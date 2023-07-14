@@ -2619,8 +2619,12 @@ declare module "@polkadot/types/lookup" {
         readonly asLinkIdentityRequested: {
             readonly shard: H256;
         } & Struct;
-        readonly isRemoveIdentityRequested: boolean;
-        readonly asRemoveIdentityRequested: {
+        readonly isDeactivateIdentityRequested: boolean;
+        readonly asDeactivateIdentityRequested: {
+            readonly shard: H256;
+        } & Struct;
+        readonly isActivateIdentityRequested: boolean;
+        readonly asActivateIdentityRequested: {
             readonly shard: H256;
         } & Struct;
         readonly isSetUserShieldingKeyRequested: boolean;
@@ -2640,8 +2644,14 @@ declare module "@polkadot/types/lookup" {
             readonly idGraph: CorePrimitivesKeyAesOutput;
             readonly reqExtHash: H256;
         } & Struct;
-        readonly isIdentityRemoved: boolean;
-        readonly asIdentityRemoved: {
+        readonly isIdentityDeactivated: boolean;
+        readonly asIdentityDeactivated: {
+            readonly account: AccountId32;
+            readonly identity: CorePrimitivesKeyAesOutput;
+            readonly reqExtHash: H256;
+        } & Struct;
+        readonly isIdentityActivated: boolean;
+        readonly asIdentityActivated: {
             readonly account: AccountId32;
             readonly identity: CorePrimitivesKeyAesOutput;
             readonly reqExtHash: H256;
@@ -2658,8 +2668,14 @@ declare module "@polkadot/types/lookup" {
             readonly detail: CorePrimitivesErrorErrorDetail;
             readonly reqExtHash: H256;
         } & Struct;
-        readonly isRemoveIdentityFailed: boolean;
-        readonly asRemoveIdentityFailed: {
+        readonly isDeactivateIdentityFailed: boolean;
+        readonly asDeactivateIdentityFailed: {
+            readonly account: Option<AccountId32>;
+            readonly detail: CorePrimitivesErrorErrorDetail;
+            readonly reqExtHash: H256;
+        } & Struct;
+        readonly isActivateIdentityFailed: boolean;
+        readonly asActivateIdentityFailed: {
             readonly account: Option<AccountId32>;
             readonly detail: CorePrimitivesErrorErrorDetail;
             readonly reqExtHash: H256;
@@ -2675,14 +2691,17 @@ declare module "@polkadot/types/lookup" {
             | "DelegateeAdded"
             | "DelegateeRemoved"
             | "LinkIdentityRequested"
-            | "RemoveIdentityRequested"
+            | "DeactivateIdentityRequested"
+            | "ActivateIdentityRequested"
             | "SetUserShieldingKeyRequested"
             | "UserShieldingKeySet"
             | "IdentityLinked"
-            | "IdentityRemoved"
+            | "IdentityDeactivated"
+            | "IdentityActivated"
             | "SetUserShieldingKeyFailed"
             | "LinkIdentityFailed"
-            | "RemoveIdentityFailed"
+            | "DeactivateIdentityFailed"
+            | "ActivateIdentityFailed"
             | "ImportScheduledEnclaveFailed"
             | "UnclassifiedError";
     }
@@ -5000,8 +5019,13 @@ declare module "@polkadot/types/lookup" {
             readonly encryptedWeb3networks: Bytes;
             readonly nonce: U8aFixed;
         } & Struct;
-        readonly isRemoveIdentity: boolean;
-        readonly asRemoveIdentity: {
+        readonly isDeactivateIdentity: boolean;
+        readonly asDeactivateIdentity: {
+            readonly shard: H256;
+            readonly encryptedIdentity: Bytes;
+        } & Struct;
+        readonly isActivateIdentity: boolean;
+        readonly asActivateIdentity: {
             readonly shard: H256;
             readonly encryptedIdentity: Bytes;
         } & Struct;
@@ -5018,8 +5042,14 @@ declare module "@polkadot/types/lookup" {
             readonly idGraph: CorePrimitivesKeyAesOutput;
             readonly reqExtHash: H256;
         } & Struct;
-        readonly isIdentityRemoved: boolean;
-        readonly asIdentityRemoved: {
+        readonly isIdentityDeactivated: boolean;
+        readonly asIdentityDeactivated: {
+            readonly account: AccountId32;
+            readonly identity: CorePrimitivesKeyAesOutput;
+            readonly reqExtHash: H256;
+        } & Struct;
+        readonly isIdentityActivated: boolean;
+        readonly asIdentityActivated: {
             readonly account: AccountId32;
             readonly identity: CorePrimitivesKeyAesOutput;
             readonly reqExtHash: H256;
@@ -5035,10 +5065,12 @@ declare module "@polkadot/types/lookup" {
             | "RemoveDelegatee"
             | "SetUserShieldingKey"
             | "LinkIdentity"
-            | "RemoveIdentity"
+            | "DeactivateIdentity"
+            | "ActivateIdentity"
             | "UserShieldingKeySet"
             | "IdentityLinked"
-            | "IdentityRemoved"
+            | "IdentityDeactivated"
+            | "IdentityActivated"
             | "SomeError";
     }
 
@@ -5048,15 +5080,18 @@ declare module "@polkadot/types/lookup" {
         readonly asSetUserShieldingKeyFailed: CorePrimitivesErrorErrorDetail;
         readonly isLinkIdentityFailed: boolean;
         readonly asLinkIdentityFailed: CorePrimitivesErrorErrorDetail;
-        readonly isRemoveIdentityFailed: boolean;
-        readonly asRemoveIdentityFailed: CorePrimitivesErrorErrorDetail;
+        readonly isDeactivateIdentityFailed: boolean;
+        readonly asDeactivateIdentityFailed: CorePrimitivesErrorErrorDetail;
+        readonly isActivateIdentityFailed: boolean;
+        readonly asActivateIdentityFailed: CorePrimitivesErrorErrorDetail;
         readonly isImportScheduledEnclaveFailed: boolean;
         readonly isUnclassifiedError: boolean;
         readonly asUnclassifiedError: CorePrimitivesErrorErrorDetail;
         readonly type:
             | "SetUserShieldingKeyFailed"
             | "LinkIdentityFailed"
-            | "RemoveIdentityFailed"
+            | "DeactivateIdentityFailed"
+            | "ActivateIdentityFailed"
             | "ImportScheduledEnclaveFailed"
             | "UnclassifiedError";
     }

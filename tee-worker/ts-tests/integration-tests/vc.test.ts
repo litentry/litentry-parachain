@@ -5,7 +5,8 @@ import {
     checkUserShieldingKeys,
     buildIdentityTxs,
     handleIdentityEvents,
-    handleVcEvents, buildIdentityFromKeypair,
+    handleVcEvents,
+    buildIdentityFromKeypair,
 } from './common/utils';
 import { step } from 'mocha-steps';
 import type { Assertion, IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';

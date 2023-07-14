@@ -31,12 +31,12 @@ use std::vec::Vec;
 use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct RemoveIdentityArgs {
+pub struct ActivateIdentityArgs {
 	shard: ShardIdentifier,
 	encrypted_identity: Vec<u8>,
 }
 
-impl RemoveIdentityArgs {
+impl ActivateIdentityArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
@@ -49,13 +49,13 @@ impl RemoveIdentityArgs {
 		if let Some(address) = address {
 			let account = AccountIdLookup::lookup(address)?;
 			debug!(
-				"execute indirect call: RemoveIdentity, who: {:?}, identity: {:?}",
+				"execute indirect call: ActivateIdentity, who: {:?}, identity: {:?}",
 				account_id_to_string(&account),
 				identity
 			);
 
 			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call = TrustedCall::remove_identity(
+			let trusted_call = TrustedCall::activate_identity(
 				enclave_account_id.into(),
 				account.into(),
 				identity,
@@ -71,16 +71,17 @@ impl RemoveIdentityArgs {
 	}
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveIdentityArgs {
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for ActivateIdentityArgs {
 	type Args = (Option<GenericAddress>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
+		log::info!("Dispatching activate identity call!");
 		let (address, hash) = args;
-		let e = Error::IMPHandlingError(IMPError::RemoveIdentityFailed(ErrorDetail::ImportError));
+		let e = Error::IMPHandlingError(IMPError::ActivateIdentityFailed(ErrorDetail::ImportError));
 		if self.internal_dispatch(executor, address, hash).is_err() {
 			if let Err(internal_e) =
 				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
 			{
-				log::warn!("fail to handle internal errors in remove_identity: {:?}", internal_e);
+				log::warn!("fail to handle internal errors in activate_identity: {:?}", internal_e);
 			}
 			return Err(e)
 		}

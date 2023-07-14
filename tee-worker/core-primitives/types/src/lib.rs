@@ -62,8 +62,11 @@ pub type LinkIdentityParams =
 	(ShardIdentifier, AccountId, Vec<u8>, Vec<u8>, UserShieldingKeyNonceType);
 pub type LinkIdentityFn = (CallIndex, LinkIdentityParams);
 
-pub type RemoveIdentityParams = (ShardIdentifier, Vec<u8>);
-pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParams);
+pub type DeactivateIdentityParams = (ShardIdentifier, Vec<u8>);
+pub type DeactivateIdentityFn = (CallIndex, DeactivateIdentityParams);
+
+pub type ActivateIdentityParams = (ShardIdentifier, Vec<u8>);
+pub type ActivateIdentityFn = (CallIndex, DeactivateIdentityParams);
 
 // pallet VCMP
 pub type RequestVCParams = (ShardIdentifier, Assertion);
@@ -74,7 +77,8 @@ pub type RequestVCFn = (CallIndex, RequestVCParams);
 pub enum SupportedBatchCallParams {
 	SetUserShieldingKey(SetUserShieldingKeyParams),
 	LinkIdentity(LinkIdentityParams),
-	RemoveIdentity(RemoveIdentityParams),
+	DeactivateIdentity(DeactivateIdentityParams),
+	ActivateIdentity(ActivateIdentityParams),
 	RequestVC(RequestVCParams),
 }
 

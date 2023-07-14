@@ -215,7 +215,6 @@ export function createSignedTrustedCallSetIdentityNetworks(
     );
 }
 
-
 export function createSignedTrustedGetterUserShieldingKey(
     parachainApi: ApiPromise,
     signer: KeyringPair,
