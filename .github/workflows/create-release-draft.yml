@@ -13,6 +13,11 @@ on:
         description: runtime
         required: true
         default: true
+      release_enclave:
+        type: boolean
+        description: enclave
+        required: true
+        default: true
       release_tag:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
@@ -49,6 +54,10 @@ jobs:
             release_type="client"
           elif [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
             release_type="runtime"
+          elif [ "${{ github.event.inputs.release_enclave }}" = "true" ]; then
+            release_type="enclave"
+          elif [ "${{ github.event.inputs.release_enclave }}" = "true" ] && [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
+            release_type="all"
           else
             echo "::error::Please select at least one release type."
             exit 1
@@ -147,6 +156,27 @@ jobs:
             litentry-collator
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
+
+  ## Build the enclave and package config files
+  generate_package_and_artifact:
+    runs-on: prod-tee-1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.manual_trigger }}
+
+      - name: Generate Package
+        run: | 
+          source /opt/intel/sgxsdk/environment 
+          ./tee-worker/scripts/litentry/release/generate_release_pkg.sh
+          
+      - name: Archive Package
+        uses: actions/upload-artifact@v2
+        with:
+          name: tee-worker-${{ env.RELEASE_TAG }}.tar.gz
+          path: ./tee-worker/target/*.tar.gz
 
   ## test again the built docker image ##
   run-ts-tests:
