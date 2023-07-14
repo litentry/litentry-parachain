@@ -31,17 +31,17 @@ jobs:
           path: ./tee-worker/target/*.tar.gz
 
       - name: Set MRENCLAVE 
-        id: vars
+        id: mrenclave
         run: | 
          cd tee-worker 
          make mrenclave
 
       - name: Set RUSTC version 
-        id: vars 
+        id: rustc 
         run: | 
          rustup show 
 
       - name: Get Size of package 
-        id: vars 
+        id: size
         run: | 
          echo "Getting the size of package"  
