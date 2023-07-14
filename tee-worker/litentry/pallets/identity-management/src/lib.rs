@@ -135,7 +135,7 @@ pub mod pallet {
 
 			let prime_id = Self::build_prime_identity(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
-				// TODO: shall we activate all available networks for the prime id?
+				// For the moment, we activate all available (matching) networks for the prime id
 				let web3networks = all_substrate_web3networks();
 				let context = <IdentityContext<T>>::new(
 					<frame_system::Pallet<T>>::block_number(),
@@ -194,6 +194,28 @@ pub mod pallet {
 			Self::remove_identity_with_limit(&who, &identity);
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
 			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(15_000_000)]
+		pub fn set_identity_networks(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+			identity: Identity,
+			web3networks: Vec<Web3Network>,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
+				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
+				ensure!(
+					identity.matches_web3networks(web3networks.as_ref()),
+					Error::<T>::WrongWeb3NetworkTypes
+				);
+				c.set_web3networks(web3networks);
+				*context = Some(c);
+				Ok(())
+			})
 		}
 	}
 

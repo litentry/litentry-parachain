@@ -21,7 +21,10 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-use crate::{helpers::ensure_enclave_signer_account, Runtime, StfError, System, TrustedOperation};
+use crate::{
+	helpers::{ensure_enclave_signer, ensure_self},
+	Runtime, StfError, System, TrustedOperation,
+};
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
@@ -120,6 +123,11 @@ pub enum TrustedCall {
 	),
 	remove_identity(AccountId, AccountId, Identity, H256),
 	request_vc(AccountId, AccountId, Assertion, H256),
+	// no `H256` in parameter because:
+	// - it only works in DI now
+	// - the response is synchronous
+	set_identity_networks(AccountId, AccountId, Identity, Vec<Web3Network>),
+
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	link_identity_callback(AccountId, AccountId, Identity, Vec<Web3Network>, H256),
@@ -149,6 +157,7 @@ impl TrustedCall {
 			TrustedCall::link_identity(account, ..) => account,
 			TrustedCall::remove_identity(account, ..) => account,
 			TrustedCall::request_vc(account, ..) => account,
+			TrustedCall::set_identity_networks(account, ..) => account,
 			TrustedCall::link_identity_callback(account, ..) => account,
 			TrustedCall::request_vc_callback(account, ..) => account,
 			TrustedCall::handle_imp_error(account, ..) => account,
@@ -249,8 +258,11 @@ where
 	// see discussion in https://github.com/integritee-network/worker/issues/1232
 	// my current thoughts are:
 	// - we should return Err() if the STF execution fails
-	// - the failed top should be removed from the tool
+	// - the failed top should be removed from the pool
 	// - however, the failed top hash needs to be included in the sidechain block
+	//
+	// Update2:
+	// for DI trusted calls we should return Err() to signal the errors synchronously
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
@@ -331,7 +343,7 @@ where
 				Ok(())
 			},
 			TrustedCall::balance_shield(enclave_account, who, value) => {
-				ensure_enclave_signer_account(&enclave_account)?;
+				ensure_enclave_signer(&enclave_account)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
@@ -654,6 +666,18 @@ where
 				}
 				Ok(())
 			},
+			TrustedCall::set_identity_networks(signer, who, identity, web3networks) => {
+				debug!("set_identity_networks, networks: {:?}", web3networks);
+				// only support DI requests from the signer but we leave the room for changes
+				ensure!(
+					ensure_self(&signer, &who),
+					Self::Error::Dispatch("Unauthorized signer".to_string())
+				);
+				IMTCall::set_identity_networks { who, identity, web3networks }
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
+				Ok(())
+			},
 			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
@@ -693,6 +717,7 @@ where
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>

@@ -2,13 +2,17 @@ import { ApiPromise } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
+import { TypeRegistry } from '@polkadot/types';
+import { Bytes } from '@polkadot/types-codec';
 import { PubicKeyJson } from '../../common/type-definitions';
-import { WorkerRpcReturnValue } from 'parachain-api';
+import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
 import { encryptWithTeeShieldingKey } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { u32, Option, u8, Vector } from 'scale-ts';
+import { Index } from '@polkadot/types/interfaces';
+import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 
 export function toBalance(amountInt: number) {
     return new BN(amountInt).mul(new BN(10).pow(new BN(12)));
@@ -74,7 +78,7 @@ export const createSignedTrustedCall = (
     nonce: Codec,
     params: any,
     withWrappedBytes = false
-) => {
+): TrustedCallSigned => {
     const [variant, argType] = trustedCall;
     const call = parachainApi.createType('TrustedCall', {
         [variant]: parachainApi.createType(argType, params),
@@ -95,7 +99,7 @@ export const createSignedTrustedCall = (
         call: call,
         index: nonce,
         signature: signature,
-    });
+    }) as unknown as TrustedCallSigned;
 };
 
 export const createSignedTrustedGetter = (
@@ -190,19 +194,37 @@ export function createSignedTrustedCallLinkIdentity(
     );
 }
 
-export function createSignedTrustedGetterUserShieldingKey(parachainApi: ApiPromise, who: KeyringPair) {
+export function createSignedTrustedCallSetIdentityNetworks(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    who: KeyringPair,
+    identity: string,
+    web3networks: string
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        ['set_identity_networks', '(AccountId, AccountId, LitentryIdentity, Vec<Web3Network>)'],
+        who,
+        mrenclave,
+        nonce,
+        [who.address, who.address, identity, web3networks]
+    );
+}
+
+export function createSignedTrustedGetterUserShieldingKey(parachainApi: ApiPromise, who: KeyringPair): Getter {
     const getterSigned = createSignedTrustedGetter(
         parachainApi,
         ['user_shielding_key', '(AccountId)'],
         who,
         who.address
     );
-    return parachainApi.createType('Getter', { trusted: getterSigned });
+    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
 
-export function createSignedTrustedGetterIdGraph(parachainApi: ApiPromise, who: KeyringPair) {
+export function createSignedTrustedGetterIdGraph(parachainApi: ApiPromise, who: KeyringPair): Getter {
     const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(AccountId)'], who, who.address);
-    return parachainApi.createType('Getter', { trusted: getterSigned });
+    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
 
 export const getSidechainNonce = async (
@@ -211,12 +233,12 @@ export const getSidechainNonce = async (
     mrenclave: string,
     teeShieldingKey: KeyObject,
     who: string
-) => {
+): Promise<Index> => {
     const getterPublic = createPublicGetter(parachainApi, ['nonce', '(AccountId)'], who);
-    const getter = parachainApi.createType('Getter', { public: getterPublic });
+    const getter = parachainApi.createType('Getter', { public: getterPublic }) as unknown as Getter;
     const nonce = await sendRequestFromGetter(wsp, parachainApi, mrenclave, teeShieldingKey, getter);
     const nonceValue = decodeNonce(nonce.value.toHex());
-    return parachainApi.createType('Index', nonceValue);
+    return parachainApi.createType('Index', nonceValue) as Index;
 };
 
 export const sendRequestFromTrustedCall = async (
@@ -224,7 +246,7 @@ export const sendRequestFromTrustedCall = async (
     parachainApi: ApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    call: Codec
+    call: TrustedCallSigned
 ) => {
     // construct trusted operation
     const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
@@ -252,7 +274,7 @@ export const sendRequestFromGetter = async (
     parachainApi: ApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    getter: Codec
+    getter: Getter
 ): Promise<WorkerRpcReturnValue> => {
     // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
     //            this is what `state_executeGetter` expects in rust
@@ -308,4 +330,12 @@ export function decodeNonce(nonceInHex: string) {
     const encodedNonce = optionalType.dec(nonceInHex) as number[];
     const nonce = u32.dec(new Uint8Array(encodedNonce));
     return nonce;
+}
+
+export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
+    const idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(value.toHex()));
+    return sidechainRegistry.createType(
+        'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+        idgraphBytes.unwrap()
+    ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
 }
