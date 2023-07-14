@@ -47,7 +47,7 @@ jobs:
          echo "Getting the size of package"
          echo "SIZE=1069" >> $GITHUB_ENV
 
- set_env_output: 
+  set_env_output:
    runs-on: prod-tee-1
    needs: generate_package_and_artifact
 
