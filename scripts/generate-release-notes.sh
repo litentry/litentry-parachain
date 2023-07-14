@@ -143,6 +143,23 @@ sha1sum of genesis wasm   : $GENESIS_WASM_HASH
 EOF
 fi
 
+# release notes for enclave binary 
+if [ "$2" != "runtime" ] && [ "$2" != "client" ] && [ "$2" != "both"]; then 
+   echo "Generating Release Notes for Enclave" 
+   cat << EOF >> "$1" 
+## TEE Worker Release 
+
+<CODEBLOCK> 
+version: 
+size: 
+rustc: 
+mrenclave: 
+upstream_commit: 
+<CODEBLOCK> 
+
+EOF 
+fi 
+
 # restore ``` in markdown doc
 # use -i.bak for compatibility for MacOS and Linux
 sed -i.bak 's/<CODEBLOCK>/```/g' "$1"
