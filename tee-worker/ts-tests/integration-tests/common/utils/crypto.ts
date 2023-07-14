@@ -17,7 +17,6 @@ export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext
 
 // A lazy version without aad. Append the tag to be consistent with rust implementation
 export function encryptWithAes(key: HexString, nonce: Uint8Array, cleartext: Buffer): HexString {
-
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce, {
         authTagLength: 16,

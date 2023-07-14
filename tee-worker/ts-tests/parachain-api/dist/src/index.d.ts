@@ -9,6 +9,8 @@ export type {
     LitentryValidationData,
     Web3Network,
     WorkerRpcReturnValue,
+    TrustedCallSigned,
+    Getter
 } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
@@ -67,6 +69,7 @@ export declare const definitions: {
                 link_identity: string;
                 remove_identity: string;
                 request_vc: string;
+                set_identity_networks: string;
             };
         };
         UserShieldingKeyType: string;

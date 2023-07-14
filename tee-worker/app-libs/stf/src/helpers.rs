@@ -90,7 +90,7 @@ pub fn enclave_signer_account<AccountId: Decode>() -> AccountId {
 }
 
 /// Ensures an account is a registered enclave account.
-pub fn ensure_enclave_signer_account<AccountId: Encode + Decode + PartialEq>(
+pub fn ensure_enclave_signer<AccountId: Encode + Decode + PartialEq>(
 	account: &AccountId,
 ) -> StfResult<()> {
 	let expected_enclave_account: AccountId = enclave_signer_account();
@@ -110,10 +110,20 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
-pub fn is_authorized_signer<AccountId: Encode + Decode + PartialEq>(
+pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
 	who: Option<AccountId>,
 ) -> bool {
+	match who {
+		Some(ref who) => signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who),
+		None => false,
+	}}
+
+pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
+	signer: &AccountId,
+	who: &AccountId,
+) -> bool {
+	signer == who
 	match who {
 		Some(ref who) => signer == &enclave_signer_account::<AccountId>() || signer == who,
 		None => false,

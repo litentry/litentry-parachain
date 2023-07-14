@@ -88,7 +88,10 @@ pub enum StfError {
 	#[display(fmt = "RequestVCFailed: {:?} {:?}", _0, _1)]
 	RequestVCFailed(Assertion, ErrorDetail),
 	SetScheduledMrEnclaveFailed,
+	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
+	SetIdentityNetworksFailed(ErrorDetail),
 	InvalidAccount,
+
 }
 
 impl From<MetadataError> for StfError {
