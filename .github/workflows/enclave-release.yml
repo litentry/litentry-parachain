@@ -35,11 +35,14 @@ jobs:
         run: | 
          cd tee-worker 
          make mrenclave
+         echo "mrenclave=$(make mrenclave)" >> $GITHUB_OUTPUT 
+
 
       - name: Set RUSTC version 
         id: rustc 
         run: | 
          rustup show 
+         echo "rustc_version=faisalversion" >> $GITHUB_OUTPUT 
 
       - name: Get Size of package 
         id: size
@@ -50,6 +53,8 @@ jobs:
 
     outputs:
       release_type: ${{ steps.size.outputs.release_type }}
+      mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
+      rustc_version: ${{ steps.rustc.outputs.rustc_version }}
 
   set_env_output:
    runs-on: prod-tee-1
@@ -71,4 +76,6 @@ jobs:
      - name: Check Envrionemnt Vars v1
        run: | 
         echo "${{ needs.generate_package_and_artifact.outputs.release_type }}"
+        echo "${{ needs.generate_package_and_artifact.outputs.mrenclave }}"
+        echo "${{ needs.generate_package_and_artifact.outputs.rustc_version }}"
          
