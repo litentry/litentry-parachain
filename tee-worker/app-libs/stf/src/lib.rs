@@ -91,7 +91,6 @@ pub enum StfError {
 	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
 	SetIdentityNetworksFailed(ErrorDetail),
 	InvalidAccount,
-
 }
 
 impl From<MetadataError> for StfError {

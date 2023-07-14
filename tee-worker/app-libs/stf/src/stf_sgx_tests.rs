@@ -23,7 +23,7 @@ use itp_stf_interface::{
 	StateCallInterface,
 };
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
-use litentry_primitives::{Identity, LitentryMultiSignature};
+use litentry_primitives::LitentryMultiSignature;
 use sp_core::{
 	ed25519::{Pair as Ed25519Pair, Signature as Ed25519Signature},
 	Pair,

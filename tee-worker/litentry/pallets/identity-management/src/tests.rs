@@ -210,21 +210,30 @@ fn remove_identity_works() {
 #[test]
 fn set_identity_networks_works() {
 	new_test_ext(false).execute_with(|| {
+		let who: Identity = BOB.into();
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
-		assert_ok!(IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key,));
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			shielding_key,
+		));
 		assert_noop!(
-			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_substrate_identity(),),
+			IMT::remove_identity(
+				RuntimeOrigin::signed(ALICE),
+				who.clone(),
+				alice_substrate_identity(),
+			),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
-			BOB,
+			who.clone(),
 			alice_substrate_identity(),
 			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_eq!(
-			IMT::id_graphs(BOB, alice_substrate_identity()).unwrap(),
+			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
 			IdentityContext {
 				link_block: 1,
 				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
@@ -235,12 +244,12 @@ fn set_identity_networks_works() {
 		let new_networks: _ = vec![Web3Network::Kusama, Web3Network::Khala];
 		assert_ok!(IMT::set_identity_networks(
 			RuntimeOrigin::signed(ALICE),
-			BOB,
+			who.clone(),
 			alice_substrate_identity(),
 			new_networks.clone(),
 		));
 		assert_eq!(
-			IMT::id_graphs(BOB, alice_substrate_identity()).unwrap().web3networks.to_vec(),
+			IMT::id_graphs(who, alice_substrate_identity()).unwrap().web3networks.to_vec(),
 			new_networks
 		);
 	})
@@ -249,21 +258,30 @@ fn set_identity_networks_works() {
 #[test]
 fn set_identity_networks_with_wrong_network_fails() {
 	new_test_ext(false).execute_with(|| {
+		let who: Identity = BOB.into();
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
-		assert_ok!(IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key,));
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			shielding_key,
+		));
 		assert_noop!(
-			IMT::remove_identity(RuntimeOrigin::signed(ALICE), BOB, alice_substrate_identity(),),
+			IMT::remove_identity(
+				RuntimeOrigin::signed(ALICE),
+				who.clone(),
+				alice_substrate_identity(),
+			),
 			Error::<Test>::IdentityNotExist
 		);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
-			BOB,
+			who.clone(),
 			alice_substrate_identity(),
 			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_eq!(
-			IMT::id_graphs(BOB, alice_substrate_identity()).unwrap(),
+			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
 			IdentityContext {
 				link_block: 1,
 				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
@@ -275,7 +293,7 @@ fn set_identity_networks_with_wrong_network_fails() {
 		assert_noop!(
 			IMT::set_identity_networks(
 				RuntimeOrigin::signed(ALICE),
-				BOB,
+				who,
 				alice_substrate_identity(),
 				new_networks,
 			),

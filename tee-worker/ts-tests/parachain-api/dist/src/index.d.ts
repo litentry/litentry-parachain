@@ -10,7 +10,7 @@ export type {
     Web3Network,
     WorkerRpcReturnValue,
     TrustedCallSigned,
-    Getter
+    Getter,
 } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";

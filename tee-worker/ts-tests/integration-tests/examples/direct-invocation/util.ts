@@ -245,7 +245,7 @@ export const getSidechainNonce = async (
     mrenclave: string,
     teeShieldingKey: KeyObject,
     subject: LitentryPrimitivesIdentity
-): Promise<Index => {
+): Promise<Index> => {
     const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject);
     const getter = parachainApi.createType('Getter', { public: getterPublic });
     const nonce = await sendRequestFromGetter(wsp, parachainApi, mrenclave, teeShieldingKey, getter);

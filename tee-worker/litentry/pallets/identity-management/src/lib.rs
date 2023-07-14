@@ -52,6 +52,7 @@ pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use litentry_primitives::all_evm_web3networks;
 	use log::{debug, warn};
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -132,10 +133,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
-			let prime_id = Self::build_prime_identity(&who)?;
+			let (prime_id, web3networks) = Self::build_prime_identity_with_networks(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
-				// For the moment, we activate all available (matching) networks for the prime id
-				let web3networks = all_substrate_web3networks();
 				let context = <IdentityContext<T>>::new(
 					<frame_system::Pallet<T>>::block_number(),
 					web3networks,
@@ -163,7 +162,7 @@ pub mod pallet {
 				!IDGraphs::<T>::contains_key(&who, &identity),
 				Error::<T>::IdentityAlreadyLinked
 			);
-			let prime_id = Self::build_prime_identity(&who)?;
+			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
 			ensure!(identity != prime_id, Error::<T>::LinkPrimeIdentityDisallowed);
 
 			ensure!(
@@ -187,7 +186,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			let prime_id = Self::build_prime_identity(&who)?;
+			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
 			ensure!(identity != prime_id, Error::<T>::RemovePrimeIdentityDisallowed);
 
 			Self::remove_identity_with_limit(&who, &identity);
@@ -199,7 +198,7 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn set_identity_networks(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			identity: Identity,
 			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
@@ -219,11 +218,15 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		// build the prime identity which might be substrate address32-based or evm address20-based
-		fn build_prime_identity(identity: &Identity) -> Result<Identity, DispatchError> {
+		// Build the prime identity which might be substrate address32-based or evm address20-based and related networks vec
+		// For the moment, return all available (matching) networks for the prime id
+		fn build_prime_identity_with_networks(
+			identity: &Identity,
+		) -> Result<(Identity, Vec<Web3Network>), DispatchError> {
 			match identity {
-				Identity::Substrate(address) => Ok(Identity::Substrate(*address)),
-				Identity::Evm(address) => Ok(Identity::Evm(*address)),
+				Identity::Substrate(address) =>
+					Ok((Identity::Substrate(*address), all_substrate_web3networks())),
+				Identity::Evm(address) => Ok((Identity::Evm(*address), all_evm_web3networks())),
 				_ => Err(Error::<T>::NotSupportedIdentity.into()),
 			}
 		}
