@@ -62,7 +62,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 						break
 					},
-				Err(e) => error!("Assertion A7 request polkadot_holder error: {:?}", e),
+				Err(e) => error!("Assertion A7 request is_holder error: {:?}", e),
 			}
 		}
 	}

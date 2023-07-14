@@ -62,7 +62,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 						break
 					},
-				Err(e) => error!("Assertion A11 request eth_holder error: {:?}", e),
+				Err(e) => error!("Assertion A11 request is_holder error: {:?}", e),
 			}
 		}
 	}

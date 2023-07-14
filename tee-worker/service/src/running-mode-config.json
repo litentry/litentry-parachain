@@ -7,7 +7,7 @@
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "http://localhost:9933"
     },
@@ -31,7 +31,7 @@
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": ""
     },
@@ -43,7 +43,7 @@
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "wss://tee-staging.litentry.io"
     }
