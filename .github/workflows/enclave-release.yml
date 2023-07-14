@@ -59,4 +59,7 @@ jobs:
 
      - name: Check Environment Variables 
        run: | 
-         echo "This size of the package is $SIZE" 
+         echo $SIZE
+         echo "$SIZE" 
+         echo "${SIZE}"
+         echo "This size of the package is ${SIZE}" 
