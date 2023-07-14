@@ -34,11 +34,7 @@ jobs:
         id: mrenclave
         run: | 
          cd tee-worker 
-         export output=$(make mrenclave 2>&1)
-         export mrenclave_value=$(echo "$output" | awk '{print $2}')
-         echo "MRENCLAVE value: $mrenclave_value" 
-         mrenclave_value="${mrenclave_value}"
-         echo "mrenclave=${mrenclave_value}" >> $GITHUB_OUTPUT 
+         echo "mrenclave=$(make mrenclave)" >> $GITHUB_OUTPUT 
 
 
       - name: Set RUSTC version 
