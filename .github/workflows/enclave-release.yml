@@ -47,6 +47,10 @@ jobs:
          echo "Getting the size of package"
          echo "SIZE=1069" >> $GITHUB_ENV
 
+      - run: echo "::set-output name=my_variable::hello world"
+        id: step1
+      - run: echo "job1 completed"
+
   set_env_output:
    runs-on: prod-tee-1
    needs: generate_package_and_artifact
@@ -63,3 +67,6 @@ jobs:
          echo "$SIZE" 
          echo "${SIZE}"
          echo "This size of the package is ${SIZE}" 
+
+     - name: Check Envrionemnt Vars v1
+       run: echo "${{ needs.generate_package_and_artifact.outputs.my_variable }}"
