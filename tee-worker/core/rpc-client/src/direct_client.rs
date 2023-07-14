@@ -58,7 +58,7 @@ pub trait DirectApi {
 	fn get_state_metadata_raw(&self) -> Result<String>;
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
 
-	fn get_mrenclave(&self) -> Result<MrEnclave>;
+	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
@@ -216,9 +216,9 @@ impl DirectApi for DirectClient {
 		decode_from_rpc_response::<u32>(&response_str)
 	}
 
-	fn get_mrenclave(&self) -> Result<MrEnclave> {
+	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
 		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call("get_mrenclave".to_string(), Default::default())?;
+			RpcRequest::compose_jsonrpc_call("state_getEnclave".to_string(), Default::default())?;
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
