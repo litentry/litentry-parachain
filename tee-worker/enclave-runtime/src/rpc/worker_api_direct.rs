@@ -218,9 +218,15 @@ where
 		Ok(json!(json_value))
 	});
 
+<<<<<<< HEAD
 	// state_getEnclave
 	let state_get_enclave_name: &str = "state_getEnclave";
 	io.add_sync_method(state_get_enclave_name, |_: Params| {
+=======
+	// get_mrenclave
+	let get_mrenclave_name: &str = "get_mrenclave";
+	io.add_sync_method(get_mrenclave_name, |_: Params| {
+>>>>>>> dev
 		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
 			Ok(mrenclave) => RpcReturnValue {
 				do_watch: false,
