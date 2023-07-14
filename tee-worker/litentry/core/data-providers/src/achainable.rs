@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, Error, HttpError, G_DATA_PROVIDERS};
+use crate::{build_client, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -50,10 +50,12 @@ impl AchainableClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().achainable_auth_key.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_auth_key.clone().as_str(),
 		);
-		let client =
-			build_client(G_DATA_PROVIDERS.read().unwrap().achainable_url.clone().as_str(), headers);
+		let client = build_client(
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_url.clone().as_str(),
+			headers,
+		);
 
 		AchainableClient { client }
 	}
@@ -699,7 +701,7 @@ impl RestPath<String> for ParamsAccount {
 mod tests {
 	use crate::achainable::{
 		AchainableClient, AchainableTagAccount, AchainableTagBalance, AchainableTagDeFi,
-		AchainableTagDotsama, AchainableTotalTransactions, G_DATA_PROVIDERS,
+		AchainableTagDotsama, AchainableTotalTransactions, GLOBAL_DATA_PROVIDER_CONFIG,
 	};
 	use lc_mock_server::{default_getter, run};
 	use litentry_primitives::Web3Network;
@@ -708,7 +710,7 @@ mod tests {
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_achainable_url(url);
+		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
 	}
 
 	#[test]

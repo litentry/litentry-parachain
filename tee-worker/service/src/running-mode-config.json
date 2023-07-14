@@ -2,7 +2,6 @@
     "dev": {
         "twitter_official_url": "https://api.twitter.com",
         "twitter_litentry_url": "http://54.255.182.249:9527",
-        "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
         "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",
@@ -14,7 +13,6 @@
     "mock": {
         "twitter_official_url": "http://localhost:19527",
         "twitter_litentry_url": "http://localhost:19527",
-        "twitter_auth_token_v1_1": "",
         "twitter_auth_token_v2": "",
         "discord_official_url": "http://localhost:19527",
         "discord_litentry_url": "http://localhost:19527",
@@ -26,7 +24,6 @@
     "prod": {
         "twitter_official_url": "https://api.twitter.com",
         "twitter_litentry_url": "",
-        "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
         "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "",
@@ -38,7 +35,6 @@
     "staging": {
         "twitter_official_url": "https://api.twitter.com",
         "twitter_litentry_url": "http://54.255.182.249:9527",
-        "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
         "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",

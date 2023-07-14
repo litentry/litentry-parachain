@@ -68,7 +68,6 @@ where
 					.or(twitter_official::query_retweeted_by())
 					.or(twitter_official::query_user_by_name())
 					.or(twitter_official::query_user_by_id())
-					.or(twitter_official::query_friendship())
 					.or(twitter_litentry::check_follow())
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())

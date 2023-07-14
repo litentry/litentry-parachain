@@ -34,7 +34,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let mut client = AchainableClient::new();
 	let mut total_txs: u64 = 0;
 
-	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.vec_identity);
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let mut networks_set: HashSet<Web3Network> = HashSet::new();
 	identities.iter().for_each(|(network, addresses)| {
 		networks_set.insert(*network);
@@ -62,7 +62,8 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			// In fact, it should never fail
+			// It should never fail because `req.assertion.get_supported_web3networks()`
+			// returns the vector which is converted from a BoundedVec
 			let bounded_web3networks =
 				req.assertion.get_supported_web3networks().try_into().unwrap();
 			Err(Error::RequestVCFailed(Assertion::A8(bounded_web3networks), e.into_error_detail()))

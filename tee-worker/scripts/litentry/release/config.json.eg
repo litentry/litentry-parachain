@@ -1,7 +1,6 @@
 {
     "twitter_official_url": "https://api.twitter.com",
     "twitter_litentry_url": "",
-    "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
     "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
     "discord_official_url": "https://discordapp.com",
     "discord_litentry_url": "",

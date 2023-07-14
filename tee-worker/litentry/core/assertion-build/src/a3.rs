@@ -58,7 +58,7 @@ pub fn build(
 	})?;
 
 	let mut client = DiscordLitentryClient::new();
-	for identity in &req.vec_identity {
+	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			if let Ok(response) = client.check_id_hubber(
 				guild_id.to_vec(),
@@ -105,14 +105,14 @@ mod tests {
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
-	use lc_data_providers::G_DATA_PROVIDERS;
+	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
 	use std::{format, vec, vec::Vec};
 
 	#[test]
 	fn build_a3_works() {
-		G_DATA_PROVIDERS
+		GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()
 			.set_discord_litentry_url("http://localhost:19527".to_string());
@@ -124,8 +124,8 @@ mod tests {
 		let channel_id_vec: Vec<u8> = format!("{}", channel_id_u).as_bytes().to_vec();
 		let role_id_vec: Vec<u8> = format!("{}", role_id_u).as_bytes().to_vec();
 
-		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
-		let vec_identity: Vec<IdentityNetworkTuple> =
+		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
+		let identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec.clone())), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
@@ -136,7 +136,7 @@ mod tests {
 			shard: ShardIdentifier::default(),
 			who: AccountId::from([0; 32]),
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
-			vec_identity,
+			identities,
 			hash: Default::default(),
 		};
 

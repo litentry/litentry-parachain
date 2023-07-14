@@ -39,6 +39,7 @@ jobs:
         with:
           chain: ${{ github.event.inputs.chain }}-parachain
           runtime_dir: runtime/${{ github.event.inputs.chain }}
+          tag: "1.66.0"
 
       - name: Summary
         run: |

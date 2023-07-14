@@ -39,7 +39,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 	})?;
 
 	let mut client = AchainableClient::new();
-	let identities = transpose_identity(&req.vec_identity);
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.filter(|(network, _)| *network == Web3Network::Polkadot)

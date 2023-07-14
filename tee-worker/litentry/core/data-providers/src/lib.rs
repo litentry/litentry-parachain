@@ -61,21 +61,18 @@ use url::Url;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
-pub mod twitter_litentry;
 pub mod twitter_official;
-
-pub mod achainable;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
-pub struct DataProvidersStatic {
+pub struct DataProviderConfig {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,
 	pub twitter_auth_token_v2: String,
-	pub twitter_auth_token_v1_1: String,
 	pub discord_official_url: String,
 	pub discord_litentry_url: String,
 	pub discord_auth_token: String,
@@ -83,18 +80,19 @@ pub struct DataProvidersStatic {
 	pub achainable_auth_key: String,
 	pub credential_endpoint: String,
 }
-impl Default for DataProvidersStatic {
+
+impl Default for DataProviderConfig {
 	fn default() -> Self {
 		Self::new()
 	}
 }
-impl DataProvidersStatic {
+
+impl DataProviderConfig {
 	pub fn new() -> Self {
-		DataProvidersStatic {
+		DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
 			twitter_litentry_url: "".to_string(),
 			twitter_auth_token_v2: "Bearer ".to_string(),
-			twitter_auth_token_v1_1: "Bearer ".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
 			discord_litentry_url: "".to_string(),
 			discord_auth_token: "".to_string(),
@@ -114,10 +112,6 @@ impl DataProvidersStatic {
 	pub fn set_twitter_auth_token_v2(&mut self, v: String) {
 		debug!("set_twitter_auth_token_v2: {:?}", v);
 		self.twitter_auth_token_v2 = v;
-	}
-	pub fn set_twitter_auth_token_v1_1(&mut self, v: String) {
-		debug!("set_twitter_auth_token_v1_1: {:?}", v);
-		self.twitter_auth_token_v1_1 = v;
 	}
 	pub fn set_discord_official_url(&mut self, v: String) {
 		debug!("set_discord_official_url: {:?}", v);
@@ -146,8 +140,8 @@ impl DataProvidersStatic {
 }
 
 lazy_static! {
-	pub static ref G_DATA_PROVIDERS: RwLock<DataProvidersStatic> =
-		RwLock::new(DataProvidersStatic::new());
+	pub static ref GLOBAL_DATA_PROVIDER_CONFIG: RwLock<DataProviderConfig> =
+		RwLock::new(DataProviderConfig::new());
 }
 
 #[derive(Debug, thiserror::Error, Clone)]
