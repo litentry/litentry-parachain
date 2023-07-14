@@ -56,6 +56,7 @@ export default {
                     "(AccountId, AccountId, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
                 remove_identity: "(AccountId, AccountId, LitentryIdentity, H256)",
                 request_vc: "(AccountId, AccountId, Assertion, H256)",
+                set_identity_networks: "(AccountId, AccountId, LitentryIdentity, Vec<Web3Network>)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",

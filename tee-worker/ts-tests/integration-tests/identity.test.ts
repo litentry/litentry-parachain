@@ -23,13 +23,6 @@ import type { TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 
-const substrateExtensionIdentity = {
-    Substrate: {
-        address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
-        network: 'Litentry',
-    },
-} as unknown as LitentryPrimitivesIdentity;
-
 describeLitentry('Test Identity', 0, (context) => {
     const errorAesKey = '0xError';
     // random wrong msg
@@ -388,9 +381,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check IDGraph after removeIdentity', async function () {
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const identityHex = twitterIdentity.toHex();
-
         // TODO: we should verify the IDGraph is empty
     });
 
