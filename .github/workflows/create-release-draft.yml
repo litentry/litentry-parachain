@@ -178,6 +178,21 @@ jobs:
           name: tee-worker-${{ env.RELEASE_TAG }}.tar.gz
           path: ./tee-worker/target/*.tar.gz
 
+      - name: Set MRENCLAVE
+        id: mrenclave
+        run: |
+          cd tee-worker 
+          echo "mrenclave=$(make mrenclave)" >> $GITHUB_OUTPUT
+
+      - name: Set RUSTC version
+        id: rustc
+        run: |
+          RUSTC_VERSION=$(rustc --version | cut -d' ' -f2)
+          echo "rustc_version=$RUSTC_VERSION" >> $GITHUB_OUTPUT
+
+    outputs:
+      mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
+      rustc_version: ${{ steps.rustc.outputs.rustc_version }}
   ## test again the built docker image ##
   run-ts-tests:
     runs-on: ubuntu-latest
@@ -307,6 +322,8 @@ jobs:
 
       - name: Generate release notes
         run: |
+          export RUSTC_VERSION=${{ needs.generate_package_and_artifact.outputs.rustc_version }}
+          export MRENCLAVE_OUTPUT=${{ needs.generate_package_and_artifact.outputs.mrenclave }}
           ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
