@@ -20,5 +20,6 @@ TEST=$1
 
 cd /ts-tests
 
+yarn set version stable
 yarn install
 yarn run $TEST:staging
