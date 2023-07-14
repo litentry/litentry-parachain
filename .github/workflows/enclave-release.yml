@@ -30,31 +30,18 @@ jobs:
           name: enclave-binary.tar.gz
           path: ./tee-worker/target/*.tar.gz
 
-  start_worker_and_parachain:
-    runs-on: prod-tee-1
-    needs: generate_package_and_artifact
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.manual_trigger }}
-
-
-      - name: Deploy worker and Parachain
+      - name: Set MRENCLAVE 
+        id: vars
         run: | 
-          source /opt/intel/sgxsdk/environment 
-          ./tee-worker/scripts/litentry/release/deploy.sh restart --build --config tee-worker/local-setup/github-action-config-one-worker.json --discard
-          echo "Sleeping for 30s" 
+         cd tee-worker 
+         make mrenclave
 
-  clean_services:
-    runs-on: prod-tee-1
-    needs: start_worker_and_parachain
+      - name: Set RUSTC version 
+        id: vars 
+        run: | 
+         rustup show 
 
-    steps:
-      - name: Deploy worker and Parachain
-        run: |
-          cd ~/.config/systemd/user
-          systemctl stop para-alice.service relay-bob.service relay-alice.service worker0.service 
-
-
+      - name: Get Size of package 
+        id: vars 
+        run: | 
+         echo "Getting the size of package"  
