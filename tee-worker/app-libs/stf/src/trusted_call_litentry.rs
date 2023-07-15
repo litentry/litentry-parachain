@@ -39,11 +39,11 @@ use std::vec::Vec;
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
 		signer: AccountId,
-		who: AccountId,
+		who: Identity,
 		key: UserShieldingKeyType,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			ensure_enclave_signer_or_self(&signer, &who),
+			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
 		);
 		IMTCall::set_user_shielding_key { who, key }
@@ -54,7 +54,7 @@ impl TrustedCallSigned {
 	#[allow(clippy::too_many_arguments)]
 	pub fn link_identity_internal(
 		signer: AccountId,
-		who: AccountId,
+		who: Identity,
 		identity: Identity,
 		validation_data: ValidationData,
 		web3networks: Vec<Web3Network>,
@@ -63,7 +63,7 @@ impl TrustedCallSigned {
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
-			ensure_enclave_signer_or_self(&signer, &who),
+			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
@@ -95,11 +95,11 @@ impl TrustedCallSigned {
 
 	pub fn remove_identity_internal(
 		signer: AccountId,
-		who: AccountId,
+		who: Identity,
 		identity: Identity,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
-			ensure_enclave_signer_or_self(&signer, &who),
+			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 		let key = IdentityManagement::user_shielding_keys(&who)
@@ -114,7 +114,7 @@ impl TrustedCallSigned {
 
 	pub fn request_vc_internal(
 		signer: AccountId,
-		who: AccountId,
+		who: Identity,
 		assertion: Assertion,
 		hash: H256,
 		shard: &ShardIdentifier,
@@ -123,7 +123,7 @@ impl TrustedCallSigned {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
 			Assertion::A13(_) => (),
 			_ => ensure!(
-				ensure_enclave_signer_or_self(&signer, &who),
+				ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 				StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
 			),
 		}
@@ -168,7 +168,7 @@ impl TrustedCallSigned {
 
 	pub fn link_identity_callback_internal(
 		signer: AccountId,
-		who: AccountId,
+		who: Identity,
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 	) -> StfResult<UserShieldingKeyType> {
@@ -188,7 +188,7 @@ impl TrustedCallSigned {
 
 	pub fn request_vc_callback_internal(
 		signer: AccountId,
-		who: AccountId,
+		who: Identity,
 		assertion: Assertion,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally

@@ -19,10 +19,10 @@ use crate::IdentityManagement;
 use codec::{Decode, Encode};
 use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
-use itp_stf_primitives::types::{AccountId, KeyPair, Signature};
+use itp_stf_primitives::types::KeyPair;
 use itp_utils::stringify::account_id_to_string;
+use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
-use sp_runtime::traits::Verify;
 use std::prelude::v1::*;
 
 #[cfg(feature = "evm")]
@@ -57,41 +57,41 @@ impl From<TrustedGetterSigned> for Getter {
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
 	some_value,
-	nonce(AccountId),
+	nonce(Identity),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedGetter {
-	free_balance(AccountId),
-	reserved_balance(AccountId),
+	free_balance(Identity),
+	reserved_balance(Identity),
 	#[cfg(feature = "evm")]
-	evm_nonce(AccountId),
+	evm_nonce(Identity),
 	#[cfg(feature = "evm")]
-	evm_account_codes(AccountId, H160),
+	evm_account_codes(Identity, H160),
 	#[cfg(feature = "evm")]
-	evm_account_storages(AccountId, H160, H256),
+	evm_account_storages(Identity, H160, H256),
 	// litentry
-	user_shielding_key(AccountId),
-	id_graph(AccountId),
-	id_graph_stats(AccountId),
+	user_shielding_key(Identity),
+	id_graph(Identity),
+	id_graph_stats(Identity),
 }
 
 impl TrustedGetter {
-	pub fn sender_account(&self) -> &AccountId {
+	pub fn sender_identity(&self) -> &Identity {
 		match self {
-			TrustedGetter::free_balance(sender_account) => sender_account,
-			TrustedGetter::reserved_balance(sender_account) => sender_account,
+			TrustedGetter::free_balance(sender_identity) => sender_identity,
+			TrustedGetter::reserved_balance(sender_identity) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedGetter::evm_nonce(sender_account) => sender_account,
+			TrustedGetter::evm_nonce(sender_identity) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedGetter::evm_account_codes(sender_account, _) => sender_account,
+			TrustedGetter::evm_account_codes(sender_identity, _) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedGetter::evm_account_storages(sender_account, ..) => sender_account,
+			TrustedGetter::evm_account_storages(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedGetter::user_shielding_key(account) => account,
-			TrustedGetter::id_graph(account) => account,
-			TrustedGetter::id_graph_stats(account) => account,
+			TrustedGetter::user_shielding_key(sender_identity, ..) => sender_identity,
+			TrustedGetter::id_graph(sender_identity) => sender_identity,
+			TrustedGetter::id_graph_stats(sender_identity) => sender_identity,
 		}
 	}
 
@@ -104,17 +104,17 @@ impl TrustedGetter {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct TrustedGetterSigned {
 	pub getter: TrustedGetter,
-	pub signature: Signature,
+	pub signature: LitentryMultiSignature,
 }
 
 impl TrustedGetterSigned {
-	pub fn new(getter: TrustedGetter, signature: Signature) -> Self {
+	pub fn new(getter: TrustedGetter, signature: LitentryMultiSignature) -> Self {
 		TrustedGetterSigned { getter, signature }
 	}
 
 	pub fn verify_signature(&self) -> bool {
 		self.signature
-			.verify(self.getter.encode().as_slice(), self.getter.sender_account())
+			.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
 	}
 }
 
@@ -137,29 +137,38 @@ impl ExecuteGetter for Getter {
 impl ExecuteGetter for TrustedGetterSigned {
 	fn execute(self) -> Option<Vec<u8>> {
 		match self.getter {
-			TrustedGetter::free_balance(who) => {
-				let info = System::account(&who);
-				debug!("TrustedGetter free_balance");
-				debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
-				debug!("Account free balance is {}", info.data.free);
-				Some(info.data.free.encode())
-			},
-			TrustedGetter::reserved_balance(who) => {
-				let info = System::account(&who);
-				debug!("TrustedGetter reserved_balance");
-				debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
-				debug!("Account reserved balance is {}", info.data.reserved);
-				Some(info.data.reserved.encode())
-			},
+			TrustedGetter::free_balance(who) =>
+				if let Some(account_id) = who.to_account_id() {
+					let info = System::account(&account_id);
+					debug!("TrustedGetter free_balance");
+					debug!("AccountInfo for {} is {:?}", account_id_to_string(&account_id), info);
+					debug!("Account free balance is {}", info.data.free);
+					Some(info.data.free.encode())
+				} else {
+					None
+				},
+			TrustedGetter::reserved_balance(who) =>
+				if let Some(account_id) = who.to_account_id() {
+					let info = System::account(&account_id);
+					debug!("TrustedGetter reserved_balance");
+					debug!("AccountInfo for {} is {:?}", account_id_to_string(&account_id), info);
+					debug!("Account reserved balance is {}", info.data.reserved);
+					Some(info.data.reserved.encode())
+				} else {
+					None
+				},
 			#[cfg(feature = "evm")]
-			TrustedGetter::evm_nonce(who) => {
-				let evm_account = get_evm_account(&who);
-				let evm_account = HashedAddressMapping::into_account_id(evm_account);
-				let nonce = System::account_nonce(&evm_account);
-				debug!("TrustedGetter evm_nonce");
-				debug!("Account nonce is {}", nonce);
-				Some(nonce.encode())
-			},
+			TrustedGetter::evm_nonce(who) =>
+				if let Some(account_id) = who.to_account_id() {
+					let evm_account = get_evm_account(&account_id);
+					let evm_account = HashedAddressMapping::into_account_id(evm_account);
+					let nonce = System::account_nonce(&evm_account);
+					debug!("TrustedGetter evm_nonce");
+					debug!("Account nonce is {}", nonce);
+					Some(nonce.encode())
+				} else {
+					None
+				},
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_account_codes(_who, evm_account) =>
 			// TODO: This probably needs some security check if who == evm_account (or assosciated)
@@ -185,6 +194,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
 			TrustedGetter::id_graph(who) =>
 				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
+
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
 			//       In fact, in the production no one should have access to the concrete identities
@@ -204,12 +214,15 @@ impl ExecuteGetter for PublicGetter {
 	fn execute(self) -> Option<Vec<u8>> {
 		match self {
 			PublicGetter::some_value => Some(42u32.encode()),
-			PublicGetter::nonce(who) => {
-				let nonce = System::account_nonce(&who);
-				debug!("PublicGetter nonce");
-				debug!("Account nonce is {}", nonce);
-				Some(nonce.encode())
-			},
+			PublicGetter::nonce(identity) =>
+				if let Some(account_id) = identity.to_account_id() {
+					let nonce = System::account_nonce(&account_id);
+					debug!("PublicGetter nonce");
+					debug!("Account nonce is {}", nonce);
+					Some(nonce.encode())
+				} else {
+					None
+				},
 		}
 	}
 

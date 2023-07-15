@@ -3,7 +3,7 @@ import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { hexToU8a } from '@polkadot/util';
 
-import { initIntegrationTestContext } from './common/utils';
+import { buildIdentityFromKeypair, initIntegrationTestContext } from './common/utils';
 import {
     createSignedTrustedGetterUserShieldingKey,
     getTeeShieldingKey,
@@ -29,9 +29,11 @@ describe('Test Identity (direct invocation)', function () {
     it('needs a lot more work to be complete');
 
     step('check user sidechain storage before create', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
             context.api,
-            context.substrateWallet.alice
+            context.substrateWallet.alice,
+            aliceSubject
         );
 
         const shieldingKeyGetResult = await sendRequestFromGetter(

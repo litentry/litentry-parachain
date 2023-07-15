@@ -142,7 +142,7 @@ where
 		let (vc_index, vc_hash, vc_payload) = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
-				enclave_signer,
+				enclave_signer.into(),
 				self.req.who.clone(),
 				self.req.assertion.clone(),
 				vc_index,
@@ -163,7 +163,7 @@ where
 		error!("Assertion build error: {error:?}");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
-				enclave_signer,
+				enclave_signer.into(),
 				Some(self.req.who.clone()),
 				error,
 				self.req.hash,

@@ -24,6 +24,7 @@ use crate::*;
 use codec::Decode;
 use frame_support::storage::storage_prefix;
 use itp_ocall_api::EnclaveOnChainOCallApi;
+use litentry_primitives::Address32;
 
 const VC_A13_SUBJECT_DESCRIPTION: &str =
 	"The user has a Polkadot Decoded 2023 Litentry Booth Special Badge";
@@ -56,7 +57,7 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 		))
 	}
 
-	match Credential::new_default(who, &req.shard) {
+	match Credential::new_default(&Address32::from(who.clone()).into(), &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

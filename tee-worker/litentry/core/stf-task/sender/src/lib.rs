@@ -71,7 +71,7 @@ use sp_std::prelude::Vec;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct IdentityVerificationRequest {
 	pub shard: ShardIdentifier,
-	pub who: AccountId,
+	pub who: Identity,
 	pub identity: Identity,
 	pub validation_data: ValidationData,
 	pub web3networks: Vec<Web3Network>,
@@ -88,7 +88,7 @@ pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
 	pub signer: AccountId,
 	pub enclave_account: AccountId,
-	pub who: AccountId,
+	pub who: Identity,
 	pub assertion: Assertion,
 	pub identities: Vec<IdentityNetworkTuple>,
 	pub hash: H256,

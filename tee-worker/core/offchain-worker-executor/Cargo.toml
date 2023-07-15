@@ -47,6 +47,8 @@ itp-stf-interface = { path = "../../core-primitives/stf-interface", features = [
 itp-sgx-externalities = { path = "../../core-primitives/substrate-sgx/externalities" }
 sp-io = { path = "../../core-primitives/substrate-sgx/sp-io" }
 
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+
 [features]
 default = ["std"]
 std = [
@@ -60,6 +62,8 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "thiserror",
+    # litentry
+    "litentry-primitives/std",
 ]
 sgx = [
     "ita-stf/sgx",
@@ -70,4 +74,6 @@ sgx = [
     "itp-top-pool-author/sgx",
     "sgx_tstd",
     "thiserror_sgx",
+    # litentry
+    "litentry-primitives/sgx",
 ]

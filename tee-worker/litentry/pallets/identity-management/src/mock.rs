@@ -114,7 +114,7 @@ pub fn alice_twitter_identity(suffix: u32) -> Identity {
 pub fn alice_substrate_identity() -> Identity {
 	let alice_key_hex: [u8; 32] =
 		hex::decode(ALICE_KEY.strip_prefix("0x").unwrap()).unwrap().try_into().unwrap();
-	Identity::Substrate(alice_key_hex.into())
+	alice_key_hex.into()
 }
 
 pub fn alice_evm_identity() -> Identity {
@@ -123,7 +123,7 @@ pub fn alice_evm_identity() -> Identity {
 
 pub fn bob_substrate_identity() -> Identity {
 	let bob_key_hex = [2u8; 32];
-	Identity::Substrate(bob_key_hex.into())
+	bob_key_hex.into()
 }
 
 pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
@@ -135,7 +135,12 @@ pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 
 		if set_shielding_key {
 			let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-			let _ = IMT::set_user_shielding_key(RuntimeOrigin::signed(ALICE), BOB, shielding_key);
+			let who = BOB.into();
+			let _ = IMT::set_user_shielding_key(
+				RuntimeOrigin::signed(ALICE),
+				who,
+				shielding_key.clone(),
+			);
 		}
 	});
 	ext

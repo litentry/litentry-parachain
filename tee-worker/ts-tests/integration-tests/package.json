@@ -18,7 +18,8 @@
 		"test-bulk-vc:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'bulk_vc.test.ts'",
 		"test-bulk-identity:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'bulk_identity.test.ts'",
 		"test-bulk-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'bulk_identity.test.ts'",
-		"di-examples": "yarn eslint . && ts-node examples/direct-invocation/index.ts",
+		"substrate-di-examples": "yarn eslint . && ts-node examples/direct-invocation/substrate-di-examples.ts",
+		"evm-di-examples": "yarn eslint . && ts-node examples/direct-invocation/evm-di-examples.ts",
 		"preinstall": "npx only-allow yarn"
 	},
 	"dependencies": {

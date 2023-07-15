@@ -40,7 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::now_as_millis;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::Web3Network;
+use litentry_primitives::{Identity, Web3Network};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -229,20 +229,28 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(who: &AccountId, shard: &ShardIdentifier) -> Result<Credential, Error> {
+	pub fn new_default(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
-		let credential: Credential = Credential::from_template(raw, who, shard)?;
+		let credential: Credential = Credential::from_template(raw, subject, shard)?;
 		Ok(credential)
 	}
 
-	pub fn from_template(s: &str, who: &AccountId, shard: &ShardIdentifier) -> Result<Self, Error> {
-		debug!("generate credential from template, who: {:?}", account_id_to_string(&who),);
+	pub fn from_template(
+		s: &str,
+		subject: &Identity,
+		shard: &ShardIdentifier,
+	) -> Result<Self, Error> {
+		debug!("generate credential from template, subject: {:?}", &subject);
 
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
-		vc.credential_subject.id = account_id_to_string(who);
+		vc.credential_subject.id = account_id_to_string(
+			&subject
+				.to_account_id()
+				.ok_or_else(|| Error::RuntimeError("Not a valid account".to_string()))?,
+		);
 		vc.issuance_timestamp = now_as_millis();
 		vc.expiration_timestamp = None;
 		vc.credential_schema = None;
@@ -520,10 +528,12 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
+		let identity = who.clone().into();
+
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
 
-		let vc = Credential::from_template(data, &who, &shard).unwrap();
+		let vc = Credential::from_template(data, &identity, &shard).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id;
 		assert_eq!(id, account_id_to_string(&who));
@@ -532,6 +542,7 @@ mod tests {
 	#[test]
 	fn update_holder_works() {
 		let who = AccountId::from([0; 32]);
+		let identity = who.into();
 		let shard = ShardIdentifier::default();
 		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();
@@ -540,7 +551,8 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
+			let mut credential_unsigned =
+				Credential::new_default(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -558,7 +570,8 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
+			let mut credential_unsigned =
+				Credential::new_default(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -576,7 +589,8 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
+			let mut credential_unsigned =
+				Credential::new_default(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =

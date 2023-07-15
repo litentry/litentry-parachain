@@ -21,14 +21,20 @@ extern crate sgx_tstd as std;
 use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode, MaxEncodedLen};
-use parentchain_primitives::Web3Network;
+use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
+use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::ConstU32, BoundedVec};
+use sp_core::{crypto::AccountId32, ed25519, sr25519, ByteArray, H160};
+use sp_runtime::{
+	traits::{BlakeTwo256, ConstU32},
+	BoundedVec,
+};
 use sp_std::vec::Vec;
 use strum_macros::EnumIter;
 
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityString = BoundedVec<u8, MaxStringLength>;
+pub type HashedAddressMapping = GenericHashedAddressMapping<BlakeTwo256>;
 
 #[derive(Encode, Decode, Copy, Clone, Debug, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -58,6 +64,38 @@ impl AsRef<[u8; 32]> for Address32 {
 impl From<[u8; 32]> for Address32 {
 	fn from(value: [u8; 32]) -> Self {
 		Self(value)
+	}
+}
+
+impl From<AccountId32> for Address32 {
+	fn from(value: AccountId32) -> Self {
+		let raw: [u8; 32] = value.as_slice().try_into().unwrap();
+		Address32::from(raw)
+	}
+}
+
+impl From<Address32> for AccountId32 {
+	fn from(value: Address32) -> Self {
+		let raw: [u8; 32] = *value.as_ref();
+		AccountId32::from(raw)
+	}
+}
+
+impl From<&Address32> for AccountId32 {
+	fn from(value: &Address32) -> Self {
+		(*value).into()
+	}
+}
+
+impl From<sr25519::Public> for Address32 {
+	fn from(k: sr25519::Public) -> Self {
+		k.0.into()
+	}
+}
+
+impl From<ed25519::Public> for Address32 {
+	fn from(k: ed25519::Public) -> Self {
+		k.0.into()
 	}
 }
 
@@ -99,6 +137,65 @@ impl Identity {
 		(self.is_substrate() && !networks.is_empty() && networks.iter().all(|n| n.is_substrate()))
 			|| (self.is_evm() && !networks.is_empty() && networks.iter().all(|n| n.is_evm()))
 			|| (self.is_web2() && networks.is_empty())
+	}
+
+	/// Currently we only support mapping from Address32/Address20 to AccountId, not opposite.
+	pub fn to_account_id(&self) -> Option<AccountId> {
+		match self {
+			Identity::Substrate(address) => {
+				let mut data = [0u8; 32];
+				data.copy_from_slice(address.as_ref());
+				Some(AccountId32::from(data))
+			},
+			Identity::Evm(address) => {
+				let substrate_version =
+					HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()));
+				Some(AccountId32::from(Into::<[u8; 32]>::into(substrate_version)))
+			},
+			_ => None,
+		}
+	}
+}
+
+impl From<ed25519::Public> for Identity {
+	fn from(value: ed25519::Public) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<sr25519::Public> for Identity {
+	fn from(value: sr25519::Public) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<AccountId32> for Identity {
+	fn from(value: AccountId32) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<Address32> for Identity {
+	fn from(value: Address32) -> Self {
+		Identity::Substrate(value)
+	}
+}
+
+impl From<Address20> for Identity {
+	fn from(value: Address20) -> Self {
+		Identity::Evm(value)
+	}
+}
+
+impl From<[u8; 32]> for Identity {
+	fn from(value: [u8; 32]) -> Self {
+		Identity::Substrate(value.into())
+	}
+}
+
+impl From<[u8; 20]> for Identity {
+	fn from(value: [u8; 20]) -> Self {
+		Identity::Evm(value.into())
 	}
 }
 
