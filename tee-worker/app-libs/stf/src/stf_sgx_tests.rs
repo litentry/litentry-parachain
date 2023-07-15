@@ -22,7 +22,8 @@ use itp_stf_interface::{
 	sudo_pallet::SudoPalletInterface, system_pallet::SystemPalletAccountInterface, InitState,
 	StateCallInterface,
 };
-use itp_stf_primitives::types::{AccountId, ShardIdentifier, Signature};
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
+use litentry_primitives::LitentryMultiSignature;
 use sp_core::{
 	ed25519::{Pair as Ed25519Pair, Signature as Ed25519Signature},
 	Pair,
@@ -54,7 +55,7 @@ pub fn shield_funds_increments_signer_account_nonce() {
 			500u128,
 		),
 		0,
-		Signature::Ed25519(Ed25519Signature([0u8; 64])),
+		LitentryMultiSignature::Ed25519(Ed25519Signature([0u8; 64])),
 	);
 
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));

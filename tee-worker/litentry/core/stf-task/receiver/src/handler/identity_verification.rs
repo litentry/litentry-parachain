@@ -55,7 +55,7 @@ where
 		debug!("verify identity OK");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::link_identity_callback(
-				enclave_signer,
+				enclave_signer.into(),
 				self.req.who.clone(),
 				self.req.identity.clone(),
 				self.req.web3networks.clone(),
@@ -74,7 +74,7 @@ where
 		error!("verify identity failed:{:?}", error);
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(
-				enclave_signer,
+				enclave_signer.into(),
 				Some(self.req.who.clone()),
 				error,
 				self.req.hash,

@@ -1,5 +1,11 @@
 import { step } from 'mocha-steps';
-import { buildValidations, describeLitentry, buildIdentityTxs, buildIdentityHelper } from './common/utils';
+import {
+    buildValidations,
+    describeLitentry,
+    buildIdentityTxs,
+    buildIdentityHelper,
+    buildIdentityFromKeypair
+} from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import type { BatchCall } from './common/type-definitions';
@@ -59,19 +65,20 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     //test identity with multiple accounts
     step('test linkIdentity with multiple accounts', async () => {
         const web3networks: Web3Network[][] = [];
-        const primeIdentityAddresses: Uint8Array[] = [];
+        const signerIdentities: LitentryPrimitivesIdentity[] = [];
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']) as unknown as Web3Network[];
 
         for (let index = 0; index < ethereumSigners.length; index++) {
+            const signerIdentity = await buildIdentityFromKeypair(substrateSigners[index], context);
             const identity = await buildIdentityHelper(ethereumSigners[index].address, 'Evm', context);
             identities.push(identity);
             web3networks.push(defaultNetworks);
-            primeIdentityAddresses.push(substrateSigners[index].addressRaw);
+            signerIdentities.push(signerIdentity);
         }
 
         const validations = await buildValidations(
             context,
-            primeIdentityAddresses,
+            signerIdentities,
             identities,
             2,
             'ethereum',

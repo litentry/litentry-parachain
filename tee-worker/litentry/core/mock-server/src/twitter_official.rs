@@ -50,7 +50,7 @@ where
 				);
 				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
-					&alice.public(),
+					&alice.public().into(),
 					&twitter_identity,
 					// the tweet_id is used as sidechain_nonce
 					// it's a bit tricky to get the nonce from the getter: you need to know

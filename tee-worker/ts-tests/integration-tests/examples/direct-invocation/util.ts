@@ -1,4 +1,4 @@
-import { ApiPromise } from '@polkadot/api';
+import { ApiPromise, Keyring } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
@@ -71,7 +71,7 @@ async function sendRequest(
 export const createSignedTrustedCall = (
     parachainApi: ApiPromise,
     trustedCall: [string, string],
-    account: KeyringPair,
+    signer: KeyringPair,
     // hex-encoded mrenclave, retrieveable from parachain enclave registry
     // TODO: do we have a RPC getter from the enclave?
     mrenclave: string,
@@ -92,8 +92,8 @@ export const createSignedTrustedCall = (
     if (withWrappedBytes) {
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
-    const signature = parachainApi.createType('MultiSignature', {
-        Sr25519: u8aToHex(account.sign(payload)),
+    const signature = parachainApi.createType('LitentryMultiSignature', {
+        [signer.type]: u8aToHex(signer.sign(payload)),
     });
     return parachainApi.createType('TrustedCallSigned', {
         call: call,
@@ -105,7 +105,7 @@ export const createSignedTrustedCall = (
 export const createSignedTrustedGetter = (
     parachainApi: ApiPromise,
     trustedGetter: [string, string],
-    account: KeyringPair,
+    signer: KeyringPair,
     params: any
 ) => {
     const [variant, argType] = trustedGetter;
@@ -113,8 +113,8 @@ export const createSignedTrustedGetter = (
         [variant]: parachainApi.createType(argType, params),
     });
     const payload = getter.toU8a();
-    const signature = parachainApi.createType('MultiSignature', {
-        Sr25519: account.sign(payload),
+    const signature = parachainApi.createType('LitentryMultiSignature', {
+        [signer.type]: signer.sign(payload),
     });
     return parachainApi.createType('TrustedGetterSigned', {
         getter: getter,
@@ -154,18 +154,19 @@ export function createSignedTrustedCallSetUserShieldingKey(
     parachainApi: ApiPromise,
     mrenclave: string,
     nonce: Codec,
-    who: KeyringPair,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity,
     key: string,
     hash: string,
     withWrappedBytes = false
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_user_shielding_key', '(AccountId, AccountId, UserShieldingKeyType, H256)'],
-        who,
+        ['set_user_shielding_key', '(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)'],
+        signer,
         mrenclave,
         nonce,
-        [who.address, who.address, key, hash],
+        [subject, subject, key, hash],
         withWrappedBytes
     );
 }
@@ -174,7 +175,8 @@ export function createSignedTrustedCallLinkIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
     nonce: Codec,
-    who: KeyringPair,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity,
     identity: string,
     validationData: string,
     web3networks: string,
@@ -185,12 +187,12 @@ export function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(AccountId, AccountId, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
         ],
-        who,
+        signer,
         mrenclave,
         nonce,
-        [who.address, who.address, identity, validationData, web3networks, keyNonce, hash]
+        [subject, subject, identity, validationData, web3networks, keyNonce, hash]
     );
 }
 
@@ -198,32 +200,42 @@ export function createSignedTrustedCallSetIdentityNetworks(
     parachainApi: ApiPromise,
     mrenclave: string,
     nonce: Codec,
-    who: KeyringPair,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity,
     identity: string,
     web3networks: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_identity_networks', '(AccountId, AccountId, LitentryIdentity, Vec<Web3Network>)'],
-        who,
+        ['set_identity_networks', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)'],
+        signer,
         mrenclave,
         nonce,
-        [who.address, who.address, identity, web3networks]
+        [subject, subject, identity, web3networks]
     );
 }
 
-export function createSignedTrustedGetterUserShieldingKey(parachainApi: ApiPromise, who: KeyringPair): Getter {
+
+export function createSignedTrustedGetterUserShieldingKey(
+    parachainApi: ApiPromise,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity
+) {
     const getterSigned = createSignedTrustedGetter(
         parachainApi,
-        ['user_shielding_key', '(AccountId)'],
-        who,
-        who.address
+        ['user_shielding_key', '(LitentryIdentity)'],
+        signer,
+        subject
     );
     return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
 
-export function createSignedTrustedGetterIdGraph(parachainApi: ApiPromise, who: KeyringPair): Getter {
-    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(AccountId)'], who, who.address);
+export function createSignedTrustedGetterIdGraph(
+    parachainApi: ApiPromise,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity
+): Getter {
+    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(LitentryIdentity)'], signer, subject);
     return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
 
@@ -232,10 +244,10 @@ export const getSidechainNonce = async (
     parachainApi: ApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    who: string
+    subject: LitentryPrimitivesIdentity
 ): Promise<Index> => {
-    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(AccountId)'], who);
-    const getter = parachainApi.createType('Getter', { public: getterPublic }) as unknown as Getter;
+    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject);
+    const getter = parachainApi.createType('Getter', { public: getterPublic });
     const nonce = await sendRequestFromGetter(wsp, parachainApi, mrenclave, teeShieldingKey, getter);
     const nonceValue = decodeNonce(nonce.value.toHex());
     return parachainApi.createType('Index', nonceValue) as Index;
@@ -338,4 +350,17 @@ export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
         'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idgraphBytes.unwrap()
     ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+}
+
+export function getKeyPair(accountName: string, keyring: Keyring): KeyringPair {
+    switch (keyring.type) {
+        case 'ethereum': {
+            return keyring.addFromMnemonic('test_account' + accountName, { name: accountName });
+        }
+        case 'ecdsa':
+        case 'ed25519':
+        case 'sr25519': {
+            return keyring.addFromUri('//' + accountName, { name: accountName });
+        }
+    }
 }

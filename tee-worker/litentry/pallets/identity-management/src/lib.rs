@@ -52,6 +52,7 @@ pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use litentry_primitives::all_evm_web3networks;
 	use log::{debug, warn};
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -65,7 +66,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// the event
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		/// the manager origin for extrincis
+		/// the manager origin for extrinsics
 		type ManageOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		/// maximum number of identities an account can have, if you change this value to lower some accounts may exceed this limit
 		#[pallet::constant]
@@ -76,42 +77,42 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// user shielding key was set
-		UserShieldingKeySet { who: T::AccountId, key: UserShieldingKeyType },
+		UserShieldingKeySet { who: Identity, key: UserShieldingKeyType },
 		/// an identity was linked
-		IdentityLinked { who: T::AccountId, identity: Identity },
+		IdentityLinked { who: Identity, identity: Identity },
 		/// an identity was removed
-		IdentityRemoved { who: T::AccountId, identity: Identity },
+		IdentityRemoved { who: Identity, identity: Identity },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// the pair (litentry-account, identity) already linked
+		/// the pair (Identity, Identity) already linked
 		IdentityAlreadyLinked,
-		/// the pair (litentry-account, identity) doesn't exist
+		/// the pair (Identity, Identity) doesn't exist
 		IdentityNotExist,
 		/// creating the prime identity manually is disallowed
 		LinkPrimeIdentityDisallowed,
-		/// remove prime identiy should be disallowed
+		/// remove prime identity should be disallowed
 		RemovePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
 		/// identity doesn't match the network types
 		WrongWeb3NetworkTypes,
+		/// identity cannot be used to build prime identity
+		NotSupportedIdentity,
 	}
 
-	/// user shielding key is per Litentry account
 	#[pallet::storage]
 	#[pallet::getter(fn user_shielding_keys)]
 	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, UserShieldingKeyType, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, Identity, UserShieldingKeyType, OptionQuery>;
 
-	/// ID graph is per Litentry account + identity
 	#[pallet::storage]
 	#[pallet::getter(fn id_graphs)]
 	pub type IDGraphs<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		T::AccountId,
+		Identity,
 		Blake2_128Concat,
 		Identity,
 		IdentityContext<T>,
@@ -119,8 +120,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	pub type IDGraphLens<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, u32, ValueQuery>;
+	pub type IDGraphLens<T: Config> = StorageMap<_, Blake2_128Concat, Identity, u32, ValueQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -128,15 +128,13 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn set_user_shielding_key(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			key: UserShieldingKeyType,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
-			let prime_id = Self::build_prime_identity(&who)?;
+			let (prime_id, web3networks) = Self::build_prime_identity_with_networks(&who)?;
 			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
-				// For the moment, we activate all available (matching) networks for the prime id
-				let web3networks = all_substrate_web3networks();
 				let context = <IdentityContext<T>>::new(
 					<frame_system::Pallet<T>>::block_number(),
 					web3networks,
@@ -154,7 +152,7 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn link_identity(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			identity: Identity,
 			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
@@ -164,7 +162,7 @@ pub mod pallet {
 				!IDGraphs::<T>::contains_key(&who, &identity),
 				Error::<T>::IdentityAlreadyLinked
 			);
-			let prime_id = Self::build_prime_identity(&who)?;
+			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
 			ensure!(identity != prime_id, Error::<T>::LinkPrimeIdentityDisallowed);
 
 			ensure!(
@@ -183,12 +181,12 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn remove_identity(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			let prime_id = Self::build_prime_identity(&who)?;
+			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
 			ensure!(identity != prime_id, Error::<T>::RemovePrimeIdentityDisallowed);
 
 			Self::remove_identity_with_limit(&who, &identity);
@@ -200,7 +198,7 @@ pub mod pallet {
 		#[pallet::weight(15_000_000)]
 		pub fn set_identity_networks(
 			origin: OriginFor<T>,
-			who: T::AccountId,
+			who: Identity,
 			identity: Identity,
 			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
@@ -220,15 +218,21 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		// build the prime identity which is always a substrate address32-based identity
-		fn build_prime_identity(who: &T::AccountId) -> Result<Identity, DispatchError> {
-			let address_raw: [u8; 32] =
-				who.encode().try_into().map_err(|_| DispatchError::Other("Invalid AccountId"))?;
-			Ok(Identity::Substrate(address_raw.into()))
+		// Build the prime identity which might be substrate address32-based or evm address20-based and related networks vec
+		// For the moment, return all available (matching) networks for the prime id
+		fn build_prime_identity_with_networks(
+			identity: &Identity,
+		) -> Result<(Identity, Vec<Web3Network>), DispatchError> {
+			match identity {
+				Identity::Substrate(address) =>
+					Ok((Identity::Substrate(*address), all_substrate_web3networks())),
+				Identity::Evm(address) => Ok((Identity::Evm(*address), all_evm_web3networks())),
+				_ => Err(Error::<T>::NotSupportedIdentity.into()),
+			}
 		}
 
 		fn insert_identity_with_limit(
-			owner: &T::AccountId,
+			owner: &Identity,
 			identity: &Identity,
 			context: IdentityContext<T>,
 		) -> Result<(), DispatchError> {
@@ -244,7 +248,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn remove_identity_with_limit(owner: &T::AccountId, identity: &Identity) {
+		fn remove_identity_with_limit(owner: &Identity, identity: &Identity) {
 			IDGraphLens::<T>::mutate_exists(owner, |maybe_value| {
 				if let Some(graph_len) = maybe_value {
 					if *graph_len == 0 {
@@ -268,15 +272,15 @@ pub mod pallet {
 		}
 
 		// get the most recent `max_len` elements in IDGraph
-		pub fn get_id_graph(who: &T::AccountId, max_len: usize) -> IDGraph<T> {
-			let mut id_graph = IDGraphs::<T>::iter_prefix(who).collect::<IDGraph<T>>();
+		pub fn get_id_graph(who: &Identity, max_len: usize) -> IDGraph<T> {
+			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
 			id_graph.sort_by(|a, b| Ord::cmp(&b.1.link_block, &a.1.link_block));
 			id_graph.truncate(max_len);
 			id_graph
 		}
 
 		// get count of all keys account + identity in the IDGraphs
-		pub fn id_graph_stats() -> Option<Vec<(T::AccountId, u32)>> {
+		pub fn id_graph_stats() -> Option<Vec<(Identity, u32)>> {
 			let stats = IDGraphLens::<T>::iter().collect();
 			debug!("IDGraph stats: {:?}", stats);
 			Some(stats)

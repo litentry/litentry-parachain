@@ -114,7 +114,15 @@ where
 		// `trusted_call` in this fn always contains the req_ext_hash, which is unique for each request.
 		if self
 			.author_api
-			.get_pending_trusted_calls_for(*shard, trusted_call.sender_account())
+			.get_pending_trusted_calls_for(
+				*shard,
+				&trusted_call.sender_identity().to_account_id().ok_or_else(|| {
+					Error::OtherError(format!(
+						"Not a valid account: {:?}",
+						trusted_call.sender_identity()
+					))
+				})?,
+			)
 			.into_iter()
 			.any(|t| t.hash() == top.hash())
 		{

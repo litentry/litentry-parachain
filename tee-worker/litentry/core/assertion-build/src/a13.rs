@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use litentry_primitives::Address32;
 
 const VC_A13_SUBJECT_DESCRIPTION: &str =
 	"The user has a Polkadot Decoded 2023 Litentry Booth Special Badge";
@@ -29,8 +30,7 @@ const VC_A13_SUBJECT_TAG: [&str; 2] = ["Polkadot decoded 2023", "Litentry"];
 
 pub fn build(req: &AssertionBuildRequest, who: &AccountId) -> Result<Credential> {
 	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
-
-	match Credential::new_default(who, &req.shard) {
+	match Credential::new_default(&Address32::from(who.clone()).into(), &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

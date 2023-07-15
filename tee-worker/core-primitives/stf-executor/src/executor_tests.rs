@@ -30,6 +30,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 use itp_types::H256;
+use litentry_primitives::Identity;
 use sp_core::Pair;
 use sp_runtime::app_crypto::sp_core::blake2_256;
 use std::{sync::Arc, time::Duration, vec};
@@ -148,7 +149,7 @@ pub fn propose_state_update_executes_no_trusted_calls_given_no_time() {
 	let trusted_operation_1 = signed_call_1.into_trusted_operation(true);
 
 	let signed_call_2 = TrustedCall::balance_transfer(
-		sender.public().into(),
+		Identity::Substrate(sender.public().into()),
 		sender.public().into(),
 		100,
 	)

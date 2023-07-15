@@ -112,9 +112,13 @@ pub fn set_block_number(block_number: u32) {
 
 pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
-	who: &AccountId,
+	who: Option<AccountId>,
 ) -> bool {
-	signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who)
+	match who {
+		Some(ref who) =>
+			signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who),
+		None => false,
+	}
 }
 
 pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
@@ -128,8 +132,8 @@ pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
 // blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
 // where <> means SCALE-encoded
 // see https://github.com/litentry/litentry-parachain/issues/1739
-pub fn get_expected_raw_message<AccountId: Encode + Decode>(
-	who: &AccountId,
+pub fn get_expected_raw_message(
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,

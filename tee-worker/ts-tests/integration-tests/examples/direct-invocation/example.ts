@@ -14,6 +14,7 @@ import {
     sendRequestFromGetter,
     getSidechainNonce,
     decodeIdGraph,
+    getKeyPair
 } from './util';
 import {
     getEnclave,
@@ -21,6 +22,7 @@ import {
     buildIdentityHelper,
     initIntegrationTestContext,
     buildValidations,
+    buildIdentityFromKeypair
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
@@ -29,19 +31,20 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import Options from 'websocket-as-promised/types/options';
 import crypto from 'crypto';
+import { KeypairType } from '@polkadot/util-crypto/types';
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import WebSocketAsPromised from 'websocket-as-promised';
 import webSocket from 'ws';
-
-const keyring = new Keyring({ type: 'sr25519' });
+const substrateKeyring = new Keyring({ type: 'sr25519' });
 
 const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
 const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
-async function runDirectCall() {
+export async function runExample(keyPairType: KeypairType) {
+    const keyring = new Keyring({ type: keyPairType });
     const parachainWs = new WsProvider(PARACHAIN_WS_ENDPINT);
     const sidechainRegistry = new TypeRegistry();
     const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
@@ -66,11 +69,16 @@ async function runDirectCall() {
 
     const key = await getTeeShieldingKey(wsp, parachainApi);
 
-    const alice: KeyringPair = keyring.addFromUri('//Alice', { name: 'Alice' });
-    const bob: KeyringPair = keyring.addFromUri('//Bob', { name: 'Bob' });
+    const alice: KeyringPair = getKeyPair('Alice', keyring);
+    const bob: KeyringPair = getKeyPair('Bob', keyring);
+    const bobSubstrateKey: KeyringPair = substrateKeyring.addFromUri('//Bob', { name: 'Bob' });
+
     const mrenclave = (await getEnclave(parachainApi)).mrEnclave;
 
-    let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, alice.address);
+    const aliceSubject = await buildIdentityFromKeypair(alice, context);
+    const bobSubject = await buildIdentityFromKeypair(bob, context);
+
+    let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
 
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
@@ -82,6 +90,7 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         alice,
+        aliceSubject,
         aesKey,
         hash
     );
@@ -91,23 +100,24 @@ async function runDirectCall() {
     await sleep(10);
 
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
-    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, alice.address);
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
 
     console.log('Send direct linkIdentity call... hash:', hash);
-    const bobSubstrateIdentity = await buildIdentityHelper(u8aToHex(bob.addressRaw), 'Substrate', context);
+    const bobSubstrateIdentity = await buildIdentityHelper(u8aToHex(bobSubstrateKey.addressRaw), 'Substrate', context);
     const [bobValidationData] = await buildValidations(
         context,
-        [alice.addressRaw],
+        [aliceSubject],
         [bobSubstrateIdentity],
         nonce.toNumber(),
         'substrate',
-        bob
+        bobSubstrateKey
     );
     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
         parachainApi,
         mrenclave,
         nonce,
         alice,
+        aliceSubject,
         sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
         parachainApi.createType('LitentryValidationData', bobValidationData).toHex(),
         parachainApi.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
@@ -122,27 +132,38 @@ async function runDirectCall() {
     await sleep(30);
 
     console.log('Send IDGraph getter for alice ...');
-    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice);
+    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     console.log('IDGraph getter returned', res.toHuman());
     let idgraph = decodeIdGraph(sidechainRegistry, res.value);
     assert.equal(idgraph.length, 2);
     // the first identity is the bob substrate identity
     assert.isTrue(idgraph[0][0].isSubstrate);
-    assert.equal(idgraph[0][0].asSubstrate.toHex(), u8aToHex(bob.publicKey));
+    assert.equal(idgraph[0][0].asSubstrate.toHex(), u8aToHex(bobSubstrateKey.publicKey));
     assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Polkadot', 'Litentry'].toString());
     assert.isTrue(idgraph[0][1].status.isActive);
     // the second identity is the substrate identity (prime identity)
-    assert.isTrue(idgraph[1][0].isSubstrate);
-    assert.equal(idgraph[1][0].asSubstrate.toHex(), u8aToHex(alice.publicKey));
-    assert.isTrue(idgraph[1][1].status.isActive);
-    assert.equal(
-        idgraph[1][1].web3networks.toHuman()?.toString(),
-        ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
-    );
+    if (alice.type === "ethereum") {
+        assert.isTrue(idgraph[1][0].isEvm);
+        assert.equal(idgraph[1][0].asEvm.toHex(), u8aToHex(alice.addressRaw));
+        assert.isTrue(idgraph[1][1].status.isActive);
+        assert.equal(
+            idgraph[1][1].web3networks.toHuman()?.toString(),
+            ['Ethereum', 'Polygon', 'BSC'].toString()
+        );
+    } else {
+        assert.isTrue(idgraph[1][0].isSubstrate);
+        assert.equal(idgraph[1][0].asSubstrate.toHex(), u8aToHex(alice.addressRaw));
+        assert.isTrue(idgraph[1][1].status.isActive);
+        assert.equal(
+            idgraph[1][1].web3networks.toHuman()?.toString(),
+            ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
+        );
+    }
+
 
     console.log('Send UserShieldingKey getter for alice ...');
-    let userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice);
+    let userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
@@ -157,12 +178,13 @@ async function runDirectCall() {
 
     // set web3networks to alice
     console.log('Set new web3networks for alice ...');
-    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, alice.address);
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
     let setIdentityNetworksCall = createSignedTrustedCallSetIdentityNetworks(
         parachainApi,
         mrenclave,
         nonce,
         alice,
+        aliceSubject,
         bobSubstrateIdentity.toHex(),
         parachainApi.createType('Vec<Web3Network>', ['Litentry', 'Khala']).toHex()
     );
@@ -175,12 +197,13 @@ async function runDirectCall() {
 
     // set incompatible web3networks to alice
     console.log('Set incompatible web3networks for alice ...');
-    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, alice.address);
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
     setIdentityNetworksCall = createSignedTrustedCallSetIdentityNetworks(
         parachainApi,
         mrenclave,
         nonce,
         alice,
+        aliceSubject,
         bobSubstrateIdentity.toHex(),
         parachainApi.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex()
     );
@@ -195,7 +218,7 @@ async function runDirectCall() {
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
-    userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob);
+    userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
@@ -203,7 +226,7 @@ async function runDirectCall() {
 
     await sleep(10);
 
-    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, bob.address);
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, bobSubject);
 
     // set bob's shielding key, with wrapped bytes
     const keyBob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
@@ -214,6 +237,7 @@ async function runDirectCall() {
         mrenclave,
         nonce,
         bob,
+        bobSubject,
         keyBob,
         hash,
         true // with wrapped bytes
@@ -223,17 +247,10 @@ async function runDirectCall() {
 
     // verify that bob's key is set
     console.log('Send UserShieldingKey getter for bob ...');
-    userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob);
+    userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), keyBob);
 }
-
-(async () => {
-    await runDirectCall().catch((e) => {
-        console.error(e);
-    });
-    process.exit(0);
-})();

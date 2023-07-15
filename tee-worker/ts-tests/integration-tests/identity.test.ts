@@ -7,10 +7,11 @@ import {
     buildIdentityHelper,
     buildIdentityTxs,
     buildValidations,
-    assertInitialIdGraphCreated,
     checkUserShieldingKeys,
     assertIdentityLinked,
     assertIdentityRemoved,
+    assertInitialIdGraphCreated,
+    buildIdentityFromKeypair,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -35,11 +36,12 @@ describeLitentry('Test Identity', 0, (context) => {
     let web3networks: Web3Network[][] = [];
 
     step('check user sidechain storage before create', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            aliceSubject
         );
         assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
     });
@@ -91,16 +93,19 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            aliceSubject
         );
         assert.equal(respShieldingKey, aesKey, 'respShieldingKey should be equal aesKey after set');
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
         // the main address should be already inside the IDGraph
         const mainIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -108,13 +113,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context
         );
         const identityHex = mainIdentity.toHex();
-        const respIdGraph = await checkIdGraph(
-            context,
-            'IdentityManagement',
-            'IDGraphs',
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            identityHex
-        );
+        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0 for main address');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
@@ -149,9 +148,10 @@ describeLitentry('Test Identity', 0, (context) => {
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const twitterValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [twitterIdentity],
             3,
             'twitter'
@@ -159,7 +159,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const evmValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [evmIdentity],
             4,
             'ethereum',
@@ -169,7 +169,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const eveSubstrateValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [eveSubstrateIdentity],
             5,
             'substrate',
@@ -218,9 +218,11 @@ describeLitentry('Test Identity', 0, (context) => {
                 },
             },
         };
+        const bobSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+
         const msg = generateVerificationMessage(
             context,
-            context.substrateWallet.bob.addressRaw,
+            bobSubject,
             aliceSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall
@@ -266,14 +268,9 @@ describeLitentry('Test Identity', 0, (context) => {
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const identityHex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
-        const respIdGraph = await checkIdGraph(
-            context,
-            'IdentityManagement',
-            'IDGraphs',
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            identityHex
-        );
+        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active');
     });

@@ -30,7 +30,7 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-use itp_types::{AccountId, H256};
+use itp_types::H256;
 pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
@@ -71,7 +71,7 @@ use sp_std::prelude::Vec;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct IdentityVerificationRequest {
 	pub shard: ShardIdentifier,
-	pub who: AccountId,
+	pub who: Identity,
 	pub identity: Identity,
 	pub validation_data: ValidationData,
 	pub web3networks: Vec<Web3Network>,
@@ -86,7 +86,7 @@ pub type MaxIdentityLength = ConstU32<64>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
-	pub who: AccountId,
+	pub who: Identity,
 	pub assertion: Assertion,
 	pub identities: Vec<IdentityNetworkTuple>,
 	pub hash: H256,

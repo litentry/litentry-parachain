@@ -83,9 +83,10 @@ mod tests {
 	use crate::{a2::build, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
-	use itp_types::AccountId;
 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
-	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
+	use litentry_primitives::{
+		Address32, Assertion, Identity, IdentityNetworkTuple, IdentityString,
+	};
 	use log;
 	use std::{format, vec, vec::Vec};
 
@@ -105,7 +106,7 @@ mod tests {
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let req = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
-			who: AccountId::from([0; 32]),
+			who: Address32::from([0; 32]).into(),
 			assertion: Assertion::A2(guild_id.clone()),
 			identities,
 			hash: Default::default(),

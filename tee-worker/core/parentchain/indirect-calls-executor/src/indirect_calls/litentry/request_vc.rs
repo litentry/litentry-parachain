@@ -54,8 +54,12 @@ impl RequestVCArgs {
 
 			let enclave_account_id = executor.get_enclave_account()?;
 
-			let trusted_call =
-				TrustedCall::request_vc(enclave_account_id, account, self.assertion.clone(), hash);
+			let trusted_call = TrustedCall::request_vc(
+				enclave_account_id.into(),
+				account.into(),
+				self.assertion.clone(),
+				hash,
+			);
 			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 
