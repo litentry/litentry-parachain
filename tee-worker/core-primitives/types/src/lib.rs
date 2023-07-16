@@ -175,17 +175,20 @@ pub enum TrustedOperationStatus {
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum WorkerRequest {
 	ChainStorage(Vec<u8>, Option<BlockHash>), // (storage_key, at_block)
+	ChainStorageKeys(Vec<u8>, Option<BlockHash>), // (storage_key_prefix, at_block)
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum WorkerResponse<V: Encode + Decode> {
 	ChainStorage(Vec<u8>, Option<V>, Option<Vec<Vec<u8>>>), // (storage_key, storage_value, storage_proof)
+	ChainStorageKeys(Vec<Vec<u8>>),                         // (storage_keys)
 }
 
 impl From<WorkerResponse<Vec<u8>>> for StorageEntry<Vec<u8>> {
 	fn from(response: WorkerResponse<Vec<u8>>) -> Self {
 		match response {
 			WorkerResponse::ChainStorage(key, value, proof) => StorageEntry { key, value, proof },
+			_ => StorageEntry::default(),
 		}
 	}
 }

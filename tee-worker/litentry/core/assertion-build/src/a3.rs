@@ -101,10 +101,9 @@ pub fn build(
 
 #[cfg(test)]
 mod tests {
-	use crate::{a3::build, AssertionBuildRequest};
+	use crate::{a3::build, AccountId, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
-	use itp_types::AccountId;
 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
@@ -124,9 +123,9 @@ mod tests {
 		let channel_id_vec: Vec<u8> = format!("{}", channel_id_u).as_bytes().to_vec();
 		let role_id_vec: Vec<u8> = format!("{}", role_id_u).as_bytes().to_vec();
 
-		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
+		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
 		let identities: Vec<IdentityNetworkTuple> =
-			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec.clone())), vec![])];
+			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec)), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let channel_id = BoundedVec::try_from(channel_id_vec).unwrap();
@@ -134,7 +133,9 @@ mod tests {
 
 		let req = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
-			who: AccountId::from([0; 32]),
+			signer: AccountId::from([0; 32]),
+			enclave_account: AccountId::from([0; 32]),
+			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			identities,
 			hash: Default::default(),

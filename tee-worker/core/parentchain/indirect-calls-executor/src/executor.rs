@@ -216,10 +216,19 @@ impl<
 		let enclave_account = self.get_enclave_account()?;
 		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
 		let trusted_call = match err {
-			Error::IMPHandlingError(e) =>
-				TrustedCall::handle_imp_error(enclave_account, account, e.clone(), hash),
-			Error::VCMPHandlingError(e) =>
-				TrustedCall::handle_vcmp_error(enclave_account, account, e.clone(), hash),
+			Error::IMPHandlingError(e) => TrustedCall::handle_imp_error(
+				enclave_account.into(),
+				account.map(|a| a.into()),
+				e.clone(),
+				hash,
+			),
+
+			Error::VCMPHandlingError(e) => TrustedCall::handle_vcmp_error(
+				enclave_account.into(),
+				account.map(|a| a.into()),
+				e.clone(),
+				hash,
+			),
 			_ => return Err(Error::Other(("unsupported error").into())),
 		};
 		let signed_trusted_call = self.sign_call_with_self(&trusted_call, &shard)?;

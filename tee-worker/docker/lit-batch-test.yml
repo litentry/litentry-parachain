@@ -4,6 +4,7 @@ services:
     container_name: litentry-batch-test
     volumes:
       - ../ts-tests:/ts-tests
+      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

@@ -255,7 +255,25 @@ where
 			.to_hex(),
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),
 		};
+		Ok(json!(json_value))
+	});
 
+	// state_getEnclave
+	let state_get_enclave_name: &str = "state_getEnclave";
+	io.add_sync_method(state_get_enclave_name, |_: Params| {
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
+			Ok(mrenclave) => RpcReturnValue {
+				do_watch: false,
+				value: mrenclave.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex(),
+			Err(error) => {
+				let error_msg: String =
+					format!("Could not get current mrenclave due to: {}", error);
+				compute_hex_encoded_return_error(error_msg.as_str())
+			},
+		};
 		Ok(json!(json_value))
 	});
 

@@ -39,6 +39,7 @@ fn test_ocall_worker_request() {
 
 	let (total_issuance, proof) = match first {
 		WorkerResponse::ChainStorage(_storage_key, value, proof) => (value, proof),
+		WorkerResponse::ChainStorageKeys(_storage_key) => todo!(),
 	};
 
 	info!("Total Issuance is: {:?}", total_issuance);

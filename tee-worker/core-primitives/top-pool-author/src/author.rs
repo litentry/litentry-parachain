@@ -311,7 +311,7 @@ where
 	) -> Vec<TrustedOperation> {
 		self.get_pending_trusted_calls(shard)
 			.into_iter()
-			.filter(|o| o.signed_caller_account() == Some(account))
+			.filter(|o| o.signed_caller_account().as_ref() == Some(account))
 			.collect()
 	}
 

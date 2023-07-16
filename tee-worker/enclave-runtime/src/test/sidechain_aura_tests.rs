@@ -56,6 +56,7 @@ use its_primitives::{traits::Block, types::SignedBlock as SignedSidechainBlock};
 use its_sidechain::{aura::proposer_factory::ProposerFactory, slots::SlotInfo};
 use jsonrpc_core::futures::executor;
 use lc_scheduled_enclave::ScheduledEnclaveMock;
+use litentry_primitives::Identity;
 use log::*;
 use primitive_types::H256;
 use sgx_crypto_helper::RsaKeyPair;
@@ -236,7 +237,7 @@ fn encrypted_trusted_operation_transfer_balance<
 	to: AccountId,
 	amount: Balance,
 ) -> Vec<u8> {
-	let call = TrustedCall::balance_transfer(from.public().into(), to, amount);
+	let call = TrustedCall::balance_transfer(Identity::Substrate(from.public().into()), to, amount);
 	let call_signed = sign_trusted_call(&call, attestation_api, shard_id, from);
 	let trusted_operation = TrustedOperation::direct_call(call_signed);
 	encrypt_trusted_operation(shielding_key, &trusted_operation)

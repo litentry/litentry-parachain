@@ -154,7 +154,7 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 				let mut trusted_operations: Vec<TrustedOperation> = Vec::new();
 				for encoded_operation in encoded_operations {
 					if let Some(o) = Self::decode_trusted_operation(encoded_operation) {
-						if o.signed_caller_account() == Some(account) {
+						if o.signed_caller_account().as_ref() == Some(account) {
 							trusted_operations.push(o);
 						}
 					}
