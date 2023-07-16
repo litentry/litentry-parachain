@@ -80,13 +80,11 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 
 #[cfg(test)]
 mod tests {
-	use crate::{a2::build, AssertionBuildRequest};
+	use crate::{a2::build, AccountId, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
-	use litentry_primitives::{
-		Address32, Assertion, Identity, IdentityNetworkTuple, IdentityString,
-	};
+	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
 	use std::{format, vec, vec::Vec};
 
