@@ -73,6 +73,10 @@ impl EnclaveOnChainOCallApi for ProposeToImportOCallApi {
 	) -> Result<Vec<StorageEntryVerified<V>>> {
 		todo!()
 	}
+
+	fn get_storage_keys(&self, _key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>> {
+		todo!()
+	}
 }
 
 impl EnclaveSidechainOCallApi for ProposeToImportOCallApi {

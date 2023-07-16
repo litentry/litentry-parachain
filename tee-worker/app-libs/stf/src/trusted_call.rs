@@ -646,6 +646,7 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
+
 				if let Err(e) = Self::request_vc_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),

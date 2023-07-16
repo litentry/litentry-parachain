@@ -206,6 +206,10 @@ impl EnclaveOnChainOCallApi for OnchainMock {
 		}
 		Ok(entries)
 	}
+
+	fn get_storage_keys(&self, _key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>, itp_ocall_api::Error> {
+		Ok(Default::default())
+	}
 }
 
 pub fn validateer_set() -> Vec<Enclave> {

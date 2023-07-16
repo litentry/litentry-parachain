@@ -30,7 +30,7 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-use itp_types::H256;
+use itp_types::{AccountId, H256};
 pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
@@ -86,6 +86,8 @@ pub type MaxIdentityLength = ConstU32<64>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
+	pub signer: AccountId,
+	pub enclave_account: AccountId,
 	pub who: Identity,
 	pub assertion: Assertion,
 	pub identities: Vec<IdentityNetworkTuple>,

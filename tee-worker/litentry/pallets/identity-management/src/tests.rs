@@ -113,7 +113,7 @@ fn link_identity_with_wrong_network_fails() {
 				RuntimeOrigin::signed(ALICE),
 				who,
 				alice_substrate_identity(),
-				web3networks.clone(),
+				web3networks,
 			),
 			Error::<Test>::WrongWeb3NetworkTypes
 		);

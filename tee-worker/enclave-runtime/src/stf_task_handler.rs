@@ -83,13 +83,18 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
-		ocall_api,
+		ocall_api.clone(),
 		shielding_key_repository,
 		author_api.clone(),
 	));
 
-	let stf_task_context =
-		StfTaskContext::new(shielding_key, author_api, stf_enclave_signer, state_handler);
+	let stf_task_context = StfTaskContext::new(
+		shielding_key,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+	);
 
 	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
 }

@@ -19,7 +19,7 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{ensure_enclave_signer, ensure_enclave_signer_or_self},
+	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -119,10 +119,15 @@ impl TrustedCallSigned {
 		hash: H256,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
-		ensure!(
-			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-			StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
-		);
+		match assertion {
+			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
+			Assertion::A13(_) => (),
+			_ => ensure!(
+				ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+				StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
+			),
+		}
+
 		ensure!(
 			UserShieldingKeys::<Runtime>::contains_key(&who),
 			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
@@ -146,6 +151,8 @@ impl TrustedCallSigned {
 			.collect();
 		let request: RequestType = AssertionBuildRequest {
 			shard: *shard,
+			signer,
+			enclave_account: enclave_signer_account(),
 			who,
 			assertion: assertion.clone(),
 			identities,

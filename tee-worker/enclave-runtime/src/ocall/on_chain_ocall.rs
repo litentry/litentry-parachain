@@ -107,4 +107,22 @@ impl EnclaveOnChainOCallApi for OcallApi {
 
 		Ok(storage_entries)
 	}
+
+	fn get_storage_keys(&self, key_prefix: Vec<u8>) -> Result<Vec<Vec<u8>>> {
+		// always using the latest state - we need to support optional header
+		let requests = vec![WorkerRequest::ChainStorageKeys(key_prefix, None)];
+
+		let responses: Vec<Vec<Vec<u8>>> = self
+			.worker_request::<Vec<u8>>(requests)?
+			.iter()
+			.filter_map(|r| match r {
+				WorkerResponse::ChainStorageKeys(k) => Some(k.clone()),
+				_ => None,
+			})
+			.collect();
+
+		// we should only have one response as we only sent one request
+		let first_response = responses.get(0).ok_or(StorageError::WrongValue)?;
+		Ok(first_response.clone())
+	}
 }

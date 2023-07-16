@@ -44,6 +44,7 @@ use handler::{
 };
 use ita_sgx_runtime::Hash;
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -72,11 +73,13 @@ pub struct StfTaskContext<
 	A: AuthorApi<Hash, Hash>,
 	S: StfEnclaveSigning,
 	H: HandleState,
+	O: EnclaveOnChainOCallApi,
 > {
 	shielding_key: K,
 	author_api: Arc<A>,
 	enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
+	pub ocall_api: Arc<O>,
 }
 
 impl<
@@ -84,7 +87,8 @@ impl<
 		A: AuthorApi<Hash, Hash>,
 		S: StfEnclaveSigning,
 		H: HandleState,
-	> StfTaskContext<K, A, S, H>
+		O: EnclaveOnChainOCallApi,
+	> StfTaskContext<K, A, S, H, O>
 where
 	H::StateT: SgxExternalitiesTrait,
 {
@@ -93,8 +97,9 @@ where
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
+		ocall_api: Arc<O>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler }
+		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api }
 	}
 
 	fn submit_trusted_call(
@@ -150,8 +155,8 @@ where
 }
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, A, S, H>(
-	context: Arc<StfTaskContext<K, A, S, H>>,
+pub fn run_stf_task_receiver<K, A, S, H, O>(
+	context: Arc<StfTaskContext<K, A, S, H, O>>,
 ) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -159,6 +164,7 @@ where
 	S: StfEnclaveSigning,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi,
 {
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
