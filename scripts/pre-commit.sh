@@ -13,34 +13,40 @@ function worker_clippy() {
     cargo clippy --release --features offchain-worker -- -D warnings
 }
 
+function parachain_check() {
+    make clippy
+    cargo test --locked --release -p pallet-* --lib
+    cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
+    cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
+    cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
+    cargo test --locked --release -p rococo-parachain-runtime --lib
+    cargo test --locked --release -p litmus-parachain-runtime --lib
+    cargo test --locked --release -p litentry-parachain-runtime --lib
+}
+
 root_dir=$(git rev-parse --show-toplevel)
 cd "$root_dir"
 
 start=$(date +%s)
 
-echo "Step 1, Parachain clippy"
 make fmt
-make clippy
 make shellcheck # _shellcheck is not enforced in CI though
-cargo test --locked --release -p pallet-* --lib
-cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
-cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
-cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
-cargo test --locked --release -p rococo-parachain-runtime --lib
-cargo test --locked --release -p litmus-parachain-runtime --lib
-cargo test --locked --release -p litentry-parachain-runtime --lib
 
-echo "Step 2, Worker clippy"
+echo "[Step 1], Parachain clippy"
+cd "$root_dir" && parachain_check
+
+echo "[Step 2], Worker clippy"
 cd "$root_dir/tee-worker" && worker_clippy
 
-echo "Step 3, Enclave clippy"
+echo "[Step 3], Enclave clippy"
 cd "$root_dir/tee-worker/enclave-runtime" && worker_clippy
 
-echo "Step 4, Worker cargo test"
+echo "[Step 4], Worker cargo test"
 cd "$root_dir/tee-worker"
 RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
-echo "Step 5, Service test"
+echo "[Step 5], Service test"
+cd "$root_dir/tee-worker"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
 ./integritee-service test --all

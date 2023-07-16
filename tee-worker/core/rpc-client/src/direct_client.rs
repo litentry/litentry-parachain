@@ -37,7 +37,6 @@ use std::{
 	thread,
 	thread::JoinHandle,
 };
-use substrate_api_client::RuntimeMetadataPrefixed;
 use teerex_primitives::{MrEnclave, Request};
 
 pub use crate::error::{Error, Result};
