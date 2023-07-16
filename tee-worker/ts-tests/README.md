@@ -2,7 +2,7 @@
 
 ts-tests of tee-worker
 
-### Environment
+## Environment
 
 node>=16, yarn v3
 
@@ -30,9 +30,9 @@ Generate sidechain type: `yarn workspace sidechain-api build`
 
 ## Usage
 
-Standard's identity test: `yarn test-identity:local`
+Standard identity test: `yarn test-identity:local`
 
-Standard's vc test: `yarn test-vc:local`
+Standard vc test: `yarn test-vc:local`
 
 Batch identity test: `yarn test-batch:local`
 
