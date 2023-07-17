@@ -148,19 +148,19 @@ impl AchainablePost for AchainableClient {
 	}
 }
 
-pub trait AchainableSystemLabelParser {
+pub trait AchainableResultParser {
 	type Item;
 	fn parse(value: serde_json::Value) -> Result<Self::Item, Error>;
 }
 
-impl AchainableSystemLabelParser for AchainableClient {
+impl AchainableResultParser for AchainableClient {
 	type Item = bool;
 	fn parse(response: serde_json::Value) -> Result<Self::Item, Error> {
 		if let Some(value) = response.get("result") {
 			if let Some(b) = value.as_bool() {
 				Ok(b)
 			} else {
-				Err(Error::AchainableError("Invalid response".to_string()))
+				Err(Error::AchainableError("Invalid boolean".to_string()))
 			}
 		} else {
 			Err(Error::AchainableError("Invalid response".to_string()))
@@ -237,6 +237,13 @@ impl AchainableA4Holder for AchainableClient {
 			return Err(Error::AchainableError("Wrong index".to_string()))
 		}
 
+		if *network != Web3Network::Ethereum
+			|| *network != Web3Network::Litentry
+			|| *network != Web3Network::Litmus
+		{
+			return Err(Error::AchainableError("Unsupported network".to_string()))
+		}
+
 		let path = if *network == Web3Network::Ethereum {
 			A4_ERC20_LIT_ETHEREUM_PATHS[index]
 		} else if *network == Web3Network::Litentry {
@@ -293,6 +300,10 @@ impl AchainableHoldingAssertion for AchainableClient {
 	fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error> {
 		if index >= PATH_LENS {
 			return Err(Error::AchainableError("Wrong index".to_string()))
+		}
+
+		if holder_type != "A7" || holder_type != "A10" || holder_type != "A11" {
+			return Err(Error::AchainableError("Unsupported holding Assertion type.".to_string()))
 		}
 
 		let path = if holder_type == "A7" {
