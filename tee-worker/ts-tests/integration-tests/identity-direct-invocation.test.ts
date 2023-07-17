@@ -1,15 +1,20 @@
-import { KeyObject } from 'crypto';
+import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { hexToU8a } from '@polkadot/util';
 
-import { buildIdentityFromKeypair, initIntegrationTestContext } from './common/utils';
+import { buildIdentityFromKeypair, buildIdentityHelper, initIntegrationTestContext } from './common/utils';
 import {
+    createSignedTrustedCallSetUserShieldingKey,
     createSignedTrustedGetterUserShieldingKey,
+    getSidechainNonce,
     getTeeShieldingKey,
     sendRequestFromGetter,
+    sendRequestFromTrustedCall,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
+import { aesKey } from './common/call';
+import { FrameSystemEventRecord } from 'parachain-api';
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -46,19 +51,74 @@ describe('Test Identity (direct invocation)', function () {
 
         const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
         assert.isTrue(k.isNone, 'shielding key should be empty before set');
+    });
 
-        // @fixme NOT FINISHED YET
-        // const twitter_identity = await buildIdentityHelper('mock_user', 'Twitter', 'Web2');
-        // const identity_hex = context.api.createType('LitentryIdentity', twitter_identity).toHex();
+    step('Invalid user shielding key', async function () {
+        const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
 
-        // const resp_challengecode = await checkUserChallengeCode(
-        //     context,
-        //     'IdentityManagement',
-        //     'ChallengeCodes',
-        //     u8aToHex(context.substrateWallet.alice.addressRaw),
-        //     identity_hex
-        // );
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
 
-        // assert.equal(resp_challengecode, '0x', 'challengecode should be empty before create');
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+
+        const setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            context.substrateWallet.alice, // @FIXME: support EVM!!!
+            aliceSubject,
+            aesKey,
+            requestIdentifier
+        );
+
+        const eventsPromise = new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
+            let blocksToScan = 30;
+
+            const unsubscribe = context.api.rpc.chain.subscribeFinalizedHeads(async (blockHeader) => {
+                const shiftedApi = await context.api.at(blockHeader.hash);
+                const allBlockEvents = await shiftedApi.query.system.events();
+                const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
+
+                const matchingEvent = allExtrinsicEvents.find((eventRecord) => {
+                    const eventProperties = eventRecord.toHuman();
+                    console.debug(JSON.stringify(eventProperties));
+                    return 'req_ext_hash' in eventProperties && eventProperties.req_ext_hash === requestIdentifier;
+                });
+                if (matchingEvent == undefined) {
+                    blocksToScan -= 1;
+                    if (blocksToScan < 1) {
+                        reject(
+                            new Error(`timed out listening for req_ext_hash: ${requestIdentifier} in parachain events`)
+                        );
+                        (await unsubscribe)();
+                    }
+                    return;
+                }
+
+                const extrinsicIndex = matchingEvent.phase.asApplyExtrinsic;
+                const requestEvents = allExtrinsicEvents.filter((eventRecord) =>
+                    eventRecord.phase.asApplyExtrinsic.eq(extrinsicIndex)
+                );
+                resolve(requestEvents);
+                (await unsubscribe)();
+            });
+        });
+
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            setUserShieldingKeyCall
+        );
+
+        const events = await eventsPromise;
+        events.forEach((event) => console.log(event.toHuman()));
     });
 });

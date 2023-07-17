@@ -2,6 +2,7 @@ import "@polkadot/api/augment";
 import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
+export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
 export type {
     Assertion,

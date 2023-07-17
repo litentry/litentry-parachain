@@ -143,19 +143,13 @@ describeLitentry('Test Identity', 0, (context) => {
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
         aliceIdentities = [aliceSubstrateIdentity];
 
-        // TODO: being lazy - the nonce here is hardcoded
+        // TODO: #1899 being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const twitterValidations = await buildValidations(
-            context,
-            [aliceSubject],
-            [twitterIdentity],
-            3,
-            'twitter'
-        );
+        const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], 3, 'twitter');
 
         const evmValidations = await buildValidations(
             context,

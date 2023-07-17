@@ -6,6 +6,7 @@ import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { identity } from "parachain-api/interfaces/definitions";
 import { LitentryIdentity } from "parachain-api/interfaces";
 
+export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
 export type {
     Assertion,
