@@ -86,15 +86,22 @@ describe('Test Identity (direct invocation)', function () {
                 const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
 
                 const matchingEvent = allExtrinsicEvents.find((eventRecord) => {
-                    const eventProperties = eventRecord.toHuman();
-                    console.debug(JSON.stringify(eventProperties));
-                    return 'req_ext_hash' in eventProperties && eventProperties.req_ext_hash === requestIdentifier;
+                    const eventData = eventRecord.event.data.toHuman();
+                    /**
+                     * @FIXME I'd love a cleaner way to do this check :P
+                     */
+                    return (
+                        eventData != undefined &&
+                        typeof eventData === 'object' &&
+                        'reqExtHash' in eventData &&
+                        eventData.reqExtHash === requestIdentifier
+                    );
                 });
                 if (matchingEvent == undefined) {
                     blocksToScan -= 1;
                     if (blocksToScan < 1) {
                         reject(
-                            new Error(`timed out listening for req_ext_hash: ${requestIdentifier} in parachain events`)
+                            new Error(`timed out listening for reqExtHash: ${requestIdentifier} in parachain events`)
                         );
                         (await unsubscribe)();
                     }
