@@ -241,5 +241,7 @@ fn generate_genesis(
 		vc_management: VCManagementConfig { admin: Some(root_key) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
+		ethereum: Default::default(),
+		evm: Default::default(),
 	}
 }
