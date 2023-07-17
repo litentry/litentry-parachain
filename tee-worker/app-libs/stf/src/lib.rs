@@ -66,7 +66,7 @@ pub type StfResult<T> = Result<T, StfError>;
 #[derive(Debug, Display, PartialEq, Eq)]
 pub enum StfError {
 	#[display(fmt = "Insufficient privileges {:?}, are you sure you are root?", _0)]
-	MissingPrivileges(AccountId),
+	MissingPrivileges(Identity),
 	#[display(fmt = "Valid enclave signer account is required")]
 	RequireEnclaveSignerAccount,
 	#[display(fmt = "Error dispatching runtime call. {:?}", _0)]
@@ -88,6 +88,9 @@ pub enum StfError {
 	#[display(fmt = "RequestVCFailed: {:?} {:?}", _0, _1)]
 	RequestVCFailed(Assertion, ErrorDetail),
 	SetScheduledMrEnclaveFailed,
+	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
+	SetIdentityNetworksFailed(ErrorDetail),
+	InvalidAccount,
 }
 
 impl From<MetadataError> for StfError {
@@ -167,10 +170,10 @@ impl TrustedOperation {
 		}
 	}
 
-	pub fn signed_caller_account(&self) -> Option<&AccountId> {
+	pub fn signed_caller_account(&self) -> Option<AccountId> {
 		match self {
-			TrustedOperation::direct_call(c) => Some(c.call.sender_account()),
-			TrustedOperation::indirect_call(c) => Some(c.call.sender_account()),
+			TrustedOperation::direct_call(c) => c.call.sender_identity().to_account_id(),
+			TrustedOperation::indirect_call(c) => c.call.sender_identity().to_account_id(),
 			_ => None,
 		}
 	}

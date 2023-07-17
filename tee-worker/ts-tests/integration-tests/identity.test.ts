@@ -7,10 +7,11 @@ import {
     buildIdentityHelper,
     buildIdentityTxs,
     buildValidations,
-    assertInitialIdGraphCreated,
     checkUserShieldingKeys,
     assertIdentityLinked,
     assertIdentityRemoved,
+    assertInitialIdGraphCreated,
+    buildIdentityFromKeypair,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -22,13 +23,6 @@ import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
-
-const substrateExtensionIdentity = {
-    Substrate: {
-        address: '0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48', //Bob
-        network: 'Litentry',
-    },
-} as unknown as LitentryPrimitivesIdentity;
 
 describeLitentry('Test Identity', 0, (context) => {
     const errorAesKey = '0xError';
@@ -42,11 +36,12 @@ describeLitentry('Test Identity', 0, (context) => {
     let web3networks: Web3Network[][] = [];
 
     step('check user sidechain storage before create', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            aliceSubject
         );
         assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
     });
@@ -98,16 +93,19 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
             'UserShieldingKeys',
-            u8aToHex(context.substrateWallet.alice.addressRaw)
+            aliceSubject
         );
         assert.equal(respShieldingKey, aesKey, 'respShieldingKey should be equal aesKey after set');
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
         // the main address should be already inside the IDGraph
         const mainIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
@@ -115,13 +113,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context
         );
         const identityHex = mainIdentity.toHex();
-        const respIdGraph = await checkIdGraph(
-            context,
-            'IdentityManagement',
-            'IDGraphs',
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            identityHex
-        );
+        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0 for main address');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active for main address');
         // TODO: check IDGraph.length == 1 in the sidechain storage
@@ -143,7 +135,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // Bob links:
         // - alice's substrate identity
         const aliceSubstrateIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.alice.addressRaw),
+            u8aToHex(context.substrateWallet.charlie.addressRaw),
             'Substrate',
             context
         );
@@ -156,9 +148,10 @@ describeLitentry('Test Identity', 0, (context) => {
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const twitterValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [twitterIdentity],
             3,
             'twitter'
@@ -166,7 +159,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const evmValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [evmIdentity],
             4,
             'ethereum',
@@ -176,7 +169,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const eveSubstrateValidations = await buildValidations(
             context,
-            [context.substrateWallet.alice.addressRaw],
+            [aliceSubject],
             [eveSubstrateIdentity],
             5,
             'substrate',
@@ -225,9 +218,11 @@ describeLitentry('Test Identity', 0, (context) => {
                 },
             },
         };
+        const bobSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+
         const msg = generateVerificationMessage(
             context,
-            context.substrateWallet.bob.addressRaw,
+            bobSubject,
             aliceSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall
@@ -236,7 +231,7 @@ describeLitentry('Test Identity', 0, (context) => {
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
         // sign the wrapped version as in polkadot-extension
-        signatureSubstrate = context.substrateWallet.alice.sign(
+        signatureSubstrate = context.substrateWallet.charlie.sign(
             u8aConcat(stringToU8a('<Bytes>'), u8aToU8a(msg), stringToU8a('</Bytes>'))
         );
         substrateExtensionValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(signatureSubstrate);
@@ -273,14 +268,9 @@ describeLitentry('Test Identity', 0, (context) => {
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const identityHex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
-        const respIdGraph = await checkIdGraph(
-            context,
-            'IdentityManagement',
-            'IDGraphs',
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            identityHex
-        );
+        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active');
     });
@@ -352,7 +342,51 @@ describeLitentry('Test Identity', 0, (context) => {
         await checkErrorDetail(aliceRespEvents, 'VerifyEvmSignatureFailed');
     });
 
-    // TODO: testcase for linking prime address and already linked address
+    step('link already linked identity', async function () {
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+
+        const aliceIdentities = [twitterIdentity];
+
+        // TODO: being lazy - the nonce here is hardcoded
+        //       it's better to retrieve the starting nonce from the sidechain and increment
+        //       it for each such request, similar to the construction of substrate tx
+        //       However, beware that we should query the nonce of the enclave-signer-account
+        //       not alice or bob, as it's the indirect calls are signed by the enclave signer
+        const aliceTwitterValidations = await buildValidations(
+            context,
+            [aliceSubject],
+            [twitterIdentity],
+            15,
+            'twitter',
+            context.substrateWallet.alice,
+            []
+        );
+
+        const aliceValidations = [...aliceTwitterValidations]
+
+        const aliceTxs = await buildIdentityTxs(
+            context,
+            context.substrateWallet.alice,
+            aliceIdentities,
+            'linkIdentity',
+            aliceValidations,
+            []
+        );
+
+        const aliceRespEvents = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.alice,
+            aliceTxs,
+            'identityManagement',
+            ['LinkIdentityFailed']
+        );
+
+        await checkErrorDetail(aliceRespEvents, 'IdentityAlreadyLinked');
+    });
+
+    // TODO: testcase for linking prime address
 
     step('remove identities', async function () {
         // Alice remove all identities
@@ -388,9 +422,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check IDGraph after removeIdentity', async function () {
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const identityHex = twitterIdentity.toHex();
-
         // TODO: we should verify the IDGraph is empty
     });
 

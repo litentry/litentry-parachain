@@ -25,12 +25,16 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use hex_sgx as hex;
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
 	pub use rust_base58_sgx as rust_base58;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
 
 pub mod a1;
 pub mod a10;
@@ -53,7 +57,7 @@ use litentry_primitives::{
 	ParameterString, VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
-use std::{collections::HashSet, format, string::String, vec, vec::Vec};
+use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -108,9 +112,9 @@ mod tests {
 	fn transpose_identity_works() {
 		let mut identities: Vec<IdentityNetworkTuple> = vec![];
 		let id1 = Identity::Twitter("alice1".as_bytes().to_vec().try_into().unwrap());
-		let id2 = Identity::Substrate([2u8; 32].into());
-		let id3 = Identity::Substrate([3u8; 32].into());
-		let id4 = Identity::Evm([4u8; 20].into());
+		let id2 = [2u8; 32].into();
+		let id3 = [3u8; 32].into();
+		let id4 = [4u8; 20].into();
 
 		let network1: Vec<Web3Network> = vec![];
 		let network2 = vec![Web3Network::Polkadot, Web3Network::Litentry];

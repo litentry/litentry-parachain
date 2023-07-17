@@ -3,14 +3,14 @@
 
 import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u128, u32 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
-import type { MultiSignature, Signature } from "@polkadot/types/interfaces/extrinsics";
+import type { Signature } from "@polkadot/types/interfaces/extrinsics";
 import type { AccountId, Balance, BlockNumber, H256 } from "@polkadot/types/interfaces/runtime";
 
 /** @name Address20 */
-export interface Address20 extends U8aFixed { }
+export interface Address20 extends U8aFixed {}
 
 /** @name Address32 */
-export interface Address32 extends U8aFixed { }
+export interface Address32 extends U8aFixed {}
 
 /** @name Assertion */
 export interface Assertion extends Enum {
@@ -21,6 +21,8 @@ export interface Assertion extends Enum {
     readonly asA3: ITuple<[Bytes, Bytes, Bytes]>;
     readonly isA4: boolean;
     readonly asA4: u128;
+    readonly isA5: boolean;
+    readonly asA5: ITuple<[Bytes, Bytes]>;
     readonly isA6: boolean;
     readonly isA7: boolean;
     readonly asA7: u128;
@@ -33,11 +35,23 @@ export interface Assertion extends Enum {
     readonly asA11: u128;
     readonly isA13: boolean;
     readonly asA13: u32;
-    readonly type: 'A1' | 'A2' | 'A3' | 'A4' | 'A6' | 'A7' | 'A8' | 'A9' | 'A10' | 'A11' | 'A13';
+    readonly type:
+        | "A1"
+        | "A2"
+        | "A3"
+        | "A4"
+        | "A5"
+        | "A6"
+        | "A7"
+        | "A8"
+        | "A9"
+        | "A10"
+        | "A11"
+        | "A13";
 }
 
 /** @name BoundedWeb3Network */
-export interface BoundedWeb3Network extends Vec<Web3Network> { }
+export interface BoundedWeb3Network extends Vec<Web3Network> {}
 
 /** @name DirectRequestStatus */
 export interface DirectRequestStatus extends Enum {
@@ -56,7 +70,7 @@ export interface DiscordValidationData extends Struct {
 }
 
 /** @name EthereumSignature */
-export interface EthereumSignature extends U8aFixed { }
+export interface EthereumSignature extends U8aFixed {}
 
 /** @name GenericEventWithAccount */
 export interface GenericEventWithAccount extends Struct {
@@ -86,19 +100,6 @@ export interface IdentityGenericEvent extends Struct {
     readonly id_graph: Vec<ITuple<[LitentryIdentity, IdentityContext]>>;
 }
 
-/** @name IdentityMultiSignature */
-export interface IdentityMultiSignature extends Enum {
-    readonly isEd25519: boolean;
-    readonly asEd25519: Signature;
-    readonly isSr25519: boolean;
-    readonly asSr25519: Signature;
-    readonly isEcdsa: boolean;
-    readonly asEcdsa: Signature;
-    readonly isEthereum: boolean;
-    readonly asEthereum: EthereumSignature;
-    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum";
-}
-
 /** @name IdentityStatus */
 export interface IdentityStatus extends Enum {
     readonly isActive: boolean;
@@ -107,7 +108,7 @@ export interface IdentityStatus extends Enum {
 }
 
 /** @name IdentityString */
-export interface IdentityString extends Bytes { }
+export interface IdentityString extends Bytes {}
 
 /** @name LitentryIdentity */
 export interface LitentryIdentity extends Enum {
@@ -124,6 +125,19 @@ export interface LitentryIdentity extends Enum {
     readonly type: "Twitter" | "Discord" | "Github" | "Substrate" | "Evm";
 }
 
+/** @name LitentryMultiSignature */
+export interface LitentryMultiSignature extends Enum {
+    readonly isEd25519: boolean;
+    readonly asEd25519: Signature;
+    readonly isSr25519: boolean;
+    readonly asSr25519: Signature;
+    readonly isEcdsa: boolean;
+    readonly asEcdsa: Signature;
+    readonly isEthereum: boolean;
+    readonly asEthereum: EthereumSignature;
+    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum";
+}
+
 /** @name LitentryValidationData */
 export interface LitentryValidationData extends Enum {
     readonly isWeb2Validation: boolean;
@@ -138,7 +152,7 @@ export interface PublicGetter extends Enum {
     readonly isSomeValue: boolean;
     readonly asSomeValue: u32;
     readonly isNonce: boolean;
-    readonly asNonce: AccountId;
+    readonly asNonce: LitentryIdentity;
     readonly type: "SomeValue" | "Nonce";
 }
 
@@ -149,25 +163,29 @@ export interface Request extends Struct {
 }
 
 /** @name ShardIdentifier */
-export interface ShardIdentifier extends H256 { }
+export interface ShardIdentifier extends H256 {}
 
 /** @name TrustedCall */
 export interface TrustedCall extends Enum {
     readonly isBalanceSetBalance: boolean;
-    readonly asBalanceSetBalance: ITuple<[AccountId, AccountId, Balance, Balance]>;
+    readonly asBalanceSetBalance: ITuple<[LitentryIdentity, LitentryIdentity, Balance, Balance]>;
     readonly isBalanceTransfer: boolean;
-    readonly asBalanceTransfer: ITuple<[AccountId, AccountId, Balance]>;
+    readonly asBalanceTransfer: ITuple<[LitentryIdentity, LitentryIdentity, Balance]>;
     readonly isBalanceUnshield: boolean;
-    readonly asBalanceUnshield: ITuple<[AccountId, AccountId, Balance, ShardIdentifier]>;
+    readonly asBalanceUnshield: ITuple<
+        [LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier]
+    >;
     readonly isBalanceShield: boolean;
-    readonly asBalanceShield: ITuple<[AccountId, AccountId, Balance]>;
+    readonly asBalanceShield: ITuple<[LitentryIdentity, LitentryIdentity, Balance]>;
     readonly isSetUserShieldingKey: boolean;
-    readonly asSetUserShieldingKey: ITuple<[AccountId, AccountId, UserShieldingKeyType, H256]>;
+    readonly asSetUserShieldingKey: ITuple<
+        [LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256]
+    >;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<
         [
-            AccountId,
-            AccountId,
+            LitentryIdentity,
+            LitentryIdentity,
             LitentryIdentity,
             LitentryValidationData,
             Vec<Web3Network>,
@@ -176,51 +194,56 @@ export interface TrustedCall extends Enum {
         ]
     >;
     readonly isRemoveIdentity: boolean;
-    readonly asRemoveIdentity: ITuple<[AccountId, AccountId, LitentryIdentity, H256]>;
+    readonly asRemoveIdentity: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]>;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[AccountId, AccountId, Assertion, H256]>;
+    readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, H256]>;
+    readonly isSetIdentityNetworks: boolean;
+    readonly asSetIdentityNetworks: ITuple<
+        [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>]
+    >;
     readonly type:
-    | "BalanceSetBalance"
-    | "BalanceTransfer"
-    | "BalanceUnshield"
-    | "BalanceShield"
-    | "SetUserShieldingKey"
-    | "LinkIdentity"
-    | "RemoveIdentity"
-    | "RequestVc";
+        | "BalanceSetBalance"
+        | "BalanceTransfer"
+        | "BalanceUnshield"
+        | "BalanceShield"
+        | "SetUserShieldingKey"
+        | "LinkIdentity"
+        | "RemoveIdentity"
+        | "RequestVc"
+        | "SetIdentityNetworks";
 }
 
 /** @name TrustedCallSigned */
 export interface TrustedCallSigned extends Struct {
     readonly call: TrustedCall;
     readonly index: u32;
-    readonly signature: MultiSignature;
+    readonly signature: LitentryMultiSignature;
 }
 
 /** @name TrustedGetter */
 export interface TrustedGetter extends Enum {
     readonly isFreeBalance: boolean;
-    readonly asFreeBalance: AccountId;
+    readonly asFreeBalance: LitentryIdentity;
     readonly isReservedBalance: boolean;
-    readonly asReservedBalance: AccountId;
+    readonly asReservedBalance: LitentryIdentity;
     readonly isUserShieldingKey: boolean;
-    readonly asUserShieldingKey: AccountId;
+    readonly asUserShieldingKey: LitentryIdentity;
     readonly isIdGraph: boolean;
-    readonly asIdGraph: AccountId;
+    readonly asIdGraph: LitentryIdentity;
     readonly isIdGraphStats: boolean;
-    readonly asIdGraphStats: AccountId;
+    readonly asIdGraphStats: LitentryIdentity;
     readonly type:
-    | "FreeBalance"
-    | "ReservedBalance"
-    | "UserShieldingKey"
-    | "IdGraph"
-    | "IdGraphStats";
+        | "FreeBalance"
+        | "ReservedBalance"
+        | "UserShieldingKey"
+        | "IdGraph"
+        | "IdGraphStats";
 }
 
 /** @name TrustedGetterSigned */
 export interface TrustedGetterSigned extends Struct {
     readonly getter: TrustedGetter;
-    readonly signature: MultiSignature;
+    readonly signature: LitentryMultiSignature;
 }
 
 /** @name TrustedOperation */
@@ -249,17 +272,17 @@ export interface TrustedOperationStatus extends Enum {
     readonly isDropped: boolean;
     readonly isInvalid: boolean;
     readonly type:
-    | "Submitted"
-    | "Future"
-    | "Ready"
-    | "Broadcast"
-    | "InSidechainBlock"
-    | "Retracted"
-    | "FinalityTimeout"
-    | "Finalized"
-    | "Usurped"
-    | "Dropped"
-    | "Invalid";
+        | "Submitted"
+        | "Future"
+        | "Ready"
+        | "Broadcast"
+        | "InSidechainBlock"
+        | "Retracted"
+        | "FinalityTimeout"
+        | "Finalized"
+        | "Usurped"
+        | "Dropped"
+        | "Invalid";
 }
 
 /** @name TwitterValidationData */
@@ -268,10 +291,10 @@ export interface TwitterValidationData extends Struct {
 }
 
 /** @name UserShieldingKeyNonceType */
-export interface UserShieldingKeyNonceType extends U8aFixed { }
+export interface UserShieldingKeyNonceType extends U8aFixed {}
 
 /** @name UserShieldingKeyType */
-export interface UserShieldingKeyType extends U8aFixed { }
+export interface UserShieldingKeyType extends U8aFixed {}
 
 /** @name VCRequested */
 export interface VCRequested extends Struct {
@@ -292,7 +315,7 @@ export interface Web2ValidationData extends Enum {
 /** @name Web3CommonValidationData */
 export interface Web3CommonValidationData extends Struct {
     readonly message: Bytes;
-    readonly signature: IdentityMultiSignature;
+    readonly signature: LitentryMultiSignature;
 }
 
 /** @name Web3Network */
@@ -308,16 +331,16 @@ export interface Web3Network extends Enum {
     readonly isPolygon: boolean;
     readonly isBsc: boolean;
     readonly type:
-    | "Polkadot"
-    | "Kusama"
-    | "Litentry"
-    | "Litmus"
-    | "LitentryRococo"
-    | "Khala"
-    | "SubstrateTestnet"
-    | "Ethereum"
-    | "Polygon"
-    | "Bsc";
+        | "Polkadot"
+        | "Kusama"
+        | "Litentry"
+        | "Litmus"
+        | "LitentryRococo"
+        | "Khala"
+        | "SubstrateTestnet"
+        | "Ethereum"
+        | "Polygon"
+        | "Bsc";
 }
 
 /** @name Web3ValidationData */
