@@ -4,7 +4,7 @@ ts-tests of tee-worker
 
 ## Environment
 
-node>=16, yarn v3
+Node versions 16.x or 18.x, yarn v3
 
 ## Installation
 
@@ -16,7 +16,7 @@ node>=16, yarn v3
 
 Update parachain metadata: `yarn workspace parachain-api update-metadata`
 
-Update parachain metadata: `yarn workspace sidechain-api update-metadata`
+Update sidechain metadata: `yarn workspace sidechain-api update-metadata`
 
 Generate parachain type: `yarn workspace parachain-api build`
 
