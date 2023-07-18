@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use litentry_primitives::{Web3Network, Assertion};
+use litentry_primitives::{Assertion, Web3Network};
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -237,13 +237,6 @@ impl AchainableA4Holder for AchainableClient {
 			return Err(Error::AchainableError("Wrong index".to_string()))
 		}
 
-		if *network != Web3Network::Ethereum
-			|| *network != Web3Network::Litentry
-			|| *network != Web3Network::Litmus
-		{
-			return Err(Error::AchainableError("Unsupported network".to_string()))
-		}
-
 		let path = if *network == Web3Network::Ethereum {
 			A4_ERC20_LIT_ETHEREUM_PATHS[index]
 		} else if *network == Web3Network::Litentry {
@@ -294,22 +287,33 @@ const A11_ETH_PATHS: [&str; PATH_LENS] = [
 ];
 
 pub trait AchainableHoldingAssertion {
-	fn is_holder(&mut self, assertion: &Assertion, address: &str, index: usize) -> Result<bool, Error>;
-	// fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error>;
+	fn is_holder(
+		&mut self,
+		assertion: &Assertion,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error>;
 }
 impl AchainableHoldingAssertion for AchainableClient {
-	fn is_holder(&mut self, assertion: &Assertion, address: &str, index: usize) -> Result<bool, Error> {
+	fn is_holder(
+		&mut self,
+		assertion: &Assertion,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error> {
 		if index >= PATH_LENS {
 			return Err(Error::AchainableError("Wrong index".to_string()))
 		}
 
-		let path;
-		match assertion {
-			Assertion::A7(..) => path = A7_DOT_PATHS[index],
-			Assertion::A10(..) => path = A10_WBTC_PATHS[index],
-			Assertion::A11(..) => path = A11_ETH_PATHS[index],
-			_ => return Err(Error::AchainableError("Unsupported holding Assertion type.".to_string())),
-		}
+		let path = match assertion {
+			Assertion::A7(..) => A7_DOT_PATHS[index],
+			Assertion::A10(..) => A10_WBTC_PATHS[index],
+			Assertion::A11(..) => A11_ETH_PATHS[index],
+			_ =>
+				return Err(Error::AchainableError(
+					"Unsupported holding Assertion type.".to_string(),
+				)),
+		};
 
 		let params = ReqParams::new(path);
 		let body = ParamsAccount::new(address).into();
@@ -325,48 +329,47 @@ impl AchainableHoldingAssertion for AchainableClient {
 // an assertion such as under 1 to calculate the sum, and then perform interval judgment.
 pub trait AchainableTotalTransactionsParser {
 	fn parse_total_transactions(response: serde_json::Value) -> Result<u64, Error> {
-		if let Some(value) = response.get("label") {
-			if let Some(value) = value.get("display") {
-				if let Some(displays) = value.as_array() {
-					let mut display_text = "";
-
-					for v in displays.iter() {
-						if let Some(text) = v.get("text") {
-							if let Some(text) = text.as_str() {
-								display_text = text
-							} else {
-								return Err(Error::AchainableError("Invalid bool".to_string()))
-							}
-						} else {
-							return Err(Error::AchainableError("Invalid result".to_string()))
+		let display_text = response
+			.get("label")
+			.and_then(|value| {
+				value.get("display").and_then(|displays| {
+					displays.as_array().map(|displays| {
+						let mut text: std::option::Option<String> = None;
+						for v in displays.iter() {
+							text = v
+								.get("text")
+								.and_then(|text| {
+									text.as_str().map(|display_text| Some(display_text.to_string()))
+								})
+								.flatten();
 						}
-					}
-					debug!("Total txs, display text: {display_text}");
+						text
+					})
+				})
+			})
+			.flatten();
 
-					// TODO:
-					// text field format: Total transactions under 1 (Transactions: 0)
-					let split_text = display_text.split(": ").collect::<Vec<&str>>();
-					if split_text.len() != 2 {
-						return Err(Error::AchainableError("Invalid array".to_string()))
-					}
+		debug!("Total txs, display text: {:?}", display_text);
 
-					let mut value_text = split_text[1].to_string();
-
-					// pop the last char: ")"
-					value_text.pop();
-
-					let value: u64 = value_text.parse::<u64>().unwrap_or_default();
-
-					Ok(value)
-				} else {
-					Err(Error::AchainableError("Invalid array".to_string()))
-				}
-			} else {
-				Err(Error::AchainableError("Invalid display".to_string()))
+		if let Some(display_text) = display_text {
+			// TODO:
+			// text field format: Total transactions under 1 (Transactions: 0)
+			let split_text = display_text.split(": ").collect::<Vec<&str>>();
+			if split_text.len() != 2 {
+				return Err(Error::AchainableError("Invalid array".to_string()))
 			}
-		} else {
-			Err(Error::AchainableError("Invalid response".to_string()))
+
+			let mut value_text = split_text[1].to_string();
+
+			// pop the last char: ")"
+			value_text.pop();
+
+			let value: u64 = value_text.parse::<u64>().unwrap_or_default();
+
+			return Ok(value)
 		}
+
+		Err(Error::AchainableError("Invalid response".to_string()))
 	}
 }
 impl AchainableTotalTransactionsParser for AchainableClient {}
@@ -378,7 +381,6 @@ impl AchainableTotalTransactions for AchainableClient {
 		addresses: &[String],
 	) -> Result<u64, Error> {
 		let mut path = "";
-		let mut is_unsupported_network = false;
 
 		match network {
 			Web3Network::Litentry => path = "/v1/run/label/74655d14-3abd-4a25-b3a4-cd592ae26f4c",
@@ -389,11 +391,7 @@ impl AchainableTotalTransactions for AchainableClient {
 			Web3Network::Khala => path = "/v1/run/label/f6a5cbe7-605a-4f9f-8763-67f90f943fb4",
 			_ => {
 				error!("Unsupported network: {:?}", network);
-				is_unsupported_network = true;
 			},
-		}
-		if is_unsupported_network {
-			return Err(Error::AchainableError("Unsupported network".to_string()))
 		}
 
 		let mut txs = 0_u64;
