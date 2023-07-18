@@ -44,7 +44,6 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
-		.filter(|(network, _)| *network == Web3Network::Polkadot)
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
