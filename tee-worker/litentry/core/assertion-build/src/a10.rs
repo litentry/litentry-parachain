@@ -60,7 +60,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
-			match client.is_holder("A10", address, index) {
+			match client.is_holder(&req.assertion, address, index) {
 				Ok(is_wbtc_holder) =>
 					if is_wbtc_holder {
 						optimal_hold_index = index;

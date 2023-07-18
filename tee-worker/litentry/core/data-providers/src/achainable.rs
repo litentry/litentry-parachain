@@ -25,7 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use litentry_primitives::Web3Network;
+use litentry_primitives::{Web3Network, Assertion};
 use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -294,25 +294,22 @@ const A11_ETH_PATHS: [&str; PATH_LENS] = [
 ];
 
 pub trait AchainableHoldingAssertion {
-	fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error>;
+	fn is_holder(&mut self, assertion: &Assertion, address: &str, index: usize) -> Result<bool, Error>;
+	// fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error>;
 }
 impl AchainableHoldingAssertion for AchainableClient {
-	fn is_holder(&mut self, holder_type: &str, address: &str, index: usize) -> Result<bool, Error> {
+	fn is_holder(&mut self, assertion: &Assertion, address: &str, index: usize) -> Result<bool, Error> {
 		if index >= PATH_LENS {
 			return Err(Error::AchainableError("Wrong index".to_string()))
 		}
 
-		if holder_type != "A7" || holder_type != "A10" || holder_type != "A11" {
-			return Err(Error::AchainableError("Unsupported holding Assertion type.".to_string()))
+		let path;
+		match assertion {
+			Assertion::A7(..) => path = A7_DOT_PATHS[index],
+			Assertion::A10(..) => path = A10_WBTC_PATHS[index],
+			Assertion::A11(..) => path = A11_ETH_PATHS[index],
+			_ => return Err(Error::AchainableError("Unsupported holding Assertion type.".to_string())),
 		}
-
-		let path = if holder_type == "A7" {
-			A7_DOT_PATHS[index]
-		} else if holder_type == "A10" {
-			A10_WBTC_PATHS[index]
-		} else {
-			A11_ETH_PATHS[index]
-		};
 
 		let params = ReqParams::new(path);
 		let body = ParamsAccount::new(address).into();

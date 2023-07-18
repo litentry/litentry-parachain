@@ -56,7 +56,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
-			match client.is_holder("A7", address, index) {
+			match client.is_holder(&req.assertion, address, index) {
 				Ok(is_polkadot_holder) =>
 					if is_polkadot_holder {
 						optimal_hold_index = index;
