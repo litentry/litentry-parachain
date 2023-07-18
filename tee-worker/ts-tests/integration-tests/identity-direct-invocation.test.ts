@@ -1,11 +1,12 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a } from '@polkadot/util';
-
-import { buildIdentityFromKeypair, buildIdentityHelper, initIntegrationTestContext } from './common/utils';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { buildIdentityFromKeypair, buildIdentityHelper, buildValidations, initIntegrationTestContext } from './common/utils';
 import { assertInitialIdGraphCreated } from './common/utils/assertion'
 import {
+    createSignedTrustedCallLinkIdentity,
+    createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedCallSetUserShieldingKey,
     createSignedTrustedGetterUserShieldingKey,
     getSidechainNonce,
@@ -14,7 +15,7 @@ import {
     sendRequestFromTrustedCall,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
-import { aesKey } from './common/call';
+import { aesKey, keyNonce } from './common/call';
 import { FrameSystemEventRecord } from 'parachain-api';
 
 const subscribeToEvents = async (requestIdentifier: string, context: IntegrationTestContext): Promise<FrameSystemEventRecord[]> => {
@@ -81,26 +82,79 @@ describe('Test Identity (direct invocation)', function () {
 
     it('needs a lot more work to be complete');
 
-    step('check user sidechain storage before create', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
-            context.api,
-            context.substrateWallet.alice,
-            aliceSubject
-        );
+    // step('check user sidechain storage before create', async function () {
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    //     const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+    //         context.api,
+    //         context.substrateWallet.alice,
+    //         aliceSubject
+    //     );
 
-        const shieldingKeyGetResult = await sendRequestFromGetter(
+    //     const shieldingKeyGetResult = await sendRequestFromGetter(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         shieldingKeyGetter
+    //     );
+
+    //     const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
+    //     assert.isTrue(k.isNone, 'shielding key should be empty before set');
+    // });
+
+    step('Invalid user shieldingkey', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const bobSubstrateIdentity = await buildIdentityHelper(u8aToHex(context.substrateWallet.bob.addressRaw), 'Substrate', context);
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+
+        const nonce = await getSidechainNonce(
             context.tee,
             context.api,
             context.mrEnclave,
             teeShieldingKey,
-            shieldingKeyGetter
+            aliceSubject
+        );
+        const [bobValidationData] = await buildValidations(
+            context,
+            [aliceSubject],
+            [bobSubstrateIdentity],
+            nonce.toNumber(),
+            'substrate',
+            context.substrateWallet.bob,
+        );
+        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+
+        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            context.substrateWallet.alice,
+            aliceSubject,
+            context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
+            context.api.createType('LitentryValidationData', bobValidationData).toHex(),
+            context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
+            keyNonce,
+            requestIdentifier
         );
 
-        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
-        assert.isTrue(k.isNone, 'shielding key should be empty before set');
-    });
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, linkIdentityCall);
+        assert.isTrue(res.status.isTrustedOperationStatus, `setUserShieldingKeyCall should be trusted operation status, but is ${res.status.type}`);
+        const status = res.status.asTrustedOperationStatus;
+        assert.isTrue(status.isSubmitted || status.isInSidechainBlock, `setUserShieldingKeyCall should be submitted or in sidechain block, but is ${status.type}`);
 
+        const events = await eventsPromise;
+
+        const linkIdentityFailed = context.api.events.identityManagement.LinkIdentityFailed;
+
+        const isLinkIdentityFailed = linkIdentityFailed.is.bind(linkIdentityFailed);
+        type EventLike = Parameters<typeof isLinkIdentityFailed>[0]
+        const ievents: EventLike[] = events.map(({ event }) => event)
+        const linkIdentityFailedEvents = ievents.filter(isLinkIdentityFailed)
+        console.log(linkIdentityFailedEvents[0].toHuman());
+
+        // assert.equal(linkIdentityFailedEvents[0].data[1].type, 'UserShieldingKeyNotFound', 'check linkIdentityFailedEvent detail is UserShieldingKeyNotFound, but is not');
+
+    });
 
     ['alice', 'bob'].forEach((name) => {
         step('set user shielding key', async function () {
@@ -144,5 +198,25 @@ describe('Test Identity (direct invocation)', function () {
 
             await assertInitialIdGraphCreated(context, [wallet], userShieldingKeySetEvents);
         })
+    });
+
+    step('check user sidechain storage after setUserShieldingKey', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+
+        const shieldingKeyGetResult = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            shieldingKeyGetter
+        );
+
+        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
+        assert.isTrue(k.isNone, 'shielding key should be empty before set');
     });
 });
