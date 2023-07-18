@@ -18,6 +18,8 @@ export async function assertInitialIdGraphCreated(
     signer: KeyringPair[],
     events: any[]
 ) {
+
+    assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
 
@@ -198,8 +200,8 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
