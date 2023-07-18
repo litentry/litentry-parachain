@@ -35,6 +35,8 @@ const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Assertion";
 const VC_A10_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
 // WBTC Holder
+// TODO:
+// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A10 build, who: {:?}", account_id_to_string(&req.who),);
 

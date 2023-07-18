@@ -31,6 +31,8 @@ const VC_A7_SUBJECT_DESCRIPTION: &str =
 const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Assertion";
 const VC_A7_SUBJECT_TAG: [&str; 1] = ["Polkadot"];
 
+// TODO:
+// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A7 build, who: {:?}", account_id_to_string(&req.who),);
 

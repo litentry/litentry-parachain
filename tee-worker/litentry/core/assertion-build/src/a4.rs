@@ -78,6 +78,8 @@ const VC_A4_SUBJECT_DESCRIPTION: &str =
 const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
 const VC_A4_SUBJECT_TAG: [&str; 3] = ["Ethereum", "Litmus", "Litentry"];
 
+// TODO:
+// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
