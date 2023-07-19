@@ -134,6 +134,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         // Bob links:
         // - alice's substrate identity
+        // @FIXME: comment says alice; code says charlie. Which one is it supposed to be !?
         const aliceSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.charlie.addressRaw),
             'Substrate',
@@ -340,7 +341,6 @@ describeLitentry('Test Identity', 0, (context) => {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
-
         const aliceIdentities = [twitterIdentity];
 
         // TODO: being lazy - the nonce here is hardcoded
@@ -358,7 +358,7 @@ describeLitentry('Test Identity', 0, (context) => {
             []
         );
 
-        const aliceValidations = [...aliceTwitterValidations]
+        const aliceValidations = [...aliceTwitterValidations];
 
         const aliceTxs = await buildIdentityTxs(
             context,

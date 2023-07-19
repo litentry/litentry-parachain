@@ -11,7 +11,6 @@ import {
 import { assertInitialIdGraphCreated } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
-    createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedCallSetUserShieldingKey,
     createSignedTrustedGetterIdGraph,
     createSignedTrustedGetterUserShieldingKey,
@@ -23,9 +22,10 @@ import {
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
-import { FrameSystemEventRecord } from 'parachain-api';
+import { FrameSystemEventRecord, LitentryValidationData, Web3Network } from 'parachain-api';
 import { CorePrimitivesErrorErrorDetail } from 'parachain-api';
-import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import { LitentryPrimitivesIdentity } from 'sidechain-api';
+import { Vec } from '@polkadot/types';
 
 const subscribeToEvents = async (
     requestIdentifier: string,
@@ -276,7 +276,114 @@ describe('Test Identity (direct invocation)', function () {
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
         assert.lengthOf(idGraph, 1);
-        assert.deepEqual(idGraph[0][0].toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
-        assert.equal(idGraph[0][1].status.toString(), 'Active', 'status should be active for main address');
+        const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
+        assert.deepEqual(idGraphNodeIdentity.toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
+        assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
+    });
+
+    step('link identities (alice)', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const getNextNonce = async () =>
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject);
+
+        // Alice links:
+        // - a `mock_user` twitter
+        // - alice's evm identity
+        // - eve's substrate identity (as alice can't link her own substrate again)
+        const linkIdentityRequestParams: {
+            identity: LitentryPrimitivesIdentity;
+            validation: LitentryValidationData;
+            networks: Vec<Web3Network>;
+        }[] = [];
+
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const [twitterValidation] = await buildValidations(
+            context,
+            [aliceSubject],
+            [twitterIdentity],
+            (await getNextNonce()).toNumber(),
+            'twitter'
+        );
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+        linkIdentityRequestParams.push({
+            identity: twitterIdentity,
+            validation: twitterValidation,
+            networks: twitterNetworks,
+        });
+
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+        const [evmValidation] = await buildValidations(
+            context,
+            [aliceSubject],
+            [evmIdentity],
+            (await getNextNonce()).toNumber(),
+            'ethereum',
+            undefined,
+            [context.ethersWallet.alice]
+        );
+        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+        linkIdentityRequestParams.push({
+            identity: evmIdentity,
+            validation: evmValidation,
+            networks: evmNetworks,
+        });
+
+        const eveSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.eve.addressRaw),
+            'Substrate',
+            context
+        );
+        const [eveSubstrateValidation] = await buildValidations(
+            context,
+            [aliceSubject],
+            [eveSubstrateIdentity],
+            (await getNextNonce()).toNumber(),
+            'substrate',
+            context.substrateWallet.eve
+        );
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']);
+        linkIdentityRequestParams.push({
+            identity: eveSubstrateIdentity,
+            validation: eveSubstrateValidation,
+            networks: eveSubstrateNetworks,
+        });
+
+        for (const { identity, validation, networks } of linkIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const eventsPromise = subscribeToEvents(requestIdentifier, context);
+            const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+                context.api,
+                context.mrEnclave,
+                await getNextNonce(),
+                context.substrateWallet.alice,
+                aliceSubject,
+                identity.toHex(),
+                validation.toHex(),
+                networks.toHex(),
+                keyNonce,
+                requestIdentifier
+            );
+
+            const res = await sendRequestFromTrustedCall(
+                context.tee,
+                context.api,
+                context.mrEnclave,
+                teeShieldingKey,
+                linkIdentityCall
+            );
+            assert.isTrue(
+                res.status.isTrustedOperationStatus,
+                `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+            );
+            const status = res.status.asTrustedOperationStatus;
+            assert.isTrue(
+                status.isSubmitted || status.isInSidechainBlock,
+                `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+            );
+
+            const events = await eventsPromise;
+            console.log('BANANA!');
+            events.forEach((event) => console.log(event.toHuman()));
+        }
     });
 });
