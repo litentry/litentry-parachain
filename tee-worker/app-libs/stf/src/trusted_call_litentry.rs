@@ -152,7 +152,7 @@ impl TrustedCallSigned {
 			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
 		);
 
-		let id_graph = IMT::get_id_graph(&who, usize::MAX);
+		let id_graph = IMT::get_id_graph_with_only_active_identities(&who, usize::MAX);
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()

@@ -279,14 +279,23 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// get the most recent `max_len` active elements in IDGraph
+		// get the most recent `max_len` elements in IDGraph
 		pub fn get_id_graph(who: &Identity, max_len: usize) -> IDGraph<T> {
-			let mut id_graph = IDGraphs::iter_prefix(who)
-				.filter(|(_, c)| c.is_active())
-				.collect::<IDGraph<T>>();
+			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
 			id_graph.sort_by(|a, b| Ord::cmp(&b.1.link_block, &a.1.link_block));
 			id_graph.truncate(max_len);
 			id_graph
+		}
+
+		// get the most recent `max_len` active elements in IDGraph
+		pub fn get_id_graph_with_only_active_identities(
+			who: &Identity,
+			max_len: usize,
+		) -> IDGraph<T> {
+			Self::get_id_graph(who, max_len)
+				.into_iter()
+				.filter(|(_, c)| c.is_active())
+				.collect::<IDGraph<T>>()
 		}
 
 		// get count of all keys account + identity in the IDGraphs

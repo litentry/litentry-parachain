@@ -235,9 +235,10 @@ fn deactivate_identity_works() {
 			}
 		);
 
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph_with_only_active_identities(&who.clone(), usize::MAX);
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
+		assert_eq!(IMT::get_id_graph(&who.clone(), usize::MAX).len(), 2);
 		// identity is only deactivated, so it still exists
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
@@ -294,7 +295,7 @@ fn activate_identity_works() {
 				status: IdentityStatus::Inactive
 			}
 		);
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph_with_only_active_identities(&who.clone(), usize::MAX);
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
 		// identity is only deactivated, so it still exists
