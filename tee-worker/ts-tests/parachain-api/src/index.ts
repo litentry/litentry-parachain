@@ -1,10 +1,11 @@
 import "@polkadot/api/augment";
-import "@polkadot/types/augment";
+import "@polkadot/types-augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 
-import { identity } from "parachain-api/interfaces/definitions";
-import { LitentryIdentity } from "parachain-api/interfaces";
+import { identity } from "../build/interfaces/definitions";
+import { LitentryIdentity } from "../build/interfaces";
+export type { CorePrimitivesErrorErrorDetail } from "@polkadot/types/lookup";
 
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
@@ -16,7 +17,7 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
-} from "parachain-api/interfaces";
+} from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider }; // @fixme don't export WsProvider :P

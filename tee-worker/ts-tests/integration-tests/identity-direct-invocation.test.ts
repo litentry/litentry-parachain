@@ -2,8 +2,13 @@ import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
-import { buildIdentityFromKeypair, buildIdentityHelper, buildValidations, initIntegrationTestContext } from './common/utils';
-import { assertInitialIdGraphCreated } from './common/utils/assertion'
+import {
+    buildIdentityFromKeypair,
+    buildIdentityHelper,
+    buildValidations,
+    initIntegrationTestContext,
+} from './common/utils';
+import { assertInitialIdGraphCreated } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallSetIdentityNetworks,
@@ -17,8 +22,12 @@ import {
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
 import { FrameSystemEventRecord } from 'parachain-api';
+import { CorePrimitivesErrorErrorDetail } from 'parachain-api';
 
-const subscribeToEvents = async (requestIdentifier: string, context: IntegrationTestContext): Promise<FrameSystemEventRecord[]> => {
+const subscribeToEvents = async (
+    requestIdentifier: string,
+    context: IntegrationTestContext
+): Promise<FrameSystemEventRecord[]> => {
     return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
         let blocksToScan = 30;
 
@@ -45,9 +54,7 @@ const subscribeToEvents = async (requestIdentifier: string, context: Integration
             if (matchingEvent == undefined) {
                 blocksToScan -= 1;
                 if (blocksToScan < 1) {
-                    reject(
-                        new Error(`timed out listening for reqExtHash: ${requestIdentifier} in parachain events`)
-                    );
+                    reject(new Error(`timed out listening for reqExtHash: ${requestIdentifier} in parachain events`));
                     (await unsubscribe)();
                 }
                 return;
@@ -62,8 +69,7 @@ const subscribeToEvents = async (requestIdentifier: string, context: Integration
             (await unsubscribe)();
         });
     });
-}
-
+};
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -77,34 +83,37 @@ describe('Test Identity (direct invocation)', function () {
             0
         );
         teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
-
     });
 
     it('needs a lot more work to be complete');
 
-    // step('check user sidechain storage before create', async function () {
-    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-    //     const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
-    //         context.api,
-    //         context.substrateWallet.alice,
-    //         aliceSubject
-    //     );
-
-    //     const shieldingKeyGetResult = await sendRequestFromGetter(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         shieldingKeyGetter
-    //     );
-
-    //     const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
-    //     assert.isTrue(k.isNone, 'shielding key should be empty before set');
-    // });
-
-    step('Invalid user shieldingkey', async function () {
+    step('check user sidechain storage before create', async function () {
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const bobSubstrateIdentity = await buildIdentityHelper(u8aToHex(context.substrateWallet.bob.addressRaw), 'Substrate', context);
+        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+
+        const shieldingKeyGetResult = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            shieldingKeyGetter
+        );
+
+        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
+        assert.isTrue(k.isNone, 'shielding key should be empty before set');
+    });
+
+    step('Invalid user shielding key', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const bobSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.bob.addressRaw),
+            'Substrate',
+            context
+        );
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
         const nonce = await getSidechainNonce(
@@ -120,7 +129,7 @@ describe('Test Identity (direct invocation)', function () {
             [bobSubstrateIdentity],
             nonce.toNumber(),
             'substrate',
-            context.substrateWallet.bob,
+            context.substrateWallet.bob
         );
         const eventsPromise = subscribeToEvents(requestIdentifier, context);
 
@@ -137,28 +146,46 @@ describe('Test Identity (direct invocation)', function () {
             requestIdentifier
         );
 
-        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, linkIdentityCall);
-        assert.isTrue(res.status.isTrustedOperationStatus, `setUserShieldingKeyCall should be trusted operation status, but is ${res.status.type}`);
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            linkIdentityCall
+        );
+        assert.isTrue(
+            res.status.isTrustedOperationStatus,
+            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+        );
         const status = res.status.asTrustedOperationStatus;
-        assert.isTrue(status.isSubmitted || status.isInSidechainBlock, `setUserShieldingKeyCall should be submitted or in sidechain block, but is ${status.type}`);
+        assert.isTrue(
+            status.isSubmitted || status.isInSidechainBlock,
+            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+        );
 
         const events = await eventsPromise;
 
         const linkIdentityFailed = context.api.events.identityManagement.LinkIdentityFailed;
 
         const isLinkIdentityFailed = linkIdentityFailed.is.bind(linkIdentityFailed);
-        type EventLike = Parameters<typeof isLinkIdentityFailed>[0]
-        const ievents: EventLike[] = events.map(({ event }) => event)
-        const linkIdentityFailedEvents = ievents.filter(isLinkIdentityFailed)
-        console.log(linkIdentityFailedEvents[0].toHuman());
+        type EventLike = Parameters<typeof isLinkIdentityFailed>[0];
+        const ievents: EventLike[] = events.map(({ event }) => event);
+        const linkIdentityFailedEvents = ievents.filter(isLinkIdentityFailed);
 
-        // assert.equal(linkIdentityFailedEvents[0].data[1].type, 'UserShieldingKeyNotFound', 'check linkIdentityFailedEvent detail is UserShieldingKeyNotFound, but is not');
-
+        assert.lengthOf(linkIdentityFailedEvents, 1);
+        /**
+         * @fixme tsc is STILL not seeing the correct type for these events, WTF!?!?!?!?
+         */
+        assert.equal(
+            (linkIdentityFailedEvents[0].data[1] as CorePrimitivesErrorErrorDetail).type,
+            'UserShieldingKeyNotFound',
+            'check linkIdentityFailedEvent detail is UserShieldingKeyNotFound, but is not'
+        );
     });
 
     ['alice', 'bob'].forEach((name) => {
         step('set user shielding key', async function () {
-            const wallet = context.substrateWallet[name] // @FIXME: support EVM!!!
+            const wallet = context.substrateWallet[name]; // @FIXME: support EVM!!!
             const subject = await buildIdentityFromKeypair(wallet, context);
             const nonce = await getSidechainNonce(
                 context.tee,
@@ -189,18 +216,26 @@ describe('Test Identity (direct invocation)', function () {
                 setUserShieldingKeyCall
             );
 
-            assert.isTrue(res.status.isTrustedOperationStatus, `setUserShieldingKeyCall should be trusted operation status, but is ${res.status.type}`);
+            assert.isTrue(
+                res.status.isTrustedOperationStatus,
+                `setUserShieldingKeyCall should be trusted operation status, but is ${res.status.type}`
+            );
             const status = res.status.asTrustedOperationStatus;
-            assert.isTrue(status.isSubmitted || status.isInSidechainBlock, `setUserShieldingKeyCall should be submitted or in sidechain block, but is ${status.type}`);
+            assert.isTrue(
+                status.isSubmitted || status.isInSidechainBlock,
+                `setUserShieldingKeyCall should be submitted or in sidechain block, but is ${status.type}`
+            );
 
             const events = await eventsPromise;
-            const userShieldingKeySetEvents = events.map(({ event }) => event).filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet')
+            const userShieldingKeySetEvents = events
+                .map(({ event }) => event)
+                .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
 
             await assertInitialIdGraphCreated(context, [wallet], userShieldingKeySetEvents);
-        })
+        });
     });
 
-    step('check user sidechain storage after setUserShieldingKey', async function () {
+    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
             context.api,
@@ -217,6 +252,6 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
-        assert.isTrue(k.isNone, 'shielding key should be empty before set');
+        assert.equal(k.value.toString(), aesKey, 'respShieldingKey should be equal aesKey after set');
     });
 });

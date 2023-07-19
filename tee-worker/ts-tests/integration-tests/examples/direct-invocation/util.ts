@@ -166,7 +166,7 @@ export function createSignedTrustedCallSetUserShieldingKey(
         signer,
         mrenclave,
         nonce,
-        [subject, subject, key, hash],
+        [subject.toHuman(), subject.toHuman(), key, hash],
         withWrappedBytes
     );
 }
@@ -192,7 +192,7 @@ export function createSignedTrustedCallLinkIdentity(
         signer,
         mrenclave,
         nonce,
-        [subject, subject, identity, validationData, web3networks, keyNonce, hash]
+        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, keyNonce, hash]
     );
 }
 
@@ -215,7 +215,6 @@ export function createSignedTrustedCallSetIdentityNetworks(
     );
 }
 
-
 export function createSignedTrustedGetterUserShieldingKey(
     parachainApi: ApiPromise,
     signer: KeyringPair,
@@ -225,7 +224,7 @@ export function createSignedTrustedGetterUserShieldingKey(
         parachainApi,
         ['user_shielding_key', '(LitentryIdentity)'],
         signer,
-        subject
+        subject.toHuman()
     );
     return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
@@ -235,7 +234,12 @@ export function createSignedTrustedGetterIdGraph(
     signer: KeyringPair,
     subject: LitentryPrimitivesIdentity
 ): Getter {
-    const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(LitentryIdentity)'], signer, subject);
+    const getterSigned = createSignedTrustedGetter(
+        parachainApi,
+        ['id_graph', '(LitentryIdentity)'],
+        signer,
+        subject.toHuman()
+    );
     return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
 
@@ -246,7 +250,7 @@ export const getSidechainNonce = async (
     teeShieldingKey: KeyObject,
     subject: LitentryPrimitivesIdentity
 ): Promise<Index> => {
-    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject);
+    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject.toHuman());
     const getter = parachainApi.createType('Getter', { public: getterPublic });
     const nonce = await sendRequestFromGetter(wsp, parachainApi, mrenclave, teeShieldingKey, getter);
     const nonceValue = decodeNonce(nonce.value.toHex());
