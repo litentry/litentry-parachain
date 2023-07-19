@@ -72,7 +72,6 @@ where
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
-					.or(achainable::query())
 					.or(achainable::tag::query())
 					.boxed(),
 			)
