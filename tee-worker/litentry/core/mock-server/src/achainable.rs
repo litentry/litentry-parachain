@@ -15,81 +15,6 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use lc_data_providers::achainable::{
-	ToAchainable, VerifiedCredentialsIsHodlerIn, VerifiedCredentialsTotalTxs,
-};
-use litentry_primitives::Web3Network;
-use std::collections::HashMap;
-use warp::{http::Response, Filter};
-
-pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-	warp::get()
-		.and(warp::path!("latest" / "achainable"))
-		.and(warp::query::<HashMap<String, String>>())
-		.map(|p: HashMap<String, String>| {
-			let default = String::default();
-			let query = p.get("query").unwrap_or(&default);
-
-			let expected_query_total_txs = VerifiedCredentialsTotalTxs::new(
-				vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-				vec![Web3Network::Kusama, Web3Network::Polkadot],
-			)
-			.to_achainable();
-
-			let expected_query_is_hodler = VerifiedCredentialsIsHodlerIn::new(
-				vec![
-					"0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad".to_string(),
-					"0x3394caf8e5ccaffb936e6407599543af46525e0b".to_string(),
-				],
-				"2022-10-16T00:00:00Z".to_string(),
-				Web3Network::Ethereum,
-				"0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723".to_string(),
-				"0.00000056".into(),
-			)
-			.to_achainable();
-
-			if query == &expected_query_total_txs {
-				let body = r#"
-{
-	"data": {
-		"kusama": [
-			{
-				"address": "EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg",
-				"totalTransactions": 42
-			}
-		],
-		"polkadot": [
-			{
-				"address": "EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg",
-				"totalTransactions": 0
-			}
-		]
-	}
-}"#;
-				Response::builder().body(body.to_string())
-			} else if query == &expected_query_is_hodler {
-				let body = r#"
-{
-  "data": {
-    "VerifiedCredentialsIsHodler": [
-      {
-        "isHodler": false,
-        "address": "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad"
-      },
-      {
-        "isHodler": false,
-        "address": "0x2eD157cd084Cee5861BdCC773c89881DdA373693"
-      }
-    ]
-  }
-}"#;
-				Response::builder().body(body.to_string())
-			} else {
-				Response::builder().status(400).body(String::from("Error query"))
-			}
-		})
-}
-
 pub mod tag {
 	use lc_data_providers::achainable::ReqBody;
 	use std::collections::HashMap;
@@ -116,6 +41,25 @@ pub mod tag {
 		{
 			"result": true
 		}"#;
+
+				if path == "/v1/run/label/74655d14-3abd-4a25-b3a4-cd592ae26f4c" {
+					// total transactions
+					let total_txs = r#"
+					{
+						"label": {
+							"result": true,
+							"display": [
+								{
+									"text": "Total transactions under 1 (Transactions: 41)",
+									"result": true
+								}
+							],
+							"runningCost": 1
+						}
+					}"#;
+
+					return Response::builder().body(total_txs.to_string())
+				}
 
 				// false
 				if (path == "/v1/run/label/1de85e1d215868788dfc91a9f04d7afd"

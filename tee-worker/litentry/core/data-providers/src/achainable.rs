@@ -23,26 +23,16 @@ use http_req::response::Headers;
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
-	RestGet, RestPath, RestPost,
+	RestPath, RestPost,
 };
-use litentry_primitives::Web3Network;
-use log::debug;
+use litentry_primitives::{Assertion, Web3Network};
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 use std::{
-	collections::HashMap,
 	format, str,
 	string::{String, ToString},
-	vec,
 	vec::Vec,
 };
-
-pub trait AchainableQuery<Query: ToAchainable> {
-	fn verified_credentials_is_hodler(&mut self, params: Query) -> Result<IsHodlerOut, Error>;
-	fn verified_credentials_total_transactions(
-		&mut self,
-		params: Query,
-	) -> Result<Vec<TotalTxsStruct>, Error>;
-}
 
 pub struct AchainableClient {
 	client: RestClient<HttpClient<DefaultSend>>,
@@ -69,174 +59,6 @@ impl AchainableClient {
 
 		AchainableClient { client }
 	}
-}
-
-impl<Query: ToAchainable> AchainableQuery<Query> for AchainableClient {
-	fn verified_credentials_is_hodler(&mut self, query: Query) -> Result<IsHodlerOut, Error> {
-		let path = query.path();
-		let query_value = query.to_achainable();
-		debug!("verified_credentials_is_hodler query: {}", query_value);
-
-		let query = vec![("query", query_value.as_str())];
-		match self.client.get_with::<String, AchainableResponse>(path, query.as_slice()) {
-			Ok(response) =>
-				if let Some(value) = response.data.get("data") {
-					debug!("	[Achainable] value: {:?}", value);
-
-					serde_json::from_value(value.clone()).map_err(|e| {
-						let error_msg = format!("Deserialize Achainable response error: {:?}", e);
-						Error::AchainableError(error_msg)
-					})
-				} else {
-					Err(Error::AchainableError("Invalid Achainable response".to_string()))
-				},
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
-	}
-
-	fn verified_credentials_total_transactions(
-		&mut self,
-		query: Query,
-	) -> Result<Vec<TotalTxsStruct>, Error> {
-		let path = query.path();
-		let query_value = query.to_achainable();
-		debug!("verified_credentials_total_transactions query: {}", query_value);
-
-		let query = vec![("query", query_value.as_str())];
-		let response = self
-			.client
-			.get_with::<String, AchainableResponse>(path, query.as_slice())
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))?;
-
-		let mut result: HashMap<String, TotalTxsStruct> = HashMap::new();
-		response.data.get("data").and_then(|v| v.as_object()).and_then(|map| {
-			for (_network, list) in map {
-				list.as_array().and_then(|element| {
-					for x in element {
-						// aggregate total_transactions from different networks, like group_by.
-						if let Ok(obj) = serde_json::from_value::<TotalTxsStruct>(x.clone()) {
-							if let Some(origin) = result.get_mut(&obj.address) {
-								origin.total_transactions += obj.total_transactions;
-							} else {
-								result.insert(obj.address.clone(), obj.clone());
-							}
-						}
-					}
-					None::<u8>
-				});
-			}
-			None::<u8>
-		});
-		if !result.is_empty() {
-			Ok(result.values().cloned().collect::<Vec<TotalTxsStruct>>())
-		} else {
-			Err(Error::AchainableError("Invalid Achainable response".to_string()))
-		}
-	}
-}
-
-pub trait ToAchainable {
-	fn path(&self) -> String {
-		"latest/achainable".to_string()
-	}
-
-	fn to_achainable(&self) -> String;
-}
-
-#[derive(Debug)]
-pub struct VerifiedCredentialsIsHodlerIn {
-	pub addresses: Vec<String>,
-	pub from_date: String,
-	pub network: Web3Network,
-	pub token_address: String,
-	pub min_balance: String,
-}
-
-impl VerifiedCredentialsIsHodlerIn {
-	pub fn new(
-		addresses: Vec<String>,
-		from_date: String,
-		network: Web3Network,
-		token_address: String,
-		min_balance: String,
-	) -> Self {
-		VerifiedCredentialsIsHodlerIn { addresses, from_date, network, token_address, min_balance }
-	}
-}
-
-impl ToAchainable for VerifiedCredentialsIsHodlerIn {
-	fn to_achainable(&self) -> String {
-		let addresses_str = format!("{:?}", self.addresses);
-		let network = format!("{:?}", self.network).to_lowercase();
-		if self.token_address.is_empty() {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.min_balance)
-		} else {
-			format!("{{VerifiedCredentialsIsHodler(addresses:{}, fromDate:\"{}\", network:{}, tokenAddress:\"{}\",minimumBalance:{}){{isHodler,address}}}}", addresses_str, self.from_date, network, self.token_address, self.min_balance)
-		}
-	}
-}
-
-#[derive(Debug)]
-pub struct VerifiedCredentialsTotalTxs {
-	addresses: Vec<String>,
-	networks: Vec<Web3Network>,
-}
-
-impl VerifiedCredentialsTotalTxs {
-	pub fn new(addresses: Vec<String>, networks: Vec<Web3Network>) -> Self {
-		VerifiedCredentialsTotalTxs { addresses, networks }
-	}
-}
-
-impl ToAchainable for VerifiedCredentialsTotalTxs {
-	fn to_achainable(&self) -> String {
-		let addresses_str = format!("{:?}", self.addresses);
-		let q = self
-			.networks
-			.iter()
-			.map(|n| {
-				let network = format!("{:?}", n).to_lowercase();
-				format!("{}: VerifiedCredentialsTotalTransactions(network: {} addresses: {}){{address,totalTransactions}}",
-						network,
-						network,
-					addresses_str
-				)
-			})
-			.collect::<Vec<String>>();
-		format!("query {{{}}}", q.join(","))
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct AchainableResponse {
-	#[serde(flatten)]
-	data: serde_json::Value,
-}
-impl RestPath<String> for AchainableResponse {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
-		Ok(path)
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct IsHodlerOut {
-	#[serde(rename = "VerifiedCredentialsIsHodler")]
-	pub hodlers: Vec<IsHodlerOutStruct>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct IsHodlerOutStruct {
-	pub address: String,
-	pub is_hodler: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct TotalTxsStruct {
-	pub address: String,
-	pub total_transactions: u64,
 }
 
 pub trait AchainableTagAccount {
@@ -320,12 +142,7 @@ impl AchainablePost for AchainableClient {
 			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, body);
 		debug!("ReqBody response: {:?}", response);
 		match response {
-			Ok(res) =>
-				if let Some(value) = res.get("result") {
-					Ok(value.clone())
-				} else {
-					Err(Error::AchainableError("Invalid response".to_string()))
-				},
+			Ok(res) => Ok(res),
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
 	}
@@ -338,9 +155,13 @@ pub trait AchainableResultParser {
 
 impl AchainableResultParser for AchainableClient {
 	type Item = bool;
-	fn parse(value: serde_json::Value) -> Result<Self::Item, Error> {
-		if let Some(b) = value.as_bool() {
-			Ok(b)
+	fn parse(response: serde_json::Value) -> Result<Self::Item, Error> {
+		if let Some(value) = response.get("result") {
+			if let Some(b) = value.as_bool() {
+				Ok(b)
+			} else {
+				Err(Error::AchainableError("Invalid boolean".to_string()))
+			}
 		} else {
 			Err(Error::AchainableError("Invalid response".to_string()))
 		}
@@ -356,6 +177,238 @@ fn check_achainable_label(
 	let body = ParamsAccount::new(address).into();
 	let resp = client.post(params, &body)?;
 	AchainableClient::parse(resp)
+}
+
+pub trait AchainableTotalTransactions {
+	// Currently, supported networks: ["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"]
+	fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error>;
+}
+
+const PATH_LENS: usize = 7;
+const A4_ERC20_LIT_ETHEREUM_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/b65b955c-63eb-4cdf-acd9-46863f9362f2",
+	"/v1/run/label/02b46446-e0ce-43ac-83f1-7e55a2f590dd",
+	"/v1/run/label/3075da9e-a426-4fe6-bd49-2e0624374326",
+	"/v1/run/label/00b52b3f-da38-4ef1-aeb3-3b5fdb508cfb",
+	"/v1/run/label/61105e67-a432-454b-b7e0-1b67d4a37ac9",
+	"/v1/run/label/79237456-bc9a-4a70-a235-09c0e1d138d2",
+	"/v1/run/label/c9149a7e-ef69-4ae2-83e6-dbf6ebe0f796",
+];
+const A4_LIT_LITENTRY_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/2e7e4efb-f64f-4c05-8535-efa14915a566",
+	"/v1/run/label/3268a2f3-b6a5-4055-a7ba-0de414e47b73",
+	"/v1/run/label/7c7dcc3b-7cea-4180-841f-fb4c920afb69",
+	"/v1/run/label/1e40a32d-5da7-4969-9648-b391eab33da7",
+	"/v1/run/label/65796b73-92fd-456e-aa28-75862c1c0cb0",
+	"/v1/run/label/7365f0a2-b69f-465d-b48f-5fe4495bfcaf",
+	"/v1/run/label/dd1bddeb-723a-48e6-b9f0-174b67bd0ff5",
+];
+const A4_LIT_LITMUS_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/a3f4d87f-d10e-4e0c-9d1a-e05f7e89ea6b",
+	"/v1/run/label/45c636e1-c34f-4d91-aa84-186ca0ebb3aa",
+	"/v1/run/label/ad95aceb-603d-41c4-997d-df196d9b1f94",
+	"/v1/run/label/10b1725a-eafb-4ee1-bace-ed754e98d309",
+	"/v1/run/label/33ccc2bd-ae38-4e41-82d3-fe522880443b",
+	"/v1/run/label/b8bccd1a-ab90-48c3-bc8b-aca3c0d011a3",
+	"/v1/run/label/38ad2b09-4851-44c7-add5-619499788db0",
+];
+pub trait AchainableA4Holder {
+	// Currently, supported networks: ["Litentry", "Litmus", "Ethereum"]
+	fn lit_holder_on_network(
+		&mut self,
+		network: &Web3Network,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error>;
+}
+impl AchainableA4Holder for AchainableClient {
+	// consistently holding at least 10 LIT tokens
+	fn lit_holder_on_network(
+		&mut self,
+		network: &Web3Network,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error> {
+		if index >= PATH_LENS {
+			return Err(Error::AchainableError("Wrong index".to_string()))
+		}
+
+		let path = if *network == Web3Network::Ethereum {
+			A4_ERC20_LIT_ETHEREUM_PATHS[index]
+		} else if *network == Web3Network::Litentry {
+			A4_LIT_LITENTRY_PATHS[index]
+		} else {
+			A4_LIT_LITMUS_PATHS[index]
+		};
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+}
+
+// consistently holding at least 5 DOT tokens
+const A7_DOT_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/7bb7b42e-088d-46d5-9deb-b0e4f02a817d",
+	"/v1/run/label/b7426872-abdf-4680-9d74-0abe8904e410",
+	"/v1/run/label/23120e2b-1f2b-40c4-83b6-2836558506f0",
+	"/v1/run/label/a3df0656-af20-4d83-8ea6-fbbe9ccd0c1b",
+	"/v1/run/label/3674490b-e986-4cf2-a7ce-6358a6df238b",
+	"/v1/run/label/0d60bb2c-de34-4575-9997-69f7dec7daf7",
+	"/v1/run/label/05b87f44-bfab-46ca-a917-062a4064d9f0",
+];
+
+// consistently holding at least 0.001 WBTC tokens
+const A10_WBTC_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/5a936ecc-abfd-4bbd-8e62-55a8fc7c4a6a",
+	"/v1/run/label/50e9f706-c610-4a21-b611-65052381061d",
+	"/v1/run/label/32184172-5316-4a95-b0d2-6d5a50b0eba3",
+	"/v1/run/label/4b4e0d0a-812e-4861-8361-b76cd357d20c",
+	"/v1/run/label/dbdbef34-35e3-4542-a50c-b40356747588",
+	"/v1/run/label/4a75aaaa-a4f0-4512-8200-3d259d7dac27",
+	"/v1/run/label/bd84b478-baea-4e2c-8e4d-0cf2eaeadb63",
+];
+
+// consistently holding at least 0.01 ETH tokens
+const A11_ETH_PATHS: [&str; PATH_LENS] = [
+	"/v1/run/label/1e6053c6-1d09-42ee-9074-a4664957f9a7",
+	"/v1/run/label/060acc81-a9b0-4997-8f4b-b8d7953fe44b",
+	"/v1/run/label/892d4ddc-f70c-4fc2-acfc-1891099db41e",
+	"/v1/run/label/eb2f0c07-c3a4-48dc-a194-c254b26ff581",
+	"/v1/run/label/7f28c5cb-64c4-4880-9242-3cde638a57d4",
+	"/v1/run/label/0afc7c00-a1be-47aa-9903-2d99d2970091",
+	"/v1/run/label/078b2f54-4515-4513-9c67-33c30081b758",
+];
+
+pub trait AchainableHoldingAssertion {
+	fn is_holder(
+		&mut self,
+		assertion: &Assertion,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error>;
+}
+impl AchainableHoldingAssertion for AchainableClient {
+	fn is_holder(
+		&mut self,
+		assertion: &Assertion,
+		address: &str,
+		index: usize,
+	) -> Result<bool, Error> {
+		if index >= PATH_LENS {
+			return Err(Error::AchainableError("Wrong index".to_string()))
+		}
+
+		let path = match assertion {
+			Assertion::A7(..) => A7_DOT_PATHS[index],
+			Assertion::A10(..) => A10_WBTC_PATHS[index],
+			Assertion::A11(..) => A11_ETH_PATHS[index],
+			_ =>
+				return Err(Error::AchainableError(
+					"Unsupported holding Assertion type.".to_string(),
+				)),
+		};
+
+		let params = ReqParams::new(path);
+		let body = ParamsAccount::new(address).into();
+		let resp = self.post(params, &body)?;
+
+		Self::parse(resp)
+	}
+}
+
+// TODO:
+// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api
+// currently only judges the range of a single account, so the current approach is to parse the returned data through
+// an assertion such as under 1 to calculate the sum, and then perform interval judgment.
+pub trait AchainableTotalTransactionsParser {
+	fn parse_total_transactions(response: serde_json::Value) -> Result<u64, Error> {
+		let display_text = response
+			.get("label")
+			.and_then(|value| {
+				value.get("display").and_then(|displays| {
+					displays.as_array().map(|displays| {
+						let mut text: std::option::Option<String> = None;
+						for v in displays.iter() {
+							text = v
+								.get("text")
+								.and_then(|text| {
+									text.as_str().map(|display_text| Some(display_text.to_string()))
+								})
+								.flatten();
+						}
+						text
+					})
+				})
+			})
+			.flatten();
+
+		debug!("Total txs, display text: {:?}", display_text);
+
+		if let Some(display_text) = display_text {
+			// TODO:
+			// text field format: Total transactions under 1 (Transactions: 0)
+			let split_text = display_text.split(": ").collect::<Vec<&str>>();
+			if split_text.len() != 2 {
+				return Err(Error::AchainableError("Invalid array".to_string()))
+			}
+
+			let mut value_text = split_text[1].to_string();
+
+			// pop the last char: ")"
+			value_text.pop();
+
+			let value: u64 = value_text.parse::<u64>().unwrap_or_default();
+
+			return Ok(value)
+		}
+
+		Err(Error::AchainableError("Invalid response".to_string()))
+	}
+}
+impl AchainableTotalTransactionsParser for AchainableClient {}
+
+impl AchainableTotalTransactions for AchainableClient {
+	fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error> {
+		let mut path = "";
+
+		match network {
+			Web3Network::Litentry => path = "/v1/run/label/74655d14-3abd-4a25-b3a4-cd592ae26f4c",
+			Web3Network::Litmus => path = "/v1/run/label/b94fedfc-cb7b-4e59-a7a9-121550acd1c4",
+			Web3Network::Polkadot => path = "/v1/run/label/046e8968-d585-4421-8064-d48b58c75b9a",
+			Web3Network::Kusama => path = "/v1/run/label/060e12c8-b84e-4284-bab3-9a014d41266b",
+			Web3Network::Ethereum => path = "/v1/run/label/8e19fb04-57fc-4537-ac93-d6fa7cff5bbe",
+			Web3Network::Khala => path = "/v1/run/label/f6a5cbe7-605a-4f9f-8763-67f90f943fb4",
+			_ => {
+				error!("Unsupported network: {:?}", network);
+			},
+		}
+
+		let mut txs = 0_u64;
+		addresses.iter().for_each(|address| {
+			let params = ReqParams::new(path);
+			let body = ParamsAccount::new(address).into();
+			match self.post(params, &body) {
+				Ok(resp) => {
+					let total = Self::parse_total_transactions(resp).unwrap_or_default();
+					txs += total;
+				},
+				Err(e) => error!("Request total txs error: {:?}", e),
+			}
+		});
+
+		Ok(txs)
+	}
 }
 
 impl AchainableTagAccount for AchainableClient {
@@ -653,17 +706,12 @@ impl RestPath<String> for ParamsAccount {
 #[cfg(test)]
 mod tests {
 	use crate::achainable::{
-		AchainableClient, AchainableQuery, AchainableTagAccount, AchainableTagBalance,
-		AchainableTagDeFi, AchainableTagDotsama, VerifiedCredentialsIsHodlerIn,
-		VerifiedCredentialsTotalTxs, GLOBAL_DATA_PROVIDER_CONFIG,
+		AchainableClient, AchainableTagAccount, AchainableTagBalance, AchainableTagDeFi,
+		AchainableTagDotsama, AchainableTotalTransactions, GLOBAL_DATA_PROVIDER_CONFIG,
 	};
 	use lc_mock_server::{default_getter, run};
 	use litentry_primitives::Web3Network;
 	use std::sync::Arc;
-
-	const ACCOUNT_ADDRESS1: &str = "0x61f2270153bb68dc0ddb3bc4e4c1bd7522e918ad";
-	const ACCOUNT_ADDRESS2: &str = "0x3394caf8e5ccaffb936e6407599543af46525e0b";
-	const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
@@ -672,38 +720,16 @@ mod tests {
 	}
 
 	#[test]
-	fn verified_credentials_is_hodler_work() {
+	fn total_transactions_work() {
 		init();
 
-		let mut client = AchainableClient::new();
-		let credentials = VerifiedCredentialsIsHodlerIn {
-			addresses: vec![ACCOUNT_ADDRESS1.to_string(), ACCOUNT_ADDRESS2.to_string()],
-			from_date: "2022-10-16T00:00:00Z".to_string(),
-			network: Web3Network::Ethereum,
-			token_address: LIT_TOKEN_ADDRESS.to_string(),
-			min_balance: "0.00000056".into(),
-		};
-		let response = client.verified_credentials_is_hodler(credentials);
-		assert!(response.is_ok(), "due to error:{:?}", response.unwrap_err());
-		let is_hodler_out = response.unwrap();
-		assert_eq!(is_hodler_out.hodlers[0].is_hodler, false);
-		assert_eq!(is_hodler_out.hodlers[1].is_hodler, false);
-	}
+		let addresses = vec!["0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string()];
 
-	#[test]
-	fn verified_credentials_total_transactions_work() {
-		init();
-
-		let query = VerifiedCredentialsTotalTxs {
-			addresses: vec!["EGP7XztdTosm1EmaATZVMjSWujGEj9nNidhjqA2zZtttkFg".to_string()],
-			networks: vec![Web3Network::Kusama, Web3Network::Polkadot],
-		};
 		let mut client = AchainableClient::new();
-		let r = client.verified_credentials_total_transactions(query);
+		let r = client.total_transactions(&Web3Network::Litentry, &addresses);
 		assert!(r.is_ok());
 		let r = r.unwrap();
-		assert!(!r.is_empty());
-		assert!(r.get(0).unwrap().total_transactions >= 41)
+		assert!(r == 41)
 	}
 
 	#[test]
