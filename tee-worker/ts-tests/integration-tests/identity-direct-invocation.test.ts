@@ -13,7 +13,9 @@ import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedCallSetUserShieldingKey,
+    createSignedTrustedGetterIdGraph,
     createSignedTrustedGetterUserShieldingKey,
+    decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
     sendRequestFromGetter,
@@ -23,6 +25,7 @@ import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
 import { FrameSystemEventRecord } from 'parachain-api';
 import { CorePrimitivesErrorErrorDetail } from 'parachain-api';
+import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 
 const subscribeToEvents = async (
     requestIdentifier: string,
@@ -184,7 +187,7 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     ['alice', 'bob'].forEach((name) => {
-        step('set user shielding key', async function () {
+        step(`set user shielding key (${name})`, async function () {
             const wallet = context.substrateWallet[name]; // @FIXME: support EVM!!!
             const subject = await buildIdentityFromKeypair(wallet, context);
             const nonce = await getSidechainNonce(
@@ -253,5 +256,27 @@ describe('Test Identity (direct invocation)', function () {
 
         const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
         assert.equal(k.value.toString(), aesKey, 'respShieldingKey should be equal aesKey after set');
+    });
+
+    step('check idgraph from sidechain storage before linking', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+        const idgraphGetter = createSignedTrustedGetterIdGraph(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
+
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+        assert.lengthOf(idGraph, 1);
+        assert.deepEqual(idGraph[0][0].toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
+        assert.equal(idGraph[0][1].status.toString(), 'Active', 'status should be active for main address');
     });
 });
