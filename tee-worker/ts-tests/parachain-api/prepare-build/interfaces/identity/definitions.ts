@@ -15,7 +15,7 @@ export default {
         TrustedCallSigned: {
             call: "TrustedCall",
             index: "u32",
-            signature: "MultiSignature",
+            signature: "LitentryMultiSignature",
         },
         Getter: {
             _enum: {
@@ -26,37 +26,39 @@ export default {
         PublicGetter: {
             _enum: {
                 some_value: "u32",
-                nonce: "(AccountId)",
+                nonce: "(LitentryIdentity)",
             },
         },
         TrustedGetterSigned: {
             getter: "TrustedGetter",
-            signature: "MultiSignature",
+            signature: "LitentryMultiSignature",
         },
 
         //important
         TrustedGetter: {
             _enum: {
-                free_balance: "(AccountId)",
-                reserved_balance: "(AccountId)",
-                user_shielding_key: "(AccountId)",
-                id_graph: "(AccountId)",
-                id_graph_stats: "(AccountId)",
+                free_balance: "(LitentryIdentity)",
+                reserved_balance: "(LitentryIdentity)",
+                user_shielding_key: "(LitentryIdentity)",
+                id_graph: "(LitentryIdentity)",
+                id_graph_stats: "(LitentryIdentity)",
             },
         },
         //important
         TrustedCall: {
             _enum: {
-                balance_set_balance: "(AccountId, AccountId, Balance, Balance)",
-                balance_transfer: "(AccountId, AccountId, Balance)",
-                balance_unshield: "(AccountId, AccountId, Balance, ShardIdentifier)",
-                balance_shield: "(AccountId, AccountId, Balance)",
-                set_user_shielding_key: "(AccountId, AccountId, UserShieldingKeyType, H256)",
+                balance_set_balance: "(LitentryIdentity, LitentryIdentity, Balance, Balance)",
+                balance_transfer: "(LitentryIdentity, LitentryIdentity, Balance)",
+                balance_unshield: "(LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier)",
+                balance_shield: "(LitentryIdentity, LitentryIdentity, Balance)",
+                set_user_shielding_key:
+                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
                 link_identity:
-                    "(AccountId, AccountId, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
-                remove_identity: "(AccountId, AccountId, LitentryIdentity, H256)",
-                request_vc: "(AccountId, AccountId, Assertion, H256)",
-                set_identity_networks: "(AccountId, AccountId, LitentryIdentity, Vec<Web3Network>)",
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
+                remove_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
+                request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
+                set_identity_networks:
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
@@ -139,10 +141,10 @@ export default {
         },
         Web3CommonValidationData: {
             message: "Vec<u8>",
-            signature: "IdentityMultiSignature",
+            signature: "LitentryMultiSignature",
         },
 
-        IdentityMultiSignature: {
+        LitentryMultiSignature: {
             _enum: {
                 Ed25519: "ed25519::Signature",
                 Sr25519: "sr25519::Signature",

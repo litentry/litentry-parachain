@@ -4,15 +4,7 @@ import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type {
-    Assertion,
-    LitentryIdentity,
-    LitentryValidationData,
-    Web3Network,
-    WorkerRpcReturnValue,
-    TrustedCallSigned,
-    Getter,
-} from "parachain-api/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -142,7 +134,7 @@ export declare const definitions: {
             message: string;
             signature: string;
         };
-        IdentityMultiSignature: {
+        LitentryMultiSignature: {
             _enum: {
                 Ed25519: string;
                 Sr25519: string;

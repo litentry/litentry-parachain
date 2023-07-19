@@ -135,7 +135,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // Bob links:
         // - alice's substrate identity
         const aliceSubstrateIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.alice.addressRaw),
+            u8aToHex(context.substrateWallet.charlie.addressRaw),
             'Substrate',
             context
         );
@@ -225,7 +225,7 @@ describeLitentry('Test Identity', 0, (context) => {
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
         // sign the wrapped version as in polkadot-extension
-        signatureSubstrate = context.substrateWallet.alice.sign(
+        signatureSubstrate = context.substrateWallet.charlie.sign(
             u8aConcat(stringToU8a('<Bytes>'), u8aToU8a(msg), stringToU8a('</Bytes>'))
         );
         substrateExtensionValidationData!.Web3Validation.Substrate.signature.Sr25519 = u8aToHex(signatureSubstrate);
@@ -336,7 +336,51 @@ describeLitentry('Test Identity', 0, (context) => {
         await checkErrorDetail(aliceRespEvents, 'VerifyEvmSignatureFailed');
     });
 
-    // TODO: testcase for linking prime address and already linked address
+    step('link already linked identity', async function () {
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+
+        const aliceIdentities = [twitterIdentity];
+
+        // TODO: being lazy - the nonce here is hardcoded
+        //       it's better to retrieve the starting nonce from the sidechain and increment
+        //       it for each such request, similar to the construction of substrate tx
+        //       However, beware that we should query the nonce of the enclave-signer-account
+        //       not alice or bob, as it's the indirect calls are signed by the enclave signer
+        const aliceTwitterValidations = await buildValidations(
+            context,
+            [aliceSubject],
+            [twitterIdentity],
+            15,
+            'twitter',
+            context.substrateWallet.alice,
+            []
+        );
+
+        const aliceValidations = [...aliceTwitterValidations]
+
+        const aliceTxs = await buildIdentityTxs(
+            context,
+            context.substrateWallet.alice,
+            aliceIdentities,
+            'linkIdentity',
+            aliceValidations,
+            []
+        );
+
+        const aliceRespEvents = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.alice,
+            aliceTxs,
+            'identityManagement',
+            ['LinkIdentityFailed']
+        );
+
+        await checkErrorDetail(aliceRespEvents, 'IdentityAlreadyLinked');
+    });
+
+    // TODO: testcase for linking prime address
 
     step('remove identities', async function () {
         // Alice remove all identities

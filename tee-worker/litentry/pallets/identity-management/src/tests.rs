@@ -121,6 +121,43 @@ fn link_identity_with_wrong_network_fails() {
 }
 
 #[test]
+fn cannot_link_identity_again() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: Vec<Web3Network> = vec![Web3Network::Polkadot];
+		let who_bob: Identity = BOB.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			who_bob.clone(),
+			alice_substrate_identity(),
+			web3networks.clone()
+		));
+		assert_eq!(
+			IMT::id_graphs(who_bob.clone(), alice_substrate_identity()).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				status: IdentityStatus::Active,
+				web3networks: web3networks.clone()
+			}
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who_bob), 2);
+
+		let who_alice: Identity = ALICE.into();
+
+		assert_err!(
+			IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				who_alice.clone(),
+				alice_substrate_identity(),
+				web3networks
+			),
+			Error::<Test>::IdentityAlreadyLinked
+		);
+
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who_alice), 0);
+	});
+}
+
+#[test]
 fn cannot_create_more_identities_for_account_than_limit() {
 	new_test_ext(true).execute_with(|| {
 		let max_id_graph_len = <<Test as crate::Config>::MaxIDGraphLength as Get<u32>>::get();
