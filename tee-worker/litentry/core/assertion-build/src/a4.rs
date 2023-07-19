@@ -109,13 +109,6 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 	//    value: true
 	// ]
 	for (network, addresses) in identities {
-		if network != Web3Network::Ethereum
-			|| network != Web3Network::Litentry
-			|| network != Web3Network::Litmus
-		{
-			break
-		}
-
 		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
 		// there is no need to query other networks.
 		if optimal_hold_index == 0 {
