@@ -247,7 +247,7 @@ pub mod pallet {
 
 		/// Deactivate an identity
 		#[pallet::call_index(4)]
-		#[pallet::weight(<T as Config>::WeightInfo::remove_identity())]
+		#[pallet::weight(<T as Config>::WeightInfo::deactivate_identity())]
 		pub fn deactivate_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -260,8 +260,7 @@ pub mod pallet {
 
 		/// Activate an identity
 		#[pallet::call_index(5)]
-		// #[pallet::weight(<T as Config>::WeightInfo::activate_identity())]
-		#[pallet::weight(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::activate_identity())]
 		pub fn activate_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
@@ -308,8 +307,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(32)]
-		#[pallet::weight(<T as Config>::WeightInfo::identity_removed())]
-		// #[pallet::weight(<T as Config>::WeightInfo::identity_deactivated())]
+		#[pallet::weight(<T as Config>::WeightInfo::identity_deactivated())]
 		pub fn identity_deactivated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
@@ -322,9 +320,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(33)]
-		// #[pallet::weight(<T as Config>::WeightInfo::identity_activated())]
-		#[pallet::weight(1)]
-
+		#[pallet::weight(<T as Config>::WeightInfo::identity_activated())]
 		pub fn identity_activated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
