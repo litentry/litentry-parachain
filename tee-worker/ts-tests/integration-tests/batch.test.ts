@@ -18,7 +18,7 @@ import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 
 describeLitentry('Test Batch Utility', 0, (context) => {
-    const identities: LitentryPrimitivesIdentity[] = [];
+    let identities: LitentryPrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
     let ethereumSigners: ethers.Wallet[] = [];
     const we3networks: Web3Network[][] = [];
@@ -99,6 +99,13 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     });
 
     step('batch test: deactivate error identities', async function () {
+        identities = [];
+        // prepare new identities that were not linked - so they do not exist
+        for (let index = 0; index < ethereumSigners.length; index++) {
+            const ethereumIdentity = await buildIdentityHelper('twitter_user_' + index, 'Twitter', context);
+            identities.push(ethereumIdentity);
+        }
+
         const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'deactivateIdentity');
         const deactivatedEvents = await sendTxsWithUtility(
             context,

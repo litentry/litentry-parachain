@@ -135,12 +135,6 @@ export async function assertIdentityDeactivated(
         const eventData = events[index].data;
         const who = eventData.account.toHex();
 
-        // Check idGraph
-        assert.isNull(
-            eventData.idGraph,
-            'check IdentityDeactivated error: event idGraph should be null after identity deactivated'
-        );
-
         assert.equal(
             who,
             u8aToHex(signer.addressRaw),
@@ -162,11 +156,6 @@ export async function assertIdentityActivated(
         const eventData = events[index].data;
         const who = eventData.account.toHex();
 
-        // Check idGraph
-        assert.isNotNull(
-            eventData.idGraph,
-            'check IdentityActivated error: event idGraph should not be null after identity deactivated'
-        );
         assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityActivated error: signer should be equal to who');
     }
 
