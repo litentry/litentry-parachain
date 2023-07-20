@@ -95,6 +95,7 @@ export async function buildIdentityTxs(
         const ciphertextIdentity =
             identity && encryptWithTeeShieldingKey(teeShieldingKey, identity.toU8a()).toString('hex');
         const nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
+        console.log("buildIdentityTxs nonce: ", nonce);
 
         switch (method) {
             case 'setUserShieldingKey': {

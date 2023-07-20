@@ -214,6 +214,7 @@ describeLitentry('Test Identity', 0, (context) => {
             eveValidations,
             web3networks
         );
+        console.log("aliceTxs:", aliceTxs);
 
         const aliceRespEvents = await sendTxsWithUtility(
             context,
@@ -222,6 +223,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
+        console.log("aliceRespEvents:", aliceRespEvents);
 
         assertIdentityLinked(context, context.substrateWallet.alice, aliceRespEvents, eveIdentities);
 
