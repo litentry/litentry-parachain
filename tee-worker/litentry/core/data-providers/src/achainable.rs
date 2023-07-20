@@ -122,8 +122,7 @@ impl SystemLabelReqPath {
 	}
 }
 
-// #[derive(Debug)]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqBody {
 	pub name: String,
@@ -147,17 +146,29 @@ impl ReqBody {
 	}
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum Params {
 	AmountHoding(AmountHoding),         //A4-A7-A10-A11
 	TotalTransaction(TotalTransaction), //A8
+
+	// Tag - Account
 	FreshAccount(FreshAccount),
 	OgAccount(OgAccount),
 	ClassOfYear(ClassOfYear),
 	AddressFoundOnBsc(AddressFoundOnBsc),
 	EthDrainedInLastFortnight(EthDrainedInLastFortnight),
 	Validator(Validator),
+
+	// Tag - Balance
+	BalanceBetweenPercents(BalanceBetweenPercents),
+	BalanceUnderAmount(BalanceUnderAmount),
+	BalanceOverAmount(BalanceOverAmount),
+	BalanceBetweenAmounts(BalanceBetweenAmounts),
+	BalanceOverDollars(BalanceOverDollars),
+	BalanceErc20OverAmount(BalanceErc20OverAmount),
+	BalanceBep20OverAmount(BalanceBep20OverAmount),
+	Bep20HoldingAmountOfTokenSinceDate(Bep20HoldingAmountOfTokenSinceDate),
 }
 
 impl AchainableSystemLabelName for Params {
@@ -165,12 +176,20 @@ impl AchainableSystemLabelName for Params {
 		match self {
 			Params::AmountHoding(a) => a.name(),
 			Params::TotalTransaction(t) => t.name(),
-			Params::FreshAccount(i) => i.name(),
-			Params::OgAccount(i) => i.name(),
+			Params::FreshAccount(f) => f.name(),
+			Params::OgAccount(o) => o.name(),
 			Params::ClassOfYear(c) => c.name(),
 			Params::AddressFoundOnBsc(a) => a.name(),
 			Params::EthDrainedInLastFortnight(e) => e.name(),
 			Params::Validator(v) => v.name(),
+			Params::BalanceBetweenPercents(b) => b.name(),
+			Params::BalanceUnderAmount(b) => b.name(),
+			Params::BalanceOverAmount(b) => b.name(),
+			Params::BalanceBetweenAmounts(b) => b.name(),
+			Params::BalanceOverDollars(b) => b.name(),
+			Params::BalanceErc20OverAmount(b) => b.name(),
+			Params::BalanceBep20OverAmount(b) => b.name(),
+			Params::Bep20HoldingAmountOfTokenSinceDate(b) => b.name(),
 		}
 	}
 }
@@ -407,13 +426,224 @@ impl AchainableSystemLabelName for Validator {
 	}
 }
 
+// Balance between percents
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceBetweenPercents {
+	pub chain: String,
+	pub greater_than_or_equal_to: String,
+	pub less_than_or_equal_to: String,
+}
+
+impl BalanceBetweenPercents {
+	pub fn new(chain: String, greater_than_or_equal_to: String, less_than_or_equal_to: String) -> Self {
+		Self {
+			chain,
+			greater_than_or_equal_to,
+			less_than_or_equal_to,
+		}
+	}
+
+	pub fn dolphin(network: Web3Network) -> Self {
+		BalanceBetweenPercents { chain: network.to_string(), greater_than_or_equal_to: "0.01".to_string(), less_than_or_equal_to: "0.0999999999999999".to_string() }
+	}
+
+	pub fn whale(network: Web3Network) -> Self {
+		BalanceBetweenPercents { chain: network.to_string(), greater_than_or_equal_to: "0.1".to_string(), less_than_or_equal_to: "100".to_string() }
+	}
+}
+
+impl AchainableSystemLabelName for BalanceBetweenPercents {
+	fn name(&self) -> String {
+		"Balance between percents".into()
+	}
+}
+
+pub enum DolphinOrWhale {
+	Dolphin,
+	Whale,
+}
+
+// BalanceUnderAmount
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceUnderAmount {
+	pub chain: String,
+	pub amount: String,
+}
+
+impl BalanceUnderAmount {
+	pub fn new(chain: String, amount: String) -> Self {
+		Self {
+			chain,
+			amount,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for BalanceUnderAmount {
+	fn name(&self) -> String {
+		"Balance under {amount}".into()
+	}
+}
+
+// Balance over {amount}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceOverAmount {
+	pub chain: String,
+	pub amount: String,
+}
+
+impl BalanceOverAmount {
+	pub fn new(chain: String, amount: String) -> Self {
+		Self {
+			chain,
+			amount,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for BalanceOverAmount {
+	fn name(&self) -> String {
+		"Balance over {amount}".into()
+	}
+}
+
+// Balance between {amounts}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceBetweenAmounts {
+	pub chain: String,
+	pub amount1: String,
+	pub amount2: String,
+}
+
+impl BalanceBetweenAmounts {
+	pub fn new(chain: String, amount1: String, amount2: String) -> Self {
+		Self {
+			chain,
+			amount1,
+			amount2,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for BalanceBetweenAmounts {
+	fn name(&self) -> String {
+		"Balance between {amounts}".into()
+	}
+}
+
+// Balance over {amount} dollars
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceOverDollars {
+	pub chain: String,
+	pub amount: String,
+}
+
+impl BalanceOverDollars {
+	pub fn new(chain: String, amount: String) -> Self {
+		Self {
+			chain,
+			amount,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for BalanceOverDollars {
+	fn name(&self) -> String {
+		"Balance over {amount} dollars".into()
+	}
+}
+
+// ERC20 balance over {amount}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceErc20OverAmount {
+	pub chain: String,
+	pub amount: String,
+	pub token: String,
+}
+
+impl BalanceErc20OverAmount {
+	pub fn new(chain: String, amount: String, token: String) -> Self {
+		Self {
+			chain,
+			amount,
+			token,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for BalanceErc20OverAmount {
+	fn name(&self) -> String {
+		"ERC20 balance over {amount}".into()
+	}
+}
+
+// BEP20 balance over {amount}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceBep20OverAmount {
+	pub chain: String,
+	pub amount: String,
+	pub token: String,
+}
+
+impl BalanceBep20OverAmount {
+	pub fn new(chain: String, amount: String, token: String) -> Self {
+		Self {
+			chain,
+			amount,
+			token,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for BalanceBep20OverAmount {
+	fn name(&self) -> String {
+		"BEP20 balance over {amount}".into()
+	}
+}
+
+// BEP20 hodling {amount} of {token} since {date}
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Bep20HoldingAmountOfTokenSinceDate {
+	pub chain: String,
+	pub amount: String,
+	pub date: String,
+	pub token: String,
+}
+
+impl Bep20HoldingAmountOfTokenSinceDate {
+	pub fn new(chain: String, amount: String, date: String, token: String) -> Self {
+		Self {
+			chain,
+			amount,
+			date,
+			token,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for Bep20HoldingAmountOfTokenSinceDate {
+	fn name(&self) -> String {
+		"BEP20 hodling {amount} of {token} since {date}".into()
+	}
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 fn check_achainable_label(
 	client: &mut AchainableClient,
-	address: String,
+	address: &str,
 	params: Params,
 ) -> Result<bool, Error> {
 	let req_path = SystemLabelReqPath::default();
-	let body = ReqBody::new(address, params);
+	let body = ReqBody::new(address.into(), params);
 	debug!("x>>> body: {:?}", body);
 	let resp = client.post(req_path, &body)?;
 	AchainableClient::parse(resp)
@@ -518,6 +748,21 @@ pub trait AchainableTagAccount {
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
+pub trait AchainableTagBalance {
+	fn balance_between_percents(&mut self, address: &str, network: Web3Network, dolphin_or_whale: DolphinOrWhale) -> Result<bool, Error>;
+	fn balance_under_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
+	fn balance_over_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
+	fn balance_between_amounts(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
+	fn balance_over_dollars(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
+	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error>;
+	fn balance_over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn balance_bep20_over_amount(&mut self, address: &str) -> Result<bool, Error>;
+	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+
+	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+}
+
 impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
 		let param = FreshAccount::default();
@@ -555,703 +800,789 @@ impl AchainableTagAccount for AchainableClient {
 	}
 }
 
+impl AchainableTagBalance for AchainableClient {
+	fn balance_between_percents(&mut self, address: &str, network: Web3Network, dolphin_or_whale: DolphinOrWhale) -> Result<bool, Error> {
+		let param = match dolphin_or_whale {
+			DolphinOrWhale::Dolphin => {
+				BalanceBetweenPercents::dolphin(network)
+			},
+			DolphinOrWhale::Whale => {
+				BalanceBetweenPercents::whale(network)
+			}
+		};
+
+		check_achainable_label(self, address, Params::BalanceBetweenPercents(param))
+	}
+
+	fn balance_under_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
+		// < 10 ETH Holder
+		// < 10 LIT Holder
+		let amount = "10".to_string();
+		let param = BalanceUnderAmount::new(network.to_string(), amount);
+		check_achainable_label(self, address, Params::BalanceUnderAmount(param))
+	}
+
+	fn balance_over_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
+		// 100+ ETH Holder
+		let amount = "100".to_string();
+		let param = BalanceOverAmount::new(network.to_string(), amount);
+		check_achainable_label(self, address, Params::BalanceOverAmount(param))
+	}
+
+	fn balance_between_amounts(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
+		// 10 - 100 ETH Holder
+		let amount1 = "10".to_string();
+		let amount2 = "100".to_string();
+		let param = BalanceBetweenAmounts::new(network.to_string(), amount1, amount2);
+		check_achainable_label(self, address, Params::BalanceBetweenAmounts(param))
+	}
+
+	fn balance_over_dollars(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
+		// ETH Millionaire
+		let amount = "100".to_string();
+		let param = BalanceOverDollars::new(network.to_string(), amount);
+		check_achainable_label(self, address, Params::BalanceOverDollars(param))
+	}
+
+	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error> {
+		// ETH2 Validator Eligible
+		let chain = "ethereum".to_string();
+		let amount = "32".to_string();
+		let param = BalanceOverAmount::new(chain, amount);
+		check_achainable_label(self, address, Params::BalanceOverAmount(param))
+	}
+
+	fn balance_over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		// 100+ WETH Holder
+		let chain = "ethereum".to_string();
+		let amount = "100".to_string();
+		let token = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".to_string();
+		let param = BalanceErc20OverAmount::new(chain, amount, token);
+		check_achainable_label(self, address, Params::BalanceErc20OverAmount(param))
+	}
+
+	fn balance_bep20_over_amount(&mut self, address: &str) -> Result<bool, Error> {
+		// 100+ LIT BEP20 Holder
+		let chain = "bsc".to_string();
+		let amount = "100".to_string();
+		let token = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string();
+		let param = BalanceBep20OverAmount::new(chain, amount, token);
+		check_achainable_label(self, address, Params::BalanceBep20OverAmount(param))
+	}
+
+	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		// Native LIT Hodler
+		let param = AmountHoding::new("litentry".to_string(), "10".to_string(),  "2023-01-01T00:00:00.000Z".to_string(),None);
+		check_achainable_label(self, address.into(), Params::AmountHoding(param))
+	}
+
+	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = AmountHoding::new("ethereum".to_string(), "10".to_string(),  "2022-01-01T00:00:00.000Z".to_string(),Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()));
+		check_achainable_label(self, address.into(), Params::AmountHoding(param))
+	}
+
+	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = Bep20HoldingAmountOfTokenSinceDate::new("bsc".to_string(), "10".to_string(), "2022-01-01T00:00:00.000Z".to_string(), "0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string());
+
+		check_achainable_label(self, address, Params::Bep20HoldingAmountOfTokenSinceDate(param))
+	}
+}
 
 
 ///////////////////////////////////////////////
 #[cfg(test)]
 mod tests {
-	use crate::achainable::{
-		AchainableClient, AchainableTagAccount, AchainableTagBalance, AchainableTagDeFi,
-		AchainableTagDotsama, AchainableTotalTransactions, GLOBAL_DATA_PROVIDER_CONFIG,
-	};
-	use lc_mock_server::{default_getter, run};
-	use litentry_primitives::Web3Network;
-	use std::sync::Arc;
-
-	fn init() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(default_getter), 0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
-	}
-
-	#[test]
-	fn total_transactions_work() {
-		init();
-
-		let addresses = vec!["0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string()];
-
-		let mut client = AchainableClient::new();
-		let r = client.total_transactions(&Web3Network::Litentry, &addresses);
-		assert!(r.is_ok());
-		let r = r.unwrap();
-		assert!(r == 41)
-	}
-
-	#[test]
-	fn fresh_account_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res: Result<bool, crate::Error> = client.fresh_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn og_account_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.og_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn class_of_2020_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.class_of_2020("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn class_of_2021_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.class_of_2021("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn class_of_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.class_of_2022("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn found_on_bsc_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.found_on_bsc("0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn is_polkadot_validator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_polkadot_validator("17bR6rzVsVrzVJS1hM4dSJU43z2MUmz7ZDpPLh8y2fqVg7m");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn is_kusama_validator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_kusama_validator("ESRBbWstgpPV1pVBsqjMo717rA8HLrtQvEUVwAGeFZyKcia");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn polkadot_dolphin_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.polkadot_dolphin("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn kusama_dolphin_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.kusama_dolphin("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn polkadot_whale_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.polkadot_whale("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn kusama_whale_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.kusama_whale("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn less_than_10_eth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.less_than_10_eth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn less_than_10_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.less_than_10_lit_holder("0x2A038e100F8B85DF21e4d44121bdBfE0c288A869");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn not_less_than_100_eth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.not_less_than_100_eth_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn between_10_to_100_eth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.between_10_to_100_eth_holder("0x082aB5505CdeA46caeF670754E962830Aa49ED2C");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn eth_millionaire_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.eth_millionaire("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn eth2_validator_eligible_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.eth2_validator_eligible("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn not_less_than_100_weth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.not_less_than_100_weth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn not_less_than_100_lit_bep20_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.not_less_than_100_lit_bep20_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn native_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.native_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn erc20_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.erc20_lit_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn bep20_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.bep20_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_treasury_proposal_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_polkadot_treasury_proposal_beneficiary(
-			"5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW",
-		);
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_treasury_proposal_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_kusama_treasury_proposal_beneficiary(
-			"CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq",
-		);
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_tip_finder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_polkadot_tip_finder("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_tip_finder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_kusama_tip_finder("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_tip_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_polkadot_tip_beneficiary("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_tip_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_kusama_tip_beneficiary("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_opengov_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_polkadot_opengov_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_opengov_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_kusama_opengov_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_fellowship_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client
-			.is_polkadot_fellowship_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_fellowship_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_kusama_fellowship_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_fellowship_member_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client
-			.is_polkadot_fellowship_member("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_fellowship_member_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_kusama_fellowship_member("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_ex_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_polkadot_ex_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_ex_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_kusama_ex_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_polkadot_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.is_kusama_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_polkadot_bounty_curator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_polkadot_bounty_curator("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn is_kusama_bounty_curator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.is_kusama_bounty_curator("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn uniswap_v2_user_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.uniswap_v2_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn uniswap_v3_user_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.uniswap_v3_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn uniswap_v2_lp_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.uniswap_v2_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn uniswap_v3_lp_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.uniswap_v3_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn usdc_uniswap_v2_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.usdc_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn usdc_uniswap_v3_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.usdc_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn usdt_uniswap_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.usdt_uniswap_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn usdt_uniswap_v2_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.usdt_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn usdt_uniswap_v3_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.usdt_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn aave_v2_lender_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.aave_v2_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
-
-	#[test]
-	fn aave_v2_borrower_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.aave_v2_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn aave_v3_lender_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.aave_v3_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn aave_v3_borrower_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.aave_v3_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn curve_trader_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.curve_trader("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn curve_trader_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.curve_trader_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn curve_liquidity_provider_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.curve_liquidity_provider("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn curve_liquidity_provider_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.curve_liquidity_provider_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn swapped_with_metamask_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res =
-			client.swapped_with_metamask_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, true);
-	}
+	// use crate::achainable::{
+	// 	AchainableClient, AchainableTagAccount, GLOBAL_DATA_PROVIDER_CONFIG,
+	// };
+	// use lc_mock_server::{default_getter, run};
+	// use litentry_primitives::Web3Network;
+	// use std::sync::Arc;
+
+	// fn init() {
+	// 	let _ = env_logger::builder().is_test(true).try_init();
+	// 	let url = run(Arc::new(default_getter), 0).unwrap();
+	// 	GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
+	// }
+
+	// #[test]
+	// fn total_transactions_work() {
+	// 	init();
+
+	// 	let addresses = vec!["0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string()];
+
+	// 	let mut client = AchainableClient::new();
+	// 	let r = client.total_transactions(&Web3Network::Litentry, &addresses);
+	// 	assert!(r.is_ok());
+	// 	let r = r.unwrap();
+	// 	assert!(r == 41)
+	// }
+
+	// #[test]
+	// fn fresh_account_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res: Result<bool, crate::Error> = client.fresh_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn og_account_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.og_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn class_of_2020_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.class_of_2020("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn class_of_2021_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.class_of_2021("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn class_of_2022_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.class_of_2022("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn found_on_bsc_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.found_on_bsc("0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn is_polkadot_validator_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_polkadot_validator("17bR6rzVsVrzVJS1hM4dSJU43z2MUmz7ZDpPLh8y2fqVg7m");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn is_kusama_validator_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_kusama_validator("ESRBbWstgpPV1pVBsqjMo717rA8HLrtQvEUVwAGeFZyKcia");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn polkadot_dolphin_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.polkadot_dolphin("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn kusama_dolphin_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.kusama_dolphin("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn polkadot_whale_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.polkadot_whale("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn kusama_whale_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.kusama_whale("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn less_than_10_eth_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.less_than_10_eth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn less_than_10_lit_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.less_than_10_lit_holder("0x2A038e100F8B85DF21e4d44121bdBfE0c288A869");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn not_less_than_100_eth_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.not_less_than_100_eth_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn between_10_to_100_eth_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.between_10_to_100_eth_holder("0x082aB5505CdeA46caeF670754E962830Aa49ED2C");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn eth_millionaire_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.eth_millionaire("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn eth2_validator_eligible_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.eth2_validator_eligible("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn not_less_than_100_weth_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.not_less_than_100_weth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn not_less_than_100_lit_bep20_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.not_less_than_100_lit_bep20_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn native_lit_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.native_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn erc20_lit_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.erc20_lit_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn bep20_lit_holder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.bep20_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_treasury_proposal_beneficiary_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_polkadot_treasury_proposal_beneficiary(
+	// 		"5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW",
+	// 	);
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_treasury_proposal_beneficiary_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_kusama_treasury_proposal_beneficiary(
+	// 		"CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq",
+	// 	);
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_tip_finder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_polkadot_tip_finder("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_tip_finder_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_kusama_tip_finder("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_tip_beneficiary_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_polkadot_tip_beneficiary("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_tip_beneficiary_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_kusama_tip_beneficiary("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_opengov_proposer_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_polkadot_opengov_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_opengov_proposer_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_kusama_opengov_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_fellowship_proposer_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client
+	// 		.is_polkadot_fellowship_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_fellowship_proposer_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_kusama_fellowship_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_fellowship_member_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client
+	// 		.is_polkadot_fellowship_member("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_fellowship_member_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_kusama_fellowship_member("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_ex_councilor_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_polkadot_ex_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_ex_councilor_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_kusama_ex_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_councilor_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_polkadot_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_councilor_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.is_kusama_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_polkadot_bounty_curator_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_polkadot_bounty_curator("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn is_kusama_bounty_curator_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.is_kusama_bounty_curator("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn uniswap_v2_user_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.uniswap_v2_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn uniswap_v3_user_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.uniswap_v3_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn uniswap_v2_lp_in_2022_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.uniswap_v2_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn uniswap_v3_lp_in_2022_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.uniswap_v3_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn usdc_uniswap_v2_lp_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.usdc_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn usdc_uniswap_v3_lp_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.usdc_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn usdt_uniswap_lp_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.usdt_uniswap_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn usdt_uniswap_v2_lp_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.usdt_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn usdt_uniswap_v3_lp_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.usdt_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn aave_v2_lender_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.aave_v2_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
+
+	// #[test]
+	// fn aave_v2_borrower_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.aave_v2_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn aave_v3_lender_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.aave_v3_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn aave_v3_borrower_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.aave_v3_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn curve_trader_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.curve_trader("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn curve_trader_in_2022_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.curve_trader_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn curve_liquidity_provider_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res = client.curve_liquidity_provider("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn curve_liquidity_provider_in_2022_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.curve_liquidity_provider_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, false);
+	// }
+
+	// #[test]
+	// fn swapped_with_metamask_in_2022_works() {
+	// 	init();
+
+	// 	let mut client = AchainableClient::new();
+	// 	let res =
+	// 		client.swapped_with_metamask_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
+	// 	assert!(res.is_ok());
+	// 	let res = res.unwrap();
+	// 	assert_eq!(res, true);
+	// }
 }
