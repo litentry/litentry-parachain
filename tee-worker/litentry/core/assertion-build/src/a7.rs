@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHoldingAssertion},
+	achainable::{AchainableClient, AmountHoding, AchainableHolder},
 	vec_to_string,
 };
 
@@ -55,7 +55,9 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
-			match client.is_holder(&req.assertion, address, index) {
+			let holding = AmountHoding::new("polkadot".into(), q_min_balance.to_string(), ASSERTION_FROM_DATE[index].into(), None);
+
+			match client.is_holder(address, holding) {
 				Ok(is_polkadot_holder) =>
 					if is_polkadot_holder {
 						optimal_hold_index = index;

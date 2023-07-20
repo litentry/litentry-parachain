@@ -22,12 +22,11 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHoldingAssertion},
+	achainable::{AchainableClient, AmountHoding, AchainableHolder},
 	vec_to_string,
 };
 
-// NOTE： The WBTC_TOKEN_ADDRESS has been embedded into the interface when creating the wbtc_holder label
-// const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 
 const VC_A10_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
@@ -59,7 +58,9 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
-			match client.is_holder(&req.assertion, address, index) {
+			let holding = AmountHoding::new("ethereum".into(), q_min_balance.to_string(), ASSERTION_FROM_DATE[index].into(), Some(WBTC_TOKEN_ADDRESS.into()));
+
+			match client.is_holder(address, holding) {
 				Ok(is_wbtc_holder) =>
 					if is_wbtc_holder {
 						optimal_hold_index = index;

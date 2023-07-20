@@ -65,13 +65,11 @@ extern crate sgx_tstd as std;
 ///  
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableA4Holder, AchainableClient},
+	achainable::{AchainableClient, AchainableHolder, AmountHoding},
 	vec_to_string,
 };
 
-// NOTE： The LIT_TOKEN_ADDRESS has been embedded into the interface when creating the label
-// ERC20 LIT token address
-// const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 const VC_A4_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
@@ -115,10 +113,16 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 			break
 		}
 
+		let chain = network.to_string();
+		let token = if network == Web3Network::Ethereum {
+			Some(LIT_TOKEN_ADDRESS.into())
+		} else { None };
+
 		let addresses: Vec<String> = addresses.into_iter().collect();
 		for index in 0..ASSERTION_FROM_DATE.len() {
 			for address in &addresses {
-				match client.lit_holder_on_network(&network, address, index) {
+				let holding = AmountHoding::new(chain.to_string(), q_min_balance.to_string(), ASSERTION_FROM_DATE[index].into(), token.clone());
+				match client.is_holder(address, holding) {
 					Ok(is_lit_holder) =>
 						if is_lit_holder {
 							if index < optimal_hold_index {
