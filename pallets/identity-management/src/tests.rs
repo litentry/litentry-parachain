@@ -123,6 +123,22 @@ fn deactivate_identity_works() {
 }
 
 #[test]
+fn activate_identity_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
+		assert_ok!(IdentityManagement::activate_identity(
+			RuntimeOrigin::signed(alice),
+			shard,
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::ActivateIdentityRequested { shard },
+		));
+	});
+}
+
+#[test]
 #[cfg(feature = "skip-ias-check")]
 fn tee_callback_with_registered_enclave_works() {
 	// copied from https://github.com/integritee-network/pallets/blob/5b0706e8b9f726d81d8aff74efbae8e023e783b7/test-utils/src/ias.rs#L147
