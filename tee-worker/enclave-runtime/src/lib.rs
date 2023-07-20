@@ -24,7 +24,13 @@
 #![cfg_attr(not(target_env = "sgx"), no_std)]
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 #![allow(clippy::missing_safety_doc)]
-#![warn(clippy::unwrap_used, clippy::unreachable, clippy::unimplemented, clippy::string_slice)]
+#![warn(
+	clippy::unwrap_used,
+	clippy::unreachable,
+	clippy::unimplemented,
+	clippy::string_slice,
+	clippy::panic_in_result_fn
+)]
 
 #[cfg(not(target_env = "sgx"))]
 #[macro_use]
