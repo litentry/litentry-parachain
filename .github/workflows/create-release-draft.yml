@@ -158,7 +158,7 @@ jobs:
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
   ## Build the enclave and package config files
-  generate_package_and_artifact:
+  build-enclave:
     runs-on: prod-tee-1
 
     steps:
@@ -307,6 +307,7 @@ jobs:
       - build-wasm
       - run-ts-tests
       - set-release-type
+      - build-enclave
     if: |
       !failure() && !cancelled() &&
       (success('build-wasm') || success('run-ts-tests'))
@@ -322,8 +323,8 @@ jobs:
 
       - name: Generate release notes
         run: |
-          export RUSTC_VERSION=${{ needs.generate_package_and_artifact.outputs.rustc_version }}
-          export MRENCLAVE_OUTPUT=${{ needs.generate_package_and_artifact.outputs.mrenclave }}
+          export RUSTC_VERSION=${{ needs.build-enclave.outputs.rustc_version }}
+          export MRENCLAVE_OUTPUT=${{ needs.build-enclave.outputs.mrenclave }}
           ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
