@@ -78,6 +78,23 @@ impl Web3Network {
 	}
 }
 
+impl ToString for Web3Network {
+    fn to_string(&self) -> String {
+        match self {
+            Web3Network::Polkadot => "polkadot".into(),
+			Web3Network::Kusama => "kusama".into(),
+			Web3Network::Litentry => "litentry".into(),
+			Web3Network::Litmus => "litmus".into(),
+			Web3Network::LitentryRococo => "litentry_rococo".into(),
+			Web3Network::Khala => "khala".into(),
+			Web3Network::SubstrateTestnet => "substrate_testnet".into(),
+			Web3Network::Ethereum => "ethereum".into(),
+			Web3Network::Polygon => "polygon".into(),
+			Web3Network::BSC => "bsc".into(),
+		}
+    }
+}
+
 pub fn all_web3networks() -> Vec<Web3Network> {
 	Web3Network::iter().collect()
 }
