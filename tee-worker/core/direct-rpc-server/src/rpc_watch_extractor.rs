@@ -62,7 +62,7 @@ where
 		}
 
 		match rpc_return_value.status {
-			DirectRequestStatus::TrustedOperationStatus(_) =>
+			DirectRequestStatus::TrustedOperationStatus(..) =>
 				Self::Hash::decode(&mut rpc_return_value.value.as_slice())
 					.map(Some)
 					.map_err(DirectRpcError::EncodingError),

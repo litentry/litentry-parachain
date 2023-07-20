@@ -91,7 +91,10 @@ where
 
 		// update response
 		result.do_watch = do_watch;
-		result.status = DirectRequestStatus::TrustedOperationStatus(status_update);
+		result.status = DirectRequestStatus::TrustedOperationStatus(
+			status_update,
+			hash.maybe_h256().ok_or(DirectRpcError::HashConversionError)?,
+		);
 		new_response.result = result.to_hex();
 
 		self.encode_and_send_response(connection_token, &new_response)?;
@@ -115,8 +118,10 @@ where
 
 		// create return value
 		// TODO: Signature?
-		let submitted =
-			DirectRequestStatus::TrustedOperationStatus(TrustedOperationStatus::Submitted);
+		let submitted = DirectRequestStatus::TrustedOperationStatus(
+			TrustedOperationStatus::Submitted,
+			hash.maybe_h256().ok_or(DirectRpcError::HashConversionError)?,
+		);
 		let result = RpcReturnValue::new(state_encoded, false, submitted);
 
 		// update response

@@ -37,7 +37,7 @@ use crate::rpc_watch_extractor::RpcWatchExtractor;
 use codec::{Encode, Error as CodecError};
 use itc_tls_websocket_server::error::WebSocketError;
 use itp_rpc::RpcResponse;
-use itp_types::TrustedOperationStatus;
+use itp_types::{TrustedOperationStatus, H256};
 use serde_json::error::Error as SerdeJsonError;
 use sp_runtime::traits;
 use std::{boxed::Box, fmt::Debug, vec::Vec};
@@ -67,13 +67,29 @@ pub enum DirectRpcError {
 	EncodingError(CodecError),
 	#[error("Other error: {0}")]
 	Other(Box<dyn std::error::Error + Sync + Send + 'static>),
+	// Litentry
+	#[error("Hash conversion error")]
+	HashConversionError,
 }
 
 pub type DirectRpcResult<T> = Result<T, DirectRpcError>;
 
 /// trait helper to mix-in all necessary traits for a hash
-pub trait RpcHash: std::hash::Hash + traits::Member + Encode {}
-impl<T: std::hash::Hash + traits::Member + Encode> RpcHash for T {}
+pub trait RpcHash: std::hash::Hash + traits::Member + Encode {
+	fn maybe_h256(&self) -> Option<H256>;
+}
+impl<T: std::hash::Hash + traits::Member + Encode> RpcHash for T {
+	fn maybe_h256(&self) -> Option<H256> {
+		let enc = self.encode();
+		if enc.len() == 32 {
+			let mut inner = [0u8; 32];
+			inner.copy_from_slice(&enc);
+			Some(inner.into())
+		} else {
+			None
+		}
+	}
+}
 
 /// Registry for RPC connections (i.e. connections that are kept alive to send updates).
 pub trait RpcConnectionRegistry: Send + Sync {

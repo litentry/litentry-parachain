@@ -12,6 +12,7 @@ import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { u32, Option, u8, Vector } from 'scale-ts';
 import { Index } from '@polkadot/types/interfaces';
+import { blake2AsHex } from '@polkadot/util-crypto';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 
 export function toBalance(amountInt: number) {
@@ -263,6 +264,7 @@ export const sendRequestFromTrustedCall = async (
     // construct trusted operation
     const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
     console.log('top: ', trustedOperation.toJSON());
+    console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
     // create the request parameter
     const requestParam = await createRequest(
         wsp,

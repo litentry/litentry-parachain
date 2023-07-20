@@ -53,6 +53,7 @@ where
 				value: hash_value.encode(),
 				status: DirectRequestStatus::TrustedOperationStatus(
 					TrustedOperationStatus::Submitted,
+					hash_value,
 				),
 			}
 			.to_hex(),
@@ -71,6 +72,7 @@ where
 				value: hash_value.encode(),
 				status: DirectRequestStatus::TrustedOperationStatus(
 					TrustedOperationStatus::Submitted,
+					hash_value,
 				),
 			}
 			.to_hex(),
