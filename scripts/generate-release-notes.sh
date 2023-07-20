@@ -18,7 +18,7 @@ cd "$ROOTDIR"
 
 REPO=https://github.com/litentry/litentry-parachain
 
-if [ "$2" != "runtime" ]; then
+if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
   # base image used to build the node binary
   NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile | head -n1 | sed 's/^FROM //;s/ as.*//')
 
@@ -72,7 +72,7 @@ docker image                 : litentry/litentry-parachain:$RELEASE_TAG
 EOF
 fi
 
-if [ "$2" != "client" ]; then
+if [ "$2" != "client" ] && [ "$2" != "enclave" ]; then
   echo "## Runtime" >> "$1"
   for CHAIN in litmus rococo litentry; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
@@ -144,7 +144,7 @@ EOF
 fi
 
 # release notes for enclave binary 
-if [ "$2" != "runtime" ] && [ "$2" != "client" ] && [ "$2" != "both"]; then 
+if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then 
    echo "Generating Release Notes for Enclave"
    local MRENCLAVE=$(echo "$MRENCLAVE_OUTPUT" | awk '{print $2}')
    cat << EOF >> "$1" 
