@@ -153,6 +153,10 @@ pub enum Params {
 	TotalTransaction(TotalTransaction), //A8
 	FreshAccount(FreshAccount),
 	OgAccount(OgAccount),
+	ClassOfYear(ClassOfYear),
+	AddressFoundOnBsc(AddressFoundOnBsc),
+	EthDrainedInLastFortnight(EthDrainedInLastFortnight),
+	Validator(Validator),
 }
 
 impl AchainableSystemLabelName for Params {
@@ -161,12 +165,15 @@ impl AchainableSystemLabelName for Params {
 			Params::TotalTransaction(t) => t.name(),
 			Params::FreshAccount(i) => i.name(),
 			Params::OgAccount(i) => i.name(),
+			Params::ClassOfYear(c) => c.name(),
+			Params::AddressFoundOnBsc(a) => a.name(),
+			Params::EthDrainedInLastFortnight(e) => e.name(),
+			Params::Validator(v) => v.name(),
 		}
 	}
 }
 
 /// The parameter types of the method are defined here
-
 pub trait AchainableSystemLabelName {
 	fn name(&self) -> String;
 }
@@ -236,6 +243,132 @@ impl Default for OgAccount {
 impl AchainableSystemLabelName for OgAccount {
 	fn name(&self) -> String {
 		"Account created before {date}".into()
+	}
+}
+
+// ClassOfYear
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ClassOfYear {
+	pub chain: String,
+	pub date1: String,
+	pub date2: String,
+}
+
+pub enum EClassOfYear {
+	Year2020,
+	Year2021,
+	Year2022,
+}
+
+impl EClassOfYear {
+	pub fn get(&self) -> ClassOfYear {
+		match self {
+			EClassOfYear::Year2020 => ClassOfYear::class_of_2020(),
+			EClassOfYear::Year2021 => ClassOfYear::class_of_2021(),
+			EClassOfYear::Year2022 => ClassOfYear::class_of_2022(),
+		}
+	}
+}
+
+impl ClassOfYear {
+	fn class_of_2020() -> Self {
+		Self {
+			chain: "ethereum".into(),
+			date1: "2020-01-01T00:00:00.000Z".into(),
+			date2: "2020-12-31T23:59:59.999Z".into(),
+		}
+	}
+
+	fn class_of_2021() -> Self {
+		Self {
+			chain: "ethereum".into(),
+			date1: "2021-01-01T00:00:00.000Z".into(),
+			date2: "2021-12-31T23:59:59.999Z".into(),
+		}
+	}
+
+	fn class_of_2022() -> Self {
+		Self {
+			chain: "ethereum".into(),
+			date1: "2022-01-01T00:00:00.000Z".into(),
+			date2: "2022-12-31T23:59:59.999Z".into(),
+		}
+	}
+}
+
+impl AchainableSystemLabelName for ClassOfYear {
+	fn name(&self) -> String {
+		"Account created between {dates}".into()
+	}
+}
+
+// AddressFoundOnBsc
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AddressFoundOnBsc {
+	pub chain: String,
+}
+
+impl Default for AddressFoundOnBsc {
+	fn default() -> Self {
+		Self {
+			chain: "bsc".into(),
+		}
+	}
+}
+
+impl AchainableSystemLabelName for AddressFoundOnBsc {
+	fn name(&self) -> String {
+		"Account found on {chain}".into()
+	}
+}
+
+// ETH Drained in Last Fortnight
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct EthDrainedInLastFortnight {
+	pub chain: String,
+	pub token: String,
+	pub date: String,
+	pub percent: String,
+}
+
+impl Default for EthDrainedInLastFortnight {
+	fn default() -> Self {
+		Self {
+			chain: "ethereum".into(),
+			token: "ETH".into(),
+			date: "14D".into(),
+			percent: "80".into(),
+		}
+	}
+}
+
+impl AchainableSystemLabelName for EthDrainedInLastFortnight {
+	fn name(&self) -> String {
+		"Balance dropped {percent} since {date}".into()
+	}
+}
+
+// Validator
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Validator {
+	pub chain: String,
+}
+
+impl Validator {
+	pub fn new(chain: String) -> Self {
+		Self {
+			chain
+		}
+	}
+}
+
+impl AchainableSystemLabelName for Validator {
+	fn name(&self) -> String {
+		"Validator".into()
 	}
 }
 
@@ -331,6 +464,11 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
+	fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error>;
+	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
+	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
 impl AchainableTagAccount for AchainableClient {
@@ -342,6 +480,31 @@ impl AchainableTagAccount for AchainableClient {
 	fn og_account(&mut self, address: &str) -> Result<bool, Error> {
 		let param = OgAccount::default();
 		check_achainable_label(self, address.into(), Params::OgAccount(param))
+	}
+
+	fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error> {
+		let param = year.get();
+		check_achainable_label(self, address.into(), Params::ClassOfYear(param))
+	}
+	
+	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
+		let param = AddressFoundOnBsc::default();
+		check_achainable_label(self, address.into(), Params::AddressFoundOnBsc(param))
+	}
+
+	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error> {
+		let param = EthDrainedInLastFortnight::default();
+		check_achainable_label(self, address.into(), Params::EthDrainedInLastFortnight(param))
+	}
+
+	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = Validator::new("polkadot".into());
+		check_achainable_label(self, address.into(), Params::Validator(param))
+	}
+	
+	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = Validator::new("kusama".into());
+		check_achainable_label(self, address.into(), Params::Validator(param))
 	}
 }
 
