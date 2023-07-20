@@ -150,6 +150,7 @@ impl ReqBody {
 #[derive(Serialize, Debug)]
 #[serde(untagged)]
 pub enum Params {
+	AmountHoding(AmountHoding),         //A4-A7-A10-A11
 	TotalTransaction(TotalTransaction), //A8
 	FreshAccount(FreshAccount),
 	OgAccount(OgAccount),
@@ -162,6 +163,7 @@ pub enum Params {
 impl AchainableSystemLabelName for Params {
 	fn name(&self) -> String {
 		match self {
+			Params::AmountHoding(a) => a.name(),
 			Params::TotalTransaction(t) => t.name(),
 			Params::FreshAccount(i) => i.name(),
 			Params::OgAccount(i) => i.name(),
@@ -176,6 +178,39 @@ impl AchainableSystemLabelName for Params {
 /// The parameter types of the method are defined here
 pub trait AchainableSystemLabelName {
 	fn name(&self) -> String;
+}
+
+/// A4/A7/A10/A11 Holder params
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct AmountHoding {
+	pub chain: String,
+	pub amount: String,
+	pub date: String,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub token: Option<String>,
+}
+
+impl AmountHoding {
+	pub fn new(chain: String, amount: String, date: String, token: Option<String>) -> Self {
+		Self {
+			chain,
+			amount,
+			date,
+			token,
+		}
+	}
+}
+
+impl AchainableSystemLabelName for AmountHoding {
+	fn name(&self) -> String {
+		if self.token.is_some() {
+			"ERC20 hodling {amount} of {token} since {date}".into()
+		} else {
+			"Balance hodling {amount} since {date}".into()
+		}
+	}
 }
 
 /// A8 Total transaction params
@@ -384,11 +419,23 @@ fn check_achainable_label(
 	AchainableClient::parse(resp)
 }
 
+/// A4/A7/A10/A11
+/// 
+pub trait AchainableHolder {
+	fn is_holder(&mut self, address: &str, amount_holding: AmountHoding) -> Result<bool, Error>;
+}
+
+impl AchainableHolder for AchainableClient {
+	fn is_holder(&mut self, address: &str, amount_holding: AmountHoding) -> Result<bool, Error> {
+		check_achainable_label(self, address.into(), Params::AmountHoding(amount_holding))
+	}
+}
+
 /// A8 TODO:
-// TODO:
-// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api
-// currently only judges the range of a single account, so the current approach is to parse the returned data through
-// an assertion such as under 1 to calculate the sum, and then perform interval judgment.
+/// TODO:
+/// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api
+/// currently only judges the range of a single account, so the current approach is to parse the returned data through
+/// an assertion such as under 1 to calculate the sum, and then perform interval judgment.
 pub trait AchainableTotalTransactionsParser {
 	fn parse_txs(response: serde_json::Value) -> Result<u64, Error>;
 }
@@ -507,5 +554,7 @@ impl AchainableTagAccount for AchainableClient {
 		check_achainable_label(self, address.into(), Params::Validator(param))
 	}
 }
+
+
 
 ///////////////////////////////////////////////
