@@ -63,7 +63,7 @@ impl<Call, State, StateDiff>
 		_call: Call,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-	) -> Result<(), Self::Error> {
+	) -> Result<Vec<u8>, Self::Error> {
 		unimplemented!()
 	}
 }
@@ -100,7 +100,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 		_shard: &ShardIdentifier,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-	) -> Result<(), Self::Error> {
+	) -> Result<Vec<u8>, Self::Error> {
 		unimplemented!()
 	}
 

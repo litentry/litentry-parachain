@@ -57,24 +57,34 @@ pub mod mocks;
 ///
 /// In case of success, it includes the operation hash, as well as
 /// any extrinsic callbacks (e.g. unshield extrinsics) that need to be executed on-chain
+///
+/// Litentry: additionally for the success case, we add the encoded rpc response
+/// that will be passed back to the requester when the top status is `InSidechainBlock`
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExecutionStatus {
-	Success(H256, Vec<OpaqueCall>),
+	Success(H256, Vec<OpaqueCall>, Vec<u8>),
 	Failure,
 }
 
 impl ExecutionStatus {
 	pub fn get_extrinsic_callbacks(&self) -> Vec<OpaqueCall> {
 		match self {
-			ExecutionStatus::Success(_, opaque_calls) => opaque_calls.clone(),
+			ExecutionStatus::Success(_, opaque_calls, _) => opaque_calls.clone(),
 			_ => Vec::new(),
 		}
 	}
 
 	pub fn get_executed_operation_hash(&self) -> Option<H256> {
 		match self {
-			ExecutionStatus::Success(operation_hash, _) => Some(*operation_hash),
+			ExecutionStatus::Success(operation_hash, _, _) => Some(*operation_hash),
 			_ => None,
+		}
+	}
+
+	pub fn get_rpc_response(&self) -> Vec<u8> {
+		match self {
+			ExecutionStatus::Success(_, _, res) => res.clone(),
+			_ => Vec::new(),
 		}
 	}
 }
@@ -94,9 +104,10 @@ impl ExecutedOperation {
 		operation_hash: H256,
 		trusted_operation_or_hash: TrustedOperationOrHash<H256>,
 		extrinsic_call_backs: Vec<OpaqueCall>,
+		rpc_response: Vec<u8>,
 	) -> Self {
 		ExecutedOperation {
-			status: ExecutionStatus::Success(operation_hash, extrinsic_call_backs),
+			status: ExecutionStatus::Success(operation_hash, extrinsic_call_backs, rpc_response),
 			trusted_operation_or_hash,
 		}
 	}
@@ -108,7 +119,7 @@ impl ExecutedOperation {
 
 	/// Returns true if the executed operation was a success.
 	pub fn is_success(&self) -> bool {
-		matches!(self.status, ExecutionStatus::Success(_, _))
+		matches!(self.status, ExecutionStatus::Success(..))
 	}
 }
 
@@ -212,8 +223,12 @@ mod tests {
 	fn create_success_operation_from_u8(int: u8) -> (ExecutedOperation, H256) {
 		let hash = H256::from([int; 32]);
 		let opaque_call: Vec<OpaqueCall> = vec![OpaqueCall(vec![int; 10])];
-		let operation =
-			ExecutedOperation::success(hash, TrustedOperationOrHash::Hash(hash), opaque_call);
+		let operation = ExecutedOperation::success(
+			hash,
+			TrustedOperationOrHash::Hash(hash),
+			opaque_call,
+			vec![],
+		);
 		(operation, hash)
 	}
 }

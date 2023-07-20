@@ -45,7 +45,7 @@ use log::*;
 use sp_core::crypto::AccountId32;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
-use std::{format, prelude::v1::*, sync::Arc};
+use std::{format, prelude::v1::*, sync::Arc, vec};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
@@ -269,7 +269,7 @@ where
 		shard: &ShardIdentifier,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<(), Self::Error> {
+	) -> Result<Vec<u8>, Self::Error> {
 		let sender = self.call.sender_identity().clone();
 		let call_hash = blake2_256(&self.call.encode());
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
@@ -762,7 +762,7 @@ where
 				Ok(())
 			},
 		}?;
-		Ok(())
+		Ok(vec![])
 	}
 
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {

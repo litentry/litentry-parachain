@@ -124,16 +124,19 @@ where
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		if let Err(e) = Stf::execute_call(
+		let rpc_response = match Stf::execute_call(
 			state,
 			shard,
 			trusted_call.clone(),
 			&mut extrinsic_call_backs,
 			self.node_metadata_repo.clone(),
 		) {
-			error!("Stf execute failed: {:?}", e);
-			return Ok(ExecutedOperation::failed(top_or_hash))
-		}
+			Err(e) => {
+				error!("Stf execute failed: {:?}", e);
+				return Ok(ExecutedOperation::failed(top_or_hash))
+			},
+			Ok(res) => res,
+		};
 
 		let operation_hash = trusted_operation.hash();
 		debug!("Operation hash {:?}", operation_hash);
@@ -142,7 +145,7 @@ where
 			state.prune_state_diff();
 		}
 
-		Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs))
+		Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response))
 	}
 }
 

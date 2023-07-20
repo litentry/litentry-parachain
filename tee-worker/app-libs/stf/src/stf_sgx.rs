@@ -138,7 +138,7 @@ where
 		call: Call,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<(), Self::Error> {
+	) -> Result<Vec<u8>, Self::Error> {
 		state.execute_with(|| call.execute(shard, calls, node_metadata_repo))
 	}
 }

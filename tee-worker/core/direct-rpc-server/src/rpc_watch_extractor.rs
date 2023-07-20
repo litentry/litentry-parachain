@@ -62,8 +62,8 @@ where
 		}
 
 		match rpc_return_value.status {
-			DirectRequestStatus::TrustedOperationStatus(..) =>
-				Self::Hash::decode(&mut rpc_return_value.value.as_slice())
+			DirectRequestStatus::TrustedOperationStatus(_, top_hash) =>
+				Self::Hash::decode::<_>(&mut top_hash.as_ref())
 					.map(Some)
 					.map_err(DirectRpcError::EncodingError),
 			_ => Ok(None),
@@ -95,7 +95,10 @@ pub mod tests {
 		let watch_extractor = RpcWatchExtractor::<String>::new();
 		let rpc_result = RpcReturnValueBuilder::new()
 			.with_do_watch(false)
-			.with_status(DirectRequestStatus::TrustedOperationStatus(TrustedOperationStatus::Ready))
+			.with_status(DirectRequestStatus::TrustedOperationStatus(
+				TrustedOperationStatus::Ready,
+				Default::default(),
+			))
 			.build();
 		let rpc_response = RpcResponseBuilder::new().with_result(rpc_result).build();
 
@@ -111,7 +114,10 @@ pub mod tests {
 		let rpc_return_value = RpcReturnValueBuilder::new()
 			.with_do_watch(true)
 			.with_value(hash.encode())
-			.with_status(DirectRequestStatus::TrustedOperationStatus(TrustedOperationStatus::Ready))
+			.with_status(DirectRequestStatus::TrustedOperationStatus(
+				TrustedOperationStatus::Ready,
+				Default::default(),
+			))
 			.build();
 		let rpc_response = RpcResponseBuilder::new().with_result(rpc_return_value).build();
 

@@ -57,13 +57,16 @@ where
 	type Error;
 
 	/// Execute a call on a specific state. Callbacks are added as an `OpaqueCall`.
+	///
+	/// Litentry: returns the encoded rpc response that should be passed back to
+	/// the requester when the call is triggered synchronously
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
 		call: Call,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<(), Self::Error>;
+	) -> Result<Vec<u8>, Self::Error>;
 }
 
 /// Interface to execute state reading getters on a state.
@@ -81,12 +84,15 @@ where
 	type Error;
 
 	/// Execute a call. Callbacks are added as an `OpaqueCall`.
+	///
+	/// Litentry: returns the encoded rpc response that should be passed back to
+	/// the requester when the call is triggered synchronously
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<(), Self::Error>;
+	) -> Result<Vec<u8>, Self::Error>;
 
 	/// Get storages hashes that should be updated for a specific call.
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;

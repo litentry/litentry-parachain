@@ -50,7 +50,7 @@ where
 		let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: true,
-				value: hash_value.encode(),
+				value: vec![],
 				status: DirectRequestStatus::TrustedOperationStatus(
 					TrustedOperationStatus::Submitted,
 					hash_value,
@@ -69,7 +69,7 @@ where
 		let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: false,
-				value: hash_value.encode(),
+				value: vec![],
 				status: DirectRequestStatus::TrustedOperationStatus(
 					TrustedOperationStatus::Submitted,
 					hash_value,
