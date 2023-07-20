@@ -29,7 +29,8 @@
 	clippy::unreachable,
 	clippy::unimplemented,
 	clippy::string_slice,
-	clippy::panic_in_result_fn
+	clippy::panic_in_result_fn,
+	clippy::panic
 )]
 
 #[cfg(not(target_env = "sgx"))]
