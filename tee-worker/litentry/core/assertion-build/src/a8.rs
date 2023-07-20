@@ -21,9 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::achainable::{
-	AchainableClient, AchainableQuery, VerifiedCredentialsTotalTxs,
-};
+use lc_data_providers::achainable::{AchainableClient, AchainableTotalTransactions};
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available networks (including invalid transactions)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
@@ -37,35 +35,18 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let mut total_txs: u64 = 0;
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
-	let mut addresses_set: HashSet<String> = HashSet::new();
 	let mut networks_set: HashSet<Web3Network> = HashSet::new();
+	identities.iter().for_each(|(network, addresses)| {
+		networks_set.insert(*network);
 
-	identities.into_iter().for_each(|(network, addresses)| {
-		addresses_set.extend(addresses);
-		networks_set.insert(network);
+		match client.total_transactions(network, addresses) {
+			Ok(txs) => total_txs += txs,
+			Err(e) => error!("Assertion A8 query total_transactions error: {:?}", e),
+		};
 	});
-
-	let addresses = addresses_set.into_iter().collect::<Vec<String>>();
-	let networks = networks_set.into_iter().collect::<Vec<Web3Network>>();
-
-	if !addresses.is_empty() && !networks.is_empty() {
-		// TODO: I fail to understand why both args are Vec<> so I just leave it as it is
-		let query = VerifiedCredentialsTotalTxs::new(addresses, networks.clone());
-		debug!("Assertion A8 query: {:?}", query);
-
-		match client.verified_credentials_total_transactions(query) {
-			Ok(result) => {
-				debug!("Assertion A8 query result: {:?}", result);
-
-				total_txs = result.iter().map(|v| v.total_transactions).sum::<u64>();
-			},
-			Err(e) => {
-				error!("Assertion A8 query error: {:?}", e);
-			},
-		}
-	}
-
 	debug!("Assertion A8 total_transactions: {}", total_txs);
+
+	let networks = networks_set.into_iter().collect::<Vec<Web3Network>>();
 
 	let (min, max) = get_total_tx_ranges(total_txs);
 	match Credential::new_default(&req.who, &req.shard) {
