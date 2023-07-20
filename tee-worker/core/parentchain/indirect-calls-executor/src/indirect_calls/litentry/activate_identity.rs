@@ -74,7 +74,6 @@ impl ActivateIdentityArgs {
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for ActivateIdentityArgs {
 	type Args = (Option<GenericAddress>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		log::info!("Dispatching activate identity call!");
 		let (address, hash) = args;
 		let e = Error::IMPHandlingError(IMPError::ActivateIdentityFailed(ErrorDetail::ImportError));
 		if self.internal_dispatch(executor, address, hash).is_err() {
