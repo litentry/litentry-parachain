@@ -149,11 +149,13 @@ describeLitentry('Test Identity', 0, (context) => {
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
+        console.log("nonce is:", nonce);
         const twitterValidations = await buildValidations(
             context,
             [aliceSubject],
             [twitterIdentity],
-            3,
+            nonce,
             'twitter'
         );
 
@@ -161,7 +163,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [evmIdentity],
-            4,
+            nonce + 1,
             'ethereum',
             undefined,
             [context.ethersWallet.alice]
@@ -171,7 +173,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [eveSubstrateIdentity],
-            5,
+            nonce + 2,
             'substrate',
             context.substrateWallet.eve
         );
