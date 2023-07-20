@@ -146,7 +146,6 @@ fi
 # release notes for enclave binary 
 if [ "$2" != "runtime" ] && [ "$2" != "client" ] && [ "$2" != "both"]; then 
    echo "Generating Release Notes for Enclave"
-   local UPSTREAM_COMMIT=$(cat tee-worker/upstream_commit)
    local MRENCLAVE=$(echo "$MRENCLAVE_OUTPUT" | awk '{print $2}')
    cat << EOF >> "$1" 
 ## TEE Worker Release 
@@ -154,7 +153,6 @@ if [ "$2" != "runtime" ] && [ "$2" != "client" ] && [ "$2" != "both"]; then
 <CODEBLOCK>
 rustc: $RUSTC_VERSION
 mrenclave: $MRENCLAVE
-upstream_commit: $UPSTREAM_COMMIT
 <CODEBLOCK> 
 
 EOF 
