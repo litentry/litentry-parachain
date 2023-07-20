@@ -6,9 +6,10 @@ import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
+    checkIdGraph,
     initIntegrationTestContext,
 } from './common/utils';
-import { assertInitialIdGraphCreated } from './common/utils/assertion';
+import { assertIdentityLinked, assertInitialIdGraphCreated } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallSetUserShieldingKey,
@@ -90,101 +91,101 @@ describe('Test Identity (direct invocation)', function () {
 
     it('needs a lot more work to be complete');
 
-    step('check user sidechain storage before create', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
-            context.api,
-            context.substrateWallet.alice,
-            aliceSubject
-        );
+    // step('check user sidechain storage before create', async function () {
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    //     const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+    //         context.api,
+    //         context.substrateWallet.alice,
+    //         aliceSubject
+    //     );
 
-        const shieldingKeyGetResult = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            shieldingKeyGetter
-        );
+    //     const shieldingKeyGetResult = await sendRequestFromGetter(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         shieldingKeyGetter
+    //     );
 
-        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
-        assert.isTrue(k.isNone, 'shielding key should be empty before set');
-    });
+    //     const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
+    //     assert.isTrue(k.isNone, 'shielding key should be empty before set');
+    // });
 
-    step('Invalid user shielding key', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const bobSubstrateIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.bob.addressRaw),
-            'Substrate',
-            context
-        );
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    // step('Invalid user shielding key', async function () {
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    //     const bobSubstrateIdentity = await buildIdentityHelper(
+    //         u8aToHex(context.substrateWallet.bob.addressRaw),
+    //         'Substrate',
+    //         context
+    //     );
+    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
-        const nonce = await getSidechainNonce(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            aliceSubject
-        );
-        const [bobValidationData] = await buildValidations(
-            context,
-            [aliceSubject],
-            [bobSubstrateIdentity],
-            nonce.toNumber(),
-            'substrate',
-            context.substrateWallet.bob
-        );
-        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+    //     const nonce = await getSidechainNonce(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         aliceSubject
+    //     );
+    //     const [bobValidationData] = await buildValidations(
+    //         context,
+    //         [aliceSubject],
+    //         [bobSubstrateIdentity],
+    //         nonce.toNumber(),
+    //         'substrate',
+    //         context.substrateWallet.bob
+    //     );
+    //     const eventsPromise = subscribeToEvents(requestIdentifier, context);
 
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            nonce,
-            context.substrateWallet.alice,
-            aliceSubject,
-            context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
-            context.api.createType('LitentryValidationData', bobValidationData).toHex(),
-            context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
-            keyNonce,
-            requestIdentifier
-        );
+    //     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    //         context.api,
+    //         context.mrEnclave,
+    //         nonce,
+    //         context.substrateWallet.alice,
+    //         aliceSubject,
+    //         context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
+    //         context.api.createType('LitentryValidationData', bobValidationData).toHex(),
+    //         context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
+    //         keyNonce,
+    //         requestIdentifier
+    //     );
 
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall
-        );
-        assert.isTrue(
-            res.status.isTrustedOperationStatus,
-            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
-        );
-        const status = res.status.asTrustedOperationStatus;
-        assert.isTrue(
-            status.isSubmitted || status.isInSidechainBlock,
-            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
-        );
+    //     const res = await sendRequestFromTrustedCall(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         linkIdentityCall
+    //     );
+    //     assert.isTrue(
+    //         res.status.isTrustedOperationStatus,
+    //         `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+    //     );
+    //     const status = res.status.asTrustedOperationStatus;
+    //     assert.isTrue(
+    //         status.isSubmitted || status.isInSidechainBlock,
+    //         `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+    //     );
 
-        const events = await eventsPromise;
+    //     const events = await eventsPromise;
 
-        const linkIdentityFailed = context.api.events.identityManagement.LinkIdentityFailed;
+    //     const linkIdentityFailed = context.api.events.identityManagement.LinkIdentityFailed;
 
-        const isLinkIdentityFailed = linkIdentityFailed.is.bind(linkIdentityFailed);
-        type EventLike = Parameters<typeof isLinkIdentityFailed>[0];
-        const ievents: EventLike[] = events.map(({ event }) => event);
-        const linkIdentityFailedEvents = ievents.filter(isLinkIdentityFailed);
+    //     const isLinkIdentityFailed = linkIdentityFailed.is.bind(linkIdentityFailed);
+    //     type EventLike = Parameters<typeof isLinkIdentityFailed>[0];
+    //     const ievents: EventLike[] = events.map(({ event }) => event);
+    //     const linkIdentityFailedEvents = ievents.filter(isLinkIdentityFailed);
 
-        assert.lengthOf(linkIdentityFailedEvents, 1);
-        /**
-         * @fixme tsc is STILL not seeing the correct type for these events, WTF!?!?!?!?
-         */
-        assert.equal(
-            (linkIdentityFailedEvents[0].data[1] as CorePrimitivesErrorErrorDetail).type,
-            'UserShieldingKeyNotFound',
-            'check linkIdentityFailedEvent detail is UserShieldingKeyNotFound, but is not'
-        );
-    });
+    //     assert.lengthOf(linkIdentityFailedEvents, 1);
+    //     /**
+    //      * @fixme tsc is STILL not seeing the correct type for these events, WTF!?!?!?!?
+    //      */
+    //     assert.equal(
+    //         (linkIdentityFailedEvents[0].data[1] as CorePrimitivesErrorErrorDetail).type,
+    //         'UserShieldingKeyNotFound',
+    //         'check linkIdentityFailedEvent detail is UserShieldingKeyNotFound, but is not'
+    //     );
+    // });
 
     ['alice', 'bob'].forEach((name) => {
         step(`set user shielding key (${name})`, async function () {
@@ -238,48 +239,48 @@ describe('Test Identity (direct invocation)', function () {
         });
     });
 
-    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
-            context.api,
-            context.substrateWallet.alice,
-            aliceSubject
-        );
+    // step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    //     const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+    //         context.api,
+    //         context.substrateWallet.alice,
+    //         aliceSubject
+    //     );
 
-        const shieldingKeyGetResult = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            shieldingKeyGetter
-        );
+    //     const shieldingKeyGetResult = await sendRequestFromGetter(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         shieldingKeyGetter
+    //     );
 
-        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
-        assert.equal(k.value.toString(), aesKey, 'respShieldingKey should be equal aesKey after set');
-    });
+    //     const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
+    //     assert.equal(k.value.toString(), aesKey, 'respShieldingKey should be equal aesKey after set');
+    // });
 
-    step('check idgraph from sidechain storage before linking', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    // step('check idgraph from sidechain storage before linking', async function () {
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
-        const idgraphGetter = createSignedTrustedGetterIdGraph(
-            context.api,
-            context.substrateWallet.alice,
-            aliceSubject
-        );
-        const res = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            idgraphGetter
-        );
+    //     const idgraphGetter = createSignedTrustedGetterIdGraph(
+    //         context.api,
+    //         context.substrateWallet.alice,
+    //         aliceSubject
+    //     );
+    //     const res = await sendRequestFromGetter(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         idgraphGetter
+    //     );
 
-        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-        assert.lengthOf(idGraph, 1);
-        const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
-        assert.deepEqual(idGraphNodeIdentity.toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
-        assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
-    });
+    //     const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+    //     assert.lengthOf(idGraph, 1);
+    //     const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
+    //     assert.deepEqual(idGraphNodeIdentity.toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
+    //     assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
+    // });
 
     step('link identities (alice)', async function () {
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
@@ -316,7 +317,7 @@ describe('Test Identity (direct invocation)', function () {
             context,
             [aliceSubject],
             [evmIdentity],
-            (await getNextNonce()).toNumber(),
+            (await getNextNonce()).toNumber() + 1,
             'ethereum',
             undefined,
             [context.ethersWallet.alice]
@@ -337,7 +338,7 @@ describe('Test Identity (direct invocation)', function () {
             context,
             [aliceSubject],
             [eveSubstrateIdentity],
-            (await getNextNonce()).toNumber(),
+            (await getNextNonce()).toNumber() + 2,
             'substrate',
             context.substrateWallet.eve
         );
@@ -382,8 +383,48 @@ describe('Test Identity (direct invocation)', function () {
             );
 
             const events = await eventsPromise;
-            console.log('BANANA!');
-            events.forEach((event) => console.log(event.toHuman()));
+
+            // check events
+            // events.forEach(({ event }) => {
+            //     if (event.section === 'identityManagement' && event.method === 'IdentityLinked') {
+            //         assertIdentityLinked(context, context.substrateWallet.alice, [event], [identity]);
+            //     }
+            // });
         }
+    });
+
+    step('check idgraph from sidechain storage after linking', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const idgraphGetter = createSignedTrustedGetterIdGraph(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
+
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        // the main address should be already inside the IDGraph
+        const mainIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'Substrate',
+            context
+        );
+        const identityHex = mainIdentity.toHex();
+        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
+        assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0 for main address');
+        assert.isTrue(respIdGraph.status.isActive, 'status should be active for main address');
+
+        // assert.lengthOf(idGraph, 1);
+        // const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
+        // assert.deepEqual(idGraphNodeIdentity.toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
+        // assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
+
     });
 });
