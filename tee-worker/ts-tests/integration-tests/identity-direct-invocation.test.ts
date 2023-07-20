@@ -23,10 +23,11 @@ import {
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
-import { FrameSystemEventRecord, LitentryValidationData, Web3Network } from 'parachain-api';
+import { FrameSystemEventRecord, LitentryValidationData, Web3Network, filterEvents } from 'parachain-api';
 import { CorePrimitivesErrorErrorDetail } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
+import { NodesmithProvider } from '@ethersproject/providers';
 
 const subscribeToEvents = async (
     requestIdentifier: string,
@@ -90,6 +91,7 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     it('needs a lot more work to be complete');
+    it('most of the bob cases are missing');
 
     // step('check user sidechain storage before create', async function () {
     //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
@@ -284,51 +286,61 @@ describe('Test Identity (direct invocation)', function () {
 
     step('link identities (alice)', async function () {
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const getNextNonce = async () =>
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject);
+
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        console.log({ currentNonce });
+        const getNextNonce = () => currentNonce++;
 
         // Alice links:
         // - a `mock_user` twitter
         // - alice's evm identity
         // - eve's substrate identity (as alice can't link her own substrate again)
         const linkIdentityRequestParams: {
+            nonce: number;
             identity: LitentryPrimitivesIdentity;
             validation: LitentryValidationData;
             networks: Vec<Web3Network>;
         }[] = [];
 
+        const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const [twitterValidation] = await buildValidations(
             context,
             [aliceSubject],
             [twitterIdentity],
-            (await getNextNonce()).toNumber(),
+            twitterNonce,
             'twitter'
         );
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
         linkIdentityRequestParams.push({
+            nonce: twitterNonce,
             identity: twitterIdentity,
             validation: twitterValidation,
             networks: twitterNetworks,
         });
 
+        const evmNonce = getNextNonce();
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const [evmValidation] = await buildValidations(
             context,
             [aliceSubject],
             [evmIdentity],
-            (await getNextNonce()).toNumber() + 1,
+            evmNonce,
             'ethereum',
             undefined,
             [context.ethersWallet.alice]
         );
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
+            nonce: evmNonce,
             identity: evmIdentity,
             validation: evmValidation,
             networks: evmNetworks,
         });
 
+        const eveSubstrateNonce = getNextNonce();
         const eveSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.eve.addressRaw),
             'Substrate',
@@ -338,24 +350,25 @@ describe('Test Identity (direct invocation)', function () {
             context,
             [aliceSubject],
             [eveSubstrateIdentity],
-            (await getNextNonce()).toNumber() + 2,
+            eveSubstrateNonce,
             'substrate',
             context.substrateWallet.eve
         );
         const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']);
         linkIdentityRequestParams.push({
+            nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
             validation: eveSubstrateValidation,
             networks: eveSubstrateNetworks,
         });
 
-        for (const { identity, validation, networks } of linkIdentityRequestParams) {
+        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEvents(requestIdentifier, context);
             const linkIdentityCall = createSignedTrustedCallLinkIdentity(
                 context.api,
                 context.mrEnclave,
-                await getNextNonce(),
+                context.api.createType('Index', nonce),
                 context.substrateWallet.alice,
                 aliceSubject,
                 identity.toHex(),
@@ -382,14 +395,17 @@ describe('Test Identity (direct invocation)', function () {
                 `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
             );
 
-            const events = await eventsPromise;
-
-            // check events
-            // events.forEach(({ event }) => {
-            //     if (event.section === 'identityManagement' && event.method === 'IdentityLinked') {
-            //         assertIdentityLinked(context, context.substrateWallet.alice, [event], [identity]);
-            //     }
-            // });
+            const events = (await eventsPromise).map(({ event }) => event);
+            let isIdentityLinked = false;
+            events.forEach((event) => {
+                if (context.api.events.identityManagement.LinkIdentityFailed.is(event)) {
+                    assert.fail(JSON.stringify(event.toHuman(), null, 4));
+                }
+                if (context.api.events.identityManagement.IdentityLinked.is(event)) {
+                    isIdentityLinked = true;
+                }
+            });
+            assert.isTrue(isIdentityLinked); // @FIXME: dump events if no success or failure reported
         }
     });
 
@@ -425,6 +441,5 @@ describe('Test Identity (direct invocation)', function () {
         // const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
         // assert.deepEqual(idGraphNodeIdentity.toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
         // assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
-
     });
 });
