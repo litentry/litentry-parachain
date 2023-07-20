@@ -18,30 +18,26 @@ use crate::{error::Error, Enclave, EnclaveResult};
 use codec::Encode;
 use frame_support::ensure;
 use itp_enclave_api_ffi as ffi;
-use lc_data_providers::DataProvidersStatic;
+use lc_data_providers::DataProviderConfig;
 use sgx_types::*;
 
 /// Trait to run a stf task handling thread inside the enclave.
 pub trait StfTaskHandler {
-	fn run_stf_task_handler(&self, data_providers_static: DataProvidersStatic)
-		-> EnclaveResult<()>;
+	fn run_stf_task_handler(&self, data_provider_config: DataProviderConfig) -> EnclaveResult<()>;
 }
 
 impl StfTaskHandler for Enclave {
-	fn run_stf_task_handler(
-		&self,
-		data_providers_static: DataProvidersStatic,
-	) -> EnclaveResult<()> {
+	fn run_stf_task_handler(&self, data_provider_config: DataProviderConfig) -> EnclaveResult<()> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
-		let data_providers_static_enc = data_providers_static.encode();
+		let data_provider_config_enc = data_provider_config.encode();
 
 		let result = unsafe {
 			ffi::run_stf_task_handler(
 				self.eid,
 				&mut retval,
-				data_providers_static_enc.as_ptr(),
-				data_providers_static_enc.len(),
+				data_provider_config_enc.as_ptr(),
+				data_provider_config_enc.len(),
 			)
 		};
 

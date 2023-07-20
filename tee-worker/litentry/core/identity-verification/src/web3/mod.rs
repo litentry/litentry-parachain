@@ -14,25 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{ensure, AccountId, Error, Result, ToString};
+use crate::{ensure, Error, Result, ToString};
 use ita_stf::helpers::{get_expected_raw_message, get_expected_wrapped_message};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	ErrorDetail, Identity, IdentityMultiSignature, UserShieldingKeyNonceType, UserShieldingKeyType,
-	Web3CommonValidationData, Web3ValidationData,
+	recover_evm_address, ErrorDetail, Identity, LitentryMultiSignature, UserShieldingKeyNonceType,
+	UserShieldingKeyType, Web3CommonValidationData, Web3ValidationData,
 };
 use log::*;
 use sp_core::{ed25519, sr25519};
 use sp_io::{
-	crypto::{
-		ed25519_verify, secp256k1_ecdsa_recover, secp256k1_ecdsa_recover_compressed, sr25519_verify,
-	},
+	crypto::{ed25519_verify, secp256k1_ecdsa_recover_compressed, sr25519_verify},
 	hashing::{blake2_256, keccak_256},
 };
 
 pub fn verify(
-	who: &AccountId,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
@@ -55,7 +53,7 @@ pub fn verify(
 }
 
 fn verify_substrate_signature(
-	who: &AccountId,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
@@ -69,7 +67,7 @@ fn verify_substrate_signature(
 		raw_msg.as_slice() == validation_data.message.as_slice(),
 		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
 	);
-	let substrate_address = if let Identity::Substrate { address, .. } = identity {
+	let substrate_address = if let Identity::Substrate(address) = identity {
 		address.as_ref()
 	} else {
 		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
@@ -93,17 +91,17 @@ fn verify_substrate_signature(
 
 fn verify_substrate_signature_internal(
 	msg: &[u8],
-	signature: &IdentityMultiSignature,
+	signature: &LitentryMultiSignature,
 	address: &[u8; 32],
 ) -> bool {
 	match signature {
-		IdentityMultiSignature::Sr25519(sig) =>
+		LitentryMultiSignature::Sr25519(sig) =>
 			sr25519_verify(sig, msg, &sr25519::Public(*address)),
-		IdentityMultiSignature::Ed25519(sig) =>
+		LitentryMultiSignature::Ed25519(sig) =>
 			ed25519_verify(sig, msg, &ed25519::Public(*address)),
 		// We can' use `ecdsa_verify` directly we don't have the raw 33-bytes publick key
 		// instead we only have AccountId which is blake2_256(pubkey)
-		IdentityMultiSignature::Ecdsa(sig) => {
+		LitentryMultiSignature::Ecdsa(sig) => {
 			// see https://github.com/paritytech/substrate/blob/493b58bd4a475080d428ce47193ee9ea9757a808/primitives/runtime/src/traits.rs#L132
 			let digest = blake2_256(msg);
 			if let Ok(recovered_substrate_pubkey) =
@@ -119,7 +117,7 @@ fn verify_substrate_signature_internal(
 }
 
 fn verify_evm_signature(
-	who: &AccountId,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
@@ -128,12 +126,12 @@ fn verify_evm_signature(
 ) -> Result<()> {
 	let msg = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 	let digest = compute_evm_msg_digest(&msg);
-	let evm_address = if let Identity::Evm { address, .. } = identity {
+	let evm_address = if let Identity::Evm(address) = identity {
 		address
 	} else {
 		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
 	};
-	if let IdentityMultiSignature::Ethereum(sig) = &validation_data.signature {
+	if let LitentryMultiSignature::Ethereum(sig) = &validation_data.signature {
 		let recovered_evm_address = recover_evm_address(&digest, sig.as_ref())
 			.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::RecoverEvmAddressFailed))?;
 		ensure!(
@@ -155,16 +153,4 @@ fn compute_evm_msg_digest(message: &[u8]) -> [u8; 32] {
 	]
 	.concat();
 	keccak_256(&eip_191_message)
-}
-
-fn recover_evm_address(
-	msg: &[u8; 32],
-	sig: &[u8; 65],
-) -> core::result::Result<[u8; 20], sp_io::EcdsaVerifyError> {
-	let pubkey = secp256k1_ecdsa_recover(sig, msg)?;
-	let hashed_pk = keccak_256(&pubkey);
-
-	let mut addr = [0u8; 20];
-	addr[..20].copy_from_slice(&hashed_pk[12..32]);
-	Ok(addr)
 }

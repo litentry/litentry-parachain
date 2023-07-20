@@ -18,7 +18,7 @@
 use crate::{UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
 use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
-use litentry_primitives::{Identity, IdentityString, Web2Network};
+use litentry_primitives::{Identity, IdentityString};
 use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
 use std::{collections::HashMap, sync::Arc};
 use warp::{http::Response, Filter};
@@ -45,14 +45,12 @@ where
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
 				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
-				let twitter_identity = Identity::Web2 {
-					network: Web2Network::Twitter,
-					address: IdentityString::try_from(tweet_author_name.as_bytes().to_vec())
-						.unwrap(),
-				};
+				let twitter_identity = Identity::Twitter(
+					IdentityString::try_from(tweet_author_name.as_bytes().to_vec()).unwrap(),
+				);
 				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
-					&alice.public(),
+					&alice.public().into(),
 					&twitter_identity,
 					// the tweet_id is used as sidechain_nonce
 					// it's a bit tricky to get the nonce from the getter: you need to know
@@ -110,48 +108,6 @@ pub(crate) fn query_retweeted_by(
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
-}
-
-pub(crate) fn query_friendship(
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-	warp::get()
-		.and(warp::path!("1.1" / "friendships" / "show.json"))
-		.and(warp::query::<HashMap<String, String>>())
-		.map(move |p: HashMap<String, String>| {
-			log::info!("query_friendship");
-			if let Some(target_id) = p.get("target_id") {
-				if target_id == "783214" {
-					return Response::builder()
-						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
-				}
-			};
-
-			if let Some(target_screen_name) = p.get("target_screen_name") {
-				if target_screen_name == "twitter" {
-					return Response::builder()
-						.body(serde_json::to_string(&prepare_mocked_relationship()).unwrap())
-				}
-			}
-			Response::builder().status(400).body(String::from("Error query"))
-		})
-}
-
-fn prepare_mocked_relationship() -> Relationship {
-	let source_user = SourceTwitterUser {
-		id_str: "2244994945".into(),
-		screen_name: "TwitterDev".into(),
-		following: true,
-		followed_by: false,
-	};
-
-	let target_user = TargetTwitterUser {
-		id_str: "783214".into(),
-		screen_name: "Twitter".into(),
-		following: false,
-		followed_by: true,
-	};
-
-	Relationship { source: source_user, target: target_user }
 }
 
 pub(crate) fn query_user_by_name(

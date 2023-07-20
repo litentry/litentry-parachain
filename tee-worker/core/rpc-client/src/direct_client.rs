@@ -36,7 +36,7 @@ use std::{
 	thread::JoinHandle,
 };
 use substrate_api_client::RuntimeMetadataPrefixed;
-use teerex_primitives::Request;
+use teerex_primitives::{MrEnclave, Request};
 
 pub use crate::error::{Error, Result};
 
@@ -58,6 +58,7 @@ pub trait DirectApi {
 	fn get_state_metadata_raw(&self) -> Result<String>;
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
 
+	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
@@ -215,6 +216,19 @@ impl DirectApi for DirectClient {
 		decode_from_rpc_response::<u32>(&response_str)
 	}
 
+	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
+		let jsonrpc_call: String =
+			RpcRequest::compose_jsonrpc_call("state_getEnclave".to_string(), Default::default())?;
+
+		// Send json rpc call to ws server.
+		let response_str = self.get(&jsonrpc_call)?;
+
+		let mrenclave: MrEnclave = decode_from_rpc_response::<MrEnclave>(&response_str)?;
+
+		info!("[+] Got enclave: {:?}", mrenclave);
+		Ok(mrenclave)
+	}
+
 	fn send(&self, request: &str) -> Result<()> {
 		self.web_socket_control.send(request)
 	}
@@ -224,14 +238,14 @@ impl DirectApi for DirectClient {
 	}
 }
 
-fn decode_from_rpc_response<T: Decode + std::fmt::Display>(json_rpc_response: &str) -> Result<T> {
+fn decode_from_rpc_response<T: Decode + std::fmt::Debug>(json_rpc_response: &str) -> Result<T> {
 	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
 	let rpc_return_value =
 		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
 	let response_message = T::decode(&mut rpc_return_value.value.as_slice())?;
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_message),
-		_ => Err(Error::Status(format!("decode_response failed to decode {}", response_message))),
+		_ => Err(Error::Status(format!("decode_response failed to decode {:?}", response_message))),
 	}
 }
 

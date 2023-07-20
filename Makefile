@@ -215,6 +215,14 @@ clippyfix:
 cargofix:
 	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
 
+# cargo update
+
+.PHONY: update ## cargo update
+update:
+	cargo update
+	cd tee-worker && cargo update
+	cd tee-worker/enclave-runtime && cargo update 
+
 # shellcheck
 
 .PHONY: shellcheck ## check the shell scripts with WARNING level

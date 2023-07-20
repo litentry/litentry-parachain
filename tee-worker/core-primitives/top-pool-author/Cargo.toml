@@ -36,6 +36,9 @@ log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
+# litentry
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+
 [dev-dependencies]
 futures = { version = "0.3" }
 itp-sgx-crypto = { path = "../sgx/crypto", features = ["mocks"] }
@@ -58,6 +61,8 @@ std = [
     "jsonrpc-core",
     "log/std",
     "thiserror",
+    # litentry
+    "litentry-primitives/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -69,6 +74,8 @@ sgx = [
     "itp-top-pool/sgx",
     "itp-utils/sgx",
     "thiserror_sgx",
+    # litentry
+    "litentry-primitives/sgx",
 ]
 test = ["itp-test/sgx", "itp-top-pool/mocks"]
 mocks = []

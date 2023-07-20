@@ -4,6 +4,7 @@ services:
     container_name: litentry-identity-test
     volumes:
       - ../ts-tests:/ts-tests
+      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile

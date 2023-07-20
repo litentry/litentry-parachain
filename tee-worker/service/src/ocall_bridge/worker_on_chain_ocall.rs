@@ -60,37 +60,29 @@ where
 		}
 
 		let api = self.node_api_factory.create_api()?;
-		let mut responses: Vec<WorkerResponse<Vec<u8>>> = Vec::with_capacity(request.len());
 
-		for req in requests {
-			let resp = match req {
-				WorkerRequest::ChainStorage(key, hash) => {
-					let storage_value = api
-						.get_opaque_storage_by_key_hash(StorageKey(key.clone()), hash)
-						.map_err(|_| {
-							OCallBridgeError::WorkerRequestError(
-								"Could not get storage value".to_string(),
-							)
-						})?;
-					let storage_proof = api
-						.get_storage_proof_by_keys(vec![StorageKey(key.clone())], hash)
-						.map_err(|_| {
-							OCallBridgeError::WorkerRequestError(
-								"Could not get storage proof".to_string(),
-							)
-						})?;
-					WorkerResponse::ChainStorage(
-						key,
-						storage_value,
-						storage_proof.map(|read_proof| {
-							read_proof.proof.into_iter().map(|bytes| bytes.0).collect()
-						}),
-					)
+		let resp: Vec<WorkerResponse<Vec<u8>>> = requests
+			.into_iter()
+			.map(|req| match req {
+				WorkerRequest::ChainStorage(key, hash) => WorkerResponse::ChainStorage(
+					key.clone(),
+					api.get_opaque_storage_by_key_hash(StorageKey(key.clone()), hash).unwrap(),
+					api.get_storage_proof_by_keys(vec![StorageKey(key)], hash).unwrap().map(
+						|read_proof| read_proof.proof.into_iter().map(|bytes| bytes.0).collect(),
+					),
+				),
+				WorkerRequest::ChainStorageKeys(key, hash) => {
+					let keys: Vec<Vec<u8>> = match api.get_keys(StorageKey(key), hash) {
+						Ok(Some(keys)) => keys.iter().map(String::encode).collect(),
+						_ => Default::default(),
+					};
+					WorkerResponse::ChainStorageKeys(keys)
 				},
-			};
-			responses.push(resp);
-		}
-		let encoded_response: Vec<u8> = responses.encode();
+			})
+			.collect();
+
+		let encoded_response: Vec<u8> = resp.encode();
+
 		Ok(encoded_response)
 	}
 
@@ -148,23 +140,19 @@ where
 				// drop &self lifetime
 				let node_api_factory_cloned = self.node_api_factory.clone();
 				let enclave_cloned = self.enclave_api.clone();
-				thread::spawn(move || match node_api_factory_cloned.create_api() {
-					Ok(api) => {
-						let enclave_account = enclave_account(enclave_cloned.as_ref());
-						warn!("send_extrinsic failed, try to reset nonce ...");
-						match api.get_nonce_of(&enclave_account) {
-							Ok(nonce) => {
-								warn!("query on-chain nonce OK, reset nonce to: {}", nonce);
-								if let Err(e) = enclave_cloned.set_nonce(nonce) {
-									warn!("failed to reset nonce due to: {:?}", e);
-								}
-							},
-							Err(e) => warn!("query on-chain nonce failed: {:?}", e),
-						}
-					},
-					Err(e) => {
-						warn!("Failed to reset nonce: {:?}", e)
-					},
+				thread::spawn(move || {
+					let api = node_api_factory_cloned.create_api().unwrap();
+					let enclave_account = enclave_account(enclave_cloned.as_ref());
+					warn!("send_extrinsic failed, try to reset nonce ...");
+					match api.get_nonce_of(&enclave_account) {
+						Ok(nonce) => {
+							warn!("query on-chain nonce OK, reset nonce to: {}", nonce);
+							if let Err(e) = enclave_cloned.set_nonce(nonce) {
+								warn!("failed to reset nonce due to: {:?}", e);
+							}
+						},
+						Err(e) => warn!("query on-chain nonce failed: {:?}", e),
+					}
 				});
 			}
 		}
