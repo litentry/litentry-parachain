@@ -36,7 +36,12 @@ impl SetHeartbeatTimeoutCommand {
 		chain_api.set_signer(ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair()));
 
 		// call set_heartbeat_timeout
-		let xt = compose_extrinsic!(chain_api, TEEREX, "set_heartbeat_timeout", codec::Compact(self.timeout));
+		let xt = compose_extrinsic!(
+			chain_api,
+			TEEREX,
+			"set_heartbeat_timeout",
+			codec::Compact(self.timeout)
+		);
 		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
 
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
