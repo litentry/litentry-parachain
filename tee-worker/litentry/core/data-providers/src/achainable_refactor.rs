@@ -26,7 +26,7 @@ use itc_rest_client::{
 	RestGet, RestPath, RestPost,
 };
 use litentry_primitives::Web3Network;
-use log::debug;
+use log::{debug, error};
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeStruct};
 use std::{
 	collections::HashMap,
@@ -150,6 +150,7 @@ impl ReqBody {
 #[derive(Serialize, Debug)]
 #[serde(untagged)]
 pub enum Params {
+	TotalTransaction(TotalTransaction), //A8
 	FreshAccount(FreshAccount),
 	OgAccount(OgAccount),
 }
@@ -157,6 +158,7 @@ pub enum Params {
 impl AchainableSystemLabelName for Params {
 	fn name(&self) -> String {
 		match self {
+			Params::TotalTransaction(t) => t.name(),
 			Params::FreshAccount(i) => i.name(),
 			Params::OgAccount(i) => i.name(),
 		}
@@ -164,9 +166,32 @@ impl AchainableSystemLabelName for Params {
 }
 
 /// The parameter types of the method are defined here
-/// fresh_account
+
 pub trait AchainableSystemLabelName {
 	fn name(&self) -> String;
+}
+
+/// A8 Total transaction params
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct TotalTransaction {
+	pub chain: String,
+	pub amount: String,
+}
+
+impl TotalTransaction {
+	fn new(chain: String) -> Self {
+		Self {
+			chain,
+			amount: "1".into(), //TODO: Be 1 always.
+		}
+	}
+}
+
+impl AchainableSystemLabelName for TotalTransaction {
+	fn name(&self) -> String {
+		"Account total transactions under {amount}".into()
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -226,12 +251,89 @@ fn check_achainable_label(
 	AchainableClient::parse(resp)
 }
 
+/// A8 TODO:
+// TODO:
+// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api
+// currently only judges the range of a single account, so the current approach is to parse the returned data through
+// an assertion such as under 1 to calculate the sum, and then perform interval judgment.
+pub trait AchainableTotalTransactionsParser {
+	fn parse_txs(response: serde_json::Value) -> Result<u64, Error>;
+}
+impl AchainableTotalTransactionsParser for AchainableClient {
+	fn parse_txs(response: serde_json::Value) -> Result<u64, Error> {
+		let display_text = response
+			.get("label")
+			.and_then(|value| {
+				value.get("display").and_then(|displays| {
+					displays.as_array().map(|displays| {
+						let mut text: std::option::Option<String> = None;
+						for v in displays.iter() {
+							text = v
+								.get("text")
+								.and_then(|text| {
+									text.as_str().map(|display_text| Some(display_text.to_string()))
+								})
+								.flatten();
+						}
+						text
+					})
+				})
+			})
+			.flatten();
+
+		debug!("Total txs, display text: {:?}", display_text);
+
+		if let Some(display_text) = display_text {
+			// TODO:
+			// text field format: Total transactions under 1 (Transactions: 0)
+			let split_text = display_text.split(": ").collect::<Vec<&str>>();
+			if split_text.len() != 2 {
+				return Err(Error::AchainableError("Invalid array".to_string()))
+			}
+
+			let mut value_text = split_text[1].to_string();
+
+			// pop the last char: ")"
+			value_text.pop();
+
+			let value: u64 = value_text.parse::<u64>().unwrap_or_default();
+
+			return Ok(value)
+		}
+
+		Err(Error::AchainableError("Invalid response".to_string()))
+	}
+}
+pub trait AchainableAccountTotalTransactions {
+	/// NOTE: Achinable "chain" fieild must be one of [ethereum, polkadot, kusama, litmus, litentry, khala]
+	fn total_transactions(&mut self, network: &Web3Network, addresses: &[String]) -> Result<u64, Error>;
+}
+
+impl AchainableAccountTotalTransactions for AchainableClient {
+	fn total_transactions(&mut self, network: &Web3Network, addresses: &[String]) -> Result<u64, Error> {
+		let mut txs = 0_u64;
+		addresses.iter().for_each(|address| {
+			let chain = network.to_string();		
+			let param = TotalTransaction::new(chain);
+			let body = ReqBody::new(address.into(), Params::TotalTransaction(param));
+			let req_path = SystemLabelReqPath::default();
+	
+			let tx = self.post(req_path, &body).and_then(|resp| {
+				Self::parse_txs(resp)
+			});
+			txs += tx.unwrap_or_default();
+		});
+
+		Ok(txs)
+	}
+}
+
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
 }
 
-impl  AchainableTagAccount for AchainableClient {
+impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
 		let param = FreshAccount::default();
 		check_achainable_label(self, address.into(), Params::FreshAccount(param))
