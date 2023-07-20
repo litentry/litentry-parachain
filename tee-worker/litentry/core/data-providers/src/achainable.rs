@@ -169,6 +169,9 @@ pub enum Params {
 	BalanceErc20OverAmount(BalanceErc20OverAmount),
 	BalanceBep20OverAmount(BalanceBep20OverAmount),
 	Bep20HoldingAmountOfTokenSinceDate(Bep20HoldingAmountOfTokenSinceDate),
+
+	// Tag - Dotsama
+	ParamsTypeA(ParamsTypeA),
 }
 
 impl AchainableSystemLabelName for Params {
@@ -190,6 +193,7 @@ impl AchainableSystemLabelName for Params {
 			Params::BalanceErc20OverAmount(b) => b.name(),
 			Params::BalanceBep20OverAmount(b) => b.name(),
 			Params::Bep20HoldingAmountOfTokenSinceDate(b) => b.name(),
+			Params::ParamsTypeA(a) => a.name.clone(),
 		}
 	}
 }
@@ -635,6 +639,25 @@ impl AchainableSystemLabelName for Bep20HoldingAmountOfTokenSinceDate {
 	}
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsTypeA {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+	pub chain: String,
+}
+
+impl ParamsTypeA {
+	pub fn new(name: String, chain: String) -> Self {
+		Self {
+			name,
+			chain,
+		}
+	}
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 fn check_achainable_label(
@@ -758,9 +781,29 @@ pub trait AchainableTagBalance {
 	fn balance_over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn balance_bep20_over_amount(&mut self, address: &str) -> Result<bool, Error>;
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
-
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+}
+
+pub trait AchainableTagDotsama {
+	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
+	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
 impl AchainableTagAccount for AchainableClient {
@@ -887,6 +930,100 @@ impl AchainableTagBalance for AchainableClient {
 		check_achainable_label(self, address, Params::Bep20HoldingAmountOfTokenSinceDate(param))
 	}
 }
+
+impl AchainableTagDotsama for AchainableClient {
+	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("TreasuryProposalBeneficiary".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("TreasuryProposalBeneficiary".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("TipFinder".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("TipFinder".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("TipBeneficiary".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("TipBeneficiary".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("OpenGovProposer".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("OpenGovProposer".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("FellowshipProposer".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("FellowshipProposer".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("FellowshipMember".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("FellowshipMember".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("ExCouncilor".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("ExCouncilor".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("Councilor".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("Councilor".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("BountyCurator".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsTypeA::new("BountyCurator".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsTypeA(param))
+	}
+
+}
+
 
 
 ///////////////////////////////////////////////
