@@ -15,7 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	mock::*, Error, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType, Web3Network,
+	mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType,
+	Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::USER_SHIELDING_KEY_LEN;
@@ -235,7 +236,10 @@ fn deactivate_identity_works() {
 			}
 		);
 
-		let id_graph = IMT::get_id_graph_with_only_active_identities(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX)
+			.into_iter()
+			.filter(|(_, c)| c.is_active())
+			.collect::<IDGraph<Test>>();
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
 		assert_eq!(IMT::get_id_graph(&who.clone(), usize::MAX).len(), 2);
@@ -295,7 +299,10 @@ fn activate_identity_works() {
 				status: IdentityStatus::Inactive
 			}
 		);
-		let id_graph = IMT::get_id_graph_with_only_active_identities(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX)
+			.into_iter()
+			.filter(|(_, c)| c.is_active())
+			.collect::<IDGraph<Test>>();
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
 		// identity is only deactivated, so it still exists

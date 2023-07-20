@@ -287,17 +287,6 @@ pub mod pallet {
 			id_graph
 		}
 
-		// get the most recent `max_len` active elements in IDGraph
-		pub fn get_id_graph_with_only_active_identities(
-			who: &Identity,
-			max_len: usize,
-		) -> IDGraph<T> {
-			Self::get_id_graph(who, max_len)
-				.into_iter()
-				.filter(|(_, c)| c.is_active())
-				.collect::<IDGraph<T>>()
-		}
-
 		// get count of all keys account + identity in the IDGraphs
 		pub fn id_graph_stats() -> Option<Vec<(Identity, u32)>> {
 			let stats = IDGraphLens::<T>::iter().collect();
