@@ -36,7 +36,7 @@ describeLitentry('Test Identity', 0, (context) => {
     let web3networks: Web3Network[][] = [];
 
     step('check user sidechain storage before create', async function () {
-        let nonce1 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
+        const nonce1 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
         console.log("nonce1 is:", nonce1);
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
@@ -49,7 +49,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('Invalid user shielding key', async function () {
-        let nonce2 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
+        const nonce2 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
         console.log("nonce2 is:", nonce2);
         const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         // use empty `eveValidations`, the `UserShieldingKeyNotFound` error should be emitted before verification
@@ -69,7 +69,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('set user shielding key', async function () {
-        let nonce3 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
+        const nonce3 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
         console.log("nonce3 is:", nonce3);
         const [aliceTxs] = (await buildIdentityTxs(
             context,
@@ -99,7 +99,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        let nonce4 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
+        const nonce4 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
         console.log("nonce2 is:", nonce4);
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
@@ -112,7 +112,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
-        let nonce5 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
+        const nonce5 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
         console.log("nonce2 is:", nonce5);
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
