@@ -47,6 +47,10 @@ RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
 echo "[Step 5], Service test"
 cd "$root_dir/tee-worker"
+cargo clean
+cd "$root_dir/tee-worker/enclave-runtime"
+cargo clean
+cd "$root_dir/tee-worker"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
 ./integritee-service test --all
