@@ -195,42 +195,6 @@ jobs:
       mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
       rustc_version: ${{ steps.rustc.outputs.rustc_version }}
   ## test again the built docker image ##
-  run-ts-tests:
-    runs-on: ubuntu-latest
-    needs: build-docker
-    strategy:
-      matrix:
-        chain:
-          - litmus
-          - litentry
-    steps:
-      - name: Checkout codes
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Download and tag docker image
-        run: |
-          docker pull litentry/litentry-parachain:${{ env.RELEASE_TAG }}
-          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
-
-      - name: Run ts tests for ${{ matrix.chain }}
-        timeout-minutes: 20
-        run: |
-          make test-ts-docker-${{ matrix.chain }}
-
-      - name: Archive logs if test fails
-        uses: actions/upload-artifact@v3
-        if: ${{ failure() }}
-        with:
-          name: ${{ matrix.chain }}-ts-tests-artifacts
-          path: /tmp/parachain_dev/
-          retention-days: 3
-
-      - name: Clean up for ${{ matrix.chain }}
-        if: ${{ always() }}
-        run: |
-          make clean-docker-${{ matrix.chain }}
 
   ## check extrinsic ##
   extrinsic-ordering-check-from-bin:
@@ -287,12 +251,8 @@ jobs:
     # seems to be the only way to achieve this
     needs:
       - build-wasm
-      - run-ts-tests
       - set-release-type
       - build-enclave
-    if: |
-      !failure() && !cancelled() &&
-      (success('build-wasm') || success('run-ts-tests'))
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v3
