@@ -136,7 +136,7 @@ where
 						let nonce = state.execute_with(|| System::account_nonce(&account));
 						let json_value = RpcReturnValue {
 							do_watch: false,
-							value: (nonce + pending_tx_count).encode(),
+							value: (nonce.saturating_add(pending_tx_count)).encode(),
 							status: DirectRequestStatus::Ok,
 						};
 						Ok(json!(json_value.to_hex()))

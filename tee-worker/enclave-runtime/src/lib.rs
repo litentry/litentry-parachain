@@ -32,7 +32,8 @@
 	clippy::panic_in_result_fn,
 	clippy::panic,
 	clippy::indexing_slicing,
-	clippy::expect_used
+	clippy::expect_used,
+	clippy::arithmetic_side_effects
 )]
 
 #[cfg(not(target_env = "sgx"))]

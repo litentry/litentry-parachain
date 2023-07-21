@@ -28,7 +28,7 @@ impl IpfsContent {
 			#[allow(clippy::string_slice)]
 			let bytes = &self.file_content.get(total..).ok_or(IpfsError::Verification)?;
 			let (blocks, consumed) = adder.push(bytes);
-			total += consumed;
+			total = total.saturating_add(consumed);
 			self.stats.process(blocks);
 		}
 		let blocks = adder.finish();
@@ -65,8 +65,8 @@ impl Stats {
 	fn process<I: Iterator<Item = (Cid, Vec<u8>)>>(&mut self, new_blocks: I) {
 		for (cid, block) in new_blocks {
 			self.last = Some(cid);
-			self.blocks += 1;
-			self.block_bytes += block.len() as u64;
+			self.blocks = self.blocks.saturating_add(1);
+			self.block_bytes = self.block_bytes.saturating_add(block.len() as u64);
 		}
 	}
 }
