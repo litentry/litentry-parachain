@@ -163,7 +163,7 @@ impl GetSupportedNetworks for EvmNetwork {
 
 pub trait ToAchainable {
 	fn path(&self) -> String {
-		"latest/achainable".to_string()
+		"latest/graphql".to_string()
 	}
 
 	fn to_achainable(&self) -> String;
