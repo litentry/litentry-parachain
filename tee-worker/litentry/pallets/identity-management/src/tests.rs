@@ -15,7 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	mock::*, Error, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType, Web3Network,
+	mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType,
+	Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::USER_SHIELDING_KEY_LEN;
@@ -184,7 +185,7 @@ fn cannot_create_more_identities_for_account_than_limit() {
 }
 
 #[test]
-fn remove_identity_works() {
+fn deactivate_identity_works() {
 	new_test_ext(false).execute_with(|| {
 		let who: Identity = BOB.into();
 		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
@@ -195,7 +196,7 @@ fn remove_identity_works() {
 			shielding_key,
 		));
 		assert_noop!(
-			IMT::remove_identity(
+			IMT::deactivate_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_substrate_identity(),
@@ -221,26 +222,102 @@ fn remove_identity_works() {
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
-		assert_ok!(IMT::remove_identity(
+		assert_ok!(IMT::deactivate_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			alice_substrate_identity(),
 		));
-		assert_eq!(IMT::id_graphs(who.clone(), alice_substrate_identity()), None);
+		assert_eq!(
+			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
+				status: IdentityStatus::Inactive
+			}
+		);
 
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX)
+			.into_iter()
+			.filter(|(_, c)| c.is_active())
+			.collect::<IDGraph<Test>>();
 		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 1);
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 1);
+		assert_eq!(IMT::get_id_graph(&who.clone(), usize::MAX).len(), 2);
+		// identity is only deactivated, so it still exists
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
 		assert_noop!(
-			IMT::remove_identity(
+			IMT::deactivate_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				bob_substrate_identity(),
 			),
-			Error::<Test>::RemovePrimeIdentityDisallowed
+			Error::<Test>::DeactivatePrimeIdentityDisallowed
 		);
+	});
+}
+
+#[test]
+fn activate_identity_works() {
+	new_test_ext(false).execute_with(|| {
+		let who: Identity = BOB.into();
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+
+		assert_ok!(IMT::set_user_shielding_key(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			shielding_key,
+		));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			alice_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
+		));
+		assert_eq!(
+			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
+				status: IdentityStatus::Active
+			}
+		);
+		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		assert_eq!(id_graph.len(), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
+
+		assert_ok!(IMT::deactivate_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			alice_substrate_identity(),
+		));
+		assert_eq!(
+			IMT::id_graphs(who.clone(), alice_substrate_identity()).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: vec![Web3Network::Litentry].try_into().unwrap(),
+				status: IdentityStatus::Inactive
+			}
+		);
+		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX)
+			.into_iter()
+			.filter(|(_, c)| c.is_active())
+			.collect::<IDGraph<Test>>();
+		// "1": because of the main id is added by default when first calling set_user_shielding_key.
+		assert_eq!(id_graph.len(), 1);
+		// identity is only deactivated, so it still exists
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
+
+		assert_ok!(IMT::activate_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			alice_substrate_identity(),
+		));
+
+		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		// "1": because of the main id is added by default when first calling set_user_shielding_key.
+		assert_eq!(id_graph.len(), 2);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 	});
 }
 
@@ -256,7 +333,7 @@ fn set_identity_networks_works() {
 			shielding_key,
 		));
 		assert_noop!(
-			IMT::remove_identity(
+			IMT::deactivate_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_substrate_identity(),
@@ -304,7 +381,7 @@ fn set_identity_networks_with_wrong_network_fails() {
 			shielding_key,
 		));
 		assert_noop!(
-			IMT::remove_identity(
+			IMT::deactivate_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
 				alice_substrate_identity(),

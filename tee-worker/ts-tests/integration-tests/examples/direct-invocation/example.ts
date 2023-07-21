@@ -161,7 +161,6 @@ export async function runExample(keyPairType: KeypairType) {
     // the second identity is the substrate identity (prime identity)
     assertPrimeIdentity(idgraph[1], alice);
 
-
     console.log('Send UserShieldingKey getter for alice ...');
     let userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
