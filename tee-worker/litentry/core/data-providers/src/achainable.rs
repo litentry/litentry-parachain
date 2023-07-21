@@ -150,50 +150,33 @@ impl ReqBody {
 #[serde(untagged)]
 pub enum Params {
 	AmountHoding(AmountHoding),         //A4-A7-A10-A11
-	TotalTransaction(TotalTransaction), //A8
 
 	// Tag - Account
-	FreshAccount(FreshAccount),
-	OgAccount(OgAccount),
 	ClassOfYear(ClassOfYear),
-	AddressFoundOnBsc(AddressFoundOnBsc),
 	EthDrainedInLastFortnight(EthDrainedInLastFortnight),
-	Validator(Validator),
-
-	// Tag - Balance
-	BalanceBetweenPercents(BalanceBetweenPercents),
-	BalanceUnderAmount(BalanceUnderAmount),
-	BalanceOverAmount(BalanceOverAmount),
-	BalanceBetweenAmounts(BalanceBetweenAmounts),
-	BalanceOverDollars(BalanceOverDollars),
-	BalanceErc20OverAmount(BalanceErc20OverAmount),
-	BalanceBep20OverAmount(BalanceBep20OverAmount),
-	Bep20HoldingAmountOfTokenSinceDate(Bep20HoldingAmountOfTokenSinceDate),
 
 	// Tag - Dotsama
-	ParamsTypeA(ParamsTypeA),
+	ParamsBasicType(ParamsBasicType),
+	ParamsBasicTypeWithAmount(ParamsBasicTypeWithAmount),
+	ParamsBasicTypeWithAmounts(ParamsBasicTypeWithAmounts),
+	ParamsBasicTypeWithDate(ParamsBasicTypeWithDate),
+	ParamsBasicTypeWithAmountToken(ParamsBasicTypeWithAmountToken),
+	ParamsBasicTypeWithBetweenPercents(ParamsBasicTypeWithBetweenPercents),
 }
 
 impl AchainableSystemLabelName for Params {
 	fn name(&self) -> String {
 		match self {
 			Params::AmountHoding(a) => a.name(),
-			Params::TotalTransaction(t) => t.name(),
-			Params::FreshAccount(f) => f.name(),
-			Params::OgAccount(o) => o.name(),
 			Params::ClassOfYear(c) => c.name(),
-			Params::AddressFoundOnBsc(a) => a.name(),
 			Params::EthDrainedInLastFortnight(e) => e.name(),
-			Params::Validator(v) => v.name(),
-			Params::BalanceBetweenPercents(b) => b.name(),
-			Params::BalanceUnderAmount(b) => b.name(),
-			Params::BalanceOverAmount(b) => b.name(),
-			Params::BalanceBetweenAmounts(b) => b.name(),
-			Params::BalanceOverDollars(b) => b.name(),
-			Params::BalanceErc20OverAmount(b) => b.name(),
-			Params::BalanceBep20OverAmount(b) => b.name(),
-			Params::Bep20HoldingAmountOfTokenSinceDate(b) => b.name(),
-			Params::ParamsTypeA(a) => a.name.clone(),
+
+			Params::ParamsBasicType(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithAmount(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithAmounts(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithDate(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithAmountToken(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithBetweenPercents(a) => a.name.clone(),
 		}
 	}
 }
@@ -233,74 +216,6 @@ impl AchainableSystemLabelName for AmountHoding {
 		} else {
 			"Balance hodling {amount} since {date}".into()
 		}
-	}
-}
-
-/// A8 Total transaction params
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct TotalTransaction {
-	pub chain: String,
-	pub amount: String,
-}
-
-impl TotalTransaction {
-	fn new(chain: String) -> Self {
-		Self {
-			chain,
-			amount: "1".into(), //TODO: Be 1 always.
-		}
-	}
-}
-
-impl AchainableSystemLabelName for TotalTransaction {
-	fn name(&self) -> String {
-		"Account total transactions under {amount}".into()
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct FreshAccount {
-	pub chain: String,
-	pub date: String,
-}
-
-impl Default for FreshAccount {
-	fn default() -> Self {
-		Self {
-			chain: "ethereum".into(),
-			date: "30D".into(),
-		}
-	}
-}
-
-impl AchainableSystemLabelName for FreshAccount {
-	fn name(&self) -> String {
-		"Account created after {date}".into()
-	}
-}
-
-// OgAccount
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct OgAccount {
-	pub chain: String,
-	pub date: String,
-}
-
-impl Default for OgAccount {
-	fn default() -> Self {
-		Self {
-			chain: "ethereum".into(),
-			date: "2020-01-01T00:00:00.000Z".into(),
-		}
-	}
-}
-
-impl AchainableSystemLabelName for OgAccount {
-	fn name(&self) -> String {
-		"Account created before {date}".into()
 	}
 }
 
@@ -361,27 +276,6 @@ impl AchainableSystemLabelName for ClassOfYear {
 	}
 }
 
-// AddressFoundOnBsc
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct AddressFoundOnBsc {
-	pub chain: String,
-}
-
-impl Default for AddressFoundOnBsc {
-	fn default() -> Self {
-		Self {
-			chain: "bsc".into(),
-		}
-	}
-}
-
-impl AchainableSystemLabelName for AddressFoundOnBsc {
-	fn name(&self) -> String {
-		"Account found on {chain}".into()
-	}
-}
-
 // ETH Drained in Last Fortnight
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -409,123 +303,81 @@ impl AchainableSystemLabelName for EthDrainedInLastFortnight {
 	}
 }
 
-// Validator
+
+
+
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Validator {
+pub struct ParamsBasicType {
+	#[serde(skip_serializing)]
+	// #[serde(skip_deserializing)]
+	pub name: String,
 	pub chain: String,
 }
 
-impl Validator {
-	pub fn new(chain: String) -> Self {
+impl ParamsBasicType {
+	pub fn new(name: String, chain: String) -> Self {
 		Self {
-			chain
-		}
-	}
-}
-
-impl AchainableSystemLabelName for Validator {
-	fn name(&self) -> String {
-		"Validator".into()
-	}
-}
-
-// Balance between percents
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct BalanceBetweenPercents {
-	pub chain: String,
-	pub greater_than_or_equal_to: String,
-	pub less_than_or_equal_to: String,
-}
-
-impl BalanceBetweenPercents {
-	pub fn new(chain: String, greater_than_or_equal_to: String, less_than_or_equal_to: String) -> Self {
-		Self {
+			name,
 			chain,
-			greater_than_or_equal_to,
-			less_than_or_equal_to,
 		}
 	}
-
-	pub fn dolphin(network: Web3Network) -> Self {
-		BalanceBetweenPercents { chain: network.to_string(), greater_than_or_equal_to: "0.01".to_string(), less_than_or_equal_to: "0.0999999999999999".to_string() }
-	}
-
-	pub fn whale(network: Web3Network) -> Self {
-		BalanceBetweenPercents { chain: network.to_string(), greater_than_or_equal_to: "0.1".to_string(), less_than_or_equal_to: "100".to_string() }
-	}
 }
 
-impl AchainableSystemLabelName for BalanceBetweenPercents {
-	fn name(&self) -> String {
-		"Balance between percents".into()
-	}
-}
-
-pub enum DolphinOrWhale {
-	Dolphin,
-	Whale,
-}
-
-// BalanceUnderAmount
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct BalanceUnderAmount {
+pub struct ParamsBasicTypeWithAmount {
+	#[serde(skip_serializing)]
+	// #[serde(skip_deserializing)]
+	pub name: String,
 	pub chain: String,
 	pub amount: String,
 }
 
-impl BalanceUnderAmount {
-	pub fn new(chain: String, amount: String) -> Self {
+impl ParamsBasicTypeWithAmount {
+	pub fn new(name: String, chain: String, amount: String) -> Self {
 		Self {
+			name,
 			chain,
 			amount,
 		}
 	}
 }
 
-impl AchainableSystemLabelName for BalanceUnderAmount {
-	fn name(&self) -> String {
-		"Balance under {amount}".into()
-	}
-}
-
-// Balance over {amount}
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct BalanceOverAmount {
+pub struct ParamsBasicTypeWithDate {
+	#[serde(skip_serializing)]
+	pub name: String,
 	pub chain: String,
-	pub amount: String,
+	pub date: String,
 }
 
-impl BalanceOverAmount {
-	pub fn new(chain: String, amount: String) -> Self {
+impl ParamsBasicTypeWithDate {
+	pub fn new(name: String, chain: String, date: String) -> Self {
 		Self {
+			name,
 			chain,
-			amount,
+			date,
 		}
 	}
 }
 
-impl AchainableSystemLabelName for BalanceOverAmount {
-	fn name(&self) -> String {
-		"Balance over {amount}".into()
-	}
-}
-
-// Balance between {amounts}
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct BalanceBetweenAmounts {
+pub struct ParamsBasicTypeWithAmounts {
+	#[serde(skip_serializing)]
+	pub name: String,
 	pub chain: String,
 	pub amount1: String,
 	pub amount2: String,
 }
 
-impl BalanceBetweenAmounts {
-	pub fn new(chain: String, amount1: String, amount2: String) -> Self {
+impl ParamsBasicTypeWithAmounts {
+	pub fn new(name: String, chain: String, amount1: String, amount2: String) -> Self {
 		Self {
+			name,
 			chain,
 			amount1,
 			amount2,
@@ -533,126 +385,44 @@ impl BalanceBetweenAmounts {
 	}
 }
 
-impl AchainableSystemLabelName for BalanceBetweenAmounts {
-	fn name(&self) -> String {
-		"Balance between {amounts}".into()
-	}
-}
-
-// Balance over {amount} dollars
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct BalanceOverDollars {
-	pub chain: String,
-	pub amount: String,
-}
-
-impl BalanceOverDollars {
-	pub fn new(chain: String, amount: String) -> Self {
-		Self {
-			chain,
-			amount,
-		}
-	}
-}
-
-impl AchainableSystemLabelName for BalanceOverDollars {
-	fn name(&self) -> String {
-		"Balance over {amount} dollars".into()
-	}
-}
-
-// ERC20 balance over {amount}
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct BalanceErc20OverAmount {
-	pub chain: String,
-	pub amount: String,
-	pub token: String,
-}
-
-impl BalanceErc20OverAmount {
-	pub fn new(chain: String, amount: String, token: String) -> Self {
-		Self {
-			chain,
-			amount,
-			token,
-		}
-	}
-}
-
-impl AchainableSystemLabelName for BalanceErc20OverAmount {
-	fn name(&self) -> String {
-		"ERC20 balance over {amount}".into()
-	}
-}
-
-// BEP20 balance over {amount}
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct BalanceBep20OverAmount {
-	pub chain: String,
-	pub amount: String,
-	pub token: String,
-}
-
-impl BalanceBep20OverAmount {
-	pub fn new(chain: String, amount: String, token: String) -> Self {
-		Self {
-			chain,
-			amount,
-			token,
-		}
-	}
-}
-
-impl AchainableSystemLabelName for BalanceBep20OverAmount {
-	fn name(&self) -> String {
-		"BEP20 balance over {amount}".into()
-	}
-}
-
-// BEP20 hodling {amount} of {token} since {date}
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Bep20HoldingAmountOfTokenSinceDate {
-	pub chain: String,
-	pub amount: String,
-	pub date: String,
-	pub token: String,
-}
-
-impl Bep20HoldingAmountOfTokenSinceDate {
-	pub fn new(chain: String, amount: String, date: String, token: String) -> Self {
-		Self {
-			chain,
-			amount,
-			date,
-			token,
-		}
-	}
-}
-
-impl AchainableSystemLabelName for Bep20HoldingAmountOfTokenSinceDate {
-	fn name(&self) -> String {
-		"BEP20 hodling {amount} of {token} since {date}".into()
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ParamsTypeA {
+pub struct ParamsBasicTypeWithAmountToken {
 	#[serde(skip_serializing)]
-	#[serde(skip_deserializing)]
 	pub name: String,
 	pub chain: String,
+	pub amount: String,
+	pub token: Option<String>
 }
 
-impl ParamsTypeA {
-	pub fn new(name: String, chain: String) -> Self {
+impl ParamsBasicTypeWithAmountToken {
+	pub fn new(name: String, chain: String, amount: String, token: Option<String>) -> Self {
 		Self {
 			name,
 			chain,
+			amount,
+			token,
+		}
+	}
+}
+
+// Balance between percents
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithBetweenPercents {
+	pub name: String,
+	pub chain: String,
+	pub greater_than_or_equal_to: String,
+	pub less_than_or_equal_to: String,
+}
+
+impl ParamsBasicTypeWithBetweenPercents {
+	pub fn new(name: String, chain: String, greater_than_or_equal_to: String, less_than_or_equal_to: String) -> Self {
+		Self {
+			name,
+			chain,
+			greater_than_or_equal_to,
+			less_than_or_equal_to,
 		}
 	}
 }
@@ -746,9 +516,13 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 	fn total_transactions(&mut self, network: &Web3Network, addresses: &[String]) -> Result<u64, Error> {
 		let mut txs = 0_u64;
 		addresses.iter().for_each(|address| {
-			let chain = network.to_string();		
-			let param = TotalTransaction::new(chain);
-			let body = ReqBody::new(address.into(), Params::TotalTransaction(param));
+
+			let name = "Account total transactions under {amount}".to_string();
+			let chain = network.to_string();
+			let amount = "1".to_string();
+
+			let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
 			let req_path = SystemLabelReqPath::default();
 	
 			let tx = self.post(req_path, &body).and_then(|resp| {
@@ -772,14 +546,18 @@ pub trait AchainableTagAccount {
 }
 
 pub trait AchainableTagBalance {
-	fn balance_between_percents(&mut self, address: &str, network: Web3Network, dolphin_or_whale: DolphinOrWhale) -> Result<bool, Error>;
-	fn balance_under_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
-	fn balance_over_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
-	fn balance_between_amounts(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
-	fn balance_over_dollars(&mut self, address: &str, network: Web3Network) -> Result<bool, Error>;
-	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error>;
-	fn balance_over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
-	fn balance_bep20_over_amount(&mut self, address: &str) -> Result<bool, Error>;
+	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error>;
+	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error>;
+	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error>;
+	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error>;
+	fn under_10_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn under_10_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn over_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;	
+	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error>;
+	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error>;	
+	fn over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error>;
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
@@ -808,13 +586,19 @@ pub trait AchainableTagDotsama {
 
 impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
-		let param = FreshAccount::default();
-		check_achainable_label(self, address.into(), Params::FreshAccount(param))
+		let name = "Account created after {date}".to_string();
+		let chain = "ethereum".to_string();
+		let date = "30D".to_string();
+		let param = ParamsBasicTypeWithDate::new(name, chain, date);
+		check_achainable_label(self, address.into(), Params::ParamsBasicTypeWithDate(param))
 	}
 
 	fn og_account(&mut self, address: &str) -> Result<bool, Error> {
-		let param = OgAccount::default();
-		check_achainable_label(self, address.into(), Params::OgAccount(param))
+		let name = "Account created before {date}".to_string();
+		let chain = "ethereum".to_string();
+		let date = "2020-01-01T00:00:00.000Z".to_string();
+		let param = ParamsBasicTypeWithDate::new(name, chain, date);
+		check_achainable_label(self, address.into(), Params::ParamsBasicTypeWithDate(param))
 	}
 
 	fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error> {
@@ -823,8 +607,8 @@ impl AchainableTagAccount for AchainableClient {
 	}
 	
 	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
-		let param = AddressFoundOnBsc::default();
-		check_achainable_label(self, address.into(), Params::AddressFoundOnBsc(param))
+		let param = ParamsBasicType::new("Account found on {chain}".to_string(), "bsc".to_string());
+		check_achainable_label(self, address.into(), Params::ParamsBasicType(param))
 	}
 
 	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error> {
@@ -833,84 +617,123 @@ impl AchainableTagAccount for AchainableClient {
 	}
 
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = Validator::new("polkadot".into());
-		check_achainable_label(self, address.into(), Params::Validator(param))
+		let param = ParamsBasicType::new("Validator".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address.into(), Params::ParamsBasicType(param))
 	}
 	
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = Validator::new("kusama".into());
-		check_achainable_label(self, address.into(), Params::Validator(param))
+		let param = ParamsBasicType::new("Validator".to_string(), "kusama".to_string());
+		check_achainable_label(self, address.into(), Params::ParamsBasicType(param))
 	}
 }
 
 impl AchainableTagBalance for AchainableClient {
-	fn balance_between_percents(&mut self, address: &str, network: Web3Network, dolphin_or_whale: DolphinOrWhale) -> Result<bool, Error> {
-		let param = match dolphin_or_whale {
-			DolphinOrWhale::Dolphin => {
-				BalanceBetweenPercents::dolphin(network)
-			},
-			DolphinOrWhale::Whale => {
-				BalanceBetweenPercents::whale(network)
-			}
-		};
-
-		check_achainable_label(self, address, Params::BalanceBetweenPercents(param))
+	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = "polkadot".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "0.0999999999999999".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
-	fn balance_under_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
-		// < 10 ETH Holder
-		// < 10 LIT Holder
+	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = "kusama".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "0.0999999999999999".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
+	}
+
+	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = "polkadot".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "100".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
+	}
+
+	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance between percents".to_string();
+		let chain = "kusama".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "100".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
+	}
+
+	fn under_10_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance under {amount}".to_string();
+		let chain = "ethereum".to_string();
 		let amount = "10".to_string();
-		let param = BalanceUnderAmount::new(network.to_string(), amount);
-		check_achainable_label(self, address, Params::BalanceUnderAmount(param))
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
-	fn balance_over_amount(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
-		// 100+ ETH Holder
+	fn under_10_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance under {amount}".to_string();
+		let chain = "litentry".to_string();
+		let amount = "10".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
+	}
+
+	fn over_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance over {amount}".to_string();
+		let chain = "ethereum".to_string();
 		let amount = "100".to_string();
-		let param = BalanceOverAmount::new(network.to_string(), amount);
-		check_achainable_label(self, address, Params::BalanceOverAmount(param))
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
-	fn balance_between_amounts(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
+	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
 		// 10 - 100 ETH Holder
+		let name = "Balance between {amounts}".to_string();
+		let chain = "ethereum".to_string();
 		let amount1 = "10".to_string();
 		let amount2 = "100".to_string();
-		let param = BalanceBetweenAmounts::new(network.to_string(), amount1, amount2);
-		check_achainable_label(self, address, Params::BalanceBetweenAmounts(param))
+		let param = ParamsBasicTypeWithAmounts::new(name, chain, amount1, amount2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmounts(param))
 	}
 
-	fn balance_over_dollars(&mut self, address: &str, network: Web3Network) -> Result<bool, Error> {
+	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error> {
 		// ETH Millionaire
+		let name = "Balance over {amount} dollars".to_string();
+		let chain = "ethereum".to_string();
 		let amount = "100".to_string();
-		let param = BalanceOverDollars::new(network.to_string(), amount);
-		check_achainable_label(self, address, Params::BalanceOverDollars(param))
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
 	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error> {
 		// ETH2 Validator Eligible
+		let name = "Balance over {amount}".to_string();
 		let chain = "ethereum".to_string();
 		let amount = "32".to_string();
-		let param = BalanceOverAmount::new(chain, amount);
-		check_achainable_label(self, address, Params::BalanceOverAmount(param))
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
-	fn balance_over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
+	fn over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
 		// 100+ WETH Holder
+		let name = "ERC20 balance over {amount}".to_string();
 		let chain = "ethereum".to_string();
 		let amount = "100".to_string();
 		let token = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".to_string();
-		let param = BalanceErc20OverAmount::new(chain, amount, token);
-		check_achainable_label(self, address, Params::BalanceErc20OverAmount(param))
+		let param = ParamsBasicTypeWithAmountToken::new(name, chain, amount, Some(token));
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param))
 	}
 
-	fn balance_bep20_over_amount(&mut self, address: &str) -> Result<bool, Error> {
+	fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error> {
 		// 100+ LIT BEP20 Holder
+		let name = "BEP20 balance over {amount}".to_string();
 		let chain = "bsc".to_string();
 		let amount = "100".to_string();
 		let token = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string();
-		let param = BalanceBep20OverAmount::new(chain, amount, token);
-		check_achainable_label(self, address, Params::BalanceBep20OverAmount(param))
+		let param = ParamsBasicTypeWithAmountToken::new(name, chain, amount, Some(token));
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param))
 	}
 
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
@@ -925,108 +748,126 @@ impl AchainableTagBalance for AchainableClient {
 	}
 
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = Bep20HoldingAmountOfTokenSinceDate::new("bsc".to_string(), "10".to_string(), "2022-01-01T00:00:00.000Z".to_string(), "0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string());
+		let param = AmountHoding::new("bsc".to_string(), "10".to_string(),  "2022-01-01T00:00:00.000Z".to_string(),Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()));
 
-		check_achainable_label(self, address, Params::Bep20HoldingAmountOfTokenSinceDate(param))
+		check_achainable_label(self, address, Params::AmountHoding(param))
 	}
 }
 
 impl AchainableTagDotsama for AchainableClient {
 	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("TreasuryProposalBeneficiary".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("TreasuryProposalBeneficiary".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("TipFinder".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("TipFinder".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("TipFinder".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("TipFinder".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("TipBeneficiary".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("TipBeneficiary".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("OpenGovProposer".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("OpenGovProposer".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("FellowshipProposer".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("FellowshipProposer".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("FellowshipMember".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("FellowshipMember".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("ExCouncilor".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("ExCouncilor".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("Councilor".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("Councilor".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("Councilor".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("Councilor".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("BountyCurator".to_string(), "polkadot".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("BountyCurator".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsTypeA::new("BountyCurator".to_string(), "kusama".to_string());
-		check_achainable_label(self, address, Params::ParamsTypeA(param))
+		let param = ParamsBasicType::new("BountyCurator".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 }
 
+// impl AchainableTagDeFi for AchainableClient {
+// 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn curve_trader(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+// 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+// }
 
-
-///////////////////////////////////////////////
 #[cfg(test)]
 mod tests {
 	// use crate::achainable::{
