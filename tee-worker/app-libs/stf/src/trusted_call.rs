@@ -535,7 +535,11 @@ where
 				)));
 
 				debug!("populating user_shielding_key_set rpc reponse ...");
-				let res = SetUserShieldingKeyResponse { account, id_graph: encrypted_id_graph };
+				let res = SetUserShieldingKeyResponse {
+					account,
+					id_graph: encrypted_id_graph,
+					req_ext_hash: hash,
+				};
 
 				rpc_response_value = res.encode();
 

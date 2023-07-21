@@ -1212,6 +1212,7 @@ import type {
 import type {
     Address20,
     Address32,
+    AesOutput,
     Assertion,
     BoundedWeb3Network,
     DirectRequestStatus,
@@ -1227,6 +1228,7 @@ import type {
     LitentryValidationData,
     PublicGetter,
     Request,
+    SetUserShieldingKeyResponse,
     ShardIdentifier,
     TrustedCall,
     TrustedCallSigned,
@@ -1276,6 +1278,7 @@ declare module "@polkadot/types/types/registry" {
         Address: Address;
         Address20: Address20;
         Address32: Address32;
+        AesOutput: AesOutput;
         AliveContractInfo: AliveContractInfo;
         AllowedSlots: AllowedSlots;
         AnySignature: AnySignature;
@@ -2128,6 +2131,7 @@ declare module "@polkadot/types/types/registry" {
         SessionKeys9B: SessionKeys9B;
         SetId: SetId;
         SetIndex: SetIndex;
+        SetUserShieldingKeyResponse: SetUserShieldingKeyResponse;
         ShardIdentifier: ShardIdentifier;
         Si0Field: Si0Field;
         Si0LookupTypeId: Si0LookupTypeId;

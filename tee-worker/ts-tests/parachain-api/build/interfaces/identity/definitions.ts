@@ -66,7 +66,7 @@ export default {
         DirectRequestStatus: {
             _enum: {
                 Ok: null,
-                TrustedOperationStatus: "TrustedOperationStatus",
+                TrustedOperationStatus: "(TrustedOperationStatus, H256)",
                 Error: null,
             },
         },
@@ -202,6 +202,16 @@ export default {
         },
         GenericEventWithAccount: {
             account: "AccountId",
+        },
+        SetUserShieldingKeyResponse: {
+            account: "AccountId",
+            id_graph: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        AesOutput: {
+            ciphertext: "Vec<u8>",
+            aad: "Vec<u8>",
+            nonce: "[u8; 12]",
         },
     },
 };

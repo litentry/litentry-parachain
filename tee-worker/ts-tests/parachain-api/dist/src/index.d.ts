@@ -185,6 +185,16 @@ export declare const definitions: {
         GenericEventWithAccount: {
             account: string;
         };
+        SetUserShieldingKeyResponse: {
+            account: string;
+            id_graph: string;
+            req_ext_hash: string;
+        };
+        AesOutput: {
+            ciphertext: string;
+            aad: string;
+            nonce: string;
+        };
     };
 };
 type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;

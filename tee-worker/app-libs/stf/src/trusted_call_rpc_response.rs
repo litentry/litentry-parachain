@@ -16,15 +16,24 @@
 
 // This file contain the RPC response struct which will be encoded and
 // passed back to the requester of trustedCall direct invocation (DI).
-// They are mostly translated from the callback extrinsics in IMP
+// They are mostly translated from the callback extrinsics in IMP.
 
 use crate::AccountId;
 use codec::{Decode, Encode};
+use itp_types::H256;
 use litentry_primitives::AesOutput;
-use std::vec::Vec;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub(crate) struct SetUserShieldingKeyResponse {
 	pub account: AccountId,
 	pub id_graph: AesOutput,
+	pub req_ext_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct LinkIdentityResponse {
+	pub account: AccountId,
+	pub identity: AesOutput,
+	pub id_graph: AesOutput,
+	pub req_ext_hash: H256,
 }

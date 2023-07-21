@@ -31,7 +31,7 @@ export async function sendRequest(
     }
 
     // unfortunately, the res.value only contains the hash of top
-    if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid) {
+    if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
         console.log('Rpc trusted operation execution failed, hash: ', res.value);
     }
 

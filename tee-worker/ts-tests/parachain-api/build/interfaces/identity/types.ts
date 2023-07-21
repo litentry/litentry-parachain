@@ -12,6 +12,13 @@ export interface Address20 extends U8aFixed {}
 /** @name Address32 */
 export interface Address32 extends U8aFixed {}
 
+/** @name AesOutput */
+export interface AesOutput extends Struct {
+    readonly ciphertext: Bytes;
+    readonly aad: Bytes;
+    readonly nonce: U8aFixed;
+}
+
 /** @name Assertion */
 export interface Assertion extends Enum {
     readonly isA1: boolean;
@@ -57,7 +64,7 @@ export interface BoundedWeb3Network extends Vec<Web3Network> {}
 export interface DirectRequestStatus extends Enum {
     readonly isOk: boolean;
     readonly isTrustedOperationStatus: boolean;
-    readonly asTrustedOperationStatus: TrustedOperationStatus;
+    readonly asTrustedOperationStatus: ITuple<[TrustedOperationStatus, H256]>;
     readonly isError: boolean;
     readonly type: "Ok" | "TrustedOperationStatus" | "Error";
 }
@@ -160,6 +167,13 @@ export interface PublicGetter extends Enum {
 export interface Request extends Struct {
     readonly shard: ShardIdentifier;
     readonly cyphertext: Bytes;
+}
+
+/** @name SetUserShieldingKeyResponse */
+export interface SetUserShieldingKeyResponse extends Struct {
+    readonly account: AccountId;
+    readonly id_graph: AesOutput;
+    readonly req_ext_hash: H256;
 }
 
 /** @name ShardIdentifier */

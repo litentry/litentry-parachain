@@ -185,7 +185,7 @@ where
 			.filter_map(|ec| {
 				ec.status
 					.get_executed_operation_hash()
-					.and_then(|h| Some((h, ec.status.get_rpc_response_value())))
+					.map(|h| (h, ec.status.get_rpc_response_value()))
 			})
 			.collect()
 	}
