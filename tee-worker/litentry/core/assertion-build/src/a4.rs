@@ -68,6 +68,7 @@ use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, AmountHoding},
 	vec_to_string,
 };
+use std::string::ToString;
 
 const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
@@ -114,14 +115,18 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		let chain = network.to_string();
-		let token = if network == Web3Network::Ethereum {
-			Some(LIT_TOKEN_ADDRESS.into())
-		} else { None };
+		let token =
+			if network == Web3Network::Ethereum { Some(LIT_TOKEN_ADDRESS.into()) } else { None };
 
 		let addresses: Vec<String> = addresses.into_iter().collect();
-		for index in 0..ASSERTION_FROM_DATE.len() {
+		for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			for address in &addresses {
-				let holding = AmountHoding::new(chain.to_string(), q_min_balance.to_string(), ASSERTION_FROM_DATE[index].into(), token.clone());
+				let holding = AmountHoding::new(
+					chain.to_string(),
+					q_min_balance.to_string(),
+					date.to_string(),
+					token.clone(),
+				);
 				match client.is_holder(address, holding) {
 					Ok(is_lit_holder) =>
 						if is_lit_holder {

@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::achainable::{AchainableClient, AchainableAccountTotalTransactions};
+use lc_data_providers::achainable::{AchainableAccountTotalTransactions, AchainableClient};
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available networks (including invalid transactions)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";

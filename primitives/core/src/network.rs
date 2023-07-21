@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#![cfg_attr(not(feature = "std"), no_std)]
+pub extern crate alloc;
+
+use alloc::string::{String, ToString};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -79,9 +83,9 @@ impl Web3Network {
 }
 
 impl ToString for Web3Network {
-    fn to_string(&self) -> String {
-        match self {
-            Web3Network::Polkadot => "polkadot".into(),
+	fn to_string(&self) -> String {
+		match self {
+			Web3Network::Polkadot => "polkadot".into(),
 			Web3Network::Kusama => "kusama".into(),
 			Web3Network::Litentry => "litentry".into(),
 			Web3Network::Litmus => "litmus".into(),
@@ -92,7 +96,7 @@ impl ToString for Web3Network {
 			Web3Network::Polygon => "polygon".into(),
 			Web3Network::BSC => "bsc".into(),
 		}
-    }
+	}
 }
 
 pub fn all_web3networks() -> Vec<Web3Network> {

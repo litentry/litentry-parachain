@@ -22,9 +22,10 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AmountHoding, AchainableHolder},
+	achainable::{AchainableClient, AchainableHolder, AmountHoding},
 	vec_to_string,
 };
+use std::string::ToString;
 
 const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 
@@ -52,13 +53,18 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = 0;
-	for index in 0..ASSERTION_FROM_DATE.len() {
+	for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
 		if is_hold {
 			break
 		}
 
 		for address in &addresses {
-			let holding = AmountHoding::new("ethereum".into(), q_min_balance.to_string(), ASSERTION_FROM_DATE[index].into(), Some(WBTC_TOKEN_ADDRESS.into()));
+			let holding = AmountHoding::new(
+				"ethereum".into(),
+				q_min_balance.to_string(),
+				date.to_string(),
+				Some(WBTC_TOKEN_ADDRESS.into()),
+			);
 
 			match client.is_holder(address, holding) {
 				Ok(is_wbtc_holder) =>
