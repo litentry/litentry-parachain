@@ -26,7 +26,6 @@ use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::Identity;
 use log::debug;
-use sp_core::crypto::AccountId32;
 use sp_runtime::{
 	traits::{AccountIdLookup, StaticLookup},
 	MultiAddress,
@@ -34,12 +33,12 @@ use sp_runtime::{
 use std::vec::Vec;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct RemoveIdentityArgs {
+pub struct DeactivateIdentityArgs {
 	shard: ShardIdentifier,
 	encrypted_identity: Vec<u8>,
 }
 
-impl RemoveIdentityArgs {
+impl DeactivateIdentityArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
@@ -52,13 +51,13 @@ impl RemoveIdentityArgs {
 		if let Some(address) = address {
 			let account = AccountIdLookup::lookup(address)?;
 			debug!(
-				"execute indirect call: RemoveIdentity, who: {:?}, identity: {:?}",
+				"execute indirect call: DeactivateIdentity, who: {:?}, identity: {:?}",
 				account_id_to_string(&account),
 				identity
 			);
 
 			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call = TrustedCall::remove_identity(
+			let trusted_call = TrustedCall::deactivate_identity(
 				enclave_account_id.into(),
 				account.into(),
 				identity,
@@ -74,16 +73,20 @@ impl RemoveIdentityArgs {
 	}
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveIdentityArgs {
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for DeactivateIdentityArgs {
 	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash) = args;
-		let e = Error::IMPHandlingError(IMPError::RemoveIdentityFailed(ErrorDetail::ImportError));
+		let e =
+			Error::IMPHandlingError(IMPError::DeactivateIdentityFailed(ErrorDetail::ImportError));
 		if self.internal_dispatch(executor, address, hash).is_err() {
 			if let Err(internal_e) =
 				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
 			{
-				log::warn!("fail to handle internal errors in remove_identity: {:?}", internal_e);
+				log::warn!(
+					"fail to handle internal errors in deactivate_identity: {:?}",
+					internal_e
+				);
 			}
 			return Err(e)
 		}
