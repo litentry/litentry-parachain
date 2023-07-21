@@ -119,7 +119,11 @@ pub unsafe extern "C" fn generate_ias_ra_extrinsic(
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
-	let url = String::decode(&mut url_slice).expect("Could not decode url slice to a valid String");
+	let url = match String::decode(&mut url_slice) {
+		Ok(url) => url,
+		Err(_) =>
+			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
+	};
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
 
@@ -149,7 +153,11 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic(
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
-	let url = String::decode(&mut url_slice).expect("Could not decode url slice to a valid String");
+	let url = match String::decode(&mut url_slice) {
+		Ok(url) => url,
+		Err(_) =>
+			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
+	};
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
 
@@ -257,7 +265,11 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic_from_quote(
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
-	let url = String::decode(&mut url_slice).expect("Could not decode url slice to a valid String");
+	let url = match String::decode(&mut url_slice) {
+		Ok(url) => url,
+		Err(_) =>
+			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
+	};
 
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
