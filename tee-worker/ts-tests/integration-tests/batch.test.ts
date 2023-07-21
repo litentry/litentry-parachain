@@ -4,20 +4,21 @@ import {
     handleIdentityEvents,
     buildIdentityHelper,
     buildValidations,
-    checkErrorDetail, buildIdentityFromKeypair,
+    checkErrorDetail,
+    buildIdentityFromKeypair,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { u8aToHex } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
-import { generateWeb3Wallets, assertIdentityLinked, assertIdentityRemoved } from './common/utils';
+import { generateWeb3Wallets, assertIdentityLinked, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 
 describeLitentry('Test Batch Utility', 0, (context) => {
-    const identities: LitentryPrimitivesIdentity[] = [];
+    let identities: LitentryPrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
     let ethereumSigners: ethers.Wallet[] = [];
     const we3networks: Web3Network[][] = [];
@@ -84,32 +85,39 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         assertIdentityLinked(context, context.substrateWallet.alice, events, identities);
     });
 
-    step('batch test: remove identities', async function () {
-        const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
-        const removedEvents = await sendTxsWithUtility(
+    step('batch test: deactivate identities', async function () {
+        const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'deactivateIdentity');
+        const deactivatedEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             txs,
             'identityManagement',
-            ['IdentityRemoved']
+            ['IdentityDeactivated']
         );
 
-        await assertIdentityRemoved(context, context.substrateWallet.alice, removedEvents);
+        await assertIdentityDeactivated(context, context.substrateWallet.alice, deactivatedEvents);
     });
 
-    step('batch test: remove error identities', async function () {
-        const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'removeIdentity');
-        const removedEvents = await sendTxsWithUtility(
+    step('batch test: deactivate error identities', async function () {
+        identities = [];
+        // prepare new identities that were not linked - so they do not exist
+        for (let index = 0; index < ethereumSigners.length; index++) {
+            const ethereumIdentity = await buildIdentityHelper('twitter_user_' + index, 'Twitter', context);
+            identities.push(ethereumIdentity);
+        }
+
+        const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'deactivateIdentity');
+        const deactivatedEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             txs,
             'identityManagement',
-            ['RemoveIdentityFailed']
+            ['DeactivateIdentityFailed']
         );
-        await checkErrorDetail(removedEvents, 'IdentityNotExist');
+        await checkErrorDetail(deactivatedEvents, 'IdentityNotExist');
     });
 
-    step('check IDGraph after removeIdentity', async function () {
+    step('check IDGraph after deactivateIdentity', async function () {
         // TODO: check the idgraph is empty
     });
 });

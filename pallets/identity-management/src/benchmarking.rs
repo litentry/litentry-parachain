@@ -66,9 +66,9 @@ benchmarks! {
 		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
 	}
 
-	// Benchmark `remove_identity`. There are no worst conditions. The benchmark showed that
+	// Benchmark `deactivate_identity`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	remove_identity {
+	deactivate_identity {
 		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let shard = H256::from_slice(&TEST8_MRENCLAVE);
 		let encrypted_did = vec![1u8; 2048];
@@ -78,7 +78,22 @@ benchmarks! {
 		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks, nonce)?;
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
 	verify {
-		assert_last_event::<T>(Event::RemoveIdentityRequested{ shard }.into());
+		assert_last_event::<T>(Event::DeactivateIdentityRequested{ shard }.into());
+	}
+
+	// Benchmark `activate_identity`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	activate_identity {
+		let caller: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+		let shard = H256::from_slice(&TEST8_MRENCLAVE);
+		let encrypted_did = vec![1u8; 2048];
+		let encrypted_validation_data = vec![1u8; 2048];
+		let encrypted_web3networks = vec![1u8; 2048];
+		let nonce = UserShieldingKeyNonceType::default();
+		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks, nonce)?;
+	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
+	verify {
+		assert_last_event::<T>(Event::ActivateIdentityRequested{ shard }.into());
 	}
 
 	// Benchmark `set_user_shielding_key`. There are no worst conditions. The benchmark showed that
@@ -117,16 +132,28 @@ benchmarks! {
 		assert_last_event::<T>(Event::IdentityLinked { account, identity, id_graph, req_ext_hash }.into());
 	}
 
-	// Benchmark `identity_removed`. There are no worst conditions. The benchmark showed that
+	// Benchmark `identity_deactivated`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
-	identity_removed {
+	identity_deactivated {
 		let req_ext_hash = H256::default();
 		let identity = AesOutput::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityRemoved { account, identity, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityDeactivated { account, identity, req_ext_hash }.into());
+	}
+
+	// Benchmark `identity_activated`. There are no worst conditions. The benchmark showed that
+	// execution time is constant irrespective of encrypted_data size.
+	identity_activated {
+		let req_ext_hash = H256::default();
+		let identity = AesOutput::default();
+		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
+		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), req_ext_hash)
+	verify {
+		assert_last_event::<T>(Event::IdentityActivated { account, identity, req_ext_hash }.into());
 	}
 
 	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that

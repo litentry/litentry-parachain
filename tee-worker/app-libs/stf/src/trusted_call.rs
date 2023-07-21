@@ -123,7 +123,8 @@ pub enum TrustedCall {
 		UserShieldingKeyNonceType,
 		H256,
 	),
-	remove_identity(Identity, Identity, Identity, H256),
+	deactivate_identity(Identity, Identity, Identity, H256),
+	activate_identity(Identity, Identity, Identity, H256),
 	request_vc(Identity, Identity, Assertion, H256),
 	// no `H256` in parameter because:
 	// - it only works in DI now
@@ -157,7 +158,8 @@ impl TrustedCall {
 			// litentry
 			TrustedCall::set_user_shielding_key(sender_identity, ..) => sender_identity,
 			TrustedCall::link_identity(sender_identity, ..) => sender_identity,
-			TrustedCall::remove_identity(sender_identity, ..) => sender_identity,
+			TrustedCall::deactivate_identity(sender_identity, ..) => sender_identity,
+			TrustedCall::activate_identity(sender_identity, ..) => sender_identity,
 			TrustedCall::request_vc(sender_identity, ..) => sender_identity,
 			TrustedCall::set_identity_networks(sender_identity, ..) => sender_identity,
 			TrustedCall::link_identity_callback(sender_identity, ..) => sender_identity,
@@ -566,21 +568,56 @@ where
 				}
 				Ok(())
 			},
-			TrustedCall::remove_identity(signer, who, identity, hash) => {
-				debug!("remove_identity, who: {}", account_id_to_string(&who));
+			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
+				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 				);
 				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
+					.get_from_metadata(|m| m.identity_deactivated_call_indexes())??;
 
-				match Self::remove_identity_internal(
+				match Self::deactivate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who,
 					identity.clone(),
 				) {
 					Ok(key) => {
-						debug!("pushing identity_removed event ...");
+						debug!("pushing identity_deactivated event ...");
+						calls.push(OpaqueCall::from_tuple(&(
+							call_index,
+							account,
+							aes_encrypt_default(&key, &identity.encode()),
+							hash,
+						)));
+					},
+					Err(e) => {
+						debug!("pushing error event ... error: {}", e);
+						add_call_from_imp_error(
+							calls,
+							node_metadata_repo,
+							Some(account),
+							e.to_imp_error(),
+							hash,
+						);
+					},
+				}
+				Ok(())
+			},
+			TrustedCall::activate_identity(signer, who, identity, hash) => {
+				debug!("activate_identity, who: {}", account_id_to_string(&who));
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
+				let call_index = node_metadata_repo
+					.get_from_metadata(|m| m.identity_activated_call_indexes())??;
+
+				match Self::activate_identity_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who,
+					identity.clone(),
+				) {
+					Ok(key) => {
+						debug!("pushing identity_activated event ...");
 						calls.push(OpaqueCall::from_tuple(&(
 							call_index,
 							account,
@@ -775,7 +812,8 @@ where
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
