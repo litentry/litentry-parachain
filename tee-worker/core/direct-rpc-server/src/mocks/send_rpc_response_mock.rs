@@ -50,4 +50,8 @@ where
 		states_lock.push((hash, state_encoded));
 		Ok(())
 	}
+
+	fn set_value(&self, _hash: Self::Hash, _encoded_value: Vec<u8>) -> DirectRpcResult<()> {
+		Ok(())
+	}
 }

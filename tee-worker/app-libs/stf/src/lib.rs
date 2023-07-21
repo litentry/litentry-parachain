@@ -58,6 +58,7 @@ pub mod stf_sgx_tests;
 pub mod test_genesis;
 pub mod trusted_call;
 pub mod trusted_call_litentry;
+pub mod trusted_call_rpc_response;
 
 pub(crate) const ENCLAVE_ACCOUNT_KEY: &str = "Enclave_Account_Key";
 

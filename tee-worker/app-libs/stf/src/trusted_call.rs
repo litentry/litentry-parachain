@@ -23,6 +23,7 @@ use std::vec::Vec;
 
 use crate::{
 	helpers::{ensure_enclave_signer, ensure_self},
+	trusted_call_rpc_response::SetUserShieldingKeyResponse,
 	Runtime, StfError, System, TrustedOperation,
 };
 use codec::{Decode, Encode};
@@ -271,6 +272,7 @@ where
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Vec<u8>, Self::Error> {
 		let sender = self.call.sender_identity().clone();
+		let mut rpc_response_value = vec![];
 		let call_hash = blake2_256(&self.call.encode());
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 		let system_nonce = System::account_nonce(&account_id);
@@ -495,7 +497,7 @@ where
 				info!("Trying to create evm contract with address {:?}", contract_address);
 				Ok(())
 			},
-			// litentry trusted calls
+			// Litentry trusted calls
 			// the reason that most calls have an internal handling fn is that we want to capture the error and
 			// handle it here to be able to send error events to the parachain
 			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
@@ -505,32 +507,38 @@ where
 				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
-				match Self::set_user_shielding_key_internal(
+				let key = Self::set_user_shielding_key_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					key,
-				) {
-					Ok(key) => {
-						debug!("pushing user_shielding_key_set event ...");
-						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-						calls.push(OpaqueCall::from_tuple(&(
-							call_index,
-							account,
-							aes_encrypt_default(&key, &id_graph.encode()),
-							hash,
-						)));
-					},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_imp_error(),
-							hash,
-						);
-					},
-				}
+				)
+				.map_err(|e| {
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account.clone()),
+						e.to_imp_error(),
+						hash,
+					);
+					e
+				})?;
+
+				debug!("pushing user_shielding_key_set event ...");
+				let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+				let encrypted_id_graph = aes_encrypt_default(&key, &id_graph.encode());
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account.clone(),
+					encrypted_id_graph.clone(),
+					hash,
+				)));
+
+				debug!("populating user_shielding_key_set rpc reponse ...");
+				let res = SetUserShieldingKeyResponse { account, id_graph: encrypted_id_graph };
+
+				rpc_response_value = res.encode();
+
 				Ok(())
 			},
 			TrustedCall::link_identity(
@@ -762,7 +770,7 @@ where
 				Ok(())
 			},
 		}?;
-		Ok(vec![])
+		Ok(rpc_response_value)
 	}
 
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {

@@ -692,6 +692,12 @@ where
 			self.listener.write().unwrap().in_block(top_hash, block_hash);
 		}
 	}
+
+	pub fn set_rpc_response_value(&self, rpc_responses_value: Vec<(ExtrinsicHash<B>, Vec<u8>)>) {
+		for (top_hash, encoded_value) in rpc_responses_value {
+			self.listener.write().unwrap().set_rpc_response_value(&top_hash, encoded_value);
+		}
+	}
 }
 
 fn fire_events<H, R, Ex>(listener: &mut Listener<H, R>, imported: &base::Imported<H, Ex>)

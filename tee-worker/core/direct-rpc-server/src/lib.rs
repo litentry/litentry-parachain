@@ -112,6 +112,9 @@ pub trait SendRpcResponse: Send + Sync {
 	) -> DirectRpcResult<()>;
 
 	fn send_state(&self, hash: Self::Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()>;
+
+	// Litentry: update the `value` field in the returning structure
+	fn set_value(&self, hash: Self::Hash, encoded_value: Vec<u8>) -> DirectRpcResult<()>;
 }
 
 /// Determines if a given connection must be watched (i.e. kept alive),

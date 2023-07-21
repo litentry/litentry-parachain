@@ -188,6 +188,8 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 	fn watch_top(&self, _ext: Vec<u8>, _shard: ShardIdentifier) -> PoolFuture<H256, RpcError> {
 		todo!()
 	}
+
+	fn set_rpc_response_value(&self, _rpc_responses_value: Vec<(H256, Vec<u8>)>) {}
 }
 
 impl OnBlockImported for AuthorApiMock<H256, H256> {

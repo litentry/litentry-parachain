@@ -40,7 +40,8 @@ use itp_types::{storage::StorageEntryVerified, OpaqueCall, H256};
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration, vec::Vec,
+	collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration, vec,
+	vec::Vec,
 };
 
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf> {
@@ -96,17 +97,18 @@ where
 
 		let top_or_hash = TrustedOperationOrHash::from_top(trusted_operation.clone());
 
+		// TODO(Litentry): do we need to send any error notification to parachain?
 		let trusted_call = match trusted_operation.to_call().ok_or(Error::InvalidTrustedCallType) {
 			Ok(c) => c,
 			Err(e) => {
 				error!("Error: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash))
+				return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
 			},
 		};
 
-		if let false = trusted_call.verify_signature(&mrenclave.m, &shard) {
+		if !trusted_call.verify_signature(&mrenclave.m, &shard) {
 			error!("TrustedCallSigned: bad signature");
-			return Ok(ExecutedOperation::failed(top_or_hash))
+			return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
 		}
 
 		// Necessary because light client sync may not be up to date
@@ -124,7 +126,7 @@ where
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		let rpc_response = match Stf::execute_call(
+		let rpc_response_value = match Stf::execute_call(
 			state,
 			shard,
 			trusted_call.clone(),
@@ -133,7 +135,7 @@ where
 		) {
 			Err(e) => {
 				error!("Stf execute failed: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash))
+				return Ok(ExecutedOperation::failed(top_or_hash, extrinsic_call_backs))
 			},
 			Ok(res) => res,
 		};
@@ -145,7 +147,7 @@ where
 			state.prune_state_diff();
 		}
 
-		Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response))
+		Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 	}
 }
 

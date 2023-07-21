@@ -132,6 +132,28 @@ where
 		debug!("sending state successful");
 		Ok(())
 	}
+
+	fn set_value(&self, hash: Self::Hash, encoded_value: Vec<u8>) -> DirectRpcResult<()> {
+		debug!("set response value");
+
+		// withdraw removes it from the registry
+		let (connection_token, rpc_response) = self
+			.connection_registry
+			.withdraw(&hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+
+		let mut new_response = rpc_response.clone();
+
+		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
+			.map_err(|e| DirectRpcError::Other(Box::new(e)))?;
+
+		result.value = encoded_value;
+		new_response.result = result.to_hex();
+		self.connection_registry.store(hash, connection_token, new_response);
+
+		debug!("set response value OK");
+		Ok(())
+	}
 }
 
 fn continue_watching(status: &TrustedOperationStatus) -> bool {

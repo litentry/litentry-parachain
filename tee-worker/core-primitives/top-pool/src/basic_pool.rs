@@ -245,4 +245,8 @@ where
 	fn on_block_imported(&self, hashes: &[Self::Hash], block_hash: SidechainBlockHash) {
 		self.pool.validated_pool().on_block_imported(hashes, block_hash);
 	}
+
+	fn set_rpc_response_value(&self, rpc_responses_value: Vec<(TxHash<Self>, Vec<u8>)>) {
+		self.pool.validated_pool().set_rpc_response_value(rpc_responses_value);
+	}
 }

@@ -154,4 +154,9 @@ where
 			}
 		}
 	}
+
+	/// Litentry: set the rpc response value for a given TrustedOperation `tx`.
+	pub fn set_rpc_response_value(&mut self, tx: &H, encoded_value: Vec<u8>) {
+		self.fire(tx, |s| s.set_rpc_response_value(encoded_value));
+	}
 }

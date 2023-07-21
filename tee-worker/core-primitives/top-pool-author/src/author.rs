@@ -343,6 +343,10 @@ where
 	) -> PoolFuture<TxHash<TopPool>, RpcError> {
 		self.process_top(ext, shard, TopSubmissionMode::SubmitWatch)
 	}
+
+	fn set_rpc_response_value(&self, rpc_responses_value: Vec<(TxHash<TopPool>, Vec<u8>)>) {
+		self.top_pool.set_rpc_response_value(rpc_responses_value)
+	}
 }
 
 impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi> OnBlockImported

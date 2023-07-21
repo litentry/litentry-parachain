@@ -46,4 +46,8 @@ where
 	fn send_state(&self, _hash: Self::Hash, _state_encoded: Vec<u8>) -> DirectRpcResult<()> {
 		Ok(())
 	}
+
+	fn set_value(&self, _hash: Self::Hash, _encoded_value: Vec<u8>) -> DirectRpcResult<()> {
+		Ok(())
+	}
 }

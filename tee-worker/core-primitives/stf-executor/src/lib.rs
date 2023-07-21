@@ -58,19 +58,22 @@ pub mod mocks;
 /// In case of success, it includes the operation hash, as well as
 /// any extrinsic callbacks (e.g. unshield extrinsics) that need to be executed on-chain
 ///
-/// Litentry: additionally for the success case, we add the encoded rpc response
-/// that will be passed back to the requester when the top status is `InSidechainBlock`
+/// Litentry:
+/// we have made a few changes:
+/// - additionally for the success case, we add the encoded rpc response that will be
+///   passed back to the requester when the top status is `InSidechainBlock`
+/// - for failed top, we apply the parachain effects too
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExecutionStatus {
 	Success(H256, Vec<OpaqueCall>, Vec<u8>),
-	Failure,
+	Failure(Vec<OpaqueCall>),
 }
 
 impl ExecutionStatus {
 	pub fn get_extrinsic_callbacks(&self) -> Vec<OpaqueCall> {
 		match self {
 			ExecutionStatus::Success(_, opaque_calls, _) => opaque_calls.clone(),
-			_ => Vec::new(),
+			ExecutionStatus::Failure(opaque_calls) => opaque_calls.clone(),
 		}
 	}
 
@@ -81,7 +84,7 @@ impl ExecutionStatus {
 		}
 	}
 
-	pub fn get_rpc_response(&self) -> Vec<u8> {
+	pub fn get_rpc_response_value(&self) -> Vec<u8> {
 		match self {
 			ExecutionStatus::Success(_, _, res) => res.clone(),
 			_ => Vec::new(),
@@ -104,17 +107,27 @@ impl ExecutedOperation {
 		operation_hash: H256,
 		trusted_operation_or_hash: TrustedOperationOrHash<H256>,
 		extrinsic_call_backs: Vec<OpaqueCall>,
-		rpc_response: Vec<u8>,
+		rpc_response_value: Vec<u8>,
 	) -> Self {
 		ExecutedOperation {
-			status: ExecutionStatus::Success(operation_hash, extrinsic_call_backs, rpc_response),
+			status: ExecutionStatus::Success(
+				operation_hash,
+				extrinsic_call_backs,
+				rpc_response_value,
+			),
 			trusted_operation_or_hash,
 		}
 	}
 
 	/// Constructor for a failed trusted operation execution.
-	pub fn failed(trusted_operation_or_hash: TrustedOperationOrHash<H256>) -> Self {
-		ExecutedOperation { status: ExecutionStatus::Failure, trusted_operation_or_hash }
+	pub fn failed(
+		trusted_operation_or_hash: TrustedOperationOrHash<H256>,
+		extrinsic_call_backs: Vec<OpaqueCall>,
+	) -> Self {
+		ExecutedOperation {
+			status: ExecutionStatus::Failure(extrinsic_call_backs),
+			trusted_operation_or_hash,
+		}
 	}
 
 	/// Returns true if the executed operation was a success.
@@ -159,6 +172,20 @@ where
 			.flat_map(|ec| match ec.is_success() {
 				false => Some(ec.clone()),
 				true => None,
+			})
+			.collect()
+	}
+
+	// Litentry: returns all (top_hash, rpc_response_value) tuples
+	// For now only successfully executed tops have a hash (see `get_executed_operation_hashes` above),
+	// but that doesn't matter, because the failed top rpc response will stay unchanged
+	pub fn get_rpc_responses_values(&self) -> Vec<(H256, Vec<u8>)> {
+		self.executed_operations
+			.iter()
+			.filter_map(|ec| {
+				ec.status
+					.get_executed_operation_hash()
+					.and_then(|h| Some((h, ec.status.get_rpc_response_value())))
 			})
 			.collect()
 	}
@@ -217,7 +244,7 @@ mod tests {
 	}
 
 	fn create_failed_operation_from_u8(int: u8) -> ExecutedOperation {
-		ExecutedOperation::failed(TrustedOperationOrHash::Hash(H256::from([int; 32])))
+		ExecutedOperation::failed(TrustedOperationOrHash::Hash(H256::from([int; 32])), vec![])
 	}
 
 	fn create_success_operation_from_u8(int: u8) -> (ExecutedOperation, H256) {

@@ -124,6 +124,13 @@ where
 			error!("failed to send status update to rpc client: {:?}", e);
 		}
 	}
+
+	// Litentry: set the new rpc response value
+	pub fn set_rpc_response_value(&mut self, encoded_value: Vec<u8>) {
+		if let Err(e) = self.rpc_response_sender.set_value(self.hash().clone(), encoded_value) {
+			error!("failed to set response value to rpc client: {:?}", e);
+		}
+	}
 }
 
 /*  /// Sender part of the watcher. Exposed only for testing purposes.
