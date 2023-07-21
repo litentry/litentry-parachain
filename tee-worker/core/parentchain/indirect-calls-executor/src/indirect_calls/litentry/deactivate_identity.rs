@@ -26,6 +26,7 @@ use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::Identity;
 use log::debug;
+use sp_core::crypto::AccountId32;
 use sp_runtime::{
 	traits::{AccountIdLookup, StaticLookup},
 	MultiAddress,
