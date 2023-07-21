@@ -280,25 +280,6 @@ jobs:
           echo "$content" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Find issues
-        uses: actions-cool/issues-helper@v3
-        id: findissueid
-        with:
-          actions: 'find-issues'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-state: 'open'
-          title-includes: Litentry-parachain ${{ env.RELEASE_TAG }} Release checklist
-
-      - name: Create comment
-        if: ${{ steps.findissueid.outputs.issues }} != '[]'
-        uses: actions-cool/issues-helper@v3
-        with:
-          actions: 'create-comment'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ fromJson(steps.findissueid.outputs.issues)[0].number }}
-          body: |
-            ${{ env.content }}
-
   ## create the release draft ##
   create-release-draft:
     runs-on: ubuntu-latest
