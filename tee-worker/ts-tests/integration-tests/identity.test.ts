@@ -317,7 +317,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'LitentryValidationData',
             validation
         ) as unknown as LitentryValidationData;
-        context;
         const aliceTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,

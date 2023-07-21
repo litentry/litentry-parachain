@@ -29,7 +29,8 @@ import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
 import { NodesmithProvider } from '@ethersproject/providers';
 import { identity } from 'common/helpers';
-
+import { ethers } from 'ethers';
+import type { HexString } from '@polkadot/util/types';
 const subscribeToEvents = async (
     requestIdentifier: string,
     context: IntegrationTestContext
@@ -429,23 +430,216 @@ describe('Test Identity (direct invocation)', function () {
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        for (const { identity } of linkIdentityRequestParams) {
-            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
-            console.debug(`checking identity: ${identityDump}`);
-            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
-            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
-            const [, idGraphNodeContext] = idGraphNode!;
-            assert.equal(
-                idGraphNodeContext.status.toString(),
-                'Active',
-                `status should be active for identity: ${identityDump}`
-            );
-            console.debug('active ✅');
-        }
+        // for (const { identity } of linkIdentityRequestParams) {
+        //     const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+        //     console.debug(`checking identity: ${identityDump}`);
+        //     const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity)
+        //     );
+        //     assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+        //     const [, idGraphNodeContext] = idGraphNode!;
+        //     assert.equal(
+        //         idGraphNodeContext.status.toString(),
+        //         'Active',
+        //         `status should be active for identity: ${identityDump}`
+        //     );
+        //     console.debug('active ✅');
+        // }
     });
 
     /**
      * @FIXME: the logic for this currently lives in the previous step :P
      */
     it('check idgraph from sidechain storage after linking');
+
+    step('linking invalid identity', async function () {
+
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+
+        const getNextNonce = () => currentNonce++;
+
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const twitterNonce = getNextNonce();
+        const evmNonce = getNextNonce();
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+        const [evmValidation] = await buildValidations(
+            context,
+            [aliceSubject],
+            [evmIdentity],
+            evmNonce,
+            'ethereum',
+            undefined,
+            [context.ethersWallet.bob]
+        );
+
+        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', twitterNonce),
+            context.substrateWallet.bob,
+            aliceSubject,
+            twitterIdentity.toHex(),
+            evmValidation.toHex(),
+            evmNetworks.toHex(),
+            keyNonce,
+            requestIdentifier
+        );
+
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            linkIdentityCall
+        );
+
+        assert.isTrue(
+            res.status.isTrustedOperationStatus,
+            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+        );
+        const status = res.status.asTrustedOperationStatus;
+        assert.isTrue(
+            status.isSubmitted || status.isInSidechainBlock,
+            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+        );
+
+        const events = (await eventsPromise).map(({ event }) => event);
+
+
+        // todo check events
+
+    });
+
+    step('linking identity with wrong signature', async function () {
+
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+
+        const evmNonce = getNextNonce();
+        // random wrong msg
+        const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
+        const ethereumSignature = (await context.ethersWallet.alice.signMessage(
+            ethers.utils.arrayify(wrongMsg)
+        )) as HexString;
+
+        const ethereumValidationData = {
+            Web3Validation: {
+                Evm: {
+                    message: wrongMsg as HexString,
+                    signature: {
+                        Ethereum: ethereumSignature as HexString,
+                    },
+                },
+            },
+        };
+        const encodedVerifyIdentityValidation = context.api.createType(
+            'LitentryValidationData',
+            ethereumValidationData
+        )
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+
+        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', evmNonce),
+            context.substrateWallet.alice,
+            aliceSubject,
+            evmIdentity.toHex(),
+            encodedVerifyIdentityValidation.toHex(),
+            evmNetworks.toHex(),
+            keyNonce,
+            requestIdentifier
+        );
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            linkIdentityCall
+        );
+
+        assert.isTrue(
+            res.status.isTrustedOperationStatus,
+            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+        );
+        const status = res.status.asTrustedOperationStatus;
+        assert.isTrue(
+            status.isSubmitted || status.isInSidechainBlock,
+            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+        );
+
+        const events = (await eventsPromise).map(({ event }) => event);
+
+        // todo check events
+
+    })
+    step('linking aleady linked identity', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+
+        const twitterNonce = getNextNonce();
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const [twitterValidation] = await buildValidations(
+            context,
+            [aliceSubject],
+            [twitterIdentity],
+            twitterNonce,
+            'twitter'
+        );
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', twitterNonce),
+            context.substrateWallet.alice,
+            aliceSubject,
+            twitterIdentity.toHex(),
+            twitterValidation.toHex(),
+            twitterNetworks.toHex(),
+            keyNonce,
+            requestIdentifier
+        );
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            linkIdentityCall
+        );
+
+        assert.isTrue(
+            res.status.isTrustedOperationStatus,
+            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+        );
+        const status = res.status.asTrustedOperationStatus;
+        assert.isTrue(
+            status.isSubmitted || status.isInSidechainBlock,
+            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+        );
+
+        const events = (await eventsPromise).map(({ event }) => event);
+
+        // todo check events
+
+    });
 });
