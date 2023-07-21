@@ -30,7 +30,8 @@
 	clippy::unimplemented,
 	clippy::string_slice,
 	clippy::panic_in_result_fn,
-	clippy::panic
+	clippy::panic,
+	clippy::indexing_slicing
 )]
 
 #[cfg(not(target_env = "sgx"))]

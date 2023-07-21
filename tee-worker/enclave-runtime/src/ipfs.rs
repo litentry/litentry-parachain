@@ -25,7 +25,9 @@ impl IpfsContent {
 		let mut adder: FileAdder = FileAdder::default();
 		let mut total: usize = 0;
 		while total < self.file_content.len() {
-			let (blocks, consumed) = adder.push(&self.file_content[total..]);
+			#[allow(clippy::string_slice)]
+			let bytes = &self.file_content.get(total..).ok_or(IpfsError::Verification)?;
+			let (blocks, consumed) = adder.push(bytes);
 			total += consumed;
 			self.stats.process(blocks);
 		}
