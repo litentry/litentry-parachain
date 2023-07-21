@@ -48,7 +48,9 @@ jobs:
         id: vars
         run: |
           release_type=""
-          if [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
+          if [ "${{ github.event.inputs.release_enclave }}" = "true" ] && [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
+            release_type="all"
+          elif [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
             release_type="both"
           elif [ "${{ github.event.inputs.release_client }}" = "true" ]; then
             release_type="client"
@@ -56,8 +58,6 @@ jobs:
             release_type="runtime"
           elif [ "${{ github.event.inputs.release_enclave }}" = "true" ]; then
             release_type="enclave"
-          elif [ "${{ github.event.inputs.release_enclave }}" = "true" ] && [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
-            release_type="all"
           else
             echo "::error::Please select at least one release type."
             exit 1
