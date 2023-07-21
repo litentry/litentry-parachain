@@ -6,6 +6,13 @@ import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
 import type { AccountId, Balance, BlockNumber, H256 } from "@polkadot/types/interfaces/runtime";
 
+/** @name ActivateIdentityResponse */
+export interface ActivateIdentityResponse extends Struct {
+    readonly account: AccountId;
+    readonly identity: AesOutput;
+    readonly req_ext_hash: H256;
+}
+
 /** @name Address20 */
 export interface Address20 extends U8aFixed {}
 
@@ -59,6 +66,13 @@ export interface Assertion extends Enum {
 
 /** @name BoundedWeb3Network */
 export interface BoundedWeb3Network extends Vec<Web3Network> {}
+
+/** @name DeactivateIdentityResponse */
+export interface DeactivateIdentityResponse extends Struct {
+    readonly account: AccountId;
+    readonly identity: AesOutput;
+    readonly req_ext_hash: H256;
+}
 
 /** @name DirectRequestStatus */
 export interface DirectRequestStatus extends Enum {
@@ -117,6 +131,14 @@ export interface IdentityStatus extends Enum {
 /** @name IdentityString */
 export interface IdentityString extends Bytes {}
 
+/** @name LinkIdentityResponse */
+export interface LinkIdentityResponse extends Struct {
+    readonly account: AccountId;
+    readonly identity: AesOutput;
+    readonly id_graph: AesOutput;
+    readonly req_ext_hash: H256;
+}
+
 /** @name LitentryIdentity */
 export interface LitentryIdentity extends Enum {
     readonly isTwitter: boolean;
@@ -169,6 +191,11 @@ export interface Request extends Struct {
     readonly cyphertext: Bytes;
 }
 
+/** @name SetIdentityNetworksResponse */
+export interface SetIdentityNetworksResponse extends Struct {
+    readonly req_ext_hash: H256;
+}
+
 /** @name SetUserShieldingKeyResponse */
 export interface SetUserShieldingKeyResponse extends Struct {
     readonly account: AccountId;
@@ -219,7 +246,7 @@ export interface TrustedCall extends Enum {
     readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, H256]>;
     readonly isSetIdentityNetworks: boolean;
     readonly asSetIdentityNetworks: ITuple<
-        [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>]
+        [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]
     >;
     readonly type:
         | "BalanceSetBalance"

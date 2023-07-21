@@ -207,15 +207,16 @@ export function createSignedTrustedCallSetIdentityNetworks(
     signer: KeyringPair,
     subject: LitentryPrimitivesIdentity,
     identity: string,
-    web3networks: string
+    web3networks: string,
+    hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_identity_networks', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)'],
+        ['set_identity_networks', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)'],
         signer,
         mrenclave,
         nonce,
-        [subject, subject, identity, web3networks]
+        [subject, subject, identity, web3networks, hash]
     );
 }
 

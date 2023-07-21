@@ -37,3 +37,22 @@ pub(crate) struct LinkIdentityResponse {
 	pub id_graph: AesOutput,
 	pub req_ext_hash: H256,
 }
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct DeactivateIdentityResponse {
+	pub account: AccountId,
+	pub identity: AesOutput,
+	pub req_ext_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ActivateIdentityResponse {
+	pub account: AccountId,
+	pub identity: AesOutput,
+	pub req_ext_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct SetIdentityNetworksResponse {
+	pub req_ext_hash: H256,
+}

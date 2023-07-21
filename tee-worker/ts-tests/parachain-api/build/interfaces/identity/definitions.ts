@@ -59,7 +59,7 @@ export default {
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
                 set_identity_networks:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)",
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
@@ -207,6 +207,25 @@ export default {
         SetUserShieldingKeyResponse: {
             account: "AccountId",
             id_graph: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        LinkIdentityResponse: {
+            account: "AccountId",
+            identity: "AesOutput",
+            id_graph: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        DeactivateIdentityResponse: {
+            account: "AccountId",
+            identity: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        ActivateIdentityResponse: {
+            account: "AccountId",
+            identity: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        SetIdentityNetworksResponse: {
             req_ext_hash: "H256",
         },
         AesOutput: {
