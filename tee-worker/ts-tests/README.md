@@ -14,8 +14,10 @@ Node versions 16.x or 18.x, yarn v3
 
 ## Type Generated
 
+## Please note that this requires the parachain to be running.
 Update parachain metadata: `yarn workspace parachain-api update-metadata`
 
+## Please note that this requires the worker to be running.
 Update sidechain metadata: `yarn workspace sidechain-api update-metadata`
 
 Generate parachain type: `yarn workspace parachain-api build`
