@@ -558,7 +558,7 @@ where
 				);
 				Self::link_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who.clone(),
+					who,
 					identity,
 					validation_data,
 					web3networks,
@@ -717,7 +717,7 @@ where
 				);
 				Self::request_vc_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who.clone(),
+					who,
 					assertion,
 					hash,
 					shard,

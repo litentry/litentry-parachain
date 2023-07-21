@@ -58,7 +58,7 @@ async function sendRequest(
                 resolve(res);
             } else {
                 // `do_watch` is true means: hold on - there's still something coming
-                console.log("do_watch is true, continue watching ...");
+                console.log('do_watch is true, continue watching ...');
             }
         })
     );

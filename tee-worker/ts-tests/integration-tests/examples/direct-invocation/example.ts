@@ -25,7 +25,7 @@ import {
     initIntegrationTestContext,
     buildValidations,
     buildIdentityFromKeypair,
-    parseIdGraph
+    parseIdGraph,
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
@@ -105,7 +105,10 @@ export async function runExample(keyPairType: KeypairType) {
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
     assert.equal(u8aToHex(res.status.asTrustedOperationStatus[1]), getTopHash(parachainApi, setUserShieldingKeyCall));
 
-    const decodedRes = parachainApi.createType('SetUserShieldingKeyResponse', res.value) as unknown as SetUserShieldingKeyResponse;
+    const decodedRes = parachainApi.createType(
+        'SetUserShieldingKeyResponse',
+        res.value
+    ) as unknown as SetUserShieldingKeyResponse;
     assert.equal(decodedRes.account.toHex(), u8aToHex(alice.addressRaw));
     assert.equal(decodedRes.req_ext_hash.toHex(), hash);
     const aesOutput = parseAesOutput(parachainApi, decodedRes.id_graph.toHex());
@@ -260,15 +263,15 @@ export async function runExample(keyPairType: KeypairType) {
     assert.equal(k.unwrap().toHex(), keyBob);
 }
 
-function assertPrimeIdentity(idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext], alice: KeyringPair) {
-    if (alice.type === "ethereum") {
+function assertPrimeIdentity(
+    idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext],
+    alice: KeyringPair
+) {
+    if (alice.type === 'ethereum') {
         assert.isTrue(idgraph[0].isEvm);
         assert.equal(idgraph[0].asEvm.toHex(), u8aToHex(alice.addressRaw));
         assert.isTrue(idgraph[1].status.isActive);
-        assert.equal(
-            idgraph[1].web3networks.toHuman()?.toString(),
-            ['Ethereum', 'Polygon', 'BSC'].toString()
-        );
+        assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Ethereum', 'Polygon', 'BSC'].toString());
     } else {
         assert.isTrue(idgraph[0].isSubstrate);
         assert.equal(idgraph[0].asSubstrate.toHex(), u8aToHex(alice.addressRaw));
