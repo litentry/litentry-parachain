@@ -71,6 +71,9 @@ pub trait AuthorApi<Hash, BlockHash> {
 
 	/// Litentry: set the rpc response value
 	fn set_rpc_response_value(&self, rpc_responses_value: Vec<(Hash, Vec<u8>)>);
+
+	/// Litentry: swap the old hash with the new one in rpc connection registry
+	fn swap_rpc_connection_hash(&self, old_hash: Hash, new_hash: Hash);
 }
 
 /// Trait to notify listeners/observer of a newly created block

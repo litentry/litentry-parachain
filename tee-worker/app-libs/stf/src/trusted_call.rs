@@ -268,6 +268,7 @@ where
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
+		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Vec<u8>, Self::Error> {
@@ -563,6 +564,7 @@ where
 					validation_data,
 					web3networks,
 					nonce,
+					top_hash,
 					hash,
 					shard,
 				)
@@ -575,7 +577,10 @@ where
 						hash,
 					);
 					e
-				})
+				})?;
+				// see `RpcResponder::update_status_event` why it's set to `true.encode()` here
+				rpc_response_value = true.encode();
+				Ok(())
 			},
 			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
 				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
@@ -719,6 +724,7 @@ where
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who,
 					assertion,
+					top_hash,
 					hash,
 					shard,
 				)

@@ -25,7 +25,7 @@ extern crate alloc;
 use alloc::{sync::Arc, vec::Vec};
 use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
-use itp_types::{OpaqueCall, ShardIdentifier};
+use itp_types::{OpaqueCall, ShardIdentifier, H256};
 
 #[cfg(feature = "mocks")]
 pub mod mocks;
@@ -58,12 +58,15 @@ where
 
 	/// Execute a call on a specific state. Callbacks are added as an `OpaqueCall`.
 	///
-	/// Litentry: returns the encoded rpc response that should be passed back to
-	/// the requester when the call is triggered synchronously
+	/// Litentry:
+	/// 1. add a parameter to pass the top_hash around
+	/// 2. returns the encoded rpc response value field that should be passed
+	/// back to the requester when the call is triggered synchronously
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
 		call: Call,
+		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Vec<u8>, Self::Error>;
@@ -90,6 +93,7 @@ where
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
+		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Vec<u8>, Self::Error>;

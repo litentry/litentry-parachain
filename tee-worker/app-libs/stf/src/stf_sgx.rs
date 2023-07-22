@@ -33,7 +33,7 @@ use itp_stf_interface::{
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_storage::storage_value_key;
-use itp_types::OpaqueCall;
+use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::StaticLookup;
@@ -136,10 +136,11 @@ where
 		state: &mut State,
 		shard: &ShardIdentifier,
 		call: Call,
+		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Vec<u8>, Self::Error> {
-		state.execute_with(|| call.execute(shard, calls, node_metadata_repo))
+		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
 	}
 }
 

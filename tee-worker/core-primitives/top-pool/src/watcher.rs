@@ -131,6 +131,13 @@ where
 			error!("failed to set response value to rpc client: {:?}", e);
 		}
 	}
+
+	// Litentry: swap the old hash with the new one in rpc connection registry
+	pub fn swap_rpc_connection_hash(&self, new_hash: H) {
+		if let Err(e) = self.rpc_response_sender.swap_hash(self.hash().clone(), new_hash) {
+			error!("failed to swap rpc connection hash: {:?}", e);
+		}
+	}
 }
 
 /*  /// Sender part of the watcher. Exposed only for testing purposes.

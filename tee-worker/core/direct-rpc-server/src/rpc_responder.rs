@@ -19,6 +19,7 @@ use crate::{
 	response_channel::ResponseChannel, DirectRpcError, DirectRpcResult, RpcConnectionRegistry,
 	RpcHash, SendRpcResponse,
 };
+use codec::Encode;
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::{DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -87,7 +88,10 @@ where
 		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
 			.map_err(|e| DirectRpcError::Other(Box::new(e)))?;
 
-		let do_watch = continue_watching(&status_update);
+		// Litentry:
+		// a trick to use `result.value` as the flag to forcily watch this connection.
+		// If it's `true.encode()` it means we have streamed trustedCalls and there's more to come
+		let do_watch = continue_watching(&status_update) || (result.value == true.encode());
 
 		// update response
 		result.do_watch = do_watch;
@@ -107,6 +111,7 @@ where
 		Ok(())
 	}
 
+	// TODO(Litentry): it seems that this fn is only used in tests?
 	fn send_state(&self, hash: Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()> {
 		debug!("sending state");
 
@@ -152,6 +157,19 @@ where
 		self.connection_registry.store(hash, connection_token, new_response);
 
 		debug!("set response value OK");
+		Ok(())
+	}
+
+	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()> {
+		debug!("swap hash, old: {:?}, new: {:?}", old_hash, new_hash);
+
+		let (connection_token, rpc_response) = self
+			.connection_registry
+			.withdraw(&old_hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+
+		self.connection_registry.store(new_hash, connection_token, rpc_response);
+		debug!("swap hash OK");
 		Ok(())
 	}
 }

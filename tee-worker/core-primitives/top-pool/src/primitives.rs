@@ -261,8 +261,11 @@ pub trait TrustedOperationPool: Send + Sync {
 	/// Notify the listener of top inclusion in sidechain block
 	fn on_block_imported(&self, hashes: &[Self::Hash], block_hash: SidechainBlockHash);
 
-	/// Litentry: set the rpc responses
+	/// Litentry: set the rpc response value
 	fn set_rpc_response_value(&self, rpc_response_value: Vec<(TxHash<Self>, Vec<u8>)>);
+
+	/// Litentry: swap the old hash with the new one in rpc connection registry
+	fn swap_rpc_connection_hash(&self, old_hash: TxHash<Self>, new_hash: TxHash<Self>);
 }
 
 /// The source of the transaction.

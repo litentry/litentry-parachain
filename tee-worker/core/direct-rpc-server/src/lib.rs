@@ -115,6 +115,9 @@ pub trait SendRpcResponse: Send + Sync {
 
 	// Litentry: update the `value` field in the returning structure
 	fn set_value(&self, hash: Self::Hash, encoded_value: Vec<u8>) -> DirectRpcResult<()>;
+
+	// Litentry: swap the old hash with the new one in rpc connection registry
+	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()>;
 }
 
 /// Determines if a given connection must be watched (i.e. kept alive),

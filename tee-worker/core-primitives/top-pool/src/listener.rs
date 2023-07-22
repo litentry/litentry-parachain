@@ -159,4 +159,9 @@ where
 	pub fn set_rpc_response_value(&mut self, tx: &H, encoded_value: Vec<u8>) {
 		self.fire(tx, |s| s.set_rpc_response_value(encoded_value));
 	}
+
+	/// Litentry: swap the old hash with the new one in rpc connection registry
+	pub fn swap_rpc_connection_hash(&mut self, old_hash: H, new_hash: H) {
+		self.fire(&old_hash, |s| s.swap_rpc_connection_hash(new_hash));
+	}
 }

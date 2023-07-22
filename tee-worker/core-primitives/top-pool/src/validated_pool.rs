@@ -698,6 +698,10 @@ where
 			self.listener.write().unwrap().set_rpc_response_value(&top_hash, encoded_value);
 		}
 	}
+
+	pub fn swap_rpc_connection_hash(&self, old_hash: ExtrinsicHash<B>, new_hash: ExtrinsicHash<B>) {
+		self.listener.write().unwrap().swap_rpc_connection_hash(old_hash, new_hash);
+	}
 }
 
 fn fire_events<H, R, Ex>(listener: &mut Listener<H, R>, imported: &base::Imported<H, Ex>)

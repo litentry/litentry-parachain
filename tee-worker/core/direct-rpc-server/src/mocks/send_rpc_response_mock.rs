@@ -54,4 +54,8 @@ where
 	fn set_value(&self, _hash: Self::Hash, _encoded_value: Vec<u8>) -> DirectRpcResult<()> {
 		Ok(())
 	}
+
+	fn swap_hash(&self, _old_hash: Self::Hash, _new_hash: Self::Hash) -> DirectRpcResult<()> {
+		Ok(())
+	}
 }

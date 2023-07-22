@@ -130,6 +130,7 @@ where
 			state,
 			shard,
 			trusted_call.clone(),
+			trusted_operation.hash(),
 			&mut extrinsic_call_backs,
 			self.node_metadata_repo.clone(),
 		) {

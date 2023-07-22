@@ -214,6 +214,8 @@ impl TrustedOperationPool for TrustedOperationPoolMock {
 	fn on_block_imported(&self, _hashes: &[Self::Hash], _block_hash: SidechainBlockHash) {}
 
 	fn set_rpc_response_value(&self, _rpc_response_value: Vec<(TxHash<Self>, Vec<u8>)>) {}
+
+	fn swap_rpc_connection_hash(&self, _old_hash: TxHash<Self>, _new_hash: TxHash<Self>) {}
 }
 
 fn default_pool_status() -> PoolStatus {
