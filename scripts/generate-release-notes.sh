@@ -146,7 +146,7 @@ fi
 # release notes for enclave binary 
 if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then 
    echo "Generating Release Notes for Enclave"
-   local MRENCLAVE=$(echo "$MRENCLAVE_OUTPUT" | awk '{print $2}')
+   MRENCLAVE=$(echo "$MRENCLAVE_OUTPUT" | awk '{print $2}')
    cat << EOF >> "$1" 
 ## TEE Worker Release 
 
@@ -155,8 +155,8 @@ rustc: $RUSTC_VERSION
 mrenclave: $MRENCLAVE
 <CODEBLOCK> 
 
-EOF 
-fi 
+EOF
+fi
 
 # restore ``` in markdown doc
 # use -i.bak for compatibility for MacOS and Linux
