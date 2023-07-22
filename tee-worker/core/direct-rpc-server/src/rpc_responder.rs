@@ -176,11 +176,12 @@ pub mod tests {
 		rpc_connection_registry::ConnectionRegistry,
 	};
 	use codec::Encode;
+	use itp_types::H256;
 	use std::assert_matches::assert_matches;
 
 	type TestConnectionToken = u64;
 	type TestResponseChannel = ResponseChannelMock<TestConnectionToken>;
-	type TestConnectionRegistry = ConnectionRegistry<String, TestConnectionToken>;
+	type TestConnectionRegistry = ConnectionRegistry<H256, TestConnectionToken>;
 
 	#[test]
 	fn given_empty_registry_when_updating_status_event_then_return_error() {
@@ -189,8 +190,7 @@ pub mod tests {
 		let rpc_responder = RpcResponder::new(connection_registry, websocket_responder);
 
 		assert_matches!(
-			rpc_responder
-				.update_status_event("hash".to_string(), TrustedOperationStatus::Broadcast),
+			rpc_responder.update_status_event([1u8; 32].into(), TrustedOperationStatus::Broadcast),
 			Err(DirectRpcError::InvalidConnectionHash)
 		);
 	}
@@ -202,14 +202,14 @@ pub mod tests {
 		let rpc_responder = RpcResponder::new(connection_registry, websocket_responder);
 
 		assert_matches!(
-			rpc_responder.send_state("hash".to_string(), vec![1u8, 2u8]),
+			rpc_responder.send_state([1u8; 32].into(), vec![1u8, 2u8]),
 			Err(DirectRpcError::InvalidConnectionHash)
 		);
 	}
 
 	#[test]
 	fn updating_status_event_with_finalized_state_removes_connection() {
-		let connection_hash = String::from("conn_hash");
+		let connection_hash = H256::random();
 		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
@@ -227,8 +227,9 @@ pub mod tests {
 
 	#[test]
 	fn updating_status_event_with_ready_state_keeps_connection_and_sends_update() {
-		let connection_hash = String::from("conn_hash");
-		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
+		let connection_hash = H256::random();
+		let connection_registry: Arc<ConnectionRegistry<_, u64>> =
+			create_registry_with_single_connection(connection_hash.clone());
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
 		let rpc_responder =
@@ -249,7 +250,7 @@ pub mod tests {
 
 	#[test]
 	fn sending_state_successfully_sends_update_and_removes_connection_token() {
-		let connection_hash = String::from("conn_hash");
+		let connection_hash = H256::random();
 		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
@@ -273,7 +274,7 @@ pub mod tests {
 	}
 
 	fn verify_open_connection(
-		connection_hash: &String,
+		connection_hash: &H256,
 		connection_registry: Arc<TestConnectionRegistry>,
 	) {
 		let maybe_connection = connection_registry.withdraw(&connection_hash);
@@ -281,14 +282,14 @@ pub mod tests {
 	}
 
 	fn verify_closed_connection(
-		connection_hash: &String,
+		connection_hash: &H256,
 		connection_registry: Arc<TestConnectionRegistry>,
 	) {
 		assert!(connection_registry.withdraw(&connection_hash).is_none());
 	}
 
 	fn create_registry_with_single_connection(
-		connection_hash: String,
+		connection_hash: H256,
 	) -> Arc<TestConnectionRegistry> {
 		let connection_registry = TestConnectionRegistry::new();
 		let rpc_response = RpcResponseBuilder::new().with_id(2).build();
