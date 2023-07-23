@@ -114,7 +114,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 			break
 		}
 
-		let chain = network.to_string();
+		let chain = network.name();
 		let token =
 			if network == Web3Network::Ethereum { Some(LIT_TOKEN_ADDRESS.into()) } else { None };
 

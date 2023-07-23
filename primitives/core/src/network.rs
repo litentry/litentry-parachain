@@ -14,10 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-pub extern crate alloc;
-
-use alloc::string::{String, ToString};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -82,19 +78,20 @@ impl Web3Network {
 	}
 }
 
-impl ToString for Web3Network {
-	fn to_string(&self) -> String {
+impl Web3Network {
+	/// Achainable server support lowercase ONLY.
+	pub fn name(&self) -> &'static str {
 		match self {
-			Web3Network::Polkadot => "polkadot".into(),
-			Web3Network::Kusama => "kusama".into(),
-			Web3Network::Litentry => "litentry".into(),
-			Web3Network::Litmus => "litmus".into(),
-			Web3Network::LitentryRococo => "litentry_rococo".into(),
-			Web3Network::Khala => "khala".into(),
-			Web3Network::SubstrateTestnet => "substrate_testnet".into(),
-			Web3Network::Ethereum => "ethereum".into(),
-			Web3Network::Polygon => "polygon".into(),
-			Web3Network::BSC => "bsc".into(),
+			Web3Network::Polkadot => "polkadot",
+			Web3Network::Kusama => "kusama",
+			Web3Network::Litentry => "litentry",
+			Web3Network::Litmus => "litmus",
+			Web3Network::LitentryRococo => "litentry_rococo",
+			Web3Network::Khala => "khala",
+			Web3Network::SubstrateTestnet => "substrate_testnet",
+			Web3Network::Ethereum => "ethereum",
+			Web3Network::Polygon => "polygon",
+			Web3Network::BSC => "bsc",
 		}
 	}
 }
