@@ -75,11 +75,7 @@ where
 		hash: Hash,
 		status_update: TrustedOperationStatus,
 	) -> DirectRpcResult<()> {
-		debug!(
-			"updating status event, hash: {}, status: {:?}",
-			hash.to_hex(),
-			status_update.clone()
-		);
+		debug!("updating status event, hash: {}, status: {:?}", hash.to_hex(), status_update);
 
 		// withdraw removes it from the registry
 		let (connection_token, rpc_response) = self
