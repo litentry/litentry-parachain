@@ -162,6 +162,8 @@ pub enum Params {
 	ParamsBasicTypeWithDate(ParamsBasicTypeWithDate),
 	ParamsBasicTypeWithAmountToken(ParamsBasicTypeWithAmountToken),
 	ParamsBasicTypeWithBetweenPercents(ParamsBasicTypeWithBetweenPercents),
+	ParamsBasicTypeWithDateInterval(ParamsBasicTypeWithDateInterval),
+	ParamsBasicTypeWithToken(ParamsBasicTypeWithToken),
 }
 
 impl AchainableSystemLabelName for Params {
@@ -177,6 +179,8 @@ impl AchainableSystemLabelName for Params {
 			Params::ParamsBasicTypeWithDate(a) => a.name.clone(),
 			Params::ParamsBasicTypeWithAmountToken(a) => a.name.clone(),
 			Params::ParamsBasicTypeWithBetweenPercents(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithDateInterval(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithToken(a) => a.name.clone(),
 		}
 	}
 }
@@ -380,7 +384,9 @@ impl ParamsBasicTypeWithAmountToken {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithBetweenPercents {
+	#[serde(skip_serializing)]
 	pub name: String,
+
 	pub chain: String,
 	pub greater_than_or_equal_to: String,
 	pub less_than_or_equal_to: String,
@@ -394,6 +400,41 @@ impl ParamsBasicTypeWithBetweenPercents {
 		less_than_or_equal_to: String,
 	) -> Self {
 		Self { name, chain, greater_than_or_equal_to, less_than_or_equal_to }
+	}
+}
+
+// ParamsBasicTypeWithDateInterval
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithDateInterval {
+	#[serde(skip_serializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub start_date: String,
+	pub end_date: String,
+}
+
+impl ParamsBasicTypeWithDateInterval {
+	pub fn new(name: String, chain: String, start_date: String, end_date: String) -> Self {
+		Self { name, chain, start_date, end_date }
+	}
+}
+
+// ParamsBasicTypeWithToken
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithToken {
+	#[serde(skip_serializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub token: String,
+}
+
+impl ParamsBasicTypeWithToken {
+	pub fn new(name: String, chain: String, token: String) -> Self {
+		Self { name, chain, token }
 	}
 }
 
@@ -557,26 +598,26 @@ pub trait AchainableTagDotsama {
 	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error>;
 }
 
-// pub trait AchainableTagDeFi {
-// 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_trader(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// }
+pub trait AchainableTagDeFi {
+	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error>;
+	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error>;
+	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error>;
+	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_trader(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error>;
+	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
+}
 
 impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
@@ -857,29 +898,197 @@ impl AchainableTagDotsama for AchainableClient {
 	}
 }
 
-// impl AchainableTagDeFi for AchainableClient {
-// 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
+impl AchainableTagDeFi for AchainableClient {
+	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 trader
+		let name = "Uniswap V2 trader";
+		let chain = "ethereum";
+		let r1 = request_basic_type(self, address, name, chain).unwrap_or_default();
 
-// 	}
+		// Uniswap V2 liquidity provider
+		let name = "Uniswap V2 liquidity provider";
+		let r2 = request_basic_type(self, address, name, chain)?;
 
-// 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_trader(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
-// }
+		Ok(r1 || r2)
+	}
+
+	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 trader
+		let name = "Uniswap V3 trader";
+		let chain = "ethereum";
+		let r1 = request_basic_type(self, address, name, chain).unwrap_or_default();
+
+		// Uniswap V3 liquidity provider
+		let name = "Uniswap V3 liquidity provider";
+		let r2 = request_basic_type(self, address, name, chain)?;
+
+		Ok(r1 || r2)
+	}
+
+	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 liquidity provider
+		let name = "Uniswap V2 liquidity provider".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
+	}
+
+	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 liquidity provider
+		let name = "Uniswap V3 liquidity provider".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
+	}
+
+	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 {token} liquidity provider
+		let name = "Uniswap V2 {token} liquidity provider";
+		let chain = "ethereum";
+		let token = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+
+		request_basic_type_with_token(self, address, name, chain, token)
+	}
+
+	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 {token} liquidity provider
+		let name = "Uniswap V3 {token} liquidity provider";
+		let chain = "ethereum";
+		let token = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+
+		request_basic_type_with_token(self, address, name, chain, token)
+	}
+
+	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 {token} liquidity provider
+		let r1 = self.usdt_uniswap_v2_lp(address).unwrap_or_default();
+
+		// Uniswap V3 {token} liquidity provider
+		let r2 = self.usdt_uniswap_v3_lp(address)?;
+
+		Ok(r1 || r2)
+	}
+
+	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V2 {token} liquidity provider
+		let name = "Uniswap V2 {token} liquidity provider";
+		let chain = "ethereum";
+		let token = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+		request_basic_type_with_token(self, address, name, chain, token)
+	}
+
+	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
+		// Uniswap V3 {token} liquidity provider
+		let name = "Uniswap V3 {token} liquidity provider";
+		let chain = "ethereum";
+		let token = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+		request_basic_type_with_token(self, address, name, chain, token)
+	}
+
+	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V2 Lender
+		let name = "Aave V2 Lender";
+		let chain = "ethereum";
+		request_basic_type(self, address, name, chain)
+	}
+
+	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V2 Borrower
+		let name = "Aave V2 Borrower";
+		let chain = "ethereum";
+		request_basic_type(self, address, name, chain)
+	}
+
+	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V3 Lender
+		let name = "Aave V3 Lender";
+		let chain = "ethereum";
+		request_basic_type(self, address, name, chain)
+	}
+
+	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error> {
+		// Aave V3 Borrower
+		let name = "Aave V3 Borrower";
+		let chain = "ethereum";
+		request_basic_type(self, address, name, chain)
+	}
+
+	fn curve_trader(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Trader
+		let name = "Curve Trader";
+		let chain = "ethereum";
+		request_basic_type(self, address, name, chain)
+	}
+
+	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Trader
+		let name = "Curve Trader".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
+	}
+
+	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Liquidity Provider
+		let name = "Curve Liquidity Provider";
+		let chain = "ethereum";
+		request_basic_type(self, address, name, chain)
+	}
+
+	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// Curve Liquidity Provider
+		let name = "Curve Liquidity Provider".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
+	}
+
+	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error> {
+		// MetaMask trader
+		let name = "MetaMask trader".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
+	}
+}
+
+/// Utils function
+fn request_basic_type(
+	client: &mut AchainableClient,
+	address: &str,
+	name: &str,
+	chain: &str,
+) -> Result<bool, Error> {
+	let param = ParamsBasicType::new(name.to_string(), chain.to_string());
+	check_achainable_label(client, address, Params::ParamsBasicType(param))
+}
+
+fn request_basic_type_with_token(
+	client: &mut AchainableClient,
+	address: &str,
+	name: &str,
+	chain: &str,
+	token: &str,
+) -> Result<bool, Error> {
+	let param =
+		ParamsBasicTypeWithToken::new(name.to_string(), chain.to_string(), token.to_string());
+	check_achainable_label(client, address, Params::ParamsBasicTypeWithToken(param))
+}
 
 #[cfg(test)]
 mod tests {
