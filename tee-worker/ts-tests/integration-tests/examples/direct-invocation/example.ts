@@ -154,10 +154,7 @@ export async function runExample(keyPairType: KeypairType) {
     console.log('linkIdentity call returned', res.toHuman());
     assert.isTrue(res.do_watch.isFalse);
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
-    decodedRes = parachainApi.createType(
-        'LinkIdentityResponse',
-        res.value
-    ) as unknown as LinkIdentityResponse;
+    decodedRes = parachainApi.createType('LinkIdentityResponse', res.value) as unknown as LinkIdentityResponse;
     assert.equal(decodedRes.account.toHex(), u8aToHex(alice.addressRaw));
     assert.equal(decodedRes.req_ext_hash.toHex(), hash);
     aesOutput = parseAesOutput(parachainApi, decodedRes.id_graph.toHex());
@@ -279,7 +276,6 @@ export async function runExample(keyPairType: KeypairType) {
     idgraph = decodeIdGraph(sidechainRegistry, res.value);
     assert.equal(idgraph.length, 2);
     assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Litentry', 'Khala'].toString());
-
 
     // ==============================================================================
     // 8. Test set_user_shielding_key with wrapped bytes
