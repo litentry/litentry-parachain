@@ -138,10 +138,6 @@ impl ReqBody {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum Params {
-	AmountHoding(AmountHoding), //A4-A7-A10-A11
-	ClassOfYear(ClassOfYear),
-	EthDrainedInLastFortnight(EthDrainedInLastFortnight),
-
 	ParamsBasicType(ParamsBasicType),
 	ParamsBasicTypeWithAmount(ParamsBasicTypeWithAmount),
 	ParamsBasicTypeWithAmounts(ParamsBasicTypeWithAmounts),
@@ -150,15 +146,14 @@ pub enum Params {
 	ParamsBasicTypeWithBetweenPercents(ParamsBasicTypeWithBetweenPercents),
 	ParamsBasicTypeWithDateInterval(ParamsBasicTypeWithDateInterval),
 	ParamsBasicTypeWithToken(ParamsBasicTypeWithToken),
+	ParamsBasicTypeWithDatePercent(ParamsBasicTypeWithDatePercent),
+	ParamsBasicTypeWithClassOfYear(ParamsBasicTypeWithClassOfYear),
+	ParamsBasicTypeWithAmountHoding(ParamsBasicTypeWithAmountHoding), //A4-A7-A10-A11
 }
 
 impl AchainableSystemLabelName for Params {
 	fn name(&self) -> String {
 		match self {
-			Params::AmountHoding(a) => a.name(),
-			Params::ClassOfYear(c) => c.name(),
-			Params::EthDrainedInLastFortnight(e) => e.name.clone(),
-
 			Params::ParamsBasicType(a) => a.name.clone(),
 			Params::ParamsBasicTypeWithAmount(a) => a.name.clone(),
 			Params::ParamsBasicTypeWithAmounts(a) => a.name.clone(),
@@ -167,6 +162,9 @@ impl AchainableSystemLabelName for Params {
 			Params::ParamsBasicTypeWithBetweenPercents(a) => a.name.clone(),
 			Params::ParamsBasicTypeWithDateInterval(a) => a.name.clone(),
 			Params::ParamsBasicTypeWithToken(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithDatePercent(e) => e.name.clone(),
+			Params::ParamsBasicTypeWithClassOfYear(c) => c.name.clone(),
+			Params::ParamsBasicTypeWithAmountHoding(a) => a.name.clone(),
 		}
 	}
 }
@@ -179,7 +177,11 @@ pub trait AchainableSystemLabelName {
 /// A4/A7/A10/A11 Holder params
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct AmountHoding {
+pub struct ParamsBasicTypeWithAmountHoding {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
 	pub chain: String,
 	pub amount: String,
 	pub date: String,
@@ -188,26 +190,22 @@ pub struct AmountHoding {
 	pub token: Option<String>,
 }
 
-impl AmountHoding {
+impl ParamsBasicTypeWithAmountHoding {
 	pub fn new(chain: String, amount: String, date: String, token: Option<String>) -> Self {
-		Self { chain, amount, date, token }
-	}
-}
-
-impl AchainableSystemLabelName for AmountHoding {
-	fn name(&self) -> String {
-		if self.token.is_some() {
+		let name = if token.is_some() {
 			"ERC20 hodling {amount} of {token} since {date}".into()
 		} else {
 			"Balance hodling {amount} since {date}".into()
-		}
+		};
+
+		Self { name, chain, amount, date, token }
 	}
 }
 
-// ClassOfYear
+// ParamsBasicTypeWithClassOfYear
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct ClassOfYear {
+pub struct ParamsBasicTypeWithClassOfYear {
 	#[serde(skip_serializing)]
 	#[serde(skip_deserializing)]
 	pub name: String,
@@ -224,16 +222,16 @@ pub enum EClassOfYear {
 }
 
 impl EClassOfYear {
-	pub fn get(&self) -> ClassOfYear {
+	pub fn get(&self) -> ParamsBasicTypeWithClassOfYear {
 		match self {
-			EClassOfYear::Year2020 => ClassOfYear::class_of_2020(),
-			EClassOfYear::Year2021 => ClassOfYear::class_of_2021(),
-			EClassOfYear::Year2022 => ClassOfYear::class_of_2022(),
+			EClassOfYear::Year2020 => ParamsBasicTypeWithClassOfYear::class_of_2020(),
+			EClassOfYear::Year2021 => ParamsBasicTypeWithClassOfYear::class_of_2021(),
+			EClassOfYear::Year2022 => ParamsBasicTypeWithClassOfYear::class_of_2022(),
 		}
 	}
 }
 
-impl ClassOfYear {
+impl ParamsBasicTypeWithClassOfYear {
 	fn class_of_2020() -> Self {
 		Self {
 			name: "Account created between {dates}".into(),
@@ -258,38 +256,6 @@ impl ClassOfYear {
 			chain: "ethereum".into(),
 			date1: "2022-01-01T00:00:00.000Z".into(),
 			date2: "2022-12-31T23:59:59.999Z".into(),
-		}
-	}
-}
-
-impl AchainableSystemLabelName for ClassOfYear {
-	fn name(&self) -> String {
-		"Account created between {dates}".into()
-	}
-}
-
-// ETH Drained in Last Fortnight
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct EthDrainedInLastFortnight {
-	#[serde(skip_serializing)]
-	#[serde(skip_deserializing)]
-	pub name: String,
-
-	pub chain: String,
-	pub token: String,
-	pub date: String,
-	pub percent: String,
-}
-
-impl Default for EthDrainedInLastFortnight {
-	fn default() -> Self {
-		Self {
-			name: "Balance dropped {percent} since {date}".into(),
-			chain: "ethereum".into(),
-			token: "ETH".into(),
-			date: "14D".into(),
-			percent: "80".into(),
 		}
 	}
 }
@@ -441,6 +407,38 @@ impl ParamsBasicTypeWithToken {
 	}
 }
 
+// ParamsBasicTypeWithDatePercent
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithDatePercent {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub token: String,
+	pub date: String,
+	pub percent: String,
+}
+
+impl ParamsBasicTypeWithDatePercent {
+	pub fn new(name: String, chain: String, token: String, date: String, percent: String) -> Self {
+		Self { name, chain, token, date, percent }
+	}
+}
+
+impl Default for ParamsBasicTypeWithDatePercent {
+	fn default() -> Self {
+		Self {
+			name: "Balance dropped {percent} since {date}".into(),
+			chain: "ethereum".into(),
+			token: "ETH".into(),
+			date: "14D".into(),
+			percent: "80".into(),
+		}
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 fn check_achainable_label(
 	client: &mut AchainableClient,
@@ -455,12 +453,24 @@ fn check_achainable_label(
 
 /// A4/A7/A10/A11
 pub trait AchainableHolder {
-	fn is_holder(&mut self, address: &str, amount_holding: AmountHoding) -> Result<bool, Error>;
+	fn is_holder(
+		&mut self,
+		address: &str,
+		amount_holding: ParamsBasicTypeWithAmountHoding,
+	) -> Result<bool, Error>;
 }
 
 impl AchainableHolder for AchainableClient {
-	fn is_holder(&mut self, address: &str, amount_holding: AmountHoding) -> Result<bool, Error> {
-		check_achainable_label(self, address, Params::AmountHoding(amount_holding))
+	fn is_holder(
+		&mut self,
+		address: &str,
+		amount_holding: ParamsBasicTypeWithAmountHoding,
+	) -> Result<bool, Error> {
+		check_achainable_label(
+			self,
+			address,
+			Params::ParamsBasicTypeWithAmountHoding(amount_holding),
+		)
 	}
 }
 
@@ -635,7 +645,7 @@ impl AchainableTagAccount for AchainableClient {
 
 	fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error> {
 		let param = year.get();
-		check_achainable_label(self, address, Params::ClassOfYear(param))
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithClassOfYear(param))
 	}
 
 	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
@@ -644,8 +654,8 @@ impl AchainableTagAccount for AchainableClient {
 	}
 
 	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error> {
-		let param = EthDrainedInLastFortnight::default();
-		check_achainable_label(self, address, Params::EthDrainedInLastFortnight(param))
+		let param = ParamsBasicTypeWithDatePercent::default();
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDatePercent(param))
 	}
 
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
@@ -770,34 +780,34 @@ impl AchainableTagBalance for AchainableClient {
 
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
 		// Native LIT Hodler
-		let param = AmountHoding::new(
+		let param = ParamsBasicTypeWithAmountHoding::new(
 			"litentry".to_string(),
 			"10".to_string(),
 			"2023-01-01T00:00:00.000Z".to_string(),
 			None,
 		);
-		check_achainable_label(self, address, Params::AmountHoding(param))
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHoding(param))
 	}
 
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = AmountHoding::new(
+		let param = ParamsBasicTypeWithAmountHoding::new(
 			"ethereum".to_string(),
 			"10".to_string(),
 			"2022-01-01T00:00:00.000Z".to_string(),
 			Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()),
 		);
-		check_achainable_label(self, address, Params::AmountHoding(param))
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHoding(param))
 	}
 
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = AmountHoding::new(
+		let param = ParamsBasicTypeWithAmountHoding::new(
 			"bsc".to_string(),
 			"10".to_string(),
 			"2022-01-01T00:00:00.000Z".to_string(),
 			Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()),
 		);
 
-		check_achainable_label(self, address, Params::AmountHoding(param))
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHoding(param))
 	}
 }
 

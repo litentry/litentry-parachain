@@ -65,7 +65,7 @@ extern crate sgx_tstd as std;
 ///  
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHolder, AmountHoding},
+	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHoding},
 	vec_to_string,
 };
 use std::string::ToString;
@@ -121,7 +121,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		let addresses: Vec<String> = addresses.into_iter().collect();
 		for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			for address in &addresses {
-				let holding = AmountHoding::new(
+				let holding = ParamsBasicTypeWithAmountHoding::new(
 					chain.to_string(),
 					q_min_balance.to_string(),
 					date.to_string(),

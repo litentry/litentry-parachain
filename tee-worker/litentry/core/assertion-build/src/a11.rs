@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHolder, AmountHoding},
+	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHoding},
 	vec_to_string,
 };
 use std::string::ToString;
@@ -56,7 +56,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
-			let holding = AmountHoding::new(
+			let holding = ParamsBasicTypeWithAmountHoding::new(
 				"ethereum".into(),
 				q_min_balance.to_string(),
 				date.to_string(),
