@@ -49,12 +49,10 @@ impl AchainableClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			// GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_auth_key.clone().as_str(),
-			"26353d4c-b01c-4466-98a5-80d3fc53a9d8",
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_auth_key.clone().as_str(),
 		);
 		let client = build_client(
 			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_url.clone().as_str(),
-			// "https://label-production.graph.tdf-labs.io",
 			headers,
 		);
 
@@ -141,12 +139,9 @@ impl ReqBody {
 #[serde(untagged)]
 pub enum Params {
 	AmountHoding(AmountHoding), //A4-A7-A10-A11
-
-	// Tag - Account
 	ClassOfYear(ClassOfYear),
 	EthDrainedInLastFortnight(EthDrainedInLastFortnight),
 
-	// Tag - Dotsama
 	ParamsBasicType(ParamsBasicType),
 	ParamsBasicTypeWithAmount(ParamsBasicTypeWithAmount),
 	ParamsBasicTypeWithAmounts(ParamsBasicTypeWithAmounts),
@@ -453,8 +448,9 @@ fn check_achainable_label(
 	params: Params,
 ) -> Result<bool, Error> {
 	let body = ReqBody::new(address.into(), params);
-	let resp = client.post(SystemLabelReqPath::default(), &body)?;
-	AchainableClient::parse(resp)
+	client
+		.post(SystemLabelReqPath::default(), &body)
+		.and_then(AchainableClient::parse)
 }
 
 /// A4/A7/A10/A11

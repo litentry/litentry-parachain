@@ -72,7 +72,7 @@ where
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
-					.or(achainable::tag::query())
+					.or(achainable::query())
 					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
