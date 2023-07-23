@@ -120,22 +120,25 @@ where
 	}
 
 	fn send(&mut self, status: TrustedOperationStatus) {
-		if let Err(e) = self.rpc_response_sender.update_status_event(self.hash().clone(), status) {
-			error!("failed to send status update to rpc client: {:?}", e);
+		if let Err(e) = self
+			.rpc_response_sender
+			.update_status_event(self.hash().clone(), status.clone())
+		{
+			warn!("failed to send status update to rpc client: {:?}, {:?}", e, status);
 		}
 	}
 
 	// Litentry: set the new rpc response value
 	pub fn set_rpc_response_value(&mut self, encoded_value: Vec<u8>) {
 		if let Err(e) = self.rpc_response_sender.set_value(self.hash().clone(), encoded_value) {
-			error!("failed to set response value to rpc client: {:?}", e);
+			warn!("failed to set response value to rpc client: {:?}", e);
 		}
 	}
 
 	// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&self, new_hash: H) {
 		if let Err(e) = self.rpc_response_sender.swap_hash(self.hash().clone(), new_hash) {
-			error!("failed to swap rpc connection hash: {:?}", e);
+			warn!("failed to swap rpc connection hash: {:?}", e);
 		}
 	}
 }

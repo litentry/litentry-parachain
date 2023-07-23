@@ -75,7 +75,11 @@ where
 		hash: Hash,
 		status_update: TrustedOperationStatus,
 	) -> DirectRpcResult<()> {
-		debug!("updating status event");
+		debug!(
+			"updating status event, hash: {}, status: {:?}",
+			hash.to_hex(),
+			status_update.clone()
+		);
 
 		// withdraw removes it from the registry
 		let (connection_token, rpc_response) = self
@@ -91,7 +95,16 @@ where
 		// Litentry:
 		// a trick to use `result.value` as the flag to forcily watch this connection.
 		// If it's `true.encode()` it means we have streamed trustedCalls and there's more to come
-		let do_watch = continue_watching(&status_update) || (result.value == true.encode());
+		// TODO: how about relying on req_ext_hash?
+		let do_watch = continue_watching(&status_update)
+			|| (result.value == true.encode()
+				&& matches!(
+					result.status,
+					DirectRequestStatus::TrustedOperationStatus(
+						TrustedOperationStatus::InSidechainBlock(_),
+						_
+					)
+				));
 
 		// update response
 		result.do_watch = do_watch;
@@ -168,6 +181,7 @@ where
 			.withdraw(&old_hash)
 			.ok_or(DirectRpcError::InvalidConnectionHash)?;
 
+		// leave `rpc_response` untouched - it should be overwritten later anyway
 		self.connection_registry.store(new_hash, connection_token, rpc_response);
 		debug!("swap hash OK");
 		Ok(())

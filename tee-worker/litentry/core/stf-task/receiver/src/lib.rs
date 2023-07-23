@@ -151,7 +151,7 @@ where
 			encrypted_trusted_call.len(),
 			top.encode().len()
 		);
-		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
+		executor::block_on(self.author_api.watch_top(encrypted_trusted_call, *shard)).map_err(
 			|e| Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e)),
 		)?;
 
