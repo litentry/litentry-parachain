@@ -109,7 +109,8 @@ mod tests {
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::A2(guild_id.clone()),
 			identities,
-			hash: Default::default(),
+			top_hash: Default::default(),
+			req_ext_hash: Default::default(),
 		};
 
 		let _ = build(&req, guild_id);
