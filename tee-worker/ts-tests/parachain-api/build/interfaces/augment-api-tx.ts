@@ -1574,11 +1574,55 @@ declare module "@polkadot/api-base/types/submittable" {
         };
         identityManagement: {
             /**
+             * Activate an identity
+             **/
+            activateIdentity: AugmentedSubmittable<
+                (
+                    shard: H256 | string | Uint8Array,
+                    encryptedIdentity: Bytes | string | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [H256, Bytes]
+            >;
+            /**
              * add an account to the delegatees
              **/
             addDelegatee: AugmentedSubmittable<
                 (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [AccountId32]
+            >;
+            /**
+             * Deactivate an identity
+             **/
+            deactivateIdentity: AugmentedSubmittable<
+                (
+                    shard: H256 | string | Uint8Array,
+                    encryptedIdentity: Bytes | string | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [H256, Bytes]
+            >;
+            identityActivated: AugmentedSubmittable<
+                (
+                    account: AccountId32 | string | Uint8Array,
+                    identity:
+                        | CorePrimitivesKeyAesOutput
+                        | { ciphertext?: any; aad?: any; nonce?: any }
+                        | string
+                        | Uint8Array,
+                    reqExtHash: H256 | string | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [AccountId32, CorePrimitivesKeyAesOutput, H256]
+            >;
+            identityDeactivated: AugmentedSubmittable<
+                (
+                    account: AccountId32 | string | Uint8Array,
+                    identity:
+                        | CorePrimitivesKeyAesOutput
+                        | { ciphertext?: any; aad?: any; nonce?: any }
+                        | string
+                        | Uint8Array,
+                    reqExtHash: H256 | string | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [AccountId32, CorePrimitivesKeyAesOutput, H256]
             >;
             identityLinked: AugmentedSubmittable<
                 (
@@ -1596,18 +1640,6 @@ declare module "@polkadot/api-base/types/submittable" {
                     reqExtHash: H256 | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, CorePrimitivesKeyAesOutput, CorePrimitivesKeyAesOutput, H256]
-            >;
-            identityRemoved: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, H256]
             >;
             /**
              * Link an identity with given network types and validation data.
@@ -1652,16 +1684,6 @@ declare module "@polkadot/api-base/types/submittable" {
                 [AccountId32]
             >;
             /**
-             * Remove an identity
-             **/
-            removeIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes]
-            >;
-            /**
              * Set or update user's shielding key
              **/
             setUserShieldingKey: AugmentedSubmittable<
@@ -1678,7 +1700,8 @@ declare module "@polkadot/api-base/types/submittable" {
                         | CorePrimitivesErrorImpError
                         | { SetUserShieldingKeyFailed: any }
                         | { LinkIdentityFailed: any }
-                        | { RemoveIdentityFailed: any }
+                        | { DeactivateIdentityFailed: any }
+                        | { ActivateIdentityFailed: any }
                         | { ImportScheduledEnclaveFailed: any }
                         | { UnclassifiedError: any }
                         | string

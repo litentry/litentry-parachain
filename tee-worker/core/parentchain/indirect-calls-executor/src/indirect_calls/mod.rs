@@ -21,8 +21,9 @@ mod shield_funds;
 
 pub use call_worker::CallWorkerArgs;
 pub use litentry::{
+	activate_identity::ActivateIdentityArgs,
+	deactivate_identity::DeactivateIdentityArgs,
 	link_identity::LinkIdentityArgs,
-	remove_identity::RemoveIdentityArgs,
 	request_vc::RequestVCArgs,
 	scheduled_enclave::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
 	set_user_shielding_key::SetUserShieldingKeyArgs,

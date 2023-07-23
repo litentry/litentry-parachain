@@ -18,8 +18,9 @@
 use crate::{
 	error::Result,
 	indirect_calls::{
-		CallWorkerArgs, LinkIdentityArgs, RemoveIdentityArgs, RemoveScheduledEnclaveArgs,
-		RequestVCArgs, SetUserShieldingKeyArgs, ShiedFundsArgs, UpdateScheduledEnclaveArgs,
+		ActivateIdentityArgs, CallWorkerArgs, DeactivateIdentityArgs, LinkIdentityArgs,
+		RemoveScheduledEnclaveArgs, RequestVCArgs, SetUserShieldingKeyArgs, ShiedFundsArgs,
+		UpdateScheduledEnclaveArgs,
 	},
 	parentchain_extrinsic_parser::ParseExtrinsic,
 	IndirectDispatch, IndirectExecutor,
@@ -101,10 +102,14 @@ where
 			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::LinkIdentity(args, address, hashed_extrinsic))
-		} else if index == metadata.remove_identity_call_indexes().ok()? {
-			let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
+		} else if index == metadata.deactivate_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<DeactivateIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
-			Some(IndirectCall::RemoveIdentity(args, address, hashed_extrinsic))
+			Some(IndirectCall::DeactivateIdentity(args, address, hashed_extrinsic))
+		} else if index == metadata.activate_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<ActivateIdentityArgs>(call_args)?;
+			let hashed_extrinsic = xt.hashed_extrinsic;
+			Some(IndirectCall::ActivateIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.request_vc_call_indexes().ok()? {
 			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
@@ -133,7 +138,8 @@ pub enum IndirectCall {
 	CallWorker(CallWorkerArgs),
 	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<GenericAddress>, H256),
 	LinkIdentity(LinkIdentityArgs, Option<GenericAddress>, H256),
-	RemoveIdentity(RemoveIdentityArgs, Option<GenericAddress>, H256),
+	DeactivateIdentity(DeactivateIdentityArgs, Option<GenericAddress>, H256),
+	ActivateIdentity(ActivateIdentityArgs, Option<GenericAddress>, H256),
 	RequestVC(RequestVCArgs, Option<GenericAddress>, H256),
 	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
@@ -151,10 +157,12 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 				set_shied.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::LinkIdentity(verify_id, address, hash) =>
 				verify_id.dispatch(executor, (address.clone(), *hash, block)),
-			IndirectCall::RemoveIdentity(remove_ideentity, address, hash) =>
-				remove_ideentity.dispatch(executor, (address.clone(), *hash)),
-			IndirectCall::RequestVC(requestvc, address, hash) =>
-				requestvc.dispatch(executor, (address.clone(), *hash, block)),
+			IndirectCall::DeactivateIdentity(deactivate_identity, address, hash) =>
+				deactivate_identity.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::ActivateIdentity(activate_identity, address, hash) =>
+				activate_identity.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::RequestVC(request_vc, address, hash) =>
+				request_vc.dispatch(executor, (address.clone(), *hash, block)),
 			IndirectCall::UpdateScheduledEnclave(update_enclave_args) =>
 				update_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_enclave_args) =>
@@ -207,10 +215,14 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
 			let hashed_extrinsic = hash;
 			calls.push(IndirectCall::LinkIdentity(args, address.clone(), hashed_extrinsic))
-		} else if index == metadata.remove_identity_call_indexes().ok()? {
-			let args = decode_and_log_error::<RemoveIdentityArgs>(call_args)?;
+		} else if index == metadata.deactivate_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<DeactivateIdentityArgs>(call_args)?;
 			let hashed_extrinsic = hash;
-			calls.push(IndirectCall::RemoveIdentity(args, address.clone(), hashed_extrinsic))
+			calls.push(IndirectCall::DeactivateIdentity(args, address.clone(), hashed_extrinsic))
+		} else if index == metadata.activate_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<ActivateIdentityArgs>(call_args)?;
+			let hashed_extrinsic = hash;
+			calls.push(IndirectCall::ActivateIdentity(args, address.clone(), hashed_extrinsic))
 		} else if index == metadata.request_vc_call_indexes().ok()? {
 			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
 			let hashed_extrinsic = hash;

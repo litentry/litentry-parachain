@@ -48,6 +48,18 @@ impl<T: Config> IdentityContext<T> {
 		self.web3networks = Self::dedup(web3networks);
 	}
 
+	pub fn deactivate(&mut self) {
+		self.status = IdentityStatus::Inactive
+	}
+
+	pub fn activate(&mut self) {
+		self.status = IdentityStatus::Active
+	}
+
+	pub fn is_active(&self) -> bool {
+		self.status == IdentityStatus::Active
+	}
+
 	// a small helper fn to apply mutable changes
 	fn dedup(mut web3networks: Vec<Web3Network>) -> Vec<Web3Network> {
 		web3networks.sort();

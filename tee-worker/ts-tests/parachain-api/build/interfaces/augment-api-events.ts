@@ -685,6 +685,34 @@ declare module "@polkadot/api-base/types/events" {
             >;
         };
         identityManagement: {
+            ActivateIdentityFailed: AugmentedEvent<
+                ApiType,
+                [
+                    account: Option<AccountId32>,
+                    detail: CorePrimitivesErrorErrorDetail,
+                    reqExtHash: H256
+                ],
+                {
+                    account: Option<AccountId32>;
+                    detail: CorePrimitivesErrorErrorDetail;
+                    reqExtHash: H256;
+                }
+            >;
+            ActivateIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
+            DeactivateIdentityFailed: AugmentedEvent<
+                ApiType,
+                [
+                    account: Option<AccountId32>,
+                    detail: CorePrimitivesErrorErrorDetail,
+                    reqExtHash: H256
+                ],
+                {
+                    account: Option<AccountId32>;
+                    detail: CorePrimitivesErrorErrorDetail;
+                    reqExtHash: H256;
+                }
+            >;
+            DeactivateIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             DelegateeAdded: AugmentedEvent<
                 ApiType,
                 [account: AccountId32],
@@ -694,6 +722,16 @@ declare module "@polkadot/api-base/types/events" {
                 ApiType,
                 [account: AccountId32],
                 { account: AccountId32 }
+            >;
+            IdentityActivated: AugmentedEvent<
+                ApiType,
+                [account: AccountId32, identity: CorePrimitivesKeyAesOutput, reqExtHash: H256],
+                { account: AccountId32; identity: CorePrimitivesKeyAesOutput; reqExtHash: H256 }
+            >;
+            IdentityDeactivated: AugmentedEvent<
+                ApiType,
+                [account: AccountId32, identity: CorePrimitivesKeyAesOutput, reqExtHash: H256],
+                { account: AccountId32; identity: CorePrimitivesKeyAesOutput; reqExtHash: H256 }
             >;
             IdentityLinked: AugmentedEvent<
                 ApiType,
@@ -710,11 +748,6 @@ declare module "@polkadot/api-base/types/events" {
                     reqExtHash: H256;
                 }
             >;
-            IdentityRemoved: AugmentedEvent<
-                ApiType,
-                [account: AccountId32, identity: CorePrimitivesKeyAesOutput, reqExtHash: H256],
-                { account: AccountId32; identity: CorePrimitivesKeyAesOutput; reqExtHash: H256 }
-            >;
             ImportScheduledEnclaveFailed: AugmentedEvent<ApiType, []>;
             LinkIdentityFailed: AugmentedEvent<
                 ApiType,
@@ -730,20 +763,6 @@ declare module "@polkadot/api-base/types/events" {
                 }
             >;
             LinkIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
-            RemoveIdentityFailed: AugmentedEvent<
-                ApiType,
-                [
-                    account: Option<AccountId32>,
-                    detail: CorePrimitivesErrorErrorDetail,
-                    reqExtHash: H256
-                ],
-                {
-                    account: Option<AccountId32>;
-                    detail: CorePrimitivesErrorErrorDetail;
-                    reqExtHash: H256;
-                }
-            >;
-            RemoveIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             SetUserShieldingKeyFailed: AugmentedEvent<
                 ApiType,
                 [

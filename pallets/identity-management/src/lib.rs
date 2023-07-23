@@ -83,7 +83,10 @@ pub mod pallet {
 		LinkIdentityRequested {
 			shard: ShardIdentifier,
 		},
-		RemoveIdentityRequested {
+		DeactivateIdentityRequested {
+			shard: ShardIdentifier,
+		},
+		ActivateIdentityRequested {
 			shard: ShardIdentifier,
 		},
 		SetUserShieldingKeyRequested {
@@ -106,7 +109,12 @@ pub mod pallet {
 			id_graph: AesOutput,
 			req_ext_hash: H256,
 		},
-		IdentityRemoved {
+		IdentityDeactivated {
+			account: T::AccountId,
+			identity: AesOutput,
+			req_ext_hash: H256,
+		},
+		IdentityActivated {
 			account: T::AccountId,
 			identity: AesOutput,
 			req_ext_hash: H256,
@@ -127,7 +135,12 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
-		RemoveIdentityFailed {
+		DeactivateIdentityFailed {
+			account: Option<T::AccountId>,
+			detail: ErrorDetail,
+			req_ext_hash: H256,
+		},
+		ActivateIdentityFailed {
 			account: Option<T::AccountId>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
@@ -232,16 +245,29 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Remove an identity
+		/// Deactivate an identity
 		#[pallet::call_index(4)]
-		#[pallet::weight(<T as Config>::WeightInfo::remove_identity())]
-		pub fn remove_identity(
+		#[pallet::weight(<T as Config>::WeightInfo::deactivate_identity())]
+		pub fn deactivate_identity(
 			origin: OriginFor<T>,
 			shard: ShardIdentifier,
 			encrypted_identity: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::RemoveIdentityRequested { shard });
+			Self::deposit_event(Event::DeactivateIdentityRequested { shard });
+			Ok(().into())
+		}
+
+		/// Activate an identity
+		#[pallet::call_index(5)]
+		#[pallet::weight(<T as Config>::WeightInfo::activate_identity())]
+		pub fn activate_identity(
+			origin: OriginFor<T>,
+			shard: ShardIdentifier,
+			encrypted_identity: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::ActivateIdentityRequested { shard });
 			Ok(().into())
 		}
 
@@ -281,19 +307,32 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(32)]
-		#[pallet::weight(<T as Config>::WeightInfo::identity_removed())]
-		pub fn identity_removed(
+		#[pallet::weight(<T as Config>::WeightInfo::identity_deactivated())]
+		pub fn identity_deactivated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
 			identity: AesOutput,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityRemoved { account, identity, req_ext_hash });
+			Self::deposit_event(Event::IdentityDeactivated { account, identity, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(33)]
+		#[pallet::weight(<T as Config>::WeightInfo::identity_activated())]
+		pub fn identity_activated(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			identity: AesOutput,
+			req_ext_hash: H256,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::IdentityActivated { account, identity, req_ext_hash });
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(34)]
 		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,
@@ -311,8 +350,14 @@ pub mod pallet {
 					}),
 				IMPError::LinkIdentityFailed(detail) =>
 					Self::deposit_event(Event::LinkIdentityFailed { account, detail, req_ext_hash }),
-				IMPError::RemoveIdentityFailed(detail) =>
-					Self::deposit_event(Event::RemoveIdentityFailed {
+				IMPError::DeactivateIdentityFailed(detail) =>
+					Self::deposit_event(Event::DeactivateIdentityFailed {
+						account,
+						detail,
+						req_ext_hash,
+					}),
+				IMPError::ActivateIdentityFailed(detail) =>
+					Self::deposit_event(Event::ActivateIdentityFailed {
 						account,
 						detail,
 						req_ext_hash,

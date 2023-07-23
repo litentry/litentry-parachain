@@ -53,7 +53,7 @@ pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 pub mod pallet {
 	use super::*;
 	use litentry_primitives::all_evm_web3networks;
-	use log::{debug, warn};
+	use log::debug;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
@@ -80,8 +80,10 @@ pub mod pallet {
 		UserShieldingKeySet { who: Identity, key: UserShieldingKeyType },
 		/// an identity was linked
 		IdentityLinked { who: Identity, identity: Identity },
-		/// an identity was removed
-		IdentityRemoved { who: Identity, identity: Identity },
+		/// an identity was deactivated
+		IdentityDeactivated { who: Identity, identity: Identity },
+		/// an identity was activated
+		IdentityActivated { who: Identity, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -92,8 +94,8 @@ pub mod pallet {
 		IdentityNotExist,
 		/// creating the prime identity manually is disallowed
 		LinkPrimeIdentityDisallowed,
-		/// remove prime identity should be disallowed
-		RemovePrimeIdentityDisallowed,
+		/// deactivate prime identity should be disallowed
+		DeactivatePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
 		/// identity doesn't match the network types
@@ -183,7 +185,7 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(15_000_000)]
-		pub fn remove_identity(
+		pub fn deactivate_identity(
 			origin: OriginFor<T>,
 			who: Identity,
 			identity: Identity,
@@ -191,14 +193,38 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
 			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
-			ensure!(identity != prime_id, Error::<T>::RemovePrimeIdentityDisallowed);
+			ensure!(identity != prime_id, Error::<T>::DeactivatePrimeIdentityDisallowed);
 
-			Self::remove_identity_with_limit(&who, &identity);
-			Self::deposit_event(Event::IdentityRemoved { who, identity });
+			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
+				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
+				c.deactivate();
+				*context = Some(c);
+				Result::<(), Error<T>>::Ok(())
+			})?;
+			Self::deposit_event(Event::IdentityDeactivated { who, identity });
 			Ok(())
 		}
 
 		#[pallet::call_index(3)]
+		#[pallet::weight(15_000_000)]
+		pub fn activate_identity(
+			origin: OriginFor<T>,
+			who: Identity,
+			identity: Identity,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
+				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
+				c.activate();
+				*context = Some(c);
+				Result::<(), Error<T>>::Ok(())
+			})?;
+			Self::deposit_event(Event::IdentityActivated { who, identity });
+			Ok(())
+		}
+
+		#[pallet::call_index(4)]
 		#[pallet::weight(15_000_000)]
 		pub fn set_identity_networks(
 			origin: OriginFor<T>,
@@ -251,29 +277,6 @@ pub mod pallet {
 			LinkedIdentities::<T>::insert(identity, ());
 			IDGraphs::<T>::insert(owner, identity, context);
 			Ok(())
-		}
-
-		fn remove_identity_with_limit(owner: &Identity, identity: &Identity) {
-			IDGraphLens::<T>::mutate_exists(owner, |maybe_value| {
-				if let Some(graph_len) = maybe_value {
-					if *graph_len == 0 {
-						warn!(
-						"Detected IDGraphLens inconsistency, found len 0 while removing identity"
-					);
-						*maybe_value = None
-					} else {
-						let new_graph_len = *graph_len - 1;
-						if new_graph_len == 0 {
-							*maybe_value = None
-						} else {
-							*maybe_value = Some(new_graph_len)
-						}
-					}
-				} else {
-					warn!("Detected IDGraphLens inconsistency, missing IdGraphLen while removing identity");
-				}
-			});
-			IDGraphs::<T>::remove(owner, identity);
 		}
 
 		// get the most recent `max_len` elements in IDGraph
