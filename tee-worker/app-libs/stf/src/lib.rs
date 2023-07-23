@@ -94,6 +94,7 @@ pub enum StfError {
 	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
 	SetIdentityNetworksFailed(ErrorDetail),
 	InvalidAccount,
+	UnclassifiedError,
 }
 
 impl From<MetadataError> for StfError {
@@ -105,6 +106,27 @@ impl From<MetadataError> for StfError {
 impl From<MetadataProviderError> for StfError {
 	fn from(_e: MetadataProviderError) -> Self {
 		StfError::InvalidMetadata
+	}
+}
+
+impl From<IMPError> for StfError {
+	fn from(e: IMPError) -> Self {
+		match e {
+			IMPError::SetUserShieldingKeyFailed(d) => StfError::SetIdentityNetworksFailed(d),
+			IMPError::LinkIdentityFailed(d) => StfError::LinkIdentityFailed(d),
+			IMPError::DeactivateIdentityFailed(d) => StfError::DeactivateIdentityFailed(d),
+			IMPError::ActivateIdentityFailed(d) => StfError::ActivateIdentityFailed(d),
+			_ => StfError::UnclassifiedError,
+		}
+	}
+}
+
+impl From<VCMPError> for StfError {
+	fn from(e: VCMPError) -> Self {
+		match e {
+			VCMPError::RequestVCFailed(a, d) => StfError::RequestVCFailed(a, d),
+			_ => StfError::UnclassifiedError,
+		}
 	}
 }
 

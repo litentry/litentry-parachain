@@ -95,7 +95,7 @@ where
 		// Litentry:
 		// a trick to use `result.value` as the flag to forcily watch this connection.
 		// If it's `true.encode()` it means we have streamed trustedCalls and there's more to come
-		// TODO: how about relying on req_ext_hash?
+		// TODO: how about relying on req_ext_hash? See comment in `trusted_call.rs`
 		let do_watch = continue_watching(&status_update)
 			|| (result.value == true.encode()
 				&& matches!(

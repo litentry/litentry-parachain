@@ -265,6 +265,10 @@ where
 	// when the request is handled asynchronously interanlly, which leads to streamed responses. Without it, it's
 	// impossible to pair the request and response. `top_hash` won't suffice as you can't know all hashes from
 	// client side beforehand (e.g. those trusted calls signed by enclave signer).
+	//
+	// TODO:
+	// - shall we add `req_ext_hash` in RpcReturnValue and use it to find streamed trustedCalls?
+	// - show error details for "Invalid" synchronous responses
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
@@ -809,10 +813,10 @@ where
 					calls,
 					node_metadata_repo,
 					account.and_then(|g| g.to_account_id()),
-					e,
+					e.clone(),
 					hash,
 				);
-				Ok(())
+				return Err(e.into())
 			},
 			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
@@ -821,10 +825,10 @@ where
 					calls,
 					node_metadata_repo,
 					account.and_then(|g| g.to_account_id()),
-					e,
+					e.clone(),
 					hash,
 				);
-				Ok(())
+				return Err(e.into())
 			},
 			TrustedCall::send_erroneous_parentchain_call(account) => {
 				// intentionally send wrong parameters, only used in testing
