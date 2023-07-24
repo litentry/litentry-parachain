@@ -29,7 +29,10 @@ import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 
 async function getNonce(base58mrEnclave: string, context: any) {
-    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave], id: 1 };
+    const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveAccountId', params: [base58mrEnclave], id: 1 };
+    const resAcc = await sendRequest(context.tee, requestAcc, context.api);
+    console.log("worker address value",resAcc.value.toHex());
+    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, resAcc.value.toHex()], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
     const u8aValue = res.value.toU8a();
     const len = u8aValue.length;

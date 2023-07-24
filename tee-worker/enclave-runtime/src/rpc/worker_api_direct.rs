@@ -95,9 +95,52 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
+	let state_account_id = state.clone();
+	let author_get_enclave_account_id: &str = "author_getEnclaveAccountId";
+	io.add_sync_method(author_get_enclave_account_id, move |params: Params| {
+		if state_account_id.is_none() {
+			return Ok(json!(compute_hex_encoded_return_error(
+				"author_getEnclaveAccountId is not avaiable"
+			)))
+		}
+		let state_account_id_unwrap = state_account_id.clone().unwrap();
+		match params.parse::<Vec<String>>() {
+			Ok(shards) => {
+				let shard = match decode_shard_from_base58(shards[0].clone().as_str()) {
+					Ok(id) => id,
+					Err(msg) => {
+						let error_msg: String = format!("Could not retrieve shard due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+
+				match state_account_id_unwrap.load_cloned(&shard) {
+					Ok((mut state, _hash)) => {
+						let account = state.execute_with(enclave_signer_account::<AccountId>);
+						debug!("author_getEnclaveAccountId account in hex :{:?}", &account.to_hex());
+						let json_value = RpcReturnValue {
+							do_watch: false,
+							value: account.encode(),
+							status: DirectRequestStatus::Ok,
+						};
+						Ok(json!(json_value.to_hex()))
+					},
+					Err(e) => {
+						let error_msg = format!("load shard failure due to: {:?}", e);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				}
+			},
+			Err(e) => {
+				let error_msg: String = format!("Could not retrieve pending calls due to: {}", e);
+				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		}
+	});
+
 	// author_getNextNonce
 	let state_storage = state.clone();
-
+	
 	let author_get_next_nonce: &str = "author_getNextNonce";
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
 		let state_nonce = state.clone();
@@ -107,11 +150,18 @@ where
 			)))
 		}
 		let state_nonce_unwrap = state_nonce.unwrap();
-		match params.parse::<Vec<String>>() {
-			Ok(shard_base58s) => {
-				let shard_base58 = shard_base58s[0].clone();
+		match params.parse::<(String, String)>() {
+			Ok((shard_base58, account_hex)) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
 					Ok(id) => id,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+				let account = match AccountId::from_hex(account_hex.as_str()) {
+					Ok(acc) => acc,
 					Err(msg) => {
 						let error_msg: String =
 							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
@@ -121,17 +171,11 @@ where
 
 				match state_nonce_unwrap.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
-						let account = state.execute_with(enclave_signer_account::<AccountId>);
-						debug!("author_getNextNonce account in hex :{:?}", &account.to_hex());
 						let trusted_calls =
 							pool_author.get_pending_trusted_calls_for(shard, &account);
 						let pending_tx_count = trusted_calls.len();
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
 						let nonce = state.execute_with(|| System::account_nonce(&account));
-						debug!(
-							"author_getNextNonce nonce:{:?} pending_tx_count {}",
-							nonce, pending_tx_count
-						);
 						let json_value = RpcReturnValue {
 							do_watch: false,
 							value: (nonce + pending_tx_count).encode(),
@@ -152,6 +196,9 @@ where
 			},
 		}
 	});
+
+	
+	
 
 	let mu_ra_url_name: &str = "author_getMuRaUrl";
 	io.add_sync_method(mu_ra_url_name, move |_: Params| {
