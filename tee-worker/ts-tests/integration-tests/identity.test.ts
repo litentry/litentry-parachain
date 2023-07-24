@@ -152,7 +152,7 @@ describeLitentry('Test Identity', 0, (context) => {
             u8aToHex(context.substrateWallet.eve.addressRaw),
             'Substrate',
             context
-        );  
+        );
 
         // Bob links:
         // - alice's substrate identity
@@ -164,20 +164,14 @@ describeLitentry('Test Identity', 0, (context) => {
 
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
         aliceIdentities = [aliceSubstrateIdentity];
-        
+
         // TODO: being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const twitterValidations = await buildValidations(
-            context,
-            [aliceSubject],
-            [twitterIdentity],
-            nonce,
-            'twitter'
-        );
+        const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], nonce, 'twitter');
 
         const evmValidations = await buildValidations(
             context,
@@ -217,7 +211,6 @@ describeLitentry('Test Identity', 0, (context) => {
             eveValidations,
             web3networks
         );
-        console.log("aliceTxs:", aliceTxs);
 
         const aliceRespEvents = await sendTxsWithUtility(
             context,
@@ -226,7 +219,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        console.log("aliceRespEvents:", aliceRespEvents);
 
         assertIdentityLinked(context, context.substrateWallet.alice, aliceRespEvents, eveIdentities);
 
@@ -243,13 +235,15 @@ describeLitentry('Test Identity', 0, (context) => {
             },
         };
         const bobSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+        const nonce9 = await getNonce(base58mrEnclave, context);
+        console.log("nonce 9", nonce9);
         const msg = generateVerificationMessage(
             context,
             bobSubject,
             aliceSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall
-            nonce + 6
+            nonce9
         );
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
@@ -384,7 +378,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [twitterIdentity],
-            nonce + 1,
+            nonce,
             'twitter',
             context.substrateWallet.alice,
             []

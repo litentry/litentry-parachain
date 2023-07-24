@@ -100,6 +100,7 @@ where
 
 	let author_get_next_nonce: &str = "author_getNextNonce";
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
+		debug!("author_getNextNonce");
 		let state_nonce = state.clone();
 		if state_nonce.is_none() {
 			return Ok(json!(compute_hex_encoded_return_error(
@@ -107,8 +108,10 @@ where
 			)))
 		}
 		let state_nonce_unwrap = state_nonce.unwrap();
-		match params.parse::<String>() {
-			Ok(shard_base58) => {
+		match params.parse::<Vec<String>>() {
+			Ok(shard_base58s) => {
+				let shard_base58 = shard_base58s[0].clone();
+				debug!("author_getNextNonce shard_base58 {:?}", shard_base58);
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
 					Ok(id) => id,
 					Err(msg) => {
