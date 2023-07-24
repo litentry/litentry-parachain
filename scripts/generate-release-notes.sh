@@ -52,6 +52,10 @@ if [ "$2" != "client" ]; then
 else
   echo "- [ ] Runtime" >> "$1"
 fi
+if [ "$2" = "enclave" || "$2" == "all" ]; then 
+  echo "- [x] Enclave" >> "$1"
+else 
+  echo "- [ ] Enclave" >> "$1"
 echo >> "$1"
 
 # use <CODE> to decorate around the stuff and then replace it with `
