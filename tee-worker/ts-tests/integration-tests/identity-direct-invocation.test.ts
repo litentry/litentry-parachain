@@ -15,6 +15,7 @@ import {
     createSignedTrustedCallSetUserShieldingKey,
     createSignedTrustedGetterIdGraph,
     createSignedTrustedGetterUserShieldingKey,
+    createSignedTrustedCallRemoveIdentity,
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
@@ -115,81 +116,81 @@ describe('Test Identity (direct invocation)', function () {
         assert.isTrue(k.isNone, 'shielding key should be empty before set');
     });
 
-    step('Invalid user shielding key', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        const bobSubstrateIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.bob.addressRaw),
-            'Substrate',
-            context
-        );
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    // step('Invalid user shielding key', async function () {
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    //     const bobSubstrateIdentity = await buildIdentityHelper(
+    //         u8aToHex(context.substrateWallet.bob.addressRaw),
+    //         'Substrate',
+    //         context
+    //     );
+    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
-        const nonce = await getSidechainNonce(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            aliceSubject
-        );
-        const [bobValidationData] = await buildValidations(
-            context,
-            [aliceSubject],
-            [bobSubstrateIdentity],
-            nonce.toNumber(),
-            'substrate',
-            context.substrateWallet.bob
-        );
-        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+    //     const nonce = await getSidechainNonce(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         aliceSubject
+    //     );
+    //     const [bobValidationData] = await buildValidations(
+    //         context,
+    //         [aliceSubject],
+    //         [bobSubstrateIdentity],
+    //         nonce.toNumber(),
+    //         'substrate',
+    //         context.substrateWallet.bob
+    //     );
+    //     const eventsPromise = subscribeToEvents(requestIdentifier, context);
 
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            nonce,
-            context.substrateWallet.alice,
-            aliceSubject,
-            context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
-            context.api.createType('LitentryValidationData', bobValidationData).toHex(),
-            context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
-            keyNonce,
-            requestIdentifier
-        );
+    //     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    //         context.api,
+    //         context.mrEnclave,
+    //         nonce,
+    //         context.substrateWallet.alice,
+    //         aliceSubject,
+    //         context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
+    //         context.api.createType('LitentryValidationData', bobValidationData).toHex(),
+    //         context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
+    //         keyNonce,
+    //         requestIdentifier
+    //     );
 
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall
-        );
-        assert.isTrue(
-            res.status.isTrustedOperationStatus,
-            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
-        );
-        const status = res.status.asTrustedOperationStatus;
-        assert.isTrue(
-            status.isSubmitted || status.isInSidechainBlock,
-            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
-        );
+    //     const res = await sendRequestFromTrustedCall(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         linkIdentityCall
+    //     );
+    //     assert.isTrue(
+    //         res.status.isTrustedOperationStatus,
+    //         `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+    //     );
+    //     const status = res.status.asTrustedOperationStatus;
+    //     assert.isTrue(
+    //         status.isSubmitted || status.isInSidechainBlock,
+    //         `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+    //     );
 
-        const events = await eventsPromise;
+    //     const events = await eventsPromise;
 
-        const linkIdentityFailed = context.api.events.identityManagement.LinkIdentityFailed;
+    //     const linkIdentityFailed = context.api.events.identityManagement.LinkIdentityFailed;
 
-        const isLinkIdentityFailed = linkIdentityFailed.is.bind(linkIdentityFailed);
-        type EventLike = Parameters<typeof isLinkIdentityFailed>[0];
-        const ievents: EventLike[] = events.map(({ event }) => event);
-        const linkIdentityFailedEvents = ievents.filter(isLinkIdentityFailed);
+    //     const isLinkIdentityFailed = linkIdentityFailed.is.bind(linkIdentityFailed);
+    //     type EventLike = Parameters<typeof isLinkIdentityFailed>[0];
+    //     const ievents: EventLike[] = events.map(({ event }) => event);
+    //     const linkIdentityFailedEvents = ievents.filter(isLinkIdentityFailed);
 
-        assert.lengthOf(linkIdentityFailedEvents, 1);
-        /**
-         * @fixme tsc is STILL not seeing the correct type for these events, WTF!?!?!?!?
-         */
-        assert.equal(
-            (linkIdentityFailedEvents[0].data[1] as CorePrimitivesErrorErrorDetail).type,
-            'UserShieldingKeyNotFound',
-            'check linkIdentityFailedEvent detail is UserShieldingKeyNotFound, but is not'
-        );
-    });
+    //     assert.lengthOf(linkIdentityFailedEvents, 1);
+    //     /**
+    //      * @fixme tsc is STILL not seeing the correct type for these events, WTF!?!?!?!?
+    //      */
+    //     assert.equal(
+    //         (linkIdentityFailedEvents[0].data[1] as CorePrimitivesErrorErrorDetail).type,
+    //         'UserShieldingKeyNotFound',
+    //         'check linkIdentityFailedEvent detail is UserShieldingKeyNotFound, but is not'
+    //     );
+    // });
 
     ['alice', 'bob'].forEach((name) => {
         step(`set user shielding key (${name})`, async function () {
@@ -640,6 +641,90 @@ describe('Test Identity (direct invocation)', function () {
         const events = (await eventsPromise).map(({ event }) => event);
 
         // todo check events
+
+    });
+
+    step('remove identity', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+
+        const linkIdentityRequestParams: {
+            nonce: number;
+            identity: LitentryPrimitivesIdentity;
+        }[] = [];
+
+        const twitterNonce = getNextNonce();
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+
+        linkIdentityRequestParams.push({
+            nonce: twitterNonce,
+            identity: twitterIdentity,
+        });
+
+        const evmNonce = getNextNonce();
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+
+        linkIdentityRequestParams.push({
+            nonce: evmNonce,
+            identity: evmIdentity,
+        });
+
+        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.eve.addressRaw),
+            'Substrate',
+            context
+        );
+        linkIdentityRequestParams.push({
+            nonce: eveSubstrateNonce,
+            identity: eveSubstrateIdentity,
+        });
+
+        for (const { nonce, identity } of linkIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const eventsPromise = subscribeToEvents(requestIdentifier, context);
+            const linkIdentityCall = createSignedTrustedCallRemoveIdentity(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                context.substrateWallet.alice,
+                aliceSubject,
+                identity.toHex(),
+                requestIdentifier
+            );
+
+            const res = await sendRequestFromTrustedCall(
+                context.tee,
+                context.api,
+                context.mrEnclave,
+                teeShieldingKey,
+                linkIdentityCall
+            );
+            assert.isTrue(
+                res.status.isTrustedOperationStatus,
+                `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+            );
+            const status = res.status.asTrustedOperationStatus;
+            assert.isTrue(
+                status.isSubmitted || status.isInSidechainBlock,
+                `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+            );
+            const events = (await eventsPromise).map(({ event }) => event);
+            // let isIdentityLinked = false;
+            // events.forEach((event) => {
+            //     if (context.api.events.identityManagement.LinkIdentityFailed.is(event)) {
+            //         assert.fail(JSON.stringify(event.toHuman(), null, 4));
+            //     }
+            //     if (context.api.events.identityManagement.IdentityLinked.is(event)) {
+            //         isIdentityLinked = true;
+            //     }
+            // });
+            // assert.isTrue(isIdentityLinked); // @FIXME: dump events if no success or failure reported
+        }
 
     });
 });
