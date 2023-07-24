@@ -60,25 +60,6 @@ describe('Test Identity (direct invocation)', function () {
     it('needs a lot more work to be complete');
     it('most of the bob cases are missing');
 
-    step('check user sidechain storage before create', async function () {
-        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
-            context.api,
-            context.substrateWallet.alice,
-            aliceSubject
-        );
-
-        const shieldingKeyGetResult = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            shieldingKeyGetter
-        );
-
-        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
-        assert.isTrue(k.isNone, 'shielding key should be empty before set');
-    });
-
     step('linking identity with invalid user shielding key', async function () {
         const bobSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.bob.addressRaw),
@@ -131,6 +112,25 @@ describe('Test Identity (direct invocation)', function () {
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
     });
 
+    step('check user sidechain storage before user shielding key creating', async function () {
+        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+
+        const shieldingKeyGetResult = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            shieldingKeyGetter
+        );
+
+        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
+        assert.isTrue(k.isNone, 'shielding key should be empty before set');
+    });
+
     ['alice', 'bob'].forEach((name) => {
         step(`setting user shielding key (${name})`, async function () {
             const wallet = context.substrateWallet[name];
@@ -174,7 +174,7 @@ describe('Test Identity (direct invocation)', function () {
         });
     });
 
-    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
+    step('check user shielding key from sidechain storage after user shielding key setting', async function () {
         const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
             context.api,
             context.substrateWallet.alice,
@@ -457,19 +457,8 @@ describe('Test Identity (direct invocation)', function () {
 
         const events = await eventsPromise;
 
-        const linkIdentityFailed = context.api.events.identityManagement.LinkIdentityFailed;
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'VerifyEvmSignatureFailed');
 
-        const isLinkIdentityFailed = linkIdentityFailed.is.bind(linkIdentityFailed);
-        type EventLike = Parameters<typeof isLinkIdentityFailed>[0];
-        const ievents: EventLike[] = events.map(({ event }) => event);
-        const linkIdentityFailedEvent = ievents.filter(isLinkIdentityFailed);
-
-        assert.lengthOf(linkIdentityFailedEvent, 1);
-        assert.equal(
-            (linkIdentityFailedEvent[0].data[1] as CorePrimitivesErrorErrorDetail).type,
-            'VerifyEvmSignatureFailed',
-            'check linkIdentityFailedEvent detail is VerifyEvmSignatureFailed, but is not'
-        );
     });
     step('linking aleady linked identity', async function () {
         let currentNonce = (
@@ -642,7 +631,7 @@ describe('Test Identity (direct invocation)', function () {
         }
     });
 
-    step('check idgraph from sidechain storage after remove', async function () {
+    step('check idgraph from sidechain storage after removing', async function () {
         const idgraphGetter = createSignedTrustedGetterIdGraph(
             context.api,
             context.substrateWallet.alice,
@@ -702,8 +691,9 @@ describe('Test Identity (direct invocation)', function () {
         ).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        // remove already removed identity
         const eveSubstrateNonce = getNextNonce();
+
+        // already removed by alice
         const eveSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.eve.addressRaw),
             'Substrate',
