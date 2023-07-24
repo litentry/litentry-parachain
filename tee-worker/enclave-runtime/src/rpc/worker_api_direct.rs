@@ -18,6 +18,7 @@
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
+use ita_stf::helpers::enclave_signer_account;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::Rsa3072Seal;
@@ -130,8 +131,13 @@ where
 						let trusted_calls =
 							pool_author.get_pending_trusted_calls_for(shard, &account);
 						let pending_tx_count = trusted_calls.len();
+						let ac = state.execute_with(enclave_signer_account::<AccountId>);
+						debug!("author_getNextNonce account in hex :{:?}", &ac.to_hex());
+						let b: [u8; 32] = ac.clone().into();
+						debug!("author_getNextNonce account in byte :{:?}", &b);
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-						let nonce = state.execute_with(|| System::account_nonce(&account));
+						let nonce = state.execute_with(|| System::account_nonce(&ac));
+						debug!("author_getNextNonce nonce:{:?} pending_tx_count {}", nonce, pending_tx_count);
 						let json_value = RpcReturnValue {
 							do_watch: false,
 							value: (nonce + pending_tx_count).encode(),

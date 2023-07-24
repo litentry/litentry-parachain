@@ -23,6 +23,26 @@ import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
+import { sendRequest } from './common/call';
+
+import * as base58 from 'micro-base58';
+
+async function getNonce(base58mrEnclave: string, context: any) {
+    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, context.mrEnclave.slice(2)], id: 1 };
+    const res = await sendRequest(context.tee, request, context.api);
+    const u8aValue = res.value.toU8a();
+    const len = u8aValue.length;
+    let nonce = 0;
+    if(len > 0) {
+        for( let i = len - 1; i > 0; i--){
+            nonce *= 16;
+            nonce += u8aValue[i];
+        }
+    }
+    console.log("res value",u8aValue);
+    console.log("nonce is:", nonce);
+    return nonce;
+}
 
 describeLitentry('Test Identity', 0, (context) => {
     const errorAesKey = '0xError';
@@ -36,8 +56,6 @@ describeLitentry('Test Identity', 0, (context) => {
     let web3networks: Web3Network[][] = [];
 
     step('check user sidechain storage before create', async function () {
-        const nonce1 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce1 is:", nonce1);
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
@@ -49,8 +67,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('Invalid user shielding key', async function () {
-        const nonce2 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce2 is:", nonce2);
         const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         // use empty `eveValidations`, the `UserShieldingKeyNotFound` error should be emitted before verification
         const txs = await buildIdentityTxs(
@@ -69,8 +85,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('set user shielding key', async function () {
-        const nonce3 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce3 is:", nonce3);
         const [aliceTxs] = (await buildIdentityTxs(
             context,
             [context.substrateWallet.alice],
@@ -99,8 +113,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        const nonce4 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce2 is:", nonce4);
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
@@ -112,8 +124,6 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
-        const nonce5 = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce2 is:", nonce5);
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
         // the main address should be already inside the IDGraph
@@ -134,8 +144,8 @@ describeLitentry('Test Identity', 0, (context) => {
         // - a `mock_user` twitter
         // - alice's evm identity
         // - eve's substrate identity (as she can't link her own substrate again)
-        let nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce is:", nonce);
+        const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+        const nonce = await getNonce(base58mrEnclave, context);
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const eveSubstrateIdentity = await buildIdentityHelper(
@@ -143,8 +153,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Substrate',
             context
         );
-        nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce is:", nonce);
+        
 
         // Bob links:
         // - alice's substrate identity
@@ -153,21 +162,14 @@ describeLitentry('Test Identity', 0, (context) => {
             'Substrate',
             context
         );
-        nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce is:", nonce);
-
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
         aliceIdentities = [aliceSubstrateIdentity];
-        nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce is:", nonce);
         // TODO: being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
-        nonce = (await context.api.rpc.system.accountNextIndex(context.substrateWallet.alice.address)).toNumber();
-        console.log("nonce is:", nonce);
         const twitterValidations = await buildValidations(
             context,
             [aliceSubject],
@@ -190,7 +192,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [eveSubstrateIdentity],
-            nonce + 2,
+            nonce + 2 ,
             'substrate',
             context.substrateWallet.eve
         );
@@ -240,14 +242,13 @@ describeLitentry('Test Identity', 0, (context) => {
             },
         };
         const bobSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
-
         const msg = generateVerificationMessage(
             context,
             bobSubject,
             aliceSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall
-            9
+            nonce + 6
         );
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
@@ -375,11 +376,14 @@ describeLitentry('Test Identity', 0, (context) => {
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
+        const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+        const nonce = await getNonce(base58mrEnclave, context);
+        console.log("nonce 15", nonce);
         const aliceTwitterValidations = await buildValidations(
             context,
             [aliceSubject],
             [twitterIdentity],
-            15,
+            nonce + 1,
             'twitter',
             context.substrateWallet.alice,
             []
