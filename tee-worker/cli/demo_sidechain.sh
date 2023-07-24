@@ -39,17 +39,11 @@ while getopts ":m:p:A:B:t:u:W:V:C:" opt; do
         A)
             WORKER1PORT=$OPTARG
             ;;
-        B)
-            WORKER2PORT=$OPTARG
-            ;;
         u)
             NODEURL=$OPTARG
             ;;
         V)
             WORKER1URL=$OPTARG
-            ;;
-        W)
-            WORKER2URL=$OPTARG
             ;;
         C)
             CLIENT_BIN=$OPTARG
@@ -64,8 +58,6 @@ NODEURL=${NODEURL:-"ws://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
-WORKER2PORT=${WORKER2PORT:-3000}
-WORKER2URL=${WORKER2URL:-"wss://127.0.0.1"}
 
 CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
@@ -78,7 +70,6 @@ INITIALFUNDS=50000000000
 AMOUNTTRANSFER=20000000000
 
 CLIENTWORKER1="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1URL}"
-CLIENTWORKER2="${CLIENT_BIN} -p ${NPORT} -P ${WORKER2PORT} -u ${NODEURL} -U ${WORKER2URL}"
 
 if [ "$READMRENCLAVE" = "file" ]
 then
@@ -129,7 +120,7 @@ echo ""
 
 # Send funds from Alice to Bobs account, on worker 2.
 echo "* Second transfer: Send ${AMOUNTTRANSFER} funds from Alice's incognito account to Bob's incognito account (on worker 2)"
-$CLIENTWORKER2 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
+$ClientWorker1 trusted --mrenclave ${MRENCLAVE} --direct transfer ${ICGACCOUNTALICE} ${ICGACCOUNTBOB} ${AMOUNTTRANSFER}
 echo ""
 
 # Prevent getter being executed too early and returning an outdated result, before the transfer was made.
