@@ -73,7 +73,7 @@ print_divider
 echo "Do runtime upgrade and verify ..."
 cd "$ROOTDIR/ts-tests"
 echo "NODE_ENV=ci" > .env
-yarn && yarn test-runtime-upgrade 2>&1
+corepack yarn && corepack yarn test-runtime-upgrade 2>&1
 
 print_divider
 
