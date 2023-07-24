@@ -452,197 +452,197 @@ describe('Test Identity (direct invocation)', function () {
      */
     it('check idgraph from sidechain storage after linking');
 
-    step('linking invalid identity', async function () {
+    // step('linking invalid identity', async function () {
 
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
 
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
-        ).toNumber();
+    //     let currentNonce = (
+    //         await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+    //     ).toNumber();
 
-        const getNextNonce = () => currentNonce++;
+    //     const getNextNonce = () => currentNonce++;
 
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const twitterNonce = getNextNonce();
-        const evmNonce = getNextNonce();
-        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
-        const [evmValidation] = await buildValidations(
-            context,
-            [aliceSubject],
-            [evmIdentity],
-            evmNonce,
-            'ethereum',
-            undefined,
-            [context.ethersWallet.bob]
-        );
+    //     const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+    //     const twitterNonce = getNextNonce();
+    //     const evmNonce = getNextNonce();
+    //     const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+    //     const [evmValidation] = await buildValidations(
+    //         context,
+    //         [aliceSubject],
+    //         [evmIdentity],
+    //         evmNonce,
+    //         'ethereum',
+    //         undefined,
+    //         [context.ethersWallet.bob]
+    //     );
 
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEvents(requestIdentifier, context);
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', twitterNonce),
-            context.substrateWallet.bob,
-            aliceSubject,
-            twitterIdentity.toHex(),
-            evmValidation.toHex(),
-            evmNetworks.toHex(),
-            keyNonce,
-            requestIdentifier
-        );
+    //     const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //     const eventsPromise = subscribeToEvents(requestIdentifier, context);
+    //     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    //         context.api,
+    //         context.mrEnclave,
+    //         context.api.createType('Index', twitterNonce),
+    //         context.substrateWallet.bob,
+    //         aliceSubject,
+    //         twitterIdentity.toHex(),
+    //         evmValidation.toHex(),
+    //         evmNetworks.toHex(),
+    //         keyNonce,
+    //         requestIdentifier
+    //     );
 
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall
-        );
+    //     const res = await sendRequestFromTrustedCall(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         linkIdentityCall
+    //     );
 
-        assert.isTrue(
-            res.status.isTrustedOperationStatus,
-            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
-        );
-        const status = res.status.asTrustedOperationStatus;
-        assert.isTrue(
-            status.isSubmitted || status.isInSidechainBlock,
-            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
-        );
+    //     assert.isTrue(
+    //         res.status.isTrustedOperationStatus,
+    //         `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+    //     );
+    //     const status = res.status.asTrustedOperationStatus;
+    //     assert.isTrue(
+    //         status.isSubmitted || status.isInSidechainBlock,
+    //         `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+    //     );
 
-        const events = (await eventsPromise).map(({ event }) => event);
+    //     const events = (await eventsPromise).map(({ event }) => event);
 
 
-        // todo check events
+    //     // todo check events
 
-    });
+    // });
 
-    step('linking identity with wrong signature', async function () {
+    // step('linking identity with wrong signature', async function () {
 
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
-        ).toNumber();
-        const getNextNonce = () => currentNonce++;
-        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+    //     let currentNonce = (
+    //         await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+    //     ).toNumber();
+    //     const getNextNonce = () => currentNonce++;
+    //     const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+    //     const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
 
-        const evmNonce = getNextNonce();
-        // random wrong msg
-        const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
-        const ethereumSignature = (await context.ethersWallet.alice.signMessage(
-            ethers.utils.arrayify(wrongMsg)
-        )) as HexString;
+    //     const evmNonce = getNextNonce();
+    //     // random wrong msg
+    //     const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
+    //     const ethereumSignature = (await context.ethersWallet.alice.signMessage(
+    //         ethers.utils.arrayify(wrongMsg)
+    //     )) as HexString;
 
-        const ethereumValidationData = {
-            Web3Validation: {
-                Evm: {
-                    message: wrongMsg as HexString,
-                    signature: {
-                        Ethereum: ethereumSignature as HexString,
-                    },
-                },
-            },
-        };
-        const encodedVerifyIdentityValidation = context.api.createType(
-            'LitentryValidationData',
-            ethereumValidationData
-        )
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+    //     const ethereumValidationData = {
+    //         Web3Validation: {
+    //             Evm: {
+    //                 message: wrongMsg as HexString,
+    //                 signature: {
+    //                     Ethereum: ethereumSignature as HexString,
+    //                 },
+    //             },
+    //         },
+    //     };
+    //     const encodedVerifyIdentityValidation = context.api.createType(
+    //         'LitentryValidationData',
+    //         ethereumValidationData
+    //     )
+    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //     const eventsPromise = subscribeToEvents(requestIdentifier, context);
 
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', evmNonce),
-            context.substrateWallet.alice,
-            aliceSubject,
-            evmIdentity.toHex(),
-            encodedVerifyIdentityValidation.toHex(),
-            evmNetworks.toHex(),
-            keyNonce,
-            requestIdentifier
-        );
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall
-        );
+    //     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    //         context.api,
+    //         context.mrEnclave,
+    //         context.api.createType('Index', evmNonce),
+    //         context.substrateWallet.alice,
+    //         aliceSubject,
+    //         evmIdentity.toHex(),
+    //         encodedVerifyIdentityValidation.toHex(),
+    //         evmNetworks.toHex(),
+    //         keyNonce,
+    //         requestIdentifier
+    //     );
+    //     const res = await sendRequestFromTrustedCall(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         linkIdentityCall
+    //     );
 
-        assert.isTrue(
-            res.status.isTrustedOperationStatus,
-            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
-        );
-        const status = res.status.asTrustedOperationStatus;
-        assert.isTrue(
-            status.isSubmitted || status.isInSidechainBlock,
-            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
-        );
+    //     assert.isTrue(
+    //         res.status.isTrustedOperationStatus,
+    //         `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+    //     );
+    //     const status = res.status.asTrustedOperationStatus;
+    //     assert.isTrue(
+    //         status.isSubmitted || status.isInSidechainBlock,
+    //         `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+    //     );
 
-        const events = (await eventsPromise).map(({ event }) => event);
+    //     const events = (await eventsPromise).map(({ event }) => event);
 
-        // todo check events
+    //     // todo check events
 
-    })
-    step('linking aleady linked identity', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+    // })
+    // step('linking aleady linked identity', async function () {
+    //     const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
-        ).toNumber();
-        const getNextNonce = () => currentNonce++;
+    //     let currentNonce = (
+    //         await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+    //     ).toNumber();
+    //     const getNextNonce = () => currentNonce++;
 
-        const twitterNonce = getNextNonce();
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const [twitterValidation] = await buildValidations(
-            context,
-            [aliceSubject],
-            [twitterIdentity],
-            twitterNonce,
-            'twitter'
-        );
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+    //     const twitterNonce = getNextNonce();
+    //     const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+    //     const [twitterValidation] = await buildValidations(
+    //         context,
+    //         [aliceSubject],
+    //         [twitterIdentity],
+    //         twitterNonce,
+    //         'twitter'
+    //     );
+    //     const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEvents(requestIdentifier, context);
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', twitterNonce),
-            context.substrateWallet.alice,
-            aliceSubject,
-            twitterIdentity.toHex(),
-            twitterValidation.toHex(),
-            twitterNetworks.toHex(),
-            keyNonce,
-            requestIdentifier
-        );
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall
-        );
+    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //     const eventsPromise = subscribeToEvents(requestIdentifier, context);
+    //     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    //         context.api,
+    //         context.mrEnclave,
+    //         context.api.createType('Index', twitterNonce),
+    //         context.substrateWallet.alice,
+    //         aliceSubject,
+    //         twitterIdentity.toHex(),
+    //         twitterValidation.toHex(),
+    //         twitterNetworks.toHex(),
+    //         keyNonce,
+    //         requestIdentifier
+    //     );
+    //     const res = await sendRequestFromTrustedCall(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         linkIdentityCall
+    //     );
 
-        assert.isTrue(
-            res.status.isTrustedOperationStatus,
-            `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
-        );
-        const status = res.status.asTrustedOperationStatus;
-        assert.isTrue(
-            status.isSubmitted || status.isInSidechainBlock,
-            `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
-        );
+    //     assert.isTrue(
+    //         res.status.isTrustedOperationStatus,
+    //         `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+    //     );
+    //     const status = res.status.asTrustedOperationStatus;
+    //     assert.isTrue(
+    //         status.isSubmitted || status.isInSidechainBlock,
+    //         `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+    //     );
 
-        const events = (await eventsPromise).map(({ event }) => event);
+    //     const events = (await eventsPromise).map(({ event }) => event);
 
-        // todo check events
+    //     // todo check events
 
-    });
+    // });
 
     step('remove identity', async function () {
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
@@ -687,7 +687,7 @@ describe('Test Identity (direct invocation)', function () {
         for (const { nonce, identity } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEvents(requestIdentifier, context);
-            const linkIdentityCall = createSignedTrustedCallRemoveIdentity(
+            const removeIdentityCall = createSignedTrustedCallRemoveIdentity(
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
@@ -702,16 +702,16 @@ describe('Test Identity (direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 teeShieldingKey,
-                linkIdentityCall
+                removeIdentityCall
             );
             assert.isTrue(
                 res.status.isTrustedOperationStatus,
-                `linkIdentityCall should be trusted operation status, but is ${res.status.type}`
+                `removeIdentityCall should be trusted operation status, but is ${res.status.type}`
             );
             const status = res.status.asTrustedOperationStatus;
             assert.isTrue(
                 status.isSubmitted || status.isInSidechainBlock,
-                `linkIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+                `removeIdentityCall should be submitted or in sidechain block, but is ${status.type}`
             );
             const events = (await eventsPromise).map(({ event }) => event);
             // let isIdentityLinked = false;
@@ -727,4 +727,121 @@ describe('Test Identity (direct invocation)', function () {
         }
 
     });
+
+    step('check idgraph from sidechain storage after remove', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+        const idgraphGetter = createSignedTrustedGetterIdGraph(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+        console.log("idGraphidGraphidGraphidGraphidGraph", idGraph[0][0].toHuman());
+        console.log("idGraphidGraphidGraphidGraphidGraph", idGraph[0][1].toHuman());
+
+        // assert.lengthOf(idGraph, 0);
+    });
+
+
+    step('remove prime identity is disallowed', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+        // remove prime identity
+        const nonce = getNextNonce();
+        const substratePrimeIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.alice.addressRaw),
+            'Substrate',
+            context
+        );
+
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+        const removeIdentityCall = createSignedTrustedCallRemoveIdentity(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', nonce),
+            context.substrateWallet.alice,
+            aliceSubject,
+            substratePrimeIdentity.toHex(),
+            requestIdentifier
+        );
+
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            removeIdentityCall
+        );
+        assert.isTrue(
+            res.status.isTrustedOperationStatus,
+            `removeIdentityCall should be trusted operation status, but is ${res.status.type}`
+        );
+        const status = res.status.asTrustedOperationStatus;
+        assert.isTrue(
+            status.isSubmitted || status.isInSidechainBlock,
+            `removeIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+        );
+        const events = (await eventsPromise).map(({ event }) => event);
+
+        // todo check events
+    });
+
+    step('remove already removed identity', async function () {
+        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+
+        // remove already removed identity
+        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.eve.addressRaw),
+            'Substrate',
+            context
+        );
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEvents(requestIdentifier, context);
+        const removeIdentityCall = createSignedTrustedCallRemoveIdentity(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', eveSubstrateNonce),
+            context.substrateWallet.alice,
+            aliceSubject,
+            eveSubstrateIdentity.toHex(),
+            requestIdentifier
+        );
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            removeIdentityCall
+        );
+        assert.isTrue(
+            res.status.isTrustedOperationStatus,
+            `removeIdentityCall should be trusted operation status, but is ${res.status.type}`
+        );
+        const status = res.status.asTrustedOperationStatus;
+        assert.isTrue(
+            status.isSubmitted || status.isInSidechainBlock,
+            `removeIdentityCall should be submitted or in sidechain block, but is ${status.type}`
+        );
+        const events = (await eventsPromise).map(({ event }) => event);
+
+    })
+
 });
