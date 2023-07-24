@@ -265,7 +265,7 @@ jobs:
       - name: Download tee-worker artifact
         uses: actions/download-artifact@v3
         with:
-          name: tee-worker-artifact
+          name: tee-worker-1892-release-3.tar.gz
           path: ${{ github.workspace }}
 
       - name: Generate release notes
