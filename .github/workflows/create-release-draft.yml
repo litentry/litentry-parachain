@@ -267,6 +267,10 @@ jobs:
         with:
           name: tee-worker-1892-release-3.tar.gz
           path: ${{ github.workspace }}
+      
+      - name: Debug files 
+        run: |
+          ls -a 
 
       - name: Generate release notes
         run: |
