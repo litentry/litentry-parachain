@@ -117,7 +117,10 @@ where
 				match state_account_id_unwrap.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
 						let account = state.execute_with(enclave_signer_account::<AccountId>);
-						debug!("author_getEnclaveAccountId account in hex :{:?}", &account.to_hex());
+						debug!(
+							"author_getEnclaveAccountId account in hex :{:?}",
+							&account.to_hex()
+						);
 						let json_value = RpcReturnValue {
 							do_watch: false,
 							value: account.encode(),
@@ -140,7 +143,7 @@ where
 
 	// author_getNextNonce
 	let state_storage = state.clone();
-	
+
 	let author_get_next_nonce: &str = "author_getNextNonce";
 	io.add_sync_method(author_get_next_nonce, move |params: Params| {
 		let state_nonce = state.clone();
@@ -196,9 +199,6 @@ where
 			},
 		}
 	});
-
-	
-	
 
 	let mu_ra_url_name: &str = "author_getMuRaUrl";
 	io.add_sync_method(mu_ra_url_name, move |_: Params| {
