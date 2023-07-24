@@ -292,4 +292,4 @@ jobs:
             *-parachain-runtime/*-parachain-srtool-digest.json
             *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
             litentry-collator/*
-            tee-worker-${{ env.RELEASE_TAG }}.tar.gz
+            tee-worker-${{ env.RELEASE_TAG }}.tar.gz/*
