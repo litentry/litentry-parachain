@@ -261,6 +261,12 @@ jobs:
 
       - name: Download all artefacts
         uses: actions/download-artifact@v3
+      
+      - name: Download tee-worker artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: tee-worker-artifact
+          path: ${{ github.workspace }}
 
       - name: Generate release notes
         run: |
