@@ -250,10 +250,8 @@ jobs:
     # see https://github.com/actions/runner/issues/491
     # seems to be the only way to achieve this
     needs:
-      - build-wasm
       - set-release-type
       - build-enclave
-      - build-docker
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v3
