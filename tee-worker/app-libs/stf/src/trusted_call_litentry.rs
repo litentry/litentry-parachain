@@ -23,7 +23,7 @@ use crate::{
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::{IdentityStatus, RuntimeOrigin};
+use ita_sgx_runtime::RuntimeOrigin;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -93,21 +93,40 @@ impl TrustedCallSigned {
 			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))
 	}
 
-	pub fn remove_identity_internal(
+	pub fn deactivate_identity_internal(
 		signer: AccountId,
 		who: Identity,
 		identity: Identity,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
 			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
+			StfError::DeactivateIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::RemoveIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+			.ok_or(StfError::DeactivateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
-		IMTCall::remove_identity { who, identity }
+		IMTCall::deactivate_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
+			.map_err(|e| StfError::DeactivateIdentityFailed(e.into()))?;
+
+		Ok(key)
+	}
+
+	pub fn activate_identity_internal(
+		signer: AccountId,
+		who: Identity,
+		identity: Identity,
+	) -> StfResult<UserShieldingKeyType> {
+		ensure!(
+			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+			StfError::ActivateIdentityFailed(ErrorDetail::UnauthorizedSigner)
+		);
+		let key = IdentityManagement::user_shielding_keys(&who)
+			.ok_or(StfError::ActivateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
+
+		IMTCall::activate_identity { who, identity }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::ActivateIdentityFailed(e.into()))?;
 
 		Ok(key)
 	}
@@ -137,7 +156,7 @@ impl TrustedCallSigned {
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
-			.filter(|item| item.1.status == IdentityStatus::Active)
+			.filter(|item| item.1.is_active())
 			.map(|item| {
 				let mut networks = item.1.web3networks.to_vec();
 				// filter out the web3networks which are not supported by this specific `assertion`.
