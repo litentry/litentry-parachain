@@ -14,8 +14,6 @@ services:
         condition: service_healthy
       integritee-worker-1:
         condition: service_healthy
-      integritee-worker-2:
-        condition: service_healthy
     networks:
       - integritee-test-network
     entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-bulk-identity 2>&1' "

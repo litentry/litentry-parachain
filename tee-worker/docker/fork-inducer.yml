@@ -19,8 +19,6 @@ services:
         condition: service_healthy
       integritee-worker-1:
         condition: service_healthy
-      integritee-worker-2:
-        condition: service_healthy
     networks:
       - integritee-test-network
     volumes:

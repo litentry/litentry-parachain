@@ -11,8 +11,6 @@ services:
         condition: service_healthy
       integritee-worker-1:
         condition: service_healthy
-      integritee-worker-2:
-        condition: service_healthy
     environment:
       - RUST_LOG=warn,ws=warn,itc_rpc_client=warn
     networks:
