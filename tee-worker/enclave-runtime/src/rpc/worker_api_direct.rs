@@ -107,18 +107,10 @@ where
 			)))
 		}
 		let state_nonce_unwrap = state_nonce.unwrap();
-		match params.parse::<(String, String)>() {
-			Ok((shard_base58, account_hex)) => {
+		match params.parse::<String>() {
+			Ok(shard_base58) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
 					Ok(id) => id,
-					Err(msg) => {
-						let error_msg: String =
-							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-				let account = match AccountId::from_hex(account_hex.as_str()) {
-					Ok(acc) => acc,
 					Err(msg) => {
 						let error_msg: String =
 							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
@@ -128,16 +120,17 @@ where
 
 				match state_nonce_unwrap.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
+						let account = state.execute_with(enclave_signer_account::<AccountId>);
+						debug!("author_getNextNonce account in hex :{:?}", &account.to_hex());
 						let trusted_calls =
 							pool_author.get_pending_trusted_calls_for(shard, &account);
 						let pending_tx_count = trusted_calls.len();
-						let ac = state.execute_with(enclave_signer_account::<AccountId>);
-						debug!("author_getNextNonce account in hex :{:?}", &ac.to_hex());
-						let b: [u8; 32] = ac.clone().into();
-						debug!("author_getNextNonce account in byte :{:?}", &b);
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-						let nonce = state.execute_with(|| System::account_nonce(&ac));
-						debug!("author_getNextNonce nonce:{:?} pending_tx_count {}", nonce, pending_tx_count);
+						let nonce = state.execute_with(|| System::account_nonce(&account));
+						debug!(
+							"author_getNextNonce nonce:{:?} pending_tx_count {}",
+							nonce, pending_tx_count
+						);
 						let json_value = RpcReturnValue {
 							do_watch: false,
 							value: (nonce + pending_tx_count).encode(),

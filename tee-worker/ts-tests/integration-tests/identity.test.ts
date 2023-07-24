@@ -28,7 +28,7 @@ import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 
 async function getNonce(base58mrEnclave: string, context: any) {
-    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, context.mrEnclave.slice(2)], id: 1 };
+    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
     const u8aValue = res.value.toU8a();
     const len = u8aValue.length;
@@ -152,8 +152,7 @@ describeLitentry('Test Identity', 0, (context) => {
             u8aToHex(context.substrateWallet.eve.addressRaw),
             'Substrate',
             context
-        );
-        
+        );  
 
         // Bob links:
         // - alice's substrate identity
@@ -162,8 +161,10 @@ describeLitentry('Test Identity', 0, (context) => {
             'Substrate',
             context
         );
+
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
         aliceIdentities = [aliceSubstrateIdentity];
+        
         // TODO: being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
         //       it for each such request, similar to the construction of substrate tx
