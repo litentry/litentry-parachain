@@ -11,6 +11,7 @@ import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { RequestEvent } from './type-definitions';
 
 import { u8aToHex } from '@polkadot/util';
+import { FrameSystemEventRecord } from 'parachain-api';
 //transactions utils
 export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<SubmittableResult>((resolve, reject) => {
@@ -217,3 +218,51 @@ export async function multiAccountTxSender(
     expect(eventsResp.length).to.be.equal(txs.length);
     return eventsResp;
 }
+
+// for DI-test
+export const subscribeToEventsWithExtHash = async (
+    requestIdentifier: string,
+    context: IntegrationTestContext
+): Promise<FrameSystemEventRecord[]> => {
+    return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
+        let blocksToScan = 30;
+
+        const unsubscribe = context.api.rpc.chain.subscribeNewHeads(async (blockHeader) => {
+            const shiftedApi = await context.api.at(blockHeader.hash);
+
+            const allBlockEvents = await shiftedApi.query.system.events();
+            const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
+
+            const matchingEvent = allExtrinsicEvents.find((eventRecord) => {
+                const eventData = eventRecord.event.data.toHuman();
+                /**
+                 * @FIXME I'd love a cleaner way to do this check :P
+                 */
+
+                return (
+                    eventData != undefined &&
+                    typeof eventData === 'object' &&
+                    'reqExtHash' in eventData &&
+                    eventData.reqExtHash === requestIdentifier
+                );
+            });
+
+            if (matchingEvent == undefined) {
+                blocksToScan -= 1;
+                if (blocksToScan < 1) {
+                    reject(new Error(`timed out listening for reqExtHash: ${requestIdentifier} in parachain events`));
+                    (await unsubscribe)();
+                }
+                return;
+            }
+
+            const extrinsicIndex = matchingEvent.phase.asApplyExtrinsic;
+            const requestEvents = allExtrinsicEvents.filter((eventRecord) =>
+                eventRecord.phase.asApplyExtrinsic.eq(extrinsicIndex)
+            );
+
+            resolve(requestEvents);
+            (await unsubscribe)();
+        });
+    });
+};

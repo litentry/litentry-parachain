@@ -248,12 +248,7 @@ export async function buildValidations(
     for (let index = 0; index < identities.length; index++) {
         const validationNonce = startingSidechainNonce + index;
 
-        const msg = generateVerificationMessage(
-            context,
-            signerIdentities[index],
-            identities[index],
-            validationNonce
-        );
+        const msg = generateVerificationMessage(context, signerIdentities[index], identities[index], validationNonce);
         if (network === 'ethereum') {
             const ethereumValidationData = {
                 Web3Validation: {

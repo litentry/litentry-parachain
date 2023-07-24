@@ -222,15 +222,11 @@ export function createSignedTrustedCallRemoveIdentity(
     signer: KeyringPair,
     subject: LitentryPrimitivesIdentity,
     identity: string,
-    hash: string,
-
+    hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        [
-            'remove_identity',
-            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)',
-        ],
+        ['remove_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
         signer,
         mrenclave,
         nonce,

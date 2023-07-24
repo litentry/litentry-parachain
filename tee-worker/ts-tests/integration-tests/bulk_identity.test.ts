@@ -4,7 +4,7 @@ import {
     describeLitentry,
     buildIdentityTxs,
     buildIdentityHelper,
-    buildIdentityFromKeypair
+    buildIdentityFromKeypair,
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
