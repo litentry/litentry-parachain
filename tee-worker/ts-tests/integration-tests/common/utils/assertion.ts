@@ -17,7 +17,7 @@ import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturn
 export async function assertFailedEvent(
     context: IntegrationTestContext,
     events: FrameSystemEventRecord[],
-    eventType: 'LinkIdentityFailed' | 'RemoveIdentityFailed',
+    eventType: 'LinkIdentityFailed' | 'DeactivateIdentityFailed',
     expectedEvent: CorePrimitivesErrorErrorDetail['type'] | PalletIdentityManagementTeeError['type']
 ) {
     const failedType = context.api.events.identityManagement[eventType];
@@ -84,6 +84,7 @@ export async function assertIdentityLinked(
 ) {
     // We should parse idGraph from the last event, because the last event updates the verification status of all identities.
     const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
+    console.log(eventIdGraph);
 
     for (let index = 0; index < events.length; index++) {
         const signer = Array.isArray(signers) ? signers[index] : signers;
@@ -103,7 +104,9 @@ export async function assertIdentityLinked(
 
         // Check event identity with expected identity
         const eventIdentity = parseIdentity(context.sidechainRegistry, eventData.identity, aesKey);
+
         const eventIdentityTarget = eventIdentity[`as${eventIdentity.type}`];
+
         assert.equal(
             expectedIdentityTarget.toString(),
             eventIdentityTarget.toString(),
@@ -258,8 +261,8 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

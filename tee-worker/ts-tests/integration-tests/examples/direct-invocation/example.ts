@@ -14,7 +14,7 @@ import {
     sendRequestFromGetter,
     getSidechainNonce,
     decodeIdGraph,
-    getKeyPair,
+    getKeyPair
 } from './util';
 import {
     getEnclave,
@@ -22,11 +22,11 @@ import {
     buildIdentityHelper,
     initIntegrationTestContext,
     buildValidations,
-    buildIdentityFromKeypair,
+    buildIdentityFromKeypair
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
-import sidechainMetaData from '../../litentry-sidechain-metadata.json' assert { type: 'json' };
+import sidechainMetaData from '../../../sidechain-api/prepare-build/litentry-sidechain-metadata.json' assert { type: 'json' };
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { assert } from 'chai';
 import Options from 'websocket-as-promised/types/options';
@@ -143,11 +143,14 @@ export async function runExample(keyPairType: KeypairType) {
     assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Polkadot', 'Litentry'].toString());
     assert.isTrue(idgraph[0][1].status.isActive);
     // the second identity is the substrate identity (prime identity)
-    if (alice.type === 'ethereum') {
+    if (alice.type === "ethereum") {
         assert.isTrue(idgraph[1][0].isEvm);
         assert.equal(idgraph[1][0].asEvm.toHex(), u8aToHex(alice.addressRaw));
         assert.isTrue(idgraph[1][1].status.isActive);
-        assert.equal(idgraph[1][1].web3networks.toHuman()?.toString(), ['Ethereum', 'Polygon', 'BSC'].toString());
+        assert.equal(
+            idgraph[1][1].web3networks.toHuman()?.toString(),
+            ['Ethereum', 'Polygon', 'BSC'].toString()
+        );
     } else {
         assert.isTrue(idgraph[1][0].isSubstrate);
         assert.equal(idgraph[1][0].asSubstrate.toHex(), u8aToHex(alice.addressRaw));
@@ -157,6 +160,7 @@ export async function runExample(keyPairType: KeypairType) {
             ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
         );
     }
+
 
     console.log('Send UserShieldingKey getter for alice ...');
     let userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);

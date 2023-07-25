@@ -8,13 +8,13 @@ import {
     buildValidations,
     initIntegrationTestContext,
 } from './common/utils';
-import { assertFailedEvent, assertInitialIdGraphCreated, assertWorkRpcReturnValue } from './common/utils/assertion';
+import { assertFailedEvent, assertIdentityLinked, assertInitialIdGraphCreated, assertWorkRpcReturnValue } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallSetUserShieldingKey,
     createSignedTrustedGetterIdGraph,
     createSignedTrustedGetterUserShieldingKey,
-    createSignedTrustedCallRemoveIdentity,
+    createSignedTrustedCallDeactivateIdentity,
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
@@ -35,6 +35,7 @@ describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceSubject: LitentryPrimitivesIdentity = undefined as any;
+
     // Alice links:
     // - a `mock_user` twitter
     // - alice's evm identity
@@ -209,12 +210,12 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
         assert.lengthOf(idGraph, 1);
         const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
         assert.deepEqual(idGraphNodeIdentity.toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
         assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
     });
-
     step('linking identities (alice)', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
@@ -278,7 +279,7 @@ describe('Test Identity (direct invocation)', function () {
             validation: eveSubstrateValidation,
             networks: eveSubstrateNetworks,
         });
-
+        const linkedIdentityEvents: any[] = []
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
@@ -306,15 +307,19 @@ describe('Test Identity (direct invocation)', function () {
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityLinked = false;
             events.forEach((event) => {
-                if (context.api.events.identityManagement.IdentityDeactivatedFailed.is(event)) {
+                if (context.api.events.identityManagement.LinkIdentityFailed.is(event)) {
                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
                 }
-                if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
+                if (context.api.events.identityManagement.IdentityLinked.is(event)) {
                     isIdentityLinked = true;
+                    linkedIdentityEvents.push(event);
+
                 }
             });
             assert.isTrue(isIdentityLinked); // @FIXME: dump events if no success or failure reported
         }
+        assert.equal(linkedIdentityEvents.length, 3);
+        assertIdentityLinked(context, context.substrateWallet.alice, linkedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -332,8 +337,6 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
-
-        // // don't work for integritee-node
         // for (const { identity } of linkIdentityRequestParams) {
         //     const identityDump = JSON.stringify(identity.toHuman(), null, 4);
         //     console.debug(`checking identity: ${identityDump}`);
@@ -558,13 +561,13 @@ describe('Test Identity (direct invocation)', function () {
     //     await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
     // });
 
-    step('removing identity', async function () {
+    step('deactivating identity', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const removeIdentityRequestParams: {
+        const deactivateIdentityRequestParams: {
             nonce: number;
             identity: LitentryPrimitivesIdentity;
         }[] = [];
@@ -572,7 +575,7 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
-        removeIdentityRequestParams.push({
+        deactivateIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
         });
@@ -580,7 +583,7 @@ describe('Test Identity (direct invocation)', function () {
         const evmNonce = getNextNonce();
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
 
-        removeIdentityRequestParams.push({
+        deactivateIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
         });
@@ -591,15 +594,16 @@ describe('Test Identity (direct invocation)', function () {
             'Substrate',
             context
         );
-        removeIdentityRequestParams.push({
+        deactivateIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
         });
+        const deactivatedIdentityEvents: any[] = []
 
-        for (const { nonce, identity } of removeIdentityRequestParams) {
+        for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-            const removeIdentityCall = createSignedTrustedCallRemoveIdentity(
+            const deactivateIdentityCall = createSignedTrustedCallDeactivateIdentity(
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
@@ -614,26 +618,28 @@ describe('Test Identity (direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 teeShieldingKey,
-                removeIdentityCall
+                deactivateIdentityCall
             );
 
-            await assertWorkRpcReturnValue('removeIdentityCall', res);
+            await assertWorkRpcReturnValue('deactivateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
-            let isIdentityRemoved = false;
+            let isIdentityDeactivated = false;
             events.forEach((event) => {
-                if (context.api.events.identityManagement.RemoveIdentityFailed.is(event)) {
+                if (context.api.events.identityManagement.DeactivateIdentityFailed.is(event)) {
                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
                 }
-                if (context.api.events.identityManagement.IdentityRemoved.is(event)) {
-                    isIdentityRemoved = true;
+                if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
+                    isIdentityDeactivated = true;
+                    deactivatedIdentityEvents.push(event)
+
                 }
             });
-            assert.isTrue(isIdentityRemoved); // @FIXME: dump events if no success or failure reported
+            assert.isTrue(isIdentityDeactivated);
         }
     });
 
-    step('check idgraph from sidechain storage after removing', async function () {
+    step('check idgraph from sidechain storage after deactivating', async function () {
         const idgraphGetter = createSignedTrustedGetterIdGraph(
             context.api,
             context.substrateWallet.alice,
@@ -648,13 +654,23 @@ describe('Test Identity (direct invocation)', function () {
         );
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        console.log('idGraph', idGraph[0][1].toHuman());
-        console.log('idGraph', idGraph[0][0].toHuman());
+        for (const { identity } of linkIdentityRequestParams) {
+            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+            console.debug(`checking identity: ${identityDump}`);
+            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+            const [, idGraphNodeContext] = idGraphNode!;
 
-
+            assert.equal(
+                idGraphNodeContext.status.toString(),
+                'Inactive',
+                `status should be Inactive for identity: ${identityDump}`
+            );
+            console.debug('active ✅');
+        }
     });
 
-    step('removing prime identity is disallowed', async function () {
+    step('deactivating prime identity is disallowed', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
@@ -670,7 +686,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const removeIdentityCall = createSignedTrustedCallRemoveIdentity(
+        const deactivateIdentityCall = createSignedTrustedCallDeactivateIdentity(
             context.api,
             context.mrEnclave,
             context.api.createType('Index', nonce),
@@ -685,37 +701,33 @@ describe('Test Identity (direct invocation)', function () {
             context.api,
             context.mrEnclave,
             teeShieldingKey,
-            removeIdentityCall
+            deactivateIdentityCall
         );
-        await assertWorkRpcReturnValue('removeIdentityCall', res);
+        await assertWorkRpcReturnValue('deactivateIdentityCall', res);
 
         const events = await eventsPromise;
-        await assertFailedEvent(context, events, 'RemoveIdentityFailed', 'RemovePrimeIdentityDisallowed');
+        await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');
     });
 
-    step('removing already removed identity', async function () {
+    step('deactivating already deactivated identity', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const eveSubstrateNonce = getNextNonce();
 
-        // already removed by alice
-        const eveSubstrateIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.eve.addressRaw),
-            'Substrate',
-            context
-        );
+        // already deactivated by alice
+        const evmNonce = getNextNonce();
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const removeIdentityCall = createSignedTrustedCallRemoveIdentity(
+        const deactivateIdentityCall = createSignedTrustedCallDeactivateIdentity(
             context.api,
             context.mrEnclave,
-            context.api.createType('Index', eveSubstrateNonce),
+            context.api.createType('Index', evmNonce),
             context.substrateWallet.alice,
             aliceSubject,
-            eveSubstrateIdentity.toHex(),
+            evmIdentity.toHex(),
             requestIdentifier
         );
         const res = await sendRequestFromTrustedCall(
@@ -723,12 +735,12 @@ describe('Test Identity (direct invocation)', function () {
             context.api,
             context.mrEnclave,
             teeShieldingKey,
-            removeIdentityCall
+            deactivateIdentityCall
         );
-        await assertWorkRpcReturnValue('removeIdentityCall', res);
+        await assertWorkRpcReturnValue('deactivateIdentityCall', res);
 
         const events = await eventsPromise;
 
-        await assertFailedEvent(context, events, 'RemoveIdentityFailed', 'IdentityNotExist');
+        await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'IdentityNotExist');
     });
 });

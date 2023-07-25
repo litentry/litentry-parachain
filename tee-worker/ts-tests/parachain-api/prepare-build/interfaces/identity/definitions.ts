@@ -204,5 +204,5 @@ export default {
         GenericEventWithAccount: {
             account: "AccountId",
         },
-    },D
+    },
 };
