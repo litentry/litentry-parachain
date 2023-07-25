@@ -96,19 +96,22 @@ where
 		let mrenclave = self.ocall_api.get_mrenclave_of_self()?;
 
 		let top_or_hash = TrustedOperationOrHash::from_top(trusted_operation.clone());
+		let operation_hash = trusted_operation.hash();
+		debug!("Operation hash {:?}", operation_hash);
+
 
 		// TODO(Litentry): do we need to send any error notification to parachain?
 		let trusted_call = match trusted_operation.to_call().ok_or(Error::InvalidTrustedCallType) {
 			Ok(c) => c,
 			Err(e) => {
 				error!("Error: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
+				return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, vec![], vec![]))
 			},
 		};
 
 		if !trusted_call.verify_signature(&mrenclave.m, &shard) {
 			error!("TrustedCallSigned: bad signature");
-			return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
+			return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, vec![], vec![]))
 		}
 
 		// Necessary because light client sync may not be up to date
@@ -135,14 +138,11 @@ where
 			self.node_metadata_repo.clone(),
 		) {
 			Err(e) => {
-				error!("Stf execute failed: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash, extrinsic_call_backs))
+				error!("Stf execute failed: {:?}", e.0);
+				return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, e.1))
 			},
 			Ok(res) => res,
 		};
-
-		let operation_hash = trusted_operation.hash();
-		debug!("Operation hash {:?}", operation_hash);
 
 		if let StatePostProcessing::Prune = post_processing {
 			state.prune_state_diff();

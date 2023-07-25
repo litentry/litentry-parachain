@@ -69,7 +69,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Vec<u8>, Self::Error>;
+	) -> Result<Vec<u8>, (Self::Error, Vec<u8>)>;
 }
 
 /// Interface to execute state reading getters on a state.
@@ -96,7 +96,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Vec<u8>, Self::Error>;
+	) -> Result<Vec<u8>, (Self::Error, Vec<u8>)>;
 
 	/// Get storages hashes that should be updated for a specific call.
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;

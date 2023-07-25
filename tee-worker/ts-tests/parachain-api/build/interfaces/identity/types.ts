@@ -1,10 +1,26 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u128, u32 } from "@polkadot/types-codec";
+import type {
+    Bytes,
+    Enum,
+    Struct,
+    Text,
+    U8aFixed,
+    Vec,
+    bool,
+    u128,
+    u32,
+} from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
-import type { AccountId, Balance, BlockNumber, H256 } from "@polkadot/types/interfaces/runtime";
+import type {
+    AccountId,
+    Balance,
+    BlockNumber,
+    H256,
+    Index,
+} from "@polkadot/types/interfaces/runtime";
 
 /** @name ActivateIdentityResponse */
 export interface ActivateIdentityResponse extends Struct {
@@ -88,6 +104,49 @@ export interface DiscordValidationData extends Struct {
     readonly channel_id: Bytes;
     readonly message_id: Bytes;
     readonly guild_id: Bytes;
+}
+
+/** @name ErrorDetail */
+export interface ErrorDetail extends Enum {
+    readonly isImportError: boolean;
+    readonly isUnauthorizedSigner: boolean;
+    readonly isStfError: boolean;
+    readonly asStfError: Bytes;
+    readonly isSendStfRequestFailed: boolean;
+    readonly isUserShieldingKeyNotFound: boolean;
+    readonly isParseError: boolean;
+    readonly isDataProviderError: boolean;
+    readonly asDataProviderError: Bytes;
+    readonly isInvalidIdentity: boolean;
+    readonly isWrongWeb2Handle: boolean;
+    readonly isUnexpectedMessage: boolean;
+    readonly isWrongSignatureType: boolean;
+    readonly isVerifySubstrateSignatureFailed: boolean;
+    readonly isVerifyEvmSignatureFailed: boolean;
+    readonly isRecoverEvmAddressFailed: boolean;
+    readonly isWeb3NetworkOutOfBounds: boolean;
+    readonly type:
+        | "ImportError"
+        | "UnauthorizedSigner"
+        | "StfError"
+        | "SendStfRequestFailed"
+        | "UserShieldingKeyNotFound"
+        | "ParseError"
+        | "DataProviderError"
+        | "InvalidIdentity"
+        | "WrongWeb2Handle"
+        | "UnexpectedMessage"
+        | "WrongSignatureType"
+        | "VerifySubstrateSignatureFailed"
+        | "VerifyEvmSignatureFailed"
+        | "RecoverEvmAddressFailed"
+        | "Web3NetworkOutOfBounds";
+}
+
+/** @name ErrorResponse */
+export interface ErrorResponse extends Struct {
+    readonly req_ext_hash: H256;
+    readonly error: StfError;
 }
 
 /** @name EthereumSignature */
@@ -205,6 +264,54 @@ export interface SetUserShieldingKeyResponse extends Struct {
 
 /** @name ShardIdentifier */
 export interface ShardIdentifier extends H256 {}
+
+/** @name StfError */
+export interface StfError extends Enum {
+    readonly isMissingPrivileges: boolean;
+    readonly asMissingPrivileges: LitentryIdentity;
+    readonly isRequireEnclaveSignerAccount: boolean;
+    readonly isDispatch: boolean;
+    readonly asDispatch: Text;
+    readonly isMissingFunds: boolean;
+    readonly isInvalidNonce: boolean;
+    readonly asInvalidNonce: ITuple<[Index, Index]>;
+    readonly isStorageHashMismatch: boolean;
+    readonly isInvalidStorageDiff: boolean;
+    readonly isInvalidMetadata: boolean;
+    readonly isSetUserShieldingKeyFailed: boolean;
+    readonly asSetUserShieldingKeyFailed: ErrorDetail;
+    readonly isLinkIdentityFailed: boolean;
+    readonly asLinkIdentityFailed: ErrorDetail;
+    readonly isDeactivateIdentityFailed: boolean;
+    readonly asDeactivateIdentityFailed: ErrorDetail;
+    readonly isActivateIdentityFailed: boolean;
+    readonly asActivateIdentityFailed: ErrorDetail;
+    readonly isRequestVCFailed: boolean;
+    readonly asRequestVCFailed: ITuple<[Assertion, ErrorDetail]>;
+    readonly isSetScheduledMrEnclaveFailed: boolean;
+    readonly isSetIdentityNetworksFailed: boolean;
+    readonly asSetIdentityNetworksFailed: ErrorDetail;
+    readonly isInvalidAccount: boolean;
+    readonly isUnclassifiedError: boolean;
+    readonly type:
+        | "MissingPrivileges"
+        | "RequireEnclaveSignerAccount"
+        | "Dispatch"
+        | "MissingFunds"
+        | "InvalidNonce"
+        | "StorageHashMismatch"
+        | "InvalidStorageDiff"
+        | "InvalidMetadata"
+        | "SetUserShieldingKeyFailed"
+        | "LinkIdentityFailed"
+        | "DeactivateIdentityFailed"
+        | "ActivateIdentityFailed"
+        | "RequestVCFailed"
+        | "SetScheduledMrEnclaveFailed"
+        | "SetIdentityNetworksFailed"
+        | "InvalidAccount"
+        | "UnclassifiedError";
+}
 
 /** @name TrustedCall */
 export interface TrustedCall extends Enum {

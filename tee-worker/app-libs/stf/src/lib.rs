@@ -64,7 +64,7 @@ pub(crate) const ENCLAVE_ACCOUNT_KEY: &str = "Enclave_Account_Key";
 
 pub type StfResult<T> = Result<T, StfError>;
 
-#[derive(Debug, Display, PartialEq, Eq)]
+#[derive(Debug, Display, PartialEq, Eq, Encode, Decode, Clone)]
 pub enum StfError {
 	#[display(fmt = "Insufficient privileges {:?}, are you sure you are root?", _0)]
 	MissingPrivileges(Identity),

@@ -1219,6 +1219,8 @@ import type {
     DeactivateIdentityResponse,
     DirectRequestStatus,
     DiscordValidationData,
+    ErrorDetail,
+    ErrorResponse,
     GenericEventWithAccount,
     Getter,
     IdentityContext,
@@ -1234,6 +1236,7 @@ import type {
     SetIdentityNetworksResponse,
     SetUserShieldingKeyResponse,
     ShardIdentifier,
+    StfError,
     TrustedCall,
     TrustedCallSigned,
     TrustedGetter,
@@ -1572,6 +1575,7 @@ declare module "@polkadot/types/types/registry" {
         EraPoints: EraPoints;
         EraRewardPoints: EraRewardPoints;
         EraRewards: EraRewards;
+        ErrorDetail: ErrorDetail;
         ErrorMetadataLatest: ErrorMetadataLatest;
         ErrorMetadataV10: ErrorMetadataV10;
         ErrorMetadataV11: ErrorMetadataV11;
@@ -1579,6 +1583,7 @@ declare module "@polkadot/types/types/registry" {
         ErrorMetadataV13: ErrorMetadataV13;
         ErrorMetadataV14: ErrorMetadataV14;
         ErrorMetadataV9: ErrorMetadataV9;
+        ErrorResponse: ErrorResponse;
         EthAccessList: EthAccessList;
         EthAccessListItem: EthAccessListItem;
         EthAccount: EthAccount;
@@ -2222,6 +2227,7 @@ declare module "@polkadot/types/types/registry" {
         StakingLedgerTo240: StakingLedgerTo240;
         Statement: Statement;
         StatementKind: StatementKind;
+        StfError: StfError;
         StorageChangeSet: StorageChangeSet;
         StorageData: StorageData;
         StorageDeposit: StorageDeposit;

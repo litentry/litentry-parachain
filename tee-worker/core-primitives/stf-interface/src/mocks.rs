@@ -64,7 +64,7 @@ impl<Call, State, StateDiff>
 		_top_hash: H256,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-	) -> Result<Vec<u8>, Self::Error> {
+	) -> Result<Vec<u8>, (Self::Error, Vec<u8>)> {
 		unimplemented!()
 	}
 }
@@ -102,7 +102,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 		_top_hash: H256,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-	) -> Result<Vec<u8>, Self::Error> {
+	) -> Result<Vec<u8>, (Self::Error, Vec<u8>)> {
 		unimplemented!()
 	}
 

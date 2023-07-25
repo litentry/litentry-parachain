@@ -18,7 +18,7 @@
 // passed back to the requester of trustedCall direct invocation (DI).
 // They are mostly translated from the callback extrinsics in IMP.
 
-use crate::AccountId;
+use crate::{AccountId, StfError};
 use codec::{Decode, Encode};
 use itp_types::H256;
 use litentry_primitives::AesOutput;
@@ -55,4 +55,16 @@ pub(crate) struct ActivateIdentityResponse {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub(crate) struct SetIdentityNetworksResponse {
 	pub req_ext_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ErrorResponse {
+	pub req_ext_hash: H256,
+	pub error: StfError,
+}
+
+impl ErrorResponse {
+	pub fn new(req_ext_hash: H256, details: StfError) -> Self {
+		ErrorResponse { req_ext_hash, error: details }
+	}
 }

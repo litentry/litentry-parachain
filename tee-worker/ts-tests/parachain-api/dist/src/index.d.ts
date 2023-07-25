@@ -3,15 +3,7 @@ import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type {
-    Assertion,
-    LitentryIdentity,
-    LitentryValidationData,
-    Web3Network,
-    WorkerRpcReturnValue,
-    TrustedCallSigned,
-    Getter,
-} from "parachain-api/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -217,6 +209,50 @@ export declare const definitions: {
         };
         SetIdentityNetworksResponse: {
             req_ext_hash: string;
+        };
+        ErrorDetail: {
+            _enum: {
+                ImportError: string;
+                UnauthorizedSigner: string;
+                StfError: string;
+                SendStfRequestFailed: string;
+                UserShieldingKeyNotFound: string;
+                ParseError: string;
+                DataProviderError: string;
+                InvalidIdentity: string;
+                WrongWeb2Handle: string;
+                UnexpectedMessage: string;
+                WrongSignatureType: string;
+                VerifySubstrateSignatureFailed: string;
+                VerifyEvmSignatureFailed: string;
+                RecoverEvmAddressFailed: string;
+                Web3NetworkOutOfBounds: string;
+            };
+        };
+        StfError: {
+            _enum: {
+                MissingPrivileges: string;
+                RequireEnclaveSignerAccount: string;
+                Dispatch: string;
+                MissingFunds: string;
+                InvalidNonce: string;
+                StorageHashMismatch: string;
+                InvalidStorageDiff: string;
+                InvalidMetadata: string;
+                SetUserShieldingKeyFailed: string;
+                LinkIdentityFailed: string;
+                DeactivateIdentityFailed: string;
+                ActivateIdentityFailed: string;
+                RequestVCFailed: string;
+                SetScheduledMrEnclaveFailed: string;
+                SetIdentityNetworksFailed: string;
+                InvalidAccount: string;
+                UnclassifiedError: string;
+            };
+        };
+        ErrorResponse: {
+            req_ext_hash: string;
+            error: string;
         };
         AesOutput: {
             ciphertext: string;

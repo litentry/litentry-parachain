@@ -344,8 +344,8 @@ where
 		self.process_top(ext, shard, TopSubmissionMode::SubmitWatch)
 	}
 
-	fn set_rpc_response_value(&self, rpc_responses_value: Vec<(TxHash<TopPool>, Vec<u8>)>) {
-		self.top_pool.set_rpc_response_value(rpc_responses_value)
+	fn set_rpc_response_values(&self, rpc_responses_values: Vec<(TxHash<TopPool>, Vec<u8>)>) {
+		self.top_pool.set_rpc_response_values(rpc_responses_values)
 	}
 
 	fn swap_rpc_connection_hash(&self, old_hash: TxHash<TopPool>, new_hash: TxHash<TopPool>) {
