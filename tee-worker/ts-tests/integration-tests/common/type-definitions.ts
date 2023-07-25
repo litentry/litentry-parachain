@@ -164,11 +164,8 @@ export const jsonSchema = {
                         type: 'boolean',
                     },
                 },
-                endpoint: {
-                    type: 'string',
-                },
             },
-            required: ['id', 'description', 'type', 'assertions', 'values', 'endpoint'],
+            required: ['id', 'description', 'type', 'assertions', 'values',],
         },
         proof: {
             type: 'object',
