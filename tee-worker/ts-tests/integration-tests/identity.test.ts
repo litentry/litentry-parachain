@@ -21,13 +21,13 @@ import { assert } from 'chai';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { TransactionSubmit } from './common/type-definitions';
+import type { IntegrationTestContext, TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 
-async function getWorkerAddress(base58mrEnclave: string, context: any) : Promise<string> {
+async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTestContext) : Promise<string> {
     const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveAccountId', params: [base58mrEnclave], id: 1 };
     const resAcc = await sendRequest(context.tee, requestAcc, context.api);
     const workerAcc = resAcc.value.toHex();
@@ -35,7 +35,7 @@ async function getWorkerAddress(base58mrEnclave: string, context: any) : Promise
     return workerAcc;
 }
 
-async function getNonce(base58mrEnclave: string, workerAddr: string, context: any) : Promise<number> {
+async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext) : Promise<number> {
     const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
     const u8aValue = res.value.toU8a();
@@ -47,7 +47,7 @@ async function getNonce(base58mrEnclave: string, workerAddr: string, context: an
             nonce += u8aValue[i];
         }
     }
-    console.log("res value",u8aValue);
+    console.log("res value in array", u8aValue, "in Hex:", res.value.toHuman();
     console.log("nonce is:", nonce);
     return nonce;
 }
