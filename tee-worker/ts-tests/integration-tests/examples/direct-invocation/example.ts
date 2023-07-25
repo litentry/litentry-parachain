@@ -318,3 +318,33 @@ export async function runExample(keyPairType: KeypairType) {
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), keyBob);
 }
+
+function assertPrimeIdentity(
+    idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext],
+    alice: KeyringPair
+) {
+    if (alice.type === 'ethereum') {
+        assert.isTrue(idgraph[0].isEvm);
+        assert.equal(idgraph[0].asEvm.toHex(), u8aToHex(alice.addressRaw));
+        assert.isTrue(idgraph[1].status.isActive);
+        assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Ethereum', 'Polygon', 'BSC'].toString());
+    } else {
+        assert.isTrue(idgraph[0].isSubstrate);
+        assert.equal(idgraph[0].asSubstrate.toHex(), u8aToHex(alice.addressRaw));
+        assert.isTrue(idgraph[1].status.isActive);
+        assert.equal(
+            idgraph[1].web3networks.toHuman()?.toString(),
+            ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
+        );
+    }
+}
+
+function assertLinkedIdentity(
+    idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext],
+    address: HexString
+) {
+    assert.isTrue(idgraph[0].isSubstrate);
+    assert.equal(idgraph[0].asSubstrate.toHex(), address);
+    assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Polkadot', 'Litentry'].toString());
+    assert.isTrue(idgraph[1].status.isActive);
+}
