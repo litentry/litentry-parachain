@@ -28,7 +28,7 @@ use lc_data_providers::{
 use std::string::ToString;
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
-	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
+	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
 const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
 const VC_A11_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
