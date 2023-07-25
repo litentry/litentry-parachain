@@ -42,12 +42,12 @@ CUMULUS_DEP=$(grep -F 'https://github.com/paritytech/cumulus' node/Cargo.toml | 
 
 echo > "$1"
 echo "## This is a release for:" >> "$1"
-if [ "$2" != "runtime" ]; then
+if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
   echo "- [x] Client" >> "$1"
 else
   echo "- [ ] Client" >> "$1"
 fi
-if [ "$2" != "client" ]; then
+if [ "$2" != "client" ] && [ "$2" != "enclave" ]; then
   echo "- [x] Runtime" >> "$1"
 else
   echo "- [ ] Runtime" >> "$1"
@@ -62,7 +62,7 @@ echo >> "$1"
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
 
-if [ "$2" != "runtime" ]; then
+if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
   cat << EOF >> "$1"
 ## Client
 
