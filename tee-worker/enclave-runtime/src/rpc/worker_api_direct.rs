@@ -433,17 +433,19 @@ fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
 		))
 	}
 
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let encoded_quote_to_forward: Vec<u8> =
-		itp_utils::hex::decode_hex(&hex_encoded_params[0]).map_err(|e| format!("{:?}", e))?;
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
 	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
 		.map_err(|e| format!("{:?}", e))?;
 
-	let validator_access = get_validator_accessor_from_solo_or_parachain().unwrap();
+	let validator_access =
+		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
 	validator_access
 		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
-		.unwrap();
+		.map_err(|e| format!("{:?}", e))?;
 
 	Ok(ext)
 }
@@ -461,17 +463,19 @@ fn attesteer_forward_ias_attestation_report_inner(
 		))
 	}
 
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let ias_attestation_report =
-		itp_utils::hex::decode_hex(&hex_encoded_params[0]).map_err(|e| format!("{:?}", e))?;
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
 	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)
 		.map_err(|e| format!("{:?}", e))?;
 
-	let validator_access = get_validator_accessor_from_solo_or_parachain().unwrap();
+	let validator_access =
+		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
 	validator_access
 		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
-		.unwrap();
+		.map_err(|e| format!("{:?}", e))?;
 
 	Ok(ext)
 }
