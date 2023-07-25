@@ -26,7 +26,6 @@ use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 const VC_A3_SUBJECT_DESCRIPTION: &str =
 	"The user has commented in a specific Discord channel with a specific role";
 const VC_A3_SUBJECT_TYPE: &str = "Discord Member Verification";
-const VC_A3_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
 pub fn build(
 	req: &AssertionBuildRequest,
@@ -76,11 +75,7 @@ pub fn build(
 
 	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A3_SUBJECT_DESCRIPTION,
-				VC_A3_SUBJECT_TYPE,
-				VC_A3_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A3_SUBJECT_DESCRIPTION, VC_A3_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a3(
 				has_commented,
 				guild_id_s,

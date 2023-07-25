@@ -32,7 +32,6 @@ use lc_data_providers::{
 const VC_A10_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
 const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Assertion";
-const VC_A10_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
 // WBTC Holder
 // TODO:
@@ -74,11 +73,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A10_SUBJECT_DESCRIPTION,
-				VC_A10_SUBJECT_TYPE,
-				VC_A10_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A10_SUBJECT_DESCRIPTION, VC_A10_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

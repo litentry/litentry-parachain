@@ -26,7 +26,6 @@ use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 const VC_A2_SUBJECT_DESCRIPTION: &str =
 	"The user has obtained an ID-Hubber role in a Litentry Discord channel";
 const VC_A2_SUBJECT_TYPE: &str = "Discord ID-Hubber Role Verification";
-const VC_A2_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
 pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<Credential> {
 	debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who));
@@ -61,11 +60,7 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 
 	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A2_SUBJECT_DESCRIPTION,
-				VC_A2_SUBJECT_TYPE,
-				VC_A2_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A2_SUBJECT_DESCRIPTION, VC_A2_SUBJECT_TYPE);
 
 			let value = discord_cnt > 0 && has_joined;
 			credential_unsigned.add_assertion_a2(value, guild_id_s);
