@@ -138,6 +138,10 @@ impl ReqBody {
 	}
 }
 
+pub trait AchainableSystemLabelName {
+	fn name(&self) -> String;
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum Params {
@@ -151,7 +155,7 @@ pub enum Params {
 	ParamsBasicTypeWithToken(ParamsBasicTypeWithToken),
 	ParamsBasicTypeWithDatePercent(ParamsBasicTypeWithDatePercent),
 	ParamsBasicTypeWithClassOfYear(ParamsBasicTypeWithClassOfYear),
-	ParamsBasicTypeWithAmountHoding(ParamsBasicTypeWithAmountHoding), //A4-A7-A10-A11
+	ParamsBasicTypeWithAmountHoding(ParamsBasicTypeWithAmountHoding),
 }
 
 impl AchainableSystemLabelName for Params {
@@ -172,12 +176,6 @@ impl AchainableSystemLabelName for Params {
 	}
 }
 
-/// The parameter types of the method are defined here
-pub trait AchainableSystemLabelName {
-	fn name(&self) -> String;
-}
-
-/// A4/A7/A10/A11 Holder params
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithAmountHoding {
@@ -442,7 +440,6 @@ impl Default for ParamsBasicTypeWithDatePercent {
 	}
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 fn check_achainable_label(
 	client: &mut AchainableClient,
 	address: &str,
@@ -923,11 +920,12 @@ impl AchainableTagDeFi for AchainableClient {
 		// Uniswap V2 trader
 		let name = "Uniswap V2 trader";
 		let chain = "ethereum";
-		let r1 = request_basic_type(self, address, name, chain).unwrap_or_default();
+		let r1 =
+			request_basic_type_with_token(self, address, name, chain, None).unwrap_or_default();
 
 		// Uniswap V2 liquidity provider
 		let name = "Uniswap V2 liquidity provider";
-		let r2 = request_basic_type(self, address, name, chain)?;
+		let r2 = request_basic_type_with_token(self, address, name, chain, None)?;
 
 		Ok(r1 || r2)
 	}
@@ -936,11 +934,12 @@ impl AchainableTagDeFi for AchainableClient {
 		// Uniswap V3 trader
 		let name = "Uniswap V3 trader";
 		let chain = "ethereum";
-		let r1 = request_basic_type(self, address, name, chain).unwrap_or_default();
+		let r1 =
+			request_basic_type_with_token(self, address, name, chain, None).unwrap_or_default();
 
 		// Uniswap V3 liquidity provider
 		let name = "Uniswap V3 liquidity provider";
-		let r2 = request_basic_type(self, address, name, chain)?;
+		let r2 = request_basic_type_with_token(self, address, name, chain, None)?;
 
 		Ok(r1 || r2)
 	}
@@ -972,7 +971,7 @@ impl AchainableTagDeFi for AchainableClient {
 		let name = "Uniswap V2 {token} liquidity provider";
 		let chain = "ethereum";
 
-		request_basic_type_with_token(self, address, name, chain, UNISWAP_TOKEN_ADDRESS)
+		request_basic_type_with_token(self, address, name, chain, Some(UNISWAP_TOKEN_ADDRESS))
 	}
 
 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
@@ -980,7 +979,7 @@ impl AchainableTagDeFi for AchainableClient {
 		let name = "Uniswap V3 {token} liquidity provider";
 		let chain = "ethereum";
 
-		request_basic_type_with_token(self, address, name, chain, UNISWAP_TOKEN_ADDRESS)
+		request_basic_type_with_token(self, address, name, chain, Some(UNISWAP_TOKEN_ADDRESS))
 	}
 
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
@@ -998,7 +997,7 @@ impl AchainableTagDeFi for AchainableClient {
 		let name = "Uniswap V2 {token} liquidity provider";
 		let chain = "ethereum";
 
-		request_basic_type_with_token(self, address, name, chain, USDT_TOKEN_ADDRESS)
+		request_basic_type_with_token(self, address, name, chain, Some(USDT_TOKEN_ADDRESS))
 	}
 
 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
@@ -1006,42 +1005,42 @@ impl AchainableTagDeFi for AchainableClient {
 		let name = "Uniswap V3 {token} liquidity provider";
 		let chain = "ethereum";
 
-		request_basic_type_with_token(self, address, name, chain, USDT_TOKEN_ADDRESS)
+		request_basic_type_with_token(self, address, name, chain, Some(USDT_TOKEN_ADDRESS))
 	}
 
 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V2 Lender
 		let name = "Aave V2 Lender";
 		let chain = "ethereum";
-		request_basic_type(self, address, name, chain)
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V2 Borrower
 		let name = "Aave V2 Borrower";
 		let chain = "ethereum";
-		request_basic_type(self, address, name, chain)
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V3 Lender
 		let name = "Aave V3 Lender";
 		let chain = "ethereum";
-		request_basic_type(self, address, name, chain)
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V3 Borrower
 		let name = "Aave V3 Borrower";
 		let chain = "ethereum";
-		request_basic_type(self, address, name, chain)
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn curve_trader(&mut self, address: &str) -> Result<bool, Error> {
 		// Curve Trader
 		let name = "Curve Trader";
 		let chain = "ethereum";
-		request_basic_type(self, address, name, chain)
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error> {
@@ -1059,7 +1058,7 @@ impl AchainableTagDeFi for AchainableClient {
 		// Curve Liquidity Provider
 		let name = "Curve Liquidity Provider";
 		let chain = "ethereum";
-		request_basic_type(self, address, name, chain)
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error> {
@@ -1085,27 +1084,21 @@ impl AchainableTagDeFi for AchainableClient {
 	}
 }
 
-/// Utils function
-fn request_basic_type(
-	client: &mut AchainableClient,
-	address: &str,
-	name: &str,
-	chain: &str,
-) -> Result<bool, Error> {
-	let param = ParamsBasicType::new(name.to_string(), chain.to_string());
-	check_achainable_label(client, address, Params::ParamsBasicType(param))
-}
-
 fn request_basic_type_with_token(
 	client: &mut AchainableClient,
 	address: &str,
 	name: &str,
 	chain: &str,
-	token: &str,
+	token: Option<&str>,
 ) -> Result<bool, Error> {
-	let param =
-		ParamsBasicTypeWithToken::new(name.to_string(), chain.to_string(), token.to_string());
-	check_achainable_label(client, address, Params::ParamsBasicTypeWithToken(param))
+	if let Some(token) = token {
+		let param =
+			ParamsBasicTypeWithToken::new(name.to_string(), chain.to_string(), token.to_string());
+		check_achainable_label(client, address, Params::ParamsBasicTypeWithToken(param))
+	} else {
+		let param = ParamsBasicType::new(name.to_string(), chain.to_string());
+		check_achainable_label(client, address, Params::ParamsBasicType(param))
+	}
 }
 
 #[cfg(test)]
