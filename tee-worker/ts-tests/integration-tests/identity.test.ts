@@ -47,7 +47,7 @@ async function getNonce(base58mrEnclave: string, workerAddr: string, context: In
             nonce += u8aValue[i];
         }
     }
-    console.log("res value in array", u8aValue, "in Hex:", res.value.toHuman();
+    console.log("res value in array", u8aValue, "in Hex:", res.value.toHuman());
     console.log("nonce is:", nonce);
     return nonce;
 }
