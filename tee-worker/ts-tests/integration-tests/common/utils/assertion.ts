@@ -84,7 +84,6 @@ export async function assertIdentityLinked(
 ) {
     // We should parse idGraph from the last event, because the last event updates the verification status of all identities.
     const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
-    console.log(eventIdGraph);
 
     for (let index = 0; index < events.length; index++) {
         const signer = Array.isArray(signers) ? signers[index] : signers;
@@ -206,8 +205,8 @@ export async function assertWorkRpcReturnValue(callType: string, res: WorkerRpcR
     const status = res.status.asTrustedOperationStatus;
 
     assert.isTrue(
-        status.isSubmitted || status.isInSidechainBlock,
-        `${callType} should be submitted or in sidechain block, but is ${status.type}`
+        status[0].isSubmitted || status[0].isInSidechainBlock,
+        `${callType} should be submitted or in sidechain block, but is ${status[0].type}`
     );
 }
 

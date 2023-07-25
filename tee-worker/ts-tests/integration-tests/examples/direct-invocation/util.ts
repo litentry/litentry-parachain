@@ -231,7 +231,7 @@ export function createSignedTrustedCallDeactivateIdentity(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
         signer,
         mrenclave,
         nonce,
@@ -249,7 +249,7 @@ export function createSignedTrustedCallActivateIdentity(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
         signer,
         mrenclave,
         nonce,
