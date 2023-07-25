@@ -22,7 +22,6 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_utils::stringify::account_id_to_string;
-use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Assertion, ErrorDetail, ErrorString, VCMPError};
 use log::*;
@@ -94,10 +93,6 @@ where
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
-
-		let credential_endpoint =
-			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().credential_endpoint.clone();
-		credential.credential_subject.set_endpoint(credential_endpoint);
 
 		credential.issuer.id = account_id_to_string(&enclave_account);
 		let payload = credential.to_json().map_err(|_| {

@@ -143,17 +143,11 @@ pub struct CredentialSubject {
 	pub assertions: Vec<AssertionLogic>,
 	/// Results of each set of assertions
 	pub values: Vec<bool>,
-	/// The extrinsic on Parentchain for credential verification purpose
-	pub endpoint: String,
 }
 
 impl CredentialSubject {
 	pub fn is_empty(&self) -> bool {
 		self.id.is_empty()
-	}
-
-	pub fn set_endpoint(&mut self, endpoint: String) {
-		self.endpoint = endpoint;
 	}
 }
 

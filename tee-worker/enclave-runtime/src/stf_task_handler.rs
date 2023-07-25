@@ -51,7 +51,6 @@ pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -
 			dpc.set_discord_auth_token(data_provider_config.discord_auth_token);
 			dpc.set_achainable_url(data_provider_config.achainable_url);
 			dpc.set_achainable_auth_key(data_provider_config.achainable_auth_key);
-			dpc.set_credential_endpoint(data_provider_config.credential_endpoint);
 		},
 		Err(e) => {
 			error!("Error while setting data provider config: {:?}", e);

@@ -939,9 +939,6 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("ACHAINABLE_AUTH_KEY") {
 		data_provider_config.set_achainable_auth_key(v);
 	}
-	if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
-		data_provider_config.set_credential_endpoint(v);
-	}
 
 	data_provider_config
 }
