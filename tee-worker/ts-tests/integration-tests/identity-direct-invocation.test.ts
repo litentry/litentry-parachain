@@ -15,6 +15,7 @@ import {
     createSignedTrustedGetterIdGraph,
     createSignedTrustedGetterUserShieldingKey,
     createSignedTrustedCallDeactivateIdentity,
+    createSignedTrustedCallActivateIdentity,
     decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
@@ -316,7 +317,7 @@ describe('Test Identity (direct invocation)', function () {
 
                 }
             });
-            assert.isTrue(isIdentityLinked); // @FIXME: dump events if no success or failure reported
+            assert.isTrue(isIdentityLinked);
         }
         assert.equal(linkedIdentityEvents.length, 3);
         assertIdentityLinked(context, context.substrateWallet.alice, linkedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
@@ -668,6 +669,116 @@ describe('Test Identity (direct invocation)', function () {
             );
             console.debug('active ✅');
         }
+    });
+    step('activating identity', async function () {
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+
+        const deactivateIdentityRequestParams: {
+            nonce: number;
+            identity: LitentryPrimitivesIdentity;
+        }[] = [];
+
+        const twitterNonce = getNextNonce();
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+
+        deactivateIdentityRequestParams.push({
+            nonce: twitterNonce,
+            identity: twitterIdentity,
+        });
+
+        const evmNonce = getNextNonce();
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+
+        deactivateIdentityRequestParams.push({
+            nonce: evmNonce,
+            identity: evmIdentity,
+        });
+
+        const eveSubstrateNonce = getNextNonce();
+        const eveSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.eve.addressRaw),
+            'Substrate',
+            context
+        );
+        deactivateIdentityRequestParams.push({
+            nonce: eveSubstrateNonce,
+            identity: eveSubstrateIdentity,
+        });
+        const activatedIdentityEvents: any[] = []
+
+        for (const { nonce, identity } of deactivateIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+            const deactivateIdentityCall = createSignedTrustedCallActivateIdentity(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                context.substrateWallet.alice,
+                aliceSubject,
+                identity.toHex(),
+                requestIdentifier
+            );
+
+            const res = await sendRequestFromTrustedCall(
+                context.tee,
+                context.api,
+                context.mrEnclave,
+                teeShieldingKey,
+                deactivateIdentityCall
+            );
+
+            await assertWorkRpcReturnValue('deactivateIdentityCall', res);
+
+            const events = (await eventsPromise).map(({ event }) => event);
+            let isIdentityActivated = false;
+            events.forEach((event) => {
+                if (context.api.events.identityManagement.ActivateIdentityFailed.is(event)) {
+                    assert.fail(JSON.stringify(event.toHuman(), null, 4));
+                }
+                if (context.api.events.identityManagement.IdentityActivated.is(event)) {
+                    isIdentityActivated = true;
+                    activatedIdentityEvents.push(event)
+
+                }
+            });
+            assert.isTrue(isIdentityActivated);
+        }
+        assert.equal(activatedIdentityEvents.length, 3);
+    });
+
+    step('check idgraph from sidechain storage after deactivating', async function () {
+        const idgraphGetter = createSignedTrustedGetterIdGraph(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
+        const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        for (const { identity } of linkIdentityRequestParams) {
+            const identityDump = JSON.stringify(identity.toHuman(), null, 4);
+            console.debug(`checking identity: ${identityDump}`);
+            const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
+            assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
+            const [, idGraphNodeContext] = idGraphNode!;
+
+            assert.equal(
+                idGraphNodeContext.status.toString(),
+                'Active',
+                `status should be active for identity: ${identityDump}`
+            );
+            console.debug('active ✅');
+        }
+
     });
 
     step('deactivating prime identity is disallowed', async function () {

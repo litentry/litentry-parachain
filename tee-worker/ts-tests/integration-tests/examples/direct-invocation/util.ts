@@ -226,6 +226,24 @@ export function createSignedTrustedCallDeactivateIdentity(
 ) {
     return createSignedTrustedCall(
         parachainApi,
+        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        signer,
+        mrenclave,
+        nonce,
+        [subject.toHuman(), subject.toHuman(), identity, hash]
+    );
+}
+export function createSignedTrustedCallActivateIdentity(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity,
+    identity: string,
+    hash: string
+) {
+    return createSignedTrustedCall(
+        parachainApi,
         ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
         signer,
         mrenclave,
@@ -233,7 +251,6 @@ export function createSignedTrustedCallDeactivateIdentity(
         [subject.toHuman(), subject.toHuman(), identity, hash]
     );
 }
-
 export function createSignedTrustedGetterUserShieldingKey(
     parachainApi: ApiPromise,
     signer: KeyringPair,
