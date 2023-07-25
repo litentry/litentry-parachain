@@ -18,6 +18,8 @@
 //! Contains all logic of the state provisioning mechanism
 //! including the remote attestation and tls / tcp connection part.
 
+use std::convert::TryFrom;
+
 mod authentication;
 pub mod seal_handler;
 mod tls_ra_client;
@@ -51,13 +53,15 @@ pub enum Opcode {
 	State = 2,
 }
 
-impl From<u8> for Opcode {
-	fn from(item: u8) -> Self {
-		match item {
-			0 => Opcode::ShieldingKey,
-			1 => Opcode::StateKey,
-			2 => Opcode::State,
-			_ => unimplemented!("Unsupported/unknown Opcode for MU-RA exchange"),
+impl TryFrom<u8> for Opcode {
+	type Error = ();
+
+	fn try_from(value: u8) -> Result<Self, Self::Error> {
+		match value {
+			0 => Ok(Opcode::ShieldingKey),
+			1 => Ok(Opcode::StateKey),
+			2 => Ok(Opcode::State),
+			_ => Err(()),
 		}
 	}
 }

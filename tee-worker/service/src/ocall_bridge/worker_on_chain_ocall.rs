@@ -50,7 +50,10 @@ where
 	fn worker_request(&self, request: Vec<u8>) -> OCallBridgeResult<Vec<u8>> {
 		debug!("    Entering ocall_worker_request");
 
-		let requests: Vec<WorkerRequest> = Decode::decode(&mut request.as_slice()).unwrap();
+		let requests: Vec<WorkerRequest> =
+			Decode::decode(&mut request.as_slice()).map_err(|_| {
+				OCallBridgeError::WorkerRequestError("Could not deserialize requests".to_string())
+			})?;
 		if requests.is_empty() {
 			debug!("requests is empty, returning empty vector");
 			return Ok(Vec::<u8>::new().encode())

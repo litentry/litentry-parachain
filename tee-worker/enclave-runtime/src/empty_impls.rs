@@ -18,6 +18,7 @@
 /// Empty tests entry for production mode.
 #[cfg(not(feature = "test"))]
 #[no_mangle]
+#[allow(clippy::unreachable)]
 pub extern "C" fn test_main_entrance() -> sgx_types::size_t {
 	unreachable!("Tests are not available when compiled in production mode.")
 }
@@ -25,6 +26,7 @@ pub extern "C" fn test_main_entrance() -> sgx_types::size_t {
 /// Empty Teeracle market data implementation.
 #[cfg(not(feature = "teeracle"))]
 #[no_mangle]
+#[allow(clippy::unreachable)]
 pub unsafe extern "C" fn update_market_data_xt(
 	_crypto_currency_ptr: *const u8,
 	_crypto_currency_size: u32,
@@ -39,6 +41,7 @@ pub unsafe extern "C" fn update_market_data_xt(
 /// Empty Teeracle Weather data implementation.
 #[cfg(not(feature = "teeracle"))]
 #[no_mangle]
+#[allow(clippy::unreachable)]
 pub unsafe extern "C" fn update_weather_data_xt(
 	_weather_info_longitude: *const u8,
 	_weather_info_longitude_size: u32,
