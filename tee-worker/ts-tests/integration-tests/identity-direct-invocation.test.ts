@@ -220,6 +220,7 @@ describe('Test Identity (direct invocation)', function () {
         assert.deepEqual(idGraphNodeIdentity.toHuman(), aliceSubject.toHuman(), 'idGraph should include main address');
         assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
     });
+
     step('linking identities (alice)', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
@@ -323,6 +324,7 @@ describe('Test Identity (direct invocation)', function () {
         }
         assert.equal(linkedIdentityEvents.length, 3);
 
+        // this assertion doesn't check the evesubstrate identity, check it in the next step
         assertIdentityLinked(context, context.substrateWallet.alice, linkedIdentityEvents, [
             twitterIdentity,
             evmIdentity,
@@ -346,19 +348,29 @@ describe('Test Identity (direct invocation)', function () {
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        // don't work for integritee-node 
+        // according to the order of linkIdentityRequestParams
+        const expectedWeb3Networks = [[], ['Ethereum', 'BSC'], ['Litentry', 'Polkadot']];
+        let currentIndex = 0;
+
+        // don't work for integritee-node
         for (const { identity } of linkIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
             assert.isDefined(idGraphNode, `identity not found in idGraph: ${identityDump}`);
             const [, idGraphNodeContext] = idGraphNode!;
+
+            const web3networks = idGraphNode![1].web3networks.toHuman();
+            assert.deepEqual(web3networks, expectedWeb3Networks[currentIndex]);
+
             assert.equal(
                 idGraphNodeContext.status.toString(),
                 'Active',
                 `status should be active for identity: ${identityDump}`
             );
             console.debug('active ✅');
+
+            currentIndex++;
         }
     });
 
@@ -684,7 +696,7 @@ describe('Test Identity (direct invocation)', function () {
         ).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const deactivateIdentityRequestParams: {
+        const activateIdentityRequestParams: {
             nonce: number;
             identity: LitentryPrimitivesIdentity;
         }[] = [];
@@ -692,7 +704,7 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNonce = getNextNonce();
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
-        deactivateIdentityRequestParams.push({
+        activateIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
         });
@@ -700,7 +712,7 @@ describe('Test Identity (direct invocation)', function () {
         const evmNonce = getNextNonce();
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
 
-        deactivateIdentityRequestParams.push({
+        activateIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
         });
@@ -711,13 +723,13 @@ describe('Test Identity (direct invocation)', function () {
             'Substrate',
             context
         );
-        deactivateIdentityRequestParams.push({
+        activateIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
         });
         const activatedIdentityEvents: any[] = [];
 
-        for (const { nonce, identity } of deactivateIdentityRequestParams) {
+        for (const { nonce, identity } of activateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
             const deactivateIdentityCall = createSignedTrustedCallActivateIdentity(
@@ -738,7 +750,7 @@ describe('Test Identity (direct invocation)', function () {
                 deactivateIdentityCall
             );
 
-            await assertWorkRpcReturnValue('deactivateIdentityCall', res);
+            await assertWorkRpcReturnValue('activateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityActivated = false;
@@ -756,7 +768,7 @@ describe('Test Identity (direct invocation)', function () {
         assert.equal(activatedIdentityEvents.length, 3);
     });
 
-    step('check idgraph from sidechain storage after deactivating', async function () {
+    step('check idgraph from sidechain storage after activating', async function () {
         const idgraphGetter = createSignedTrustedGetterIdGraph(
             context.api,
             context.substrateWallet.alice,
