@@ -17,7 +17,10 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
+use crate::{
+	build_client, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG, LIT_TOKEN_ADDRESS,
+	UNISWAP_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
+};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -763,8 +766,13 @@ impl AchainableTagBalance for AchainableClient {
 		let name = "ERC20 balance over {amount}".to_string();
 		let chain = "ethereum".to_string();
 		let amount = "100".to_string();
-		let token = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".to_string();
-		let param = ParamsBasicTypeWithAmountToken::new(name, chain, amount, Some(token));
+
+		let param = ParamsBasicTypeWithAmountToken::new(
+			name,
+			chain,
+			amount,
+			Some(WETH_TOKEN_ADDRESS.to_string()),
+		);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param))
 	}
 
@@ -773,8 +781,13 @@ impl AchainableTagBalance for AchainableClient {
 		let name = "BEP20 balance over {amount}".to_string();
 		let chain = "bsc".to_string();
 		let amount = "100".to_string();
-		let token = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string();
-		let param = ParamsBasicTypeWithAmountToken::new(name, chain, amount, Some(token));
+
+		let param = ParamsBasicTypeWithAmountToken::new(
+			name,
+			chain,
+			amount,
+			Some(LIT_TOKEN_ADDRESS.to_string()),
+		);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param))
 	}
 
@@ -958,18 +971,16 @@ impl AchainableTagDeFi for AchainableClient {
 		// Uniswap V2 {token} liquidity provider
 		let name = "Uniswap V2 {token} liquidity provider";
 		let chain = "ethereum";
-		let token = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 
-		request_basic_type_with_token(self, address, name, chain, token)
+		request_basic_type_with_token(self, address, name, chain, UNISWAP_TOKEN_ADDRESS)
 	}
 
 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V3 {token} liquidity provider
 		let name = "Uniswap V3 {token} liquidity provider";
 		let chain = "ethereum";
-		let token = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 
-		request_basic_type_with_token(self, address, name, chain, token)
+		request_basic_type_with_token(self, address, name, chain, UNISWAP_TOKEN_ADDRESS)
 	}
 
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
@@ -986,16 +997,16 @@ impl AchainableTagDeFi for AchainableClient {
 		// Uniswap V2 {token} liquidity provider
 		let name = "Uniswap V2 {token} liquidity provider";
 		let chain = "ethereum";
-		let token = "0xdac17f958d2ee523a2206206994597c13d831ec7";
-		request_basic_type_with_token(self, address, name, chain, token)
+
+		request_basic_type_with_token(self, address, name, chain, USDT_TOKEN_ADDRESS)
 	}
 
 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V3 {token} liquidity provider
 		let name = "Uniswap V3 {token} liquidity provider";
 		let chain = "ethereum";
-		let token = "0xdac17f958d2ee523a2206206994597c13d831ec7";
-		request_basic_type_with_token(self, address, name, chain, token)
+
+		request_basic_type_with_token(self, address, name, chain, USDT_TOKEN_ADDRESS)
 	}
 
 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {

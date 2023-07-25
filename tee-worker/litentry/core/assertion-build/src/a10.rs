@@ -23,11 +23,9 @@ extern crate sgx_tstd as std;
 use crate::*;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHoding},
-	vec_to_string,
+	vec_to_string, WBTC_TOKEN_ADDRESS,
 };
 use std::string::ToString;
-
-const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 
 const VC_A10_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
@@ -35,8 +33,6 @@ const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Assertion";
 const VC_A10_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
 // WBTC Holder
-// TODO:
-// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A10 build, who: {:?}", account_id_to_string(&req.who),);
 
