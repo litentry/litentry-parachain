@@ -21,13 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
-use log::*;
-use std::vec::Vec;
 
 const VC_A3_SUBJECT_DESCRIPTION: &str =
 	"The user has commented in a specific Discord channel with a specific role";
@@ -35,18 +29,12 @@ const VC_A3_SUBJECT_TYPE: &str = "Discord Member Verification";
 const VC_A3_SUBJECT_TAG: [&str; 1] = ["Discord"];
 
 pub fn build(
-	identities: Vec<Identity>,
+	req: &AssertionBuildRequest,
 	guild_id: ParameterString,
 	channel_id: ParameterString,
 	role_id: ParameterString,
-	shard: &ShardIdentifier,
-	who: &AccountId,
 ) -> Result<Credential> {
-	debug!(
-		"Assertion A3 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
-	);
+	debug!("Assertion A3 build, who: {:?}", account_id_to_string(&req.who),);
 
 	let mut has_commented: bool = false;
 
@@ -70,25 +58,23 @@ pub fn build(
 	})?;
 
 	let mut client = DiscordLitentryClient::new();
-	for identity in identities {
-		if let Identity::Web2 { network, address } = identity {
-			if matches!(network, Web2Network::Discord) {
-				if let Ok(response) = client.check_id_hubber(
-					guild_id.to_vec(),
-					channel_id.to_vec(),
-					role_id.to_vec(),
-					address.to_vec(),
-				) {
-					if response.data {
-						has_commented = true;
-						break
-					}
+	for identity in &req.identities {
+		if let Identity::Discord(address) = &identity.0 {
+			if let Ok(response) = client.check_id_hubber(
+				guild_id.to_vec(),
+				channel_id.to_vec(),
+				role_id.to_vec(),
+				address.to_vec(),
+			) {
+				if response.data {
+					has_commented = true;
+					break
 				}
 			}
 		}
 	}
 
-	match Credential::new_default(who, shard) {
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A3_SUBJECT_DESCRIPTION,
@@ -115,18 +101,17 @@ pub fn build(
 
 #[cfg(test)]
 mod tests {
-	use crate::a3::build;
+	use crate::{a3::build, AccountId, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
-	use itp_types::AccountId;
-	use lc_data_providers::G_DATA_PROVIDERS;
-	use litentry_primitives::{Identity, IdentityString, Web2Network};
+	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
+	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
 	use std::{format, vec, vec::Vec};
 
 	#[test]
-	fn assertion3_verification_works() {
-		G_DATA_PROVIDERS
+	fn build_a3_works() {
+		GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()
 			.set_discord_litentry_url("http://localhost:19527".to_string());
@@ -138,19 +123,25 @@ mod tests {
 		let channel_id_vec: Vec<u8> = format!("{}", channel_id_u).as_bytes().to_vec();
 		let role_id_vec: Vec<u8> = format!("{}", role_id_u).as_bytes().to_vec();
 
-		let handler_vec: Vec<u8> = "againstwar%234779".to_string().as_bytes().to_vec();
-		let identities = vec![Identity::Web2 {
-			network: Web2Network::Discord,
-			address: IdentityString::truncate_from(handler_vec.clone()),
-		}];
+		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec)), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let channel_id = BoundedVec::try_from(channel_id_vec).unwrap();
 		let role_id = BoundedVec::try_from(role_id_vec).unwrap();
-		let who = AccountId::from([0; 32]);
-		let shard = ShardIdentifier::default();
 
-		let _ = build(identities, guild_id, channel_id, role_id, &shard, &who);
-		log::info!("assertion3 test");
+		let req = AssertionBuildRequest {
+			shard: ShardIdentifier::default(),
+			signer: AccountId::from([0; 32]),
+			enclave_account: AccountId::from([0; 32]),
+			who: AccountId::from([0; 32]).into(),
+			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+			identities,
+			hash: Default::default(),
+		};
+
+		let _ = build(&req, guild_id, channel_id, role_id);
+		log::info!("build A3 done");
 	}
 }

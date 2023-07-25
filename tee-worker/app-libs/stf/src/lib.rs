@@ -66,7 +66,7 @@ pub type StfResult<T> = Result<T, StfError>;
 #[derive(Debug, Display, PartialEq, Eq)]
 pub enum StfError {
 	#[display(fmt = "Insufficient privileges {:?}, are you sure you are root?", _0)]
-	MissingPrivileges(AccountId),
+	MissingPrivileges(Identity),
 	#[display(fmt = "Valid enclave signer account is required")]
 	RequireEnclaveSignerAccount,
 	#[display(fmt = "Error dispatching runtime call. {:?}", _0)]
@@ -83,11 +83,16 @@ pub enum StfError {
 	SetUserShieldingKeyFailed(ErrorDetail),
 	#[display(fmt = "LinkIdentityFailed: {:?}", _0)]
 	LinkIdentityFailed(ErrorDetail),
-	#[display(fmt = "RemoveIdentityFailed: {:?}", _0)]
-	RemoveIdentityFailed(ErrorDetail),
+	#[display(fmt = "DeactivateIdentityFailed: {:?}", _0)]
+	DeactivateIdentityFailed(ErrorDetail),
+	#[display(fmt = "ActivateIdentityFailed: {:?}", _0)]
+	ActivateIdentityFailed(ErrorDetail),
 	#[display(fmt = "RequestVCFailed: {:?} {:?}", _0, _1)]
 	RequestVCFailed(Assertion, ErrorDetail),
 	SetScheduledMrEnclaveFailed,
+	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
+	SetIdentityNetworksFailed(ErrorDetail),
+	InvalidAccount,
 }
 
 impl From<MetadataError> for StfError {
@@ -109,7 +114,8 @@ impl StfError {
 			StfError::SetUserShieldingKeyFailed(d) =>
 				IMPError::SetUserShieldingKeyFailed(d.clone()),
 			StfError::LinkIdentityFailed(d) => IMPError::LinkIdentityFailed(d.clone()),
-			StfError::RemoveIdentityFailed(d) => IMPError::RemoveIdentityFailed(d.clone()),
+			StfError::DeactivateIdentityFailed(d) => IMPError::DeactivateIdentityFailed(d.clone()),
+			StfError::ActivateIdentityFailed(d) => IMPError::ActivateIdentityFailed(d.clone()),
 			_ => IMPError::UnclassifiedError(ErrorDetail::StfError(ErrorString::truncate_from(
 				format!("{:?}", self).as_bytes().to_vec(),
 			))),
@@ -167,10 +173,10 @@ impl TrustedOperation {
 		}
 	}
 
-	pub fn signed_caller_account(&self) -> Option<&AccountId> {
+	pub fn signed_caller_account(&self) -> Option<AccountId> {
 		match self {
-			TrustedOperation::direct_call(c) => Some(c.call.sender_account()),
-			TrustedOperation::indirect_call(c) => Some(c.call.sender_account()),
+			TrustedOperation::direct_call(c) => c.call.sender_identity().to_account_id(),
+			TrustedOperation::indirect_call(c) => c.call.sender_identity().to_account_id(),
 			_ => None,
 		}
 	}

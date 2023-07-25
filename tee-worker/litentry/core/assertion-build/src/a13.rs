@@ -21,21 +21,43 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
-use log::*;
+use codec::Decode;
+use frame_support::storage::storage_prefix;
+use itp_ocall_api::EnclaveOnChainOCallApi;
+use litentry_primitives::Address32;
 
 const VC_A13_SUBJECT_DESCRIPTION: &str =
 	"The user has a Polkadot Decoded 2023 Litentry Booth Special Badge";
 const VC_A13_SUBJECT_TYPE: &str = "Decoded 2023 Basic Special Badge";
 const VC_A13_SUBJECT_TAG: [&str; 2] = ["Polkadot decoded 2023", "Litentry"];
 
-pub fn build(shard: &ShardIdentifier, who: &AccountId) -> Result<Credential> {
+pub fn build<O: EnclaveOnChainOCallApi>(
+	req: &AssertionBuildRequest,
+	ocall_api: Arc<O>,
+	who: &AccountId,
+) -> Result<Credential> {
 	debug!("Assertion A13 build, who: {:?}", account_id_to_string(&who));
 
-	match Credential::new_default(who, shard) {
+	let key_prefix = storage_prefix(b"VCManagement", b"Delegatee");
+	let response = ocall_api.get_storage_keys(key_prefix.into()).map_err(|_| {
+		Error::RequestVCFailed(Assertion::A13(who.clone()), ErrorDetail::ParseError)
+	})?;
+	let keys: Vec<String> = response
+		.into_iter()
+		.map(|r| String::decode(&mut r.as_slice()).unwrap_or_default())
+		.collect();
+
+	// if the signer can't be found in the delegatee list OR not the enclave account
+	if !(keys.iter().any(|k| k.ends_with(hex::encode(&req.signer).as_str()))
+		|| req.signer == req.enclave_account)
+	{
+		return Err(Error::RequestVCFailed(
+			Assertion::A13(who.clone()),
+			ErrorDetail::UnauthorizedSigner,
+		))
+	}
+
+	match Credential::new_default(&Address32::from(who.clone()).into(), &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

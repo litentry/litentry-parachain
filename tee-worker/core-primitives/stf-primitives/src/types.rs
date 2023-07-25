@@ -17,10 +17,11 @@
 extern crate alloc;
 use alloc::boxed::Box;
 use codec::Compact;
+use litentry_primitives::LitentryMultiSignature;
 use sp_core::{crypto::AccountId32, ed25519, sr25519, Pair, H256};
-use sp_runtime::{traits::Verify, MultiSignature};
+use sp_runtime::{traits::Verify, MultiSignature as SpMultiSignature};
 
-pub type Signature = MultiSignature;
+pub type Signature = SpMultiSignature;
 pub type AuthorityId = <Signature as Verify>::Signer;
 pub type AccountId = AccountId32;
 pub type Hash = H256;
@@ -34,7 +35,7 @@ pub enum KeyPair {
 }
 
 impl KeyPair {
-	pub fn sign(&self, payload: &[u8]) -> Signature {
+	pub fn sign(&self, payload: &[u8]) -> LitentryMultiSignature {
 		match self {
 			Self::Sr25519(pair) => pair.sign(payload).into(),
 			Self::Ed25519(pair) => pair.sign(payload).into(),

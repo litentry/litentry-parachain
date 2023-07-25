@@ -55,6 +55,7 @@ fn link_identity_without_delegatee_works() {
 			alice,
 			vec![1u8; 2048],
 			vec![1u8; 2048],
+			vec![1u8; 2048],
 			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
@@ -73,6 +74,7 @@ fn link_identity_with_authorized_delegatee_works() {
 			RuntimeOrigin::signed(eddie), // authorized delegatee set in initialisation
 			shard,
 			alice,
+			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			UserShieldingKeyNonceType::default(),
@@ -96,6 +98,7 @@ fn link_identity_with_unauthorized_delegatee_fails() {
 				alice,
 				vec![1u8; 2048],
 				vec![1u8; 2048],
+				vec![1u8; 2048],
 				UserShieldingKeyNonceType::default(),
 			),
 			Error::<Test>::UnauthorizedUser
@@ -104,17 +107,33 @@ fn link_identity_with_unauthorized_delegatee_fails() {
 }
 
 #[test]
-fn remove_identity_works() {
+fn deactivate_identity_works() {
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		assert_ok!(IdentityManagement::remove_identity(
+		assert_ok!(IdentityManagement::deactivate_identity(
 			RuntimeOrigin::signed(alice),
 			shard,
 			vec![1u8; 2048]
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::RemoveIdentityRequested { shard },
+			crate::Event::DeactivateIdentityRequested { shard },
+		));
+	});
+}
+
+#[test]
+fn activate_identity_works() {
+	new_test_ext().execute_with(|| {
+		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
+		assert_ok!(IdentityManagement::activate_identity(
+			RuntimeOrigin::signed(alice),
+			shard,
+			vec![1u8; 2048]
+		));
+		System::assert_last_event(RuntimeEvent::IdentityManagement(
+			crate::Event::ActivateIdentityRequested { shard },
 		));
 	});
 }

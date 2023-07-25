@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, G_DATA_PROVIDERS};
+use crate::{build_client, vec_to_string, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -66,7 +66,12 @@ impl DiscordLitentryClient {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		let client = build_client(
-			G_DATA_PROVIDERS.write().unwrap().discord_litentry_url.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG
+				.write()
+				.unwrap()
+				.discord_litentry_url
+				.clone()
+				.as_str(),
 			headers,
 		);
 		DiscordLitentryClient { client }
@@ -152,14 +157,14 @@ mod tests {
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_discord_litentry_url(url.clone());
+		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_discord_litentry_url(url);
 	}
 
 	#[test]
 	fn check_join_work() {
 		init();
 		let guild_id = "919848390156767232".as_bytes().to_vec();
-		let handler = "againstwar#4779".as_bytes().to_vec();
+		let handler = "againstwar".as_bytes().to_vec();
 		let mut client = DiscordLitentryClient::new();
 		let response = client.check_join(guild_id, handler);
 		assert!(response.is_ok(), "check join discord error: {:?}", response);
@@ -171,7 +176,7 @@ mod tests {
 		let guild_id = "919848390156767232".as_bytes().to_vec();
 		let channel_id = "919848392035794945".as_bytes().to_vec();
 		let role_id = "1034083718425493544".as_bytes().to_vec();
-		let handler = "ericzhang.eth#0114".as_bytes().to_vec();
+		let handler = "ericzhang.eth".as_bytes().to_vec();
 		let mut client = DiscordLitentryClient::new();
 		let response = client.check_id_hubber(guild_id, channel_id, role_id, handler);
 		assert!(response.is_ok(), "check discord id hubber error: {:?}", response);

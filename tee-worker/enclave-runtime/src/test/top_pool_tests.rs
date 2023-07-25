@@ -58,11 +58,9 @@ use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
-use itp_types::{
-	extrinsics::fill_opaque_extrinsic_with_status, parentchain::Address, AccountId, Block,
-	ShardIdentifier, ShieldFundsFn, H256,
-};
+use itp_types::{parentchain::Address, AccountId, Block, ShardIdentifier, ShieldFundsFn, H256};
 use jsonrpc_core::futures::executor;
+use litentry_primitives::Identity;
 use log::*;
 use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
@@ -169,8 +167,11 @@ fn encrypted_indirect_call<
 	let sender = endowed_account();
 	let receiver = unendowed_account();
 
-	let call =
-		TrustedCall::balance_transfer(sender.public().into(), receiver.public().into(), 10000u128);
+	let call = TrustedCall::balance_transfer(
+		Identity::Substrate(sender.public().into()),
+		receiver.public().into(),
+		10000u128,
+	);
 	let call_signed = sign_trusted_call(&call, attestation_api, shard_id, sender);
 	let trusted_operation = TrustedOperation::indirect_call(call_signed);
 	encrypt_trusted_operation(shielding_key, &trusted_operation)
@@ -208,6 +209,6 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	.unwrap();
 
 	ParentchainBlockBuilder::default()
-		.with_extrinsics(vec![fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()])
+		.with_extrinsics(vec![opaque_extrinsic])
 		.build()
 }

@@ -2,53 +2,45 @@
     "dev": {
         "twitter_official_url": "https://api.twitter.com",
         "twitter_litentry_url": "http://54.255.182.249:9527",
-        "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
         "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "credential_endpoint": "http://localhost:9933",
-        "achainable_rest_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "credential_endpoint": "http://localhost:9933"
     },
     "mock": {
         "twitter_official_url": "http://localhost:19527",
         "twitter_litentry_url": "http://localhost:19527",
-        "twitter_auth_token_v1_1": "",
         "twitter_auth_token_v2": "",
         "discord_official_url": "http://localhost:19527",
         "discord_litentry_url": "http://localhost:19527",
         "discord_auth_token": "",
         "achainable_url": "http://localhost:19527",
         "achainable_auth_key": "",
-        "credential_endpoint": "http://localhost:9933",
-        "achainable_rest_key": ""
+        "credential_endpoint": "http://localhost:9933"
     },
     "prod": {
         "twitter_official_url": "https://api.twitter.com",
         "twitter_litentry_url": "",
-        "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
         "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "credential_endpoint": "",
-        "achainable_rest_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "credential_endpoint": ""
     },
     "staging": {
         "twitter_official_url": "https://api.twitter.com",
         "twitter_litentry_url": "http://54.255.182.249:9527",
-        "twitter_auth_token_v1_1": "abcdefghijklmnopqrstuvwxyz",
         "twitter_auth_token_v2": "abcdefghijklmnopqrstuvwxyz",
         "discord_official_url": "https://discordapp.com",
         "discord_litentry_url": "http://54.255.182.249:9527",
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "achainable_url": "https://graph.tdf-labs.io/",
+        "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "credential_endpoint": "wss://tee-staging.litentry.io",
-        "achainable_rest_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "credential_endpoint": "wss://tee-staging.litentry.io"
     }
 }

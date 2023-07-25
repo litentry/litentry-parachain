@@ -216,10 +216,19 @@ impl<
 		let enclave_account = self.get_enclave_account()?;
 		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
 		let trusted_call = match err {
-			Error::IMPHandlingError(e) =>
-				TrustedCall::handle_imp_error(enclave_account, account, e.clone(), hash),
-			Error::VCMPHandlingError(e) =>
-				TrustedCall::handle_vcmp_error(enclave_account, account, e.clone(), hash),
+			Error::IMPHandlingError(e) => TrustedCall::handle_imp_error(
+				enclave_account.into(),
+				account.map(|a| a.into()),
+				e.clone(),
+				hash,
+			),
+
+			Error::VCMPHandlingError(e) => TrustedCall::handle_vcmp_error(
+				enclave_account.into(),
+				account.map(|a| a.into()),
+				e.clone(),
+				hash,
+			),
 			_ => return Err(Error::Other(("unsupported error").into())),
 		};
 		let signed_trusted_call = self.sign_call_with_self(&trusted_call, &shard)?;
@@ -276,10 +285,7 @@ mod test {
 	use itp_stf_primitives::types::AccountId;
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{
-		extrinsics::fill_opaque_extrinsic_with_status, Block, CallWorkerFn, Request,
-		ShardIdentifier, ShieldFundsFn,
-	};
+	use itp_types::{Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
@@ -312,9 +318,7 @@ mod test {
 				.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![
-				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
-			])
+			.with_extrinsics(vec![opaque_extrinsic])
 			.build();
 
 		indirect_calls_executor
@@ -339,9 +343,7 @@ mod test {
 		.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![
-				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
-			])
+			.with_extrinsics(vec![opaque_extrinsic])
 			.build();
 
 		indirect_calls_executor

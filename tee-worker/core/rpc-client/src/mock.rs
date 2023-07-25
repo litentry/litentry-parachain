@@ -24,6 +24,7 @@ use itp_api_client_types::Metadata;
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{sync::mpsc::Sender as MpscSender, thread::JoinHandle};
+use teerex_primitives::MrEnclave;
 
 #[derive(Clone, Default)]
 pub struct DirectClientMock {
@@ -111,5 +112,9 @@ impl DirectApi for DirectClientMock {
 
 	fn get_next_nonce(&self, _shard: &ShardIdentifier, _account: &AccountId) -> Result<u32> {
 		Ok(self.nonce)
+	}
+
+	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
+		unimplemented!()
 	}
 }

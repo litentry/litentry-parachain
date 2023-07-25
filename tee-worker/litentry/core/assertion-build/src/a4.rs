@@ -64,68 +64,31 @@ extern crate sgx_tstd as std;
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
 ///  
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::{
-	achainable::{
-		AchainableClient, AchainableQuery, GetSupportedNetworks, VerifiedCredentialsIsHodlerIn,
-	},
+	achainable::{AchainableA4Holder, AchainableClient},
 	vec_to_string,
 };
-use litentry_primitives::SupportedNetwork;
-use log::*;
-use std::{
-	collections::{HashMap, HashSet},
-	string::{String, ToString},
-	vec::Vec,
-};
 
+// NOTE： The LIT_TOKEN_ADDRESS has been embedded into the interface when creating the label
 // ERC20 LIT token address
-const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+// const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
 
 const VC_A4_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
 const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
 const VC_A4_SUBJECT_TAG: [&str; 3] = ["Ethereum", "Litmus", "Litentry"];
 
-pub fn build(
-	identities: Vec<Identity>,
-	min_balance: ParameterString,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!(
-		"Assertion A4 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
-	);
+// TODO:
+// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
+pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
+	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A4(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
 	let mut client = AchainableClient::new();
-	let mut networks: HashMap<SupportedNetwork, HashSet<String>> = HashMap::new();
-
-	identities.iter().for_each(|identity| {
-		match identity {
-			Identity::Substrate { network, address } => {
-				let mut address = account_id_to_string(address.as_ref());
-				address.insert_str(0, "0x");
-
-				if_match_networks_collect_address(&mut networks, (*network).get(), address);
-			},
-			Identity::Evm { network, address } => {
-				let mut address = account_id_to_string(address.as_ref());
-				address.insert_str(0, "0x");
-
-				if_match_networks_collect_address(&mut networks, (*network).get(), address);
-			},
-			_ => {},
-		};
-	});
+	let identities = transpose_identity(&req.identities);
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = usize::MAX;
@@ -145,63 +108,46 @@ pub fn build(
 	//    to_date: >= 2023-03-30 (now)
 	//    value: true
 	// ]
-	for (verified_network, addresses) in networks {
+	for (network, addresses) in identities {
 		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
 		// there is no need to query other networks.
 		if optimal_hold_index == 0 {
 			break
 		}
 
-		// Each query loop needs to reset is_hold to false
-		is_hold = false;
-
 		let addresses: Vec<String> = addresses.into_iter().collect();
-		let token_address =
-			if verified_network == SupportedNetwork::Ethereum { LIT_TOKEN_ADDRESS } else { "" };
+		for index in 0..ASSERTION_FROM_DATE.len() {
+			for address in &addresses {
+				match client.lit_holder_on_network(&network, address, index) {
+					Ok(is_lit_holder) =>
+						if is_lit_holder {
+							if index < optimal_hold_index {
+								optimal_hold_index = index;
+							}
+
+							is_hold = true;
+
+							break
+						},
+					Err(e) =>
+						error!("Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}", e),
+				}
+			}
+		}
 
 		// TODO:
 		// There is a problem here, because TDF does not support mixed network types,
 		// It is need to request TDF 2 (substrate+evm networks) * 7 (ASSERTION_FROM_DATE) = 14 http requests.
 		// If TDF can handle mixed network type, and even supports from_date array,
 		// so that ideally, up to one http request can yield results.
-		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-			let vch = VerifiedCredentialsIsHodlerIn::new(
-				addresses.clone(),
-				from_date.to_string(),
-				verified_network.clone(),
-				token_address.to_string(),
-				q_min_balance.to_string(),
-			);
-			match client.verified_credentials_is_hodler(vch) {
-				Ok(is_hodler_out) =>
-					for hodler in is_hodler_out.hodlers.iter() {
-						is_hold = is_hold || hodler.is_hodler;
-					},
-				Err(e) => error!(
-					"Assertion A4 request check_verified_credentials_is_hodler error: {:?}",
-					e
-				),
-			}
-
-			if is_hold {
-				if index < optimal_hold_index {
-					optimal_hold_index = index;
-				}
-
-				break
-			}
-		}
 	}
 
-	// Found the optimal hold index, set the is_hold to true, otherwise
-	// the optimal_hold_index is always 0 (2017-01-01)
-	if optimal_hold_index != usize::MAX {
-		is_hold = true;
-	} else {
+	// If is_hold is false, then the optimal_hold_index is always 0 (2017-01-01)
+	if !is_hold {
 		optimal_hold_index = 0;
 	}
 
-	match Credential::new_default(who, shard) {
+	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A4_SUBJECT_DESCRIPTION,
@@ -220,31 +166,5 @@ pub fn build(
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(Assertion::A4(min_balance), e.into_error_detail()))
 		},
-	}
-}
-
-fn if_match_networks_collect_address(
-	networks: &mut HashMap<SupportedNetwork, HashSet<String>>,
-	verified_network: SupportedNetwork,
-	address: String,
-) {
-	if matches!(
-		verified_network,
-		SupportedNetwork::Litentry
-			| SupportedNetwork::Litmus
-			| SupportedNetwork::LitentryRococo
-			| SupportedNetwork::Ethereum
-	) {
-		match networks.get_mut(&verified_network) {
-			Some(set) => {
-				set.insert(address);
-			},
-			None => {
-				let mut set = HashSet::new();
-				set.insert(address);
-
-				networks.insert(verified_network.clone(), set);
-			},
-		}
 	}
 }

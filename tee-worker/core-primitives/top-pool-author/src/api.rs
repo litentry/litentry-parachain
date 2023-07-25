@@ -55,7 +55,7 @@ impl<Block> SidechainApi<Block> {
 	}
 
 	fn validate_trusted_call(trusted_call_signed: TrustedCallSigned) -> ValidTransaction {
-		let from = trusted_call_signed.call.sender_account();
+		let from = trusted_call_signed.call.sender_identity();
 		let requires = vec![];
 		let provides = vec![(from, trusted_call_signed.nonce).encode()];
 
@@ -146,6 +146,7 @@ mod tests {
 	use ita_stf::{PublicGetter, TrustedCall, TrustedOperation};
 	use itp_stf_primitives::types::{KeyPair, ShardIdentifier};
 	use itp_types::Block as ParentchainBlock;
+	use litentry_primitives::Identity;
 	use sp_core::{ed25519, Pair};
 	use sp_keyring::AccountKeyring;
 
@@ -186,7 +187,7 @@ mod tests {
 
 	fn create_indirect_trusted_operation() -> TrustedOperation {
 		let trusted_call_signed = TrustedCall::balance_transfer(
-			AccountKeyring::Alice.public().into(),
+			Identity::Substrate(AccountKeyring::Alice.public().into()),
 			AccountKeyring::Bob.public().into(),
 			1000u128,
 		)

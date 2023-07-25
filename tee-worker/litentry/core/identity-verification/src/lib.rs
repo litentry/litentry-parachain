@@ -35,8 +35,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use frame_support::pallet_prelude::*;
 use lc_stf_task_sender::IdentityVerificationRequest;
-// this should be ita_stf::AccountId, but we use itp_types to avoid cyclic dep
-use itp_types::AccountId;
 use litentry_primitives::ValidationData;
 use std::string::ToString;
 
