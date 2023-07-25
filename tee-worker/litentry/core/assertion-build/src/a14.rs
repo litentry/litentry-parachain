@@ -41,7 +41,6 @@ use ss58_registry::Ss58AddressFormat;
 const VC_A14_SUBJECT_DESCRIPTION: &str =
 	"The user has participated in any Polkadot on-chain governance events";
 const VC_A14_SUBJECT_TYPE: &str = "Polkadot Governance Participation Proof";
-const VC_A14_SUBJECT_TAG: [&str; 2] = ["Polkadot", "Governance"];
 
 // mostly copied from https://github.com/hack-ink/substrate-minimal/blob/main/subcryptor/src/lib.rs
 // no_std version is used here
@@ -178,11 +177,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
-			credential_unsigned.add_subject_info(
-				VC_A14_SUBJECT_DESCRIPTION,
-				VC_A14_SUBJECT_TYPE,
-				VC_A14_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A14_SUBJECT_DESCRIPTION, VC_A14_SUBJECT_TYPE);
 
 			// add assertion
 			credential_unsigned.add_assertion_a14(value);

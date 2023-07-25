@@ -19,6 +19,7 @@ use crate::{
 	response_channel::ResponseChannel, DirectRpcError, DirectRpcResult, RpcConnectionRegistry,
 	RpcHash, SendRpcResponse,
 };
+use codec::Encode;
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::{DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -74,7 +75,7 @@ where
 		hash: Hash,
 		status_update: TrustedOperationStatus,
 	) -> DirectRpcResult<()> {
-		debug!("updating status event");
+		debug!("updating status event, hash: {}, status: {:?}", hash.to_hex(), status_update);
 
 		// withdraw removes it from the registry
 		let (connection_token, rpc_response) = self
@@ -87,11 +88,26 @@ where
 		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
 			.map_err(|e| DirectRpcError::Other(Box::new(e)))?;
 
-		let do_watch = continue_watching(&status_update);
+		// Litentry:
+		// a trick to use `result.value` as the flag to forcily watch this connection.
+		// If it's `true.encode()` it means we have streamed trustedCalls and there's more to come
+		// TODO: how about relying on req_ext_hash? See comment in `trusted_call.rs`
+		let do_watch = continue_watching(&status_update)
+			|| (result.value == true.encode()
+				&& matches!(
+					result.status,
+					DirectRequestStatus::TrustedOperationStatus(
+						TrustedOperationStatus::InSidechainBlock(_),
+						_
+					)
+				));
 
 		// update response
 		result.do_watch = do_watch;
-		result.status = DirectRequestStatus::TrustedOperationStatus(status_update);
+		result.status = DirectRequestStatus::TrustedOperationStatus(
+			status_update,
+			hash.maybe_h256().ok_or(DirectRpcError::HashConversionError)?,
+		);
 		new_response.result = result.to_hex();
 
 		self.encode_and_send_response(connection_token, &new_response)?;
@@ -104,6 +120,7 @@ where
 		Ok(())
 	}
 
+	// TODO(Litentry): it seems that this fn is only used in tests?
 	fn send_state(&self, hash: Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()> {
 		debug!("sending state");
 
@@ -115,8 +132,10 @@ where
 
 		// create return value
 		// TODO: Signature?
-		let submitted =
-			DirectRequestStatus::TrustedOperationStatus(TrustedOperationStatus::Submitted);
+		let submitted = DirectRequestStatus::TrustedOperationStatus(
+			TrustedOperationStatus::Submitted,
+			hash.maybe_h256().ok_or(DirectRpcError::HashConversionError)?,
+		);
 		let result = RpcReturnValue::new(state_encoded, false, submitted);
 
 		// update response
@@ -125,6 +144,42 @@ where
 		self.encode_and_send_response(connection_token, &response)?;
 
 		debug!("sending state successful");
+		Ok(())
+	}
+
+	fn set_value(&self, hash: Self::Hash, encoded_value: Vec<u8>) -> DirectRpcResult<()> {
+		debug!("set response value");
+
+		// withdraw removes it from the registry
+		let (connection_token, rpc_response) = self
+			.connection_registry
+			.withdraw(&hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+
+		let mut new_response = rpc_response.clone();
+
+		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
+			.map_err(|e| DirectRpcError::Other(Box::new(e)))?;
+
+		result.value = encoded_value;
+		new_response.result = result.to_hex();
+		self.connection_registry.store(hash, connection_token, new_response);
+
+		debug!("set response value OK");
+		Ok(())
+	}
+
+	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()> {
+		debug!("swap hash, old: {:?}, new: {:?}", old_hash, new_hash);
+
+		let (connection_token, rpc_response) = self
+			.connection_registry
+			.withdraw(&old_hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+
+		// leave `rpc_response` untouched - it should be overwritten later anyway
+		self.connection_registry.store(new_hash, connection_token, rpc_response);
+		debug!("swap hash OK");
 		Ok(())
 	}
 }
@@ -149,11 +204,12 @@ pub mod tests {
 		rpc_connection_registry::ConnectionRegistry,
 	};
 	use codec::Encode;
+	use itp_types::H256;
 	use std::assert_matches::assert_matches;
 
 	type TestConnectionToken = u64;
 	type TestResponseChannel = ResponseChannelMock<TestConnectionToken>;
-	type TestConnectionRegistry = ConnectionRegistry<String, TestConnectionToken>;
+	type TestConnectionRegistry = ConnectionRegistry<H256, TestConnectionToken>;
 
 	#[test]
 	fn given_empty_registry_when_updating_status_event_then_return_error() {
@@ -162,8 +218,7 @@ pub mod tests {
 		let rpc_responder = RpcResponder::new(connection_registry, websocket_responder);
 
 		assert_matches!(
-			rpc_responder
-				.update_status_event("hash".to_string(), TrustedOperationStatus::Broadcast),
+			rpc_responder.update_status_event([1u8; 32].into(), TrustedOperationStatus::Broadcast),
 			Err(DirectRpcError::InvalidConnectionHash)
 		);
 	}
@@ -175,14 +230,14 @@ pub mod tests {
 		let rpc_responder = RpcResponder::new(connection_registry, websocket_responder);
 
 		assert_matches!(
-			rpc_responder.send_state("hash".to_string(), vec![1u8, 2u8]),
+			rpc_responder.send_state([1u8; 32].into(), vec![1u8, 2u8]),
 			Err(DirectRpcError::InvalidConnectionHash)
 		);
 	}
 
 	#[test]
 	fn updating_status_event_with_finalized_state_removes_connection() {
-		let connection_hash = String::from("conn_hash");
+		let connection_hash = H256::random();
 		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
@@ -200,8 +255,9 @@ pub mod tests {
 
 	#[test]
 	fn updating_status_event_with_ready_state_keeps_connection_and_sends_update() {
-		let connection_hash = String::from("conn_hash");
-		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
+		let connection_hash = H256::random();
+		let connection_registry: Arc<ConnectionRegistry<_, u64>> =
+			create_registry_with_single_connection(connection_hash.clone());
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
 		let rpc_responder =
@@ -222,7 +278,7 @@ pub mod tests {
 
 	#[test]
 	fn sending_state_successfully_sends_update_and_removes_connection_token() {
-		let connection_hash = String::from("conn_hash");
+		let connection_hash = H256::random();
 		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
 
 		let websocket_responder = Arc::new(TestResponseChannel::default());
@@ -246,7 +302,7 @@ pub mod tests {
 	}
 
 	fn verify_open_connection(
-		connection_hash: &String,
+		connection_hash: &H256,
 		connection_registry: Arc<TestConnectionRegistry>,
 	) {
 		let maybe_connection = connection_registry.withdraw(&connection_hash);
@@ -254,14 +310,14 @@ pub mod tests {
 	}
 
 	fn verify_closed_connection(
-		connection_hash: &String,
+		connection_hash: &H256,
 		connection_registry: Arc<TestConnectionRegistry>,
 	) {
 		assert!(connection_registry.withdraw(&connection_hash).is_none());
 	}
 
 	fn create_registry_with_single_connection(
-		connection_hash: String,
+		connection_hash: H256,
 	) -> Arc<TestConnectionRegistry> {
 		let connection_registry = TestConnectionRegistry::new();
 		let rpc_response = RpcResponseBuilder::new().with_id(2).build();

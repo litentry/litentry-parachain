@@ -25,8 +25,6 @@ use lc_data_providers::achainable::{AchainableClient, AchainableTotalTransaction
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "The total amount of transaction the user has ever made in each of the available networks (including invalid transactions)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
-const VC_A8_SUBJECT_TAG: [&str; 6] =
-	["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"];
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who),);
@@ -51,11 +49,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let (min, max) = get_total_tx_ranges(total_txs);
 	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A8_SUBJECT_DESCRIPTION,
-				VC_A8_SUBJECT_TYPE,
-				VC_A8_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A8_SUBJECT_DESCRIPTION, VC_A8_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a8(networks, min, max);
 
 			Ok(credential_unsigned)

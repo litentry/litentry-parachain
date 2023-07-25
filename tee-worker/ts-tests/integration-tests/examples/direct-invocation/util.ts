@@ -3,6 +3,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { BN, u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
+import { HexString } from '@polkadot/util/types';
 import { Bytes } from '@polkadot/types-codec';
 import { PubicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
@@ -12,7 +13,10 @@ import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { u32, Option, u8, Vector } from 'scale-ts';
 import { Index } from '@polkadot/types/interfaces';
+import { blake2AsHex } from '@polkadot/util-crypto';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import { AesOutput as CustomAesOutput } from '../../common/type-definitions';
+import { AesOutput } from 'parachain-api/build/interfaces';
 
 export function toBalance(amountInt: number) {
     return new BN(amountInt).mul(new BN(10).pow(new BN(12)));
@@ -43,8 +47,7 @@ async function sendRequest(
                 console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
             }
 
-            // unfortunately, the res.value only contains the hash of top
-            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid) {
+            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
                 console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
             }
 
@@ -54,7 +57,8 @@ async function sendRequest(
                 wsClient.onMessage.removeAllListeners();
                 resolve(res);
             } else {
-                // TODO: subscribe to parachain headers if the status is `Submitted`
+                // `do_watch` is true means: hold on - there's still something coming
+                console.log('do_watch is true, continue watching ...');
             }
         })
     );
@@ -203,15 +207,16 @@ export function createSignedTrustedCallSetIdentityNetworks(
     signer: KeyringPair,
     subject: LitentryPrimitivesIdentity,
     identity: string,
-    web3networks: string
+    web3networks: string,
+    hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_identity_networks', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)'],
+        ['set_identity_networks', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)'],
         signer,
         mrenclave,
         nonce,
-        [subject, subject, identity, web3networks]
+        [subject, subject, identity, web3networks, hash]
     );
 }
 
@@ -303,6 +308,7 @@ export const sendRequestFromTrustedCall = async (
     // construct trusted operation
     const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
     console.log('top: ', trustedOperation.toJSON());
+    console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
     // create the request parameter
     const requestParam = await createRequest(
         wsp,
@@ -403,4 +409,18 @@ export function getKeyPair(accountName: string, keyring: Keyring): KeyringPair {
             return keyring.addFromUri('//' + accountName, { name: accountName });
         }
     }
+}
+
+export function getTopHash(parachainApi: ApiPromise, call: TrustedCallSigned) {
+    const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
+    return blake2AsHex(trustedOperation.toU8a());
+}
+
+export function parseAesOutput(parachainApi: ApiPromise, value: HexString): CustomAesOutput {
+    const aesOutput = parachainApi.createType('AesOutput', value) as unknown as AesOutput;
+    const output = new CustomAesOutput();
+    output.ciphertext = hexToU8a(aesOutput.ciphertext.toHex());
+    output.aad = hexToU8a(aesOutput.aad.toHex());
+    output.nonce = aesOutput.nonce.toU8a();
+    return output;
 }

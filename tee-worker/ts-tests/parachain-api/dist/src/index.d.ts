@@ -14,7 +14,7 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
-} from "../build/interfaces";
+} from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -70,8 +70,8 @@ export declare const definitions: {
                 balance_shield: string;
                 set_user_shielding_key: string;
                 link_identity: string;
-                activate_identity: string;
                 deactivate_identity: string;
+                activate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
             };
@@ -197,14 +197,37 @@ export declare const definitions: {
         GenericEventWithAccount: {
             account: string;
         };
+        SetUserShieldingKeyResponse: {
+            account: string;
+            id_graph: string;
+            req_ext_hash: string;
+        };
+        LinkIdentityResponse: {
+            account: string;
+            identity: string;
+            id_graph: string;
+            req_ext_hash: string;
+        };
+        DeactivateIdentityResponse: {
+            account: string;
+            identity: string;
+            req_ext_hash: string;
+        };
+        ActivateIdentityResponse: {
+            account: string;
+            identity: string;
+            req_ext_hash: string;
+        };
+        SetIdentityNetworksResponse: {
+            req_ext_hash: string;
+        };
+        AesOutput: {
+            ciphertext: string;
+            aad: string;
+            nonce: string;
+        };
     };
 };
 type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
 export declare function create(provider: ProviderInterface): Promise<ApiPromise>;
-type GuardType<GuardFunction> = GuardFunction extends (x: any) => x is infer Type ? Type : never;
-type IEventLike = Parameters<AugmentedEvent<never>["is"]>[0];
-export declare function filterEvents<ApiType extends ApiTypes, T extends AnyTuple, N>(
-    eventType: AugmentedEvent<ApiType, T, N>,
-    events: IEventLike[]
-): GuardType<AugmentedEvent<ApiType, T, N>["is"]>[];
 //# sourceMappingURL=index.d.ts.map

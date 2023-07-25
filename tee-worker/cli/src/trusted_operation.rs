@@ -30,7 +30,7 @@ use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, Header, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainHash as Hash};
+use litentry_primitives::ParentchainAccountId as AccountId;
 use log::*;
 use sp_core::{sr25519 as sr25519_core, H256};
 use std::{
@@ -185,11 +185,8 @@ fn send_direct_request(
 							direct_api.close().unwrap();
 							return None
 						},
-						DirectRequestStatus::TrustedOperationStatus(status) => {
-							debug!("request status is: {:?}", status);
-							if let Ok(value) = Hash::decode(&mut return_value.value.as_slice()) {
-								println!("Trusted call {:?} is {:?}", value, status);
-							}
+						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
 							if connection_can_be_closed(status) {
 								direct_api.close().unwrap();
 								return None
@@ -256,17 +253,13 @@ pub(crate) fn wait_until(
 								}
 								return None
 							},
-							DirectRequestStatus::TrustedOperationStatus(status) => {
-								debug!("request status is: {:?}", status);
-								if let Ok(value) = Hash::decode(&mut return_value.value.as_slice())
-								{
-									println!("Trusted call {:?} is {:?}", value, status);
-									if until(status.clone()) {
-										return Some((value, Instant::now()))
-									} else if status == TrustedOperationStatus::Invalid {
-										error!("Invalid request");
-										return None
-									}
+							DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+								debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+								if until(status.clone()) {
+									return Some((top_hash, Instant::now()))
+								} else if status == TrustedOperationStatus::Invalid {
+									error!("Invalid request");
+									return None
 								}
 							},
 							_ => {
