@@ -254,12 +254,15 @@ jobs:
       - name: Free up disk space
         # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
         # before: 23 GB | after: 48 GB
+        # only do this for github-hosted runners
         run: |
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          if [ "${{ runner.name }}" = "GitHub Actions 2" ]; then
+            sudo rm -rf /usr/local/lib/android
+            sudo rm -rf /usr/share/dotnet
+            sudo rm -rf /opt/ghc
+            sudo rm -rf /usr/local/share/boost
+            sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          fi
 
       - uses: actions/checkout@v3
 
@@ -300,12 +303,15 @@ jobs:
       - name: Free up disk space
         # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
         # before: 23 GB | after: 48 GB
+        # only do this for github-hosted runners
         run: |
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          if [ "${{ runner.name }}" = "GitHub Actions 2" ]; then
+            sudo rm -rf /usr/local/lib/android
+            sudo rm -rf /usr/share/dotnet
+            sudo rm -rf /opt/ghc
+            sudo rm -rf /usr/local/share/boost
+            sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          fi
 
       - uses: actions/checkout@v3
 
@@ -350,12 +356,15 @@ jobs:
       - name: Free up disk space
         # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
         # before: 23 GB | after: 48 GB
+        # only do this for github-hosted runners
         run: |
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          if [ "${{ runner.name }}" = "GitHub Actions 2" ]; then
+            sudo rm -rf /usr/local/lib/android
+            sudo rm -rf /usr/share/dotnet
+            sudo rm -rf /opt/ghc
+            sudo rm -rf /usr/local/share/boost
+            sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          fi
 
       - uses: actions/checkout@v3
 
