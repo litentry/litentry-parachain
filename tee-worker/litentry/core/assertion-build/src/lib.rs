@@ -57,14 +57,7 @@ use litentry_primitives::{
 	ParameterString, VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
-use std::{
-	collections::HashSet,
-	format,
-	string::{String, ToString},
-	sync::Arc,
-	vec,
-	vec::Vec,
-};
+use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};
 
 pub type Result<T> = core::result::Result<T, Error>;
 

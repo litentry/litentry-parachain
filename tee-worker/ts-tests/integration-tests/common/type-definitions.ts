@@ -79,7 +79,8 @@ export type VcRequested = {
 export enum RequestEvent {
     LinkIdentityRequested = 'LinkIdentityRequested',
     SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
-    RemoveIdentityRequested = 'RemoveIdentityRequested',
+    DeactivateIdentityRequested = 'DeactivateIdentityRequested',
+    ActivateIdentityRequested = 'ActivateIdentityRequested',
     VCRequested = 'VCRequested',
     ItemCompleted = 'ItemCompleted',
     BatchCompleted = 'BatchCompleted',

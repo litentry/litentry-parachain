@@ -79,7 +79,7 @@ export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
     identities: LitentryPrimitivesIdentity[],
-    method: 'setUserShieldingKey' | 'linkIdentity' | 'removeIdentity',
+    method: 'setUserShieldingKey' | 'linkIdentity' | 'deactivateIdentity' | 'activateIdentity',
     validations?: LitentryValidationData[],
     web3networks?: Web3Network[][]
 ): Promise<any[]> {
@@ -121,8 +121,12 @@ export async function buildIdentityTxs(
                 );
                 break;
             }
-            case 'removeIdentity': {
-                tx = api.tx.identityManagement.removeIdentity(mrEnclave, `0x${ciphertextIdentity}`);
+            case 'deactivateIdentity': {
+                tx = api.tx.identityManagement.deactivateIdentity(mrEnclave, `0x${ciphertextIdentity}`);
+                break;
+            }
+            case 'activateIdentity': {
+                tx = api.tx.identityManagement.activateIdentity(mrEnclave, `0x${ciphertextIdentity}`);
                 break;
             }
             default:
@@ -138,7 +142,7 @@ export async function handleIdentityEvents(
     context: IntegrationTestContext,
     aesKey: HexString,
     events: any[],
-    type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityRemoved' | 'Failed'
+    type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityDeactivated' | 'Failed'
 ): Promise<IdentityGenericEvent[]> {
     const results: IdentityGenericEvent[] = [];
 
@@ -164,7 +168,7 @@ export async function handleIdentityEvents(
                     )
                 );
                 break;
-            case 'IdentityRemoved':
+            case 'IdentityDeactivated':
                 results.push(
                     createIdentityEvent(
                         context.sidechainRegistry,

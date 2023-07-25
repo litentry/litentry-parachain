@@ -101,12 +101,12 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         assert.equal(events.length, txs.length, 'verify identities with multiple accounts check fail');
     });
 
-    step('test removeIdentity with multiple accounts', async () => {
-        const txs = await buildIdentityTxs(context, substrateSigners, identities, 'removeIdentity');
+    step('test deactivateIdentity with multiple accounts', async () => {
+        const txs = await buildIdentityTxs(context, substrateSigners, identities, 'deactivateIdentity');
 
         const events = await multiAccountTxSender(context, txs, substrateSigners, 'identityManagement', [
-            'IdentityRemoved',
+            'IdentityDeactivated',
         ]);
-        assert.equal(events.length, txs.length, 'remove identities with multiple accounts check fail');
+        assert.equal(events.length, txs.length, 'deactivate identities with multiple accounts check fail');
     });
 });

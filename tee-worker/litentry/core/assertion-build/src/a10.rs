@@ -22,11 +22,12 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableQuery, VerifiedCredentialsIsHodlerIn},
+	achainable::{AchainableClient, AchainableHoldingAssertion},
 	vec_to_string,
 };
 
-const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+// NOTE： The WBTC_TOKEN_ADDRESS has been embedded into the interface when creating the wbtc_holder label
+// const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 
 const VC_A10_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
@@ -34,6 +35,8 @@ const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Assertion";
 const VC_A10_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
 
 // WBTC Holder
+// TODO:
+// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A10 build, who: {:?}", account_id_to_string(&req.who),);
 
@@ -43,58 +46,30 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
 
 	let mut is_hold = false;
-	let mut optimal_hold_index = usize::MAX;
-
-	for (network, addresses) in identities {
-		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
-		// there is no need to query other networks.
-		if optimal_hold_index == 0 {
+	let mut optimal_hold_index = 0;
+	for index in 0..ASSERTION_FROM_DATE.len() {
+		if is_hold {
 			break
 		}
 
-		// Each query loop needs to reset is_hold to false
-		is_hold = false;
+		for address in &addresses {
+			match client.is_holder(&req.assertion, address, index) {
+				Ok(is_wbtc_holder) =>
+					if is_wbtc_holder {
+						optimal_hold_index = index;
+						is_hold = true;
 
-		let addresses: Vec<String> = addresses.into_iter().collect();
-		let token_address = WBTC_TOKEN_ADDRESS;
-
-		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-			let vch = VerifiedCredentialsIsHodlerIn::new(
-				addresses.clone(),
-				from_date.to_string(),
-				network,
-				token_address.to_string(),
-				q_min_balance.to_string(),
-			);
-			match client.verified_credentials_is_hodler(vch) {
-				Ok(is_hodler_out) =>
-					for hodler in is_hodler_out.hodlers.iter() {
-						is_hold = is_hold || hodler.is_hodler;
+						break
 					},
-				Err(e) => error!(
-					"Assertion A10 request check_verified_credentials_is_hodler error: {:?}",
-					e
-				),
-			}
-
-			if is_hold {
-				if index < optimal_hold_index {
-					optimal_hold_index = index;
-				}
-
-				break
+				Err(e) => error!("Assertion A10 request is_holder error: {:?}", e),
 			}
 		}
-	}
-
-	// Found the optimal hold index, set the is_hold to true, otherwise
-	// the optimal_hold_index is always 0 (2017-01-01)
-	if optimal_hold_index != usize::MAX {
-		is_hold = true;
-	} else {
-		optimal_hold_index = 0;
 	}
 
 	match Credential::new_default(&req.who, &req.shard) {

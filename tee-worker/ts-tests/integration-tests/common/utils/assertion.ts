@@ -157,7 +157,7 @@ export async function assertIdentityCreated(
     console.log(colors.green('assertIdentityCreated complete'));
 }
 
-export async function assertIdentityRemoved(
+export async function assertIdentityDeactivated(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
     events: any[]
@@ -168,17 +168,31 @@ export async function assertIdentityRemoved(
         const eventData = events[index].data;
         const who = eventData.account.toHex();
 
-        // Check idGraph
         assert.equal(
-            eventData.idGraph,
-            null,
-            'check IdentityRemoved error: event idGraph should be null after removed identity'
+            who,
+            u8aToHex(signer.addressRaw),
+            'Check IdentityDeactivated error: signer should be equal to who'
         );
-
-        assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityRemoved error: signer should be equal to who');
     }
 
-    console.log(colors.green('assertIdentityRemoved complete'));
+    console.log(colors.green('assertIdentityDeactivated complete'));
+}
+
+export async function assertIdentityActivated(
+    context: IntegrationTestContext,
+    signers: KeyringPair | KeyringPair[],
+    events: any[]
+) {
+    for (let index = 0; index < events.length; index++) {
+        const signer = Array.isArray(signers) ? signers[index] : signers;
+
+        const eventData = events[index].data;
+        const who = eventData.account.toHex();
+
+        assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityActivated error: signer should be equal to who');
+    }
+
+    console.log(colors.green('assertIdentityActivated complete'));
 }
 
 export async function assertWorkRpcReturnValue(callType: string, res: WorkerRpcReturnValue) {

@@ -9,9 +9,10 @@ import {
     buildValidations,
     checkUserShieldingKeys,
     assertIdentityLinked,
-    assertIdentityRemoved,
+    assertIdentityDeactivated,
     assertInitialIdGraphCreated,
     buildIdentityFromKeypair,
+    assertIdentityActivated,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -381,45 +382,70 @@ describeLitentry('Test Identity', 0, (context) => {
 
     // TODO: testcase for linking prime address
 
-    step('remove identities', async function () {
-        // Alice remove all identities
+    step('deactivate identities', async function () {
+        // Alice deactivate all identities
         const aliceTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
             eveIdentities,
-            'removeIdentity'
+            'deactivateIdentity'
         );
-        const aliceRemovedEvents = await sendTxsWithUtility(
+        const aliceDeactivatedEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             aliceTxs,
             'identityManagement',
-            ['IdentityRemoved']
+            ['IdentityDeactivated']
         );
 
-        // Bob remove substrate identities
-        const bobTxs = await buildIdentityTxs(context, context.substrateWallet.bob, aliceIdentities, 'removeIdentity');
-        const bobRemovedEvents = await sendTxsWithUtility(
+        // Bob deactivate substrate identities
+        const bobTxs = await buildIdentityTxs(
+            context,
+            context.substrateWallet.bob,
+            aliceIdentities,
+            'deactivateIdentity'
+        );
+        const bobDeactivatedEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.bob,
             bobTxs,
             'identityManagement',
-            ['IdentityRemoved']
+            ['IdentityDeactivated']
         );
 
         // Alice check identity
-        assertIdentityRemoved(context, context.substrateWallet.alice, aliceRemovedEvents);
+        assertIdentityDeactivated(context, context.substrateWallet.alice, aliceDeactivatedEvents);
 
         // Bob check identity
-        assertIdentityRemoved(context, context.substrateWallet.bob, bobRemovedEvents);
+        assertIdentityDeactivated(context, context.substrateWallet.bob, bobDeactivatedEvents);
     });
 
-    step('check IDGraph after removeIdentity', async function () {
+    step('check IDGraph after deactivateIdentity', async function () {
         // TODO: we should verify the IDGraph is empty
     });
 
-    step('remove prime identity is disallowed', async function () {
-        // remove prime identity
+    step('activate identity', async () => {
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+        // Alice activate all identities
+        const aliceTxs = await buildIdentityTxs(
+            context,
+            context.substrateWallet.alice,
+            [evmIdentity],
+            'activateIdentity'
+        );
+        const aliceActivatedEvents = await sendTxsWithUtility(
+            context,
+            context.substrateWallet.alice,
+            aliceTxs,
+            'identityManagement',
+            ['IdentityActivated']
+        );
+        // Alice check identity
+        await assertIdentityActivated(context, context.substrateWallet.alice, aliceActivatedEvents);
+    });
+
+    step('deactivate prime identity is disallowed', async function () {
+        // deactivate prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.alice.addressRaw),
             'Substrate',
@@ -430,54 +456,55 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             context.substrateWallet.alice,
             [substratePrimeIdentity],
-            'removeIdentity'
+            'deactivateIdentity'
         );
         const primeEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
             primeTxs,
             'identityManagement',
-            ['RemoveIdentityFailed']
+            ['DeactivateIdentityFailed']
         );
 
-        await checkErrorDetail(primeEvents, 'RemovePrimeIdentityDisallowed');
+        await checkErrorDetail(primeEvents, 'DeactivatePrimeIdentityDisallowed');
     });
 
-    step('remove error identities', async function () {
-        // Remove a nonexistent identity
-        // context.substrateWallet.alice has aleady removed all identities in step('remove identities')
-        const aliceRemoveTxs = await buildIdentityTxs(
+    step('deactivate error identities', async function () {
+        // Deactivate a nonexistent identity
+        // context.substrateWallet.alice has already deactivated all identities in step('deactivate identities')
+        const notExistingIdentity = await buildIdentityHelper('new_mock_user', 'Twitter', context);
+        const aliceDeactivateTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,
-            eveIdentities,
-            'removeIdentity'
+            [notExistingIdentity],
+            'deactivateIdentity'
         );
-        const aliceRemovedEvents = await sendTxsWithUtility(
+        const aliceDeactivatedEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.alice,
-            aliceRemoveTxs,
+            aliceDeactivateTxs,
             'identityManagement',
-            ['RemoveIdentityFailed']
+            ['DeactivateIdentityFailed']
         );
 
-        await checkErrorDetail(aliceRemovedEvents, 'IdentityNotExist');
+        await checkErrorDetail(aliceDeactivatedEvents, 'IdentityNotExist');
 
-        // remove a wrong identity (alice) for charlie
-        const charlieRemoveTxs = await buildIdentityTxs(
+        // deactivate a wrong identity (alice) for charlie
+        const charlieDeactivateTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.charlie,
             eveIdentities,
-            'removeIdentity'
+            'deactivateIdentity'
         );
-        const charileRemovedEvents = await sendTxsWithUtility(
+        const charlieDeactivateEvents = await sendTxsWithUtility(
             context,
             context.substrateWallet.charlie,
-            charlieRemoveTxs,
+            charlieDeactivateTxs,
             'identityManagement',
-            ['RemoveIdentityFailed']
+            ['DeactivateIdentityFailed']
         );
 
-        await checkErrorDetail(charileRemovedEvents, 'UserShieldingKeyNotFound');
+        await checkErrorDetail(charlieDeactivateEvents, 'UserShieldingKeyNotFound');
     });
 
     step('set error user shielding key', async function () {
