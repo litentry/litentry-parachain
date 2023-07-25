@@ -251,6 +251,16 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - name: Free up disk space
+        # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
+        # before: 23 GB | after: 48 GB
+        run: |
+          sudo rm -rf /usr/local/lib/android # will release about 10 GB if you don't need Android
+          sudo rm -rf /usr/share/dotnet # will release about 20GB if you don't need .NET
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - uses: actions/checkout@v3
 
       - name: Build docker image
@@ -287,6 +297,16 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - name: Free up disk space
+        # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
+        # before: 23 GB | after: 48 GB
+        run: |
+          sudo rm -rf /usr/local/lib/android # will release about 10 GB if you don't need Android
+          sudo rm -rf /usr/share/dotnet # will release about 20GB if you don't need .NET
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - uses: actions/checkout@v3
 
       - name: Build docker image
@@ -327,6 +347,16 @@ jobs:
       - set-condition
       - sequentialise
     steps:
+      - name: Free up disk space
+        # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
+        # before: 23 GB | after: 48 GB
+        run: |
+          sudo rm -rf /usr/local/lib/android # will release about 10 GB if you don't need Android
+          sudo rm -rf /usr/share/dotnet # will release about 20GB if you don't need .NET
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
