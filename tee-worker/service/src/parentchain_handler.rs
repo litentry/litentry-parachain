@@ -178,37 +178,37 @@ where
 				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
 				events.push(block_events);
 			}
-			block_chunk_to_sync
-				.iter_mut()
-				.enumerate()
-				.for_each(|(block_index, signed_block)| {
-					let mut extrinsics = vec![];
-					let block_events = events.get(block_index).unwrap();
-					for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
-						// Check if the tx was successful
-						let success = block_events
-							.iter()
-							.filter(|event| {
-								if let Ok(event) = event {
-									event.pallet_name() == "System"
-										&& event.variant_name() == "ExtrinsicSuccess"
-										&& event.phase() == Phase::ApplyExtrinsic(i as u32)
-								} else {
-									false
-								}
-							})
-							.count() > 0;
-						if !success {
-							warn!(
-								"block:{:?}, extrinsic index: {:?}, success: {:?}",
-								&signed_block.block.header.number, i, success,
-							);
-						} else {
-							extrinsics.push(xt.clone());
-						}
+
+			for (block_index, signed_block) in block_chunk_to_sync.iter_mut().enumerate() {
+				let mut extrinsics = vec![];
+				let block_events = events
+					.get(block_index)
+					.ok_or_else(|| Error::MissingBlockEvents(block_index))?;
+				for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
+					// Check if the tx was successful
+					let success = block_events
+						.iter()
+						.filter(|event| {
+							if let Ok(event) = event {
+								event.pallet_name() == "System"
+									&& event.variant_name() == "ExtrinsicSuccess"
+									&& event.phase() == Phase::ApplyExtrinsic(i as u32)
+							} else {
+								false
+							}
+						})
+						.count() > 0;
+					if !success {
+						warn!(
+							"block:{:?}, extrinsic index: {:?}, success: {:?}",
+							&signed_block.block.header.number, i, success,
+						);
+					} else {
+						extrinsics.push(xt.clone());
 					}
-					signed_block.block.extrinsics = extrinsics;
-				});
+				}
+				signed_block.block.extrinsics = extrinsics;
+			}
 
 			let events_chunk_to_sync: Vec<Vec<u8>> = block_chunk_to_sync
 				.iter()

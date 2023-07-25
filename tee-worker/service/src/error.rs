@@ -52,6 +52,8 @@ pub enum Error {
 	MissingLastFinalizedBlock,
 	#[error("{0}")]
 	Custom(Box<dyn std::error::Error + Sync + Send + 'static>),
+	#[error("Could not find parentchain block events")]
+	MissingBlockEvents(usize),
 }
 
 impl From<ApiClientError> for Error {

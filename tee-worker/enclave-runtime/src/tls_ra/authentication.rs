@@ -62,16 +62,19 @@ where
 			return Err(rustls::TLSError::NoCertificatesPresented)
 		}
 
-		match cert::verify_mra_cert(&certs[0].0, &self.attestation_ocall) {
-			Ok(()) => Ok(rustls::ClientCertVerified::assertion()),
-			Err(sgx_status_t::SGX_ERROR_UPDATE_NEEDED) =>
-				if self.outdated_ok {
-					warn!("outdated_ok is set, overriding outdated error");
-					Ok(rustls::ClientCertVerified::assertion())
-				} else {
-					Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid))
-				},
-			Err(_) => Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid)),
+		match &certs.get(0) {
+			Some(cert) => match cert::verify_mra_cert(&cert.0, &self.attestation_ocall) {
+				Ok(()) => Ok(rustls::ClientCertVerified::assertion()),
+				Err(sgx_status_t::SGX_ERROR_UPDATE_NEEDED) =>
+					if self.outdated_ok {
+						warn!("outdated_ok is set, overriding outdated error");
+						Ok(rustls::ClientCertVerified::assertion())
+					} else {
+						Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid))
+					},
+				Err(_) => Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid)),
+			},
+			None => Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid)),
 		}
 	}
 }
@@ -111,16 +114,19 @@ where
 		}
 
 		// This call will automatically verify cert is properly signed
-		match cert::verify_mra_cert(&certs[0].0, &self.attestation_ocall) {
-			Ok(()) => Ok(rustls::ServerCertVerified::assertion()),
-			Err(sgx_status_t::SGX_ERROR_UPDATE_NEEDED) =>
-				if self.outdated_ok {
-					warn!("outdated_ok is set, overriding outdated error");
-					Ok(rustls::ServerCertVerified::assertion())
-				} else {
-					Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid))
-				},
-			Err(_) => Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid)),
+		match &certs.get(0) {
+			Some(cert) => match cert::verify_mra_cert(&cert.0, &self.attestation_ocall) {
+				Ok(()) => Ok(rustls::ServerCertVerified::assertion()),
+				Err(sgx_status_t::SGX_ERROR_UPDATE_NEEDED) =>
+					if self.outdated_ok {
+						warn!("outdated_ok is set, overriding outdated error");
+						Ok(rustls::ServerCertVerified::assertion())
+					} else {
+						Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid))
+					},
+				Err(_) => Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid)),
+			},
+			None => Err(rustls::TLSError::WebPKIError(webpki::Error::ExtensionValueInvalid)),
 		}
 	}
 }
