@@ -110,7 +110,6 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 			break
 		}
 
-		let chain = network.name();
 		let token =
 			if network == Web3Network::Ethereum { Some(LIT_TOKEN_ADDRESS.into()) } else { None };
 
@@ -118,7 +117,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			for address in &addresses {
 				let holding = ParamsBasicTypeWithAmountHoding::new(
-					chain.to_string(),
+					&network,
 					q_min_balance.to_string(),
 					date.to_string(),
 					token.clone(),

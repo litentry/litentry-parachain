@@ -142,6 +142,21 @@ pub trait AchainableSystemLabelName {
 	fn name(&self) -> String;
 }
 
+pub fn web3_network_to_chain(network: &Web3Network) -> String {
+	match network {
+		Web3Network::Polkadot => "polkadot".into(),
+		Web3Network::Kusama => "kusama".into(),
+		Web3Network::Litentry => "litentry".into(),
+		Web3Network::Litmus => "litmus".into(),
+		Web3Network::LitentryRococo => "litentry_rococo".into(),
+		Web3Network::Khala => "khala".into(),
+		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
+		Web3Network::Ethereum => "ethereum".into(),
+		Web3Network::Polygon => "polygon".into(),
+		Web3Network::BSC => "bsc".into(),
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum Params {
@@ -192,7 +207,8 @@ pub struct ParamsBasicTypeWithAmountHoding {
 }
 
 impl ParamsBasicTypeWithAmountHoding {
-	pub fn new(chain: String, amount: String, date: String, token: Option<String>) -> Self {
+	pub fn new(netwok: &Web3Network, amount: String, date: String, token: Option<String>) -> Self {
+		let chain = web3_network_to_chain(netwok);
 		let name = if token.is_some() {
 			"ERC20 hodling {amount} of {token} since {date}".into()
 		} else {
@@ -543,7 +559,7 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 		let mut txs = 0_u64;
 		addresses.iter().for_each(|address| {
 			let name = "Account total transactions under {amount}".to_string();
-			let chain = network.name().to_string();
+			let chain = web3_network_to_chain(network);
 			let amount = "1".to_string();
 
 			let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
@@ -791,7 +807,7 @@ impl AchainableTagBalance for AchainableClient {
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
 		// Native LIT Hodler
 		let param = ParamsBasicTypeWithAmountHoding::new(
-			"litentry".to_string(),
+			&Web3Network::Litentry,
 			"10".to_string(),
 			"2023-01-01T00:00:00.000Z".to_string(),
 			None,
@@ -801,7 +817,7 @@ impl AchainableTagBalance for AchainableClient {
 
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
 		let param = ParamsBasicTypeWithAmountHoding::new(
-			"ethereum".to_string(),
+			&Web3Network::Ethereum,
 			"10".to_string(),
 			"2022-01-01T00:00:00.000Z".to_string(),
 			Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()),
@@ -811,7 +827,7 @@ impl AchainableTagBalance for AchainableClient {
 
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
 		let param = ParamsBasicTypeWithAmountHoding::new(
-			"bsc".to_string(),
+			&Web3Network::BSC,
 			"10".to_string(),
 			"2022-01-01T00:00:00.000Z".to_string(),
 			Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()),

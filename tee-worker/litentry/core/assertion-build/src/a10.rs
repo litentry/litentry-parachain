@@ -56,7 +56,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 		for address in &addresses {
 			let holding = ParamsBasicTypeWithAmountHoding::new(
-				"ethereum".into(),
+				&Web3Network::Ethereum,
 				q_min_balance.to_string(),
 				date.to_string(),
 				Some(WBTC_TOKEN_ADDRESS.into()),
