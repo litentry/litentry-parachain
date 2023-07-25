@@ -24,11 +24,22 @@ function parachain_check() {
     cargo test --locked --release -p litentry-parachain-runtime --lib
 }
 
+function clean_up() {
+    cd "$root_dir"
+    cargo clean
+    cd "$root_dir/tee-worker"
+    cargo clean
+    cd "$root_dir/tee-worker/enclave-runtime"
+    cargo clean
+}
+
 root_dir=$(git rev-parse --show-toplevel)
-cd "$root_dir"
 
 start=$(date +%s)
 
+clean_up
+
+cd "$root_dir"
 make fmt
 make shellcheck # _shellcheck is not enforced in CI though
 
@@ -46,10 +57,7 @@ cd "$root_dir/tee-worker"
 RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
 echo "[Step 5], Service test"
-cd "$root_dir/tee-worker"
-cargo clean
-cd "$root_dir/tee-worker/enclave-runtime"
-cargo clean
+clean_up
 cd "$root_dir/tee-worker"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
