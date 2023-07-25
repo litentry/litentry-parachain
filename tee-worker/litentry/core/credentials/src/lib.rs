@@ -171,7 +171,7 @@ pub struct CredentialSchema {
 #[serde(rename_all = "camelCase")]
 pub struct Proof {
 	/// The timestamp when the signature was created
-	pub created_timestamp: u64,
+	pub created: u64,
 	/// The cryptographic signature suite that used to generate signature
 	#[serde(rename = "type")]
 	pub proof_type: ProofType,
@@ -186,7 +186,7 @@ pub struct Proof {
 impl Proof {
 	pub fn new(sig: &Vec<u8>, issuer: &AccountId) -> Self {
 		Proof {
-			created_timestamp: now_as_millis(),
+			created: now_as_millis(),
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
@@ -329,7 +329,7 @@ impl Credential {
 			return Err(Error::InvalidProof)
 		} else {
 			let proof = vc.proof.unwrap();
-			if proof.created_timestamp == 0 {
+			if proof.created == 0 {
 				return Err(Error::EmptyProofTimestamp)
 			}
 
