@@ -270,7 +270,7 @@ jobs:
       - name: Download tee-worker artifact
         uses: actions/download-artifact@v3
         with:
-          name: tee-worker-${{ env.RELEASE_TAG }}.tar.gz/*
+          name: tee-worker-${{ env.RELEASE_TAG }}.tar.gz
           path: ${{ github.workspace }}
 
       - name: Generate release notes
