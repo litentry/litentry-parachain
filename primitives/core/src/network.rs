@@ -78,24 +78,6 @@ impl Web3Network {
 	}
 }
 
-impl Web3Network {
-	/// Achainable server support lowercase ONLY.
-	pub fn name(&self) -> &'static str {
-		match self {
-			Web3Network::Polkadot => "polkadot",
-			Web3Network::Kusama => "kusama",
-			Web3Network::Litentry => "litentry",
-			Web3Network::Litmus => "litmus",
-			Web3Network::LitentryRococo => "litentry_rococo",
-			Web3Network::Khala => "khala",
-			Web3Network::SubstrateTestnet => "substrate_testnet",
-			Web3Network::Ethereum => "ethereum",
-			Web3Network::Polygon => "polygon",
-			Web3Network::BSC => "bsc",
-		}
-	}
-}
-
 pub fn all_web3networks() -> Vec<Web3Network> {
 	Web3Network::iter().collect()
 }
