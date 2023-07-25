@@ -228,6 +228,14 @@ export default {
         SetIdentityNetworksResponse: {
             req_ext_hash: "H256",
         },
+        RequestVCResponse: {
+            account: "AccountId",
+            assertion: "Assertion",
+            vc_index: "H256",
+            vc_hash: "H256",
+            vc_payload: "AesOutput",
+            req_ext_hash: "H256",
+        },
         AesOutput: {
             ciphertext: "Vec<u8>",
             aad: "Vec<u8>",

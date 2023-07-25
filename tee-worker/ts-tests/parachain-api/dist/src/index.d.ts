@@ -3,15 +3,7 @@ import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type {
-    Assertion,
-    LitentryIdentity,
-    LitentryValidationData,
-    Web3Network,
-    WorkerRpcReturnValue,
-    TrustedCallSigned,
-    Getter,
-} from "parachain-api/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -216,6 +208,14 @@ export declare const definitions: {
             req_ext_hash: string;
         };
         SetIdentityNetworksResponse: {
+            req_ext_hash: string;
+        };
+        RequestVCResponse: {
+            account: string;
+            assertion: string;
+            vc_index: string;
+            vc_hash: string;
+            vc_payload: string;
             req_ext_hash: string;
         };
         AesOutput: {
