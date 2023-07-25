@@ -25,14 +25,18 @@ import type { TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
-
 import * as base58 from 'micro-base58';
 
-async function getNonce(base58mrEnclave: string, context: any) {
+async function getWorkerAddress(base58mrEnclave: string, context: any) : Promise<string> {
     const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveAccountId', params: [base58mrEnclave], id: 1 };
     const resAcc = await sendRequest(context.tee, requestAcc, context.api);
-    console.log("worker address value",resAcc.value.toHex());
-    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, resAcc.value.toHex()], id: 1 };
+    const workerAcc = resAcc.value.toHex();
+    console.log("worker address value", workerAcc);
+    return workerAcc;
+}
+
+async function getNonce(base58mrEnclave: string, workerAddr: string, context: any) : Promise<number> {
+    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
     const u8aValue = res.value.toU8a();
     const len = u8aValue.length;
@@ -58,6 +62,13 @@ describeLitentry('Test Identity', 0, (context) => {
     let eveValidations: LitentryValidationData[] = [];
     let bobValidations: LitentryValidationData[] = [];
     let web3networks: Web3Network[][] = [];
+    let base58mrEnclave: string;
+    let workerAddress: string;
+
+    step('init', async () => {
+        base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+        workerAddress = await getWorkerAddress(base58mrEnclave, context);
+    });
 
     step('check user sidechain storage before create', async function () {
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
@@ -148,8 +159,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // - a `mock_user` twitter
         // - alice's evm identity
         // - eve's substrate identity (as she can't link her own substrate again)
-        const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-        const nonce = await getNonce(base58mrEnclave, context);
+        const nonce = await getNonce(base58mrEnclave, workerAddress, context);
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const eveSubstrateIdentity = await buildIdentityHelper(
@@ -239,7 +249,7 @@ describeLitentry('Test Identity', 0, (context) => {
             },
         };
         const bobSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
-        const nonce9 = await getNonce(base58mrEnclave, context);
+        const nonce9 = await getNonce(base58mrEnclave, workerAddress, context);
         console.log("nonce 9", nonce9);
         const msg = generateVerificationMessage(
             context,
@@ -374,8 +384,7 @@ describeLitentry('Test Identity', 0, (context) => {
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
-        const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-        const nonce = await getNonce(base58mrEnclave, context);
+        const nonce = await getNonce(base58mrEnclave, workerAddress, context);
         console.log("nonce 15", nonce);
         const aliceTwitterValidations = await buildValidations(
             context,

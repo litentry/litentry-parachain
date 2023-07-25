@@ -95,6 +95,7 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
+	// author_getEnclaveAccountId
 	let state_account_id = state.clone();
 	let author_get_enclave_account_id: &str = "author_getEnclaveAccountId";
 	io.add_sync_method(author_get_enclave_account_id, move |params: Params| {
