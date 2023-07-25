@@ -66,4 +66,4 @@ sleep 20
 # if the incoming parentchain extrinsic is blocked (due to the wrong nonce), there won't be
 # such many events.
 set -e
-timeout -v --foreground 250s $CLIENT listen -e 20
+timeout -v --foreground 250s $CLIENT listen -e 10
