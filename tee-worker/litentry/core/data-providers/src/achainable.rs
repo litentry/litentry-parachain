@@ -170,7 +170,7 @@ pub enum Params {
 	ParamsBasicTypeWithToken(ParamsBasicTypeWithToken),
 	ParamsBasicTypeWithDatePercent(ParamsBasicTypeWithDatePercent),
 	ParamsBasicTypeWithClassOfYear(ParamsBasicTypeWithClassOfYear),
-	ParamsBasicTypeWithAmountHoding(ParamsBasicTypeWithAmountHoding),
+	ParamsBasicTypeWithAmountHolding(ParamsBasicTypeWithAmountHolding),
 }
 
 impl AchainableSystemLabelName for Params {
@@ -186,14 +186,14 @@ impl AchainableSystemLabelName for Params {
 			Params::ParamsBasicTypeWithToken(a) => a.name.clone(),
 			Params::ParamsBasicTypeWithDatePercent(e) => e.name.clone(),
 			Params::ParamsBasicTypeWithClassOfYear(c) => c.name.clone(),
-			Params::ParamsBasicTypeWithAmountHoding(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithAmountHolding(a) => a.name.clone(),
 		}
 	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct ParamsBasicTypeWithAmountHoding {
+pub struct ParamsBasicTypeWithAmountHolding {
 	#[serde(skip_serializing)]
 	#[serde(skip_deserializing)]
 	pub name: String,
@@ -206,9 +206,9 @@ pub struct ParamsBasicTypeWithAmountHoding {
 	pub token: Option<String>,
 }
 
-impl ParamsBasicTypeWithAmountHoding {
-	pub fn new(netwok: &Web3Network, amount: String, date: String, token: Option<String>) -> Self {
-		let chain = web3_network_to_chain(netwok);
+impl ParamsBasicTypeWithAmountHolding {
+	pub fn new(network: &Web3Network, amount: String, date: String, token: Option<String>) -> Self {
+		let chain = web3_network_to_chain(network);
 		let name = if token.is_some() {
 			"ERC20 hodling {amount} of {token} since {date}".into()
 		} else {
@@ -472,7 +472,7 @@ pub trait AchainableHolder {
 	fn is_holder(
 		&mut self,
 		address: &str,
-		amount_holding: ParamsBasicTypeWithAmountHoding,
+		amount_holding: ParamsBasicTypeWithAmountHolding,
 	) -> Result<bool, Error>;
 }
 
@@ -480,12 +480,12 @@ impl AchainableHolder for AchainableClient {
 	fn is_holder(
 		&mut self,
 		address: &str,
-		amount_holding: ParamsBasicTypeWithAmountHoding,
+		amount_holding: ParamsBasicTypeWithAmountHolding,
 	) -> Result<bool, Error> {
 		check_achainable_label(
 			self,
 			address,
-			Params::ParamsBasicTypeWithAmountHoding(amount_holding),
+			Params::ParamsBasicTypeWithAmountHolding(amount_holding),
 		)
 	}
 }
@@ -806,34 +806,34 @@ impl AchainableTagBalance for AchainableClient {
 
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
 		// Native LIT Hodler
-		let param = ParamsBasicTypeWithAmountHoding::new(
+		let param = ParamsBasicTypeWithAmountHolding::new(
 			&Web3Network::Litentry,
 			"10".to_string(),
 			"2023-01-01T00:00:00.000Z".to_string(),
 			None,
 		);
-		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHoding(param))
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param))
 	}
 
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicTypeWithAmountHoding::new(
+		let param = ParamsBasicTypeWithAmountHolding::new(
 			&Web3Network::Ethereum,
 			"10".to_string(),
 			"2022-01-01T00:00:00.000Z".to_string(),
-			Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()),
+			Some(LIT_TOKEN_ADDRESS.to_string()),
 		);
-		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHoding(param))
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param))
 	}
 
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicTypeWithAmountHoding::new(
+		let param = ParamsBasicTypeWithAmountHolding::new(
 			&Web3Network::BSC,
 			"10".to_string(),
 			"2022-01-01T00:00:00.000Z".to_string(),
-			Some("0xb59490ab09a0f526cc7305822ac65f2ab12f9723".to_string()),
+			Some(LIT_TOKEN_ADDRESS.to_string()),
 		);
 
-		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHoding(param))
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param))
 	}
 }
 
