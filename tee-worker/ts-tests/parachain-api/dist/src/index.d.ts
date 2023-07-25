@@ -67,8 +67,8 @@ export declare const definitions: {
                 balance_shield: string;
                 set_user_shielding_key: string;
                 link_identity: string;
-                activate_identity: string;
                 deactivate_identity: string;
+                activate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
             };
