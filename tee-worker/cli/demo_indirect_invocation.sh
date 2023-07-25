@@ -32,14 +32,10 @@ NODEURL=${NODEURL:-"ws://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
-WORKER2PORT=${WORKER2PORT:-3000}
-WORKER2URL=${WORKER2URL:-"wss://127.0.0.1"}
-
 CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 "${SCRIPT_DIR}"/demo_shielding_unshielding.sh -p "${NPORT}" -u "${NODEURL}" -V "${WORKER1URL}" -P "${WORKER1PORT}" -C "${CLIENT_BIN}" -t first
-"${SCRIPT_DIR}"/demo_shielding_unshielding.sh -p "${NPORT}" -u "${NODEURL}" -V "${WORKER2URL}" -P "${WORKER2PORT}" -C "${CLIENT_BIN}" -t second
 
 exit 0
