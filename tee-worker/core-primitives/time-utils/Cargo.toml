@@ -7,7 +7,6 @@ edition = "2021"
 [dependencies]
 chrono = { version = "0.4.19", features = ["alloc"], optional = true }
 
-
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
