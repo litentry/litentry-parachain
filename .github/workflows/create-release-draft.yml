@@ -267,12 +267,6 @@ jobs:
       - name: Download all artefacts
         uses: actions/download-artifact@v3
       
-      - name: Download tee-worker artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: tee-worker-${{ env.RELEASE_TAG }}.tar.gz
-          path: ${{ github.workspace }}
-
       - name: Generate release notes
         run: |
           export RUSTC_VERSION=${{ needs.build-enclave.outputs.rustc_version }}
