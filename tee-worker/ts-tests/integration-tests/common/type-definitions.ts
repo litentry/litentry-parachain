@@ -173,8 +173,8 @@ export const jsonSchema = {
         proof: {
             type: 'object',
             properties: {
-                createdTimestamp: {
-                    type: 'integer',
+                created: {
+                    type: 'string',
                 },
                 type: {
                     enum: ['Ed25519Signature2020'],
