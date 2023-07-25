@@ -8,7 +8,12 @@ import {
     buildValidations,
     initIntegrationTestContext,
 } from './common/utils';
-import { assertFailedEvent, assertIdentityLinked, assertInitialIdGraphCreated, assertWorkRpcReturnValue } from './common/utils/assertion';
+import {
+    assertFailedEvent,
+    assertIdentityLinked,
+    assertInitialIdGraphCreated,
+    assertWorkRpcReturnValue,
+} from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallSetUserShieldingKey,
@@ -25,7 +30,6 @@ import {
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { CorePrimitivesErrorErrorDetail } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
 import { ethers } from 'ethers';
@@ -61,7 +65,6 @@ describe('Test Identity (direct invocation)', function () {
 
     it('needs a lot more work to be complete');
     it('most of the bob cases are missing');
-
 
     step('linking identity with invalid user shielding key', async function () {
         const bobSubstrateIdentity = await buildIdentityHelper(
@@ -280,7 +283,7 @@ describe('Test Identity (direct invocation)', function () {
             validation: eveSubstrateValidation,
             networks: eveSubstrateNetworks,
         });
-        const linkedIdentityEvents: any[] = []
+        const linkedIdentityEvents: any[] = [];
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
@@ -314,14 +317,17 @@ describe('Test Identity (direct invocation)', function () {
                 if (context.api.events.identityManagement.IdentityLinked.is(event)) {
                     isIdentityLinked = true;
                     linkedIdentityEvents.push(event);
-
                 }
             });
             assert.isTrue(isIdentityLinked);
         }
         assert.equal(linkedIdentityEvents.length, 3);
 
-        assertIdentityLinked(context, context.substrateWallet.alice, linkedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
+        assertIdentityLinked(context, context.substrateWallet.alice, linkedIdentityEvents, [
+            twitterIdentity,
+            evmIdentity,
+            eveSubstrateIdentity,
+        ]);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -339,6 +345,8 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        // don't work for integritee-node 
         for (const { identity } of linkIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
@@ -465,10 +473,7 @@ describe('Test Identity (direct invocation)', function () {
         const events = await eventsPromise;
 
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'VerifyEvmSignatureFailed');
-
     });
-
-
 
     step('linking aleady linked identity', async function () {
         let currentNonce = (
@@ -603,7 +608,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
         });
-        const deactivatedIdentityEvents: any[] = []
+        const deactivatedIdentityEvents: any[] = [];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -636,8 +641,7 @@ describe('Test Identity (direct invocation)', function () {
                 }
                 if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
                     isIdentityDeactivated = true;
-                    deactivatedIdentityEvents.push(event)
-
+                    deactivatedIdentityEvents.push(event);
                 }
             });
             assert.isTrue(isIdentityDeactivated);
@@ -711,7 +715,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
         });
-        const activatedIdentityEvents: any[] = []
+        const activatedIdentityEvents: any[] = [];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -744,8 +748,7 @@ describe('Test Identity (direct invocation)', function () {
                 }
                 if (context.api.events.identityManagement.IdentityActivated.is(event)) {
                     isIdentityActivated = true;
-                    activatedIdentityEvents.push(event)
-
+                    activatedIdentityEvents.push(event);
                 }
             });
             assert.isTrue(isIdentityActivated);
@@ -782,7 +785,6 @@ describe('Test Identity (direct invocation)', function () {
             );
             console.debug('active ✅');
         }
-
     });
 
     step('deactivating prime identity is disallowed', async function () {
@@ -823,5 +825,4 @@ describe('Test Identity (direct invocation)', function () {
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');
     });
-
 });

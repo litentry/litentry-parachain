@@ -188,7 +188,6 @@ export async function runExample(keyPairType: KeypairType) {
     // 4. Test user_shielding_key getter
     // ==============================================================================
 
-
     console.log('Send UserShieldingKey getter for alice ...');
     let userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
