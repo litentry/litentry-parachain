@@ -29,7 +29,6 @@ use litentry_primitives::Address32;
 const VC_A13_SUBJECT_DESCRIPTION: &str =
 	"The user has a Polkadot Decoded 2023 Litentry Booth Special Badge";
 const VC_A13_SUBJECT_TYPE: &str = "Decoded 2023 Basic Special Badge";
-const VC_A13_SUBJECT_TAG: [&str; 2] = ["Polkadot decoded 2023", "Litentry"];
 
 pub fn build<O: EnclaveOnChainOCallApi>(
 	req: &AssertionBuildRequest,
@@ -60,11 +59,7 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 	match Credential::new(&Address32::from(who.clone()).into(), &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
-			credential_unsigned.add_subject_info(
-				VC_A13_SUBJECT_DESCRIPTION,
-				VC_A13_SUBJECT_TYPE,
-				VC_A13_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A13_SUBJECT_DESCRIPTION, VC_A13_SUBJECT_TYPE);
 
 			// add assertion
 			credential_unsigned.add_assertion_a13();

@@ -61,11 +61,7 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A2_SUBJECT_DESCRIPTION,
-				VC_A2_SUBJECT_TYPE,
-				VC_A2_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A2_SUBJECT_DESCRIPTION, VC_A2_SUBJECT_TYPE);
 
 			let value = discord_cnt > 0 && has_joined;
 			credential_unsigned.add_assertion_a2(value, guild_id_s);
