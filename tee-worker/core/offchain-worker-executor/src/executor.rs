@@ -131,7 +131,14 @@ impl<
 			let successful_operations: Vec<ExecutedOperation> = batch_execution_result
 				.get_executed_operation_hashes()
 				.into_iter()
-				.map(|h| ExecutedOperation::success(h, TrustedOperationOrHash::Hash(h), Vec::new()))
+				.map(|h| {
+					ExecutedOperation::success(
+						h,
+						TrustedOperationOrHash::Hash(h),
+						Vec::new(),
+						Vec::new(),
+					)
+				})
 				.collect();
 
 			// Remove all not successfully executed operations from the top pool.

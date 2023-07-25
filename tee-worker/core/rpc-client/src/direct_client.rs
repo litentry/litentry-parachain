@@ -214,7 +214,7 @@ impl DirectApi for DirectClient {
 
 	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
 		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call("state_getEnclave".to_string(), Default::default())?;
+			RpcRequest::compose_jsonrpc_call("state_getMrenclave".to_string(), Default::default())?;
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;

@@ -15,6 +15,8 @@ import {
     getSidechainNonce,
     decodeIdGraph,
     getKeyPair,
+    getTopHash,
+    parseAesOutput,
 } from './util';
 import {
     getEnclave,
@@ -23,23 +25,26 @@ import {
     initIntegrationTestContext,
     buildValidations,
     buildIdentityFromKeypair,
+    parseIdGraph,
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../litentry-sidechain-metadata.json' assert { type: 'json' };
 import { hexToU8a, u8aToHex } from '@polkadot/util';
+import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { assert } from 'chai';
 import Options from 'websocket-as-promised/types/options';
 import crypto from 'crypto';
 import { KeypairType } from '@polkadot/util-crypto/types';
+import WebSocketAsPromised from 'websocket-as-promised';
+import webSocket from 'ws';
+import { SetUserShieldingKeyResponse, LinkIdentityResponse } from 'parachain-api/build/interfaces';
+
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-import WebSocketAsPromised from 'websocket-as-promised';
-import webSocket from 'ws';
 const substrateKeyring = new Keyring({ type: 'sr25519' });
-
 const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
 const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
@@ -78,12 +83,16 @@ export async function runExample(keyPairType: KeypairType) {
     const aliceSubject = await buildIdentityFromKeypair(alice, context);
     const bobSubject = await buildIdentityFromKeypair(bob, context);
 
-    let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
+    // ==============================================================================
+    // 1. Test set_user_shielding_key
+    // ==============================================================================
 
     // similar to `reqExtHash` in indirect calls, we need some "identifiers" to pair the response
     // with the request. Ideally it's the hash of the trusted operation, but we need it before constructing
     // a trusted call, hence a random number is used here - better ideas are welcome
     let hash = `0x${crypto.randomBytes(32).toString('hex')}`;
+    let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
+
     console.log('Send direct setUserShieldingKey call for alice ... hash:', hash);
     let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
@@ -96,12 +105,29 @@ export async function runExample(keyPairType: KeypairType) {
     );
     let res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, setUserShieldingKeyCall);
     console.log('setUserShieldingKey call returned', res.toHuman());
+    assert.isTrue(res.do_watch.isFalse);
+    assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
+    assert.equal(u8aToHex(res.status.asTrustedOperationStatus[1]), getTopHash(parachainApi, setUserShieldingKeyCall));
+
+    let decodedRes = parachainApi.createType(
+        'SetUserShieldingKeyResponse',
+        res.value
+    ) as unknown as SetUserShieldingKeyResponse;
+    assert.equal(decodedRes.account.toHex(), u8aToHex(alice.addressRaw));
+    assert.equal(decodedRes.req_ext_hash.toHex(), hash);
+    let aesOutput = parseAesOutput(parachainApi, decodedRes.id_graph.toHex());
+    let idgraph = parseIdGraph(sidechainRegistry, aesOutput, aesKey);
+    assert.equal(idgraph.length, 1);
+    assertPrimeIdentity(idgraph[0], alice);
 
     await sleep(10);
 
+    // ==============================================================================
+    // 2. Test link_identity (happy path)
+    // ==============================================================================
+
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
-
     console.log('Send direct linkIdentity call... hash:', hash);
     const bobSubstrateIdentity = await buildIdentityHelper(u8aToHex(bobSubstrateKey.addressRaw), 'Substrate', context);
     const [bobValidationData] = await buildValidations(
@@ -112,7 +138,7 @@ export async function runExample(keyPairType: KeypairType) {
         'substrate',
         bobSubstrateKey
     );
-    const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    let linkIdentityCall = createSignedTrustedCallLinkIdentity(
         parachainApi,
         mrenclave,
         nonce,
@@ -126,37 +152,41 @@ export async function runExample(keyPairType: KeypairType) {
     );
     res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, linkIdentityCall);
     console.log('linkIdentity call returned', res.toHuman());
+    assert.isTrue(res.do_watch.isFalse);
+    assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
+    decodedRes = parachainApi.createType('LinkIdentityResponse', res.value) as unknown as LinkIdentityResponse;
+    assert.equal(decodedRes.account.toHex(), u8aToHex(alice.addressRaw));
+    assert.equal(decodedRes.req_ext_hash.toHex(), hash);
+    aesOutput = parseAesOutput(parachainApi, decodedRes.id_graph.toHex());
+    idgraph = parseIdGraph(sidechainRegistry, aesOutput, aesKey);
+    assert.equal(idgraph.length, 2);
+    // the first identity is the bob substrate identity
+    assertLinkedIdentity(idgraph[0], u8aToHex(bob.addressRaw));
+    // the second identity is the substrate identity (prime identity)
+    assertPrimeIdentity(idgraph[1], alice);
 
     // we should have listened to the parachain event, for demo purpose we only wait for enough
     // time and check the IDGraph
     await sleep(30);
 
+    // ==============================================================================
+    // 3. Test id_graph getter
+    // ==============================================================================
+
     console.log('Send IDGraph getter for alice ...');
     const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     console.log('IDGraph getter returned', res.toHuman());
-    let idgraph = decodeIdGraph(sidechainRegistry, res.value);
+    idgraph = decodeIdGraph(sidechainRegistry, res.value);
     assert.equal(idgraph.length, 2);
     // the first identity is the bob substrate identity
-    assert.isTrue(idgraph[0][0].isSubstrate);
-    assert.equal(idgraph[0][0].asSubstrate.toHex(), u8aToHex(bobSubstrateKey.publicKey));
-    assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Polkadot', 'Litentry'].toString());
-    assert.isTrue(idgraph[0][1].status.isActive);
+    assertLinkedIdentity(idgraph[0], u8aToHex(bob.addressRaw));
     // the second identity is the substrate identity (prime identity)
-    if (alice.type === 'ethereum') {
-        assert.isTrue(idgraph[1][0].isEvm);
-        assert.equal(idgraph[1][0].asEvm.toHex(), u8aToHex(alice.addressRaw));
-        assert.isTrue(idgraph[1][1].status.isActive);
-        assert.equal(idgraph[1][1].web3networks.toHuman()?.toString(), ['Ethereum', 'Polygon', 'BSC'].toString());
-    } else {
-        assert.isTrue(idgraph[1][0].isSubstrate);
-        assert.equal(idgraph[1][0].asSubstrate.toHex(), u8aToHex(alice.addressRaw));
-        assert.isTrue(idgraph[1][1].status.isActive);
-        assert.equal(
-            idgraph[1][1].web3networks.toHuman()?.toString(),
-            ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
-        );
-    }
+    assertPrimeIdentity(idgraph[1], alice);
+
+    // ==============================================================================
+    // 4. Test user_shielding_key getter
+    // ==============================================================================
 
     console.log('Send UserShieldingKey getter for alice ...');
     let userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);
@@ -172,9 +202,37 @@ export async function runExample(keyPairType: KeypairType) {
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), aesKey);
 
-    // set web3networks to alice
-    console.log('Set new web3networks for alice ...');
+    // ==============================================================================
+    // 5. Test link_identity (error case: IdentityAlreadyLinked)
+    // ==============================================================================
+    hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
+    console.log('Send direct linkIdentity call (error case)... hash:', hash);
+    linkIdentityCall = createSignedTrustedCallLinkIdentity(
+        parachainApi,
+        mrenclave,
+        nonce,
+        alice,
+        aliceSubject,
+        sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
+        parachainApi.createType('LitentryValidationData', bobValidationData).toHex(),
+        parachainApi.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
+        keyNonce,
+        hash
+    );
+    res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, linkIdentityCall);
+    console.log('linkIdentity call returned', res.toHuman());
+    assert.isTrue(res.do_watch.isFalse);
+    assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+
+    // ==============================================================================
+    // 6. Test set_identity_networks (happy path)
+    // ==============================================================================
+
+    // set web3networks to alice
+    hash = `0x${crypto.randomBytes(32).toString('hex')}`;
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
+    console.log('Set new web3networks for alice ...');
     let setIdentityNetworksCall = createSignedTrustedCallSetIdentityNetworks(
         parachainApi,
         mrenclave,
@@ -182,7 +240,8 @@ export async function runExample(keyPairType: KeypairType) {
         alice,
         aliceSubject,
         bobSubstrateIdentity.toHex(),
-        parachainApi.createType('Vec<Web3Network>', ['Litentry', 'Khala']).toHex()
+        parachainApi.createType('Vec<Web3Network>', ['Litentry', 'Khala']).toHex(),
+        hash
     );
     res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, setIdentityNetworksCall);
     console.log('setIdentityNetworks call returned', res.toHuman());
@@ -191,9 +250,14 @@ export async function runExample(keyPairType: KeypairType) {
     assert.equal(idgraph.length, 2);
     assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Litentry', 'Khala'].toString());
 
+    // ==============================================================================
+    // 7. Test set_identity_networks (error case)
+    // ==============================================================================
+
     // set incompatible web3networks to alice
-    console.log('Set incompatible web3networks for alice ...');
+    hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
+    console.log('Set incompatible web3networks for alice ...');
     setIdentityNetworksCall = createSignedTrustedCallSetIdentityNetworks(
         parachainApi,
         mrenclave,
@@ -201,16 +265,21 @@ export async function runExample(keyPairType: KeypairType) {
         alice,
         aliceSubject,
         bobSubstrateIdentity.toHex(),
-        parachainApi.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex()
+        parachainApi.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex(),
+        hash
     );
     res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, setIdentityNetworksCall);
     console.log('setIdentityNetworks call returned', res.toHuman());
-    assert.isTrue!(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid); // invalid status
+    assert.isTrue!(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid); // invalid status
     // idgraph should be unchanged
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     idgraph = decodeIdGraph(sidechainRegistry, res.value);
     assert.equal(idgraph.length, 2);
     assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), ['Litentry', 'Khala'].toString());
+
+    // ==============================================================================
+    // 8. Test set_user_shielding_key with wrapped bytes
+    // ==============================================================================
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
@@ -222,11 +291,10 @@ export async function runExample(keyPairType: KeypairType) {
 
     await sleep(10);
 
-    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, bobSubject);
-
     // set bob's shielding key, with wrapped bytes
     const keyBob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, bobSubject);
     console.log('Send direct setUserShieldingKey call for bob, with wrapped bytes... hash:', hash);
     setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
@@ -249,4 +317,34 @@ export async function runExample(keyPairType: KeypairType) {
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), keyBob);
+}
+
+function assertPrimeIdentity(
+    idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext],
+    alice: KeyringPair
+) {
+    if (alice.type === 'ethereum') {
+        assert.isTrue(idgraph[0].isEvm);
+        assert.equal(idgraph[0].asEvm.toHex(), u8aToHex(alice.addressRaw));
+        assert.isTrue(idgraph[1].status.isActive);
+        assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Ethereum', 'Polygon', 'BSC'].toString());
+    } else {
+        assert.isTrue(idgraph[0].isSubstrate);
+        assert.equal(idgraph[0].asSubstrate.toHex(), u8aToHex(alice.addressRaw));
+        assert.isTrue(idgraph[1].status.isActive);
+        assert.equal(
+            idgraph[1].web3networks.toHuman()?.toString(),
+            ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
+        );
+    }
+}
+
+function assertLinkedIdentity(
+    idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext],
+    address: HexString
+) {
+    assert.isTrue(idgraph[0].isSubstrate);
+    assert.equal(idgraph[0].asSubstrate.toHex(), address);
+    assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Polkadot', 'Litentry'].toString());
+    assert.isTrue(idgraph[1].status.isActive);
 }

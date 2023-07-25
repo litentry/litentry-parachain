@@ -29,7 +29,6 @@ use lc_data_providers::{
 const VC_A7_SUBJECT_DESCRIPTION: &str =
 	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
 const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Assertion";
-const VC_A7_SUBJECT_TAG: [&str; 1] = ["Polkadot"];
 
 // TODO:
 // The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
@@ -70,11 +69,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A7_SUBJECT_DESCRIPTION,
-				VC_A7_SUBJECT_TYPE,
-				VC_A7_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A7_SUBJECT_DESCRIPTION, VC_A7_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

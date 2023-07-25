@@ -25,7 +25,6 @@ use crate::*;
 const VC_A1_SUBJECT_DESCRIPTION: &str =
 	"The user has verified one identity in Web 2 and one identity in Web 3";
 const VC_A1_SUBJECT_TYPE: &str = "Basic Identity Verification";
-const VC_A1_SUBJECT_TAG: [&str; 1] = ["Litentry Network"];
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion A1 build, who: {:?}", account_id_to_string(&req.who));
@@ -44,11 +43,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	match Credential::new_default(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
-			credential_unsigned.add_subject_info(
-				VC_A1_SUBJECT_DESCRIPTION,
-				VC_A1_SUBJECT_TYPE,
-				VC_A1_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A1_SUBJECT_DESCRIPTION, VC_A1_SUBJECT_TYPE);
 
 			// add assertion
 			let flag = web2_cnt != 0 && web3_cnt != 0;

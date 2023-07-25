@@ -141,6 +141,7 @@ pub fn nonce_is_computed_correctly() {
 		&mut state,
 		&shard,
 		trusted_call_1_signed,
+		Default::default(),
 		&mut Vec::new(),
 		repo.clone(),
 	)
@@ -150,6 +151,7 @@ pub fn nonce_is_computed_correctly() {
 		&mut state,
 		&shard,
 		trusted_call_2_signed,
+		Default::default(),
 		&mut Vec::new(),
 		repo,
 	)

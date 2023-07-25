@@ -3,7 +3,15 @@ import "@polkadot/types/augment";
 import { ApiOptions } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "parachain-api/interfaces";
+export type {
+    Assertion,
+    LitentryIdentity,
+    LitentryValidationData,
+    Web3Network,
+    WorkerRpcReturnValue,
+    TrustedCallSigned,
+    Getter,
+} from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -59,8 +67,8 @@ export declare const definitions: {
                 balance_shield: string;
                 set_user_shielding_key: string;
                 link_identity: string;
-                activate_identity: string;
                 deactivate_identity: string;
+                activate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
             };
@@ -185,6 +193,35 @@ export declare const definitions: {
         };
         GenericEventWithAccount: {
             account: string;
+        };
+        SetUserShieldingKeyResponse: {
+            account: string;
+            id_graph: string;
+            req_ext_hash: string;
+        };
+        LinkIdentityResponse: {
+            account: string;
+            identity: string;
+            id_graph: string;
+            req_ext_hash: string;
+        };
+        DeactivateIdentityResponse: {
+            account: string;
+            identity: string;
+            req_ext_hash: string;
+        };
+        ActivateIdentityResponse: {
+            account: string;
+            identity: string;
+            req_ext_hash: string;
+        };
+        SetIdentityNetworksResponse: {
+            req_ext_hash: string;
+        };
+        AesOutput: {
+            ciphertext: string;
+            aad: string;
+            nonce: string;
         };
     };
 };

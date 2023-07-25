@@ -1210,10 +1210,13 @@ import type {
     XcmpMessageFormat,
 } from "@polkadot/types/interfaces/xcm";
 import type {
+    ActivateIdentityResponse,
     Address20,
     Address32,
+    AesOutput,
     Assertion,
     BoundedWeb3Network,
+    DeactivateIdentityResponse,
     DirectRequestStatus,
     DiscordValidationData,
     GenericEventWithAccount,
@@ -1222,11 +1225,14 @@ import type {
     IdentityGenericEvent,
     IdentityStatus,
     IdentityString,
+    LinkIdentityResponse,
     LitentryIdentity,
     LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
     Request,
+    SetIdentityNetworksResponse,
+    SetUserShieldingKeyResponse,
     ShardIdentifier,
     TrustedCall,
     TrustedCallSigned,
@@ -1268,6 +1274,7 @@ declare module "@polkadot/types/types/registry" {
         AccountVote: AccountVote;
         AccountVoteSplit: AccountVoteSplit;
         AccountVoteStandard: AccountVoteStandard;
+        ActivateIdentityResponse: ActivateIdentityResponse;
         ActiveEraInfo: ActiveEraInfo;
         ActiveGilt: ActiveGilt;
         ActiveGiltsTotal: ActiveGiltsTotal;
@@ -1276,6 +1283,7 @@ declare module "@polkadot/types/types/registry" {
         Address: Address;
         Address20: Address20;
         Address32: Address32;
+        AesOutput: AesOutput;
         AliveContractInfo: AliveContractInfo;
         AllowedSlots: AllowedSlots;
         AnySignature: AnySignature;
@@ -1503,6 +1511,7 @@ declare module "@polkadot/types/types/registry" {
         CrateVersion: CrateVersion;
         CreatedBlock: CreatedBlock;
         Data: Data;
+        DeactivateIdentityResponse: DeactivateIdentityResponse;
         DeferredOffenceOf: DeferredOffenceOf;
         DefunctVoter: DefunctVoter;
         DelayKind: DelayKind;
@@ -1806,6 +1815,7 @@ declare module "@polkadot/types/types/registry" {
         LegacyTransaction: LegacyTransaction;
         Limits: Limits;
         LimitsTo264: LimitsTo264;
+        LinkIdentityResponse: LinkIdentityResponse;
         LitentryIdentity: LitentryIdentity;
         LitentryMultiSignature: LitentryMultiSignature;
         LitentryValidationData: LitentryValidationData;
@@ -2127,7 +2137,9 @@ declare module "@polkadot/types/types/registry" {
         SessionKeys9: SessionKeys9;
         SessionKeys9B: SessionKeys9B;
         SetId: SetId;
+        SetIdentityNetworksResponse: SetIdentityNetworksResponse;
         SetIndex: SetIndex;
+        SetUserShieldingKeyResponse: SetUserShieldingKeyResponse;
         ShardIdentifier: ShardIdentifier;
         Si0Field: Si0Field;
         Si0LookupTypeId: Si0LookupTypeId;

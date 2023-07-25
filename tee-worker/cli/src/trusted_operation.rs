@@ -210,11 +210,8 @@ fn send_direct_request(
 								msg: "[Error] DirectRequestStatus::Error".to_string(),
 							})
 						},
-						DirectRequestStatus::TrustedOperationStatus(status) => {
-							debug!("request status is: {:?}", status);
-							if let Ok(value) = Hash::decode(&mut return_value.value.as_slice()) {
-								println!("Trusted call {:?} is {:?}", value, status);
-							}
+						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
 							if connection_can_be_closed(status) {
 								direct_api.close().unwrap();
 								return Ok(None)
@@ -283,17 +280,13 @@ pub(crate) fn wait_until(
 								}
 								return None
 							},
-							DirectRequestStatus::TrustedOperationStatus(status) => {
-								debug!("request status is: {:?}", status);
-								if let Ok(value) = Hash::decode(&mut return_value.value.as_slice())
-								{
-									println!("Trusted call {:?} is {:?}", value, status);
-									if until(status.clone()) {
-										return Some((value, Instant::now()))
-									} else if status == TrustedOperationStatus::Invalid {
-										error!("Invalid request");
-										return None
-									}
+							DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+								debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+								if until(status.clone()) {
+									return Some((top_hash, Instant::now()))
+								} else if status == TrustedOperationStatus::Invalid {
+									error!("Invalid request");
+									return None
 								}
 							},
 							DirectRequestStatus::Ok => {

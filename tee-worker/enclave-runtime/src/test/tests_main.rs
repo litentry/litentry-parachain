@@ -635,7 +635,15 @@ pub fn test_retrieve_events() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	assert_eq!(TestStf::get_events(&mut state).len(), 3);
 }
@@ -660,7 +668,15 @@ pub fn test_retrieve_event_count() {
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	let event_count = TestStf::get_event_count(&mut state);
 	assert_eq!(event_count, 3);
@@ -683,7 +699,15 @@ pub fn test_reset_events() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());
 	assert_eq!(receiver_acc_info.free, transfer_value);
 	// Ensure that there really have been events generated.
