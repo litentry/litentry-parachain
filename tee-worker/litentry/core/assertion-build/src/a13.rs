@@ -57,7 +57,7 @@ pub fn build<O: EnclaveOnChainOCallApi>(
 		))
 	}
 
-	match Credential::new_default(&Address32::from(who.clone()).into(), &req.shard) {
+	match Credential::new_default(&Address32::from(who.clone()).into()) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(

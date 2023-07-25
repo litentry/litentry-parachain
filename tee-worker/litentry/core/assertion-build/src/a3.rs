@@ -74,7 +74,7 @@ pub fn build(
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new_default(&req.who) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A3_SUBJECT_DESCRIPTION,

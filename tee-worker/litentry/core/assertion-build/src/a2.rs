@@ -59,7 +59,7 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new_default(&req.who) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A2_SUBJECT_DESCRIPTION,

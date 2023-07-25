@@ -36,7 +36,6 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use codec::{Decode, Encode};
-use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::now_as_millis;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
@@ -70,7 +69,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::offset::Utc as TzUtc;
 
 use rand::Rng;
-use rust_base58::ToBase58;
 
 pub mod error;
 pub use error::Error;
@@ -79,7 +77,6 @@ pub mod schema;
 pub mod assertion_logic;
 use assertion_logic::{AssertionLogic, Op};
 
-pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";
 pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 
@@ -110,13 +107,11 @@ pub struct DataSource {
 pub struct Issuer {
 	/// ID of the TEE Worker
 	pub id: String,
-	pub name: String,
-	pub mrenclave: String,
 }
 
 impl Issuer {
 	pub fn is_empty(&self) -> bool {
-		self.mrenclave.is_empty() || self.mrenclave.is_empty()
+		self.id.is_empty()
 	}
 
 	pub fn set_id(&mut self, id: &AccountId) {
@@ -229,23 +224,17 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
+	pub fn new_default(subject: &Identity) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
-		let credential: Credential = Credential::from_template(raw, subject, shard)?;
+		let credential: Credential = Credential::from_template(raw, subject)?;
 		Ok(credential)
 	}
 
-	pub fn from_template(
-		s: &str,
-		subject: &Identity,
-		shard: &ShardIdentifier,
-	) -> Result<Self, Error> {
+	pub fn from_template(s: &str, subject: &Identity) -> Result<Self, Error> {
 		debug!("generate credential from template, subject: {:?}", &subject);
 
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
-		vc.issuer.mrenclave = shard.encode().to_base58();
-		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id = account_id_to_string(
 			&subject
 				.to_account_id()
@@ -531,9 +520,8 @@ mod tests {
 		let identity = who.clone().into();
 
 		let data = include_str!("templates/credential.json");
-		let shard = ShardIdentifier::default();
 
-		let vc = Credential::from_template(data, &identity, &shard).unwrap();
+		let vc = Credential::from_template(data, &identity).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id;
 		assert_eq!(id, account_id_to_string(&who));
@@ -543,7 +531,6 @@ mod tests {
 	fn update_holder_works() {
 		let who = AccountId::from([0; 32]);
 		let identity = who.into();
-		let shard = ShardIdentifier::default();
 		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();
 
@@ -551,8 +538,7 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new_default(&identity).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -570,8 +556,7 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new_default(&identity).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -589,8 +574,7 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new_default(&identity).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =

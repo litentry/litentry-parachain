@@ -175,7 +175,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new_default(&req.who) {
 		Ok(mut credential_unsigned) => {
 			// add subject info
 			credential_unsigned.add_subject_info(
