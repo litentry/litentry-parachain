@@ -13,6 +13,7 @@ make SGX_MODE=SW
 ./local-setup/launch.py local-setup/development-worker.json local-docker
 # run the ts test script below if container started
 cd ./tee-worker/ts-tests
+nvm use
 corepack yarn
 corepack yarn workspace integration-tests test-identity:local
 # other ts test

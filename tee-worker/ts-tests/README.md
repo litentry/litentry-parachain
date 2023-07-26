@@ -2,16 +2,17 @@
 
 ts-tests of tee-worker
 
-## Environment
+## Environment setup
 
--   [ ] TODO add docs re nvm, corepack, etc.
-
-[nvm](https://github.com/nvm-sh/nvm) should be installed
+-   Install [nvm](https://github.com/nvm-sh/nvm)
+-   Inside the repository, run `nvm use` to set the correct Node version.
+    -   If the version is not installed, run `nvm install`.
 
 ## Installation
 
 ```
 cd tee-worker/ts-tests
+nvm use
 corepack yarn
 ```
 
