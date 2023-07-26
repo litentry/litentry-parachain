@@ -220,13 +220,20 @@ export async function multiAccountTxSender(
 }
 
 // for DI-test
+
 export const subscribeToEventsWithExtHash = async (
     requestIdentifier: string,
     context: IntegrationTestContext
 ): Promise<FrameSystemEventRecord[]> => {
     return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
         let blocksToScan = 30;
-
+        /* 
+        WARNING:The unsubscribe function is called inside the Promise callback, which is executed each time a new blockHeader is subscribed. 
+               `unsubscribe` is intended to unsubscribe a blockHeader if certain conditions are met. 
+                If you use await, you will actually wait for this function to finish executing. 
+                However, since it doesn't return a Promise, using await doesn't make sense and can lead to problematic code behaviour.
+                soooooo, don't use await here
+        */
         const unsubscribe = context.api.rpc.chain.subscribeNewHeads(async (blockHeader) => {
             const shiftedApi = await context.api.at(blockHeader.hash);
 
