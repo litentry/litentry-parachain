@@ -20,5 +20,5 @@ TEST=$1
 
 cd /ts-tests
 
-yarn install
-yarn run $TEST:staging
+corepack yarn install
+corepack yarn run $TEST:staging
