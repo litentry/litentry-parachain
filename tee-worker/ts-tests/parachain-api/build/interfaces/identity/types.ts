@@ -191,6 +191,16 @@ export interface Request extends Struct {
     readonly cyphertext: Bytes;
 }
 
+/** @name RequestVCResponse */
+export interface RequestVCResponse extends Struct {
+    readonly account: AccountId;
+    readonly assertion: Assertion;
+    readonly vc_index: H256;
+    readonly vc_hash: H256;
+    readonly vc_payload: AesOutput;
+    readonly req_ext_hash: H256;
+}
+
 /** @name SetIdentityNetworksResponse */
 export interface SetIdentityNetworksResponse extends Struct {
     readonly req_ext_hash: H256;

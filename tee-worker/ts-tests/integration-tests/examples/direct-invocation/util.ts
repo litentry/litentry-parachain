@@ -220,6 +220,25 @@ export function createSignedTrustedCallSetIdentityNetworks(
     );
 }
 
+export function createSignedTrustedCallRequestVc(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity,
+    assertion: string,
+    hash: string
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, H256)'],
+        signer,
+        mrenclave,
+        nonce,
+        [subject, subject, assertion, hash]
+    );
+}
+
 export function createSignedTrustedGetterUserShieldingKey(
     parachainApi: ApiPromise,
     signer: KeyringPair,

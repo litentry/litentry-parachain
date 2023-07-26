@@ -21,7 +21,7 @@
 use crate::AccountId;
 use codec::{Decode, Encode};
 use itp_types::H256;
-use litentry_primitives::AesOutput;
+use litentry_primitives::{AesOutput, Assertion};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub(crate) struct SetUserShieldingKeyResponse {
@@ -54,5 +54,15 @@ pub(crate) struct ActivateIdentityResponse {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub(crate) struct SetIdentityNetworksResponse {
+	pub req_ext_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RequestVCResponse {
+	pub account: AccountId,
+	pub assertion: Assertion,
+	pub vc_index: H256,
+	pub vc_hash: H256,
+	pub vc_payload: AesOutput,
 	pub req_ext_hash: H256,
 }
