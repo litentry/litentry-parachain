@@ -12,7 +12,7 @@ import {
     assertFailedEvent,
     assertIdentityLinked,
     assertInitialIdGraphCreated,
-    assertWorkRpcReturnValue,
+    assertIsInSidechainBlock,
 } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
@@ -66,7 +66,9 @@ describe('Test Identity (direct invocation)', function () {
     it('needs a lot more work to be complete');
     it('most of the bob cases are missing');
 
-    step('linking identity with invalid user shielding key', async function () {
+    step('linking identity with without user shielding key(charlie)', async function () {
+        const charlieSubject = await buildIdentityFromKeypair(context.substrateWallet.charlie, context);
+
         const bobSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.bob.addressRaw),
             'Substrate',
@@ -79,11 +81,11 @@ describe('Test Identity (direct invocation)', function () {
             context.api,
             context.mrEnclave,
             teeShieldingKey,
-            aliceSubject
+            charlieSubject
         );
         const [bobValidationData] = await buildValidations(
             context,
-            [aliceSubject],
+            [charlieSubject],
             [bobSubstrateIdentity],
             nonce.toNumber(),
             'substrate',
@@ -95,11 +97,11 @@ describe('Test Identity (direct invocation)', function () {
             context.api,
             context.mrEnclave,
             nonce,
-            context.substrateWallet.alice,
-            aliceSubject,
+            context.substrateWallet.charlie,
+            charlieSubject,
             context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
             context.api.createType('LitentryValidationData', bobValidationData).toHex(),
-            context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
+            context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']).toHex(),
             keyNonce,
             requestIdentifier
         );
@@ -112,7 +114,12 @@ describe('Test Identity (direct invocation)', function () {
             linkIdentityCall
         );
 
-        await assertWorkRpcReturnValue('linkIdentityCall', res);
+        /* 
+        In the case of an error, the RPC status will be false, right? 
+        However, will we still have events occurring in Parachain? Based on the example provided.
+        */
+        assert.isTrue(res.do_watch.isFalse);
+        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
 
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
@@ -169,7 +176,7 @@ describe('Test Identity (direct invocation)', function () {
                 teeShieldingKey,
                 setUserShieldingKeyCall
             );
-            await assertWorkRpcReturnValue('setUserShieldingKeyCall', res);
+            await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
             const events = await eventsPromise;
             const userShieldingKeySetEvents = events
@@ -277,7 +284,7 @@ describe('Test Identity (direct invocation)', function () {
             'substrate',
             context.substrateWallet.eve
         );
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']);
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']);
         linkIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
@@ -308,7 +315,7 @@ describe('Test Identity (direct invocation)', function () {
                 teeShieldingKey,
                 linkIdentityCall
             );
-            await assertWorkRpcReturnValue('linkIdentityCall', res);
+            await assertIsInSidechainBlock('linkIdentityCall', res);
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityLinked = false;
             events.forEach((event) => {
@@ -349,10 +356,9 @@ describe('Test Identity (direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [[], ['Ethereum', 'BSC'], ['Litentry', 'Polkadot']];
+        const expectedWeb3Networks = [[], ['Ethereum', 'BSC'], ['Polkadot', 'Litentry']];
         let currentIndex = 0;
 
-        // don't work for integritee-node
         for (const { identity } of linkIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
@@ -421,7 +427,8 @@ describe('Test Identity (direct invocation)', function () {
             linkIdentityCall
         );
 
-        await assertWorkRpcReturnValue('linkIdentityCall', res);
+        assert.isTrue(res.do_watch.isFalse);
+        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
 
         const events = await eventsPromise;
 
@@ -480,7 +487,8 @@ describe('Test Identity (direct invocation)', function () {
             linkIdentityCall
         );
 
-        await assertWorkRpcReturnValue('linkIdentityCall', res);
+        assert.isTrue(res.do_watch.isFalse);
+        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
 
         const events = await eventsPromise;
 
@@ -526,61 +534,11 @@ describe('Test Identity (direct invocation)', function () {
             linkIdentityCall
         );
 
-        await assertWorkRpcReturnValue('linkIdentityCall', res);
+        assert.isTrue(res.do_watch.isFalse);
+        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
 
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'IdentityAlreadyLinked');
-    });
-
-    step('linking identity without shielding key (charlie)', async function () {
-        // charlie is not set shielding key
-        const charlieSubject = await buildIdentityFromKeypair(context.substrateWallet.charlie, context);
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, charlieSubject)
-        ).toNumber();
-        const getNextNonce = () => currentNonce++;
-
-        const evmNonce = getNextNonce();
-        const evmIdentity = await buildIdentityHelper(context.ethersWallet.charlie.address, 'Evm', context);
-        const [evmValidation] = await buildValidations(
-            context,
-            [charlieSubject],
-            [evmIdentity],
-            evmNonce,
-            'ethereum',
-            undefined,
-            [context.ethersWallet.charlie]
-        );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
-
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            context.api.createType('Index', evmNonce),
-            context.substrateWallet.charlie,
-            charlieSubject,
-            evmIdentity.toHex(),
-            evmValidation.toHex(),
-            evmNetworks.toHex(),
-            keyNonce,
-            requestIdentifier
-        );
-
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall
-        );
-        await assertWorkRpcReturnValue('linkIdentityCall', res);
-
-        const events = await eventsPromise;
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
     });
 
     step('deactivating identity', async function () {
@@ -643,7 +601,7 @@ describe('Test Identity (direct invocation)', function () {
                 deactivateIdentityCall
             );
 
-            await assertWorkRpcReturnValue('deactivateIdentityCall', res);
+            await assertIsInSidechainBlock('deactivateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityDeactivated = false;
@@ -750,7 +708,7 @@ describe('Test Identity (direct invocation)', function () {
                 deactivateIdentityCall
             );
 
-            await assertWorkRpcReturnValue('activateIdentityCall', res);
+            await assertIsInSidechainBlock('activateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityActivated = false;
@@ -832,7 +790,8 @@ describe('Test Identity (direct invocation)', function () {
             teeShieldingKey,
             deactivateIdentityCall
         );
-        await assertWorkRpcReturnValue('deactivateIdentityCall', res);
+        assert.isTrue(res.do_watch.isFalse);
+        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
 
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');

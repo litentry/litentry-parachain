@@ -134,16 +134,15 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Bob links:
-        // - alice's substrate identity
-        // @FIXME: comment says alice; code says charlie. Which one is it supposed to be !?
-        const aliceSubstrateIdentity = await buildIdentityHelper(
+        // - charlie's substrate identity
+        const charlieSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.charlie.addressRaw),
             'Substrate',
             context
         );
 
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
-        aliceIdentities = [aliceSubstrateIdentity];
+        aliceIdentities = [charlieSubstrateIdentity];
 
         // TODO: #1899 being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
@@ -219,7 +218,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const msg = generateVerificationMessage(
             context,
             bobSubject,
-            aliceSubstrateIdentity,
+            charlieSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall
             9
@@ -262,7 +261,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check IDGraph after LinkIdentity', async function () {
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context)
         const identityHex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 

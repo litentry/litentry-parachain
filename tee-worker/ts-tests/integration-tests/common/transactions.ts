@@ -235,10 +235,6 @@ export const subscribeToEventsWithExtHash = async (
 
             const matchingEvent = allExtrinsicEvents.find((eventRecord) => {
                 const eventData = eventRecord.event.data.toHuman();
-                /**
-                 * @FIXME I'd love a cleaner way to do this check :P
-                 */
-
                 return (
                     eventData != undefined &&
                     typeof eventData === 'object' &&

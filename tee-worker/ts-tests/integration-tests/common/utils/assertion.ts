@@ -26,7 +26,7 @@ export async function assertFailedEvent(
     const ievents: EventLike[] = events.map(({ event }) => event);
     const failedEvent = ievents.filter(isFailed);
     /* 
-      @fix Why this type don't work??????
+      @fix Why this type don't work?????? https://github.com/litentry/litentry-parachain/issues/1917
     */
     const eventData = failedEvent[0].data[1] as CorePrimitivesErrorErrorDetail;
     assert.lengthOf(failedEvent, 1);
@@ -197,12 +197,13 @@ export async function assertIdentityActivated(
     console.log(colors.green('assertIdentityActivated complete'));
 }
 
-export async function assertWorkRpcReturnValue(callType: string, res: WorkerRpcReturnValue) {
+export async function assertIsInSidechainBlock(callType: string, res: WorkerRpcReturnValue) {
     assert.isTrue(
         res.status.isTrustedOperationStatus,
         `${callType} should be trusted operation status, but is ${res.status.type}`
     );
     const status = res.status.asTrustedOperationStatus;
+    console.log(res.toHuman());
 
     assert.isTrue(
         status[0].isSubmitted || status[0].isInSidechainBlock,
@@ -260,8 +261,8 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
