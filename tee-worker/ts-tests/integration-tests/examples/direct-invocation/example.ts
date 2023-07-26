@@ -340,10 +340,10 @@ export async function runExample(keyPairType: KeypairType) {
     console.log('requestVcCall call returned', res.toHuman());
     assert.isTrue(res.do_watch.isFalse);
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
-    const requestVCRes = parachainApi.createType('RequestVCResponse', res.value) as unknown as RequestVCResponse;
-    assert.equal(requestVCRes.account.toHex(), u8aToHex(alice.addressRaw));
-    assert.equal(requestVCRes.req_ext_hash.toHex(), hash);
-    aesOutput = parseAesOutput(parachainApi, requestVCRes.vc_payload.toHex());
+    const requestVcRes = parachainApi.createType('RequestVCResponse', res.value) as unknown as RequestVCResponse;
+    assert.equal(requestVcRes.account.toHex(), u8aToHex(alice.addressRaw));
+    assert.equal(requestVcRes.req_ext_hash.toHex(), hash);
+    aesOutput = parseAesOutput(parachainApi, requestVcRes.vc_payload.toHex());
     const decryptedVcPayload = u8aToString(hexToU8a(decryptWithAes(aesKey, aesOutput, 'hex')));
     console.log('decrypted vc payload:', decryptedVcPayload);
 }
