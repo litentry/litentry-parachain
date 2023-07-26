@@ -47,7 +47,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let networks = networks_set.into_iter().collect::<Vec<Web3Network>>();
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_A8_SUBJECT_DESCRIPTION, VC_A8_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a8(networks, min, max);

@@ -227,7 +227,7 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
+	pub fn new(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
 		let credential: Credential = Credential::from_template(raw, subject, shard)?;
 		Ok(credential)
@@ -546,8 +546,7 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -565,8 +564,7 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -584,8 +582,7 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
