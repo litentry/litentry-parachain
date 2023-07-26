@@ -1361,14 +1361,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.39#4239d3defa20c3fbd13966f62ce85e9a407bd7bf"
-dependencies = [
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "concurrent-queue"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4306,7 +4298,7 @@ dependencies = [
  "sp-runtime",
  "substrate-api-client",
  "substrate-client-keystore",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
  "thiserror 1.0.44",
  "ws",
 ]
@@ -4378,7 +4370,7 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "substrate-api-client",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
  "thiserror 1.0.44",
  "tokio",
  "warp",
@@ -4814,7 +4806,7 @@ dependencies = [
  "serde_derive 1.0.175",
  "serde_json 1.0.103",
  "sgx_crypto_helper",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
  "thiserror 1.0.44",
  "url 2.4.0",
  "ws",
@@ -5000,7 +4992,7 @@ dependencies = [
  "sp-core",
  "sp-finality-grandpa",
  "sp-runtime",
- "teerex-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.39)",
+ "teerex-primitives",
  "thiserror 1.0.44",
 ]
 
@@ -8884,7 +8876,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -9179,7 +9171,7 @@ dependencies = [
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -9281,7 +9273,7 @@ dependencies = [
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -9414,7 +9406,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
 ]
 
 [[package]]
@@ -11982,7 +11974,7 @@ dependencies = [
  "sp-runtime",
  "sp-state-machine",
  "sp-std 5.0.0",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -13697,7 +13689,7 @@ dependencies = [
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-std 5.0.0",
- "teerex-primitives 0.1.0",
+ "teerex-primitives",
  "webpki 0.21.0",
  "x509-cert",
 ]
@@ -15300,7 +15292,7 @@ checksum = "1d2faeef5759ab89935255b1a4cd98e0baf99d1085e37d36599c625dac49ae8e"
 name = "teeracle-primitives"
 version = "0.1.0"
 dependencies = [
- "common-primitives 0.1.0",
+ "common-primitives",
  "sp-std 5.0.0",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
 ]
@@ -15309,21 +15301,7 @@ dependencies = [
 name = "teerex-primitives"
 version = "0.1.0"
 dependencies = [
- "common-primitives 0.1.0",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.175",
- "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
- "sp-std 5.0.0",
-]
-
-[[package]]
-name = "teerex-primitives"
-version = "0.1.0"
-source = "git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.39#4239d3defa20c3fbd13966f62ce85e9a407bd7bf"
-dependencies = [
- "common-primitives 0.1.0 (git+https://github.com/integritee-network/pallets.git?branch=polkadot-v0.9.39)",
+ "common-primitives",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
