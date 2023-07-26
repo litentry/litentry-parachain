@@ -228,7 +228,7 @@ export const subscribeToEventsWithExtHash = async (
     return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
         let blocksToScan = 30;
         /* 
-        WARNING:The unsubscribe function is called inside the Promise callback, which is executed each time a new blockHeader is subscribed. 
+        WARNING:The unsubscribe function is called inside the Promise callback, which is executed each time a new blockHeader is received. 
                `unsubscribe` is intended to unsubscribe a blockHeader if certain conditions are met. 
                 If you use await, you will actually wait for this function to finish executing. 
                 However, since it doesn't return a Promise, using await doesn't make sense and can lead to problematic code behaviour.
