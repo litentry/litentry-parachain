@@ -142,7 +142,8 @@ pub enum DirectRequestStatus {
 	/// Direct request was successfully executed
 	Ok,
 	/// Trusted Call Status
-	TrustedOperationStatus(TrustedOperationStatus),
+	/// Litentry: embed the top hash here - TODO - use generic type?
+	TrustedOperationStatus(TrustedOperationStatus, H256),
 	/// Direct request could not be executed
 	Error,
 }

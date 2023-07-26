@@ -25,8 +25,10 @@ impl IpfsContent {
 		let mut adder: FileAdder = FileAdder::default();
 		let mut total: usize = 0;
 		while total < self.file_content.len() {
-			let (blocks, consumed) = adder.push(&self.file_content[total..]);
-			total += consumed;
+			#[allow(clippy::string_slice)]
+			let bytes = &self.file_content.get(total..).ok_or(IpfsError::Verification)?;
+			let (blocks, consumed) = adder.push(bytes);
+			total = total.saturating_add(consumed);
 			self.stats.process(blocks);
 		}
 		let blocks = adder.finish();
@@ -63,8 +65,8 @@ impl Stats {
 	fn process<I: Iterator<Item = (Cid, Vec<u8>)>>(&mut self, new_blocks: I) {
 		for (cid, block) in new_blocks {
 			self.last = Some(cid);
-			self.blocks += 1;
-			self.block_bytes += block.len() as u64;
+			self.blocks = self.blocks.saturating_add(1);
+			self.block_bytes = self.block_bytes.saturating_add(block.len() as u64);
 		}
 	}
 }
@@ -75,6 +77,7 @@ pub fn test_creates_ipfs_content_struct_works() {
 	let content: Vec<u8> = vec![20; 512 * 1024];
 	let ipfs_content = IpfsContent::new(cid, content.clone());
 
+	#[allow(clippy::unwrap_used)]
 	let cid_str = Base::Base58Btc.encode(ipfs_content.cid.as_ref().unwrap().hash().as_bytes());
 	assert_eq!(cid_str, cid);
 	assert_eq!(ipfs_content.file_content, content);
@@ -95,5 +98,8 @@ pub fn test_verification_fails_for_incorrect_content() {
 	let content: Vec<u8> = vec![10; 512 * 1024];
 	let mut ipfs_content = IpfsContent::new(cid, content);
 	let verification = ipfs_content.verify();
-	assert_eq!(verification.unwrap_err(), IpfsError::Verification);
+	#[allow(clippy::unwrap_used)]
+	{
+		assert_eq!(verification.unwrap_err(), IpfsError::Verification);
+	}
 }

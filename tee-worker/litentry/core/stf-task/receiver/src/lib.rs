@@ -50,7 +50,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
+use itp_types::{ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
 use std::{format, string::String, sync::Arc};
@@ -105,6 +105,7 @@ where
 	fn submit_trusted_call(
 		&self,
 		shard: &ShardIdentifier,
+		old_top_hash: &H256,
 		trusted_call: &TrustedCall,
 	) -> Result<(), Error> {
 		let signed_trusted_call = self
@@ -136,6 +137,10 @@ where
 			return Ok(())
 		}
 
+		// swap the hash in the rpc connection registry to make sure furthre RPC responses go to
+		// the right channel
+		self.author_api.swap_rpc_connection_hash(*old_top_hash, top.hash());
+
 		let encrypted_trusted_call = self
 			.shielding_key
 			.encrypt(&top.encode())
@@ -146,7 +151,7 @@ where
 			encrypted_trusted_call.len(),
 			top.encode().len()
 		);
-		executor::block_on(self.author_api.submit_top(encrypted_trusted_call, *shard)).map_err(
+		executor::block_on(self.author_api.watch_top(encrypted_trusted_call, *shard)).map_err(
 			|e| Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e)),
 		)?;
 

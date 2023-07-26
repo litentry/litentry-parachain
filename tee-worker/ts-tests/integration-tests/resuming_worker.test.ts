@@ -71,8 +71,8 @@ function generateWorkerCommandArguments(
         `--node-port ${nodePort}`,
         `run`,
         `--skip-ra`,
+        `--dev`,
         ...(isLaunch && workerParams.requestStateOnLaunch ? ['--request-state'] : []),
-        ...(isLaunch ? ['--dev'] : []),
     ].join(' ');
 }
 

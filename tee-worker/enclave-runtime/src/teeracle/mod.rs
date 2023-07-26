@@ -163,10 +163,12 @@ pub unsafe extern "C" fn update_market_data_xt(
 ) -> sgx_status_t {
 	let mut crypto_currency_slice =
 		slice::from_raw_parts(crypto_currency_ptr, crypto_currency_size as usize);
+	#[allow(clippy::unwrap_used)]
 	let crypto_currency: String = Decode::decode(&mut crypto_currency_slice).unwrap();
 
 	let mut fiat_currency_slice =
 		slice::from_raw_parts(fiat_currency_ptr, fiat_currency_size as usize);
+	#[allow(clippy::unwrap_used)]
 	let fiat_currency: String = Decode::decode(&mut fiat_currency_slice).unwrap();
 
 	let extrinsics = match update_market_data_internal(crypto_currency, fiat_currency) {
