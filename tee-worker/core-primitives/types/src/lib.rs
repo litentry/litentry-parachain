@@ -23,7 +23,6 @@ use codec::{Decode, Encode};
 use litentry_primitives::UserShieldingKeyNonceType;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
-pub mod extrinsics;
 pub mod parentchain;
 pub mod storage;
 

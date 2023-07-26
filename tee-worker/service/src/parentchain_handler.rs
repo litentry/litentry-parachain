@@ -27,9 +27,8 @@ use itp_storage::StorageProof;
 use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use sp_finality_grandpa::VersionedAuthorityList;
-use sp_runtime::traits::{Block, Header as HeaderTrait};
+use sp_runtime::traits::Header as HeaderTrait;
 use std::{cmp::min, sync::Arc};
-use substrate_api_client::Phase;
 
 const BLOCK_SYNC_BATCH_SIZE: u32 = 1000;
 
@@ -156,58 +155,13 @@ where
 		}
 
 		loop {
-			let mut block_chunk_to_sync = self.parentchain_api.get_blocks(
+			let block_chunk_to_sync = self.parentchain_api.get_blocks(
 				start_block,
 				min(start_block + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
 			)?;
 			println!("[+] Found {} block(s) to sync", block_chunk_to_sync.len());
 			if block_chunk_to_sync.is_empty() {
 				return Ok(until_synced_header)
-			}
-
-			// `indirect_calls_executor` looks for extrinsics in parentchain blocks without checking their status.
-			// We believe it's wrong, see https://github.com/litentry/litentry-parachain/issues/1092
-			//
-			// We try to pre-process the signed block to only keep extrinsics that are successfully executed.
-			//
-			// TODO:
-			// 	1. further simplify the logic below, e.g. with `filter`
-			//  3. add a test to verify the failed parachain extrinsic won't cause any sidechain state mutation
-			let mut events = vec![];
-			for block in &block_chunk_to_sync {
-				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
-				events.push(block_events);
-			}
-
-			for (block_index, signed_block) in block_chunk_to_sync.iter_mut().enumerate() {
-				let mut extrinsics = vec![];
-				let block_events = events
-					.get(block_index)
-					.ok_or_else(|| Error::MissingBlockEvents(block_index))?;
-				for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
-					// Check if the tx was successful
-					let success = block_events
-						.iter()
-						.filter(|event| {
-							if let Ok(event) = event {
-								event.pallet_name() == "System"
-									&& event.variant_name() == "ExtrinsicSuccess"
-									&& event.phase() == Phase::ApplyExtrinsic(i as u32)
-							} else {
-								false
-							}
-						})
-						.count() > 0;
-					if !success {
-						warn!(
-							"block:{:?}, extrinsic index: {:?}, success: {:?}",
-							&signed_block.block.header.number, i, success,
-						);
-					} else {
-						extrinsics.push(xt.clone());
-					}
-				}
-				signed_block.block.extrinsics = extrinsics;
 			}
 
 			let events_chunk_to_sync: Vec<Vec<u8>> = block_chunk_to_sync
