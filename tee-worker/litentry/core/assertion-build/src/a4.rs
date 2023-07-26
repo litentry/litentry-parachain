@@ -140,8 +140,10 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		// TODO:
+		// There's an issue for this: https://github.com/litentry/litentry-parachain/issues/1655
+		//
 		// There is a problem here, because TDF does not support mixed network types,
-		// It is need to request TDF 2 (substrate+evm networks) * 7 (ASSERTION_FROM_DATE) = 14 http requests.
+		// It is need to request TDF 2 (substrate+evm networks) * 14 (ASSERTION_FROM_DATE) * addresses http requests.
 		// If TDF can handle mixed network type, and even supports from_date array,
 		// so that ideally, up to one http request can yield results.
 	}
