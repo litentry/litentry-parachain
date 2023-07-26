@@ -73,7 +73,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A11_SUBJECT_DESCRIPTION,
