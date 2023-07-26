@@ -46,7 +46,6 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
     });
-
     step('Invalid user shielding key', async function () {
         const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         // use empty `eveValidations`, the `UserShieldingKeyNotFound` error should be emitted before verification
@@ -261,8 +260,8 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check IDGraph after LinkIdentity', async function () {
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context)
-        const identityHex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
+        const identityHex = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex();
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
         const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
