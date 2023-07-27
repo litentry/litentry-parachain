@@ -31,7 +31,7 @@ import {
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import sidechainMetaData from '../../../sidechain-api/prepare-build/litentry-sidechain-metadata.json' assert { type: 'json' };
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { assert } from 'chai';
 import Options from 'websocket-as-promised/types/options';

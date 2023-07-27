@@ -220,6 +220,24 @@ export function createSignedTrustedCallSetIdentityNetworks(
     );
 }
 
+export function createSignedTrustedCallRequestVc(
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity,
+    assertion: string,
+    hash: string
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        signer,
+        mrenclave,
+        nonce,
+        [subject.toHuman(), subject.toHuman(), assertion, hash]
+    );
+}
 export function createSignedTrustedCallDeactivateIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
