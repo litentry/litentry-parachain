@@ -260,15 +260,19 @@ export default {
     PalletIdentityManagementTeeEvent: {
         _enum: {
             UserShieldingKeySet: {
-                who: "AccountId32",
+                who: "LitentryPrimitivesIdentity",
                 key: "[u8;32]",
             },
             IdentityLinked: {
-                who: "AccountId32",
+                who: "LitentryPrimitivesIdentity",
                 identity: "LitentryPrimitivesIdentity",
             },
-            IdentityRemoved: {
-                who: "AccountId32",
+            IdentityDeactivated: {
+                who: "LitentryPrimitivesIdentity",
+                identity: "LitentryPrimitivesIdentity",
+            },
+            IdentityActivated: {
+                who: "LitentryPrimitivesIdentity",
                 identity: "LitentryPrimitivesIdentity",
             },
         },
@@ -556,17 +560,26 @@ export default {
     PalletIdentityManagementTeeCall: {
         _enum: {
             set_user_shielding_key: {
-                who: "AccountId32",
+                who: "LitentryPrimitivesIdentity",
                 key: "[u8;32]",
             },
             link_identity: {
-                who: "AccountId32",
+                who: "LitentryPrimitivesIdentity",
                 identity: "LitentryPrimitivesIdentity",
                 web3networks: "Vec<CorePrimitivesNetworkWeb3Network>",
             },
-            remove_identity: {
-                who: "AccountId32",
+            deactivate_identity: {
+                who: "LitentryPrimitivesIdentity",
                 identity: "LitentryPrimitivesIdentity",
+            },
+            activate_identity: {
+                who: "LitentryPrimitivesIdentity",
+                identity: "LitentryPrimitivesIdentity",
+            },
+            set_identity_networks: {
+                who: "LitentryPrimitivesIdentity",
+                identity: "LitentryPrimitivesIdentity",
+                web3networks: "Vec<CorePrimitivesNetworkWeb3Network>",
             },
         },
     },
@@ -588,13 +601,13 @@ export default {
         ],
     },
     /**
-     * Lookup92: pallet_sudo::pallet::Error<T>
+     * Lookup91: pallet_sudo::pallet::Error<T>
      **/
     PalletSudoError: {
         _enum: ["RequireSudo"],
     },
     /**
-     * Lookup94: pallet_identity_management_tee::identity_context::IdentityContext<T>
+     * Lookup93: pallet_identity_management_tee::identity_context::IdentityContext<T>
      **/
     PalletIdentityManagementTeeIdentityContext: {
         linkBlock: "u32",
@@ -602,26 +615,27 @@ export default {
         status: "PalletIdentityManagementTeeIdentityContextIdentityStatus",
     },
     /**
-     * Lookup95: pallet_identity_management_tee::identity_context::IdentityStatus
+     * Lookup94: pallet_identity_management_tee::identity_context::IdentityStatus
      **/
     PalletIdentityManagementTeeIdentityContextIdentityStatus: {
         _enum: ["Active", "Inactive"],
     },
     /**
-     * Lookup96: pallet_identity_management_tee::pallet::Error<T>
+     * Lookup95: pallet_identity_management_tee::pallet::Error<T>
      **/
     PalletIdentityManagementTeeError: {
         _enum: [
             "IdentityAlreadyLinked",
             "IdentityNotExist",
             "LinkPrimeIdentityDisallowed",
-            "RemovePrimeIdentityDisallowed",
+            "DeactivatePrimeIdentityDisallowed",
             "IDGraphLenLimitReached",
-            "Web3NetworkLenLimitReached",
+            "WrongWeb3NetworkTypes",
+            "NotSupportedIdentity",
         ],
     },
     /**
-     * Lookup98: sp_runtime::MultiSignature
+     * Lookup97: sp_runtime::MultiSignature
      **/
     SpRuntimeMultiSignature: {
         _enum: {
@@ -631,47 +645,47 @@ export default {
         },
     },
     /**
-     * Lookup99: sp_core::ed25519::Signature
+     * Lookup98: sp_core::ed25519::Signature
      **/
     SpCoreEd25519Signature: "[u8;64]",
     /**
-     * Lookup101: sp_core::sr25519::Signature
+     * Lookup100: sp_core::sr25519::Signature
      **/
     SpCoreSr25519Signature: "[u8;64]",
     /**
-     * Lookup102: sp_core::ecdsa::Signature
+     * Lookup101: sp_core::ecdsa::Signature
      **/
     SpCoreEcdsaSignature: "[u8;65]",
     /**
-     * Lookup105: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
+     * Lookup104: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
      **/
     FrameSystemExtensionsCheckNonZeroSender: "Null",
     /**
-     * Lookup106: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+     * Lookup105: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
      **/
     FrameSystemExtensionsCheckSpecVersion: "Null",
     /**
-     * Lookup107: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+     * Lookup106: frame_system::extensions::check_tx_version::CheckTxVersion<T>
      **/
     FrameSystemExtensionsCheckTxVersion: "Null",
     /**
-     * Lookup108: frame_system::extensions::check_genesis::CheckGenesis<T>
+     * Lookup107: frame_system::extensions::check_genesis::CheckGenesis<T>
      **/
     FrameSystemExtensionsCheckGenesis: "Null",
     /**
-     * Lookup111: frame_system::extensions::check_nonce::CheckNonce<T>
+     * Lookup110: frame_system::extensions::check_nonce::CheckNonce<T>
      **/
     FrameSystemExtensionsCheckNonce: "Compact<u32>",
     /**
-     * Lookup112: frame_system::extensions::check_weight::CheckWeight<T>
+     * Lookup111: frame_system::extensions::check_weight::CheckWeight<T>
      **/
     FrameSystemExtensionsCheckWeight: "Null",
     /**
-     * Lookup113: pallet_transaction_payment::ChargeTransactionPayment<T>
+     * Lookup112: pallet_transaction_payment::ChargeTransactionPayment<T>
      **/
     PalletTransactionPaymentChargeTransactionPayment: "Compact<u128>",
     /**
-     * Lookup114: ita_sgx_runtime::Runtime
+     * Lookup113: ita_sgx_runtime::Runtime
      **/
     ItaSgxRuntimeRuntime: "Null",
 };

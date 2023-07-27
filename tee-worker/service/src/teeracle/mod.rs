@@ -24,7 +24,7 @@ use itp_utils::hex::hex_encode;
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::time::Duration;
-use substrate_api_client::XtStatus;
+use substrate_api_client::{SubmitAndWatch, XtStatus};
 use teeracle_metrics::{increment_number_of_request_failures, set_extrinsics_inclusion_success};
 use tokio::runtime::Handle;
 
@@ -39,18 +39,20 @@ pub(crate) fn start_interval_market_update<E: TeeracleApi>(
 	enclave_api: &E,
 	tokio_handle: &Handle,
 ) {
+	let updates_to_run = || {
+		execute_market_update(api, enclave_api, tokio_handle);
+		// TODO: Refactor and add this back according to ISSUE: https://github.com/integritee-network/worker/issues/1300
+		// execute_weather_update(api, enclave_api, tokio_handle);
+	};
+	info!("Teeracle will update now");
+	updates_to_run();
+
 	let interval = maybe_interval.unwrap_or(DEFAULT_MARKET_DATA_UPDATE_INTERVAL);
 	info!("Starting teeracle interval for oracle update, interval of {:?}", interval);
-
-	schedule_on_repeating_intervals(
-		|| {
-			execute_update_market(api, enclave_api, tokio_handle);
-			execute_weather_update(api, enclave_api, tokio_handle);
-		},
-		interval,
-	);
+	schedule_on_repeating_intervals(updates_to_run, interval);
 }
 
+#[allow(dead_code)]
 fn execute_weather_update<E: TeeracleApi>(
 	node_api: &ParentchainApi,
 	enclave: &E,
@@ -76,27 +78,29 @@ fn execute_weather_update<E: TeeracleApi>(
 	extrinsics.into_iter().for_each(|call| {
 		let node_api_clone = node_api.clone();
 		tokio_handle.spawn(async move {
-			let hex_encoded_extrinsic = hex_encode(&call.encode());
-			debug!("Hex encoded extrinsic to be sent: {}", hex_encoded_extrinsic);
+			let encoded_extrinsic = call.encode();
+			debug!("Hex encoded extrinsic to be sent: {}", hex_encode(&encoded_extrinsic));
 			println!("[>] Update oracle (send the extrinsic)");
-			let extrinsic_hash =
-				match node_api_clone.send_extrinsic(hex_encoded_extrinsic, XtStatus::InBlock) {
-					Err(e) => {
-						error!("Failed to send extrinsic: {:?}", e);
-						set_extrinsics_inclusion_success(false);
-						return
-					},
-					Ok(hash) => {
-						set_extrinsics_inclusion_success(true);
-						hash
-					},
-				};
+			let extrinsic_hash = match node_api_clone.submit_and_watch_opaque_extrinsic_until(
+				encoded_extrinsic.into(),
+				XtStatus::InBlock,
+			) {
+				Err(e) => {
+					error!("Failed to send extrinsic: {:?}", e);
+					set_extrinsics_inclusion_success(false);
+					return
+				},
+				Ok(report) => {
+					set_extrinsics_inclusion_success(true);
+					report.extrinsic_hash
+				},
+			};
 			println!("[<] Extrinsic got included into a block. Hash: {:?}\n", extrinsic_hash);
 		});
 	});
 }
 
-fn execute_update_market<E: TeeracleApi>(
+fn execute_market_update<E: TeeracleApi>(
 	node_api: &ParentchainApi,
 	enclave: &E,
 	tokio_handle: &Handle,
@@ -123,22 +127,24 @@ fn execute_update_market<E: TeeracleApi>(
 	for call in extrinsics.into_iter() {
 		let node_api_clone = node_api.clone();
 		tokio_handle.spawn(async move {
-			let hex_encoded_extrinsic = hex_encode(&call.encode());
-			debug!("Hex encoded extrinsic to be sent: {}", hex_encoded_extrinsic);
+			let encoded_extrinsic = call.encode();
+			debug!("Hex encoded extrinsic to be sent: {}", hex_encode(&encoded_extrinsic));
 
 			println!("[>] Update the exchange rate (send the extrinsic)");
-			let extrinsic_hash =
-				match node_api_clone.send_extrinsic(hex_encoded_extrinsic, XtStatus::InBlock) {
-					Err(e) => {
-						error!("Failed to send extrinsic: {:?}", e);
-						set_extrinsics_inclusion_success(false);
-						return
-					},
-					Ok(hash) => {
-						set_extrinsics_inclusion_success(true);
-						hash
-					},
-				};
+			let extrinsic_hash = match node_api_clone.submit_and_watch_opaque_extrinsic_until(
+				encoded_extrinsic.into(),
+				XtStatus::InBlock,
+			) {
+				Err(e) => {
+					error!("Failed to send extrinsic: {:?}", e);
+					set_extrinsics_inclusion_success(false);
+					return
+				},
+				Ok(report) => {
+					set_extrinsics_inclusion_success(true);
+					report.extrinsic_hash
+				},
+			};
 
 			println!("[<] Extrinsic got included into a block. Hash: {:?}\n", extrinsic_hash);
 		});

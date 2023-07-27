@@ -25,8 +25,6 @@ use lc_data_providers::achainable::{AchainableAccountTotalTransactions, Achainab
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "Gets the range of number of transactions a user has made for a specific token on all supported networks (invalid transactions are also counted)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
-const VC_A8_SUBJECT_TAG: [&str; 6] =
-	["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"];
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who),);
@@ -49,13 +47,9 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let networks = networks_set.into_iter().collect::<Vec<Web3Network>>();
 
 	let (min, max) = get_total_tx_ranges(total_txs);
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A8_SUBJECT_DESCRIPTION,
-				VC_A8_SUBJECT_TYPE,
-				VC_A8_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A8_SUBJECT_DESCRIPTION, VC_A8_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a8(networks, min, max);
 
 			Ok(credential_unsigned)

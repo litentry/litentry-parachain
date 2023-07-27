@@ -60,7 +60,15 @@ pub fn shield_funds_increments_signer_account_nonce() {
 
 	let repo = Arc::new(NodeMetadataRepository::new(NodeMetadataMock::new()));
 	let shard = ShardIdentifier::default();
-	StfState::execute_call(&mut state, &shard, shield_funds_call, &mut Vec::new(), repo).unwrap();
+	StfState::execute_call(
+		&mut state,
+		&shard,
+		shield_funds_call,
+		Default::default(),
+		&mut Vec::new(),
+		repo,
+	)
+	.unwrap();
 	assert_eq!(1, StfState::get_account_nonce(&mut state, &enclave_signer_account_id));
 }
 

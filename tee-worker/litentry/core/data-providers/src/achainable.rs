@@ -220,8 +220,6 @@ impl ParamsBasicTypeWithAmountHolding {
 }
 
 // ParamsBasicTypeWithClassOfYear
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithClassOfYear {
 	#[serde(skip_serializing)]
 	#[serde(skip_deserializing)]
@@ -575,7 +573,6 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
-	// fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error>;
 	fn class_of_year(&mut self, address: &str, param: ParamsBasicTypeWithClassOfYear) -> Result<bool, Error>;
 	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
 	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error>;
@@ -660,11 +657,8 @@ impl AchainableTagAccount for AchainableClient {
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param))
 	}
 
-	// fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error> {
-	// 	let param = year.get();
-	// 	check_achainable_label(self, address, Params::ParamsBasicTypeWithClassOfYear(param))
-	// }
 	fn class_of_year(&mut self, address: &str, param: ParamsBasicTypeWithClassOfYear) -> Result<bool, Error> {
+		let param = year.get();
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithClassOfYear(param))
 	}
 
@@ -1173,19 +1167,19 @@ mod tests {
 		assert_eq!(res, true);
 	}
 
-	// #[test]
-	// fn class_of_year_works() {
-	// 	init();
+	#[test]
+	fn class_of_year_works() {
+		init();
 
-	// 	let mut client = AchainableClient::new();
-	// 	let res = client.class_of_year(
-	// 		"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5",
-	// 		crate::achainable::EClassOfYear::Year2020,
-	// 	);
-	// 	assert!(res.is_ok());
-	// 	let res = res.unwrap();
-	// 	assert_eq!(res, true);
-	// }
+		let mut client = AchainableClient::new();
+		let res = client.class_of_year(
+			"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5",
+			crate::achainable::EClassOfYear::Year2020.get(),
+		);
+		assert!(res.is_ok());
+		let res = res.unwrap();
+		assert_eq!(res, true);
+	}
 
 	#[test]
 	fn address_found_on_bsc_works() {

@@ -59,7 +59,8 @@ impl TrustedCallSigned {
 		validation_data: ValidationData,
 		web3networks: Vec<Web3Network>,
 		nonce: UserShieldingKeyNonceType,
-		hash: H256,
+		top_hash: H256,
+		req_ext_hash: H256,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		ensure!(
@@ -85,7 +86,8 @@ impl TrustedCallSigned {
 			sidechain_nonce,
 			key_nonce: nonce,
 			key,
-			hash,
+			top_hash,
+			req_ext_hash,
 		}
 		.into();
 		StfRequestSender::new()
@@ -135,7 +137,8 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: Identity,
 		assertion: Assertion,
-		hash: H256,
+		top_hash: H256,
+		req_ext_hash: H256,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		match assertion {
@@ -175,7 +178,8 @@ impl TrustedCallSigned {
 			who,
 			assertion: assertion.clone(),
 			identities,
-			hash,
+			top_hash,
+			req_ext_hash,
 		}
 		.into();
 		let sender = StfRequestSender::new();

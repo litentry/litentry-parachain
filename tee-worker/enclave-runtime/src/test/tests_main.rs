@@ -157,6 +157,9 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		// EVM tests
 		run_evm_tests,
 
+		// light-client-test
+		itc_parentchain::light_client::io::sgx_tests::init_parachain_light_client_works,
+
 		// these unit test (?) need an ipfs node running..
 		// ipfs::test_creates_ipfs_content_struct_works,
 		// ipfs::test_verification_ok_for_correct_content,
@@ -632,7 +635,15 @@ pub fn test_retrieve_events() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	assert_eq!(TestStf::get_events(&mut state).len(), 3);
 }
@@ -657,7 +668,15 @@ pub fn test_retrieve_event_count() {
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	let event_count = TestStf::get_event_count(&mut state);
 	assert_eq!(event_count, 3);
@@ -680,7 +699,15 @@ pub fn test_reset_events() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());
 	assert_eq!(receiver_acc_info.free, transfer_value);
 	// Ensure that there really have been events generated.

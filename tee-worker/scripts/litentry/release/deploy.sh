@@ -242,8 +242,8 @@ function register_parachain() {
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
-  yarn
-  yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
+  corepack yarn
+  corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
   print_divider
 
   echo "upgrade parathread to parachain now ..."
@@ -255,8 +255,8 @@ function register_parachain() {
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
-  yarn
-  yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
+  corepack yarn
+  corepack yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
   print_divider
 
   echo "done. please check $TMPDIR for generated files if need"
@@ -325,7 +325,7 @@ function restart_worker() {
     # Transfer balance to the enclave account that is generated
     echo "Transferring balance to the enclave account"
     cd $ROOTDIR/scripts/ts-utils/ || exit 
-    yarn install
+    corepack yarn install
     npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
 
     cd $ROOTDIR/tee-worker || exit 
@@ -392,7 +392,7 @@ function upgrade_worker(){
 
   echo "Setting up the new Worker on Chain"
   cd $ROOTDIR/scripts/ts-utils/ || exit 
-  yarn install
+  corepack yarn install
   npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
 
   echo "Stopping Currently running Worker..."

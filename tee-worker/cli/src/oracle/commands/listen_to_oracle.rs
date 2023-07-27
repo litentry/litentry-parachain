@@ -16,15 +16,12 @@
 */
 
 use crate::{command_utils::get_chain_api, Cli};
-use codec::Decode;
-use itp_node_api::{
-	api_client::ParentchainApi,
-	metadata::{event::PalletTeeracleOracleUpdated, pallet_teeracle::TEERACLE},
-};
+use itp_node_api::api_client::ParentchainApi;
 use itp_time_utils::{duration_now, remaining_time};
-use log::{debug, warn};
-use std::{sync::mpsc::channel, time::Duration};
-use substrate_api_client::{Events, FromHexString};
+use log::{debug, info};
+use my_node_runtime::{Hash, RuntimeEvent};
+use std::time::Duration;
+use substrate_api_client::{EventRecord, SubscribeEvents};
 
 /// Listen to exchange rate events.
 #[derive(Debug, Clone, Parser)]
@@ -34,6 +31,7 @@ pub struct ListenToOracleEventsCmd {
 }
 
 type EventCount = u32;
+type Event = EventRecord<RuntimeEvent, Hash>;
 
 impl ListenToOracleEventsCmd {
 	pub fn run(&self, cli: &Cli) {
@@ -49,42 +47,39 @@ fn count_oracle_update_events(api: &ParentchainApi, duration: Duration) -> Event
 	let stop = duration_now() + duration;
 
 	//subscribe to events
-	let (events_in, events_out) = channel();
-	api.subscribe_events(events_in).unwrap();
+	let mut subscription = api.subscribe_events().unwrap();
 	let mut count = 0;
 
 	while remaining_time(stop).unwrap_or_default() > Duration::ZERO {
-		let events_str = events_out.recv().unwrap();
-		let event_bytes = Vec::from_hex(events_str).unwrap();
-		let metadata = api.metadata.clone();
-		let events = Events::new(metadata, Default::default(), event_bytes);
-		for maybe_event_details in events.iter() {
-			let event_details = maybe_event_details.unwrap();
-			let pallet_name = event_details.pallet_name();
-			let event_name = event_details.event_metadata().event();
-			debug!(
-				"Decoded: phase = {:?}, pallet = {:?} event = {:?}",
-				event_details.phase(),
-				pallet_name,
-				event_name
-			);
-			if let (TEERACLE, "OracleUpdated") = (pallet_name, event_name) {
-				let mut bytes = event_details.field_bytes();
-				if let Ok(PalletTeeracleOracleUpdated { oracle_data_name, data_source }) =
-					PalletTeeracleOracleUpdated::decode(&mut bytes)
-				{
+		let events_result = subscription.next_event::<RuntimeEvent, Hash>();
+		let event_count = match events_result {
+			Some(Ok(event_records)) => {
+				debug!("Could not successfully decode event_bytes {:?}", event_records);
+				report_event_count(event_records)
+			},
+			_ => 0,
+		};
+		count += event_count;
+	}
+	debug!("Received {} ExchangeRateUpdated event(s) in total", count);
+	count
+}
+
+fn report_event_count(event_records: Vec<Event>) -> EventCount {
+	let mut count = 0;
+	event_records.iter().for_each(|event_record| {
+		info!("received event {:?}", event_record.event);
+		if let RuntimeEvent::Teeracle(event) = &event_record.event {
+			match &event {
+				my_node_runtime::pallet_teeracle::Event::OracleUpdated(oracle_name, src) => {
 					count += 1;
 					debug!("Received OracleUpdated event");
-					println!(
-						"OracleUpdated: ORACLE_NAME : {}, SRC : {}",
-						oracle_data_name, data_source
-					);
-				} else {
-					warn!("Ignoring unsupported OracleUpdated event");
-				}
+					println!("OracleUpdated: ORACLE_NAME : {}, SRC : {}", oracle_name, src);
+				},
+				// Can just remove this and ignore handling this case
+				_ => debug!("ignoring teeracle event: {:?}", event),
 			}
 		}
-	}
-	debug!("Received {} OracleUpdated event(s) in total", count);
+	});
 	count
 }

@@ -19,7 +19,7 @@ use crate::{
 	command_utils::get_worker_api_direct,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	Cli,
+	Cli, CliResult, CliResultOk,
 };
 use itc_rpc_client::direct_client::DirectApi;
 use sp_core::Pair;
@@ -31,7 +31,7 @@ pub struct NonceCommand {
 }
 
 impl NonceCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let (_mrenclave, shard) = get_identifiers(trusted_cli);
 		let who = get_pair_from_str(trusted_cli, &self.account);
 		let worker_api_direct = get_worker_api_direct(cli);
@@ -39,5 +39,6 @@ impl NonceCommand {
 		let nonce = nonce_ret.expect("get nonce error!");
 		println!("{}", nonce);
 		worker_api_direct.close().unwrap();
+		Ok(CliResultOk::None)
 	}
 }

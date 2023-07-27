@@ -51,7 +51,7 @@ where
 				let (from_block_hash, maybe_until_block_hash, shard_identifier) =
 					params.one::<(BlockHash, Option<BlockHash>, ShardIdentifier)>()?;
 				info!("Got request to fetch sidechain blocks from peer. Fetching sidechain blocks from storage \
-					(last imported block hash: {:?}, until block hash: {:?}, shard: {}",
+					(last imported block hash: {:?}, until block hash: {:?}, shard: {}", 
 					from_block_hash, maybe_until_block_hash, shard_identifier);
 
 				match maybe_until_block_hash {

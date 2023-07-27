@@ -78,7 +78,8 @@ pub struct IdentityVerificationRequest {
 	pub sidechain_nonce: Index,
 	pub key_nonce: UserShieldingKeyNonceType,
 	pub key: UserShieldingKeyType,
-	pub hash: H256,
+	pub top_hash: H256,
+	pub req_ext_hash: H256,
 }
 
 pub type MaxIdentityLength = ConstU32<64>;
@@ -91,7 +92,8 @@ pub struct AssertionBuildRequest {
 	pub who: Identity,
 	pub assertion: Assertion,
 	pub identities: Vec<IdentityNetworkTuple>,
-	pub hash: H256,
+	pub top_hash: H256,
+	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]

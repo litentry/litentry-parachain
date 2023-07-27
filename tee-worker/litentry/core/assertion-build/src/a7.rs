@@ -30,7 +30,6 @@ use std::string::ToString;
 const VC_A7_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
 const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Assertion";
-const VC_A7_SUBJECT_TAG: [&str; 1] = ["Polkadot"];
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A7 build, who: {:?}", account_id_to_string(&req.who),);
@@ -74,13 +73,9 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A7_SUBJECT_DESCRIPTION,
-				VC_A7_SUBJECT_TYPE,
-				VC_A7_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A7_SUBJECT_DESCRIPTION, VC_A7_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

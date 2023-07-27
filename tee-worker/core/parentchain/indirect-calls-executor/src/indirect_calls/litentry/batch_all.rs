@@ -39,7 +39,7 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	extrinsics::ParentchainUncheckedExtrinsicWithStatus, BatchAllFn, BatchCall, CallIndex,
+	BatchAllFn, BatchCall, CallIndex,
 	LinkIdentityParams, DeactivateIdentityParams, RequestVCParams, SetUserShieldingKeyParams,
 	SupportedBatchCallMap, SupportedBatchCallParams, H256,
 };
@@ -138,11 +138,9 @@ where
 		&self,
 		context: &IndirectCallsExecutor<R, S, T, N>,
 		input: &mut &[u8],
-	) -> Result<itp_types::extrinsics::ParentchainUncheckedExtrinsicWithStatus<Self::Call>> {
+	) -> Result<itp_types::extrinsics::ParentchainUncheckedExtrinsic<Self::Call>> {
 		// We have two vector_prefixes:
-		// - when encoding `OpaqueExtrinsicWithStatus`
 		// - when encoding the innen `UncheckedExtrinsicV4`
-		let _: Vec<()> = Decode::decode(input)?;
 		let _: Vec<()> = Decode::decode(input)?;
 
 		// mostly copied from
@@ -164,8 +162,7 @@ where
 			function: decode_batch_call(input, supported_batch_call_map.deref())?,
 		};
 
-		let status: bool = Decode::decode(input)?;
-		Ok(ParentchainUncheckedExtrinsicWithStatus { xt, status })
+		Ok(xt)
 	}
 
 	fn call_index(&self, call: &Self::Call) -> [u8; 2] {

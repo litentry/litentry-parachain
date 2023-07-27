@@ -15,9 +15,17 @@
 
 */
 
+use crate::{
+	attestation::{
+		generate_dcap_ra_extrinsic_from_quote_internal,
+		generate_ias_ra_extrinsic_from_der_cert_internal,
+	},
+	utils::get_validator_accessor_from_solo_or_parachain,
+};
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
+use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::Rsa3072Seal;
@@ -37,6 +45,7 @@ use its_sidechain::rpc_handler::{
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::debug;
+use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
@@ -105,6 +114,7 @@ where
 				"author_getNextNonce is not avaiable"
 			)))
 		}
+		#[allow(clippy::unwrap_used)]
 		let state_nonce_unwrap = state_nonce.unwrap();
 		match params.parse::<(String, String)>() {
 			Ok((shard_base58, account_hex)) => {
@@ -130,11 +140,12 @@ where
 						let trusted_calls =
 							pool_author.get_pending_trusted_calls_for(shard, &account);
 						let pending_tx_count = trusted_calls.len();
+						#[allow(clippy::unwrap_used)]
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
 						let nonce = state.execute_with(|| System::account_nonce(&account));
 						let json_value = RpcReturnValue {
 							do_watch: false,
-							value: (nonce + pending_tx_count).encode(),
+							value: (nonce.saturating_add(pending_tx_count)).encode(),
 							status: DirectRequestStatus::Ok,
 						};
 						Ok(json!(json_value.to_hex()))
@@ -218,9 +229,40 @@ where
 		Ok(json!(json_value))
 	});
 
-	// state_getEnclave
-	let state_get_enclave_name: &str = "state_getEnclave";
-	io.add_sync_method(state_get_enclave_name, |_: Params| {
+	// attesteer_forward_dcap_quote
+	let attesteer_forward_dcap_quote: &str = "attesteer_forwardDcapQuote";
+	io.add_sync_method(attesteer_forward_dcap_quote, move |params: Params| {
+		let json_value = match forward_dcap_quote_inner(params) {
+			Ok(val) => RpcReturnValue {
+				do_watch: false,
+				value: val.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex(),
+			Err(error) => compute_hex_encoded_return_error(error.as_str()),
+		};
+
+		Ok(json!(json_value))
+	});
+
+	// attesteer_forward_ias_attestation_report
+	let attesteer_forward_ias_attestation_report: &str = "attesteer_forwardIasAttestationReport";
+	io.add_sync_method(attesteer_forward_ias_attestation_report, move |params: Params| {
+		let json_value = match attesteer_forward_ias_attestation_report_inner(params) {
+			Ok(val) => RpcReturnValue {
+				do_watch: false,
+				value: val.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex(),
+			Err(error) => compute_hex_encoded_return_error(error.as_str()),
+		};
+		Ok(json!(json_value))
+	});
+
+	// state_getMrenclave
+	let state_get_mrenclave_name: &str = "state_getMrenclave";
+	io.add_sync_method(state_get_mrenclave_name, |_: Params| {
 		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
 			Ok(mrenclave) => RpcReturnValue {
 				do_watch: false,
@@ -285,10 +327,13 @@ where
 					"state_getStorage is not avaiable"
 				)))
 			}
+
+			#[allow(clippy::unwrap_used)]
 			let state_storage = state_storage.clone().unwrap();
 			match params.parse::<(String, String)>() {
 				Ok((shard_str, key_hash)) => {
 					let key_hash = if key_hash.starts_with("0x") {
+						#[allow(clippy::unwrap_used)]
 						key_hash.strip_prefix("0x").unwrap()
 					} else {
 						key_hash.as_str()
@@ -364,8 +409,8 @@ fn execute_getter_inner<G: ExecuteGetter>(
 ) -> Result<Option<Vec<u8>>, String> {
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
-	let request =
-		Request::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let request = Request::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let shard: ShardIdentifier = request.shard;
 	let encoded_trusted_getter: Vec<u8> = request.cyphertext;
@@ -375,6 +420,64 @@ fn execute_getter_inner<G: ExecuteGetter>(
 		.map_err(|e| format!("{:?}", e))?;
 
 	Ok(getter_result)
+}
+
+fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
+	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+
+	if hex_encoded_params.len() != 1 {
+		return Err(format!(
+			"Wrong number of arguments for IAS attestation report forwarding: {}, expected: {}",
+			hex_encoded_params.len(),
+			1
+		))
+	}
+
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let encoded_quote_to_forward: Vec<u8> =
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+
+	let url = String::new();
+	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
+		.map_err(|e| format!("{:?}", e))?;
+
+	let validator_access =
+		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	validator_access
+		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
+		.map_err(|e| format!("{:?}", e))?;
+
+	Ok(ext)
+}
+
+fn attesteer_forward_ias_attestation_report_inner(
+	params: Params,
+) -> Result<OpaqueExtrinsic, String> {
+	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+
+	if hex_encoded_params.len() != 1 {
+		return Err(format!(
+			"Wrong number of arguments for IAS attestation report forwarding: {}, expected: {}",
+			hex_encoded_params.len(),
+			1
+		))
+	}
+
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let ias_attestation_report =
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+
+	let url = String::new();
+	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)
+		.map_err(|e| format!("{:?}", e))?;
+
+	let validator_access =
+		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	validator_access
+		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
+		.map_err(|e| format!("{:?}", e))?;
+
+	Ok(ext)
 }
 
 pub fn sidechain_io_handler<ImportFn, Error>(import_fn: ImportFn) -> IoHandler

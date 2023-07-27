@@ -23,16 +23,12 @@ use itc_parentchain::{
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
-use itp_types::{extrinsics::fill_opaque_extrinsic_with_status, SignedBlock};
+use itp_storage::StorageProof;
 use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use sp_finality_grandpa::VersionedAuthorityList;
-use sp_runtime::{
-	traits::{Block, Header as HeaderTrait},
-	OpaqueExtrinsic,
-};
+use sp_runtime::traits::Header as HeaderTrait;
 use std::{cmp::min, sync::Arc};
-use substrate_api_client::{Events, Phase};
 
 const BLOCK_SYNC_BATCH_SIZE: u32 = 1000;
 
@@ -92,9 +88,8 @@ where
 		enclave_api: Arc<EnclaveApi>,
 	) -> ServiceResult<Self> {
 		let genesis_hash = parentchain_api.get_genesis_hash()?;
-		let genesis_header: Header = parentchain_api
-			.get_header(Some(genesis_hash))?
-			.ok_or(Error::MissingGenesisHeader)?;
+		let genesis_header =
+			parentchain_api.header(Some(genesis_hash))?.ok_or(Error::MissingGenesisHeader)?;
 
 		let parentchain_init_params: ParentchainInitParams = if parentchain_api
 			.is_grandpa_available()?
@@ -142,7 +137,7 @@ where
 		overriden_start_block: u32,
 	) -> ServiceResult<Header> {
 		trace!("Getting current head");
-		let curr_block: SignedBlock = self
+		let curr_block = self
 			.parentchain_api
 			.last_finalized_block()?
 			.ok_or(Error::MissingLastFinalizedBlock)?;
@@ -160,7 +155,7 @@ where
 		}
 
 		loop {
-			let mut block_chunk_to_sync = self.parentchain_api.get_blocks(
+			let block_chunk_to_sync = self.parentchain_api.get_blocks(
 				start_block,
 				min(start_block + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
 			)?;
@@ -169,55 +164,28 @@ where
 				return Ok(until_synced_header)
 			}
 
-			// `indirect_calls_executor` looks for extrinsics in parentchain blocks without checking their status.
-			// We believe it's wrong, see https://github.com/litentry/litentry-parachain/issues/1092
-			//
-			// One solution is to change the block type to `sp_runtime::generic::Block` or `sp_runtime::generic::SignedBlock`,
-			// this will however affect many structs or files, like block_importer, block_import_dispatcher, consensus and so on.
-			//
-			// We use a hacky workaround here for the least possible changes:
-			// append an extra `status` flag to `OpaqueExtrinsic` (Vec<u8>) and adjust the codec of it
-			//
-			// We intentionally don't drop failed extrinsics to allow any potential (post-)processing of failed extrinsics
-			let mut events: Vec<Events> = vec![];
-			for block in &block_chunk_to_sync {
-				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
-				events.push(block_events);
-			}
-			block_chunk_to_sync
-				.iter_mut()
-				.enumerate()
-				.for_each(|(block_index, signed_block)| {
-					let mut extrinsics: Vec<OpaqueExtrinsic> = vec![];
-					let block_events = events.get(block_index).unwrap();
-					for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
-						// Check if the tx was successful
-						let success = block_events
-							.iter()
-							.filter(|event| {
-								if let Ok(event) = event {
-									event.pallet_name() == "System"
-										&& event.variant_name() == "ExtrinsicSuccess"
-										&& event.phase() == Phase::ApplyExtrinsic(i as u32)
-								} else {
-									false
-								}
-							})
-							.count() > 0;
-						if !success {
-							warn!(
-								"block:{:?}, extrinsic index: {:?}, success: {:?}",
-								&signed_block.block.header.number, i, success,
-							);
-						}
+			let events_chunk_to_sync: Vec<Vec<u8>> = block_chunk_to_sync
+				.iter()
+				.map(|block| {
+					self.parentchain_api.get_events_for_block(Some(block.block.header.hash()))
+				})
+				.collect::<Result<Vec<_>, _>>()?;
 
-						extrinsics
-							.push(fill_opaque_extrinsic_with_status(xt.clone(), success).unwrap());
-					}
-					signed_block.block.extrinsics = extrinsics;
-				});
+			println!("[+] Found {} event vector(s) to sync", events_chunk_to_sync.len());
 
-			self.enclave_api.sync_parentchain(block_chunk_to_sync.as_slice(), 0)?;
+			let events_proofs_chunk_to_sync: Vec<StorageProof> = block_chunk_to_sync
+				.iter()
+				.map(|block| {
+					self.parentchain_api.get_events_value_proof(Some(block.block.header.hash()))
+				})
+				.collect::<Result<Vec<_>, _>>()?;
+
+			self.enclave_api.sync_parentchain(
+				block_chunk_to_sync.as_slice(),
+				events_chunk_to_sync.as_slice(),
+				events_proofs_chunk_to_sync.as_slice(),
+				0,
+			)?;
 
 			until_synced_header = block_chunk_to_sync
 				.last()

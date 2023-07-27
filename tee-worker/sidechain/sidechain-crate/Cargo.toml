@@ -1,19 +1,11 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "its-sidechain"
 version = "0.9.0"
+authors = ["Integritee AG <hello@integritee.network>"]
+edition = "2021"
 
 [features]
 default = ["std"]
-sgx = [
-    "its-block-composer/sgx",
-    "its-consensus-aura/sgx",
-    "its-consensus-common/sgx",
-    "its-consensus-slots/sgx",
-    "its-rpc-handler/sgx",
-    "its-state/sgx",
-]
 std = [
     "its-block-composer/std",
     "its-consensus-aura/std",
@@ -23,6 +15,14 @@ std = [
     "its-primitives/std",
     "its-state/std",
     "its-validateer-fetch/std",
+]
+sgx = [
+    "its-block-composer/sgx",
+    "its-consensus-aura/sgx",
+    "its-consensus-common/sgx",
+    "its-consensus-slots/sgx",
+    "its-rpc-handler/sgx",
+    "its-state/sgx",
 ]
 
 [dependencies]

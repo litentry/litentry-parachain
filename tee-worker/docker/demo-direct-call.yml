@@ -1,9 +1,13 @@
 services:
   demo-direct-call:
     image: integritee-cli:dev
-    container_name: integritee-direct-call-demo
+    devices:
+      - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
+      - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
+    volumes:
+      - "${AESMD:-/dev/null}:/var/run/aesmd"
     build:
-      context: ..
+      context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
