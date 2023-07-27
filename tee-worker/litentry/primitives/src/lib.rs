@@ -42,7 +42,7 @@ pub use parentchain_primitives::{
 	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
 	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
 	Signature as ParentchainSignature, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError,
-	Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
+	Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN, ParamsBasicTypeWithClassOfYearN, AchainableParams,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};

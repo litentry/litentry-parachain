@@ -25,6 +25,20 @@ use sp_std::{vec, vec::Vec};
 
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct ParamsBasicTypeWithClassOfYearN {
+	pub name: ParameterString,
+	pub chain: ParameterString,
+	pub date1: ParameterString,
+	pub date2: ParameterString,
+}
+
+#[rustfmt::skip]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum AchainableParams {
+	ClassOfYear(ParamsBasicTypeWithClassOfYearN),
+}
+
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum Assertion {
@@ -44,6 +58,8 @@ pub enum Assertion {
 	A14,
 	// for Holder assertions we'll reuse A4/A7
 	// ----- end polkadot decoded 2023 -----
+
+	A20(AchainableParams),
 }
 
 impl Assertion {
@@ -68,6 +84,8 @@ impl Assertion {
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
 			Self::A14 => vec![Web3Network::Polkadot],
+			// Class of year
+			Self::A20(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum, Web3Network::Polkadot, Web3Network::Kusama, Web3Network::Khala],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

@@ -499,6 +499,20 @@ impl Credential {
 		self.credential_subject.assertions.push(governance);
 		self.credential_subject.values.push(value);
 	}
+
+	pub fn add_achainable(&mut self, value: bool, from: String, to: String) {
+		let min_item = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from);
+		let max_item = AssertionLogic::new_item("$to_date", Op::LessThan, &to);
+		let and_logic = AssertionLogic::new_and();
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(min_item)
+			.add_item(max_item)
+			.add_item(and_logic);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
 }
 
 /// Assertion To-Date

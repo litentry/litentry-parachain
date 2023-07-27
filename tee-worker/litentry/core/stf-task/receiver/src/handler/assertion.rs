@@ -81,6 +81,8 @@ where
 
 			Assertion::A14 => lc_assertion_build::a14::build(&self.req),
 
+			Assertion::A20(param) => lc_assertion_build::achainable::build(&self.req, param),
+
 			_ => {
 				unimplemented!()
 			},
