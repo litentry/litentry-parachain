@@ -54,8 +54,9 @@ use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
-	Assertion, ErrorDetail, ErrorString, Identity, IdentityNetworkTuple, IntoErrorDetail,
-	ParameterString, VCMPError as Error, Web3Network, ASSERTION_FROM_DATE, ParamsBasicTypeWithClassOfYearN, AchainableParams
+	AchainableBasicTypeWithClassOfYear, AchainableParams, Assertion, ErrorDetail, ErrorString,
+	Identity, IdentityNetworkTuple, IntoErrorDetail, ParameterString, VCMPError as Error,
+	Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};

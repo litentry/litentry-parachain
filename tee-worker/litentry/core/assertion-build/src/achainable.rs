@@ -22,49 +22,57 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding, ParamsBasicTypeWithClassOfYear, AchainableTagAccount},
+	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
 	vec_to_string,
 };
-use std::string::ToString;
 
-const VC_A20_SUBJECT_DESCRIPTION: &str =
-	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
-const VC_A20_SUBJECT_TYPE: &str = "ETH Holding Assertion";
-const VC_A20_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
+const VC_ACHAINABLE_SUBJECT_DESCRIPTION: &str = "Class of year";
+const VC_ACHAINABLE_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 
 pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Credential> {
-    match param {
-        AchainableParams::ClassOfYear(c) => build_class_of_year(req, c),
-    }
+	match param {
+		AchainableParams::ClassOfYear(c) => build_class_of_year(req, c),
+	}
 }
 
-fn build_class_of_year(req: &AssertionBuildRequest, param: ParamsBasicTypeWithClassOfYearN) -> Result<Credential> {
+fn build_class_of_year(
+	req: &AssertionBuildRequest,
+	param: AchainableBasicTypeWithClassOfYear,
+) -> Result<Credential> {
 	debug!("Assertion A20 build, who: {:?}", account_id_to_string(&req.who));
 
-    let name = param.clone().name;
-    let chain = param.clone().chain;
-    let date1 = param.clone().date1;
-    let date2 = param.clone().date2;
+	let name = param.clone().name;
+	let chain = param.clone().chain;
+	let date1 = param.clone().date1;
+	let date2 = param.clone().date2;
 
-    let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(Assertion::A1, ErrorDetail::ParseError)
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
 	})?;
-    let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(Assertion::A1, ErrorDetail::ParseError)
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
 	})?;
-    let date1 = vec_to_string(date1.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(Assertion::A1, ErrorDetail::ParseError)
+	let date1 = vec_to_string(date1.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
 	})?;
-    let date2 = vec_to_string(date2.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(Assertion::A1, ErrorDetail::ParseError)
+	let date2 = vec_to_string(date2.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
 	})?;
 
-    let p = ParamsBasicTypeWithClassOfYear {
-        name,
-        chain,
-        date1: date1.clone(),
-        date2: date2.clone(),
-    };
+	let p =
+		ParamsBasicTypeWithClassOfYear { name, chain, date1: date1.clone(), date2: date2.clone() };
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
@@ -73,31 +81,32 @@ fn build_class_of_year(req: &AssertionBuildRequest, param: ParamsBasicTypeWithCl
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-    let mut flag = false;
-    for address in &addresses {
-        if flag {
-            break;
-        }
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
 
-        match client.class_of_year(address, p.clone()) {
-            Ok(b) => flag = b,
-            Err(e) => error!("Request class of year failed {:?}", e),
-        }
-    }
+		match client.class_of_year(address, p.clone()) {
+			Ok(b) => flag = b,
+			Err(e) => error!("Request class of year failed {:?}", e),
+		}
+	}
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A20_SUBJECT_DESCRIPTION,
-				VC_A20_SUBJECT_TYPE,
-			);
+			credential_unsigned
+				.add_subject_info(VC_ACHAINABLE_SUBJECT_DESCRIPTION, VC_ACHAINABLE_SUBJECT_TYPE);
 			credential_unsigned.add_achainable(flag, date1, date2);
 
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A20(AchainableParams::ClassOfYear(param)), e.into_error_detail()))
+			Err(Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::ClassOfYear(param)),
+				e.into_error_detail(),
+			))
 		},
 	}
 }

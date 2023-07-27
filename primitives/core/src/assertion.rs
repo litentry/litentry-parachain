@@ -26,17 +26,17 @@ use sp_std::{vec, vec::Vec};
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct ParamsBasicTypeWithClassOfYearN {
+pub struct AchainableBasicTypeWithClassOfYear {
 	pub name: ParameterString,
-	pub chain: ParameterString,
-	pub date1: ParameterString,
-	pub date2: ParameterString,
+	pub chain: ParameterString, // supported network, see function web3_network_to_chain
+	pub date1: ParameterString, // date format: 2017-01-01
+	pub date2: ParameterString, // date format: 2017-01-01
 }
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AchainableParams {
-	ClassOfYear(ParamsBasicTypeWithClassOfYearN),
+	ClassOfYear(AchainableBasicTypeWithClassOfYear),
 }
 
 #[rustfmt::skip]
@@ -59,7 +59,7 @@ pub enum Assertion {
 	// for Holder assertions we'll reuse A4/A7
 	// ----- end polkadot decoded 2023 -----
 
-	A20(AchainableParams),
+	Achainable(AchainableParams),
 }
 
 impl Assertion {
@@ -84,8 +84,17 @@ impl Assertion {
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
 			Self::A14 => vec![Web3Network::Polkadot],
-			// Class of year
-			Self::A20(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum, Web3Network::Polkadot, Web3Network::Kusama, Web3Network::Khala],
+			// Achainable Assertions
+			Self::Achainable(a) => match a {
+				AchainableParams::ClassOfYear(..) => vec![
+					Web3Network::Litentry,
+					Web3Network::Litmus,
+					Web3Network::Ethereum,
+					Web3Network::Polkadot,
+					Web3Network::Kusama,
+					Web3Network::Khala,
+				],
+			},
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

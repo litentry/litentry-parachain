@@ -575,7 +575,11 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
-	fn class_of_year(&mut self, address: &str, param: ParamsBasicTypeWithClassOfYear) -> Result<bool, Error>;
+	fn class_of_year(
+		&mut self,
+		address: &str,
+		param: ParamsBasicTypeWithClassOfYear,
+	) -> Result<bool, Error>;
 	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
 	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error>;
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error>;
@@ -659,7 +663,11 @@ impl AchainableTagAccount for AchainableClient {
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param))
 	}
 
-	fn class_of_year(&mut self, address: &str, param: ParamsBasicTypeWithClassOfYear) -> Result<bool, Error> {
+	fn class_of_year(
+		&mut self,
+		address: &str,
+		param: ParamsBasicTypeWithClassOfYear,
+	) -> Result<bool, Error> {
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithClassOfYear(param))
 	}
 

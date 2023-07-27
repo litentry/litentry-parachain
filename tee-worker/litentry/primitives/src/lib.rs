@@ -37,12 +37,13 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use log::error;
 pub use parentchain_primitives::{
 	all_evm_web3networks, all_substrate_web3networks, all_web3networks,
-	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
-	BlockNumber as ParentchainBlockNumber, BoundedWeb3Network, ErrorDetail, ErrorString,
-	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
-	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
-	Signature as ParentchainSignature, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError,
-	Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN, ParamsBasicTypeWithClassOfYearN, AchainableParams,
+	AccountId as ParentchainAccountId, AchainableBasicTypeWithClassOfYear, AchainableParams,
+	AesOutput, Assertion, Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber,
+	BoundedWeb3Network, ErrorDetail, ErrorString, Hash as ParentchainHash,
+	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
+	ParameterString, SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
+	UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, Web3Network, ASSERTION_FROM_DATE,
+	MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
