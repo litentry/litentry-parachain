@@ -363,7 +363,7 @@ function assertPrimeIdentity(
         assert.isTrue(idgraph[1].status.isActive);
         assert.equal(
             idgraph[1].web3networks.toHuman()?.toString(),
-            ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
+            ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala'].toString()
         );
     }
 }

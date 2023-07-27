@@ -108,7 +108,6 @@ export default {
                 "Litmus",
                 "LitentryRococo",
                 "Khala",
-                "SubstrateTestnet",
                 "Ethereum",
                 "Polygon",
                 "BSC",

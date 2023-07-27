@@ -2957,7 +2957,6 @@ declare module "@polkadot/types/lookup" {
         readonly isLitmus: boolean;
         readonly isLitentryRococo: boolean;
         readonly isKhala: boolean;
-        readonly isSubstrateTestnet: boolean;
         readonly isEthereum: boolean;
         readonly isPolygon: boolean;
         readonly isBsc: boolean;
@@ -2968,7 +2967,6 @@ declare module "@polkadot/types/lookup" {
             | "Litmus"
             | "LitentryRococo"
             | "Khala"
-            | "SubstrateTestnet"
             | "Ethereum"
             | "Polygon"
             | "Bsc";

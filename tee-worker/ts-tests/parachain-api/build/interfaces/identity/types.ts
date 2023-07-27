@@ -384,7 +384,6 @@ export interface Web3Network extends Enum {
     readonly isLitmus: boolean;
     readonly isLitentryRococo: boolean;
     readonly isKhala: boolean;
-    readonly isSubstrateTestnet: boolean;
     readonly isEthereum: boolean;
     readonly isPolygon: boolean;
     readonly isBsc: boolean;
@@ -395,7 +394,6 @@ export interface Web3Network extends Enum {
         | "Litmus"
         | "LitentryRococo"
         | "Khala"
-        | "SubstrateTestnet"
         | "Ethereum"
         | "Polygon"
         | "Bsc";
