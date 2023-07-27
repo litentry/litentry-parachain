@@ -31,6 +31,8 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 ///   Evm(EvmNetwork),
 /// }
 /// TODO: theoretically this should the the union of the supported networks of all data providers
+/// TODO: Using enum is not a great idea when using combined with scale codec, The ordering might
+/// cause inconsistencies
 #[derive(
 	Encode,
 	Decode,
@@ -48,18 +50,16 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 )]
 pub enum Web3Network {
 	// substrate
-	Polkadot,
-	Kusama,
-	Litentry,
-	Litmus,
-	LitentryRococo,
-	Khala,
-	SubstrateTestnet, // when launched it with standalone (integritee-)node
-
+	Polkadot = 0,
+	Kusama = 1,
+	Litentry = 2,
+	Litmus = 3,
+	LitentryRococo = 4,
+	Khala = 5,
 	// evm
-	Ethereum,
-	Polygon,
-	BSC,
+	Ethereum = 7,
+	Polygon = 8,
+	BSC = 9,
 }
 
 impl Web3Network {
@@ -69,7 +69,7 @@ impl Web3Network {
 			Self::Polkadot |
 				Self::Kusama | Self::Litentry |
 				Self::Litmus | Self::LitentryRococo |
-				Self::Khala | Self::SubstrateTestnet
+				Self::Khala
 		)
 	}
 
@@ -112,7 +112,6 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
-					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
 					Web3Network::Polygon => true,
 					Web3Network::BSC => true,
@@ -133,7 +132,6 @@ mod tests {
 					Web3Network::Litmus => true,
 					Web3Network::LitentryRococo => true,
 					Web3Network::Khala => true,
-					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
 					Web3Network::Polygon => false,
 					Web3Network::BSC => false,
