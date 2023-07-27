@@ -220,6 +220,8 @@ impl ParamsBasicTypeWithAmountHolding {
 }
 
 // ParamsBasicTypeWithClassOfYear
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithClassOfYear {
 	#[serde(skip_serializing)]
 	#[serde(skip_deserializing)]
@@ -658,7 +660,6 @@ impl AchainableTagAccount for AchainableClient {
 	}
 
 	fn class_of_year(&mut self, address: &str, param: ParamsBasicTypeWithClassOfYear) -> Result<bool, Error> {
-		let param = year.get();
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithClassOfYear(param))
 	}
 

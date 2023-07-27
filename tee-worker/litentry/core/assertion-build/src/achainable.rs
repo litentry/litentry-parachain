@@ -85,12 +85,11 @@ fn build_class_of_year(req: &AssertionBuildRequest, param: ParamsBasicTypeWithCl
         }
     }
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(
 				VC_A20_SUBJECT_DESCRIPTION,
 				VC_A20_SUBJECT_TYPE,
-				VC_A20_SUBJECT_TAG.to_vec(),
 			);
 			credential_unsigned.add_achainable(flag, date1, date2);
 
