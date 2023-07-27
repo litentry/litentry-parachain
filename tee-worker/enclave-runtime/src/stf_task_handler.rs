@@ -77,6 +77,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
 	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;

@@ -6,15 +6,7 @@ import type { AnyTuple } from "@polkadot/types/types";
 export type { CorePrimitivesErrorErrorDetail } from "@polkadot/types/lookup";
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type {
-    Assertion,
-    LitentryIdentity,
-    LitentryValidationData,
-    Web3Network,
-    WorkerRpcReturnValue,
-    TrustedCallSigned,
-    Getter,
-} from "parachain-api/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "parachain-api/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -221,6 +213,14 @@ export declare const definitions: {
         SetIdentityNetworksResponse: {
             req_ext_hash: string;
         };
+        RequestVCResponse: {
+            account: string;
+            assertion: string;
+            vc_index: string;
+            vc_hash: string;
+            vc_payload: string;
+            req_ext_hash: string;
+        };
         AesOutput: {
             ciphertext: string;
             aad: string;
@@ -230,10 +230,4 @@ export declare const definitions: {
 };
 type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
 export declare function create(provider: ProviderInterface): Promise<ApiPromise>;
-type GuardType<GuardFunction> = GuardFunction extends (x: any) => x is infer Type ? Type : never;
-type IEventLike = Parameters<AugmentedEvent<never>["is"]>[0];
-export declare function filterEvents<ApiType extends ApiTypes, T extends AnyTuple, N>(
-    eventType: AugmentedEvent<ApiType, T, N>,
-    events: IEventLike[]
-): GuardType<AugmentedEvent<ApiType, T, N>["is"]>[];
 //# sourceMappingURL=index.d.ts.map

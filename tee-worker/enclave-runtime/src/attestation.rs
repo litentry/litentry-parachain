@@ -119,7 +119,11 @@ pub unsafe extern "C" fn generate_ias_ra_extrinsic(
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
-	let url = String::decode(&mut url_slice).expect("Could not decode url slice to a valid String");
+	let url = match String::decode(&mut url_slice) {
+		Ok(url) => url,
+		Err(_) =>
+			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
+	};
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
 
@@ -149,7 +153,11 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic(
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
-	let url = String::decode(&mut url_slice).expect("Could not decode url slice to a valid String");
+	let url = match String::decode(&mut url_slice) {
+		Ok(url) => url,
+		Err(_) =>
+			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
+	};
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
 
@@ -193,7 +201,10 @@ pub fn generate_dcap_ra_extrinsic_internal(
 	let call = OpaqueCall::from_tuple(&(call_ids, dcap_quote, url));
 
 	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?;
-	Ok(extrinsic[0].clone())
+	match extrinsic.get(0) {
+		Some(xt) => Ok(xt.clone()),
+		None => Err(EnclaveError::Other("Could not create extrinsic".into())),
+	}
 }
 
 #[no_mangle]
@@ -254,7 +265,11 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic_from_quote(
 		return sgx_status_t::SGX_ERROR_INVALID_PARAMETER
 	}
 	let mut url_slice = slice::from_raw_parts(w_url, w_url_size as usize);
-	let url = String::decode(&mut url_slice).expect("Could not decode url slice to a valid String");
+	let url = match String::decode(&mut url_slice) {
+		Ok(url) => url,
+		Err(_) =>
+			return EnclaveError::Other("Could not decode url slice to a valid String".into()).into(),
+	};
 
 	let extrinsic_slice =
 		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
@@ -288,7 +303,10 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 
 	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?;
 	info!("    [Enclave] Compose register enclave got extrinsic, returning");
-	Ok(extrinsic[0].clone())
+	match extrinsic.get(0) {
+		Some(xt) => Ok(xt.clone()),
+		None => Err(EnclaveError::Other("Could not create extrinsic".into())),
+	}
 }
 
 fn generate_ias_ra_extrinsic_internal(
@@ -334,7 +352,10 @@ fn generate_ias_ra_extrinsic_internal(
 
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 
-	Ok(extrinsics[0].clone())
+	match extrinsics.get(0) {
+		Some(xt) => Ok(xt.clone()),
+		None => Err(EnclaveError::Other("Could not create extrinsic".into())),
+	}
 }
 
 #[no_mangle]
@@ -418,11 +439,16 @@ where
 	info!("    [Enclave] Compose register collateral call: {:?}", call_ids);
 	let call = OpaqueCall::from_tuple(&(call_ids, collateral_data, data_signature, issuer_chain));
 
-	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?[0].clone();
-	if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, extrinsic.encode()) {
-		return EnclaveError::Other(Box::new(e)).into()
-	};
-	Ok(())
+	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?;
+	match extrinsic.get(0) {
+		Some(xt) => {
+			if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, xt.encode()) {
+				return EnclaveError::Other(Box::new(e)).into()
+			};
+			Ok(())
+		},
+		None => Err(EnclaveError::Other("Could not create extrinsic".into())),
+	}
 }
 
 #[no_mangle]

@@ -38,6 +38,7 @@ use rustls::{ClientConfig, ClientSession, Stream};
 use sgx_types::*;
 use std::{
 	backtrace::{self, PrintFormat},
+	convert::TryInto,
 	io::{Read, Write},
 	net::TcpStream,
 	slice,
@@ -132,7 +133,9 @@ where
 	fn read_header(&mut self, start_byte: u8) -> EnclaveResult<TcpHeader> {
 		debug!("Read first byte: {:?}", start_byte);
 		// The first sent byte indicates the payload type.
-		let opcode: Opcode = start_byte.into();
+		let opcode: Opcode = start_byte
+			.try_into()
+			.map_err(|_| EnclaveError::Other("Could not convert opcode".into()))?;
 		debug!("Read header opcode: {:?}", opcode);
 		// The following bytes contain the payload length, which is a u64.
 		let mut payload_length_buffer = [0u8; std::mem::size_of::<u64>()];
@@ -230,7 +233,7 @@ fn tls_client_config<A: EnclaveAttestationOCallApi + 'static>(
 	let mut cfg = rustls::ClientConfig::new();
 	let certs = vec![rustls::Certificate(cert_der)];
 	let privkey = rustls::PrivateKey(key_der);
-
+	#[allow(clippy::unwrap_used)]
 	cfg.set_single_client_cert(certs, privkey).unwrap();
 	cfg.dangerous()
 		.set_certificate_verifier(Arc::new(ServerAuth::new(true, skip_ra, ocall_api)));

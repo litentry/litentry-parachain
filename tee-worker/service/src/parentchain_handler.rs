@@ -184,38 +184,38 @@ where
 				let block_events = self.parentchain_api.events(Some(block.block.hash()))?;
 				events.push(block_events);
 			}
-			block_chunk_to_sync
-				.iter_mut()
-				.enumerate()
-				.for_each(|(block_index, signed_block)| {
-					let mut extrinsics: Vec<OpaqueExtrinsic> = vec![];
-					let block_events = events.get(block_index).unwrap();
-					for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
-						// Check if the tx was successful
-						let success = block_events
-							.iter()
-							.filter(|event| {
-								if let Ok(event) = event {
-									event.pallet_name() == "System"
-										&& event.variant_name() == "ExtrinsicSuccess"
-										&& event.phase() == Phase::ApplyExtrinsic(i as u32)
-								} else {
-									false
-								}
-							})
-							.count() > 0;
-						if !success {
-							warn!(
-								"block:{:?}, extrinsic index: {:?}, success: {:?}",
-								&signed_block.block.header.number, i, success,
-							);
-						}
 
-						extrinsics
-							.push(fill_opaque_extrinsic_with_status(xt.clone(), success).unwrap());
+			for (block_index, signed_block) in block_chunk_to_sync.iter_mut().enumerate() {
+				let mut extrinsics: Vec<OpaqueExtrinsic> = vec![];
+				let block_events = events
+					.get(block_index)
+					.ok_or_else(|| Error::MissingBlockEvents(block_index))?;
+				for (i, xt) in signed_block.block.extrinsics.iter().enumerate() {
+					// Check if the tx was successful
+					let success = block_events
+						.iter()
+						.filter(|event| {
+							if let Ok(event) = event {
+								event.pallet_name() == "System"
+									&& event.variant_name() == "ExtrinsicSuccess"
+									&& event.phase() == Phase::ApplyExtrinsic(i as u32)
+							} else {
+								false
+							}
+						})
+						.count() > 0;
+					if !success {
+						warn!(
+							"block:{:?}, extrinsic index: {:?}, success: {:?}",
+							&signed_block.block.header.number, i, success,
+						);
 					}
-					signed_block.block.extrinsics = extrinsics;
-				});
+					let ext = fill_opaque_extrinsic_with_status(xt.clone(), success)
+						.map_err(Error::Codec)?;
+					extrinsics.push(ext);
+				}
+				signed_block.block.extrinsics = extrinsics;
+			}
 
 			self.enclave_api.sync_parentchain(block_chunk_to_sync.as_slice(), 0)?;
 

@@ -106,6 +106,7 @@ impl EnclaveAttestationOCallApi for OcallApi {
 		ensure!(result == sgx_status_t::SGX_SUCCESS, result);
 		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
 
+		#[allow(clippy::indexing_slicing)]
 		let quote_vec: Vec<u8> = Vec::from(&return_quote_buf[..quote_len as usize]);
 
 		Ok((qe_report, quote_vec))
@@ -122,6 +123,7 @@ impl EnclaveAttestationOCallApi for OcallApi {
 		};
 		ensure!(result == sgx_status_t::SGX_SUCCESS, result);
 		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
+		#[allow(clippy::indexing_slicing)]
 		let quote_vec: Vec<u8> = Vec::from(&return_quote_buf[..quote_size as usize]);
 		Ok(quote_vec)
 	}
