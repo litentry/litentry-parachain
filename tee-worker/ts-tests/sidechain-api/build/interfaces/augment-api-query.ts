@@ -6,7 +6,17 @@
 import "@polkadot/api-base/types/storage";
 
 import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from "@polkadot/api-base/types";
-import type { Bytes, Option, U8aFixed, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
+import type {
+    Bytes,
+    Null,
+    Option,
+    U8aFixed,
+    Vec,
+    bool,
+    u128,
+    u32,
+    u64,
+} from "@polkadot/types-codec";
 import type { AnyNumber, ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
 import type {
@@ -95,16 +105,31 @@ declare module "@polkadot/api-base/types/storage" {
         identityManagement: {
             idGraphLens: AugmentedQuery<
                 ApiType,
-                (arg: AccountId32 | string | Uint8Array) => Observable<u32>,
-                [AccountId32]
+                (
+                    arg:
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | string
+                        | Uint8Array
+                ) => Observable<u32>,
+                [LitentryPrimitivesIdentity]
             >;
-            /**
-             * ID graph is per Litentry account + identity
-             **/
             idGraphs: AugmentedQuery<
                 ApiType,
                 (
-                    arg1: AccountId32 | string | Uint8Array,
+                    arg1:
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | string
+                        | Uint8Array,
                     arg2:
                         | LitentryPrimitivesIdentity
                         | { Twitter: any }
@@ -115,15 +140,37 @@ declare module "@polkadot/api-base/types/storage" {
                         | string
                         | Uint8Array
                 ) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>,
-                [AccountId32, LitentryPrimitivesIdentity]
+                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity]
             >;
-            /**
-             * user shielding key is per Litentry account
-             **/
+            linkedIdentities: AugmentedQuery<
+                ApiType,
+                (
+                    arg:
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | string
+                        | Uint8Array
+                ) => Observable<Option<Null>>,
+                [LitentryPrimitivesIdentity]
+            >;
             userShieldingKeys: AugmentedQuery<
                 ApiType,
-                (arg: AccountId32 | string | Uint8Array) => Observable<Option<U8aFixed>>,
-                [AccountId32]
+                (
+                    arg:
+                        | LitentryPrimitivesIdentity
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
+                        | string
+                        | Uint8Array
+                ) => Observable<Option<U8aFixed>>,
+                [LitentryPrimitivesIdentity]
             >;
         };
         parentchain: {
