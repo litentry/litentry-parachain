@@ -22,17 +22,16 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHoldingAssertion},
+	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
 	vec_to_string,
 };
+use std::string::ToString;
 
 const VC_A7_SUBJECT_DESCRIPTION: &str =
-	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
+	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
 const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Assertion";
 const VC_A7_SUBJECT_TAG: [&str; 1] = ["Polkadot"];
 
-// TODO:
-// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A7 build, who: {:?}", account_id_to_string(&req.who),);
 
@@ -49,13 +48,20 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = 0_usize;
-	for index in 0..ASSERTION_FROM_DATE.len() {
+	for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
 		if is_hold {
 			break
 		}
 
 		for address in &addresses {
-			match client.is_holder(&req.assertion, address, index) {
+			let holding = ParamsBasicTypeWithAmountHolding::new(
+				&Web3Network::Polkadot,
+				q_min_balance.to_string(),
+				date.to_string(),
+				None,
+			);
+
+			match client.is_holder(address, holding) {
 				Ok(is_polkadot_holder) =>
 					if is_polkadot_holder {
 						optimal_hold_index = index;
