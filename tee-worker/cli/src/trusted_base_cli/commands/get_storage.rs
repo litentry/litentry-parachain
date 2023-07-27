@@ -1,4 +1,6 @@
-use crate::{command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli};
+use crate::{
+	command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli, CliResult, CliResultOk,
+};
 use codec::Decode;
 use frame_metadata::{RuntimeMetadata, StorageEntryType, StorageHasher};
 use ita_sgx_runtime::Runtime;
@@ -28,7 +30,7 @@ pub struct GetStorageCommand {
 	keys: Vec<String>,
 }
 impl GetStorageCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
 		let direct_api = get_worker_api_direct(cli);
 		let mrenclave = trusted_args.mrenclave.clone();
 		if let Some(v) = get_storage_value(
@@ -42,6 +44,8 @@ impl GetStorageCommand {
 		} else {
 			println!("None");
 		}
+
+		Ok(CliResultOk::None)
 	}
 }
 
