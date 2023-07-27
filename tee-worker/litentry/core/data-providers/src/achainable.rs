@@ -61,6 +61,18 @@ impl AchainableClient {
 
 		AchainableClient { client }
 	}
+
+	pub fn query_system_label(
+		&mut self,
+		c: &mut AchainableClient,
+		address: &str,
+		params: Params,
+	) -> Result<bool, Error> {
+		let body = ReqBody::new(address.into(), params);
+		c
+			.post(SystemLabelReqPath::default(), &body)
+			.and_then(AchainableClient::parse)
+	}
 }
 
 pub trait AchainablePost {

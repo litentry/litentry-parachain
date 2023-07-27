@@ -20,93 +20,27 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::*;
-use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
-	vec_to_string,
+use crate::{
+	achainable_amount::build_amount, achainable_amount_holding::build_amount_holding,
+	achainable_amount_token::build_amount_token, achainable_amounts::build_amounts,
+	achainable_basic::build_basic, achainable_between_percents::build_between_percents,
+	achainable_class_of_year::build_class_of_year, achainable_date::build_date,
+	achainable_date_interval::build_date_interval, achainable_date_percent::build_date_percent,
+	achainable_token::build_token, *,
 };
-
-const VC_ACHAINABLE_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_ACHAINABLE_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 
 pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Credential> {
 	match param {
-		AchainableParams::ClassOfYear(c) => build_class_of_year(req, c),
-	}
-}
-
-fn build_class_of_year(
-	req: &AssertionBuildRequest,
-	param: AchainableBasicTypeWithClassOfYear,
-) -> Result<Credential> {
-	debug!("Assertion A20 build, who: {:?}", account_id_to_string(&req.who));
-
-	let name = param.clone().name;
-	let chain = param.clone().chain;
-	let date1 = param.clone().date1;
-	let date2 = param.clone().date2;
-
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date1 = vec_to_string(date1.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date2 = vec_to_string(date2.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	let p =
-		ParamsBasicTypeWithClassOfYear { name, chain, date1: date1.clone(), date2: date2.clone() };
-
-	let mut client = AchainableClient::new();
-	let identities = transpose_identity(&req.identities);
-	let addresses = identities
-		.into_iter()
-		.flat_map(|(_, addresses)| addresses)
-		.collect::<Vec<String>>();
-
-	let mut flag = false;
-	for address in &addresses {
-		if flag {
-			break
-		}
-
-		match client.class_of_year(address, p.clone()) {
-			Ok(b) => flag = b,
-			Err(e) => error!("Request class of year failed {:?}", e),
-		}
-	}
-
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned
-				.add_subject_info(VC_ACHAINABLE_SUBJECT_DESCRIPTION, VC_ACHAINABLE_SUBJECT_TYPE);
-			credential_unsigned.add_achainable(flag, date1, date2);
-
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::ClassOfYear(param)),
-				e.into_error_detail(),
-			))
-		},
+		AchainableParams::AmountHolding(param) => build_amount_holding(req, param),
+		AchainableParams::AmountToken(param) => build_amount_token(req, param),
+		AchainableParams::Amount(param) => build_amount(req, param),
+		AchainableParams::Amounts(param) => build_amounts(req, param),
+		AchainableParams::Basic(param) => build_basic(req, param),
+		AchainableParams::BetweenPercents(param) => build_between_percents(req, param),
+		AchainableParams::ClassOfYear(param) => build_class_of_year(req, param),
+		AchainableParams::DateInterval(param) => build_date_interval(req, param),
+		AchainableParams::DatePercent(param) => build_date_percent(req, param),
+		AchainableParams::Date(param) => build_date(req, param),
+		AchainableParams::Token(param) => build_token(req, param),
 	}
 }

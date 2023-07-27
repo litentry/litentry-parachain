@@ -26,17 +26,83 @@ use sp_std::{vec, vec::Vec};
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
-pub struct AchainableBasicTypeWithClassOfYear {
-	pub name: ParameterString,
+pub struct AchainableAmountHolding {
+	pub chain: ParameterString,
+	pub amount: ParameterString,
+	pub date: ParameterString,
+	pub token: Option<ParameterString>,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableAmountToken {
+	pub chain: ParameterString,
+	pub amount: ParameterString,
+	pub token: Option<ParameterString>,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableAmount {
+	pub chain: ParameterString,
+	pub amount: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableAmounts {
+	pub chain: ParameterString,
+	pub amount1: ParameterString,
+	pub amount2: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableBasic {
+	pub chain: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableBetweenPercents {
+	pub chain: ParameterString,
+	pub greater_than_or_equal_to: ParameterString,
+	pub less_than_or_equal_to: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableClassOfYear {
 	pub chain: ParameterString, // supported network, see function web3_network_to_chain
 	pub date1: ParameterString, // date format: 2017-01-01
 	pub date2: ParameterString, // date format: 2017-01-01
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableDateInterval {
+	pub chain: ParameterString,
+	pub start_date: ParameterString,
+	pub end_date: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableDatePercent {
+	pub chain: ParameterString,
+	pub token: ParameterString,
+	pub date: ParameterString,
+	pub percent: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableDate {
+	pub chain: ParameterString,
+	pub date: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableToken {
+	pub chain: ParameterString,
+	pub token: ParameterString,
 }
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AchainableParams {
-	ClassOfYear(AchainableBasicTypeWithClassOfYear),
+	AmountHolding(AchainableAmountHolding),
+	AmountToken(AchainableAmountToken),
+	Amount(AchainableAmount),
+	Amounts(AchainableAmounts),
+	Basic(AchainableBasic),
+	BetweenPercents(AchainableBetweenPercents),
+	ClassOfYear(AchainableClassOfYear),
+	DateInterval(AchainableDateInterval),
+	DatePercent(AchainableDatePercent),
+	Date(AchainableDate),
+	Token(AchainableToken),
 }
 
 #[rustfmt::skip]
@@ -48,7 +114,7 @@ pub enum Assertion {
 	A4(ParameterString),                                    // (minimum_amount)
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
-	A8(BoundedWeb3Network),             					// litentry, litmus, polkadot, kusama, khala, ethereum
+	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
@@ -86,6 +152,12 @@ impl Assertion {
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
 			Self::Achainable(a) => match a {
+				AchainableParams::AmountHolding(..) => todo!(),
+				AchainableParams::AmountToken(..) => todo!(),
+				AchainableParams::Amount(..) => todo!(),
+				AchainableParams::Amounts(..) => todo!(),
+				AchainableParams::Basic(..) => todo!(),
+				AchainableParams::BetweenPercents(..) => todo!(),
 				AchainableParams::ClassOfYear(..) => vec![
 					Web3Network::Litentry,
 					Web3Network::Litmus,
@@ -94,6 +166,10 @@ impl Assertion {
 					Web3Network::Kusama,
 					Web3Network::Khala,
 				],
+				AchainableParams::DateInterval(..) => todo!(),
+				AchainableParams::DatePercent(..) => todo!(),
+				AchainableParams::Date(..) => todo!(),
+				AchainableParams::Token(..) => todo!(),
 			},
 			// we don't care about any specific web3 network
 			_ => vec![],

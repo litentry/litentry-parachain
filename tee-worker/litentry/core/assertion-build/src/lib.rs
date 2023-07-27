@@ -48,15 +48,28 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 pub mod achainable;
+pub mod achainable_amount;
+pub mod achainable_amount_holding;
+pub mod achainable_amount_token;
+pub mod achainable_amounts;
+pub mod achainable_basic;
+pub mod achainable_between_percents;
+pub mod achainable_class_of_year;
+pub mod achainable_date;
+pub mod achainable_date_interval;
+pub mod achainable_date_percent;
+pub mod achainable_token;
 
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
-	AchainableBasicTypeWithClassOfYear, AchainableParams, Assertion, ErrorDetail, ErrorString,
-	Identity, IdentityNetworkTuple, IntoErrorDetail, ParameterString, VCMPError as Error,
-	Web3Network, ASSERTION_FROM_DATE,
+	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
+	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
+	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
+	ErrorDetail, ErrorString, Identity, IdentityNetworkTuple, IntoErrorDetail, ParameterString,
+	VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};
