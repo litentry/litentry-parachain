@@ -101,5 +101,3 @@ mockall = "0.11"
 itc-parentchain-test = { path = "../core/parentchain/test" }
 its-peer-fetch = { path = "../sidechain/peer-fetch", features = ["mocks"] }
 its-test = { path = "../sidechain/test" }
-# litentry
-scale-info = { version = "2.4.0" }
