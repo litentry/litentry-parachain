@@ -76,7 +76,7 @@ pub fn build_class_of_year(
 			break
 		}
 
-		let ret = client.query_system_label(&mut client, address, Params::ParamsBasicTypeWithClassOfYear(p.clone()));
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithClassOfYear(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request class of year failed {:?}", e),

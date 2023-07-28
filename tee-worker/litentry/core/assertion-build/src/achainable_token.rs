@@ -20,7 +20,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{std::string::ToString, *};
+use crate::*;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
 	vec_to_string,
@@ -47,6 +47,11 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 			ErrorDetail::ParseError,
 		)
 	})?;
+
+	/// TODO:
+	/// There are many types of names&Tokens here
+	/// name: Uniswap V3 trader / Uniswap V2 trader / Uniswap V2 {token} liquidity provider / ...
+	/// token: USDC / USDT / Aave V2 Lender
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

@@ -20,14 +20,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{std::string::ToString, *};
+use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear, ParamsBasicType},
+	achainable::{AchainableClient, ParamsBasicType},
 	vec_to_string,
 };
 
 const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
+const VC_SUBJECT_TYPE: &str = "Basic Type of Assertion";
 
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
@@ -49,6 +49,9 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
+
+	/// TODO:
+	/// There are many types of names&networks here
 
 	// let mut flag = false;
 	// for address in &addresses {

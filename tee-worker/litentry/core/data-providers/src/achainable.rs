@@ -64,12 +64,12 @@ impl AchainableClient {
 
 	pub fn query_system_label(
 		&mut self,
-		c: &mut AchainableClient,
+		// c: &mut AchainableClient,
 		address: &str,
 		params: Params,
 	) -> Result<bool, Error> {
 		let body = ReqBody::new(address.into(), params);
-		c
+		self
 			.post(SystemLabelReqPath::default(), &body)
 			.and_then(AchainableClient::parse)
 	}
@@ -333,7 +333,7 @@ impl ParamsBasicTypeWithAmount {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithDate {
 	#[serde(skip_serializing)]
@@ -350,7 +350,7 @@ impl ParamsBasicTypeWithDate {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithAmounts {
 	#[serde(skip_serializing)]
@@ -368,7 +368,7 @@ impl ParamsBasicTypeWithAmounts {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithAmountToken {
 	#[serde(skip_serializing)]
@@ -387,7 +387,7 @@ impl ParamsBasicTypeWithAmountToken {
 }
 
 // Balance between percents
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithBetweenPercents {
 	#[serde(skip_serializing)]
@@ -411,7 +411,7 @@ impl ParamsBasicTypeWithBetweenPercents {
 }
 
 // ParamsBasicTypeWithDateInterval
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithDateInterval {
 	#[serde(skip_serializing)]
@@ -430,7 +430,7 @@ impl ParamsBasicTypeWithDateInterval {
 }
 
 // ParamsBasicTypeWithToken
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithToken {
 	#[serde(skip_serializing)]
@@ -448,7 +448,7 @@ impl ParamsBasicTypeWithToken {
 }
 
 // ParamsBasicTypeWithDatePercent
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithDatePercent {
 	#[serde(skip_serializing)]

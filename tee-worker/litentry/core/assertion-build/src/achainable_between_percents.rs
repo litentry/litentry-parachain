@@ -20,14 +20,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{std::string::ToString, *};
+use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
+	achainable::{ParamsBasicTypeWithBetweenPercents, AchainableClient, Params},
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
+const VC_SUBJECT_DESCRIPTION: &str = "Balance between percents";
+const VC_SUBJECT_TYPE: &str = "Balance between percents";
 
 pub fn build_between_percents(
 	req: &AssertionBuildRequest,
@@ -58,6 +58,27 @@ pub fn build_between_percents(
 			ErrorDetail::ParseError,
 		)
 	})?;
+
+	let mut client: AchainableClient = AchainableClient::new();
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let p = ParamsBasicTypeWithBetweenPercents::new("Balance between percents".into(), chain, greater_than_or_equal_to, less_than_or_equal_to);
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithBetweenPercents(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request Balance between percents failed {:?}", e),
+		}
+	}
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
