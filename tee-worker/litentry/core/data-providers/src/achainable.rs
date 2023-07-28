@@ -244,6 +244,17 @@ pub struct ParamsBasicTypeWithClassOfYear {
 	pub date2: String,
 }
 
+impl ParamsBasicTypeWithClassOfYear {
+	pub fn new(chain: String, date1: String, date2: String) -> Self {
+		Self {
+			name: "Account created between {dates}".to_string(),
+			chain,
+			date1,
+			date2,
+		}
+	}
+}
+
 pub enum EClassOfYear {
 	Year2020,
 	Year2021,
