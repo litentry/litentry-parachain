@@ -22,12 +22,12 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
+	achainable::{AchainableClient, ParamsBasicTypeWithAmount, Params},
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
+const VC_SUBJECT_DESCRIPTION: &str = "Contract Creator";
+const VC_SUBJECT_TYPE: &str = "ETH Contract Creator Assertion";
 
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
@@ -48,10 +48,32 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 		)
 	})?;
 
+	// TODO: Contract Creator: amount == 0
+	let p = ParamsBasicTypeWithAmount::new("Created over {amount} contracts".to_string(), chain, amount);
+	let mut client = AchainableClient::new();
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmount(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request Contract Creator failed {:?}", e),
+		}
+	}
+
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
+			credential_unsigned.add_contract_creator(flag);
 
 			Ok(credential_unsigned)
 		},

@@ -508,6 +508,15 @@ impl Credential {
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
 	}
+
+	pub fn add_contract_creator(&mut self, value: bool) {
+		let and_logic = AssertionLogic::new_and();
+		let assertion = AssertionLogic::new_and()
+			.add_item(and_logic);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
 }
 
 /// Assertion To-Date
