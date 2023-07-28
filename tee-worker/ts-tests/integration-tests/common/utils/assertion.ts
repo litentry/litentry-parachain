@@ -275,12 +275,12 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
 
 export function assertWorkerError(
     context: IntegrationTestContext,
-    requestIdentifier: String,
+    requestIdentifier: string,
     check: (returnValue: StfError) => void,
     returnValue: WorkerRpcReturnValue
 ) {
-    let errDecodedRes = context.api.createType('ErrorResponse', returnValue.value) as unknown as ErrorResponse;
+    const errDecodedRes = context.api.createType('ErrorResponse', returnValue.value) as unknown as ErrorResponse;
     assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
-    let errValueDecoded = context.api.createType('StfError', errDecodedRes.error) as unknown as StfError;
+    const errValueDecoded = context.api.createType('StfError', errDecodedRes.error) as unknown as StfError;
     check(errValueDecoded);
 }

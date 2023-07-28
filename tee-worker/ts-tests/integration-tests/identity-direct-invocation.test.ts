@@ -10,7 +10,6 @@ import {
     initIntegrationTestContext,
 } from './common/utils';
 import {
-    assertFailedEvent,
     assertIdentityLinked,
     assertInitialIdGraphCreated,
     assertIsInSidechainBlock,
@@ -30,7 +29,7 @@ import {
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
-import { ErrorResponse, LitentryValidationData, StfError, Web3Network, WorkerRpcReturnValue } from 'parachain-api';
+import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
 import { ethers } from 'ethers';
