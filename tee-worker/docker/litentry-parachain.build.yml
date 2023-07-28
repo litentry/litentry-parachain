@@ -3,7 +3,7 @@ services:
   relaychain-alice:
     image: docker_relaychain-alice:latest
     networks:
-      - integritee-test-network
+      - litentry-test-network
     ports:
       - 9946:9944
       - 9936:9933
@@ -34,7 +34,7 @@ services:
   relaychain-bob:
     image: docker_relaychain-bob:latest
     networks:
-      - integritee-test-network
+      - litentry-test-network
     ports:
       - 9947:9944
       - 9937:9933
@@ -58,14 +58,14 @@ services:
     environment:
       RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
     ulimits: *a1
-  # this is actually litentry parachain, keep the integritee name so that we don't have change
+  # this is actually litentry parachain, keep the litentry name so that we don't have change
   # the service name everywhere in other yml files
-  integritee-node:
-    image: docker_integritee-node:latest
+  litentry-node:
+    image: docker_litentry-node:latest
     networks:
-      - integritee-test-network
+      - litentry-test-network
     ports:
-      # integritee uses 9912 as ws port (why?)
+      # TODO: maybe not use 9912 as port
       - 9944:9912
       - 9933:9933
       - 30333:30333
@@ -102,5 +102,5 @@ volumes:
   ? parachain-2106-0
 networks:
   # to be aligned with other yml files => same network
-  integritee-test-network:
+  litentry-test-network:
     driver: bridge

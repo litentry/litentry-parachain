@@ -63,7 +63,7 @@ services:
     networks:
       - litentry-test-network
     ports:
-      # integritee uses 9912 as ws port (why?)
+      # TODO: maybe not use 9912 as port
       - 9944:9912
       - 9933:9933
       - 30333:30333
