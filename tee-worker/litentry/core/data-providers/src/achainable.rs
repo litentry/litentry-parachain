@@ -150,7 +150,6 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 		Web3Network::Litmus => "litmus".into(),
 		Web3Network::LitentryRococo => "litentry_rococo".into(),
 		Web3Network::Khala => "khala".into(),
-		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
 		Web3Network::Ethereum => "ethereum".into(),
 		Web3Network::Polygon => "polygon".into(),
 		Web3Network::BSC => "bsc".into(),
