@@ -195,6 +195,7 @@ export function parseIdGraph(
             'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
             decryptedIdGraph
         ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+
     return idGraph;
 }
 
