@@ -22,12 +22,12 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
+	achainable::{AchainableClient, ParamsBasicTypeWithAmountHolding, Params},
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
+const VC_SUBJECT_DESCRIPTION: &str = "Achainable amount holding";
+const VC_SUBJECT_TYPE: &str = "Amount holding";
 
 pub fn build_amount_holding(
 	req: &AssertionBuildRequest,
@@ -38,7 +38,6 @@ pub fn build_amount_holding(
 	let chain = param.chain.clone();
 	let amount = param.amount.clone();
 	let date = param.date.clone();
-	let token = param.token.clone().map(|t| t).unwrap_or_else(|| ParameterString::new());
 
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
@@ -58,17 +57,43 @@ pub fn build_amount_holding(
 			ErrorDetail::ParseError,
 		)
 	})?;
-	let token = vec_to_string(token.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
+
+	let token = if param.token.is_some() {
+		let token = param.token.clone().unwrap();
+		let token = vec_to_string(token.to_vec()).map_err(|_| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
+				ErrorDetail::ParseError,
+			)
+		})?;
+		Some(token)
+	} else { None };
+
+	let p = ParamsBasicTypeWithAmountHolding::one(chain, amount.clone(), date.clone(), token);
+	let mut client: AchainableClient = AchainableClient::new();
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmountHolding(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request class of year failed {:?}", e),
+		}
+	}
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
+			credential_unsigned.update_holder(flag, &amount, &date);
 
 			Ok(credential_unsigned)
 		},

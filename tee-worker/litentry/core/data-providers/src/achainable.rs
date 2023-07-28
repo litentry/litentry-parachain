@@ -203,7 +203,7 @@ impl AchainableSystemLabelName for Params {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicTypeWithAmountHolding {
 	#[serde(skip_serializing)]
@@ -221,6 +221,16 @@ pub struct ParamsBasicTypeWithAmountHolding {
 impl ParamsBasicTypeWithAmountHolding {
 	pub fn new(network: &Web3Network, amount: String, date: String, token: Option<String>) -> Self {
 		let chain = web3_network_to_chain(network);
+		let name = if token.is_some() {
+			"ERC20 hodling {amount} of {token} since {date}".into()
+		} else {
+			"Balance hodling {amount} since {date}".into()
+		};
+
+		Self { name, chain, amount, date, token }
+	}
+
+	pub fn one(chain: String, amount: String, date: String, token: Option<String>) -> Self {
 		let name = if token.is_some() {
 			"ERC20 hodling {amount} of {token} since {date}".into()
 		} else {
