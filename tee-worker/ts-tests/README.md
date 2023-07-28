@@ -42,6 +42,8 @@ Bulk identity test: `corepack yarn test-bulk-identity:local`
 
 Bulk vc test: `corepack yarn test-bulk-vc:local`
 
-Direct invocation identity test: `corepack yarn test-identity-direct-invocation:local`
+Direct invocation substrate identity test: `corepack yarn test-substrate-di-identity:local`
+
+Direct invocation evm identity test: `corepack yarn test-evm-di-identity:local`
 
 Di examples: `corepack yarn workspace integration-tests di-examples`
