@@ -230,13 +230,7 @@ impl ParamsBasicTypeWithAmountHolding {
 		Self { name, chain, amount, date, token }
 	}
 
-	pub fn one(chain: String, amount: String, date: String, token: Option<String>) -> Self {
-		let name = if token.is_some() {
-			"ERC20 hodling {amount} of {token} since {date}".into()
-		} else {
-			"Balance hodling {amount} since {date}".into()
-		};
-
+	pub fn one(name: String, chain: String, amount: String, date: String, token: Option<String>) -> Self {
 		Self { name, chain, amount, date, token }
 	}
 }
