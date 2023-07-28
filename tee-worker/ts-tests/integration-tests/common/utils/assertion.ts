@@ -13,6 +13,7 @@ import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
 import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
+import * as polkadotCryptoUtils from '@polkadot/util-crypto';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -44,28 +45,45 @@ export async function assertFailedEvent(
         );
     }
 }
-
-export async function assertInitialIdGraphCreated(
-    context: IntegrationTestContext,
-    signer: KeyringPair[],
-    events: any[]
-) {
+export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: KeyringPair, events: any[]) {
     assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
+
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
+        const keyringType = signer.type;
 
-        const who = eventData.account.toHex();
+        // evm address should convert to substrate address before compare
+        const who = keyringType === 'ethereum' ? eventData.account.toHuman() : eventData.account.toHex();
+        const signerEvmToSubstrateAddress =
+            keyringType === 'ethereum'
+                ? polkadotCryptoUtils.evmToAddress(signer.address, context.chainIdentifier)
+                : u8aToHex(signer.addressRaw);
+
+        assert.equal(
+            who,
+            signerEvmToSubstrateAddress,
+            'Check IdentityLinked error: signer should be equal to who, but got ' +
+                who +
+                ' and ' +
+                signerEvmToSubstrateAddress
+        );
+
+        // check event idGraph
+        const expectedPrimeIdentity = await buildIdentityHelper(
+            u8aToHex(signer.addressRaw),
+            keyringType === 'ethereum' ? 'Evm' : 'Substrate',
+            context
+        );
         const idGraphData = parseIdGraph(context.sidechainRegistry, eventData.idGraph, aesKey);
-        assert.equal(idGraphData.length, 1);
-        assert.equal(who, u8aToHex(signer[index].addressRaw));
 
-        // Check identity in idgraph
-        const expectedIdentity = await buildIdentityHelper(u8aToHex(signer[index].addressRaw), 'Substrate', context);
-        const expectedTarget = expectedIdentity[`as${expectedIdentity.type}`];
-        const idGraphTarget = idGraphData[0][0][`as${idGraphData[0][0].type}`];
-        assert.equal(expectedTarget.toString(), idGraphTarget.toString());
+        // check idGraph LitentryPrimitivesIdentity
+        assert.deepEqual(
+            idGraphData[0][0].toHuman(),
+            expectedPrimeIdentity.toHuman(),
+            'event idGraph identity should be equal expectedIdentity'
+        );
 
-        // Check identityContext in idgraph
+        // check idGraph LitentryPrimitivesIdentityContext
         const idGraphContext = idGraphData[0][1];
         assert.isTrue(
             idGraphContext.linkBlock.toNumber() > 0,
@@ -73,9 +91,8 @@ export async function assertInitialIdGraphCreated(
         );
         assert.isTrue(idGraphContext.status.isActive, 'Check InitialIDGraph error: isActive should be true');
     }
-    console.log(colors.green('assertInitialIdGraphCreated complete'));
+    console.log(colors.green('assertInitialIdGraphCreated passed'));
 }
-
 export async function assertIdentityLinked(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
@@ -261,8 +278,132 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
+}
+
+/* 
+    assert linked event
+
+    steps:
+    1. compare event account with signer
+    2. compare event identity with expected identity
+    3. compare event prime identity with expected prime identity
+    4. compare event web3networks with expected web3networks
+    5. check event idGraph LitentryPrimitivesIdentityContext(linkBlock > 0, isActive = true)
+*/
+
+export async function assertLinkedEvent(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    events: any[],
+    expectedIdentities: LitentryPrimitivesIdentity[]
+) {
+    assert.isAtLeast(events.length, 1, 'Check assertLinkedEvent error: events length should be greater than 1');
+
+    const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
+
+    const keyringType = signer.type;
+    for (let index = 0; index < events.length; index++) {
+        const eventData = events[index].data;
+        // evm address should convert to substrate address before compare
+        const who = keyringType === 'ethereum' ? eventData.account.toHuman() : eventData.account.toHex();
+        const signerEvmToSubstrateAddress =
+            keyringType === 'ethereum'
+                ? polkadotCryptoUtils.evmToAddress(signer.address, context.chainIdentifier)
+                : u8aToHex(signer.addressRaw);
+
+        // step 1
+        assert.equal(
+            who,
+            signerEvmToSubstrateAddress,
+            'Check IdentityLinked error: signer should be equal to who, but got ' +
+                who +
+                ' and ' +
+                signerEvmToSubstrateAddress
+        );
+
+        // step 2
+        // parse event identity
+        const eventIdentity = parseIdentity(context.sidechainRegistry, eventData.identity, aesKey);
+        // prepare expected identity
+        const expectedIdentity = expectedIdentities[index];
+        // compare identity
+        assert.equal(
+            eventIdentity.toHuman()?.toString(),
+            expectedIdentity.toHuman()?.toString(),
+            'Check IdentityLinked error: eventIdentityTarget should be equal to expectedIdentityTarget, but got ' +
+                eventIdentity.toString() +
+                ' and ' +
+                expectedIdentity.toString()
+        );
+
+        // step 3
+        const eventPrimeIdentity = eventIdGraph[events.length][0];
+        // parse event idGraph
+        const expectedPrimeIdentity = await buildIdentityHelper(
+            u8aToHex(signer.addressRaw),
+            keyringType === 'ethereum' ? 'Evm' : 'Substrate',
+            context
+        );
+        // compare prime identity
+        assert.equal(
+            eventPrimeIdentity.toHuman()?.toString(),
+            expectedPrimeIdentity.toHuman()?.toString(),
+            'Check IdentityLinked error: eventPrimeIdentity should be equal to expectedPrimeIdentity, but got ' +
+                eventPrimeIdentity.toString() +
+                ' and ' +
+                expectedPrimeIdentity!.toString()
+        );
+
+        // step 4
+        const web3Networks =
+            signer.type === 'ethereum'
+                ? ['Ethereum', 'Polygon', 'BSC']
+                : ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'];
+        // parse event web3networks
+        const eventWeb3Networks = eventIdGraph[events.length][1].web3networks.toHuman();
+        // compare web3networks
+        assert.equal(
+            eventWeb3Networks!.toString(),
+            web3Networks.toString(),
+            'Check IdentityLinked error: eventWeb3Networks should be equal to web3Networks, but got ' +
+                eventWeb3Networks!.toString() +
+                ' and ' +
+                web3Networks.toString()
+        );
+
+        // step 5
+        const eventIdentityContext = eventIdGraph[index][1];
+        assert.isTrue(
+            eventIdentityContext.linkBlock.toNumber() > 0,
+            'Check IdentityLinked error: link_block should be greater than 0'
+        );
+        assert.isTrue(eventIdentityContext.status.isActive, 'Check IdentityLinked error: isActive should be true');
+    }
+
+    console.log(colors.green('assertIdentityLinked passed'));
+}
+
+export async function assertIdentity(
+    context: IntegrationTestContext,
+    signer: KeyringPair,
+    events: any[],
+    expectedIdentities: LitentryPrimitivesIdentity[]
+) {
+    assert.isAtLeast(events.length, 1, 'Check assertIdentity error: events length should be greater than 1');
+    for (let index = 0; index < events.length; index++) {
+        const identity = parseIdentity(context.sidechainRegistry, events[index].data.identity, aesKey);
+        assert.deepEqual(
+            identity.toHuman()?.toString(),
+            expectedIdentities[index].toHuman()?.toString(),
+            'identity should be equal expectedIdentities, but got ' +
+                identity.toHuman() +
+                ' and ' +
+                expectedIdentities[index].toHuman()
+        );
+    }
+    console.log(colors.green('assertIdentity passed'));
 }
