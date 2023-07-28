@@ -27,7 +27,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate chrono_sgx as chrono;
 
-use chrono::{DateTime, Utc};
+use chrono::{offset::FixedOffset, DateTime, Utc};
 use std::{
 	string::String,
 	time::{Duration, SystemTime},
@@ -46,6 +46,10 @@ pub fn now_as_millis() -> u64 {
 pub fn now_as_iso8601() -> String {
 	let date_time: DateTime<Utc> = SystemTime::now().into();
 	date_time.to_rfc3339()
+}
+
+pub fn from_iso8601(datetime_str: &str) -> Option<DateTime<FixedOffset>> {
+	DateTime::parse_from_rfc3339(datetime_str).ok()
 }
 
 /// Returns the current timestamp based on the unix epoch in nanoseconds.

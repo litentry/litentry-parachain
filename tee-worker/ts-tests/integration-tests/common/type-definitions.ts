@@ -134,8 +134,8 @@ export const jsonSchema = {
                 },
             },
         },
-        issuanceTimestamp: {
-            type: 'integer',
+        issuanceDate: {
+            type: 'string',
         },
         credentialSubject: {
             type: 'object',
@@ -191,5 +191,5 @@ export const jsonSchema = {
             },
         },
     },
-    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceTimestamp', 'proof'],
+    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceDate', 'proof'],
 };
