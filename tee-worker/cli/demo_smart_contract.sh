@@ -4,15 +4,15 @@
 #
 # setup:
 # run all on localhost:
-#   integritee-node purge-chain --dev
-#   integritee-node --tmp --dev -lruntime=debug
-#   export RUST_LOG=integritee_service=info,ita_stf=debug
-#   integritee-service run
+#   litentry-node purge-chain --dev
+#   litentry-node --tmp --dev -lruntime=debug
+#   export RUST_LOG=litentry_worker=info,ita_stf=debug
+#   litentry-worker run
 #
 # then run this script
 
 # usage:
-#  export RUST_LOG_LOG=integritee-cli=info,ita_stf=info
+#  export RUST_LOG_LOG=litentry-cli=info,ita_stf=info
 #  demo_smart_contract.sh -p <NODEPORT> -P <WORKERPORT>
 
 while getopts ":p:A:u:V:C:" opt; do
@@ -50,7 +50,7 @@ WORKERPORT=${WORKERPORT:-2000}
 WORKERURL=${WORKERURL:-"wss://127.0.0.1"}
 
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 echo "Using node uri ${NODEURL}:${NPORT}"
