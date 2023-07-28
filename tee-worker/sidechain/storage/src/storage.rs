@@ -26,7 +26,6 @@ use rocksdb::WriteBatch;
 use serde::Serialize;
 use sp_core::H256;
 use std::{collections::HashMap, fmt::Debug, path::PathBuf};
-
 /// key value of sidechain db of last block
 const LAST_BLOCK_KEY: &[u8] = b"last_sidechainblock";
 /// key value of the stored shards vector

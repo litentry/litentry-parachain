@@ -19,7 +19,7 @@ use crate::{
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
-	Cli,
+	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
@@ -37,7 +37,7 @@ pub struct SetUserShieldingKeyCommand {
 }
 
 impl SetUserShieldingKeyCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let who = get_pair_from_str(trusted_cli, self.account.as_str());
 		let identity: Identity = who.public().into();
 
@@ -56,6 +56,6 @@ impl SetUserShieldingKeyCommand {
 		)
 		.sign(&KeyPair::Sr25519(Box::new(who)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
-		perform_trusted_operation(cli, trusted_cli, &top);
+		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }

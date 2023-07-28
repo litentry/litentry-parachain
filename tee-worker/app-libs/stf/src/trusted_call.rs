@@ -132,7 +132,7 @@ pub enum TrustedCall {
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	link_identity_callback(Identity, Identity, Identity, Vec<Web3Network>, H256),
-	request_vc_callback(Identity, Identity, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
+	request_vc_callback(Identity, Identity, Assertion, H256, H256, Vec<u8>, H256),
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
 	send_erroneous_parentchain_call(Identity),
@@ -771,7 +771,9 @@ where
 						hash,
 					);
 					e
-				})
+				})?;
+				rpc_response_value = true.encode();
+				Ok(())
 			},
 			TrustedCall::request_vc_callback(
 				signer,
@@ -812,13 +814,22 @@ where
 
 				calls.push(OpaqueCall::from_tuple(&(
 					call_index,
-					account,
-					assertion,
+					account.clone(),
+					assertion.clone(),
 					vc_index,
 					vc_hash,
 					aes_encrypt_default(&key, &vc_payload),
 					hash,
 				)));
+				let res = RequestVCResponse {
+					account,
+					assertion,
+					vc_index,
+					vc_hash,
+					vc_payload: aes_encrypt_default(&key, &vc_payload),
+					req_ext_hash: hash,
+				};
+				rpc_response_value = res.encode();
 				Ok(())
 			},
 			TrustedCall::set_identity_networks(signer, who, identity, web3networks, hash) => {

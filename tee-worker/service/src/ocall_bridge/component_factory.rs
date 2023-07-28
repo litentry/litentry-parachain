@@ -128,7 +128,7 @@ impl<
 		TokioHandle,
 		MetricsReceiver,
 	> where
-	NodeApi: CreateNodeApi,
+	NodeApi: CreateNodeApi + 'static,
 	Broadcaster: BroadcastBlocks + 'static,
 	EnclaveApi: EnclaveBase + RemoteAttestationCallBacks + 'static,
 	Storage: BlockStorage<SignedSidechainBlock> + 'static,

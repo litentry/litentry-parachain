@@ -11,6 +11,7 @@ import {
     createSignedTrustedGetterUserShieldingKey,
     createSignedTrustedCallSetIdentityNetworks,
     createSignedTrustedGetterIdGraph,
+    createSignedTrustedCallRequestVc,
     sendRequestFromGetter,
     getSidechainNonce,
     decodeIdGraph,
@@ -29,8 +30,8 @@ import {
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
-import sidechainMetaData from '../../litentry-sidechain-metadata.json' assert { type: 'json' };
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import sidechainMetaData from '../../../sidechain-api/prepare-build/litentry-sidechain-metadata.json' assert { type: 'json' };
+import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { assert } from 'chai';
 import Options from 'websocket-as-promised/types/options';
@@ -38,7 +39,8 @@ import crypto from 'crypto';
 import { KeypairType } from '@polkadot/util-crypto/types';
 import WebSocketAsPromised from 'websocket-as-promised';
 import webSocket from 'ws';
-import { SetUserShieldingKeyResponse, LinkIdentityResponse } from 'parachain-api/build/interfaces';
+import { decryptWithAes } from '../../common/utils';
+import { SetUserShieldingKeyResponse, LinkIdentityResponse, RequestVCResponse } from 'parachain-api/build/interfaces';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -109,13 +111,13 @@ export async function runExample(keyPairType: KeypairType) {
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
     assert.equal(u8aToHex(res.status.asTrustedOperationStatus[1]), getTopHash(parachainApi, setUserShieldingKeyCall));
 
-    let decodedRes = parachainApi.createType(
+    const setUserShieldingKeyRes = parachainApi.createType(
         'SetUserShieldingKeyResponse',
         res.value
     ) as unknown as SetUserShieldingKeyResponse;
-    assert.equal(decodedRes.account.toHex(), u8aToHex(alice.addressRaw));
-    assert.equal(decodedRes.req_ext_hash.toHex(), hash);
-    let aesOutput = parseAesOutput(parachainApi, decodedRes.id_graph.toHex());
+    assert.equal(setUserShieldingKeyRes.account.toHex(), u8aToHex(alice.addressRaw));
+    assert.equal(setUserShieldingKeyRes.req_ext_hash.toHex(), hash);
+    let aesOutput = parseAesOutput(parachainApi, setUserShieldingKeyRes.id_graph.toHex());
     let idgraph = parseIdGraph(sidechainRegistry, aesOutput, aesKey);
     assert.equal(idgraph.length, 1);
     assertPrimeIdentity(idgraph[0], alice);
@@ -154,10 +156,10 @@ export async function runExample(keyPairType: KeypairType) {
     console.log('linkIdentity call returned', res.toHuman());
     assert.isTrue(res.do_watch.isFalse);
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
-    decodedRes = parachainApi.createType('LinkIdentityResponse', res.value) as unknown as LinkIdentityResponse;
-    assert.equal(decodedRes.account.toHex(), u8aToHex(alice.addressRaw));
-    assert.equal(decodedRes.req_ext_hash.toHex(), hash);
-    aesOutput = parseAesOutput(parachainApi, decodedRes.id_graph.toHex());
+    const linkIdentityRes = parachainApi.createType('LinkIdentityResponse', res.value) as unknown as LinkIdentityResponse;
+    assert.equal(linkIdentityRes.account.toHex(), u8aToHex(alice.addressRaw));
+    assert.equal(linkIdentityRes.req_ext_hash.toHex(), hash);
+    aesOutput = parseAesOutput(parachainApi, linkIdentityRes.id_graph.toHex());
     idgraph = parseIdGraph(sidechainRegistry, aesOutput, aesKey);
     assert.equal(idgraph.length, 2);
     // the first identity is the bob substrate identity
@@ -317,6 +319,33 @@ export async function runExample(keyPairType: KeypairType) {
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), keyBob);
+
+    // ==============================================================================
+    // 9. Test request_vc
+    // ==============================================================================
+
+    hash = `0x${crypto.randomBytes(32).toString('hex')}`;
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
+    console.log('request vc for alice ...');
+    const requestVcCall = createSignedTrustedCallRequestVc(
+        parachainApi,
+        mrenclave,
+        nonce,
+        alice,
+        aliceSubject,
+        parachainApi.createType('Assertion', { A1: null }).toHex(),
+        hash
+    );
+    res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, requestVcCall);
+    console.log('requestVcCall call returned', res.toHuman());
+    assert.isTrue(res.do_watch.isFalse);
+    assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
+    const requestVcRes = parachainApi.createType('RequestVCResponse', res.value) as unknown as RequestVCResponse;
+    assert.equal(requestVcRes.account.toHex(), u8aToHex(alice.addressRaw));
+    assert.equal(requestVcRes.req_ext_hash.toHex(), hash);
+    aesOutput = parseAesOutput(parachainApi, requestVcRes.vc_payload.toHex());
+    const decryptedVcPayload = u8aToString(hexToU8a(decryptWithAes(aesKey, aesOutput, 'hex')));
+    console.log('decrypted vc payload:', decryptedVcPayload);
 }
 
 function assertPrimeIdentity(

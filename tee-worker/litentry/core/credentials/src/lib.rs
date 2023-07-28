@@ -227,7 +227,7 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
+	pub fn new(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
 		let credential: Credential = Credential::from_template(raw, subject, shard)?;
 		Ok(credential)
@@ -446,6 +446,8 @@ impl Credential {
 	}
 
 	pub fn add_assertion_a8(&mut self, networks: Vec<Web3Network>, min: u64, max: u64) {
+		let value = min != 0;
+
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
@@ -464,7 +466,7 @@ impl Credential {
 			.add_item(max_item)
 			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(true);
+		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a12(&mut self, twitter_screen_name: String, value: bool) {
@@ -546,8 +548,7 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -565,8 +566,7 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -584,8 +584,7 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned =
-				Credential::new_default(&identity, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =

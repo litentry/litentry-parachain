@@ -1233,6 +1233,7 @@ import type {
     LitentryValidationData,
     PublicGetter,
     Request,
+    RequestVCResponse,
     SetIdentityNetworksResponse,
     SetUserShieldingKeyResponse,
     ShardIdentifier,
@@ -2078,6 +2079,7 @@ declare module "@polkadot/types/types/registry" {
         Reporter: Reporter;
         ReportIdOf: ReportIdOf;
         Request: Request;
+        RequestVCResponse: RequestVCResponse;
         ReserveData: ReserveData;
         ReserveIdentifier: ReserveIdentifier;
         Response: Response;

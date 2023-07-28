@@ -15,11 +15,12 @@
 
 */
 
-use crate::{command_utils::get_chain_api, Cli};
-use itp_node_api::metadata::event::print_event;
+use crate::{command_utils::get_chain_api, Cli, CliResult, CliResultOk};
+use base58::ToBase58;
+use codec::Encode;
 use log::*;
-use std::{sync::mpsc::channel, vec::Vec};
-use substrate_api_client::{utils::FromHexString, Events};
+use my_node_runtime::{Hash, RuntimeEvent};
+use substrate_api_client::SubscribeEvents;
 
 #[derive(Parser)]
 pub struct ListenCommand {
@@ -33,35 +34,114 @@ pub struct ListenCommand {
 }
 
 impl ListenCommand {
-	pub(crate) fn run(&self, cli: &Cli) {
+	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
 		println!("{:?} {:?}", self.events, self.blocks);
 		let api = get_chain_api(cli);
 		info!("Subscribing to events");
-		let (events_in, events_out) = channel();
-		#[allow(unused)]
 		let mut count = 0u32;
 		let mut blocks = 0u32;
-		api.subscribe_events(events_in).unwrap();
+		let mut subscription = api.subscribe_events().unwrap();
 		loop {
 			if let Some(e) = self.events {
 				if count >= e {
-					return
+					return Ok(CliResultOk::None)
 				}
 			};
 			if let Some(b) = self.blocks {
 				if blocks >= b {
-					return
+					return Ok(CliResultOk::None)
 				}
 			};
 
-			let events_str = events_out.recv().unwrap();
-			let event_bytes = Vec::from_hex(events_str).unwrap();
-			let metadata = api.metadata.clone();
+			let event_results = subscription.next_event::<RuntimeEvent, Hash>().unwrap();
 			blocks += 1;
-			let events = Events::new(metadata, Default::default(), event_bytes);
-			for maybe_event_details in events.iter() {
-				let event_details = maybe_event_details.unwrap();
-				count += print_event(&event_details);
+			match event_results {
+				Ok(evts) =>
+					for evr in &evts {
+						println!("decoded: phase {:?} event {:?}", evr.phase, evr.event);
+						match &evr.event {
+							RuntimeEvent::Balances(be) => {
+								println!(">>>>>>>>>> balances event: {:?}", be);
+								match &be {
+									pallet_balances::Event::Transfer { from, to, amount } => {
+										println!("From: {:?}", from);
+										println!("To: {:?}", to);
+										println!("Value: {:?}", amount);
+									},
+									_ => {
+										debug!("ignoring unsupported balances event");
+									},
+								}
+							},
+							RuntimeEvent::Teerex(ee) => {
+								println!(">>>>>>>>>> integritee event: {:?}", ee);
+								count += 1;
+								match &ee {
+									my_node_runtime::pallet_teerex::Event::AddedEnclave(
+										accountid,
+										url,
+									) => {
+										println!(
+											"AddedEnclave: {:?} at url {}",
+											accountid,
+											String::from_utf8(url.to_vec())
+												.unwrap_or_else(|_| "error".to_string())
+										);
+									},
+									my_node_runtime::pallet_teerex::Event::RemovedEnclave(
+										accountid,
+									) => {
+										println!("RemovedEnclave: {:?}", accountid);
+									},
+									my_node_runtime::pallet_teerex::Event::Forwarded(shard) => {
+										println!(
+											"Forwarded request for shard {}",
+											shard.encode().to_base58()
+										);
+									},
+									my_node_runtime::pallet_teerex::Event::ProcessedParentchainBlock(
+										accountid,
+										block_hash,
+										merkle_root,
+										block_number,
+									) => {
+										println!(
+											"ProcessedParentchainBlock from {} with hash {:?}, number {} and merkle root {:?}",
+											accountid, block_hash, merkle_root, block_number
+										);
+									},
+									my_node_runtime::pallet_teerex::Event::ShieldFunds(
+										incognito_account,
+									) => {
+										println!("ShieldFunds for {:?}", incognito_account);
+									},
+									my_node_runtime::pallet_teerex::Event::UnshieldedFunds(
+										public_account,
+									) => {
+										println!("UnshieldFunds for {:?}", public_account);
+									},
+									_ => debug!("ignoring unsupported teerex event: {:?}", ee),
+								}
+							},
+							RuntimeEvent::Sidechain(ee) => {
+								count += 1;
+								match &ee {
+									my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
+										accountid,
+										block_hash,
+									) => {
+										println!(
+											"ProposedSidechainBlock from {} with hash {:?}",
+											accountid, block_hash
+										);
+									},
+									_ => debug!("ignoring unsupported sidechain event: {:?}", ee),
+								}
+							},
+							_ => debug!("ignoring unsupported module event: {:?}", evr.event),
+						}
+					},
+				Err(_) => error!("couldn't decode event record list"),
 			}
 		}
 	}

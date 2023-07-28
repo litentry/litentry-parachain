@@ -5,19 +5,52 @@ import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
 import { buildIdentityHelper, parseIdGraph, parseIdentity } from './identity-helper';
-import type { LitentryPrimitivesIdentity } from 'sidechain-api';
+import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeError } from 'sidechain-api';
 import type { EnclaveResult, IntegrationTestContext } from '../type-definitions';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
+import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
+
+export async function assertFailedEvent(
+    context: IntegrationTestContext,
+    events: FrameSystemEventRecord[],
+    eventType: 'LinkIdentityFailed' | 'DeactivateIdentityFailed',
+    expectedEvent: CorePrimitivesErrorErrorDetail['type'] | PalletIdentityManagementTeeError['type']
+) {
+    const failedType = context.api.events.identityManagement[eventType];
+    const isFailed = failedType.is.bind(failedType);
+    type EventLike = Parameters<typeof isFailed>[0];
+    const ievents: EventLike[] = events.map(({ event }) => event);
+    const failedEvent = ievents.filter(isFailed);
+    /* 
+      @fix Why this type don't work?????? https://github.com/litentry/litentry-parachain/issues/1917
+    */
+    const eventData = failedEvent[0].data[1] as CorePrimitivesErrorErrorDetail;
+    assert.lengthOf(failedEvent, 1);
+    if (eventData.isStfError) {
+        assert.equal(
+            eventData.asStfError.toHuman(),
+            expectedEvent,
+            `check event detail is ${expectedEvent}, but is ${eventData.asStfError.toHuman()}`
+        );
+    } else {
+        assert.equal(
+            eventData.type,
+            expectedEvent,
+            `check event detail is  ${expectedEvent}, but is ${eventData.type}`
+        );
+    }
+}
 
 export async function assertInitialIdGraphCreated(
     context: IntegrationTestContext,
     signer: KeyringPair[],
     events: any[]
 ) {
+    assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
 
@@ -70,7 +103,9 @@ export async function assertIdentityLinked(
 
         // Check event identity with expected identity
         const eventIdentity = parseIdentity(context.sidechainRegistry, eventData.identity, aesKey);
+
         const eventIdentityTarget = eventIdentity[`as${eventIdentity.type}`];
+
         assert.equal(
             expectedIdentityTarget.toString(),
             eventIdentityTarget.toString(),
@@ -162,6 +197,20 @@ export async function assertIdentityActivated(
     console.log(colors.green('assertIdentityActivated complete'));
 }
 
+export async function assertIsInSidechainBlock(callType: string, res: WorkerRpcReturnValue) {
+    assert.isTrue(
+        res.status.isTrustedOperationStatus,
+        `${callType} should be trusted operation status, but is ${res.status.type}`
+    );
+    const status = res.status.asTrustedOperationStatus;
+    console.log(res.toHuman());
+
+    assert.isTrue(
+        status[0].isSubmitted || status[0].isInSidechainBlock,
+        `${callType} should be submitted or in sidechain block, but is ${status[0].type}`
+    );
+}
+
 export async function checkErrorDetail(events: Event[], expectedDetail: string) {
     // TODO: sometimes `item.data.detail.toHuman()` or `item` is treated as object (why?)
     //       I have to JSON.stringify it to assign it to a string
@@ -212,8 +261,8 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }

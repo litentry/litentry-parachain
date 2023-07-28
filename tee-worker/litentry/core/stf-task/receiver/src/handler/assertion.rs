@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
+use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
 use ita_sgx_runtime::Hash;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -50,7 +50,7 @@ where
 	O: EnclaveOnChainOCallApi,
 {
 	type Error = VCMPError;
-	type Result = ([u8; 32], [u8; 32], Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
+	type Result = (H256, H256, Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
@@ -120,17 +120,20 @@ where
 			)
 		})?;
 
-		let vc_index = credential.get_index().map_err(|e| {
-			VCMPError::RequestVCFailed(
-				self.req.assertion.clone(),
-				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
-			)
-		})?;
+		let vc_index = credential
+			.get_index()
+			.map_err(|e| {
+				VCMPError::RequestVCFailed(
+					self.req.assertion.clone(),
+					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
+				)
+			})?
+			.into();
 		let credential_str = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
 		debug!("Credential: {}, length: {}", credential_str, credential_str.len());
-		let vc_hash = blake2_256(credential_str.as_bytes());
+		let vc_hash = blake2_256(credential_str.as_bytes()).into();
 		debug!("VC hash: {:?}", vc_hash);
 		Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
 	}

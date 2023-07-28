@@ -47,11 +47,15 @@ declare module "@polkadot/api-base/types/errors" {
         };
         identityManagement: {
             /**
-             * the pair (litentry-account, identity) already linked
+             * deactivate prime identity should be disallowed
+             **/
+            DeactivatePrimeIdentityDisallowed: AugmentedError<ApiType>;
+            /**
+             * the identity is already linked
              **/
             IdentityAlreadyLinked: AugmentedError<ApiType>;
             /**
-             * the pair (litentry-account, identity) doesn't exist
+             * the pair (Identity, Identity) doesn't exist
              **/
             IdentityNotExist: AugmentedError<ApiType>;
             /**
@@ -63,13 +67,13 @@ declare module "@polkadot/api-base/types/errors" {
              **/
             LinkPrimeIdentityDisallowed: AugmentedError<ApiType>;
             /**
-             * remove prime identiy should be disallowed
+             * identity cannot be used to build prime identity
              **/
-            RemovePrimeIdentityDisallowed: AugmentedError<ApiType>;
+            NotSupportedIdentity: AugmentedError<ApiType>;
             /**
-             * Web3Network len limit reached
+             * identity doesn't match the network types
              **/
-            Web3NetworkLenLimitReached: AugmentedError<ApiType>;
+            WrongWeb3NetworkTypes: AugmentedError<ApiType>;
         };
         sudo: {
             /**

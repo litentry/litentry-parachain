@@ -68,6 +68,12 @@ pub mod twitter_official;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
+pub const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+pub const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+pub const WETH_TOKEN_ADDRESS: &str = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+pub const UNISWAP_TOKEN_ADDRESS: &str = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+pub const USDT_TOKEN_ADDRESS: &str = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
 pub struct DataProviderConfig {
 	pub twitter_official_url: String,

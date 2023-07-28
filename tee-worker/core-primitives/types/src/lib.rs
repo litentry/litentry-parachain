@@ -23,7 +23,7 @@ use codec::{Decode, Encode};
 use litentry_primitives::UserShieldingKeyNonceType;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
-pub mod extrinsics;
+pub mod parentchain;
 pub mod storage;
 
 /// Substrate runtimes provide no string type. Hence, for arbitrary data of varying length the

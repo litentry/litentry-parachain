@@ -2,25 +2,29 @@
 
 ts-tests of tee-worker
 
-## Environment
+## Environment setup
 
-Node versions 16.x or 18.x, yarn v3
+-   Install [nvm](https://github.com/nvm-sh/nvm)
+-   Inside the repository, run `nvm use` to set the correct Node version.
+    -   If the version is not installed, run `nvm install`.
 
 ## Installation
 
-`cd tee-worker/ts-tests`
-
-`yarn`
+```
+cd tee-worker/ts-tests
+nvm use
+corepack yarn
+```
 
 ## Type Generated
 
-Update parachain metadata: `yarn workspace parachain-api update-metadata` (requires the parachain is running)
+Update parachain metadata: `corepack yarn workspace parachain-api update-metadata` (requires the parachain is running)
 
-Update sidechain metadata: `yarn workspace sidechain-api update-metadata` (requires the worker is running)
+Update sidechain metadata: `corepack yarn workspace sidechain-api update-metadata` (requires the worker is running)
 
-Generate parachain type: `yarn workspace parachain-api build`
+Generate parachain type: `corepack yarn workspace parachain-api build`
 
-Generate sidechain type: `yarn workspace sidechain-api build`
+Generate sidechain type: `corepack yarn workspace sidechain-api build`
 
 ## Local
 
@@ -28,16 +32,16 @@ Generate sidechain type: `yarn workspace sidechain-api build`
 
 ## Usage
 
-Standard identity test: `yarn test-identity:local`
+Standard identity test: `corepack yarn test-identity:local`
 
-Standard vc test: `yarn test-vc:local`
+Standard vc test: `corepack yarn test-vc:local`
 
-Batch identity test: `yarn test-batch:local`
+Batch identity test: `corepack yarn test-batch:local`
 
-Bulk identity test: `yarn test-bulk-identity:local`
+Bulk identity test: `corepack yarn test-bulk-identity:local`
 
-Bulk vc test: `yarn test-bulk-vc:local`
+Bulk vc test: `corepack yarn test-bulk-vc:local`
 
-Direct invocation identity test: `yarn test-identity-direct-invocation:local`
+Direct invocation identity test: `corepack yarn test-identity-direct-invocation:local`
 
-Di examples: `yarn workspace integration-tests di-examples`
+Di examples: `corepack yarn workspace integration-tests di-examples`
