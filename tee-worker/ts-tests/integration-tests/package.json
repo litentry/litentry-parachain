@@ -6,7 +6,7 @@
 		"format": "yarn prettier --write .",
 		"test-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'identity.test.ts'",
 		"test-identity:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm --loader=ts-node/esm 'identity.test.ts'",
-		"test-identity-direct-invocation:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'identity-direct-invocation.test.ts'",
+		"test-identity-direct-invocation:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'identity-direct-invocation.test.ts'",
 		"test-identity-direct-invocation:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'identity-direct-invocation.test.ts'",
 		"test-resuming-worker:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
 		"test-resuming-worker:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",

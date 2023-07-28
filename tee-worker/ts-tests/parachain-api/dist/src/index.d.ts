@@ -6,7 +6,7 @@ import type { AnyTuple } from "@polkadot/types/types";
 export type { CorePrimitivesErrorErrorDetail } from "@polkadot/types/lookup";
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "../build/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, ErrorResponse, StfError, } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };

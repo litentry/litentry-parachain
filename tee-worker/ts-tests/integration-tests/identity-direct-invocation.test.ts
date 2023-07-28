@@ -1,8 +1,9 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
+    assertWorkerError,
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
@@ -29,7 +30,7 @@ import {
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
+import { ErrorResponse, LitentryValidationData, StfError, Web3Network, WorkerRpcReturnValue } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
 import { ethers } from 'ethers';
@@ -91,8 +92,6 @@ describe('Test Identity (direct invocation)', function () {
             'substrate',
             context.substrateWallet.bob
         );
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -120,9 +119,15 @@ describe('Test Identity (direct invocation)', function () {
         */
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
-        const events = await eventsPromise;
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed);
+                assert.isTrue(v.asLinkIdentityFailed.isUserShieldingKeyNotFound);
+            },
+            res
+        );
     });
 
     step('check user sidechain storage before user shielding key creating(alice)', async function () {
@@ -405,7 +410,6 @@ describe('Test Identity (direct invocation)', function () {
 
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -429,10 +433,15 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
-        const events = await eventsPromise;
-
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'InvalidIdentity');
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed);
+                assert.isTrue(v.asLinkIdentityFailed.isInvalidIdentity);
+            },
+            res
+        );
     });
 
     step('linking identity with wrong signature', async function () {
@@ -465,7 +474,6 @@ describe('Test Identity (direct invocation)', function () {
             ethereumValidationData
         );
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
@@ -489,13 +497,18 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
-        const events = await eventsPromise;
-
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'VerifyEvmSignatureFailed');
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed);
+                assert.isTrue(v.asLinkIdentityFailed.isVerifyEvmSignatureFailed);
+            },
+            res
+        );
     });
 
-    step('linking aleady linked identity', async function () {
+    step('linking already linked identity', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
@@ -513,7 +526,6 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -536,9 +548,16 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
-        const events = await eventsPromise;
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'IdentityAlreadyLinked');
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed);
+                assert.isTrue(v.asLinkIdentityFailed.isStfError);
+                assert.equal(u8aToString(v.asLinkIdentityFailed.asStfError), 'IdentityAlreadyLinked');
+            },
+            res
+        );
     });
 
     step('deactivating identity', async function () {
@@ -772,7 +791,6 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const deactivateIdentityCall = createSignedTrustedCallDeactivateIdentity(
             context.api,
             context.mrEnclave,
@@ -792,8 +810,15 @@ describe('Test Identity (direct invocation)', function () {
         );
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
-        const events = await eventsPromise;
-        await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isDeactivateIdentityFailed);
+                assert.isTrue(v.asDeactivateIdentityFailed.isStfError);
+                assert.equal(u8aToString(v.asDeactivateIdentityFailed.asStfError), 'DeactivatePrimeIdentityDisallowed');
+            },
+            res
+        );
     });
 });

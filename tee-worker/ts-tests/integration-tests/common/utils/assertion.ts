@@ -12,7 +12,13 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
+import {
+    CorePrimitivesErrorErrorDetail,
+    ErrorResponse,
+    FrameSystemEventRecord,
+    StfError,
+    WorkerRpcReturnValue,
+} from 'parachain-api';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -261,8 +267,20 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-        vc.issuer.id === proofJson.verificationMethod &&
-        proofJson.type === 'Ed25519Signature2020'
+            vc.issuer.id === proofJson.verificationMethod &&
+            proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
+}
+
+export function assertWorkerError(
+    context: IntegrationTestContext,
+    requestIdentifier: String,
+    check: (returnValue: StfError) => void,
+    returnValue: WorkerRpcReturnValue
+) {
+    let errDecodedRes = context.api.createType('ErrorResponse', returnValue.value) as unknown as ErrorResponse;
+    assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
+    let errValueDecoded = context.api.createType('StfError', errDecodedRes.error) as unknown as StfError;
+    check(errValueDecoded);
 }
