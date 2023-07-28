@@ -18,7 +18,7 @@
 use crate::{
 	error::{Error, ErrorResponse, Result},
 	traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState},
-	BatchExecutionResult, ExecutedOperation
+	BatchExecutionResult, ExecutedOperation,
 };
 use codec::{Decode, Encode};
 use ita_stf::{
