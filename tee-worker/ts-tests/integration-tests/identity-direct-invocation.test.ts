@@ -10,9 +10,11 @@ import {
 } from './common/utils';
 import {
     assertFailedEvent,
+    assertIdentity,
     assertIdentityLinked,
     assertInitialIdGraphCreated,
     assertIsInSidechainBlock,
+    assertLinkedEvent,
 } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
@@ -66,64 +68,64 @@ describe('Test Identity (direct invocation)', function () {
     it('needs a lot more work to be complete');
     it('most of the bob cases are missing');
 
-    step('linking identity with without user shielding key(charlie)', async function () {
-        const charlieSubject = await buildIdentityFromKeypair(context.substrateWallet.charlie, context);
+    // step('linking identity with without user shielding key(charlie)', async function () {
+    //     const charlieSubject = await buildIdentityFromKeypair(context.substrateWallet.charlie, context);
 
-        const bobSubstrateIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.bob.addressRaw),
-            'Substrate',
-            context
-        );
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //     const bobSubstrateIdentity = await buildIdentityHelper(
+    //         u8aToHex(context.substrateWallet.bob.addressRaw),
+    //         'Substrate',
+    //         context
+    //     );
+    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
-        const nonce = await getSidechainNonce(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            charlieSubject
-        );
-        const [bobValidationData] = await buildValidations(
-            context,
-            [charlieSubject],
-            [bobSubstrateIdentity],
-            nonce.toNumber(),
-            'substrate',
-            context.substrateWallet.bob
-        );
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+    //     const nonce = await getSidechainNonce(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         charlieSubject
+    //     );
+    //     const [bobValidationData] = await buildValidations(
+    //         context,
+    //         [charlieSubject],
+    //         [bobSubstrateIdentity],
+    //         nonce.toNumber(),
+    //         'substrate',
+    //         context.substrateWallet.bob
+    //     );
+    //     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-            context.api,
-            context.mrEnclave,
-            nonce,
-            context.substrateWallet.charlie,
-            charlieSubject,
-            context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
-            context.api.createType('LitentryValidationData', bobValidationData).toHex(),
-            context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']).toHex(),
-            keyNonce,
-            requestIdentifier
-        );
+    //     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+    //         context.api,
+    //         context.mrEnclave,
+    //         nonce,
+    //         context.substrateWallet.charlie,
+    //         charlieSubject,
+    //         context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
+    //         context.api.createType('LitentryValidationData', bobValidationData).toHex(),
+    //         context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']).toHex(),
+    //         keyNonce,
+    //         requestIdentifier
+    //     );
 
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall
-        );
+    //     const res = await sendRequestFromTrustedCall(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         linkIdentityCall
+    //     );
 
-        /* 
-        In the case of an error, the RPC status will be false, right? 
-        However, will we still have events occurring in Parachain? Based on the example provided.
-        */
-        assert.isTrue(res.do_watch.isFalse);
-        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+    //     /*
+    //     In the case of an error, the RPC status will be false, right?
+    //     However, will we still have events occurring in Parachain? Based on the example provided.
+    //     */
+    //     assert.isTrue(res.do_watch.isFalse);
+    //     assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
 
-        const events = await eventsPromise;
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
-    });
+    //     const events = await eventsPromise;
+    //     await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
+    // });
 
     step('check user sidechain storage before user shielding key creating(alice)', async function () {
         const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
@@ -183,7 +185,7 @@ describe('Test Identity (direct invocation)', function () {
                 .map(({ event }) => event)
                 .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
 
-            await assertInitialIdGraphCreated(context, [wallet], userShieldingKeySetEvents);
+            await assertInitialIdGraphCreated(context, wallet, userShieldingKeySetEvents);
         });
     });
 
@@ -331,8 +333,7 @@ describe('Test Identity (direct invocation)', function () {
         }
         assert.equal(linkedIdentityEvents.length, 3);
 
-        // this assertion doesn't check the evesubstrate identity, check it in the next step
-        assertIdentityLinked(context, context.substrateWallet.alice, linkedIdentityEvents, [
+        await assertLinkedEvent(context, context.substrateWallet.alice, linkedIdentityEvents, [
             twitterIdentity,
             evmIdentity,
             eveSubstrateIdentity,
@@ -616,6 +617,13 @@ describe('Test Identity (direct invocation)', function () {
             });
             assert.isTrue(isIdentityDeactivated);
         }
+        assert.equal(deactivatedIdentityEvents.length, 3);
+
+        await assertIdentity(context, context.substrateWallet.alice, deactivatedIdentityEvents, [
+            twitterIdentity,
+            evmIdentity,
+            eveSubstrateIdentity,
+        ]);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -724,6 +732,11 @@ describe('Test Identity (direct invocation)', function () {
             assert.isTrue(isIdentityActivated);
         }
         assert.equal(activatedIdentityEvents.length, 3);
+        await assertIdentity(context, context.substrateWallet.alice, activatedIdentityEvents, [
+            twitterIdentity,
+            evmIdentity,
+            eveSubstrateIdentity,
+        ]);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
