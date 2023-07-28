@@ -32,28 +32,8 @@ pub fn build_amount_token(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
 
-	// let chain = param.chain.clone();
-	// let amount = param.amount.clone();
-	// let token = param.token.clone().map(|t| t).unwrap_or_else(|| ParameterString::new());
-
-	// let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-	// 	Error::RequestVCFailed(
-	// 		Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
-	// 		ErrorDetail::ParseError,
-	// 	)
-	// })?;
-	// let amount = vec_to_string(amount.to_vec()).map_err(|_| {
-	// 	Error::RequestVCFailed(
-	// 		Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
-	// 		ErrorDetail::ParseError,
-	// 	)
-	// })?;
-	// let token = vec_to_string(token.to_vec()).map_err(|_| {
-	// 	Error::RequestVCFailed(
-	// 		Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
-	// 		ErrorDetail::ParseError,
-	// 	)
-	// })?;
+	let (name,chain, amount, token) = get_amount_token_params(&param)?;
+	let p = ParamsBasicTypeWithAmountToken::new(name, chain, amount, token);
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
@@ -68,9 +48,11 @@ pub fn build_amount_token(
 			break
 		}
 
-		let v2 = client.uniswap_v2_user(address).unwrap_or_default();
-		let v3 = client.uniswap_v3_user(address).unwrap_or_default();
-		flag = v2 || v3;
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmountHolding(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request query_system_label failed {:?}", e),
+		}
 	}
 
 	match Credential::new(&req.who, &req.shard) {
@@ -88,4 +70,36 @@ pub fn build_amount_token(
 			))
 		},
 	}
+}
+
+fn get_amount_token_params(param: &AchainableAmountToken) -> Result<(String, String, String, Option<String>)> {
+	let name = param.name.clone();
+	let chain = param.chain.clone();
+	let amount = param.amount.clone();
+	let token = param.token.clone().map(|t| t).unwrap_or_else(|| ParameterString::new());
+
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let token = if param.token.is_some() {
+		let token = param.token.clone().unwrap();
+		let token = vec_to_string(token.to_vec()).map_err(|_| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
+				ErrorDetail::ParseError,
+			)
+		})?;
+		Some(token)
+	} else { None };
+
+	Ok((name, chain, amount, token))
 }
