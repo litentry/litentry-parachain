@@ -195,7 +195,6 @@ describeLitentry('Test Identity', 0, (context) => {
             aliceTxs,
             'identityManagement',
             ['IdentityLinked'],
-            100
         );
 
         await assertLinkedEvent(context, context.substrateWallet.alice, aliceRespEvents, eveIdentities);
