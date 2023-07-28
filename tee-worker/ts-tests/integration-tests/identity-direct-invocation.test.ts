@@ -68,64 +68,64 @@ describe('Test Identity (direct invocation)', function () {
     it('needs a lot more work to be complete');
     it('most of the bob cases are missing');
 
-    // step('linking identity with without user shielding key(charlie)', async function () {
-    //     const charlieSubject = await buildIdentityFromKeypair(context.substrateWallet.charlie, context);
+    step('linking identity with without user shielding key(charlie)', async function () {
+        const charlieSubject = await buildIdentityFromKeypair(context.substrateWallet.charlie, context);
 
-    //     const bobSubstrateIdentity = await buildIdentityHelper(
-    //         u8aToHex(context.substrateWallet.bob.addressRaw),
-    //         'Substrate',
-    //         context
-    //     );
-    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const bobSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.bob.addressRaw),
+            'Substrate',
+            context
+        );
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         charlieSubject
-    //     );
-    //     const [bobValidationData] = await buildValidations(
-    //         context,
-    //         [charlieSubject],
-    //         [bobSubstrateIdentity],
-    //         nonce.toNumber(),
-    //         'substrate',
-    //         context.substrateWallet.bob
-    //     );
-    //     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            charlieSubject
+        );
+        const [bobValidationData] = await buildValidations(
+            context,
+            [charlieSubject],
+            [bobSubstrateIdentity],
+            nonce.toNumber(),
+            'substrate',
+            context.substrateWallet.bob
+        );
+        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
-    //     const linkIdentityCall = createSignedTrustedCallLinkIdentity(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         context.substrateWallet.charlie,
-    //         charlieSubject,
-    //         context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
-    //         context.api.createType('LitentryValidationData', bobValidationData).toHex(),
-    //         context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']).toHex(),
-    //         keyNonce,
-    //         requestIdentifier
-    //     );
+        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            context.substrateWallet.charlie,
+            charlieSubject,
+            context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
+            context.api.createType('LitentryValidationData', bobValidationData).toHex(),
+            context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']).toHex(),
+            keyNonce,
+            requestIdentifier
+        );
 
-    //     const res = await sendRequestFromTrustedCall(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         linkIdentityCall
-    //     );
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            linkIdentityCall
+        );
 
-    //     /*
-    //     In the case of an error, the RPC status will be false, right?
-    //     However, will we still have events occurring in Parachain? Based on the example provided.
-    //     */
-    //     assert.isTrue(res.do_watch.isFalse);
-    //     assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+        /*
+        In the case of an error, the RPC status will be false, right?
+        However, will we still have events occurring in Parachain? Based on the example provided.
+        */
+        assert.isTrue(res.do_watch.isFalse);
+        assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
 
-    //     const events = await eventsPromise;
-    //     await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
-    // });
+        const events = await eventsPromise;
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
+    });
 
     step('check user sidechain storage before user shielding key creating(alice)', async function () {
         const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
