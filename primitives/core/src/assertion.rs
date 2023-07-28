@@ -27,52 +27,68 @@ pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableAmountHolding {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub amount: ParameterString,
 	pub date: ParameterString,
 	pub token: Option<ParameterString>,
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableAmountToken {
 	pub chain: ParameterString,
 	pub amount: ParameterString,
 	pub token: Option<ParameterString>,
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableAmount {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub amount: ParameterString,
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableAmounts {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub amount1: ParameterString,
 	pub amount2: ParameterString,
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableBasic {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableBetweenPercents {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub greater_than_or_equal_to: ParameterString,
 	pub less_than_or_equal_to: ParameterString,
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableClassOfYear {
+	pub name: ParameterString,
 	pub chain: ParameterString, // supported network, see function web3_network_to_chain
 	pub date1: ParameterString, // date format: 2017-01-01
 	pub date2: ParameterString, // date format: 2017-01-01
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableDateInterval {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub start_date: ParameterString,
 	pub end_date: ParameterString,
 }
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableDatePercent {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub token: ParameterString,
 	pub date: ParameterString,
@@ -80,11 +96,13 @@ pub struct AchainableDatePercent {
 }
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableDate {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub date: ParameterString,
 }
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableToken {
+	pub name: ParameterString,
 	pub chain: ParameterString,
 	pub token: ParameterString,
 }
