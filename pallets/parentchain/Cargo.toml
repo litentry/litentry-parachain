@@ -1,10 +1,10 @@
 [package]
 name = "pallet-parentchain"
-description = "The remote attestation registry and verification pallet for integritee blockchains and parachains"
+description = "The remote attestation registry and verification pallet for litentry blockchains and parachains"
 version = "0.9.0"
-authors = ['Litentry Dev']
-homepage = "https://integritee.network/"
-repository = "https://github.com/integritee-network/pallets/"
+authors = ['Litentry Dev and Integritee AG <hello@integritee.network>']
+homepage = 'https://litentry.com/'
+repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
 edition = "2021"
 

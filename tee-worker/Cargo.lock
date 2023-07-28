@@ -4252,58 +4252,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "integritee-cli"
-version = "0.9.0"
-dependencies = [
- "array-bytes 6.1.0",
- "base58",
- "blake2-rfc",
- "chrono 0.4.26",
- "clap 3.2.25",
- "env_logger 0.9.3",
- "frame-metadata 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "frame-system",
- "hdrhistogram",
- "hex 0.4.3",
- "ita-sgx-runtime",
- "ita-stf",
- "itc-rpc-client",
- "itp-node-api",
- "itp-node-api-metadata",
- "itp-rpc",
- "itp-sgx-crypto",
- "itp-stf-primitives",
- "itp-time-utils",
- "itp-types",
- "itp-utils",
- "litentry-primitives",
- "log 0.4.19",
- "pallet-balances",
- "pallet-evm",
- "pallet-teerex",
- "parity-scale-codec",
- "primitive-types",
- "rand 0.8.5",
- "rayon",
- "rococo-parachain-runtime",
- "sc-keystore",
- "scale-value",
- "serde 1.0.175",
- "serde_json 1.0.103",
- "sgx_crypto_helper",
- "sp-application-crypto",
- "sp-core",
- "sp-core-hashing 6.0.0",
- "sp-keyring",
- "sp-runtime",
- "substrate-api-client",
- "substrate-client-keystore",
- "teerex-primitives",
- "thiserror 1.0.44",
- "ws",
-]
-
-[[package]]
 name = "interceptor"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6927,6 +6875,58 @@ name = "linux-raw-sys"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
+
+[[package]]
+name = "litentry-cli"
+version = "0.9.0"
+dependencies = [
+ "array-bytes 6.1.0",
+ "base58",
+ "blake2-rfc",
+ "chrono 0.4.26",
+ "clap 3.2.25",
+ "env_logger 0.9.3",
+ "frame-metadata 15.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "frame-system",
+ "hdrhistogram",
+ "hex 0.4.3",
+ "ita-sgx-runtime",
+ "ita-stf",
+ "itc-rpc-client",
+ "itp-node-api",
+ "itp-node-api-metadata",
+ "itp-rpc",
+ "itp-sgx-crypto",
+ "itp-stf-primitives",
+ "itp-time-utils",
+ "itp-types",
+ "itp-utils",
+ "litentry-primitives",
+ "log 0.4.19",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-teerex",
+ "parity-scale-codec",
+ "primitive-types",
+ "rand 0.8.5",
+ "rayon",
+ "rococo-parachain-runtime",
+ "sc-keystore",
+ "scale-value",
+ "serde 1.0.175",
+ "serde_json 1.0.103",
+ "sgx_crypto_helper",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-core-hashing 6.0.0",
+ "sp-keyring",
+ "sp-runtime",
+ "substrate-api-client",
+ "substrate-client-keystore",
+ "teerex-primitives",
+ "thiserror 1.0.44",
+ "ws",
+]
 
 [[package]]
 name = "litentry-primitives"
