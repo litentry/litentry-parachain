@@ -2,7 +2,7 @@
 name = "pallet-teeracle"
 description = "A pallet to store cryptocurrency market data"
 version = "0.1.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Dev']
 homepage = "https://integritee.network/"
 repository = "https://github.com/integritee-network/pallets/"
 license = "Apache-2.0"

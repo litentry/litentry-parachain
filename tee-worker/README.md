@@ -23,7 +23,7 @@ corepack yarn workspace integration-tests test-identity:local
 
 This tee-worker is based on [Integritee](https://integritee.network)'s [worker](https://github.com/integritee-network/worker)
 
-The following is the original README from integritee-worker.
+The following is based on the original README from integritee-worker.
 
 If you think parachain-node launch too slowly, can use this branch: [litentry-runtime](https://github.com/litentry/integritee-node/tree/litentry-runtime) and need to use the following command to build
 
@@ -64,7 +64,7 @@ Run
 
 ```
 make
-./bin/integritee-service test --all
+./bin/litentry-worker test --all
 ```
 
 ### Integration Tests

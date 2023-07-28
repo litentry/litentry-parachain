@@ -2,7 +2,7 @@
 name = "test-utils"
 description = "A crate for common utilities for tests"
 version = "0.1.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Dev']
 homepage = "https://integritee.network/"
 repository = "https://github.com/integritee-network/pallets/"
 license = "Apache-2.0"

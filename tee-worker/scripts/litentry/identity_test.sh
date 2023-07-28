@@ -7,15 +7,15 @@ root_dir="$root_dir/tee-worker"
 
 #NODE PORT
 node_port=9912
-node_url=ws://integritee-node
+node_url=ws://litentry-node
 
 worker_url=wss://tee-builder
 worker_port=2000
 
-CLIENT="./integritee-cli --node-url ${node_url} --node-port ${node_port} --worker-url ${worker_url} --trusted-worker-port  ${worker_port}"
+CLIENT="./litentry-cli --node-url ${node_url} --node-port ${node_port} --worker-url ${worker_url} --trusted-worker-port  ${worker_port}"
 
 cd "$root_dir/bin"
-./integritee-service mrenclave | tee ~/mrenclave.b58
+./litentry-worker mrenclave | tee ~/mrenclave.b58
 MRENCLAVE=$(cat ~/mrenclave.b58)
 
 cd "$root_dir/tmp/worker1"

@@ -30,12 +30,12 @@ done
 SRC_DIR=$(dirname "$0")
 cd $SRC_DIR
 
-./integritee-service signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
+./litentry-worker signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
 echo "Enclave account is prepared inside enclave_account.txt"
 
-./integritee-service shielding-key
+./litentry-worker shielding-key
 
-for Item in 'enclave.signed.so' 'integritee-service' 'aes_key_sealed.bin' 'ed25519_key_sealed.bin' 'enclave-shielding-pubkey.json' 'enclave-signing-pubkey.bin' 'rsa3072_key_sealed.bin' 'sidechain_db'; do
+for Item in 'enclave.signed.so' 'litentry-worker' 'aes_key_sealed.bin' 'ed25519_key_sealed.bin' 'enclave-shielding-pubkey.json' 'enclave-signing-pubkey.bin' 'rsa3072_key_sealed.bin' 'sidechain_db'; do
   cp -r "${Item}" "${WORKER_DIR}"
 done
 

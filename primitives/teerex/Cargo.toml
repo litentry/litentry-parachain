@@ -1,5 +1,5 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Dev']
 edition = "2021"
 homepage = "https://integritee.network/"
 license = "Apache-2.0"

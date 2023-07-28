@@ -1,7 +1,7 @@
-name: "integritee-service"
+name: "litentry-worker"
 version: "0.8.0"
-about: Worker using Intel SGX TEE for Integritee-node
-authors: "Integritee AG <hello@integritee.network>"
+about: Worker using Intel SGX TEE for litentry parachain node
+authors: "Litentry Dev"
 
 # AppSettings can be defined as a list and are **not** ascii case sensitive
 settings:
@@ -107,7 +107,7 @@ args:
 
 subcommands:
     - run:
-        about: Start the integritee-service
+        about: Start the litentry-worker
         args:
             - skip-ra:
                 long: skip-ra

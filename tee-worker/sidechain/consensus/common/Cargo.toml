@@ -1,7 +1,7 @@
 [package]
 name = "its-consensus-common"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Dev']
 edition = "2021"
 
 [dependencies]

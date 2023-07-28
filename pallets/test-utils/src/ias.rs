@@ -115,7 +115,7 @@ pub mod consts {
 
 	pub const TEST1_DCAP_QUOTE: &[u8] = include_bytes!("./ias-data/ra_dcap_dump_quote.ra");
 
-	// reproduce with integritee-service signing-key
+	// reproduce with litentry-worker signing-key
 	pub const TEST4_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST4.bin");
 	// equal to TEST4! because of MRSIGNER policy it was possible to change the MRENCLAVE but keep
