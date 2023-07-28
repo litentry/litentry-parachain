@@ -16,9 +16,9 @@
 */
 
 use crate::{
-	error::{Error, Result},
+	error::{Error, ErrorResponse, Result},
 	traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState},
-	BatchExecutionResult, ExecutedOperation,
+	BatchExecutionResult, ExecutedOperation
 };
 use codec::{Decode, Encode};
 use ita_stf::{
@@ -138,8 +138,14 @@ where
 			self.node_metadata_repo.clone(),
 		) {
 			Err(e) => {
-				error!("Stf execute failed: {:?}", e.0);
-				return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, e.1))
+				error!("Stf execute failed: {:?}", e);
+				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
+					ErrorResponse {
+						req_ext_hash: h.clone(),
+						error: e
+					}.encode()
+				}).unwrap_or_default();
+				return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
 			Ok(res) => res,
 		};

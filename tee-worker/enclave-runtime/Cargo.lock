@@ -2207,6 +2207,7 @@ dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
  "itp-types",
+ "parity-scale-codec",
 ]
 
 [[package]]

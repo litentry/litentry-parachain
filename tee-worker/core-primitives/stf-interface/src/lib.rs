@@ -23,6 +23,7 @@
 extern crate alloc;
 
 use alloc::{sync::Arc, vec::Vec};
+use codec::Encode;
 use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_types::{OpaqueCall, ShardIdentifier, H256};
@@ -54,7 +55,7 @@ where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
-	type Error;
+	type Error: Encode;
 
 	/// Execute a call on a specific state. Callbacks are added as an `OpaqueCall`.
 	///
@@ -69,7 +70,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Vec<u8>, (Self::Error, Vec<u8>)>;
+	) -> Result<Vec<u8>, Self::Error>;
 }
 
 /// Interface to execute state reading getters on a state.
@@ -84,7 +85,7 @@ where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
-	type Error;
+	type Error: Encode;
 
 	/// Execute a call. Callbacks are added as an `OpaqueCall`.
 	///
@@ -96,7 +97,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Vec<u8>, (Self::Error, Vec<u8>)>;
+	) -> Result<Vec<u8>, Self::Error>;
 
 	/// Get storages hashes that should be updated for a specific call.
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;

@@ -23,6 +23,7 @@
 #![cfg_attr(all(not(target_env = "sgx"), not(feature = "std")), no_std)]
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -201,6 +202,15 @@ impl TrustedOperation {
 			TrustedOperation::direct_call(c) => c.call.sender_identity().to_account_id(),
 			TrustedOperation::indirect_call(c) => c.call.sender_identity().to_account_id(),
 			_ => None,
+		}
+	}
+
+	pub fn req_hash(&self) -> Option<&H256> {
+		match self {
+			TrustedOperation::direct_call(c) => c.call.req_hash(),
+			TrustedOperation::indirect_call(c) => c.call.req_hash(),
+			//todo: getters should also contain req_hash ?
+			TrustedOperation::get(_) => None,
 		}
 	}
 }

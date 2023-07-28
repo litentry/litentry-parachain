@@ -139,7 +139,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Vec<u8>, (Self::Error, Vec<u8>)> {
+	) -> Result<Vec<u8>, Self::Error> {
 		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
 	}
 }
