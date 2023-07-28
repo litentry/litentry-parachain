@@ -3,6 +3,7 @@ import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
+    assertFailedEvent,
     assertWorkerError,
     buildIdentityFromKeypair,
     buildIdentityHelper,
@@ -91,6 +92,8 @@ describe('Test Identity (direct invocation)', function () {
             'substrate',
             context.substrateWallet.bob
         );
+        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -127,6 +130,9 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
+
+        const events = await eventsPromise;
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
     });
 
     step('check user sidechain storage before user shielding key creating(alice)', async function () {
@@ -409,6 +415,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -441,6 +448,8 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
+        const events = await eventsPromise;
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'InvalidIdentity');
     });
 
     step('linking identity with wrong signature', async function () {
@@ -473,6 +482,7 @@ describe('Test Identity (direct invocation)', function () {
             ethereumValidationData
         );
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
@@ -505,6 +515,8 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
+        const events = await eventsPromise;
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'VerifyEvmSignatureFailed');
     });
 
     step('linking already linked identity', async function () {
@@ -525,6 +537,7 @@ describe('Test Identity (direct invocation)', function () {
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const linkIdentityCall = createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
@@ -557,6 +570,8 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
+        const events = await eventsPromise;
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'IdentityAlreadyLinked');
     });
 
     step('deactivating identity', async function () {
@@ -790,6 +805,7 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const deactivateIdentityCall = createSignedTrustedCallDeactivateIdentity(
             context.api,
             context.mrEnclave,
@@ -819,5 +835,7 @@ describe('Test Identity (direct invocation)', function () {
             },
             res
         );
+        const events = await eventsPromise;
+        await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');
     });
 });
