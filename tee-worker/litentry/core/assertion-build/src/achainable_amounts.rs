@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
+	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithAmounts},
 	vec_to_string,
 };
 
@@ -32,10 +32,58 @@ const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> Result<Credential> {
 	debug!("Assertion Achainable build_amounts, who: {:?}", account_id_to_string(&req.who));
 
+	let (name, chain, amount1, amount2) = get_amounts_params(&param)?;
+	let p = ParamsBasicTypeWithAmounts::new(name, chain, amount1, amount2);
+
+	let mut client = AchainableClient::new();
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmounts(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request query_system_label failed {:?}", e),
+		}
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			// credential_unsigned.add_achainable(flag, date1, date2);
+
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::Amounts(param)),
+				e.into_error_detail(),
+			))
+		},
+	}
+}
+
+fn get_amounts_params(param: &AchainableAmounts) -> Result<(String, String, String, String)> {
+	let name = param.name.clone();
 	let chain = param.chain.clone();
 	let amount1 = param.amount1.clone();
 	let amount2 = param.amount2.clone();
 
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
@@ -55,19 +103,5 @@ pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> R
 		)
 	})?;
 
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
-
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::Amounts(param)),
-				e.into_error_detail(),
-			))
-		},
-	}
+	Ok((name, chain, amount1, amount2))
 }

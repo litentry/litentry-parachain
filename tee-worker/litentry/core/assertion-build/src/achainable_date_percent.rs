@@ -35,35 +35,8 @@ pub fn build_date_percent(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let chain = param.clone().chain;
-	let token = param.clone().token;
-	let date = param.clone().date;
-	let percent = param.clone().percent;
-
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let token = vec_to_string(token.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date = vec_to_string(date.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let percent = vec_to_string(percent.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
+	let (name, chain, token, date, percent) = get_date_percent_params(&param)?;
+	let p = ParamsBasicTypeWithDatePercent::new(name, chain, token, date, percent);
 
 	let mut client: AchainableClient = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
@@ -72,7 +45,6 @@ pub fn build_date_percent(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let p = ParamsBasicTypeWithDatePercent::new("Balance dropped {percent} since {date}".into(), chain, token, date, percent);
 	let mut flag = false;
 	for address in &addresses {
 		if flag {
@@ -101,4 +73,45 @@ pub fn build_date_percent(
 			))
 		},
 	}
+}
+
+fn get_date_percent_params(param: &AchainableDatePercent) -> Result<(String, String, String, String, String)> {
+	let chain = param.clone().name;
+	let chain = param.clone().chain;
+	let token = param.clone().token;
+	let date = param.clone().date;
+	let percent = param.clone().percent;
+
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;	
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let token = vec_to_string(token.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let date = vec_to_string(date.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let percent = vec_to_string(percent.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	Ok((name, chain, token, date, percent))
 }

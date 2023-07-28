@@ -32,6 +32,13 @@ const VC_SUBJECT_TYPE: &str = "Basic Type of Assertion";
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
+	let name = param.name.clone();
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
 	let chain = param.chain.clone();
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
@@ -40,7 +47,6 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		)
 	})?;
 
-	let name = "todo".to_string();
 	let p = ParamsBasicType { name, chain };
 
 	let mut client = AchainableClient::new();
@@ -50,20 +56,25 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	/// TODO:
-	/// There are many types of names&networks here
+	let mut client = AchainableClient::new();
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
 
-	// let mut flag = false;
-	// for address in &addresses {
-	// 	if flag {
-	// 		break
-	// 	}
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
 
-	// 	match client.class_of_year(address, p.clone()) {
-	// 		Ok(b) => flag = b,
-	// 		Err(e) => error!("Request class of year failed {:?}", e),
-	// 	}
-	// }
+		let ret = client.query_system_label(address, Params::ParamsBasicType(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request query_system_label failed {:?}", e),
+		}
+	}
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
+	achainable::{AchainableClient, AchainableTagAccount},
 	vec_to_string,
 };
 use crate::*;
@@ -37,10 +37,57 @@ pub fn build_date_interval(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
+	let (name, chain, start_date, end_date) = get_date_interval_params(&param)?;
+	let p = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+
+	let mut client = AchainableClient::new();
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
+
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithDateInterval(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request class of year failed {:?}", e),
+		}
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			// credential_unsigned.add_achainable(flag, date1, date2);
+
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::DateInterval(param)),
+				e.into_error_detail(),
+			))
+		},
+	}
+}
+
+fn get_date_interval_params(param: &AchainableDateInterval) -> Result<(String, String, String, String)> {
+	let chain = param.clone().name;
 	let chain = param.clone().chain;
 	let start_date = param.clone().start_date;
 	let end_date = param.clone().end_date;
-
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
@@ -60,19 +107,5 @@ pub fn build_date_interval(
 		)
 	})?;
 
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
-
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::DateInterval(param)),
-				e.into_error_detail(),
-			))
-		},
-	}
+	Ok((name, chain, start_date, end_date))
 }

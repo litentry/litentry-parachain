@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithClassOfYear},
+	achainable::{AchainableClient, AchainableTagAccount, Params, ParamsBasicTypeWithToken},
 	vec_to_string,
 };
 
@@ -32,26 +32,28 @@ const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let chain = param.clone().chain;
-	let token = param.clone().token;
+	let (name, chain, token) = get_token_params(&param)?;
+	let p = ParamsBasicTypeWithToken::new(name, chain, token);
 
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Token(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let token = vec_to_string(token.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Token(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
+	let mut client = AchainableClient::new();
+	let identities = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
 
-	/// TODO:
-	/// There are many types of names&Tokens here
-	/// name: Uniswap V3 trader / Uniswap V2 trader / Uniswap V2 {token} liquidity provider / ...
-	/// token: USDC / USDT / Aave V2 Lender
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithToken(p.clone()));
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request class of year failed {:?}", e),
+		}
+	}
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
@@ -68,4 +70,30 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 			))
 		},
 	}
+}
+
+fn get_token_params(param: &AchainableToken) -> Result<(String, String, String)> {
+	let name = param.clone().name;
+	let chain = param.clone().chain;
+	let token = param.clone().token;
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Token(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Token(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let token = vec_to_string(token.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Token(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	Ok((name, chain, token))
 }

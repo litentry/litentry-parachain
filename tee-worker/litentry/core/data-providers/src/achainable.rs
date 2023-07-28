@@ -257,6 +257,15 @@ impl ParamsBasicTypeWithClassOfYear {
 			date2,
 		}
 	}
+
+	pub fn one(name: String, chain: String, date1: String, date2: String) -> Self {
+		Self {
+			name,
+			chain,
+			date1,
+			date2,
+		}
+	}
 }
 
 pub enum EClassOfYear {

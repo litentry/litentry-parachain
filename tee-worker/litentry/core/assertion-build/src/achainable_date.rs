@@ -32,21 +32,8 @@ const VC_SUBJECT_TYPE: &str = "Account created after {date}";
 pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let chain = param.clone().chain;
-	let date = param.clone().date;
-
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Date(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date = vec_to_string(date.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Date(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
+	let (name, chain, date) = get_date_params(&param)?;
+	let p = ParamsBasicTypeWithDate::new(name, chain, date);
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
@@ -55,7 +42,6 @@ pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let p = ParamsBasicTypeWithDate::new("Account created after {date}".into(), chain, date);
 	let mut flag = false;
 	for address in &addresses {
 		if flag {
@@ -84,4 +70,31 @@ pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<
 			))
 		},
 	}
+}
+
+fn get_date_params(param: &AchainableDate) -> Result<(String, String, String)> {
+	let name = param.clone().name;
+	let chain = param.clone().chain;
+	let date = param.clone().date;
+
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Date(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Date(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let date = vec_to_string(date.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Date(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	Ok((name, chain, date))
 }

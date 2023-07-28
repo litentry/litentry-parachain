@@ -32,24 +32,9 @@ const VC_SUBJECT_TYPE: &str = "ETH Contract Creator Assertion";
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 
-	let chain = param.chain.clone();
-	let amount = param.amount.clone();
+	let (name, chain, amount) = get_amount_params(&param)?;
 
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amount(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amount(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	// TODO: Contract Creator: amount == 0
-	let p = ParamsBasicTypeWithAmount::new("Created over {amount} contracts".to_string(), chain, amount);
+	let p = ParamsBasicTypeWithAmount::new(name, chain, amount);
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -66,7 +51,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmount(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
-			Err(e) => error!("Request Contract Creator failed {:?}", e),
+			Err(e) => error!("Request query_system_label failed {:?}", e),
 		}
 	}
 
@@ -85,4 +70,31 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 			))
 		},
 	}
+}
+
+fn get_amount_params(param: AchainableAmount) -> Result<(String, String, String)> {
+	let name = param.name.clone();
+	let chain = param.chain.clone();
+	let amount = param.amount.clone();
+
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Amount(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Amount(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Amount(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	Ok((name, chain, amount))	
 }

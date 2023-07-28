@@ -39,30 +39,9 @@ pub fn build_class_of_year(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_class_of_year, who: {:?}", account_id_to_string(&req.who));
 
-	let chain = param.clone().chain;
-	let date1 = param.clone().date1;
-	let date2 = param.clone().date2;
+	let (name, chain, date1, date2) = get_class_of_year_params(&param);
 
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date1 = vec_to_string(date1.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date2 = vec_to_string(date2.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	let p = ParamsBasicTypeWithClassOfYear::new(chain, date1.clone(), date2.clone());
+	let p = ParamsBasicTypeWithClassOfYear::one(name, chain, date1.clone(), date2.clone());
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -99,4 +78,37 @@ pub fn build_class_of_year(
 			))
 		},
 	}
+}
+
+fn get_class_of_year_params(param: &AchainableClassOfYear) -> Result<(String, String, String, String)> {
+	let name = param.clone().name;
+	let chain = param.clone().chain;
+	let date1 = param.clone().date1;
+	let date2 = param.clone().date2;
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let date1 = vec_to_string(date1.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let date2 = vec_to_string(date2.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	Ok((name, chain, date1, date2))
 }

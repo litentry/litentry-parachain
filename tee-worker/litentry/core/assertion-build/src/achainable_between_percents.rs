@@ -35,29 +35,7 @@ pub fn build_between_percents(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let chain = param.clone().chain;
-	let greater_than_or_equal_to = param.clone().greater_than_or_equal_to;
-	let less_than_or_equal_to = param.clone().less_than_or_equal_to;
-
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let greater_than_or_equal_to =
-		vec_to_string(greater_than_or_equal_to.to_vec()).map_err(|_| {
-			Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
-				ErrorDetail::ParseError,
-			)
-		})?;
-	let less_than_or_equal_to = vec_to_string(less_than_or_equal_to.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
+	let (name, chain, greater_than_or_equal_to, less_than_or_equal_to) = get_between_percents_params(&param);
 
 	let mut client: AchainableClient = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
@@ -66,7 +44,7 @@ pub fn build_between_percents(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let p = ParamsBasicTypeWithBetweenPercents::new("Balance between percents".into(), chain, greater_than_or_equal_to, less_than_or_equal_to);
+	let p = ParamsBasicTypeWithBetweenPercents::new(name, chain, greater_than_or_equal_to, less_than_or_equal_to);
 	let mut flag = false;
 	for address in &addresses {
 		if flag {
@@ -95,4 +73,39 @@ pub fn build_between_percents(
 			))
 		},
 	}
+}
+
+fn get_between_percents_params(param: &AchainableBetweenPercents) -> Result<(String)> {
+	let name = param.clone().name;
+	let chain = param.clone().chain;
+	let greater_than_or_equal_to = param.clone().greater_than_or_equal_to;
+	let less_than_or_equal_to = param.clone().less_than_or_equal_to;
+
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let greater_than_or_equal_to =
+		vec_to_string(greater_than_or_equal_to.to_vec()).map_err(|_| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
+				ErrorDetail::ParseError,
+			)
+		})?;
+	let less_than_or_equal_to = vec_to_string(less_than_or_equal_to.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	Ok((name, chain, greater_than_or_equal_to, less_than_or_equal_to))
 }
