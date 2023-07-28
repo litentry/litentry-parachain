@@ -129,7 +129,7 @@ ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 ### Deployed worker service
 ##################################################
 FROM runner AS deployed-worker
-LABEL maintainer="zoltan@integritee.network"
+LABEL maintainer="litentry-dev"
 
 WORKDIR /usr/local/bin
 
