@@ -58,8 +58,6 @@ services:
     environment:
       RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
     ulimits: *a1
-  # this is actually litentry parachain, keep the litentry name so that we don't have change
-  # the service name everywhere in other yml files
   litentry-node:
     image: docker_litentry-node:latest
     networks:
