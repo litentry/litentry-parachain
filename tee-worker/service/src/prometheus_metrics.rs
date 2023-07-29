@@ -47,13 +47,13 @@ lazy_static! {
 	/// Register all the prometheus metrics we want to monitor (aside from the default process ones).
 
 	static ref ENCLAVE_ACCOUNT_FREE_BALANCE: IntGauge =
-		register_int_gauge!("integritee_worker_enclave_account_free_balance", "Free balance of the enclave account")
+		register_int_gauge!("litentry_worker_enclave_account_free_balance", "Free balance of the enclave account")
 			.unwrap();
 	static ref ENCLAVE_SIDECHAIN_BLOCK_HEIGHT: IntGauge =
-		register_int_gauge!("integritee_worker_enclave_sidechain_block_height", "Enclave sidechain block height")
+		register_int_gauge!("litentry_worker_enclave_sidechain_block_height", "Enclave sidechain block height")
 			.unwrap();
 	static ref ENCLAVE_SIDECHAIN_TOP_POOL_SIZE: IntGauge =
-		register_int_gauge!("integritee_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
+		register_int_gauge!("litentry_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
 			.unwrap();
 }
 

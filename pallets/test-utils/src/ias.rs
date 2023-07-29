@@ -105,7 +105,7 @@ pub mod consts {
 		132, 145, 21, 17, 52, 41, 40, 220, 157, 130, 48, 176,
 	];
 
-	// reproduce with "integritee_service dump_ra"
+	// reproduce with "litentry-worker dump_ra"
 	pub const TEST4_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST4.der");
 	pub const TEST5_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST5.der");
 	pub const TEST6_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST6.der");
