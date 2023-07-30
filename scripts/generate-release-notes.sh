@@ -152,12 +152,20 @@ fi
 if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then 
    echo "Generating Release Notes for Enclave"
    MRENCLAVE=$(echo "$MRENCLAVE_OUTPUT" | awk '{print $2}')
+   RUSTC_VERSION=$(grep -o 'channel = "[^"]*"' tee-worker/rust-toolchain.toml | cut -d '"' -f 2)
+   # get Sha256 hash of the code 
+   TEMP_DIR=$(mktemp -d)
+   tar -xzf "$FILENAME" -C "$TEMP_DIR" || { echo "Error extracting '$FILENAME'."; exit 1; }
+   HASH_VALUE=$(find "$TEMP_DIR" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
+   rm -rf "$TEMP_DIR"
+
    cat << EOF >> "$1" 
 ## TEE Worker Release 
 
 <CODEBLOCK>
-rustc: $RUSTC_VERSION
-mrenclave: $MRENCLAVE
+RUSTC                        : $RUSTC_VERSION
+MRENCLAVE                    : $MRENCLAVE
+SHA256                       : $HASH_VALUE
 <CODEBLOCK> 
 
 EOF

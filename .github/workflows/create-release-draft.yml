@@ -326,7 +326,8 @@ jobs:
       
       - name: Generate release notes
         run: |
-          export RUSTC_VERSION=${{ needs.build-enclave.outputs.rustc_version }}
+          export TARFILENAME=$(find "tee-worker-${{ env.RELEASE_TAG }}.tar.gz/" -type f -name "release-*.tar.gz" -print -quit)
+          export FILENAME="tee-worker-${{ env.RELEASE_TAG }}/${TARFILENAME}"
           export MRENCLAVE_OUTPUT="${{ needs.build-enclave.outputs.mrenclave }}"
           ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
