@@ -1,5 +1,3 @@
-import { Bytes } from "@polkadot/types-codec";
-
 export default {
     types: {
         WorkerRpcReturnValue: {
