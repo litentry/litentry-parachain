@@ -1,7 +1,7 @@
 services:
-    lit-substrate-di-identity-test-test:
+    lit-substrate-di-identity-test:
         image: integritee-cli:dev
-        container_name: litentry-substrate-di-identity-test-test
+        container_name: litentry-substrate-di-identity-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../cli:/usr/local/worker-cli
