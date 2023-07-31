@@ -20,9 +20,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::*;
+use crate::{*, achainable::request_achainable};
 use lc_data_providers::{
-	achainable::{AchainableClient, Params, ParamsBasicTypeWithAmount},
+	achainable::{Params, ParamsBasicTypeWithAmount},
 	vec_to_string,
 };
 
@@ -33,27 +33,15 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 
 	let (name, chain, amount) = get_amount_params(&param)?;
-
 	let p = ParamsBasicTypeWithAmount::new(name, chain, amount);
-	let mut client = AchainableClient::new();
+
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let mut flag = false;
-	for address in &addresses {
-		if flag {
-			break
-		}
-
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmount(p.clone()));
-		match ret {
-			Ok(r) => flag = r,
-			Err(e) => error!("Request query_system_label failed {:?}", e),
-		}
-	}
+	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmount(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

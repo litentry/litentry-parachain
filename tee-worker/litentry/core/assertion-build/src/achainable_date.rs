@@ -20,9 +20,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::*;
+use crate::{*, achainable::request_achainable};
 use lc_data_providers::{
-	achainable::{AchainableClient, Params, ParamsBasicTypeWithDate},
+	achainable::{Params, ParamsBasicTypeWithDate},
 	vec_to_string,
 };
 
@@ -35,25 +35,13 @@ pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<
 	let (name, chain, date) = get_date_params(&param)?;
 	let p = ParamsBasicTypeWithDate::new(name, chain, date);
 
-	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let mut flag = false;
-	for address in &addresses {
-		if flag {
-			break
-		}
-
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithDate(p.clone()));
-		match ret {
-			Ok(r) => flag = r,
-			Err(e) => error!("Request class of year failed {:?}", e),
-		}
-	}
+	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithDate(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

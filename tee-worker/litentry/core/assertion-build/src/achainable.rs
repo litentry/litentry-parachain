@@ -20,6 +20,8 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use lc_data_providers::achainable::{AchainableClient, Params};
+
 use crate::{
 	achainable_amount::build_amount, achainable_amount_holding::build_amount_holding,
 	achainable_amount_token::build_amount_token, achainable_amounts::build_amounts,
@@ -43,4 +45,24 @@ pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Cre
 		AchainableParams::Date(param) => build_date(req, param),
 		AchainableParams::Token(param) => build_token(req, param),
 	}
+}
+
+pub fn request_achainable(addresses: Vec<String>, param: Params) -> Result<bool> {
+	let mut client: AchainableClient = AchainableClient::new();
+
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let ret =
+			client.query_system_label(address, param.clone());
+		match ret {
+			Ok(r) => flag = r,
+			Err(e) => error!("Request achainable failed {:?}", e),
+		}
+	}
+
+	Ok(flag)
 }

@@ -168,7 +168,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(untagged)]
 pub enum Params {
 	ParamsBasicType(ParamsBasicType),
