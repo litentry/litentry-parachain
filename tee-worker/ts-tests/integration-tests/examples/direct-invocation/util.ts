@@ -216,7 +216,7 @@ export function createSignedTrustedCallSetIdentityNetworks(
         signer,
         mrenclave,
         nonce,
-        [subject, subject, identity, web3networks, hash]
+        [subject.toHuman(), subject.toHuman(), identity, web3networks, hash]
     );
 }
 
