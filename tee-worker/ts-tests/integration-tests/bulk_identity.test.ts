@@ -5,16 +5,13 @@ import {
     buildIdentityTxs,
     buildIdentityHelper,
     buildIdentityFromKeypair,
+    batchAndWait,
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
-import type { BatchCall } from './common/type-definitions';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
-import type { Call } from '@polkadot/types/interfaces/types';
-import type { Vec } from '@polkadot/types';
 import { assert } from 'chai';
 import { multiAccountTxSender } from './common/transactions';
-import { SubmittableResult } from '@polkadot/api';
 import type { Web3Network } from 'parachain-api';
 
 //Explain how to use this test, which has two important parameters:
@@ -35,25 +32,11 @@ describeLitentry('multiple accounts test', 2, async (context) => {
     });
 
     step('send test token to each account', async () => {
-        const txs: BatchCall = [];
-        for (let i = 0; i < substrateSigners.length; i++) {
-            //1 token
-            const tx = context.api.tx.balances.transfer(substrateSigners[i].address, '1000000000000');
-            txs.push(tx);
-        }
-        await new Promise((resolve, reject) => {
-            context.api.tx.utility
-                .batch(txs as Vec<Call>)
-                .signAndSend(context.substrateWallet.alice, (result: SubmittableResult) => {
-                    console.log(`Current status is ${result.status}`);
-                    if (result.status.isFinalized) {
-                        resolve(result.status);
-                    } else if (result.status.isInvalid) {
-                        console.log(`Transaction is ${result.status}`);
-                        reject(result.status);
-                    }
-                });
-        });
+        await batchAndWait(
+            context.api,
+            context.substrateWallet.alice,
+            substrateSigners.map((signer) => context.api.tx.balances.transfer(signer.address, '1000000000000'))
+        );
     });
 
     //test with multiple accounts

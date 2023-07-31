@@ -21,7 +21,7 @@
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
 use litentry_primitives::UserShieldingKeyNonceType;
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_std::vec::Vec;
 
 pub mod parentchain;
 pub mod storage;
@@ -71,28 +71,6 @@ pub type ActivateIdentityFn = (CallIndex, DeactivateIdentityParams);
 // pallet VCMP
 pub type RequestVCParams = (ShardIdentifier, Assertion);
 pub type RequestVCFn = (CallIndex, RequestVCParams);
-
-// pallet utility
-#[derive(Clone, Encode, Decode, Debug)]
-pub enum SupportedBatchCallParams {
-	SetUserShieldingKey(SetUserShieldingKeyParams),
-	LinkIdentity(LinkIdentityParams),
-	DeactivateIdentity(DeactivateIdentityParams),
-	ActivateIdentity(ActivateIdentityParams),
-	RequestVC(RequestVCParams),
-}
-
-// I don't find a good way to preserve the type (as values) as rust doesn't have meta programmming
-// maybe we can use generics/traits to simplify this
-pub type SupportedBatchCallMap = BTreeMap<CallIndex, SupportedBatchCallParams>;
-
-#[derive(Clone, Encode, Decode, Debug)]
-pub struct BatchCall {
-	pub index: CallIndex,
-	pub params: SupportedBatchCallParams,
-}
-// we need a vector the keep the population order
-pub type BatchAllFn = (CallIndex, Vec<BatchCall>);
 
 pub type Enclave = EnclaveGen<AccountId>;
 
