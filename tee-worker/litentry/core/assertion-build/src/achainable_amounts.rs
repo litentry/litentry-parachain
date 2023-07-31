@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount, ParamsBasicTypeWithAmounts},
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithAmounts},
 	vec_to_string,
 };
 

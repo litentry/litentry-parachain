@@ -20,13 +20,12 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use crate::*;
+use lc_credentials::Credential;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagAccount},
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithDateInterval},
 	vec_to_string,
 };
-use crate::*;
-use std::string::ToString;
-use lc_credentials::Credential;
 
 const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
 const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
@@ -53,7 +52,8 @@ pub fn build_date_interval(
 			break
 		}
 
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithDateInterval(p.clone()));
+		let ret =
+			client.query_system_label(address, Params::ParamsBasicTypeWithDateInterval(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request class of year failed {:?}", e),
@@ -77,8 +77,10 @@ pub fn build_date_interval(
 	}
 }
 
-fn get_date_interval_params(param: &AchainableDateInterval) -> Result<(String, String, String, String)> {
-	let chain = param.clone().name;
+fn get_date_interval_params(
+	param: &AchainableDateInterval,
+) -> Result<(String, String, String, String)> {
+	let name = param.clone().name;
 	let chain = param.clone().chain;
 	let start_date = param.clone().start_date;
 	let end_date = param.clone().end_date;

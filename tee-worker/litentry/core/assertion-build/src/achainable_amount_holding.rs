@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, ParamsBasicTypeWithAmountHolding, Params},
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithAmountHolding},
 	vec_to_string,
 };
 
@@ -35,7 +35,7 @@ pub fn build_amount_holding(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_holding, who: {:?}", account_id_to_string(&req.who));
 
-	let (mame, chain, amount, date, token) = get_amount_holding_params(&param)?;
+	let (name, chain, amount, date, token) = get_amount_holding_params(&param)?;
 	let p = ParamsBasicTypeWithAmountHolding::one(name, chain, amount.clone(), date.clone(), token);
 	let mut client: AchainableClient = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
@@ -50,7 +50,8 @@ pub fn build_amount_holding(
 			break
 		}
 
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmountHolding(p.clone()));
+		let ret =
+			client.query_system_label(address, Params::ParamsBasicTypeWithAmountHolding(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request class of year failed {:?}", e),
@@ -74,7 +75,9 @@ pub fn build_amount_holding(
 	}
 }
 
-fn get_amount_holding_params(param: &AchainableAmountHolding) -> Result<(String, String, String, String, Option<String>)> {
+fn get_amount_holding_params(
+	param: &AchainableAmountHolding,
+) -> Result<(String, String, String, String, Option<String>)> {
 	let name = param.name.clone();
 	let chain = param.chain.clone();
 	let amount = param.amount.clone();
@@ -115,7 +118,9 @@ fn get_amount_holding_params(param: &AchainableAmountHolding) -> Result<(String,
 			)
 		})?;
 		Some(token)
-	} else { None };
+	} else {
+		None
+	};
 
 	Ok((name, chain, amount, date, token))
 }

@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{ParamsBasicTypeWithBetweenPercents, AchainableClient, Params},
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithBetweenPercents},
 	vec_to_string,
 };
 
@@ -35,7 +35,8 @@ pub fn build_between_percents(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, greater_than_or_equal_to, less_than_or_equal_to) = get_between_percents_params(&param);
+	let (name, chain, greater_than_or_equal_to, less_than_or_equal_to) =
+		get_between_percents_params(&param)?;
 
 	let mut client: AchainableClient = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);
@@ -44,14 +45,20 @@ pub fn build_between_percents(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let p = ParamsBasicTypeWithBetweenPercents::new(name, chain, greater_than_or_equal_to, less_than_or_equal_to);
+	let p = ParamsBasicTypeWithBetweenPercents::new(
+		name,
+		chain,
+		greater_than_or_equal_to,
+		less_than_or_equal_to,
+	);
 	let mut flag = false;
 	for address in &addresses {
 		if flag {
 			break
 		}
 
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithBetweenPercents(p.clone()));
+		let ret = client
+			.query_system_label(address, Params::ParamsBasicTypeWithBetweenPercents(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request Balance between percents failed {:?}", e),
@@ -75,7 +82,9 @@ pub fn build_between_percents(
 	}
 }
 
-fn get_between_percents_params(param: &AchainableBetweenPercents) -> Result<(String)> {
+fn get_between_percents_params(
+	param: &AchainableBetweenPercents,
+) -> Result<(String, String, String, String)> {
 	let name = param.clone().name;
 	let chain = param.clone().chain;
 	let greater_than_or_equal_to = param.clone().greater_than_or_equal_to;

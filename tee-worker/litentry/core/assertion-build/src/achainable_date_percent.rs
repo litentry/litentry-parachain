@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, ParamsBasicTypeWithDatePercent, Params},
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithDatePercent},
 	vec_to_string,
 };
 
@@ -51,7 +51,8 @@ pub fn build_date_percent(
 			break
 		}
 
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithDatePercent(p.clone()));
+		let ret =
+			client.query_system_label(address, Params::ParamsBasicTypeWithDatePercent(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request class of year failed {:?}", e),
@@ -75,8 +76,10 @@ pub fn build_date_percent(
 	}
 }
 
-fn get_date_percent_params(param: &AchainableDatePercent) -> Result<(String, String, String, String, String)> {
-	let chain = param.clone().name;
+fn get_date_percent_params(
+	param: &AchainableDatePercent,
+) -> Result<(String, String, String, String, String)> {
+	let name = param.clone().name;
 	let chain = param.clone().chain;
 	let token = param.clone().token;
 	let date = param.clone().date;
@@ -87,7 +90,7 @@ fn get_date_percent_params(param: &AchainableDatePercent) -> Result<(String, Str
 			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
 			ErrorDetail::ParseError,
 		)
-	})?;	
+	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),

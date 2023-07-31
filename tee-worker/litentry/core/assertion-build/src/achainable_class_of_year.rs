@@ -20,15 +20,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use crate::*;
 use lc_credentials::Credential;
 use lc_data_providers::{
-	achainable::{Params, AchainableClient, ParamsBasicTypeWithClassOfYear},
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithClassOfYear},
 	vec_to_string,
 };
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableClassOfYear;
 use log::debug;
-use crate::*;
 
 const VC_ACHAINABLE_SUBJECT_DESCRIPTION: &str = "Class of year";
 const VC_ACHAINABLE_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
@@ -39,7 +39,7 @@ pub fn build_class_of_year(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_class_of_year, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, date1, date2) = get_class_of_year_params(&param);
+	let (name, chain, date1, date2) = get_class_of_year_params(&param)?;
 
 	let p = ParamsBasicTypeWithClassOfYear::one(name, chain, date1.clone(), date2.clone());
 	let mut client = AchainableClient::new();
@@ -55,7 +55,8 @@ pub fn build_class_of_year(
 			break
 		}
 
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithClassOfYear(p.clone()));
+		let ret =
+			client.query_system_label(address, Params::ParamsBasicTypeWithClassOfYear(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request class of year failed {:?}", e),
@@ -80,7 +81,9 @@ pub fn build_class_of_year(
 	}
 }
 
-fn get_class_of_year_params(param: &AchainableClassOfYear) -> Result<(String, String, String, String)> {
+fn get_class_of_year_params(
+	param: &AchainableClassOfYear,
+) -> Result<(String, String, String, String)> {
 	let name = param.clone().name;
 	let chain = param.clone().chain;
 	let date1 = param.clone().date1;

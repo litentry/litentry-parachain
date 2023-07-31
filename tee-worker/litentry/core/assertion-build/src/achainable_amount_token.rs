@@ -21,7 +21,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::achainable::{AchainableClient, AchainableTagDeFi};
+use lc_data_providers::{
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithAmountToken},
+	vec_to_string,
+};
 
 const VC_SUBJECT_DESCRIPTION: &str = "Uniswap User V2/V3";
 const VC_SUBJECT_TYPE: &str = "Uniswap User V2/V3 Assertion";
@@ -32,7 +35,7 @@ pub fn build_amount_token(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
 
-	let (name,chain, amount, token) = get_amount_token_params(&param)?;
+	let (name, chain, amount, token) = get_amount_token_params(&param)?;
 	let p = ParamsBasicTypeWithAmountToken::new(name, chain, amount, token);
 
 	let mut client = AchainableClient::new();
@@ -48,7 +51,8 @@ pub fn build_amount_token(
 			break
 		}
 
-		let ret = client.query_system_label(address, Params::ParamsBasicTypeWithAmountHolding(p.clone()));
+		let ret =
+			client.query_system_label(address, Params::ParamsBasicTypeWithAmountToken(p.clone()));
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request query_system_label failed {:?}", e),
@@ -72,12 +76,19 @@ pub fn build_amount_token(
 	}
 }
 
-fn get_amount_token_params(param: &AchainableAmountToken) -> Result<(String, String, String, Option<String>)> {
+fn get_amount_token_params(
+	param: &AchainableAmountToken,
+) -> Result<(String, String, String, Option<String>)> {
 	let name = param.name.clone();
 	let chain = param.chain.clone();
 	let amount = param.amount.clone();
-	let token = param.token.clone().map(|t| t).unwrap_or_else(|| ParameterString::new());
 
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
@@ -94,12 +105,14 @@ fn get_amount_token_params(param: &AchainableAmountToken) -> Result<(String, Str
 		let token = param.token.clone().unwrap();
 		let token = vec_to_string(token.to_vec()).map_err(|_| {
 			Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
+				Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
 				ErrorDetail::ParseError,
 			)
 		})?;
 		Some(token)
-	} else { None };
+	} else {
+		None
+	};
 
 	Ok((name, chain, amount, token))
 }

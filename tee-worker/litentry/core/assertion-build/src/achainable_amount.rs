@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, ParamsBasicTypeWithAmount, Params},
+	achainable::{AchainableClient, Params, ParamsBasicTypeWithAmount},
 	vec_to_string,
 };
 
@@ -72,7 +72,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 	}
 }
 
-fn get_amount_params(param: AchainableAmount) -> Result<(String, String, String)> {
+fn get_amount_params(param: &AchainableAmount) -> Result<(String, String, String)> {
 	let name = param.name.clone();
 	let chain = param.chain.clone();
 	let amount = param.amount.clone();
@@ -96,5 +96,5 @@ fn get_amount_params(param: AchainableAmount) -> Result<(String, String, String)
 		)
 	})?;
 
-	Ok((name, chain, amount))	
+	Ok((name, chain, amount))
 }

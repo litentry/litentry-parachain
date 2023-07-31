@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, ParamsBasicType},
+	achainable::{AchainableClient, Params, ParamsBasicType},
 	vec_to_string,
 };
 
@@ -35,7 +35,7 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 	let name = param.name.clone();
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
+			Assertion::Achainable(AchainableParams::Basic(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
@@ -48,13 +48,6 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 	})?;
 
 	let p = ParamsBasicType { name, chain };
-
-	let mut client = AchainableClient::new();
-	let identities = transpose_identity(&req.identities);
-	let addresses = identities
-		.into_iter()
-		.flat_map(|(_, addresses)| addresses)
-		.collect::<Vec<String>>();
 
 	let mut client = AchainableClient::new();
 	let identities = transpose_identity(&req.identities);

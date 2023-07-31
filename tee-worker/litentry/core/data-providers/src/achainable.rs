@@ -69,8 +69,7 @@ impl AchainableClient {
 		params: Params,
 	) -> Result<bool, Error> {
 		let body = ReqBody::new(address.into(), params);
-		self
-			.post(SystemLabelReqPath::default(), &body)
+		self.post(SystemLabelReqPath::default(), &body)
 			.and_then(AchainableClient::parse)
 	}
 }
@@ -230,7 +229,13 @@ impl ParamsBasicTypeWithAmountHolding {
 		Self { name, chain, amount, date, token }
 	}
 
-	pub fn one(name: String, chain: String, amount: String, date: String, token: Option<String>) -> Self {
+	pub fn one(
+		name: String,
+		chain: String,
+		amount: String,
+		date: String,
+		token: Option<String>,
+	) -> Self {
 		Self { name, chain, amount, date, token }
 	}
 }
@@ -250,21 +255,11 @@ pub struct ParamsBasicTypeWithClassOfYear {
 
 impl ParamsBasicTypeWithClassOfYear {
 	pub fn new(chain: String, date1: String, date2: String) -> Self {
-		Self {
-			name: "Account created between {dates}".to_string(),
-			chain,
-			date1,
-			date2,
-		}
+		Self { name: "Account created between {dates}".to_string(), chain, date1, date2 }
 	}
 
 	pub fn one(name: String, chain: String, date1: String, date2: String) -> Self {
-		Self {
-			name,
-			chain,
-			date1,
-			date2,
-		}
+		Self { name, chain, date1, date2 }
 	}
 }
 
@@ -313,7 +308,7 @@ impl ParamsBasicTypeWithClassOfYear {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ParamsBasicType {
 	#[serde(skip_serializing)]
