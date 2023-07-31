@@ -772,13 +772,22 @@ describe('Test Identity (direct invocation)', function () {
 
     step('check idgraph from sidechain storage before setting identity network', async function () {
         const expectedWeb3Networks = ['Polkadot', 'Litentry'];
-        const idgraphGetter = createSignedTrustedGetterIdGraph(context.api, context.substrateWallet.alice, aliceSubject);
-        const res = await sendRequestFromGetter(context.tee, context.api, context.mrEnclave, teeShieldingKey, idgraphGetter);
+        const idgraphGetter = createSignedTrustedGetterIdGraph(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
         const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // we have 3 identities and the first one is the eveSubstrateIdentity and network is ['Polkadot', 'Litentry']
         assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString());
-
     });
     step('setting identity network(alice)', async function () {
         let currentNonce = (
@@ -804,20 +813,39 @@ describe('Test Identity (direct invocation)', function () {
             context.api.createType('Vec<Web3Network>', ['Litentry', 'Kusama']).toHex(),
             requestIdentifier
         );
-        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, setIdentityNetworksCall);
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            setIdentityNetworksCall
+        );
         console.log('setIdentityNetworks call returned', res.toHuman());
         assertIsInSidechainBlock('setIdentityNetworksCall', res);
     });
 
     step('check idgraph from sidechain storage after setting identity network', async function () {
-
         const expectedWeb3Networks = ['Kusama', 'Litentry'];
-        const idgraphGetter = createSignedTrustedGetterIdGraph(context.api, context.substrateWallet.alice, aliceSubject);
-        const res = await sendRequestFromGetter(context.tee, context.api, context.mrEnclave, teeShieldingKey, idgraphGetter);
+        const idgraphGetter = createSignedTrustedGetterIdGraph(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
         const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // we have 3 identities and the first one should be changed to expectedWeb3Networks
-        assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString(), 'idgraph should be changed after setting network');
+        assert.equal(
+            idgraph[0][1].web3networks.toHuman()?.toString(),
+            expectedWeb3Networks.toString(),
+            'idgraph should be changed after setting network'
+        );
     });
 
     step('setting incompatible identity network(alice)', async function () {
@@ -844,20 +872,39 @@ describe('Test Identity (direct invocation)', function () {
             context.api.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex(),
             requestIdentifier
         );
-        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, setIdentityNetworksCall);
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            setIdentityNetworksCall
+        );
         console.log('setIdentityNetworks call returned', res.toHuman());
         assert.isTrue(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid);
     });
 
     step('check idgraph from sidechain storage after setting incompatible identity network', async function () {
         const expectedWeb3Networks = ['Kusama', 'Litentry'];
-        const idgraphGetter = createSignedTrustedGetterIdGraph(context.api, context.substrateWallet.alice, aliceSubject);
-        const res = await sendRequestFromGetter(context.tee, context.api, context.mrEnclave, teeShieldingKey, idgraphGetter);
+        const idgraphGetter = createSignedTrustedGetterIdGraph(
+            context.api,
+            context.substrateWallet.alice,
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
         const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // we have 3 identities and the first one should be changed to expectedWeb3Networks
-        assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString(), 'idgraph should not be changed after setting incompatible network');
-
+        assert.equal(
+            idgraph[0][1].web3networks.toHuman()?.toString(),
+            expectedWeb3Networks.toString(),
+            'idgraph should not be changed after setting incompatible network'
+        );
     });
     step('deactivating prime identity is disallowed', async function () {
         let currentNonce = (
