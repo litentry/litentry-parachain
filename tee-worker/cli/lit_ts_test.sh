@@ -21,4 +21,6 @@ TEST=$1
 cd /ts-tests
 
 corepack yarn install
+corepack yarn workspace parachain-api build
+corepack yarn workspace sidechain-api build
 corepack yarn run $TEST:staging
