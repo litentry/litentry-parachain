@@ -911,7 +911,9 @@ describe('Test Identity (direct invocation)', function () {
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
         const getNextNonce = () => currentNonce++;
-        const nonce = getNextNonce();
+
+        //  nonce should be plus 1 why?
+        const nonce = getNextNonce() + 1;
 
         // prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
