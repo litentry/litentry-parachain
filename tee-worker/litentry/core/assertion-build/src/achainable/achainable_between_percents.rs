@@ -20,24 +20,23 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{*, achainable::request_achainable};
-use lc_credentials::Credential;
+use crate::{achainable::request_achainable, *};
 use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithDateInterval},
+	achainable::{Params, ParamsBasicTypeWithBetweenPercents},
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
+const VC_SUBJECT_DESCRIPTION: &str = "Balance between percents";
+const VC_SUBJECT_TYPE: &str = "Balance between percents";
 
-pub fn build_date_interval(
+pub fn build_between_percents(
 	req: &AssertionBuildRequest,
-	param: AchainableDateInterval,
+	param: AchainableBetweenPercents,
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, start_date, end_date) = get_date_interval_params(&param)?;
-	let p = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+	let (name, chain, greater_than_or_equal_to, less_than_or_equal_to) =
+		get_between_percents_params(&param)?;
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -45,7 +44,14 @@ pub fn build_date_interval(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithDateInterval(p.clone()))?;
+	let p = ParamsBasicTypeWithBetweenPercents::new(
+		name,
+		chain,
+		greater_than_or_equal_to,
+		less_than_or_equal_to,
+	);
+	let flag =
+		request_achainable(addresses, Params::ParamsBasicTypeWithBetweenPercents(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
@@ -57,44 +63,46 @@ pub fn build_date_interval(
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::DateInterval(param)),
+				Assertion::Achainable(AchainableParams::BetweenPercents(param)),
 				e.into_error_detail(),
 			))
 		},
 	}
 }
 
-fn get_date_interval_params(
-	param: &AchainableDateInterval,
+fn get_between_percents_params(
+	param: &AchainableBetweenPercents,
 ) -> Result<(String, String, String, String)> {
 	let name = param.clone().name;
 	let chain = param.clone().chain;
-	let start_date = param.clone().start_date;
-	let end_date = param.clone().end_date;
+	let greater_than_or_equal_to = param.clone().greater_than_or_equal_to;
+	let less_than_or_equal_to = param.clone().less_than_or_equal_to;
+
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
+			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
+			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
-	let start_date = vec_to_string(start_date.to_vec()).map_err(|_| {
+	let greater_than_or_equal_to =
+		vec_to_string(greater_than_or_equal_to.to_vec()).map_err(|_| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
+				ErrorDetail::ParseError,
+			)
+		})?;
+	let less_than_or_equal_to = vec_to_string(less_than_or_equal_to.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let end_date = vec_to_string(end_date.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
+			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
 
-	Ok((name, chain, start_date, end_date))
+	Ok((name, chain, greater_than_or_equal_to, less_than_or_equal_to))
 }

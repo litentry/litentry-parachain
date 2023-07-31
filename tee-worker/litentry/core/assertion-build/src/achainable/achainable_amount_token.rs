@@ -20,20 +20,23 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{*, achainable::request_achainable};
+use crate::{achainable::request_achainable, *};
 use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithAmounts},
+	achainable::{Params, ParamsBasicTypeWithAmountToken},
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
+const VC_SUBJECT_DESCRIPTION: &str = "Uniswap User V2/V3";
+const VC_SUBJECT_TYPE: &str = "Uniswap User V2/V3 Assertion";
 
-pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> Result<Credential> {
-	debug!("Assertion Achainable build_amounts, who: {:?}", account_id_to_string(&req.who));
+pub fn build_amount_token(
+	req: &AssertionBuildRequest,
+	param: AchainableAmountToken,
+) -> Result<Credential> {
+	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, amount1, amount2) = get_amounts_params(&param)?;
-	let p = ParamsBasicTypeWithAmounts::new(name, chain, amount1, amount2);
+	let (name, chain, amount, token) = get_amount_token_params(&param)?;
+	let p = ParamsBasicTypeWithAmountToken::new(name, chain, amount, token);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -41,55 +44,62 @@ pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> R
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmounts(p.clone()))?;
+	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmountToken(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
+			// credential_unsigned.add_amount_token(flag, date1, date2);
 
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::Amounts(param)),
+				Assertion::Achainable(AchainableParams::AmountToken(param)),
 				e.into_error_detail(),
 			))
 		},
 	}
 }
 
-fn get_amounts_params(param: &AchainableAmounts) -> Result<(String, String, String, String)> {
+fn get_amount_token_params(
+	param: &AchainableAmountToken,
+) -> Result<(String, String, String, Option<String>)> {
 	let name = param.name.clone();
 	let chain = param.chain.clone();
-	let amount1 = param.amount1.clone();
-	let amount2 = param.amount2.clone();
+	let amount = param.amount.clone();
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
+			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
+			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
-	let amount1 = vec_to_string(amount1.to_vec()).map_err(|_| {
+	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
+			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
-	let amount2 = vec_to_string(amount2.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
+	let token = if param.token.is_some() {
+		let token = param.token.clone().unwrap();
+		let token = vec_to_string(token.to_vec()).map_err(|_| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
+				ErrorDetail::ParseError,
+			)
+		})?;
+		Some(token)
+	} else {
+		None
+	};
 
-	Ok((name, chain, amount1, amount2))
+	Ok((name, chain, amount, token))
 }

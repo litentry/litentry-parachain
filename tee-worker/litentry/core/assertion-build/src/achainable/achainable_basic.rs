@@ -20,20 +20,34 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{*, achainable::request_achainable};
+use crate::{achainable::request_achainable, *};
 use lc_data_providers::{
-	achainable::{AchainableClient, Params, ParamsBasicTypeWithToken},
+	achainable::{Params, ParamsBasicType},
 	vec_to_string,
 };
 
 const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
+const VC_SUBJECT_TYPE: &str = "Basic Type of Assertion";
 
-pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Result<Credential> {
+pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, token) = get_token_params(&param)?;
-	let p = ParamsBasicTypeWithToken::new(name, chain, token);
+	let name = param.name.clone();
+	let name = vec_to_string(name.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Basic(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let chain = param.chain.clone();
+	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Basic(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+
+	let p = ParamsBasicType { name, chain };
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -41,7 +55,7 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithToken(p.clone()))?;
+	let flag = request_achainable(addresses, Params::ParamsBasicType(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
@@ -53,35 +67,9 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::Token(param)),
+				Assertion::Achainable(AchainableParams::Basic(param)),
 				e.into_error_detail(),
 			))
 		},
 	}
-}
-
-fn get_token_params(param: &AchainableToken) -> Result<(String, String, String)> {
-	let name = param.clone().name;
-	let chain = param.clone().chain;
-	let token = param.clone().token;
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Token(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Token(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let token = vec_to_string(token.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Token(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	Ok((name, chain, token))
 }

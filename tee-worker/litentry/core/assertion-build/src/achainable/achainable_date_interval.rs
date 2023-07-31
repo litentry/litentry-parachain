@@ -20,23 +20,24 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{*, achainable::request_achainable};
+use crate::{achainable::request_achainable, *};
+use lc_credentials::Credential;
 use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithDatePercent},
+	achainable::{Params, ParamsBasicTypeWithDateInterval},
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Balance dropped {percent} since {date}";
-const VC_SUBJECT_TYPE: &str = "Balance dropped {percent} since {date}";
+const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
+const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 
-pub fn build_date_percent(
+pub fn build_date_interval(
 	req: &AssertionBuildRequest,
-	param: AchainableDatePercent,
+	param: AchainableDateInterval,
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, token, date, percent) = get_date_percent_params(&param)?;
-	let p = ParamsBasicTypeWithDatePercent::new(name, chain, token, date, percent);
+	let (name, chain, start_date, end_date) = get_date_interval_params(&param)?;
+	let p = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -44,7 +45,7 @@ pub fn build_date_percent(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithDatePercent(p.clone()))?;
+	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithDateInterval(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
@@ -56,52 +57,44 @@ pub fn build_date_percent(
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::DatePercent(param)),
+				Assertion::Achainable(AchainableParams::DateInterval(param)),
 				e.into_error_detail(),
 			))
 		},
 	}
 }
 
-fn get_date_percent_params(
-	param: &AchainableDatePercent,
-) -> Result<(String, String, String, String, String)> {
+fn get_date_interval_params(
+	param: &AchainableDateInterval,
+) -> Result<(String, String, String, String)> {
 	let name = param.clone().name;
 	let chain = param.clone().chain;
-	let token = param.clone().token;
-	let date = param.clone().date;
-	let percent = param.clone().percent;
-
+	let start_date = param.clone().start_date;
+	let end_date = param.clone().end_date;
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
-	let token = vec_to_string(token.to_vec()).map_err(|_| {
+	let start_date = vec_to_string(start_date.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
-	let date = vec_to_string(date.to_vec()).map_err(|_| {
+	let end_date = vec_to_string(end_date.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let percent = vec_to_string(percent.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
+			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
 
-	Ok((name, chain, token, date, percent))
+	Ok((name, chain, start_date, end_date))
 }

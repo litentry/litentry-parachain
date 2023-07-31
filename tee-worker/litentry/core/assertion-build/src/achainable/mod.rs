@@ -20,16 +20,31 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use crate::*;
 use lc_data_providers::achainable::{AchainableClient, Params};
+use lc_stf_task_sender::AssertionBuildRequest;
+use litentry_primitives::AchainableParams;
 
-use crate::{
+use self::{
 	achainable_amount::build_amount, achainable_amount_holding::build_amount_holding,
 	achainable_amount_token::build_amount_token, achainable_amounts::build_amounts,
 	achainable_basic::build_basic, achainable_between_percents::build_between_percents,
 	achainable_class_of_year::build_class_of_year, achainable_date::build_date,
 	achainable_date_interval::build_date_interval, achainable_date_percent::build_date_percent,
-	achainable_token::build_token, *,
+	achainable_token::build_token,
 };
+
+pub mod achainable_amount;
+pub mod achainable_amount_holding;
+pub mod achainable_amount_token;
+pub mod achainable_amounts;
+pub mod achainable_basic;
+pub mod achainable_between_percents;
+pub mod achainable_class_of_year;
+pub mod achainable_date;
+pub mod achainable_date_interval;
+pub mod achainable_date_percent;
+pub mod achainable_token;
 
 pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Credential> {
 	match param {
@@ -56,8 +71,7 @@ pub fn request_achainable(addresses: Vec<String>, param: Params) -> Result<bool>
 			break
 		}
 
-		let ret =
-			client.query_system_label(address, param.clone());
+		let ret = client.query_system_label(address, param.clone());
 		match ret {
 			Ok(r) => flag = r,
 			Err(e) => error!("Request achainable failed {:?}", e),

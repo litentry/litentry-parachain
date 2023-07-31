@@ -20,20 +20,20 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{*, achainable::request_achainable};
+use crate::{achainable::request_achainable, *};
 use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithAmount},
+	achainable::{Params, ParamsBasicTypeWithAmounts},
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Contract Creator";
-const VC_SUBJECT_TYPE: &str = "ETH Contract Creator Assertion";
+const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
+const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 
-pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
-	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
+pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> Result<Credential> {
+	debug!("Assertion Achainable build_amounts, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, amount) = get_amount_params(&param)?;
-	let p = ParamsBasicTypeWithAmount::new(name, chain, amount);
+	let (name, chain, amount1, amount2) = get_amounts_params(&param)?;
+	let p = ParamsBasicTypeWithAmounts::new(name, chain, amount1, amount2);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -41,48 +41,55 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmount(p.clone()))?;
+	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmounts(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.add_contract_creator(flag);
+			// credential_unsigned.add_achainable(flag, date1, date2);
 
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::Amount(param)),
+				Assertion::Achainable(AchainableParams::Amounts(param)),
 				e.into_error_detail(),
 			))
 		},
 	}
 }
 
-fn get_amount_params(param: &AchainableAmount) -> Result<(String, String, String)> {
+fn get_amounts_params(param: &AchainableAmounts) -> Result<(String, String, String, String)> {
 	let name = param.name.clone();
 	let chain = param.chain.clone();
-	let amount = param.amount.clone();
+	let amount1 = param.amount1.clone();
+	let amount2 = param.amount2.clone();
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amount(param.clone())),
+			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
 	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amount(param.clone())),
+			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
-	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
+	let amount1 = vec_to_string(amount1.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amount(param.clone())),
+			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
+			ErrorDetail::ParseError,
+		)
+	})?;
+	let amount2 = vec_to_string(amount2.to_vec()).map_err(|_| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
 			ErrorDetail::ParseError,
 		)
 	})?;
 
-	Ok((name, chain, amount))
+	Ok((name, chain, amount1, amount2))
 }
