@@ -1,7 +1,7 @@
 services:
-    lit-evm-di-identity-test-test:
+    lit-substrate-di-identity-test-test:
         image: integritee-cli:dev
-        container_name: litentry-evm-di-identity-test-test
+        container_name: litentry-substrate-di-identity-test-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../cli:/usr/local/worker-cli
@@ -18,7 +18,7 @@ services:
                 condition: service_healthy
         networks:
             - integritee-test-network
-        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-evm-di-identity-test 2>&1' "
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-substrate-di-identity-test 2>&1' "
         restart: "no"
 networks:
     integritee-test-network:
