@@ -524,9 +524,28 @@ impl Credential {
 		let uniswap_v3 = AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, "true");
 
 		let or_logic = AssertionLogic::new_or();
-		let assertion = AssertionLogic::new_or().add_item(uniswap_v2).add_item(uniswap_v3).add_item(or_logic);
+		let assertion = AssertionLogic::new_or()
+			.add_item(uniswap_v2)
+			.add_item(uniswap_v3)
+			.add_item(or_logic);
 
 		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_class_of_year(&mut self, value: bool, from: Vec<&str>, to: Vec<&str>) {
+		let mut or_logic = AssertionLogic::new_or();
+		for indx in 0..from.len() {
+			let mut and_logic = AssertionLogic::new_and();
+
+			let from = AssertionLogic::new_item("$from_date", Op::Equal, from[indx]);
+			let to = AssertionLogic::new_item("$to_date", Op::Equal, to[indx]);
+			and_logic = and_logic.add_item(from).add_item(to);
+
+			or_logic = or_logic.add_item(and_logic);
+		}
+
+		self.credential_subject.assertions.push(or_logic);
 		self.credential_subject.values.push(value);
 	}
 }

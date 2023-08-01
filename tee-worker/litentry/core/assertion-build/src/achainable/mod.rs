@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::achainable::{AchainableClient, Params, AchainableTagDeFi};
+use lc_data_providers::achainable::{AchainableClient, AchainableTagDeFi, Params};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
 

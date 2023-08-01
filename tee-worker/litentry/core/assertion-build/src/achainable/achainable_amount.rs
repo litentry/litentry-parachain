@@ -34,7 +34,7 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// name: "Created over {amount} contracts"
 /// chain: "ethereum",
 /// amount: "0",
-/// 
+///
 /// "assertions":[
 /// {
 ///		"and":[
@@ -45,13 +45,13 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// 		}
 /// 	]
 /// }
-/// 
-/// 
+///
+///
 /// Build ETH holder Assertion Params
 /// name: Balance over {amount}
 /// chain: "ethereum",
 /// amount: "0",
-/// 
+///
 /// assertions":[
 /// {
 ///		"and":[
@@ -62,7 +62,7 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// 		}
 /// 	]
 /// }
-/// 
+///
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 
@@ -79,7 +79,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			let (desc, subtype, content) = get_assertion_content(&name); 
+			let (desc, subtype, content) = get_assertion_content(&name);
 			credential_unsigned.add_subject_info(desc, subtype);
 			credential_unsigned.update_content(flag, content);
 

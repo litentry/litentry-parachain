@@ -27,7 +27,7 @@ use lc_data_providers::vec_to_string;
 /// Build is uniswap v2/v3 user
 /// name: Because it is necessary to request the interface four times to determine whether the uniswapv2/v3 user requires it, we can agree on the name here as IsUniswapV23User.
 /// chain: ethereum
-/// 
+///
 /// assertions":[
 /// {
 ///		"or":[
@@ -43,7 +43,7 @@ use lc_data_providers::vec_to_string;
 /// 		}
 /// 	]
 /// }
-/// 
+///
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
@@ -72,7 +72,6 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-
 			let (desc, subtype) = get_uniswap_v23_info();
 			credential_unsigned.add_subject_info(desc, subtype);
 			credential_unsigned.update_uniswap_v23_info(flag);

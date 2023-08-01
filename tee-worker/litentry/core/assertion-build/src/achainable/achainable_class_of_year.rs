@@ -29,18 +29,84 @@ use lc_data_providers::{
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableClassOfYear;
 use log::debug;
+use std::string::ToString;
 
 const VC_ACHAINABLE_SUBJECT_DESCRIPTION: &str = "Class of year";
 const VC_ACHAINABLE_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 
+/// TODO: date
+const CLASS_OF_YEAR_INTERVAL: usize = 4;
+const FROM_CLASS_OF_YEAR: [&str; CLASS_OF_YEAR_INTERVAL] =
+	["2009-01-01", "2017-01-01", "2020-01-01", "2022-01-01"];
+const TO_CLASS_OF_YEAR: [&str; CLASS_OF_YEAR_INTERVAL] =
+	["2016-12-31", "2019-12-31", "2021-12-31", "2022-12-31"];
+
+/// NOTE:
+///
+/// Build class of year
+/// name: Account created between {dates}
+/// chain: ethereum
+///
+/// assertions":[
+/// {
+///		"or":[
+/// 		and: [
+/// 			{
+/// 				"src":"$from_date",
+/// 				"op":"==",
+/// 				"dst":"2009-01-01"
+/// 			},
+/// 			{
+/// 				"src": "to_date",
+/// 				"op": "==",
+/// 				"dst": "2016-12-31"
+/// 			}
+/// 		],
+/// 		and: [
+/// 			{
+/// 				"src":"$from_date",
+/// 				"op":"==",
+/// 				"dst":"2017-01-01"
+/// 			},
+/// 			{
+/// 				"src": "to_date",
+/// 				"op": "==",
+/// 				"dst": "2019-12-31"
+/// 			}
+/// 		],
+/// 		and: [
+/// 			{
+/// 				"src":"$from_date",
+/// 				"op":"==",
+/// 				"dst":"2020-01-01"
+/// 			},
+/// 			{
+/// 				"src": "to_date",
+/// 				"op": "==",
+/// 				"dst": "2021-12-31"
+/// 			}
+/// 		],
+/// 		and: [
+/// 			{
+/// 				"src":"$from_date",
+/// 				"op":"==",
+/// 				"dst":"2022-01-01"
+/// 			},
+/// 			{
+/// 				"src": "to_date",
+/// 				"op": "==",
+/// 				"dst": "2022-12-31"
+/// 			}
+/// 		],
+/// 	]
+/// }
 pub fn build_class_of_year(
 	req: &AssertionBuildRequest,
 	param: AchainableClassOfYear,
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_class_of_year, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, date1, date2) = get_class_of_year_params(&param)?;
-	let p = ParamsBasicTypeWithClassOfYear::one(name, chain, date1.clone(), date2.clone());
+	let (name, chain, _date1, _date2) = get_class_of_year_params(&param)?;
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -48,13 +114,36 @@ pub fn build_class_of_year(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithClassOfYear(p.clone()))?;
+	let mut flag = false;
+	for indx in 0..CLASS_OF_YEAR_INTERVAL {
+		if flag {
+			break
+		}
+
+		let date1 = FROM_CLASS_OF_YEAR[indx];
+		let date2 = TO_CLASS_OF_YEAR[indx];
+		let p = ParamsBasicTypeWithClassOfYear::one(
+			name.clone(),
+			chain.clone(),
+			date1.to_string(),
+			date2.to_string(),
+		);
+
+		flag = request_achainable(
+			addresses.clone(),
+			Params::ParamsBasicTypeWithClassOfYear(p.clone()),
+		)?;
+	}
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned
 				.add_subject_info(VC_ACHAINABLE_SUBJECT_DESCRIPTION, VC_ACHAINABLE_SUBJECT_TYPE);
-			credential_unsigned.add_achainable(flag, date1, date2);
+			credential_unsigned.update_class_of_year(
+				flag,
+				FROM_CLASS_OF_YEAR.to_vec(),
+				TO_CLASS_OF_YEAR.to_vec(),
+			);
 
 			Ok(credential_unsigned)
 		},
