@@ -111,26 +111,44 @@ function restart(){
   fi
 }
 
-# Can do later 
+# TODO: Make less redundant 
 function stop_running_services() {
-  # TODO: Change this to /etc/systemd/system 
-  cd ~/.config/systemd/user || exit 
+  if [ "$ROOT" = true ]; then 
+    cd /etc/systemd/system 
+  else 
+    cd ~/.config/systemd/user || exit
+  fi  
   if [ "$ONLY_WORKER" = true ]; then
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
     for ((i = 0; i < worker_count; i++)); do
-      systemctl --user stop "worker${i}".service
+      if [ "$ROOT" = true ]; then 
+        systemctl stop "worker${i}".service
+      else 
+        systemctl --user stop "worker${i}".service
+      fi 
     done
   else
-    echo "Stopping Running Services if any"
-    systemctl --user stop para-alice.service
-    systemctl --user stop relay-alice.service
-    systemctl --user stop relay-bob.service
+    if [ "$ROOT" = true ]; then 
+      echo "Stopping Running Services if any"
+      systemctl stop para-alice.service
+      systemctl stop relay-alice.service
+      systemctl stop relay-bob.service
+    else 
+      echo "Stopping Running Services if any"
+      systemctl --user stop para-alice.service
+      systemctl --user stop relay-alice.service
+      systemctl --user stop relay-bob.service
+    fi 
 
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
     for ((i = 0; i < worker_count; i++)); do
-      systemctl --user stop "worker${i}".service
+      if [ "$ROOT" = true ]; then 
+        systemctl stop "worker${i}".service
+      else 
+        systemctl --user stop "worker${i}".service
+      fi 
     done
   fi
 
@@ -138,7 +156,6 @@ function stop_running_services() {
 
 # Note: Inspired from launch-local-binary.sh
 function restart_parachain() {
-  # TODO: change this /opt/parachain_dev 
   if [ "$ROOT" = true ]; then
       export TMPDIR=/opt/parachain_dev
   else 
@@ -197,7 +214,6 @@ function restart_parachain() {
   local service_name="relay-alice"
   local description="Alice Node for Relay Chain"
   local working_directory="$TMPDIR"
-  # TODO: change this to /var/data/log 
   if [ "$ROOT" = true ]; then 
     local log_file=/opt/parachain_dev/relay.alice.log
   else 
@@ -224,7 +240,6 @@ function restart_parachain() {
   local service_name="relay-bob"
   local description="Bob Node for Relay Chain"
   local working_directory="$TMPDIR"
-  # TODO: change this to /var/data/log 
   if [ "$ROOT" = true ]; then 
     local log_file=/opt/parachain_dev/relay.bob.log
   else 
@@ -248,7 +263,6 @@ function restart_parachain() {
   local service_name="para-alice"
   local description="Parachain Collator for Litenry Parachain"
   local working_directory="$TMPDIR"
-  # TODO: change this to /var/data/log 
   if [ "$ROOT" = true ]; then 
       local log_file=/opt/parachain_dev/para.alice.log
   else 
@@ -275,7 +289,6 @@ function restart_parachain() {
   echo "Finished restarting Parachain, Check logs at /tmp/parachain_dev/para.alice.log"
 }
 
-# TODO: check if the node version is correct in the root session 
 function register_parachain() {
   echo "register parathread now ..."
   cd "$ROOTDIR/ts-tests" || exit 
@@ -310,7 +323,6 @@ function register_parachain() {
   print_divider
 }
 
-# TODO: we need to change the target directory /opt/worker/ 
 setup_working_dir() {
     local CONFIG_DIR=~/configs
 
@@ -370,7 +382,6 @@ function restart_worker() {
     # Remove previous logs if any
     rm -r $ROOTDIR/tee-worker/log/worker${i}.log
     # Prepare the Worker Directory before restarting
-    # TODO: change this to /opt/worker/
     if [ "$ROOT" = true ]; then
       mkdir -p /opt/worker/w${i}
       setup_working_dir $ROOTDIR/tee-worker/bin /opt/worker/w${i} 
@@ -416,7 +427,6 @@ function restart_worker() {
     generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
 
     # Move the service to systemd
-    # TODO: change this etc/systemd/system 
     if [ "$ROOT" = true ]; then 
       cp -r "worker${i}.service" /etc/systemd/system 
       systemctl daemon-reload 
@@ -725,18 +735,27 @@ fi
 CONFIG=$(cat $config)
 export CONFIG
 
+# TODO: There's lot of redundanct code here to clean, let's see if functionality works fast and then clean up 
 # Move log files to log-backup
-# TODO: this logic is different when used with root, Not important to backup now 
 if [ -d "$ROOTDIR/tee-worker/log" ]; then
-  new_folder_name=$(date +"$ROOTDIR/tee-worker/log-backup/log-%Y%m%d-%H%M%S")
-  mkdir -p $new_folder_name
-  cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
-  cp /tmp/parachain_dev/*.log $new_folder_name
-  echo "Backup log into $new_folder_name"
+  if [ "$ROOT" = true ]; then 
+    new_folder_name=$(date +"opt/worker/log-backup/log-%Y%m%d-%H%M%S")
+    mkdir -p $new_folder_name
+    # TODO: this should be changed soon 
+    cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
+    cp /opt/parachain_dev/*.log $new_folder_name
+    echo "Backup log into $new_folder_name"
+  else 
+    new_folder_name=$(date +"$ROOTDIR/tee-worker/log-backup/log-%Y%m%d-%H%M%S")
+    mkdir -p $new_folder_name
+    cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
+    cp /tmp/parachain_dev/*.log $new_folder_name
+    echo "Backup log into $new_folder_name"
+  fi 
 fi
 
 # Backup worker folder
-# TODO: this logic is different when used with root, Not important to backup now 
+# Let's backup regardless of root or userspace 
 worker_count=$(echo "$CONFIG" | jq '.workers | length')
 for ((i = 0; i < worker_count; i++)); do
     if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
@@ -745,20 +764,39 @@ for ((i = 0; i < worker_count; i++)); do
         cp -r $ROOTDIR/tee-worker/tmp/w$i $new_folder_name
         echo "Backing up, previous worker binary $new_folder_name"
     fi
+    if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
+      new_folder_name=$(date +"opt/worker/w$i-%Y%m%d-%H%M%S")
+      mkdir -p new_folder_name
+      cp -r /opt/worker/w$i $new_folder_name
+      echo "Backing up, previous worker binary $new_folder_name"
+    fi
 done
 
-# TODO: this logic is different when used with root, Not important to backup now 
+
 if [ "$discard" = true ]; then
-  echo "Cleaning the existing state for Parachain and Worker."
-  stop_running_services
-  rm -rf /tmp/parachain_dev/
-  worker_count=$(echo "$CONFIG" | jq '.workers | length')
-  for ((i = 0; i < worker_count; i++)); do
+  if [ "$ROOT" = true ]; then 
+    echo "Cleaning the existing state for Parachain and Worker."
+    stop_running_services
+    rm -rf /opt/parachain_dev/ 
+    worker_count=$(echo "$CONFIG" | jq '.workers | length')
+    for ((i = 0; i < worker_count; i++)); do
+      if [ -d "/opt/worker/w$i" ]; then
+          echo "Deleting Previous worker /opt/worker/w$i"
+          rm -r "/opt/worker/w$i"
+      fi
+    done
+  else 
+    echo "Cleaning the existing state for Parachain and Worker."
+    stop_running_services
+    rm -rf /tmp/parachain_dev/
+    worker_count=$(echo "$CONFIG" | jq '.workers | length')
+    for ((i = 0; i < worker_count; i++)); do
       if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
           echo "Deleting Previous worker $ROOTDIR/tmp/w$i"
           rm -r "$ROOTDIR/tee-worker/tmp/w$i"
       fi
-  done
+    done
+  fi 
 fi
 
 # TODO: Not touching on upgrade worker for now 
