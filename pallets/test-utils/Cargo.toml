@@ -2,7 +2,7 @@
 name = "test-utils"
 description = "A crate for common utilities for tests"
 version = "0.1.0"
-authors = ['Litentry Dev']
+authors = ['Litentry Technologies GmbH <info@litentry.com>']
 homepage = 'https://litentry.com/'
 repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"

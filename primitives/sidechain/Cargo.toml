@@ -1,5 +1,5 @@
 [package]
-authors = ['Litentry Dev']
+authors = ['Litentry Technologies GmbH <info@litentry.com>']
 edition = "2021"
 homepage = 'https://litentry.com/'
 license = "Apache-2.0"

@@ -1,7 +1,7 @@
 [package]
 name = "sp-io"
 version = "7.0.0"
-authors = ['Litentry Dev and Integritee AG <hello@integritee.network> and Parity Technologies <admin@parity.io>']
+authors = ['Litentry Technologies GmbH <info@litentry.com> and Integritee AG <hello@integritee.network> and Parity Technologies <admin@parity.io>']
 edition = "2021"
 license = "Apache-2.0"
 
