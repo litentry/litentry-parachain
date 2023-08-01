@@ -56,6 +56,7 @@ impl<Call, State, StateDiff>
 	for StateInterfaceMock<State, StateDiff>
 {
 	type Error = String;
+	type Result = ();
 
 	fn execute_call(
 		_state: &mut State,
@@ -64,7 +65,7 @@ impl<Call, State, StateDiff>
 		_top_hash: H256,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-	) -> Result<Vec<u8>, Self::Error> {
+	) -> Result<Option<Self::Result>, Self::Error> {
 		unimplemented!()
 	}
 }
@@ -95,6 +96,7 @@ pub struct CallExecutorMock;
 
 impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock {
 	type Error = String;
+	type Result = ();
 
 	fn execute(
 		self,
@@ -102,7 +104,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 		_top_hash: H256,
 		_calls: &mut Vec<OpaqueCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
-	) -> Result<Vec<u8>, Self::Error> {
+	) -> Result<Option<()>, Self::Error> {
 		unimplemented!()
 	}
 

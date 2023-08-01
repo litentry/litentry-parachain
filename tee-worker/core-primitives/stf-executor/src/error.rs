@@ -88,9 +88,3 @@ impl From<itp_node_api::metadata::Error> for Error {
 		Self::NodeMetadata(e)
 	}
 }
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ErrorResponse<T: Encode> {
-	pub req_ext_hash: H256,
-	pub error: T,
-}

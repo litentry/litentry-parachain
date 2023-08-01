@@ -131,6 +131,7 @@ where
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error = Call::Error;
+	type Result = Call::Result;
 
 	fn execute_call(
 		state: &mut State,
@@ -139,7 +140,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Vec<u8>, Self::Error> {
+	) -> Result<Option<Self::Result>, Self::Error> {
 		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
 	}
 }

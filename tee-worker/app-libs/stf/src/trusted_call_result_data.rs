@@ -23,46 +23,46 @@ use codec::{Decode, Encode};
 use itp_types::H256;
 use litentry_primitives::{AesOutput, Assertion};
 
+#[derive(Encode, Decode)]
+pub enum TrustedCallResultData {
+	SetUserShieldingKey(SetUserShieldingKeyResultData),
+	LinkIdentity(LinkIdentityResultData),
+	DeactivateIdentity(DeactivateIdentityResultData),
+	ActivateIdentity(ActivateIdentityResultData),
+	RequestVC(RequestVCResultData),
+	Empty,
+}
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct SetUserShieldingKeyResponse {
+pub struct SetUserShieldingKeyResultData {
 	pub account: AccountId,
 	pub id_graph: AesOutput,
-	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct LinkIdentityResponse {
+pub struct LinkIdentityResultData {
 	pub account: AccountId,
 	pub identity: AesOutput,
 	pub id_graph: AesOutput,
-	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct DeactivateIdentityResponse {
+pub struct DeactivateIdentityResultData {
 	pub account: AccountId,
 	pub identity: AesOutput,
-	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ActivateIdentityResponse {
+pub struct ActivateIdentityResultData {
 	pub account: AccountId,
 	pub identity: AesOutput,
-	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct SetIdentityNetworksResponse {
-	pub req_ext_hash: H256,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct RequestVCResponse {
+pub struct RequestVCResultData {
 	pub account: AccountId,
 	pub assertion: Assertion,
 	pub vc_index: H256,
 	pub vc_hash: H256,
 	pub vc_payload: AesOutput,
-	pub req_ext_hash: H256,
 }

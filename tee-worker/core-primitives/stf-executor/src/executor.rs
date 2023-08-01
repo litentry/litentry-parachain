@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	error::{Error, ErrorResponse, Result},
+	error::{Error, Result},
 	traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState},
 	BatchExecutionResult, ExecutedOperation,
 };
@@ -129,7 +129,7 @@ where
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		let rpc_response_value = match Stf::execute_call(
+		return match Stf::execute_call(
 			state,
 			shard,
 			trusted_call.clone(),
@@ -140,21 +140,27 @@ where
 			Err(e) => {
 				error!("Stf execute failed: {:?}", e);
 				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
-					ErrorResponse {
+					Response {
 						req_ext_hash: h.clone(),
-						error: e
+						value: e
 					}.encode()
 				}).unwrap_or_default();
-				return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
+				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
-			Ok(res) => res,
+			Ok(result) => {
+				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
+					Response {
+						req_ext_hash: h.clone(),
+						value: result
+					}.encode()
+				}).unwrap_or_default();
+
+				if let StatePostProcessing::Prune = post_processing {
+					state.prune_state_diff();
+				}
+				Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
+			},
 		};
-
-		if let StatePostProcessing::Prune = post_processing {
-			state.prune_state_diff();
-		}
-
-		Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 	}
 }
 
@@ -318,4 +324,10 @@ fn into_map(
 	storage_entries: Vec<StorageEntryVerified<Vec<u8>>>,
 ) -> BTreeMap<Vec<u8>, Option<Vec<u8>>> {
 	storage_entries.into_iter().map(|e| e.into_tuple()).collect()
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Response<T: Encode> {
+	pub req_ext_hash: H256,
+	pub value: T,
 }
