@@ -20,7 +20,7 @@ use crate::{
 	chain_specs,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial, Block, LitentryParachainRuntimeExecutor, LitmusParachainRuntimeExecutor,
+		new_partial, AdditionalConfig, Block, LitentryParachainRuntimeExecutor, LitmusParachainRuntimeExecutor,
 		RococoParachainRuntimeExecutor,
 	},
 };
@@ -218,24 +218,24 @@ impl SubstrateCli for RelayChainCli {
 macro_rules! construct_benchmark_partials {
 	($config:expr, |$partials:ident| $code:expr) => {
 		if $config.chain_spec.is_litmus() {
-			let $partials = new_partial::<litmus_parachain_runtime::RuntimeApi, _>(
+			let $partials = new_partial::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor, _>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi>,
+				crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>,
 			)?;
 			$code
 		} else if $config.chain_spec.is_litentry() {
-			let $partials = new_partial::<litentry_parachain_runtime::RuntimeApi, _>(
+			let $partials = new_partial::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor, _>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi>,
+				crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
 			)?;
 			$code
 		} else if $config.chain_spec.is_rococo() {
-			let $partials = new_partial::<rococo_parachain_runtime::RuntimeApi, _>(
+			let $partials = new_partial::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor, _>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi>,
+				crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
 			)?;
 			$code
 		} else {
@@ -252,11 +252,12 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					litmus_parachain_runtime::RuntimeApi,
+					LitmusParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
 					false,
-					crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi>,
+					crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -265,11 +266,12 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					litentry_parachain_runtime::RuntimeApi,
+					LitentryParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
 					false,
-					crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi>,
+					crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -278,11 +280,12 @@ macro_rules! construct_async_run {
 			runner.async_run(|$config| {
 				let $components = new_partial::<
 					rococo_parachain_runtime::RuntimeApi,
+					RococoParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
 					false,
-					crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi>,
+					crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -474,10 +477,22 @@ pub fn run() -> Result<()> {
 			let collator_options = cli.run.collator_options();
 			let is_standalone = runner.config().chain_spec.is_standalone();
 
+			let evm_tracing_config = crate::evm_tracing_types::EvmTracingConfig {
+                ethapi: cli.eth_api_options.ethapi,
+                ethapi_max_permits: cli.eth_api_options.ethapi_max_permits,
+                ethapi_trace_max_count: cli.eth_api_options.ethapi_trace_max_count,
+                ethapi_trace_cache_duration: cli.eth_api_options.ethapi_trace_cache_duration,
+                eth_log_block_cache: cli.eth_api_options.eth_log_block_cache,
+                eth_statuses_cache: cli.eth_api_options.eth_statuses_cache,
+                max_past_logs: cli.eth_api_options.max_past_logs,
+                tracing_raw_max_memory_usage: cli.eth_api_options.tracing_raw_max_memory_usage,
+            };
+
 			runner.run_node_until_exit(|config| async move {
 				if is_standalone {
-					return crate::service::start_standalone_node::<rococo_parachain_runtime::RuntimeApi>(
-						config
+					return crate::service::start_standalone_node::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>(
+						config,
+						evm_tracing_config
 					)
 					.await
 					.map_err(Into::into)
@@ -524,34 +539,45 @@ pub fn run() -> Result<()> {
 				if !collator_options.relay_chain_rpc_urls.is_empty() && !cli.relay_chain_args.is_empty() {
 					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
 				}
+
+				let additional_config = AdditionalConfig {
+                    evm_tracing_config,
+                    enable_evm_rpc: cli.enable_evm_rpc,
+                    proposer_block_size_limit: cli.proposer_block_size_limit,
+                    proposer_soft_deadline_percent: cli.proposer_soft_deadline_percent
+                };
+
 				if config.chain_spec.is_litmus() {
-					crate::service::start_node::<litmus_parachain_runtime::RuntimeApi>(
+					crate::service::start_node::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>(
 						config,
 						polkadot_config,
 						collator_options,
 						id,
+						additional_config,
 						hwbench,
 					)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
 				} else if config.chain_spec.is_litentry() {
-					crate::service::start_node::<litentry_parachain_runtime::RuntimeApi>(
+					crate::service::start_node::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>(
 						config,
 						polkadot_config,
 						collator_options,
 						id,
+						additional_config,
 						hwbench,
 					)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
 				} else if config.chain_spec.is_rococo() {
-					crate::service::start_node::<rococo_parachain_runtime::RuntimeApi>(
+					crate::service::start_node::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>(
 						config,
 						polkadot_config,
 						collator_options,
 						id,
+						additional_config,
 						hwbench,
 					)
 					.await

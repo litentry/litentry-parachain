@@ -4,7 +4,7 @@ use codec::Encode;
 use fp_evm::GenesisAccount;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU128, ConstU32, ConstU64, FindAuthor, GenesisBuild},
+	traits::{ConstU128, ConstU32, FindAuthor, GenesisBuild},
 	weights::Weight,
 	ConsensusEngineId,
 };
@@ -17,8 +17,10 @@ use sp_runtime::{
 	MultiSignature,
 };
 use sp_std::vec;
-use std::{collections::BTreeMap, str::FromStr};
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+use std::collections::BTreeMap;
+
+pub type SignedExtra = (frame_system::CheckSpecVersion<Test>,);
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test, (), SignedExtra>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
@@ -33,8 +35,8 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		// Frontier
 		EVM: pallet_evm::{Pallet, Call, Config, Storage, Event<T>},
 		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Origin},
@@ -106,11 +108,14 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type WeightInfo = ();
 }
+parameter_types! {
+	pub const MinimumPeriod: u64 = 6000 / 2;
+}
 
 impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = ConstU64<1>;
+	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
@@ -121,11 +126,15 @@ where
 	T: pallet_evm_address::Config<EVMId = H160>,
 	OuterOrigin: Into<Result<RawOrigin<T::AccountId>, OuterOrigin>> + From<RawOrigin<T::AccountId>>,
 {
-	type Success = ();
+	type Success = T::AccountId;
 
-	fn try_address_origin(address: &H160, origin: OuterOrigin) -> Result<(), OuterOrigin> {
+	fn try_address_origin(
+		address: &H160,
+		origin: OuterOrigin,
+	) -> Result<T::AccountId, OuterOrigin> {
 		origin.into().and_then(|o| match o {
-			RawOrigin::Root => Ok(()),
+			// In practice, the root should withdraw to treasury account or something
+			RawOrigin::Root => Err(OuterOrigin::from(RawOrigin::Root)),
 			RawOrigin::Signed(account_id) => {
 				// AddressMapping revert logic check here
 				if H160::from_slice(&account_id.encode()[0..20]) == *address {
@@ -133,7 +142,7 @@ where
 						*address,
 						account_id.clone(),
 					) {
-						Ok(_) => Ok(()),
+						Ok(_) => Ok(account_id),
 						Err(_) => Err(OuterOrigin::from(RawOrigin::Signed(account_id))),
 					}
 				} else {
@@ -179,7 +188,10 @@ impl FindAuthor<H160> for FindAuthorTruncated {
 	where
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
-		Some(H160::from_str("1234500000000000000000000000000000000000").unwrap())
+		let author = sp_runtime::AccountId32::new(hex![
+			"d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"
+		]);
+		Some(H160::from_slice(&author.encode()[0..20]))
 	}
 }
 
@@ -187,7 +199,7 @@ pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> (U256, Weight) {
 		// Return some meaningful gas price and weight
-		(1_000_000_000u128.into(), Weight::from_ref_time(7u64))
+		(1.into(), Weight::zero())
 	}
 }
 
@@ -195,10 +207,11 @@ impl pallet_evm::Config for Test {
 	type FeeCalculator = FixedGasPrice;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
+	// type BlockHashMapping = pallet_evm::SubstrateBlockHashMapping<Self>;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressEqualAndStore<Test>;
-	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
-	// From evm address to parachain address
+	type CallOrigin = EnsureAddressEqualAndStore<Self>;
+	type WithdrawOrigin = EnsureAddressEqualAndStore<Self>;
+	// From evm address to parachain addressOnCreate
 	type AddressMapping = EVMAddressMapping<Self>;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
@@ -241,14 +254,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		alice_evm,
 		GenesisAccount {
 			nonce: U256::from(1),
-			balance: U256::from(10000000000000000u128),
+			balance: U256::from(10_000_000_000_000_000u128),
 			storage: Default::default(),
 			code: vec![],
 		},
 	);
 	pallet_balances::GenesisConfig::<Test> {
 		// Create the block author account with some balance.
-		balances: vec![(ALICE, 80000000000000000u128)],
+		balances: vec![(ALICE, 8_000_000_000_000_000_000u128)],
 	}
 	.assimilate_storage(&mut t)
 	.expect("Pallet balances storage can be assimilated");

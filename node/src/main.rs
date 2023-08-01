@@ -21,8 +21,10 @@ mod chain_specs;
 mod service;
 mod cli;
 mod command;
+mod evm_tracing_types;
 mod rpc;
 mod standalone_block_import;
+mod tracing;
 
 fn main() -> sc_cli::Result<()> {
 	command::run()

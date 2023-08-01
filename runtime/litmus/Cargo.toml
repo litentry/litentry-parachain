@@ -101,6 +101,17 @@ pallet-sidechain = { path = "../../pallets/sidechain", default-features = false 
 pallet-teeracle = { path = "../../pallets/teeracle", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
+# EVM/Frontier
+pallet-ethereum = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false, features = ["forbid-evm-reentrancy"] }
+pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false, features = ["forbid-evm-reentrancy"] }
+fp-rpc = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false }
+fp-self-contained = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false }
+
+# Moonbeam
+moonbeam-evm-tracer = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.39", default-features = false }
+moonbeam-rpc-primitives-debug = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.39", default-features = false }
+moonbeam-rpc-primitives-txpool = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.39", default-features = false }
+
 [dev-dependencies]
 cumulus-primitives-parachain-inherent = { git = 'https://github.com/paritytech/cumulus', branch = "polkadot-v0.9.39" }
 hex-literal = "0.4.1"
@@ -216,6 +227,8 @@ std = [
     "xcm/std",
     "xcm-builder/std",
     "xcm-executor/std",
+    "fp-rpc/std",
+	"fp-self-contained/std",
     "frame-benchmarking?/std",
     'runtime-common/std',
     "pallet-bridge/std",
@@ -228,6 +241,9 @@ std = [
     "pallet-sidechain/std",
     "pallet-teeracle/std",
     "pallet-vc-management/std",
+    "moonbeam-evm-tracer/std",
+	"moonbeam-rpc-primitives-debug/std",
+	"moonbeam-rpc-primitives-txpool/std",
 ]
 try-runtime = [
     "cumulus-pallet-aura-ext/try-runtime",
@@ -239,6 +255,7 @@ try-runtime = [
     "frame-support/try-runtime",
     "frame-system/try-runtime",
     "frame-try-runtime",
+    "fp-self-contained/try-runtime",
     "orml-tokens/try-runtime",
     "orml-xtokens/try-runtime",
     "pallet-asset-manager/try-runtime",
