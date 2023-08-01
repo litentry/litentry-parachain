@@ -16,7 +16,7 @@
 */
 
 use clap::Parser;
-use integritee_cli::{commands, Cli};
+use litentry_cli::{commands, Cli};
 
 fn main() {
 	env_logger::init();
