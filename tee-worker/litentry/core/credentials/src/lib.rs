@@ -509,11 +509,11 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn add_contract_creator(&mut self, value: bool) {
-		let contract_creator = AssertionLogic::new_item("$is_contract_creator", Op::GreaterThan, "true");
+	pub fn update_content(&mut self, value: bool, content: &str) {
+		let content = AssertionLogic::new_item(content, Op::GreaterThan, "true");
 
 		let and_logic = AssertionLogic::new_and();
-		let assertion = AssertionLogic::new_and().add_item(and_logic).add_item(contract_creator);
+		let assertion = AssertionLogic::new_and().add_item(and_logic).add_item(content);
 
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);

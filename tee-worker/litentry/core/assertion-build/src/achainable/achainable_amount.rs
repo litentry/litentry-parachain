@@ -26,13 +26,12 @@ use lc_data_providers::{
 	vec_to_string,
 };
 
-/// TODO: info needs update
-const VC_SUBJECT_DESCRIPTION: &str = "Contract Creator";
-const VC_SUBJECT_TYPE: &str = "ETH Contract Creator Assertion";
+const CREATED_OVER_AMOUNT_CONTRACTS: &str = "Created over {amount} contracts";
+const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 
 /// NOTE:
 /// Build Contract Creator Assertion Params
-/// name: Created over {amount} contracts
+/// name: "Created over {amount} contracts"
 /// chain: "ethereum",
 /// amount: "0",
 /// 
@@ -46,11 +45,29 @@ const VC_SUBJECT_TYPE: &str = "ETH Contract Creator Assertion";
 /// 		}
 /// 	]
 /// }
+/// 
+/// 
+/// Build ETH holder Assertion Params
+/// name: Balance over {amount}
+/// chain: "ethereum",
+/// amount: "0",
+/// 
+/// assertions":[
+/// {
+///		"and":[
+/// 		{
+/// 			"src":"$is_eth_holder",
+/// 			"op":"==",
+/// 			"dst":"true"
+/// 		}
+/// 	]
+/// }
+/// 
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 
 	let (name, chain, amount) = get_amount_params(&param)?;
-	let p = ParamsBasicTypeWithAmount::new(name, chain, amount);
+	let p = ParamsBasicTypeWithAmount::new(name.clone(), chain, amount);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -62,8 +79,9 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.add_contract_creator(flag);
+			let (desc, subtype, content) = get_assertion_content(&name); 
+			credential_unsigned.add_subject_info(desc, subtype);
+			credential_unsigned.update_content(flag, content);
 
 			Ok(credential_unsigned)
 		},
@@ -102,4 +120,17 @@ fn get_amount_params(param: &AchainableAmount) -> Result<(String, String, String
 	})?;
 
 	Ok((name, chain, amount))
+}
+
+/// TODO: info needs update
+fn get_assertion_content(name: &String) -> (&str, &str, &str) {
+	let assertion = if name == CREATED_OVER_AMOUNT_CONTRACTS {
+		("", "", "$is_contract_creator")
+	} else if name == BALANCE_OVER_AMOUNT {
+		("", "", "$is_eth_holder")
+	} else {
+		("", "", "")
+	};
+
+	assertion
 }
