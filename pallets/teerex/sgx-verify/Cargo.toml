@@ -2,9 +2,9 @@
 name = "sgx-verify"
 version = "0.1.4"
 description = "a certificate verification and IAS report parser crate for the teerex pallet"
-authors = ["Integritee AG <hello@integritee.network>"]
-homepage = "https://integritee.network/"
-repository = "https://github.com/integritee-network/pallets/"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+homepage = 'https://litentry.com/'
+repository = 'https://github.com/litentry/litentry-parachain'
 license = "GPL-3.0"
 edition = "2021"
 

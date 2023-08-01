@@ -1,9 +1,9 @@
 [package]
 name = "itp-types"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
-homepage = "https://integritee.network/"
-repository = "https://github.com/integritee-network/pallets/"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+homepage = 'https://litentry.com/'
+repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
 edition = "2021"
 

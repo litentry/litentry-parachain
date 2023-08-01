@@ -105,7 +105,7 @@ pub mod consts {
 		132, 145, 21, 17, 52, 41, 40, 220, 157, 130, 48, 176,
 	];
 
-	// reproduce with "integritee_service dump_ra"
+	// reproduce with "litentry-worker dump_ra"
 	pub const TEST4_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST4.der");
 	pub const TEST5_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST5.der");
 	pub const TEST6_CERT: &[u8] = include_bytes!("./ias-data/ra_dump_cert_TEST6.der");
@@ -115,7 +115,7 @@ pub mod consts {
 
 	pub const TEST1_DCAP_QUOTE: &[u8] = include_bytes!("./ias-data/ra_dcap_dump_quote.ra");
 
-	// reproduce with integritee-service signing-key
+	// reproduce with litentry-worker signing-key
 	pub const TEST4_SIGNER_PUB: &MrSigner =
 		include_bytes!("./ias-data/enclave-signing-pubkey-TEST4.bin");
 	// equal to TEST4! because of MRSIGNER policy it was possible to change the MRENCLAVE but keep

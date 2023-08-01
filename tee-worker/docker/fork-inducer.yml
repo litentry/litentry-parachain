@@ -10,12 +10,12 @@ services:
     build:
       context: .
       dockerfile: ping.Dockerfile
-    depends_on: [ 'integritee-node-${VERSION}', 'integritee-worker-1-${VERSION}', 'integritee-worker-2-${VERSION}' ]
+    depends_on: [ 'litentry-node-${VERSION}', 'litentry-worker-1-${VERSION}', 'litentry-worker-2-${VERSION}' ]
     networks:
-      - integritee-test-network
-    entrypoint: "ping integritee-worker-2"
+      - litentry-test-network
+    entrypoint: "ping litentry-worker-2"
   pumba-network-delay:
-    image: integritee-fork-producer:${VERSION:-dev}
+    image: litentry-fork-producer:${VERSION:-dev}
     devices:
       - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
       - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
@@ -26,18 +26,18 @@ services:
       context: .
       dockerfile: fork.Dockerfile
     depends_on:
-      integritee-node-${VERSION}:
+      litentry-node-${VERSION}:
         condition: service_healthy
-      integritee-worker-1-${VERSION}:
+      litentry-worker-1-${VERSION}:
         condition: service_healthy
-      integritee-worker-2-${VERSION}:
+      litentry-worker-2-${VERSION}:
         condition: service_healthy
     networks:
-      - integritee-test-network
+      - litentry-test-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     entrypoint:
-      "pumba --interval 3m netem --interface eth0 --duration 30s delay --time 1000 integritee-worker-2"
+      "pumba --interval 3m netem --interface eth0 --duration 30s delay --time 1000 litentry-worker-2"
 networks:
-  integritee-test-network:
+  litentry-test-network:
     driver: bridge

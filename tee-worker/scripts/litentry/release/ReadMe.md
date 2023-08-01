@@ -12,7 +12,7 @@ make release-pkg
 A release package will be generated, within which there are:
 
 - enclave.sign.so
-- integritee-service
+- litentry-worker
 - config.json.eg
 - prepare.sh
 
@@ -45,15 +45,15 @@ Before starting the workers, please make sure the target parachain is already up
 
     The service will start up like this example:
     ```
-    RUST_LOG=info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug ./integritee-service --clean-reset --ws-external --mu-ra-external-address localhost --mu-ra-port 3443 --node-port 9944 --node-url ws://127.0.0.1 --trusted-external-address wss://localhost --trusted-worker-port 2000 --untrusted-external-address ws://localhost --untrusted-http-port 4545 --untrusted-worker-port 3000 --running-mode dev --enable-mock-server run --skip-ra --dev
+    RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug ./litentry-worker --clean-reset --ws-external --mu-ra-external-address localhost --mu-ra-port 3443 --node-port 9944 --node-url ws://127.0.0.1 --trusted-external-address wss://localhost --trusted-worker-port 2000 --untrusted-external-address ws://localhost --untrusted-http-port 4545 --untrusted-worker-port 3000 --running-mode dev --enable-mock-server run --skip-ra --dev
     ```
     The first part is RUST_LOG info. In production env, most of them will be disabled. Or `RUST_LOG=info` is enough.
 
-    Starting from `./integritee-service`, the following is the real startup options:
+    Starting from `./litentry-worker`, the following is the real startup options:
 
     ```
     USAGE:
-    integritee-service [FLAGS] [OPTIONS] <SUBCOMMAND>
+    litentry-worker [FLAGS] [OPTIONS] <SUBCOMMAND>
 
     FLAGS:
         -c, --clean-reset           Cleans and purges any previous state and key files and generates them anew before starting.
@@ -105,7 +105,7 @@ Before starting the workers, please make sure the target parachain is already up
     migrate-shard    Migrate shard
     mrenclave        Dump mrenclave to stdout. base58 encoded.
     request-state    join a shard by requesting key provisioning from another worker
-    run              Start the integritee-service
+    run              Start the litentry-worker
     shielding-key    Get the public RSA3072 key from the TEE to be used to encrypt requests
     signing-key      Get the public ed25519 key the TEE uses to sign messages and extrinsics
     test             Run tests involving the enclave

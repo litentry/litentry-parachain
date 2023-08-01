@@ -1,10 +1,10 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Technologies GmbH <info@litentry.com>']
 edition = "2021"
-homepage = "https://integritee.network/"
+homepage = 'https://litentry.com/'
 license = "Apache-2.0"
 name = "teeracle-primitives"
-repository = "https://github.com/integritee-network/pallets/"
+repository = 'https://github.com/litentry/litentry-parachain'
 version = "0.1.0"
 
 [dependencies]
