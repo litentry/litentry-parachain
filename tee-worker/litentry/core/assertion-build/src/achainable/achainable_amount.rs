@@ -26,9 +26,26 @@ use lc_data_providers::{
 	vec_to_string,
 };
 
+/// TODO: info needs update
 const VC_SUBJECT_DESCRIPTION: &str = "Contract Creator";
 const VC_SUBJECT_TYPE: &str = "ETH Contract Creator Assertion";
 
+/// NOTE:
+/// Build Contract Creator Assertion Params
+/// name: Created over {amount} contracts
+/// chain: "ethereum",
+/// amount: "0",
+/// 
+/// "assertions":[
+/// {
+///		"and":[
+/// 		{
+/// 			"src":"$is_contract_creator",
+/// 			"op":"==",
+/// 			"dst":"true"
+/// 		}
+/// 	]
+/// }
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 

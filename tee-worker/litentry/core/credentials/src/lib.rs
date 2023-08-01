@@ -510,8 +510,10 @@ impl Credential {
 	}
 
 	pub fn add_contract_creator(&mut self, value: bool) {
+		let contract_creator = AssertionLogic::new_item("$is_contract_creator", Op::GreaterThan, "true");
+
 		let and_logic = AssertionLogic::new_and();
-		let assertion = AssertionLogic::new_and().add_item(and_logic);
+		let assertion = AssertionLogic::new_and().add_item(and_logic).add_item(contract_creator);
 
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
