@@ -111,6 +111,7 @@ function restart(){
   fi
 }
 
+# Can do later 
 function stop_running_services() {
   # TODO: Change this to /etc/systemd/system 
   cd ~/.config/systemd/user || exit 
@@ -138,7 +139,11 @@ function stop_running_services() {
 # Note: Inspired from launch-local-binary.sh
 function restart_parachain() {
   # TODO: change this /opt/parachain_dev 
-  export TMPDIR=/tmp/parachain_dev
+  if [ "$ROOT" = true ]; then
+      export TMPDIR=/opt/parachain_dev
+  else 
+      export TMPDIR=/tmp/parachain_dev
+  fi 
   [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 
   cd "$ROOTDIR" || exit
@@ -193,14 +198,24 @@ function restart_parachain() {
   local description="Alice Node for Relay Chain"
   local working_directory="$TMPDIR"
   # TODO: change this to /var/data/log 
-  local log_file=/tmp/parachain_dev/relay.alice.log
+  if [ "$ROOT" = true ]; then 
+    local log_file=/opt/parachain_dev/relay.alice.log
+  else 
+    local log_file=/tmp/parachain_dev/relay.alice.log
+  fi 
   local command="$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936}"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
-  cp ./${service_name}.service ~/.config/systemd/user/
+  if [ "$ROOT" = true ]; then
+    cp ./${service_name}.service /etc/systemd/system/ 
+    systemctl daemon-reload
+    systemctl start $service_name
 
-  systemctl --user daemon-reload
-  systemctl --user start $service_name
+  else 
+    cp ./${service_name}.service ~/.config/systemd/user/
+    systemctl --user daemon-reload
+    systemctl --user start $service_name
+  fi 
 
   sleep 10
 
@@ -210,34 +225,50 @@ function restart_parachain() {
   local description="Bob Node for Relay Chain"
   local working_directory="$TMPDIR"
   # TODO: change this to /var/data/log 
-  local log_file=/tmp/parachain_dev/relay.bob.log
+  if [ "$ROOT" = true ]; then 
+    local log_file=/opt/parachain_dev/relay.bob.log
+  else 
+    local log_file=/tmp/parachain_dev/para.bob.log
+  fi 
   local command="$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
-  # TODO: change this to /etc/systemd/system 
-  cp ./${service_name}.service ~/.config/systemd/user/
+  if [ "$ROOT" = true ]; then
+    cp ./${service_name}.service /etc/systemd/system/ 
+    systemctl daemon-reload
+    systemctl start $service_name
 
-  # TODO: change this to root level context, i.e. systemctl 
-  systemctl --user daemon-reload
-  systemctl --user start $service_name
+  else 
+    cp ./${service_name}.service ~/.config/systemd/user/
+    systemctl --user daemon-reload
+    systemctl --user start $service_name
+  fi 
   sleep 10
 
   local service_name="para-alice"
   local description="Parachain Collator for Litenry Parachain"
   local working_directory="$TMPDIR"
   # TODO: change this to /var/data/log 
-  local log_file=/tmp/parachain_dev/para.alice.log
+  if [ "$ROOT" = true ]; then 
+      local log_file=/opt/parachain_dev/para.alice.log
+  else 
+      local log_file=/tmp/parachain_dev/para.alice.log
+  fi 
   local command=
   # run a litentry-collator instance
   local command="${PARACHAIN_BIN} --alice --collator --force-authoring --tmp --chain $CHAIN-dev --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm --state-pruning archive --blocks-pruning archive -- --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
-  # TODO: change this to root level context 
-  cp ./${service_name}.service ~/.config/systemd/user/
+  if [ "$ROOT" = true ]; then
+    cp ./${service_name}.service /etc/systemd/system/ 
+    systemctl daemon-reload
+    systemctl start $service_name
 
-  # TODO: change this to root level context 
-  systemctl --user daemon-reload
-  systemctl --user start $service_name
+  else 
+    cp ./${service_name}.service ~/.config/systemd/user/
+    systemctl --user daemon-reload
+    systemctl --user start $service_name
+  fi 
 
   sleep 10
 
@@ -253,6 +284,10 @@ function register_parachain() {
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
+  # Using $GENESIS_STATE_PATH and $GENESIS_WASM_PATH environment variables
+  jq --arg genesis_state "$TMPDIR/genesis-state" --arg genesis_wasm "$TMPDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > updated_config.json
+  # jq '.genesis_state_path = "${TEMPDIR}/genesis-state" | .genesis_wasm_path = "${TEMPDIR}/genesis-wasm"' config.ci.json > update_config.json
+  mv updated_config.json config.ci.json 
   corepack yarn
   corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
   print_divider
@@ -327,19 +362,31 @@ function restart_worker() {
   worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
   for ((i = 0; i < worker_count; i++)); do
-    WORKER_DIR=$ROOTDIR/tee-worker/tmp/w$i
+    if [ "$ROOT" = true ]; then
+      WORKER_DIR=/opt/worker/w${i}
+    else 
+      WORKER_DIR=$ROOTDIR/tee-worker/tmp/w$i
+    fi 
     # Remove previous logs if any
     rm -r $ROOTDIR/tee-worker/log/worker${i}.log
     # Prepare the Worker Directory before restarting
     # TODO: change this to /opt/worker/
-    mkdir -p $ROOTDIR/tee-worker/tmp/w${i}
-    setup_working_dir $ROOTDIR/tee-worker/bin $ROOTDIR/tee-worker/tmp/w$i
+    if [ "$ROOT" = true ]; then
+      mkdir -p /opt/worker/w${i}
+      setup_working_dir $ROOTDIR/tee-worker/bin /opt/worker/w${i} 
+    else 
+      mkdir -p $ROOTDIR/tee-worker/tmp/w${i}
+      setup_working_dir $ROOTDIR/tee-worker/bin $ROOTDIR/tee-worker/tmp/w$i
+    fi 
 
-    # Transfer balance to the enclave account that is generated
-    echo "Transferring balance to the enclave account"
-    cd $ROOTDIR/scripts/ts-utils/ || exit 
-    corepack yarn install
-    npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
+    # We only need this in productive enclave 
+    if [ "$PRODUCTION" = true ]; then 
+      # Transfer balance to the enclave account that is generated
+      echo "Transferring balance to the enclave account"
+      cd $ROOTDIR/scripts/ts-utils/ || exit 
+      yarn install
+      npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
+    fi 
 
     cd $ROOTDIR/tee-worker || exit 
 
@@ -370,11 +417,21 @@ function restart_worker() {
 
     # Move the service to systemd
     # TODO: change this etc/systemd/system 
-    cp -r "worker${i}.service" ~/.config/systemd/user
-    systemctl --user daemon-reload
-    echo "Starting worker service"
-    cd ~/.config/systemd/user/ || exit 
-    systemctl --user start "worker${i}".service
+    if [ "$ROOT" = true ]; then 
+      cp -r "worker${i}.service" /etc/systemd/system 
+      systemctl daemon-reload 
+      echo "Starting worker service" 
+      cd /etc/systemd/system || exit 
+      systemctl start "worker${i}".service
+
+    else 
+      cp -r "worker${i}.service" ~/.config/systemd/user
+      systemctl --user daemon-reload
+      echo "Starting worker service"
+      cd ~/.config/systemd/user/ || exit 
+      systemctl --user start "worker${i}".service
+    fi 
+
   done
 }
 
