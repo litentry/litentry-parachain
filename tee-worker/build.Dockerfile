@@ -150,7 +150,7 @@ ENV SGX_SDK /opt/sgxsdk
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
 ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
 
-COPY ./docker/entrypoint.sh /entrypoint.sh
+COPY --from=builder /home/ubuntu/repo/tee-worker/docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 
