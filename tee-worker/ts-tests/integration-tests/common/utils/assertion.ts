@@ -54,19 +54,12 @@ export async function assertInitialIdGraphCreated(context: IntegrationTestContex
 
         // evm address should convert to substrate address before compare
         const who = keyringType === 'ethereum' ? eventData.account.toHuman() : eventData.account.toHex();
-        const signerEvmToSubstrateAddress =
+        const signerAddress =
             keyringType === 'ethereum'
                 ? polkadotCryptoUtils.evmToAddress(signer.address, context.chainIdentifier)
                 : u8aToHex(signer.addressRaw);
 
-        assert.equal(
-            who,
-            signerEvmToSubstrateAddress,
-            'Check IdentityLinked error: signer should be equal to who, but got ' +
-                who +
-                ' and ' +
-                signerEvmToSubstrateAddress
-        );
+        assert.equal(who, signerAddress);
 
         // check event idGraph
         const expectedPrimeIdentity = await buildIdentityHelper(
@@ -316,14 +309,7 @@ export async function assertLinkedEvent(
                 : u8aToHex(signer.addressRaw);
 
         // step 1
-        assert.equal(
-            who,
-            signerEvmToSubstrateAddress,
-            'Check IdentityLinked error: signer should be equal to who, but got ' +
-                who +
-                ' and ' +
-                signerEvmToSubstrateAddress
-        );
+        assert.equal(who, signerEvmToSubstrateAddress);
 
         // step 2
         // parse event identity
@@ -331,14 +317,7 @@ export async function assertLinkedEvent(
         // prepare expected identity
         const expectedIdentity = expectedIdentities[index];
         // compare identity
-        assert.equal(
-            eventIdentity.toHuman()?.toString(),
-            expectedIdentity.toHuman()?.toString(),
-            'Check IdentityLinked error: eventIdentityTarget should be equal to expectedIdentityTarget, but got ' +
-                eventIdentity.toString() +
-                ' and ' +
-                expectedIdentity.toString()
-        );
+        assert.equal(eventIdentity.toString(), expectedIdentity.toString());
 
         // step 3
         const eventPrimeIdentity = eventIdGraph[events.length][0];
@@ -348,15 +327,9 @@ export async function assertLinkedEvent(
             keyringType === 'ethereum' ? 'Evm' : 'Substrate',
             context
         );
+
         // compare prime identity
-        assert.equal(
-            eventPrimeIdentity.toHuman()?.toString(),
-            expectedPrimeIdentity.toHuman()?.toString(),
-            'Check IdentityLinked error: eventPrimeIdentity should be equal to expectedPrimeIdentity, but got ' +
-                eventPrimeIdentity.toString() +
-                ' and ' +
-                expectedPrimeIdentity!.toString()
-        );
+        assert.equal(eventPrimeIdentity.toString(), expectedPrimeIdentity.toString());
 
         // step 4
         const web3Networks =
@@ -366,14 +339,7 @@ export async function assertLinkedEvent(
         // parse event web3networks
         const eventWeb3Networks = eventIdGraph[events.length][1].web3networks.toHuman();
         // compare web3networks
-        assert.equal(
-            eventWeb3Networks!.toString(),
-            web3Networks.toString(),
-            'Check IdentityLinked error: eventWeb3Networks should be equal to web3Networks, but got ' +
-                eventWeb3Networks!.toString() +
-                ' and ' +
-                web3Networks.toString()
-        );
+        assert.equal(eventWeb3Networks!.toString(), web3Networks.toString());
 
         // step 5
         const eventIdentityContext = eventIdGraph[index][1];
@@ -396,14 +362,7 @@ export async function assertIdentity(
     assert.isAtLeast(events.length, 1, 'Check assertIdentity error: events length should be greater than 1');
     for (let index = 0; index < events.length; index++) {
         const identity = parseIdentity(context.sidechainRegistry, events[index].data.identity, aesKey);
-        assert.deepEqual(
-            identity.toHuman()?.toString(),
-            expectedIdentities[index].toHuman()?.toString(),
-            'identity should be equal expectedIdentities, but got ' +
-                identity.toHuman() +
-                ' and ' +
-                expectedIdentities[index].toHuman()
-        );
+        assert.deepEqual(identity.toString(), expectedIdentities[index].toString());
     }
     console.log(colors.green('assertIdentity passed'));
 }

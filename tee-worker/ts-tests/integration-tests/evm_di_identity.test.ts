@@ -7,7 +7,6 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
-    parseIdentity,
 } from './common/utils';
 import {
     assertFailedEvent,
@@ -37,15 +36,11 @@ import { Vec } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { Keyring } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
-import * as polkadotCryptoUtils from '@polkadot/util-crypto';
 describe('Test Identity (evm direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceEvmSubject: LitentryPrimitivesIdentity = undefined as any;
     let aliceEvmPair: KeyringPair = undefined as any;
-
-    // the address of substrate format of alice's evm account
-    let aliceEvmToAddress: string = undefined as any;
 
     // Alice links:
     // - a `mock_user` twitter
@@ -75,7 +70,6 @@ describe('Test Identity (evm direct invocation)', function () {
 
         aliceEvmPair = evmKeyring.addFromUri(aliceEvmPhareser);
         aliceEvmSubject = await buildIdentityFromKeypair(aliceEvmPair, context);
-        aliceEvmToAddress = polkadotCryptoUtils.evmToAddress(aliceEvmPair.address, context.chainIdentifier);
     });
 
     it('needs a lot more work to be complete');
