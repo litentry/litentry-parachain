@@ -510,10 +510,21 @@ impl Credential {
 	}
 
 	pub fn update_content(&mut self, value: bool, content: &str) {
-		let content = AssertionLogic::new_item(content, Op::GreaterThan, "true");
+		let content = AssertionLogic::new_item(content, Op::Equal, "true");
 
 		let and_logic = AssertionLogic::new_and();
 		let assertion = AssertionLogic::new_and().add_item(and_logic).add_item(content);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_uniswap_v23_info(&mut self, value: bool) {
+		let uniswap_v2 = AssertionLogic::new_item("$is_uniswap_v2_user", Op::Equal, "true");
+		let uniswap_v3 = AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, "true");
+
+		let or_logic = AssertionLogic::new_or();
+		let assertion = AssertionLogic::new_or().add_item(uniswap_v2).add_item(uniswap_v3).add_item(or_logic);
 
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);

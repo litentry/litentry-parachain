@@ -20,15 +20,30 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::request_achainable, *};
-use lc_data_providers::{
-	achainable::{Params, ParamsBasicType},
-	vec_to_string,
-};
+use crate::{achainable::is_uniswap_v2_or_v3_user, *};
+use lc_data_providers::vec_to_string;
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "Basic Type of Assertion";
-
+/// NOTE:
+/// Build is uniswap v2/v3 user
+/// name: Because it is necessary to request the interface four times to determine whether the uniswapv2/v3 user requires it, we can agree on the name here as IsUniswapV23User.
+/// chain: ethereum
+/// 
+/// assertions":[
+/// {
+///		"or":[
+/// 		{
+/// 			"src":"$is_uniswap_v2_user",
+/// 			"op":"==",
+/// 			"dst":"true"
+/// 		},
+/// 		{
+/// 			"src": "is_uniswap_v3_user",
+/// 			"op": "==",
+/// 			"dst": "true"
+/// 		}
+/// 	]
+/// }
+/// 
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
@@ -47,20 +62,20 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		)
 	})?;
 
-	let p = ParamsBasicType { name, chain };
-
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicType(p.clone()))?;
+	let flag = is_uniswap_v2_or_v3_user(addresses)?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
+
+			let (desc, subtype) = get_uniswap_v23_info();
+			credential_unsigned.add_subject_info(desc, subtype);
+			credential_unsigned.update_uniswap_v23_info(flag);
 
 			Ok(credential_unsigned)
 		},
@@ -72,4 +87,9 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 			))
 		},
 	}
+}
+
+/// TODO: Info needs update
+fn get_uniswap_v23_info() -> (&'static str, &'static str) {
+	("", "")
 }

@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::achainable::{AchainableClient, Params};
+use lc_data_providers::achainable::{AchainableClient, Params, AchainableTagDeFi};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
 
@@ -76,6 +76,24 @@ pub fn request_achainable(addresses: Vec<String>, param: Params) -> Result<bool>
 			Ok(r) => flag = r,
 			Err(e) => error!("Request achainable failed {:?}", e),
 		}
+	}
+
+	Ok(flag)
+}
+
+pub fn is_uniswap_v2_or_v3_user(addresses: Vec<String>) -> Result<bool> {
+	let mut client: AchainableClient = AchainableClient::new();
+
+	let mut flag = false;
+	for address in &addresses {
+		if flag {
+			break
+		}
+
+		let is_v2 = client.uniswap_v2_user(address).unwrap_or_default();
+		let is_v3 = client.uniswap_v3_user(address).unwrap_or_default();
+
+		flag = is_v2 || is_v3
 	}
 
 	Ok(flag)
