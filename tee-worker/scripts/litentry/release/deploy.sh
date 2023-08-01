@@ -12,15 +12,16 @@ function display_help() {
   echo "Usage: ./deploy.sh restart --build --config config.json"
   echo ""
   echo "Options:"
-  echo "  -h, --help         Display this help message and exit."
-  echo "  -b, --build        Build the binary for Parachain and Worker."
-  echo "  -d, --discard      Clean the existing state for Parachain and Worker."
-  echo "  -c, --config [Config.json] Config file for the worker."
-  echo "  -a, --only-worker   Start only the worker"
-  echo "  -x, --chain        Chain to use for Parachain Deployment"
-  echo "  -p, --parachain-port  Parachain Port Number (default: 9944)"
-  echo "  -h, --parachain-host  Parachain Host Url (default: localhost)"
-  echo "  -v, --copy-from-docker Copy the binary for Parachain from a docker image (default: litentry/litentry-parachain:tee-prod)"
+  echo "  -h, --help                  Display this help message and exit."
+  echo "  -b, --build                 Build the binary for Parachain and Worker."
+  echo "  -d, --discard               Clean the existing state for Parachain and Worker."
+  echo "  -c, --config [Config.json]  Config file for the worker."
+  echo "  -a, --only-worker           Start only the worker"
+  echo "  -x, --chain                 Chain to use for Parachain Deployment"
+  echo "  -p, --parachain-port        Parachain Port Number (default: 9944)"
+  echo "  -h, --parachain-host        Parachain Host Url (default: localhost)"
+  echo "  -v, --copy-from-docker      Copy the binary for Parachain from a docker image (default: litentry/litentry-parachain:tee-prod)"
+  echo "  -r, --root                  Run the deployment as a root user (Only use in servers where you have root permission)"
   echo ""
   echo "Arguments:"
   echo "  restart            Restart the services."
@@ -111,6 +112,7 @@ function restart(){
 }
 
 function stop_running_services() {
+  # TODO: Change this to /etc/systemd/system 
   cd ~/.config/systemd/user || exit 
   if [ "$ONLY_WORKER" = true ]; then
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
@@ -135,6 +137,7 @@ function stop_running_services() {
 
 # Note: Inspired from launch-local-binary.sh
 function restart_parachain() {
+  # TODO: change this /opt/parachain_dev 
   export TMPDIR=/tmp/parachain_dev
   [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 
@@ -189,6 +192,7 @@ function restart_parachain() {
   local service_name="relay-alice"
   local description="Alice Node for Relay Chain"
   local working_directory="$TMPDIR"
+  # TODO: change this to /var/data/log 
   local log_file=/tmp/parachain_dev/relay.alice.log
   local command="$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936}"
 
@@ -205,12 +209,15 @@ function restart_parachain() {
   local service_name="relay-bob"
   local description="Bob Node for Relay Chain"
   local working_directory="$TMPDIR"
+  # TODO: change this to /var/data/log 
   local log_file=/tmp/parachain_dev/relay.bob.log
   local command="$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
+  # TODO: change this to /etc/systemd/system 
   cp ./${service_name}.service ~/.config/systemd/user/
 
+  # TODO: change this to root level context, i.e. systemctl 
   systemctl --user daemon-reload
   systemctl --user start $service_name
   sleep 10
@@ -218,14 +225,17 @@ function restart_parachain() {
   local service_name="para-alice"
   local description="Parachain Collator for Litenry Parachain"
   local working_directory="$TMPDIR"
+  # TODO: change this to /var/data/log 
   local log_file=/tmp/parachain_dev/para.alice.log
   local command=
   # run a litentry-collator instance
   local command="${PARACHAIN_BIN} --alice --collator --force-authoring --tmp --chain $CHAIN-dev --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm --state-pruning archive --blocks-pruning archive -- --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
+  # TODO: change this to root level context 
   cp ./${service_name}.service ~/.config/systemd/user/
 
+  # TODO: change this to root level context 
   systemctl --user daemon-reload
   systemctl --user start $service_name
 
@@ -234,6 +244,7 @@ function restart_parachain() {
   echo "Finished restarting Parachain, Check logs at /tmp/parachain_dev/para.alice.log"
 }
 
+# TODO: check if the node version is correct in the root session 
 function register_parachain() {
   echo "register parathread now ..."
   cd "$ROOTDIR/ts-tests" || exit 
@@ -264,6 +275,7 @@ function register_parachain() {
   print_divider
 }
 
+# TODO: we need to change the target directory /opt/worker/ 
 setup_working_dir() {
     local CONFIG_DIR=~/configs
 
@@ -319,6 +331,7 @@ function restart_worker() {
     # Remove previous logs if any
     rm -r $ROOTDIR/tee-worker/log/worker${i}.log
     # Prepare the Worker Directory before restarting
+    # TODO: change this to /opt/worker/
     mkdir -p $ROOTDIR/tee-worker/tmp/w${i}
     setup_working_dir $ROOTDIR/tee-worker/bin $ROOTDIR/tee-worker/tmp/w$i
 
@@ -350,11 +363,13 @@ function restart_worker() {
     local service_name="worker${i}"
     local description='Worker Service for Litentry Side chain'
     local working_directory='/usr/local/bin'
+    # TODO: change this to /var/data/log 
     local log="${ROOTDIR}/tee-worker/log/worker${i}.log"
 
     generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
 
     # Move the service to systemd
+    # TODO: change this etc/systemd/system 
     cp -r "worker${i}.service" ~/.config/systemd/user
     systemctl --user daemon-reload
     echo "Starting worker service"
@@ -580,6 +595,7 @@ export PARACHAIN_HOST="localhost"
 export PARACHAIN_PORT="9944"
 export DOCKERIMAGE="litentry/litentry-parachain:tee-prod"
 export COPY_FROM_DOCKER=false
+export ROOT=false
 
 # Parse command-line options and arguments
 while [[ $# -gt 0 ]]; do
@@ -626,6 +642,10 @@ while [[ $# -gt 0 ]]; do
       export DOCKERIMAGE="$2"
       shift
       ;;
+    -r| --root)
+      export ROOT=true
+      shift
+      ;;
     restart|upgrade-worker)
       action="$1"
       shift
@@ -649,6 +669,7 @@ CONFIG=$(cat $config)
 export CONFIG
 
 # Move log files to log-backup
+# TODO: this logic is different when used with root, Not important to backup now 
 if [ -d "$ROOTDIR/tee-worker/log" ]; then
   new_folder_name=$(date +"$ROOTDIR/tee-worker/log-backup/log-%Y%m%d-%H%M%S")
   mkdir -p $new_folder_name
@@ -658,6 +679,7 @@ if [ -d "$ROOTDIR/tee-worker/log" ]; then
 fi
 
 # Backup worker folder
+# TODO: this logic is different when used with root, Not important to backup now 
 worker_count=$(echo "$CONFIG" | jq '.workers | length')
 for ((i = 0; i < worker_count; i++)); do
     if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
@@ -668,6 +690,7 @@ for ((i = 0; i < worker_count; i++)); do
     fi
 done
 
+# TODO: this logic is different when used with root, Not important to backup now 
 if [ "$discard" = true ]; then
   echo "Cleaning the existing state for Parachain and Worker."
   stop_running_services
@@ -681,6 +704,7 @@ if [ "$discard" = true ]; then
   done
 fi
 
+# TODO: Not touching on upgrade worker for now 
 # Get old MRENCLAVE
 if [ "$action" = "upgrade-worker" ]; then
   cd $ROOTDIR/tee-worker || exit 
@@ -701,7 +725,7 @@ if [ "$action" = "upgrade-worker" ]; then
   echo "Old Shard value: ${OLD_SHARD}"
 fi
 
-
+# Focusing on this first 
 if [ "$build" = true ]; then
   echo "Building the binary for Parachain and Worker."
   build_parachain
