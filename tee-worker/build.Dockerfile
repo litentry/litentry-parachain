@@ -64,8 +64,9 @@ ENV CARGO_NET_GIT_FETCH_WITH_CLI true
 ARG SGX_MODE=SW
 ENV SGX_MODE=$SGX_MODE
 
-ARG WORKER_FEATURES_ARG
-ENV WORKER_FEATURES=$WORKER_FEATURES_ARG
+ARG SGX_PRODUCTION=0
+ENV SGX_PRODUCTION=$SGX_PRODUCTION
+
 
 ENV HOME=/home/ubuntu/repo
 
@@ -86,10 +87,11 @@ ARG FINGERPRINT=none
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
-RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
-	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db \
+RUN --mount=type=cache,id=cargo-registry-cache,target=/opt/rust/registry/cache,sharing=private \
+	--mount=type=cache,id=cargo-registry-index,target=/opt/rust/registry/index,sharing=private \
+	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db,sharing=private \
 	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
-	echo ${FINGERPRINT} && make && cargo test --release && sccache --show-stats
+	echo ${FINGERPRINT} && make && make identity && cargo test --release && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################
@@ -139,14 +141,19 @@ COPY --from=builder /home/ubuntu/repo/tee-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
-RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/integritee-service
 RUN ls -al /usr/local/bin
 
 # checks
 ENV SGX_SDK /opt/sgxsdk
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
+ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
+
+COPY ./docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+
 RUN ldd /usr/local/bin/integritee-service && \
     /usr/local/bin/integritee-service --version
 
-ENTRYPOINT ["/usr/local/bin/integritee-service"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -17,7 +17,7 @@ evm = [
     "ita-sgx-runtime/evm",
     "ita-stf/evm",
 ]
-production = ["itp-settings/production"]
+production = ["itp-settings/production", "itp-attestation-handler/production"]
 sidechain = ["itp-settings/sidechain", "itp-top-pool-author/sidechain"]
 offchain-worker = [
     "itp-settings/offchain-worker",
@@ -33,7 +33,8 @@ test = [
     "itc-parentchain/test",
     "itp-attestation-handler/test",
     "itp-extrinsics-factory/mocks",
-    "itp-sgx-crypto/mocks",
+    "itp-sgx-crypto/test",
+    "itp-sgx-temp-dir",
     "itp-stf-executor/test",
     "itp-stf-executor/mocks",
     "itp-stf-state-handler/test",
@@ -45,6 +46,7 @@ test = [
     # substrate
     "frame-system",
 ]
+dcap = []
 
 [target.'cfg(not(target_env = "sgx"))'.dependencies]
 sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_tcrypto_helper" }
@@ -74,6 +76,8 @@ jsonrpc-core = { default-features = false, git = "https://github.com/scs/jsonrpc
 # mesalock
 env_logger = { git = "https://github.com/integritee-network/env_logger-sgx" }
 log = { git = "https://github.com/integritee-network/log-sgx" }
+# Todo #1313: use the `once_cell` included in rusts core library once we use rust v1.70.0
+once_cell = { git = "https://github.com/mesalock-linux/once_cell-sgx" }
 rustls = { rev = "sgx_1.1.3", features = ["dangerous_configuration"], git = "https://github.com/mesalock-linux/rustls" }
 serde = { tag = "sgx_1.1.3", git = "https://github.com/mesalock-linux/serde-sgx", features = ["alloc", "mesalock_sgx"] }
 serde_derive = { git = "https://github.com/mesalock-linux/serde-sgx" }
@@ -141,6 +145,9 @@ frame-system = { optional = true, default-features = false, git = "https://githu
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+
+# test-deps
+itp-sgx-temp-dir = { version = "0.1", default-features = false, optional = true, path = "../core-primitives/sgx/temp-dir" }
 
 [patch.crates-io]
 env_logger = { git = "https://github.com/integritee-network/env_logger-sgx" }

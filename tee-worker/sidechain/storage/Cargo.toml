@@ -14,6 +14,7 @@ serde = { version = "1.0", features = ["derive"] }
 thiserror = "1.0"
 
 # integritee
+itp-settings = { path = "../../core-primitives/settings" }
 itp-types = { path = "../../core-primitives/types" }
 its-primitives = { path = "../primitives" }
 

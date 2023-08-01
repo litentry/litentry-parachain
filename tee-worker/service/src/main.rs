@@ -18,7 +18,7 @@
 #![cfg_attr(test, feature(assert_matches))]
 
 #[cfg(feature = "teeracle")]
-use crate::teeracle::start_interval_market_update;
+use crate::teeracle::{schedule_periodic_reregistration_thread, start_periodic_market_update};
 
 #[cfg(not(feature = "dcap"))]
 use crate::utils::check_files;
@@ -65,16 +65,11 @@ use itp_node_api::{
 	metadata::NodeMetadata,
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
-use itp_settings::{
-	files::SIDECHAIN_STORAGE_PATH,
-	worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider},
-};
+use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
 use itp_stf_primitives::types::KeyPair;
 
 #[cfg(feature = "dcap")]
 use itp_utils::hex::hex_encode;
-// #[cfg(feature = "dcap")]
-// use litentry_primitives::ParentchainHash as Hash;
 
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
@@ -89,7 +84,7 @@ use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
 	rpc::HandleSubscription, serde_impls::StorageKey, storage_key, GetHeader, GetStorage,
-	SubmitAndWatch, SubscribeChain, SubscribeEvents, XtStatus,
+	SubmitAndWatchUntilSuccess, SubscribeChain, SubscribeEvents,
 };
 
 #[cfg(feature = "dcap")]
@@ -101,10 +96,7 @@ use sp_core::{
 	Pair,
 };
 use sp_keyring::AccountKeyring;
-use std::{
-	collections::HashSet, env, fs::File, io::Read, path::PathBuf, str, sync::Arc, thread,
-	time::Duration,
-};
+use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
 extern crate config as rs_config;
 use sp_runtime::traits::Header as HeaderTrait;
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
@@ -157,14 +149,16 @@ fn main() {
 
 	let clean_reset = matches.is_present("clean-reset");
 	if clean_reset {
-		setup::purge_files_from_cwd().unwrap();
+		setup::purge_files_from_dir(config.data_dir()).unwrap();
 	}
 
 	// build the entire dependency tree
 	let tokio_handle = Arc::new(GlobalTokioHandle {});
 	let sidechain_blockstorage = Arc::new(
-		SidechainStorageLock::<SignedSidechainBlock>::new(PathBuf::from(&SIDECHAIN_STORAGE_PATH))
-			.unwrap(),
+		SidechainStorageLock::<SignedSidechainBlock>::from_base_path(
+			config.data_dir().to_path_buf(),
+		)
+		.unwrap(),
 	);
 	let node_api_factory =
 		Arc::new(NodeApiFactory::new(config.node_url(), AccountKeyring::Alice.pair()));
@@ -197,10 +191,25 @@ fn main() {
 		enclave_metrics_receiver,
 	)));
 
+	let quoting_enclave_target_info = match enclave.qe_get_target_info() {
+		Ok(target_info) => Some(target_info),
+		Err(e) => {
+			warn!("Setting up DCAP - qe_get_target_info failed with error: {:#?}, continuing.", e);
+			None
+		},
+	};
+	let quote_size = match enclave.qe_get_quote_size() {
+		Ok(size) => Some(size),
+		Err(e) => {
+			warn!("Setting up DCAP - qe_get_quote_size failed with error: {:#?}, continuing.", e);
+			None
+		},
+	};
+
 	let data_provider_config = get_data_provider_config(&config);
 
-	if let Some(run_config) = &config.run_config {
-		let shard = extract_shard(&run_config.shard, enclave.as_ref());
+	if let Some(run_config) = config.run_config() {
+		let shard = extract_shard(run_config.shard(), enclave.as_ref());
 
 		println!("Worker Config: {:?}", config);
 
@@ -234,12 +243,12 @@ fn main() {
 		let node_api =
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
 
-		if run_config.request_state {
+		if run_config.request_state() {
 			sync_state::sync_state::<_, _, WorkerModeProvider>(
 				&node_api,
 				&shard,
 				enclave.as_ref(),
-				run_config.skip_ra,
+				run_config.skip_ra(),
 			);
 		}
 
@@ -252,6 +261,8 @@ fn main() {
 			node_api,
 			tokio_handle,
 			initialization_handler,
+			quoting_enclave_target_info,
+			quote_size,
 		);
 	} else if let Some(smatches) = matches.subcommand_matches("request-state") {
 		println!("*** Requesting state from a registered worker \n");
@@ -259,7 +270,7 @@ fn main() {
 			node_api_factory.create_api().expect("Failed to create parentchain node API");
 		sync_state::sync_state::<_, _, WorkerModeProvider>(
 			&node_api,
-			&extract_shard(&smatches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
+			&extract_shard(smatches.value_of("shard"), enclave.as_ref()),
 			enclave.as_ref(),
 			smatches.is_present("skip-ra"),
 		);
@@ -286,7 +297,7 @@ fn main() {
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
 		setup::init_shard(
 			enclave.as_ref(),
-			&extract_shard(&sub_matches.value_of("shard").map(|s| s.to_string()), enclave.as_ref()),
+			&extract_shard(sub_matches.value_of("shard"), enclave.as_ref()),
 		);
 	} else if let Some(sub_matches) = matches.subcommand_matches("test") {
 		if sub_matches.is_present("provisioning-server") {
@@ -294,16 +305,15 @@ fn main() {
 			enclave_run_state_provisioning_server(
 				enclave.as_ref(),
 				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+				quoting_enclave_target_info.as_ref(),
+				quote_size.as_ref(),
 				&config.mu_ra_url(),
 				sub_matches.is_present("skip-ra"),
 			);
 			println!("[+] Done!");
 		} else if sub_matches.is_present("provisioning-client") {
 			println!("*** Running Enclave MU-RA TLS client\n");
-			let shard = extract_shard(
-				&sub_matches.value_of("shard").map(|s| s.to_string()),
-				enclave.as_ref(),
-			);
+			let shard = extract_shard(sub_matches.value_of("shard"), enclave.as_ref());
 			enclave_request_state_provisioning(
 				enclave.as_ref(),
 				sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
@@ -359,6 +369,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	node_api: ParentchainApi,
 	tokio_handle_getter: Arc<T>,
 	initialization_handler: Arc<InitializationHandler>,
+	quoting_enclave_target_info: Option<sgx_target_info_t>,
+	quote_size: Option<u32>,
 ) where
 	T: GetTokioHandle,
 	E: EnclaveBase
@@ -373,8 +385,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
 	WorkerModeProvider: ProvideWorkerMode,
 {
-	let run_config = config.run_config.clone().expect("Run config missing");
-	let skip_ra = run_config.skip_ra;
+	let run_config = config.run_config().clone().expect("Run config missing");
+	let skip_ra = run_config.skip_ra();
 
 	println!("Integritee Worker v{}", VERSION);
 	info!("starting worker on shard {}", shard.encode().to_base58());
@@ -393,13 +405,15 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// let new workers call us for key provisioning
 	println!("MU-RA server listening on {}", config.mu_ra_url());
-	let is_development_mode = run_config.dev;
+	let is_development_mode = run_config.dev();
 	let ra_url = config.mu_ra_url();
 	let enclave_api_key_prov = enclave.clone();
 	thread::spawn(move || {
 		enclave_run_state_provisioning_server(
 			enclave_api_key_prov.as_ref(),
 			sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE,
+			quoting_enclave_target_info.as_ref(),
+			quote_size.as_ref(),
 			&ra_url,
 			skip_ra,
 		);
@@ -433,7 +447,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// ------------------------------------------------------------------------
 	// Start prometheus metrics server.
-	if config.enable_metrics_server {
+	if config.enable_metrics_server() {
 		let enclave_wallet =
 			Arc::new(EnclaveAccountInfoProvider::new(node_api.clone(), tee_accountid.clone()));
 		let metrics_handler = Arc::new(MetricsHandler::new(enclave_wallet));
@@ -508,18 +522,15 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	register_collateral(&node_api, &*enclave, &tee_accountid, is_development_mode, skip_ra);
 
 	let trusted_url = config.trusted_worker_url_external();
-	#[cfg(feature = "dcap")]
-	let marblerun_base_url =
-		run_config.marblerun_base_url.unwrap_or("http://localhost:9944".to_owned());
 
-	#[cfg(feature = "dcap")]
+	#[cfg(feature = "attesteer")]
 	fetch_marblerun_events_every_hour(
 		node_api.clone(),
 		enclave.clone(),
 		tee_accountid.clone(),
 		is_development_mode,
 		trusted_url.clone(),
-		marblerun_base_url.clone(),
+		run_config.marblerun_base_url().to_string(),
 	);
 
 	// ------------------------------------------------------------------------
@@ -532,6 +543,23 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	} else {
 		println!("[!] creating remote attestation report and create enclave register extrinsic.");
 	};
+
+	// clones because of the move
+	let enclave2 = enclave.clone();
+	let node_api2 = node_api.clone();
+	let tee_accountid2 = tee_accountid.clone();
+	let trusted_url2 = trusted_url.clone();
+	#[cfg(feature = "dcap")]
+	enclave2.set_sgx_qpl_logging().expect("QPL logging setup failed");
+	#[cfg(not(feature = "dcap"))]
+	let register_xt = move || enclave2.generate_ias_ra_extrinsic(&trusted_url2, skip_ra).unwrap();
+	#[cfg(feature = "dcap")]
+	let register_xt = move || enclave2.generate_dcap_ra_extrinsic(&trusted_url, skip_ra).unwrap();
+
+	let _send_register_xt = move || {
+		send_extrinsic(register_xt(), &node_api2, &tee_accountid2.clone(), is_development_mode)
+	};
+
 	#[cfg(not(feature = "dcap"))]
 	let xt = enclave.generate_ias_ra_extrinsic(&trusted_url, skip_ra).unwrap();
 	#[cfg(feature = "dcap")]
@@ -623,9 +651,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// initialize teeracle interval
 	#[cfg(feature = "teeracle")]
 	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
-		start_interval_market_update(
+		schedule_periodic_reregistration_thread(
+			_send_register_xt,
+			run_config.reregister_teeracle_interval(),
+		);
+
+		start_periodic_market_update(
 			&node_api,
-			run_config.teeracle_update_interval,
+			run_config.teeracle_update_interval(),
 			enclave.as_ref(),
 			&teeracle_tokio_handle,
 		);
@@ -869,7 +902,7 @@ fn print_events(events: Vec<Event>) {
 	}
 }
 
-#[cfg(feature = "dcap")]
+#[cfg(feature = "attesteer")]
 fn fetch_marblerun_events_every_hour<E>(
 	api: ParentchainApi,
 	enclave: Arc<E>,
@@ -891,7 +924,7 @@ fn fetch_marblerun_events_every_hour<E>(
 				&accountid,
 				is_development_mode,
 				url.clone(),
-				marblerun_base_url.clone(),
+				&marblerun_base_url,
 			);
 
 			thread::sleep(Duration::from_secs(POLL_INTERVAL_5_MINUTES_IN_SECS));
@@ -900,17 +933,17 @@ fn fetch_marblerun_events_every_hour<E>(
 
 	handle.join().unwrap()
 }
-#[cfg(feature = "dcap")]
+#[cfg(feature = "attesteer")]
 fn register_quotes_from_marblerun(
 	api: &ParentchainApi,
 	enclave: Arc<dyn RemoteAttestation>,
 	accountid: &AccountId32,
 	is_development_mode: bool,
 	url: String,
-	marblerun_base_url: String,
+	marblerun_base_url: &str,
 ) {
 	let enclave = enclave.as_ref();
-	let events = prometheus_metrics::fetch_marblerun_events(&marblerun_base_url)
+	let events = prometheus_metrics::fetch_marblerun_events(marblerun_base_url)
 		.map_err(|e| {
 			info!("Fetching events from Marblerun failed with: {:?}, continuing with 0 events.", e);
 		})
@@ -938,13 +971,14 @@ fn register_collateral(
 	skip_ra: bool,
 ) {
 	//TODO generate_dcap_ra_quote() does not really need skip_ra, rethink how many layers skip_ra should be passed along
-	let dcap_quote = enclave.generate_dcap_ra_quote(skip_ra).unwrap();
 	if !skip_ra {
+		let dcap_quote = enclave.generate_dcap_ra_quote(skip_ra).unwrap();
 		let (fmspc, _tcb_info) = extract_tcb_info_from_raw_dcap_quote(&dcap_quote).unwrap();
-
+		println!("[>] DCAP setup: register QE collateral");
 		let uxt = enclave.generate_register_quoting_enclave_extrinsic(fmspc).unwrap();
 		send_extrinsic(uxt, api, accountid, is_development_mode);
 
+		println!("[>] DCAP setup: register TCB info");
 		let uxt = enclave.generate_register_tcb_info_extrinsic(fmspc).unwrap();
 		send_extrinsic(uxt, api, accountid, is_development_mode);
 	}
@@ -963,13 +997,19 @@ fn send_extrinsic(
 		return None
 	}
 
-	println!("[>] Register the TCB info (send the extrinsic)");
-	let register_qe_block_hash = api
-		.submit_and_watch_opaque_extrinsic_until(extrinsic.into(), XtStatus::Finalized)
-		.unwrap()
-		.block_hash;
-	println!("[<] Extrinsic got finalized. Block hash: {:?}\n", register_qe_block_hash);
-	register_qe_block_hash
+	println!("[>] send extrinsic");
+
+	match api.submit_and_watch_opaque_extrinsic_until_success(extrinsic.into(), true) {
+		Ok(xt_report) => {
+			let register_qe_block_hash = xt_report.block_hash;
+			println!("[<] Extrinsic got finalized. Block hash: {:?}\n", register_qe_block_hash);
+			register_qe_block_hash
+		},
+		Err(e) => {
+			error!("ExtrinsicFailed {:?}", e);
+			None
+		},
+	}
 }
 
 /// Subscribe to the node API finalized heads stream and trigger a parent chain sync

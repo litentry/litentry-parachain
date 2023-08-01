@@ -100,7 +100,6 @@ class Worker:
     def purge(self):
         """ Deletes the light_client_db.bin, the shards and the sidechain_db
         """
-        self.purge_last_slot_seal()
         self.purge_light_client_db()
         self.purge_shards_and_sidechain_db()
         return self
@@ -117,12 +116,6 @@ class Worker:
     def purge_light_client_db(self):
         print(f'purging light_client_db')
         for db in pathlib.Path(self.cwd).glob('light_client_db.bin*'):
-            print(f'remove: {db}')
-            db.unlink()
-
-    def purge_last_slot_seal(self):
-        print(f'purging last_slot_seal')
-        for db in pathlib.Path(self.cwd).glob('last_slot.bin'):
             print(f'remove: {db}')
             db.unlink()
 
@@ -169,8 +162,10 @@ class Worker:
                                         'lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,'
                                         'lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug,')
 
+        worker_cmd = self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags)
+        print("worker command is: "+ str(worker_cmd))
         return Popen(
-            self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags),
+            worker_cmd,
             env=env,
             stdout=log_file,
             stderr=STDOUT,
