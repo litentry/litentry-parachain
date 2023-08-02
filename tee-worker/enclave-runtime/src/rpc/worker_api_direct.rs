@@ -116,7 +116,9 @@ where
 			let state_account_id_unwrap = state_account_id.clone().unwrap();
 			match params.parse::<Vec<String>>() {
 				Ok(shards) => {
-					let shard = match decode_shard_from_base58(shards.get(0).clone().as_str()) {
+					let shard = match decode_shard_from_base58(
+						shards.get(0).clone().expect("REASON").as_str(),
+					) {
 						Ok(id) => id,
 						Err(msg) => {
 							let error_msg: String =
