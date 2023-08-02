@@ -1,7 +1,7 @@
 [package]
 name = "itp-enclave-api"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
@@ -22,8 +22,10 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 itc-parentchain = { path = "../../core/parentchain/parentchain-crate" }
 itp-enclave-api-ffi = { path = "ffi" }
 itp-settings = { path = "../settings" }
+itp-storage = { path = "../storage" }
 itp-types = { path = "../types" }
 
 # litentry
 lc-data-providers = { path = "../../litentry/core/data-providers" }
 litentry-primitives = { path = "../../litentry/primitives" }
+teerex-primitives = { path = "../../../primitives/teerex", default-features = false }

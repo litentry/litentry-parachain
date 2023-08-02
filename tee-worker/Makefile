@@ -99,7 +99,7 @@ CUSTOM_COMMON_PATH := ./rust-sgx-sdk/common
 ######## EDL settings ########
 Enclave_EDL_Files := enclave-runtime/Enclave_t.c enclave-runtime/Enclave_t.h service/Enclave_u.c service/Enclave_u.h
 
-######## Integritee-service settings ########
+######## litentry-worker settings ########
 SRC_Files := $(shell find . -type f -name '*.rs') $(shell find . -type f -name 'Cargo.toml')
 Worker_Rust_Flags := $(CARGO_TARGET) $(WORKER_FEATURES)
 Worker_Include_Paths := -I ./service -I./include -I$(SGX_SDK)/include -I$(CUSTOM_EDL_PATH)
@@ -109,12 +109,12 @@ Worker_Rust_Path := target/$(OUTPUT_PATH)
 Worker_Enclave_u_Object :=service/libEnclave_u.a
 Worker_Name := bin/app
 
-######## Integritee-cli settings ########
+######## litentry-cli settings ########
 Client_Rust_Flags := $(CARGO_TARGET) $(CLIENT_FEATURES)
 
 Client_Rust_Path := target/$(OUTPUT_PATH)
 Client_Path := bin
-Client_Binary := integritee-cli
+Client_Binary := litentry-cli
 Client_Name := $(Client_Path)/$(Client_Binary)
 
 ######## Enclave settings ########
@@ -157,7 +157,7 @@ $(Enclave_EDL_Files): $(SGX_EDGER8R) enclave-runtime/Enclave.edl
 	$(SGX_EDGER8R) --untrusted enclave-runtime/Enclave.edl --search-path $(SGX_SDK)/include --search-path $(CUSTOM_EDL_PATH) --untrusted-dir service
 	@echo "GEN  =>  $(Enclave_EDL_Files)"
 
-######## Integritee-service objects ########
+######## litentry-worker objects ########
 service/Enclave_u.o: $(Enclave_EDL_Files)
 	@$(CC) $(Worker_C_Flags) -c service/Enclave_u.c -o $@
 	@echo "CC   <=  $<"
@@ -168,16 +168,16 @@ $(Worker_Enclave_u_Object): service/Enclave_u.o
 
 $(Worker_Name): $(Worker_Enclave_u_Object) $(SRC_Files)
 	@echo
-	@echo "Building the integritee-service"
-	@SGX_SDK=$(SGX_SDK) SGX_MODE=$(SGX_MODE) cargo build -p integritee-service $(Worker_Rust_Flags)
+	@echo "Building the litentry-worker"
+	@SGX_SDK=$(SGX_SDK) SGX_MODE=$(SGX_MODE) cargo build -p litentry-worker $(Worker_Rust_Flags)
 	@echo "Cargo  =>  $@"
-	cp $(Worker_Rust_Path)/integritee-service ./bin
+	cp $(Worker_Rust_Path)/litentry-worker ./bin
 
-######## Integritee-client objects ########
+######## litentry-client objects ########
 $(Client_Name): $(SRC_Files)
 	@echo
-	@echo "Building the integritee-cli"
-	@cargo build -p integritee-cli $(Client_Rust_Flags)
+	@echo "Building the litentry-cli"
+	@cargo build -p litentry-cli $(Client_Rust_Flags)
 	@echo "Cargo  =>  $@"
 	cp $(Client_Rust_Path)/$(Client_Binary) ./bin
 
@@ -251,8 +251,8 @@ release-pkg:
 help:
 	@echo "Available targets"
 	@echo "  all      - builds all targets (default)"
-	@echo "  service   - builds the integritee-service"
-	@echo "  client   - builds the integritee-cli"
+	@echo "  service   - builds the litentry-worker"
+	@echo "  client   - builds the litentry-cli"
 	@echo "  githooks - installs the git hooks (copy .githooks/pre-commit to .git/hooks)"
 	@echo ""
 	@echo "  clean   - cleanup"

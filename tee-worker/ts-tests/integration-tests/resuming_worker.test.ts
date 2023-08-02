@@ -71,15 +71,15 @@ function generateWorkerCommandArguments(
         `--node-port ${nodePort}`,
         `run`,
         `--skip-ra`,
+        `--dev`,
         ...(isLaunch && workerParams.requestStateOnLaunch ? ['--request-state'] : []),
-        ...(isLaunch ? ['--dev'] : []),
     ].join(' ');
 }
 
 function initializeFiles(workingDir: string, binaryDir: string) {
     fs.mkdirSync(workingDir, { recursive: true });
     fs.copyFileSync(path.join(binaryDir, 'enclave.signed.so'), path.join(workingDir, 'enclave.signed.so'));
-    fs.copyFileSync(path.join(binaryDir, 'integritee-service'), path.join(workingDir, 'integritee-service'));
+    fs.copyFileSync(path.join(binaryDir, 'litentry-worker'), path.join(workingDir, 'litentry-worker'));
     fs.closeSync(fs.openSync(path.join(workingDir, 'spid.txt'), 'w'));
     fs.closeSync(fs.openSync(path.join(workingDir, 'key.txt'), 'w'));
 }
@@ -135,7 +135,7 @@ async function spawnWorkerJob(
             let shard: `0x${string}` | undefined = undefined;
 
             const job = spawn(
-                `./integritee-service`,
+                `./litentry-worker`,
                 [generateWorkerCommandArguments(command, nodeConfig, workerConfig)],
                 {
                     cwd: workingDir,

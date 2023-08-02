@@ -61,11 +61,11 @@ where
 				self.req.who.clone(),
 				self.req.identity.clone(),
 				self.req.web3networks.clone(),
-				self.req.hash,
+				self.req.req_ext_hash,
 			);
 			let _ = self
 				.context
-				.submit_trusted_call(&self.req.shard, &c)
+				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
 				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
 		} else {
 			error!("can't get enclave signer");
@@ -79,11 +79,11 @@ where
 				enclave_signer.into(),
 				Some(self.req.who.clone()),
 				error,
-				self.req.hash,
+				self.req.req_ext_hash,
 			);
 			let _ = self
 				.context
-				.submit_trusted_call(&self.req.shard, &c)
+				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
 				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
 		} else {
 			error!("can't get enclave signer");

@@ -1,12 +1,12 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-description = "Verification logic for sidechain blocks"
-edition = "2021"
-homepage = "https://integritee.network/"
-license = "Apache-2.0"
 name = "its-block-verification"
-repository = "https://github.com/integritee-network/pallets/"
+description = "Verification logic for sidechain blocks"
 version = "0.9.0"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+homepage = 'https://litentry.com/'
+repository = 'https://github.com/litentry/litentry-parachain'
+license = "Apache-2.0"
+edition = "2021"
 
 [dependencies]
 log = { version = "0.4", default-features = false }
@@ -29,11 +29,6 @@ thiserror-sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 
 [features]
 default = ["std"]
-sgx = [
-    "itp-utils/sgx",
-    "sgx_tstd",
-    "thiserror-sgx",
-]
 std = [
     "log/std",
     "thiserror",
@@ -46,6 +41,11 @@ std = [
     "sp-consensus-slots/std",
     "sp-core/std",
     "sp-runtime/std",
+]
+sgx = [
+    "itp-utils/sgx",
+    "sgx_tstd",
+    "thiserror-sgx",
 ]
 
 [dev-dependencies]

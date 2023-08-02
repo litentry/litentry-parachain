@@ -74,7 +74,7 @@ After=network.target
 [Service]
 ExecStart=${command}
 Restart=always
-Environment='RUST_LOG=info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug'
+Environment='RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug'
 WorkingDirectory=${working_directory}
 StandardOutput=file:${log_file}
 StandardError=inherit
@@ -242,8 +242,8 @@ function register_parachain() {
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
-  yarn
-  yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
+  corepack yarn
+  corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
   print_divider
 
   echo "upgrade parathread to parachain now ..."
@@ -255,8 +255,8 @@ function register_parachain() {
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
-  yarn
-  yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
+  corepack yarn
+  corepack yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
   print_divider
 
   echo "done. please check $TMPDIR for generated files if need"
@@ -274,7 +274,7 @@ setup_working_dir() {
     target_dir=$2
 
     cd $source_dir || exit
-    ./integritee-service signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
+    ./litentry-worker signing-key | grep -oP '^Enclave account: \K.*$$' > enclave_account.txt
     echo "Enclave account is prepared inside enclave_account.txt"
 
     ENCLAVE_ACCOUNT=$(cat enclave_account.txt)
@@ -294,7 +294,7 @@ setup_working_dir() {
         fi
     done
 
-    for Item in 'enclave.signed.so' 'integritee-service' 'aes_key_sealed.bin' 'ed25519_key_sealed.bin' 'enclave-shielding-pubkey.json' 'enclave-signing-pubkey.bin' 'rsa3072_key_sealed.bin' 'sidechain_db'; do
+    for Item in 'enclave.signed.so' 'litentry-worker' 'aes_key_sealed.bin' 'ed25519_key_sealed.bin' 'enclave-shielding-pubkey.json' 'enclave-signing-pubkey.bin' 'rsa3072_key_sealed.bin' 'sidechain_db'; do
       cp -r "${Item}" "${target_dir}"
     done
 
@@ -325,7 +325,7 @@ function restart_worker() {
     # Transfer balance to the enclave account that is generated
     echo "Transferring balance to the enclave account"
     cd $ROOTDIR/scripts/ts-utils/ || exit 
-    yarn install
+    corepack yarn install
     npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
 
     cd $ROOTDIR/tee-worker || exit 
@@ -334,7 +334,7 @@ function restart_worker() {
     flags=$(echo "$CONFIG" | jq -r ".workers[$i].flags[]")
     subcommand_flags=$(echo "$CONFIG" | jq -r ".workers[$i].subcommand_flags[]")
 
-    command="./integritee-service"
+    command="./litentry-worker"
 
     for flag in $flags; do
       command+=" $flag"
@@ -377,7 +377,7 @@ function upgrade_worker(){
       echo "Failed to extract MRENCLAVE value."
   fi
   echo "Fetching Enclave Signing Key"
-  log=$(cd bin && ./integritee-service signing-key 2>&1)
+  log=$(cd bin && ./litentry-worker signing-key 2>&1)
   enclave_account=$(echo "$log" | awk '/Enclave account:/{print $NF}')
   if [[ -n $enclave_account ]]; then
       echo "Enclave account value: $enclave_account"
@@ -392,7 +392,7 @@ function upgrade_worker(){
 
   echo "Setting up the new Worker on Chain"
   cd $ROOTDIR/scripts/ts-utils/ || exit 
-  yarn install
+  corepack yarn install
   npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
 
   echo "Stopping Currently running Worker..."
@@ -425,7 +425,7 @@ function upgrade_worker(){
       flags=$(echo "$CONFIG" | jq -r ".workers[$i].flags[]")
       subcommand_flags=$(echo "$CONFIG" | jq -r ".workers[$i].subcommand_flags[]")
 
-      command="./integritee-service"
+      command="./litentry-worker"
 
 
       skip_next_flag=false
@@ -492,15 +492,15 @@ function stop_old_worker(){
 
 function migrate_worker(){
   cd $ROOTDIR/tee-worker || exit 
-  # Copy integritee-service binary and enclave_signed.so to ./tmp/w0
-  cp ./bin/integritee-service ./tmp/w0
+  # Copy litentry-worker binary and enclave_signed.so to ./tmp/w0
+  cp ./bin/litentry-worker ./tmp/w0
   cp ./bin/enclave.signed.so  ./tmp/w0
   cd ./tmp/w0 || exit
 
   echo "Old MRENCLAVE VALUE: $OLD_MRENCLAVE"
   echo "New MRENCLAVE VALUE: $NEW_MRENCLAVE"
   # Run the migration command
-  ./integritee-service migrate-shard --old-shard $OLD_MRENCLAVE --new-shard $NEW_MRENCLAVE
+  ./litentry-worker migrate-shard --old-shard $OLD_MRENCLAVE --new-shard $NEW_MRENCLAVE
 
   # Navigate to ./tmp/w0/shards
   cd shards || exit
@@ -696,7 +696,7 @@ if [ "$action" = "upgrade-worker" ]; then
 
   # Fetch Base58 value for MRENCLAVE
   cd $ROOTDIR/tee-worker/bin || exit 
-  OLD_SHARD=$(./integritee-service mrenclave)
+  OLD_SHARD=$(./litentry-worker mrenclave)
   export OLD_SHARD
   echo "Old Shard value: ${OLD_SHARD}"
 fi

@@ -10,13 +10,13 @@ from .helpers import run_subprocess, setup_working_dir, mkdir_p
 
 class Worker:
     def __init__(self,
-                 worker_bin: str = './integritee-service',
+                 worker_bin: str = './litentry-worker',
                  cwd: str = './',
                  source_dir: str = './',
                  std_err: Union[None, int, IO] = STDOUT,
                  ):
         """
-        Integritee-service wrapper.
+        litentry-worker wrapper.
 
         Args:
             worker_bin: Path to the worker bin relative to `cwd` or as absolute path.
@@ -164,7 +164,7 @@ class Worker:
                                         'itc_parentchain_light_client=info,'
                                         'jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,'
                                         'its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,'
-                                        'its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,'
+                                        'its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itc_direct_rpc_server=debug,'
                                         'itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,'
                                         'lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,'
                                         'lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug,')

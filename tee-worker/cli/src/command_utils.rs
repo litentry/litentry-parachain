@@ -40,7 +40,7 @@ pub(crate) fn get_shielding_key(cli: &Cli) -> Result<Rsa3072PubKey, String> {
 pub(crate) fn get_chain_api(cli: &Cli) -> ParentchainApi {
 	let url = format!("{}:{}", cli.node_url, cli.node_port);
 	info!("connecting to {}", url);
-	ParentchainApi::new(WsRpcClient::new(&url)).unwrap()
+	ParentchainApi::new(WsRpcClient::new(&url).unwrap()).unwrap()
 }
 
 pub(crate) fn get_accountid_from_str(account: &str) -> AccountId {
@@ -53,7 +53,7 @@ pub(crate) fn get_accountid_from_str(account: &str) -> AccountId {
 
 pub(crate) fn get_worker_api_direct(cli: &Cli) -> DirectWorkerApi {
 	let url = format!("{}:{}", cli.worker_url, cli.trusted_worker_port);
-	info!("Connecting to integritee-service-direct-port on '{}'", url);
+	info!("Connecting to litentry-worker-direct-port on '{}'", url);
 	DirectWorkerApi::new(url)
 }
 

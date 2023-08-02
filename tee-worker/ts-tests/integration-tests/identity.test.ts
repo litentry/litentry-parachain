@@ -76,7 +76,6 @@ describeLitentry('Test Identity', 0, (context) => {
         );
         assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
     });
-
     step('Invalid user shielding key', async function () {
         const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         // use empty `eveValidations`, the `UserShieldingKeyNotFound` error should be emitted before verification
@@ -165,17 +164,17 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Bob links:
-        // - alice's substrate identity
-        const aliceSubstrateIdentity = await buildIdentityHelper(
+        // - charlie's substrate identity
+        const charlieSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.charlie.addressRaw),
             'Substrate',
             context
         );
 
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
-        aliceIdentities = [aliceSubstrateIdentity];
+        aliceIdentities = [charlieSubstrateIdentity];
 
-        // TODO: being lazy - the nonce here is hardcoded
+        // TODO: #1899 being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
@@ -250,7 +249,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const msg = generateVerificationMessage(
             context,
             bobSubject,
-            aliceSubstrateIdentity,
+            charlieSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall
             nonce9
@@ -294,7 +293,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const identityHex = context.api.createType('LitentryIdentity', twitterIdentity).toHex();
+        const identityHex = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex();
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
 
         const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
@@ -349,7 +348,6 @@ describeLitentry('Test Identity', 0, (context) => {
             'LitentryValidationData',
             validation
         ) as unknown as LitentryValidationData;
-        context;
         const aliceTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.alice,

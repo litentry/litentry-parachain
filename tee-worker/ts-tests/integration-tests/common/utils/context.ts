@@ -1,4 +1,5 @@
-import { WsProvider, ApiPromise, Keyring } from '@polkadot/api';
+import { WsProvider, ApiPromise } from 'parachain-api';
+import { Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { ethers } from 'ethers';
 import WebSocketAsPromised from 'websocket-as-promised';

@@ -55,11 +55,11 @@ export default {
                     "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
                 link_identity:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
-                activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
+                activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
                 set_identity_networks:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)",
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
@@ -67,7 +67,7 @@ export default {
         DirectRequestStatus: {
             _enum: {
                 Ok: null,
-                TrustedOperationStatus: "TrustedOperationStatus",
+                TrustedOperationStatus: "(TrustedOperationStatus, H256)",
                 Error: null,
             },
         },
@@ -203,6 +203,43 @@ export default {
         },
         GenericEventWithAccount: {
             account: "AccountId",
+        },
+        SetUserShieldingKeyResponse: {
+            account: "AccountId",
+            id_graph: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        LinkIdentityResponse: {
+            account: "AccountId",
+            identity: "AesOutput",
+            id_graph: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        DeactivateIdentityResponse: {
+            account: "AccountId",
+            identity: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        ActivateIdentityResponse: {
+            account: "AccountId",
+            identity: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        SetIdentityNetworksResponse: {
+            req_ext_hash: "H256",
+        },
+        RequestVCResponse: {
+            account: "AccountId",
+            assertion: "Assertion",
+            vc_index: "H256",
+            vc_hash: "H256",
+            vc_payload: "AesOutput",
+            req_ext_hash: "H256",
+        },
+        AesOutput: {
+            ciphertext: "Vec<u8>",
+            aad: "Vec<u8>",
+            nonce: "[u8; 12]",
         },
     },
 };

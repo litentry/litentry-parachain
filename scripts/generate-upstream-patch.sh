@@ -63,7 +63,7 @@ function generate_worker_patch() {
 	echo "generating patch ..."
 	git diff "$OLD_COMMIT" HEAD > "$TARGET_DIR/upstream.patch"
 	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
-	 
+
 	# Clean up TMP DIR
 	cleanup "$tmp_dir"
 
@@ -118,7 +118,7 @@ function generate_pallets_patch() {
 	echo ">>> generating patch done."
 
 	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
-	 
+
 	# Clean up TMP DIR
 	cleanup "$tmp_dir"
 
@@ -158,7 +158,7 @@ function apply_woker_tips() {
 
 	echo "- resolve any conflicts"
 	echo "- optionally update Cargo.lock file"
-	echo "- apply the changes to $ROOTDIR/.github/workflows/tee-worker-ci.yml"
+	echo "- apply any changes of `workflows/build_and_test.yml` to $ROOTDIR/.github/workflows/ci.yml"
 }
 
 if [ -z "$2" ]; then

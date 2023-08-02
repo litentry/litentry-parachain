@@ -32,7 +32,7 @@ pub struct IpfsOCall;
 impl IpfsBridge for IpfsOCall {
 	fn write_to_ipfs(&self, data: &'static [u8]) -> OCallBridgeResult<Cid> {
 		debug!("    Entering ocall_write_ipfs");
-		Ok(write_to_ipfs(data))
+		write_to_ipfs(data)
 	}
 
 	fn read_from_ipfs(&self, cid: Cid) -> OCallBridgeResult<()> {
@@ -41,7 +41,9 @@ impl IpfsBridge for IpfsOCall {
 		let result = read_from_ipfs(cid);
 		match result {
 			Ok(res) => {
-				let filename = str::from_utf8(&cid).unwrap();
+				let filename = str::from_utf8(&cid).map_err(|_| {
+					OCallBridgeError::IpfsError("Could not convert cid bytes".to_string())
+				})?;
 				create_file(filename, &res).map_err(OCallBridgeError::IpfsError)
 			},
 			Err(_) => Err(OCallBridgeError::IpfsError("failed to read from IPFS".to_string())),
@@ -59,7 +61,7 @@ fn create_file(filename: &str, result: &[u8]) -> Result<(), String> {
 }
 
 #[tokio::main]
-async fn write_to_ipfs(data: &'static [u8]) -> Cid {
+async fn write_to_ipfs(data: &'static [u8]) -> OCallBridgeResult<Cid> {
 	// Creates an `IpfsClient` connected to the endpoint specified in ~/.ipfs/api.
 	// If not found, tries to connect to `localhost:5001`.
 	let client = IpfsClient::default();
@@ -75,13 +77,21 @@ async fn write_to_ipfs(data: &'static [u8]) -> Cid {
 	match client.add(datac).await {
 		Ok(res) => {
 			info!("Result Hash {}", res.hash);
-			tx.send(res.hash.into_bytes()).unwrap();
+			tx.send(res.hash.into_bytes()).map_err(|e| {
+				OCallBridgeError::IpfsError(format!(
+					"Could not get result from IPFS, reason: {:?}",
+					e
+				))
+			})?
 		},
 		Err(e) => eprintln!("error adding file: {}", e),
 	}
 	let mut cid: Cid = [0; 46];
-	cid.clone_from_slice(&rx.recv().unwrap());
-	cid
+	let result = &rx.recv().map_err(|e| {
+		OCallBridgeError::IpfsError(format!("Could not get result from IPFS, reason: {:?}", e))
+	})?;
+	cid.clone_from_slice(result);
+	Ok(cid)
 }
 
 #[tokio::main]
@@ -89,7 +99,7 @@ pub async fn read_from_ipfs(cid: Cid) -> Result<Vec<u8>, String> {
 	// Creates an `IpfsClient` connected to the endpoint specified in ~/.ipfs/api.
 	// If not found, tries to connect to `localhost:5001`.
 	let client = IpfsClient::default();
-	let h = str::from_utf8(&cid).unwrap();
+	let h = str::from_utf8(&cid).map_err(|_| "Could not convert cid bytes".to_string())?;
 
 	info!("Fetching content from: {}", h);
 

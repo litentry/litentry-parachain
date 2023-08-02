@@ -22,7 +22,7 @@ RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 # stage 2: packaging
 # ==========================
 FROM ubuntu:20.04
-LABEL maintainer="litentry-dev"
+LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
 
 ARG PROFILE
 

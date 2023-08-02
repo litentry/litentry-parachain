@@ -131,7 +131,14 @@ impl<
 			let successful_operations: Vec<ExecutedOperation> = batch_execution_result
 				.get_executed_operation_hashes()
 				.into_iter()
-				.map(|h| ExecutedOperation::success(h, TrustedOperationOrHash::Hash(h), Vec::new()))
+				.map(|h| {
+					ExecutedOperation::success(
+						h,
+						TrustedOperationOrHash::Hash(h),
+						Vec::new(),
+						Vec::new(),
+					)
+				})
 				.collect();
 
 			// Remove all not successfully executed operations from the top pool.
@@ -155,7 +162,7 @@ impl<
 
 	fn get_latest_parentchain_header(&self) -> Result<ParentchainBlock::Header> {
 		let header = self.validator_accessor.execute_on_validator(|v| {
-			let latest_parentchain_header = v.latest_finalized_header(v.num_relays())?;
+			let latest_parentchain_header = v.latest_finalized_header()?;
 			Ok(latest_parentchain_header)
 		})?;
 		Ok(header)

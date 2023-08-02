@@ -9,4 +9,4 @@ if [ ! -z "$pid" ]; then
   kill -9 "$pid"
 fi
 
-killall integritee-service 2>/dev/null || true
+killall litentry-worker 2>/dev/null || true

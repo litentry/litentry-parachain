@@ -24,6 +24,17 @@
 #![cfg_attr(not(target_env = "sgx"), no_std)]
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 #![allow(clippy::missing_safety_doc)]
+#![warn(
+	clippy::unwrap_used,
+	clippy::unreachable,
+	clippy::unimplemented,
+	clippy::string_slice,
+	clippy::panic_in_result_fn,
+	clippy::panic,
+	clippy::indexing_slicing,
+	clippy::expect_used,
+	clippy::arithmetic_side_effects
+)]
 
 #[cfg(not(target_env = "sgx"))]
 #[macro_use]
@@ -49,18 +60,20 @@ use itc_parentchain::{
 	},
 	light_client::{concurrent_access::ValidatorAccess, Validator},
 };
-use itp_block_import_queue::PushToBlockQueue;
 use itp_component_container::ComponentGetter;
+use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce, GLOBAL_NONCE_CACHE};
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::{ed25519, Ed25519Seal, Rsa3072Seal};
 use itp_sgx_io::StaticSealedIO;
+use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
+use sp_runtime::traits::BlakeTwo256;
 use std::{boxed::Box, slice, vec::Vec};
 
 mod attestation;
@@ -94,6 +107,7 @@ pub unsafe extern "C" fn init(
 	untrusted_worker_addr: *const u8,
 	untrusted_worker_addr_size: u32,
 ) -> sgx_status_t {
+	info!("enclave runtime start");
 	let mu_ra_url =
 		match String::decode(&mut slice::from_raw_parts(mu_ra_addr, mu_ra_addr_size as usize))
 			.map_err(Error::Codec)
@@ -102,6 +116,7 @@ pub unsafe extern "C" fn init(
 			Err(e) => return e.into(),
 		};
 
+	info!("enclave runtime start 2");
 	let untrusted_worker_url = match String::decode(&mut slice::from_raw_parts(
 		untrusted_worker_addr,
 		untrusted_worker_addr_size as usize,
@@ -112,6 +127,7 @@ pub unsafe extern "C" fn init(
 		Err(e) => return e.into(),
 	};
 
+	info!("enclave runtime start 3");
 	match initialization::init_enclave(mu_ra_url, untrusted_worker_url) {
 		Err(e) => e.into(),
 		Ok(()) => sgx_status_t::SGX_SUCCESS,
@@ -375,6 +391,10 @@ pub unsafe extern "C" fn migrate_shard(
 pub unsafe extern "C" fn sync_parentchain(
 	blocks_to_sync: *const u8,
 	blocks_to_sync_size: usize,
+	events_to_sync: *const u8,
+	events_to_sync_size: usize,
+	events_proofs_to_sync: *const u8,
+	events_proofs_to_sync_size: usize,
 	_nonce: *const u32,
 ) -> sgx_status_t {
 	let blocks_to_sync = match Vec::<SignedBlock>::decode_raw(blocks_to_sync, blocks_to_sync_size) {
@@ -382,7 +402,27 @@ pub unsafe extern "C" fn sync_parentchain(
 		Err(e) => return Error::Codec(e).into(),
 	};
 
-	if let Err(e) = dispatch_parentchain_blocks_for_import::<WorkerModeProvider>(blocks_to_sync) {
+	let events_proofs_to_sync =
+		match Vec::<StorageProof>::decode_raw(events_proofs_to_sync, events_proofs_to_sync_size) {
+			Ok(events_proofs) => events_proofs,
+			Err(e) => return Error::Codec(e).into(),
+		};
+
+	let blocks_to_sync_merkle_roots: Vec<sp_core::H256> =
+		blocks_to_sync.iter().map(|block| block.block.header.state_root).collect();
+
+	if let Err(e) = validate_events(&events_proofs_to_sync, &blocks_to_sync_merkle_roots) {
+		return e.into()
+	}
+
+	let events_to_sync = match Vec::<Vec<u8>>::decode_raw(events_to_sync, events_to_sync_size) {
+		Ok(events) => events,
+		Err(e) => return Error::Codec(e).into(),
+	};
+
+	if let Err(e) =
+		dispatch_parentchain_blocks_for_import::<WorkerModeProvider>(blocks_to_sync, events_to_sync)
+	{
 		return e.into()
 	}
 
@@ -416,6 +456,7 @@ pub unsafe extern "C" fn ignore_parentchain_block_import_validation_until(
 ///
 fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>(
 	blocks_to_sync: Vec<SignedBlock>,
+	events_to_sync: Vec<Vec<u8>>,
 ) -> Result<()> {
 	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
 		trace!("Not importing any parentchain blocks");
@@ -431,7 +472,44 @@ fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>
 			return Err(Error::NoParentchainAssigned)
 		};
 
-	import_dispatcher.dispatch_import(blocks_to_sync)?;
+	import_dispatcher.dispatch_import(blocks_to_sync, events_to_sync)?;
+	Ok(())
+}
+
+/// Validates the events coming from the parentchain
+fn validate_events(
+	events_proofs: &Vec<StorageProof>,
+	blocks_merkle_roots: &Vec<sp_core::H256>,
+) -> Result<()> {
+	info!(
+		"Validating events, events_proofs_length: {:?}, blocks_merkle_roots_lengths: {:?}",
+		events_proofs.len(),
+		blocks_merkle_roots.len()
+	);
+
+	if events_proofs.len() != blocks_merkle_roots.len() {
+		return Err(Error::ParentChainSync)
+	}
+
+	let events_key = itp_storage::storage_value_key("System", "Events");
+
+	let validated_events: Result<Vec<Vec<u8>>> = events_proofs
+		.iter()
+		.zip(blocks_merkle_roots.iter())
+		.map(|(proof, root)| {
+			StorageProofChecker::<BlakeTwo256>::check_proof(
+				*root,
+				events_key.as_slice(),
+				proof.clone(),
+			)
+			.ok()
+			.flatten()
+			.ok_or_else(|| Error::ParentChainValidation(itp_storage::Error::WrongValue))
+		})
+		.collect();
+
+	let _ = validated_events?;
+
 	Ok(())
 }
 

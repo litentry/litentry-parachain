@@ -71,8 +71,8 @@ for _ in $(seq 1 $WAIT_ROUNDS); do
     else
         echo "NODE_ENV=${NODE_ENV}" > .env
     fi
-    yarn
-    yarn upgrade-parathread 2>&1
+    corepack yarn
+    corepack yarn upgrade-parathread 2>&1
     print_divider
     echo "Done."
     exit 0

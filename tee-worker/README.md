@@ -13,8 +13,9 @@ make SGX_MODE=SW
 ./local-setup/launch.py local-setup/development-worker.json local-docker
 # run the ts test script below if container started
 cd ./tee-worker/ts-tests
-yarn
-yarn run test-identity:local
+nvm use
+corepack yarn
+corepack yarn workspace integration-tests test-identity:local
 # other ts test
 ```
 
@@ -22,44 +23,52 @@ yarn run test-identity:local
 
 This tee-worker is based on [Integritee](https://integritee.network)'s [worker](https://github.com/integritee-network/worker)
 
-The following is the original README from integritee-worker.
+The following is based on the original README from integritee-worker.
 
 If you think parachain-node launch too slowly, can use this branch: [litentry-runtime](https://github.com/litentry/integritee-node/tree/litentry-runtime) and need to use the following command to build
-``` bash
+
+```bash
 # build integritee-node(not parachain-node)
 cargo build --release --features "skip-extrinsic-filtering skip-ias-check"
 ```
 
 ## Build and Run
+
 Please see our [Integritee Book](https://docs.integritee.network/4-development/4.4-sdk) to learn how to build and run this.
 
 To start multiple worker and a node with one simple command: Check out [this README](local-setup/README.md).
 
 ## Docker
+
 See [docker/README.md](docker/README.md).
 
 ## Tests
 
 There are 3 types of tests:
-- cargo tests
-- enclave tests
-- integration tests
+
+-   cargo tests
+-   enclave tests
+-   integration tests
 
 ### Cargo Tests
+
 Run
+
 ```
 cargo test
 ```
 
 ### Enclave Tests
+
 Run
 
 ```
 make
-./bin/integritee-service test --all
+./bin/litentry-worker test --all
 ```
 
 ### Integration Tests
+
 See [docker/README.md](docker/README.md)
 
 ## Direct calls scalability

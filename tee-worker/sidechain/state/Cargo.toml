@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "its-state"
 version = "0.9.0"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "chain-error"] }
@@ -35,16 +35,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 
 [features]
 default = ["std"]
-sgx = [
-    # teaclave
-    "sgx_tstd",
-    # local crates
-    "itp-sgx-externalities/sgx",
-    "itp-storage/sgx",
-    "sp-io/sgx",
-    # sgx versions of std crates
-    "thiserror_sgx",
-]
 std = [
     "log/std",
     "serde/std",
@@ -59,4 +49,14 @@ std = [
     # optional std crates
     "codec/std",
     "thiserror",
+]
+sgx = [
+    # teaclave
+    "sgx_tstd",
+    # local crates
+    "itp-sgx-externalities/sgx",
+    "itp-storage/sgx",
+    "sp-io/sgx",
+    # sgx versions of std crates
+    "thiserror_sgx",
 ]
