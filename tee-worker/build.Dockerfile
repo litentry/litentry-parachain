@@ -147,14 +147,8 @@ RUN ls -al /usr/local/bin
 
 # checks
 ENV SGX_SDK /opt/sgxsdk
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
-ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
-
-COPY --from=builder /home/ubuntu/repo/tee-worker/docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
 RUN ldd /usr/local/bin/litentry-worker && \
     /usr/local/bin/litentry-worker --version
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/litentry-worker"]
