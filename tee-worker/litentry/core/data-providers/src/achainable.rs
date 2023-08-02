@@ -75,7 +75,7 @@ impl AchainableClient {
 			.and_then(|v| v.get(0))
 			.and_then(|v| v.as_str());
 
-		Ok(v.unwrap_or_default().into())
+		Ok(v.unwrap_or("Invalid").into())
 	}
 
 	pub fn query_class_of_year(&mut self, address: &str, params: Params) -> Result<String, Error> {

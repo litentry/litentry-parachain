@@ -20,11 +20,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::*;
-use lc_data_providers::achainable::{AchainableClient, AchainableTagDeFi, Params};
-use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::AchainableParams;
-
 use self::{
 	achainable_amount::build_amount, achainable_amount_holding::build_amount_holding,
 	achainable_amount_token::build_amount_token, achainable_amounts::build_amounts,
@@ -33,6 +28,11 @@ use self::{
 	achainable_date_interval::build_date_interval, achainable_date_percent::build_date_percent,
 	achainable_token::build_token,
 };
+use crate::*;
+use lc_data_providers::achainable::{AchainableClient, AchainableTagDeFi, Params};
+use lc_stf_task_sender::AssertionBuildRequest;
+use litentry_primitives::AchainableParams;
+use std::string::ToString;
 
 pub mod achainable_amount;
 pub mod achainable_amount_holding;
@@ -99,10 +99,11 @@ pub fn is_uniswap_v2_or_v3_user(addresses: Vec<String>) -> Result<bool> {
 	Ok(flag)
 }
 
-pub fn request_achainable_classofyear(addresses: Vec<String>, param: Params) -> String {
+const INVALID_CLASS_OF_YEAR: &str = "Invalid";
+pub fn request_achainable_classofyear(addresses: Vec<String>, param: Params) -> (bool, String) {
 	let mut client: AchainableClient = AchainableClient::new();
 
-	let mut longest_created_date = "".into();
+	let mut longest_created_date = INVALID_CLASS_OF_YEAR.into();
 	for address in &addresses {
 		let year = client.query_class_of_year(address, param.clone()).unwrap_or_default();
 		if year < longest_created_date {
@@ -110,5 +111,5 @@ pub fn request_achainable_classofyear(addresses: Vec<String>, param: Params) -> 
 		}
 	}
 
-	longest_created_date
+	(longest_created_date != INVALID_CLASS_OF_YEAR.to_string(), longest_created_date)
 }

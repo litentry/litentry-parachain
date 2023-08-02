@@ -533,12 +533,11 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn update_class_of_year(&mut self, value: bool, from: String, to: String) {
+	pub fn update_class_of_year(&mut self, value: bool, date: String) {
 		let mut and_logic = AssertionLogic::new_and();
 
-		let from = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from);
-		let to = AssertionLogic::new_item("$to_date", Op::LessEq, &to);
-		and_logic = and_logic.add_item(from).add_item(to);
+		let from = AssertionLogic::new_item("$account_created_year", Op::GreaterEq, &date);
+		and_logic = and_logic.add_item(from);
 
 		self.credential_subject.assertions.push(and_logic);
 		self.credential_subject.values.push(value);
