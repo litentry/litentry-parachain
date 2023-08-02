@@ -100,10 +100,7 @@ where
 		credential.credential_subject.set_endpoint(credential_endpoint);
 
 		credential.issuer.id = account_id_to_string(&enclave_account);
-		let payload = credential.to_json().map_err(|_| {
-			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
-		})?;
-		debug!("Credential payload: {}", payload);
+		let payload = credential.issuer.mrenclave.clone();
 		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
