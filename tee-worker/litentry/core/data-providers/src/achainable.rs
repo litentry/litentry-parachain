@@ -64,13 +64,35 @@ impl AchainableClient {
 
 	pub fn query_system_label(
 		&mut self,
-		// c: &mut AchainableClient,
 		address: &str,
 		params: Params,
 	) -> Result<bool, Error> {
 		let body = ReqBody::new(address.into(), params);
 		self.post(SystemLabelReqPath::default(), &body)
 			.and_then(AchainableClient::parse)
+	}
+
+	fn parse_class_of_year(value: serde_json::Value) -> Result<String, Error> {
+		let value = value.clone();
+		let v = value
+		.get("metadata")
+		.and_then(|res| res.as_array())
+		.and_then(|v| {
+			v.get(0)
+		})
+		.and_then(|v| v.as_str());
+		
+		Ok(v.unwrap_or_default().into())
+	}
+
+	pub fn query_class_of_year(
+		&mut self,
+		address: &str,
+		params: Params,
+	) -> Result<String, Error> {
+		let body = ReqBody::new(address.into(), params);
+		self.post(SystemLabelReqPath::default(), &body)
+			.and_then(Self::parse_class_of_year)
 	}
 }
 
@@ -251,15 +273,22 @@ pub struct ParamsBasicTypeWithClassOfYear {
 	pub chain: String,
 	pub date1: String,
 	pub date2: String,
+
+	/// TODO:
+	/// Because some interfaces of the achainable API cannot meet the current assertion requirements well, this trade-off is being made. 
+	/// This field is added here to request once interface to obtain the specific account creation date, and then match it with the product's time interval. 
+	/// And according to TDF developers, this field is unstable and may be cancelled in the future. Even so, this is currently the most appropriate approach
+	/// So, this is the current solution.
+	pub include_metadata: bool,
 }
 
 impl ParamsBasicTypeWithClassOfYear {
 	pub fn new(chain: String, date1: String, date2: String) -> Self {
-		Self { name: "Account created between {dates}".to_string(), chain, date1, date2 }
+		Self { name: "Account created between {dates}".to_string(), chain, date1, date2, include_metadata:true }
 	}
 
 	pub fn one(name: String, chain: String, date1: String, date2: String) -> Self {
-		Self { name, chain, date1, date2 }
+		Self { name, chain, date1, date2, include_metadata: true}
 	}
 }
 
@@ -286,6 +315,7 @@ impl ParamsBasicTypeWithClassOfYear {
 			chain: "ethereum".into(),
 			date1: "2020-01-01T00:00:00.000Z".into(),
 			date2: "2020-12-31T23:59:59.999Z".into(),
+			include_metadata: true,
 		}
 	}
 
@@ -295,6 +325,7 @@ impl ParamsBasicTypeWithClassOfYear {
 			chain: "ethereum".into(),
 			date1: "2021-01-01T00:00:00.000Z".into(),
 			date2: "2021-12-31T23:59:59.999Z".into(),
+			include_metadata: true,
 		}
 	}
 
@@ -304,6 +335,7 @@ impl ParamsBasicTypeWithClassOfYear {
 			chain: "ethereum".into(),
 			date1: "2022-01-01T00:00:00.000Z".into(),
 			date2: "2022-12-31T23:59:59.999Z".into(),
+			include_metadata: true,
 		}
 	}
 }

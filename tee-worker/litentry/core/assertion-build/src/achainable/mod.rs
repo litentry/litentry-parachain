@@ -98,3 +98,17 @@ pub fn is_uniswap_v2_or_v3_user(addresses: Vec<String>) -> Result<bool> {
 
 	Ok(flag)
 }
+
+pub fn request_achainable_classofyear(addresses: Vec<String>, param: Params) -> String {
+	let mut client: AchainableClient = AchainableClient::new();
+
+	let mut longest_created_date = "".into();
+	for address in &addresses {
+		let year = client.query_class_of_year(address, param.clone()).unwrap_or_default();
+		if year < longest_created_date {
+			longest_created_date = year;
+		}
+	}
+
+	longest_created_date
+}

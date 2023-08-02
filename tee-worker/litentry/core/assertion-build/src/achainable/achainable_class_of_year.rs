@@ -20,8 +20,8 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::request_achainable, *};
-use lc_credentials::Credential;
+use crate::{achainable::request_achainable_classofyear, *};
+use lc_credentials::{Credential, format_assertion_to_date};
 use lc_data_providers::{
 	achainable::{Params, ParamsBasicTypeWithClassOfYear},
 	vec_to_string,
@@ -31,15 +31,8 @@ use litentry_primitives::AchainableClassOfYear;
 use log::debug;
 use std::string::ToString;
 
-const VC_ACHAINABLE_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_ACHAINABLE_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
-
-/// TODO: date
-const CLASS_OF_YEAR_INTERVAL: usize = 4;
-const FROM_CLASS_OF_YEAR: [&str; CLASS_OF_YEAR_INTERVAL] =
-	["2009-01-01", "2017-01-01", "2020-01-01", "2022-01-01"];
-const TO_CLASS_OF_YEAR: [&str; CLASS_OF_YEAR_INTERVAL] =
-	["2016-12-31", "2019-12-31", "2021-12-31", "2022-12-31"];
+const VC_SUBJECT_DESCRIPTION: &str = "The class of year that your Ethereum account was created (must have on-chain records)";
+const VC_SUBJECT_TYPE: &str = "Ethereum Account Class Of Year";
 
 /// NOTE:
 ///
@@ -47,59 +40,40 @@ const TO_CLASS_OF_YEAR: [&str; CLASS_OF_YEAR_INTERVAL] =
 /// name: Account created between {dates}
 /// chain: ethereum
 ///
+/// True:
 /// assertions":[
 /// {
-///		"or":[
 /// 		and: [
 /// 			{
 /// 				"src":"$from_date",
 /// 				"op":"==",
-/// 				"dst":"2009-01-01"
+/// 				"dst":"2015-07-30"
 /// 			},
 /// 			{
 /// 				"src": "to_date",
 /// 				"op": "==",
-/// 				"dst": "2016-12-31"
+/// 				"dst": "2017-01-01"
 /// 			}
 /// 		],
-/// 		and: [
-/// 			{
-/// 				"src":"$from_date",
-/// 				"op":"==",
-/// 				"dst":"2017-01-01"
-/// 			},
-/// 			{
-/// 				"src": "to_date",
-/// 				"op": "==",
-/// 				"dst": "2019-12-31"
-/// 			}
-/// 		],
-/// 		and: [
-/// 			{
-/// 				"src":"$from_date",
-/// 				"op":"==",
-/// 				"dst":"2020-01-01"
-/// 			},
-/// 			{
-/// 				"src": "to_date",
-/// 				"op": "==",
-/// 				"dst": "2021-12-31"
-/// 			}
-/// 		],
-/// 		and: [
-/// 			{
-/// 				"src":"$from_date",
-/// 				"op":"==",
-/// 				"dst":"2022-01-01"
-/// 			},
-/// 			{
-/// 				"src": "to_date",
-/// 				"op": "==",
-/// 				"dst": "2022-12-31"
-/// 			}
-/// 		],
-/// 	]
 /// }
+/// 
+/// False:
+/// assertions":[
+/// {
+/// 		and: [
+/// 			{
+/// 				"src":"$from_date",
+/// 				"op":"==",
+/// 				"dst":"2015-01-01"
+/// 			},
+/// 			{
+/// 				"src": "to_date",
+/// 				"op": "==",
+/// 				"dst": "NOW"
+/// 			}
+/// 		],
+/// }
+
 pub fn build_class_of_year(
 	req: &AssertionBuildRequest,
 	param: AchainableClassOfYear,
@@ -114,36 +88,21 @@ pub fn build_class_of_year(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let mut flag = false;
-	for indx in 0..CLASS_OF_YEAR_INTERVAL {
-		if flag {
-			break
-		}
-
-		let date1 = FROM_CLASS_OF_YEAR[indx];
-		let date2 = TO_CLASS_OF_YEAR[indx];
-		let p = ParamsBasicTypeWithClassOfYear::one(
-			name.clone(),
-			chain.clone(),
-			date1.to_string(),
-			date2.to_string(),
-		);
-
-		flag = request_achainable(
-			addresses.clone(),
-			Params::ParamsBasicTypeWithClassOfYear(p.clone()),
-		)?;
-	}
+	let p = ParamsBasicTypeWithClassOfYear::one(
+		name.clone(),
+		chain.clone(),
+		"2015-07-30".to_string(),
+		"2017-01-01".to_string(),
+	);
+	let longest_created_date = request_achainable_classofyear(addresses, Params::ParamsBasicTypeWithClassOfYear(p));
+	let found = !longest_created_date.is_empty();
+	let (from, to) = get_class_of_year_interval(longest_created_date);
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned
-				.add_subject_info(VC_ACHAINABLE_SUBJECT_DESCRIPTION, VC_ACHAINABLE_SUBJECT_TYPE);
-			credential_unsigned.update_class_of_year(
-				flag,
-				FROM_CLASS_OF_YEAR.to_vec(),
-				TO_CLASS_OF_YEAR.to_vec(),
-			);
+				.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.update_class_of_year(found, from, to);
 
 			Ok(credential_unsigned)
 		},
@@ -190,4 +149,22 @@ fn get_class_of_year_params(
 	})?;
 
 	Ok((name, chain, date1, date2))
+}
+
+const INTERVAL: usize = 4;
+const FROM_DATE: [&str; INTERVAL] = ["2015-07-30", "2017-01-02", "2019-01-02", "2022-01-02"];
+const TO_DATE: [&str; 3] = ["2017-01-01", "2019-01-01", "2022-01-01"];
+
+fn get_class_of_year_interval(date: String) -> (String, String) {
+	let now = format_assertion_to_date();
+	TO_DATE.to_vec().push(&now);
+
+	for indx in 0..INTERVAL {
+		if date >= FROM_DATE[indx].to_string() && date <= TO_DATE[indx].to_string() {
+			return (FROM_DATE[indx].to_string(), TO_DATE[indx].to_string())
+		}
+	}
+
+	// If not in range
+	(FROM_DATE[0].to_string(), TO_DATE[INTERVAL-1].to_string())
 }
