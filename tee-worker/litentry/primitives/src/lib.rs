@@ -48,6 +48,7 @@ use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
+use std::string::ToString;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -100,7 +101,7 @@ impl LitentryMultiSignature {
 	fn verify_evm(&self, msg: &[u8], signer: &Address20) -> bool {
 		match (self, signer) {
 			(Self::Ethereum(ref sig), who) => {
-				let digest = keccak_256(msg);
+				let digest = compute_evm_msg_digest(msg);
 				return match recover_evm_address(&digest, sig.as_ref()) {
 					Ok(recovered_evm_address) => recovered_evm_address == who.as_ref().as_slice(),
 					Err(_e) => {
@@ -115,6 +116,17 @@ impl LitentryMultiSignature {
 			_ => false,
 		}
 	}
+}
+
+// we use an EIP-191 message has computing
+fn compute_evm_msg_digest(message: &[u8]) -> [u8; 32] {
+	let eip_191_message = [
+		"\x19Ethereum Signed Message:\n".as_bytes(),
+		message.len().to_string().as_bytes(),
+		message,
+	]
+		.concat();
+	keccak_256(&eip_191_message)
 }
 
 impl From<ed25519::Signature> for LitentryMultiSignature {
