@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_classofyear, *};
-use lc_credentials::{Credential, format_assertion_to_date};
+use lc_credentials::{format_assertion_to_date, Credential};
 use lc_data_providers::{
 	achainable::{Params, ParamsBasicTypeWithClassOfYear},
 	vec_to_string,
@@ -31,8 +31,9 @@ use litentry_primitives::AchainableClassOfYear;
 use log::debug;
 use std::string::ToString;
 
-const VC_SUBJECT_DESCRIPTION: &str = "The class of year that your Ethereum account was created (must have on-chain records)";
-const VC_SUBJECT_TYPE: &str = "Ethereum Account Class Of Year";
+const VC_SUBJECT_DESCRIPTION: &str =
+	"The class of year that the user account was created on a particular network (must have on-chain records)";
+const VC_SUBJECT_TYPE: &str = "Account Class Of Year";
 
 /// NOTE:
 ///
@@ -56,7 +57,7 @@ const VC_SUBJECT_TYPE: &str = "Ethereum Account Class Of Year";
 /// 			}
 /// 		],
 /// }
-/// 
+///
 /// False:
 /// assertions":[
 /// {
@@ -94,14 +95,14 @@ pub fn build_class_of_year(
 		"2015-07-30".to_string(),
 		"2017-01-01".to_string(),
 	);
-	let longest_created_date = request_achainable_classofyear(addresses, Params::ParamsBasicTypeWithClassOfYear(p));
+	let longest_created_date =
+		request_achainable_classofyear(addresses, Params::ParamsBasicTypeWithClassOfYear(p));
 	let found = !longest_created_date.is_empty();
 	let (from, to) = get_class_of_year_interval(longest_created_date);
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned
-				.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
+			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_class_of_year(found, from, to);
 
 			Ok(credential_unsigned)
@@ -157,14 +158,15 @@ const TO_DATE: [&str; 3] = ["2017-01-01", "2019-01-01", "2022-01-01"];
 
 fn get_class_of_year_interval(date: String) -> (String, String) {
 	let now = format_assertion_to_date();
-	TO_DATE.to_vec().push(&now);
+	let mut to_date = TO_DATE.to_vec();
+	to_date.push(&now);
 
 	for indx in 0..INTERVAL {
-		if date >= FROM_DATE[indx].to_string() && date <= TO_DATE[indx].to_string() {
-			return (FROM_DATE[indx].to_string(), TO_DATE[indx].to_string())
+		if date >= FROM_DATE[indx].to_string() && date <= to_date[indx].to_string() {
+			return (FROM_DATE[indx].to_string(), to_date[indx].to_string())
 		}
 	}
 
 	// If not in range
-	(FROM_DATE[0].to_string(), TO_DATE[INTERVAL-1].to_string())
+	(FROM_DATE[0].to_string(), to_date[INTERVAL - 1].to_string())
 }

@@ -72,7 +72,7 @@ use std::string::ToString;
 
 const VC_A4_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
-const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
+const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Time";
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
