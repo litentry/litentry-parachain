@@ -19,8 +19,8 @@ use ita_stf::helpers::{get_expected_raw_message, get_expected_wrapped_message};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	recover_evm_address, ErrorDetail, Identity, LitentryMultiSignature, UserShieldingKeyNonceType,
-	UserShieldingKeyType, Web3CommonValidationData, Web3ValidationData,
+	compute_evm_msg_digest, recover_evm_address, ErrorDetail, Identity, LitentryMultiSignature,
+	UserShieldingKeyNonceType, UserShieldingKeyType, Web3CommonValidationData, Web3ValidationData,
 };
 use log::*;
 use sp_core::{ed25519, sr25519};
@@ -142,15 +142,4 @@ fn verify_evm_signature(
 		return Err(Error::LinkIdentityFailed(ErrorDetail::WrongSignatureType))
 	}
 	Ok(())
-}
-
-// we use an EIP-191 message has computing
-fn compute_evm_msg_digest(message: &[u8]) -> [u8; 32] {
-	let eip_191_message = [
-		"\x19Ethereum Signed Message:\n".as_bytes(),
-		message.len().to_string().as_bytes(),
-		message,
-	]
-	.concat();
-	keccak_256(&eip_191_message)
 }
