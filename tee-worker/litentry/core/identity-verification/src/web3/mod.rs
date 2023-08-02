@@ -14,16 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{ensure, Error, Result, ToString};
+use crate::{ensure, Error, Result};
 use ita_stf::helpers::get_expected_raw_message;
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	ErrorDetail, Identity, LitentryMultiSignature, UserShieldingKeyNonceType, UserShieldingKeyType,
-	Web3CommonValidationData, Web3ValidationData,
+	ErrorDetail, Identity, UserShieldingKeyNonceType, UserShieldingKeyType, Web3ValidationData,
 };
 use log::*;
-use sp_core::{ed25519, sr25519};
 
 pub fn verify(
 	who: &Identity,
