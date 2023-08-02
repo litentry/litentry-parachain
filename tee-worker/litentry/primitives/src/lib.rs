@@ -69,8 +69,12 @@ pub enum LitentryMultiSignature {
 impl LitentryMultiSignature {
 	pub fn verify(&self, msg: &[u8], signer: &Identity) -> bool {
 		match signer {
-			Identity::Substrate(address) => self.verify_substrate(msg, address),
-			Identity::Evm(address) => self.verify_evm(msg, address),
+			Identity::Substrate(address) =>
+				self.verify_substrate(substrate_wrap(msg).as_slice(), address)
+					|| self.verify_substrate(msg, address),
+			Identity::Evm(address) =>
+				self.verify_evm(evm_eip191_wrap(msg).as_slice(), address)
+					|| self.verify_evm(msg, address),
 			_ => false,
 		}
 	}
@@ -101,7 +105,7 @@ impl LitentryMultiSignature {
 	fn verify_evm(&self, msg: &[u8], signer: &Address20) -> bool {
 		match (self, signer) {
 			(Self::Ethereum(ref sig), who) => {
-				let digest = compute_evm_msg_digest(msg);
+				let digest = keccak_256(msg);
 				return match recover_evm_address(&digest, sig.as_ref()) {
 					Ok(recovered_evm_address) => recovered_evm_address == who.as_ref().as_slice(),
 					Err(_e) => {
@@ -148,16 +152,14 @@ pub fn recover_evm_address(
 	Ok(addr)
 }
 
-// we use an EIP-191 message has computing
+// see https://github.com/litentry/litentry-parachain/issues/1137
+fn substrate_wrap(msg: &[u8]) -> Vec<u8> {
+	["<Bytes>".as_bytes(), msg, "</Bytes>".as_bytes()].concat()
+}
+
 // see https://github.com/litentry/litentry-parachain/issues/1970
-pub fn compute_evm_msg_digest(message: &[u8]) -> [u8; 32] {
-	let eip_191_message = [
-		"\x19Ethereum Signed Message:\n".as_bytes(),
-		message.len().to_string().as_bytes(),
-		message,
-	]
-	.concat();
-	keccak_256(&eip_191_message)
+fn evm_eip191_wrap(msg: &[u8]) -> Vec<u8> {
+	["\x19Ethereum Signed Message:\n".as_bytes(), msg.len().to_string().as_bytes(), msg].concat()
 }
 
 pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);

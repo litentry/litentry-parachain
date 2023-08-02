@@ -146,9 +146,3 @@ pub fn get_expected_raw_message(
 	payload.append(&mut encrypted_data);
 	blake2_256(payload.as_slice()).to_vec()
 }
-
-// Get the wrapped version of the raw msg: <Bytes>raw_msg</Bytes>,
-// see https://github.com/litentry/litentry-parachain/issues/1137
-pub fn get_expected_wrapped_message(raw_msg: Vec<u8>) -> Vec<u8> {
-	["<Bytes>".as_bytes(), raw_msg.as_slice(), "</Bytes>".as_bytes()].concat()
-}
