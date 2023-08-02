@@ -44,7 +44,7 @@ pub fn build_amount_token(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmountToken(p.clone()))?;
+	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmountToken(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

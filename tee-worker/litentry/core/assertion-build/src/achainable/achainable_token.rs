@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
 use lc_data_providers::{
-	achainable::{AchainableClient, Params, ParamsBasicTypeWithToken},
+	achainable::{Params, ParamsBasicTypeWithToken},
 	vec_to_string,
 };
 
@@ -41,7 +41,7 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithToken(p.clone()))?;
+	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithToken(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

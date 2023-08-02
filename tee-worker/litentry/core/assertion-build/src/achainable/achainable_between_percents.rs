@@ -50,7 +50,7 @@ pub fn build_between_percents(
 		greater_than_or_equal_to,
 		less_than_or_equal_to,
 	);
-	let flag =
+	let _flag =
 		request_achainable(addresses, Params::ParamsBasicTypeWithBetweenPercents(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {

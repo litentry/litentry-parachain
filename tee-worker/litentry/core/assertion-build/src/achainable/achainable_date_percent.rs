@@ -44,7 +44,7 @@ pub fn build_date_percent(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithDatePercent(p.clone()))?;
+	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithDatePercent(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

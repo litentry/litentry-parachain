@@ -41,7 +41,7 @@ pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithDate(p.clone()))?;
+	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithDate(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

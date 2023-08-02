@@ -41,7 +41,7 @@ pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> R
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmounts(p.clone()))?;
+	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmounts(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
