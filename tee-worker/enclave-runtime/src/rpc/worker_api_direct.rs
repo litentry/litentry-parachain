@@ -112,42 +112,45 @@ where
 			return Ok(json!(compute_hex_encoded_return_error(
 				"author_getEnclaveAccountId is not avaiable"
 			)))
-		}
-		let state_account_id_unwrap = state_account_id.clone().unwrap();
-		match params.parse::<Vec<String>>() {
-			Ok(shards) => {
-				let shard = match decode_shard_from_base58(shards[0].clone().as_str()) {
-					Ok(id) => id,
-					Err(msg) => {
-						let error_msg: String = format!("Could not retrieve shard due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
+		} else {
+			let state_account_id_unwrap = state_account_id.clone().unwrap();
+			match params.parse::<Vec<String>>() {
+				Ok(shards) => {
+					let shard = match decode_shard_from_base58(shards.get(0).clone().as_str()) {
+						Ok(id) => id,
+						Err(msg) => {
+							let error_msg: String =
+								format!("Could not retrieve shard due to: {}", msg);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					};
 
-				match state_account_id_unwrap.load_cloned(&shard) {
-					Ok((mut state, _hash)) => {
-						let account = state.execute_with(enclave_signer_account::<AccountId>);
-						debug!(
-							"author_getEnclaveAccountId account in hex :{:?}",
-							&account.to_hex()
-						);
-						let json_value = RpcReturnValue {
-							do_watch: false,
-							value: account.encode(),
-							status: DirectRequestStatus::Ok,
-						};
-						Ok(json!(json_value.to_hex()))
-					},
-					Err(e) => {
-						let error_msg = format!("load shard failure due to: {:?}", e);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				}
-			},
-			Err(e) => {
-				let error_msg: String = format!("Could not retrieve pending calls due to: {}", e);
-				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-			},
+					match state_account_id_unwrap.load_cloned(&shard) {
+						Ok((mut state, _hash)) => {
+							let account = state.execute_with(enclave_signer_account::<AccountId>);
+							debug!(
+								"author_getEnclaveAccountId account in hex :{:?}",
+								&account.to_hex()
+							);
+							let json_value = RpcReturnValue {
+								do_watch: false,
+								value: account.encode(),
+								status: DirectRequestStatus::Ok,
+							};
+							Ok(json!(json_value.to_hex()))
+						},
+						Err(e) => {
+							let error_msg = format!("load shard failure due to: {:?}", e);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					}
+				},
+				Err(e) => {
+					let error_msg: String =
+						format!("Could not retrieve pending calls due to: {}", e);
+					Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+				},
+			}
 		}
 	});
 
