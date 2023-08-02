@@ -122,12 +122,11 @@ fn get_amount_params(param: &AchainableAmount) -> Result<(String, String, String
 	Ok((name, chain, amount))
 }
 
-/// TODO: info needs update
 fn get_assertion_content(name: &String) -> (&str, &str, &str) {
 	let assertion = if name == CREATED_OVER_AMOUNT_CONTRACTS {
-		("", "", "$is_contract_creator")
+		("Contract Creator", "You are a deployer of a smart contract on these networks: Ethereum", "$is_contract_creator")
 	} else if name == BALANCE_OVER_AMOUNT {
-		("", "", "$is_eth_holder")
+		("ETH Holder", "The number of ETH tokens you hold > 0", "$is_eth_holder")
 	} else {
 		("", "", "")
 	};

@@ -21,7 +21,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::is_uniswap_v2_or_v3_user, *};
-use lc_data_providers::vec_to_string;
 
 /// NOTE:
 /// Build is uniswap v2/v3 user
@@ -46,21 +45,6 @@ use lc_data_providers::vec_to_string;
 ///
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
-
-	let name = param.name.clone();
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Basic(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = param.chain.clone();
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Basic(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -88,7 +72,6 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 	}
 }
 
-/// TODO: Info needs update
 fn get_uniswap_v23_info() -> (&'static str, &'static str) {
-	("", "")
+	("Uniswap V2/V3 User", "You are a user of Uniswap V2 or V3 DApp contract")
 }
