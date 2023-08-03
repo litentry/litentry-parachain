@@ -49,7 +49,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
 
     step('batch test: link identities', async function () {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
 
         for (let index = 0; index < ethereumSigners.length; index++) {
             const signer = ethereumSigners[index];

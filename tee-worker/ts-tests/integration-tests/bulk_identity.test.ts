@@ -69,7 +69,7 @@ describeLitentry('multiple accounts test', 2, async (context) => {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']) as unknown as Web3Network[];
 
         for (let index = 0; index < ethereumSigners.length; index++) {
-            const signerIdentity = await buildIdentityFromKeypair(substrateSigners[index], context);
+            const signerIdentity = await buildIdentityFromKeypair(new PolkadotSigner(substrateSigners[index]), context);
             const identity = await buildIdentityHelper(ethereumSigners[index].address, 'Evm', context);
             identities.push(identity);
             web3networks.push(defaultNetworks);

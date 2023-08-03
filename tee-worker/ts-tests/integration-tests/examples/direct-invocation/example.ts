@@ -1,5 +1,4 @@
 import { cryptoWaitReady } from '@polkadot/util-crypto';
-import { KeyringPair } from '@polkadot/keyring/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { default as teeTypes } from '../../../parachain-api/build/interfaces/identity/definitions';
 import { HexString } from '@polkadot/util/types';
@@ -43,8 +42,9 @@ const substrateKeyring = new Keyring({ type: 'sr25519' });
 const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
 const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
-export async function runExample(keyPairType: KeypairType) {
-    const keyring = new Keyring({ type: keyPairType });
+export type Mode = 'substrate' | 'evm';
+
+export async function runExample(mode: Mode) {
     const parachainWs = new WsProvider(PARACHAIN_WS_ENDPINT);
     const sidechainRegistry = new TypeRegistry();
     const metaData = new Metadata(sidechainRegistry, sidechainMetaData.result as HexString);
@@ -69,8 +69,15 @@ export async function runExample(keyPairType: KeypairType) {
 
     const key = await getTeeShieldingKey(wsp, parachainApi);
 
-    const alice: KeyringPair = getKeyPair('Alice', keyring);
-    const bob: KeyringPair = getKeyPair('Bob', keyring);
+    const alice: Signer =
+        mode == 'substrate'
+            ? new PolkadotSigner(context.substrateWallet['alice'])
+            : new EthersSigner(context.ethersWallet['alice']);
+    const bob: Signer =
+        mode == 'substrate'
+            ? new PolkadotSigner(context.substrateWallet['bob'])
+            : new EthersSigner(context.ethersWallet['bob']);
+
     const bobSubstrateKey: KeyringPair = substrateKeyring.addFromUri('//Bob', { name: 'Bob' });
 
     const mrenclave = (await getEnclave(parachainApi)).mrEnclave;
@@ -85,7 +92,7 @@ export async function runExample(keyPairType: KeypairType) {
     // a trusted call, hence a random number is used here - better ideas are welcome
     let hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     console.log('Send direct setUserShieldingKey call for alice ... hash:', hash);
-    let setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
+    let setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
         mrenclave,
         nonce,
@@ -119,7 +126,7 @@ export async function runExample(keyPairType: KeypairType) {
         alice,
         aliceSubject,
         sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
-        parachainApi.createType('LitentryValidationData', bobValidationData).toHex(),
+        parachainApi.createType('LitentryValidationData', bobValidationData.toU8a()).toHex(),
         parachainApi.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']).toHex(),
         keyNonce,
         hash
@@ -132,7 +139,7 @@ export async function runExample(keyPairType: KeypairType) {
     await sleep(30);
 
     console.log('Send IDGraph getter for alice ...');
-    const idgraphGetter = createSignedTrustedGetterIdGraph(parachainApi, alice, aliceSubject);
+    const idgraphGetter = await createSignedTrustedGetterIdGraph(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, idgraphGetter);
     console.log('IDGraph getter returned', res.toHuman());
     let idgraph = decodeIdGraph(sidechainRegistry, res.value);
@@ -163,7 +170,7 @@ export async function runExample(keyPairType: KeypairType) {
 
 
     console.log('Send UserShieldingKey getter for alice ...');
-    let userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);
+    let userShieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(parachainApi, alice, aliceSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     // the returned res.value of the trustedGetter is of Option<> type
@@ -218,7 +225,7 @@ export async function runExample(keyPairType: KeypairType) {
 
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
-    userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
+    userShieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
@@ -232,7 +239,7 @@ export async function runExample(keyPairType: KeypairType) {
     const keyBob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     console.log('Send direct setUserShieldingKey call for bob, with wrapped bytes... hash:', hash);
-    setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
+    setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
         mrenclave,
         nonce,
@@ -247,7 +254,7 @@ export async function runExample(keyPairType: KeypairType) {
 
     // verify that bob's key is set
     console.log('Send UserShieldingKey getter for bob ...');
-    userShieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
+    userShieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
     res = await sendRequestFromGetter(wsp, parachainApi, mrenclave, key, userShieldingKeyGetter);
     console.log('UserShieldingKey getter returned', res.toHuman());
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));

@@ -32,7 +32,7 @@ describe('Test Identity (direct invocation)', function () {
         const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
         const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
             context.api,
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject
         );
 
