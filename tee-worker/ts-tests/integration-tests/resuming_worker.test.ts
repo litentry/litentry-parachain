@@ -111,7 +111,7 @@ async function withRetry<T>(
             delaySeconds *= backoffFactor;
         }
     }
-}HexString
+}
 
 type JobConfig = {
     workerConfig: WorkerConfig;
