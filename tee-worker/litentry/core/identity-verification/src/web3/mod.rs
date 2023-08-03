@@ -32,6 +32,9 @@ pub fn verify(
 	data: &Web3ValidationData,
 ) -> Result<()> {
 	debug!("verify web3 identity, who: {}", account_id_to_string(&who));
+
+	ensure!(identity.is_web3(), Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity),);
+
 	let raw_msg = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
 
 	ensure!(
