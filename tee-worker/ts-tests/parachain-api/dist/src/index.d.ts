@@ -14,7 +14,6 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
-    ErrorResponse,
     StfError,
 } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
@@ -199,37 +198,29 @@ export declare const definitions: {
         GenericEventWithAccount: {
             account: string;
         };
-        SetUserShieldingKeyResponse: {
+        SetUserShieldingKeyResult: {
             account: string;
             id_graph: string;
-            req_ext_hash: string;
         };
-        LinkIdentityResponse: {
+        LinkIdentityResult: {
             account: string;
             identity: string;
             id_graph: string;
-            req_ext_hash: string;
         };
-        DeactivateIdentityResponse: {
+        DeactivateIdentityResult: {
             account: string;
             identity: string;
-            req_ext_hash: string;
         };
-        ActivateIdentityResponse: {
+        ActivateIdentityResult: {
             account: string;
             identity: string;
-            req_ext_hash: string;
         };
-        SetIdentityNetworksResponse: {
-            req_ext_hash: string;
-        };
-        RequestVCResponse: {
+        RequestVCResult: {
             account: string;
             assertion: string;
             vc_index: string;
             vc_hash: string;
             vc_payload: string;
-            req_ext_hash: string;
         };
         ErrorDetail: {
             _enum: {
@@ -271,9 +262,9 @@ export declare const definitions: {
                 UnclassifiedError: string;
             };
         };
-        ErrorResponse: {
+        Response: {
             req_ext_hash: string;
-            error: string;
+            value: string;
         };
         AesOutput: {
             ciphertext: string;

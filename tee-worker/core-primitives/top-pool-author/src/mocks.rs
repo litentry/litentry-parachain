@@ -189,7 +189,7 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 		todo!()
 	}
 
-	fn set_rpc_response_values(&self, _rpc_responses_values: Vec<(H256, Vec<u8>)>) {}
+	fn set_rpc_response_value(&self, _rpc_responses_value: Vec<(H256, Vec<u8>)>) {}
 
 	fn swap_rpc_connection_hash(&self, _old_hash: H256, _new_hash: H256) {}
 }

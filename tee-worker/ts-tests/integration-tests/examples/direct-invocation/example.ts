@@ -40,7 +40,12 @@ import { KeypairType } from '@polkadot/util-crypto/types';
 import WebSocketAsPromised from 'websocket-as-promised';
 import webSocket from 'ws';
 import { decryptWithAes } from '../../common/utils';
-import { SetUserShieldingKeyResponse, LinkIdentityResponse, RequestVCResponse } from 'parachain-api/build/interfaces';
+import {
+    Response,
+    SetUserShieldingKeyResult,
+    LinkIdentityResult,
+    RequestVCResult,
+} from 'parachain-api/build/interfaces';
 
 // in order to handle self-signed certificates we need to turn off the validation
 // TODO add self signed certificate
@@ -110,14 +115,14 @@ export async function runExample(keyPairType: KeypairType) {
     assert.isTrue(res.do_watch.isFalse);
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
     assert.equal(u8aToHex(res.status.asTrustedOperationStatus[1]), getTopHash(parachainApi, setUserShieldingKeyCall));
-
-    const setUserShieldingKeyRes = parachainApi.createType(
-        'SetUserShieldingKeyResponse',
-        res.value
-    ) as unknown as SetUserShieldingKeyResponse;
-    assert.equal(setUserShieldingKeyRes.account.toHex(), u8aToHex(alice.addressRaw));
-    assert.equal(setUserShieldingKeyRes.req_ext_hash.toHex(), hash);
-    let aesOutput = parseAesOutput(parachainApi, setUserShieldingKeyRes.id_graph.toHex());
+    const setUserShieldingKeyResponse = parachainApi.createType('Response', res.value) as unknown as Response;
+    assert.equal(setUserShieldingKeyResponse.req_ext_hash.toHex(), hash);
+    const setUserShieldingKeyResult = parachainApi.createType(
+        'SetUserShieldingKeyResult',
+        setUserShieldingKeyResponse.value
+    ) as unknown as SetUserShieldingKeyResult;
+    assert.equal(setUserShieldingKeyResult.account.toHex(), u8aToHex(alice.addressRaw));
+    let aesOutput = parseAesOutput(parachainApi, setUserShieldingKeyResult.id_graph.toHex());
     let idgraph = parseIdGraph(sidechainRegistry, aesOutput, aesKey);
     assert.equal(idgraph.length, 1);
     assertPrimeIdentity(idgraph[0], alice);
@@ -156,13 +161,14 @@ export async function runExample(keyPairType: KeypairType) {
     console.log('linkIdentity call returned', res.toHuman());
     assert.isTrue(res.do_watch.isFalse);
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
-    const linkIdentityRes = parachainApi.createType(
-        'LinkIdentityResponse',
-        res.value
-    ) as unknown as LinkIdentityResponse;
-    assert.equal(linkIdentityRes.account.toHex(), u8aToHex(alice.addressRaw));
-    assert.equal(linkIdentityRes.req_ext_hash.toHex(), hash);
-    aesOutput = parseAesOutput(parachainApi, linkIdentityRes.id_graph.toHex());
+    const linkIdentityResponse = parachainApi.createType('Response', res.value) as unknown as Response;
+    assert.equal(linkIdentityResponse.req_ext_hash.toHex(), hash);
+    const linkIdentityResult = parachainApi.createType(
+        'LinkIdentityResult',
+        linkIdentityResponse.value
+    ) as unknown as LinkIdentityResult;
+    assert.equal(linkIdentityResult.account.toHex(), u8aToHex(alice.addressRaw));
+    aesOutput = parseAesOutput(parachainApi, linkIdentityResult.id_graph.toHex());
     idgraph = parseIdGraph(sidechainRegistry, aesOutput, aesKey);
     assert.equal(idgraph.length, 2);
     // the first identity is the bob substrate identity
@@ -343,10 +349,14 @@ export async function runExample(keyPairType: KeypairType) {
     console.log('requestVcCall call returned', res.toHuman());
     assert.isTrue(res.do_watch.isFalse);
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
-    const requestVcRes = parachainApi.createType('RequestVCResponse', res.value) as unknown as RequestVCResponse;
-    assert.equal(requestVcRes.account.toHex(), u8aToHex(alice.addressRaw));
-    assert.equal(requestVcRes.req_ext_hash.toHex(), hash);
-    aesOutput = parseAesOutput(parachainApi, requestVcRes.vc_payload.toHex());
+    const requestVcResponse = parachainApi.createType('Response', res.value) as unknown as Response;
+    assert.equal(requestVcResponse.req_ext_hash.toHex(), hash);
+    const requestVcResult = parachainApi.createType(
+        'RequestVCResult',
+        linkIdentityResponse.value
+    ) as unknown as RequestVCResult;
+    assert.equal(requestVcResult.account.toHex(), u8aToHex(alice.addressRaw));
+    aesOutput = parseAesOutput(parachainApi, requestVcResult.vc_payload.toHex());
     const decryptedVcPayload = u8aToString(hexToU8a(decryptWithAes(aesKey, aesOutput, 'hex')));
     console.log('decrypted vc payload:', decryptedVcPayload);
 }

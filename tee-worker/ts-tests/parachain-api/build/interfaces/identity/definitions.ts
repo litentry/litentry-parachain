@@ -204,37 +204,29 @@ export default {
         GenericEventWithAccount: {
             account: "AccountId",
         },
-        SetUserShieldingKeyResponse: {
+        SetUserShieldingKeyResult: {
             account: "AccountId",
             id_graph: "AesOutput",
-            req_ext_hash: "H256",
         },
-        LinkIdentityResponse: {
+        LinkIdentityResult: {
             account: "AccountId",
             identity: "AesOutput",
             id_graph: "AesOutput",
-            req_ext_hash: "H256",
         },
-        DeactivateIdentityResponse: {
+        DeactivateIdentityResult: {
             account: "AccountId",
             identity: "AesOutput",
-            req_ext_hash: "H256",
         },
-        ActivateIdentityResponse: {
+        ActivateIdentityResult: {
             account: "AccountId",
             identity: "AesOutput",
-            req_ext_hash: "H256",
         },
-        SetIdentityNetworksResponse: {
-            req_ext_hash: "H256",
-        },
-        RequestVCResponse: {
+        RequestVCResult: {
             account: "AccountId",
             assertion: "Assertion",
             vc_index: "H256",
             vc_hash: "H256",
             vc_payload: "AesOutput",
-            req_ext_hash: "H256",
         },
         ErrorDetail: {
             _enum: {
@@ -276,9 +268,9 @@ export default {
                 UnclassifiedError: "Null",
             },
         },
-        ErrorResponse: {
+        Response: {
             req_ext_hash: "H256",
-            error: "StfError",
+            value: "Vec<u8>",
         },
         AesOutput: {
             ciphertext: "Vec<u8>",

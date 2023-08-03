@@ -19,7 +19,7 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
-    ErrorResponse,
+    // ErrorResponse,
     StfError,
 } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";

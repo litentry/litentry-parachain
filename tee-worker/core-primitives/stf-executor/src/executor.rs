@@ -15,11 +15,7 @@
 
 */
 
-use crate::{
-	error::{Error, Result},
-	traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState},
-	BatchExecutionResult, ExecutedOperation,
-};
+use crate::{error::{Error, Result}, traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState}, BatchExecutionResult, ExecutedOperation};
 use codec::{Decode, Encode};
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},
@@ -29,10 +25,7 @@ use ita_stf::{
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
-use itp_stf_interface::{
-	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
-	ExecuteCall, StateCallInterface, UpdateState,
-};
+use itp_stf_interface::{parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface, ExecuteCall, StateCallInterface, UpdateState, EncodeResult};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
@@ -142,7 +135,7 @@ where
 				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
 					Response {
 						req_ext_hash: h.clone(),
-						value: e
+						value: e.encode()
 					}.encode()
 				}).unwrap_or_default();
 				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
@@ -151,7 +144,7 @@ where
 				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
 					Response {
 						req_ext_hash: h.clone(),
-						value: result
+						value: result.get_encoded_result()
 					}.encode()
 				}).unwrap_or_default();
 
@@ -327,7 +320,7 @@ fn into_map(
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Response<T: Encode> {
+pub(crate) struct Response {
 	pub req_ext_hash: H256,
-	pub value: T,
+	pub value: Vec<u8>,
 }

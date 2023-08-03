@@ -56,7 +56,7 @@ where
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error: Encode;
-	type Result: Encode;
+	type Result: EncodeResult;
 
 	/// Execute a call on a specific state. Callbacks are added as an `OpaqueCall`.
 	///
@@ -71,7 +71,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Option<Self::Result>, Self::Error>;
+	) -> Result<Self::Result, Self::Error>;
 }
 
 /// Interface to execute state reading getters on a state.
@@ -87,7 +87,7 @@ where
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error: Encode;
-	type Result: Encode;
+	type Result: EncodeResult;
 
 	/// Execute a call. Callbacks are added as an `OpaqueCall`.
 	///
@@ -99,7 +99,7 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Option<Self::Result>, Self::Error>;
+	) -> Result<Self::Result, Self::Error>;
 
 	/// Get storages hashes that should be updated for a specific call.
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;
@@ -111,4 +111,14 @@ pub trait ExecuteGetter {
 	fn execute(self) -> Option<Vec<u8>>;
 	/// Get storages hashes that should be updated for a specific getter.
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;
+}
+
+pub trait EncodeResult {
+	fn get_encoded_result(self) -> Vec<u8>;
+}
+
+impl EncodeResult for () {
+	fn get_encoded_result(self) -> Vec<u8> {
+		Vec::default()
+	}
 }

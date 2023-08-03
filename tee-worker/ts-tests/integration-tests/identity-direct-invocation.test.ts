@@ -10,11 +10,7 @@ import {
     buildValidations,
     initIntegrationTestContext,
 } from './common/utils';
-import {
-    assertIdentityLinked,
-    assertInitialIdGraphCreated,
-    assertIsInSidechainBlock,
-} from './common/utils/assertion';
+import { assertIdentityLinked, assertInitialIdGraphCreated, assertIsInSidechainBlock } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallSetUserShieldingKey,
@@ -125,8 +121,11 @@ describe('Test Identity (direct invocation)', function () {
             context,
             requestIdentifier,
             (v) => {
-                assert.isTrue(v.isLinkIdentityFailed);
-                assert.isTrue(v.asLinkIdentityFailed.isUserShieldingKeyNotFound);
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isUserShieldingKeyNotFound,
+                    `expected UserShieldingKeyNotFound, received ${v.asDeactivateIdentityFailed.type} instead`
+                );
             },
             res
         );
@@ -443,8 +442,11 @@ describe('Test Identity (direct invocation)', function () {
             context,
             requestIdentifier,
             (v) => {
-                assert.isTrue(v.isLinkIdentityFailed);
-                assert.isTrue(v.asLinkIdentityFailed.isInvalidIdentity);
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isInvalidIdentity,
+                    `expected InvalidIdentity, received ${v.asLinkIdentityFailed.type} instead`
+                );
             },
             res
         );
@@ -510,8 +512,11 @@ describe('Test Identity (direct invocation)', function () {
             context,
             requestIdentifier,
             (v) => {
-                assert.isTrue(v.isLinkIdentityFailed);
-                assert.isTrue(v.asLinkIdentityFailed.isVerifyEvmSignatureFailed);
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isVerifyEvmSignatureFailed,
+                    `expected VerifyEvmSignatureFailed, received ${v.asLinkIdentityFailed.type} instead`
+                );
             },
             res
         );
@@ -564,8 +569,11 @@ describe('Test Identity (direct invocation)', function () {
             context,
             requestIdentifier,
             (v) => {
-                assert.isTrue(v.isLinkIdentityFailed);
-                assert.isTrue(v.asLinkIdentityFailed.isStfError);
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asLinkIdentityFailed.type} instead`
+                );
                 assert.equal(u8aToString(v.asLinkIdentityFailed.asStfError), 'IdentityAlreadyLinked');
             },
             res
@@ -829,8 +837,14 @@ describe('Test Identity (direct invocation)', function () {
             context,
             requestIdentifier,
             (v) => {
-                assert.isTrue(v.isDeactivateIdentityFailed);
-                assert.isTrue(v.asDeactivateIdentityFailed.isStfError);
+                assert.isTrue(
+                    v.isDeactivateIdentityFailed,
+                    `expected DeactivateIdentityFailed, received ${v.type} instead`
+                );
+                assert.isTrue(
+                    v.asDeactivateIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asDeactivateIdentityFailed.type} instead`
+                );
                 assert.equal(u8aToString(v.asDeactivateIdentityFailed.asStfError), 'DeactivatePrimeIdentityDisallowed');
             },
             res

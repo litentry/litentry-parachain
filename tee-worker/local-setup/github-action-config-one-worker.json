@@ -16,7 +16,7 @@
         "mock",
         "--enable-mock-server",
         "--parentchain-start-block",
-        "0"
+        "3650"
       ],
       "subcommand_flags": [
         "--skip-ra",

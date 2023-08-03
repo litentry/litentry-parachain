@@ -22,11 +22,10 @@ import type {
     Index,
 } from "@polkadot/types/interfaces/runtime";
 
-/** @name ActivateIdentityResponse */
-export interface ActivateIdentityResponse extends Struct {
+/** @name ActivateIdentityResult */
+export interface ActivateIdentityResult extends Struct {
     readonly account: AccountId;
     readonly identity: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name Address20 */
@@ -83,11 +82,10 @@ export interface Assertion extends Enum {
 /** @name BoundedWeb3Network */
 export interface BoundedWeb3Network extends Vec<Web3Network> {}
 
-/** @name DeactivateIdentityResponse */
-export interface DeactivateIdentityResponse extends Struct {
+/** @name DeactivateIdentityResult */
+export interface DeactivateIdentityResult extends Struct {
     readonly account: AccountId;
     readonly identity: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name DirectRequestStatus */
@@ -143,12 +141,6 @@ export interface ErrorDetail extends Enum {
         | "Web3NetworkOutOfBounds";
 }
 
-/** @name ErrorResponse */
-export interface ErrorResponse extends Struct {
-    readonly req_ext_hash: H256;
-    readonly error: StfError;
-}
-
 /** @name EthereumSignature */
 export interface EthereumSignature extends U8aFixed {}
 
@@ -190,12 +182,11 @@ export interface IdentityStatus extends Enum {
 /** @name IdentityString */
 export interface IdentityString extends Bytes {}
 
-/** @name LinkIdentityResponse */
-export interface LinkIdentityResponse extends Struct {
+/** @name LinkIdentityResult */
+export interface LinkIdentityResult extends Struct {
     readonly account: AccountId;
     readonly identity: AesOutput;
     readonly id_graph: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name LitentryIdentity */
@@ -250,26 +241,25 @@ export interface Request extends Struct {
     readonly cyphertext: Bytes;
 }
 
-/** @name RequestVCResponse */
-export interface RequestVCResponse extends Struct {
+/** @name RequestVCResult */
+export interface RequestVCResult extends Struct {
     readonly account: AccountId;
     readonly assertion: Assertion;
     readonly vc_index: H256;
     readonly vc_hash: H256;
     readonly vc_payload: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
-/** @name SetIdentityNetworksResponse */
-export interface SetIdentityNetworksResponse extends Struct {
+/** @name Response */
+export interface Response extends Struct {
     readonly req_ext_hash: H256;
+    readonly value: Bytes;
 }
 
-/** @name SetUserShieldingKeyResponse */
-export interface SetUserShieldingKeyResponse extends Struct {
+/** @name SetUserShieldingKeyResult */
+export interface SetUserShieldingKeyResult extends Struct {
     readonly account: AccountId;
     readonly id_graph: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name ShardIdentifier */

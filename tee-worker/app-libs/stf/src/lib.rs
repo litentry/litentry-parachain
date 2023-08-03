@@ -59,7 +59,7 @@ pub mod stf_sgx_tests;
 pub mod test_genesis;
 pub mod trusted_call;
 pub mod trusted_call_litentry;
-pub mod trusted_call_result_data;
+pub mod trusted_call_result;
 
 pub(crate) const ENCLAVE_ACCOUNT_KEY: &str = "Enclave_Account_Key";
 
@@ -207,8 +207,8 @@ impl TrustedOperation {
 
 	pub fn req_hash(&self) -> Option<&H256> {
 		match self {
-			TrustedOperation::direct_call(c) => c.call.req_hash(),
-			TrustedOperation::indirect_call(c) => c.call.req_hash(),
+			TrustedOperation::direct_call(c) => c.call.identifier(),
+			TrustedOperation::indirect_call(c) => c.call.identifier(),
 			//todo: getters should also contain req_hash ?
 			TrustedOperation::get(_) => None,
 		}

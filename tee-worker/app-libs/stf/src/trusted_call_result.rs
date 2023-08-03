@@ -22,44 +22,62 @@ use crate::AccountId;
 use codec::{Decode, Encode};
 use itp_types::H256;
 use litentry_primitives::{AesOutput, Assertion};
+use std::vec::Vec;
+use itp_stf_interface::EncodeResult;
 
 #[derive(Encode, Decode)]
-pub enum TrustedCallResultData {
-	SetUserShieldingKey(SetUserShieldingKeyResultData),
-	LinkIdentity(LinkIdentityResultData),
-	DeactivateIdentity(DeactivateIdentityResultData),
-	ActivateIdentity(ActivateIdentityResultData),
-	RequestVC(RequestVCResultData),
+pub enum TrustedCallResult {
 	Empty,
+	Streamed,
+	SetUserShieldingKey(SetUserShieldingKeyResult),
+	LinkIdentity(LinkIdentityResult),
+	DeactivateIdentity(DeactivateIdentityResult),
+	ActivateIdentity(ActivateIdentityResult),
+	RequestVC(RequestVCResult),
+}
+
+impl EncodeResult for TrustedCallResult {
+	fn get_encoded_result(self) -> Vec<u8> {
+		match self {
+			Self::Empty => Vec::default(),
+			// true means that there are more results to come, see rpc_responder
+			Self::Streamed => true.encode(),
+			Self::SetUserShieldingKey(result) => result.encode(),
+			Self::LinkIdentity(result)=> result.encode(),
+			Self::DeactivateIdentity(result)=> result.encode(),
+				Self::ActivateIdentity(result)=> result.encode(),
+			Self::RequestVC(result) => result.encode(),
+		}
+	}
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct SetUserShieldingKeyResultData {
+pub struct SetUserShieldingKeyResult {
 	pub account: AccountId,
 	pub id_graph: AesOutput,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct LinkIdentityResultData {
+pub struct LinkIdentityResult {
 	pub account: AccountId,
 	pub identity: AesOutput,
 	pub id_graph: AesOutput,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct DeactivateIdentityResultData {
+pub struct DeactivateIdentityResult {
 	pub account: AccountId,
 	pub identity: AesOutput,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct ActivateIdentityResultData {
+pub struct ActivateIdentityResult {
 	pub account: AccountId,
 	pub identity: AesOutput,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct RequestVCResultData {
+pub struct RequestVCResult {
 	pub account: AccountId,
 	pub assertion: Assertion,
 	pub vc_index: H256,

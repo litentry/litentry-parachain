@@ -85,10 +85,10 @@ impl ExecutionStatus {
 		}
 	}
 
-	pub fn get_operation_hash(&self) -> Option<H256> {
+	pub fn get_operation_hash(&self) -> H256 {
 		match self {
-			ExecutionStatus::Success(operation_hash, _, _) => Some(*operation_hash),
-			ExecutionStatus::Failure(operation_hash, _, _) => Some(*operation_hash),
+			ExecutionStatus::Success(operation_hash, _, _) => *operation_hash,
+			ExecutionStatus::Failure(operation_hash, _, _) => *operation_hash,
 		}
 	}
 
@@ -188,9 +188,7 @@ where
 	pub fn get_rpc_responses_values(&self) -> Vec<(H256, RpcResponseValue)> {
 		self.executed_operations
 			.iter()
-			.filter_map(|ec| {
-				ec.status.get_operation_hash().map(|h| (h, ec.status.get_rpc_response_value()))
-			})
+			.map(|ec| (ec.status.get_operation_hash(), ec.status.get_rpc_response_value()))
 			.collect()
 	}
 }
