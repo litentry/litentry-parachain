@@ -99,8 +99,6 @@ export class EthersSigner implements Signer {
     }
 
     getAddressRaw(): Uint8Array {
-        console.log(this.wallet.address);
-        console.log(hexToU8a(this.wallet.address));
         return hexToU8a(this.wallet.address);
     }
 
