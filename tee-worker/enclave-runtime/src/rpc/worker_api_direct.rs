@@ -109,15 +109,20 @@ where
 	let author_get_enclave_account_id: &str = "author_getEnclaveAccountId";
 	io.add_sync_method(author_get_enclave_account_id, move |params: Params| {
 		if state_account_id.is_none() {
-			return Ok(json!(compute_hex_encoded_return_error(
+			Ok(json!(compute_hex_encoded_return_error(
 				"author_getEnclaveAccountId is not avaiable"
 			)))
 		} else {
-			let state_account_id_unwrap = state_account_id.clone().unwrap();
+			let state_account_id_unwrap =
+				state_account_id.clone().expect("unwrap state_account_id error");
 			match params.parse::<Vec<String>>() {
 				Ok(shards) => {
 					let shard = match decode_shard_from_base58(
-						shards.get(0).clone().expect("REASON").as_str(),
+						shards
+							.get(0)
+							.clone()
+							.expect("unwrap state_accoshardsunt_id error")
+							.as_str(),
 					) {
 						Ok(id) => id,
 						Err(msg) => {
