@@ -156,7 +156,10 @@ export async function runExample(keyPairType: KeypairType) {
     console.log('linkIdentity call returned', res.toHuman());
     assert.isTrue(res.do_watch.isFalse);
     assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
-    const linkIdentityRes = parachainApi.createType('LinkIdentityResponse', res.value) as unknown as LinkIdentityResponse;
+    const linkIdentityRes = parachainApi.createType(
+        'LinkIdentityResponse',
+        res.value
+    ) as unknown as LinkIdentityResponse;
     assert.equal(linkIdentityRes.account.toHex(), u8aToHex(alice.addressRaw));
     assert.equal(linkIdentityRes.req_ext_hash.toHex(), hash);
     aesOutput = parseAesOutput(parachainApi, linkIdentityRes.id_graph.toHex());

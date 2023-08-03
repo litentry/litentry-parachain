@@ -19,7 +19,7 @@
 ### Builder Stage
 ##################################################
 FROM litentry/litentry-tee-dev:edge AS builder
-LABEL maintainer="zoltan@integritee.network"
+LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
 
 # set environment variables
 ENV SGX_SDK /opt/sgxsdk
@@ -51,7 +51,7 @@ RUN cargo test --release
 # Installation and setup of sccache should be moved to the integritee-dev image, so we don't
 # always need to compile and install sccache on CI (where we have no caching so far).
 FROM litentry/litentry-tee-dev:edge AS builder
-LABEL maintainer="zoltan@integritee.network"
+LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
 
 # set environment variables
 ENV SGX_SDK /opt/sgxsdk
@@ -106,7 +106,7 @@ RUN corepack prepare yarn@3.6.1 --activate
 ### Deployed CLI client
 ##################################################
 FROM runner AS deployed-client
-LABEL maintainer="zoltan@integritee.network"
+LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
 
 ARG SCRIPT_DIR=/usr/local/worker-cli
 ARG LOG_DIR=/usr/local/log
@@ -114,22 +114,22 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-COPY --from=builder /home/ubuntu/repo/tee-worker/bin/integritee-cli /usr/local/bin
+COPY --from=builder /home/ubuntu/repo/tee-worker/bin/litentry-cli /usr/local/bin
 COPY --from=builder /home/ubuntu/repo/tee-worker/cli/*.sh /usr/local/worker-cli/
 
-RUN chmod +x /usr/local/bin/integritee-cli ${SCRIPT_DIR}/*.sh
+RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
 
-RUN ldd /usr/local/bin/integritee-cli && \
-    /usr/local/bin/integritee-cli --version
+RUN ldd /usr/local/bin/litentry-cli && \
+    /usr/local/bin/litentry-cli --version
 
-ENTRYPOINT ["/usr/local/bin/integritee-cli"]
+ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 
 
 ### Deployed worker service
 ##################################################
 FROM runner AS deployed-worker
-LABEL maintainer="zoltan@integritee.network"
+LABEL maintainer="litentry-dev"
 
 WORKDIR /usr/local/bin
 
@@ -140,13 +140,13 @@ COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
-RUN chmod +x /usr/local/bin/integritee-service
+RUN chmod +x /usr/local/bin/litentry-worker
 RUN ls -al /usr/local/bin
 
 # checks
 ENV SGX_SDK /opt/sgxsdk
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
-RUN ldd /usr/local/bin/integritee-service && \
-    /usr/local/bin/integritee-service --version
+RUN ldd /usr/local/bin/litentry-worker && \
+    /usr/local/bin/litentry-worker --version
 
-ENTRYPOINT ["/usr/local/bin/integritee-service"]
+ENTRYPOINT ["/usr/local/bin/litentry-worker"]

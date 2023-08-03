@@ -1,5 +1,5 @@
 use clap::Parser;
-use integritee_cli::Cli;
+use litentry_cli::Cli;
 
 fn init() {
 	let _ = env_logger::try_init();
