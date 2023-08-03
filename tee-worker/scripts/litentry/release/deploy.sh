@@ -111,7 +111,6 @@ function restart(){
   fi
 }
 
-# TODO: Make less redundant 
 function stop_running_services() {
   if [ "$ROOT" = true ]; then 
     cd /etc/systemd/system 
@@ -297,9 +296,8 @@ function register_parachain() {
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
-  # Using $GENESIS_STATE_PATH and $GENESIS_WASM_PATH environment variables
+  # The genesis state path file needs to be updated as it is hardcoded to be /tmp/parachain_dev 
   jq --arg genesis_state "$TMPDIR/genesis-state" --arg genesis_wasm "$TMPDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > updated_config.json
-  # jq '.genesis_state_path = "${TEMPDIR}/genesis-state" | .genesis_wasm_path = "${TEMPDIR}/genesis-wasm"' config.ci.json > update_config.json
   mv updated_config.json config.ci.json 
   corepack yarn
   corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
@@ -421,7 +419,6 @@ function restart_worker() {
     local service_name="worker${i}"
     local description='Worker Service for Litentry Side chain'
     local working_directory='/usr/local/bin'
-    # TODO: change this to /var/data/log 
     local log="${ROOTDIR}/tee-worker/log/worker${i}.log"
 
     generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
@@ -761,13 +758,11 @@ fi
 CONFIG=$(cat $config)
 export CONFIG
 
-# TODO: There's lot of redundanct code here to clean, let's see if functionality works fast and then clean up 
 # Move log files to log-backup
 if [ -d "$ROOTDIR/tee-worker/log" ]; then
   if [ "$ROOT" = true ]; then 
     new_folder_name=$(date +"/opt/worker/log-backup/log-%Y%m%d-%H%M%S")
     mkdir -p $new_folder_name
-    # TODO: this should be changed soon 
     cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
     cp /opt/parachain_dev/*.log $new_folder_name
     echo "Backup log into $new_folder_name"
@@ -825,7 +820,6 @@ if [ "$discard" = true ]; then
   fi 
 fi
 
-# TODO: Not touching on upgrade worker for now 
 # Get old MRENCLAVE
 if [ "$action" = "upgrade-worker" ]; then
   cd $ROOTDIR/tee-worker || exit 
