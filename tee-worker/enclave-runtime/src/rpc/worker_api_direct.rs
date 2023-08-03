@@ -113,17 +113,21 @@ where
 				"author_getEnclaveAccountId is not avaiable"
 			)))
 		} else {
-			let state_account_id_unwrap =
-				state_account_id.clone().expect("unwrap state_account_id error");
+			let state_account_id_unwrap = match state_account_id.clone() {
+				None =>
+					return Ok(json!(compute_hex_encoded_return_error(
+						"author_getEnclaveAccountId is not avaiable"
+					))),
+				Some(id) => id,
+			};
 			match params.parse::<Vec<String>>() {
 				Ok(shards) => {
-					let shard = match decode_shard_from_base58(
-						shards
-							.get(0)
-							.clone()
-							.expect("unwrap state_accoshardsunt_id error")
-							.as_str(),
-					) {
+					let shard0_unwrap = match shards.get(0) {
+						None =>
+							return Ok(json!(compute_hex_encoded_return_error("unwrap shard error"))),
+						Some(shard0) => shard0,
+					};
+					let shard = match decode_shard_from_base58(shard0_unwrap.as_str()) {
 						Ok(id) => id,
 						Err(msg) => {
 							let error_msg: String =
