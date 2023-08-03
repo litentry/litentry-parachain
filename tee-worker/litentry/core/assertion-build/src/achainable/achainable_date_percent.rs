@@ -35,8 +35,8 @@ pub fn build_date_percent(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, token, date, percent) = get_date_percent_params(&param)?;
-	let p = ParamsBasicTypeWithDatePercent::new(name, chain, token, date, percent);
+	let (name, token, date, percent) = parse_date_percent_params(&param)?;
+	let p = ParamsBasicTypeWithDatePercent::new(name, &param.chain, token, date, percent);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -63,22 +63,15 @@ pub fn build_date_percent(
 	}
 }
 
-fn get_date_percent_params(
+fn parse_date_percent_params(
 	param: &AchainableDatePercent,
-) -> Result<(String, String, String, String, String)> {
+) -> Result<(String, String, String, String)> {
 	let name = param.clone().name;
-	let chain = param.clone().chain;
 	let token = param.clone().token;
 	let date = param.clone().date;
 	let percent = param.clone().percent;
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::DatePercent(param.clone())),
 			ErrorDetail::ParseError,
@@ -103,5 +96,5 @@ fn get_date_percent_params(
 		)
 	})?;
 
-	Ok((name, chain, token, date, percent))
+	Ok((name, token, date, percent))
 }

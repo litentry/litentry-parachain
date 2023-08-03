@@ -32,8 +32,8 @@ const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> Result<Credential> {
 	debug!("Assertion Achainable build_amounts, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, amount1, amount2) = get_amounts_params(&param)?;
-	let p = ParamsBasicTypeWithAmounts::new(name, chain, amount1, amount2);
+	let (name, amount1, amount2) = parse_amounts_params(&param)?;
+	let p = ParamsBasicTypeWithAmounts::new(name, &param.chain, amount1, amount2);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -60,19 +60,12 @@ pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> R
 	}
 }
 
-fn get_amounts_params(param: &AchainableAmounts) -> Result<(String, String, String, String)> {
+fn parse_amounts_params(param: &AchainableAmounts) -> Result<(String, String, String)> {
 	let name = param.name.clone();
-	let chain = param.chain.clone();
 	let amount1 = param.amount1.clone();
 	let amount2 = param.amount2.clone();
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::Amounts(param.clone())),
 			ErrorDetail::ParseError,
@@ -91,5 +84,5 @@ fn get_amounts_params(param: &AchainableAmounts) -> Result<(String, String, Stri
 		)
 	})?;
 
-	Ok((name, chain, amount1, amount2))
+	Ok((name, amount1, amount2))
 }

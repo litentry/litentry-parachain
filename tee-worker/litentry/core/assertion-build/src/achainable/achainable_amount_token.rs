@@ -35,8 +35,8 @@ pub fn build_amount_token(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, amount, token) = get_amount_token_params(&param)?;
-	let p = ParamsBasicTypeWithAmountToken::new(name, chain, amount, token);
+	let (name, amount, token) = parse_amount_token_params(&param)?;
+	let p = ParamsBasicTypeWithAmountToken::new(name, &param.chain, amount, token);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -63,20 +63,13 @@ pub fn build_amount_token(
 	}
 }
 
-fn get_amount_token_params(
+fn parse_amount_token_params(
 	param: &AchainableAmountToken,
-) -> Result<(String, String, String, Option<String>)> {
+) -> Result<(String, String, Option<String>)> {
 	let name = param.name.clone();
-	let chain = param.chain.clone();
 	let amount = param.amount.clone();
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
 			ErrorDetail::ParseError,
@@ -101,5 +94,5 @@ fn get_amount_token_params(
 		None
 	};
 
-	Ok((name, chain, amount, token))
+	Ok((name, amount, token))
 }

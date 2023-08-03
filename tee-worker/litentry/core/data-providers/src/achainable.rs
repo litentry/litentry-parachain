@@ -242,11 +242,12 @@ impl ParamsBasicTypeWithAmountHolding {
 
 	pub fn one(
 		name: String,
-		chain: String,
+		network: &Web3Network,
 		amount: String,
 		date: String,
 		token: Option<String>,
 	) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, amount, date, token }
 	}
 }
@@ -282,7 +283,8 @@ impl ParamsBasicTypeWithClassOfYear {
 		}
 	}
 
-	pub fn one(name: String, chain: String, date1: String, date2: String) -> Self {
+	pub fn one(name: String, network: &Web3Network, date1: String, date2: String) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, date1, date2, include_metadata: true }
 	}
 }
@@ -346,7 +348,8 @@ pub struct ParamsBasicType {
 }
 
 impl ParamsBasicType {
-	pub fn new(name: String, chain: String) -> Self {
+	pub fn new(name: String, network: &Web3Network) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain }
 	}
 }
@@ -380,7 +383,8 @@ pub struct ParamsBasicTypeWithDate {
 }
 
 impl ParamsBasicTypeWithDate {
-	pub fn new(name: String, chain: String, date: String) -> Self {
+	pub fn new(name: String, network: &Web3Network, date: String) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, date }
 	}
 }
@@ -398,7 +402,8 @@ pub struct ParamsBasicTypeWithAmounts {
 }
 
 impl ParamsBasicTypeWithAmounts {
-	pub fn new(name: String, chain: String, amount1: String, amount2: String) -> Self {
+	pub fn new(name: String, network: &Web3Network, amount1: String, amount2: String) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, amount1, amount2 }
 	}
 }
@@ -416,7 +421,8 @@ pub struct ParamsBasicTypeWithAmountToken {
 }
 
 impl ParamsBasicTypeWithAmountToken {
-	pub fn new(name: String, chain: String, amount: String, token: Option<String>) -> Self {
+	pub fn new(name: String, network: &Web3Network, amount: String, token: Option<String>) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, amount, token }
 	}
 }
@@ -437,10 +443,11 @@ pub struct ParamsBasicTypeWithBetweenPercents {
 impl ParamsBasicTypeWithBetweenPercents {
 	pub fn new(
 		name: String,
-		chain: String,
+		network: &Web3Network,
 		greater_than_or_equal_to: String,
 		less_than_or_equal_to: String,
 	) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, greater_than_or_equal_to, less_than_or_equal_to }
 	}
 }
@@ -459,7 +466,8 @@ pub struct ParamsBasicTypeWithDateInterval {
 }
 
 impl ParamsBasicTypeWithDateInterval {
-	pub fn new(name: String, chain: String, start_date: String, end_date: String) -> Self {
+	pub fn new(name: String, network: &Web3Network, start_date: String, end_date: String) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, start_date, end_date }
 	}
 }
@@ -477,7 +485,8 @@ pub struct ParamsBasicTypeWithToken {
 }
 
 impl ParamsBasicTypeWithToken {
-	pub fn new(name: String, chain: String, token: String) -> Self {
+	pub fn new(name: String, network: &Web3Network, token: String) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, token }
 	}
 }
@@ -497,7 +506,14 @@ pub struct ParamsBasicTypeWithDatePercent {
 }
 
 impl ParamsBasicTypeWithDatePercent {
-	pub fn new(name: String, chain: String, token: String, date: String, percent: String) -> Self {
+	pub fn new(
+		name: String,
+		network: &Web3Network,
+		token: String,
+		date: String,
+		percent: String,
+	) -> Self {
+		let chain = web3_network_to_chain(network);
 		Self { name, chain, token, date, percent }
 	}
 }
@@ -707,17 +723,17 @@ pub trait AchainableTagDeFi {
 impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Account created after {date}".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let date = "30D".to_string();
-		let param = ParamsBasicTypeWithDate::new(name, chain, date);
+		let param = ParamsBasicTypeWithDate::new(name, &chain, date);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param))
 	}
 
 	fn og_account(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Account created before {date}".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let date = "2020-01-01T00:00:00.000Z".to_string();
-		let param = ParamsBasicTypeWithDate::new(name, chain, date);
+		let param = ParamsBasicTypeWithDate::new(name, &chain, date);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param))
 	}
 
@@ -730,7 +746,7 @@ impl AchainableTagAccount for AchainableClient {
 	}
 
 	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("Account found on {chain}".to_string(), "bsc".to_string());
+		let param = ParamsBasicType::new("Account found on {chain}".to_string(), &Web3Network::BSC);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
@@ -740,12 +756,12 @@ impl AchainableTagAccount for AchainableClient {
 	}
 
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("Validator".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("Validator".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("Validator".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("Validator".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 }
@@ -753,37 +769,37 @@ impl AchainableTagAccount for AchainableClient {
 impl AchainableTagBalance for AchainableClient {
 	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance between percents".to_string();
-		let chain = "polkadot".to_string();
+		let chain = Web3Network::Polkadot;
 		let a1 = "0.01".to_string();
 		let a2 = "0.0999999999999999".to_string();
-		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
 	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance between percents".to_string();
-		let chain = "kusama".to_string();
+		let chain = Web3Network::Kusama;
 		let a1 = "0.01".to_string();
 		let a2 = "0.0999999999999999".to_string();
-		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
 	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance between percents".to_string();
-		let chain = "polkadot".to_string();
+		let chain = Web3Network::Polkadot;
 		let a1 = "0.01".to_string();
 		let a2 = "100".to_string();
-		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
 	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance between percents".to_string();
-		let chain = "kusama".to_string();
+		let chain = Web3Network::Kusama;
 		let a1 = "0.01".to_string();
 		let a2 = "100".to_string();
-		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, &chain, a1, a2);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
@@ -814,10 +830,10 @@ impl AchainableTagBalance for AchainableClient {
 	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
 		// 10 - 100 ETH Holder
 		let name = "Balance between {amounts}".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let amount1 = "10".to_string();
 		let amount2 = "100".to_string();
-		let param = ParamsBasicTypeWithAmounts::new(name, chain, amount1, amount2);
+		let param = ParamsBasicTypeWithAmounts::new(name, &chain, amount1, amount2);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmounts(param))
 	}
 
@@ -842,12 +858,12 @@ impl AchainableTagBalance for AchainableClient {
 	fn over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
 		// 100+ WETH Holder
 		let name = "ERC20 balance over {amount}".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let amount = "100".to_string();
 
 		let param = ParamsBasicTypeWithAmountToken::new(
 			name,
-			chain,
+			&chain,
 			amount,
 			Some(WETH_TOKEN_ADDRESS.to_string()),
 		);
@@ -857,12 +873,12 @@ impl AchainableTagBalance for AchainableClient {
 	fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error> {
 		// 100+ LIT BEP20 Holder
 		let name = "BEP20 balance over {amount}".to_string();
-		let chain = "bsc".to_string();
+		let chain = Web3Network::BSC;
 		let amount = "100".to_string();
 
 		let param = ParamsBasicTypeWithAmountToken::new(
 			name,
-			chain,
+			&chain,
 			amount,
 			Some(LIT_TOKEN_ADDRESS.to_string()),
 		);
@@ -905,93 +921,93 @@ impl AchainableTagBalance for AchainableClient {
 impl AchainableTagDotsama for AchainableClient {
 	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
 		let param =
-			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), "polkadot".to_string());
+			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
 		let param =
-			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), "kusama".to_string());
+			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("TipFinder".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("TipFinder".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("TipFinder".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("TipFinder".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("TipBeneficiary".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("TipBeneficiary".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("OpenGovProposer".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("OpenGovProposer".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("FellowshipProposer".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("FellowshipProposer".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("FellowshipMember".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("FellowshipMember".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("ExCouncilor".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("ExCouncilor".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("Councilor".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("Councilor".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("Councilor".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("Councilor".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("BountyCurator".to_string(), "polkadot".to_string());
+		let param = ParamsBasicType::new("BountyCurator".to_string(), &Web3Network::Polkadot);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("BountyCurator".to_string(), "kusama".to_string());
+		let param = ParamsBasicType::new("BountyCurator".to_string(), &Web3Network::Kusama);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 }
@@ -1000,13 +1016,13 @@ impl AchainableTagDeFi for AchainableClient {
 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 trader
 		let name = "Uniswap V2 trader";
-		let chain = "ethereum";
+		let chain: Web3Network = Web3Network::Ethereum;
 		let r1 =
-			request_basic_type_with_token(self, address, name, chain, None).unwrap_or_default();
+			request_basic_type_with_token(self, address, name, &chain, None).unwrap_or_default();
 
 		// Uniswap V2 liquidity provider
 		let name = "Uniswap V2 liquidity provider";
-		let r2 = request_basic_type_with_token(self, address, name, chain, None)?;
+		let r2 = request_basic_type_with_token(self, address, name, &chain, None)?;
 
 		Ok(r1 || r2)
 	}
@@ -1014,13 +1030,13 @@ impl AchainableTagDeFi for AchainableClient {
 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V3 trader
 		let name = "Uniswap V3 trader";
-		let chain = "ethereum";
+		let chain: Web3Network = Web3Network::Ethereum;
 		let r1 =
-			request_basic_type_with_token(self, address, name, chain, None).unwrap_or_default();
+			request_basic_type_with_token(self, address, name, &chain, None).unwrap_or_default();
 
 		// Uniswap V3 liquidity provider
 		let name = "Uniswap V3 liquidity provider";
-		let r2 = request_basic_type_with_token(self, address, name, chain, None)?;
+		let r2 = request_basic_type_with_token(self, address, name, &chain, None)?;
 
 		Ok(r1 || r2)
 	}
@@ -1028,39 +1044,39 @@ impl AchainableTagDeFi for AchainableClient {
 	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 liquidity provider
 		let name = "Uniswap V2 liquidity provider".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let start_date = "2022-01-01T00:00:00.000Z".to_string();
 		let end_date = "2022-12-31T23:59:59.999Z".to_string();
 
-		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V3 liquidity provider
 		let name = "Uniswap V3 liquidity provider".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let start_date = "2022-01-01T00:00:00.000Z".to_string();
 		let end_date = "2022-12-31T23:59:59.999Z".to_string();
 
-		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 {token} liquidity provider
 		let name = "Uniswap V2 {token} liquidity provider";
-		let chain = "ethereum";
+		let chain: Web3Network = Web3Network::Ethereum;
 
-		request_basic_type_with_token(self, address, name, chain, Some(UNISWAP_TOKEN_ADDRESS))
+		request_basic_type_with_token(self, address, name, &chain, Some(UNISWAP_TOKEN_ADDRESS))
 	}
 
 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V3 {token} liquidity provider
 		let name = "Uniswap V3 {token} liquidity provider";
-		let chain = "ethereum";
+		let chain: Web3Network = Web3Network::Ethereum;
 
-		request_basic_type_with_token(self, address, name, chain, Some(UNISWAP_TOKEN_ADDRESS))
+		request_basic_type_with_token(self, address, name, &chain, Some(UNISWAP_TOKEN_ADDRESS))
 	}
 
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
@@ -1076,91 +1092,91 @@ impl AchainableTagDeFi for AchainableClient {
 	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 {token} liquidity provider
 		let name = "Uniswap V2 {token} liquidity provider";
-		let chain = "ethereum";
+		let chain: Web3Network = Web3Network::Ethereum;
 
-		request_basic_type_with_token(self, address, name, chain, Some(USDT_TOKEN_ADDRESS))
+		request_basic_type_with_token(self, address, name, &chain, Some(USDT_TOKEN_ADDRESS))
 	}
 
 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V3 {token} liquidity provider
 		let name = "Uniswap V3 {token} liquidity provider";
-		let chain = "ethereum";
+		let chain: Web3Network = Web3Network::Ethereum;
 
-		request_basic_type_with_token(self, address, name, chain, Some(USDT_TOKEN_ADDRESS))
+		request_basic_type_with_token(self, address, name, &chain, Some(USDT_TOKEN_ADDRESS))
 	}
 
 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V2 Lender
 		let name = "Aave V2 Lender";
-		let chain = "ethereum";
-		request_basic_type_with_token(self, address, name, chain, None)
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None)
 	}
 
 	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V2 Borrower
 		let name = "Aave V2 Borrower";
-		let chain = "ethereum";
-		request_basic_type_with_token(self, address, name, chain, None)
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None)
 	}
 
 	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V3 Lender
 		let name = "Aave V3 Lender";
-		let chain = "ethereum";
-		request_basic_type_with_token(self, address, name, chain, None)
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None)
 	}
 
 	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error> {
 		// Aave V3 Borrower
 		let name = "Aave V3 Borrower";
-		let chain = "ethereum";
-		request_basic_type_with_token(self, address, name, chain, None)
+		let chain: Web3Network = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None)
 	}
 
 	fn curve_trader(&mut self, address: &str) -> Result<bool, Error> {
 		// Curve Trader
 		let name = "Curve Trader";
-		let chain = "ethereum";
-		request_basic_type_with_token(self, address, name, chain, None)
+		let chain = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None)
 	}
 
 	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error> {
 		// Curve Trader
 		let name = "Curve Trader".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let start_date = "2022-01-01T00:00:00.000Z".to_string();
 		let end_date = "2022-12-31T23:59:59.999Z".to_string();
 
-		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error> {
 		// Curve Liquidity Provider
 		let name = "Curve Liquidity Provider";
-		let chain = "ethereum";
-		request_basic_type_with_token(self, address, name, chain, None)
+		let chain = Web3Network::Ethereum;
+		request_basic_type_with_token(self, address, name, &chain, None)
 	}
 
 	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error> {
 		// Curve Liquidity Provider
 		let name = "Curve Liquidity Provider".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let start_date = "2022-01-01T00:00:00.000Z".to_string();
 		let end_date = "2022-12-31T23:59:59.999Z".to_string();
 
-		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error> {
 		// MetaMask trader
 		let name = "MetaMask trader".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let start_date = "2022-01-01T00:00:00.000Z".to_string();
 		let end_date = "2022-12-31T23:59:59.999Z".to_string();
 
-		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		let param = ParamsBasicTypeWithDateInterval::new(name, &chain, start_date, end_date);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 }
@@ -1169,15 +1185,14 @@ fn request_basic_type_with_token(
 	client: &mut AchainableClient,
 	address: &str,
 	name: &str,
-	chain: &str,
+	network: &Web3Network,
 	token: Option<&str>,
 ) -> Result<bool, Error> {
 	if let Some(token) = token {
-		let param =
-			ParamsBasicTypeWithToken::new(name.to_string(), chain.to_string(), token.to_string());
+		let param = ParamsBasicTypeWithToken::new(name.to_string(), network, token.to_string());
 		check_achainable_label(client, address, Params::ParamsBasicTypeWithToken(param))
 	} else {
-		let param = ParamsBasicType::new(name.to_string(), chain.to_string());
+		let param = ParamsBasicType::new(name.to_string(), network);
 		check_achainable_label(client, address, Params::ParamsBasicType(param))
 	}
 }

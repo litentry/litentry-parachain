@@ -35,8 +35,8 @@ pub fn build_between_percents(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, greater_than_or_equal_to, less_than_or_equal_to) =
-		get_between_percents_params(&param)?;
+	let (name, greater_than_or_equal_to, less_than_or_equal_to) =
+		parse_between_percents_params(&param)?;
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -46,7 +46,7 @@ pub fn build_between_percents(
 
 	let p = ParamsBasicTypeWithBetweenPercents::new(
 		name,
-		chain,
+		&param.chain,
 		greater_than_or_equal_to,
 		less_than_or_equal_to,
 	);
@@ -70,21 +70,14 @@ pub fn build_between_percents(
 	}
 }
 
-fn get_between_percents_params(
+fn parse_between_percents_params(
 	param: &AchainableBetweenPercents,
-) -> Result<(String, String, String, String)> {
+) -> Result<(String, String, String)> {
 	let name = param.clone().name;
-	let chain = param.clone().chain;
 	let greater_than_or_equal_to = param.clone().greater_than_or_equal_to;
 	let less_than_or_equal_to = param.clone().less_than_or_equal_to;
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::BetweenPercents(param.clone())),
 			ErrorDetail::ParseError,
@@ -104,5 +97,5 @@ fn get_between_percents_params(
 		)
 	})?;
 
-	Ok((name, chain, greater_than_or_equal_to, less_than_or_equal_to))
+	Ok((name, greater_than_or_equal_to, less_than_or_equal_to))
 }

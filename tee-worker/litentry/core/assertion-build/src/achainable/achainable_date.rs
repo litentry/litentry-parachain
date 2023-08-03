@@ -32,8 +32,8 @@ const VC_SUBJECT_TYPE: &str = "Account created after {date}";
 pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, date) = get_date_params(&param)?;
-	let p = ParamsBasicTypeWithDate::new(name, chain, date);
+	let (name, date) = parse_date_params(&param)?;
+	let p = ParamsBasicTypeWithDate::new(name, &param.chain, date);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -60,18 +60,11 @@ pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<
 	}
 }
 
-fn get_date_params(param: &AchainableDate) -> Result<(String, String, String)> {
+fn parse_date_params(param: &AchainableDate) -> Result<(String, String)> {
 	let name = param.clone().name;
-	let chain = param.clone().chain;
 	let date = param.clone().date;
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Date(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::Date(param.clone())),
 			ErrorDetail::ParseError,
@@ -84,5 +77,5 @@ fn get_date_params(param: &AchainableDate) -> Result<(String, String, String)> {
 		)
 	})?;
 
-	Ok((name, chain, date))
+	Ok((name, date))
 }

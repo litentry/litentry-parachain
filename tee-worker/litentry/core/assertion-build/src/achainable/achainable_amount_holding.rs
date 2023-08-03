@@ -35,8 +35,14 @@ pub fn build_amount_holding(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_holding, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, amount, date, token) = get_amount_holding_params(&param)?;
-	let p = ParamsBasicTypeWithAmountHolding::one(name, chain, amount.clone(), date.clone(), token);
+	let (name, amount, date, token) = parse_amount_holding_params(&param)?;
+	let p = ParamsBasicTypeWithAmountHolding::one(
+		name,
+		&param.chain,
+		amount.clone(),
+		date.clone(),
+		token,
+	);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -62,22 +68,14 @@ pub fn build_amount_holding(
 	}
 }
 
-fn get_amount_holding_params(
+fn parse_amount_holding_params(
 	param: &AchainableAmountHolding,
-) -> Result<(String, String, String, String, Option<String>)> {
+) -> Result<(String, String, String, Option<String>)> {
 	let name = param.name.clone();
-	let chain = param.chain.clone();
 	let amount = param.amount.clone();
 	let date = param.date.clone();
 
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
 			ErrorDetail::ParseError,
@@ -109,5 +107,5 @@ fn get_amount_holding_params(
 		None
 	};
 
-	Ok((name, chain, amount, date, token))
+	Ok((name, amount, date, token))
 }

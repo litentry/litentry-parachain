@@ -32,8 +32,8 @@ const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
 pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, token) = get_token_params(&param)?;
-	let p = ParamsBasicTypeWithToken::new(name, chain, token);
+	let (name, token) = parse_token_params(&param)?;
+	let p = ParamsBasicTypeWithToken::new(name, &param.chain, token);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -60,17 +60,10 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 	}
 }
 
-fn get_token_params(param: &AchainableToken) -> Result<(String, String, String)> {
+fn parse_token_params(param: &AchainableToken) -> Result<(String, String)> {
 	let name = param.clone().name;
-	let chain = param.clone().chain;
 	let token = param.clone().token;
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Token(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::Token(param.clone())),
 			ErrorDetail::ParseError,
@@ -83,5 +76,5 @@ fn get_token_params(param: &AchainableToken) -> Result<(String, String, String)>
 		)
 	})?;
 
-	Ok((name, chain, token))
+	Ok((name, token))
 }

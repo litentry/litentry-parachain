@@ -36,8 +36,8 @@ pub fn build_date_interval(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, chain, start_date, end_date) = get_date_interval_params(&param)?;
-	let p = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+	let (name, start_date, end_date) = parse_date_interval_params(&param)?;
+	let p = ParamsBasicTypeWithDateInterval::new(name, &param.chain, start_date, end_date);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -64,20 +64,11 @@ pub fn build_date_interval(
 	}
 }
 
-fn get_date_interval_params(
-	param: &AchainableDateInterval,
-) -> Result<(String, String, String, String)> {
+fn parse_date_interval_params(param: &AchainableDateInterval) -> Result<(String, String, String)> {
 	let name = param.clone().name;
-	let chain = param.clone().chain;
 	let start_date = param.clone().start_date;
 	let end_date = param.clone().end_date;
 	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let chain = vec_to_string(chain.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
 			ErrorDetail::ParseError,
@@ -96,5 +87,5 @@ fn get_date_interval_params(
 		)
 	})?;
 
-	Ok((name, chain, start_date, end_date))
+	Ok((name, start_date, end_date))
 }
