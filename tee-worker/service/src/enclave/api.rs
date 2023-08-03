@@ -104,7 +104,6 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 	}
 
 	// create an enclave API and initialize it
-	info!("enclave_api init start");
 	let enclave_api = Enclave::new(enclave);
 	enclave_api.init(
 		&config.mu_ra_url_external(),
@@ -112,5 +111,6 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 		&config.data_dir().display().to_string(),
 	)?;
 
+	info!("enclave_api init succeed");
 	Ok(enclave_api)
 }
