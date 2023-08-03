@@ -15,7 +15,12 @@
 
 */
 
-use crate::{error::Result, state_getter::GetState, traits::{StateUpdateProposer, StfEnclaveSigning}, BatchExecutionResult, ExecutedOperation};
+use crate::{
+	error::Result,
+	state_getter::GetState,
+	traits::{StateUpdateProposer, StfEnclaveSigning},
+	BatchExecutionResult, ExecutedOperation,
+};
 use codec::Encode;
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},

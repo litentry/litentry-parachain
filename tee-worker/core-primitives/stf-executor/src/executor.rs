@@ -15,7 +15,11 @@
 
 */
 
-use crate::{error::{Error, Result}, traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState}, BatchExecutionResult, ExecutedOperation};
+use crate::{
+	error::{Error, Result},
+	traits::{StatePostProcessing, StateUpdateProposer, StfUpdateState},
+	BatchExecutionResult, ExecutedOperation,
+};
 use codec::{Decode, Encode};
 use ita_stf::{
 	hash::{Hash, TrustedOperationOrHash},
@@ -25,7 +29,10 @@ use ita_stf::{
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
-use itp_stf_interface::{parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface, ExecuteCall, StateCallInterface, UpdateState, EncodeResult};
+use itp_stf_interface::{
+	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
+	EncodeResult, ExecuteCall, StateCallInterface, UpdateState,
+};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
