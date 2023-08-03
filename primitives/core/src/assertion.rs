@@ -274,7 +274,8 @@ fn achainable_networks(name: &ParameterString) -> Vec<Web3Network> {
 		name == "Aave V2 Borrower" ||
 		name == "Aave V3 Lender" ||
 		name == "Aave V3 Borrower" ||
-		name == "ERC20 hodling {amount} of {token} since {date}"
+		name == "ERC20 hodling {amount} of {token} since {date}" ||
+		name == "Created over {amount} contracts"
 	{
 		return vec![Web3Network::Ethereum]
 	} else if name == "BEP20 balance over {amount}" {
