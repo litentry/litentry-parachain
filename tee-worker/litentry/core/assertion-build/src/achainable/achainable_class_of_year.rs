@@ -60,7 +60,7 @@ const VC_SUBJECT_TYPE: &str = "Account Class Of Year";
 /// 			{
 /// 				"src":"$account_created_year",
 /// 				"op":"==",
-/// 				"dst":"invalid"
+/// 				"dst":"Invalid"
 /// 			}
 /// 		],
 /// }
