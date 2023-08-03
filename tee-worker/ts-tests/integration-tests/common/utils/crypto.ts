@@ -3,9 +3,9 @@ import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { AesOutput } from '../type-definitions';
 import crypto from 'crypto';
-import {KeyringPair} from "@polkadot/keyring/types";
-import {ethers} from "ethers";
-import {blake2AsU8a} from '@polkadot/util-crypto';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { ethers } from 'ethers';
+import { blake2AsU8a } from '@polkadot/util-crypto';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
@@ -61,7 +61,7 @@ export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex'
 export interface Signer {
     getAddressRaw(): Uint8Array;
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array>;
-    type(): SignerType
+    type(): SignerType;
     getAddressInSubstrateFormat(): Uint8Array;
 }
 
@@ -79,7 +79,7 @@ export class PolkadotSigner implements Signer {
     }
 
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
-        return new Promise(resolve => resolve(this.keypair.sign(message)));
+        return new Promise((resolve) => resolve(this.keypair.sign(message)));
     }
 
     type(): SignerType {
@@ -99,27 +99,27 @@ export class EthersSigner implements Signer {
     }
 
     getAddressRaw(): Uint8Array {
-        console.log(this.wallet.address)
-        console.log(hexToU8a(this.wallet.address))
+        console.log(this.wallet.address);
+        console.log(hexToU8a(this.wallet.address));
         return hexToU8a(this.wallet.address);
     }
 
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
         return this.wallet.signMessage(message).then((sig) => {
-            return hexToU8a(sig)
+            return hexToU8a(sig);
         });
     }
 
     type(): SignerType {
-        return "ethereum";
+        return 'ethereum';
     }
 
     getAddressInSubstrateFormat(): Uint8Array {
-        const prefix = stringToU8a("evm:")
+        const prefix = stringToU8a('evm:');
         const address = this.getAddressRaw();
         const merged = new Uint8Array(prefix.length + address.length);
         merged.set(prefix);
         merged.set(address, 4);
-        return blake2AsU8a(merged, 256)
+        return blake2AsU8a(merged, 256);
     }
 }

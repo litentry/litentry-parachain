@@ -1,4 +1,4 @@
-import {runExample} from './example';
+import { runExample } from './example';
 
 (async () => {
     await runExample('substrate').catch((e) => {

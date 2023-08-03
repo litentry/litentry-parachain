@@ -12,7 +12,8 @@ import {
     assertIdentityDeactivated,
     assertInitialIdGraphCreated,
     buildIdentityFromKeypair,
-    assertIdentityActivated, PolkadotSigner,
+    assertIdentityActivated,
+    PolkadotSigner,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -296,8 +297,7 @@ describeLitentry('Test Identity', 0, (context) => {
     step('link identities with wrong signature', async function () {
         const evmIdentity = eveIdentities[1];
 
-        // link eth identity with wrong validation data
-        // the `VerifyEvmSignatureFailed` error should be emitted prior to `AlreadyLinked` error
+        // link evm identity with wrong validation data(raw message)
         const ethereumSignature = (await context.ethersWallet.alice.signMessage(
             ethers.utils.arrayify(wrongMsg)
         )) as HexString;
@@ -332,7 +332,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['LinkIdentityFailed']
         );
 
-        await checkErrorDetail(aliceRespEvents, 'VerifyEvmSignatureFailed');
+        await checkErrorDetail(aliceRespEvents, 'UnexpectedMessage');
     });
 
     step('link already linked identity', async function () {

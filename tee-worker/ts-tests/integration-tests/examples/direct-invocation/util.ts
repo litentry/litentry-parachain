@@ -6,7 +6,7 @@ import { HexString } from '@polkadot/util/types';
 import { Bytes } from '@polkadot/types-codec';
 import { PubicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
-import {encryptWithTeeShieldingKey, Signer} from '../../common/utils';
+import { encryptWithTeeShieldingKey, Signer } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';

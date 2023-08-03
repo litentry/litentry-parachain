@@ -2,7 +2,7 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
 import { AesOutput } from '../type-definitions';
-import {decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey, Signer} from './crypto';
+import { decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';

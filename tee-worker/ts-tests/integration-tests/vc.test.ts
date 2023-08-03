@@ -6,7 +6,8 @@ import {
     buildIdentityTxs,
     handleIdentityEvents,
     handleVcEvents,
-    buildIdentityFromKeypair, PolkadotSigner,
+    buildIdentityFromKeypair,
+    PolkadotSigner,
 } from './common/utils';
 import { step } from 'mocha-steps';
 import type { Assertion, IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';

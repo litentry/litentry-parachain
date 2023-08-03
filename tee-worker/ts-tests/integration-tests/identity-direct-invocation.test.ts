@@ -6,7 +6,8 @@ import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
-    initIntegrationTestContext, PolkadotSigner,
+    initIntegrationTestContext,
+    PolkadotSigner,
 } from './common/utils';
 import {
     assertFailedEvent,
@@ -67,7 +68,10 @@ describe('Test Identity (direct invocation)', function () {
     it('most of the bob cases are missing');
 
     step('linking identity with without user shielding key(charlie)', async function () {
-        const charlieSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.charlie), context);
+        const charlieSubject = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.charlie),
+            context
+        );
 
         const bobSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.bob.addressRaw),
@@ -492,7 +496,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const events = await eventsPromise;
 
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'VerifyEvmSignatureFailed');
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UnexpectedMessage');
     });
 
     step('linking aleady linked identity', async function () {

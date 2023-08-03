@@ -24,7 +24,10 @@ import {
     initIntegrationTestContext,
     buildValidations,
     buildIdentityFromKeypair,
-    parseIdGraph, Signer, PolkadotSigner, EthersSigner,
+    parseIdGraph,
+    Signer,
+    PolkadotSigner,
+    EthersSigner,
 } from '../../common/utils';
 import { aesKey, keyNonce } from '../../common/call';
 import { Metadata, TypeRegistry } from '@polkadot/types';
@@ -43,12 +46,12 @@ import { SetUserShieldingKeyResponse, LinkIdentityResponse, RequestVCResponse } 
 // TODO add self signed certificate
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-import {KeyringPair} from "@polkadot/keyring/types";
+import { KeyringPair } from '@polkadot/keyring/types';
 const substrateKeyring = new Keyring({ type: 'sr25519' });
 const PARACHAIN_WS_ENDPINT = 'ws://localhost:9944';
 const WORKER_TRUSTED_WS_ENDPOINT = 'wss://localhost:2000';
 
-export type Mode = 'substrate' | 'evm'
+export type Mode = 'substrate' | 'evm';
 
 export async function runExample(mode: Mode) {
     const parachainWs = new WsProvider(PARACHAIN_WS_ENDPINT);
@@ -75,8 +78,14 @@ export async function runExample(mode: Mode) {
 
     const key = await getTeeShieldingKey(wsp, parachainApi);
 
-    const alice: Signer = mode == 'substrate' ? new PolkadotSigner(context.substrateWallet['alice']) : new EthersSigner(context.ethersWallet['alice']);
-    const bob: Signer = mode == 'substrate' ? new PolkadotSigner(context.substrateWallet['bob']) : new EthersSigner(context.ethersWallet['bob']);
+    const alice: Signer =
+        mode == 'substrate'
+            ? new PolkadotSigner(context.substrateWallet['alice'])
+            : new EthersSigner(context.ethersWallet['alice']);
+    const bob: Signer =
+        mode == 'substrate'
+            ? new PolkadotSigner(context.substrateWallet['bob'])
+            : new EthersSigner(context.ethersWallet['bob']);
 
     const bobSubstrateKey: KeyringPair = substrateKeyring.addFromUri('//Bob', { name: 'Bob' });
 

@@ -5,7 +5,8 @@ import {
     buildIdentityHelper,
     buildValidations,
     checkErrorDetail,
-    buildIdentityFromKeypair, PolkadotSigner,
+    buildIdentityFromKeypair,
+    PolkadotSigner,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { u8aToHex } from '@polkadot/util';

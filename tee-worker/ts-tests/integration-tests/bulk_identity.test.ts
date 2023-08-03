@@ -5,7 +5,8 @@ import {
     buildIdentityTxs,
     buildIdentityHelper,
     buildIdentityFromKeypair,
-    batchAndWait, PolkadotSigner,
+    batchAndWait,
+    PolkadotSigner,
 } from './common/utils';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
