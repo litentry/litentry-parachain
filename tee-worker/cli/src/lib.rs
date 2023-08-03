@@ -18,7 +18,7 @@
 //! an RPC client to Integritee using websockets
 //!
 //! examples
-//! integritee_cli 127.0.0.1:9944 transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
+//! litentry_cli 127.0.0.1:9944 transfer //Alice 5G9RtsTbiYJYQYMHbWfyPoeuuxNaCbC16tZ2JGrZ4gRKwz14 1000
 //!
 #![feature(rustc_private)]
 #[macro_use]

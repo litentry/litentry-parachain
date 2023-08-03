@@ -72,7 +72,7 @@ echo "Number of WORKER_NUM: ${WORKER_NUM}"
 
 ROOTDIR=$(git rev-parse --show-toplevel)
 ROOTDIR="${ROOTDIR}/tee-worker"
-RUST_LOG="info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,\
+RUST_LOG="info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,\
 itc_parentchain_light_client=info,\
 jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,\
 its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,\
@@ -102,7 +102,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 		rm -rf "${ROOTDIR}"/tmp/"${worker_name}"
 	fi
 	mkdir -p "${ROOTDIR}"/tmp/"${worker_name}"
-	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'integritee-service' 'integritee-cli'; do
+	for Item in 'enclave.signed.so' 'key.txt' 'spid.txt' 'litentry-worker' 'litentry-cli'; do
 		cp "${ROOTDIR}/bin/${Item}" "${ROOTDIR}"/tmp/"${worker_name}"
 	done
 
@@ -120,7 +120,7 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 	untrusted-worker-port: ${untrusted_worker_port}
 	"
 
-	launch_command="RUST_LOG=${RUST_LOG} ./integritee-service ${F_CLEAN} --ws-external \
+	launch_command="RUST_LOG=${RUST_LOG} ./litentry-worker ${F_CLEAN} --ws-external \
 --mu-ra-external-address ${WORKER_ENDPOINT} \
 --mu-ra-port ${mu_ra_port} \
 --node-port ${NODE_PORT} \
@@ -135,7 +135,7 @@ run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 
 	echo "${worker_name} command: ${launch_command}"
 	eval "${launch_command}" > "${ROOTDIR}"/log/${worker_name}.log 2>&1 &
-	echo "${worker_name}(integritee-service) started successfully. log: ${ROOTDIR}/log/${worker_name}.log"
+	echo "${worker_name}(litentry-worker) started successfully. log: ${ROOTDIR}/log/${worker_name}.log"
 
 	if ((${WORKER_NUM} > 0)); then
 		wait_worker_is_initialized ${untrusted_http_port}

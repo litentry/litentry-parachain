@@ -1,5 +1,5 @@
 [package]
-authors = ['Litentry Dev']
+authors = ['Litentry Technologies GmbH <info@litentry.com>']
 description = 'Pallet for interacting with drop3 project'
 edition = '2021'
 homepage = 'https://litentry.com/'

@@ -14,7 +14,7 @@ log*
 
 # binaries
 bin/*.so
-bin/integritee-*
+bin/litentry-*
 bin/*.wasm
 
 # sealed data

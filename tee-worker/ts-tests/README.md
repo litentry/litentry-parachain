@@ -32,16 +32,18 @@ Generate sidechain type: `corepack yarn workspace sidechain-api build`
 
 ## Usage
 
-Standard identity test: `corepack yarn test-identity:local`
+II identity test: `corepack yarn test-identity:local`
 
-Standard vc test: `corepack yarn test-vc:local`
+II vc test: `corepack yarn test-vc:local`
 
-Batch identity test: `corepack yarn test-batch:local`
+II batch identity test: `corepack yarn test-batch:local`
 
-Bulk identity test: `corepack yarn test-bulk-identity:local`
+Bulk II identity test: `corepack yarn test-bulk-identity:local`
 
-Bulk vc test: `corepack yarn test-bulk-vc:local`
+Bulk II vc test: `corepack yarn test-bulk-vc:local`
 
-Direct invocation identity test: `corepack yarn test-identity-direct-invocation:local`
+DI identity test: `corepack yarn test-identity-direct-invocation:local`
 
-Di examples: `corepack yarn workspace integration-tests di-examples`
+EVM DI examples: `corepack yarn workspace integration-tests evm-di-examples`
+
+Substrate DI examples: `corepack yarn workspace integration-tests substrate-di-examples`

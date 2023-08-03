@@ -9,6 +9,7 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
+    PolkadotSigner,
 } from './common/utils';
 import { assertIdentityLinked, assertInitialIdGraphCreated, assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -57,14 +58,17 @@ describe('Test Identity (direct invocation)', function () {
             0
         );
         teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
-        aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
     it('needs a lot more work to be complete');
     it('most of the bob cases are missing');
 
     step('linking identity with without user shielding key(charlie)', async function () {
-        const charlieSubject = await buildIdentityFromKeypair(context.substrateWallet.charlie, context);
+        const charlieSubject = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.charlie),
+            context
+        );
 
         const bobSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.bob.addressRaw),
@@ -90,11 +94,11 @@ describe('Test Identity (direct invocation)', function () {
         );
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+        const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
             nonce,
-            context.substrateWallet.charlie,
+            new PolkadotSigner(context.substrateWallet.charlie),
             charlieSubject,
             context.sidechainRegistry.createType('LitentryPrimitivesIdentity', bobSubstrateIdentity).toHex(),
             context.api.createType('LitentryValidationData', bobValidationData).toHex(),
@@ -111,8 +115,8 @@ describe('Test Identity (direct invocation)', function () {
             linkIdentityCall
         );
 
-        /* 
-        In the case of an error, the RPC status will be false, right? 
+        /*
+        In the case of an error, the RPC status will be false, right?
         However, will we still have events occurring in Parachain? Based on the example provided.
         */
         assert.isTrue(res.do_watch.isFalse);
@@ -135,9 +139,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('check user sidechain storage before user shielding key creating(alice)', async function () {
-        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+        const shieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(
             context.api,
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject
         );
 
@@ -156,7 +160,7 @@ describe('Test Identity (direct invocation)', function () {
     ['alice', 'bob'].forEach((name) => {
         step(`setting user shielding key (${name})`, async function () {
             const wallet = context.substrateWallet[name];
-            const subject = await buildIdentityFromKeypair(wallet, context);
+            const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
             const nonce = await getSidechainNonce(
                 context.tee,
                 context.api,
@@ -167,11 +171,11 @@ describe('Test Identity (direct invocation)', function () {
 
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
-            const setUserShieldingKeyCall = createSignedTrustedCallSetUserShieldingKey(
+            const setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
                 context.api,
                 context.mrEnclave,
                 nonce,
-                wallet,
+                new PolkadotSigner(wallet),
                 subject,
                 aesKey,
                 requestIdentifier
@@ -197,9 +201,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('check user shielding key from sidechain storage after user shielding key setting(alice)', async function () {
-        const shieldingKeyGetter = createSignedTrustedGetterUserShieldingKey(
+        const shieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(
             context.api,
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject
         );
 
@@ -216,9 +220,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
-        const idgraphGetter = createSignedTrustedGetterIdGraph(
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject
         );
         const res = await sendRequestFromGetter(
@@ -304,11 +308,11 @@ describe('Test Identity (direct invocation)', function () {
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-            const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+            const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                context.substrateWallet.alice,
+                new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
                 identity.toHex(),
                 validation.toHex(),
@@ -349,9 +353,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('check user sidechain storage after linking', async function () {
-        const idgraphGetter = createSignedTrustedGetterIdGraph(
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject
         );
         const res = await sendRequestFromGetter(
@@ -390,7 +394,7 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking invalid identity', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
 
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
@@ -415,11 +419,11 @@ describe('Test Identity (direct invocation)', function () {
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+        const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
             context.api.createType('Index', twitterNonce),
-            context.substrateWallet.bob,
+            new PolkadotSigner(context.substrateWallet.bob),
             aliceSubject,
             twitterIdentity.toHex(),
             evmValidation.toHex(),
@@ -486,11 +490,11 @@ describe('Test Identity (direct invocation)', function () {
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+        const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
             context.api.createType('Index', evmNonce),
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
             evmIdentity.toHex(),
             encodedVerifyIdentityValidation.toHex(),
@@ -521,7 +525,8 @@ describe('Test Identity (direct invocation)', function () {
             res
         );
         const events = await eventsPromise;
-        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'VerifyEvmSignatureFailed');
+
+        await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UnexpectedMessage');
     });
 
     step('linking already linked identity', async function () {
@@ -543,11 +548,11 @@ describe('Test Identity (direct invocation)', function () {
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const linkIdentityCall = createSignedTrustedCallLinkIdentity(
+        const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
             context.api,
             context.mrEnclave,
             context.api.createType('Index', twitterNonce),
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
             twitterIdentity.toHex(),
             twitterValidation.toHex(),
@@ -624,11 +629,11 @@ describe('Test Identity (direct invocation)', function () {
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-            const deactivateIdentityCall = createSignedTrustedCallDeactivateIdentity(
+            const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                context.substrateWallet.alice,
+                new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
                 identity.toHex(),
                 requestIdentifier
@@ -660,9 +665,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
-        const idgraphGetter = createSignedTrustedGetterIdGraph(
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject
         );
         const res = await sendRequestFromGetter(
@@ -731,11 +736,11 @@ describe('Test Identity (direct invocation)', function () {
         for (const { nonce, identity } of activateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-            const deactivateIdentityCall = createSignedTrustedCallActivateIdentity(
+            const deactivateIdentityCall = await createSignedTrustedCallActivateIdentity(
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                context.substrateWallet.alice,
+                new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
                 identity.toHex(),
                 requestIdentifier
@@ -768,9 +773,9 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
-        const idgraphGetter = createSignedTrustedGetterIdGraph(
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject
         );
         const res = await sendRequestFromGetter(
@@ -814,11 +819,11 @@ describe('Test Identity (direct invocation)', function () {
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const deactivateIdentityCall = createSignedTrustedCallDeactivateIdentity(
+        const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
             context.api,
             context.mrEnclave,
             context.api.createType('Index', nonce),
-            context.substrateWallet.alice,
+            new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
             substratePrimeIdentity.toHex(),
             requestIdentifier
