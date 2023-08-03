@@ -205,7 +205,7 @@ where
 					},
 					Err(e) => {
 						let error_msg = format!("load shard failure due to: {:?}", e);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				}
 			},
