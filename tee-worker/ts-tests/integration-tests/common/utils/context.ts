@@ -11,6 +11,7 @@ import { getEthereumSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
 import { default as teeTypes } from '../../../parachain-api/build/interfaces/identity/definitions';
 import crypto from 'crypto';
+import type { HexString } from '@polkadot/util/types';
 
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 15;
@@ -74,7 +75,7 @@ export async function initIntegrationTestContext(
 }
 
 export async function getEnclave(api: ApiPromise): Promise<{
-    mrEnclave: `0x${string}`;
+    mrEnclave: HexString;
     teeShieldingKey: KeyObject;
 }> {
     const count = await api.query.teerex.enclaveCount();
