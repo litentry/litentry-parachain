@@ -134,7 +134,7 @@ where
 		.tracked_relays
 		.get(&validation_state.num_relays)
 		.ok_or(Error::NoSuchRelayExists)?;
-	let genesis_hash = relay.header_hashes[0];
+	let genesis_hash = relay.header_hashes()[0];
 
 	Ok((validation_state, genesis_hash))
 }

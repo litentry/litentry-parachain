@@ -151,8 +151,8 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 		}
 
 		// A valid grandpa proof proves finalization of all previous unjustified blocks.
-		relay.header_hashes.append(&mut relay.unjustified_headers);
-		relay.header_hashes.push(header.hash());
+		relay.justify_headers();
+		relay.push_header_hash(header.hash());
 
 		relay.set_last_finalized_block_header(header);
 
@@ -309,7 +309,7 @@ where
 
 	fn genesis_hash(&self, relay_id: RelayId) -> Result<HashFor<Block>, Error> {
 		let relay = self.light_validation_state.get_tracked_relay(relay_id)?;
-		Ok(relay.header_hashes[0])
+		Ok(relay.header_hashes()[0])
 	}
 
 	fn latest_finalized_header(&self, relay_id: RelayId) -> Result<Block::Header, Error> {

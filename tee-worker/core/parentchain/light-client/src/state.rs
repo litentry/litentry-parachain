@@ -21,7 +21,10 @@ use sp_runtime::{
 	traits::{Block as BlockT, Header as HeaderT},
 	OpaqueExtrinsic,
 };
-use std::{fmt, vec::Vec};
+use std::{collections::VecDeque, fmt, vec::Vec};
+
+/// Defines the amount of parentchain headers to keep.
+pub const PARENTCHAIN_HEADER_PRUNING: u64 = 1000;
 
 #[derive(Encode, Decode, Clone, PartialEq)]
 pub struct RelayState<Block: BlockT> {
@@ -29,7 +32,7 @@ pub struct RelayState<Block: BlockT> {
 	pub penultimate_finalized_block_header: Block::Header,
 	pub current_validator_set: AuthorityList,
 	pub current_validator_set_id: SetId,
-	pub header_hashes: Vec<Block::Hash>,
+	header_hashes: VecDeque<Block::Hash>,
 	pub unjustified_headers: Vec<Block::Hash>, // Finalized headers without grandpa proof
 	pub verify_tx_inclusion: Vec<OpaqueExtrinsic>, // Transactions sent by the relay
 	pub scheduled_change: Option<ScheduledChangeAtBlock<Block::Header>>, // Scheduled Authorities change as indicated in the header's digest.
@@ -44,7 +47,7 @@ pub struct ScheduledChangeAtBlock<Header: HeaderT> {
 impl<Block: BlockT> RelayState<Block> {
 	pub fn new(block_header: Block::Header, validator_set: AuthorityList) -> Self {
 		RelayState {
-			header_hashes: vec![block_header.hash()],
+			header_hashes: vec![block_header.hash()].into(),
 			last_finalized_block_header: block_header.clone(),
 			// is it bad to initialize with the same? Header trait does no implement default...
 			penultimate_finalized_block_header: block_header,
@@ -59,6 +62,27 @@ impl<Block: BlockT> RelayState<Block> {
 	pub fn set_last_finalized_block_header(&mut self, header: Block::Header) {
 		self.penultimate_finalized_block_header =
 			std::mem::replace(&mut self.last_finalized_block_header, header);
+	}
+
+	pub fn push_header_hash(&mut self, header: Block::Hash) {
+		self.header_hashes.push_back(header);
+
+		if self.header_hashes.len() > PARENTCHAIN_HEADER_PRUNING as usize {
+			self.header_hashes.pop_front().expect("Tested above that is not empty; qed");
+		}
+	}
+
+	pub fn justify_headers(&mut self) {
+		self.header_hashes.extend(&mut self.unjustified_headers.iter());
+		self.unjustified_headers.clear();
+
+		while self.header_hashes.len() > PARENTCHAIN_HEADER_PRUNING as usize {
+			self.header_hashes.pop_front().expect("Tested above that is not empty; qed");
+		}
+	}
+
+	pub fn header_hashes(&self) -> &VecDeque<Block::Hash> {
+		&self.header_hashes
 	}
 }
 
