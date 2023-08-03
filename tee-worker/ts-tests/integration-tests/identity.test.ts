@@ -41,7 +41,7 @@ async function getNonce(base58mrEnclave: string, workerAddr: string, context: In
     const resHex = res.value.toString();
     let nonce = 0;
     if(resHex){
-        nonce = parseInt('0x' + resHex.slice(2)?.match(/../g)?.reverse().join(''));
+        nonce = context.api.createType('Index', ('0x' + resHex.slice(2)?.match(/../g)?.reverse().join(''))).toNumber();
     }   
     console.log("resHex:", resHex);
     console.log("nonce is:", nonce);
