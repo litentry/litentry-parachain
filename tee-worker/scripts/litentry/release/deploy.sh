@@ -473,9 +473,10 @@ function upgrade_worker(){
   latest_parentchain_sync_block
 
   echo "Setting up the new Worker on Chain"
-  cd $ROOTDIR/scripts/ts-utils/ || exit 
+  cd $ROOTDIR/ts-tests/ || exit 
   corepack yarn install
-  npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
+  corepack yarn setup-enclave $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
+  # npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT 
 
   echo "Stopping Currently running Worker..."
   stop_old_worker
@@ -490,15 +491,21 @@ function upgrade_worker(){
 
   for ((i = 0; i < worker_count; i++)); do
 
-      local WORKERTMPDIR=$ROOTDIR/tee-worker/tmp/w$i
-      # Rename the original db to backup file
-      mv $WORKERTMPDIR/light_client_db.bin $WORKERTMPDIR/light_client_db.bin.backup
+      if [ "$ROOT" = true ]; then 
+        local WORKERTMPDIR=/opt/worker/w$i
+      else 
+        local WORKERTMPDIR=$ROOTDIR/tee-worker/tmp/w$i
+      fi 
 
-      # Rename the backup file to replace the original file
-      mv $WORKERTMPDIR/light_client_db.bin.1 $WORKERTMPDIR/light_client_db.bin
+      # Note: The worker doesn't seem to produce light_client_db.bin.1 
+      if [ -d "$WORKERTMPDIR/light_client_db.bin.1" ]; then 
+        mv $WORKERTMPDIR/light_client_db.bin $WORKERTMPDIR/light_client_db.bin.backup
 
-      echo "Replacement complete. light_client_db has been replaced with light_client_db.bin.1."
+        # Rename the backup file to replace the original file
+        mv $WORKERTMPDIR/light_client_db.bin.1 $WORKERTMPDIR/light_client_db.bin
+        echo "Replacement complete. light_client_db has been replaced with light_client_db.bin.1."
 
+      fi
       rm $ROOTDIR/tee-worker/log/worker$i.log
       WORKER_DIR=$ROOTDIR/tee-worker/tmp/w$i
 
@@ -542,14 +549,23 @@ function upgrade_worker(){
       local working_directory='/usr/local/bin'
       local log="${ROOTDIR}/tee-worker/log/worker${i}.log"
 
+      echo "Generating service file" 
       generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
 
+      if [ "$ROOT" = true ]; then 
+        cp -r "worker${i}.service" /etc/systemd/system 
+        systemctl daemon-reload
+        echo "Starting worker service"
+        cd /etc/systemd/system || exit 
+        systemctl start "worker${i}".service
+      else 
       # Move the service to systemd
-      cp -r "worker${i}.service" ~/.config/systemd/user
-      systemctl --user daemon-reload
-      echo "Starting worker service"
-      cd ~/.config/systemd/user/ || exit 
-      systemctl --user start "worker${i}".service
+        cp -r "worker${i}.service" ~/.config/systemd/user
+        systemctl --user daemon-reload
+        echo "Starting worker service"
+        cd ~/.config/systemd/user/ || exit 
+        systemctl --user start "worker${i}".service
+      fi 
     done
 }
 
@@ -563,7 +579,11 @@ function stop_old_worker(){
             worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
             for ((i = 0; i < worker_count; i++)); do
-              systemctl --user stop "worker${i}".service
+              if [ "$ROOT" = true ]; then 
+                systemctl stop "worker${i}" 
+              else 
+                systemctl --user stop "worker${i}".service
+              fi 
             done
             echo "Sleeping for 120 seconds, So that old worker can be stopped gracefully.."
             sleep 120
@@ -575,10 +595,15 @@ function stop_old_worker(){
 function migrate_worker(){
   cd $ROOTDIR/tee-worker || exit 
   # Copy integritee-service binary and enclave_signed.so to ./tmp/w0
-  cp ./bin/integritee-service ./tmp/w0
-  cp ./bin/enclave.signed.so  ./tmp/w0
-  cd ./tmp/w0 || exit
-
+  if [ "$ROOT" = true ]; then 
+    cp ./bin/integritee-service /opt/worker/w0
+    cp ./bin/enclave.signed.so  /opt/worker/w0
+    cd /opt/worker/w0 || exit
+  else 
+    cp ./bin/integritee-service ./tmp/w0
+    cp ./bin/enclave.signed.so  ./tmp/w0
+    cd ./tmp/w0 || exit
+  fi 
   echo "Old MRENCLAVE VALUE: $OLD_MRENCLAVE"
   echo "New MRENCLAVE VALUE: $NEW_MRENCLAVE"
   # Run the migration command
@@ -739,7 +764,7 @@ export CONFIG
 # Move log files to log-backup
 if [ -d "$ROOTDIR/tee-worker/log" ]; then
   if [ "$ROOT" = true ]; then 
-    new_folder_name=$(date +"opt/worker/log-backup/log-%Y%m%d-%H%M%S")
+    new_folder_name=$(date +"/opt/worker/log-backup/log-%Y%m%d-%H%M%S")
     mkdir -p $new_folder_name
     # TODO: this should be changed soon 
     cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
@@ -765,7 +790,7 @@ for ((i = 0; i < worker_count; i++)); do
         echo "Backing up, previous worker binary $new_folder_name"
     fi
     if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
-      new_folder_name=$(date +"opt/worker/w$i-%Y%m%d-%H%M%S")
+      new_folder_name=$(date +"/opt/worker/w$i-%Y%m%d-%H%M%S")
       mkdir -p new_folder_name
       cp -r /opt/worker/w$i $new_folder_name
       echo "Backing up, previous worker binary $new_folder_name"
