@@ -201,7 +201,7 @@ pub mod pallet {
 		// The condition holds for all known chains.
 		<T as frame_system::Config>::Hash: From<[u8; 32]>,
 	{
-		// the integritee-service wants to register his enclave
+		// the litentry-worker wants to register his enclave
 		#[pallet::call_index(0)]
 		#[pallet::weight((<T as Config>::WeightInfo::register_enclave(), DispatchClass::Normal, Pays::Yes))]
 		pub fn register_enclave(
