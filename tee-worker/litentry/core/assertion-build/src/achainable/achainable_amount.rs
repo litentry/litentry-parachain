@@ -63,11 +63,45 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// 	]
 /// }
 ///
+///
+/// Build LIT holder Assertion Params
+/// name: Balance over {amount}
+/// chain: "litentry",
+/// amount: "0",
+///
+/// assertions":[
+/// {
+///		"and":[
+/// 		{
+/// 			"src":"$is_lit_holder",
+/// 			"op":"==",
+/// 			"dst":"true"
+/// 		}
+/// 	]
+/// }
+///
+///
+/// Build DOT holder Assertion Params
+/// name: Balance over {amount}
+/// chain: "polkadot",
+/// amount: "0",
+///
+/// assertions":[
+/// {
+///		"and":[
+/// 		{
+/// 			"src":"$is_dot_holder",
+/// 			"op":"==",
+/// 			"dst":"true"
+/// 		}
+/// 	]
+/// }
+///
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 
 	let (name, chain, amount) = get_amount_params(&param)?;
-	let p = ParamsBasicTypeWithAmount::new(name.clone(), chain, amount);
+	let p = ParamsBasicTypeWithAmount::new(name.clone(), chain.clone(), amount);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -79,7 +113,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			let (desc, subtype, content) = get_assertion_content(&name);
+			let (desc, subtype, content) = get_assertion_content(&name, &chain);
 			credential_unsigned.add_subject_info(desc, subtype);
 			credential_unsigned.update_content(flag, content);
 
@@ -122,18 +156,31 @@ fn get_amount_params(param: &AchainableAmount) -> Result<(String, String, String
 	Ok((name, chain, amount))
 }
 
-fn get_assertion_content(name: &String) -> (&str, &str, &str) {
-	let assertion = if name == CREATED_OVER_AMOUNT_CONTRACTS {
-		(
+fn get_assertion_content(
+	name: &String,
+	chain: &String,
+) -> (&'static str, &'static str, &'static str) {
+	if name == CREATED_OVER_AMOUNT_CONTRACTS {
+		return (
 			"Contract Creator",
 			"You are a deployer of a smart contract on these networks: Ethereum",
 			"$is_contract_creator",
 		)
-	} else if name == BALANCE_OVER_AMOUNT {
-		("Token Holder", "The number of a particular token you hold > 0", "$is_eth_holder")
-	} else {
-		("", "", "")
-	};
+	}
 
-	assertion
+	if name == BALANCE_OVER_AMOUNT {
+		let c = if chain == "ethereum" {
+			"$is_eth_holder"
+		} else if chain == "litentry" {
+			"$is_lit_holder"
+		} else if chain == "polkadot" {
+			"$is_dot_holder"
+		} else {
+			""
+		};
+
+		return ("Token Holder", "The number of a particular token you hold > 0", c)
+	}
+
+	("", "", "")
 }

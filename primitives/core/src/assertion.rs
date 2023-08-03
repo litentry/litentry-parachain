@@ -244,10 +244,8 @@ fn achainable_networks(name: &ParameterString) -> Vec<Web3Network> {
 		]
 	} else if name == "Account total transactions under {amount}" ||
 		name == "Balance under {amount}" ||
-		name == "Balance under {amount}" ||
 		name == "Balance over {amount}" ||
 		name == "Balance over {amount} dollars" ||
-		name == "Balance over {amount}" ||
 		name == "Balance between {amounts}" ||
 		name == "Account created after {date}" ||
 		name == "Account created before {date}" ||
@@ -269,8 +267,7 @@ fn achainable_networks(name: &ParameterString) -> Vec<Web3Network> {
 		name == "Curve Liquidity Provider" ||
 		name == "MetaMask trader" ||
 		name == "Uniswap V2 trader" ||
-		name == "Uniswap V2 {token} liquidity provider" ||
-		name == "Uniswap V3 {token} liquidity provider" ||
+		name == "Uniswap V3 trader" ||
 		name == "Uniswap V2 {token} liquidity provider" ||
 		name == "Uniswap V3 {token} liquidity provider" ||
 		name == "Aave V2 Lender" ||
