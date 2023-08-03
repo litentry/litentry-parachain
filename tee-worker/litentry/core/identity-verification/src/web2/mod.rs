@@ -64,6 +64,8 @@ pub fn verify(
 ) -> Result<()> {
 	debug!("verify web2 identity, who: {:?}", who);
 
+	ensure!(identity.is_web2(), Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity),);
+
 	let (user_name, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
 			let mut client = TwitterOfficialClient::v2();
