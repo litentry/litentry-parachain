@@ -1,8 +1,11 @@
 import type { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { AesOutput } from '../type-definitions';
 import crypto from 'crypto';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { ethers } from 'ethers';
+import { blake2AsU8a } from '@polkadot/util-crypto';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
@@ -52,5 +55,69 @@ export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex'
         return `0x${part1 + part2}`;
     } else {
         return u8aToHex(aesOutput as Uint8Array);
+    }
+}
+
+export interface Signer {
+    getAddressRaw(): Uint8Array;
+    sign(message: HexString | string | Uint8Array): Promise<Uint8Array>;
+    type(): SignerType;
+    getAddressInSubstrateFormat(): Uint8Array;
+}
+
+type SignerType = 'ethereum' | 'sr25519' | 'ed25519' | 'ecdsa';
+
+export class PolkadotSigner implements Signer {
+    keypair: KeyringPair;
+
+    constructor(keypair: KeyringPair) {
+        this.keypair = keypair;
+    }
+
+    getAddressRaw(): Uint8Array {
+        return this.keypair.addressRaw;
+    }
+
+    sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
+        return new Promise((resolve) => resolve(this.keypair.sign(message)));
+    }
+
+    type(): SignerType {
+        return this.keypair.type;
+    }
+
+    getAddressInSubstrateFormat(): Uint8Array {
+        return this.getAddressRaw();
+    }
+}
+
+export class EthersSigner implements Signer {
+    wallet: ethers.Wallet;
+
+    constructor(wallet: ethers.Wallet) {
+        this.wallet = wallet;
+    }
+
+    getAddressRaw(): Uint8Array {
+        return hexToU8a(this.wallet.address);
+    }
+
+    sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
+        return this.wallet.signMessage(message).then((sig) => {
+            return hexToU8a(sig);
+        });
+    }
+
+    type(): SignerType {
+        return 'ethereum';
+    }
+
+    getAddressInSubstrateFormat(): Uint8Array {
+        const prefix = stringToU8a('evm:');
+        const address = this.getAddressRaw();
+        const merged = new Uint8Array(prefix.length + address.length);
+        merged.set(prefix);
+        merged.set(address, 4);
+        return blake2AsU8a(merged, 256);
     }
 }
