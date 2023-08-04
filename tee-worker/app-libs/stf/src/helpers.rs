@@ -161,7 +161,7 @@ pub fn verify_web3_identity(
 
 	// TODO: just to make it backwards compatible
 	//       will merge it to `VerifyWeb3SignatureFailed` after the campaign
-	if !data.signature().verify(&raw_msg, identity) {
+	if !data.signature().verify(raw_msg, identity) {
 		match data {
 			Web3ValidationData::Substrate(_) =>
 				return Err(StfError::LinkIdentityFailed(

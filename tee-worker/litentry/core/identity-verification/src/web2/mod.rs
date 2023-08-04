@@ -125,6 +125,9 @@ pub fn verify(
 	}
 
 	// the payload must match
-	ensure!(&payload == raw_msg, Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage));
+	ensure!(
+		payload.as_slice() == raw_msg,
+		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
+	);
 	Ok(())
 }

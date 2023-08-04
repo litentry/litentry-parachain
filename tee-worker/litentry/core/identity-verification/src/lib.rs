@@ -37,7 +37,6 @@ use frame_support::pallet_prelude::*;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 
 mod web2;
-mod web3;
 
 mod error;
 use error::{Error, Result};
