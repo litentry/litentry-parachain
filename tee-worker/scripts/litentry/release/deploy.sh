@@ -21,8 +21,6 @@ function display_help() {
   echo "  -p, --parachain-port        Parachain Port Number (default: 9944)"
   echo "  -h, --parachain-host        Parachain Host Url (default: localhost)"
   echo "  -v, --copy-from-docker      Copy the binary for Parachain from a docker image (default: litentry/litentry-parachain:tee-prod)"
-  echo "  -r, --root                  Run the deployment as a root user (Only use in servers where you have root permission)"
-  echo "  -g, --purge                 Purge the previous parachain data"
   echo ""
   echo "Arguments:"
   echo "  restart            Restart the services."
@@ -597,7 +595,6 @@ export PARACHAIN_HOST="localhost"
 export PARACHAIN_PORT="9944"
 export DOCKERIMAGE="litentry/litentry-parachain:tee-prod"
 export COPY_FROM_DOCKER=false
-export ROOT=false
 
 # Parse command-line options and arguments
 while [[ $# -gt 0 ]]; do
@@ -642,10 +639,6 @@ while [[ $# -gt 0 ]]; do
     -v| --copy-from-docker)
       export COPY_FROM_DOCKER=true
       export DOCKERIMAGE="$2"
-      shift
-      ;;
-    -r| --root)
-      export ROOT=true
       shift
       ;;
     restart|upgrade-worker)
