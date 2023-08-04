@@ -115,42 +115,24 @@ function restart(){
 }
 
 function stop_running_services() {
-  if [ "$ROOT" = true ]; then 
-    cd /etc/systemd/system 
-  else 
-    cd ~/.config/systemd/user || exit
-  fi  
+  cd /etc/systemd/system 
+
   if [ "$ONLY_WORKER" = true ]; then
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
     for ((i = 0; i < worker_count; i++)); do
-      if [ "$ROOT" = true ]; then 
-        systemctl stop "worker${i}".service
-      else 
-        systemctl --user stop "worker${i}".service
-      fi 
+      systemctl stop "worker${i}".service
     done
   else
-    if [ "$ROOT" = true ]; then 
-      echo "Stopping Running Services if any"
-      systemctl stop para-alice.service
-      systemctl stop relay-alice.service
-      systemctl stop relay-bob.service
-    else 
-      echo "Stopping Running Services if any"
-      systemctl --user stop para-alice.service
-      systemctl --user stop relay-alice.service
-      systemctl --user stop relay-bob.service
-    fi 
+    echo "Stopping Running Services if any"
+    systemctl stop para-alice.service
+    systemctl stop relay-alice.service
+    systemctl stop relay-bob.service
 
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
     for ((i = 0; i < worker_count; i++)); do
-      if [ "$ROOT" = true ]; then 
-        systemctl stop "worker${i}".service
-      else 
-        systemctl --user stop "worker${i}".service
-      fi 
+      systemctl stop "worker${i}".service
     done
   fi
 
@@ -158,11 +140,7 @@ function stop_running_services() {
 
 # Note: Inspired from launch-local-binary.sh
 function restart_parachain() {
-  if [ "$ROOT" = true ]; then
-      export TMPDIR=/opt/parachain_dev
-  else 
-      export TMPDIR=/tmp/parachain_dev
-  fi 
+  export TMPDIR=/opt/parachain_dev
   [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 
   cd "$ROOTDIR" || exit
@@ -216,24 +194,14 @@ function restart_parachain() {
   local service_name="relay-alice"
   local description="Alice Node for Relay Chain"
   local working_directory="$TMPDIR"
-  if [ "$ROOT" = true ]; then 
-    local log_file=/opt/parachain_dev/relay.alice.log
-  else 
-    local log_file=/tmp/parachain_dev/relay.alice.log
-  fi 
-  local command="$POLKADOT_BIN --base-path /tmp/parachain_dev/alice --chain $ROCOCO_CHAINSPEC --alice --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936}"
+  local log_file=/opt/parachain_dev/relay.alice.log
+  local command="$POLKADOT_BIN --base-path /opt/parachain_dev/alice --chain $ROCOCO_CHAINSPEC --alice --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936}"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
-  if [ "$ROOT" = true ]; then
-    cp ./${service_name}.service /etc/systemd/system/ 
-    systemctl daemon-reload
-    systemctl start $service_name
 
-  else 
-    cp ./${service_name}.service ~/.config/systemd/user/
-    systemctl --user daemon-reload
-    systemctl --user start $service_name
-  fi 
+  cp ./${service_name}.service /etc/systemd/system/ 
+  systemctl daemon-reload
+  systemctl start $service_name
 
   sleep 10
 
@@ -242,49 +210,29 @@ function restart_parachain() {
   local service_name="relay-bob"
   local description="Bob Node for Relay Chain"
   local working_directory="$TMPDIR"
-  if [ "$ROOT" = true ]; then 
-    local log_file=/opt/parachain_dev/relay.bob.log
-  else 
-    local log_file=/tmp/parachain_dev/para.bob.log
-  fi 
-  local command="$POLKADOT_BIN --base-path /tmp/parachain_dev/bob --chain $ROCOCO_CHAINSPEC --bob --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY"
+  local log_file=/opt/parachain_dev/relay.bob.log
+  local command="$POLKADOT_BIN --base-path /opt/parachain_dev/bob --chain $ROCOCO_CHAINSPEC --bob --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
-  if [ "$ROOT" = true ]; then
-    cp ./${service_name}.service /etc/systemd/system/ 
-    systemctl daemon-reload
-    systemctl start $service_name
 
-  else 
-    cp ./${service_name}.service ~/.config/systemd/user/
-    systemctl --user daemon-reload
-    systemctl --user start $service_name
-  fi 
+  cp ./${service_name}.service /etc/systemd/system/ 
+  systemctl daemon-reload
+  systemctl start $service_name
+
   sleep 10
 
   local service_name="para-alice"
   local description="Parachain Collator for Litenry Parachain"
   local working_directory="$TMPDIR"
-  if [ "$ROOT" = true ]; then 
-      local log_file=/opt/parachain_dev/para.alice.log
-  else 
-      local log_file=/tmp/parachain_dev/para.alice.log
-  fi 
-  local command=
+  local log_file=/opt/parachain_dev/para.alice.log
   # run a litentry-collator instance
-  local command="${PARACHAIN_BIN} --base-path /tmp/parachain_dev/para-alice --alice --collator --force-authoring --chain $CHAIN-dev --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm --state-pruning archive --blocks-pruning archive -- --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY"
+  local command="${PARACHAIN_BIN} --base-path /opt/parachain_dev/para-alice --alice --collator --force-authoring --chain $CHAIN-dev --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm --state-pruning archive --blocks-pruning archive -- --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
-  if [ "$ROOT" = true ]; then
-    cp ./${service_name}.service /etc/systemd/system/ 
-    systemctl daemon-reload
-    systemctl start $service_name
 
-  else 
-    cp ./${service_name}.service ~/.config/systemd/user/
-    systemctl --user daemon-reload
-    systemctl --user start $service_name
-  fi 
+  cp ./${service_name}.service /etc/systemd/system/ 
+  systemctl daemon-reload
+  systemctl start $service_name
 
   sleep 10
 
@@ -375,21 +323,12 @@ function restart_worker() {
   worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
   for ((i = 0; i < worker_count; i++)); do
-    if [ "$ROOT" = true ]; then
-      WORKER_DIR=/opt/worker/w${i}
-    else 
-      WORKER_DIR=$ROOTDIR/tee-worker/tmp/w$i
-    fi 
+    WORKER_DIR=/opt/worker/w${i}
     # Remove previous logs if any
     rm -r $ROOTDIR/tee-worker/log/worker${i}.log
     # Prepare the Worker Directory before restarting
-    if [ "$ROOT" = true ]; then
-      mkdir -p /opt/worker/w${i}
-      setup_working_dir $ROOTDIR/tee-worker/bin /opt/worker/w${i} 
-    else 
-      mkdir -p $ROOTDIR/tee-worker/tmp/w${i}
-      setup_working_dir $ROOTDIR/tee-worker/bin $ROOTDIR/tee-worker/tmp/w$i
-    fi 
+    mkdir -p /opt/worker/w${i}
+    setup_working_dir $ROOTDIR/tee-worker/bin /opt/worker/w${i} 
 
     # We only need this in productive enclave 
     if [ "$PRODUCTION" = true ]; then 
@@ -427,20 +366,11 @@ function restart_worker() {
     generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
 
     # Move the service to systemd
-    if [ "$ROOT" = true ]; then 
-      cp -r "worker${i}.service" /etc/systemd/system 
-      systemctl daemon-reload 
-      echo "Starting worker service" 
-      cd /etc/systemd/system || exit 
-      systemctl start "worker${i}".service
-
-    else 
-      cp -r "worker${i}.service" ~/.config/systemd/user
-      systemctl --user daemon-reload
-      echo "Starting worker service"
-      cd ~/.config/systemd/user/ || exit 
-      systemctl --user start "worker${i}".service
-    fi 
+    cp -r "worker${i}.service" /etc/systemd/system 
+    systemctl daemon-reload 
+    echo "Starting worker service" 
+    cd /etc/systemd/system || exit 
+    systemctl start "worker${i}".service
 
   done
 }
@@ -491,11 +421,7 @@ function upgrade_worker(){
 
   for ((i = 0; i < worker_count; i++)); do
 
-      if [ "$ROOT" = true ]; then 
-        local WORKERTMPDIR=/opt/worker/w$i
-      else 
-        local WORKERTMPDIR=$ROOTDIR/tee-worker/tmp/w$i
-      fi 
+      local WORKERTMPDIR=/opt/worker/w$i
 
       # Note: The worker doesn't seem to produce light_client_db.bin.1 
       if [ -d "$WORKERTMPDIR/light_client_db.bin.1" ]; then 
@@ -504,10 +430,10 @@ function upgrade_worker(){
         # Rename the backup file to replace the original file
         mv $WORKERTMPDIR/light_client_db.bin.1 $WORKERTMPDIR/light_client_db.bin
         echo "Replacement complete. light_client_db has been replaced with light_client_db.bin.1."
-
       fi
+
       rm $ROOTDIR/tee-worker/log/worker$i.log
-      WORKER_DIR=$ROOTDIR/tee-worker/tmp/w$i
+      WORKER_DIR=/opt/worker/w$i
 
 
       source=$(echo "$CONFIG" | jq -r ".workers[$i].source")
@@ -552,20 +478,13 @@ function upgrade_worker(){
       echo "Generating service file" 
       generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
 
-      if [ "$ROOT" = true ]; then 
-        cp -r "worker${i}.service" /etc/systemd/system 
-        systemctl daemon-reload
-        echo "Starting worker service"
-        cd /etc/systemd/system || exit 
-        systemctl start "worker${i}".service
-      else 
-      # Move the service to systemd
-        cp -r "worker${i}.service" ~/.config/systemd/user
-        systemctl --user daemon-reload
-        echo "Starting worker service"
-        cd ~/.config/systemd/user/ || exit 
-        systemctl --user start "worker${i}".service
-      fi 
+
+      cp -r "worker${i}.service" /etc/systemd/system 
+      systemctl daemon-reload
+      echo "Starting worker service"
+      cd /etc/systemd/system || exit 
+      systemctl start "worker${i}".service
+
     done
 }
 
@@ -579,11 +498,7 @@ function stop_old_worker(){
             worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
             for ((i = 0; i < worker_count; i++)); do
-              if [ "$ROOT" = true ]; then 
-                systemctl stop "worker${i}" 
-              else 
-                systemctl --user stop "worker${i}".service
-              fi 
+              systemctl stop "worker${i}" 
             done
             echo "Sleeping for 120 seconds, So that old worker can be stopped gracefully.."
             sleep 120
@@ -595,15 +510,10 @@ function stop_old_worker(){
 function migrate_worker(){
   cd $ROOTDIR/tee-worker || exit 
 
-  if [ "$ROOT" = true ]; then 
-    cp ./bin/litentry-worker /opt/worker/w0
-    cp ./bin/enclave.signed.so  /opt/worker/w0
-    cd /opt/worker/w0 || exit
-  else 
-    cp ./bin/litentry-worker ./tmp/w0
-    cp ./bin/enclave.signed.so  ./tmp/w0
-    cd ./tmp/w0 || exit
-  fi 
+  cp ./bin/litentry-worker /opt/worker/w0
+  cp ./bin/enclave.signed.so  /opt/worker/w0
+  cd /opt/worker/w0 || exit
+
   echo "Old MRENCLAVE VALUE: $OLD_MRENCLAVE"
   echo "New MRENCLAVE VALUE: $NEW_MRENCLAVE"
   # Run the migration command
@@ -762,32 +672,18 @@ export CONFIG
 
 # Move log files to log-backup
 if [ -d "$ROOTDIR/tee-worker/log" ]; then
-  if [ "$ROOT" = true ]; then 
-    new_folder_name=$(date +"/opt/worker/log-backup/log-%Y%m%d-%H%M%S")
-    mkdir -p $new_folder_name
-    cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
-    cp /opt/parachain_dev/*.log $new_folder_name
-    echo "Backup log into $new_folder_name"
-  else 
-    new_folder_name=$(date +"$ROOTDIR/tee-worker/log-backup/log-%Y%m%d-%H%M%S")
-    mkdir -p $new_folder_name
-    cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
-    cp /tmp/parachain_dev/*.log $new_folder_name
-    echo "Backup log into $new_folder_name"
-  fi 
+  new_folder_name=$(date +"/opt/worker/log-backup/log-%Y%m%d-%H%M%S")
+  mkdir -p $new_folder_name
+  cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
+  cp /opt/parachain_dev/*.log $new_folder_name
+  echo "Backup log into $new_folder_name"
 fi
 
 # Backup worker folder
 # Let's backup regardless of root or userspace 
 worker_count=$(echo "$CONFIG" | jq '.workers | length')
 for ((i = 0; i < worker_count; i++)); do
-    if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
-        new_folder_name=$(date +"$ROOTDIR/tee-worker/tmp/w$i-%Y%m%d-%H%M%S")
-        mkdir -p new_folder_name
-        cp -r $ROOTDIR/tee-worker/tmp/w$i $new_folder_name
-        echo "Backing up, previous worker binary $new_folder_name"
-    fi
-    if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
+    if [ -d "/opt/worker/w$i" ]; then
       new_folder_name=$(date +"/opt/worker/w$i-%Y%m%d-%H%M%S")
       mkdir -p new_folder_name
       cp -r /opt/worker/w$i $new_folder_name
@@ -797,29 +693,16 @@ done
 
 
 if [ "$discard" = true ]; then
-  if [ "$ROOT" = true ]; then 
-    echo "Cleaning the existing state for Parachain and Worker."
-    stop_running_services
-    rm -rf /opt/parachain_dev/ 
-    worker_count=$(echo "$CONFIG" | jq '.workers | length')
-    for ((i = 0; i < worker_count; i++)); do
-      if [ -d "/opt/worker/w$i" ]; then
-          echo "Deleting Previous worker /opt/worker/w$i"
-          rm -r "/opt/worker/w$i"
-      fi
-    done
-  else 
-    echo "Cleaning the existing state for Parachain and Worker."
-    stop_running_services
-    rm -rf /tmp/parachain_dev/
-    worker_count=$(echo "$CONFIG" | jq '.workers | length')
-    for ((i = 0; i < worker_count; i++)); do
-      if [ -d "$ROOTDIR/tee-worker/tmp/w$i" ]; then
-          echo "Deleting Previous worker $ROOTDIR/tmp/w$i"
-          rm -r "$ROOTDIR/tee-worker/tmp/w$i"
-      fi
-    done
-  fi 
+  echo "Cleaning the existing state for Parachain and Worker."
+  stop_running_services
+  rm -rf /opt/parachain_dev/ 
+  worker_count=$(echo "$CONFIG" | jq '.workers | length')
+  for ((i = 0; i < worker_count; i++)); do
+    if [ -d "/opt/worker/w$i" ]; then
+      echo "Deleting Previous worker /opt/worker/w$i"
+      rm -r "/opt/worker/w$i"
+    fi
+  done
 fi
 
 # Get old MRENCLAVE
