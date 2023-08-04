@@ -22,6 +22,7 @@ function display_help() {
   echo "  -h, --parachain-host        Parachain Host Url (default: localhost)"
   echo "  -v, --copy-from-docker      Copy the binary for Parachain from a docker image (default: litentry/litentry-parachain:tee-prod)"
   echo "  -r, --root                  Run the deployment as a root user (Only use in servers where you have root permission)"
+  echo "  -g, --purge                 Purge the previous parachain data"
   echo ""
   echo "Arguments:"
   echo "  restart            Restart the services."
@@ -56,14 +57,13 @@ generate_service_file() {
 Description=${description}
 
 [Service]
+ExecStartPre=/bin/mv ${log_file} ${log_file}-backup 
 ExecStart=${command}
 WorkingDirectory=${working_directory}
 Restart=always
 StandardOutput=file:${log_file}
 StandardError=inherit
 
-[Install]
-WantedBy=multi-user.target
 "
 
   # If worker service, We use a different template
@@ -73,6 +73,7 @@ Description=${description}
 After=network.target
 
 [Service]
+ExecStartPre=/bin/mv ${log_file} ${log_file}-backup 
 ExecStart=${command}
 Restart=always
 Environment='RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug'
@@ -80,10 +81,12 @@ WorkingDirectory=${working_directory}
 StandardOutput=file:${log_file}
 StandardError=inherit
 
-[Install]
-WantedBy=default.target
 "
   fi
+
+  service_template+="[Install]
+WantedBy=default.target
+" 
 
   local service_filename="${service_name}.service"
   echo "$service_template" > "$service_filename"
@@ -218,7 +221,7 @@ function restart_parachain() {
   else 
     local log_file=/tmp/parachain_dev/relay.alice.log
   fi 
-  local command="$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936}"
+  local command="$POLKADOT_BIN --base-path /tmp/parachain_dev/alice --chain $ROCOCO_CHAINSPEC --alice --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936}"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
   if [ "$ROOT" = true ]; then
@@ -244,7 +247,7 @@ function restart_parachain() {
   else 
     local log_file=/tmp/parachain_dev/para.bob.log
   fi 
-  local command="$POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY"
+  local command="$POLKADOT_BIN --base-path /tmp/parachain_dev/bob --chain $ROCOCO_CHAINSPEC --bob --port ${BobPort:-30337} --ws-port ${BobWSPort:-9947}  --rpc-port ${BobRPCPort:-9937} --bootnodes /ip4/127.0.0.1/tcp/${CollatorPort:-30333}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
   if [ "$ROOT" = true ]; then
@@ -269,7 +272,7 @@ function restart_parachain() {
   fi 
   local command=
   # run a litentry-collator instance
-  local command="${PARACHAIN_BIN} --alice --collator --force-authoring --tmp --chain $CHAIN-dev --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm --state-pruning archive --blocks-pruning archive -- --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY"
+  local command="${PARACHAIN_BIN} --base-path /tmp/parachain_dev/para-alice --alice --collator --force-authoring --chain $CHAIN-dev --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm --state-pruning archive --blocks-pruning archive -- --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY"
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
   if [ "$ROOT" = true ]; then
@@ -592,13 +595,12 @@ function stop_old_worker(){
 function migrate_worker(){
   cd $ROOTDIR/tee-worker || exit 
 
-  # Copy integritee-service binary and enclave_signed.so to ./tmp/w0
   if [ "$ROOT" = true ]; then 
-    cp ./bin/integritee-service /opt/worker/w0
+    cp ./bin/litentry-worker /opt/worker/w0
     cp ./bin/enclave.signed.so  /opt/worker/w0
     cd /opt/worker/w0 || exit
   else 
-    cp ./bin/integritee-service ./tmp/w0
+    cp ./bin/litentry-worker ./tmp/w0
     cp ./bin/enclave.signed.so  ./tmp/w0
     cd ./tmp/w0 || exit
   fi 
