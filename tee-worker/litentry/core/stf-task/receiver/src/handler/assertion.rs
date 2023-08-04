@@ -21,10 +21,10 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_utils::stringify::account_id_to_string;
+use lc_credentials::DID;
 use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{Assertion, ErrorDetail, ErrorString, VCMPError};
+use litentry_primitives::{Assertion, ErrorDetail, ErrorString, Identity, VCMPError};
 use log::*;
 use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
@@ -99,11 +99,15 @@ where
 			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().credential_endpoint.clone();
 		credential.credential_subject.set_endpoint(credential_endpoint);
 
-		credential.issuer.id = account_id_to_string(&enclave_account);
-		let payload = credential.to_json().map_err(|_| {
-			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
-		})?;
-		debug!("Credential payload: {}", payload);
+		credential.issuer.id = DID::try_from(&Identity::Substrate(enclave_account.into()))
+			.map_err(|e| {
+				VCMPError::RequestVCFailed(
+					self.req.assertion.clone(),
+					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
+				)
+			})?
+			.format();
+		let payload = credential.issuer.mrenclave.clone();
 		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
