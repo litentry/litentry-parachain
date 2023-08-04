@@ -31,7 +31,7 @@ async function updateScheduledEnclave(api: ApiPromise, config: any) {
 }
 
 (async () => {
-    console.log('Register parachain ...');
+    console.log('Schedule enclave on parachain ...');
     const config = loadConfig();
 
     const provider = new WsProvider(config.parachain_ws);
