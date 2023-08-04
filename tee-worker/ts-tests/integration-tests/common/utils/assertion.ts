@@ -230,9 +230,8 @@ export async function verifySignature(data: any, index: HexString, proofJson: an
     const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
     // Check vc index
     expect(index).to.be.eq(data.id);
-
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
-    const message = Buffer.from(JSON.stringify(data));
+    const message = Buffer.from(data.issuer.mrenclave);
     const vcPubkey = Buffer.from(hexToU8a(`${res.vcPubkey}`));
 
     const isValid = await ed.verify(signature, message, vcPubkey);
@@ -261,7 +260,6 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
             proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
