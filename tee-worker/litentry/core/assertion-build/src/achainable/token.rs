@@ -46,8 +46,6 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
-
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

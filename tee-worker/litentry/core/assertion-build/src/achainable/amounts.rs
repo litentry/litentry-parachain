@@ -46,8 +46,6 @@ pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> R
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_achainable(flag, date1, date2);
-
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
