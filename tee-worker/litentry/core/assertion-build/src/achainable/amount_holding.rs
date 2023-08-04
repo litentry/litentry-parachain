@@ -21,10 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithAmountHolding},
-	ConvertParameterString,
-};
+use lc_data_providers::ConvertParameterString;
 
 const VC_SUBJECT_DESCRIPTION: &str = "Achainable amount holding";
 const VC_SUBJECT_TYPE: &str = "Amount holding";
@@ -35,26 +32,22 @@ pub fn build_amount_holding(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_holding, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, amount, date, token) = parse_amount_holding_params(&param)?;
-	let p = ParamsBasicTypeWithAmountHolding::one(
-		name,
-		&param.chain,
-		amount.clone(),
-		date.clone(),
-		token,
-	);
-
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmountHolding(p.clone()))?;
+	let flag =
+		request_achainable(addresses, AchainableParams::AmountHolding(param.clone()).into())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_holder(flag, &amount, &date);
+			credential_unsigned.update_holder(
+				flag,
+				&param.amount.to_string(),
+				&param.date.to_string(),
+			);
 
 			Ok(credential_unsigned)
 		},
@@ -66,15 +59,4 @@ pub fn build_amount_holding(
 			))
 		},
 	}
-}
-
-fn parse_amount_holding_params(
-	param: &AchainableAmountHolding,
-) -> Result<(String, String, String, Option<String>)> {
-	let name = param.name.to_string();
-	let amount = param.amount.to_string();
-	let date = param.date.to_string();
-	let token = param.token.as_ref().map(|v| v.to_string());
-
-	Ok((name, amount, date, token))
 }

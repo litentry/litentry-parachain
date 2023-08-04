@@ -21,10 +21,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithAmountToken},
-	vec_to_string,
-};
 
 pub fn build_amount_token(
 	req: &AssertionBuildRequest,
@@ -32,17 +28,13 @@ pub fn build_amount_token(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, amount, token) = parse_amount_token_params(&param)?;
-	let p = ParamsBasicTypeWithAmountToken::new(name, &param.chain, amount, token);
-
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmountToken(p.clone()))?;
-
+	let _flag = request_achainable(addresses, AchainableParams::AmountToken(param.clone()).into())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {
@@ -53,38 +45,4 @@ pub fn build_amount_token(
 			))
 		},
 	}
-}
-
-fn parse_amount_token_params(
-	param: &AchainableAmountToken,
-) -> Result<(String, String, Option<String>)> {
-	let name = param.name.clone();
-	let amount = param.amount.clone();
-
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let token = if param.token.is_some() {
-		let token = param.token.clone().unwrap();
-		let token = vec_to_string(token.to_vec()).map_err(|_| {
-			Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::AmountToken(param.clone())),
-				ErrorDetail::ParseError,
-			)
-		})?;
-		Some(token)
-	} else {
-		None
-	};
-
-	Ok((name, amount, token))
 }

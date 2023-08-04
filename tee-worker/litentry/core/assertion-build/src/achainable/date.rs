@@ -21,16 +21,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithDate},
-	vec_to_string,
-};
 
 pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<Credential> {
 	debug!("Assertion Achainable build_date, who: {:?}", account_id_to_string(&req.who));
-
-	let (name, date) = parse_date_params(&param)?;
-	let p = ParamsBasicTypeWithDate::new(name, &param.chain, date);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -38,7 +31,7 @@ pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithDate(p.clone()))?;
+	let _flag = request_achainable(addresses, AchainableParams::Date(param.clone()).into())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {
@@ -49,24 +42,4 @@ pub fn build_date(req: &AssertionBuildRequest, param: AchainableDate) -> Result<
 			))
 		},
 	}
-}
-
-fn parse_date_params(param: &AchainableDate) -> Result<(String, String)> {
-	let name = param.clone().name;
-	let date = param.clone().date;
-
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Date(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date = vec_to_string(date.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Date(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	Ok((name, date))
 }

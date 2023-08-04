@@ -240,7 +240,7 @@ impl From<AchainableParams> for Params {
 				let network = &p.chain;
 				let amount = p.amount.to_string();
 
-				let p = ParamsBasicTypeWithAmount::new(name.clone(), network, amount);
+				let p = ParamsBasicTypeWithAmount::new(name, network, amount);
 				Params::ParamsBasicTypeWithAmount(p)
 			},
 			AchainableParams::Amounts(p) => {

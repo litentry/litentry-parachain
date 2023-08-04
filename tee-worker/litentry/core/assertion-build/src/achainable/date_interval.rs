@@ -22,10 +22,6 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
 use lc_credentials::Credential;
-use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithDateInterval},
-	vec_to_string,
-};
 
 pub fn build_date_interval(
 	req: &AssertionBuildRequest,
@@ -33,16 +29,14 @@ pub fn build_date_interval(
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_date_interval, who: {:?}", account_id_to_string(&req.who));
 
-	let (name, start_date, end_date) = parse_date_interval_params(&param)?;
-	let p = ParamsBasicTypeWithDateInterval::new(name, &param.chain, start_date, end_date);
-
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithDateInterval(p.clone()))?;
+	let _flag =
+		request_achainable(addresses, AchainableParams::DateInterval(param.clone()).into())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {
@@ -53,30 +47,4 @@ pub fn build_date_interval(
 			))
 		},
 	}
-}
-
-fn parse_date_interval_params(param: &AchainableDateInterval) -> Result<(String, String, String)> {
-	let name = param.clone().name;
-	let start_date = param.clone().start_date;
-	let end_date = param.clone().end_date;
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let start_date = vec_to_string(start_date.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let end_date = vec_to_string(end_date.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::DateInterval(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	Ok((name, start_date, end_date))
 }
