@@ -36,7 +36,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use frame_support::pallet_prelude::*;
 use lc_stf_task_sender::IdentityVerificationRequest;
 use litentry_primitives::ValidationData;
-use std::string::ToString;
 
 mod web2;
 mod web3;

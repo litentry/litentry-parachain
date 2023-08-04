@@ -48,6 +48,7 @@ use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
+use std::string::ToString;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -68,8 +69,12 @@ pub enum LitentryMultiSignature {
 impl LitentryMultiSignature {
 	pub fn verify(&self, msg: &[u8], signer: &Identity) -> bool {
 		match signer {
-			Identity::Substrate(address) => self.verify_substrate(msg, address),
-			Identity::Evm(address) => self.verify_evm(msg, address),
+			Identity::Substrate(address) =>
+				self.verify_substrate(substrate_wrap(msg).as_slice(), address)
+					|| self.verify_substrate(msg, address),
+			Identity::Evm(address) =>
+				self.verify_evm(evm_eip191_wrap(msg).as_slice(), address)
+					|| self.verify_evm(msg, address),
 			_ => false,
 		}
 	}
@@ -145,6 +150,16 @@ pub fn recover_evm_address(
 	let mut addr = [0u8; 20];
 	addr[..20].copy_from_slice(&hashed_pk[12..32]);
 	Ok(addr)
+}
+
+// see https://github.com/litentry/litentry-parachain/issues/1137
+fn substrate_wrap(msg: &[u8]) -> Vec<u8> {
+	["<Bytes>".as_bytes(), msg, "</Bytes>".as_bytes()].concat()
+}
+
+// see https://github.com/litentry/litentry-parachain/issues/1970
+fn evm_eip191_wrap(msg: &[u8]) -> Vec<u8> {
+	["\x19Ethereum Signed Message:\n".as_bytes(), msg.len().to_string().as_bytes(), msg].concat()
 }
 
 pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);

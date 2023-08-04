@@ -62,6 +62,22 @@ pub enum Web3ValidationData {
 	Evm(Web3CommonValidationData),
 }
 
+impl Web3ValidationData {
+	pub fn message(&self) -> &ValidationString {
+		match self {
+			Self::Substrate(data) => &data.message,
+			Self::Evm(data) => &data.message,
+		}
+	}
+
+	pub fn signature(&self) -> &LitentryMultiSignature {
+		match self {
+			Self::Substrate(data) => &data.signature,
+			Self::Evm(data) => &data.signature,
+		}
+	}
+}
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ValidationData {

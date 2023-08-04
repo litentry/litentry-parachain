@@ -1,7 +1,7 @@
 import { runExample } from './example';
 
 (async () => {
-    await runExample('sr25519').catch((e) => {
+    await runExample('substrate').catch((e) => {
         console.error(e);
     });
     process.exit(0);
