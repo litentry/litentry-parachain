@@ -362,7 +362,7 @@ export async function runExample(mode: Mode) {
     assert.equal(requestVcResponse.req_ext_hash.toHex(), hash);
     const requestVcResult = parachainApi.createType(
         'RequestVCResult',
-        linkIdentityResponse.value
+        requestVcResponse.value
     ) as unknown as RequestVCResult;
     assert.equal(requestVcResult.account.toHex(), u8aToHex(alice.getAddressInSubstrateFormat()));
     aesOutput = parseAesOutput(parachainApi, requestVcResult.vc_payload.toHex());

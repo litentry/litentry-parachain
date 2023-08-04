@@ -14,11 +14,13 @@ import { aesKey } from '../call';
 import colors from 'colors';
 import {
     CorePrimitivesErrorErrorDetail,
-    ErrorResponse,
     FrameSystemEventRecord,
     StfError,
     WorkerRpcReturnValue,
 } from 'parachain-api';
+import {
+    Response,
+} from 'parachain-api/build/interfaces';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -278,8 +280,8 @@ export function assertWorkerError(
     check: (returnValue: StfError) => void,
     returnValue: WorkerRpcReturnValue
 ) {
-    const errDecodedRes = context.api.createType('ErrorResponse', returnValue.value) as unknown as ErrorResponse;
+    const errDecodedRes = context.api.createType('Response', returnValue.value) as unknown as Response;
     assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
-    const errValueDecoded = context.api.createType('StfError', errDecodedRes.error) as unknown as StfError;
+    const errValueDecoded = context.api.createType('StfError', errDecodedRes.value) as unknown as StfError;
     check(errValueDecoded);
 }

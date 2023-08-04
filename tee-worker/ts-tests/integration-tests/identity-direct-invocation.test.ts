@@ -128,7 +128,7 @@ describe('Test Identity (direct invocation)', function () {
                 assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
                 assert.isTrue(
                     v.asLinkIdentityFailed.isUserShieldingKeyNotFound,
-                    `expected UserShieldingKeyNotFound, received ${v.asDeactivateIdentityFailed.type} instead`
+                    `expected UserShieldingKeyNotFound, received ${v.asLinkIdentityFailed.type} instead`
                 );
             },
             res
@@ -518,8 +518,8 @@ describe('Test Identity (direct invocation)', function () {
             (v) => {
                 assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
                 assert.isTrue(
-                    v.asLinkIdentityFailed.isVerifyEvmSignatureFailed,
-                    `expected VerifyEvmSignatureFailed, received ${v.asLinkIdentityFailed.type} instead`
+                    v.asLinkIdentityFailed.isUnexpectedMessage,
+                    `expected UnexpectedMessage, received ${v.asLinkIdentityFailed.type} instead`
                 );
             },
             res
