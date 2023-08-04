@@ -25,7 +25,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use crate::{ensure, Error, Result};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use itp_types::Index;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
@@ -33,7 +32,7 @@ use lc_data_providers::{
 };
 use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
-	UserShieldingKeyNonceType, UserShieldingKeyType, Web2ValidationData,
+	Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -56,7 +55,7 @@ fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 pub fn verify(
 	who: &Identity,
 	identity: &Identity,
-	raw_msg: Vec<u8>,
+	raw_msg: &[u8],
 	data: &Web2ValidationData,
 ) -> Result<()> {
 	debug!("verify web2 identity, who: {:?}", who);
@@ -126,6 +125,6 @@ pub fn verify(
 	}
 
 	// the payload must match
-	ensure!(payload == raw_msg, Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage));
+	ensure!(&payload == raw_msg, Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage));
 	Ok(())
 }

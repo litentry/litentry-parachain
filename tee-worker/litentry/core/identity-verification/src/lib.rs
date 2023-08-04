@@ -35,7 +35,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use frame_support::pallet_prelude::*;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
-use litentry_primitives::ValidationData;
 
 mod web2;
 mod web3;
@@ -44,5 +43,5 @@ mod error;
 use error::{Error, Result};
 
 pub fn verify(r: &Web2IdentityVerificationRequest) -> Result<()> {
-	web2::verify(&r.who, &r.identity, r.raw_msg, &r.validation_data)
+	web2::verify(&r.who, &r.identity, &r.raw_msg, &r.validation_data)
 }

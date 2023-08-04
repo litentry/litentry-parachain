@@ -108,7 +108,7 @@ impl TrustedCallSigned {
 					identity.is_web3(),
 					StfError::LinkIdentityFailed(ErrorDetail::InvalidIdentity)
 				);
-				verify_web3_identity(&identity, raw_msg, &data)
+				verify_web3_identity(&identity, &raw_msg, &data)
 			},
 		}
 	}

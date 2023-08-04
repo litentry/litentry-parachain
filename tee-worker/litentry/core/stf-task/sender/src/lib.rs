@@ -36,10 +36,8 @@ pub mod stf_task_sender;
 use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::Index;
 use litentry_primitives::{
-	Assertion, Identity, IdentityNetworkTuple, UserShieldingKeyNonceType, UserShieldingKeyType,
-	Web2ValidationData, Web3Network,
+	Assertion, Identity, IdentityNetworkTuple, Web2ValidationData, Web3Network,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;

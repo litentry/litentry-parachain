@@ -151,11 +151,11 @@ pub fn get_expected_raw_message(
 
 pub fn verify_web3_identity(
 	identity: &Identity,
-	raw_msg: Vec<u8>,
+	raw_msg: &[u8],
 	data: &Web3ValidationData,
 ) -> StfResult<()> {
 	ensure!(
-		raw_msg.as_slice() == data.message().as_slice(),
+		raw_msg == data.message().as_slice(),
 		StfError::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
 	);
 
