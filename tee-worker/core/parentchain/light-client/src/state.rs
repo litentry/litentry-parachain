@@ -62,7 +62,7 @@ impl<Block: BlockT> RelayState<Block> {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq)]
 pub struct ScheduledChangeAtBlock<Header: HeaderT> {
 	pub at_block: Header::Number,
 	pub next_authority_list: AuthorityList,
