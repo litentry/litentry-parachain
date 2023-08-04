@@ -217,7 +217,7 @@ pub const ASSERTION_FROM_DATE: [&str; 14] = [
 
 fn achainable_networks(name: &ParameterString) -> Vec<Web3Network> {
 	let name = &name.clone().to_vec();
-	let name = str::from_utf8(name).map(|s| s).unwrap_or("");
+	let name = str::from_utf8(name).unwrap_or("");
 
 	if name == "Validator" ||
 		name == "TreasuryProposalBeneficiary" ||
