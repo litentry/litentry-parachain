@@ -13,6 +13,7 @@ import {
     assertInitialIdGraphCreated,
     buildIdentityFromKeypair,
     assertIdentityActivated,
+    PolkadotSigner,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -67,7 +68,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user sidechain storage before create', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
@@ -123,7 +124,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
         const respShieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',
@@ -134,7 +135,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
 
         // the main address should be already inside the IDGraph
         const mainIdentity = await buildIdentityHelper(
@@ -179,7 +180,7 @@ describeLitentry('Test Identity', 0, (context) => {
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
         //       not alice or bob, as it's the indirect calls are signed by the enclave signer
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
         const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], nonce, 'twitter');
 
         const evmValidations = await buildValidations(
@@ -243,7 +244,7 @@ describeLitentry('Test Identity', 0, (context) => {
                 },
             },
         };
-        const bobSubject = await buildIdentityFromKeypair(context.substrateWallet.bob, context);
+        const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
         const nonce9 = await getNonce(base58mrEnclave, workerAddress, context);
         console.log("nonce 9", nonce9);
         const msg = generateVerificationMessage(
@@ -294,7 +295,7 @@ describeLitentry('Test Identity', 0, (context) => {
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const identityHex = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex();
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
 
         const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
@@ -328,8 +329,7 @@ describeLitentry('Test Identity', 0, (context) => {
     step('link identities with wrong signature', async function () {
         const evmIdentity = eveIdentities[1];
 
-        // link eth identity with wrong validation data
-        // the `VerifyEvmSignatureFailed` error should be emitted prior to `AlreadyLinked` error
+        // link evm identity with wrong validation data(raw message)
         const ethereumSignature = (await context.ethersWallet.alice.signMessage(
             ethers.utils.arrayify(wrongMsg)
         )) as HexString;
@@ -364,12 +364,12 @@ describeLitentry('Test Identity', 0, (context) => {
             ['LinkIdentityFailed']
         );
 
-        await checkErrorDetail(aliceRespEvents, 'VerifyEvmSignatureFailed');
+        await checkErrorDetail(aliceRespEvents, 'UnexpectedMessage');
     });
 
     step('link already linked identity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
 
         const aliceIdentities = [twitterIdentity];
 

@@ -1,7 +1,7 @@
 import { ApiPromise } from '@polkadot/api';
 import { KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
+import { Metadata, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { KeyringPair } from '@polkadot/keyring/types';
