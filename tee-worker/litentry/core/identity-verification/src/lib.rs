@@ -34,7 +34,7 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use frame_support::pallet_prelude::*;
-use lc_stf_task_sender::IdentityVerificationRequest;
+use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::ValidationData;
 
 mod web2;
@@ -43,11 +43,6 @@ mod web3;
 mod error;
 use error::{Error, Result};
 
-pub fn verify(r: &IdentityVerificationRequest) -> Result<()> {
-	match &r.validation_data {
-		ValidationData::Web2(data) =>
-			web2::verify(&r.who, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
-		ValidationData::Web3(data) =>
-			web3::verify(&r.who, &r.identity, r.sidechain_nonce, r.key, r.key_nonce, data),
-	}
+pub fn verify(r: &Web2IdentityVerificationRequest) -> Result<()> {
+	web2::verify(&r.who, &r.identity, r.raw_msg, &r.validation_data)
 }

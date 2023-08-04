@@ -39,7 +39,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::Index;
 use litentry_primitives::{
 	Assertion, Identity, IdentityNetworkTuple, UserShieldingKeyNonceType, UserShieldingKeyType,
-	ValidationData, Web3Network,
+	Web2ValidationData, Web3Network,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -69,15 +69,13 @@ use sp_std::prelude::Vec;
 /// https://www.notion.so/web3builders/Sidechain-block-importer-and-block-production-28292233b4c74f4ab8110a0014f8d9df
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct IdentityVerificationRequest {
+pub struct Web2IdentityVerificationRequest {
 	pub shard: ShardIdentifier,
 	pub who: Identity,
 	pub identity: Identity,
-	pub validation_data: ValidationData,
+	pub raw_msg: Vec<u8>,
+	pub validation_data: Web2ValidationData,
 	pub web3networks: Vec<Web3Network>,
-	pub sidechain_nonce: Index,
-	pub key_nonce: UserShieldingKeyNonceType,
-	pub key: UserShieldingKeyType,
 	pub top_hash: H256,
 	pub req_ext_hash: H256,
 }
@@ -98,12 +96,12 @@ pub struct AssertionBuildRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
-	IdentityVerification(IdentityVerificationRequest),
+	IdentityVerification(Web2IdentityVerificationRequest),
 	AssertionVerification(AssertionBuildRequest),
 }
 
-impl From<IdentityVerificationRequest> for RequestType {
-	fn from(r: IdentityVerificationRequest) -> Self {
+impl From<Web2IdentityVerificationRequest> for RequestType {
+	fn from(r: Web2IdentityVerificationRequest) -> Self {
 		RequestType::IdentityVerification(r)
 	}
 }

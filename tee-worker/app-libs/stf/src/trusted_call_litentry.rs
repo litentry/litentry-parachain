@@ -19,7 +19,10 @@ extern crate sgx_tstd as std;
 
 use super::*;
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self},
+	helpers::{
+		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self,
+		get_expected_raw_message, verify_web3_identity,
+	},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -27,7 +30,7 @@ use ita_sgx_runtime::RuntimeOrigin;
 use itp_stf_primitives::types::ShardIdentifier;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
+	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, UserShieldingKeyType, ValidationData,
@@ -77,22 +80,37 @@ impl TrustedCallSigned {
 		// (current nonce + 1) when verifying the validation data.
 		let sidechain_nonce = System::account_nonce(&signer) - 1;
 
-		let request: RequestType = IdentityVerificationRequest {
-			shard: *shard,
-			who,
-			identity,
-			validation_data,
-			web3networks,
-			sidechain_nonce,
-			key_nonce: nonce,
-			key,
-			top_hash,
-			req_ext_hash,
+		let raw_msg = get_expected_raw_message(&who, &identity, sidechain_nonce, key, nonce);
+
+		match validation_data {
+			ValidationData::Web2(data) => {
+				ensure!(
+					identity.is_web2(),
+					StfError::LinkIdentityFailed(ErrorDetail::InvalidIdentity)
+				);
+				let request: RequestType = Web2IdentityVerificationRequest {
+					shard: *shard,
+					who,
+					identity,
+					raw_msg,
+					validation_data: data,
+					web3networks,
+					top_hash,
+					req_ext_hash,
+				}
+				.into();
+				StfRequestSender::new()
+					.send_stf_request(request)
+					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))
+			},
+			ValidationData::Web3(data) => {
+				ensure!(
+					identity.is_web3(),
+					StfError::LinkIdentityFailed(ErrorDetail::InvalidIdentity)
+				);
+				verify_web3_identity(&identity, raw_msg, &data)
+			},
 		}
-		.into();
-		StfRequestSender::new()
-			.send_stf_request(request)
-			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))
 	}
 
 	pub fn deactivate_identity_internal(
