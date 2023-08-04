@@ -27,8 +27,9 @@ import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
+import { decodeNonce } from './examples/direct-invocation/util';
 
-async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTestContext) : Promise<string> {
+async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTestContext): Promise<string> {
     const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveAccountId', params: [base58mrEnclave], id: 1 };
     const resAcc = await sendRequest(context.tee, requestAcc, context.api);
     const workerAcc = resAcc.value.toHex();
@@ -36,15 +37,10 @@ async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTes
     return workerAcc;
 }
 
-async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext) : Promise<number> {
+async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
     const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
-    const resHex = res.value.toString();
-    let nonce = 0;
-    if(resHex){
-        nonce = context.api.createType('Index', ('0x' + resHex.slice(2)?.match(/../g)?.reverse().join(''))).toNumber();
-    }   
-    console.log("resHex:", resHex);
+    const nonce = decodeNonce(res.value.toHex());
     console.log("nonce is:", nonce);
     return nonce;
 }
@@ -197,7 +193,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [eveSubstrateIdentity],
-            nonce + 2 ,
+            nonce + 2,
             'substrate',
             context.substrateWallet.eve
         );
