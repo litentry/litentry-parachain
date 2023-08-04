@@ -26,9 +26,6 @@ use lc_data_providers::{
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Uniswap User V2/V3";
-const VC_SUBJECT_TYPE: &str = "Uniswap User V2/V3 Assertion";
-
 pub fn build_amount_token(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountToken,
@@ -47,11 +44,8 @@ pub fn build_amount_token(
 	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmountToken(p.clone()))?;
 
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			// credential_unsigned.add_amount_token(flag, date1, date2);
-
-			Ok(credential_unsigned)
+		Ok(mut _credential_unsigned) => {
+			Ok(_credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);

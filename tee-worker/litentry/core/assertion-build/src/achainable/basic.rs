@@ -53,7 +53,6 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		.collect::<Vec<String>>();
 
 	let flag = is_uniswap_v2_or_v3_user(addresses)?;
-
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			let (desc, subtype) = get_uniswap_v23_info();

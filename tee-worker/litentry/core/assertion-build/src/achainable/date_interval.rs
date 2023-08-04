@@ -27,14 +27,11 @@ use lc_data_providers::{
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
-
 pub fn build_date_interval(
 	req: &AssertionBuildRequest,
 	param: AchainableDateInterval,
 ) -> Result<Credential> {
-	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
+	debug!("Assertion Achainable build_date_interval, who: {:?}", account_id_to_string(&req.who));
 
 	let (name, start_date, end_date) = parse_date_interval_params(&param)?;
 	let p = ParamsBasicTypeWithDateInterval::new(name, &param.chain, start_date, end_date);
@@ -46,11 +43,9 @@ pub fn build_date_interval(
 		.collect::<Vec<String>>();
 
 	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithDateInterval(p.clone()))?;
-
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			Ok(credential_unsigned)
+		Ok(mut _credential_unsigned) => {
+			Ok(_credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);

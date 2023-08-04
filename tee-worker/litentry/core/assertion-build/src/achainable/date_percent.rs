@@ -26,14 +26,11 @@ use lc_data_providers::{
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Balance dropped {percent} since {date}";
-const VC_SUBJECT_TYPE: &str = "Balance dropped {percent} since {date}";
-
 pub fn build_date_percent(
 	req: &AssertionBuildRequest,
 	param: AchainableDatePercent,
 ) -> Result<Credential> {
-	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
+	debug!("Assertion Achainable build_date_percent, who: {:?}", account_id_to_string(&req.who));
 
 	let (name, token, date, percent) = parse_date_percent_params(&param)?;
 	let p = ParamsBasicTypeWithDatePercent::new(name, &param.chain, token, date, percent);
@@ -45,11 +42,9 @@ pub fn build_date_percent(
 		.collect::<Vec<String>>();
 
 	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithDatePercent(p.clone()))?;
-
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			Ok(credential_unsigned)
+		Ok(mut _credential_unsigned) => {
+			Ok(_credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);

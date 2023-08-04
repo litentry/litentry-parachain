@@ -26,14 +26,11 @@ use lc_data_providers::{
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Balance between percents";
-const VC_SUBJECT_TYPE: &str = "Balance between percents";
-
 pub fn build_between_percents(
 	req: &AssertionBuildRequest,
 	param: AchainableBetweenPercents,
 ) -> Result<Credential> {
-	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
+	debug!("Assertion Achainable build_between_percents, who: {:?}", account_id_to_string(&req.who));
 
 	let (name, greater_than_or_equal_to, less_than_or_equal_to) =
 		parse_between_percents_params(&param)?;
@@ -52,11 +49,9 @@ pub fn build_between_percents(
 	);
 	let _flag =
 		request_achainable(addresses, Params::ParamsBasicTypeWithBetweenPercents(p.clone()))?;
-
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			Ok(credential_unsigned)
+		Ok(mut _credential_unsigned) => {
+			Ok(_credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);

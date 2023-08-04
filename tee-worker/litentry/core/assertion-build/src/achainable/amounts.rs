@@ -26,9 +26,6 @@ use lc_data_providers::{
 	vec_to_string,
 };
 
-const VC_SUBJECT_DESCRIPTION: &str = "Class of year";
-const VC_SUBJECT_TYPE: &str = "ETH Class of year Assertion";
-
 pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> Result<Credential> {
 	debug!("Assertion Achainable build_amounts, who: {:?}", account_id_to_string(&req.who));
 
@@ -42,11 +39,9 @@ pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> R
 		.collect::<Vec<String>>();
 
 	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmounts(p.clone()))?;
-
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			Ok(credential_unsigned)
+		Ok(mut _credential_unsigned) => {
+			Ok(_credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
