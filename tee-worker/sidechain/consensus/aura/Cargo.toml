@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "its-consensus-aura"
 version = "0.9.0"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "chain-error"] }
@@ -52,24 +52,6 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 
 [features]
 default = ["std"]
-sgx = [
-    "sgx_tstd",
-    "ita-stf/sgx",
-    "itc-parentchain-block-import-dispatcher/sgx",
-    "itp-enclave-metrics/sgx",
-    "itp-sgx-crypto/sgx",
-    "itp-sgx-externalities/sgx",
-    "itp-stf-executor/sgx",
-    "itp-stf-state-handler/sgx",
-    "itp-time-utils/sgx",
-    "itp-utils/sgx",
-    "its-block-composer/sgx",
-    "its-consensus-common/sgx",
-    "its-consensus-slots/sgx",
-    "its-state/sgx",
-    "its-block-verification/sgx",
-    "lc-scheduled-enclave/sgx",
-]
 std = [
     #crates.io
     "codec/std",
@@ -99,4 +81,22 @@ std = [
     "its-validateer-fetch/std",
     "its-primitives/std",
     "lc-scheduled-enclave/std",
+]
+sgx = [
+    "sgx_tstd",
+    "ita-stf/sgx",
+    "itc-parentchain-block-import-dispatcher/sgx",
+    "itp-enclave-metrics/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "itp-stf-executor/sgx",
+    "itp-stf-state-handler/sgx",
+    "itp-time-utils/sgx",
+    "itp-utils/sgx",
+    "its-block-composer/sgx",
+    "its-consensus-common/sgx",
+    "its-consensus-slots/sgx",
+    "its-state/sgx",
+    "its-block-verification/sgx",
+    "lc-scheduled-enclave/sgx",
 ]

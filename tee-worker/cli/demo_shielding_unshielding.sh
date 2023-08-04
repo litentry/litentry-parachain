@@ -7,14 +7,14 @@ set -e
 #
 # setup:
 # run all on localhost:
-#   integritee-node purge-chain --dev
-#   integritee-node --dev -lruntime=debug
+#   litentry-node purge-chain --dev
+#   litentry-node --dev -lruntime=debug
 #   rm light_client_db.bin
-#   export RUST_LOG=integritee_service=info,ita_stf=debug
-#   integritee-service init_shard
-#   integritee-service shielding-key
-#   integritee-service signing-key
-#   integritee-service run
+#   export RUST_LOG=litentry_worker=info,ita_stf=debug
+#   litentry-worker init_shard
+#   litentry-worker shielding-key
+#   litentry-worker signing-key
+#   litentry-worker run
 #
 # then run this script
 
@@ -57,7 +57,7 @@ NODEURL=${NODEURL:-"ws://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 echo "Using node uri ${NODEURL}:${NPORT}"

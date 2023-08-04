@@ -1,16 +1,12 @@
 import { ApiPromise } from '@polkadot/api';
 import { KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { Metadata, Vec, TypeRegistry } from '@polkadot/types';
+import { Metadata, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
-import { Call } from '@polkadot/types/interfaces';
 import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
-import type { AnyTuple, IMethod } from '@polkadot/types/types';
-
-export type BatchCall = Vec<Call> | (string | Uint8Array | IMethod<AnyTuple, any> | Call)[];
 
 export type EnclaveResult = {
     mrEnclave: `0x${string}`;
@@ -134,8 +130,8 @@ export const jsonSchema = {
                 },
             },
         },
-        issuanceTimestamp: {
-            type: 'integer',
+        issuanceDate: {
+            type: 'string',
         },
         credentialSubject: {
             type: 'object',
@@ -173,8 +169,8 @@ export const jsonSchema = {
         proof: {
             type: 'object',
             properties: {
-                createdTimestamp: {
-                    type: 'integer',
+                created: {
+                    type: 'string',
                 },
                 type: {
                     enum: ['Ed25519Signature2020'],
@@ -191,5 +187,5 @@ export const jsonSchema = {
             },
         },
     },
-    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceTimestamp', 'proof'],
+    required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceDate', 'proof'],
 };

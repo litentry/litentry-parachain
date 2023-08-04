@@ -17,7 +17,10 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
+use crate::{
+	build_client, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG, LIT_TOKEN_ADDRESS,
+	UNISWAP_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
+};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -25,15 +28,14 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use litentry_primitives::{Assertion, Web3Network};
-use log::{debug, error};
+use litentry_primitives::Web3Network;
+use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
 	string::{String, ToString},
 	vec::Vec,
 };
-
 pub struct AchainableClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
@@ -61,13 +63,521 @@ impl AchainableClient {
 	}
 }
 
+pub trait AchainablePost {
+	fn post(
+		&mut self,
+		params: SystemLabelReqPath,
+		body: &ReqBody,
+	) -> Result<serde_json::Value, Error>;
+}
+
+impl AchainablePost for AchainableClient {
+	fn post(
+		&mut self,
+		params: SystemLabelReqPath,
+		body: &ReqBody,
+	) -> Result<serde_json::Value, Error> {
+		let response = self
+			.client
+			.post_capture::<SystemLabelReqPath, ReqBody, serde_json::Value>(params, body);
+		debug!("ReqBody response: {:?}", response);
+		response.map_err(|e| Error::AchainableError(format!("Achainable response error: {}", e)))
+	}
+}
+
+pub trait AchainableResultParser {
+	type Item;
+	fn parse(value: serde_json::Value) -> Result<Self::Item, Error>;
+}
+
+impl AchainableResultParser for AchainableClient {
+	type Item = bool;
+	fn parse(value: serde_json::Value) -> Result<Self::Item, Error> {
+		value
+			.get("result")
+			.and_then(|res| res.as_bool())
+			.ok_or_else(|| Error::AchainableError("Achainable Parse result error".to_string()))
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemLabelReqPath {
+	path: String,
+}
+
+impl Default for SystemLabelReqPath {
+	fn default() -> Self {
+		Self { path: "/v1/run/system-labels".into() }
+	}
+}
+
+impl SystemLabelReqPath {
+	pub fn new(path: &str) -> Self {
+		Self { path: path.into() }
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ReqBody {
+	pub name: String,
+	pub address: String,
+	pub params: Params,
+}
+
+impl RestPath<SystemLabelReqPath> for ReqBody {
+	fn get_path(req_params: SystemLabelReqPath) -> core::result::Result<String, HttpError> {
+		Ok(req_params.path)
+	}
+}
+
+impl ReqBody {
+	pub fn new(address: String, params: Params) -> Self {
+		ReqBody { name: params.name(), address, params }
+	}
+}
+
+pub trait AchainableSystemLabelName {
+	fn name(&self) -> String;
+}
+
+pub fn web3_network_to_chain(network: &Web3Network) -> String {
+	match network {
+		Web3Network::Polkadot => "polkadot".into(),
+		Web3Network::Kusama => "kusama".into(),
+		Web3Network::Litentry => "litentry".into(),
+		Web3Network::Litmus => "litmus".into(),
+		Web3Network::LitentryRococo => "litentry_rococo".into(),
+		Web3Network::Khala => "khala".into(),
+		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
+		Web3Network::Ethereum => "ethereum".into(),
+		Web3Network::Polygon => "polygon".into(),
+		Web3Network::BSC => "bsc".into(),
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+pub enum Params {
+	ParamsBasicType(ParamsBasicType),
+	ParamsBasicTypeWithAmount(ParamsBasicTypeWithAmount),
+	ParamsBasicTypeWithAmounts(ParamsBasicTypeWithAmounts),
+	ParamsBasicTypeWithDate(ParamsBasicTypeWithDate),
+	ParamsBasicTypeWithAmountToken(ParamsBasicTypeWithAmountToken),
+	ParamsBasicTypeWithBetweenPercents(ParamsBasicTypeWithBetweenPercents),
+	ParamsBasicTypeWithDateInterval(ParamsBasicTypeWithDateInterval),
+	ParamsBasicTypeWithToken(ParamsBasicTypeWithToken),
+	ParamsBasicTypeWithDatePercent(ParamsBasicTypeWithDatePercent),
+	ParamsBasicTypeWithClassOfYear(ParamsBasicTypeWithClassOfYear),
+	ParamsBasicTypeWithAmountHolding(ParamsBasicTypeWithAmountHolding),
+}
+
+impl AchainableSystemLabelName for Params {
+	fn name(&self) -> String {
+		match self {
+			Params::ParamsBasicType(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithAmount(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithAmounts(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithDate(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithAmountToken(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithBetweenPercents(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithDateInterval(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithToken(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithDatePercent(e) => e.name.clone(),
+			Params::ParamsBasicTypeWithClassOfYear(c) => c.name.clone(),
+			Params::ParamsBasicTypeWithAmountHolding(a) => a.name.clone(),
+		}
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithAmountHolding {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub amount: String,
+	pub date: String,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub token: Option<String>,
+}
+
+impl ParamsBasicTypeWithAmountHolding {
+	pub fn new(network: &Web3Network, amount: String, date: String, token: Option<String>) -> Self {
+		let chain = web3_network_to_chain(network);
+		let name = if token.is_some() {
+			"ERC20 hodling {amount} of {token} since {date}".into()
+		} else {
+			"Balance hodling {amount} since {date}".into()
+		};
+
+		Self { name, chain, amount, date, token }
+	}
+}
+
+// ParamsBasicTypeWithClassOfYear
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithClassOfYear {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub date1: String,
+	pub date2: String,
+}
+
+pub enum EClassOfYear {
+	Year2020,
+	Year2021,
+	Year2022,
+}
+
+impl EClassOfYear {
+	pub fn get(&self) -> ParamsBasicTypeWithClassOfYear {
+		match self {
+			EClassOfYear::Year2020 => ParamsBasicTypeWithClassOfYear::class_of_2020(),
+			EClassOfYear::Year2021 => ParamsBasicTypeWithClassOfYear::class_of_2021(),
+			EClassOfYear::Year2022 => ParamsBasicTypeWithClassOfYear::class_of_2022(),
+		}
+	}
+}
+
+impl ParamsBasicTypeWithClassOfYear {
+	fn class_of_2020() -> Self {
+		Self {
+			name: "Account created between {dates}".into(),
+			chain: "ethereum".into(),
+			date1: "2020-01-01T00:00:00.000Z".into(),
+			date2: "2020-12-31T23:59:59.999Z".into(),
+		}
+	}
+
+	fn class_of_2021() -> Self {
+		Self {
+			name: "Account created between {dates}".into(),
+			chain: "ethereum".into(),
+			date1: "2021-01-01T00:00:00.000Z".into(),
+			date2: "2021-12-31T23:59:59.999Z".into(),
+		}
+	}
+
+	fn class_of_2022() -> Self {
+		Self {
+			name: "Account created between {dates}".into(),
+			chain: "ethereum".into(),
+			date1: "2022-01-01T00:00:00.000Z".into(),
+			date2: "2022-12-31T23:59:59.999Z".into(),
+		}
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicType {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+}
+
+impl ParamsBasicType {
+	pub fn new(name: String, chain: String) -> Self {
+		Self { name, chain }
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithAmount {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub amount: String,
+}
+
+impl ParamsBasicTypeWithAmount {
+	pub fn new(name: String, chain: String, amount: String) -> Self {
+		Self { name, chain, amount }
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithDate {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub date: String,
+}
+
+impl ParamsBasicTypeWithDate {
+	pub fn new(name: String, chain: String, date: String) -> Self {
+		Self { name, chain, date }
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithAmounts {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub amount1: String,
+	pub amount2: String,
+}
+
+impl ParamsBasicTypeWithAmounts {
+	pub fn new(name: String, chain: String, amount1: String, amount2: String) -> Self {
+		Self { name, chain, amount1, amount2 }
+	}
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithAmountToken {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub amount: String,
+	pub token: Option<String>,
+}
+
+impl ParamsBasicTypeWithAmountToken {
+	pub fn new(name: String, chain: String, amount: String, token: Option<String>) -> Self {
+		Self { name, chain, amount, token }
+	}
+}
+
+// Balance between percents
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithBetweenPercents {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub greater_than_or_equal_to: String,
+	pub less_than_or_equal_to: String,
+}
+
+impl ParamsBasicTypeWithBetweenPercents {
+	pub fn new(
+		name: String,
+		chain: String,
+		greater_than_or_equal_to: String,
+		less_than_or_equal_to: String,
+	) -> Self {
+		Self { name, chain, greater_than_or_equal_to, less_than_or_equal_to }
+	}
+}
+
+// ParamsBasicTypeWithDateInterval
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithDateInterval {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub start_date: String,
+	pub end_date: String,
+}
+
+impl ParamsBasicTypeWithDateInterval {
+	pub fn new(name: String, chain: String, start_date: String, end_date: String) -> Self {
+		Self { name, chain, start_date, end_date }
+	}
+}
+
+// ParamsBasicTypeWithToken
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithToken {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub token: String,
+}
+
+impl ParamsBasicTypeWithToken {
+	pub fn new(name: String, chain: String, token: String) -> Self {
+		Self { name, chain, token }
+	}
+}
+
+// ParamsBasicTypeWithDatePercent
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithDatePercent {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub token: String,
+	pub date: String,
+	pub percent: String,
+}
+
+impl ParamsBasicTypeWithDatePercent {
+	pub fn new(name: String, chain: String, token: String, date: String, percent: String) -> Self {
+		Self { name, chain, token, date, percent }
+	}
+}
+
+impl Default for ParamsBasicTypeWithDatePercent {
+	fn default() -> Self {
+		Self {
+			name: "Balance dropped {percent} since {date}".into(),
+			chain: "ethereum".into(),
+			token: "ETH".into(),
+			date: "14D".into(),
+			percent: "80".into(),
+		}
+	}
+}
+
+fn check_achainable_label(
+	client: &mut AchainableClient,
+	address: &str,
+	params: Params,
+) -> Result<bool, Error> {
+	let body = ReqBody::new(address.into(), params);
+	client
+		.post(SystemLabelReqPath::default(), &body)
+		.and_then(AchainableClient::parse)
+}
+
+/// A4/A7/A10/A11
+pub trait AchainableHolder {
+	fn is_holder(
+		&mut self,
+		address: &str,
+		amount_holding: ParamsBasicTypeWithAmountHolding,
+	) -> Result<bool, Error>;
+}
+
+impl AchainableHolder for AchainableClient {
+	fn is_holder(
+		&mut self,
+		address: &str,
+		amount_holding: ParamsBasicTypeWithAmountHolding,
+	) -> Result<bool, Error> {
+		check_achainable_label(
+			self,
+			address,
+			Params::ParamsBasicTypeWithAmountHolding(amount_holding),
+		)
+	}
+}
+
+/// A8 TODO:
+/// TODO:
+/// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api
+/// currently only judges the range of a single account, so the current approach is to parse the returned data through
+/// an assertion such as under 1 to calculate the sum, and then perform interval judgment.
+pub trait AchainableTotalTransactionsParser {
+	fn parse_txs(response: serde_json::Value) -> Result<u64, Error>;
+}
+impl AchainableTotalTransactionsParser for AchainableClient {
+	fn parse_txs(response: serde_json::Value) -> Result<u64, Error> {
+		let display_text = response
+			.get("display")
+			.and_then(|displays| {
+				displays.as_array().map(|displays| {
+					let mut text: std::option::Option<String> = None;
+					for v in displays.iter() {
+						text = v
+							.get("text")
+							.and_then(|text| {
+								text.as_str().map(|display_text| Some(display_text.to_string()))
+							})
+							.flatten();
+					}
+					text
+				})
+			})
+			.flatten();
+
+		debug!("Total txs, display text: {:?}", display_text);
+
+		if let Some(display_text) = display_text {
+			// TODO:
+			// text field format: Total transactions under 1 (Transactions: 0)
+			let split_text = display_text.split(": ").collect::<Vec<&str>>();
+			if split_text.len() != 2 {
+				return Err(Error::AchainableError("Invalid array".to_string()))
+			}
+
+			let mut value_text = split_text[1].to_string();
+
+			// pop the last char: ")"
+			value_text.pop();
+
+			let value: u64 = value_text.parse::<u64>().unwrap_or_default();
+
+			return Ok(value)
+		}
+
+		Err(Error::AchainableError("Invalid response".to_string()))
+	}
+}
+pub trait AchainableAccountTotalTransactions {
+	/// NOTE: Achinable "chain" fieild must be one of [ethereum, polkadot, kusama, litmus, litentry, khala]
+	fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error>;
+}
+
+impl AchainableAccountTotalTransactions for AchainableClient {
+	fn total_transactions(
+		&mut self,
+		network: &Web3Network,
+		addresses: &[String],
+	) -> Result<u64, Error> {
+		let mut txs = 0_u64;
+		addresses.iter().for_each(|address| {
+			let name = "Account total transactions under {amount}".to_string();
+			let chain = web3_network_to_chain(network);
+			let amount = "1".to_string();
+
+			let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
+			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs);
+			txs += tx.unwrap_or_default();
+		});
+
+		Ok(txs)
+	}
+}
+
 pub trait AchainableTagAccount {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error>;
 	fn og_account(&mut self, address: &str) -> Result<bool, Error>;
-	fn class_of_2020(&mut self, address: &str) -> Result<bool, Error>;
-	fn class_of_2021(&mut self, address: &str) -> Result<bool, Error>;
-	fn class_of_2022(&mut self, address: &str) -> Result<bool, Error>;
-	fn found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
+	fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error>;
+	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error>;
+	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error>;
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error>;
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error>;
 }
@@ -77,14 +587,14 @@ pub trait AchainableTagBalance {
 	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error>;
 	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error>;
 	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error>;
-	fn less_than_10_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
-	fn less_than_10_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
-	fn not_less_than_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn under_10_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn under_10_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn over_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error>;
 	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error>;
-	fn not_less_than_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
-	fn not_less_than_100_lit_bep20_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error>;
+	fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error>;
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error>;
@@ -132,582 +642,486 @@ pub trait AchainableTagDeFi {
 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error>;
 }
 
-pub trait AchainablePost {
-	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error>;
-}
-
-impl AchainablePost for AchainableClient {
-	fn post(&mut self, params: ReqParams, body: &ReqBody) -> Result<serde_json::Value, Error> {
-		let response =
-			self.client.post_capture::<ReqParams, ReqBody, serde_json::Value>(params, body);
-		debug!("ReqBody response: {:?}", response);
-		match response {
-			Ok(res) => Ok(res),
-			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
-		}
-	}
-}
-
-pub trait AchainableResultParser {
-	type Item;
-	fn parse(value: serde_json::Value) -> Result<Self::Item, Error>;
-}
-
-impl AchainableResultParser for AchainableClient {
-	type Item = bool;
-	fn parse(response: serde_json::Value) -> Result<Self::Item, Error> {
-		if let Some(value) = response.get("result") {
-			if let Some(b) = value.as_bool() {
-				Ok(b)
-			} else {
-				Err(Error::AchainableError("Invalid boolean".to_string()))
-			}
-		} else {
-			Err(Error::AchainableError("Invalid response".to_string()))
-		}
-	}
-}
-
-fn check_achainable_label(
-	client: &mut AchainableClient,
-	address: &str,
-	label_path: &str,
-) -> Result<bool, Error> {
-	let params = ReqParams::new(label_path);
-	let body = ParamsAccount::new(address).into();
-	let resp = client.post(params, &body)?;
-	AchainableClient::parse(resp)
-}
-
-pub trait AchainableTotalTransactions {
-	// Currently, supported networks: ["Litentry", "Litmus", "Polkadot", "Kusama", "Ethereum", "Khala"]
-	fn total_transactions(
-		&mut self,
-		network: &Web3Network,
-		addresses: &[String],
-	) -> Result<u64, Error>;
-}
-
-const PATH_LENS: usize = 7;
-const A4_ERC20_LIT_ETHEREUM_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/labels/b65b955c-63eb-4cdf-acd9-46863f9362f2",
-	"/v1/run/labels/02b46446-e0ce-43ac-83f1-7e55a2f590dd",
-	"/v1/run/labels/3075da9e-a426-4fe6-bd49-2e0624374326",
-	"/v1/run/labels/00b52b3f-da38-4ef1-aeb3-3b5fdb508cfb",
-	"/v1/run/labels/61105e67-a432-454b-b7e0-1b67d4a37ac9",
-	"/v1/run/labels/79237456-bc9a-4a70-a235-09c0e1d138d2",
-	"/v1/run/labels/c9149a7e-ef69-4ae2-83e6-dbf6ebe0f796",
-];
-const A4_LIT_LITENTRY_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/labels/2e7e4efb-f64f-4c05-8535-efa14915a566",
-	"/v1/run/labels/3268a2f3-b6a5-4055-a7ba-0de414e47b73",
-	"/v1/run/labels/7c7dcc3b-7cea-4180-841f-fb4c920afb69",
-	"/v1/run/labels/1e40a32d-5da7-4969-9648-b391eab33da7",
-	"/v1/run/labels/65796b73-92fd-456e-aa28-75862c1c0cb0",
-	"/v1/run/labels/7365f0a2-b69f-465d-b48f-5fe4495bfcaf",
-	"/v1/run/labels/dd1bddeb-723a-48e6-b9f0-174b67bd0ff5",
-];
-const A4_LIT_LITMUS_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/labels/a3f4d87f-d10e-4e0c-9d1a-e05f7e89ea6b",
-	"/v1/run/labels/45c636e1-c34f-4d91-aa84-186ca0ebb3aa",
-	"/v1/run/labels/ad95aceb-603d-41c4-997d-df196d9b1f94",
-	"/v1/run/labels/10b1725a-eafb-4ee1-bace-ed754e98d309",
-	"/v1/run/labels/33ccc2bd-ae38-4e41-82d3-fe522880443b",
-	"/v1/run/labels/b8bccd1a-ab90-48c3-bc8b-aca3c0d011a3",
-	"/v1/run/labels/38ad2b09-4851-44c7-add5-619499788db0",
-];
-pub trait AchainableA4Holder {
-	// Currently, supported networks: ["Litentry", "Litmus", "Ethereum"]
-	fn lit_holder_on_network(
-		&mut self,
-		network: &Web3Network,
-		address: &str,
-		index: usize,
-	) -> Result<bool, Error>;
-}
-impl AchainableA4Holder for AchainableClient {
-	// consistently holding at least 10 LIT tokens
-	fn lit_holder_on_network(
-		&mut self,
-		network: &Web3Network,
-		address: &str,
-		index: usize,
-	) -> Result<bool, Error> {
-		if index >= PATH_LENS {
-			return Err(Error::AchainableError("Wrong index".to_string()))
-		}
-
-		let path = if *network == Web3Network::Ethereum {
-			A4_ERC20_LIT_ETHEREUM_PATHS[index]
-		} else if *network == Web3Network::Litentry {
-			A4_LIT_LITENTRY_PATHS[index]
-		} else {
-			A4_LIT_LITMUS_PATHS[index]
-		};
-
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse(resp)
-	}
-}
-
-// consistently holding at least 5 DOT tokens
-const A7_DOT_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/labels/7bb7b42e-088d-46d5-9deb-b0e4f02a817d",
-	"/v1/run/labels/b7426872-abdf-4680-9d74-0abe8904e410",
-	"/v1/run/labels/23120e2b-1f2b-40c4-83b6-2836558506f0",
-	"/v1/run/labels/a3df0656-af20-4d83-8ea6-fbbe9ccd0c1b",
-	"/v1/run/labels/3674490b-e986-4cf2-a7ce-6358a6df238b",
-	"/v1/run/labels/0d60bb2c-de34-4575-9997-69f7dec7daf7",
-	"/v1/run/labels/05b87f44-bfab-46ca-a917-062a4064d9f0",
-];
-
-// consistently holding at least 0.001 WBTC tokens
-const A10_WBTC_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/labels/5a936ecc-abfd-4bbd-8e62-55a8fc7c4a6a",
-	"/v1/run/labels/50e9f706-c610-4a21-b611-65052381061d",
-	"/v1/run/labels/32184172-5316-4a95-b0d2-6d5a50b0eba3",
-	"/v1/run/labels/4b4e0d0a-812e-4861-8361-b76cd357d20c",
-	"/v1/run/labels/dbdbef34-35e3-4542-a50c-b40356747588",
-	"/v1/run/labels/4a75aaaa-a4f0-4512-8200-3d259d7dac27",
-	"/v1/run/labels/bd84b478-baea-4e2c-8e4d-0cf2eaeadb63",
-];
-
-// consistently holding at least 0.01 ETH tokens
-const A11_ETH_PATHS: [&str; PATH_LENS] = [
-	"/v1/run/labels/1e6053c6-1d09-42ee-9074-a4664957f9a7",
-	"/v1/run/labels/060acc81-a9b0-4997-8f4b-b8d7953fe44b",
-	"/v1/run/labels/892d4ddc-f70c-4fc2-acfc-1891099db41e",
-	"/v1/run/labels/eb2f0c07-c3a4-48dc-a194-c254b26ff581",
-	"/v1/run/labels/7f28c5cb-64c4-4880-9242-3cde638a57d4",
-	"/v1/run/labels/0afc7c00-a1be-47aa-9903-2d99d2970091",
-	"/v1/run/labels/078b2f54-4515-4513-9c67-33c30081b758",
-];
-
-pub trait AchainableHoldingAssertion {
-	fn is_holder(
-		&mut self,
-		assertion: &Assertion,
-		address: &str,
-		index: usize,
-	) -> Result<bool, Error>;
-}
-impl AchainableHoldingAssertion for AchainableClient {
-	fn is_holder(
-		&mut self,
-		assertion: &Assertion,
-		address: &str,
-		index: usize,
-	) -> Result<bool, Error> {
-		if index >= PATH_LENS {
-			return Err(Error::AchainableError("Wrong index".to_string()))
-		}
-
-		let path = match assertion {
-			Assertion::A7(..) => A7_DOT_PATHS[index],
-			Assertion::A10(..) => A10_WBTC_PATHS[index],
-			Assertion::A11(..) => A11_ETH_PATHS[index],
-			_ =>
-				return Err(Error::AchainableError(
-					"Unsupported holding Assertion type.".to_string(),
-				)),
-		};
-
-		let params = ReqParams::new(path);
-		let body = ParamsAccount::new(address).into();
-		let resp = self.post(params, &body)?;
-
-		Self::parse(resp)
-	}
-}
-
-// TODO:
-// This is a compromise. We need to judge the range of the sum of transactions of all linked accounts, but the achanable api
-// currently only judges the range of a single account, so the current approach is to parse the returned data through
-// an assertion such as under 1 to calculate the sum, and then perform interval judgment.
-pub trait AchainableTotalTransactionsParser {
-	fn parse_total_transactions(response: serde_json::Value) -> Result<u64, Error> {
-		let display_text = response
-			.get("label")
-			.and_then(|value| {
-				value.get("display").and_then(|displays| {
-					displays.as_array().map(|displays| {
-						let mut text: std::option::Option<String> = None;
-						for v in displays.iter() {
-							text = v
-								.get("text")
-								.and_then(|text| {
-									text.as_str().map(|display_text| Some(display_text.to_string()))
-								})
-								.flatten();
-						}
-						text
-					})
-				})
-			})
-			.flatten();
-
-		debug!("Total txs, display text: {:?}", display_text);
-
-		if let Some(display_text) = display_text {
-			// TODO:
-			// text field format: Total transactions under 1 (Transactions: 0)
-			let split_text = display_text.split(": ").collect::<Vec<&str>>();
-			if split_text.len() != 2 {
-				return Err(Error::AchainableError("Invalid array".to_string()))
-			}
-
-			let mut value_text = split_text[1].to_string();
-
-			// pop the last char: ")"
-			value_text.pop();
-
-			let value: u64 = value_text.parse::<u64>().unwrap_or_default();
-
-			return Ok(value)
-		}
-
-		Err(Error::AchainableError("Invalid response".to_string()))
-	}
-}
-impl AchainableTotalTransactionsParser for AchainableClient {}
-
-impl AchainableTotalTransactions for AchainableClient {
-	fn total_transactions(
-		&mut self,
-		network: &Web3Network,
-		addresses: &[String],
-	) -> Result<u64, Error> {
-		let mut path = "";
-
-		match network {
-			Web3Network::Litentry => path = "/v1/run/labels/74655d14-3abd-4a25-b3a4-cd592ae26f4c",
-			Web3Network::Litmus => path = "/v1/run/labels/b94fedfc-cb7b-4e59-a7a9-121550acd1c4",
-			Web3Network::Polkadot => path = "/v1/run/labels/046e8968-d585-4421-8064-d48b58c75b9a",
-			Web3Network::Kusama => path = "/v1/run/labels/060e12c8-b84e-4284-bab3-9a014d41266b",
-			Web3Network::Ethereum => path = "/v1/run/labels/8e19fb04-57fc-4537-ac93-d6fa7cff5bbe",
-			Web3Network::Khala => path = "/v1/run/labels/f6a5cbe7-605a-4f9f-8763-67f90f943fb4",
-			_ => {
-				error!("Unsupported network: {:?}", network);
-			},
-		}
-
-		let mut txs = 0_u64;
-		addresses.iter().for_each(|address| {
-			let params = ReqParams::new(path);
-			let body = ParamsAccount::new(address).into();
-			match self.post(params, &body) {
-				Ok(resp) => {
-					let total = Self::parse_total_transactions(resp).unwrap_or_default();
-					txs += total;
-				},
-				Err(e) => error!("Request total txs error: {:?}", e),
-			}
-		});
-
-		Ok(txs)
-	}
-}
-
 impl AchainableTagAccount for AchainableClient {
 	fn fresh_account(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/1de85e1d215868788dfc91a9f04d7afd")
+		let name = "Account created after {date}".to_string();
+		let chain = "ethereum".to_string();
+		let date = "30D".to_string();
+		let param = ParamsBasicTypeWithDate::new(name, chain, date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param))
 	}
 
 	fn og_account(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/8a6e26b90dee869634215683ea2dad0d")
+		let name = "Account created before {date}".to_string();
+		let chain = "ethereum".to_string();
+		let date = "2020-01-01T00:00:00.000Z".to_string();
+		let param = ParamsBasicTypeWithDate::new(name, chain, date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDate(param))
 	}
 
-	fn class_of_2020(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/9343efca78222a4fad82c635ab697ca0")
+	fn class_of_year(&mut self, address: &str, year: EClassOfYear) -> Result<bool, Error> {
+		let param = year.get();
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithClassOfYear(param))
 	}
 
-	fn class_of_2021(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/6808c28c26908eb695f63b089cfdae80")
+	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicType::new("Account found on {chain}".to_string(), "bsc".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
-	fn class_of_2022(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/a4ee0c9e44cbc7b8a4b2074b3b8fb912")
-	}
-
-	fn found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/3ace29836b372ae66a218dec16e37b62")
+	fn eth_drained_in_last_fortnight(&mut self, address: &str) -> Result<bool, Error> {
+		let param = ParamsBasicTypeWithDatePercent::default();
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDatePercent(param))
 	}
 
 	fn is_polkadot_validator(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/eb66927e8f56fd7f9a8917d380e6100d")
+		let param = ParamsBasicType::new("Validator".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_validator(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/a0d213ff009e43b4ecd0cae67bbabae9")
+		let param = ParamsBasicType::new("Validator".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 }
 
 impl AchainableTagBalance for AchainableClient {
 	fn polkadot_dolphin(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/6a0424e7544696a3e774dfc7e260dd6e")
+		let name = "Balance between percents".to_string();
+		let chain = "polkadot".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "0.0999999999999999".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
 	fn kusama_dolphin(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/3e226ee1bfb0d33564efe7f28f5015bd")
+		let name = "Balance between percents".to_string();
+		let chain = "kusama".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "0.0999999999999999".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
 	fn polkadot_whale(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/68390df24e8ac5d0984a8e9c0725a964")
+		let name = "Balance between percents".to_string();
+		let chain = "polkadot".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "100".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
 	fn kusama_whale(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/2bf33f5b3ae60293bf93784b80251129")
+		let name = "Balance between percents".to_string();
+		let chain = "kusama".to_string();
+		let a1 = "0.01".to_string();
+		let a2 = "100".to_string();
+		let param = ParamsBasicTypeWithBetweenPercents::new(name, chain, a1, a2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithBetweenPercents(param))
 	}
 
-	fn less_than_10_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/fee8171e2001d1605e018c74f64352da")
+	fn under_10_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance under {amount}".to_string();
+		let chain = "ethereum".to_string();
+		let amount = "10".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
-	fn less_than_10_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/4a35e107005f1ea4077f119c10d18503")
+	fn under_10_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance under {amount}".to_string();
+		let chain = "litentry".to_string();
+		let amount = "10".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
-	fn not_less_than_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/8657c801983aed40012e387900d75726")
+	fn over_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		let name = "Balance over {amount}".to_string();
+		let chain = "ethereum".to_string();
+		let amount = "100".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
 	fn between_10_to_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/e4724ad5b7354ef85332887ee7852800")
+		// 10 - 100 ETH Holder
+		let name = "Balance between {amounts}".to_string();
+		let chain = "ethereum".to_string();
+		let amount1 = "10".to_string();
+		let amount2 = "100".to_string();
+		let param = ParamsBasicTypeWithAmounts::new(name, chain, amount1, amount2);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmounts(param))
 	}
 
 	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/83d16c4c31c55ae535472643e63f49ce")
+		// ETH Millionaire
+		let name = "Balance over {amount} dollars".to_string();
+		let chain = "ethereum".to_string();
+		let amount = "100".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
 	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/53b54e51090a3663173c2a97039ebf69")
+		// ETH2 Validator Eligible
+		let name = "Balance over {amount}".to_string();
+		let chain = "ethereum".to_string();
+		let amount = "32".to_string();
+		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
-	fn not_less_than_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/f55a4c5a19b6817ad4faf90385f4df6e")
+	fn over_100_weth_holder(&mut self, address: &str) -> Result<bool, Error> {
+		// 100+ WETH Holder
+		let name = "ERC20 balance over {amount}".to_string();
+		let chain = "ethereum".to_string();
+		let amount = "100".to_string();
+
+		let param = ParamsBasicTypeWithAmountToken::new(
+			name,
+			chain,
+			amount,
+			Some(WETH_TOKEN_ADDRESS.to_string()),
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param))
 	}
 
-	fn not_less_than_100_lit_bep20_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/0f26a13d7ff182641f9bb9168a3f1d84")
+	fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error> {
+		// 100+ LIT BEP20 Holder
+		let name = "BEP20 balance over {amount}".to_string();
+		let chain = "bsc".to_string();
+		let amount = "100".to_string();
+
+		let param = ParamsBasicTypeWithAmountToken::new(
+			name,
+			chain,
+			amount,
+			Some(LIT_TOKEN_ADDRESS.to_string()),
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountToken(param))
 	}
 
 	fn native_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/3f0469170cd271ebaac4ed2c92754479")
+		// Native LIT Hodler
+		let param = ParamsBasicTypeWithAmountHolding::new(
+			&Web3Network::Litentry,
+			"10".to_string(),
+			"2023-01-01T00:00:00.000Z".to_string(),
+			None,
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param))
 	}
 
 	fn erc20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/7bf72e9190098776817afa763044ac1b")
+		let param = ParamsBasicTypeWithAmountHolding::new(
+			&Web3Network::Ethereum,
+			"10".to_string(),
+			"2022-01-01T00:00:00.000Z".to_string(),
+			Some(LIT_TOKEN_ADDRESS.to_string()),
+		);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param))
 	}
 
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/0dc166e3b588fb45a9cca36c60c61f79")
+		let param = ParamsBasicTypeWithAmountHolding::new(
+			&Web3Network::BSC,
+			"10".to_string(),
+			"2022-01-01T00:00:00.000Z".to_string(),
+			Some(LIT_TOKEN_ADDRESS.to_string()),
+		);
+
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmountHolding(param))
 	}
 }
 
 impl AchainableTagDotsama for AchainableClient {
 	fn is_polkadot_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/d4748f8b162a78a195cbbc6669333545")
+		let param =
+			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_treasury_proposal_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/d7cf879652ea3bcab1c043828f4d4478")
+		let param =
+			ParamsBasicType::new("TreasuryProposalBeneficiary".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/fbf7f158c78d7eb95cb872b1a8d5fe07")
+		let param = ParamsBasicType::new("TipFinder".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_tip_finder(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/1181944a66c746042c2914080eb7155b")
+		let param = ParamsBasicType::new("TipFinder".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/1829e887a62fa97113dd0cee977aa8d5")
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_tip_beneficiary(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/3564145e6ca3f13185b2cd1490db65fc")
+		let param = ParamsBasicType::new("TipBeneficiary".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/ce5e845483b2fcbe42021ff91198b92b")
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_opengov_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/ee1a4e4a1e3e63e3e9d1c5af1674e15b")
+		let param = ParamsBasicType::new("OpenGovProposer".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/5c1a272ce054e729f1eca5c5a47bcbdd")
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_fellowship_proposer(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/4aa1a72b5d1fae6dd0417671193fffe1")
+		let param = ParamsBasicType::new("FellowshipProposer".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/9b03668237a0a4a7bbdd45c839dbb0fd")
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_fellowship_member(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/91b0529b323d6c1207dc601d0f677414")
+		let param = ParamsBasicType::new("FellowshipMember".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/8cb42563adaacf8fd4609d6641ce7670")
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_ex_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/50e6094ebf3df2e8bf2d2b41b2737ba0")
+		let param = ParamsBasicType::new("ExCouncilor".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/e5bcdbdb20c07ffd9ff68ce206fb64d5")
+		let param = ParamsBasicType::new("Councilor".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_councilor(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/a27e414ae882a5e5b291b437376e266a")
+		let param = ParamsBasicType::new("Councilor".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_polkadot_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/1f39ff71595b1f0ff9f196b8f64f04e3")
+		let param = ParamsBasicType::new("BountyCurator".to_string(), "polkadot".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
 	fn is_kusama_bounty_curator(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/6ecc10647157f1c34fe7d3734ba3d89f")
+		let param = ParamsBasicType::new("BountyCurator".to_string(), "kusama".to_string());
+		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 }
 
 impl AchainableTagDeFi for AchainableClient {
 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/6650ee41cda375e6d2a4d27746ce4805")
+		// Uniswap V2 trader
+		let name = "Uniswap V2 trader";
+		let chain = "ethereum";
+		let r1 =
+			request_basic_type_with_token(self, address, name, chain, None).unwrap_or_default();
+
+		// Uniswap V2 liquidity provider
+		let name = "Uniswap V2 liquidity provider";
+		let r2 = request_basic_type_with_token(self, address, name, chain, None)?;
+
+		Ok(r1 || r2)
 	}
 
 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/9e394bae4a87c67d1073d930e0dee58c")
+		// Uniswap V3 trader
+		let name = "Uniswap V3 trader";
+		let chain = "ethereum";
+		let r1 =
+			request_basic_type_with_token(self, address, name, chain, None).unwrap_or_default();
+
+		// Uniswap V3 liquidity provider
+		let name = "Uniswap V3 liquidity provider";
+		let r2 = request_basic_type_with_token(self, address, name, chain, None)?;
+
+		Ok(r1 || r2)
 	}
 
 	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/17769b1442bb26a1604c85ad49045f1b")
+		// Uniswap V2 liquidity provider
+		let name = "Uniswap V2 liquidity provider".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn uniswap_v3_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/e3da6466ef2e710b39f1139872a69eed")
+		// Uniswap V3 liquidity provider
+		let name = "Uniswap V3 liquidity provider".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn usdc_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/aa7d5d57430bfb68708417aca6fa2e16")
+		// Uniswap V2 {token} liquidity provider
+		let name = "Uniswap V2 {token} liquidity provider";
+		let chain = "ethereum";
+
+		request_basic_type_with_token(self, address, name, chain, Some(UNISWAP_TOKEN_ADDRESS))
 	}
 
 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/3a0a5230a42c5dd2b3581218766cc7fb")
+		// Uniswap V3 {token} liquidity provider
+		let name = "Uniswap V3 {token} liquidity provider";
+		let chain = "ethereum";
+
+		request_basic_type_with_token(self, address, name, chain, Some(UNISWAP_TOKEN_ADDRESS))
 	}
 
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/05265d4009703337e7a57764b09d39d2")
+		// Uniswap V2 {token} liquidity provider
+		let r1 = self.usdt_uniswap_v2_lp(address).unwrap_or_default();
+
+		// Uniswap V3 {token} liquidity provider
+		let r2 = self.usdt_uniswap_v3_lp(address)?;
+
+		Ok(r1 || r2)
 	}
 
 	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/1dcd359e078fb8fac92b76d2e9d720c8")
+		// Uniswap V2 {token} liquidity provider
+		let name = "Uniswap V2 {token} liquidity provider";
+		let chain = "ethereum";
+
+		request_basic_type_with_token(self, address, name, chain, Some(USDT_TOKEN_ADDRESS))
 	}
 
 	fn usdt_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/5a2a14a93b7352e93a6cf84a460c2c50")
+		// Uniswap V3 {token} liquidity provider
+		let name = "Uniswap V3 {token} liquidity provider";
+		let chain = "ethereum";
+
+		request_basic_type_with_token(self, address, name, chain, Some(USDT_TOKEN_ADDRESS))
 	}
 
 	fn aave_v2_lender(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/e79d42db5a0e1571262e5d7c056111ed")
+		// Aave V2 Lender
+		let name = "Aave V2 Lender";
+		let chain = "ethereum";
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn aave_v2_borrower(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/b9256d66b76ad62b9ec25f27775e6d83")
+		// Aave V2 Borrower
+		let name = "Aave V2 Borrower";
+		let chain = "ethereum";
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn aave_v3_lender(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/2f0470c59799e58f91929678d2a62c2b")
+		// Aave V3 Lender
+		let name = "Aave V3 Lender";
+		let chain = "ethereum";
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn aave_v3_borrower(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/c090d9694c902141673c85a8f64d7f78")
+		// Aave V3 Borrower
+		let name = "Aave V3 Borrower";
+		let chain = "ethereum";
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn curve_trader(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/054625c2a49a73876831b797c5c41cd3")
+		// Curve Trader
+		let name = "Curve Trader";
+		let chain = "ethereum";
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn curve_trader_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/7d7c271af78ebf94d7f3b1ff6df30142")
+		// Curve Trader
+		let name = "Curve Trader".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn curve_liquidity_provider(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/2c3d7189e1783880916cc56a1277cb13")
+		// Curve Liquidity Provider
+		let name = "Curve Liquidity Provider";
+		let chain = "ethereum";
+		request_basic_type_with_token(self, address, name, chain, None)
 	}
 
 	fn curve_liquidity_provider_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/112860d373ee427d80b2d687ca54dc8e")
+		// Curve Liquidity Provider
+		let name = "Curve Liquidity Provider".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 
 	fn swapped_with_metamask_in_2022(&mut self, address: &str) -> Result<bool, Error> {
-		check_achainable_label(self, address, "/v1/run/labels/5061d6de2687378f303b2f38538b350d")
+		// MetaMask trader
+		let name = "MetaMask trader".to_string();
+		let chain = "ethereum".to_string();
+		let start_date = "2022-01-01T00:00:00.000Z".to_string();
+		let end_date = "2022-12-31T23:59:59.999Z".to_string();
+
+		let param = ParamsBasicTypeWithDateInterval::new(name, chain, start_date, end_date);
+		check_achainable_label(self, address, Params::ParamsBasicTypeWithDateInterval(param))
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ReqParams {
-	path: String,
-}
-
-impl ReqParams {
-	pub fn new(path: &str) -> Self {
-		Self { path: path.into() }
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ReqBody {
-	pub params: ParamsAccount,
-}
-
-impl RestPath<ReqParams> for ReqBody {
-	fn get_path(req_params: ReqParams) -> core::result::Result<String, HttpError> {
-		Ok(req_params.path)
-	}
-}
-
-impl From<ParamsAccount> for ReqBody {
-	fn from(item: ParamsAccount) -> Self {
-		ReqBody { params: item }
-	}
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ParamsAccount {
-	pub address: String,
-}
-
-impl ParamsAccount {
-	pub fn new(address: &str) -> Self {
-		ParamsAccount { address: address.into() }
-	}
-}
-
-impl RestPath<String> for ParamsAccount {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
-		Ok(path)
+fn request_basic_type_with_token(
+	client: &mut AchainableClient,
+	address: &str,
+	name: &str,
+	chain: &str,
+	token: Option<&str>,
+) -> Result<bool, Error> {
+	if let Some(token) = token {
+		let param =
+			ParamsBasicTypeWithToken::new(name.to_string(), chain.to_string(), token.to_string());
+		check_achainable_label(client, address, Params::ParamsBasicTypeWithToken(param))
+	} else {
+		let param = ParamsBasicType::new(name.to_string(), chain.to_string());
+		check_achainable_label(client, address, Params::ParamsBasicType(param))
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use crate::achainable::{
-		AchainableClient, AchainableTagAccount, AchainableTagBalance, AchainableTagDeFi,
-		AchainableTagDotsama, AchainableTotalTransactions, GLOBAL_DATA_PROVIDER_CONFIG,
+		AchainableAccountTotalTransactions, AchainableClient, AchainableTagAccount,
+		AchainableTagBalance, AchainableTagDeFi, AchainableTagDotsama, GLOBAL_DATA_PROVIDER_CONFIG,
 	};
 	use lc_mock_server::{default_getter, run};
 	use litentry_primitives::Web3Network;
@@ -737,10 +1151,11 @@ mod tests {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res = client.fresh_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+		let res: Result<bool, crate::Error> =
+			client.fresh_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -751,48 +1166,29 @@ mod tests {
 		let res = client.og_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
-	fn class_of_2020_works() {
+	fn class_of_year_works() {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res = client.class_of_2020("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn class_of_2021_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.class_of_2021("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
-		assert!(res.is_ok());
-		let res = res.unwrap();
-		assert_eq!(res, false);
-	}
-
-	#[test]
-	fn class_of_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
-		let res = client.class_of_2022("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
+		let res = client.class_of_year(
+			"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5",
+			crate::achainable::EClassOfYear::Year2020,
+		);
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
 	}
 
 	#[test]
-	fn found_on_bsc_works() {
+	fn address_found_on_bsc_works() {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res = client.found_on_bsc("0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1");
+		let res = client.address_found_on_bsc("0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1");
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
@@ -828,7 +1224,7 @@ mod tests {
 		let res = client.polkadot_dolphin("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -850,7 +1246,7 @@ mod tests {
 		let res = client.polkadot_whale("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -861,37 +1257,37 @@ mod tests {
 		let res = client.kusama_whale("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
-	fn less_than_10_eth_holder_works() {
+	fn under_10_eth_holder_works() {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res = client.less_than_10_eth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		let res = client.under_10_eth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
 	}
 
 	#[test]
-	fn less_than_10_lit_holder_works() {
+	fn under_10_lit_holder_works() {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res = client.less_than_10_lit_holder("0x2A038e100F8B85DF21e4d44121bdBfE0c288A869");
+		let res = client.under_10_lit_holder("0x2A038e100F8B85DF21e4d44121bdBfE0c288A869");
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
 	}
 
 	#[test]
-	fn not_less_than_100_eth_holder_works() {
+	fn over_100_eth_holder_works() {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res = client.not_less_than_100_eth_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
+		let res = client.over_100_eth_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
@@ -931,27 +1327,25 @@ mod tests {
 	}
 
 	#[test]
-	fn not_less_than_100_weth_holder_works() {
+	fn over_100_weth_holder_works() {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res =
-			client.not_less_than_100_weth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		let res = client.over_100_weth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
-	fn not_less_than_100_lit_bep20_holder_works() {
+	fn over_100_lit_bep20_amount_works() {
 		init();
 
 		let mut client = AchainableClient::new();
-		let res =
-			client.not_less_than_100_lit_bep20_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
+		let res = client.over_100_lit_bep20_amount("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -962,7 +1356,7 @@ mod tests {
 		let res = client.native_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -984,7 +1378,7 @@ mod tests {
 		let res = client.bep20_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -997,7 +1391,7 @@ mod tests {
 		);
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1010,7 +1404,7 @@ mod tests {
 		);
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1021,7 +1415,7 @@ mod tests {
 		let res = client.is_polkadot_tip_finder("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1032,7 +1426,7 @@ mod tests {
 		let res = client.is_kusama_tip_finder("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1044,7 +1438,7 @@ mod tests {
 			client.is_polkadot_tip_beneficiary("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1056,7 +1450,7 @@ mod tests {
 			client.is_kusama_tip_beneficiary("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1068,7 +1462,7 @@ mod tests {
 			client.is_polkadot_opengov_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1080,7 +1474,7 @@ mod tests {
 			client.is_kusama_opengov_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1092,7 +1486,7 @@ mod tests {
 			.is_polkadot_fellowship_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1104,7 +1498,7 @@ mod tests {
 			client.is_kusama_fellowship_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1116,7 +1510,7 @@ mod tests {
 			.is_polkadot_fellowship_member("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1128,7 +1522,7 @@ mod tests {
 			client.is_kusama_fellowship_member("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1140,7 +1534,7 @@ mod tests {
 			client.is_polkadot_ex_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1151,7 +1545,7 @@ mod tests {
 		let res = client.is_kusama_ex_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1162,7 +1556,7 @@ mod tests {
 		let res = client.is_polkadot_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1173,7 +1567,7 @@ mod tests {
 		let res = client.is_kusama_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1185,7 +1579,7 @@ mod tests {
 			client.is_polkadot_bounty_curator("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1197,7 +1591,7 @@ mod tests {
 			client.is_kusama_bounty_curator("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1230,7 +1624,7 @@ mod tests {
 		let res = client.uniswap_v2_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1252,7 +1646,7 @@ mod tests {
 		let res = client.usdc_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1274,7 +1668,7 @@ mod tests {
 		let res = client.usdt_uniswap_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1285,7 +1679,7 @@ mod tests {
 		let res = client.usdt_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1296,7 +1690,7 @@ mod tests {
 		let res = client.usdt_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1318,7 +1712,7 @@ mod tests {
 		let res = client.aave_v2_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1329,7 +1723,7 @@ mod tests {
 		let res = client.aave_v3_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1340,7 +1734,7 @@ mod tests {
 		let res = client.aave_v3_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1351,7 +1745,7 @@ mod tests {
 		let res = client.curve_trader("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1362,7 +1756,7 @@ mod tests {
 		let res = client.curve_trader_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1373,7 +1767,7 @@ mod tests {
 		let res = client.curve_liquidity_provider("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]
@@ -1385,7 +1779,7 @@ mod tests {
 			client.curve_liquidity_provider_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
-		assert_eq!(res, false);
+		assert_eq!(res, true);
 	}
 
 	#[test]

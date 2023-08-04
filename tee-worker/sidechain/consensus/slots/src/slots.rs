@@ -98,6 +98,7 @@ pub fn slot_ends_at(slot: Slot, slot_duration: Duration) -> Duration {
 	Duration::from_millis(*slot.saturating_add(1u64) * (slot_duration.as_millis() as u64))
 }
 
+#[allow(dead_code)]
 pub(crate) fn timestamp_within_slot<
 	ParentchainBlock: ParentchainBlockTrait,
 	SignedSidechainBlock: SignedSidechainBlockTrait,
@@ -205,7 +206,7 @@ pub mod sgx {
 mod tests {
 	use super::*;
 	use core::assert_matches::assert_matches;
-	use itc_parentchain_test::parentchain_header_builder::ParentchainHeaderBuilder;
+	use itc_parentchain_test::ParentchainHeaderBuilder;
 	use itp_sgx_io::StaticSealedIO;
 	use itp_types::Block as ParentchainBlock;
 	use its_primitives::{

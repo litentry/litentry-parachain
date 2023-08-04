@@ -7,6 +7,7 @@ import {
     handleIdentityEvents,
     handleVcEvents,
     buildIdentityFromKeypair,
+    PolkadotSigner,
 } from './common/utils';
 import { step } from 'mocha-steps';
 import type { Assertion, IdentityGenericEvent, TransactionSubmit } from './common/type-definitions';
@@ -61,7 +62,7 @@ describeLitentry('VC test', 0, async (context) => {
         );
     });
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
         const shieldingKey = await checkUserShieldingKeys(
             context,
             'IdentityManagement',

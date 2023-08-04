@@ -37,7 +37,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_time_utils::now_as_millis;
+use itp_time_utils::{from_iso8601, now_as_iso8601};
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, Web3Network};
@@ -170,8 +170,8 @@ pub struct CredentialSchema {
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct Proof {
-	/// The timestamp when the signature was created
-	pub created_timestamp: u64,
+	/// The ISO-8601 datetime of signature creation
+	pub created: String,
 	/// The cryptographic signature suite that used to generate signature
 	#[serde(rename = "type")]
 	pub proof_type: ProofType,
@@ -186,7 +186,7 @@ pub struct Proof {
 impl Proof {
 	pub fn new(sig: &Vec<u8>, issuer: &AccountId) -> Self {
 		Proof {
-			created_timestamp: now_as_millis(),
+			created: now_as_iso8601(),
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
@@ -214,10 +214,7 @@ pub struct Credential {
 	pub credential_subject: CredentialSubject,
 	/// The TEE enclave who issued the credential
 	pub issuer: Issuer,
-	pub issuance_timestamp: u64,
-	/// (Optional)
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub expiration_timestamp: Option<u64>,
+	pub issuance_date: String,
 	/// Digital proof with the signature of Issuer
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
@@ -249,8 +246,7 @@ impl Credential {
 				.to_account_id()
 				.ok_or_else(|| Error::RuntimeError("Not a valid account".to_string()))?,
 		);
-		vc.issuance_timestamp = now_as_millis();
-		vc.expiration_timestamp = None;
+		vc.issuance_date = now_as_iso8601();
 		vc.credential_schema = None;
 		vc.proof = None;
 
@@ -295,9 +291,7 @@ impl Credential {
 			return Err(Error::EmptyCredentialSubject)
 		}
 
-		if self.issuance_timestamp == 0 {
-			return Err(Error::EmptyIssuanceTimestamp)
-		}
+		from_iso8601(&self.issuance_date).ok_or(Error::EmptyIssuanceTimestamp)?;
 
 		if self.id.is_empty() {
 			return Err(Error::InvalidCredential)
@@ -327,13 +321,6 @@ impl Credential {
 
 		if vc.proof.is_none() {
 			return Err(Error::InvalidProof)
-		} else {
-			let proof = vc.proof.unwrap();
-			if proof.created_timestamp == 0 {
-				return Err(Error::EmptyProofTimestamp)
-			}
-
-			//ToDo: validate proof signature
 		}
 
 		Ok(())
@@ -446,6 +433,8 @@ impl Credential {
 	}
 
 	pub fn add_assertion_a8(&mut self, networks: Vec<Web3Network>, min: u64, max: u64) {
+		let value = min != 0;
+
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
@@ -464,7 +453,7 @@ impl Credential {
 			.add_item(max_item)
 			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(true);
+		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a12(&mut self, twitter_screen_name: String, value: bool) {

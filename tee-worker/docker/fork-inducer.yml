@@ -1,32 +1,41 @@
 services:
   worker-ping:
-    image: worker-ping:dev
+    image: worker-ping:${VERSION:-dev}
+    devices:
+      - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
+      - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
+    volumes:
+      - "${AESMD:-/dev/null}:/var/run/aesmd"
     build:
       context: .
       dockerfile: ping.Dockerfile
-    depends_on: [ 'integritee-node', 'integritee-worker-1', 'integritee-worker-2' ]
+    depends_on: [ 'litentry-node-${VERSION}', 'litentry-worker-1-${VERSION}', 'litentry-worker-2-${VERSION}' ]
     networks:
-      - integritee-test-network
-    #entrypoint: "ping integritee-worker-2 | while read pong; do echo \"$$(date): $$pong\"; done"
-    entrypoint: "ping integritee-worker-2"
+      - litentry-test-network
+    entrypoint: "ping litentry-worker-2"
   pumba-network-delay:
-    image: integritee-fork-producer:dev
+    image: litentry-fork-producer:${VERSION:-dev}
+    devices:
+      - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
+      - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
+    volumes:
+      - "${AESMD:-/dev/null}:/var/run/aesmd"
     build:
       context: .
       dockerfile: fork.Dockerfile
     depends_on:
-      integritee-node:
+      litentry-node-${VERSION}:
         condition: service_healthy
-      integritee-worker-1:
+      litentry-worker-1-${VERSION}:
         condition: service_healthy
-      integritee-worker-2:
+      litentry-worker-2-${VERSION}:
         condition: service_healthy
     networks:
-      - integritee-test-network
+      - litentry-test-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     entrypoint:
-      "pumba --interval 3m netem --interface eth0 --duration 30s delay --time 1000 integritee-worker-2"
+      "pumba --interval 3m netem --interface eth0 --duration 30s delay --time 1000 litentry-worker-2"
 networks:
-  integritee-test-network:
+  litentry-test-network:
     driver: bridge
