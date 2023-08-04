@@ -22,14 +22,9 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_classofyear, *};
 use lc_credentials::Credential;
-use lc_data_providers::{
-	achainable::{Params, ParamsBasicTypeWithClassOfYear},
-	vec_to_string,
-};
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::AchainableClassOfYear;
+use litentry_primitives::{AchainableClassOfYear, AchainableParams};
 use log::debug;
-use std::string::ToString;
 
 const VC_SUBJECT_DESCRIPTION: &str =
 	"The class of year that the user account was created on a particular network (must have on-chain records)";
@@ -70,9 +65,6 @@ pub fn build_class_of_year(
 	param: AchainableClassOfYear,
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_class_of_year, who: {:?}", account_id_to_string(&req.who));
-
-	let (name, _date1, _date2) = parse_class_of_year_params(&param)?;
-
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
@@ -81,14 +73,10 @@ pub fn build_class_of_year(
 
 	// TODO:
 	// Because this is only for the purpose of obtaining created account year, the dates here can be arbitrary
-	let p = ParamsBasicTypeWithClassOfYear::one(
-		name.clone(),
-		&param.chain,
-		"2015-07-30".to_string(),
-		"2017-01-01".to_string(),
+	let (found, created_date) = request_achainable_classofyear(
+		addresses,
+		AchainableParams::ClassOfYear(param.clone()).into(),
 	);
-	let (found, created_date) =
-		request_achainable_classofyear(addresses, Params::ParamsBasicTypeWithClassOfYear(p));
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
@@ -105,30 +93,4 @@ pub fn build_class_of_year(
 			))
 		},
 	}
-}
-
-fn parse_class_of_year_params(param: &AchainableClassOfYear) -> Result<(String, String, String)> {
-	let name = param.clone().name;
-	let date1 = param.clone().date1;
-	let date2 = param.clone().date2;
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date1 = vec_to_string(date1.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date2 = vec_to_string(date2.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::ClassOfYear(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	Ok((name, date1, date2))
 }

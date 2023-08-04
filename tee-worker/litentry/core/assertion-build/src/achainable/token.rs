@@ -40,9 +40,7 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 
 	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithToken(p.clone()))?;
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut _credential_unsigned) => {
-			Ok(_credential_unsigned)
-		},
+		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(

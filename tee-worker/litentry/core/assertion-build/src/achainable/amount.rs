@@ -21,10 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use lc_data_providers::{
-	achainable::{web3_network_to_chain, Params, ParamsBasicTypeWithAmount},
-	vec_to_string,
-};
+use lc_data_providers::ConvertParameterString;
 
 const CREATED_OVER_AMOUNT_CONTRACTS: &str = "Created over {amount} contracts";
 const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
@@ -99,21 +96,17 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 ///
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
-
-	let (name, amount) = parse_name_amount_params(&param)?;
-	let p =
-		ParamsBasicTypeWithAmount::new(name.clone(), web3_network_to_chain(&param.chain), amount);
-
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmount(p.clone()))?;
+	let flag = request_achainable(addresses, AchainableParams::Amount(param.clone()).into())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			let (desc, subtype, content) = get_assertion_content(&name, &param.chain);
+			let (desc, subtype, content) =
+				get_assertion_content(&param.name.to_string(), &param.chain);
 			credential_unsigned.add_subject_info(desc, subtype);
 			credential_unsigned.update_content(flag, content);
 
@@ -127,26 +120,6 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 			))
 		},
 	}
-}
-
-fn parse_name_amount_params(param: &AchainableAmount) -> Result<(String, String)> {
-	let name = param.name.clone();
-	let amount = param.amount.clone();
-
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amount(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::Amount(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	Ok((name, amount))
 }
 
 fn get_assertion_content(

@@ -50,7 +50,7 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail};
+use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail, ParameterString};
 use std::{
 	format,
 	string::{String, ToString},
@@ -188,4 +188,14 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)
+}
+
+pub trait ConvertParameterString {
+	fn to_string(&self) -> String;
+}
+
+impl ConvertParameterString for ParameterString {
+	fn to_string(&self) -> String {
+		vec_to_string(self.to_vec()).unwrap_or_default()
+	}
 }

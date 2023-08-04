@@ -21,12 +21,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use self::{
-	amount::build_amount, amount_holding::build_amount_holding,
-	amount_token::build_amount_token, amounts::build_amounts,
-	basic::build_basic, between_percents::build_between_percents,
-	class_of_year::build_class_of_year, date::build_date,
-	date_interval::build_date_interval, date_percent::build_date_percent,
-	token::build_token,
+	amount::build_amount, amount_holding::build_amount_holding, amount_token::build_amount_token,
+	amounts::build_amounts, basic::build_basic, between_percents::build_between_percents,
+	class_of_year::build_class_of_year, date::build_date, date_interval::build_date_interval,
+	date_percent::build_date_percent, token::build_token,
 };
 use crate::*;
 use lc_data_providers::achainable::{AchainableClient, AchainableTagDeFi, Params};

@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::{achainable::request_achainable, *};
 use lc_data_providers::{
 	achainable::{Params, ParamsBasicTypeWithAmountHolding},
-	vec_to_string,
+	ConvertParameterString,
 };
 
 const VC_SUBJECT_DESCRIPTION: &str = "Achainable amount holding";
@@ -71,41 +71,10 @@ pub fn build_amount_holding(
 fn parse_amount_holding_params(
 	param: &AchainableAmountHolding,
 ) -> Result<(String, String, String, Option<String>)> {
-	let name = param.name.clone();
-	let amount = param.amount.clone();
-	let date = param.date.clone();
-
-	let name = vec_to_string(name.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let amount = vec_to_string(amount.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-	let date = vec_to_string(date.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(
-			Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
-			ErrorDetail::ParseError,
-		)
-	})?;
-
-	let token = if param.token.is_some() {
-		let token = param.token.clone().unwrap();
-		let token = vec_to_string(token.to_vec()).map_err(|_| {
-			Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::AmountHolding(param.clone())),
-				ErrorDetail::ParseError,
-			)
-		})?;
-		Some(token)
-	} else {
-		None
-	};
+	let name = param.name.to_string();
+	let amount = param.amount.to_string();
+	let date = param.date.to_string();
+	let token = param.token.as_ref().map(|v| v.to_string());
 
 	Ok((name, amount, date, token))
 }

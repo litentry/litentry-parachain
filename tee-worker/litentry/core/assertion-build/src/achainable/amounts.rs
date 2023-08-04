@@ -40,9 +40,7 @@ pub fn build_amounts(req: &AssertionBuildRequest, param: AchainableAmounts) -> R
 
 	let _flag = request_achainable(addresses, Params::ParamsBasicTypeWithAmounts(p.clone()))?;
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut _credential_unsigned) => {
-			Ok(_credential_unsigned)
-		},
+		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(

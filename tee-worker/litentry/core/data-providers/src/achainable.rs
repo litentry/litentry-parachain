@@ -18,8 +18,8 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG, LIT_TOKEN_ADDRESS,
-	UNISWAP_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
+	build_client, ConvertParameterString, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG,
+	LIT_TOKEN_ADDRESS, UNISWAP_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -28,7 +28,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use litentry_primitives::Web3Network;
+use litentry_primitives::{AchainableParams, Web3Network};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -228,6 +228,114 @@ pub struct ParamsBasicTypeWithAmountHolding {
 	pub token: Option<String>,
 }
 
+impl From<AchainableParams> for Params {
+	fn from(ap: AchainableParams) -> Self {
+		match ap {
+			AchainableParams::AmountHolding(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let amount = p.amount.to_string();
+				let date = p.date.to_string();
+				let token = p.token.as_ref().map(|v| v.to_string());
+
+				let p = ParamsBasicTypeWithAmountHolding::one(name, network, amount, date, token);
+				Params::ParamsBasicTypeWithAmountHolding(p)
+			},
+			AchainableParams::AmountToken(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let amount = p.amount.to_string();
+				let token = p.token.as_ref().map(|v| v.to_string());
+
+				let p = ParamsBasicTypeWithAmountToken::new(name, network, amount, token);
+				Params::ParamsBasicTypeWithAmountToken(p)
+			},
+			AchainableParams::Amount(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let amount = p.amount.to_string();
+
+				let p = ParamsBasicTypeWithAmount::new(name.clone(), network, amount);
+				Params::ParamsBasicTypeWithAmount(p)
+			},
+			AchainableParams::Amounts(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let amount1 = p.amount1.to_string();
+				let amount2 = p.amount2.to_string();
+
+				let p = ParamsBasicTypeWithAmounts::new(name, network, amount1, amount2);
+				Params::ParamsBasicTypeWithAmounts(p)
+			},
+			AchainableParams::Basic(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+
+				let p = ParamsBasicType::new(name, network);
+				Params::ParamsBasicType(p)
+			},
+			AchainableParams::BetweenPercents(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let greater_than_or_equal_to = p.greater_than_or_equal_to.to_string();
+				let less_than_or_equal_to = p.less_than_or_equal_to.to_string();
+
+				let p = ParamsBasicTypeWithBetweenPercents::new(
+					name,
+					network,
+					greater_than_or_equal_to,
+					less_than_or_equal_to,
+				);
+				Params::ParamsBasicTypeWithBetweenPercents(p)
+			},
+			AchainableParams::ClassOfYear(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let date1 = p.date1.to_string();
+				let date2 = p.date2.to_string();
+
+				let p = ParamsBasicTypeWithClassOfYear::one(name, network, date1, date2);
+				Params::ParamsBasicTypeWithClassOfYear(p)
+			},
+			AchainableParams::DateInterval(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let start_date = p.start_date.to_string();
+				let end_date = p.end_date.to_string();
+
+				let p = ParamsBasicTypeWithDateInterval::new(name, network, start_date, end_date);
+				Params::ParamsBasicTypeWithDateInterval(p)
+			},
+			AchainableParams::DatePercent(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let token = p.token.to_string();
+				let date = p.date.to_string();
+				let percent = p.percent.to_string();
+
+				let p = ParamsBasicTypeWithDatePercent::new(name, network, token, date, percent);
+				Params::ParamsBasicTypeWithDatePercent(p)
+			},
+			AchainableParams::Date(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let date = p.date.to_string();
+
+				let p = ParamsBasicTypeWithDate::new(name, network, date);
+				Params::ParamsBasicTypeWithDate(p)
+			},
+			AchainableParams::Token(p) => {
+				let name = p.name.to_string();
+				let network = &p.chain;
+				let token = p.token.to_string();
+
+				let p = ParamsBasicTypeWithToken::new(name, network, token);
+				Params::ParamsBasicTypeWithToken(p)
+			},
+		}
+	}
+}
+
 impl ParamsBasicTypeWithAmountHolding {
 	pub fn new(network: &Web3Network, amount: String, date: String, token: Option<String>) -> Self {
 		let chain = web3_network_to_chain(network);
@@ -366,7 +474,9 @@ pub struct ParamsBasicTypeWithAmount {
 }
 
 impl ParamsBasicTypeWithAmount {
-	pub fn new(name: String, chain: String, amount: String) -> Self {
+	pub fn new(name: String, network: &Web3Network, amount: String) -> Self {
+		let chain = web3_network_to_chain(network);
+
 		Self { name, chain, amount }
 	}
 }
@@ -633,10 +743,9 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 		let mut txs = 0_u64;
 		addresses.iter().for_each(|address| {
 			let name = "Account total transactions under {amount}".to_string();
-			let chain = web3_network_to_chain(network);
 			let amount = "1".to_string();
 
-			let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+			let param = ParamsBasicTypeWithAmount::new(name, network, amount);
 			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
 			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs);
 			txs += tx.unwrap_or_default();
@@ -805,25 +914,25 @@ impl AchainableTagBalance for AchainableClient {
 
 	fn under_10_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance under {amount}".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let amount = "10".to_string();
-		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
 	fn under_10_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance under {amount}".to_string();
-		let chain = "litentry".to_string();
+		let chain = Web3Network::Litentry;
 		let amount = "10".to_string();
-		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
 	fn over_100_eth_holder(&mut self, address: &str) -> Result<bool, Error> {
 		let name = "Balance over {amount}".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let amount = "100".to_string();
-		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
@@ -840,18 +949,18 @@ impl AchainableTagBalance for AchainableClient {
 	fn eth_millionaire(&mut self, address: &str) -> Result<bool, Error> {
 		// ETH Millionaire
 		let name = "Balance over {amount} dollars".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let amount = "100".to_string();
-		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
 	fn eth2_validator_eligible(&mut self, address: &str) -> Result<bool, Error> {
 		// ETH2 Validator Eligible
 		let name = "Balance over {amount}".to_string();
-		let chain = "ethereum".to_string();
+		let chain = Web3Network::Ethereum;
 		let amount = "32".to_string();
-		let param = ParamsBasicTypeWithAmount::new(name, chain, amount);
+		let param = ParamsBasicTypeWithAmount::new(name, &chain, amount);
 		check_achainable_label(self, address, Params::ParamsBasicTypeWithAmount(param))
 	}
 
