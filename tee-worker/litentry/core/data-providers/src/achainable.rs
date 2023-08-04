@@ -213,21 +213,6 @@ impl AchainableSystemLabelName for Params {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ParamsBasicTypeWithAmountHolding {
-	#[serde(skip_serializing)]
-	#[serde(skip_deserializing)]
-	pub name: String,
-
-	pub chain: String,
-	pub amount: String,
-	pub date: String,
-
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub token: Option<String>,
-}
-
 impl From<AchainableParams> for Params {
 	fn from(ap: AchainableParams) -> Self {
 		match ap {
@@ -334,6 +319,21 @@ impl From<AchainableParams> for Params {
 			},
 		}
 	}
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithAmountHolding {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+	pub amount: String,
+	pub date: String,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub token: Option<String>,
 }
 
 impl ParamsBasicTypeWithAmountHolding {
@@ -1124,30 +1124,38 @@ impl AchainableTagDotsama for AchainableClient {
 impl AchainableTagDeFi for AchainableClient {
 	fn uniswap_v2_user(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 trader
-		let name = "Uniswap V2 trader";
-		let chain: Web3Network = Web3Network::Ethereum;
-		let r1 =
-			request_basic_type_with_token(self, address, name, &chain, None).unwrap_or_default();
-
+		let name_trader = "Uniswap V2 trader";
 		// Uniswap V2 liquidity provider
-		let name = "Uniswap V2 liquidity provider";
-		let r2 = request_basic_type_with_token(self, address, name, &chain, None)?;
+		let name_provider = "Uniswap V2 liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
 
-		Ok(r1 || r2)
+		if request_basic_type_with_token(self, address, name_trader, &chain, None)
+			.unwrap_or_default()
+			|| request_basic_type_with_token(self, address, name_provider, &chain, None)
+				.unwrap_or_default()
+		{
+			return Ok(true)
+		}
+
+		Ok(false)
 	}
 
 	fn uniswap_v3_user(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V3 trader
-		let name = "Uniswap V3 trader";
-		let chain: Web3Network = Web3Network::Ethereum;
-		let r1 =
-			request_basic_type_with_token(self, address, name, &chain, None).unwrap_or_default();
-
+		let name_trader = "Uniswap V3 trader";
 		// Uniswap V3 liquidity provider
-		let name = "Uniswap V3 liquidity provider";
-		let r2 = request_basic_type_with_token(self, address, name, &chain, None)?;
+		let name_provider = "Uniswap V3 liquidity provider";
+		let chain: Web3Network = Web3Network::Ethereum;
 
-		Ok(r1 || r2)
+		if request_basic_type_with_token(self, address, name_trader, &chain, None)
+			.unwrap_or_default()
+			|| request_basic_type_with_token(self, address, name_provider, &chain, None)
+				.unwrap_or_default()
+		{
+			return Ok(true)
+		}
+
+		Ok(false)
 	}
 
 	fn uniswap_v2_lp_in_2022(&mut self, address: &str) -> Result<bool, Error> {
@@ -1190,12 +1198,14 @@ impl AchainableTagDeFi for AchainableClient {
 
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 {token} liquidity provider
-		let r1 = self.usdt_uniswap_v2_lp(address).unwrap_or_default();
-
 		// Uniswap V3 {token} liquidity provider
-		let r2 = self.usdt_uniswap_v3_lp(address)?;
+		if self.usdt_uniswap_v2_lp(address).unwrap_or_default()
+			|| self.usdt_uniswap_v3_lp(address).unwrap_or_default()
+		{
+			return Ok(true)
+		}
 
-		Ok(r1 || r2)
+		Ok(false)
 	}
 
 	fn usdt_uniswap_v2_lp(&mut self, address: &str) -> Result<bool, Error> {

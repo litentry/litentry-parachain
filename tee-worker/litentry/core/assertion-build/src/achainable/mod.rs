@@ -82,19 +82,15 @@ pub fn request_achainable(addresses: Vec<String>, param: Params) -> Result<bool>
 pub fn is_uniswap_v2_or_v3_user(addresses: Vec<String>) -> Result<bool> {
 	let mut client: AchainableClient = AchainableClient::new();
 
-	let mut flag = false;
 	for address in &addresses {
-		if flag {
-			break
+		if client.uniswap_v2_user(address).unwrap_or_default()
+			|| client.uniswap_v3_user(address).unwrap_or_default()
+		{
+			return Ok(true)
 		}
-
-		let is_v2 = client.uniswap_v2_user(address).unwrap_or_default();
-		let is_v3 = client.uniswap_v3_user(address).unwrap_or_default();
-
-		flag = is_v2 || is_v3
 	}
 
-	Ok(flag)
+	Ok(false)
 }
 
 const INVALID_CLASS_OF_YEAR: &str = "Invalid";
