@@ -132,8 +132,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 							break
 						},
-					Err(e) =>
-						error!("Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}", e),
+					Err(e) => error!("Assertion A4 request is_holder error: {:?}", e),
 				}
 			}
 		}
