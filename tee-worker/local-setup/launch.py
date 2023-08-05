@@ -11,7 +11,7 @@ import argparse
 import json
 import signal
 from subprocess import Popen, PIPE, STDOUT, run
-import sys
+import shutil
 import os
 from time import sleep
 from typing import Union, IO
@@ -79,7 +79,7 @@ def is_port_open(port):
 
 # Function to reallocate port if it is not available
 def reallocate_ports(env_name, port):
-    # Offset the original port by 10
+    # Offset the original port by 100
     new_port = int(port) + int(OFFSET)
     while not is_port_open(str(new_port)):
         new_port = int(port) + int(OFFSET)
@@ -100,44 +100,45 @@ def check_all_ports_and_reallocate():
     print("All Preliminary Port Checks Completed")
 
 
-def generate_json_config_file():
+# Generate `config.local.json` used by parachain ts utils
+def generate_config_local_json():
     data = {
+        "eth_endpoint": "http://127.0.0.1:8545",
         "eth_address": "[0x4d88dc5d528a33e4b8be579e9476715f60060582]",
         "private_key": "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
         "ocw_account": "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
-        "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
-        "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
         "genesis_state_path": "/tmp/parachain_dev/genesis-state",
         "genesis_wasm_path": "/tmp/parachain_dev/genesis-wasm",
+        "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
+        "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
+        "bridge_path": "/tmp/parachain_dev/chainbridge"
     }
-    file_path = "../ts-tests/config.local.json"
+    config_file = "../ts-tests/config.local.json"
 
-    with open(file_path, "w") as json_file:
-        json.dump(data, json_file, indent=4)
+    with open(config_file, "w") as f:
+        json.dump(data, f, indent=4)
 
-    print("Config data has been written to", file_path)
+    print("Successfully written ", config_file)
 
 
-def generate_config_file():
-    config = """NODE_ENV = local
-WORKER_END_POINT = wss://localhost:{}
-SUBSTRATE_END_POINT = "ws://localhost:{}"
-ID_HUB_URL='http://localhost:3000' """
+# Generate `.env.local` used by local enclave ts-tests
+def generate_env_local():
+    env_local_example_file = "ts-tests/integration-tests/.env.local.example"
+    env_local_file = env_local_example_file[:-len(".example")]
 
     # Get the value of the environment variables or use default values
-    worker_end_point = os.environ.get("TrustedWorkerPort", "2000")
-    substrate_end_point = os.environ.get("CollatorWSPort", "9944")
+    worker_port = os.environ.get("TrustedWorkerPort", "2000")
+    parentchain_port = os.environ.get("CollatorWSPort", "9944")
 
-    # Replace the placeholders with the environment variable values
-    config = config.replace("{}", worker_end_point, 1)
-    config = config.replace("{}", substrate_end_point, 1)
+    with open(env_local_example_file, "r") as f:
+        data = f.read()
+        data.replace(":2000", ":" + worker_port)
+        data.replace(":9944", ":" + parentchain_port)
 
-    file_path = "ts-tests/.env.local"
+    with open(env_local_file, "w") as f:
+        f.write(data)
 
-    with open(file_path, "w") as config_file:
-        config_file.write(config)
-
-    print("Configuration has been written to", file_path)
+    print("Successfully written ", env_local_file)
 
 
 def offset_port(offset):
@@ -151,8 +152,8 @@ def setup_environment(offset, config):
     load_dotenv(".env.dev")
     offset_port(offset)
     check_all_ports_and_reallocate()
-    generate_json_config_file()
-    generate_config_file()
+    generate_config_local_json()
+    generate_env_local()
     config["workers"][0]["flags"] = [
         flag.replace("$CollatorWSPort", os.environ.get("CollatorWSPort", ""))
         for flag in config["workers"][0]["flags"]
@@ -176,26 +177,25 @@ def setup_environment(offset, config):
 
 
 def main(processes, config_path, parachain_type, offset):
-    print("Starting litentry-parachain in background")
-
     with open(config_path) as config_file:
         config = json.load(config_file)
 
     # Litentry
     if parachain_type == "local-docker":
+        print("Starting litentry-parachain in background ...")
         setup_environment(offset, config)
-        # start parachain via shell script
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
-
         print("Starting litentry-parachain done")
         print("----------------------------------------")
 
     # development environment
     if parachain_type == "local-binary":
+        print("Starting litentry-parachain in background ...")
         setup_environment(offset, config)
-        # start parachain via script
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
+        print("Starting litentry-parachain done")
+        print("----------------------------------------")
 
     c = pycurl.Curl()
     worker_i = 0
