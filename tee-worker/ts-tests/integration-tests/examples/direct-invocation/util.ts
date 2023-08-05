@@ -379,8 +379,10 @@ export const createRequest = async (
 };
 
 export function decodeNonce(nonceInHex: string) {
+    console.log("nonceInHex:", nonceInHex);
     const optionalType = Option(Vector(u8));
     const encodedNonce = optionalType.dec(nonceInHex) as number[];
+    console.log("encodedNonce", encodedNonce);
     const nonce = u32.dec(new Uint8Array(encodedNonce));
     return nonce;
 }
