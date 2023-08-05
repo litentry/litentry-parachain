@@ -23,11 +23,14 @@ use crate::{
 		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self,
 		get_expected_raw_message, verify_web3_identity,
 	},
+	trusted_call_rpc_response::LinkIdentityResponse,
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
+use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::types::ShardIdentifier;
+use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
@@ -37,7 +40,7 @@ use litentry_primitives::{
 	Web3Network,
 };
 use log::*;
-use std::vec::Vec;
+use std::{sync::Arc, vec::Vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
@@ -65,7 +68,7 @@ impl TrustedCallSigned {
 		top_hash: H256,
 		req_ext_hash: H256,
 		shard: &ShardIdentifier,
-	) -> StfResult<()> {
+	) -> StfResult<bool> {
 		ensure!(
 			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
@@ -101,14 +104,16 @@ impl TrustedCallSigned {
 				.into();
 				StfRequestSender::new()
 					.send_stf_request(request)
-					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))
+					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::SendStfRequestFailed))?;
+				Ok(false)
 			},
 			ValidationData::Web3(data) => {
 				ensure!(
 					identity.is_web3(),
 					StfError::LinkIdentityFailed(ErrorDetail::InvalidIdentity)
 				);
-				verify_web3_identity(&identity, &raw_msg, &data)
+				verify_web3_identity(&identity, &raw_msg, &data)?;
+				Ok(true)
 			},
 		}
 	}
@@ -241,5 +246,65 @@ impl TrustedCallSigned {
 			.ok_or(StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound))?;
 
 		Ok(key)
+	}
+
+	// common handler for both web2 and web3 identity verification
+	#[allow(clippy::too_many_arguments)]
+	pub fn handle_link_identity_callback<NodeMetadataRepository>(
+		calls: &mut Vec<OpaqueCall>,
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+		signer: Identity,
+		who: Identity,
+		identity: Identity,
+		web3networks: Vec<Web3Network>,
+		hash: H256,
+		rpc_response_value: &mut Vec<u8>,
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+	{
+		debug!("link_identity_callback, who: {}", account_id_to_string(&who));
+		let account = SgxParentchainTypeConverter::convert(
+			who.to_account_id().ok_or(StfError::InvalidAccount)?,
+		);
+		let call_index =
+			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
+
+		let key = Self::link_identity_callback_internal(
+			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
+			who.clone(),
+			identity.clone(),
+			web3networks,
+		)
+		.map_err(|e| {
+			debug!("pushing error event ... error: {}", e);
+			add_call_from_imp_error(
+				calls,
+				node_metadata_repo,
+				Some(account.clone()),
+				e.to_imp_error(),
+				hash,
+			);
+			e
+		})?;
+		let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+		debug!("pushing identity_linked event ...");
+		calls.push(OpaqueCall::from_tuple(&(
+			call_index,
+			account.clone(),
+			aes_encrypt_default(&key, &identity.encode()),
+			aes_encrypt_default(&key, &id_graph.encode()),
+			hash,
+		)));
+
+		let res = LinkIdentityResponse {
+			account,
+			identity: aes_encrypt_default(&key, &identity.encode()),
+			id_graph: aes_encrypt_default(&key, &id_graph.encode()),
+			req_ext_hash: hash,
+		};
+		*rpc_response_value = res.encode();
+		Ok(())
 	}
 }

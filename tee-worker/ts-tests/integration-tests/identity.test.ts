@@ -219,9 +219,10 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             bobSubject,
             charlieSubstrateIdentity,
-            // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
-            // due to the callback trustedCall
-            9
+            // 7 because the linking of Alice's twitter identity would trigger an additional nonce bump
+            // due to the trusted_call callback
+            // Alice's evm and substrate identities are verified without additional nonce bump
+            7
         );
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
@@ -341,7 +342,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const aliceIdentities = [twitterIdentity];
 
-        // TODO: being lazy - the nonce here is hardcoded
+        // TODO: #1899 being lazy - the nonce here is hardcoded
         //       it's better to retrieve the starting nonce from the sidechain and increment
         //       it for each such request, similar to the construction of substrate tx
         //       However, beware that we should query the nonce of the enclave-signer-account
@@ -350,7 +351,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [twitterIdentity],
-            15,
+            10,
             'twitter',
             context.substrateWallet.alice,
             []
