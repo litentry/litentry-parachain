@@ -100,7 +100,7 @@ pub fn request_achainable_classofyear(addresses: Vec<String>, param: Params) -> 
 	let mut longest_created_date = INVALID_CLASS_OF_YEAR.into();
 	for address in &addresses {
 		let year = client.query_class_of_year(address, param.clone()).unwrap_or_default();
-		if year < longest_created_date {
+		if !year.is_empty() && year < longest_created_date {
 			longest_created_date = year;
 		}
 	}

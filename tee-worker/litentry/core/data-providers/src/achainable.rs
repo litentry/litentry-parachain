@@ -75,7 +75,7 @@ impl AchainableClient {
 			.and_then(|v| v.get(0))
 			.and_then(|v| v.as_str());
 
-		Ok(v.unwrap_or("Invalid").into())
+		Ok(v.and_then(|v| v.get(0..4)).unwrap_or("Invalid").into())
 	}
 
 	pub fn query_class_of_year(&mut self, address: &str, params: Params) -> Result<String, Error> {
@@ -146,6 +146,13 @@ pub struct ReqBody {
 	pub name: String,
 	pub address: String,
 	pub params: Params,
+
+	/// TODO:
+	/// Because some interfaces of the achainable API cannot meet the current assertion requirements well, this trade-off is being made.
+	/// This field is added here to request once interface to obtain the specific account creation date, and then match it with the product's time interval.
+	/// And according to TDF developers, this field is unstable and may be cancelled in the future. Even so, this is currently the most appropriate approach
+	/// So, this is the current solution.
+	pub include_metadata: bool,
 }
 
 impl RestPath<SystemLabelReqPath> for ReqBody {
@@ -156,7 +163,7 @@ impl RestPath<SystemLabelReqPath> for ReqBody {
 
 impl ReqBody {
 	pub fn new(address: String, params: Params) -> Self {
-		ReqBody { name: params.name(), address, params }
+		ReqBody { name: params.name(), address, params, include_metadata: true }
 	}
 }
 
@@ -279,7 +286,7 @@ impl From<AchainableParams> for Params {
 				let date1 = p.date1.to_string();
 				let date2 = p.date2.to_string();
 
-				let p = ParamsBasicTypeWithClassOfYear::one(name, network, date1, date2);
+				let p = ParamsBasicTypeWithClassOfYear::new(name, network, date1, date2);
 				Params::ParamsBasicTypeWithClassOfYear(p)
 			},
 			AchainableParams::DateInterval(p) => {
@@ -371,29 +378,12 @@ pub struct ParamsBasicTypeWithClassOfYear {
 	pub chain: String,
 	pub date1: String,
 	pub date2: String,
-
-	/// TODO:
-	/// Because some interfaces of the achainable API cannot meet the current assertion requirements well, this trade-off is being made.
-	/// This field is added here to request once interface to obtain the specific account creation date, and then match it with the product's time interval.
-	/// And according to TDF developers, this field is unstable and may be cancelled in the future. Even so, this is currently the most appropriate approach
-	/// So, this is the current solution.
-	pub include_metadata: bool,
 }
 
 impl ParamsBasicTypeWithClassOfYear {
-	pub fn new(chain: String, date1: String, date2: String) -> Self {
-		Self {
-			name: "Account created between {dates}".to_string(),
-			chain,
-			date1,
-			date2,
-			include_metadata: true,
-		}
-	}
-
-	pub fn one(name: String, network: &Web3Network, date1: String, date2: String) -> Self {
+	pub fn new(name: String, network: &Web3Network, date1: String, date2: String) -> Self {
 		let chain = web3_network_to_chain(network);
-		Self { name, chain, date1, date2, include_metadata: true }
+		Self { name, chain, date1, date2 }
 	}
 }
 
@@ -420,7 +410,6 @@ impl ParamsBasicTypeWithClassOfYear {
 			chain: "ethereum".into(),
 			date1: "2020-01-01T00:00:00.000Z".into(),
 			date2: "2020-12-31T23:59:59.999Z".into(),
-			include_metadata: true,
 		}
 	}
 
@@ -430,7 +419,6 @@ impl ParamsBasicTypeWithClassOfYear {
 			chain: "ethereum".into(),
 			date1: "2021-01-01T00:00:00.000Z".into(),
 			date2: "2021-12-31T23:59:59.999Z".into(),
-			include_metadata: true,
 		}
 	}
 
@@ -440,7 +428,6 @@ impl ParamsBasicTypeWithClassOfYear {
 			chain: "ethereum".into(),
 			date1: "2022-01-01T00:00:00.000Z".into(),
 			date2: "2022-12-31T23:59:59.999Z".into(),
-			include_metadata: true,
 		}
 	}
 }

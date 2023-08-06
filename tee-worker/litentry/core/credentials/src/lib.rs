@@ -498,9 +498,7 @@ impl Credential {
 
 	pub fn update_content(&mut self, value: bool, content: &str) {
 		let content = AssertionLogic::new_item(content, Op::Equal, "true");
-
-		let and_logic = AssertionLogic::new_and();
-		let assertion = AssertionLogic::new_and().add_item(and_logic).add_item(content);
+		let assertion = AssertionLogic::new_and().add_item(content);
 
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
@@ -510,11 +508,7 @@ impl Credential {
 		let uniswap_v2 = AssertionLogic::new_item("$is_uniswap_v2_user", Op::Equal, "true");
 		let uniswap_v3 = AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, "true");
 
-		let or_logic = AssertionLogic::new_or();
-		let assertion = AssertionLogic::new_or()
-			.add_item(uniswap_v2)
-			.add_item(uniswap_v3)
-			.add_item(or_logic);
+		let assertion = AssertionLogic::new_or().add_item(uniswap_v2).add_item(uniswap_v3);
 
 		self.credential_subject.assertions.push(assertion);
 		self.credential_subject.values.push(value);
@@ -523,7 +517,7 @@ impl Credential {
 	pub fn update_class_of_year(&mut self, value: bool, date: String) {
 		let mut and_logic = AssertionLogic::new_and();
 
-		let from = AssertionLogic::new_item("$account_created_year", Op::GreaterEq, &date);
+		let from = AssertionLogic::new_item("$account_created_year", Op::Equal, &date);
 		and_logic = and_logic.add_item(from);
 
 		self.credential_subject.assertions.push(and_logic);
