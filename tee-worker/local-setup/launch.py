@@ -11,8 +11,8 @@ import argparse
 import json
 import signal
 from subprocess import Popen, PIPE, STDOUT, run
-import shutil
 import os
+import sys
 from time import sleep
 from typing import Union, IO
 from dotenv import load_dotenv
@@ -111,7 +111,7 @@ def generate_config_local_json():
         "genesis_wasm_path": "/tmp/parachain_dev/genesis-wasm",
         "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
         "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
-        "bridge_path": "/tmp/parachain_dev/chainbridge"
+        "bridge_path": "/tmp/parachain_dev/chainbridge",
     }
     config_file = "../ts-tests/config.local.json"
 
@@ -124,7 +124,7 @@ def generate_config_local_json():
 # Generate `.env.local` used by local enclave ts-tests
 def generate_env_local():
     env_local_example_file = "ts-tests/integration-tests/.env.local.example"
-    env_local_file = env_local_example_file[:-len(".example")]
+    env_local_file = env_local_example_file[: -len(".example")]
 
     # Get the value of the environment variables or use default values
     worker_port = os.environ.get("TrustedWorkerPort", "2000")
@@ -154,26 +154,19 @@ def setup_environment(offset, config):
     check_all_ports_and_reallocate()
     generate_config_local_json()
     generate_env_local()
-    config["workers"][0]["flags"] = [
-        flag.replace("$CollatorWSPort", os.environ.get("CollatorWSPort", ""))
-        for flag in config["workers"][0]["flags"]
-    ]
-    config["workers"][0]["flags"] = [
-        flag.replace("$TrustedWorkerPort", os.environ.get("TrustedWorkerPort", ""))
-        for flag in config["workers"][0]["flags"]
-    ]
-    config["workers"][0]["flags"] = [
-        flag.replace("$UntrustedWorkerPort", os.environ.get("UntrustedWorkerPort", ""))
-        for flag in config["workers"][0]["flags"]
-    ]
-    config["workers"][0]["flags"] = [
-        flag.replace("$MuRaPort", os.environ.get("MuRaPort", ""))
-        for flag in config["workers"][0]["flags"]
-    ]
-    config["workers"][0]["flags"] = [
-        flag.replace("$UntrustedHttpPort", os.environ.get("UntrustedHttpPort", ""))
-        for flag in config["workers"][0]["flags"]
-    ]
+
+    # TODO: only works for single worker for now
+    for p in [
+        "CollatorWSPort",
+        "TrustedWorkerPort",
+        "UntrustedWorkerPort",
+        "MuRaPort",
+        "UntrustedHttpPort",
+    ]:
+        config["workers"][0]["flags"] = [
+            flag.replace("$" + p, os.environ.get(p, ""))
+            for flag in config["workers"][0]["flags"]
+        ]
 
 
 def main(processes, config_path, parachain_type, offset):
@@ -181,21 +174,21 @@ def main(processes, config_path, parachain_type, offset):
         config = json.load(config_file)
 
     # Litentry
+    print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
-        print("Starting litentry-parachain in background ...")
         setup_environment(offset, config)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
-        print("Starting litentry-parachain done")
-        print("----------------------------------------")
-
-    # development environment
-    if parachain_type == "local-binary":
-        print("Starting litentry-parachain in background ...")
+    elif parachain_type == "local-binary":
         setup_environment(offset, config)
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
-        print("Starting litentry-parachain done")
-        print("----------------------------------------")
+    elif parachain_type == "remote":
+        print("Litentry parachain should be started remotely")
+    else:
+        sys.exit("Unsupported parachain_type")
+
+    print("Litentry parachain is running")
+    print("----------------------------------------")
 
     c = pycurl.Curl()
     worker_i = 0
@@ -235,7 +228,7 @@ def main(processes, config_path, parachain_type, offset):
                 if counter >= 600:
                     print("Worker initialization timeout (3000s). Exit")
                     return 0
-                counter = counter + 1
+                counter += 1
 
         worker_i += 1
 

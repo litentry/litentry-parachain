@@ -186,7 +186,7 @@ class Worker:
         :return: process handle for the spawned background process.
         """
 
-        # Todo: make this configurable
+        # TODO: make this configurable
         env = dict(
             os.environ,
             RUST_LOG="info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,"
