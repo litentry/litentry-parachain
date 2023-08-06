@@ -316,10 +316,10 @@ function getConfiguration(): { binaryDir: string; nodeUrl: string; nodePort: num
         throw new Error('Environment variable BINARY_DIR not defined');
     }
 
-    const [, nodeHost, nodePortRaw] = process.env.SUBSTRATE_END_POINT!.split(':');
+    const [, nodeHost, nodePortRaw] = process.env.NODE_ENDPOINT!.split(':');
     const nodePort = Number.parseInt(nodePortRaw);
     if (nodeHost === undefined || Number.isNaN(nodePort)) {
-        throw new Error('Environment variable SUBSTRATE_END_POINT undefined or malformed');
+        throw new Error('Environment variable NODE_ENDPOINT undefined or malformed');
     }
 
     return { binaryDir, nodeUrl: `ws:${nodeHost}`, nodePort };

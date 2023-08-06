@@ -189,7 +189,7 @@ class Worker:
         # TODO: make this configurable
         env = dict(
             os.environ,
-            RUST_LOG="info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,"
+            RUST_LOG="info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,"
             "itc_parentchain_light_client=info,"
             "jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,"
             "its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,"
