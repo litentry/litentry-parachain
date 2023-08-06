@@ -122,7 +122,7 @@ where
 			.retrieve_key()
 			.and_then(|keypair| {
 				// vc signing pubkey
-				keypair.derive_ed25519().map(|keypair| keypair.public().to_vec())
+				keypair.derive_ed25519().map(|keypair| keypair.public().to_hex())
 			})
 			.ok();
 		debug!("[Enclave] VC pubkey: {:?}", vc_pubkey);
