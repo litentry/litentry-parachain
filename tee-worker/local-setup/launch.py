@@ -97,7 +97,7 @@ def check_all_ports_and_reallocate():
         else:
             reallocate_ports(x, os.environ.get(x))
 
-    print("All Preliminary Port Checks Completed")
+    print("All preliminary port checks completed")
 
 
 # Generate `config.local.json` used by parachain ts utils
@@ -126,14 +126,10 @@ def generate_env_local():
     env_local_example_file = "ts-tests/integration-tests/.env.local.example"
     env_local_file = env_local_example_file[: -len(".example")]
 
-    # Get the value of the environment variables or use default values
-    worker_port = os.environ.get("TrustedWorkerPort", "2000")
-    parentchain_port = os.environ.get("CollatorWSPort", "9944")
-
     with open(env_local_example_file, "r") as f:
         data = f.read()
-        data.replace(":2000", ":" + worker_port)
-        data.replace(":9944", ":" + parentchain_port)
+        data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
+        data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
 
     with open(env_local_file, "w") as f:
         f.write(data)
@@ -188,7 +184,7 @@ def main(processes, config_path, parachain_type, offset):
         sys.exit("Unsupported parachain_type")
 
     print("Litentry parachain is running")
-    print("----------------------------------------")
+    print("------------------------------------------------------------")
 
     c = pycurl.Curl()
     worker_i = 0
