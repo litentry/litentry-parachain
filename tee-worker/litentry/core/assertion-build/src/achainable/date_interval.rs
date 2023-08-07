@@ -22,6 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
 use lc_credentials::Credential;
+use lc_data_providers::achainable::Params;
 
 pub fn build_date_interval(
 	req: &AssertionBuildRequest,
@@ -35,8 +36,9 @@ pub fn build_date_interval(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let _flag =
-		request_achainable(addresses, AchainableParams::DateInterval(param.clone()).into())?;
+	let achainable_param = AchainableParams::DateInterval(param.clone());
+	let request_param = Params::try_from(achainable_param)?;
+	let _flag = request_achainable(addresses, request_param)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {

@@ -22,6 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_classofyear, *};
 use lc_credentials::Credential;
+use lc_data_providers::achainable::Params;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{AchainableClassOfYear, AchainableParams};
 use log::debug;
@@ -71,12 +72,11 @@ pub fn build_class_of_year(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
+	let achainable_param = AchainableParams::ClassOfYear(param.clone());
+	let request_param = Params::try_from(achainable_param)?;
 	// TODO:
 	// Because this is only for the purpose of obtaining created account year, the dates here can be arbitrary
-	let (found, created_date) = request_achainable_classofyear(
-		addresses,
-		AchainableParams::ClassOfYear(param.clone()).into(),
-	);
+	let (found, created_date) = request_achainable_classofyear(addresses, request_param);
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

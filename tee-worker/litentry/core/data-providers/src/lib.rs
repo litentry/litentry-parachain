@@ -50,7 +50,10 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail, ParameterString};
+use litentry_primitives::{
+	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
+	VCMPError,
+};
 use std::{
 	format,
 	string::{String, ToString},
@@ -191,11 +194,13 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 }
 
 pub trait ConvertParameterString {
-	fn to_string(&self) -> String;
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError>;
 }
 
-impl ConvertParameterString for ParameterString {
-	fn to_string(&self) -> String {
-		vec_to_string(self.to_vec()).unwrap_or_default()
+impl ConvertParameterString for AchainableParams {
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError> {
+		vec_to_string(field.to_vec()).map_err(|_| {
+			VCMPError::RequestVCFailed(Assertion::Achainable(self.clone()), ErrorDetail::ParseError)
+		})
 	}
 }

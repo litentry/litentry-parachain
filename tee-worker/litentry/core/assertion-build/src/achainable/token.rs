@@ -20,6 +20,8 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use lc_data_providers::achainable::Params;
+
 use crate::{achainable::request_achainable, *};
 
 pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Result<Credential> {
@@ -31,7 +33,9 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let _flag = request_achainable(addresses, AchainableParams::Token(param.clone()).into())?;
+	let achainable_param = AchainableParams::Token(param.clone());
+	let request_param = Params::try_from(achainable_param)?;
+	let _flag = request_achainable(addresses, request_param)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {

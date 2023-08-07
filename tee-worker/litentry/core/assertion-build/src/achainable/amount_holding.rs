@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use lc_data_providers::ConvertParameterString;
+use lc_data_providers::{achainable::Params, ConvertParameterString};
 
 const VC_SUBJECT_DESCRIPTION: &str = "Achainable amount holding";
 const VC_SUBJECT_TYPE: &str = "Amount holding";
@@ -38,15 +38,16 @@ pub fn build_amount_holding(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag =
-		request_achainable(addresses, AchainableParams::AmountHolding(param.clone()).into())?;
+	let achainable_param = AchainableParams::AmountHolding(param.clone());
+	let request_param = Params::try_from(achainable_param.clone())?;
+	let flag = request_achainable(addresses, request_param)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				flag,
-				&param.amount.to_string(),
-				&param.date.to_string(),
+				&achainable_param.to_string(&param.amount)?,
+				&achainable_param.to_string(&param.date)?,
 			);
 
 			Ok(credential_unsigned)
@@ -54,7 +55,7 @@ pub fn build_amount_holding(
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::AmountHolding(param)),
+				Assertion::Achainable(achainable_param),
 				e.into_error_detail(),
 			))
 		},

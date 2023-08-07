@@ -28,7 +28,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use litentry_primitives::{AchainableParams, Web3Network};
+use litentry_primitives::{AchainableParams, VCMPError, Web3Network};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -220,57 +220,60 @@ impl AchainableSystemLabelName for Params {
 	}
 }
 
-impl From<AchainableParams> for Params {
-	fn from(ap: AchainableParams) -> Self {
-		match ap {
+impl TryFrom<AchainableParams> for Params {
+	type Error = VCMPError;
+	fn try_from(ap: AchainableParams) -> Result<Self, Self::Error> {
+		match ap.clone() {
 			AchainableParams::AmountHolding(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let amount = p.amount.to_string();
-				let date = p.date.to_string();
-				let token = p.token.as_ref().map(|v| v.to_string());
+				let amount = ap.to_string(&p.amount)?;
+				let date = ap.to_string(&p.date)?;
+				let token =
+					if p.token.is_some() { Some(ap.to_string(&p.token.unwrap())?) } else { None };
 
 				let p = ParamsBasicTypeWithAmountHolding::one(name, network, amount, date, token);
-				Params::ParamsBasicTypeWithAmountHolding(p)
+				Ok(Params::ParamsBasicTypeWithAmountHolding(p))
 			},
 			AchainableParams::AmountToken(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let amount = p.amount.to_string();
-				let token = p.token.as_ref().map(|v| v.to_string());
+				let amount = ap.to_string(&p.amount)?;
+				let token =
+					if p.token.is_some() { Some(ap.to_string(&p.token.unwrap())?) } else { None };
 
 				let p = ParamsBasicTypeWithAmountToken::new(name, network, amount, token);
-				Params::ParamsBasicTypeWithAmountToken(p)
+				Ok(Params::ParamsBasicTypeWithAmountToken(p))
 			},
 			AchainableParams::Amount(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let amount = p.amount.to_string();
+				let amount = ap.to_string(&p.amount)?;
 
 				let p = ParamsBasicTypeWithAmount::new(name, network, amount);
-				Params::ParamsBasicTypeWithAmount(p)
+				Ok(Params::ParamsBasicTypeWithAmount(p))
 			},
 			AchainableParams::Amounts(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let amount1 = p.amount1.to_string();
-				let amount2 = p.amount2.to_string();
+				let amount1 = ap.to_string(&p.amount1)?;
+				let amount2 = ap.to_string(&p.amount2)?;
 
 				let p = ParamsBasicTypeWithAmounts::new(name, network, amount1, amount2);
-				Params::ParamsBasicTypeWithAmounts(p)
+				Ok(Params::ParamsBasicTypeWithAmounts(p))
 			},
 			AchainableParams::Basic(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
 
 				let p = ParamsBasicType::new(name, network);
-				Params::ParamsBasicType(p)
+				Ok(Params::ParamsBasicType(p))
 			},
 			AchainableParams::BetweenPercents(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let greater_than_or_equal_to = p.greater_than_or_equal_to.to_string();
-				let less_than_or_equal_to = p.less_than_or_equal_to.to_string();
+				let greater_than_or_equal_to = ap.to_string(&p.greater_than_or_equal_to)?;
+				let less_than_or_equal_to = ap.to_string(&p.less_than_or_equal_to)?;
 
 				let p = ParamsBasicTypeWithBetweenPercents::new(
 					name,
@@ -278,51 +281,51 @@ impl From<AchainableParams> for Params {
 					greater_than_or_equal_to,
 					less_than_or_equal_to,
 				);
-				Params::ParamsBasicTypeWithBetweenPercents(p)
+				Ok(Params::ParamsBasicTypeWithBetweenPercents(p))
 			},
 			AchainableParams::ClassOfYear(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let date1 = p.date1.to_string();
-				let date2 = p.date2.to_string();
+				let date1 = ap.to_string(&p.date1)?;
+				let date2 = ap.to_string(&p.date2)?;
 
 				let p = ParamsBasicTypeWithClassOfYear::new(name, network, date1, date2);
-				Params::ParamsBasicTypeWithClassOfYear(p)
+				Ok(Params::ParamsBasicTypeWithClassOfYear(p))
 			},
 			AchainableParams::DateInterval(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let start_date = p.start_date.to_string();
-				let end_date = p.end_date.to_string();
+				let start_date = ap.to_string(&p.start_date)?;
+				let end_date = ap.to_string(&p.end_date)?;
 
 				let p = ParamsBasicTypeWithDateInterval::new(name, network, start_date, end_date);
-				Params::ParamsBasicTypeWithDateInterval(p)
+				Ok(Params::ParamsBasicTypeWithDateInterval(p))
 			},
 			AchainableParams::DatePercent(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let token = p.token.to_string();
-				let date = p.date.to_string();
-				let percent = p.percent.to_string();
+				let token = ap.to_string(&p.token)?;
+				let date = ap.to_string(&p.date)?;
+				let percent = ap.to_string(&p.percent)?;
 
 				let p = ParamsBasicTypeWithDatePercent::new(name, network, token, date, percent);
-				Params::ParamsBasicTypeWithDatePercent(p)
+				Ok(Params::ParamsBasicTypeWithDatePercent(p))
 			},
 			AchainableParams::Date(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let date = p.date.to_string();
+				let date = ap.to_string(&p.date)?;
 
 				let p = ParamsBasicTypeWithDate::new(name, network, date);
-				Params::ParamsBasicTypeWithDate(p)
+				Ok(Params::ParamsBasicTypeWithDate(p))
 			},
 			AchainableParams::Token(p) => {
-				let name = p.name.to_string();
+				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let token = p.token.to_string();
+				let token = ap.to_string(&p.token)?;
 
 				let p = ParamsBasicTypeWithToken::new(name, network, token);
-				Params::ParamsBasicTypeWithToken(p)
+				Ok(Params::ParamsBasicTypeWithToken(p))
 			},
 		}
 	}
