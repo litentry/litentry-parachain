@@ -30,8 +30,8 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             //env url
 
             const tmp = await initIntegrationTestContext(
-                process.env.WORKER_END_POINT!,
-                process.env.SUBSTRATE_END_POINT!,
+                process.env.WORKER_ENDPOINT!,
+                process.env.NODE_ENDPOINT!,
                 walletsNumber
             );
             context.mrEnclave = tmp.mrEnclave;
