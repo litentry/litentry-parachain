@@ -23,9 +23,9 @@ extern crate sgx_tstd as std;
 use crate::*;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 
-const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord
-	Server link: https://discord.gg/phBSa3eMX9 
-	Guild ID: 807161594245152800";
+const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord. 
+Server link: https://discord.gg/phBSa3eMX9
+Guild ID: 807161594245152800.";
 const VC_A2_SUBJECT_TYPE: &str = "Litentry Discord Member";
 
 pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<Credential> {

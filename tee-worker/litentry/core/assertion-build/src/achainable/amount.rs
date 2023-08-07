@@ -131,8 +131,8 @@ fn get_assertion_content(
 ) -> (&'static str, &'static str, &'static str) {
 	if name == CREATED_OVER_AMOUNT_CONTRACTS {
 		return (
-			"Contract Creator",
 			"You are a deployer of a smart contract on these networks: Ethereum",
+			"Contract Creator",
 			"$is_contract_creator",
 		)
 	}
@@ -148,7 +148,7 @@ fn get_assertion_content(
 			"Unsupported"
 		};
 
-		return ("Token Holder", "The number of a particular token you hold > 0", c)
+		return ("The number of a particular token you hold > 0", "Token Holder", c)
 	}
 
 	("", "", "")

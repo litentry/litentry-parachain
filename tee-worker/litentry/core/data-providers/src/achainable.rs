@@ -286,8 +286,13 @@ impl TryFrom<AchainableParams> for Params {
 			AchainableParams::ClassOfYear(p) => {
 				let name = ap.to_string(&p.name)?;
 				let network = &p.chain;
-				let date1 = ap.to_string(&p.date1)?;
-				let date2 = ap.to_string(&p.date2)?;
+
+				// NOTE:
+				// The front-end use case doesn’t need specific date period, but in general an overall evaluation. While Achainable interface requires date1 and date2, to avoid ambiguity, the start and end dates here are fixed as follow:
+				// date1: 2015-01-01
+				// date2: 2023-01-01
+				let date1 = "2015-01-01".into();
+				let date2 = "2023-01-01".into();
 
 				let p = ParamsBasicTypeWithClassOfYear::new(name, network, date1, date2);
 				Ok(Params::ParamsBasicTypeWithClassOfYear(p))

@@ -44,7 +44,11 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	});
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
-	let networks = networks_set.into_iter().collect::<Vec<Web3Network>>();
+	let networks = if networks_set.is_empty() {
+		req.assertion.get_supported_web3networks()
+	} else {
+		networks_set.into_iter().collect::<Vec<Web3Network>>()
+	};
 
 	let (min, max) = get_total_tx_ranges(total_txs);
 	match Credential::new(&req.who, &req.shard) {

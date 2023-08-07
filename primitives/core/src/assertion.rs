@@ -74,9 +74,7 @@ pub struct AchainableBetweenPercents {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableClassOfYear {
 	pub name: ParameterString,
-	pub chain: Web3Network, // supported network, see function web3_network_to_chain
-	pub date1: ParameterString, // date format: 2017-01-01
-	pub date2: ParameterString, // date format: 2017-01-01
+	pub chain: Web3Network,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]

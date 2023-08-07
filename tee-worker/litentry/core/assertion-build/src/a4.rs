@@ -122,8 +122,8 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 					token.clone(),
 				);
 				match client.is_holder(address, holding) {
-					Ok(is_lit_holder) =>
-						if is_lit_holder {
+					Ok(is_amount_holder) =>
+						if is_amount_holder {
 							if index < optimal_hold_index {
 								optimal_hold_index = index;
 							}
