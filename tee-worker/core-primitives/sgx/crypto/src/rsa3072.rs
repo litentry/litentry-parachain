@@ -152,23 +152,6 @@ pub mod sgx {
 		}
 	}
 
-	impl StaticSealedIO for Rsa3072Seal {
-		type Error = Error;
-		type Unsealed = Rsa3072KeyPair;
-		fn unseal_from_static_file() -> Result<Self::Unsealed> {
-			let raw = unseal(RSA3072_SEALED_KEY_FILE)?;
-			let key: Rsa3072KeyPair = serde_json::from_slice(&raw)
-				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-			Ok(key.into())
-		}
-
-		fn seal_to_static_file(unsealed: &Self::Unsealed) -> Result<()> {
-			let key_json = serde_json::to_vec(&unsealed)
-				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
-			Ok(seal(&key_json, RSA3072_SEALED_KEY_FILE)?)
-		}
-	}
-
 	impl SealedIO for Rsa3072Seal {
 		type Error = Error;
 		type Unsealed = Rsa3072KeyPair;
