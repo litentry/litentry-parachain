@@ -38,28 +38,24 @@ const VC_SUBJECT_TYPE: &str = "Account Class Of Year";
 /// chain: ethereum
 ///
 /// True:
-/// assertions":[
+/// assertions:[
 /// {
-/// 		and: [
-/// 			{
-/// 				"src":"$account_created_year",
-/// 				"op":"==",
-/// 				"dst":"2015"
-/// 			}
-/// 		],
+///    {
+///        src:$account_created_year,
+///        op:==,
+///        dst:2015
+///    }
 /// }
+/// ]
 ///
 /// False:
 /// assertions":[
 /// {
-/// 		and: [
-/// 			{
-/// 				"src":"$account_created_year",
-/// 				"op":"==",
-/// 				"dst":"Invalid"
-/// 			}
-/// 		],
+///    src:$account_created_year,
+///    op:==,
+///    dst:Invalid
 /// }
+/// ]
 
 pub fn build_class_of_year(
 	req: &AssertionBuildRequest,

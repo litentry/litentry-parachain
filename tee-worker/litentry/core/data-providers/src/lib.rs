@@ -15,6 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::large_enum_variant)]
+#![allow(clippy::result_large_err)]
 
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]

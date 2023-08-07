@@ -32,15 +32,15 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// chain: "ethereum",
 /// amount: "0",
 ///
-/// "assertions":[
+/// assertions:[
 /// {
-///		"and":[
-/// 		{
-/// 			"src":"$is_contract_creator",
-/// 			"op":"==",
-/// 			"dst":"true"
-/// 		}
-/// 	]
+///    and:[
+///        {
+///            src:$is_contract_creator,
+///            op:==,
+///            dst:true
+///        }
+///        ]
 /// }
 ///
 ///
@@ -49,15 +49,15 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// chain: "ethereum",
 /// amount: "0",
 ///
-/// assertions":[
+/// assertions:[
 /// {
-///		"and":[
-/// 		{
-/// 			"src":"$is_eth_holder",
-/// 			"op":"==",
-/// 			"dst":"true"
-/// 		}
-/// 	]
+///    and:[
+///        {
+///            src:$is_eth_holder,
+///            op:==,
+///            dst:true
+///        }
+///        ]
 /// }
 ///
 ///
@@ -66,15 +66,15 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// chain: "litentry",
 /// amount: "0",
 ///
-/// assertions":[
+/// assertions:[
 /// {
-///		"and":[
-/// 		{
-/// 			"src":"$is_lit_holder",
-/// 			"op":"==",
-/// 			"dst":"true"
-/// 		}
-/// 	]
+///    and:[
+///        {
+///            src:$is_lit_holder,
+///            op:==,
+///            dst:true
+///        }
+///        ]
 /// }
 ///
 ///
@@ -83,15 +83,15 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 /// chain: "polkadot",
 /// amount: "0",
 ///
-/// assertions":[
+/// assertions:[
 /// {
-///		"and":[
-/// 		{
-/// 			"src":"$is_dot_holder",
-/// 			"op":"==",
-/// 			"dst":"true"
-/// 		}
-/// 	]
+///    and:[
+///        {
+///            src:$is_dot_holder,
+///            op:==,
+///            dst:true
+///        }
+///        ]
 /// }
 ///
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {

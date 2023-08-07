@@ -105,5 +105,5 @@ pub fn request_achainable_classofyear(addresses: Vec<String>, param: Params) -> 
 		}
 	}
 
-	(longest_created_date != INVALID_CLASS_OF_YEAR.to_string(), longest_created_date)
+	(longest_created_date != *INVALID_CLASS_OF_YEAR.to_string(), longest_created_date)
 }

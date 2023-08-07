@@ -29,18 +29,16 @@ use crate::{achainable::is_uniswap_v2_or_v3_user, *};
 ///
 /// assertions":[
 /// {
-///		"or":[
-/// 		{
-/// 			"src":"$is_uniswap_v2_user",
-/// 			"op":"==",
-/// 			"dst":"true"
-/// 		},
-/// 		{
-/// 			"src": "is_uniswap_v3_user",
-/// 			"op": "==",
-/// 			"dst": "true"
-/// 		}
-/// 	]
+///        {
+///            src:$is_uniswap_v2_user,
+///            op:==,
+///            dst:true
+///        },
+///        {
+///            src: is_uniswap_v3_user,
+///            op: ==,
+///            dst: true
+///         }
 /// }
 ///
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
