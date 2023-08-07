@@ -34,16 +34,18 @@ async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTes
     const resAcc = await sendRequest(context.tee, requestAcc, context.api);
     const workerAcc = resAcc.value.toHex();
     console.log("worker address value", workerAcc);
+    const request1 = { jsonrpc: '2.0', method: 'author_getEnclaveId', params: [], id: 1 };
+    const res1 = await sendRequest(context.tee, request1, context.api);
+    const resHex1 = res1.value.toHex();
+    console.log("resHex1:", resHex1);
+    console.log("res1.value", res1.value);
     return workerAcc;
 }
 
 async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
     const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
-    const request1 = { jsonrpc: '2.0', method: 'author_getEnclaveId', params: [base58mrEnclave, workerAddr], id: 1 };
-    const res1 = await sendRequest(context.tee, request1, context.api);
-    const resHex1 = res1.value.toString();
-    console.log("resHex1:", resHex1);
+    
     const resHex = res.value.toString();
     let nonce = 0;
     if(resHex){
