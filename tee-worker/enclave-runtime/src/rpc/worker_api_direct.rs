@@ -120,10 +120,7 @@ where
 		};
 		let vc_pubkey = shielding_key_repository
 			.retrieve_key()
-			.and_then(|keypair| {
-				// vc signing pubkey
-				keypair.derive_ed25519().map(|keypair| keypair.public().to_hex())
-			})
+			.and_then(|keypair| keypair.derive_ed25519().map(|keypair| keypair.public().to_hex()))
 			.ok();
 		debug!("[Enclave] VC pubkey: {:?}", vc_pubkey);
 
@@ -134,67 +131,6 @@ where
 		};
 
 		Ok(json!(json_value.to_hex()))
-	});
-
-	// author_getEnclaveAccountId
-	let state_account_id = state.clone();
-	let author_get_enclave_account_id: &str = "author_getEnclaveAccountId";
-	io.add_sync_method(author_get_enclave_account_id, move |params: Params| {
-		if state_account_id.is_none() {
-			Ok(json!(compute_hex_encoded_return_error(
-				"author_getEnclaveAccountId is not avaiable"
-			)))
-		} else {
-			let state_account_id_unwrap = match state_account_id.clone() {
-				None =>
-					return Ok(json!(compute_hex_encoded_return_error(
-						"author_getEnclaveAccountId is not avaiable"
-					))),
-				Some(id) => id,
-			};
-			match params.parse::<Vec<String>>() {
-				Ok(shards) => {
-					let shard0_unwrap = match shards.get(0) {
-						None =>
-							return Ok(json!(compute_hex_encoded_return_error("unwrap shard error"))),
-						Some(shard0) => shard0,
-					};
-					let shard = match decode_shard_from_base58(shard0_unwrap.as_str()) {
-						Ok(id) => id,
-						Err(msg) => {
-							let error_msg: String =
-								format!("Could not retrieve shard due to: {}", msg);
-							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-						},
-					};
-
-					match state_account_id_unwrap.load_cloned(&shard) {
-						Ok((mut state, _hash)) => {
-							let account = state.execute_with(enclave_signer_account::<AccountId>);
-							debug!(
-								"author_getEnclaveAccountId account in hex :{:?}",
-								&account.to_hex()
-							);
-							let json_value = RpcReturnValue {
-								do_watch: false,
-								value: account.encode(),
-								status: DirectRequestStatus::Ok,
-							};
-							Ok(json!(json_value.to_hex()))
-						},
-						Err(e) => {
-							let error_msg = format!("load shard failure due to: {:?}", e);
-							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-						},
-					}
-				},
-				Err(e) => {
-					let error_msg: String =
-						format!("Could not retrieve pending calls due to: {}", e);
-					Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-				},
-			}
-		}
 	});
 
 	// author_getNextNonce

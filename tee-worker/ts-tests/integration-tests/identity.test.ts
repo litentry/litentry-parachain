@@ -29,16 +29,11 @@ import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 import { decodeRpcBytesAsString } from './common/call';
 
-async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTestContext): Promise<string> {
-    const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveAccountId', params: [base58mrEnclave], id: 1 };
+async function getWorkerAddress(context: IntegrationTestContext): Promise<string> {
+    const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveId', params: [], id: 1 };
     const resAcc = await sendRequest(context.tee, requestAcc, context.api);
-    const workerAcc = resAcc.value.toHex();
-    console.log("worker address value", workerAcc);
-    const request1 = { jsonrpc: '2.0', method: 'author_getEnclaveId', params: [], id: 1 };
-    const res1 = await sendRequest(context.tee, request1, context.api);
-    const resHex1 = res1.value.toHex();
-    console.log("resHex1:", resHex1);
-    console.log("res1.value", decodeRpcBytesAsString(res1.value));
+    const workerAcc =  decodeRpcBytesAsString(resAcc.value);
+    console.log("workerAcc", workerAcc);
     return workerAcc;
 }
 
@@ -71,7 +66,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('init', async () => {
         base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-        workerAddress = await getWorkerAddress(base58mrEnclave, context);
+        workerAddress = await getWorkerAddress(context);
     });
 
     step('check user sidechain storage before create', async function () {
