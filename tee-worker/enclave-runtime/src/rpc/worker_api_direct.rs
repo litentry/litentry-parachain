@@ -26,7 +26,6 @@ use crate::{
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
-use ita_stf::helpers::enclave_signer_account;
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_component_container::ComponentGetter;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
