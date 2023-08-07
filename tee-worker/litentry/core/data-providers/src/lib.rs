@@ -15,6 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::large_enum_variant)]
+#![allow(clippy::result_large_err)]
 
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -50,7 +52,10 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail};
+use litentry_primitives::{
+	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
+	VCMPError,
+};
 use std::{
 	format,
 	string::{String, ToString},
@@ -188,4 +193,16 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)
+}
+
+pub trait ConvertParameterString {
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError>;
+}
+
+impl ConvertParameterString for AchainableParams {
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError> {
+		vec_to_string(field.to_vec()).map_err(|_| {
+			VCMPError::RequestVCFailed(Assertion::Achainable(self.clone()), ErrorDetail::ParseError)
+		})
+	}
 }

@@ -29,8 +29,7 @@ use std::string::ToString;
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
-const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
-const VC_A11_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
+const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Time";
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A11 build, who: {:?}", account_id_to_string(&req.who),);

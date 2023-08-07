@@ -62,7 +62,7 @@ extern crate sgx_tstd as std;
 /// the operators are mainly for IDHub's parsing, we will **NEVER** have:
 /// - `from_date` with >= op, nor
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
-///  
+///
 use crate::*;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
@@ -72,8 +72,7 @@ use std::string::ToString;
 
 const VC_A4_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
-const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
-const VC_A4_SUBJECT_TAG: [&str; 3] = ["Ethereum", "Litmus", "Litentry"];
+const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Time";
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
@@ -123,8 +122,8 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 					token.clone(),
 				);
 				match client.is_holder(address, holding) {
-					Ok(is_lit_holder) =>
-						if is_lit_holder {
+					Ok(is_amount_holder) =>
+						if is_amount_holder {
 							if index < optimal_hold_index {
 								optimal_hold_index = index;
 							}
@@ -133,8 +132,7 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 							break
 						},
-					Err(e) =>
-						error!("Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}", e),
+					Err(e) => error!("Assertion A4 request is_holder error: {:?}", e),
 				}
 			}
 		}
