@@ -27,7 +27,7 @@ import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
-
+import { decodeRpcBytesAsString } from './common/call';
 
 async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTestContext): Promise<string> {
     const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveAccountId', params: [base58mrEnclave], id: 1 };
@@ -38,7 +38,7 @@ async function getWorkerAddress(base58mrEnclave: string, context: IntegrationTes
     const res1 = await sendRequest(context.tee, request1, context.api);
     const resHex1 = res1.value.toHex();
     console.log("resHex1:", resHex1);
-    console.log("res1.value", res1.value);
+    console.log("res1.value", decodeRpcBytesAsString(res1.value));
     return workerAcc;
 }
 
