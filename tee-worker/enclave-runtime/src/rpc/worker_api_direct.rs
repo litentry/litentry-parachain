@@ -106,8 +106,8 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
-	// author_getEnclaveId
-	let rsa_pubkey_name: &str = "author_getEnclaveId";
+	// author_getEnclaveSignerAccount
+	let rsa_pubkey_name: &str = "author_getEnclaveSignerAccount";
 	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
 		let shielding_key_repository = match GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get() {
 			Ok(s) => s,
@@ -117,15 +117,21 @@ where
 				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 			},
 		};
-		let vc_pubkey = shielding_key_repository
+		let enclave_signer_public_key = match shielding_key_repository
 			.retrieve_key()
 			.and_then(|keypair| keypair.derive_ed25519().map(|keypair| keypair.public().to_hex()))
-			.ok();
-		debug!("[Enclave] VC pubkey: {:?}", vc_pubkey);
+		{
+			Err(e) => {
+				let error_msg: String = format!("{:?}", e);
+				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+			Ok(public_key) => public_key,
+		};
+		debug!("[Enclave] enclave_signer_public_key: {:?}", enclave_signer_public_key);
 
 		let json_value = RpcReturnValue {
 			do_watch: false,
-			value: vc_pubkey.encode(),
+			value: enclave_signer_public_key.encode(),
 			status: DirectRequestStatus::Ok,
 		};
 

@@ -30,7 +30,7 @@ import * as base58 from 'micro-base58';
 import { decodeRpcBytesAsString } from './common/call';
 
 async function getWorkerAddress(context: IntegrationTestContext): Promise<string> {
-    const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveId', params: [], id: 1 };
+    const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
     const resAcc = await sendRequest(context.tee, requestAcc, context.api);
     const workerAcc =  decodeRpcBytesAsString(resAcc.value);
     console.log("workerAcc", workerAcc.slice(1));
@@ -157,7 +157,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // - a `mock_user` twitter
         // - alice's evm identity
         // - eve's substrate identity (as she can't link her own substrate again)
-        const nonce = await getNonce(base58mrEnclave, workerAddress, context);
+        let nonce = await getNonce(base58mrEnclave, workerAddress, context);
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const eveSubstrateIdentity = await buildIdentityHelper(
@@ -247,15 +247,15 @@ describeLitentry('Test Identity', 0, (context) => {
             },
         };
         const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
-        const nonce9 = await getNonce(base58mrEnclave, workerAddress, context);
-        console.log("nonce 9", nonce9);
+        nonce = await getNonce(base58mrEnclave, workerAddress, context);
+        console.log("nonce", nonce);
         const msg = generateVerificationMessage(
             context,
             bobSubject,
             charlieSubstrateIdentity,
             // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
             // due to the callback trustedCall
-            nonce9
+            nonce
         );
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
