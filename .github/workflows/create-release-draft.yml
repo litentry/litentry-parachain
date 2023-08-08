@@ -13,6 +13,11 @@ on:
         description: runtime
         required: true
         default: true
+      release_enclave:
+        type: boolean
+        description: enclave
+        required: true
+        default: true
       release_tag:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
@@ -43,12 +48,16 @@ jobs:
         id: vars
         run: |
           release_type=""
-          if [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
+          if [ "${{ github.event.inputs.release_enclave }}" = "true" ] && [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
+            release_type="all"
+          elif [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
             release_type="both"
           elif [ "${{ github.event.inputs.release_client }}" = "true" ]; then
             release_type="client"
           elif [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
             release_type="runtime"
+          elif [ "${{ github.event.inputs.release_enclave }}" = "true" ]; then
+            release_type="enclave"
           else
             echo "::error::Please select at least one release type."
             exit 1
@@ -85,6 +94,7 @@ jobs:
         with:
           chain: ${{ matrix.chain }}-parachain
           runtime_dir: runtime/${{ matrix.chain }}
+          tag: "1.66.0"
 
       - name: Summary
         run: |
@@ -148,6 +158,44 @@ jobs:
             ${{ env.GENESIS_RELEASE }}-genesis-state
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
+  ## Build the enclave and package config files
+  build-enclave:
+    if: ${{ github.event.inputs.release_enclave == 'true' }}
+    runs-on: prod-tee-1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.manual_trigger }}
+
+      - name: Generate Package
+        run: | 
+          source /opt/intel/sgxsdk/environment 
+          ./tee-worker/scripts/litentry/release/generate_release_pkg.sh
+          
+      - name: Archive Package
+        uses: actions/upload-artifact@v2
+        with:
+          name: tee-worker-${{ env.RELEASE_TAG }}.tar.gz
+          path: ./tee-worker/target/*.tar.gz
+
+      - name: Set MRENCLAVE
+        id: mrenclave
+        run: |
+          cd tee-worker 
+          echo "mrenclave=$(make mrenclave)" >> $GITHUB_OUTPUT
+
+      - name: Set RUSTC version
+        id: rustc
+        run: |
+          RUSTC_VERSION=$(rustc --version | cut -d' ' -f2)
+          echo "rustc_version=$RUSTC_VERSION" >> $GITHUB_OUTPUT
+
+    outputs:
+      mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
+      rustc_version: ${{ steps.rustc.outputs.rustc_version }}
+  
   ## test again the built docker image ##
   run-ts-tests:
     runs-on: ubuntu-latest
@@ -242,7 +290,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-state: 'open'
           title-includes: Litentry-parachain ${{ env.RELEASE_TAG }} Release checklist
-
+  
       - name: Create comment
         if: ${{ steps.findissueid.outputs.issues }} != '[]'
         uses: actions-cool/issues-helper@v3
@@ -259,12 +307,13 @@ jobs:
     # see https://github.com/actions/runner/issues/491
     # seems to be the only way to achieve this
     needs:
-      - build-wasm
-      - run-ts-tests
       - set-release-type
+      - build-enclave
+      - run-ts-tests
+      - build-wasm 
     if: |
-      !failure() && !cancelled() &&
-      (success('build-wasm') || success('run-ts-tests'))
+      !failure()  &&
+      (success('build-wasm') || success('run-ts-tests') || success('build-enclave'))
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v3
@@ -274,9 +323,11 @@ jobs:
 
       - name: Download all artefacts
         uses: actions/download-artifact@v3
-
+      
       - name: Generate release notes
         run: |
+          export FILENAME=$(find "tee-worker-${{ env.RELEASE_TAG }}.tar.gz/" -type f -name "release-*.tar.gz" -print -quit)
+          export MRENCLAVE_OUTPUT="${{ needs.build-enclave.outputs.mrenclave }}"
           ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
@@ -293,3 +344,4 @@ jobs:
             *-parachain-runtime/*-parachain-srtool-digest.json
             *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
             litentry-collator/*
+            tee-worker-${{ env.RELEASE_TAG }}.tar.gz/*
