@@ -33,7 +33,7 @@ WORKER_CONFIG=
 CHAIN=rococo
 ONLY_WORKER=false
 PARACHAIN_HOST=localhost
-PARACHAIN_PORT="9944"
+PARACHAIN_PORT=9944
 DOCKER_IMAGE=litentry/litentry-parachain:tee-prod
 COPY_FROM_DOCKER=false
 PRODUCTION=false
@@ -43,7 +43,6 @@ ACTION=
 # Some global setting
 # ------------------------------
 
-ENCLAVE_ACCOUNT=
 WORKER_COUNT=
 PARACHAIN_ID=
 OLD_MRENCLAVE=
@@ -445,18 +444,6 @@ function upgrade_worker {
   echo "Upgrading worker ..."
   cd $ROOTDIR/tee-worker || exit 
   NEW_MRENCLAVE=$(make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}')
-
-  echo "Fetching Enclave Signing Key"
-  log=$(cd bin && ./litentry-worker signing-key 2>&1)
-  enclave_account=$(echo "$log" | awk '/Enclave account:/{print $NF}')
-
-  if [[ -n $enclave_account ]]; then
-      echo "Enclave account value: $enclave_account"
-      export ENCLAVE_ACCOUNT="$enclave_account"
-      echo "ENCLAVE_ACCOUNT exported successfully."
-  else
-      echo "Failed to extract Enclave account value."
-  fi
 
   latest_sidechain_block
   latest_parentchain_block
