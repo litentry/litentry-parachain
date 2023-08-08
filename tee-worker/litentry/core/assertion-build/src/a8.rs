@@ -34,14 +34,18 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let mut networks_set: HashSet<Web3Network> = HashSet::new();
-	identities.iter().for_each(|(network, addresses)| {
-		networks_set.insert(*network);
+	for (network, addresses) in identities {
+		networks_set.insert(network);
 
-		match client.total_transactions(network, addresses) {
-			Ok(txs) => total_txs += txs,
-			Err(e) => error!("Assertion A8 query total_transactions error: {:?}", e),
-		};
-	});
+		let txs = client.total_transactions(&network, &addresses).map_err(|e| {
+			error!("Assertion A8 query total_transactions error: {:?}", e);
+			let bounded_web3networks =
+				req.assertion.get_supported_web3networks().try_into().unwrap();
+			Error::RequestVCFailed(Assertion::A8(bounded_web3networks), e.into_error_detail())
+		})?;
+
+		total_txs += txs;
+	}
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
 	let networks = if networks_set.is_empty() {

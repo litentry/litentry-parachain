@@ -18,7 +18,7 @@ cd "$ROOTDIR"
 
 REPO=https://github.com/litentry/litentry-parachain
 
-if [ "$2" != "runtime" ]; then
+if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
   # base image used to build the node binary
   NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile | head -n1 | sed 's/^FROM //;s/ as.*//')
 
@@ -42,22 +42,27 @@ CUMULUS_DEP=$(grep -F 'https://github.com/paritytech/cumulus' node/Cargo.toml | 
 
 echo > "$1"
 echo "## This is a release for:" >> "$1"
-if [ "$2" != "runtime" ]; then
+if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
   echo "- [x] Client" >> "$1"
 else
   echo "- [ ] Client" >> "$1"
 fi
-if [ "$2" != "client" ]; then
+if [ "$2" != "client" ] && [ "$2" != "enclave" ]; then
   echo "- [x] Runtime" >> "$1"
 else
   echo "- [ ] Runtime" >> "$1"
+fi
+if [ "$2" = "enclave" ] || [ "$2" == "all" ]; then 
+  echo "- [x] Enclave" >> "$1"
+else 
+  echo "- [ ] Enclave" >> "$1"
 fi
 echo >> "$1"
 
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
 
-if [ "$2" != "runtime" ]; then
+if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
   cat << EOF >> "$1"
 ## Client
 
@@ -72,7 +77,7 @@ docker image                 : litentry/litentry-parachain:$RELEASE_TAG
 EOF
 fi
 
-if [ "$2" != "client" ]; then
+if [ "$2" != "client" ] && [ "$2" != "enclave" ]; then
   echo "## Runtime" >> "$1"
   for CHAIN in litmus rococo litentry; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
@@ -139,6 +144,32 @@ if [ "$GENESIS_RELEASE" != "none" ]; then
 sha1sum of genesis state  : $GENESIS_STATE_HASH
 sha1sum of genesis wasm   : $GENESIS_WASM_HASH
 <CODEBLOCK>
+
+EOF
+fi
+
+# release notes for enclave binary 
+if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then 
+   echo "Generating Release Notes for Enclave"
+   MRENCLAVE=$(echo "$MRENCLAVE_OUTPUT" | awk '{print $2}')
+   RUSTC_VERSION=$(grep -o 'channel = "[^"]*"' tee-worker/rust-toolchain.toml | cut -d '"' -f 2)
+   # get Sha256 hash of the code 
+   TEMP_DIR=$(mktemp -d)
+   tar -xzf "$FILENAME" -C "$TEMP_DIR" || { echo "Error extracting '$FILENAME'."; exit 1; }
+   FILE=$(cd $TEMP_DIR && ls) 
+   HASH_VALUE_ENCLAVE=$(find "$TEMP_DIR/$FILE/enclave.signed.so" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
+   HASH_VALUE_WORKER=$(find "$TEMP_DIR/$FILE/litentry-worker" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
+   rm -rf "$TEMP_DIR"
+
+   cat << EOF >> "$1" 
+## TEE Worker Release 
+
+<CODEBLOCK>
+rustc                        : $RUSTC_VERSION
+mrenclave                    : $MRENCLAVE
+sha256(enclave)              : $HASH_VALUE_ENCLAVE
+sha256(worker)               : $HASH_VALUE_WORKER
+<CODEBLOCK> 
 
 EOF
 fi
