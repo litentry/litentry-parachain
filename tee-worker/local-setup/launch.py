@@ -101,14 +101,14 @@ def check_all_ports_and_reallocate():
 
 
 # Generate `config.local.json` used by parachain ts utils
-def generate_config_local_json():
+def generate_config_local_json(parachain_dir):
     data = {
         "eth_endpoint": "http://127.0.0.1:8545",
         "eth_address": "[0x4d88dc5d528a33e4b8be579e9476715f60060582]",
         "private_key": "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
         "ocw_account": "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
-        "genesis_state_path": "/tmp/parachain_dev/genesis-state",
-        "genesis_wasm_path": "/tmp/parachain_dev/genesis-wasm",
+        "genesis_state_path": parachain_dir+"/genesis-state",
+        "genesis_wasm_path": parachain_dir+"/genesis-wasm",
         "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
         "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
         "bridge_path": "/tmp/parachain_dev/chainbridge",
@@ -144,11 +144,11 @@ def offset_port(offset):
         os.environ[x] = str(new_port)
 
 
-def setup_environment(offset, config):
+def setup_environment(offset, config, parachain_dir):
     load_dotenv(".env.dev")
     offset_port(offset)
     check_all_ports_and_reallocate()
-    generate_config_local_json()
+    generate_config_local_json(parachain_dir)
     generate_env_local()
 
     # TODO: only works for single worker for now
@@ -165,18 +165,20 @@ def setup_environment(offset, config):
         ]
 
 
-def main(processes, config_path, parachain_type, offset):
+def main(processes, config_path, parachain_type, offset, parachain_dir):
     with open(config_path) as config_file:
         config = json.load(config_file)
 
     # Litentry
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
-        setup_environment(offset, config)
+        setup_environment(offset, config, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
     elif parachain_type == "local-binary":
-        setup_environment(offset, config)
+        # Export Parachain Directory as Global Variable
+        os.environ['TMPDIR'] = parachain_dir
+        setup_environment(offset, config, parachain_dir)
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
     elif parachain_type == "remote":
         print("Litentry parachain should be started remotely")
@@ -250,9 +252,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "offset", nargs="?", default="0", type=int, help="offset for port"
     )
+    parser.add_argument(
+        "parachain_dir", nargs="?", default="/tmp/parachain_dev", help="Parachain directory for local binary"
+    )
     args = parser.parse_args()
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.offset) == 0:
+    if main(process_list, args.config, args.parachain, args.offset, args.parachain_dir) == 0:
         killer.exit_gracefully()
