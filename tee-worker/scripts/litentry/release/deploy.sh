@@ -1,42 +1,271 @@
 #!/bin/bash
 
-ROOTDIR=$(git rev-parse --show-toplevel)
-export ROOTDIR
+set -euo pipefail
 
-function print_divider() {
+# ------------------------------
+# path setting
+# ------------------------------
+
+ROOTDIR=$(git rev-parse --show-toplevel)
+BASEDIR=/opt/litentry
+PARACHAIN_BASEDIR="$BASEDIR/parachain"
+WORKER_BASEDIR="$BASEDIR/worker"
+LOG_BACKUP_BASEDIR="$BASEDIR/log-backup"
+WORKER_BACKUP_BASEDIR="$BASEDIR/worker-backup"
+RELAYCHAIN_ALICE_BASEDIR="$PARACHAIN_BASEDIR/relay-alice"
+RELAYCHAIN_BOB_BASEDIR="$PARACHAIN_BASEDIR/relay-bob"
+PARACHAIN_ALICE_BASEDIR="$PARACHAIN_BASEDIR/para-alice"
+
+# ------------------------------
+# default arg setting
+# ------------------------------
+
+BUILD=false
+DISCARD=false
+WORKER_CONFIG=
+CHAIN=rococo
+ONLY_WORKER=false
+PARACHAIN_HOST=localhost
+PARACHAIN_PORT="9944"
+DOCKER_IMAGE=litentry/litentry-parachain:tee-prod
+COPY_FROM_DOCKER=false
+PRODUCTION=false
+ACTION=
+
+# ------------------------------
+# main()
+# ------------------------------
+
+function main {
+  # 1/ create folders if missing
+  for d in "$BASEDIR" "$LOG_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
+    "$PARACHAIN_ALICE_BASEDIR" "$WORKER_BASEDIR"; do
+    mkdir -p "$d"
+  done
+
+  # 2/ parse command lines
+  echo "Parsing command line ..."
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -h|--help)
+        display_help
+        exit 0
+        ;;
+      -b|--build)
+        BUILD=true
+        shift
+        ;;
+      -d|--discard)
+        DISCARD=true
+        shift
+        ;;
+      -c|--config)
+        WORKER_CONFIG="$2"
+        shift 2
+        ;;
+      -a|--only-worker)
+        ONLY_WORKER=true
+        shift
+        ;;
+      -x|--chain)
+        CHAIN="$2"
+        shift
+        ;;
+      -p|--parachain-port)
+        PARACHAIN_PORT="$2"
+        shift
+        ;;
+      -z|--parachain-host)
+        PARACHAIN_HOST="$2"
+        shift
+        ;;
+      -v|--copy-from-docker)
+        COPY_FROM_DOCKER=true
+        DOCKER_IMAGE="$2"
+        shift
+        ;;
+      --prod)
+        PRODUCTION=true
+        shift
+        ;;
+      generate|restart|upgrade-worker)
+        ACTION="$1"
+        shift
+        ;;
+      *)
+        echo "Error: unknown option or subcommand $1"
+        display_help
+        exit 1
+        ;;
+    esac
+  done
+
+  # 3/ sanity checks
+  if [ ! -f "$WORKER_CONFIG" ]; then
+    echo "Worker config not found: $WORKER_CONFIG"
+    exit 1
+  fi
+
+  worker_count=$(cat "$WORKER_CONFIG" | jq '.workers | length')
+
+  # TODO: check flags conflict, e.g.
+  # - having `--discard` together with `upgrade-worker` doesn't make sense
+  # - `upgrade-worker` should ignore the `--only-worker` flag
+
+  # 4/ back up logs and workers
+  backup_logs
+  backup_workers
+
+  # 5/ main business logic
+  case "$ACTION" in
+    generate)
+      backup_services
+      echo "Generating systemd service files ..."
+      cd "$ROOTDIR/tee-worker/scripts/litentry/release"
+      cp template/* .
+      sed -i "s/CHAIN/$CHAIN/g" *.service
+      for ((i = 0; i < worker_count; i++)); do
+        cp worker.service worker$i.service
+        sed -i "s/NUMBER/$i/g" worker$i.service
+      done
+      rm worker.service
+      cp *.service -f /etc/systemd/system/
+      rm *.service
+      echo "Done, please check files under /etc/systemd/system/"
+      echo "Restart the services to take effect"
+      exit
+      ;;
+    restart)
+      ;;
+    upgrade-worker)
+      ;;
+    *)
+      echo "Unknown action: $ACTION"
+      exit 1 ;;
+  esac
+
+  if [ "$DISCARD" = true ]; then
+    echo "Cleaning the existing state ..."
+    stop_services
+    rm -rf /opt/parachain_dev/ 
+    worker_count=$(echo "$CONFIG" | jq '.workers | length')
+    for ((i = 0; i < worker_count; i++)); do
+      if [ -d "/opt/worker/w$i" ]; then
+        echo "Deleting Previous worker /opt/worker/w$i"
+        rm -r "/opt/worker/w$i"
+      fi
+    done
+  fi
+
+  # Get old MRENCLAVE
+  if [ "$ACTION" = "upgrade-worker" ]; then
+    cd $ROOTDIR/tee-worker || exit 
+    output=$(make mrenclave 2>&1)
+    if [[ $? -eq 0 ]]; then
+      mrenclave_value=$(echo "$output" | awk '{print $2}')
+      echo "MRENCLAVE value: $mrenclave_value"
+      export OLD_MRENCLAVE="$mrenclave_value"
+    else
+      echo "Failed to extract MRENCLAVE value."
+      exit 1
+    fi
+
+    # Fetch Base58 value for MRENCLAVE
+    cd $ROOTDIR/tee-worker/bin || exit 
+    OLD_SHARD=$(./litentry-worker mrenclave)
+    export OLD_SHARD
+    echo "Old Shard value: ${OLD_SHARD}"
+  fi
+
+  # Focusing on this first 
+  if [ "$build" = true ]; then
+    echo "Building the binary for Parachain and Worker."
+    build_parachain
+    build_worker
+  fi
+
+  echo "Action: $action"
+
+  if [ "$action" = "restart" ]; then
+    echo "restarting Services"
+    restart
+  elif [ "$action" = "upgrade-worker" ]; then
+    echo "Upgrading Worker"
+    upgrade_worker
+  fi
+}
+
+# ------------------------------
+# helper functions
+# ------------------------------
+
+function print_divider {
   echo "------------------------------------------------------------"
 }
 
-# Function to display the script's usage
-function display_help() {
-  echo "Usage: ./deploy.sh restart --build --config config.json"
+function display_help {
+  echo "usage: ./deploy.sh <subcommands> [options]"
   echo ""
-  echo "Options:"
-  echo "  -h, --help                  Display this help message and exit."
-  echo "  -b, --build                 Build the binary for Parachain and Worker."
-  echo "  -d, --discard               Clean the existing state for Parachain and Worker."
-  echo "  -c, --config [Config.json]  Config file for the worker."
-  echo "  -a, --only-worker           Start only the worker"
-  echo "  -x, --chain                 Chain to use for Parachain Deployment"
-  echo "  -p, --parachain-port        Parachain Port Number (default: 9944)"
-  echo "  -h, --parachain-host        Parachain Host Url (default: localhost)"
-  echo "  -v, --copy-from-docker      Copy the binary for Parachain from a docker image (default: litentry/litentry-parachain:tee-prod)"
+  echo "subcommands:"
+  echo "  generate           Generate the parachain and worker systemd files"
+  echo "  restart            Restart the services"
+  echo "  upgrade-worker     Upgrade the worker"
   echo ""
-  echo "Arguments:"
-  echo "  restart            Restart the services."
-  echo "  upgrade-worker     Upgrade the worker."
+  echo "options:"
+  echo "  -h, --help                  Display this help message and exit"
+  echo "  -b, --build                 Build the parachain and worker binaries (default: false)"
+  echo "  -d, --discard               Clean the existing state for parachain and worker (default: false)"
+  echo "  -c, --config <config.json>  Config file for the worker, absolute path is required"
+  echo "  -a, --only-worker           Start only the worker (default: false)"
+  echo "  -x, --chain                 Chain type for launching the parachain network (default: rococo)"
+  echo "  -h, --parachain-host        Parachain ws URL (default: localhost)"
+  echo "  -p, --parachain-port        Parachain ws port (default: 9944)"
+  echo "  -v, --copy-from-docker      Copy the parachain binary from a docker image (default: litentry/litentry-parachain:tee-prod)"
+  echo "  --prod                      Use a prod configuration to build and run the worker (default: false)"
   echo ""
-  echo "Examples:"
+  echo "examples:"
   echo "  ./deploy.sh restart --build --config github-staging-one-worker.json"
   echo "  ./deploy.sh restart --build --config github-staging-one-worker.json --discard"
   echo "  ./deploy.sh upgrade-worker --build --config github-staging-one-worker.json"
   echo ""
-  echo "Additional Information:"
+  echo "notes:"
   echo "  - This script requires an OS that supports systemd."
   echo "  - It is mandatory to provide a JSON config file for the worker."
   echo "  - jq is required to be installed on the system "
   echo ""
-  echo "For more information or assistance, please contact Faisal."
+  echo "For more information or assistance, please contact Litentry parachain team."
+}
+
+function backup_logs {
+  echo "Backing up logs ..."
+  now=$(date +"%Y%m%d-%H%M%S")
+  outdir="$LOG_BACKUP_BASEDIR/log-$now"
+  mkdir -p "$outdir"
+  [ -d "$ROOTDIR/tee-worker/log" ] && cp -r "$ROOTDIR/tee-worker/log" "$outdir"
+  cp "$PARACHAIN_BASEDIR/*.log" "$outdir" || true
+  echo "Logs backed up into $outdir"
+}
+
+function backup_workers {
+  echo "Backing up workers ..."
+  now=$(date +"%Y%m%d-%H%M%S")
+  cd "$WORKER_BASEDIR" || exit
+  for i in $(ls -d * 2>/dev/null); do
+    outdir="$WORKER_BACKUP_BASEDIR/$i-$now"
+    cp -rf "$i" "$outdir"
+    echo "Worker backed up into $outdir"
+  done
+}
+
+function backup_services {
+  echo "Backing up services ..."
+  now=$(date +"%Y%m%d-%H%M%S")
+  cd /etc/systemd/system || exit
+  outdir="$WORKER_BACKUP_BASEDIR/service-$now"
+  mkdir -p "$outdir"
+  for f in para-alice.service relay-alice.service relay-bob.service $(ls worker*.service 2>/dev/null); do
+    cp "$f" "$outdir" || true
+  done
 }
 
 generate_service_file() {
@@ -91,16 +320,22 @@ WantedBy=default.target
   echo "Service file \"${service_filename}\" generated successfully."
 }
 
-# Function responsible for restarting the services
-function restart(){
+function restart {
+  # stop the worker in any case
+  worker_count=$(echo "$CONFIG" | jq '.workers | length')
+  for ((i = 0; i < worker_count; i++)); do
+    systemctl stop "worker${i}".service
+  done
+
+  # additionally stop the 
   if [ "$ONLY_WORKER" = true ]; then
-    stop_running_services
+    stop_services
     echo "Starting only worker"
     print_divider
     restart_worker
     print_divider
   else
-    stop_running_services
+    stop_services
     print_divider
     echo "Launching the system"
     restart_parachain
@@ -112,8 +347,7 @@ function restart(){
   fi
 }
 
-function stop_running_services() {
-  cd /etc/systemd/system 
+function stop_services {
 
   if [ "$ONLY_WORKER" = true ]; then
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
@@ -526,8 +760,6 @@ function migrate_worker(){
   echo "Migration of shards completed"
 }
 
-
-
 function latest_sidechain_sync_block(){
   # Fetch Latest Block Produced
   line=$(grep '\[.*\]$' $ROOTDIR/tee-worker/log/worker0.log | tail -n 1 2>&1)
@@ -572,165 +804,14 @@ function build_parachain(){
 }
 
 function build_worker(){
+  cd $ROOTDIR/tee-worker/ || exit 
+  source /opt/intel/sgxsdk/environment
   if [ "$PRODUCTION" = 1 ]; then
-    cd $ROOTDIR/tee-worker/ || exit 
-    source /opt/intel/sgxsdk/environment
-    SGX_COMMERCIAL_KEY=$ROOTDIR/tee-worker/enclave-runtime/Enclave_private.pem SGX_PRODUCTION=1 make
-  else
-    cd $ROOTDIR/tee-worker/ || exit 
-    source /opt/intel/sgxsdk/environment
-    # It builds in only H/W mode when Non-Production
-    make
+    # we will get an error if SGX_COMMERCIAL_KEY is not for prod
+    export SGX_PRODUCTION=1
   fi
+  make
 
 }
 
-# Default values
-build=false
-discard=false
-config=""
-export CHAIN=rococo
-export ONLY_WORKER=false
-export PARACHAIN_HOST="localhost"
-export PARACHAIN_PORT="9944"
-export DOCKERIMAGE="litentry/litentry-parachain:tee-prod"
-export COPY_FROM_DOCKER=false
-
-# Parse command-line options and arguments
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -h|--help)
-      display_help
-      exit 0
-      ;;
-    -b|--build)
-      build=true
-      shift
-      ;;
-    -d|--discard)
-      discard=true
-      shift
-      ;;
-    -c|--config)
-      if [[ $# -lt 2 ]]; then
-        echo "Error: The config file name is missing."
-        display_help
-        exit 1
-      fi
-      config="$2"
-      shift 2
-      ;;
-    -a|--only-worker)
-      export ONLY_WORKER=true
-      shift
-      ;;
-    -x| --chain)
-      export CHAIN="$2"
-      shift
-      ;;
-    -p| --parachain-port)
-      export PARACHAIN_PORT="$2"
-      shift
-      ;;
-    -z| --parachain-host)
-      export PARACHAIN_HOST="$2"
-      shift
-      ;;
-    -v| --copy-from-docker)
-      export COPY_FROM_DOCKER=true
-      export DOCKERIMAGE="$2"
-      shift
-      ;;
-    restart|upgrade-worker)
-      action="$1"
-      shift
-      ;;
-    *)
-      echo "Error: Unknown option or argument '$1'."
-      display_help
-      exit 1
-      ;;
-  esac
-done
-
-# Create systemd folder for user if not already present
-mkdir -p ~/.config/systemd/user
-
-if [ -n "$config" ]; then
-  echo "Config file: $config"
-fi
-
-CONFIG=$(cat $config)
-export CONFIG
-
-# Move log files to log-backup
-if [ -d "$ROOTDIR/tee-worker/log" ]; then
-  new_folder_name=$(date +"/opt/worker/log-backup/log-%Y%m%d-%H%M%S")
-  mkdir -p $new_folder_name
-  cp -r "$ROOTDIR/tee-worker/log" "$new_folder_name"
-  cp /opt/parachain_dev/*.log $new_folder_name
-  echo "Backup log into $new_folder_name"
-fi
-
-# Backup worker folder
-# Let's backup regardless of root or userspace 
-worker_count=$(echo "$CONFIG" | jq '.workers | length')
-for ((i = 0; i < worker_count; i++)); do
-    if [ -d "/opt/worker/w$i" ]; then
-      new_folder_name=$(date +"/opt/worker/w$i-%Y%m%d-%H%M%S")
-      mkdir -p new_folder_name
-      cp -r /opt/worker/w$i $new_folder_name
-      echo "Backing up, previous worker binary $new_folder_name"
-    fi
-done
-
-
-if [ "$discard" = true ]; then
-  echo "Cleaning the existing state for Parachain and Worker."
-  stop_running_services
-  rm -rf /opt/parachain_dev/ 
-  worker_count=$(echo "$CONFIG" | jq '.workers | length')
-  for ((i = 0; i < worker_count; i++)); do
-    if [ -d "/opt/worker/w$i" ]; then
-      echo "Deleting Previous worker /opt/worker/w$i"
-      rm -r "/opt/worker/w$i"
-    fi
-  done
-fi
-
-# Get old MRENCLAVE
-if [ "$action" = "upgrade-worker" ]; then
-  cd $ROOTDIR/tee-worker || exit 
-  output=$(make mrenclave 2>&1)
-  if [[ $? -eq 0 ]]; then
-    mrenclave_value=$(echo "$output" | awk '{print $2}')
-    echo "MRENCLAVE value: $mrenclave_value"
-    export OLD_MRENCLAVE="$mrenclave_value"
-  else
-    echo "Failed to extract MRENCLAVE value."
-    exit 1
-  fi
-
-  # Fetch Base58 value for MRENCLAVE
-  cd $ROOTDIR/tee-worker/bin || exit 
-  OLD_SHARD=$(./litentry-worker mrenclave)
-  export OLD_SHARD
-  echo "Old Shard value: ${OLD_SHARD}"
-fi
-
-# Focusing on this first 
-if [ "$build" = true ]; then
-  echo "Building the binary for Parachain and Worker."
-  build_parachain
-  build_worker
-fi
-
-echo "Action: $action"
-
-if [ "$action" = "restart" ]; then
-  echo "restarting Services"
-  restart
-elif [ "$action" = "upgrade-worker" ]; then
-  echo "Upgrading Worker"
-  upgrade_worker
-fi
+main "$@"
