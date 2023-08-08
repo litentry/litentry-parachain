@@ -156,7 +156,6 @@ if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then
    # get Sha256 hash of the code 
    TEMP_DIR=$(mktemp -d)
    tar -xzf "$FILENAME" -C "$TEMP_DIR" || { echo "Error extracting '$FILENAME'."; exit 1; }
-   HASH_VALUE=$(find "$TEMP_DIR" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
    FILE=$(cd $TEMP_DIR && ls) 
    HASH_VALUE_ENCLAVE=$(find "$TEMP_DIR/$FILE/enclave.signed.so" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
    HASH_VALUE_WORKER=$(find "$TEMP_DIR/$FILE/litentry-worker" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
