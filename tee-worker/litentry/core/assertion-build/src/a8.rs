@@ -24,7 +24,7 @@ use crate::*;
 use lc_data_providers::achainable::{AchainableAccountTotalTransactions, AchainableClient};
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "Gets the range of number of transactions a user has made for a specific token on all supported networks (invalid transactions are also counted)";
-const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count on Networks";
+const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count";
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who),);
@@ -44,7 +44,11 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	});
 	debug!("Assertion A8 total_transactions: {}", total_txs);
 
-	let networks = networks_set.into_iter().collect::<Vec<Web3Network>>();
+	let networks = if networks_set.is_empty() {
+		req.assertion.get_supported_web3networks()
+	} else {
+		networks_set.into_iter().collect::<Vec<Web3Network>>()
+	};
 
 	let (min, max) = get_total_tx_ranges(total_txs);
 	match Credential::new(&req.who, &req.shard) {

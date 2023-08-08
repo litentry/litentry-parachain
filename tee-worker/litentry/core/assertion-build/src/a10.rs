@@ -29,7 +29,7 @@ use std::string::ToString;
 
 const VC_A10_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
-const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Assertion";
+const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Time";
 
 // WBTC Holder
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
