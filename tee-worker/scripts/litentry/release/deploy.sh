@@ -456,25 +456,6 @@ function upgrade_worker {
   migrate_worker
 }
 
-function stop_old_worker(){
-  TIMEOUT=300  # Timeout in seconds
-  SECONDS=0
-  while (( SECONDS < TIMEOUT )); do
-      LOG_FILE="$ROOTDIR/tee-worker/log/worker0.log"
-        if grep -q "Enclave did not produce sidechain blocks" "$LOG_FILE"; then
-            echo "Enclave has stoppped producing blocks, Stopping it now"
-            WORKER_COUNT=$(echo "$CONFIG" | jq '.workers | length')
-
-            for ((i = 0; i < WORKER_COUNT; i++)); do
-              systemctl stop "worker${i}" 
-            done
-            echo "Sleeping for 120 seconds, So that old worker can be stopped gracefully.."
-            sleep 120
-        fi
-      sleep 10
-  done
-}
-
 # TODO: only works for w0
 function migrate_worker {
   echo "Migrating shards for new worker ..."
