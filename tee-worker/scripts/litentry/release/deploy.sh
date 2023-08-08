@@ -2,6 +2,13 @@
 
 set -euo pipefail
 
+# This script is used to perform actions on the target host, including:
+# - generate: generate the systemd service files from the template
+# - restart: restart the parachain, or the worker, or both
+# - upgrade-worker: uprade the worker0 to the rev in local repo
+#
+# Note: this script must be run with `sudo` or `root`
+
 # ------------------------------
 # path setting
 # ------------------------------
@@ -49,6 +56,12 @@ LATEST_FINALIZED_BLOCK=
 # ------------------------------
 
 function main {
+  # 0/ check if root
+  if [ "$EUID" -ne 0 ]
+    then echo "Please run this script as root"
+    exit 1
+  fi
+
   # 1/ create folders if missing
   for d in "$BASEDIR" "$LOG_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
     "$PARACHAIN_ALICE_BASEDIR" "$WORKER_BASEDIR"; do
@@ -269,6 +282,7 @@ function generate_services {
     echo "Restart the services to take effect"
 }
 
+# TODO: take github rev into consideration
 function build {
   if [ "$BUILD" = true ]; then
     echo "Building the parachain and worker binaries ..."
