@@ -9,6 +9,7 @@ import WebSocketAsPromised from 'websocket-as-promised';
 import os from 'os';
 import { initWorkerConnection, sleep } from './common/utils';
 import { assert } from 'chai';
+import type { HexString } from '@polkadot/util/types';
 
 type WorkerConfig = {
     name: string;
@@ -128,11 +129,11 @@ async function spawnWorkerJob(
     command: Command,
     { workingDir, nodeConfig, workerConfig }: JobConfig,
     subprocessTracker: Set<number>
-): Promise<{ job: ChildProcess; shard: `0x${string}` | undefined }> {
+): Promise<{ job: ChildProcess; shard: HexString | undefined }> {
     const { name } = workerConfig;
     const task = () =>
-        new Promise<{ job: ChildProcess; shard: `0x${string}` | undefined }>((resolve, reject) => {
-            let shard: `0x${string}` | undefined = undefined;
+        new Promise<{ job: ChildProcess; shard: HexString | undefined }>((resolve, reject) => {
+            let shard: HexString | undefined = undefined;
 
             const job = spawn(
                 `./litentry-worker`,
@@ -188,7 +189,7 @@ async function spawnWorkerJob(
                      * as well as the corresponding named capturing groups. See
                      * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
                      */
-                    shard = match.groups!.shard as `0x${string}`;
+                    shard = match.groups!.shard as HexString;
                     return;
                 }
 
@@ -207,7 +208,7 @@ async function spawnWorkerJob(
 }
 
 type WorkerState = {
-    shard: `0x${string}`;
+    shard: HexString;
     job: ChildProcess;
     connection: WebSocketAsPromised;
     latestSeenBlock: number;
@@ -270,7 +271,7 @@ function killWorker(worker: ChildProcess): Promise<void> {
 
 async function latestBlock(
     connection: WebSocketAsPromised,
-    shard: `0x${string}`
+    shard: HexString
 ): Promise<{ result: undefined | { number: number; hash: string } }> {
     return await connection.sendRequest(
         {
@@ -285,7 +286,7 @@ async function latestBlock(
 
 async function waitForBlock(
     connection: WebSocketAsPromised,
-    shard: `0x${string}`,
+    shard: HexString,
     lowerBound: number
 ): Promise<number> {
     const task = async () => {
@@ -303,7 +304,7 @@ async function waitForBlock(
 
 async function waitWorkerProducingBlock(
     connection: WebSocketAsPromised,
-    shard: `0x${string}`,
+    shard: HexString,
     atLeast: number
 ): Promise<number> {
     const currentBlockNumber = await waitForBlock(connection, shard, 0);

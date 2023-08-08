@@ -9,9 +9,9 @@ import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { HexString } from '@polkadot/util/types';
 
 export type EnclaveResult = {
-    mrEnclave: `0x${string}`;
-    shieldingKey: `0x${string}`;
-    vcPubkey: `0x${string}`;
+    mrEnclave: HexString;
+    shieldingKey: HexString;
+    vcPubkey: HexString;
     sgxMetadata: object;
 };
 export type PubicKeyJson = {
