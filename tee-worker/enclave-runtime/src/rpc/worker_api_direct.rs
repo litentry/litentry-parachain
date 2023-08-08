@@ -28,7 +28,7 @@ use ita_sgx_runtime::{Runtime, System};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
-use itp_sgx_crypto::Rsa3072Seal;
+use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_primitives::types::AccountId;
@@ -45,6 +45,7 @@ use its_sidechain::rpc_handler::{
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::debug;
+use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
@@ -62,14 +63,16 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<R, G, S>(
-	top_pool_author: Arc<R>,
-	getter_executor: Arc<G>,
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, S>(
+	top_pool_author: Arc<Author>,
+	getter_executor: Arc<GetterExecutor>,
+	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<S>>,
 ) -> IoHandler
 where
-	R: AuthorApi<H256, H256> + Send + Sync + 'static,
-	G: ExecuteGetter + Send + Sync + 'static,
+	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
+	GetterExecutor: ExecuteGetter + Send + Sync + 'static,
+	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 	S: HandleState + Send + Sync + 'static,
 	S::StateT: SgxExternalitiesTrait,
 {
@@ -82,7 +85,7 @@ where
 	// author_getShieldingKey
 	let rsa_pubkey_name: &str = "author_getShieldingKey";
 	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
-		let rsa_pubkey = match Rsa3072Seal::unseal_pubkey() {
+		let rsa_pubkey = match shielding_key.retrieve_pubkey() {
 			Ok(key) => key,
 			Err(status) => {
 				let error_msg: String = format!("Could not get rsa pubkey due to: {}", status);

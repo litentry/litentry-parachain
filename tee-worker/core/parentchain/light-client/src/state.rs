@@ -26,7 +26,7 @@ use std::{collections::VecDeque, fmt, vec::Vec};
 /// Defines the amount of parentchain headers to keep.
 pub const PARENTCHAIN_HEADER_PRUNING: u64 = 1000;
 
-#[derive(Encode, Decode, Clone, PartialEq)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq)]
 pub struct RelayState<Block: BlockT> {
 	pub genesis_hash: Block::Hash,
 	pub last_finalized_block_header: Block::Header,
@@ -62,7 +62,7 @@ impl<Block: BlockT> RelayState<Block> {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq)]
+#[derive(Encode, Decode, Clone, Eq, PartialEq)]
 pub struct ScheduledChangeAtBlock<Header: HeaderT> {
 	pub at_block: Header::Number,
 	pub next_authority_list: AuthorityList,

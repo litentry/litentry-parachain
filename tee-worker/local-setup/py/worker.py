@@ -199,8 +199,10 @@ class Worker:
             "lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug,",
         )
 
+        worker_cmd = self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags)
+        print("worker command is: "+ str(worker_cmd))
         return Popen(
-            self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags),
+            worker_cmd,
             env=env,
             stdout=log_file,
             stderr=STDOUT,

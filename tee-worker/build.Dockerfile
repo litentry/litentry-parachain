@@ -64,8 +64,9 @@ ENV CARGO_NET_GIT_FETCH_WITH_CLI true
 ARG SGX_MODE=SW
 ENV SGX_MODE=$SGX_MODE
 
-ARG WORKER_FEATURES_ARG
-ENV WORKER_FEATURES=$WORKER_FEATURES_ARG
+ARG SGX_PRODUCTION=0
+ENV SGX_PRODUCTION=$SGX_PRODUCTION
+
 
 ENV HOME=/home/ubuntu/repo
 
@@ -86,10 +87,11 @@ ARG FINGERPRINT=none
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
-RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
-	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db \
+RUN --mount=type=cache,id=cargo-registry-cache,target=/opt/rust/registry/cache,sharing=private \
+	--mount=type=cache,id=cargo-registry-index,target=/opt/rust/registry/index,sharing=private \
+	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db,sharing=private \
 	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
-	echo ${FINGERPRINT} && make && cargo test --release && sccache --show-stats
+	echo ${FINGERPRINT} && make && make identity && cargo test --release && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################

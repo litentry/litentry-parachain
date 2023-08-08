@@ -7,7 +7,7 @@ on:
       - master
       - 'sdk-v[0-9]+.[0-9]+.[0-9]+-*'
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
     branches:
       - master
@@ -37,17 +37,20 @@ jobs:
             mode: sidechain
             host: integritee-builder-sgx
             sgx_mode: HW
+            additional_features: dcap
           - flavor_id: offchain-worker
             mode: offchain-worker
             host: integritee-builder-sgx
             sgx_mode: HW
+            additional_features: dcap
           - flavor_id: teeracle
             mode: teeracle
             host: integritee-builder-sgx
             sgx_mode: HW
+            additional_features: dcap
           - flavor_id: sidechain-evm
             mode: sidechain
-            additional_features: evm
+            additional_features: evm,dcap
             host: integritee-builder-sgx
             sgx_mode: HW
 
@@ -60,7 +63,7 @@ jobs:
           echo "FINGERPRINT=$fingerprint" >> $GITHUB_ENV
           if [[ ${{ matrix.sgx_mode }} == 'HW' ]]; then
              echo "DOCKER_DEVICES=--device=/dev/sgx/enclave --device=/dev/sgx/provision" >> $GITHUB_ENV
-             echo "DOCKER_VOLUMES=--volume /var/run/aesmd:/var/run/aesmd" >> $GITHUB_ENV
+             echo "DOCKER_VOLUMES=--volume /var/run/aesmd:/var/run/aesmd --volume /etc/sgx_default_qcnl.conf:/etc/sgx_default_qcnl.conf" >> $GITHUB_ENV
           else
              echo "DOCKER_DEVICES=" >> $GITHUB_ENV
              echo "DOCKER_VOLUMES=" >> $GITHUB_ENV
@@ -111,6 +114,16 @@ jobs:
         with:
           name: integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
           path: integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }}.tar.gz
+
+      - name: Delete images
+        run: |
+          if [[ "$(docker images -q integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} 2> /dev/null)" != "" ]]; then
+              docker image rmi --force integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} 2>/dev/null
+          fi
+          if [[ "$(docker images -q integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} 2> /dev/null)" != "" ]]; then
+              docker image rmi --force integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} 2>/dev/null
+          fi
+          docker images --all
 
   clippy:
     runs-on: ubuntu-latest
@@ -179,8 +192,8 @@ jobs:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
       COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
-      IAS_EPID_SPID: ${{ secrets.IAS_SPID }}
-      IAS_EPID_KEY: ${{ secrets.IAS_PRIMARY_KEY }}
+      # IAS_EPID_SPID: ${{ secrets.IAS_SPID }}
+      # IAS_EPID_KEY: ${{ secrets.IAS_PRIMARY_KEY }}
       TEERACLE_INTERVAL_SECONDS: 10
 
     strategy:
@@ -244,6 +257,7 @@ jobs:
              echo "SGX_PROVISION=/dev/sgx/provision" >> $GITHUB_ENV
              echo "SGX_ENCLAVE=/dev/sgx/enclave" >> $GITHUB_ENV
              echo "AESMD=/var/run/aesmd" >> $GITHUB_ENV
+             echo "SGX_QCNL=/etc/sgx_default_qcnl.conf" >> $GITHUB_ENV
           fi
 
           echo "LOG_DIR=./logs-$version" >> $GITHUB_ENV
@@ -327,6 +341,12 @@ jobs:
 
       - name: Delete images
         run: |
+          if [[ "$(docker images -q integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} 2> /dev/null)" != "" ]]; then
+              docker image rmi --force integritee-worker-${{ matrix.flavor_id }}-${{ github.sha }} 2>/dev/null
+          fi
+          if [[ "$(docker images -q integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} 2> /dev/null)" != "" ]]; then
+              docker image rmi --force integritee-cli-client-${{ matrix.flavor_id }}-${{ github.sha }} 2>/dev/null
+          fi
           if [[ "$(docker images -q ${{ env.WORKER_IMAGE_TAG }} 2> /dev/null)" != "" ]]; then
              docker image rmi --force ${{ env.WORKER_IMAGE_TAG }} 2>/dev/null
           fi
@@ -338,47 +358,142 @@ jobs:
           fi
           docker images --all
 
+  release-build:
+    runs-on: integritee-builder-sgx
+    name: Release Build of teeracle
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-test, integration-tests]
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor_id: teeracle
+            mode: teeracle
+            sgx_mode: HW
+            additional_features: dcap
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Add masks
+        run: |
+          echo "::add-mask::$VAULT_TOKEN"
+          echo "::add-mask::$PRIVKEY_B64"
+          echo "::add-mask::$PRIVKEY_PASS"
+
+      - name: Set env
+        run: |
+          fingerprint=$RANDOM
+          echo "FINGERPRINT=$fingerprint" >> $GITHUB_ENV
+          if [[ ${{ matrix.sgx_mode }} == 'HW' ]]; then
+              echo "DOCKER_DEVICES=--device=/dev/sgx/enclave --device=/dev/sgx/provision" >> $GITHUB_ENV
+              echo "DOCKER_VOLUMES=--volume /var/run/aesmd:/var/run/aesmd --volume /etc/sgx_default_qcnl.conf:/etc/sgx_default_qcnl.conf" >> $GITHUB_ENV
+          else
+              echo "DOCKER_DEVICES=" >> $GITHUB_ENV
+              echo "DOCKER_VOLUMES=" >> $GITHUB_ENV
+          fi
+          echo "VAULT_TOKEN=$VAULT_TOKEN" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
+          driver: docker-container
+
+      - name: Import secrets
+        uses: hashicorp/vault-action@v2
+        id: import-secrets
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          tlsSkipVerify: false
+          token: ${{ env.VAULT_TOKEN }}
+          exportEnv: false
+          secrets: |
+            ${{ secrets.VAULT_PATH }} intel_sgx_pem_base64 | PRIVKEY_B64 ;
+            ${{ secrets.VAULT_PATH }} password | PRIVKEY_PASS
+
+      - name: Get secrets
+        env:
+          PRIVKEY_B64: ${{ steps.import-secrets.outputs.PRIVKEY_B64 }}
+          PRIVKEY_PASS: ${{ steps.import-secrets.outputs.PRIVKEY_PASS }}
+        run: |
+          echo $PRIVKEY_B64 | base64 --ignore-garbage --decode > enclave-runtime/intel_sgx.pem
+          echo $PRIVKEY_PASS > enclave-runtime/passfile.txt
+
+      - name: Build Worker & Run Cargo Test
+        env:
+          DOCKER_BUILDKIT: 1
+        run: >
+          docker build -t integritee/${{ matrix.flavor_id }}:${{ github.ref_name }}
+          --target deployed-worker
+          --build-arg WORKER_MODE_ARG=${{ matrix.mode }} --build-arg SGX_COMMERCIAL_KEY=enclave-runtime/intel_sgx.pem --build-arg SGX_PASSFILE=enclave-runtime/passfile.txt --build-arg SGX_PRODUCTION=1 --build-arg ADDITIONAL_FEATURES_ARG=${{ matrix.additional_features }} --build-arg SGX_MODE=${{ matrix.sgx_mode }}
+          -f build.Dockerfile .
+
+      - name: Save released teeracle
+        run: |
+            docker image save integritee/${{ matrix.flavor_id }}:${{ github.ref_name }} | gzip > integritee-worker-${{ matrix.flavor_id }}-${{ github.ref_name }}.tar.gz
+            docker images --all
+
+      - name: Upload teeracle image
+        uses: actions/upload-artifact@v3
+        with:
+          name: integritee-worker-${{ matrix.flavor_id }}-${{ github.ref_name }}.tar.gz
+          path: integritee-worker-${{ matrix.flavor_id }}-${{ github.ref_name }}.tar.gz
+
+      - name: Delete images
+        run: |
+            if [[ "$(docker images -q integritee/${{ matrix.flavor_id }}:${{ github.ref_name }} 2> /dev/null)" != "" ]]; then
+                docker image rmi --force integritee/${{ matrix.flavor_id }}:${{ github.ref_name }} 2>/dev/null
+            fi
+            docker images --all
 
   release:
     runs-on: ubuntu-latest
     name: Draft Release
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [build-test, integration-tests]
+    needs: [build-test, integration-tests, release-build]
     outputs:
       release_url: ${{ steps.create-release.outputs.html_url }}
       asset_upload_url: ${{ steps.create-release.outputs.upload_url }}
     steps:
       - uses: actions/checkout@v3
 
-      - name: Download Integritee Service
+      - name: Download Worker Image
         uses: actions/download-artifact@v3
         with:
-          name: integritee-worker-sidechain-${{ github.sha }}
-          path: integritee-worker-tmp
+          name: integritee-worker-teeracle-${{ github.ref_name }}.tar.gz
+          path: .  
 
-      - name: Download Integritee Client
-        uses: actions/download-artifact@v3
-        with:
-          name: integritee-client-sidechain-${{ github.sha }}
-          path: integritee-client-tmp
+      # 
+      # Temporary comment out until we decide what to release
+      #
+      # - name: Download Integritee Service
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: integritee-worker-sidechain-${{ github.sha }}
+      #     path: integritee-worker-tmp
 
-      - name: Download Enclave Signed
-        uses: actions/download-artifact@v3
-        with:
-          name: enclave-signed-sidechain-${{ github.sha }}
-          path: enclave-signed-tmp
+      # - name: Download Integritee Client
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: integritee-client-sidechain-${{ github.sha }}
+      #     path: integritee-client-tmp
 
-      - name: Move service binaries
-        run: mv integritee-worker-tmp/integritee-service ./integritee-demo-validateer
+      # - name: Download Enclave Signed
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: enclave-signed-sidechain-${{ github.sha }}
+      #     path: enclave-signed-tmp
 
-      - name: Move service client binaries
-        run: mv integritee-client-tmp/integritee-cli ./integritee-client
+      # - name: Move service binaries
+      #   run: mv integritee-worker-tmp/integritee-service ./integritee-demo-validateer
 
-      - name: Move service client binaries
-        run: mv enclave-signed-tmp/enclave.signed.so ./enclave.signed.so
+      # - name: Move service client binaries
+      #   run: mv integritee-client-tmp/integritee-cli ./integritee-client
 
-      - name: Create required package.json
-        run: test -f package.json || echo '{}' >package.json
+      # - name: Move service client binaries
+      #   run: mv enclave-signed-tmp/enclave.signed.so ./enclave.signed.so
 
       - name: Changelog
         uses: scottbrenner/generate-changelog-action@master
@@ -397,7 +512,9 @@ jobs:
           body: |
             ${{ steps.Changelog.outputs.changelog }}
           draft: true
+          name: Docker ${{ github.ref_name }}
           files: |
+            integritee-worker-teeracle-${{ github.ref_name }}.tar.gz
             integritee-client
             integritee-demo-validateer
             enclave.signed.so
