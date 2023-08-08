@@ -55,7 +55,7 @@ generate_service_file() {
 Description=${description}
 
 [Service]
-ExecStartPre=/bin/sh -c 'if [ -d $log_file ]; then /bin/mv ${log_file} ${log_file}-backup; fi' 
+ExecStartPre=/bin/sh -c 'if [ -d $log_file ]; then /bin/mv ${log_file} ${log_file}-backup; fi'
 ExecStart=${command}
 WorkingDirectory=${working_directory}
 Restart=always
@@ -71,7 +71,7 @@ Description=${description}
 After=network.target
 
 [Service]
-ExecStartPre=/bin/sh -c 'if [ -d $log_file ]; then /bin/mv ${log_file} ${log_file}-backup; fi' 
+ExecStartPre=/bin/sh -c 'if [ -d $log_file ]; then /bin/mv ${log_file} ${log_file}-backup; fi'
 ExecStart=${command}
 Restart=always
 Environment='RUST_LOG=info,integritee_service=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug'
@@ -84,7 +84,7 @@ StandardError=inherit
 
   service_template+="[Install]
 WantedBy=default.target
-" 
+"
 
   local service_filename="${service_name}.service"
   echo "$service_template" > "$service_filename"
@@ -113,7 +113,7 @@ function restart(){
 }
 
 function stop_running_services() {
-  cd /etc/systemd/system 
+  cd /etc/systemd/system || exit
 
   if [ "$ONLY_WORKER" = true ]; then
     worker_count=$(echo "$CONFIG" | jq '.workers | length')
@@ -178,7 +178,7 @@ function restart_parachain() {
     exit 1
   fi
 
-  cd "$TMPDIR" || exit 
+  cd "$TMPDIR" || exit
 
   echo "starting dev network with binaries ..."
   ROCOCO_CHAINSPEC=rococo-local-chain-spec.json
@@ -197,7 +197,7 @@ function restart_parachain() {
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
 
-  cp ./${service_name}.service /etc/systemd/system/ 
+  cp ./${service_name}.service /etc/systemd/system/
   systemctl daemon-reload
   systemctl start $service_name
 
@@ -213,7 +213,7 @@ function restart_parachain() {
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
 
-  cp ./${service_name}.service /etc/systemd/system/ 
+  cp ./${service_name}.service /etc/systemd/system/
   systemctl daemon-reload
   systemctl start $service_name
 
@@ -228,7 +228,7 @@ function restart_parachain() {
 
   generate_service_file "${service_name}" "${description}" "${command}" "${working_directory}" "${log_file}"
 
-  cp ./${service_name}.service /etc/systemd/system/ 
+  cp ./${service_name}.service /etc/systemd/system/
   systemctl daemon-reload
   systemctl start $service_name
 
@@ -239,15 +239,15 @@ function restart_parachain() {
 
 function register_parachain() {
   echo "register parathread now ..."
-  cd "$ROOTDIR/ts-tests" || exit 
+  cd "$ROOTDIR/ts-tests" || exit
   if [[ -z "${NODE_ENV}" ]]; then
       echo "NODE_ENV=ci" > .env
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
-  # The genesis state path file needs to be updated as it is hardcoded to be /tmp/parachain_dev 
+  # The genesis state path file needs to be updated as it is hardcoded to be /tmp/parachain_dev
   jq --arg genesis_state "$TMPDIR/genesis-state" --arg genesis_wasm "$TMPDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > updated_config.json
-  mv updated_config.json config.ci.json 
+  mv updated_config.json config.ci.json
   corepack yarn
   corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
   print_divider
@@ -255,7 +255,7 @@ function register_parachain() {
   echo "upgrade parathread to parachain now ..."
   # Wait for 90s to allow onboarding finish, after that we do the upgrade
   sleep 90
-  cd "$ROOTDIR/ts-tests" || exit 
+  cd "$ROOTDIR/ts-tests" || exit
   if [[ -z "${NODE_ENV}" ]]; then
       echo "NODE_ENV=ci" > .env
   else
@@ -317,7 +317,7 @@ setup_working_dir() {
 
 function restart_worker() {
   # Need to make sure we have the JSON
-  cd $ROOTDIR || exit 
+  cd $ROOTDIR || exit
   worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
   for ((i = 0; i < worker_count; i++)); do
@@ -326,18 +326,18 @@ function restart_worker() {
     rm -r $ROOTDIR/tee-worker/log/worker${i}.log
     # Prepare the Worker Directory before restarting
     mkdir -p /opt/worker/w${i}
-    setup_working_dir $ROOTDIR/tee-worker/bin /opt/worker/w${i} 
+    setup_working_dir $ROOTDIR/tee-worker/bin /opt/worker/w${i}
 
-    # We only need this in productive enclave 
-    if [ "$PRODUCTION" = true ]; then 
+    # We only need this in productive enclave
+    if [ "$PRODUCTION" = true ]; then
       # Transfer balance to the enclave account that is generated
       echo "Transferring balance to the enclave account"
-      cd $ROOTDIR/scripts/ts-utils/ || exit 
+      cd $ROOTDIR/scripts/ts-utils/ || exit
       yarn install
       npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
-    fi 
+    fi
 
-    cd $ROOTDIR/tee-worker || exit 
+    cd $ROOTDIR/tee-worker || exit
 
     source=$(echo "$CONFIG" | jq -r ".workers[$i].source")
     flags=$(echo "$CONFIG" | jq -r ".workers[$i].flags[]")
@@ -364,10 +364,10 @@ function restart_worker() {
     generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
 
     # Move the service to systemd
-    cp -r "worker${i}.service" /etc/systemd/system 
-    systemctl daemon-reload 
-    echo "Starting worker service" 
-    cd /etc/systemd/system || exit 
+    cp -r "worker${i}.service" /etc/systemd/system
+    systemctl daemon-reload
+    echo "Starting worker service"
+    cd /etc/systemd/system || exit
     systemctl start "worker${i}".service
 
   done
@@ -376,7 +376,7 @@ function restart_worker() {
 # Function responsible for upgrading worker
 function upgrade_worker(){
   echo "Upgrading Worker"
-  cd $ROOTDIR/tee-worker || exit 
+  cd $ROOTDIR/tee-worker || exit
   echo "Fetching New MRENCLAVE Value"
   output=$(make mrenclave 2>&1)
   if [[ $? -eq 0 ]]; then
@@ -401,10 +401,10 @@ function upgrade_worker(){
   latest_parentchain_sync_block
 
   echo "Setting up the new Worker on Chain"
-  cd $ROOTDIR/ts-tests/ || exit 
+  cd $ROOTDIR/ts-tests/ || exit
   corepack yarn install
   corepack yarn setup-enclave $NEW_MRENCLAVE $SCHEDULE_UPDATE_BLOCK
-  # npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT 
+  # npx ts-node setup-enclave.ts  $ENCLAVE_ACCOUNT
 
   echo "Stopping Currently running Worker..."
   stop_old_worker
@@ -413,7 +413,7 @@ function upgrade_worker(){
   migrate_worker
 
 
-  cd $ROOTDIR || exit 
+  cd $ROOTDIR || exit
   worker_count=$(echo "$CONFIG" | jq '.workers | length')
   echo "Worker Count is: ${worker_count}"
 
@@ -421,8 +421,8 @@ function upgrade_worker(){
 
       local WORKERTMPDIR=/opt/worker/w$i
 
-      # Note: The worker doesn't seem to produce light_client_db.bin.1 
-      if [ -d "$WORKERTMPDIR/light_client_db.bin.1" ]; then 
+      # Note: The worker doesn't seem to produce light_client_db.bin.1
+      if [ -d "$WORKERTMPDIR/light_client_db.bin.1" ]; then
         mv $WORKERTMPDIR/light_client_db.bin $WORKERTMPDIR/light_client_db.bin.backup
 
         # Rename the backup file to replace the original file
@@ -473,14 +473,14 @@ function upgrade_worker(){
       local working_directory='/usr/local/bin'
       local log="${ROOTDIR}/tee-worker/log/worker${i}.log"
 
-      echo "Generating service file" 
+      echo "Generating service file"
       generate_service_file "${service_name}" "${description}" "${command_exec}" "${working_directory}" "${log}"
 
 
-      cp -r "worker${i}.service" /etc/systemd/system 
+      cp -r "worker${i}.service" /etc/systemd/system
       systemctl daemon-reload
       echo "Starting worker service"
-      cd /etc/systemd/system || exit 
+      cd /etc/systemd/system || exit
       systemctl start "worker${i}".service
 
     done
@@ -496,7 +496,7 @@ function stop_old_worker(){
             worker_count=$(echo "$CONFIG" | jq '.workers | length')
 
             for ((i = 0; i < worker_count; i++)); do
-              systemctl stop "worker${i}" 
+              systemctl stop "worker${i}"
             done
             echo "Sleeping for 120 seconds, So that old worker can be stopped gracefully.."
             sleep 120
@@ -506,7 +506,7 @@ function stop_old_worker(){
 }
 
 function migrate_worker(){
-  cd $ROOTDIR/tee-worker || exit 
+  cd $ROOTDIR/tee-worker || exit
 
   cp ./bin/integritee-worker /opt/worker/w0
   cp ./bin/enclave.signed.so  /opt/worker/w0
@@ -561,11 +561,11 @@ function build_parachain(){
     docker rm -v $img_id
   else
     if [ "$PRODUCTION" = 1 ]; then
-      cd $ROOTDIR || exit 
+      cd $ROOTDIR || exit
       # It builds without the `tee-dev` feature
       make "build-runtime-$CHAIN"
     else
-      cd $ROOTDIR || exit 
+      cd $ROOTDIR || exit
       make build-node
     fi
   fi
@@ -573,11 +573,11 @@ function build_parachain(){
 
 function build_worker(){
   if [ "$PRODUCTION" = 1 ]; then
-    cd $ROOTDIR/tee-worker/ || exit 
+    cd $ROOTDIR/tee-worker/ || exit
     source /opt/intel/sgxsdk/environment
     SGX_COMMERCIAL_KEY=$ROOTDIR/tee-worker/enclave-runtime/Enclave_private.pem SGX_PRODUCTION=1 make
   else
-    cd $ROOTDIR/tee-worker/ || exit 
+    cd $ROOTDIR/tee-worker/ || exit
     source /opt/intel/sgxsdk/environment
     # It builds in only H/W mode when Non-Production
     make
@@ -673,7 +673,7 @@ if [ -d "$ROOTDIR/tee-worker/log" ]; then
 fi
 
 # Backup worker folder
-# Let's backup regardless of root or userspace 
+# Let's backup regardless of root or userspace
 worker_count=$(echo "$CONFIG" | jq '.workers | length')
 for ((i = 0; i < worker_count; i++)); do
     if [ -d "/opt/worker/w$i" ]; then
@@ -688,7 +688,7 @@ done
 if [ "$discard" = true ]; then
   echo "Cleaning the existing state for Parachain and Worker."
   stop_running_services
-  rm -rf /opt/parachain_dev/ 
+  rm -rf /opt/parachain_dev/
   worker_count=$(echo "$CONFIG" | jq '.workers | length')
   for ((i = 0; i < worker_count; i++)); do
     if [ -d "/opt/worker/w$i" ]; then
@@ -700,7 +700,7 @@ fi
 
 # Get old MRENCLAVE
 if [ "$action" = "upgrade-worker" ]; then
-  cd $ROOTDIR/tee-worker || exit 
+  cd $ROOTDIR/tee-worker || exit
   output=$(make mrenclave 2>&1)
   if [[ $? -eq 0 ]]; then
     mrenclave_value=$(echo "$output" | awk '{print $2}')
@@ -712,13 +712,13 @@ if [ "$action" = "upgrade-worker" ]; then
   fi
 
   # Fetch Base58 value for MRENCLAVE
-  cd $ROOTDIR/tee-worker/bin || exit 
+  cd $ROOTDIR/tee-worker/bin || exit
   OLD_SHARD=$(./integritee-service mrenclave)
   export OLD_SHARD
   echo "Old Shard value: ${OLD_SHARD}"
 fi
 
-# Focusing on this first 
+# Focusing on this first
 if [ "$build" = true ]; then
   echo "Building the binary for Parachain and Worker."
   build_parachain

@@ -61,15 +61,15 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 				Some(WBTC_TOKEN_ADDRESS.into()),
 			);
 
-			match client.is_holder(address, holding) {
-				Ok(is_wbtc_holder) =>
-					if is_wbtc_holder {
-						optimal_hold_index = index;
-						is_hold = true;
+			let is_wbtc_holder = client.is_holder(address, holding).map_err(|e| {
+				error!("Assertion A10 request is_holder error: {:?}", e);
+				Error::RequestVCFailed(Assertion::A10(min_balance.clone()), e.into_error_detail())
+			})?;
+			if is_wbtc_holder {
+				optimal_hold_index = index;
+				is_hold = true;
 
-						break
-					},
-				Err(e) => error!("Assertion A10 request is_holder error: {:?}", e),
+				break
 			}
 		}
 	}
