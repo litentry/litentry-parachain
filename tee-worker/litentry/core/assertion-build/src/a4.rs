@@ -121,18 +121,22 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 					date.to_string(),
 					token.clone(),
 				);
-				match client.is_holder(address, holding) {
-					Ok(is_amount_holder) =>
-						if is_amount_holder {
-							if index < optimal_hold_index {
-								optimal_hold_index = index;
-							}
+				let is_amount_holder = client.is_holder(address, holding).map_err(|e| {
+					error!("Assertion A4 request is_holder error: {:?}", e);
+					Error::RequestVCFailed(
+						Assertion::A4(min_balance.clone()),
+						e.into_error_detail(),
+					)
+				})?;
 
-							is_hold = true;
+				if is_amount_holder {
+					if index < optimal_hold_index {
+						optimal_hold_index = index;
+					}
 
-							break
-						},
-					Err(e) => error!("Assertion A4 request is_holder error: {:?}", e),
+					is_hold = true;
+
+					break
 				}
 			}
 		}

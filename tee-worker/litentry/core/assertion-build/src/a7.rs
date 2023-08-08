@@ -60,15 +60,16 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 				None,
 			);
 
-			match client.is_holder(address, holding) {
-				Ok(is_polkadot_holder) =>
-					if is_polkadot_holder {
-						optimal_hold_index = index;
-						is_hold = true;
+			let is_polkadot_holder = client.is_holder(address, holding).map_err(|e| {
+				error!("Assertion A7 request is_holder error: {:?}", e);
+				Error::RequestVCFailed(Assertion::A7(min_balance.clone()), e.into_error_detail())
+			})?;
 
-						break
-					},
-				Err(e) => error!("Assertion A7 request is_holder error: {:?}", e),
+			if is_polkadot_holder {
+				optimal_hold_index = index;
+				is_hold = true;
+
+				break
 			}
 		}
 	}
