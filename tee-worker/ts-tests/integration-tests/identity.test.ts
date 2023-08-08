@@ -33,8 +33,8 @@ async function getWorkerAddress(context: IntegrationTestContext): Promise<string
     const requestAcc = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
     const resAcc = await sendRequest(context.tee, requestAcc, context.api);
     const workerAcc =  decodeRpcBytesAsString(resAcc.value);
-    console.log("workerAcc", workerAcc.slice(1));
-    return workerAcc.slice(1);
+    console.log("workerAcc", workerAcc);
+    return workerAcc;
 }
 
 async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
