@@ -158,10 +158,8 @@ if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then
    tar -xzf "$FILENAME" -C "$TEMP_DIR" || { echo "Error extracting '$FILENAME'."; exit 1; }
    HASH_VALUE=$(find "$TEMP_DIR" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
    FILE=$(cd $TEMP_DIR && ls) 
-   FILES=$(cd "$TEMP_DIR/$FILE" && ls)
-   echo "$FILES" 
-   # HASH_VALUE_ENCLAVE=$(find "$TEMP_DIR/enclave.signed.so" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
-   # HASH_VALUE_WORKER=$(find "$TEMP_DIR/litentry-worker" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
+   HASH_VALUE_ENCLAVE=$(find "$TEMP_DIR/$FILE/enclave.signed.so" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
+   HASH_VALUE_WORKER=$(find "$TEMP_DIR/$FILE/integritee-service" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
    rm -rf "$TEMP_DIR"
 
    cat << EOF >> "$1" 
@@ -170,7 +168,8 @@ if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then
 <CODEBLOCK>
 rustc                        : $RUSTC_VERSION
 mrenclave                    : $MRENCLAVE
-sha256(enclave)              : $HASH_VALUE
+sha256(enclave)              : $HASH_VALUE_ENCLAVE
+sha256(worker)               : $HASH_VALUE_WORKER
 <CODEBLOCK> 
 
 EOF
