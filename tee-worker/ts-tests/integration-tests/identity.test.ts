@@ -32,8 +32,9 @@ import { decodeRpcBytesAsString } from './common/call';
 async function getEnclaveSignerAccount (context: IntegrationTestContext): Promise<string> {
     const request = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
     const response = await sendRequest(context.tee, request, context.api);
-    console.log("response.status.isOk", response.status.isOk);
-    console.log("status",response.status);
+    if (!response.status.isOk) {
+        throw new Error("Get author_getEnclaveSignerAccount response error!");
+    }
     const enclaveSignerAccount =  decodeRpcBytesAsString(response.value);
     console.log("enclaveSignerAccount", enclaveSignerAccount);
     return enclaveSignerAccount;
@@ -179,11 +180,6 @@ describeLitentry('Test Identity', 0, (context) => {
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
         aliceIdentities = [charlieSubstrateIdentity];
 
-        // TODO: #1899 being lazy - the nonce here is hardcoded
-        //       it's better to retrieve the starting nonce from the sidechain and increment
-        //       it for each such request, similar to the construction of substrate tx
-        //       However, beware that we should query the nonce of the enclave-signer-account
-        //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
         const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], nonce, 'twitter');
 
@@ -250,7 +246,7 @@ describeLitentry('Test Identity', 0, (context) => {
         };
         const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
         nonce = await getNonce(base58mrEnclave, workerAddress, context);
-        console.log("nonce", nonce);
+        console.log("nonce for step link identities", nonce);
         const msg = generateVerificationMessage(
             context,
             bobSubject,
@@ -377,13 +373,8 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const aliceIdentities = [twitterIdentity];
 
-        // TODO: being lazy - the nonce here is hardcoded
-        //       it's better to retrieve the starting nonce from the sidechain and increment
-        //       it for each such request, similar to the construction of substrate tx
-        //       However, beware that we should query the nonce of the enclave-signer-account
-        //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const nonce = await getNonce(base58mrEnclave, workerAddress, context);
-        console.log("nonce 15", nonce);
+        console.log("nonce for step link already linked identity", nonce);
         const aliceTwitterValidations = await buildValidations(
             context,
             [aliceSubject],
