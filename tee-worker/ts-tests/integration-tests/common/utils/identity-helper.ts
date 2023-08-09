@@ -60,6 +60,7 @@ export async function buildIdentityFromKeypair(
                 return 'Substrate';
         }
     })();
+
     const address = signer.getAddressRaw();
     const identity = {
         [type]: address,

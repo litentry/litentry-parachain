@@ -14,7 +14,8 @@ import { aesKey } from '../call';
 import colors from 'colors';
 import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
 import * as polkadotCryptoUtils from '@polkadot/util-crypto';
-
+import { ethers } from 'ethers';
+import { Signer } from './crypto'
 export async function assertFailedEvent(
     context: IntegrationTestContext,
     events: FrameSystemEventRecord[],
@@ -45,25 +46,20 @@ export async function assertFailedEvent(
         );
     }
 }
-export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: KeyringPair, events: any[]) {
+export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
 
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
-        const keyringType = signer.type;
-
-        // evm address should convert to substrate address before compare
-        const who = keyringType === 'ethereum' ? eventData.account.toHuman() : eventData.account.toHex();
-        const signerAddress =
-            keyringType === 'ethereum'
-                ? polkadotCryptoUtils.evmToAddress(signer.address, context.chainIdentifier)
-                : u8aToHex(signer.addressRaw);
-
+        const keyringType = signer.type()
+        // check who is signer
+        const who = eventData.account.toHex();
+        const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
         assert.equal(who, signerAddress);
 
         // check event idGraph
         const expectedPrimeIdentity = await buildIdentityHelper(
-            u8aToHex(signer.addressRaw),
+            u8aToHex(signer.getAddressRaw()),
             keyringType === 'ethereum' ? 'Evm' : 'Substrate',
             context
         );
@@ -270,8 +266,8 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(
         vc.type[0] === 'VerifiableCredential' &&
-            vc.issuer.id === proofJson.verificationMethod &&
-            proofJson.type === 'Ed25519Signature2020'
+        vc.issuer.id === proofJson.verificationMethod &&
+        proofJson.type === 'Ed25519Signature2020'
     ).to.be.true;
     return true;
 }
