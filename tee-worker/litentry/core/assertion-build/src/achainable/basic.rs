@@ -20,7 +20,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::is_uniswap_v2_or_v3_user, *};
+use crate::{achainable::request_uniswap_v2_or_v3_user, *};
+use lc_data_providers::ConvertParameterString;
+use std::string::ToString;
 
 /// NOTE:
 /// Build is uniswap v2/v3 user
@@ -50,7 +52,10 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let flag = is_uniswap_v2_or_v3_user(addresses)?;
+	let achainable_param = AchainableParams::Basic(param.clone());
+	check_uniswap_v23_user_inputs(&achainable_param, &param)?;
+
+	let flag = request_uniswap_v2_or_v3_user(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			let (desc, subtype) = get_uniswap_v23_info();
@@ -62,7 +67,7 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::Basic(param)),
+				Assertion::Achainable(achainable_param),
 				e.into_error_detail(),
 			))
 		},
@@ -76,4 +81,19 @@ fn get_uniswap_v23_info() -> (&'static str, &'static str) {
 	Uniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984.",
 		"Uniswap V2/V3 User",
 	)
+}
+
+fn check_uniswap_v23_user_inputs(
+	achainable_param: &AchainableParams,
+	param: &AchainableBasic,
+) -> Result<bool> {
+	let name = achainable_param.to_string(&param.name)?;
+	if name != "Uniswap V2/V3 user" {
+		return Err(Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			ErrorDetail::StfError(ErrorString::truncate_from("Invalid name".to_string().into())),
+		))
+	}
+
+	Ok(true)
 }
