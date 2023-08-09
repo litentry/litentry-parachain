@@ -30,7 +30,6 @@ use crate::*;
 use lc_data_providers::achainable::{AchainableClient, AchainableTagDeFi, Params};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
-use std::string::ToString;
 
 pub mod amount;
 pub mod amount_holding;
@@ -60,32 +59,18 @@ pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Cre
 	}
 }
 
-pub fn request_achainable(addresses: Vec<String>, param: Params) -> Result<bool> {
-	let mut client: AchainableClient = AchainableClient::new();
-
-	let mut flag = false;
-	for address in &addresses {
-		if flag {
-			break
-		}
-
-		let ret = client.query_system_label(address, param.clone());
-		match ret {
-			Ok(r) => flag = r,
-			Err(e) => error!("Request achainable failed {:?}", e),
-		}
-	}
-
-	Ok(flag)
-}
-
-pub fn is_uniswap_v2_or_v3_user(addresses: Vec<String>) -> Result<bool> {
+pub fn request_achainable(addresses: Vec<String>, param: AchainableParams) -> Result<bool> {
+	let request_param = Params::try_from(param.clone())?;
 	let mut client: AchainableClient = AchainableClient::new();
 
 	for address in &addresses {
-		if client.uniswap_v2_user(address).unwrap_or_default()
-			|| client.uniswap_v3_user(address).unwrap_or_default()
-		{
+		let ret = client.query_system_label(address, request_param.clone()).map_err(|e| {
+			error!("Request achainable failed {:?}", e);
+
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
+
+		if ret {
 			return Ok(true)
 		}
 	}
@@ -93,17 +78,45 @@ pub fn is_uniswap_v2_or_v3_user(addresses: Vec<String>) -> Result<bool> {
 	Ok(false)
 }
 
-const INVALID_CLASS_OF_YEAR: &str = "Invalid";
-pub fn request_achainable_classofyear(addresses: Vec<String>, param: Params) -> (bool, String) {
+pub fn request_uniswap_v2_or_v3_user(
+	addresses: Vec<String>,
+	param: AchainableParams,
+) -> Result<bool> {
+	let _request_param = Params::try_from(param.clone())?;
+
+	let mut client: AchainableClient = AchainableClient::new();
+
+	for address in &addresses {
+		if client.uniswap_v2_user(address).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})? || client.uniswap_v3_user(address).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})? {
+			return Ok(true)
+		}
+	}
+
+	Ok(false)
+}
+
+const INVALID_CLASS_OF_YEAR: &str = "9999-12-31";
+pub fn request_achainable_classofyear(
+	addresses: Vec<String>,
+	param: AchainableParams,
+) -> Result<String> {
+	let request_param = Params::try_from(param.clone())?;
 	let mut client: AchainableClient = AchainableClient::new();
 
 	let mut longest_created_date = INVALID_CLASS_OF_YEAR.into();
 	for address in &addresses {
-		let year = client.query_class_of_year(address, param.clone()).unwrap_or_default();
-		if !year.is_empty() && year < longest_created_date {
+		let year = client.query_class_of_year(address, request_param.clone()).map_err(|e| {
+			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+		})?;
+
+		if year < longest_created_date {
 			longest_created_date = year;
 		}
 	}
 
-	(longest_created_date != *INVALID_CLASS_OF_YEAR.to_string(), longest_created_date)
+	Ok(longest_created_date)
 }
