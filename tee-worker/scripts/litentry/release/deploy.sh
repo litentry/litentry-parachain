@@ -321,7 +321,7 @@ function build {
     echo "Building worker ..."
     cd $ROOTDIR/tee-worker/ || exit 
     source /opt/intel/sgxsdk/environment
-    if [ "$PRODUCTION" = 1 ]; then
+    if [ "$PRODUCTION" = true ]; then
       # we will get an error if SGX_COMMERCIAL_KEY is not set for prod
       export SGX_PRODUCTION=1
     fi
