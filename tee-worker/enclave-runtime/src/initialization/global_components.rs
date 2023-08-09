@@ -61,7 +61,7 @@ use itp_node_api::{
 	metadata::{provider::NodeMetadataRepository, NodeMetadata},
 };
 use itp_nonce_cache::NonceCache;
-use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Rsa3072Seal};
+use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Ed25519Seal, Rsa3072Seal};
 use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,
 	state_getter::StfStateGetter,
@@ -89,7 +89,7 @@ use its_sidechain::{
 };
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
-use sp_core::ed25519::Pair;
+use sp_core::{ed25519, ed25519::Pair};
 
 pub type EnclaveParentchainSigner =
 	itp_node_api::api_client::StaticExtrinsicSigner<Pair, PairSignature>;
@@ -99,6 +99,7 @@ pub type EnclaveTrustedCallSigned = TrustedCallSigned;
 pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Runtime>;
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
+pub type EnclaveSigningKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
 pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
 pub type EnclaveStateSnapshotRepository = StateSnapshotRepository<EnclaveStateFileIo>;
 pub type EnclaveStateObserver = StateObserver<StfState>;
@@ -118,7 +119,8 @@ pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveStf,
 	EnclaveTopPoolAuthor,
 >;
-pub type EnclaveAttestationHandler = IntelAttestationHandler<EnclaveOCallApi>;
+pub type EnclaveAttestationHandler =
+	IntelAttestationHandler<EnclaveOCallApi, EnclaveSigningKeyRepository>;
 
 pub type EnclaveRpcConnectionRegistry = ConnectionRegistry<Hash, ConnectionToken>;
 pub type EnclaveRpcWsHandler =
@@ -234,6 +236,11 @@ pub static GLOBAL_STATE_KEY_REPOSITORY_COMPONENT: ComponentContainer<EnclaveStat
 pub static GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 	EnclaveShieldingKeyRepository,
 > = ComponentContainer::new("Shielding key repository");
+
+/// Signing key repository
+pub static GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
+	EnclaveSigningKeyRepository,
+> = ComponentContainer::new("Signing key repository");
 
 /// O-Call API
 pub static GLOBAL_OCALL_API_COMPONENT: ComponentContainer<EnclaveOCallApi> =

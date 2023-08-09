@@ -25,12 +25,19 @@
         "-p",
         "9944",
         "-r",
-        "3490",
+        "3443",
         "-w",
         "2001",
         "-h",
         "4545",
-        "--ws-external"
+        "--ws-external",
+        "--running-mode",
+        "mock",
+        "--enable-mock-server",
+        "--parentchain-start-block",
+        "0",
+        "--data-dir",
+        "/tmp/data-dir"
       ],
       "subcommand_flags": [
         "--skip-ra",

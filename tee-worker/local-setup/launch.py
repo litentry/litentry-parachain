@@ -195,7 +195,7 @@ def main(processes, config_path, parachain_type, offset, parachain_dir):
         processes.append(run_worker(w_conf, worker_i))
         print()
         # Wait a bit for worker to start up.
-        sleep(5)
+        sleep(300)
 
         idx = 0
         if "-h" in w_conf["flags"]:

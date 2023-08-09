@@ -16,8 +16,7 @@
 
 use crate::utils::DecodeRaw;
 use itp_component_container::ComponentGetter;
-use itp_sgx_crypto::Rsa3072Seal;
-use itp_sgx_io::StaticSealedIO;
+use itp_sgx_crypto::key_repository::AccessKey;
 use lc_data_providers::{DataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
 use log::*;
@@ -78,7 +77,7 @@ fn run_stf_task_handler_internal() -> Result<()> {
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
-	let shielding_key = Rsa3072Seal::unseal_from_static_file().unwrap();
+	let shielding_key = shielding_key_repository.retrieve_key().unwrap();
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
