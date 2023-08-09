@@ -24,6 +24,7 @@ from py.worker import Worker
 from py.helpers import GracefulKiller, mkdir_p
 
 import socket
+import toml
 
 log_dir = "log"
 mkdir_p(log_dir)
@@ -49,7 +50,9 @@ PORTS = [
 def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
     print(f"Setting up worker in {work_dir}")
     print(f"Copying files from {source_dir}")
-    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err)
+
+    log_level_dic = setup_worker_log_level()
+    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err, log_level_dic=log_level_dic)
     worker.init_clean()
     print("Initialized worker.")
     return worker
@@ -163,6 +166,28 @@ def setup_environment(offset, config, parachain_dir):
             flag.replace("$" + p, os.environ.get(p, ""))
             for flag in config["workers"][0]["flags"]
         ]
+
+def setup_worker_log_level():
+    log_level_dic = {}
+    with open("./local-setup/worker-log-level-config.toml") as f:
+        log_data = toml.load(f)
+
+        # Section
+        for (section, item) in log_data.items():
+            log_level_string = "";
+            indx = 0
+
+            for (k, v) in item.items():
+                if indx == 0:
+                    log_level_string += v+","
+                else:
+                    log_level_string += k+"="+v+","
+
+                indx += 1
+                
+            log_level_dic[section] = log_level_string
+    
+    return log_level_dic
 
 
 def main(processes, config_path, parachain_type, offset, parachain_dir):
