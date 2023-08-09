@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use lc_data_providers::{achainable::Params, ConvertParameterString};
+use lc_data_providers::ConvertParameterString;
 
 const VC_SUBJECT_DESCRIPTION: &str = "Achainable amount holding";
 const VC_SUBJECT_TYPE: &str = "Amount holding";
@@ -39,8 +39,7 @@ pub fn build_amount_holding(
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::AmountHolding(param.clone());
-	let request_param = Params::try_from(achainable_param.clone())?;
-	let flag = request_achainable(addresses, request_param)?;
+	let flag = request_achainable(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);

@@ -1124,10 +1124,8 @@ impl AchainableTagDeFi for AchainableClient {
 		let name_provider = "Uniswap V2 liquidity provider";
 		let chain: Web3Network = Web3Network::Ethereum;
 
-		if request_basic_type_with_token(self, address, name_trader, &chain, None)
-			.unwrap_or_default()
-			|| request_basic_type_with_token(self, address, name_provider, &chain, None)
-				.unwrap_or_default()
+		if request_basic_type_with_token(self, address, name_trader, &chain, None)?
+			|| request_basic_type_with_token(self, address, name_provider, &chain, None)?
 		{
 			return Ok(true)
 		}
