@@ -87,9 +87,9 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // check alice
-        await assertInitialIdGraphCreated(context, context.substrateWallet.alice, [respEvents[0]]);
+        await assertInitialIdGraphCreated(context, new PolkadotSigner(context.substrateWallet.alice), [respEvents[0]]);
         // check bob
-        await assertInitialIdGraphCreated(context, context.substrateWallet.bob, [respEvents[1]]);
+        await assertInitialIdGraphCreated(context, new PolkadotSigner(context.substrateWallet.bob), [respEvents[1]]);
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
@@ -198,7 +198,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityLinked']
         );
 
-        await assertLinkedEvent(context, context.substrateWallet.alice, aliceRespEvents, eveIdentities);
+        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.alice), aliceRespEvents, eveIdentities);
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
@@ -256,7 +256,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        await assertLinkedEvent(context, context.substrateWallet.bob, bobRespEvents, charlieIdentities);
+        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.bob), bobRespEvents, charlieIdentities);
     });
 
     step('check IDGraph after LinkIdentity', async function () {

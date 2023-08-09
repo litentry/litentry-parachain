@@ -237,7 +237,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
         // check event data
         assert.equal(linkedIdentityEvents.length, 2);
-        // await assertLinkedEvent(context, new EthersSigner(context.ethersWallet.alice), linkedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
+        await assertLinkedEvent(context, new EthersSigner(context.ethersWallet.alice), linkedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -349,7 +349,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
         assert.equal(deactivatedIdentityEvents.length, 2);
 
-        // await assertIdentity(context, new EthersSigner(context.ethersWallet.alice), deactivatedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
+        await assertIdentity(context, deactivatedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -448,7 +448,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
         assert.equal(activatedIdentityEvents.length, 2);
 
-        // await assertIdentity(context, new EthersSigner(context.ethersWallet.alice), activatedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
+        await assertIdentity(context, activatedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {

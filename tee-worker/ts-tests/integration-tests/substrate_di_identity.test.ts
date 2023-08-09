@@ -189,7 +189,7 @@ describe('Test Identity (direct invocation)', function () {
                 .map(({ event }) => event)
                 .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
 
-            await assertInitialIdGraphCreated(context, wallet, userShieldingKeySetEvents);
+            await assertInitialIdGraphCreated(context, new PolkadotSigner(wallet), userShieldingKeySetEvents);
         });
     });
 
@@ -337,7 +337,7 @@ describe('Test Identity (direct invocation)', function () {
         }
         assert.equal(linkedIdentityEvents.length, 3);
 
-        await assertLinkedEvent(context, context.substrateWallet.alice, linkedIdentityEvents, [
+        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.alice), linkedIdentityEvents, [
             twitterIdentity,
             evmIdentity,
             eveSubstrateIdentity,
@@ -623,7 +623,7 @@ describe('Test Identity (direct invocation)', function () {
         }
         assert.equal(deactivatedIdentityEvents.length, 3);
 
-        await assertIdentity(context, context.substrateWallet.alice, deactivatedIdentityEvents, [
+        await assertIdentity(context, deactivatedIdentityEvents, [
             twitterIdentity,
             evmIdentity,
             eveSubstrateIdentity,
@@ -736,7 +736,7 @@ describe('Test Identity (direct invocation)', function () {
             assert.isTrue(isIdentityActivated);
         }
         assert.equal(activatedIdentityEvents.length, 3);
-        await assertIdentity(context, context.substrateWallet.alice, activatedIdentityEvents, [
+        await assertIdentity(context, activatedIdentityEvents, [
             twitterIdentity,
             evmIdentity,
             eveSubstrateIdentity,

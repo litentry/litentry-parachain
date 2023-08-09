@@ -48,10 +48,10 @@ export async function assertFailedEvent(
 }
 export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
+    const keyringType = signer.type()
 
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
-        const keyringType = signer.type()
         // check who is signer
         const who = eventData.account.toHex();
         const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
@@ -285,7 +285,7 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
 
 export async function assertLinkedEvent(
     context: IntegrationTestContext,
-    signer: KeyringPair,
+    signer: Signer,
     events: any[],
     expectedIdentities: LitentryPrimitivesIdentity[]
 ) {
@@ -293,18 +293,16 @@ export async function assertLinkedEvent(
 
     const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
 
-    const keyringType = signer.type;
+    const keyringType = signer.type();
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
-        // evm address should convert to substrate address before compare
-        const who = keyringType === 'ethereum' ? eventData.account.toHuman() : eventData.account.toHex();
-        const signerEvmToSubstrateAddress =
-            keyringType === 'ethereum'
-                ? polkadotCryptoUtils.evmToAddress(signer.address, context.chainIdentifier)
-                : u8aToHex(signer.addressRaw);
+        // check who is signer
+        const who = eventData.account.toHex();
+        const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
+        assert.equal(who, signerAddress);
 
         // step 1
-        assert.equal(who, signerEvmToSubstrateAddress);
+        assert.equal(who, signerAddress);
 
         // step 2
         // parse event identity
@@ -318,7 +316,7 @@ export async function assertLinkedEvent(
         const eventPrimeIdentity = eventIdGraph[events.length][0];
         // parse event idGraph
         const expectedPrimeIdentity = await buildIdentityHelper(
-            u8aToHex(signer.addressRaw),
+            u8aToHex(signer.getAddressRaw()),
             keyringType === 'ethereum' ? 'Evm' : 'Substrate',
             context
         );
@@ -328,7 +326,7 @@ export async function assertLinkedEvent(
 
         // step 4
         const web3Networks =
-            signer.type === 'ethereum'
+            keyringType === 'ethereum'
                 ? ['Ethereum', 'Polygon', 'BSC']
                 : ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'];
         // parse event web3networks
@@ -350,7 +348,6 @@ export async function assertLinkedEvent(
 
 export async function assertIdentity(
     context: IntegrationTestContext,
-    signer: KeyringPair,
     events: any[],
     expectedIdentities: LitentryPrimitivesIdentity[]
 ) {
