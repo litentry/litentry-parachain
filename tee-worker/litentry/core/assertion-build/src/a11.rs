@@ -29,7 +29,7 @@ use std::string::ToString;
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
-const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
+const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Time";
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A11 build, who: {:?}", account_id_to_string(&req.who),);
@@ -60,15 +60,16 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 				None,
 			);
 
-			match client.is_holder(address, holding) {
-				Ok(is_eth_holder) =>
-					if is_eth_holder {
-						optimal_hold_index = index;
-						is_hold = true;
+			let is_eth_holder = client.is_holder(address, holding).map_err(|e| {
+				error!("Assertion A11 request is_holder error: {:?}", e);
+				Error::RequestVCFailed(Assertion::A11(min_balance.clone()), e.into_error_detail())
+			})?;
 
-						break
-					},
-				Err(e) => error!("Assertion A11 request is_holder error: {:?}", e),
+			if is_eth_holder {
+				optimal_hold_index = index;
+				is_hold = true;
+
+				break
 			}
 		}
 	}

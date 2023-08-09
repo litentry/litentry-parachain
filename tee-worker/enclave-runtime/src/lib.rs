@@ -44,7 +44,8 @@ use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
 		GLOBAL_FULL_PARACHAIN_HANDLER_COMPONENT, GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
 	},
 	rpc::worker_api_direct::sidechain_io_handler,
 	utils::{
@@ -53,7 +54,7 @@ use crate::{
 		get_validator_accessor_from_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
 	},
 };
-use codec::{alloc::string::String, Decode};
+use codec::Decode;
 use itc_parentchain::{
 	block_import_dispatcher::{
 		triggered_dispatcher::TriggerParentchainBlockImport, DispatchBlockImport,
@@ -65,16 +66,21 @@ use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce, GLOBAL_NONCE_CACHE};
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
-use itp_sgx_crypto::{ed25519, Ed25519Seal, Rsa3072Seal};
-use itp_sgx_io::StaticSealedIO;
+use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
 use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
+use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
-use sp_core::crypto::Pair;
 use sp_runtime::traits::BlakeTwo256;
-use std::{boxed::Box, slice, vec::Vec};
+use std::{
+	boxed::Box,
+	path::PathBuf,
+	slice,
+	string::{String, ToString},
+	vec::Vec,
+};
 
 mod attestation;
 mod empty_impls;
@@ -99,6 +105,16 @@ pub mod test;
 pub type Hash = sp_core::H256;
 pub type AuthorityPair = sp_core::ed25519::Pair;
 
+static BASE_PATH: OnceCell<PathBuf> = OnceCell::new();
+
+fn get_base_path() -> Result<PathBuf> {
+	let base_path = BASE_PATH.get().ok_or_else(|| {
+		Error::Other("BASE_PATH not initialized. Broken enclave init flow!".to_string().into())
+	})?;
+
+	Ok(base_path.clone())
+}
+
 /// Initialize the enclave.
 #[no_mangle]
 pub unsafe extern "C" fn init(
@@ -106,8 +122,12 @@ pub unsafe extern "C" fn init(
 	mu_ra_addr_size: u32,
 	untrusted_worker_addr: *const u8,
 	untrusted_worker_addr_size: u32,
+	encoded_base_dir_str: *const u8,
+	encoded_base_dir_size: u32,
 ) -> sgx_status_t {
-	info!("enclave runtime start");
+	// Initialize the logging environment in the enclave.
+	env_logger::init();
+
 	let mu_ra_url =
 		match String::decode(&mut slice::from_raw_parts(mu_ra_addr, mu_ra_addr_size as usize))
 			.map_err(Error::Codec)
@@ -116,7 +136,6 @@ pub unsafe extern "C" fn init(
 			Err(e) => return e.into(),
 		};
 
-	info!("enclave runtime start 2");
 	let untrusted_worker_url = match String::decode(&mut slice::from_raw_parts(
 		untrusted_worker_addr,
 		untrusted_worker_addr_size as usize,
@@ -127,8 +146,22 @@ pub unsafe extern "C" fn init(
 		Err(e) => return e.into(),
 	};
 
-	info!("enclave runtime start 3");
-	match initialization::init_enclave(mu_ra_url, untrusted_worker_url) {
+	let base_dir = match String::decode(&mut slice::from_raw_parts(
+		encoded_base_dir_str,
+		encoded_base_dir_size as usize,
+	))
+	.map_err(Error::Codec)
+	{
+		Ok(b) => b,
+		Err(e) => return e.into(),
+	};
+
+	info!("Setting base_dir to {}", base_dir);
+	let path = PathBuf::from(base_dir);
+	// Litentry: the default value here is only for clippy checking
+	BASE_PATH.set(path.clone()).unwrap_or(());
+
+	match initialization::init_enclave(mu_ra_url, untrusted_worker_url, path) {
 		Err(e) => e.into(),
 		Ok(()) => sgx_status_t::SGX_SUCCESS,
 	}
@@ -139,7 +172,15 @@ pub unsafe extern "C" fn get_rsa_encryption_pubkey(
 	pubkey: *mut u8,
 	pubkey_size: u32,
 ) -> sgx_status_t {
-	let rsa_pubkey = match Rsa3072Seal::unseal_pubkey() {
+	let shielding_key_repository = match GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+
+	let rsa_pubkey = match shielding_key_repository.retrieve_pubkey() {
 		Ok(key) => key,
 		Err(e) => return e.into(),
 	};
@@ -165,18 +206,23 @@ pub unsafe extern "C" fn get_rsa_encryption_pubkey(
 
 #[no_mangle]
 pub unsafe extern "C" fn get_ecc_signing_pubkey(pubkey: *mut u8, pubkey_size: u32) -> sgx_status_t {
-	if let Err(e) = ed25519::create_sealed_if_absent().map_err(Error::Crypto) {
-		return e.into()
-	}
+	let signing_key_repository = match GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get() {
+		Ok(s) => s,
+		Err(e) => {
+			error!("{:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
 
-	let signer = match Ed25519Seal::unseal_from_static_file().map_err(Error::Crypto) {
-		Ok(pair) => pair,
+	let signer_public = match signing_key_repository.retrieve_pubkey() {
+		Ok(s) => s,
 		Err(e) => return e.into(),
 	};
-	debug!("Restored ECC pubkey: {:?}", signer.public());
+
+	debug!("Restored ECC pubkey: {:?}", signer_public);
 
 	let pubkey_slice = slice::from_raw_parts_mut(pubkey, pubkey_size as usize);
-	pubkey_slice.clone_from_slice(&signer.public());
+	pubkey_slice.clone_from_slice(&signer_public);
 
 	sgx_status_t::SGX_SUCCESS
 }
@@ -339,19 +385,22 @@ pub unsafe extern "C" fn init_parentchain_components(
 	let encoded_params = slice::from_raw_parts(params, params_size);
 	let latest_header_slice = slice::from_raw_parts_mut(latest_header, latest_header_size);
 
-	let encoded_latest_header = match initialization::parentchain::init_parentchain_components::<
-		WorkerModeProvider,
-	>(encoded_params.to_vec())
-	{
-		Ok(h) => h,
-		Err(e) => return e.into(),
-	};
+	match init_parentchain_params_internal(encoded_params.to_vec(), latest_header_slice) {
+		Ok(()) => sgx_status_t::SGX_SUCCESS,
+		Err(e) => e.into(),
+	}
+}
 
-	if let Err(e) = write_slice_and_whitespace_pad(latest_header_slice, encoded_latest_header) {
-		return Error::Other(Box::new(e)).into()
-	};
+/// Initializes the parentchain components and writes the latest header into the `latest_header` slice.
+fn init_parentchain_params_internal(params: Vec<u8>, latest_header: &mut [u8]) -> Result<()> {
+	use initialization::parentchain::init_parentchain_components;
 
-	sgx_status_t::SGX_SUCCESS
+	let encoded_latest_header =
+		init_parentchain_components::<WorkerModeProvider>(get_base_path()?, params)?;
+
+	write_slice_and_whitespace_pad(latest_header, encoded_latest_header)?;
+
+	Ok(())
 }
 
 #[no_mangle]

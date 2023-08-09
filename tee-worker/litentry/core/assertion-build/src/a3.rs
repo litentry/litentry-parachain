@@ -59,16 +59,23 @@ pub fn build(
 	let mut client = DiscordLitentryClient::new();
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
-			if let Ok(response) = client.check_id_hubber(
-				guild_id.to_vec(),
-				channel_id.to_vec(),
-				role_id.to_vec(),
-				address.to_vec(),
-			) {
-				if response.data {
-					has_commented = true;
-					break
-				}
+			let resp = client
+				.check_id_hubber(
+					guild_id.to_vec(),
+					channel_id.to_vec(),
+					role_id.to_vec(),
+					address.to_vec(),
+				)
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+						e.into_error_detail(),
+					)
+				})?;
+
+			if resp.data {
+				has_commented = true;
+				break
 			}
 		}
 	}
