@@ -42,10 +42,10 @@ Bulk II identity test: `corepack yarn test-bulk-identity:local`
 
 Bulk II vc test: `corepack yarn test-bulk-vc:local`
 
-Direct invocation substrate identity test: `corepack yarn test-substrate-di-identity:local`
+Direct invocation substrate identity test: `corepack yarn test-substrate-ii-identity:local`
 
-Direct invocation evm identity test: `corepack yarn test-evm-di-identity:local`
+Direct invocation evm identity test: `corepack yarn test-evm-ii-identity:local`
 
-EVM DI examples: `corepack yarn workspace integration-tests evm-di-examples`
+EVM II examples: `corepack yarn workspace integration-tests evm-ii-examples`
 
-Substrate DI examples: `corepack yarn workspace integration-tests substrate-di-examples`
+Substrate II examples: `corepack yarn workspace integration-tests substrate-ii-examples`
