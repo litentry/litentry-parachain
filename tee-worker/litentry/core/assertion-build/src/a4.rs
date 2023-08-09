@@ -72,7 +72,7 @@ use std::string::ToString;
 
 const VC_A4_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
-const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
+const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Time";
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
@@ -121,19 +121,22 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 					date.to_string(),
 					token.clone(),
 				);
-				match client.is_holder(address, holding) {
-					Ok(is_lit_holder) =>
-						if is_lit_holder {
-							if index < optimal_hold_index {
-								optimal_hold_index = index;
-							}
+				let is_amount_holder = client.is_holder(address, holding).map_err(|e| {
+					error!("Assertion A4 request is_holder error: {:?}", e);
+					Error::RequestVCFailed(
+						Assertion::A4(min_balance.clone()),
+						e.into_error_detail(),
+					)
+				})?;
 
-							is_hold = true;
+				if is_amount_holder {
+					if index < optimal_hold_index {
+						optimal_hold_index = index;
+					}
 
-							break
-						},
-					Err(e) =>
-						error!("Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}", e),
+					is_hold = true;
+
+					break
 				}
 			}
 		}

@@ -35,7 +35,9 @@
         "mock",
         "--enable-mock-server",
         "--parentchain-start-block",
-        "0"
+        "0",
+        "--data-dir",
+        "/tmp/data-dir"
       ],
       "subcommand_flags": [
         "--skip-ra",
@@ -61,7 +63,9 @@
         "mock",
         "--enable-mock-server",
         "--parentchain-start-block",
-        "0"
+        "0",
+        "--data-dir",
+        "/tmp/data-dir2"
       ],
       "subcommand_flags": [
         "--skip-ra",

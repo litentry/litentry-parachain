@@ -25,7 +25,9 @@ CHAIN=$1
 POLKADOT_BIN="$2"
 PARACHAIN_BIN="$3"
 
-TMPDIR=/tmp/parachain_dev
+# Check if TMPDIR is already set
+TMPDIR=${TMPDIR:-"/tmp/parachain_dev"}
+
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 ROOTDIR=$(git rev-parse --show-toplevel)
 

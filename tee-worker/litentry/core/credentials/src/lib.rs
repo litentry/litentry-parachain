@@ -480,6 +480,48 @@ impl Credential {
 		self.credential_subject.assertions.push(governance);
 		self.credential_subject.values.push(value);
 	}
+
+	pub fn add_achainable(&mut self, value: bool, from: String, to: String) {
+		let min_item = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from);
+		let max_item = AssertionLogic::new_item("$to_date", Op::LessThan, &to);
+		let and_logic = AssertionLogic::new_and();
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(min_item)
+			.add_item(max_item)
+			.add_item(and_logic);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_content(&mut self, value: bool, content: &str) {
+		let content = AssertionLogic::new_item(content, Op::Equal, "true");
+		let assertion = AssertionLogic::new_and().add_item(content);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_uniswap_v23_info(&mut self, value: bool) {
+		let uniswap_v2 = AssertionLogic::new_item("$is_uniswap_v2_user", Op::Equal, "true");
+		let uniswap_v3 = AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, "true");
+
+		let assertion = AssertionLogic::new_or().add_item(uniswap_v2).add_item(uniswap_v3);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_class_of_year(&mut self, value: bool, date: String) {
+		let mut and_logic = AssertionLogic::new_and();
+
+		let from = AssertionLogic::new_item("$account_created_year", Op::Equal, &date);
+		and_logic = and_logic.add_item(from);
+
+		self.credential_subject.assertions.push(and_logic);
+		self.credential_subject.values.push(value);
+	}
 }
 
 pub enum DID {

@@ -45,7 +45,7 @@ pub mod files {
 	pub const RSA3072_SEALED_KEY_FILE: &str = "rsa3072_key_sealed.bin";
 	pub const SEALED_SIGNER_SEED_FILE: &str = "ed25519_key_sealed.bin";
 	pub const AES_KEY_FILE_AND_INIT_V: &str = "aes_key_sealed.bin";
-	pub const LIGHT_CLIENT_DB: &str = "light_client_db.bin";
+	pub const LIGHT_CLIENT_DB_PATH: &str = "light_client_db.bin";
 	// litentry
 	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
 
@@ -53,8 +53,6 @@ pub mod files {
 
 	// used by worker and enclave
 	pub const SHARDS_PATH: &str = "shards";
-	pub const ENCRYPTED_STATE_FILE: &str = "state.bin";
-	pub const LAST_SLOT_BIN: &str = "last_slot.bin";
 
 	#[cfg(feature = "production")]
 	pub static RA_SPID_FILE: &str = "spid_production.txt";
@@ -104,9 +102,12 @@ pub mod sidechain {
 pub mod enclave {}
 
 /// Settings for the Teeracle
-#[cfg(feature = "teeracle")]
 pub mod teeracle {
 	use core::time::Duration;
 	// Send extrinsic to update market exchange rate on the parentchain once per day
-	pub static DEFAULT_MARKET_DATA_UPDATE_INTERVAL: Duration = Duration::from_secs(86400);
+	pub static DEFAULT_MARKET_DATA_UPDATE_INTERVAL: Duration = ONE_DAY;
+
+	pub static ONE_DAY: Duration = Duration::from_secs(86400);
+
+	pub static THIRTY_MINUTES: Duration = Duration::from_secs(1800);
 }
