@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use lc_data_providers::{achainable::Params, ConvertParameterString};
+use lc_data_providers::ConvertParameterString;
 
 const CREATED_OVER_AMOUNT_CONTRACTS: &str = "Created over {amount} contracts";
 const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
@@ -103,9 +103,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::Amount(param.clone());
-	let request_param = Params::try_from(achainable_param.clone())?;
-
-	let flag = request_achainable(addresses, request_param)?;
+	let flag = request_achainable(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			let (desc, subtype, content) =
