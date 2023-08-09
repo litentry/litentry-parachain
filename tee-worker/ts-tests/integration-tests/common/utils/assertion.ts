@@ -13,8 +13,6 @@ import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
 import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
-import * as polkadotCryptoUtils from '@polkadot/util-crypto';
-import { ethers } from 'ethers';
 import { Signer } from './crypto'
 export async function assertFailedEvent(
     context: IntegrationTestContext,
