@@ -33,7 +33,6 @@ use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519,
 	key_repository::{AccessKey, AccessPubkey},
-	Rsa3072Seal,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
