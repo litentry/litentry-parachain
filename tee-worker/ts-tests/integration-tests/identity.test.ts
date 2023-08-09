@@ -29,19 +29,20 @@ import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 import { decodeRpcBytesAsString } from './common/call';
 
-async function getEnclaveSignerAccount (context: IntegrationTestContext) {
+async function getEnclaveSignerAccount (context: IntegrationTestContext): Promise<string> {
     const request = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
     const response = await sendRequest(context.tee, request, context.api);
-    if (!response.status.isOk) {
-        throw new Error("Get author_getEnclaveSignerAccount response error!");
-    }
-    return response.value;
+    console.log("response.status.isOk", response.status.isOk);
+    console.log("status",response.status);
+    const enclaveSignerAccount =  decodeRpcBytesAsString(response.value);
+    console.log("enclaveSignerAccount", enclaveSignerAccount);
+    return enclaveSignerAccount;
 }
 
 async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
     const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
-    
+    console.log("workerAddr", workerAddr)
     const resHex = res.value.toString();
     let nonce = 0;
     if(resHex){
@@ -67,8 +68,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('init', async () => {
         base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-        const enclaveSignerAccount = decodeRpcBytesAsString(await getEnclaveSignerAccount(context));
-        return enclaveSignerAccount;
+        workerAddress = await getEnclaveSignerAccount (context);
     });
 
     step('check user sidechain storage before create', async function () {
