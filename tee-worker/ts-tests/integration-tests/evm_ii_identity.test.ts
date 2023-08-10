@@ -55,8 +55,8 @@ describe('Test Identity (evm direct invocation)', function () {
 
     before(async () => {
         context = await initIntegrationTestContext(
-            process.env.WORKER_END_POINT!, // @fixme evil assertion; centralize env access
-            process.env.SUBSTRATE_END_POINT!, // @fixme evil assertion; centralize env access
+            process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
+            process.env.NODE_ENDPOINT!, // @fixme evil assertion; centralize env access
             0
         );
         teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
