@@ -68,11 +68,11 @@ pub fn build_class_of_year(
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::ClassOfYear(param);
-	let created_date = request_achainable_classofyear(addresses, achainable_param.clone())?;
+	let (ret, created_date) = request_achainable_classofyear(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_class_of_year(created_date);
+			credential_unsigned.update_class_of_year(ret, created_date);
 
 			Ok(credential_unsigned)
 		},
