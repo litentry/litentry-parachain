@@ -99,24 +99,29 @@ pub fn request_uniswap_v2_or_v3_user(
 	Ok(false)
 }
 
-const INVALID_CLASS_OF_YEAR: &str = "9999-12-31";
+const INVALID_CLASS_OF_YEAR: &str = "Invalid";
 pub fn request_achainable_classofyear(
 	addresses: Vec<String>,
 	param: AchainableParams,
-) -> Result<String> {
+) -> Result<(bool, String)> {
 	let request_param = Params::try_from(param.clone())?;
 	let mut client: AchainableClient = AchainableClient::new();
 
-	let mut longest_created_date = INVALID_CLASS_OF_YEAR.into();
+	let mut longest_created_year = INVALID_CLASS_OF_YEAR.into();
 	for address in &addresses {
 		let year = client.query_class_of_year(address, request_param.clone()).map_err(|e| {
 			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
 		})?;
 
-		if year < longest_created_date {
-			longest_created_date = year;
+		// If parse metadata field error, return Invalid immediately
+		if year.parse::<u32>().is_err() {
+			return Ok((false, INVALID_CLASS_OF_YEAR.into()))
+		}
+
+		if year < longest_created_year {
+			longest_created_year = year;
 		}
 	}
 
-	Ok(longest_created_date)
+	Ok((longest_created_year.parse::<u32>().is_ok(), longest_created_year))
 }
