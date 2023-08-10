@@ -29,7 +29,7 @@ import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 import { decodeRpcBytesAsString } from './common/call';
 
-async function getEnclaveSignerAccount (context: IntegrationTestContext): Promise<string> {
+async function getEnclaveSignerPublicKey (context: IntegrationTestContext): Promise<string> {
     const request = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
     const response = await sendRequest(context.tee, request, context.api);
     if (!response.status.isOk) {
@@ -69,7 +69,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('init', async () => {
         base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-        workerAddress = await getEnclaveSignerAccount (context);
+        workerAddress = await getEnclaveSignerPublicKey (context);
     });
 
     step('check user sidechain storage before create', async function () {
