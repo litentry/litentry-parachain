@@ -35,7 +35,7 @@ async function getEnclaveSignerAccount (context: IntegrationTestContext): Promis
     if (!response.status.isOk) {
         throw new Error("Get author_getEnclaveSignerAccount response error!");
     }
-    const enclaveSignerAccount =  decodeRpcBytesAsString(response.value);
+    const enclaveSignerAccount = decodeRpcBytesAsString(response.value);
     console.log("enclaveSignerAccount", enclaveSignerAccount);
     return enclaveSignerAccount;
 }
@@ -43,7 +43,7 @@ async function getEnclaveSignerAccount (context: IntegrationTestContext): Promis
 async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
     const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
-    console.log("workerAddr", workerAddr)
+    console.log("workerAddr", workerAddr);
     const resHex = res.value.toString();
     let nonce = 0;
     if(resHex){
