@@ -527,14 +527,14 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn update_class_of_year(&mut self, date: String) {
+	pub fn update_class_of_year(&mut self, ret: bool, date: String) {
 		let mut and_logic = AssertionLogic::new_and();
 
 		let from = AssertionLogic::new_item("$account_created_year", Op::Equal, &date);
 		and_logic = and_logic.add_item(from);
 
 		self.credential_subject.assertions.push(and_logic);
-		self.credential_subject.values.push(true);
+		self.credential_subject.values.push(ret);
 	}
 }
 
