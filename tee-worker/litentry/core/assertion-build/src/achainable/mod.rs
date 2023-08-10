@@ -81,22 +81,23 @@ pub fn request_achainable(addresses: Vec<String>, param: AchainableParams) -> Re
 pub fn request_uniswap_v2_or_v3_user(
 	addresses: Vec<String>,
 	param: AchainableParams,
-) -> Result<bool> {
+) -> Result<(bool, bool)> {
 	let _request_param = Params::try_from(param.clone())?;
-
 	let mut client: AchainableClient = AchainableClient::new();
 
+	let mut v2_user = false;
+	let mut v3_user = false;
 	for address in &addresses {
-		if client.uniswap_v2_user(address).map_err(|e| {
+		v2_user |= client.uniswap_v2_user(address).map_err(|e| {
 			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-		})? || client.uniswap_v3_user(address).map_err(|e| {
+		})?;
+
+		v3_user |= client.uniswap_v3_user(address).map_err(|e| {
 			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
-		})? {
-			return Ok(true)
-		}
+		})?
 	}
 
-	Ok(false)
+	Ok((v2_user, v3_user))
 }
 
 const INVALID_CLASS_OF_YEAR: &str = "Invalid";
