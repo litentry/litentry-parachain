@@ -517,14 +517,17 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
-	pub fn update_uniswap_v23_info(&mut self, value: bool) {
-		let uniswap_v2 = AssertionLogic::new_item("$is_uniswap_v2_user", Op::Equal, "true");
-		let uniswap_v3 = AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, "true");
+	pub fn update_uniswap_v23_info(&mut self, v2_user: bool, v3_user: bool) {
+		let uniswap_v2 =
+			AssertionLogic::new_item("$is_uniswap_v2_user", Op::Equal, &v2_user.to_string());
+		let uniswap_v3 =
+			AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, &v3_user.to_string());
 
-		let assertion = AssertionLogic::new_or().add_item(uniswap_v2).add_item(uniswap_v3);
-
+		let assertion = AssertionLogic::new_and().add_item(uniswap_v2).add_item(uniswap_v3);
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(value);
+
+		// Always true
+		self.credential_subject.values.push(true);
 	}
 
 	pub fn update_class_of_year(&mut self, ret: bool, date: String) {

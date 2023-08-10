@@ -55,12 +55,12 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 	let achainable_param = AchainableParams::Basic(param.clone());
 	check_uniswap_v23_user_inputs(&achainable_param, &param)?;
 
-	let flag = request_uniswap_v2_or_v3_user(addresses, achainable_param.clone())?;
+	let (v2_user, v3_user) = request_uniswap_v2_or_v3_user(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			let (desc, subtype) = get_uniswap_v23_info();
 			credential_unsigned.add_subject_info(desc, subtype);
-			credential_unsigned.update_uniswap_v23_info(flag);
+			credential_unsigned.update_uniswap_v23_info(v2_user, v3_user);
 
 			Ok(credential_unsigned)
 		},
