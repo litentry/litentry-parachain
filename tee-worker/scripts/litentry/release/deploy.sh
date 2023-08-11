@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euo pipefail
+set -eo pipefail
 
 # This script is used to perform actions on the target host, including:
 # - generate: generate the systemd service files from the template
@@ -55,14 +55,18 @@ LATEST_FINALIZED_BLOCK=
 # ------------------------------
 
 function main {
-  # 0/ check if root
-  if [ "$EUID" -ne 0 ]
-    then echo "Please run this script as root"
+  # 0/ check if $USER has sudo
+  if sudo -l -U $USER 2>/dev/null | grep -q 'may run the following'; then
+    source /opt/intel/sgxsdk/environment
+  else
+    echo "$USER doesn't have sudo permission"
     exit 1
   fi
 
   # 1/ create folders if missing
-  for d in "$BASEDIR" "$LOG_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
+  sudo mkdir -p "$BASEDIR"
+  sudo chown $USER:$GROUPS "$BASEDIR" 
+  for d in "$LOG_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
     "$PARACHAIN_ALICE_BASEDIR" "$WORKER_BASEDIR"; do
     mkdir -p "$d"
   done
@@ -137,11 +141,7 @@ function main {
   # - having `--discard` together with `upgrade-worker` doesn't make sense
   # - `upgrade-worker` should ignore the `--only-worker` flag
 
-  # 4/ back up logs and workers
-  backup_logs
-  backup_workers
-
-  # 5/ main business logic
+  # 4/ main business logic
   case "$ACTION" in
     generate)
       backup_services
@@ -149,6 +149,8 @@ function main {
       exit
       ;;
     restart)
+      backup_logs
+      backup_workers
       stop_services
       prune
       build
@@ -157,7 +159,8 @@ function main {
       exit
       ;;
     upgrade-worker)
-      stop_services
+      backup_workers
+      stop_worker_services
       get_old_mrenclave
       build
       # TODO: actually we only need the copy-up
@@ -201,9 +204,10 @@ function display_help {
   echo "  --prod                      Use a prod configuration to build and run the worker (default: false)"
   echo ""
   echo "examples:"
-  echo "  ./deploy.sh restart --build --config github-staging-one-worker.json"
-  echo "  ./deploy.sh restart --build --config github-staging-one-worker.json --discard"
-  echo "  ./deploy.sh upgrade-worker --build --config github-staging-one-worker.json"
+  echo "  sudo ./deploy.sh generate --config tmp.json"
+  echo "  sudo ./deploy.sh restart --build --config github-staging-one-worker.json"
+  echo "  sudo ./deploy.sh restart --build --config github-staging-one-worker.json --discard"
+  echo "  sudo ./deploy.sh upgrade-worker --build --config github-staging-one-worker.json"
   echo ""
   echo "notes:"
   echo "  - This script requires an OS that supports systemd."
@@ -213,13 +217,14 @@ function display_help {
   echo "For more information or assistance, please contact Litentry parachain team."
 }
 
+# TODO: in fact, this function only backs up the parachain logs
+#       maybe we want to remove it as it's not so critical anyway 
 function backup_logs {
   echo "Backing up logs ..."
   now=$(date +"%Y%m%d-%H%M%S")
   outdir="$LOG_BACKUP_BASEDIR/log-$now"
   mkdir -p "$outdir"
-  [ -d "$ROOTDIR/tee-worker/log" ] && cp -r "$ROOTDIR/tee-worker/log" "$outdir"
-  cp "$PARACHAIN_BASEDIR/*.log" "$outdir" || true
+  cp "$PARACHAIN_BASEDIR"/*.log "$outdir" || true
   echo "Logs backed up into $outdir"
 }
 
@@ -258,6 +263,7 @@ function generate_services {
     cd "$ROOTDIR/tee-worker/scripts/litentry/release"
     cp template/* .
     sed -i "s/CHAIN/$CHAIN/g" *.service
+    sed -i "s/USER/$USER/g" *.service
     for ((i = 0; i < WORKER_COUNT; i++)); do
       cp worker.service worker$i.service
       sed -i "s/NUMBER/$i/g" worker$i.service
@@ -275,8 +281,9 @@ function generate_services {
       sed -i "s/ARGS/$args/" worker$i.service
     done
     rm worker.service
-    cp *.service -f /etc/systemd/system/
+    sudo cp *.service -f /etc/systemd/system/
     rm *.service
+    sudo systemctl daemon-reload
     echo "Done, please check files under /etc/systemd/system/"
     echo "Restart the services to take effect"
 }
@@ -311,6 +318,7 @@ function build {
       if [ "$PRODUCTION" = true ]; then
         cargo build --locked --profile production
       else
+        pwd
         make build-node
       fi
       cp "$ROOTDIR/target/release/litentry-collator" "$PARACHAIN_BASEDIR"
@@ -320,17 +328,18 @@ function build {
     # build worker
     echo "Building worker ..."
     cd $ROOTDIR/tee-worker/ || exit 
-    source /opt/intel/sgxsdk/environment
     if [ "$PRODUCTION" = true ]; then
       # we will get an error if SGX_COMMERCIAL_KEY is not set for prod
-      export SGX_PRODUCTION=1
+      SGX_PRODUCTION=1 make
+    else
+      # use SW mode for dev
+      SGX_MODE=SW make
     fi
-    make
   fi
 }
 
 function restart_services {
-  systemctl daemon-reload
+  sudo systemctl daemon-reload
   if [ "$ONLY_WORKER" = false ]; then
     echo "Restarting parachain services ..."
 
@@ -339,37 +348,45 @@ function restart_services {
     ./litentry-collator export-genesis-state --chain $CHAIN-dev > genesis-state
     ./litentry-collator export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
 
-    systemctl restart relay-alice.service
-    sleep 10
-    systemctl restart relay-bob.service
-    sleep 10
-    systemctl restart para-alice.service
-    sleep 10
+    sudo systemctl restart relay-alice.service
+    sleep 5
+    sudo systemctl restart relay-bob.service
+    sleep 5
+    sudo systemctl restart para-alice.service
+    sleep 5
     register_parachain
   fi
 
   echo "Restarting worker services ..."
   for ((i = 0; i < WORKER_COUNT; i++)); do
-    systemctl restart "worker$i.service"
+    sudo systemctl restart "worker$i.service"
+    sleep 5
   done
   echo "Done"
 }
 
-function stop_services {
+function stop_worker_services {
   echo "Stopping worker services ..."
   for ((i = 0; i < WORKER_COUNT; i++)); do
-    systemctl stop "worker$i.service"
+    sudo systemctl stop "worker$i.service"
+    sleep 5
   done
+}
 
-  sleep 10
+function stop_parachain_services {
+  echo "Stopping parachain services ..."
+  sudo systemctl stop para-alice.service
+  sudo systemctl stop relay-alice.service
+  sudo systemctl stop relay-bob.service
+}
+
+function stop_services {
+  stop_worker_services
 
   # TODO: it means we can't stop parachain service alone
   #       this needs to be done directly via `systemctl`
   if [ "$ONLY_WORKER" = false ]; then
-    echo "Stopping parachain services ..."
-    systemctl stop para-alice.service
-    systemctl stop relay-alice.service
-    systemctl stop relay-bob.service
+    stop_parachain_services
   fi
 }
 
@@ -401,7 +418,7 @@ function register_parachain {
 }
 
 function setup_working_dir {
-    cd "$ROOT_DIR/tee-worker/bin" || exit
+    cd "$ROOTDIR/tee-worker/bin" || exit
 
     if [ "$PRODUCTION" = false ]; then
       for f in 'key.txt' 'spid.txt'; do
@@ -417,7 +434,7 @@ function setup_working_dir {
       done
 
       cd "$worker_dir"
-      [ -f light_client_db.bin.1 ] && cp -f light_client_db.bin.1 light_client_db.bin
+      [ -f light_client_db.bin/db.bin.backup ] && cp -f light_client_db.bin/db.bin.backup light_client_db.bin/db.bin
 
       enclave_account=$(./litentry-worker signing-key | grep -oP '^Enclave account: \K.*$$')
 

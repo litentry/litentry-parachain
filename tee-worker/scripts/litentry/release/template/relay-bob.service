@@ -3,11 +3,12 @@ Description=Litentry Relaychain Bob
 
 [Service]
 Type=simple
+User=USER
 WorkingDirectory=/opt/litentry/parachain
-ExecStart=./polkadot --base-path /opt/litentry/parachain/relay-bob --chain rococo-local-chain-spec.json --bob --port 30337 --ws-port 9947 --rpc-port 9937
+ExecStart=/opt/litentry/parachain/polkadot --base-path /opt/litentry/parachain/relay-bob --chain /opt/litentry/parachain/rococo-local-chain-spec.json --bob --port 30337 --ws-port 9947 --rpc-port 9937
 Restart=always
 RestartSec=120
-StandardOutput=file:/opt/parachain/relay.bob.log
+StandardOutput=append:/opt/litentry/parachain/relay.bob.log
 StandardError=inherit
 
 [Install]
