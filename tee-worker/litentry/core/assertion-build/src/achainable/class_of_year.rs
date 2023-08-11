@@ -22,7 +22,6 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_classofyear, *};
 use lc_credentials::Credential;
-use lc_data_providers::achainable::Params;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{AchainableClassOfYear, AchainableParams};
 use log::debug;
@@ -68,23 +67,19 @@ pub fn build_class_of_year(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let achainable_param = AchainableParams::ClassOfYear(param.clone());
-	let request_param = Params::try_from(achainable_param)?;
-	// TODO:
-	// Because this is only for the purpose of obtaining created account year, the dates here can be arbitrary
-	let (found, created_date) = request_achainable_classofyear(addresses, request_param);
-
+	let achainable_param = AchainableParams::ClassOfYear(param);
+	let (ret, created_date) = request_achainable_classofyear(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);
-			credential_unsigned.update_class_of_year(found, created_date);
+			credential_unsigned.update_class_of_year(ret, created_date);
 
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
-				Assertion::Achainable(AchainableParams::ClassOfYear(param)),
+				Assertion::Achainable(achainable_param),
 				e.into_error_detail(),
 			))
 		},
