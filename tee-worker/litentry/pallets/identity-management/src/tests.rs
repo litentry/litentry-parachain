@@ -87,7 +87,7 @@ fn link_substrate_identity_works() {
 #[test]
 fn link_evm_identity_works() {
 	new_test_ext(true).execute_with(|| {
-		let web3networks: Vec<Web3Network> = vec![Web3Network::Ethereum, Web3Network::Polygon];
+		let web3networks: Vec<Web3Network> = vec![Web3Network::Ethereum, Web3Network::Bsc];
 		let who: Identity = BOB.into();
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -106,7 +106,7 @@ fn link_evm_identity_works() {
 #[test]
 fn link_identity_with_wrong_network_fails() {
 	new_test_ext(true).execute_with(|| {
-		let web3networks: Vec<Web3Network> = vec![Web3Network::BSC];
+		let web3networks: Vec<Web3Network> = vec![Web3Network::Bsc];
 		let who: Identity = BOB.into();
 		assert_noop!(
 			IMT::link_identity(
@@ -326,7 +326,7 @@ fn set_identity_networks_with_wrong_network_fails() {
 			}
 		);
 
-		let new_networks: _ = vec![Web3Network::BSC, Web3Network::Khala];
+		let new_networks: _ = vec![Web3Network::Bsc, Web3Network::Khala];
 		assert_noop!(
 			IMT::set_identity_networks(
 				RuntimeOrigin::signed(ALICE),

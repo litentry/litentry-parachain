@@ -109,8 +109,7 @@ export default {
                 "Khala",
                 "SubstrateTestnet",
                 "Ethereum",
-                "Polygon",
-                "BSC",
+                "Bsc",
             ],
         },
         LitentryValidationData: {

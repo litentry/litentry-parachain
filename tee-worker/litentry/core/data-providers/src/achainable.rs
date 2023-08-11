@@ -181,8 +181,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 		Web3Network::Khala => "khala".into(),
 		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
 		Web3Network::Ethereum => "ethereum".into(),
-		Web3Network::Polygon => "polygon".into(),
-		Web3Network::BSC => "bsc".into(),
+		Web3Network::Bsc => "bsc".into(),
 	}
 }
 
@@ -850,7 +849,7 @@ impl AchainableTagAccount for AchainableClient {
 	}
 
 	fn address_found_on_bsc(&mut self, address: &str) -> Result<bool, Error> {
-		let param = ParamsBasicType::new("Account found on {chain}".to_string(), &Web3Network::BSC);
+		let param = ParamsBasicType::new("Account found on {chain}".to_string(), &Web3Network::Bsc);
 		check_achainable_label(self, address, Params::ParamsBasicType(param))
 	}
 
@@ -977,7 +976,7 @@ impl AchainableTagBalance for AchainableClient {
 	fn over_100_lit_bep20_amount(&mut self, address: &str) -> Result<bool, Error> {
 		// 100+ LIT BEP20 Holder
 		let name = "BEP20 balance over {amount}".to_string();
-		let chain = Web3Network::BSC;
+		let chain = Web3Network::Bsc;
 		let amount = "100".to_string();
 
 		let param = ParamsBasicTypeWithAmountToken::new(
@@ -1012,7 +1011,7 @@ impl AchainableTagBalance for AchainableClient {
 
 	fn bep20_lit_holder(&mut self, address: &str) -> Result<bool, Error> {
 		let param = ParamsBasicTypeWithAmountHolding::new(
-			&Web3Network::BSC,
+			&Web3Network::Bsc,
 			"10".to_string(),
 			"2022-01-01T00:00:00.000Z".to_string(),
 			Some(LIT_TOKEN_ADDRESS.to_string()),

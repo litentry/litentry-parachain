@@ -212,7 +212,8 @@ export async function runExample(mode: Mode) {
         alice,
         aliceSubject,
         bobSubstrateIdentity.toHex(),
-        parachainApi.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex()
+        parachainApi.createType('Vec<Web3Network>', ['Bsc', 'Ethereum']).toHex(),
+        hash
     );
     res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, setIdentityNetworksCall);
     console.log('setIdentityNetworks call returned', res.toHuman());
@@ -260,4 +261,61 @@ export async function runExample(mode: Mode) {
     k = parachainApi.createType('Option<Bytes>', hexToU8a(res.value.toHex()));
     assert.isTrue(k.isSome);
     assert.equal(k.unwrap().toHex(), keyBob);
+
+    // ==============================================================================
+    // 9. Test request_vc
+    // ==============================================================================
+
+    hash = `0x${crypto.randomBytes(32).toString('hex')}`;
+    nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
+    console.log('request vc for alice ...');
+    const requestVcCall = await createSignedTrustedCallRequestVc(
+        parachainApi,
+        mrenclave,
+        nonce,
+        alice,
+        aliceSubject,
+        parachainApi.createType('Assertion', { A1: null }).toHex(),
+        hash
+    );
+    res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, requestVcCall);
+    console.log('requestVcCall call returned', res.toHuman());
+    assert.isTrue(res.do_watch.isFalse);
+    assert.isTrue(res.status.asTrustedOperationStatus[0].isInSidechainBlock);
+    const requestVcRes = parachainApi.createType('RequestVCResponse', res.value) as unknown as RequestVCResponse;
+    assert.equal(requestVcRes.account.toHex(), u8aToHex(alice.getAddressInSubstrateFormat()));
+    assert.equal(requestVcRes.req_ext_hash.toHex(), hash);
+    aesOutput = parseAesOutput(parachainApi, requestVcRes.vc_payload.toHex());
+    const decryptedVcPayload = u8aToString(hexToU8a(decryptWithAes(aesKey, aesOutput, 'hex')));
+    console.log('decrypted vc payload:', decryptedVcPayload);
+}
+
+function assertPrimeIdentity(
+    idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext],
+    signer: Signer
+) {
+    if (signer.type() === 'ethereum') {
+        assert.isTrue(idgraph[0].isEvm);
+        assert.equal(idgraph[0].asEvm.toHex(), u8aToHex(signer.getAddressRaw()));
+        assert.isTrue(idgraph[1].status.isActive);
+        assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Ethereum', 'Bsc'].toString());
+    } else {
+        assert.isTrue(idgraph[0].isSubstrate);
+        assert.equal(idgraph[0].asSubstrate.toHex(), u8aToHex(signer.getAddressRaw()));
+        assert.isTrue(idgraph[1].status.isActive);
+        assert.equal(
+            idgraph[1].web3networks.toHuman()?.toString(),
+            ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'].toString()
+        );
+    }
+}
+
+function assertLinkedIdentity(
+    idgraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext],
+    address: HexString
+) {
+    assert.isTrue(idgraph[0].isSubstrate);
+    assert.equal(idgraph[0].asSubstrate.toHex(), address);
+    assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Polkadot', 'Litentry'].toString());
+    assert.isTrue(idgraph[1].status.isActive);
 }

@@ -328,7 +328,6 @@ export interface Web3Network extends Enum {
     readonly isKhala: boolean;
     readonly isSubstrateTestnet: boolean;
     readonly isEthereum: boolean;
-    readonly isPolygon: boolean;
     readonly isBsc: boolean;
     readonly type:
         | "Polkadot"
@@ -339,7 +338,6 @@ export interface Web3Network extends Enum {
         | "Khala"
         | "SubstrateTestnet"
         | "Ethereum"
-        | "Polygon"
         | "Bsc";
 }
 

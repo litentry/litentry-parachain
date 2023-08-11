@@ -2943,7 +2943,6 @@ declare module "@polkadot/types/lookup" {
         readonly isKhala: boolean;
         readonly isSubstrateTestnet: boolean;
         readonly isEthereum: boolean;
-        readonly isPolygon: boolean;
         readonly isBsc: boolean;
         readonly type:
             | "Polkadot"
@@ -2954,7 +2953,6 @@ declare module "@polkadot/types/lookup" {
             | "Khala"
             | "SubstrateTestnet"
             | "Ethereum"
-            | "Polygon"
             | "Bsc";
     }
 
