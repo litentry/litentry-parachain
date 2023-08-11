@@ -52,7 +52,6 @@ pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use litentry_primitives::all_evm_web3networks;
 	use log::debug;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
@@ -136,16 +135,19 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			who: Identity,
 			key: UserShieldingKeyType,
+			networks: Vec<Web3Network>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
-			let (prime_id, web3networks) = Self::build_prime_identity_with_networks(&who)?;
-			if IDGraphs::<T>::get(&who, &prime_id).is_none() {
-				let context = <IdentityContext<T>>::new(
-					<frame_system::Pallet<T>>::block_number(),
-					web3networks,
+			ensure!(!who.is_web2(), Error::<T>::NotSupportedIdentity);
+			if IDGraphs::<T>::get(&who, &who).is_none() {
+				ensure!(
+					who.matches_web3networks(networks.as_ref()),
+					Error::<T>::WrongWeb3NetworkTypes
 				);
-				Self::insert_identity_with_limit(&who, &prime_id, context)?;
+				let context =
+					<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), networks);
+				Self::insert_identity_with_limit(&who, &who, context)?;
 			}
 			// we don't care about the current key
 			UserShieldingKeys::<T>::insert(&who, key);
@@ -168,8 +170,7 @@ pub mod pallet {
 				!LinkedIdentities::<T>::contains_key(&identity),
 				Error::<T>::IdentityAlreadyLinked
 			);
-			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
-			ensure!(identity != prime_id, Error::<T>::LinkPrimeIdentityDisallowed);
+			ensure!(identity != who, Error::<T>::LinkPrimeIdentityDisallowed);
 
 			ensure!(
 				identity.matches_web3networks(web3networks.as_ref()),
@@ -192,8 +193,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			let (prime_id, _) = Self::build_prime_identity_with_networks(&who)?;
-			ensure!(identity != prime_id, Error::<T>::DeactivatePrimeIdentityDisallowed);
+			ensure!(identity != who, Error::<T>::DeactivatePrimeIdentityDisallowed);
 
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
@@ -248,19 +248,6 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		// Build the prime identity which might be substrate address32-based or evm address20-based and related networks vec
-		// For the moment, return all available (matching) networks for the prime id
-		fn build_prime_identity_with_networks(
-			identity: &Identity,
-		) -> Result<(Identity, Vec<Web3Network>), DispatchError> {
-			match identity {
-				Identity::Substrate(address) =>
-					Ok((Identity::Substrate(*address), all_substrate_web3networks())),
-				Identity::Evm(address) => Ok((Identity::Evm(*address), all_evm_web3networks())),
-				_ => Err(Error::<T>::NotSupportedIdentity.into()),
-			}
-		}
-
 		fn insert_identity_with_limit(
 			owner: &Identity,
 			identity: &Identity,

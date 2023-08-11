@@ -20,11 +20,14 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self},
+	trusted_call_rpc_response::SetUserShieldingKeyResponse,
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
+use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::types::ShardIdentifier;
+use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, IdentityVerificationRequest, RequestType,
@@ -34,21 +37,81 @@ use litentry_primitives::{
 	Web3Network,
 };
 use log::*;
-use std::vec::Vec;
+use std::{sync::Arc, vec::Vec};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
 		signer: AccountId,
 		who: Identity,
 		key: UserShieldingKeyType,
+		networks: Vec<Web3Network>,
 	) -> StfResult<UserShieldingKeyType> {
 		ensure!(
 			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
 		);
-		IMTCall::set_user_shielding_key { who, key }
+		IMTCall::set_user_shielding_key { who, key, networks }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
+	}
+
+	pub fn handle_set_user_shielding_key<NodeMetadataRepository>(
+		calls: &mut Vec<OpaqueCall>,
+		node_metadata_repo: Arc<NodeMetadataRepository>,
+		signer: Identity,
+		who: Identity,
+		key: UserShieldingKeyType,
+		web3networks: Vec<Web3Network>,
+		hash: H256,
+		rpc_response_value: &mut Vec<u8>,
+	) -> StfResult<()>
+	where
+		NodeMetadataRepository: AccessNodeMetadata,
+		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+	{
+		debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
+		let account = SgxParentchainTypeConverter::convert(
+			who.to_account_id().ok_or(StfError::InvalidAccount)?,
+		);
+		let call_index =
+			node_metadata_repo.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
+
+		let key = Self::set_user_shielding_key_internal(
+			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
+			who.clone(),
+			key,
+			web3networks,
+		)
+		.map_err(|e| {
+			debug!("pushing error event ... error: {}", e);
+			add_call_from_imp_error(
+				calls,
+				node_metadata_repo,
+				Some(account.clone()),
+				e.to_imp_error(),
+				hash,
+			);
+			e
+		})?;
+
+		debug!("pushing user_shielding_key_set event ...");
+		let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+		let encrypted_id_graph = aes_encrypt_default(&key, &id_graph.encode());
+		calls.push(OpaqueCall::from_tuple(&(
+			call_index,
+			account.clone(),
+			encrypted_id_graph.clone(),
+			hash,
+		)));
+
+		debug!("populating user_shielding_key_set rpc reponse ...");
+		let res = SetUserShieldingKeyResponse {
+			account,
+			id_graph: encrypted_id_graph,
+			req_ext_hash: hash,
+		};
+		*rpc_response_value = res.encode();
+		Ok(())
 	}
 
 	#[allow(clippy::too_many_arguments)]
