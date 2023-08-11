@@ -361,7 +361,7 @@ describe('Test Identity (direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [[], ['Ethereum', 'BSC'], ['Polkadot', 'Litentry']];
+        const expectedWeb3Networks = [[], ['Ethereum', 'Bsc'], ['Polkadot', 'Litentry']];
         let currentIndex = 0;
 
         for (const { identity } of linkIdentityRequestParams) {

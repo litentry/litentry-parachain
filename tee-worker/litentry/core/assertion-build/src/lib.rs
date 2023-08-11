@@ -124,7 +124,7 @@ mod tests {
 		let network1: Vec<Web3Network> = vec![];
 		let network2 = vec![Web3Network::Polkadot, Web3Network::Litentry];
 		let network3 = vec![Web3Network::Litentry, Web3Network::Khala, Web3Network::Kusama];
-		let network4 = vec![Web3Network::BSC];
+		let network4 = vec![Web3Network::Bsc];
 
 		identities.push((id1, network1));
 		identities.push((id2, network2));
@@ -141,6 +141,6 @@ mod tests {
 			&(Web3Network::Litentry, vec![[2u8; 32].to_hex(), [3u8; 32].to_hex()])
 		);
 		assert_eq!(result.get(3).unwrap(), &(Web3Network::Khala, vec![[3u8; 32].to_hex()]));
-		assert_eq!(result.get(4).unwrap(), &(Web3Network::BSC, vec![[4u8; 20].to_hex()]));
+		assert_eq!(result.get(4).unwrap(), &(Web3Network::Bsc, vec![[4u8; 20].to_hex()]));
 	}
 }
