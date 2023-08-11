@@ -58,8 +58,7 @@ pub enum Web3Network {
 
 	// evm
 	Ethereum,
-	Polygon,
-	BSC,
+	Bsc,
 }
 
 impl Web3Network {
@@ -74,7 +73,7 @@ impl Web3Network {
 	}
 
 	pub fn is_evm(&self) -> bool {
-		matches!(self, Self::Ethereum | Self::Polygon | Self::BSC)
+		matches!(self, Self::Ethereum | Self::Bsc)
 	}
 }
 
@@ -114,8 +113,7 @@ mod tests {
 					Web3Network::Khala => false,
 					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
-					Web3Network::Polygon => true,
-					Web3Network::BSC => true,
+					Web3Network::Bsc => true,
 				}
 			)
 		})
@@ -135,8 +133,7 @@ mod tests {
 					Web3Network::Khala => true,
 					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
-					Web3Network::Polygon => false,
-					Web3Network::BSC => false,
+					Web3Network::Bsc => false,
 				}
 			)
 		})
