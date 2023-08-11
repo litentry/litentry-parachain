@@ -167,7 +167,7 @@ describe('Test Identity (evm direct invocation)', function () {
             undefined,
             [context.ethersWallet.bob]
         );
-        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Polygon']);
+        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
         linkIdentityRequestParams.push({
             nonce: bobEvmNonce,
             identity: bobEvmIdentity,
@@ -254,7 +254,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
         // according to the order of linkIdentityRequestParams
         const expectedWeb3Networks = [
-            ['Ethereum', 'Polygon'],
+            ['Ethereum', 'Bsc'],
             ['Litentry', 'Khala'],
         ];
         let currentIndex = 0;
