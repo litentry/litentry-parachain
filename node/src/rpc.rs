@@ -94,7 +94,6 @@ pub struct FullDeps<C, P, A: ChainApi> {
 	/// EthFilterApi pool.
 	pub filter_pool: FilterPool,
 	/// Maximum fee history cache size.
-	///
 	pub fee_history_limit: u64,
 	/// Fee history cache.
 	pub fee_history_cache: FeeHistoryCache,
