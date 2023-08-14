@@ -33,7 +33,6 @@ export default {
             getter: "TrustedGetter",
             signature: "LitentryMultiSignature",
         },
-
         //important
         TrustedGetter: {
             _enum: {
@@ -51,15 +50,12 @@ export default {
                 balance_transfer: "(LitentryIdentity, LitentryIdentity, Balance)",
                 balance_unshield: "(LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier)",
                 balance_shield: "(LitentryIdentity, LitentryIdentity, Balance)",
-                set_user_shielding_key:
-                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
-                link_identity:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
+                set_user_shielding_key: "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
+                link_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
-                set_identity_networks:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
+                set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
@@ -86,7 +82,6 @@ export default {
                 Invalid: null,
             },
         },
-
         // identity management
         LitentryIdentity: {
             _enum: {
@@ -143,7 +138,6 @@ export default {
             message: "Vec<u8>",
             signature: "LitentryMultiSignature",
         },
-
         LitentryMultiSignature: {
             _enum: {
                 Ed25519: "ed25519::Signature",
@@ -154,31 +148,26 @@ export default {
             },
         },
         EthereumSignature: "([u8; 65])",
-
         IdentityGenericEvent: {
             who: "AccountId",
             identity: "LitentryIdentity",
             id_graph: "Vec<(LitentryIdentity, IdentityContext)>",
         },
-
         IdentityStatus: {
             _enum: ["Active", "Inactive"],
         },
-
         IdentityContext: {
             link_block: "BlockNumber",
             web3networks: "BoundedWeb3Network",
             status: "IdentityStatus",
         },
         BoundedWeb3Network: "BoundedVec<Web3Network, ConstU32<128>>",
-
         // teerex
         ShardIdentifier: "H256",
         Request: {
             shard: "ShardIdentifier",
             cyphertext: "Vec<u8>",
         },
-
         // vc management
         VCRequested: {
             account: "AccountId",

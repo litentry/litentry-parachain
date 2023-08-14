@@ -1,16 +1,4 @@
-import "@polkadot/api/augment";
-import "@polkadot/types-augment";
-import { ApiOptions, ApiTypes, AugmentedEvent } from "@polkadot/api/types";
-import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
-import type { AnyTuple } from "@polkadot/types/types";
-export type { CorePrimitivesErrorErrorDetail } from "@polkadot/types/lookup";
-export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
-export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "../build/interfaces";
-export type { Codec } from "@polkadot/types/types";
-export type { Bytes } from "@polkadot/types-codec";
-export { ApiPromise, Keyring, WsProvider };
-export declare const definitions: {
+declare const _default: {
     types: {
         WorkerRpcReturnValue: {
             value: string;
@@ -229,9 +217,5 @@ export declare const definitions: {
         };
     };
 };
-type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
-export declare function create(provider: ProviderInterface): Promise<ApiPromise>;
-type GuardType<GuardFunction> = GuardFunction extends (x: any) => x is infer Type ? Type : never;
-type IEventLike = Parameters<AugmentedEvent<never>["is"]>[0];
-export declare function filterEvents<ApiType extends ApiTypes, T extends AnyTuple, N>(eventType: AugmentedEvent<ApiType, T, N>, events: IEventLike[]): GuardType<AugmentedEvent<ApiType, T, N>["is"]>[];
-//# sourceMappingURL=index.d.ts.map
+export default _default;
+//# sourceMappingURL=definitions.d.ts.map
