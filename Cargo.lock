@@ -4215,11 +4215,7 @@ version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb0889898416213fab133e1d33a0e5858a48177452750691bde3666d0fdbaf8b"
 dependencies = [
- "hermit-abi 0.3.1",
- "io-lifetimes",
- "rustix 0.37.20",
  "hermit-abi 0.3.2",
- "io-lifetimes",
  "rustix 0.38.4",
  "windows-sys 0.48.0",
 ]
@@ -10427,12 +10423,8 @@ version = "0.38.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a962918ea88d644592894bc6dc55acc6c0956488adcebbfb6e273506b7fd6e5"
 dependencies = [
- "bitflags",
- "errno",
- "io-lifetimes",
  "bitflags 2.3.3",
  "errno",
- "io-lifetimes",
  "libc",
  "linux-raw-sys 0.4.3",
  "windows-sys 0.48.0",
@@ -12190,7 +12182,6 @@ dependencies = [
  "sp-mmr-primitives",
  "sp-runtime",
  "sp-std",
- "strum",
  "strum 0.24.1",
 ]
 
@@ -12649,14 +12640,12 @@ dependencies = [
  "hash-db",
  "log",
  "parity-scale-codec",
- "scale-info",
  "parking_lot 0.12.1",
  "rand 0.8.5",
  "smallvec",
  "sp-core",
  "sp-externalities",
  "sp-panic-handler",
- "sp-runtime",
  "sp-std",
  "sp-trie",
  "thiserror",
