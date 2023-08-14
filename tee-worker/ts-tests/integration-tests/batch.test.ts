@@ -17,6 +17,7 @@ import { generateWeb3Wallets, assertIdentityLinked, assertIdentityDeactivated } 
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import { Vec } from '@polkadot/types';
 
 describeLitentry('Test Batch Utility', 0, (context) => {
     let identities: LitentryPrimitivesIdentity[] = [];
@@ -57,7 +58,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             const signer = ethereumSigners[index];
             const ethereumIdentity = await buildIdentityHelper(signer.address, 'Evm', context);
             identities.push(ethereumIdentity);
-            we3networks.push(defaultNetworks);
+            we3networks.push(defaultNetworks as unknown as Vec<Web3Network>); // @fixme #1878
             signerIdentities.push(aliceSubject);
         }
 
