@@ -38,9 +38,9 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier};
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
-	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
-	VCMPError, ValidationData, Web3Network,
+	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
+	ErrorDetail, IMPError, Identity, ParentchainAccountId, ParentchainBlockNumber,
+	UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, ValidationData, Web3Network,
 };
 use log::*;
 use sp_core::crypto::AccountId32;
@@ -128,6 +128,13 @@ pub enum TrustedCall {
 	activate_identity(Identity, Identity, Identity, H256),
 	request_vc(Identity, Identity, Assertion, H256),
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
+	set_user_shielding_key_with_networks(
+		Identity,
+		Identity,
+		UserShieldingKeyType,
+		Vec<Web3Network>,
+		H256,
+	),
 
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
@@ -160,6 +167,8 @@ impl TrustedCall {
 			TrustedCall::activate_identity(sender_identity, ..) => sender_identity,
 			TrustedCall::request_vc(sender_identity, ..) => sender_identity,
 			TrustedCall::set_identity_networks(sender_identity, ..) => sender_identity,
+			TrustedCall::set_user_shielding_key_with_networks(sender_identity, ..) =>
+				sender_identity,
 			TrustedCall::link_identity_callback(sender_identity, ..) => sender_identity,
 			TrustedCall::request_vc_callback(sender_identity, ..) => sender_identity,
 			TrustedCall::handle_imp_error(sender_identity, ..) => sender_identity,
@@ -500,48 +509,38 @@ where
 			// the reason that most calls have an internal handling fn is that we want to capture the error and
 			// handle it here to be able to send error events to the parachain
 			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
-				debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
-				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
-				let key = Self::set_user_shielding_key_internal(
-					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who.clone(),
-					key,
-				)
-				.map_err(|e| {
-					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(account.clone()),
-						e.to_imp_error(),
-						hash,
-					);
-					e
-				})?;
-
-				debug!("pushing user_shielding_key_set event ...");
-				let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-				let encrypted_id_graph = aes_encrypt_default(&key, &id_graph.encode());
-				calls.push(OpaqueCall::from_tuple(&(
-					call_index,
-					account.clone(),
-					encrypted_id_graph.clone(),
-					hash,
-				)));
-
-				debug!("populating user_shielding_key_set rpc reponse ...");
-				let res = SetUserShieldingKeyResponse {
-					account,
-					id_graph: encrypted_id_graph,
-					req_ext_hash: hash,
+				let web3networks = match who {
+					Identity::Substrate(..) => all_substrate_web3networks(),
+					Identity::Evm(..) => all_evm_web3networks(),
+					_ => vec![],
 				};
-				rpc_response_value = res.encode();
-				Ok(())
+				Self::handle_set_user_shielding_key(
+					calls,
+					node_metadata_repo,
+					signer,
+					who,
+					key,
+					web3networks,
+					hash,
+					&mut rpc_response_value,
+				)
 			},
+			TrustedCall::set_user_shielding_key_with_networks(
+				signer,
+				who,
+				key,
+				web3networks,
+				hash,
+			) => Self::handle_set_user_shielding_key(
+				calls,
+				node_metadata_repo,
+				signer,
+				who,
+				key,
+				web3networks,
+				hash,
+				&mut rpc_response_value,
+			),
 			TrustedCall::link_identity(
 				signer,
 				who,
@@ -864,6 +863,8 @@ where
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_user_shielding_key_with_networks(..) =>
+				debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>

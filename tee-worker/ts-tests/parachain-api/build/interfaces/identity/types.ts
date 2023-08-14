@@ -260,6 +260,10 @@ export interface TrustedCall extends Enum {
     readonly asSetIdentityNetworks: ITuple<
         [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]
     >;
+    readonly isSetUserShieldingKeyWithNetworks: boolean;
+    readonly asSetUserShieldingKeyWithNetworks: ITuple<
+        [LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256]
+    >;
     readonly type:
         | "BalanceSetBalance"
         | "BalanceTransfer"
@@ -270,7 +274,8 @@ export interface TrustedCall extends Enum {
         | "DeactivateIdentity"
         | "ActivateIdentity"
         | "RequestVc"
-        | "SetIdentityNetworks";
+        | "SetIdentityNetworks"
+        | "SetUserShieldingKeyWithNetworks";
 }
 
 /** @name TrustedCallSigned */
