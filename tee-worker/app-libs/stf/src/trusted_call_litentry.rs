@@ -55,6 +55,7 @@ impl TrustedCallSigned {
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
 	}
 
+	#[allow(clippy::too_many_arguments)]
 	pub fn handle_set_user_shielding_key<NodeMetadataRepository>(
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
