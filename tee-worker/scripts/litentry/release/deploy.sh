@@ -507,7 +507,7 @@ function stop_old_worker(){
 function migrate_worker(){
   cd $ROOTDIR/tee-worker || exit
 
-  cp ./bin/integritee-worker /opt/worker/w0
+  cp ./bin/integritee-service /opt/worker/w0
   cp ./bin/enclave.signed.so  /opt/worker/w0
   cd /opt/worker/w0 || exit
 
