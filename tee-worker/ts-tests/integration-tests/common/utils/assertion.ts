@@ -321,7 +321,7 @@ export async function assertLinkedEvent(
         // step 4
         const web3Networks =
             keyringType === 'ethereum'
-                ? ['Ethereum', 'Polygon', 'BSC']
+                ? ['Ethereum', 'Bsc']
                 : ['Polkadot', 'Kusama', 'Litentry', 'Litmus', 'LitentryRococo', 'Khala', 'SubstrateTestnet'];
         // parse event web3networks
         const eventWeb3Networks = eventIdGraph[events.length][1].web3networks.toHuman();
