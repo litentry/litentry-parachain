@@ -502,7 +502,7 @@ where
 				let web3networks = match who {
 					Identity::Substrate(..) => all_substrate_web3networks(),
 					Identity::Evm(..) => all_evm_web3networks(),
-					_ => vec![], // will trigger an error in the handler
+					_ => vec![],
 				};
 				Self::handle_set_user_shielding_key(
 					calls,
