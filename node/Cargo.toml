@@ -73,8 +73,8 @@ fc-rpc-core = { git = "https://github.com/paritytech/frontier", branch = "polkad
 fc-storage = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39" }
 fp-consensus = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39" }
 fp-rpc = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false }
-pallet-ethereum = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39" }
-pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39" }
+pallet-ethereum = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false }
+pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false }
 
 # evm-tracing
 moonbeam-primitives-ext = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.39" }
