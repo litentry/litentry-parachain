@@ -27,7 +27,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 # EVM/Frontier
-pallet-ethereum = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", features = ["forbid-evm-reentrancy", "runtime-benchmarks"] }
+pallet-ethereum = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", features = ["forbid-evm-reentrancy"] }
 pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", features = ["forbid-evm-reentrancy"] }
 fp-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39" }
 
@@ -37,6 +37,7 @@ runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
+    "pallet-ethereum/runtime-benchmarks",
 ]
 std = [
     "codec/std",
