@@ -21,91 +21,62 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::{
-	graphql::{AchainableQuery, GraphQLClient, VerifiedCredentialsIsHodlerIn},
+	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
 	vec_to_string,
 };
-use litentry_primitives::SupportedNetwork;
-use log::*;
-use std::{string::ToString, vec, vec::Vec};
+use std::string::ToString;
 
 const VC_A7_SUBJECT_DESCRIPTION: &str =
-	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
-const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Assertion";
-const VC_A7_SUBJECT_TAG: [&str; 1] = ["Polkadot"];
+	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
+const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Time";
 
-pub fn build(
-	identities: Vec<Identity>,
-	min_balance: ParameterString,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!(
-		"Assertion A7 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
-	);
+pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
+	debug!("Assertion A7 build, who: {:?}", account_id_to_string(&req.who),);
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A7(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
-	let mut client = GraphQLClient::new();
-	let mut addresses = vec![];
-
-	for id in identities {
-		if let Identity::Substrate { network, address } = id {
-			if matches!(network, SubstrateNetwork::Polkadot) {
-				let mut address = account_id_to_string(address.as_ref());
-				address.insert_str(0, "0x");
-				debug!("Assertion A7 Polkadot address : {}", address);
-
-				addresses.push(address);
-			}
-		}
-	}
+	let mut client = AchainableClient::new();
+	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
+	let addresses = identities
+		.into_iter()
+		.flat_map(|(_, addresses)| addresses)
+		.collect::<Vec<String>>();
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = 0_usize;
+	for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
+		if is_hold {
+			break
+		}
 
-	if !addresses.is_empty() {
-		for (index, from_date) in ASSERTION_FROM_DATE.iter().enumerate() {
-			let vch = VerifiedCredentialsIsHodlerIn::new(
-				addresses.clone(),
-				from_date.to_string(),
-				SupportedNetwork::Polkadot,
-				"".into(),
+		for address in &addresses {
+			let holding = ParamsBasicTypeWithAmountHolding::new(
+				&Web3Network::Polkadot,
 				q_min_balance.to_string(),
+				date.to_string(),
+				None,
 			);
-			match client.verified_credentials_is_hodler(vch) {
-				Ok(is_hodler_out) =>
-					for hodler in is_hodler_out.hodlers.iter() {
-						is_hold = is_hold || hodler.is_hodler;
-					},
-				Err(e) => error!(
-					"Assertion A7 request check_verified_credentials_is_hodler error: {:?}",
-					e
-				),
-			}
 
-			if is_hold {
+			let is_polkadot_holder = client.is_holder(address, holding).map_err(|e| {
+				error!("Assertion A7 request is_holder error: {:?}", e);
+				Error::RequestVCFailed(Assertion::A7(min_balance.clone()), e.into_error_detail())
+			})?;
+
+			if is_polkadot_holder {
 				optimal_hold_index = index;
+				is_hold = true;
+
 				break
 			}
 		}
 	}
 
-	match Credential::new_default(who, shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A7_SUBJECT_DESCRIPTION,
-				VC_A7_SUBJECT_TYPE,
-				VC_A7_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A7_SUBJECT_DESCRIPTION, VC_A7_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

@@ -15,6 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::large_enum_variant)]
+#![allow(clippy::result_large_err)]
 
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -50,7 +52,10 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail};
+use litentry_primitives::{
+	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
+	VCMPError,
+};
 use std::{
 	format,
 	string::{String, ToString},
@@ -61,48 +66,50 @@ use url::Url;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
-pub mod twitter_litentry;
 pub mod twitter_official;
-
-pub mod graphql;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
+pub const LIT_TOKEN_ADDRESS: &str = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723";
+pub const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+pub const WETH_TOKEN_ADDRESS: &str = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+pub const UNISWAP_TOKEN_ADDRESS: &str = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+pub const USDT_TOKEN_ADDRESS: &str = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
-pub struct DataProvidersStatic {
+pub struct DataProviderConfig {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,
 	pub twitter_auth_token_v2: String,
-	pub twitter_auth_token_v1_1: String,
 	pub discord_official_url: String,
 	pub discord_litentry_url: String,
 	pub discord_auth_token: String,
-	pub graphql_url: String,
-	pub graphql_auth_key: String,
+	pub achainable_url: String,
+	pub achainable_auth_key: String,
 	pub credential_endpoint: String,
-	pub achainable_rest_key: String,
 }
-impl Default for DataProvidersStatic {
+
+impl Default for DataProviderConfig {
 	fn default() -> Self {
 		Self::new()
 	}
 }
-impl DataProvidersStatic {
+
+impl DataProviderConfig {
 	pub fn new() -> Self {
-		DataProvidersStatic {
+		DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
 			twitter_litentry_url: "".to_string(),
 			twitter_auth_token_v2: "Bearer ".to_string(),
-			twitter_auth_token_v1_1: "Bearer ".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
 			discord_litentry_url: "".to_string(),
 			discord_auth_token: "".to_string(),
-			graphql_url: "https://graph.tdf-labs.io/".to_string(),
-			graphql_auth_key: "".to_string(),
+			achainable_url: "https://graph.tdf-labs.io/".to_string(),
+			achainable_auth_key: "".to_string(),
 			credential_endpoint: "".to_string(),
-			achainable_rest_key: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -117,10 +124,6 @@ impl DataProvidersStatic {
 		debug!("set_twitter_auth_token_v2: {:?}", v);
 		self.twitter_auth_token_v2 = v;
 	}
-	pub fn set_twitter_auth_token_v1_1(&mut self, v: String) {
-		debug!("set_twitter_auth_token_v1_1: {:?}", v);
-		self.twitter_auth_token_v1_1 = v;
-	}
 	pub fn set_discord_official_url(&mut self, v: String) {
 		debug!("set_discord_official_url: {:?}", v);
 		self.discord_official_url = v;
@@ -133,27 +136,23 @@ impl DataProvidersStatic {
 		debug!("set_discord_auth_token: {:?}", v);
 		self.discord_auth_token = v;
 	}
-	pub fn set_graphql_url(&mut self, v: String) {
-		debug!("set_graphql_url: {:?}", v);
-		self.graphql_url = v;
+	pub fn set_achainable_url(&mut self, v: String) {
+		debug!("set_achainable_url: {:?}", v);
+		self.achainable_url = v;
 	}
-	pub fn set_graphql_auth_key(&mut self, v: String) {
-		debug!("set_graphql_auth_key: {:?}", v);
-		self.graphql_auth_key = v;
+	pub fn set_achainable_auth_key(&mut self, v: String) {
+		debug!("set_achainable_auth_key: {:?}", v);
+		self.achainable_auth_key = v;
 	}
 	pub fn set_credential_endpoint(&mut self, v: String) {
 		debug!("set_credential_endpoint: {:?}", v);
 		self.credential_endpoint = v;
 	}
-	pub fn set_achainable_rest_key(&mut self, v: String) {
-		debug!("set_achainable_rest_key: {:?}", v);
-		self.achainable_rest_key = v;
-	}
 }
 
 lazy_static! {
-	pub static ref G_DATA_PROVIDERS: RwLock<DataProvidersStatic> =
-		RwLock::new(DataProvidersStatic::new());
+	pub static ref GLOBAL_DATA_PROVIDER_CONFIG: RwLock<DataProviderConfig> =
+		RwLock::new(DataProviderConfig::new());
 }
 
 #[derive(Debug, thiserror::Error, Clone)]
@@ -164,8 +163,8 @@ pub enum Error {
 	#[error("UTF8 error: {0}")]
 	Utf8Error(String),
 
-	#[error("GraphQL error: {0}")]
-	GraphQLError(String),
+	#[error("Achainable error: {0}")]
+	AchainableError(String),
 }
 
 impl IntoErrorDetail for Error {
@@ -194,4 +193,16 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)
+}
+
+pub trait ConvertParameterString {
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError>;
+}
+
+impl ConvertParameterString for AchainableParams {
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError> {
+		vec_to_string(field.to_vec()).map_err(|_| {
+			VCMPError::RequestVCFailed(Assertion::Achainable(self.clone()), ErrorDetail::ParseError)
+		})
+	}
 }

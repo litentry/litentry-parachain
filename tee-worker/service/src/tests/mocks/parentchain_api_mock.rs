@@ -14,22 +14,14 @@
 	limitations under the License.
 
 */
-
-use codec::{Decode, Encode};
-use frame_metadata::{
-	v14::{ExtrinsicMetadata, PalletEventMetadata, PalletMetadata, RuntimeMetadataV14},
-	RuntimeMetadataPrefixed,
+use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
+use itp_node_api::api_client::{ApiResult, ChainApi, SignedBlock};
+use itp_types::{
+	parentchain::{Hash, Header, StorageProof},
+	H256,
 };
-use itc_parentchain_test::{
-	parentchain_block_builder::ParentchainBlockBuilder,
-	parentchain_header_builder::ParentchainHeaderBuilder,
-};
-use itp_node_api::api_client::{ApiResult, ChainApi, StorageProof};
-use itp_types::{Header, SignedBlock, H256};
-use scale_info::{meta_type, TypeInfo};
 use sp_finality_grandpa::AuthorityList;
-use std::convert::TryFrom;
-use substrate_api_client::{Events, Metadata};
+use substrate_api_client::{Error::Metadata, Events, MetadataError::PalletNotFound};
 
 pub struct ParentchainApiMock {
 	parentchain: Vec<SignedBlock>,
@@ -52,48 +44,20 @@ impl ParentchainApiMock {
 	}
 }
 
-// Build fake metadata consisting of a single pallet that knows
-/// about the event type provided.
-fn metadata<E: TypeInfo + 'static>() -> Metadata {
-	let pallets = vec![PalletMetadata {
-		name: "Test",
-		storage: None,
-		calls: None,
-		event: Some(PalletEventMetadata { ty: meta_type::<E>() }),
-		constants: vec![],
-		error: None,
-		index: 0,
-	}];
-
-	let extrinsic =
-		ExtrinsicMetadata { ty: meta_type::<()>(), version: 0, signed_extensions: vec![] };
-
-	let v14 = RuntimeMetadataV14::new(pallets, extrinsic, meta_type::<()>());
-	let runtime_metadata: RuntimeMetadataPrefixed = v14.into();
-
-	Metadata::try_from(runtime_metadata).unwrap()
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Decode, Encode, TypeInfo)]
-enum Event {
-	A(u8),
-	B(bool),
-}
-
 impl ChainApi for ParentchainApiMock {
 	fn last_finalized_block(&self) -> ApiResult<Option<SignedBlock>> {
 		Ok(self.parentchain.last().cloned())
 	}
 
-	fn signed_block(&self, _hash: Option<H256>) -> ApiResult<Option<SignedBlock>> {
+	fn signed_block(&self, _hash: Option<Hash>) -> ApiResult<Option<SignedBlock>> {
 		todo!()
 	}
 
-	fn get_genesis_hash(&self) -> ApiResult<H256> {
+	fn get_genesis_hash(&self) -> ApiResult<Hash> {
 		todo!()
 	}
 
-	fn get_header(&self, _header_hash: Option<H256>) -> ApiResult<Option<Header>> {
+	fn header(&self, _header_hash: Option<Hash>) -> ApiResult<Option<Header>> {
 		todo!()
 	}
 
@@ -113,16 +77,25 @@ impl ChainApi for ParentchainApiMock {
 		todo!()
 	}
 
-	fn grandpa_authorities(&self, _hash: Option<H256>) -> ApiResult<AuthorityList> {
+	fn grandpa_authorities(&self, _hash: Option<Hash>) -> ApiResult<AuthorityList> {
 		todo!()
 	}
 
-	fn grandpa_authorities_proof(&self, _hash: Option<H256>) -> ApiResult<StorageProof> {
+	fn grandpa_authorities_proof(&self, _hash: Option<Hash>) -> ApiResult<StorageProof> {
 		todo!()
 	}
 
-	fn events(&self, _hash: Option<H256>) -> ApiResult<Events> {
-		let metadata = metadata::<Event>();
-		Ok(Events::new(metadata, H256::default(), vec![].into()))
+	fn get_events_value_proof(&self, _block_hash: Option<H256>) -> ApiResult<StorageProof> {
+		Ok(Default::default())
 	}
+
+	fn get_events_for_block(&self, _block_hash: Option<H256>) -> ApiResult<Vec<u8>> {
+		Ok(Default::default())
+	}
+
+	// fn events(&self, _hash: Option<H256>) -> ApiResult<Events<H256>> {
+	// 	// let metadata = metadata::<Event>();
+	// 	// Ok(Events::new(metadata, H256::default(), vec![].into()))
+	// 	Err(Metadata(PalletNotFound("abc".to_string())))
+	// }
 }

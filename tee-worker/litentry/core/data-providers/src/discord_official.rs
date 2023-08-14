@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, G_DATA_PROVIDERS};
+use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER_CONFIG};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -40,8 +40,6 @@ pub struct DiscordMessage {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessageAuthor {
 	pub id: String, //user_id
-	// NOTE: username doesn't contain discriminator(the user's 4-digit discord-tag),
-	// so it can't compared with user handler
 	pub username: String,
 }
 
@@ -86,10 +84,15 @@ impl DiscordOfficialClient {
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			G_DATA_PROVIDERS.read().unwrap().discord_auth_token.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().discord_auth_token.clone().as_str(),
 		);
 		let client = build_client(
-			G_DATA_PROVIDERS.read().unwrap().discord_official_url.clone().as_str(),
+			GLOBAL_DATA_PROVIDER_CONFIG
+				.read()
+				.unwrap()
+				.discord_official_url
+				.clone()
+				.as_str(),
 			headers,
 		);
 		DiscordOfficialClient { client }
@@ -125,15 +128,13 @@ impl DiscordOfficialClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use itp_stf_primitives::types::AccountId;
 	use lc_mock_server::{default_getter, run};
-	use litentry_primitives::{Identity, UserShieldingKeyNonceType};
 	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
-		G_DATA_PROVIDERS.write().unwrap().set_discord_official_url(url.clone());
+		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_discord_official_url(url);
 	}
 
 	#[test]

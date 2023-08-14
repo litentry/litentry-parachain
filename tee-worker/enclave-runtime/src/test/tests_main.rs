@@ -67,6 +67,7 @@ use its_sidechain::{
 	block_composer::{BlockComposer, ComposeBlock},
 	state::SidechainSystemExt,
 };
+use litentry_primitives::Identity;
 use sgx_tunittest::*;
 use sgx_types::size_t;
 use sp_core::{crypto::Pair, ed25519 as spEd25519, H256};
@@ -91,6 +92,12 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itp_stf_state_handler::test::sgx_tests::test_file_io_get_state_hash_works,
 		itp_stf_state_handler::test::sgx_tests::test_list_state_ids_ignores_files_not_matching_the_pattern,
 		itp_stf_state_handler::test::sgx_tests::test_in_memory_state_initializes_from_shard_directory,
+		itp_sgx_crypto::tests::aes_sealing_works,
+		itp_sgx_crypto::tests::using_get_aes_repository_twice_initializes_key_only_once,
+		itp_sgx_crypto::tests::ed25529_sealing_works,
+		itp_sgx_crypto::tests::using_get_ed25519_repository_twice_initializes_key_only_once,
+		itp_sgx_crypto::tests::rsa3072_sealing_works,
+		itp_sgx_crypto::tests::using_get_rsa3072_repository_twice_initializes_key_only_once,
 		test_compose_block,
 		test_submit_trusted_call_to_top_pool,
 		test_submit_trusted_getter_to_top_pool,
@@ -155,6 +162,10 @@ pub extern "C" fn test_main_entrance() -> size_t {
 
 		// EVM tests
 		run_evm_tests,
+
+		// light-client-test
+		itc_parentchain::light_client::io::sgx_tests::init_parachain_light_client_works,
+		itc_parentchain::light_client::io::sgx_tests::sealing_creates_backup,
 
 		// these unit test (?) need an ipfs node running..
 		// ipfs::test_creates_ipfs_content_struct_works,
@@ -224,9 +235,13 @@ fn test_submit_trusted_call_to_top_pool() {
 
 	let sender = funded_pair();
 
-	let signed_call =
-		TrustedCall::balance_set_balance(sender.public().into(), sender.public().into(), 42, 42)
-			.sign(&sender.into(), 0, &mrenclave, &shard);
+	let signed_call = TrustedCall::balance_set_balance(
+		Identity::Substrate(sender.public().into()),
+		sender.public().into(),
+		42,
+		42,
+	)
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let trusted_operation = direct_top(signed_call);
 
 	// when
@@ -255,7 +270,8 @@ fn test_submit_trusted_getter_to_top_pool() {
 
 	let sender = funded_pair();
 
-	let signed_getter = TrustedGetter::free_balance(sender.public().into()).sign(&sender.into());
+	let signed_getter = TrustedGetter::free_balance(Identity::Substrate(sender.public().into()))
+		.sign(&sender.into());
 
 	// when
 	submit_operation_to_top_pool(
@@ -279,12 +295,16 @@ fn test_differentiate_getter_and_call_works() {
 	// create accounts
 	let sender = funded_pair();
 
-	let signed_getter =
-		TrustedGetter::free_balance(sender.public().into()).sign(&sender.clone().into());
+	let signed_getter = TrustedGetter::free_balance(Identity::Substrate(sender.public().into()))
+		.sign(&sender.clone().into());
 
-	let signed_call =
-		TrustedCall::balance_set_balance(sender.public().into(), sender.public().into(), 42, 42)
-			.sign(&sender.clone().into(), 0, &mrenclave, &shard);
+	let signed_call = TrustedCall::balance_set_balance(
+		Identity::Substrate(sender.public().into()),
+		sender.public().into(),
+		42,
+		42,
+	)
+	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let trusted_operation = direct_top(signed_call);
 
 	// when
@@ -323,8 +343,12 @@ fn test_create_block_and_confirmation_works() {
 	let sender = funded_pair();
 	let receiver = unfunded_public();
 
-	let signed_call = TrustedCall::balance_transfer(sender.public().into(), receiver.into(), 1000)
-		.sign(&sender.into(), 0, &mrenclave, &shard);
+	let signed_call = TrustedCall::balance_transfer(
+		Identity::Substrate(sender.public().into()),
+		receiver.into(),
+		1000,
+	)
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let trusted_operation = direct_top(signed_call);
 
 	let top_hash = submit_operation_to_top_pool(
@@ -369,8 +393,12 @@ fn test_create_state_diff() {
 	let sender = funded_pair();
 	let receiver = unfunded_public();
 
-	let signed_call = TrustedCall::balance_transfer(sender.public().into(), receiver.into(), 1000)
-		.sign(&sender.clone().into(), 0, &mrenclave, &shard);
+	let signed_call = TrustedCall::balance_transfer(
+		Identity::Substrate(sender.public().into()),
+		receiver.into(),
+		1000,
+	)
+	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let trusted_operation = direct_top(signed_call);
 
 	submit_operation_to_top_pool(
@@ -423,10 +451,13 @@ fn test_executing_call_updates_account_nonce() {
 	let sender = funded_pair();
 	let receiver = unfunded_public();
 
-	let trusted_operation =
-		TrustedCall::balance_transfer(sender.public().into(), receiver.into(), 1000)
-			.sign(&sender.clone().into(), 0, &mrenclave, &shard)
-			.into_trusted_operation(false);
+	let trusted_operation = TrustedCall::balance_transfer(
+		Identity::Substrate(sender.public().into()),
+		receiver.into(),
+		1000,
+	)
+	.sign(&sender.clone().into(), 0, &mrenclave, &shard)
+	.into_trusted_operation(false);
 
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
@@ -477,10 +508,13 @@ fn test_signature_must_match_public_sender_in_call() {
 	let sender = funded_pair();
 	let receiver = unfunded_public();
 
-	let trusted_operation =
-		TrustedCall::balance_transfer(receiver.into(), sender.public().into(), 1000)
-			.sign(&sender.clone().into(), 10, &mrenclave, &shard)
-			.into_trusted_operation(true);
+	let trusted_operation = TrustedCall::balance_transfer(
+		Identity::Substrate(receiver.into()),
+		sender.public().into(),
+		1000,
+	)
+	.sign(&sender.clone().into(), 10, &mrenclave, &shard)
+	.into_trusted_operation(true);
 
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
@@ -505,10 +539,13 @@ fn test_invalid_nonce_call_is_not_executed() {
 	let sender = funded_pair();
 	let receiver = unfunded_public();
 
-	let trusted_operation =
-		TrustedCall::balance_transfer(sender.public().into(), receiver.into(), 1000)
-			.sign(&sender.clone().into(), 10, &mrenclave, &shard)
-			.into_trusted_operation(true);
+	let trusted_operation = TrustedCall::balance_transfer(
+		Identity::Substrate(sender.public().into()),
+		receiver.into(),
+		1000,
+	)
+	.sign(&sender.clone().into(), 10, &mrenclave, &shard)
+	.into_trusted_operation(true);
 
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
@@ -532,8 +569,12 @@ fn test_non_root_shielding_call_is_not_executed() {
 	let sender = funded_pair();
 	let sender_acc: AccountId = sender.public().into();
 
-	let signed_call = TrustedCall::balance_shield(sender_acc.clone(), sender_acc.clone(), 1000)
-		.sign(&sender.into(), 0, &mrenclave, &shard);
+	let signed_call = TrustedCall::balance_shield(
+		Identity::Substrate(sender_acc.clone().into()),
+		sender_acc.clone(),
+		1000,
+	)
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
@@ -558,7 +599,7 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 	let enclave_call_signer = enclave_call_signer(&shielding_key);
 
 	let signed_call = TrustedCall::balance_shield(
-		enclave_call_signer.public().into(),
+		Identity::Substrate(enclave_call_signer.public().into()),
 		sender_account.clone(),
 		1000,
 	)
@@ -594,14 +635,22 @@ pub fn test_retrieve_events() {
 
 	// Execute a transfer extrinsic to generate events via the Balance pallet.
 	let trusted_call = TrustedCall::balance_transfer(
-		sender.public().into(),
+		Identity::Substrate(sender.public().into()),
 		receiver.public().into(),
 		transfer_value,
 	)
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	assert_eq!(TestStf::get_events(&mut state).len(), 3);
 }
@@ -617,7 +666,7 @@ pub fn test_retrieve_event_count() {
 
 	// Execute a transfer extrinsic to generate events via the Balance pallet.
 	let trusted_call = TrustedCall::balance_transfer(
-		sender.public().into(),
+		Identity::Substrate(sender.public().into()),
 		receiver.public().into(),
 		transfer_value,
 	)
@@ -626,7 +675,15 @@ pub fn test_retrieve_event_count() {
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	let event_count = TestStf::get_event_count(&mut state);
 	assert_eq!(event_count, 3);
@@ -642,14 +699,22 @@ pub fn test_reset_events() {
 	state.execute_with(|| set_block_number(100));
 	// Execute a transfer extrinsic to generate events via the Balance pallet.
 	let trusted_call = TrustedCall::balance_transfer(
-		sender.public().into(),
+		Identity::Substrate(sender.public().into()),
 		receiver.public().into(),
 		transfer_value,
 	)
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());
 	assert_eq!(receiver_acc_info.free, transfer_value);
 	// Ensure that there really have been events generated.

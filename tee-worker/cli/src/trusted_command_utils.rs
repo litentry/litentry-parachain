@@ -41,16 +41,20 @@ use substrate_client_keystore::LocalKeystore;
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
 		use ita_stf::{Getter, PublicGetter};
+		use litentry_primitives::Identity;
+
 		use $crate::{
 			trusted_command_utils::get_pending_trusted_calls_for,
 			trusted_operation::execute_getter_from_cli_args,
 		};
 
-		let getter = Getter::public(PublicGetter::nonce($signer_pair.public().into()));
+		let getter =
+			Getter::public(PublicGetter::nonce(Identity::Substrate($signer_pair.public().into())));
 		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
 		let nonce = match getter_result {
-			Some(encoded_nonce) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
-			None => Default::default(),
+			Ok(Some(encoded_nonce)) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
+			Ok(None) => Default::default(),
+			Err(_) => todo!(),
 		};
 
 		debug!("got system nonce: {:?}", nonce);
@@ -70,7 +74,7 @@ pub(crate) fn get_balance(cli: &Cli, trusted_args: &TrustedCli, arg_who: &str) -
 	let top: TrustedOperation = TrustedGetter::free_balance(who.public().into())
 		.sign(&KeyPair::Sr25519(Box::new(who)))
 		.into();
-	let res = perform_trusted_operation(cli, trusted_args, &top);
+	let res = perform_trusted_operation(cli, trusted_args, &top).unwrap_or(None);
 	debug!("received result for balance");
 	decode_balance(res)
 }

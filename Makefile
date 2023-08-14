@@ -179,7 +179,7 @@ generate-docker-compose-rococo:
 
 .PHONY: update-ts-dep ## update ts-tests dependencies
 update-ts-dep:
-	@cd ts-tests && npx npm-check-updates -u && yarn
+	@cd ts-tests && npx npm-check-updates -u && corepack yarn
 
 # format
 
@@ -214,6 +214,14 @@ clippyfix:
 .PHONY: cargofix ## cargo fix
 cargofix:
 	cargo fix --allow-dirty --allow-staged --workspace --all-targets --all-features
+
+# cargo update
+
+.PHONY: update ## cargo update
+update:
+	cargo update
+	cd tee-worker && cargo update
+	cd tee-worker/enclave-runtime && cargo update 
 
 # shellcheck
 

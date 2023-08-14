@@ -23,14 +23,14 @@ cd "$WORKER_DIR"
 SGX_PRODUCTION=1 SGX_COMMERCIAL_KEY=${COMMERCIAL_KEY_PATH} make
 
 # Copy files
-for Item in 'enclave.signed.so' 'integritee-service'; do
+for Item in 'enclave.signed.so' 'litentry-worker'; do
     cp "${WORKER_DIR}/bin/${Item}" "${RELEASE_DIR}"
 done
 for Item in 'prepare.sh' 'config.json.eg' 'ReadMe.md'; do
     cp -r "${WORKER_DIR}/scripts/litentry/release/${Item}" "${RELEASE_DIR}"
 done
 
-cp -r "${ROOT_DIR}/ts-utils" "${RELEASE_DIR}"
+cp -r "${ROOT_DIR}/scripts/ts-utils" "${RELEASE_DIR}"
 
 make mrenclave | grep -oP '^MRENCLAVE: \K.*$$' > "${RELEASE_DIR}/mrenclave.txt"
 

@@ -1,7 +1,7 @@
 [package]
 name = "itp-stf-executor"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
@@ -25,9 +25,6 @@ itp-time-utils = { path = "../time-utils", default-features = false }
 itp-top-pool-author = { path = "../top-pool-author", default-features = false }
 itp-types = { path = "../types", default-features = false }
 
-# scs
-substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
-
 # sgx enabled external libraries
 thiserror_sgx = { optional = true, package = "thiserror", git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3" }
 
@@ -45,6 +42,9 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 # dev dependencies
 itc-parentchain-test = { path = "../../core/parentchain/test", optional = true, default-features = false }
 itp-test = { path = "../test", default-features = false, optional = true }
+
+# litentry
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 [dev-dependencies]
 itp-stf-state-observer = { path = "../stf-state-observer", features = ["mocks"] }
@@ -69,12 +69,12 @@ std = [
     # crates.io
     "log/std",
     "codec/std",
-    # scs
-    "substrate-api-client/std",
     # substrate
     "sp-core/std",
     "sp-runtime/std",
     "thiserror",
+    # litentry
+    "litentry-primitives/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -88,6 +88,8 @@ sgx = [
     "itp-storage/sgx",
     "itp-time-utils/sgx",
     "thiserror_sgx",
+    # litentry
+    "litentry-primitives/sgx",
 ]
 test = [
     "itc-parentchain-test",

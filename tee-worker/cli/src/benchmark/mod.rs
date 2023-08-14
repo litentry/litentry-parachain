@@ -23,7 +23,7 @@ use crate::{
 		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
 	},
 	trusted_operation::{get_json_request, wait_until},
-	Cli,
+	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
 use hdrhistogram::Histogram;
@@ -113,7 +113,7 @@ struct BenchmarkTransaction {
 }
 
 impl BenchmarkCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
 		let random_wait_before_transaction_ms: (u32, u32) = (
 			self.random_wait_before_transaction_min_ms,
 			self.random_wait_before_transaction_max_ms,
@@ -145,9 +145,11 @@ impl BenchmarkCommand {
 			let account = get_pair_from_str(trusted_args, a.public().to_string().as_str());
 			let initial_balance = 10000000;
 
+			let funding_identity = funding_account_keys.public().into();
+
 			// Transfer amount from Alice to new account.
 			let top: TrustedOperation = TrustedCall::balance_transfer(
-				funding_account_keys.public().into(),
+				funding_identity,
 				account.public().into(),
 				initial_balance,
 			)
@@ -202,9 +204,11 @@ impl BenchmarkCommand {
 					// Get nonce of account.
 					let nonce = get_nonce(client.account.clone(), shard, &client.client_api);
 
+					let client_identity = client.account.public().into();
+
 					// Transfer money from client account to new account.
 					let top: TrustedOperation = TrustedCall::balance_transfer(
-						client.account.public().into(),
+						client_identity,
 						new_account.public().into(),
 						EXISTENTIAL_DEPOSIT,
 					)
@@ -247,7 +251,9 @@ impl BenchmarkCommand {
 			overall_start.elapsed().as_millis()
 		);
 
-		print_benchmark_statistic(outputs, self.wait_for_confirmation)
+		print_benchmark_statistic(outputs, self.wait_for_confirmation);
+
+		Ok(CliResultOk::None)
 	}
 }
 

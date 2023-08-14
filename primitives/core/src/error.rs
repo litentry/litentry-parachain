@@ -49,6 +49,7 @@ pub enum ErrorDetail {
 	VerifySubstrateSignatureFailed,
 	VerifyEvmSignatureFailed,
 	RecoverEvmAddressFailed,
+	Web3NetworkOutOfBounds,
 }
 
 // We could have used Into<ErrorDetail>, but we want it to be more explicit, similar to `into_iter`
@@ -83,7 +84,8 @@ pub enum IMPError {
 	// errors when executing individual error
 	SetUserShieldingKeyFailed(ErrorDetail),
 	LinkIdentityFailed(ErrorDetail),
-	RemoveIdentityFailed(ErrorDetail),
+	DeactivateIdentityFailed(ErrorDetail),
+	ActivateIdentityFailed(ErrorDetail),
 	// scheduled encalve import error
 	ImportScheduledEnclaveFailed,
 

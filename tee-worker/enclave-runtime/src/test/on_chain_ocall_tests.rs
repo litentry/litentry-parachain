@@ -17,11 +17,11 @@
 */
 
 use crate::ocall::OcallApi;
+use itp_node_api::api_client::storage_key;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_types::{WorkerRequest, WorkerResponse};
 use log::*;
 use std::vec::Vec;
-use substrate_api_client::utils::storage_key;
 
 #[allow(unused)]
 fn test_ocall_worker_request() {
@@ -39,6 +39,7 @@ fn test_ocall_worker_request() {
 
 	let (total_issuance, proof) = match first {
 		WorkerResponse::ChainStorage(_storage_key, value, proof) => (value, proof),
+		WorkerResponse::ChainStorageKeys(_storage_key) => todo!(),
 	};
 
 	info!("Total Issuance is: {:?}", total_issuance);

@@ -22,10 +22,11 @@ use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, UserShieldingKeyNonceType, ValidationData};
+use litentry_primitives::{Identity, UserShieldingKeyNonceType, ValidationData, Web3Network};
 use log::debug;
+use sp_core::crypto::AccountId32;
+use sp_runtime::MultiAddress;
 use std::vec::Vec;
-use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct LinkIdentityArgs {
@@ -33,6 +34,7 @@ pub struct LinkIdentityArgs {
 	account: AccountId,
 	encrypted_identity: Vec<u8>,
 	encrypted_validation_data: Vec<u8>,
+	encrypted_web3networks: Vec<u8>,
 	nonce: UserShieldingKeyNonceType,
 }
 
@@ -40,7 +42,7 @@ impl LinkIdentityArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<GenericAddress>,
+		address: Option<MultiAddress<AccountId32, ()>>,
 		hash: H256,
 	) -> Result<()> {
 		let identity: Identity =
@@ -48,6 +50,8 @@ impl LinkIdentityArgs {
 		let validation_data = ValidationData::decode(
 			&mut executor.decrypt(&self.encrypted_validation_data)?.as_slice(),
 		)?;
+		let web3networks: Vec<Web3Network> =
+			Decode::decode(&mut executor.decrypt(&self.encrypted_web3networks)?.as_slice())?;
 
 		if address.is_some() {
 			debug!(
@@ -60,10 +64,11 @@ impl LinkIdentityArgs {
 
 			let enclave_account_id = executor.get_enclave_account()?;
 			let trusted_call = TrustedCall::link_identity(
-				enclave_account_id,
-				self.account.clone(),
+				enclave_account_id.into(),
+				self.account.clone().into(),
 				identity,
 				validation_data,
+				web3networks,
 				self.nonce,
 				hash,
 			);
@@ -78,7 +83,7 @@ impl LinkIdentityArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for LinkIdentityArgs {
-	type Args = (Option<GenericAddress>, H256, u32);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, H256, u32);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash, _block) = args;
 		let e = Error::IMPHandlingError(IMPError::LinkIdentityFailed(ErrorDetail::ImportError));

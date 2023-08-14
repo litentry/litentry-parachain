@@ -1,25 +1,26 @@
 services:
   lit-identity-test:
-    image: integritee-cli:dev
+    image: litentry-cli:dev
     container_name: litentry-identity-test
     volumes:
       - ../ts-tests:/ts-tests
+      - ../cli:/usr/local/worker-cli
     build:
       context: ..
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      integritee-node:
+      litentry-node:
         condition: service_healthy
-      integritee-worker-1:
+      litentry-worker-1:
         condition: service_healthy
-      integritee-worker-2:
+      litentry-worker-2:
         condition: service_healthy
     networks:
-      - integritee-test-network
+      - litentry-test-network
     entrypoint:
       "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-identity 2>&1' "
     restart: "no"
 networks:
-  integritee-test-network:
+  litentry-test-network:
     driver: bridge

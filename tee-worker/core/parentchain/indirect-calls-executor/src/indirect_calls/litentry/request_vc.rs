@@ -29,7 +29,8 @@ use log::debug;
 use parachain_core_primitives::Assertion;
 use sp_runtime::traits::{AccountIdLookup, StaticLookup};
 
-use substrate_api_client::GenericAddress;
+use sp_core::crypto::AccountId32;
+use sp_runtime::MultiAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RequestVCArgs {
@@ -41,7 +42,7 @@ impl RequestVCArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<GenericAddress>,
+		address: Option<MultiAddress<AccountId32, ()>>,
 		hash: H256,
 	) -> Result<()> {
 		if let Some(address) = address {
@@ -54,8 +55,12 @@ impl RequestVCArgs {
 
 			let enclave_account_id = executor.get_enclave_account()?;
 
-			let trusted_call =
-				TrustedCall::request_vc(enclave_account_id, account, self.assertion.clone(), hash);
+			let trusted_call = TrustedCall::request_vc(
+				enclave_account_id.into(),
+				account.into(),
+				self.assertion.clone(),
+				hash,
+			);
 			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 
@@ -66,7 +71,7 @@ impl RequestVCArgs {
 	}
 }
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RequestVCArgs {
-	type Args = (Option<GenericAddress>, H256, u32);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, H256, u32);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash, _block) = args;
 		let e = Error::VCMPHandlingError(VCMPError::RequestVCFailed(

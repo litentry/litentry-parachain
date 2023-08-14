@@ -21,17 +21,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
-use lc_credentials::Credential;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
-use log::*;
-use std::{format, vec::Vec};
 
 const VC_A6_SUBJECT_DESCRIPTION: &str = "The range of the user's Twitter follower count";
 const VC_A6_SUBJECT_TYPE: &str = "Twitter Follower Amount";
-const VC_A6_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 
 /// Following ranges:
 ///
@@ -40,39 +33,24 @@ const VC_A6_SUBJECT_TAG: [&str; 1] = ["Twitter"];
 ///    * 1,000+ followers
 ///    * 10,000+ followers
 ///    * 100,000+ followers
-pub fn build(
-	identities: Vec<Identity>,
-	shard: &ShardIdentifier,
-	who: &AccountId,
-) -> Result<Credential> {
-	debug!(
-		"Assertion A6 build, who: {:?}, identities: {:?}",
-		account_id_to_string(&who),
-		identities
-	);
+pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+	debug!("Assertion A6 build, who: {:?}", account_id_to_string(&req.who),);
 
 	let mut client = TwitterOfficialClient::v2();
 	let mut sum: u32 = 0;
 
-	for identity in identities {
-		if let Identity::Web2 { network, address } = identity {
-			if matches!(network, Web2Network::Twitter) {
-				let twitter_handler = address.to_vec();
-				match client.query_user_by_name(twitter_handler) {
-					Ok(user) =>
-						if let Some(metrics) = user.public_metrics {
-							sum += metrics.followers_count;
-						},
-					Err(e) => {
-						log::warn!("Assertion6 request error:{:?}", e);
-						return Err(Error::RequestVCFailed(
-							Assertion::A6,
-							ErrorDetail::StfError(ErrorString::truncate_from(
-								format!("{:?}", e).into(),
-							)),
-						))
-					},
-				}
+	for identity in &req.identities {
+		if let Identity::Twitter(address) = &identity.0 {
+			let twitter_handler = address.to_vec();
+			let user = client.query_user_by_name(twitter_handler).map_err(|e| {
+				Error::RequestVCFailed(
+					Assertion::A6,
+					ErrorDetail::StfError(ErrorString::truncate_from(format!("{:?}", e).into())),
+				)
+			})?;
+
+			if let Some(metrics) = user.public_metrics {
+				sum += metrics.followers_count;
 			}
 		}
 	}
@@ -108,13 +86,9 @@ pub fn build(
 		},
 	}
 
-	match Credential::new_default(who, shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A6_SUBJECT_DESCRIPTION,
-				VC_A6_SUBJECT_TYPE,
-				VC_A6_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A6_SUBJECT_DESCRIPTION, VC_A6_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a6(min, max);
 
 			Ok(credential_unsigned)

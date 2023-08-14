@@ -1,7 +1,7 @@
-name: "integritee-service"
+name: "litentry-worker"
 version: "0.8.0"
-about: Worker using Intel SGX TEE for Integritee-node
-authors: "Integritee AG <hello@integritee.network>"
+about: Worker using Intel SGX TEE for litentry parachain node
+authors: "Litentry Technologies GmbH <info@litentry.com>"
 
 # AppSettings can be defined as a list and are **not** ascii case sensitive
 settings:
@@ -19,11 +19,16 @@ args:
         takes_value: true
         default_value: "ws://127.0.0.1"
     - node-port:
-        short: p
-        long: node-port
-        help: Set the websocket port to listen for substrate events
-        takes_value: true
-        default_value: "9944"
+          short: p
+          long: node-port
+          help: Set the websocket port to listen for substrate events
+          takes_value: true
+          default_value: "9944"
+    - data-dir:
+          short: d
+          long: data-dir
+          help: Data dir where the worker stores it's keys and other data.
+          takes_value: true
     - ws-external:
         long: ws-external
         help: Set this flag in case the worker should listen to external requests.
@@ -107,7 +112,7 @@ args:
 
 subcommands:
     - run:
-        about: Start the integritee-service
+        about: Start the litentry-worker
         args:
             - skip-ra:
                 long: skip-ra
@@ -129,6 +134,11 @@ subcommands:
                 long: teeracle-interval
                 short: i
                 help: Set the teeracle exchange rate update interval. Example of accepted syntax <5 seconds 15 minutes 2 hours 1 days> or short <5s15m2h1d>
+                takes_value: true
+            - reregister-teeracle-interval:
+                required: false
+                long: reregister
+                help: Set the teeracle reregistration interval. Example of accepted syntax <5 seconds 15 minutes 2 hours 1 days> or short <5s15m2h1d>
                 takes_value: true
     - request-state:
         about: join a shard by requesting key provisioning from another worker

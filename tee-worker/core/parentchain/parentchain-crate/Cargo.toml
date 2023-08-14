@@ -1,7 +1,7 @@
 [package]
 name = "itc-parentchain"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
@@ -37,4 +37,8 @@ sgx = [
 mocks = [
     "itc-parentchain-block-import-dispatcher/mocks",
     "itc-parentchain-light-client/mocks",
+]
+test = [
+    "mocks",
+    "itc-parentchain-light-client/test",
 ]

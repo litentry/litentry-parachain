@@ -36,11 +36,12 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use codec::{Decode, Encode};
+use core::str::from_utf8;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_time_utils::now_as_millis;
+use itp_time_utils::{from_iso8601, now_as_iso8601};
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::SupportedNetwork;
+use litentry_primitives::{Address20, Address32, Identity, Web3Network};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -57,6 +58,7 @@ extern crate rust_base58_sgx as rust_base58;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate hex_sgx as hex;
 
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
@@ -78,6 +80,7 @@ pub mod schema;
 
 pub mod assertion_logic;
 use assertion_logic::{AssertionLogic, Op};
+use itp_utils::hex::hex_encode;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";
@@ -132,8 +135,6 @@ pub struct CredentialSubject {
 	pub description: String,
 	#[serde(rename = "type")]
 	pub types: String,
-	/// (Optional) Some externally provided identifiers
-	pub tag: Vec<String>,
 	/// (Optional) Data source definitions for trusted data providers
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub data_source: Option<Vec<DataSource>>,
@@ -172,8 +173,8 @@ pub struct CredentialSchema {
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 #[serde(rename_all = "camelCase")]
 pub struct Proof {
-	/// The timestamp when the signature was created
-	pub created_timestamp: u64,
+	/// The ISO-8601 datetime of signature creation
+	pub created: String,
 	/// The cryptographic signature suite that used to generate signature
 	#[serde(rename = "type")]
 	pub proof_type: ProofType,
@@ -188,7 +189,7 @@ pub struct Proof {
 impl Proof {
 	pub fn new(sig: &Vec<u8>, issuer: &AccountId) -> Self {
 		Proof {
-			created_timestamp: now_as_millis(),
+			created: now_as_iso8601(),
 			proof_type: ProofType::Ed25519Signature2020,
 			proof_purpose: PROOF_PURPOSE.to_string(),
 			proof_value: format!("{}", HexDisplay::from(sig)),
@@ -216,10 +217,7 @@ pub struct Credential {
 	pub credential_subject: CredentialSubject,
 	/// The TEE enclave who issued the credential
 	pub issuer: Issuer,
-	pub issuance_timestamp: u64,
-	/// (Optional)
-	#[serde(skip_serializing_if = "Option::is_none")]
-	pub expiration_timestamp: Option<u64>,
+	pub issuance_date: String,
 	/// Digital proof with the signature of Issuer
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
@@ -229,22 +227,25 @@ pub struct Credential {
 }
 
 impl Credential {
-	pub fn new_default(who: &AccountId, shard: &ShardIdentifier) -> Result<Credential, Error> {
+	pub fn new(subject: &Identity, shard: &ShardIdentifier) -> Result<Credential, Error> {
 		let raw = include_str!("templates/credential.json");
-		let credential: Credential = Credential::from_template(raw, who, shard)?;
+		let credential: Credential = Credential::from_template(raw, subject, shard)?;
 		Ok(credential)
 	}
 
-	pub fn from_template(s: &str, who: &AccountId, shard: &ShardIdentifier) -> Result<Self, Error> {
-		debug!("generate credential from template, who: {:?}", account_id_to_string(&who),);
+	pub fn from_template(
+		s: &str,
+		subject: &Identity,
+		shard: &ShardIdentifier,
+	) -> Result<Self, Error> {
+		debug!("generate credential from template, subject: {:?}", &subject);
 
 		let mut vc: Self =
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
-		vc.credential_subject.id = account_id_to_string(who);
-		vc.issuance_timestamp = now_as_millis();
-		vc.expiration_timestamp = None;
+		vc.credential_subject.id = DID::try_from(subject)?.format();
+		vc.issuance_date = now_as_iso8601();
 		vc.credential_schema = None;
 		vc.proof = None;
 
@@ -289,9 +290,7 @@ impl Credential {
 			return Err(Error::EmptyCredentialSubject)
 		}
 
-		if self.issuance_timestamp == 0 {
-			return Err(Error::EmptyIssuanceTimestamp)
-		}
+		from_iso8601(&self.issuance_date).ok_or(Error::EmptyIssuanceTimestamp)?;
 
 		if self.id.is_empty() {
 			return Err(Error::InvalidCredential)
@@ -321,13 +320,6 @@ impl Credential {
 
 		if vc.proof.is_none() {
 			return Err(Error::InvalidProof)
-		} else {
-			let proof = vc.proof.unwrap();
-			if proof.created_timestamp == 0 {
-				return Err(Error::EmptyProofTimestamp)
-			}
-
-			//ToDo: validate proof signature
 		}
 
 		Ok(())
@@ -360,12 +352,9 @@ impl Credential {
 		self.credential_subject.values.push(is_hold);
 	}
 
-	pub fn add_subject_info(&mut self, subject_description: &str, types: &str, tag: Vec<&str>) {
+	pub fn add_subject_info(&mut self, subject_description: &str, types: &str) {
 		self.credential_subject.description = subject_description.into();
 		self.credential_subject.types = types.into();
-
-		let tag = tag.iter().map(|s| s.to_string()).collect();
-		self.credential_subject.tag = tag;
 	}
 
 	pub fn add_assertion_a1(&mut self, value: bool) {
@@ -442,13 +431,15 @@ impl Credential {
 		self.credential_subject.values.push(true);
 	}
 
-	pub fn add_assertion_a8(&mut self, networks: Vec<SupportedNetwork>, min: u64, max: u64) {
+	pub fn add_assertion_a8(&mut self, networks: Vec<Web3Network>, min: u64, max: u64) {
+		let value = min != 0;
+
 		let min = format!("{}", min);
 		let max = format!("{}", max);
 
 		let mut or_logic = AssertionLogic::new_or();
 		for network in networks {
-			let network = network.display();
+			let network = format!("{:?}", network);
 			let network_logic = AssertionLogic::new_item("$network", Op::Equal, &network);
 			or_logic = or_logic.add_item(network_logic);
 		}
@@ -461,7 +452,7 @@ impl Credential {
 			.add_item(max_item)
 			.add_item(or_logic);
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(true);
+		self.credential_subject.values.push(value);
 	}
 
 	pub fn add_assertion_a12(&mut self, twitter_screen_name: String, value: bool) {
@@ -489,6 +480,103 @@ impl Credential {
 		self.credential_subject.assertions.push(governance);
 		self.credential_subject.values.push(value);
 	}
+
+	pub fn add_achainable(&mut self, value: bool, from: String, to: String) {
+		let min_item = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from);
+		let max_item = AssertionLogic::new_item("$to_date", Op::LessThan, &to);
+		let and_logic = AssertionLogic::new_and();
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(min_item)
+			.add_item(max_item)
+			.add_item(and_logic);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_content(&mut self, value: bool, content: &str) {
+		let content = AssertionLogic::new_item(content, Op::Equal, "true");
+		let assertion = AssertionLogic::new_and().add_item(content);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_uniswap_v23_info(&mut self, v2_user: bool, v3_user: bool) {
+		let uniswap_v2 =
+			AssertionLogic::new_item("$is_uniswap_v2_user", Op::Equal, &v2_user.to_string());
+		let uniswap_v3 =
+			AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, &v3_user.to_string());
+
+		let assertion = AssertionLogic::new_and().add_item(uniswap_v2).add_item(uniswap_v3);
+		self.credential_subject.assertions.push(assertion);
+
+		// Always true
+		self.credential_subject.values.push(true);
+	}
+
+	pub fn update_class_of_year(&mut self, ret: bool, date: String) {
+		let mut and_logic = AssertionLogic::new_and();
+
+		let from = AssertionLogic::new_item("$account_created_year", Op::Equal, &date);
+		and_logic = and_logic.add_item(from);
+
+		self.credential_subject.assertions.push(and_logic);
+		self.credential_subject.values.push(ret);
+	}
+}
+
+pub enum DID {
+	Evm(Address20),
+	Substrate(Address32),
+	Twitter(String),
+	Discord(String),
+	Github(String),
+}
+
+impl DID {
+	pub fn format(self) -> String {
+		format!(
+			"did:litentry:{}",
+			&match self {
+				Self::Evm(address) => format!("evm:{}", &hex_encode(address.as_ref())),
+				Self::Substrate(address) => format!("substrate:{}", &hex_encode(address.as_ref())),
+				Self::Twitter(handle) => format!("twitter:{}", handle),
+				Self::Discord(handle) => format!("discord:{}", handle),
+				Self::Github(handle) => format!("github:{}", handle),
+			}
+		)
+	}
+}
+
+impl TryFrom<&Identity> for DID {
+	type Error = Error;
+
+	fn try_from(value: &Identity) -> Result<Self, Self::Error> {
+		match value {
+			Identity::Substrate(address) => Ok(DID::Substrate(*address)),
+			Identity::Evm(address) => Ok(DID::Evm(*address)),
+			Identity::Twitter(handle) => {
+				let handle = from_utf8(handle.as_ref())
+					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
+					.to_string();
+				Ok(DID::Twitter(handle))
+			},
+			Identity::Discord(handle) => {
+				let handle = from_utf8(handle.as_ref())
+					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
+					.to_string();
+				Ok(DID::Discord(handle))
+			},
+			Identity::Github(handle) => {
+				let handle = from_utf8(handle.as_ref())
+					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
+					.to_string();
+				Ok(DID::Github(handle))
+			},
+		}
+	}
 }
 
 /// Assertion To-Date
@@ -513,24 +601,6 @@ pub fn format_assertion_to_date() -> String {
 	}
 }
 
-trait DisplayNetwork {
-	fn display(&self) -> String;
-}
-impl DisplayNetwork for SupportedNetwork {
-	fn display(&self) -> String {
-		match self {
-			SupportedNetwork::Litentry => "Litentry".into(),
-			SupportedNetwork::Litmus => "Litmus".into(),
-			SupportedNetwork::LitentryRococo => "LitentryRococo".into(),
-			SupportedNetwork::Polkadot => "Polkadot".into(),
-			SupportedNetwork::Kusama => "Kusama".into(),
-			SupportedNetwork::Khala => "Khala".into(),
-			SupportedNetwork::Ethereum => "Ethereum".into(),
-			SupportedNetwork::TestNet => "TestNet".into(),
-		}
-	}
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -538,18 +608,21 @@ mod tests {
 	#[test]
 	fn eval_simple_success() {
 		let who = AccountId::from([0; 32]);
+		let identity = who.clone().into();
+
 		let data = include_str!("templates/credential.json");
 		let shard = ShardIdentifier::default();
 
-		let vc = Credential::from_template(data, &who, &shard).unwrap();
+		let vc = Credential::from_template(data, &identity, &shard).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
-		let id: String = vc.credential_subject.id.clone();
-		assert_eq!(id, account_id_to_string(&who));
+		let id: String = vc.credential_subject.id;
+		assert_eq!(id, "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000");
 	}
 
 	#[test]
 	fn update_holder_works() {
 		let who = AccountId::from([0; 32]);
+		let identity = who.into();
 		let shard = ShardIdentifier::default();
 		let minimum_amount = "1".to_string();
 		let to_date = format_assertion_to_date();
@@ -558,7 +631,7 @@ mod tests {
 			let from_date = "2017-01-01".to_string();
 			let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, &from_date);
 
-			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(false, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -576,7 +649,7 @@ mod tests {
 
 		{
 			let from_date = "2018-01-01".to_string();
-			let mut credential_unsigned = Credential::new_default(&&who, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -594,7 +667,7 @@ mod tests {
 
 		{
 			let from_date = "2017-01-01".to_string();
-			let mut credential_unsigned = Credential::new_default(&who, &shard.clone()).unwrap();
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
 			credential_unsigned.update_holder(true, &minimum_amount, &from_date);
 
 			let minimum_amount_logic =
@@ -609,5 +682,42 @@ mod tests {
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
 			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
 		}
+	}
+
+	#[test]
+	fn test_substrate_did_format() {
+		assert_eq!(DID::Substrate([0; 32].into()).format(), "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000")
+	}
+
+	#[test]
+	fn test_evm_did_format() {
+		assert_eq!(
+			DID::Evm([0; 20].into()).format(),
+			"did:litentry:evm:0x0000000000000000000000000000000000000000"
+		)
+	}
+
+	#[test]
+	fn test_discord_format() {
+		assert_eq!(
+			DID::Discord("discord_handle".to_string()).format(),
+			"did:litentry:discord:discord_handle"
+		)
+	}
+
+	#[test]
+	fn test_twitter_format() {
+		assert_eq!(
+			DID::Twitter("twitter_handle".to_string()).format(),
+			"did:litentry:twitter:twitter_handle"
+		)
+	}
+
+	#[test]
+	fn test_github_format() {
+		assert_eq!(
+			DID::Github("github_handle".to_string()).format(),
+			"did:litentry:github:github_handle"
+		)
 	}
 }

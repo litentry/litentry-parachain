@@ -1,14 +1,13 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "its-consensus-slots"
 version = "0.9.0"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
 
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 derive_more = "0.99.16"
-hex = { version = "0.4", default-features = false }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 
@@ -30,13 +29,17 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 
 # local deps
 itp-settings = { path = "../../../core-primitives/settings" }
-itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
-itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", default-features = false }
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
 its-consensus-common = { path = "../common", default-features = false }
+
+# litentry
+hex = { version = "0.4", default-features = false }
+itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false }
+itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", default-features = false }
 its-state = { path = "../../state", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false }
+
 
 [dev-dependencies]
 itc-parentchain-test = { path = "../../../core/parentchain/test" }
@@ -48,16 +51,6 @@ tokio = { version = "1.6.1", features = ["full"] }
 
 [features]
 default = ["std"]
-sgx = [
-    "itp-sgx-io/sgx",
-    "itp-time-utils/sgx",
-    "its-consensus-common/sgx",
-    "itp-stf-state-handler/sgx",
-    "itp-sgx-externalities/sgx",
-    "its-state/sgx",
-    "lc-scheduled-enclave/sgx",
-    "sgx_tstd",
-]
 std = [
     "codec/std",
     "log/std",
@@ -78,4 +71,14 @@ std = [
     "itp-sgx-externalities/std",
     "its-state/std",
     "lc-scheduled-enclave/std",
+]
+sgx = [
+    "itp-sgx-io/sgx",
+    "itp-time-utils/sgx",
+    "its-consensus-common/sgx",
+    "sgx_tstd",
+    "itp-stf-state-handler/sgx",
+    "itp-sgx-externalities/sgx",
+    "its-state/sgx",
+    "lc-scheduled-enclave/sgx",
 ]

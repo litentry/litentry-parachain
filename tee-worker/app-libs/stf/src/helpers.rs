@@ -90,7 +90,7 @@ pub fn enclave_signer_account<AccountId: Decode>() -> AccountId {
 }
 
 /// Ensures an account is a registered enclave account.
-pub fn ensure_enclave_signer_account<AccountId: Encode + Decode + PartialEq>(
+pub fn ensure_enclave_signer<AccountId: Encode + Decode + PartialEq>(
 	account: &AccountId,
 ) -> StfResult<()> {
 	let expected_enclave_account: AccountId = enclave_signer_account();
@@ -110,19 +110,30 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
-pub fn is_authorized_signer<AccountId: Encode + Decode + PartialEq>(
+pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
+	signer: &AccountId,
+	who: Option<AccountId>,
+) -> bool {
+	match who {
+		Some(ref who) =>
+			signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who),
+		None => false,
+	}
+}
+
+pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
 	who: &AccountId,
 ) -> bool {
-	signer == &enclave_signer_account::<AccountId>() || signer == who
+	signer == who
 }
 
 // verification message format:
 // blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
 // where <> means SCALE-encoded
 // see https://github.com/litentry/litentry-parachain/issues/1739
-pub fn get_expected_raw_message<AccountId: Encode + Decode>(
-	who: &AccountId,
+pub fn get_expected_raw_message(
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
@@ -134,10 +145,4 @@ pub fn get_expected_raw_message<AccountId: Encode + Decode>(
 	let mut payload = sidechain_nonce.encode();
 	payload.append(&mut encrypted_data);
 	blake2_256(payload.as_slice()).to_vec()
-}
-
-// Get the wrapped version of the raw msg: <Bytes>raw_msg</Bytes>,
-// see https://github.com/litentry/litentry-parachain/issues/1137
-pub fn get_expected_wrapped_message(raw_msg: Vec<u8>) -> Vec<u8> {
-	["<Bytes>".as_bytes(), raw_msg.as_slice(), "</Bytes>".as_bytes()].concat()
 }

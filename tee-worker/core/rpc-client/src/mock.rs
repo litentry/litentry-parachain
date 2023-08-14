@@ -17,14 +17,14 @@
 
 //! Interface for direct access to a workers rpc.
 
-use crate::{
-	direct_client::{DirectApi, Error},
-	error::Result,
-};
+use crate::{direct_client::DirectApi, error::Result};
 use codec::Decode;
+use frame_metadata::RuntimeMetadataPrefixed;
+use itp_api_client_types::Metadata;
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{sync::mpsc::Sender as MpscSender, thread::JoinHandle};
-use substrate_api_client::{FromHexString, RuntimeMetadataPrefixed};
+use teerex_primitives::MrEnclave;
 
 #[derive(Clone, Default)]
 pub struct DirectClientMock {
@@ -32,6 +32,7 @@ pub struct DirectClientMock {
 	mu_ra_url: String,
 	untrusted_worker_url: String,
 	metadata: String,
+	nonce: u32,
 }
 
 impl DirectClientMock {
@@ -40,8 +41,9 @@ impl DirectClientMock {
 		mu_ra_url: String,
 		untrusted_worker_url: String,
 		metadata: String,
+		nonce: u32,
 	) -> Self {
-		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata }
+		Self { rsa_pubkey, mu_ra_url, untrusted_worker_url, metadata, nonce }
 	}
 
 	pub fn with_rsa_pubkey(mut self, key: Rsa3072PubKey) -> Self {
@@ -59,8 +61,13 @@ impl DirectClientMock {
 		self
 	}
 
-	pub fn with_metadata(mut self, hex_metadata: String) -> Self {
-		self.metadata = hex_metadata;
+	pub fn with_metadata(mut self, metadata: String) -> Self {
+		self.metadata = metadata;
+		self
+	}
+
+	pub fn with_nonce(mut self, nonce: u32) -> Self {
+		self.nonce = nonce;
 		self
 	}
 }
@@ -86,17 +93,9 @@ impl DirectApi for DirectClientMock {
 		Ok(self.untrusted_worker_url.clone())
 	}
 
-	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed> {
-		let metadata = match Vec::from_hex(self.metadata.clone()) {
-			Ok(m) => m,
-			Err(e) =>
-				return Err(Error::Custom(format!("Decode metadata FromHexError: {:?}", e).into())),
-		};
-		RuntimeMetadataPrefixed::decode(&mut metadata.as_slice()).map_err(|e| e.into())
-	}
-
-	fn get_state_metadata_raw(&self) -> Result<String> {
-		unimplemented!()
+	fn get_state_metadata(&self) -> Result<Metadata> {
+		let metadata = RuntimeMetadataPrefixed::decode(&mut self.metadata.as_bytes())?;
+		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
 	fn send(&self, _request: &str) -> Result<()> {
@@ -104,6 +103,18 @@ impl DirectApi for DirectClientMock {
 	}
 
 	fn close(&self) -> Result<()> {
+		unimplemented!()
+	}
+
+	fn get_state_metadata_raw(&self) -> Result<String> {
+		unimplemented!()
+	}
+
+	fn get_next_nonce(&self, _shard: &ShardIdentifier, _account: &AccountId) -> Result<u32> {
+		Ok(self.nonce)
+	}
+
+	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
 		unimplemented!()
 	}
 }

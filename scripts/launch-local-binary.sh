@@ -25,7 +25,9 @@ CHAIN=$1
 POLKADOT_BIN="$2"
 PARACHAIN_BIN="$3"
 
-TMPDIR=/tmp/parachain_dev
+# Check if TMPDIR is already set
+TMPDIR=${TMPDIR:-"/tmp/parachain_dev"}
+
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 ROOTDIR=$(git rev-parse --show-toplevel)
 
@@ -114,8 +116,8 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-yarn
-yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
+corepack yarn
+corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
 print_divider
 
 echo "upgrade parathread to parachain now ..."
@@ -127,8 +129,8 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-yarn
-yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
+corepack yarn
+corepack yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
 print_divider
 
 echo "done. please check $TMPDIR for generated files if need"

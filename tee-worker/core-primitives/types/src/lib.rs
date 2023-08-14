@@ -21,9 +21,9 @@
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
 use litentry_primitives::UserShieldingKeyNonceType;
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_std::vec::Vec;
 
-pub mod extrinsics;
+pub mod parentchain;
 pub mod storage;
 
 /// Substrate runtimes provide no string type. Hence, for arbitrary data of varying length the
@@ -62,33 +62,15 @@ pub type LinkIdentityParams =
 	(ShardIdentifier, AccountId, Vec<u8>, Vec<u8>, UserShieldingKeyNonceType);
 pub type LinkIdentityFn = (CallIndex, LinkIdentityParams);
 
-pub type RemoveIdentityParams = (ShardIdentifier, Vec<u8>);
-pub type RemoveIdentityFn = (CallIndex, RemoveIdentityParams);
+pub type DeactivateIdentityParams = (ShardIdentifier, Vec<u8>);
+pub type DeactivateIdentityFn = (CallIndex, DeactivateIdentityParams);
+
+pub type ActivateIdentityParams = (ShardIdentifier, Vec<u8>);
+pub type ActivateIdentityFn = (CallIndex, DeactivateIdentityParams);
 
 // pallet VCMP
 pub type RequestVCParams = (ShardIdentifier, Assertion);
 pub type RequestVCFn = (CallIndex, RequestVCParams);
-
-// pallet utility
-#[derive(Clone, Encode, Decode, Debug)]
-pub enum SupportedBatchCallParams {
-	SetUserShieldingKey(SetUserShieldingKeyParams),
-	LinkIdentity(LinkIdentityParams),
-	RemoveIdentity(RemoveIdentityParams),
-	RequestVC(RequestVCParams),
-}
-
-// I don't find a good way to preserve the type (as values) as rust doesn't have meta programmming
-// maybe we can use generics/traits to simplify this
-pub type SupportedBatchCallMap = BTreeMap<CallIndex, SupportedBatchCallParams>;
-
-#[derive(Clone, Encode, Decode, Debug)]
-pub struct BatchCall {
-	pub index: CallIndex,
-	pub params: SupportedBatchCallParams,
-}
-// we need a vector the keep the population order
-pub type BatchAllFn = (CallIndex, Vec<BatchCall>);
 
 pub type Enclave = EnclaveGen<AccountId>;
 
@@ -138,7 +120,8 @@ pub enum DirectRequestStatus {
 	/// Direct request was successfully executed
 	Ok,
 	/// Trusted Call Status
-	TrustedOperationStatus(TrustedOperationStatus),
+	/// Litentry: embed the top hash here - TODO - use generic type?
+	TrustedOperationStatus(TrustedOperationStatus, H256),
 	/// Direct request could not be executed
 	Error,
 }
@@ -174,17 +157,20 @@ pub enum TrustedOperationStatus {
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum WorkerRequest {
 	ChainStorage(Vec<u8>, Option<BlockHash>), // (storage_key, at_block)
+	ChainStorageKeys(Vec<u8>, Option<BlockHash>), // (storage_key_prefix, at_block)
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum WorkerResponse<V: Encode + Decode> {
 	ChainStorage(Vec<u8>, Option<V>, Option<Vec<Vec<u8>>>), // (storage_key, storage_value, storage_proof)
+	ChainStorageKeys(Vec<Vec<u8>>),                         // (storage_keys)
 }
 
 impl From<WorkerResponse<Vec<u8>>> for StorageEntry<Vec<u8>> {
 	fn from(response: WorkerResponse<Vec<u8>>) -> Self {
 		match response {
 			WorkerResponse::ChainStorage(key, value, proof) => StorageEntry { key, value, proof },
+			_ => StorageEntry::default(),
 		}
 	}
 }

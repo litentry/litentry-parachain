@@ -24,12 +24,10 @@ use codec::{Decode, Encode};
 use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::AccountApi, node_api_factory::CreateNodeApi};
 use itp_types::{WorkerRequest, WorkerResponse};
-use itp_utils::ToHexPrefixed;
 use log::*;
-use sp_core::storage::StorageKey;
 use sp_runtime::OpaqueExtrinsic;
 use std::{sync::Arc, thread, vec::Vec};
-use substrate_api_client::XtStatus;
+use substrate_api_client::{serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
 
 pub struct WorkerOnChainOCall<E, F> {
 	enclave_api: Arc<E>,
@@ -50,7 +48,10 @@ where
 	fn worker_request(&self, request: Vec<u8>) -> OCallBridgeResult<Vec<u8>> {
 		debug!("    Entering ocall_worker_request");
 
-		let requests: Vec<WorkerRequest> = Decode::decode(&mut request.as_slice()).unwrap();
+		let requests: Vec<WorkerRequest> =
+			Decode::decode(&mut request.as_slice()).map_err(|_| {
+				OCallBridgeError::WorkerRequestError("Could not deserialize requests".to_string())
+			})?;
 		if requests.is_empty() {
 			debug!("requests is empty, returning empty vector");
 			return Ok(Vec::<u8>::new().encode())
@@ -68,6 +69,13 @@ where
 						|read_proof| read_proof.proof.into_iter().map(|bytes| bytes.0).collect(),
 					),
 				),
+				WorkerRequest::ChainStorageKeys(key, hash) => {
+					let keys: Vec<Vec<u8>> = match api.get_keys(StorageKey(key), hash) {
+						Ok(Some(keys)) => keys.iter().map(String::encode).collect(),
+						_ => Default::default(),
+					};
+					WorkerResponse::ChainStorageKeys(keys)
+				},
 			})
 			.collect();
 
@@ -96,8 +104,7 @@ where
 			debug!("Enclave wants to send {} extrinsics", extrinsics.len());
 			let api = self.node_api_factory.create_api()?;
 			for call in extrinsics.into_iter() {
-				debug!("Send extrinsic, call length: {}", call.to_hex().len());
-				if let Err(e) = api.send_extrinsic(call.to_hex(), XtStatus::Ready) {
+				if let Err(e) = api.submit_opaque_extrinsic(call.encode().into()) {
 					error!("Could not send extrsinic to node: {:?}", e);
 					send_extrinsic_failed = true;
 				}

@@ -23,12 +23,13 @@ use codec::{Decode, Encode};
 use ita_stf::{TrustedCall, TrustedOperation};
 
 use itp_types::{ShardIdentifier, H256};
-use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::UserShieldingKeyType;
-use log::debug;
-use sp_runtime::traits::{AccountIdLookup, StaticLookup};
+use sp_core::crypto::AccountId32;
+use sp_runtime::{
+	traits::{AccountIdLookup, StaticLookup},
+	MultiAddress,
+};
 use std::vec::Vec;
-use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct SetUserShieldingKeyArgs {
@@ -40,7 +41,7 @@ impl SetUserShieldingKeyArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<GenericAddress>,
+		address: Option<MultiAddress<AccountId32, ()>>,
 		hash: H256,
 	) -> Result<()> {
 		let key =
@@ -48,11 +49,13 @@ impl SetUserShieldingKeyArgs {
 
 		if let Some(address) = address {
 			let account = AccountIdLookup::lookup(address)?;
-			debug!("indirect call SetUserShieldingKey, who:{:?}", account_id_to_string(&account));
-
 			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call =
-				TrustedCall::set_user_shielding_key(enclave_account_id, account, key, hash);
+			let trusted_call = TrustedCall::set_user_shielding_key(
+				enclave_account_id.into(),
+				account.into(),
+				key,
+				hash,
+			);
 			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
 			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
 
@@ -64,7 +67,7 @@ impl SetUserShieldingKeyArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for SetUserShieldingKeyArgs {
-	type Args = (Option<GenericAddress>, H256);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash) = args;

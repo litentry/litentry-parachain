@@ -23,11 +23,10 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-use crate::{ensure, AccountId, Error, Result};
+use crate::{ensure, Error, Result};
 use ita_stf::helpers::get_expected_raw_message;
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_types::Index;
-use itp_utils::stringify::account_id_to_string;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
@@ -35,7 +34,7 @@ use lc_data_providers::{
 };
 use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
-	UserShieldingKeyNonceType, UserShieldingKeyType, Web2Network, Web2ValidationData,
+	UserShieldingKeyNonceType, UserShieldingKeyType, Web2ValidationData,
 };
 use log::*;
 use std::{string::ToString, vec::Vec};
@@ -56,14 +55,16 @@ fn payload_from_discord(discord: &DiscordMessage) -> Result<Vec<u8>> {
 }
 
 pub fn verify(
-	who: &AccountId,
+	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
 	key: UserShieldingKeyType,
 	nonce: UserShieldingKeyNonceType,
 	data: &Web2ValidationData,
 ) -> Result<()> {
-	debug!("verify web2 identity, who: {}", account_id_to_string(who));
+	debug!("verify web2 identity, who: {:?}", who);
+
+	ensure!(identity.is_web2(), Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity),);
 
 	let (user_name, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
@@ -98,41 +99,40 @@ pub fn verify(
 				.get_user_info(message.author.id.clone())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
 
-			let mut user_name_with_discriminator = message.author.username.clone();
-			user_name_with_discriminator.push_str(&'#'.to_string());
-			user_name_with_discriminator.push_str(&user.discriminator);
-
+			let mut user_name = message.author.username.clone();
+			// if discord user's username is upgraded complete, the discriminator value from api will be "0".
+			if user.discriminator != "0" {
+				user_name.push_str(&'#'.to_string());
+				user_name.push_str(&user.discriminator);
+			}
 			let payload = payload_from_discord(&message)?;
-			Ok((user_name_with_discriminator, payload))
+			Ok((user_name, payload))
 		},
 	}?;
 
 	// compare the username:
 	// - twitter's username is case insensitive
-	// - discord's username (with 4 digit discriminator) is case sensitive
-	if let Identity::Web2 { ref network, ref address } = identity {
-		let handle = std::str::from_utf8(address.as_slice())
-			.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
-		match network {
-			Web2Network::Twitter => ensure!(
+	// - discord's username is case sensitive
+	match identity {
+		Identity::Twitter(address) => {
+			let handle = std::str::from_utf8(address.as_slice())
+				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
+			ensure!(
 				user_name.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
 				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
-			),
-			Web2Network::Discord => ensure!(
-				user_name.eq(handle),
-				Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle)
-			),
-			_ => (),
-		}
-	} else {
-		return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity))
+			);
+		},
+		Identity::Discord(address) => {
+			let handle = std::str::from_utf8(address.as_slice())
+				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
+			ensure!(user_name.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));
+		},
+		_ => return Err(Error::LinkIdentityFailed(ErrorDetail::InvalidIdentity)),
 	}
 
 	// the payload must match
 	// TODO: maybe move it to common place
-	ensure!(
-		payload == get_expected_raw_message(who, identity, sidechain_nonce, key, nonce),
-		Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
-	);
+	let expected = get_expected_raw_message(who, identity, sidechain_nonce, key, nonce);
+	ensure!(payload == expected, Error::LinkIdentityFailed(ErrorDetail::UnexpectedMessage));
 	Ok(())
 }

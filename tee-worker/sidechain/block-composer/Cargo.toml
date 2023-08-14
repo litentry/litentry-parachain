@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "its-block-composer"
 version = "0.9.0"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
 
 [dependencies]
 # sgx dependencies
@@ -38,18 +38,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 
 [features]
 default = ["std"]
-sgx = [
-    "sgx_tstd",
-    "ita-stf/sgx",
-    "itp-node-api/sgx",
-    "itp-sgx-crypto/sgx",
-    "itp-sgx-externalities/sgx",
-    "itp-stf-executor/sgx",
-    "itp-time-utils/sgx",
-    "itp-top-pool-author/sgx",
-    "its-state/sgx",
-    "thiserror_sgx",
-]
 std = [
     "ita-stf/std",
     "itp-node-api/std",
@@ -64,4 +52,16 @@ std = [
     "its-state/std",
     "log/std",
     "thiserror",
+]
+sgx = [
+    "sgx_tstd",
+    "ita-stf/sgx",
+    "itp-node-api/sgx",
+    "itp-sgx-crypto/sgx",
+    "itp-sgx-externalities/sgx",
+    "itp-stf-executor/sgx",
+    "itp-time-utils/sgx",
+    "itp-top-pool-author/sgx",
+    "its-state/sgx",
+    "thiserror_sgx",
 ]

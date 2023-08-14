@@ -5,11 +5,12 @@
 .github
 .idea
 ci/
-docker/
+docker/*yml
 docs/
 local-setup/
 scripts/
 target/
+enclave-runtime/target/
 tmp/
 *.Dockerfile
 Dockerfile

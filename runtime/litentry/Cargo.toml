@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry Dev"]
+authors = ["Litentry Technologies GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'litentry-parachain-runtime'
 version = '0.9.16'

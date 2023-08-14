@@ -1,10 +1,11 @@
-use crate::{command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli};
+use crate::{
+	command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli, CliResult, CliResultOk,
+};
 use codec::Decode;
 use frame_metadata::{RuntimeMetadata, StorageEntryType, StorageHasher};
 use ita_sgx_runtime::Runtime;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
-use itp_stf_primitives::types::Hash;
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
 use log::{error, warn};
@@ -29,7 +30,7 @@ pub struct GetStorageCommand {
 	keys: Vec<String>,
 }
 impl GetStorageCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
 		let direct_api = get_worker_api_direct(cli);
 		let mrenclave = trusted_args.mrenclave.clone();
 		if let Some(v) = get_storage_value(
@@ -43,6 +44,8 @@ impl GetStorageCommand {
 		} else {
 			println!("None");
 		}
+
+		Ok(CliResultOk::None)
 	}
 }
 
@@ -150,11 +153,8 @@ fn send_get_storage_request(
 						}
 						None
 					},
-					DirectRequestStatus::TrustedOperationStatus(status) => {
-						warn!("request status is: {:?}", status);
-						if let Ok(value) = Hash::decode(&mut return_value.value.as_slice()) {
-							warn!("Trusted call {:?} is {:?}", value, status);
-						}
+					DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+						warn!("request status is: {:?}, top_hash: {:?}", status, top_hash);
 						None
 					},
 				}

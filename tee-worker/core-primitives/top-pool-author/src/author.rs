@@ -311,7 +311,7 @@ where
 	) -> Vec<TrustedOperation> {
 		self.get_pending_trusted_calls(shard)
 			.into_iter()
-			.filter(|o| o.signed_caller_account() == Some(account))
+			.filter(|o| o.signed_caller_account().as_ref() == Some(account))
 			.collect()
 	}
 
@@ -342,6 +342,14 @@ where
 		shard: ShardIdentifier,
 	) -> PoolFuture<TxHash<TopPool>, RpcError> {
 		self.process_top(ext, shard, TopSubmissionMode::SubmitWatch)
+	}
+
+	fn set_rpc_response_value(&self, rpc_responses_value: Vec<(TxHash<TopPool>, Vec<u8>)>) {
+		self.top_pool.set_rpc_response_value(rpc_responses_value)
+	}
+
+	fn swap_rpc_connection_hash(&self, old_hash: TxHash<TopPool>, new_hash: TxHash<TopPool>) {
+		self.top_pool.swap_rpc_connection_hash(old_hash, new_hash)
 	}
 }
 

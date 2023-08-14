@@ -23,9 +23,9 @@ use tokio::{
 };
 use warp::Filter;
 
+pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
-pub mod graphql;
 pub mod twitter_litentry;
 pub mod twitter_official;
 
@@ -68,12 +68,12 @@ where
 					.or(twitter_official::query_retweeted_by())
 					.or(twitter_official::query_user_by_name())
 					.or(twitter_official::query_user_by_id())
-					.or(twitter_official::query_friendship())
 					.or(twitter_litentry::check_follow())
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
-					.or(graphql::query()),
+					.or(achainable::query())
+					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
 			log::info!("mock-server listen on addr:{:?}", addr);

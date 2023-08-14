@@ -7,19 +7,19 @@
 #
 # setup:
 # run all on localhost:
-#   integritee-node purge-chain --dev
-#   integritee-node --tmp --dev -lruntime=debug
+#   litentry-node purge-chain --dev
+#   litentry-node --tmp --dev -lruntime=debug
 #   rm light_client_db.bin
-#   export RUST_LOG=integritee_service=info,ita_stf=debug
-#   integritee-service init_shard
-#   integritee-service shielding-key
-#   integritee-service signing-key
-#   integritee-service run
+#   export RUST_LOG=litentry_worker=info,ita_stf=debug
+#   litentry-worker init_shard
+#   litentry-worker shielding-key
+#   litentry-worker signing-key
+#   litentry-worker run
 #
 # Then run this script.
 #
 # usage:
-#  export RUST_LOG_LOG=integritee-cli=info,ita_stf=info
+#  export RUST_LOG_LOG=litentry-cli=info,ita_stf=info
 #  demo_sidechain.sh -p <NODEPORT> -A <WORKER1PORT> -B <WORKER2PORT> -m file
 #
 # TEST_BALANCE_RUN is either "first" or "second"
@@ -67,7 +67,7 @@ WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 WORKER2PORT=${WORKER2PORT:-3000}
 WORKER2URL=${WORKER2URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 echo "Using node uri ${NODEURL}:${NPORT}"

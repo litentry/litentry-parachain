@@ -154,7 +154,7 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 				let mut trusted_operations: Vec<TrustedOperation> = Vec::new();
 				for encoded_operation in encoded_operations {
 					if let Some(o) = Self::decode_trusted_operation(encoded_operation) {
-						if o.signed_caller_account() == Some(account) {
+						if o.signed_caller_account().as_ref() == Some(account) {
 							trusted_operations.push(o);
 						}
 					}
@@ -188,6 +188,10 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 	fn watch_top(&self, _ext: Vec<u8>, _shard: ShardIdentifier) -> PoolFuture<H256, RpcError> {
 		todo!()
 	}
+
+	fn set_rpc_response_value(&self, _rpc_responses_value: Vec<(H256, Vec<u8>)>) {}
+
+	fn swap_rpc_connection_hash(&self, _old_hash: H256, _new_hash: H256) {}
 }
 
 impl OnBlockImported for AuthorApiMock<H256, H256> {

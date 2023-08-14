@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry dev"]
+authors = ["Litentry Technologies GmbH <info@litentry.com>"]
 edition = "2021"
 name = "lc-assertion-build"
 version = "0.1.0"
@@ -53,7 +53,7 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39", default-features = false }
 
-# features = ["sgx"]
+# litentry
 lc-credentials = { path = "../credentials", default-features = false }
 lc-data-providers = { path = "../data-providers", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
@@ -78,6 +78,7 @@ sgx = [
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
     "lc-credentials/sgx",
+    "lc-data-providers/sgx",
 ]
 std = [
     "futures",
@@ -105,4 +106,5 @@ std = [
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
     "lc-credentials/std",
+    "lc-data-providers/std",
 ]

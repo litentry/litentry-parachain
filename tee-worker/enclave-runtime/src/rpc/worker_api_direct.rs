@@ -15,18 +15,27 @@
 
 */
 
+use crate::{
+	attestation::{
+		generate_dcap_ra_extrinsic_from_quote_internal,
+		generate_ias_ra_extrinsic_from_der_cert_internal,
+	},
+	utils::get_validator_accessor_from_solo_or_parachain,
+};
 use codec::Encode;
 use core::result::Result;
-use ita_sgx_runtime::Runtime;
+use ita_sgx_runtime::{Runtime, System};
+use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
-use itp_sgx_crypto::Rsa3072Seal;
+use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
+use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	DirectRequestStatus, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
+	DirectRequestStatus, Index, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
 };
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
@@ -36,6 +45,8 @@ use its_sidechain::rpc_handler::{
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::debug;
+use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
@@ -52,18 +63,21 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<R, G, S>(
-	top_pool_author: Arc<R>,
-	getter_executor: Arc<G>,
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, S>(
+	top_pool_author: Arc<Author>,
+	getter_executor: Arc<GetterExecutor>,
+	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<S>>,
 ) -> IoHandler
 where
-	R: AuthorApi<H256, H256> + Send + Sync + 'static,
-	G: ExecuteGetter + Send + Sync + 'static,
+	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
+	GetterExecutor: ExecuteGetter + Send + Sync + 'static,
+	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 	S: HandleState + Send + Sync + 'static,
 	S::StateT: SgxExternalitiesTrait,
 {
 	let io = IoHandler::new();
+	let pool_author = top_pool_author.clone();
 
 	// Add direct TOP pool rpc methods
 	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author, io);
@@ -71,7 +85,7 @@ where
 	// author_getShieldingKey
 	let rsa_pubkey_name: &str = "author_getShieldingKey";
 	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
-		let rsa_pubkey = match Rsa3072Seal::unseal_pubkey() {
+		let rsa_pubkey = match shielding_key.retrieve_pubkey() {
 			Ok(key) => key,
 			Err(status) => {
 				let error_msg: String = format!("Could not get rsa pubkey due to: {}", status);
@@ -90,6 +104,67 @@ where
 		let json_value =
 			RpcReturnValue::new(rsa_pubkey_json.encode(), false, DirectRequestStatus::Ok);
 		Ok(json!(json_value.to_hex()))
+	});
+
+	// author_getNextNonce
+	let state_storage = state.clone();
+
+	let author_get_next_nonce: &str = "author_getNextNonce";
+	io.add_sync_method(author_get_next_nonce, move |params: Params| {
+		let state_nonce = state.clone();
+		if state_nonce.is_none() {
+			return Ok(json!(compute_hex_encoded_return_error(
+				"author_getNextNonce is not avaiable"
+			)))
+		}
+		#[allow(clippy::unwrap_used)]
+		let state_nonce_unwrap = state_nonce.unwrap();
+		match params.parse::<(String, String)>() {
+			Ok((shard_base58, account_hex)) => {
+				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
+					Ok(id) => id,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+				let account = match AccountId::from_hex(account_hex.as_str()) {
+					Ok(acc) => acc,
+					Err(msg) => {
+						let error_msg: String =
+							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				};
+
+				match state_nonce_unwrap.load_cloned(&shard) {
+					Ok((mut state, _hash)) => {
+						let trusted_calls =
+							pool_author.get_pending_trusted_calls_for(shard, &account);
+						let pending_tx_count = trusted_calls.len();
+						#[allow(clippy::unwrap_used)]
+						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
+						let nonce = state.execute_with(|| System::account_nonce(&account));
+						let json_value = RpcReturnValue {
+							do_watch: false,
+							value: (nonce.saturating_add(pending_tx_count)).encode(),
+							status: DirectRequestStatus::Ok,
+						};
+						Ok(json!(json_value.to_hex()))
+					},
+					Err(e) => {
+						let error_msg = format!("load shard failure due to: {:?}", e);
+						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+					},
+				}
+			},
+			Err(e) => {
+				let error_msg: String =
+					format!("Could not retrieve author_getNextNonce calls due to: {}", e);
+				Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		}
 	});
 
 	let mu_ra_url_name: &str = "author_getMuRaUrl";
@@ -157,49 +232,54 @@ where
 		Ok(json!(json_value))
 	});
 
-	// state_getStorage
-	let state_get_storage = "state_getStorage";
-	io.add_sync_method(state_get_storage, move |params: Params| {
-		if state.is_none() {
-			return Ok(json!(compute_hex_encoded_return_error("state_getStorage is not avaiable")))
-		}
-		let state = state.clone().unwrap();
-		match params.parse::<(String, String)>() {
-			Ok((shard_str, key_hash)) => {
-				let key_hash = if key_hash.starts_with("0x") {
-					key_hash.strip_prefix("0x").unwrap()
-				} else {
-					key_hash.as_str()
-				};
-				let key_hash = match hex::decode(key_hash) {
-					Ok(key_hash) => key_hash,
-					Err(_) =>
-						return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
-				};
+	// attesteer_forward_dcap_quote
+	let attesteer_forward_dcap_quote: &str = "attesteer_forwardDcapQuote";
+	io.add_sync_method(attesteer_forward_dcap_quote, move |params: Params| {
+		let json_value = match forward_dcap_quote_inner(params) {
+			Ok(val) => RpcReturnValue {
+				do_watch: false,
+				value: val.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex(),
+			Err(error) => compute_hex_encoded_return_error(error.as_str()),
+		};
 
-				let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str()) {
-					Ok(id) => id,
-					Err(msg) => {
-						let error_msg = format!("decode shard failure due to: {}", msg);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				};
-				match state.load_cloned(&shard) {
-					Ok((state, _hash)) => {
-						// Get storage by key hash
-						let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
-						debug!("query storage value:{:?}", &value);
-						let json_value = RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
-						Ok(json!(json_value.to_hex()))
-					},
-					Err(e) => {
-						let error_msg = format!("load shard failure due to: {:?}", e);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-					},
-				}
+		Ok(json!(json_value))
+	});
+
+	// attesteer_forward_ias_attestation_report
+	let attesteer_forward_ias_attestation_report: &str = "attesteer_forwardIasAttestationReport";
+	io.add_sync_method(attesteer_forward_ias_attestation_report, move |params: Params| {
+		let json_value = match attesteer_forward_ias_attestation_report_inner(params) {
+			Ok(val) => RpcReturnValue {
+				do_watch: false,
+				value: val.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex(),
+			Err(error) => compute_hex_encoded_return_error(error.as_str()),
+		};
+		Ok(json!(json_value))
+	});
+
+	// state_getMrenclave
+	let state_get_mrenclave_name: &str = "state_getMrenclave";
+	io.add_sync_method(state_get_mrenclave_name, |_: Params| {
+		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
+			Ok(mrenclave) => RpcReturnValue {
+				do_watch: false,
+				value: mrenclave.encode(),
+				status: DirectRequestStatus::Ok,
+			}
+			.to_hex(),
+			Err(error) => {
+				let error_msg: String =
+					format!("Could not get current mrenclave due to: {}", error);
+				compute_hex_encoded_return_error(error_msg.as_str())
 			},
-			Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
-		}
+		};
+		Ok(json!(json_value))
 	});
 
 	if cfg!(not(feature = "production")) {
@@ -241,6 +321,59 @@ where
 				Err(_) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
+
+		// state_getStorage
+		let state_get_storage = "state_getStorage";
+		io.add_sync_method(state_get_storage, move |params: Params| {
+			if state_storage.is_none() {
+				return Ok(json!(compute_hex_encoded_return_error(
+					"state_getStorage is not avaiable"
+				)))
+			}
+
+			#[allow(clippy::unwrap_used)]
+			let state_storage = state_storage.clone().unwrap();
+			match params.parse::<(String, String)>() {
+				Ok((shard_str, key_hash)) => {
+					let key_hash = if key_hash.starts_with("0x") {
+						#[allow(clippy::unwrap_used)]
+						key_hash.strip_prefix("0x").unwrap()
+					} else {
+						key_hash.as_str()
+					};
+					let key_hash = match hex::decode(key_hash) {
+						Ok(key_hash) => key_hash,
+						Err(_) =>
+							return Ok(json!(compute_hex_encoded_return_error("docode key error"))),
+					};
+
+					let shard: ShardIdentifier = match decode_shard_from_base58(shard_str.as_str())
+					{
+						Ok(id) => id,
+						Err(msg) => {
+							let error_msg = format!("decode shard failure due to: {}", msg);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					};
+					match state_storage.load_cloned(&shard) {
+						Ok((state_storage, _hash)) => {
+							// Get storage by key hash
+							let value =
+								state_storage.get(key_hash.as_slice()).cloned().unwrap_or_default();
+							debug!("query storage value:{:?}", &value);
+							let json_value =
+								RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
+							Ok(json!(json_value.to_hex()))
+						},
+						Err(e) => {
+							let error_msg = format!("load shard failure due to: {:?}", e);
+							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						},
+					}
+				},
+				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
+			}
+		});
 	}
 
 	// system_health
@@ -279,8 +412,8 @@ fn execute_getter_inner<G: ExecuteGetter>(
 ) -> Result<Option<Vec<u8>>, String> {
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
-	let request =
-		Request::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let request = Request::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let shard: ShardIdentifier = request.shard;
 	let encoded_trusted_getter: Vec<u8> = request.cyphertext;
@@ -290,6 +423,64 @@ fn execute_getter_inner<G: ExecuteGetter>(
 		.map_err(|e| format!("{:?}", e))?;
 
 	Ok(getter_result)
+}
+
+fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
+	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+
+	if hex_encoded_params.len() != 1 {
+		return Err(format!(
+			"Wrong number of arguments for IAS attestation report forwarding: {}, expected: {}",
+			hex_encoded_params.len(),
+			1
+		))
+	}
+
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let encoded_quote_to_forward: Vec<u8> =
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+
+	let url = String::new();
+	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
+		.map_err(|e| format!("{:?}", e))?;
+
+	let validator_access =
+		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	validator_access
+		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
+		.map_err(|e| format!("{:?}", e))?;
+
+	Ok(ext)
+}
+
+fn attesteer_forward_ias_attestation_report_inner(
+	params: Params,
+) -> Result<OpaqueExtrinsic, String> {
+	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+
+	if hex_encoded_params.len() != 1 {
+		return Err(format!(
+			"Wrong number of arguments for IAS attestation report forwarding: {}, expected: {}",
+			hex_encoded_params.len(),
+			1
+		))
+	}
+
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
+	let ias_attestation_report =
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+
+	let url = String::new();
+	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)
+		.map_err(|e| format!("{:?}", e))?;
+
+	let validator_access =
+		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	validator_access
+		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
+		.map_err(|e| format!("{:?}", e))?;
+
+	Ok(ext)
 }
 
 pub fn sidechain_io_handler<ImportFn, Error>(import_fn: ImportFn) -> IoHandler

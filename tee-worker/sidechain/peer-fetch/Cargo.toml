@@ -1,8 +1,8 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
 name = "its-peer-fetch"
 version = "0.9.0"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
 
 [dependencies]
 # crates.io
@@ -32,5 +32,5 @@ its-test = { path = "../test" }
 
 [features]
 default = ["std"]
-mocks = []
 std = []
+mocks = []

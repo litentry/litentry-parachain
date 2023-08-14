@@ -11,8 +11,6 @@ docker/yarn.lock
 docker/generated-*/
 tee-worker/docker/litentry/
 
-ts-tests/package-lock.json
-
 tags.lock
 
 recipe.json
@@ -21,7 +19,5 @@ gethdata
 
 *.patch
 
-# Local dev environment config files
-tee-worker/.env
-tee-worker/ts-tests/.env.local
-ts-tests/config.local.json
+# Docker files
+docker/.yarn

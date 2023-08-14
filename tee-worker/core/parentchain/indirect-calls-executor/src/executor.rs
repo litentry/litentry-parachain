@@ -216,10 +216,19 @@ impl<
 		let enclave_account = self.get_enclave_account()?;
 		// let shielding_key = self.shielding_key_repo.retrieve_key()?;
 		let trusted_call = match err {
-			Error::IMPHandlingError(e) =>
-				TrustedCall::handle_imp_error(enclave_account, account, e.clone(), hash),
-			Error::VCMPHandlingError(e) =>
-				TrustedCall::handle_vcmp_error(enclave_account, account, e.clone(), hash),
+			Error::IMPHandlingError(e) => TrustedCall::handle_imp_error(
+				enclave_account.into(),
+				account.map(|a| a.into()),
+				e.clone(),
+				hash,
+			),
+
+			Error::VCMPHandlingError(e) => TrustedCall::handle_vcmp_error(
+				enclave_account.into(),
+				account.map(|a| a.into()),
+				e.clone(),
+				hash,
+			),
 			_ => return Err(Error::Other(("unsupported error").into())),
 		};
 		let signed_trusted_call = self.sign_call_with_self(&trusted_call, &shard)?;
@@ -268,10 +277,7 @@ mod test {
 	use ita_stf::TrustedOperation;
 	use itc_parentchain_test::parentchain_block_builder::ParentchainBlockBuilder;
 	use itp_node_api::{
-		api_client::{
-			ParentchainExtrinsicParams, ParentchainExtrinsicParamsBuilder,
-			ParentchainUncheckedExtrinsic,
-		},
+		api_client::{ParentchainExtrinsicParams, ParentchainUncheckedExtrinsic},
 		metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
@@ -279,14 +285,11 @@ mod test {
 	use itp_stf_primitives::types::AccountId;
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{
-		extrinsics::fill_opaque_extrinsic_with_status, Block, CallWorkerFn, Request,
-		ShardIdentifier, ShieldFundsFn,
-	};
+	use itp_types::{Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn};
 	use sp_core::{ed25519, Pair};
-	use sp_runtime::{MultiSignature, OpaqueExtrinsic};
+	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
-	use substrate_api_client::{ExtrinsicParams, GenericAddress};
+	use substrate_api_client::ExtrinsicParams;
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;
@@ -315,9 +318,7 @@ mod test {
 				.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![
-				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
-			])
+			.with_extrinsics(vec![opaque_extrinsic])
 			.build();
 
 		indirect_calls_executor
@@ -342,9 +343,7 @@ mod test {
 		.unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
-			.with_extrinsics(vec![
-				fill_opaque_extrinsic_with_status(opaque_extrinsic, true).unwrap()
-			])
+			.with_extrinsics(vec![opaque_extrinsic])
 			.build();
 
 		indirect_calls_executor
@@ -426,7 +425,7 @@ mod test {
 		let shield_funds_indexes = dummy_metadata.shield_funds_call_indexes().unwrap();
 		ParentchainUncheckedExtrinsic::<ShieldFundsFn>::new_signed(
 			(shield_funds_indexes, target_account, 1000u128, shard_id()),
-			GenericAddress::Address32([1u8; 32]),
+			MultiAddress::Address32([1u8; 32]),
 			MultiSignature::Ed25519(default_signature()),
 			default_extrinsic_params().signed_extra(),
 		)
@@ -439,7 +438,7 @@ mod test {
 
 		ParentchainUncheckedExtrinsic::<CallWorkerFn>::new_signed(
 			(call_worker_indexes, request),
-			GenericAddress::Address32([1u8; 32]),
+			MultiAddress::Address32([1u8; 32]),
 			MultiSignature::Ed25519(default_signature()),
 			default_extrinsic_params().signed_extra(),
 		)
@@ -458,13 +457,7 @@ mod test {
 	}
 
 	fn default_extrinsic_params() -> ParentchainExtrinsicParams {
-		ParentchainExtrinsicParams::new(
-			0,
-			0,
-			0,
-			H256::default(),
-			ParentchainExtrinsicParamsBuilder::default(),
-		)
+		ParentchainExtrinsicParams::new(0, 0, 0, H256::default(), Default::default())
 	}
 	fn test_fixtures(
 		mr_enclave: [u8; 32],

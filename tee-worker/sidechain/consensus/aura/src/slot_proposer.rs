@@ -133,6 +133,10 @@ where
 				.collect(),
 		);
 
+		// store the rpc response value to top pool
+		let rpc_responses_value = batch_execution_result.get_rpc_responses_values();
+		self.top_pool_author.set_rpc_response_value(rpc_responses_value);
+
 		// 3) Compose sidechain block.
 		let sidechain_block = self
 			.block_composer

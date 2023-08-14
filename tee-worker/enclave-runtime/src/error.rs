@@ -16,7 +16,7 @@
 */
 
 use derive_more::From;
-use sgx_types::sgx_status_t;
+use sgx_types::{sgx_quote3_error_t, sgx_status_t};
 use std::{boxed::Box, result::Result as StdResult, string::String};
 
 pub type Result<T> = StdResult<T, Error>;
@@ -34,6 +34,7 @@ pub enum Error {
 	LightClient(itc_parentchain::light_client::error::Error),
 	NodeMetadataProvider(itp_node_api::metadata::provider::Error),
 	Sgx(sgx_status_t),
+	SgxQuote(sgx_quote3_error_t),
 	Consensus(its_sidechain::consensus_common::Error),
 	Stf(String),
 	StfStateHandler(itp_stf_state_handler::error::Error),
@@ -42,10 +43,13 @@ pub enum Error {
 	ExpectedTriggeredImportDispatcher,
 	CouldNotDispatchBlockImport,
 	NoParentchainAssigned,
+	ParentChainValidation(itp_storage::error::Error),
+	ParentChainSync,
 	PrimitivesAccess(itp_primitives_cache::error::Error),
 	MutexAccess,
 	Attestation(itp_attestation_handler::error::Error),
 	Metadata(itp_node_api_metadata::error::Error),
+	BufferError(itp_utils::buffer::BufferError),
 	Other(Box<dyn std::error::Error>),
 }
 
@@ -57,6 +61,19 @@ impl From<Error> for sgx_status_t {
 			_ => {
 				log::error!("Returning error {:?} as sgx unexpected.", error);
 				sgx_status_t::SGX_ERROR_UNEXPECTED
+			},
+		}
+	}
+}
+
+impl From<Error> for sgx_quote3_error_t {
+	/// return sgx_quote error
+	fn from(error: Error) -> sgx_quote3_error_t {
+		match error {
+			Error::SgxQuote(status) => status,
+			_ => {
+				log::error!("Returning error {:?} as sgx unexpected.", error);
+				sgx_quote3_error_t::SGX_QL_ERROR_UNEXPECTED
 			},
 		}
 	}

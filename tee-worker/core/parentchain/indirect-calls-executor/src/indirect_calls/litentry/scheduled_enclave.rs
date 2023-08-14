@@ -25,32 +25,32 @@ use log::debug;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct UpdateScheduledEnclaveArgs {
-	sbn: SidechainBlockNumber,
+	sbn: codec::Compact<SidechainBlockNumber>,
 	mrenclave: MrEnclave,
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for UpdateScheduledEnclaveArgs {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
-		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {}, mrenclave: {:?}", self.sbn, self.mrenclave);
-		GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn, self.mrenclave)?;
+		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {:?}, mrenclave: {:?}", self.sbn, self.mrenclave);
+		GLOBAL_SCHEDULED_ENCLAVE.update(self.sbn.into(), self.mrenclave)?;
 		Ok(())
 	}
 }
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct RemoveScheduledEnclaveArgs {
-	sbn: SidechainBlockNumber,
+	sbn: codec::Compact<SidechainBlockNumber>,
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveScheduledEnclaveArgs {
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!(
-			"execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {}",
+			"execute indirect call: RemoveScheduledEnclave, sidechain_block_number: {:?}",
 			self.sbn
 		);
-		GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn)?;
+		GLOBAL_SCHEDULED_ENCLAVE.remove(self.sbn.into())?;
 		Ok(())
 	}
 }

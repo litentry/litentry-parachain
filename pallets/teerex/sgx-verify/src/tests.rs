@@ -6,7 +6,7 @@ use codec::Decode;
 use frame_support::assert_err;
 use hex_literal::hex;
 
-// reproduce with "integritee_service dump_ra"
+// reproduce with "litentry-worker dump_ra"
 const TEST1_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER1_MRENCLAVE1.der");
 const TEST2_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER2_MRENCLAVE2.der");
 const TEST3_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER3_MRENCLAVE2.der");
@@ -23,7 +23,7 @@ const TEST2_SIGNER_ATTN: &[u8] =
 const TEST3_SIGNER_ATTN: &[u8] =
 	include_bytes!("../test/test_ra_signer_attn_MRSIGNER3_MRENCLAVE2.bin");
 
-// reproduce with "integritee_service signing-key"
+// reproduce with "litentry-worker signing-key"
 const TEST1_SIGNER_PUB: &[u8] =
 	include_bytes!("../test/test_ra_signer_pubkey_MRSIGNER1_MRENCLAVE1.bin");
 const TEST2_SIGNER_PUB: &[u8] =

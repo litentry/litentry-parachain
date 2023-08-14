@@ -19,7 +19,7 @@ use crate::{
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_trusted_operation,
-	Cli,
+	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
@@ -31,7 +31,7 @@ use sp_core::Pair;
 pub struct SendErroneousParentchainCallCommand {}
 
 impl SendErroneousParentchainCallCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) {
+	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let root = get_pair_from_str(trusted_cli, "//Alice");
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
@@ -41,6 +41,6 @@ impl SendErroneousParentchainCallCommand {
 			TrustedCall::send_erroneous_parentchain_call(root.public().into())
 				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
-		perform_trusted_operation(cli, trusted_cli, &top);
+		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }

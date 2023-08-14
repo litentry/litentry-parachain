@@ -21,7 +21,11 @@ use sp_core::{H160, U256};
 #[cfg(feature = "evm")]
 use std::vec::Vec;
 
-use crate::{helpers::ensure_enclave_signer_account, Runtime, StfError, System, TrustedOperation};
+use crate::{
+	helpers::{ensure_enclave_signer, ensure_self},
+	trusted_call_rpc_response::*,
+	Runtime, StfError, System, TrustedOperation,
+};
 use codec::{Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 pub use ita_sgx_runtime::{Balance, ConvertAccountId, Index, SgxParentchainTypeConverter};
@@ -30,22 +34,24 @@ pub use itp_node_api::metadata::{
 	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata,
 };
 use itp_stf_interface::ExecuteCall;
-use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier, Signature};
+use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier};
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
 	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
-	VCMPError, ValidationData,
+	VCMPError, ValidationData, Web3Network,
 };
 use log::*;
+use sp_core::crypto::AccountId32;
 use sp_io::hashing::blake2_256;
-use sp_runtime::{traits::Verify, MultiAddress};
-use std::{format, prelude::v1::*, sync::Arc};
+use sp_runtime::MultiAddress;
+use std::{format, prelude::v1::*, sync::Arc, vec};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 use itp_node_api::metadata::NodeMetadataTrait;
+use litentry_primitives::LitentryMultiSignature;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -60,16 +66,16 @@ pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
-	balance_set_balance(AccountId, AccountId, Balance, Balance),
-	balance_transfer(AccountId, AccountId, Balance),
-	balance_unshield(AccountId, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
-	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
+	balance_set_balance(Identity, AccountId, Balance, Balance),
+	balance_transfer(Identity, AccountId, Balance),
+	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
+	balance_shield(Identity, AccountId, Balance),                    // (Root, AccountIncognito, Amount)
 	#[cfg(feature = "evm")]
-	evm_withdraw(AccountId, H160, Balance), // (Origin, Address EVM Account, Value)
+	evm_withdraw(Identity, H160, Balance),  // (Origin, Address EVM Account, Value)
 	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_call(
-		AccountId,
+		Identity,
 		H160,
 		H160,
 		Vec<u8>,
@@ -83,7 +89,7 @@ pub enum TrustedCall {
 	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_create(
-		AccountId,
+		Identity,
 		H160,
 		Vec<u8>,
 		U256,
@@ -96,7 +102,7 @@ pub enum TrustedCall {
 	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	evm_create2(
-		AccountId,
+		Identity,
 		H160,
 		Vec<u8>,
 		H256,
@@ -108,44 +114,57 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	// litentry
-	set_user_shielding_key(AccountId, AccountId, UserShieldingKeyType, H256),
-	link_identity(AccountId, AccountId, Identity, ValidationData, UserShieldingKeyNonceType, H256),
-	remove_identity(AccountId, AccountId, Identity, H256),
-	request_vc(AccountId, AccountId, Assertion, H256),
+	set_user_shielding_key(Identity, Identity, UserShieldingKeyType, H256),
+	link_identity(
+		Identity,
+		Identity,
+		Identity,
+		ValidationData,
+		Vec<Web3Network>,
+		UserShieldingKeyNonceType,
+		H256,
+	),
+	deactivate_identity(Identity, Identity, Identity, H256),
+	activate_identity(Identity, Identity, Identity, H256),
+	request_vc(Identity, Identity, Assertion, H256),
+	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
+
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(AccountId, AccountId, Identity, H256),
-	request_vc_callback(AccountId, AccountId, Assertion, [u8; 32], [u8; 32], Vec<u8>, H256),
-	handle_imp_error(AccountId, Option<AccountId>, IMPError, H256),
-	handle_vcmp_error(AccountId, Option<AccountId>, VCMPError, H256),
-	send_erroneous_parentchain_call(AccountId),
+	link_identity_callback(Identity, Identity, Identity, Vec<Web3Network>, H256),
+	request_vc_callback(Identity, Identity, Assertion, H256, H256, Vec<u8>, H256),
+	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
+	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
+	send_erroneous_parentchain_call(Identity),
 }
 
 impl TrustedCall {
-	pub fn sender_account(&self) -> &AccountId {
+	pub fn sender_identity(&self) -> &Identity {
 		match self {
-			TrustedCall::balance_set_balance(sender_account, ..) => sender_account,
-			TrustedCall::balance_transfer(sender_account, ..) => sender_account,
-			TrustedCall::balance_unshield(sender_account, ..) => sender_account,
-			TrustedCall::balance_shield(sender_account, ..) => sender_account,
+			TrustedCall::balance_set_balance(sender_identity, ..) => sender_identity,
+			TrustedCall::balance_transfer(sender_identity, ..) => sender_identity,
+			TrustedCall::balance_unshield(sender_identity, ..) => sender_identity,
+			TrustedCall::balance_shield(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_withdraw(sender_account, ..) => sender_account,
+			TrustedCall::evm_withdraw(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_call(sender_account, ..) => sender_account,
+			TrustedCall::evm_call(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_create(sender_account, ..) => sender_account,
+			TrustedCall::evm_create(sender_identity, ..) => sender_identity,
 			#[cfg(feature = "evm")]
-			TrustedCall::evm_create2(sender_account, ..) => sender_account,
+			TrustedCall::evm_create2(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedCall::set_user_shielding_key(account, ..) => account,
-			TrustedCall::link_identity(account, ..) => account,
-			TrustedCall::remove_identity(account, ..) => account,
-			TrustedCall::request_vc(account, ..) => account,
-			TrustedCall::link_identity_callback(account, ..) => account,
-			TrustedCall::request_vc_callback(account, ..) => account,
-			TrustedCall::handle_imp_error(account, ..) => account,
-			TrustedCall::handle_vcmp_error(account, ..) => account,
-			TrustedCall::send_erroneous_parentchain_call(account) => account,
+			TrustedCall::set_user_shielding_key(sender_identity, ..) => sender_identity,
+			TrustedCall::link_identity(sender_identity, ..) => sender_identity,
+			TrustedCall::deactivate_identity(sender_identity, ..) => sender_identity,
+			TrustedCall::activate_identity(sender_identity, ..) => sender_identity,
+			TrustedCall::request_vc(sender_identity, ..) => sender_identity,
+			TrustedCall::set_identity_networks(sender_identity, ..) => sender_identity,
+			TrustedCall::link_identity_callback(sender_identity, ..) => sender_identity,
+			TrustedCall::request_vc_callback(sender_identity, ..) => sender_identity,
+			TrustedCall::handle_imp_error(sender_identity, ..) => sender_identity,
+			TrustedCall::handle_vcmp_error(sender_identity, ..) => sender_identity,
+			TrustedCall::send_erroneous_parentchain_call(sender_identity) => sender_identity,
 		}
 	}
 
@@ -169,11 +188,11 @@ impl TrustedCall {
 pub struct TrustedCallSigned {
 	pub call: TrustedCall,
 	pub nonce: Index,
-	pub signature: Signature,
+	pub signature: LitentryMultiSignature,
 }
 
 impl TrustedCallSigned {
-	pub fn new(call: TrustedCall, nonce: Index, signature: Signature) -> Self {
+	pub fn new(call: TrustedCall, nonce: Index, signature: LitentryMultiSignature) -> Self {
 		TrustedCallSigned { call, nonce, signature }
 	}
 
@@ -183,14 +202,7 @@ impl TrustedCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		// litentry: https://github.com/litentry/litentry-parachain/issues/1752
-		// the raw message is always wrapped up with `<Bytes></Bytes>` when using browser
-		// wallet extension, we need to support it as well
-		let wrapped_payload =
-			["<Bytes>".as_bytes(), payload.as_slice(), "</Bytes>".as_bytes()].concat();
-
-		self.signature.verify(payload.as_slice(), self.call.sender_account())
-			|| self.signature.verify(wrapped_payload.as_slice(), self.call.sender_account())
+		self.signature.verify(payload.as_slice(), self.call.sender_identity())
 	}
 
 	pub fn into_trusted_operation(self, direct: bool) -> TrustedOperation {
@@ -234,34 +246,50 @@ where
 	//
 	// This is probably the reason why the nonce-handling test in `demo_shielding_unshielding.sh` sometimes fails.
 	//
-	// for now we should always return Ok(()) for this function and propagate the exe, at least for
-	// litentry STFs. I believe this is the right way to go, but it still needs more discussions.
-	//
 	// Update:
 	// see discussion in https://github.com/integritee-network/worker/issues/1232
 	// my current thoughts are:
-	// - we should return Err() if the STF execution fails
-	// - the failed top should be removed from the tool
-	// - however, the failed top hash needs to be included in the sidechain block
+	// - we should return Err() if the STF execution fails, the parentchain effect will get applied regardless
+	// - the failed top should be removed from the pool
+	// - however, the failed top hash needs to be included in the sidechain block (still TODO)
+	//
+	// Almost every (Litentry) trusted call has a `H256` as parameter, this is used as the request identifier.
+	// It should be generated by the client (requester), and checked against when getting the response.
+	// It might seem redundant for direct invocation (DI) as the response is synchronous, however, we do need it
+	// when the request is handled asynchronously interanlly, which leads to streamed responses. Without it, it's
+	// impossible to pair the request and response. `top_hash` won't suffice as you can't know all hashes from
+	// client side beforehand (e.g. those trusted calls signed by enclave signer).
+	//
+	// TODO:
+	// - shall we add `req_ext_hash` in RpcReturnValue and use it to find streamed trustedCalls?
+	// - show error details for "Invalid" synchronous responses
 	fn execute(
 		self,
 		shard: &ShardIdentifier,
+		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<(), Self::Error> {
-		let sender = self.call.sender_account().clone();
+	) -> Result<Vec<u8>, Self::Error> {
+		let sender = self.call.sender_identity().clone();
+		let mut rpc_response_value = vec![];
 		let call_hash = blake2_256(&self.call.encode());
-		let system_nonce = System::account_nonce(&sender);
+		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+		let system_nonce = System::account_nonce(&account_id);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 
 		// Increment the nonce no matter if the call succeeds or fails.
 		// We consider the call "valid" once it reaches here (= it entered the tx pool)
-		System::inc_account_nonce(&sender);
+		System::inc_account_nonce(&account_id);
 
 		// TODO: maybe we can further simplify this by effacing the duplicate code
 		match self.call {
 			TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
-				ensure!(is_root::<Runtime, AccountId>(&root), Self::Error::MissingPrivileges(root));
+				let root_account_id: AccountId =
+					root.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure!(
+					is_root::<Runtime, AccountId>(&root_account_id),
+					Self::Error::MissingPrivileges(root)
+				);
 				debug!(
 					"balance_set_balance({}, {}, {})",
 					account_id_to_string(&who),
@@ -287,7 +315,9 @@ where
 				Ok::<(), Self::Error>(())
 			},
 			TrustedCall::balance_transfer(from, to, value) => {
-				let origin = ita_sgx_runtime::RuntimeOrigin::signed(from.clone());
+				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				debug!(
 					"balance_transfer({}, {}, {})",
 					account_id_to_string(&from),
@@ -312,7 +342,10 @@ where
 					value,
 					shard
 				);
-				unshield_funds(account_incognito, value)?;
+				unshield_funds(
+					account_incognito.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					value,
+				)?;
 				calls.push(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
 					beneficiary,
@@ -323,7 +356,9 @@ where
 				Ok(())
 			},
 			TrustedCall::balance_shield(enclave_account, who, value) => {
-				ensure_enclave_signer_account(&enclave_account)?;
+				let account_id: AccountId32 =
+					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer(&account_id)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
@@ -340,7 +375,9 @@ where
 			TrustedCall::evm_withdraw(from, address, value) => {
 				debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
 				ita_sgx_runtime::EvmCall::<Runtime>::withdraw { address, value }
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+						from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					))
 					.map_err(|e| {
 						Self::Error::Dispatch(format!("Evm Withdraw error: {:?}", e.error))
 					})?;
@@ -376,7 +413,9 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Call error: {:?}", e.error)))?;
 				Ok(())
 			},
@@ -410,7 +449,9 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create error: {:?}", e.error)))?;
 				let contract_address = evm_create_address(source, nonce_evm_account);
 				info!("Trying to create evm contract with address {:?}", contract_address);
@@ -447,153 +488,224 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
+					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create2 error: {:?}", e.error)))?;
 				let contract_address = evm_create2_address(source, salt, code_hash);
 				info!("Trying to create evm contract with address {:?}", contract_address);
 				Ok(())
 			},
-			// litentry trusted calls
+			// Litentry trusted calls
 			// the reason that most calls have an internal handling fn is that we want to capture the error and
 			// handle it here to be able to send error events to the parachain
 			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
 				debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-				let account = SgxParentchainTypeConverter::convert(who.clone());
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
-
-				match Self::set_user_shielding_key_internal(
-					signer,
+				let key = Self::set_user_shielding_key_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					key,
-					parent_ss58_prefix,
-				) {
-					Ok(key) => {
-						debug!("pushing user_shielding_key_set event ...");
-						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-						calls.push(OpaqueCall::from_tuple(&(
-							call_index,
-							account,
-							aes_encrypt_default(&key, &id_graph.encode()),
-							hash,
-						)));
-					},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_imp_error(),
-							hash,
-						);
-					},
-				}
-				Ok(())
-			},
-			TrustedCall::link_identity(signer, who, identity, validation_data, nonce, hash) => {
-				debug!("link_identity, who: {}", account_id_to_string(&who));
-
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-
-				if let Err(e) = Self::link_identity_internal(
-					signer,
-					who.clone(),
-					identity,
-					validation_data,
-					nonce,
-					hash,
-					shard,
-					parent_ss58_prefix,
-				) {
+				)
+				.map_err(|e| {
+					debug!("pushing error event ... error: {}", e);
 					add_call_from_imp_error(
 						calls,
 						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
+						Some(account.clone()),
 						e.to_imp_error(),
 						hash,
 					);
-				}
+					e
+				})?;
+
+				debug!("pushing user_shielding_key_set event ...");
+				let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+				let encrypted_id_graph = aes_encrypt_default(&key, &id_graph.encode());
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account.clone(),
+					encrypted_id_graph.clone(),
+					hash,
+				)));
+
+				debug!("populating user_shielding_key_set rpc reponse ...");
+				let res = SetUserShieldingKeyResponse {
+					account,
+					id_graph: encrypted_id_graph,
+					req_ext_hash: hash,
+				};
+				rpc_response_value = res.encode();
 				Ok(())
 			},
-			TrustedCall::remove_identity(signer, who, identity, hash) => {
-				debug!("remove_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.clone());
+			TrustedCall::link_identity(
+				signer,
+				who,
+				identity,
+				validation_data,
+				web3networks,
+				nonce,
+				hash,
+			) => {
+				debug!("link_identity, who: {}", account_id_to_string(&who));
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
+				Self::link_identity_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who,
+					identity,
+					validation_data,
+					web3networks,
+					nonce,
+					top_hash,
+					hash,
+					shard,
+				)
+				.map_err(|e| {
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account),
+						e.to_imp_error(),
+						hash,
+					);
+					e
+				})?;
+				// see `RpcResponder::update_status_event` why it's set to `true.encode()` here
+				rpc_response_value = true.encode();
+				Ok(())
+			},
+			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
+				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_removed_call_indexes())??;
+					.get_from_metadata(|m| m.identity_deactivated_call_indexes())??;
 
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-
-				match Self::remove_identity_internal(
-					signer,
+				let key = Self::deactivate_identity_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who,
 					identity.clone(),
-					parent_ss58_prefix,
-				) {
-					Ok(key) => {
-						debug!("pushing identity_removed event ...");
-						calls.push(OpaqueCall::from_tuple(&(
-							call_index,
-							account,
-							aes_encrypt_default(&key, &identity.encode()),
-							hash,
-						)));
-					},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_imp_error(),
-							hash,
-						);
-					},
-				}
+				)
+				.map_err(|e| {
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account.clone()),
+						e.to_imp_error(),
+						hash,
+					);
+					e
+				})?;
+
+				debug!("pushing identity_deactivated event ...");
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account.clone(),
+					aes_encrypt_default(&key, &identity.encode()),
+					hash,
+				)));
+
+				debug!("populating identity_deactivated rpc reponse ...");
+				let res = DeactivateIdentityResponse {
+					account,
+					identity: aes_encrypt_default(&key, &identity.encode()),
+					req_ext_hash: hash,
+				};
+				rpc_response_value = res.encode();
 				Ok(())
 			},
-			TrustedCall::link_identity_callback(signer, who, identity, hash) => {
+			TrustedCall::activate_identity(signer, who, identity, hash) => {
+				debug!("activate_identity, who: {}", account_id_to_string(&who));
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
+				let call_index = node_metadata_repo
+					.get_from_metadata(|m| m.identity_activated_call_indexes())??;
+
+				let key = Self::activate_identity_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who,
+					identity.clone(),
+				)
+				.map_err(|e| {
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account.clone()),
+						e.to_imp_error(),
+						hash,
+					);
+					e
+				})?;
+
+				debug!("pushing identity_activated event ...");
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account.clone(),
+					aes_encrypt_default(&key, &identity.encode()),
+					hash,
+				)));
+
+				debug!("populating identity_activated rpc reponse ...");
+				let res = ActivateIdentityResponse {
+					account,
+					identity: aes_encrypt_default(&key, &identity.encode()),
+					req_ext_hash: hash,
+				};
+				rpc_response_value = res.encode();
+				Ok(())
+			},
+			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) => {
 				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(who.clone());
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
-				let parent_ss58_prefix =
-					node_metadata_repo.get_from_metadata(|m| m.system_ss58_prefix())??;
-
-				match Self::link_identity_callback_internal(
-					signer,
+				let key = Self::link_identity_callback_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					identity.clone(),
-					parent_ss58_prefix,
-				) {
-					Ok(key) => {
-						let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-						debug!("pushing identity_linked event ...");
-						calls.push(OpaqueCall::from_tuple(&(
-							call_index,
-							account,
-							aes_encrypt_default(&key, &identity.encode()),
-							aes_encrypt_default(&key, &id_graph.encode()),
-							hash,
-						)));
-					},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_imp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_imp_error(),
-							hash,
-						);
-					},
-				}
+					web3networks,
+				)
+				.map_err(|e| {
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(account.clone()),
+						e.to_imp_error(),
+						hash,
+					);
+					e
+				})?;
+				let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+				debug!("pushing identity_linked event ...");
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account.clone(),
+					aes_encrypt_default(&key, &identity.encode()),
+					aes_encrypt_default(&key, &id_graph.encode()),
+					hash,
+				)));
 
+				let res = LinkIdentityResponse {
+					account,
+					identity: aes_encrypt_default(&key, &identity.encode()),
+					id_graph: aes_encrypt_default(&key, &id_graph.encode()),
+					req_ext_hash: hash,
+				};
+				rpc_response_value = res.encode();
 				Ok(())
 			},
 			TrustedCall::request_vc(signer, who, assertion, hash) => {
@@ -602,18 +714,30 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
-				if let Err(e) =
-					Self::request_vc_internal(signer, who.clone(), assertion, hash, shard)
-				{
+
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
+				Self::request_vc_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who,
+					assertion,
+					top_hash,
+					hash,
+					shard,
+				)
+				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
 					add_call_from_vcmp_error(
 						calls,
 						node_metadata_repo,
-						Some(SgxParentchainTypeConverter::convert(who)),
+						Some(account),
 						e.to_vcmp_error(),
 						hash,
 					);
-				}
+					e
+				})?;
+				rpc_response_value = true.encode();
 				Ok(())
 			},
 			TrustedCall::request_vc_callback(
@@ -630,46 +754,86 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
-				let account = SgxParentchainTypeConverter::convert(who.clone());
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
 				let call_index =
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
-				match Self::request_vc_callback_internal(signer, who, assertion.clone()) {
-					Ok(key) => {
-						calls.push(OpaqueCall::from_tuple(&(
-							call_index,
-							account,
-							assertion,
-							vc_index,
-							vc_hash,
-							aes_encrypt_default(&key, &vc_payload),
-							hash,
-						)));
-					},
-					Err(e) => {
-						debug!("pushing error event ... error: {}", e);
-						add_call_from_vcmp_error(
-							calls,
-							node_metadata_repo,
-							Some(account),
-							e.to_vcmp_error(),
-							hash,
-						);
-					},
-				}
+				let key = Self::request_vc_callback_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who,
+					assertion.clone(),
+				)
+				.map_err(|e| {
+					debug!("pushing error event ... error: {}", e);
+					add_call_from_vcmp_error(
+						calls,
+						node_metadata_repo,
+						Some(account.clone()),
+						e.to_vcmp_error(),
+						hash,
+					);
+					e
+				})?;
+
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account.clone(),
+					assertion.clone(),
+					vc_index,
+					vc_hash,
+					aes_encrypt_default(&key, &vc_payload),
+					hash,
+				)));
+				let res = RequestVCResponse {
+					account,
+					assertion,
+					vc_index,
+					vc_hash,
+					vc_payload: aes_encrypt_default(&key, &vc_payload),
+					req_ext_hash: hash,
+				};
+				rpc_response_value = res.encode();
+				Ok(())
+			},
+			TrustedCall::set_identity_networks(signer, who, identity, web3networks, hash) => {
+				debug!("set_identity_networks, networks: {:?}", web3networks);
+				// only support DI requests from the signer but we leave the room for changes
+				ensure!(
+					ensure_self(&signer, &who),
+					Self::Error::Dispatch("Unauthorized signer".to_string())
+				);
+				IMTCall::set_identity_networks { who, identity, web3networks }
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
+				let res = SetIdentityNetworksResponse { req_ext_hash: hash };
+				rpc_response_value = res.encode();
 				Ok(())
 			},
 			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_imp_error(calls, node_metadata_repo, account, e, hash);
-				Ok(())
+				add_call_from_imp_error(
+					calls,
+					node_metadata_repo,
+					account.and_then(|g| g.to_account_id()),
+					e.clone(),
+					hash,
+				);
+				return Err(e.into())
 			},
 			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_vcmp_error(calls, node_metadata_repo, account, e, hash);
-				Ok(())
+				add_call_from_vcmp_error(
+					calls,
+					node_metadata_repo,
+					account.and_then(|g| g.to_account_id()),
+					e.clone(),
+					hash,
+				);
+				return Err(e.into())
 			},
 			TrustedCall::send_erroneous_parentchain_call(account) => {
 				// intentionally send wrong parameters, only used in testing
@@ -681,7 +845,7 @@ where
 				Ok(())
 			},
 		}?;
-		Ok(())
+		Ok(rpc_response_value)
 	}
 
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
@@ -694,10 +858,12 @@ where
 			// litentry
 			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
+			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>

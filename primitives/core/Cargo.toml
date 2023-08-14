@@ -1,10 +1,13 @@
 [package]
-authors = ["Litentry Dev"]
+authors = ["Litentry Technologies GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'core-primitives'
 version = '0.9.12'
 
 [dependencies]
+strum = { version = "0.25.0", default-features = false }
+strum_macros = { version = "0.25.2", default-features = false }
+
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 ring = { git = "https://github.com/Niederb/ring-xous.git", branch = "0.16.20-cleanup", default-features = false, features = ["alloc"] }
@@ -18,6 +21,7 @@ xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.3
 [features]
 default = ["std"]
 std = [
+    "strum/std",
     "codec/std",
     "scale-info/std",
     "frame-support/std",

@@ -18,10 +18,13 @@
 //! Interface for direct access to a workers rpc.
 
 use crate::ws_client::{WsClient, WsClientControl};
+use base58::ToBase58;
 use codec::{Decode, Encode};
+use frame_metadata::RuntimeMetadataPrefixed;
 use ita_stf::Getter;
+use itp_api_client_types::Metadata;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
@@ -34,8 +37,7 @@ use std::{
 	thread,
 	thread::JoinHandle,
 };
-use substrate_api_client::RuntimeMetadataPrefixed;
-use teerex_primitives::Request;
+use teerex_primitives::{MrEnclave, Request};
 
 pub use crate::error::{Error, Result};
 
@@ -52,10 +54,12 @@ pub trait DirectApi {
 	fn get_rsa_pubkey(&self) -> Result<Rsa3072PubKey>;
 	fn get_mu_ra_url(&self) -> Result<String>;
 	fn get_untrusted_worker_url(&self) -> Result<String>;
-	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed>;
+	fn get_state_metadata(&self) -> Result<Metadata>;
 	// litentry
 	fn get_state_metadata_raw(&self) -> Result<String>;
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
 
+	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
@@ -142,7 +146,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let shielding_pubkey_string = decode_from_rpc_response(&response_str)?;
+		let shielding_pubkey_string = decode_from_rpc_response::<String>(&response_str)?;
 		let shielding_pubkey: Rsa3072PubKey = serde_json::from_str(&shielding_pubkey_string)?;
 
 		info!("[+] Got RSA public key of enclave");
@@ -156,7 +160,7 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let mu_ra_url: String = decode_from_rpc_response(&response_str)?;
+		let mu_ra_url: String = decode_from_rpc_response::<String>(&response_str)?;
 
 		info!("[+] Got mutual remote attestation url of enclave: {}", mu_ra_url);
 		Ok(mu_ra_url)
@@ -171,13 +175,13 @@ impl DirectApi for DirectClient {
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
 
-		let untrusted_url: String = decode_from_rpc_response(&response_str)?;
+		let untrusted_url: String = decode_from_rpc_response::<String>(&response_str)?;
 
 		info!("[+] Got untrusted websocket url of worker: {}", untrusted_url);
 		Ok(untrusted_url)
 	}
 
-	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed> {
+	fn get_state_metadata(&self) -> Result<Metadata> {
 		let jsonrpc_call: String =
 			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
 
@@ -191,13 +195,34 @@ impl DirectApi for DirectClient {
 
 		// Decode Metadata.
 		let metadata = RuntimeMetadataPrefixed::decode(&mut rpc_return_value.value.as_slice())?;
-		Ok(metadata)
+		println!("[+] Got metadata of enclave runtime");
+		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
-	fn get_state_metadata_raw(&self) -> Result<String> {
-		let metadata = self.get_state_metadata().unwrap().to_hex();
-		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
-		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			"author_getNextNonce".to_owned(),
+			vec![shard.encode().to_base58(), account.to_hex()],
+		)
+		.unwrap();
+		debug!("[+] get_next_nonce jsonrpc_call: {}", jsonrpc_call);
+		// Send json rpc call to ws server.
+		let response_str = self.get(&jsonrpc_call)?;
+		debug!("[+] get_next_nonce response_str: {}", response_str);
+		decode_from_rpc_response::<u32>(&response_str)
+	}
+
+	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
+		let jsonrpc_call: String =
+			RpcRequest::compose_jsonrpc_call("state_getMrenclave".to_string(), Default::default())?;
+
+		// Send json rpc call to ws server.
+		let response_str = self.get(&jsonrpc_call)?;
+
+		let mrenclave: MrEnclave = decode_from_rpc_response::<MrEnclave>(&response_str)?;
+
+		info!("[+] Got enclave: {:?}", mrenclave);
+		Ok(mrenclave)
 	}
 
 	fn send(&self, request: &str) -> Result<()> {
@@ -207,16 +232,22 @@ impl DirectApi for DirectClient {
 	fn close(&self) -> Result<()> {
 		self.web_socket_control.close_connection()
 	}
+
+	fn get_state_metadata_raw(&self) -> Result<String> {
+		let metadata = self.get_state_metadata().unwrap().to_hex();
+		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
+		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
+	}
 }
 
-fn decode_from_rpc_response(json_rpc_response: &str) -> Result<String> {
+fn decode_from_rpc_response<T: Decode + std::fmt::Debug>(json_rpc_response: &str) -> Result<T> {
 	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
 	let rpc_return_value =
 		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
-	let response_message = String::decode(&mut rpc_return_value.value.as_slice())?;
+	let response_message = T::decode(&mut rpc_return_value.value.as_slice())?;
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_message),
-		_ => Err(Error::Status(response_message)),
+		_ => Err(Error::Status(format!("decode_response failed to decode {:?}", response_message))),
 	}
 }
 

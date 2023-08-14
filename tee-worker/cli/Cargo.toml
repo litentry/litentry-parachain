@@ -1,10 +1,11 @@
 [package]
-name = "integritee-cli"
+name = "litentry-cli"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
+array-bytes = { version = "6.0.0" }
 base58 = "0.2"
 blake2-rfc = { version = "0.2.18" }
 chrono = "*"
@@ -20,12 +21,14 @@ rayon = "1.5.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+thiserror = "1.0"
 ws = { version = "0.9.1", features = ["ssl"] }
 
 # scs / integritee
 pallet-evm = { optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "polkadot-v0.9.39" }
-substrate-api-client = { features = ["ws-client"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
-substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
+# `default-features = false` to remove the jsonrpsee dependency.
+substrate-api-client = { default-features = false, features = ["std", "ws-client"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39" }
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39" }
 
 # substrate dependencies
 frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
@@ -52,6 +55,8 @@ frame-metadata = "15.0.0"
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
 itp-node-api-metadata = { path = "../core-primitives/node-api/metadata" }
 litentry-primitives = { path = "../litentry/primitives" }
+my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
+pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 scale-value = "0.6.0"
 sp-core-hashing = "6.0.0"
 teerex-primitives = { path = "../../primitives/teerex", default-features = false }
@@ -63,3 +68,5 @@ teeracle = []
 sidechain = []
 offchain-worker = []
 production = []
+# dcap feature flag is not used in this crate, but for easier build purposes only it present here as well
+dcap = []

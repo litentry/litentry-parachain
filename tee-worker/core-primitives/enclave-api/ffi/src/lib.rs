@@ -25,6 +25,8 @@ extern "C" {
 		mu_ra_addr_size: u32,
 		untrusted_worker_addr: *const u8,
 		untrusted_worker_addr_size: u32,
+		encoded_base_dir_str: *const u8,
+		encoded_base_dir_size: u32,
 	) -> sgx_status_t;
 
 	pub fn init_enclave_sidechain_components(
@@ -67,6 +69,10 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		blocks: *const u8,
 		blocks_size: usize,
+		events: *const u8,
+		events_size: usize,
+		events_proofs: *const u8,
+		events_proofs_size: usize,
 		nonce: *const u32,
 	) -> sgx_status_t;
 
@@ -122,8 +128,8 @@ extern "C" {
 		unchecked_extrinsic: *mut u8,
 		unchecked_extrinsic_size: u32,
 		skip_ra: c_int,
-		quoting_enclave_target_info: &sgx_target_info_t,
-		quote_size: u32,
+		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quote_size: Option<&u32>,
 	) -> sgx_status_t;
 
 	pub fn generate_dcap_ra_quote(
@@ -208,6 +214,8 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		socket_fd: c_int,
 		sign_type: sgx_quote_sign_type_t,
+		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quote_size: Option<&u32>,
 		skip_ra: c_int,
 	) -> sgx_status_t;
 
@@ -216,6 +224,8 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		socket_fd: c_int,
 		sign_type: sgx_quote_sign_type_t,
+		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quote_size: Option<&u32>,
 		shard: *const u8,
 		shard_size: u32,
 		skip_ra: c_int,
@@ -239,7 +249,7 @@ extern "C" {
 	pub fn run_stf_task_handler(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
-		data_providers_static: *const u8,
-		data_providers_static_size: usize,
+		data_provider_config: *const u8,
+		data_provider_config_size: usize,
 	) -> sgx_status_t;
 }
