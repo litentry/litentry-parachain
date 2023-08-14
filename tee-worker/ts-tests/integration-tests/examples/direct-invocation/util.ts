@@ -213,7 +213,7 @@ export async function createSignedTrustedGetterIdGraph(
     subject: LitentryPrimitivesIdentity
 ): Getter {
     const getterSigned = createSignedTrustedGetter(parachainApi, ['id_graph', '(LitentryIdentity)'], signer, subject);
-    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
+    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter; // @fixme 1878;
 }
 
 export const getSidechainNonce = async (
@@ -224,7 +224,7 @@ export const getSidechainNonce = async (
     subject: LitentryPrimitivesIdentity
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject);
-    const getter = parachainApi.createType('Getter', { public: getterPublic });
+    const getter = parachainApi.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
     const nonce = await sendRequestFromGetter(wsp, parachainApi, mrenclave, teeShieldingKey, getter);
     const nonceValue = decodeNonce(nonce.value.toHex());
     return parachainApi.createType('Index', nonceValue) as Index;

@@ -4684,6 +4684,7 @@ dependencies = [
  "chrono 0.4.26",
  "core-primitives",
  "hex 0.4.3",
+ "itp-utils",
  "log 0.4.19",
  "pallet-evm",
  "parity-scale-codec",

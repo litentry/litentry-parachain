@@ -149,6 +149,7 @@ export default {
                 Sr25519: "sr25519::Signature",
                 Ecdsa: "ecdsa::Signature",
                 Ethereum: "EthereumSignature",
+                EthereumPrettified: "EthereumSignature",
             },
         },
         EthereumSignature: "([u8; 65])",

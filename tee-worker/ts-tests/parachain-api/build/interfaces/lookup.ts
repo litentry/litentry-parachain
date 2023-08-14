@@ -1930,7 +1930,10 @@ export default {
             LinkIdentityRequested: {
                 shard: "H256",
             },
-            RemoveIdentityRequested: {
+            DeactivateIdentityRequested: {
+                shard: "H256",
+            },
+            ActivateIdentityRequested: {
                 shard: "H256",
             },
             SetUserShieldingKeyRequested: {
@@ -1947,7 +1950,12 @@ export default {
                 idGraph: "CorePrimitivesKeyAesOutput",
                 reqExtHash: "H256",
             },
-            IdentityRemoved: {
+            IdentityDeactivated: {
+                account: "AccountId32",
+                identity: "CorePrimitivesKeyAesOutput",
+                reqExtHash: "H256",
+            },
+            IdentityActivated: {
                 account: "AccountId32",
                 identity: "CorePrimitivesKeyAesOutput",
                 reqExtHash: "H256",
@@ -1962,7 +1970,12 @@ export default {
                 detail: "CorePrimitivesErrorErrorDetail",
                 reqExtHash: "H256",
             },
-            RemoveIdentityFailed: {
+            DeactivateIdentityFailed: {
+                account: "Option<AccountId32>",
+                detail: "CorePrimitivesErrorErrorDetail",
+                reqExtHash: "H256",
+            },
+            ActivateIdentityFailed: {
                 account: "Option<AccountId32>",
                 detail: "CorePrimitivesErrorErrorDetail",
                 reqExtHash: "H256",
@@ -4141,11 +4154,14 @@ export default {
                 encryptedWeb3networks: "Bytes",
                 nonce: "[u8;12]",
             },
-            remove_identity: {
+            deactivate_identity: {
                 shard: "H256",
                 encryptedIdentity: "Bytes",
             },
-            __Unused5: "Null",
+            activate_identity: {
+                shard: "H256",
+                encryptedIdentity: "Bytes",
+            },
             __Unused6: "Null",
             __Unused7: "Null",
             __Unused8: "Null",
@@ -4181,7 +4197,12 @@ export default {
                 idGraph: "CorePrimitivesKeyAesOutput",
                 reqExtHash: "H256",
             },
-            identity_removed: {
+            identity_deactivated: {
+                account: "AccountId32",
+                identity: "CorePrimitivesKeyAesOutput",
+                reqExtHash: "H256",
+            },
+            identity_activated: {
                 account: "AccountId32",
                 identity: "CorePrimitivesKeyAesOutput",
                 reqExtHash: "H256",
@@ -4200,7 +4221,8 @@ export default {
         _enum: {
             SetUserShieldingKeyFailed: "CorePrimitivesErrorErrorDetail",
             LinkIdentityFailed: "CorePrimitivesErrorErrorDetail",
-            RemoveIdentityFailed: "CorePrimitivesErrorErrorDetail",
+            DeactivateIdentityFailed: "CorePrimitivesErrorErrorDetail",
+            ActivateIdentityFailed: "CorePrimitivesErrorErrorDetail",
             ImportScheduledEnclaveFailed: "Null",
             UnclassifiedError: "CorePrimitivesErrorErrorDetail",
         },

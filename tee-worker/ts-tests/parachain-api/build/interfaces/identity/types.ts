@@ -135,7 +135,9 @@ export interface LitentryMultiSignature extends Enum {
     readonly asEcdsa: Signature;
     readonly isEthereum: boolean;
     readonly asEthereum: EthereumSignature;
-    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum";
+    readonly isEthereumPrettified: boolean;
+    readonly asEthereumPrettified: EthereumSignature;
+    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum" | "EthereumPrettified";
 }
 
 /** @name LitentryValidationData */
