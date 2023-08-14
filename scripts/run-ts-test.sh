@@ -23,6 +23,8 @@ TMPDIR=/tmp/parachain_dev
 [ -f .env ] || echo "NODE_ENV=ci" >.env
 yarn
 yarn test-filter 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
+yarn test-evm-transfer 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
+yarn test-evm-contract 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
 if $bridge; then
     yarn test-bridge 2>&1 | tee -a "$TMPDIR/parachain_ci_test.log"
 fi
