@@ -261,8 +261,8 @@ function register_parachain() {
   else
       echo "NODE_ENV=${NODE_ENV}" > .env
   fi
-  yarn
-  yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
+  corepack yarn
+  corepack yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
   print_divider
 
   echo "done. please check $TMPDIR for generated files if need"
@@ -273,8 +273,8 @@ function register_parachain() {
 setup_working_dir() {
     local CONFIG_DIR=~/configs
 
-    local INTEL_KEY=$CONFIG_DIR/key_production.txt
-    local INTEL_SPID=$CONFIG_DIR/spid_production.txt
+    local INTEL_KEY=${INTEL_KEY:-"$CONFIG_DIR/key_production.txt"}
+    local INTEL_SPID=${INTEL_SPID:-"$CONFIG_DIR/spid_production.txt"}
 
     source_dir=$1
     target_dir=$2
@@ -287,7 +287,7 @@ setup_working_dir() {
     export ENCLAVE_ACCOUNT
     echo "Enclave Account: $ENCLAVE_ACCOUNT"
 
-    optional=("key.txt" "spid.txt")
+    optional=("key.txt" "spid.txt" "key_production.txt" "spid_production.txt")
 
     for file in "${optional[@]}"; do
         source="${source_dir}/${file}"
@@ -305,8 +305,7 @@ setup_working_dir() {
     done
 
     # Only possible in TEE-Internal
-    cp $CONFIG "${target_dir}/mode_config.json"
-    if [ "$PRODUCTION" = true ]; then
+    if [ "$PRODUCTION" = 1 ]; then
       cp $INTEL_KEY "${target_dir}/key_production.txt"
       cp $INTEL_SPID "${target_dir}/spid_production.txt"
     else
@@ -329,12 +328,12 @@ function restart_worker() {
     setup_working_dir $ROOTDIR/tee-worker/bin /opt/worker/w${i}
 
     # We only need this in productive enclave
-    if [ "$PRODUCTION" = true ]; then
+    if [ "$PRODUCTION" = 1 ]; then
       # Transfer balance to the enclave account that is generated
       echo "Transferring balance to the enclave account"
-      cd $ROOTDIR/scripts/ts-utils/ || exit
-      yarn install
-      npx ts-node transfer.ts  $ENCLAVE_ACCOUNT
+      cd $ROOTDIR/ts-tests/ || exit
+      corepack yarn install
+      corepack yarn transfer $ENCLAVE_ACCOUNT
     fi
 
     cd $ROOTDIR/tee-worker || exit
