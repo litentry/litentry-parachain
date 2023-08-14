@@ -185,8 +185,13 @@ export declare const definitions: {
                 A9: string;
                 A10: string;
                 A11: string;
+                A12: string;
                 A13: string;
+                A14: string;
             };
+        };
+        AssertionSupportedNetwork: {
+            _enum: string[];
         };
         GenericEventWithAccount: {
             account: string;

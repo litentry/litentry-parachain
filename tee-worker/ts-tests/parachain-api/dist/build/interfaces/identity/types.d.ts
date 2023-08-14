@@ -1,7 +1,7 @@
-import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u128, u32 } from "@polkadot/types-codec";
+import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u32 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
-import type { AccountId, Balance, BlockNumber, H256 } from "@polkadot/types/interfaces/runtime";
+import type { AccountId, AccountId32, Balance, BlockNumber, H256 } from "@polkadot/types/interfaces/runtime";
 /** @name ActivateIdentityResponse */
 export interface ActivateIdentityResponse extends Struct {
     readonly account: AccountId;
@@ -28,22 +28,37 @@ export interface Assertion extends Enum {
     readonly isA3: boolean;
     readonly asA3: ITuple<[Bytes, Bytes, Bytes]>;
     readonly isA4: boolean;
-    readonly asA4: u128;
+    readonly asA4: Bytes;
     readonly isA5: boolean;
-    readonly asA5: ITuple<[Bytes, Bytes]>;
+    readonly asA5: Bytes;
     readonly isA6: boolean;
     readonly isA7: boolean;
-    readonly asA7: u128;
+    readonly asA7: Bytes;
     readonly isA8: boolean;
-    readonly asA8: Vec<Bytes>;
+    readonly asA8: Vec<AssertionSupportedNetwork>;
     readonly isA9: boolean;
     readonly isA10: boolean;
-    readonly asA10: u128;
+    readonly asA10: Bytes;
     readonly isA11: boolean;
-    readonly asA11: u128;
+    readonly asA11: Bytes;
+    readonly isA12: boolean;
+    readonly asA12: Bytes;
     readonly isA13: boolean;
-    readonly asA13: u32;
-    readonly type: "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "A7" | "A8" | "A9" | "A10" | "A11" | "A13";
+    readonly asA13: AccountId32;
+    readonly isA14: boolean;
+    readonly type: "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "A7" | "A8" | "A9" | "A10" | "A11" | "A12" | "A13" | "A14";
+}
+/** @name AssertionSupportedNetwork */
+export interface AssertionSupportedNetwork extends Enum {
+    readonly isLitentry: boolean;
+    readonly isLitmus: boolean;
+    readonly isLitentryRococo: boolean;
+    readonly isPolkadot: boolean;
+    readonly isKusama: boolean;
+    readonly isKhala: boolean;
+    readonly isEthereum: boolean;
+    readonly isTestNet: boolean;
+    readonly type: "Litentry" | "Litmus" | "LitentryRococo" | "Polkadot" | "Kusama" | "Khala" | "Ethereum" | "TestNet";
 }
 /** @name BoundedWeb3Network */
 export interface BoundedWeb3Network extends Vec<Web3Network> {
@@ -238,7 +253,15 @@ export interface TrustedCall extends Enum {
         Vec<Web3Network>,
         H256
     ]>;
-    readonly type: "BalanceSetBalance" | "BalanceTransfer" | "BalanceUnshield" | "BalanceShield" | "SetUserShieldingKey" | "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "RequestVc" | "SetIdentityNetworks";
+    readonly isSetUserShieldingKeyWithNetworks: boolean;
+    readonly asSetUserShieldingKeyWithNetworks: ITuple<[
+        LitentryIdentity,
+        LitentryIdentity,
+        UserShieldingKeyType,
+        Vec<Web3Network>,
+        H256
+    ]>;
+    readonly type: "BalanceSetBalance" | "BalanceTransfer" | "BalanceUnshield" | "BalanceShield" | "SetUserShieldingKey" | "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "RequestVc" | "SetIdentityNetworks" | "SetUserShieldingKeyWithNetworks";
 }
 /** @name TrustedCallSigned */
 export interface TrustedCallSigned extends Struct {
