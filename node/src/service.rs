@@ -43,8 +43,11 @@ use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use jsonrpsee::RpcModule;
 use polkadot_service::CollatorPair;
 
-use crate::{rpc, standalone_block_import::StandaloneBlockImport};
-use crate::evm_tracing_types::{EthApi as EthApiCmd, EvmTracingConfig};
+use crate::{
+	evm_tracing_types::{EthApi as EthApiCmd, EvmTracingConfig},
+	rpc,
+	standalone_block_import::StandaloneBlockImport,
+};
 
 pub use core_primitives::{AccountId, Balance, Block, Hash, Header, Index as Nonce};
 
@@ -415,112 +418,110 @@ where
 
 	// TODO: not for 0.9.39
 	// // Sinks for pubsub notifications.
-    // // Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
-    // // The MappingSyncWorker sends through the channel on block import and the subscription emits a notification to the subscriber on receiving a message through this channel.
-    // // This way we avoid race conditions when using native substrate block import notification stream.
-    // let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-    //     fc_mapping_sync::EthereumBlockNotification<Block>,
-    // > = Default::default();
-    // let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
+	// // Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
+	// // The MappingSyncWorker sends through the channel on block import and the subscription emits
+	// a notification to the subscriber on receiving a message through this channel. // This way we
+	// avoid race conditions when using native substrate block import notification stream.
+	// let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+	//     fc_mapping_sync::EthereumBlockNotification<Block>,
+	// > = Default::default();
+	// let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-    let ethapi_cmd = additional_config.evm_tracing_config.ethapi.clone();
-    let tracing_requesters =
-        if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-            tracing::spawn_tracing_tasks(
-                &additional_config.evm_tracing_config,
-                tracing::SpawnTasksParams {
-                    task_manager: &task_manager,
-                    client: client.clone(),
-                    substrate_backend: backend.clone(),
-                    frontier_backend: frontier_backend.clone(),
-                    filter_pool: Some(filter_pool.clone()),
-                    overrides: overrides.clone(),
-                },
-            )
-        } else {
-            tracing::RpcRequesters {
-                debug: None,
-                trace: None,
-            }
-        };
-	
+	let ethapi_cmd = additional_config.evm_tracing_config.ethapi.clone();
+	let tracing_requesters =
+		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+			tracing::spawn_tracing_tasks(
+				&additional_config.evm_tracing_config,
+				tracing::SpawnTasksParams {
+					task_manager: &task_manager,
+					client: client.clone(),
+					substrate_backend: backend.clone(),
+					frontier_backend: frontier_backend.clone(),
+					filter_pool: Some(filter_pool.clone()),
+					overrides: overrides.clone(),
+				},
+			)
+		} else {
+			tracing::RpcRequesters { debug: None, trace: None }
+		};
+
 	// Frontier offchain DB task. Essential.
-    // Maps emulated ethereum data to substrate native data.
-    task_manager.spawn_essential_handle().spawn(
-        "frontier-mapping-sync-worker",
-        Some("frontier"),
-        fc_mapping_sync::MappingSyncWorker::new(
-            client.import_notification_stream(),
-            Duration::new(6, 0),
-            client.clone(),
-            backend.clone(),
-            overrides.clone(),
-            frontier_backend.clone(),
-            3,
-            0,
-            fc_mapping_sync::SyncStrategy::Parachain,
-        )
-        .for_each(|()| futures::future::ready(())),
-    );
+	// Maps emulated ethereum data to substrate native data.
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		Some("frontier"),
+		fc_mapping_sync::MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			overrides.clone(),
+			frontier_backend.clone(),
+			3,
+			0,
+			fc_mapping_sync::SyncStrategy::Parachain,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
 
-    // Frontier `EthFilterApi` maintenance. Manages the pool of user-created Filters.
-    // Each filter is allowed to stay in the pool for 100 blocks.
-    const FILTER_RETAIN_THRESHOLD: u64 = 100;
-    task_manager.spawn_essential_handle().spawn(
-        "frontier-filter-pool",
-        Some("frontier"),
-        fc_rpc::EthTask::filter_pool_task(
-            client.clone(),
-            filter_pool.clone(),
-            FILTER_RETAIN_THRESHOLD,
-        ),
-    );
+	// Frontier `EthFilterApi` maintenance. Manages the pool of user-created Filters.
+	// Each filter is allowed to stay in the pool for 100 blocks.
+	const FILTER_RETAIN_THRESHOLD: u64 = 100;
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-filter-pool",
+		Some("frontier"),
+		fc_rpc::EthTask::filter_pool_task(
+			client.clone(),
+			filter_pool.clone(),
+			FILTER_RETAIN_THRESHOLD,
+		),
+	);
 
-    const FEE_HISTORY_LIMIT: u64 = 2048;
-    task_manager.spawn_essential_handle().spawn(
-        "frontier-fee-history",
-        Some("frontier"),
-        fc_rpc::EthTask::fee_history_task(
-            client.clone(),
-            overrides.clone(),
-            fee_history_cache.clone(),
-            FEE_HISTORY_LIMIT,
-        ),
-    );
+	const FEE_HISTORY_LIMIT: u64 = 2048;
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-fee-history",
+		Some("frontier"),
+		fc_rpc::EthTask::fee_history_task(
+			client.clone(),
+			overrides.clone(),
+			fee_history_cache.clone(),
+			FEE_HISTORY_LIMIT,
+		),
+	);
 
-    let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
-        task_manager.spawn_handle(),
-        overrides.clone(),
-        50,
-        50,
-        prometheus_registry.clone(),
-    ));
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		50,
+		50,
+		prometheus_registry.clone(),
+	));
 
 	let rpc_builder = {
 		let client = client.clone();
 		let network = network.clone();
 		let transaction_pool = transaction_pool.clone();
 		let rpc_config = rpc::EvmTracingConfig {
-            tracing_requesters,
-            trace_filter_max_count: additional_config.evm_tracing_config.ethapi_trace_max_count,
-            enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
-        };
+			tracing_requesters,
+			trace_filter_max_count: additional_config.evm_tracing_config.ethapi_trace_max_count,
+			enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
+		};
 
 		Box::new(move |deny_unsafe, subscription| {
 			let deps = rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				graph: transaction_pool.pool().clone(),
-                network: network.clone(),
-                is_authority: validator,
+				network: network.clone(),
+				is_authority: validator,
 				deny_unsafe,
 				frontier_backend: frontier_backend.clone(),
-                filter_pool: filter_pool.clone(),
-                fee_history_limit: FEE_HISTORY_LIMIT,
-                fee_history_cache: fee_history_cache.clone(),
-                block_data_cache: block_data_cache.clone(),
-                overrides: overrides.clone(),
-                enable_evm_rpc: additional_config.enable_evm_rpc,
+				filter_pool: filter_pool.clone(),
+				fee_history_limit: FEE_HISTORY_LIMIT,
+				fee_history_cache: fee_history_cache.clone(),
+				block_data_cache: block_data_cache.clone(),
+				overrides: overrides.clone(),
+				enable_evm_rpc: additional_config.enable_evm_rpc,
 			};
 
 			crate::rpc::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)
@@ -627,7 +628,8 @@ pub async fn start_node<RuntimeApi, Executor>(
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient<RuntimeApi, Executor>>)>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi:
+		ConstructRuntimeApi<Block, ParachainClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -733,9 +735,13 @@ pub fn build_import_queue<RuntimeApi, Executor>(
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 	is_standalone: bool,
-) -> Result<sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi, Executor>>, sc_service::Error>
+) -> Result<
+	sc_consensus::DefaultImportQueue<Block, ParachainClient<RuntimeApi, Executor>>,
+	sc_service::Error,
+>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi:
+		ConstructRuntimeApi<Block, ParachainClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -842,7 +848,8 @@ pub async fn start_standalone_node<RuntimeApi, Executor>(
 	evm_tracing_config: crate::evm_tracing_types::EvmTracingConfig,
 ) -> Result<TaskManager, sc_service::Error>
 where
-	RuntimeApi: ConstructRuntimeApi<Block, ParachainClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi:
+		ConstructRuntimeApi<Block, ParachainClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
@@ -871,7 +878,11 @@ where
 		select_chain: maybe_select_chain,
 		transaction_pool,
 		other: (_, _, _, frontier_backend),
-	} = new_partial::<RuntimeApi, Executor, _>(&config, true, build_import_queue::<RuntimeApi, Executor>)?;
+	} = new_partial::<RuntimeApi, Executor, _>(
+		&config,
+		true,
+		build_import_queue::<RuntimeApi, Executor>,
+	)?;
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -895,86 +906,84 @@ where
 
 	// TODO: Not for 0.9.39
 	// // Sinks for pubsub notifications.
-    // // Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
-    // // The MappingSyncWorker sends through the channel on block import and the subscription emits a notification to the subscriber on receiving a message through this channel.
-    // // This way we avoid race conditions when using native substrate block import notification stream.
-    // let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-    //     fc_mapping_sync::EthereumBlockNotification<Block>,
-    // > = Default::default();
-    // let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
+	// // Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
+	// // The MappingSyncWorker sends through the channel on block import and the subscription emits
+	// a notification to the subscriber on receiving a message through this channel. // This way we
+	// avoid race conditions when using native substrate block import notification stream.
+	// let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+	//     fc_mapping_sync::EthereumBlockNotification<Block>,
+	// > = Default::default();
+	// let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
-    let ethapi_cmd = evm_tracing_config.ethapi.clone();
-    let tracing_requesters =
-        if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
-            tracing::spawn_tracing_tasks(
-                &evm_tracing_config,
-                tracing::SpawnTasksParams {
-                    task_manager: &task_manager,
-                    client: client.clone(),
-                    substrate_backend: backend.clone(),
-                    frontier_backend: frontier_backend.clone(),
-                    filter_pool: Some(filter_pool.clone()),
-                    overrides: overrides.clone(),
-                },
-            )
-        } else {
-            tracing::RpcRequesters {
-                debug: None,
-                trace: None,
-            }
-        };
-	
+	let ethapi_cmd = evm_tracing_config.ethapi.clone();
+	let tracing_requesters =
+		if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
+			tracing::spawn_tracing_tasks(
+				&evm_tracing_config,
+				tracing::SpawnTasksParams {
+					task_manager: &task_manager,
+					client: client.clone(),
+					substrate_backend: backend.clone(),
+					frontier_backend: frontier_backend.clone(),
+					filter_pool: Some(filter_pool.clone()),
+					overrides: overrides.clone(),
+				},
+			)
+		} else {
+			tracing::RpcRequesters { debug: None, trace: None }
+		};
+
 	// Frontier offchain DB task. Essential.
-    // Maps emulated ethereum data to substrate native data.
-    task_manager.spawn_essential_handle().spawn(
-        "frontier-mapping-sync-worker",
-        Some("frontier"),
-        fc_mapping_sync::MappingSyncWorker::new(
-            client.import_notification_stream(),
-            Duration::new(6, 0),
-            client.clone(),
-            backend.clone(),
-            overrides.clone(),
-            frontier_backend.clone(),
-            3,
-            0,
-            fc_mapping_sync::SyncStrategy::Parachain,
-        )
-        .for_each(|()| futures::future::ready(())),
-    );
+	// Maps emulated ethereum data to substrate native data.
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		Some("frontier"),
+		fc_mapping_sync::MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			backend.clone(),
+			overrides.clone(),
+			frontier_backend.clone(),
+			3,
+			0,
+			fc_mapping_sync::SyncStrategy::Parachain,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
 
-    // Frontier `EthFilterApi` maintenance. Manages the pool of user-created Filters.
-    // Each filter is allowed to stay in the pool for 100 blocks.
-    const FILTER_RETAIN_THRESHOLD: u64 = 100;
-    task_manager.spawn_essential_handle().spawn(
-        "frontier-filter-pool",
-        Some("frontier"),
-        fc_rpc::EthTask::filter_pool_task(
-            client.clone(),
-            filter_pool.clone(),
-            FILTER_RETAIN_THRESHOLD,
-        ),
-    );
+	// Frontier `EthFilterApi` maintenance. Manages the pool of user-created Filters.
+	// Each filter is allowed to stay in the pool for 100 blocks.
+	const FILTER_RETAIN_THRESHOLD: u64 = 100;
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-filter-pool",
+		Some("frontier"),
+		fc_rpc::EthTask::filter_pool_task(
+			client.clone(),
+			filter_pool.clone(),
+			FILTER_RETAIN_THRESHOLD,
+		),
+	);
 
-    const FEE_HISTORY_LIMIT: u64 = 2048;
-    task_manager.spawn_essential_handle().spawn(
-        "frontier-fee-history",
-        Some("frontier"),
-        fc_rpc::EthTask::fee_history_task(
-            client.clone(),
-            overrides.clone(),
-            fee_history_cache.clone(),
-            FEE_HISTORY_LIMIT,
-        ),
-    );
+	const FEE_HISTORY_LIMIT: u64 = 2048;
+	task_manager.spawn_essential_handle().spawn(
+		"frontier-fee-history",
+		Some("frontier"),
+		fc_rpc::EthTask::fee_history_task(
+			client.clone(),
+			overrides.clone(),
+			fee_history_cache.clone(),
+			FEE_HISTORY_LIMIT,
+		),
+	);
 
-    let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
-        task_manager.spawn_handle(),
-        overrides.clone(),
-        50,
-        50,
-        prometheus_registry,
-    ));
+	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides.clone(),
+		50,
+		50,
+		prometheus_registry,
+	));
 
 	let select_chain = maybe_select_chain
 		.expect("In `standalone` mode, `new_partial` will return some `select_chain`; qed");
@@ -1068,27 +1077,27 @@ where
 		let network = network.clone();
 		let transaction_pool = transaction_pool.clone();
 		let rpc_config = rpc::EvmTracingConfig {
-            tracing_requesters,
-            trace_filter_max_count: evm_tracing_config.ethapi_trace_max_count,
-            enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
-        };
+			tracing_requesters,
+			trace_filter_max_count: evm_tracing_config.ethapi_trace_max_count,
+			enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
+		};
 
 		Box::new(move |deny_unsafe, subscription| {
 			let deps = rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				graph: transaction_pool.pool().clone(),
-                network: network.clone(),
-                is_authority: role.is_authority(),
+				network: network.clone(),
+				is_authority: role.is_authority(),
 				deny_unsafe,
 				frontier_backend: frontier_backend.clone(),
-                filter_pool: filter_pool.clone(),
-                fee_history_limit: FEE_HISTORY_LIMIT,
-                fee_history_cache: fee_history_cache.clone(),
-                block_data_cache: block_data_cache.clone(),
-                overrides: overrides.clone(),
+				filter_pool: filter_pool.clone(),
+				fee_history_limit: FEE_HISTORY_LIMIT,
+				fee_history_cache: fee_history_cache.clone(),
+				block_data_cache: block_data_cache.clone(),
+				overrides: overrides.clone(),
 				// enable EVM RPC for dev node by default
-                enable_evm_rpc: true,
+				enable_evm_rpc: true,
 			};
 
 			crate::rpc::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)

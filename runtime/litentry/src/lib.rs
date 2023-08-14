@@ -1206,38 +1206,38 @@ impl_runtime_apis! {
 	}
 
 	impl moonbeam_rpc_primitives_debug::DebugRuntimeApi<Block> for Runtime {
-        fn trace_transaction(
-            _extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-            _traced_transaction: &pallet_ethereum::Transaction,
-        ) -> Result<
-            (),
-            sp_runtime::DispatchError,
-        > {
-            Ok(())
-        }
+		fn trace_transaction(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_traced_transaction: &pallet_ethereum::Transaction,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			Ok(())
+		}
 
-        fn trace_block(
-            _extrinsics: Vec<<Block as BlockT>::Extrinsic>,
-            _known_transactions: Vec<H256>,
-        ) -> Result<
-            (),
-            sp_runtime::DispatchError,
-        > {
-            Ok(())
-        }
-    }
+		fn trace_block(
+			_extrinsics: Vec<<Block as BlockT>::Extrinsic>,
+			_known_transactions: Vec<H256>,
+		) -> Result<
+			(),
+			sp_runtime::DispatchError,
+		> {
+			Ok(())
+		}
+	}
 
-    impl moonbeam_rpc_primitives_txpool::TxPoolRuntimeApi<Block> for Runtime {
-        fn extrinsic_filter(
-            _xts_ready: Vec<<Block as BlockT>::Extrinsic>,
-            _xts_future: Vec<<Block as BlockT>::Extrinsic>,
-        ) -> moonbeam_rpc_primitives_txpool::TxPoolResponse {
-            moonbeam_rpc_primitives_txpool::TxPoolResponse {
-                ready: Default::default(),
-                future: Default::default(),
-            }
-        }
-    }
+	impl moonbeam_rpc_primitives_txpool::TxPoolRuntimeApi<Block> for Runtime {
+		fn extrinsic_filter(
+			_xts_ready: Vec<<Block as BlockT>::Extrinsic>,
+			_xts_future: Vec<<Block as BlockT>::Extrinsic>,
+		) -> moonbeam_rpc_primitives_txpool::TxPoolResponse {
+			moonbeam_rpc_primitives_txpool::TxPoolResponse {
+				ready: Default::default(),
+				future: Default::default(),
+			}
+		}
+	}
 
 	#[cfg(feature = "try-runtime")]
 	impl frame_try_runtime::TryRuntime<Block> for Runtime {

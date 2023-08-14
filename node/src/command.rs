@@ -20,8 +20,8 @@ use crate::{
 	chain_specs,
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{
-		new_partial, AdditionalConfig, Block, LitentryParachainRuntimeExecutor, LitmusParachainRuntimeExecutor,
-		RococoParachainRuntimeExecutor,
+		new_partial, AdditionalConfig, Block, LitentryParachainRuntimeExecutor,
+		LitmusParachainRuntimeExecutor, RococoParachainRuntimeExecutor,
 	},
 };
 use cumulus_client_cli::generate_genesis_block;
@@ -218,24 +218,45 @@ impl SubstrateCli for RelayChainCli {
 macro_rules! construct_benchmark_partials {
 	($config:expr, |$partials:ident| $code:expr) => {
 		if $config.chain_spec.is_litmus() {
-			let $partials = new_partial::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor, _>(
+			let $partials = new_partial::<
+				litmus_parachain_runtime::RuntimeApi,
+				LitmusParachainRuntimeExecutor,
+				_,
+			>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>,
+				crate::service::build_import_queue::<
+					litmus_parachain_runtime::RuntimeApi,
+					LitmusParachainRuntimeExecutor,
+				>,
 			)?;
 			$code
 		} else if $config.chain_spec.is_litentry() {
-			let $partials = new_partial::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor, _>(
+			let $partials = new_partial::<
+				litentry_parachain_runtime::RuntimeApi,
+				LitentryParachainRuntimeExecutor,
+				_,
+			>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
+				crate::service::build_import_queue::<
+					litentry_parachain_runtime::RuntimeApi,
+					LitentryParachainRuntimeExecutor,
+				>,
 			)?;
 			$code
 		} else if $config.chain_spec.is_rococo() {
-			let $partials = new_partial::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor, _>(
+			let $partials = new_partial::<
+				rococo_parachain_runtime::RuntimeApi,
+				RococoParachainRuntimeExecutor,
+				_,
+			>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<rococo_parachain_runtime::RuntimeApi, RococoParachainRuntimeExecutor>,
+				crate::service::build_import_queue::<
+					rococo_parachain_runtime::RuntimeApi,
+					RococoParachainRuntimeExecutor,
+				>,
 			)?;
 			$code
 		} else {
@@ -478,15 +499,15 @@ pub fn run() -> Result<()> {
 			let is_standalone = runner.config().chain_spec.is_standalone();
 
 			let evm_tracing_config = crate::evm_tracing_types::EvmTracingConfig {
-                ethapi: cli.eth_api_options.ethapi,
-                ethapi_max_permits: cli.eth_api_options.ethapi_max_permits,
-                ethapi_trace_max_count: cli.eth_api_options.ethapi_trace_max_count,
-                ethapi_trace_cache_duration: cli.eth_api_options.ethapi_trace_cache_duration,
-                eth_log_block_cache: cli.eth_api_options.eth_log_block_cache,
-                eth_statuses_cache: cli.eth_api_options.eth_statuses_cache,
-                max_past_logs: cli.eth_api_options.max_past_logs,
-                tracing_raw_max_memory_usage: cli.eth_api_options.tracing_raw_max_memory_usage,
-            };
+				ethapi: cli.eth_api_options.ethapi,
+				ethapi_max_permits: cli.eth_api_options.ethapi_max_permits,
+				ethapi_trace_max_count: cli.eth_api_options.ethapi_trace_max_count,
+				ethapi_trace_cache_duration: cli.eth_api_options.ethapi_trace_cache_duration,
+				eth_log_block_cache: cli.eth_api_options.eth_log_block_cache,
+				eth_statuses_cache: cli.eth_api_options.eth_statuses_cache,
+				max_past_logs: cli.eth_api_options.max_past_logs,
+				tracing_raw_max_memory_usage: cli.eth_api_options.tracing_raw_max_memory_usage,
+			};
 
 			runner.run_node_until_exit(|config| async move {
 				if is_standalone {

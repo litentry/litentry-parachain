@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::chain_specs;
-use crate::evm_tracing_types::EthApiOptions;
+use crate::{chain_specs, evm_tracing_types::EthApiOptions};
 use clap::Parser;
 use std::path::PathBuf;
 
@@ -96,20 +95,20 @@ pub struct Cli {
 	#[arg(raw = true, conflicts_with = "relay-chain-rpc-url")]
 	pub relay_chain_args: Vec<String>,
 
-    #[clap(flatten)]
-    pub eth_api_options: EthApiOptions,
+	#[clap(flatten)]
+	pub eth_api_options: EthApiOptions,
 
 	/// Enable Ethereum compatible JSON-RPC servers (disabled by default).
-    #[clap(name = "enable-evm-rpc", long)]
-    pub enable_evm_rpc: bool,
+	#[clap(name = "enable-evm-rpc", long)]
+	pub enable_evm_rpc: bool,
 
 	/// Proposer's maximum block size limit in bytes
-    #[clap(long, default_value = sc_basic_authorship::DEFAULT_BLOCK_SIZE_LIMIT.to_string())]
-    pub proposer_block_size_limit: usize,
+	#[clap(long, default_value = sc_basic_authorship::DEFAULT_BLOCK_SIZE_LIMIT.to_string())]
+	pub proposer_block_size_limit: usize,
 
-    /// Proposer's soft deadline in percents of block size
-    #[clap(long, default_value = "50")]
-    pub proposer_soft_deadline_percent: u8,
+	/// Proposer's soft deadline in percents of block size
+	#[clap(long, default_value = "50")]
+	pub proposer_soft_deadline_percent: u8,
 }
 
 #[derive(Debug)]
