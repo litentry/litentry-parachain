@@ -16,7 +16,7 @@ name = 'litentry-collator'
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-async-trait = "0.1.72"
+async-trait = "0.1.73"
 clap = { version = "4.3", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 futures = { version = "0.3.28", features = ["compat"] }
