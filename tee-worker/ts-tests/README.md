@@ -40,10 +40,6 @@ II vc test: `corepack yarn test-vc:local`
 
 II batch identity test: `corepack yarn test-batch:local`
 
-Bulk II identity test: `corepack yarn test-bulk-identity:local`
-
-Bulk II vc test: `corepack yarn test-bulk-vc:local`
-
 Direct invocation substrate identity test: `corepack yarn test-substrate-ii-identity:local`
 
 Direct invocation evm identity test: `corepack yarn test-evm-ii-identity:local`
