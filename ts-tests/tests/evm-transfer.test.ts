@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
@@ -35,10 +35,10 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         );
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
-        expect(evmAccountCurrentNonce.free.toBigInt()).to.equal(BigInt(value));
+        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(BigInt(value));
     });
 
-    step('Transfer 100 unit back to Eve Mapped account from EVM external account', async function () {
+    step('Transfer some value back to Eve Mapped account from EVM external account', async function () {
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
             context.eve.address
@@ -84,5 +84,42 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
 
         expect(evmAccountCurrentNonce.toNumber()).to.equal(evmAccountInitNonce.toNumber() + 1);
         expect(eveCurrentBalance.free.toBigInt()).to.equal(eveInitBalance.free.toBigInt() + BigInt(100000000000));
+    });
+
+    step('Test evm signature can not access ultra vires evm account', async function () {
+        // EVM account 1
+        const evmAccountRaw = {
+            privateKey: '0x7daadde6e9d1377640070b143cfbde103b078c008d35ee2c7ed989878f2187c7',
+            address: '0x297f658F438C9c657c45fd6B1b0dB4222f1983B0',
+            mappedAddress: '0x297f658F438C9c657c45fd6B1b0dB4222f1983B0000000000000000000000000'
+        };
+    
+        const evmAccount = createPair({ encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
+        // Create Web3 instance
+        const web3 = new Web3('http://localhost:9944');
+        
+        let value = "0x174876E800";
+        // ExistentialDeposit = 100 000 000 000 (0x174876E800)
+        // Sign Tx with PK, try manipulate evm account out of private key's control
+        const transferTransaction = await web3.eth.accounts.signTransaction(
+            {
+                from: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
+                to: evmAccountRaw.address,
+                value: value, // must be higher than ExistentialDeposit
+                gasPrice: "0x3B9ACA00", // 1000000000,
+				gas: "0x100000",
+            },
+            evmAccountRaw.privateKey
+        );
+        const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction);
+        // Expect EVM revert
+        assert(!transferReceipt.status, "Transaction with wrong signature succeed");
+
+    });
+    step('Test substrate signature can not access ultra vires evm/substrate account', async function () {
+        
+    });
+    step('Test substrate signature can access its mapped evm account', async function () {
+        
     });
 });

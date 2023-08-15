@@ -35,7 +35,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         );
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
-        expect(evmAccountCurrentNonce.free.toBigInt()).to.equal(BigInt(value));
+        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(BigInt(value));
     });
 
     step('Deploy and test contract by EVM external account', async function () {
