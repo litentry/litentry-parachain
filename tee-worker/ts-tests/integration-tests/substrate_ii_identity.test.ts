@@ -249,7 +249,7 @@ describe('Test Identity (direct invocation)', function () {
             twitterNonce,
             'twitter'
         );
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
@@ -268,7 +268,10 @@ describe('Test Identity (direct invocation)', function () {
             undefined,
             [context.ethersWallet.alice]
         );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+        const evmNetworks = context.api.createType('Vec<Web3Network>', [
+            'Ethereum',
+            'Bsc',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
@@ -290,7 +293,10 @@ describe('Test Identity (direct invocation)', function () {
             'substrate',
             context.substrateWallet.eve
         );
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']);
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', [
+            'Polkadot',
+            'Litentry',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
