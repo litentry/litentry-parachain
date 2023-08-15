@@ -190,7 +190,6 @@ export default {
                 A12: "Bytes",
                 A13: "AccountId32",
                 A14: "Null",
-                Achainable: "AchainableBasic",
             },
         },
         AssertionSupportedNetwork: {
@@ -204,12 +203,6 @@ export default {
                 "Ethereum",
                 "TestNet",
             ],
-        },
-        AchainableBasic: {
-            _enum: {
-                name: "Bytes",
-                chain: "AssertionSupportedNetwork",
-            },
         },
         GenericEventWithAccount: {
             account: "AccountId",

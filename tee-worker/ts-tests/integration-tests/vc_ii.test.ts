@@ -31,7 +31,7 @@ import {
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
+import { LitentryValidationData, Web3Network, CorePrimitivesAssertion } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
 import { ethers } from 'ethers';
@@ -53,6 +53,7 @@ describe('Test Identity (direct invocation)', function () {
         validation: LitentryValidationData;
         networks: Vec<Web3Network>;
     }[] = [];
+
     this.timeout(6000000);
 
     before(async () => {
@@ -124,7 +125,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A1: null }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A1: null }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -150,7 +151,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A2: ['A2'] }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A2: ['A2'] }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -177,7 +178,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A2: ['A3', 'A3', 'A3'] }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A2: ['A3', 'A3', 'A3'] }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -204,7 +205,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A4: '10' }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A4: '10' }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -231,7 +232,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A6: null }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A6: null }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -258,7 +259,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A7: '10.01' }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A7: '10.01' }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -285,7 +286,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A8: ["Litentry"] }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A8: ["Litentry"] }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -312,7 +313,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A10: '10' }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A10: '10' }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -338,7 +339,7 @@ describe('Test Identity (direct invocation)', function () {
             nonce,
             new PolkadotSigner(context.substrateWallet.alice),
             aliceSubject,
-            context.api.createType('Assertion', { A11: '10' }).toHex(),
+            context.api.createType('CorePrimitivesAssertion', { A11: '10' }).toHex(),
             hash
         );
         const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
@@ -350,30 +351,38 @@ describe('Test Identity (direct invocation)', function () {
     });
 
 
-    step(`request vc Achai  (alice)`, async function () {
-        const nonce = await getSidechainNonce(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            aliceSubject
-        );
-        const hash = `0x${randomBytes(32).toString('hex')}`;
-        console.log('request vc for alice ...');
-        const requestVcCall = await createSignedTrustedCallRequestVc(
-            context.api,
-            context.mrEnclave,
-            nonce,
-            new PolkadotSigner(context.substrateWallet.alice),
-            aliceSubject,
-            context.api.createType('Assertion', { A11: '10' }).toHex(),
-            hash
-        );
-        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    // step(`request vc Achainable  (alice)`, async function () {
+    //     const nonce = await getSidechainNonce(
+    //         context.tee,
+    //         context.api,
+    //         context.mrEnclave,
+    //         teeShieldingKey,
+    //         aliceSubject
+    //     );
+    //     const hash = `0x${randomBytes(32).toString('hex')}`;
+    //     console.log('request vc for alice ...');
+    //     const requestVcCall = await createSignedTrustedCallRequestVc(
+    //         context.api,
+    //         context.mrEnclave,
+    //         nonce,
+    //         new PolkadotSigner(context.substrateWallet.alice),
+    //         aliceSubject,
+    //         context.api.createType('CorePrimitivesAssertion', {
+    //             Achainable: {
+    //                 Basic: {
+    //                     name: 'Uniswap V2/V3 user',
+    //                     chain: 'Ethereum',
+    //                 },
+    //             }
 
-        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+    //         }).toHex(),
+    //         hash
+    //     );
+    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-        console.log(requestVcRes);
+    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    });
+    //     console.log(requestVcRes);
+
+    // });
 });

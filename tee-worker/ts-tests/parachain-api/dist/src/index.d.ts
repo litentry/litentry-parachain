@@ -187,17 +187,10 @@ export declare const definitions: {
                 A12: string;
                 A13: string;
                 A14: string;
-                Achainable: string;
             };
         };
         AssertionSupportedNetwork: {
             _enum: string[];
-        };
-        AchainableBasic: {
-            _enum: {
-                name: string;
-                chain: string;
-            };
         };
         GenericEventWithAccount: {
             account: string;
