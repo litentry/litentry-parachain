@@ -166,7 +166,6 @@ declare const _default: {
                 A2: string;
                 A3: string;
                 A4: string;
-                A5: string;
                 A6: string;
                 A7: string;
                 A8: string;
@@ -176,10 +175,17 @@ declare const _default: {
                 A12: string;
                 A13: string;
                 A14: string;
+                Achainable: string;
             };
         };
         AssertionSupportedNetwork: {
             _enum: string[];
+        };
+        AchainableBasic: {
+            _enum: {
+                name: string;
+                chain: string;
+            };
         };
         GenericEventWithAccount: {
             account: string;

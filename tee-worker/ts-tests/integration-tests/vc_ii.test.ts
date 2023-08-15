@@ -108,112 +108,112 @@ describe('Test Identity (direct invocation)', function () {
     //     // await assertInitialIdGraphCreated(context, new PolkadotSigner(wallet), userShieldingKeySetEvents);
     // });
 
-    // step(`request vc A1 (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A1: null }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+    step(`request vc A1 (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A1: null }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     console.log(requestVcRes);
+        console.log(requestVcRes);
 
-    // });
+    });
 
-    // step(`request vc A2  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A2: ['A2'] }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    step(`request vc A2  (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A2: ['A2'] }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     console.log(requestVcRes);
+        console.log(requestVcRes);
 
-    // });
+    });
 
-    // step(`request vc A3  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A2: ['A3', 'A3', 'A3'] }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    step(`request vc A3  (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A2: ['A3', 'A3', 'A3'] }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     console.log(requestVcRes);
+        console.log(requestVcRes);
 
-    // });
+    });
 
-    // step(`request vc A4  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A4: '10' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    step(`request vc A4  (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A4: '10' }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     console.log(requestVcRes);
+        console.log(requestVcRes);
 
-    // });
+    });
 
     step(`request vc A6  (alice)`, async function () {
         const nonce = await getSidechainNonce(
@@ -242,110 +242,138 @@ describe('Test Identity (direct invocation)', function () {
         console.log(requestVcRes);
 
     });
-    // step(`request vc A7  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A7: '10.01' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    step(`request vc A7  (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A7: '10.01' }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-    //     // const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+        // const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     // console.log(requestVcRes);
+        // console.log(requestVcRes);
 
-    // });
+    });
 
-    // step(`request vc A8 (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A8: ["Litentry"] }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    step(`request vc A8 (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A8: ["Litentry"] }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     console.log(requestVcRes);
+        console.log(requestVcRes);
 
-    // });
+    });
 
-    // step(`request vc A10  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A10: '10' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    step(`request vc A10  (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A10: '10' }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     console.log(requestVcRes);
+        console.log(requestVcRes);
 
-    // });
-    // step(`request vc A11  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('Assertion', { A11: '10' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+    });
+    step(`request vc A11  (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A11: '10' }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
 
-    //     console.log(requestVcRes);
+        console.log(requestVcRes);
 
-    // });
+    });
+
+
+    step(`request vc Achai  (alice)`, async function () {
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            aliceSubject
+        );
+        const hash = `0x${randomBytes(32).toString('hex')}`;
+        console.log('request vc for alice ...');
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            nonce,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            context.api.createType('Assertion', { A11: '10' }).toHex(),
+            hash
+        );
+        const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+
+        const requestVcRes = context.api.createType('RequestVCResponse', res.value);
+
+        console.log(requestVcRes);
+
+    });
 });

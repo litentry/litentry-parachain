@@ -12,6 +12,15 @@ import type {
     H256,
 } from "@polkadot/types/interfaces/runtime";
 
+/** @name AchainableBasic */
+export interface AchainableBasic extends Enum {
+    readonly isName: boolean;
+    readonly asName: Bytes;
+    readonly isChain: boolean;
+    readonly asChain: AssertionSupportedNetwork;
+    readonly type: "Name" | "Chain";
+}
+
 /** @name ActivateIdentityResponse */
 export interface ActivateIdentityResponse extends Struct {
     readonly account: AccountId;
@@ -41,8 +50,6 @@ export interface Assertion extends Enum {
     readonly asA3: ITuple<[Bytes, Bytes, Bytes]>;
     readonly isA4: boolean;
     readonly asA4: Bytes;
-    readonly isA5: boolean;
-    readonly asA5: Bytes;
     readonly isA6: boolean;
     readonly isA7: boolean;
     readonly asA7: Bytes;
@@ -58,12 +65,13 @@ export interface Assertion extends Enum {
     readonly isA13: boolean;
     readonly asA13: AccountId32;
     readonly isA14: boolean;
+    readonly isAchainable: boolean;
+    readonly asAchainable: AchainableBasic;
     readonly type:
         | "A1"
         | "A2"
         | "A3"
         | "A4"
-        | "A5"
         | "A6"
         | "A7"
         | "A8"
@@ -72,7 +80,8 @@ export interface Assertion extends Enum {
         | "A11"
         | "A12"
         | "A13"
-        | "A14";
+        | "A14"
+        | "Achainable";
 }
 
 /** @name AssertionSupportedNetwork */

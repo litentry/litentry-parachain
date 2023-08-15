@@ -6,15 +6,7 @@ import type { AnyTuple } from "@polkadot/types/types";
 export type { CorePrimitivesErrorErrorDetail } from "@polkadot/types/lookup";
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type {
-    Assertion,
-    LitentryIdentity,
-    LitentryValidationData,
-    Web3Network,
-    WorkerRpcReturnValue,
-    TrustedCallSigned,
-    Getter,
-} from "../build/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -186,7 +178,6 @@ export declare const definitions: {
                 A2: string;
                 A3: string;
                 A4: string;
-                A5: string;
                 A6: string;
                 A7: string;
                 A8: string;
@@ -196,10 +187,17 @@ export declare const definitions: {
                 A12: string;
                 A13: string;
                 A14: string;
+                Achainable: string;
             };
         };
         AssertionSupportedNetwork: {
             _enum: string[];
+        };
+        AchainableBasic: {
+            _enum: {
+                name: string;
+                chain: string;
+            };
         };
         GenericEventWithAccount: {
             account: string;
@@ -247,8 +245,5 @@ type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
 export declare function create(provider: ProviderInterface): Promise<ApiPromise>;
 type GuardType<GuardFunction> = GuardFunction extends (x: any) => x is infer Type ? Type : never;
 type IEventLike = Parameters<AugmentedEvent<never>["is"]>[0];
-export declare function filterEvents<ApiType extends ApiTypes, T extends AnyTuple, N>(
-    eventType: AugmentedEvent<ApiType, T, N>,
-    events: IEventLike[]
-): GuardType<AugmentedEvent<ApiType, T, N>["is"]>[];
+export declare function filterEvents<ApiType extends ApiTypes, T extends AnyTuple, N>(eventType: AugmentedEvent<ApiType, T, N>, events: IEventLike[]): GuardType<AugmentedEvent<ApiType, T, N>["is"]>[];
 //# sourceMappingURL=index.d.ts.map

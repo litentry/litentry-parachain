@@ -1210,6 +1210,7 @@ import type {
     XcmpMessageFormat,
 } from "@polkadot/types/interfaces/xcm";
 import type {
+    AchainableBasic,
     ActivateIdentityResponse,
     Address20,
     Address32,
@@ -1276,6 +1277,7 @@ declare module "@polkadot/types/types/registry" {
         AccountVote: AccountVote;
         AccountVoteSplit: AccountVoteSplit;
         AccountVoteStandard: AccountVoteStandard;
+        AchainableBasic: AchainableBasic;
         ActivateIdentityResponse: ActivateIdentityResponse;
         ActiveEraInfo: ActiveEraInfo;
         ActiveGilt: ActiveGilt;
