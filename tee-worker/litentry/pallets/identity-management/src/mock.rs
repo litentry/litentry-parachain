@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate as pallet_tee_identity_management;
-use crate::UserShieldingKeyType;
+use crate::{all_substrate_web3networks, UserShieldingKeyType};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32},
@@ -140,6 +140,7 @@ pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 				RuntimeOrigin::signed(ALICE),
 				who,
 				shielding_key.clone(),
+				all_substrate_web3networks(),
 			);
 		}
 	});

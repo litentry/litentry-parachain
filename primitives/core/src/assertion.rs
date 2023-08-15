@@ -138,6 +138,22 @@ impl AchainableParams {
 			AchainableParams::Token(p) => p.name.clone(),
 		}
 	}
+
+	pub fn chain(&self) -> Web3Network {
+		match self {
+			AchainableParams::AmountHolding(p) => p.chain,
+			AchainableParams::AmountToken(p) => p.chain,
+			AchainableParams::Amount(p) => p.chain,
+			AchainableParams::Amounts(p) => p.chain,
+			AchainableParams::Basic(p) => p.chain,
+			AchainableParams::BetweenPercents(p) => p.chain,
+			AchainableParams::ClassOfYear(p) => p.chain,
+			AchainableParams::DateInterval(p) => p.chain,
+			AchainableParams::DatePercent(p) => p.chain,
+			AchainableParams::Date(p) => p.chain,
+			AchainableParams::Token(p) => p.chain,
+		}
+	}
 }
 
 #[rustfmt::skip]
@@ -186,10 +202,7 @@ impl Assertion {
 			// polkadot paticipation
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
-			Self::Achainable(a) => {
-				let name = &a.name();
-				achainable_networks(name)
-			},
+			Self::Achainable(a) => vec![a.chain()],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
@@ -212,75 +225,3 @@ pub const ASSERTION_FROM_DATE: [&str; 14] = [
 	"2023-01-01",
 	"2023-07-01",
 ];
-
-fn achainable_networks(name: &ParameterString) -> Vec<Web3Network> {
-	let name = &name.clone().to_vec();
-	let name = str::from_utf8(name).unwrap_or("");
-
-	if name == "Validator" ||
-		name == "TreasuryProposalBeneficiary" ||
-		name == "TipFinder" ||
-		name == "TipBeneficiary" ||
-		name == "OpenGovProposer" ||
-		name == "FellowshipProposer" ||
-		name == "FellowshipMember" ||
-		name == "ExCouncilor" ||
-		name == "Councilor" ||
-		name == "BountyCurator" ||
-		name == "Balance between percents"
-	{
-		return vec![Web3Network::Litmus, Web3Network::Polkadot]
-	} else if name == "Account found on {chain}" {
-		return vec![
-			Web3Network::Litentry,
-			Web3Network::Litmus,
-			Web3Network::Ethereum,
-			Web3Network::Polkadot,
-			Web3Network::Kusama,
-			Web3Network::Khala,
-			Web3Network::BSC,
-		]
-	} else if name == "Account total transactions under {amount}" ||
-		name == "Balance under {amount}" ||
-		name == "Balance over {amount}" ||
-		name == "Balance over {amount} dollars" ||
-		name == "Balance between {amounts}" ||
-		name == "Account created after {date}" ||
-		name == "Account created before {date}" ||
-		name == "Account created between {dates}" ||
-		name == "Balance hodling {amount} since {date}"
-	{
-		return vec![
-			Web3Network::Litentry,
-			Web3Network::Litmus,
-			Web3Network::Ethereum,
-			Web3Network::Polkadot,
-			Web3Network::Kusama,
-			Web3Network::Khala,
-		]
-	} else if name == "ERC20 balance over {amount}" ||
-		name == "Uniswap V2 liquidity provider" ||
-		name == "Uniswap V3 liquidity provider" ||
-		name == "Curve Trader" ||
-		name == "Curve Liquidity Provider" ||
-		name == "MetaMask trader" ||
-		name == "Uniswap V2 trader" ||
-		name == "Uniswap V3 trader" ||
-		name == "Uniswap V2 {token} liquidity provider" ||
-		name == "Uniswap V3 {token} liquidity provider" ||
-		name == "Aave V2 Lender" ||
-		name == "Aave V2 Borrower" ||
-		name == "Aave V3 Lender" ||
-		name == "Aave V3 Borrower" ||
-		name == "ERC20 hodling {amount} of {token} since {date}" ||
-		name == "Created over {amount} contracts"
-	{
-		return vec![Web3Network::Ethereum]
-	} else if name == "BEP20 balance over {amount}" {
-		return vec![Web3Network::BSC]
-	} else if name == "Balance dropped {percent} since {date}" {
-		return vec![Web3Network::Ethereum, Web3Network::BSC]
-	}
-
-	vec![]
-}

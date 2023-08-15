@@ -20,8 +20,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_data_providers::achainable::Params;
-
 use crate::{achainable::request_achainable, *};
 
 pub fn build_between_percents(
@@ -40,9 +38,7 @@ pub fn build_between_percents(
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::BetweenPercents(param.clone());
-	let request_param = Params::try_from(achainable_param)?;
-
-	let _flag = request_achainable(addresses, request_param)?;
+	let _flag = request_achainable(addresses, achainable_param)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {

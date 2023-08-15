@@ -279,7 +279,7 @@ export async function runExample(mode: Mode) {
         alice,
         aliceSubject,
         bobSubstrateIdentity.toHex(),
-        parachainApi.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex(),
+        parachainApi.createType('Vec<Web3Network>', ['Bsc', 'Ethereum']).toHex(),
         hash
     );
     res = await sendRequestFromTrustedCall(wsp, parachainApi, mrenclave, key, setIdentityNetworksCall);
@@ -368,7 +368,7 @@ function assertPrimeIdentity(
         assert.isTrue(idgraph[0].isEvm);
         assert.equal(idgraph[0].asEvm.toHex(), u8aToHex(signer.getAddressRaw()));
         assert.isTrue(idgraph[1].status.isActive);
-        assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Ethereum', 'Polygon', 'BSC'].toString());
+        assert.equal(idgraph[1].web3networks.toHuman()?.toString(), ['Ethereum', 'Bsc'].toString());
     } else {
         assert.isTrue(idgraph[0].isSubstrate);
         assert.equal(idgraph[0].asSubstrate.toHex(), u8aToHex(signer.getAddressRaw()));

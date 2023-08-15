@@ -258,9 +258,6 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     const validate = ajv.compile(jsonSchema);
     const isValid = validate(vc);
     expect(isValid).to.be.true;
-    expect(
-        vc.type[0] === 'VerifiableCredential' &&
-            proofJson.type === 'Ed25519Signature2020'
-    ).to.be.true;
+    expect(vc.type[0] === 'VerifiableCredential' && proofJson.type === 'Ed25519Signature2020').to.be.true;
     return true;
 }
