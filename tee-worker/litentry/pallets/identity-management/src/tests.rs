@@ -15,8 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType,
-	Web3Network,
+	all_substrate_web3networks, mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus,
+	UserShieldingKeyType, Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use litentry_primitives::USER_SHIELDING_KEY_LEN;
@@ -37,6 +37,7 @@ fn set_user_shielding_key_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			all_substrate_web3networks(),
 		));
 		assert_eq!(IMT::user_shielding_keys(who.clone()), Some(shielding_key));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
@@ -194,6 +195,7 @@ fn deactivate_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			all_substrate_web3networks(),
 		));
 		assert_noop!(
 			IMT::deactivate_identity(
@@ -267,6 +269,7 @@ fn activate_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			all_substrate_web3networks(),
 		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
@@ -331,6 +334,7 @@ fn set_identity_networks_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			all_substrate_web3networks(),
 		));
 		assert_noop!(
 			IMT::deactivate_identity(
@@ -379,6 +383,7 @@ fn set_identity_networks_with_wrong_network_fails() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			all_substrate_web3networks(),
 		));
 		assert_noop!(
 			IMT::deactivate_identity(
