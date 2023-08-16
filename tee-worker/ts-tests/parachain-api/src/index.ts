@@ -9,7 +9,6 @@ import type { AnyTuple } from "@polkadot/types/types";
 
 export type {
     CorePrimitivesErrorErrorDetail,
-    CorePrimitivesAssertion
 } from "@polkadot/types/lookup";
 
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
