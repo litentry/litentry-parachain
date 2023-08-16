@@ -2,7 +2,8 @@ import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
-import { addressToEvm, createPair, encodeAddress , hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a } from '@polkadot/util';
+import { createPair, encodeAddress } from '@polkadot/keyring';
 import Web3 from "web3";
 
 describeLitentry('Test EVM Module Transfer', ``, (context) => {
@@ -20,7 +21,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000'
         };
     
-        const evmAccount = createPair({ encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
+        const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
     
         let eveMappedAccount = context.eve.address.slice(0, 42);
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
@@ -48,7 +49,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
             mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000'
         };
-        const evmAccount = createPair({ encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
+        const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccount.address
         );
@@ -94,7 +95,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             mappedAddress: '0x297f658F438C9c657c45fd6B1b0dB4222f1983B0000000000000000000000000'
         };
     
-        const evmAccount = createPair({ encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
+        const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
         // Create Web3 instance
         const web3 = new Web3('http://localhost:9944');
         
@@ -132,7 +133,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
     
-        const evmAccount = createPair({ encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
+        const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
     
         let eveMappedAccount = context.eve.address.slice(0, 42);
         let value = 100000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
