@@ -81,7 +81,7 @@ fn set_user_shielding_key_fails_for_linked_identity() {
 			Error::<Test>::IdentityAlreadyLinked
 		);
 
-		// assert_eq!(crate::IDGraphLens::<Test>::get(&who_alice), 0);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 0);
 	});
 }
 
