@@ -142,6 +142,10 @@ pub mod pallet {
 			ensure!(!who.is_web2(), Error::<T>::NotSupportedIdentity);
 			if IDGraphs::<T>::get(&who, &who).is_none() {
 				ensure!(
+					!LinkedIdentities::<T>::contains_key(&who),
+					Error::<T>::IdentityAlreadyLinked
+				);
+				ensure!(
 					who.matches_web3networks(networks.as_ref()),
 					Error::<T>::WrongWeb3NetworkTypes
 				);

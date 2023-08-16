@@ -49,6 +49,43 @@ fn set_user_shielding_key_works() {
 }
 
 #[test]
+fn set_user_shielding_key_fails_for_linked_identity() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: Vec<Web3Network> = vec![Web3Network::Litentry];
+		let who: Identity = BOB.into();
+		let alice_prime_identity: Identity = ALICE.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			alice_prime_identity.clone(),
+			web3networks.clone(),
+		));
+		assert_eq!(
+			IMT::id_graphs(who.clone(), alice_prime_identity).unwrap(),
+			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
+
+		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
+		let who: Identity = ALICE.into();
+
+		assert_eq!(IMT::user_shielding_keys(who.clone()), None);
+
+		assert_err!(
+			IMT::set_user_shielding_key(
+				RuntimeOrigin::signed(ALICE),
+				who.clone(),
+				shielding_key,
+				all_substrate_web3networks(),
+			),
+			Error::<Test>::IdentityAlreadyLinked
+		);
+
+		// assert_eq!(crate::IDGraphLens::<Test>::get(&who_alice), 0);
+	});
+}
+
+#[test]
 fn link_twitter_identity_works() {
 	new_test_ext(true).execute_with(|| {
 		let who: Identity = BOB.into();
