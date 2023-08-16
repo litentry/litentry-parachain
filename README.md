@@ -154,7 +154,7 @@ GPLv3
 
 ## Preparation
 
-1. env: [Setup **SGX TEE** Environment](https://www.notion.so/Setup-SGX-TEE-Environment-68066770831b45b7b632e682cf159477?pvs=21) 
+1. env: [Setup **SGX TEE** Environment](https://web3builders.notion.site/Setup-SGX-TEE-Environment-68066770831b45b7b632e682cf159477?pvs=4) 
 2. add VSCode configs for indexing and parsing tee-worker codes
 
 ```
