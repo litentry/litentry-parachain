@@ -116,10 +116,40 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         assert(!transferReceipt.status, "Transaction with wrong signature succeed");
 
     });
+
     step('Test substrate signature can not access ultra vires evm/substrate account', async function () {
+        // Get the initial balance of Eve and EVM external account
+        const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
+            context.eve.address
+        );
+        // EVM module transfer for substrate account
+        const evmAccountRaw = {
+            privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
+            address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
+            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000'
+        };
+        const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
+            evmAccountRaw.mappedAddress
+        );
+    
+        const evmAccount = createPair({ encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
+    
+        let eveMappedAccount = context.eve.address.slice(0, 42);
+        let value = 100000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
+        // Sign Tx with substrate signature, try manipulate evm account out of substrate signature's control
+        const tx = context.api.tx.evm.call(evmAccount.address, eveMappedAccount, '0x', value, 4294967295, 1, null);
+        await signAndSend(tx, context.eve);
+
+        const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
+            context.eve.address
+        );
+        const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } = await context.api.query.system.account(
+            evmAccount.address
+        );
         
-    });
-    step('Test substrate signature can access its mapped evm account', async function () {
-        
+        // Extrinsic succeed with failed origin
+        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
+        // Which means balance unchanged
+        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt());
     });
 });
