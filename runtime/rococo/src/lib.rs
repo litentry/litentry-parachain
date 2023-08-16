@@ -28,8 +28,8 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, Everything,
-		InstanceFilter, SortedMembers, WithdrawReasons,
+		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
+		Everything, InstanceFilter, SortedMembers, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	PalletId, RuntimeDebug,
@@ -560,6 +560,22 @@ parameter_types! {
 	pub const MaximumReasonLength: u32 = 8192;
 }
 
+pub struct EnsureRootOrTwoThirdsCouncilWrapper;
+impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrTwoThirdsCouncilWrapper {
+	type Success = Treasury::Currency::Balance;
+	fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+		match EnsureRootOrTwoThirdsCouncil::try_origin(o) {
+			Ok(_) => return Ok(Treasury::Currency::Balance::max_value()),
+			Err(o) => o,
+		}
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+		Ok(RuntimeOrigin::root())
+	}
+}
+
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
@@ -570,7 +586,8 @@ impl pallet_treasury::Config for Runtime {
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
-	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
+	// Once passed, at most all is allowed to be spent
+	type SpendOrigin = EnsureRootOrTwoThirdsCouncilWrapper;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -1051,6 +1068,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Vesting(pallet_vesting::Call::vest { .. }) |
 			// ChainBridge
 			RuntimeCall::ChainBridge(_) |
+			// Bounties
+			RuntimeCall::Bounties(_) |
 			// BridgeTransfer
 			RuntimeCall::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
