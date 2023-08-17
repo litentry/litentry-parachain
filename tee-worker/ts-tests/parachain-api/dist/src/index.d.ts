@@ -75,6 +75,7 @@ export declare const definitions: {
                 activate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
+                set_user_shielding_key_with_networks: string;
             };
         };
         UserShieldingKeyType: string;
@@ -152,6 +153,7 @@ export declare const definitions: {
                 Sr25519: string;
                 Ecdsa: string;
                 Ethereum: string;
+                EthereumPrettified: string;
             };
         };
         EthereumSignature: string;

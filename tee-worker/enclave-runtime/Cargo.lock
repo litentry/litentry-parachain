@@ -788,6 +788,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-sgx-io",
+ "itp-sgx-temp-dir",
  "itp-stf-executor",
  "itp-stf-interface",
  "itp-stf-primitives",
@@ -813,6 +814,7 @@ dependencies = [
  "litentry-primitives",
  "log",
  "multibase",
+ "once_cell 1.4.0",
  "parity-scale-codec",
  "primitive-types",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
@@ -2136,6 +2138,7 @@ dependencies = [
  "derive_more",
  "itp-settings",
  "itp-sgx-io",
+ "itp-sgx-temp-dir",
  "log",
  "ofb",
  "parity-scale-codec",
@@ -2249,6 +2252,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-sgx-io",
+ "itp-sgx-temp-dir",
  "itp-stf-interface",
  "itp-stf-state-observer",
  "itp-time-utils",
@@ -2957,6 +2961,7 @@ dependencies = [
  "base64 0.13.0 (git+https://github.com/mesalock-linux/rust-base64-sgx?rev=sgx_1.1.3)",
  "chrono 0.4.11",
  "core-primitives",
+ "itp-utils",
  "log",
  "pallet-evm",
  "parity-scale-codec",
@@ -5012,9 +5017,9 @@ checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
 
 [[package]]
 name = "strum_macros"
-version = "0.25.1"
+version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6069ca09d878a33f883cc06aaa9718ede171841d3832450354410b718b097232"
+checksum = "ad8d03b598d3d0fff69bf533ee3ef19b8eeb342729596df84bcc7e1f96ec4059"
 dependencies = [
  "heck",
  "proc-macro2",

@@ -1,3 +1,6 @@
 .env
 .yarn
 .pnp.*
+
+config.local.json
+package-lock.json

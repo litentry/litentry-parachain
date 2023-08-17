@@ -53,8 +53,8 @@ describe('Test Identity (direct invocation)', function () {
 
     before(async () => {
         context = await initIntegrationTestContext(
-            process.env.WORKER_END_POINT!, // @fixme evil assertion; centralize env access
-            process.env.SUBSTRATE_END_POINT!, // @fixme evil assertion; centralize env access
+            process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
+            process.env.NODE_ENDPOINT!, // @fixme evil assertion; centralize env access
             0
         );
         teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
@@ -256,7 +256,7 @@ describe('Test Identity (direct invocation)', function () {
             twitterNonce,
             'twitter'
         );
-        const twitterNetworks = context.api.createType('Vec<Web3Network>', []);
+        const twitterNetworks = context.api.createType('Vec<Web3Network>', []) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: twitterNonce,
             identity: twitterIdentity,
@@ -275,7 +275,10 @@ describe('Test Identity (direct invocation)', function () {
             undefined,
             [context.ethersWallet.alice]
         );
-        const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
+        const evmNetworks = context.api.createType('Vec<Web3Network>', [
+            'Ethereum',
+            'Bsc',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: evmNonce,
             identity: evmIdentity,
@@ -297,7 +300,10 @@ describe('Test Identity (direct invocation)', function () {
             'substrate',
             context.substrateWallet.eve
         );
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Polkadot', 'Litentry']);
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', [
+            'Polkadot',
+            'Litentry',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
@@ -369,7 +375,7 @@ describe('Test Identity (direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [[], ['Ethereum', 'BSC'], ['Polkadot', 'Litentry']];
+        const expectedWeb3Networks = [[], ['Ethereum', 'Bsc'], ['Polkadot', 'Litentry']];
         let currentIndex = 0;
 
         for (const { identity } of linkIdentityRequestParams) {

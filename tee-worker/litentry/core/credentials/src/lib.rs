@@ -36,11 +36,12 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use codec::{Decode, Encode};
+use core::str::from_utf8;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::{from_iso8601, now_as_iso8601};
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, Web3Network};
+use litentry_primitives::{Address20, Address32, Identity, Web3Network};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -57,6 +58,7 @@ extern crate rust_base58_sgx as rust_base58;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate hex_sgx as hex;
 
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
@@ -78,6 +80,7 @@ pub mod schema;
 
 pub mod assertion_logic;
 use assertion_logic::{AssertionLogic, Op};
+use itp_utils::hex::hex_encode;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";
@@ -241,11 +244,7 @@ impl Credential {
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
-		vc.credential_subject.id = account_id_to_string(
-			&subject
-				.to_account_id()
-				.ok_or_else(|| Error::RuntimeError("Not a valid account".to_string()))?,
-		);
+		vc.credential_subject.id = DID::try_from(subject)?.format();
 		vc.issuance_date = now_as_iso8601();
 		vc.credential_schema = None;
 		vc.proof = None;
@@ -481,6 +480,103 @@ impl Credential {
 		self.credential_subject.assertions.push(governance);
 		self.credential_subject.values.push(value);
 	}
+
+	pub fn add_achainable(&mut self, value: bool, from: String, to: String) {
+		let min_item = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from);
+		let max_item = AssertionLogic::new_item("$to_date", Op::LessThan, &to);
+		let and_logic = AssertionLogic::new_and();
+
+		let assertion = AssertionLogic::new_and()
+			.add_item(min_item)
+			.add_item(max_item)
+			.add_item(and_logic);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_content(&mut self, value: bool, content: &str) {
+		let content = AssertionLogic::new_item(content, Op::Equal, "true");
+		let assertion = AssertionLogic::new_and().add_item(content);
+
+		self.credential_subject.assertions.push(assertion);
+		self.credential_subject.values.push(value);
+	}
+
+	pub fn update_uniswap_v23_info(&mut self, v2_user: bool, v3_user: bool) {
+		let uniswap_v2 =
+			AssertionLogic::new_item("$is_uniswap_v2_user", Op::Equal, &v2_user.to_string());
+		let uniswap_v3 =
+			AssertionLogic::new_item("$is_uniswap_v3_user", Op::Equal, &v3_user.to_string());
+
+		let assertion = AssertionLogic::new_and().add_item(uniswap_v2).add_item(uniswap_v3);
+		self.credential_subject.assertions.push(assertion);
+
+		// Always true
+		self.credential_subject.values.push(true);
+	}
+
+	pub fn update_class_of_year(&mut self, ret: bool, date: String) {
+		let mut and_logic = AssertionLogic::new_and();
+
+		let from = AssertionLogic::new_item("$account_created_year", Op::Equal, &date);
+		and_logic = and_logic.add_item(from);
+
+		self.credential_subject.assertions.push(and_logic);
+		self.credential_subject.values.push(ret);
+	}
+}
+
+pub enum DID {
+	Evm(Address20),
+	Substrate(Address32),
+	Twitter(String),
+	Discord(String),
+	Github(String),
+}
+
+impl DID {
+	pub fn format(self) -> String {
+		format!(
+			"did:litentry:{}",
+			&match self {
+				Self::Evm(address) => format!("evm:{}", &hex_encode(address.as_ref())),
+				Self::Substrate(address) => format!("substrate:{}", &hex_encode(address.as_ref())),
+				Self::Twitter(handle) => format!("twitter:{}", handle),
+				Self::Discord(handle) => format!("discord:{}", handle),
+				Self::Github(handle) => format!("github:{}", handle),
+			}
+		)
+	}
+}
+
+impl TryFrom<&Identity> for DID {
+	type Error = Error;
+
+	fn try_from(value: &Identity) -> Result<Self, Self::Error> {
+		match value {
+			Identity::Substrate(address) => Ok(DID::Substrate(*address)),
+			Identity::Evm(address) => Ok(DID::Evm(*address)),
+			Identity::Twitter(handle) => {
+				let handle = from_utf8(handle.as_ref())
+					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
+					.to_string();
+				Ok(DID::Twitter(handle))
+			},
+			Identity::Discord(handle) => {
+				let handle = from_utf8(handle.as_ref())
+					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
+					.to_string();
+				Ok(DID::Discord(handle))
+			},
+			Identity::Github(handle) => {
+				let handle = from_utf8(handle.as_ref())
+					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
+					.to_string();
+				Ok(DID::Github(handle))
+			},
+		}
+	}
 }
 
 /// Assertion To-Date
@@ -520,7 +616,7 @@ mod tests {
 		let vc = Credential::from_template(data, &identity, &shard).unwrap();
 		assert!(vc.validate_unsigned().is_ok());
 		let id: String = vc.credential_subject.id;
-		assert_eq!(id, account_id_to_string(&who));
+		assert_eq!(id, "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000");
 	}
 
 	#[test]
@@ -586,5 +682,42 @@ mod tests {
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
 			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
 		}
+	}
+
+	#[test]
+	fn test_substrate_did_format() {
+		assert_eq!(DID::Substrate([0; 32].into()).format(), "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000")
+	}
+
+	#[test]
+	fn test_evm_did_format() {
+		assert_eq!(
+			DID::Evm([0; 20].into()).format(),
+			"did:litentry:evm:0x0000000000000000000000000000000000000000"
+		)
+	}
+
+	#[test]
+	fn test_discord_format() {
+		assert_eq!(
+			DID::Discord("discord_handle".to_string()).format(),
+			"did:litentry:discord:discord_handle"
+		)
+	}
+
+	#[test]
+	fn test_twitter_format() {
+		assert_eq!(
+			DID::Twitter("twitter_handle".to_string()).format(),
+			"did:litentry:twitter:twitter_handle"
+		)
+	}
+
+	#[test]
+	fn test_github_format() {
+		assert_eq!(
+			DID::Github("github_handle".to_string()).format(),
+			"did:litentry:github:github_handle"
+		)
 	}
 }

@@ -214,7 +214,9 @@ export interface LitentryMultiSignature extends Enum {
     readonly asEcdsa: Signature;
     readonly isEthereum: boolean;
     readonly asEthereum: EthereumSignature;
-    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum";
+    readonly isEthereumPrettified: boolean;
+    readonly asEthereumPrettified: EthereumSignature;
+    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum" | "EthereumPrettified";
 }
 
 /** @name LitentryValidationData */
@@ -355,6 +357,10 @@ export interface TrustedCall extends Enum {
     readonly asSetIdentityNetworks: ITuple<
         [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]
     >;
+    readonly isSetUserShieldingKeyWithNetworks: boolean;
+    readonly asSetUserShieldingKeyWithNetworks: ITuple<
+        [LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256]
+    >;
     readonly type:
         | "BalanceSetBalance"
         | "BalanceTransfer"
@@ -365,7 +371,8 @@ export interface TrustedCall extends Enum {
         | "DeactivateIdentity"
         | "ActivateIdentity"
         | "RequestVc"
-        | "SetIdentityNetworks";
+        | "SetIdentityNetworks"
+        | "SetUserShieldingKeyWithNetworks";
 }
 
 /** @name TrustedCallSigned */
@@ -483,7 +490,6 @@ export interface Web3Network extends Enum {
     readonly isKhala: boolean;
     readonly isSubstrateTestnet: boolean;
     readonly isEthereum: boolean;
-    readonly isPolygon: boolean;
     readonly isBsc: boolean;
     readonly type:
         | "Polkadot"
@@ -494,7 +500,6 @@ export interface Web3Network extends Enum {
         | "Khala"
         | "SubstrateTestnet"
         | "Ethereum"
-        | "Polygon"
         | "Bsc";
 }
 

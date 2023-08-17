@@ -1440,7 +1440,7 @@ dependencies = [
  "sp-runtime",
  "sp-std 5.0.0",
  "strum 0.25.0",
- "strum_macros 0.25.1",
+ "strum_macros 0.25.2",
  "xcm",
 ]
 
@@ -4851,6 +4851,7 @@ name = "itp-enclave-api"
 version = "0.9.0"
 dependencies = [
  "frame-support",
+ "hex 0.4.3",
  "itc-parentchain",
  "itp-enclave-api-ffi",
  "itp-settings",
@@ -5035,6 +5036,7 @@ dependencies = [
  "derive_more",
  "itp-settings",
  "itp-sgx-io",
+ "itp-sgx-temp-dir",
  "log 0.4.19",
  "ofb",
  "parity-scale-codec",
@@ -5152,6 +5154,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-sgx-io",
+ "itp-sgx-temp-dir",
  "itp-stf-interface",
  "itp-stf-state-observer",
  "itp-time-utils",
@@ -5577,6 +5580,7 @@ dependencies = [
 name = "its-storage"
 version = "0.9.0"
 dependencies = [
+ "itp-settings",
  "itp-time-utils",
  "itp-types",
  "its-primitives",
@@ -6941,6 +6945,7 @@ dependencies = [
  "chrono 0.4.26",
  "core-primitives",
  "hex 0.4.3",
+ "itp-utils",
  "log 0.4.19",
  "pallet-evm",
  "parity-scale-codec",
@@ -6956,7 +6961,7 @@ dependencies = [
  "sp-runtime",
  "sp-std 5.0.0",
  "strum 0.25.0",
- "strum_macros 0.25.1",
+ "strum_macros 0.25.2",
 ]
 
 [[package]]
@@ -15011,9 +15016,9 @@ dependencies = [
 
 [[package]]
 name = "strum_macros"
-version = "0.25.1"
+version = "0.25.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6069ca09d878a33f883cc06aaa9718ede171841d3832450354410b718b097232"
+checksum = "ad8d03b598d3d0fff69bf533ee3ef19b8eeb342729596df84bcc7e1f96ec4059"
 dependencies = [
  "heck",
  "proc-macro2",
