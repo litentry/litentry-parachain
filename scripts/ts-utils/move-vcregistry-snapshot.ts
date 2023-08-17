@@ -33,6 +33,8 @@ async function encodeExtrinsic() {
     let txs: any[] = [];
     console.log(colors.green('vcRegistry data length'), data.length);
     let i = 0
+    const hexData = []
+
     while (data.length > 0) {
         const batch = data.splice(0, BATCH_SIZE);
         const batchTxs = batch.map((entry: any) =>
@@ -44,15 +46,29 @@ async function encodeExtrinsic() {
             )
         );
         txs = txs.concat(batchTxs);
-
         if (data.length === 0 || txs.length >= BATCH_SIZE) {
             i++
             const extrinsics = defaultAPI.tx.utility.batch(batchTxs);
-            console.log(colors.green(`extrinsic ${i} encode`), extrinsics.toHex());
+            hexData.push({ batch: i, extrinsics: extrinsics.toHex(), })
+            // console.log(colors.green(`extrinsic ${i} encode`), extrinsics.toHex());
             txs = [];
+            if (data.length === 0) {
+                const extrinsicsFilename = `extrinsics-${new Date().toISOString().slice(0, 10)}.json`;
+                const extrinsicsFilepath = path.join(__dirname, extrinsicsFilename);
+
+                const formattedHexData = prettier.format(JSON.stringify(hexData), {
+                    parser: "json",
+                    printWidth: 120,
+                    tabWidth: 2,
+                    singleQuote: true,
+                    trailingComma: "es5",
+                });
+
+                fs.writeFileSync(extrinsicsFilepath, formattedHexData);
+                console.log(colors.green(`Extrinsics saved to ${extrinsicsFilename} successfully.`));
+            }
         }
     }
-    console.log(colors.green('done'));
     process.exit();
 }
 

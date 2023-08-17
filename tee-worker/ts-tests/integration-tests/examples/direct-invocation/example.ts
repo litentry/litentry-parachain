@@ -104,7 +104,7 @@ export async function runExample(mode: Mode) {
     let hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     let nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
 
-    console.log('Send direct setUserShieldingKey call for alice ... hash:', hash);
+    console.log('Send direct setUserShieldingKey call for alice ... nonce:' + nonce + ', hash:', hash);
     let setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
         mrenclave,
@@ -139,7 +139,7 @@ export async function runExample(mode: Mode) {
 
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
-    console.log('Send direct linkIdentity call... hash:', hash);
+    console.log('Send direct linkIdentity call... nonce:' + nonce + ', hash:', hash);
     const bobSubstrateIdentity = await buildIdentityHelper(u8aToHex(bobSubstrateKey.addressRaw), 'Substrate', context);
     const [bobValidationData] = await buildValidations(
         context,
@@ -217,11 +217,12 @@ export async function runExample(mode: Mode) {
     assert.equal(k.unwrap().toHex(), aesKey);
 
     // ==============================================================================
-    // 5. Test link_identity (error case: IdentityAlreadyLinked)
+    // 5. Test link_identity (error case: UnexpectedMessage)
     // ==============================================================================
+
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
-    console.log('Send direct linkIdentity call (error case)... hash:', hash);
+    console.log('Send direct linkIdentity call (error case)... nonce:' + nonce + ', hash:', hash);
     linkIdentityCall = await createSignedTrustedCallLinkIdentity(
         parachainApi,
         mrenclave,
@@ -243,10 +244,13 @@ export async function runExample(mode: Mode) {
     // 6. Test set_identity_networks (happy path)
     // ==============================================================================
 
+    // To avoid nonce clash, see https://github.com/litentry/litentry-parachain/issues/1990
+    await sleep(20);
+
     // set web3networks to alice
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
-    console.log('Set new web3networks for alice ...');
+    console.log('Set new web3networks for alice ... nonce:' + nonce + ', hash:', hash);
     let setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
         parachainApi,
         mrenclave,
@@ -271,7 +275,7 @@ export async function runExample(mode: Mode) {
     // set incompatible web3networks to alice
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
-    console.log('Set incompatible web3networks for alice ...');
+    console.log('Set incompatible web3networks for alice ... nonce:' + nonce + ', hash:', hash);
     setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
         parachainApi,
         mrenclave,
@@ -295,6 +299,9 @@ export async function runExample(mode: Mode) {
     // 8. Test set_user_shielding_key with wrapped bytes
     // ==============================================================================
 
+    // To avoid nonce clash, see https://github.com/litentry/litentry-parachain/issues/1990
+    await sleep(20);
+
     // bob's shielding key should be none
     console.log('Send UserShieldingKey getter for bob ...');
     userShieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(parachainApi, bob, bobSubject);
@@ -309,7 +316,7 @@ export async function runExample(mode: Mode) {
     const keyBob = '0x8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c';
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, bobSubject);
-    console.log('Send direct setUserShieldingKey call for bob, with wrapped bytes... hash:', hash);
+    console.log('Send direct setUserShieldingKey call for bob, with wrapped bytes... nonce:' + nonce + ', hash:', hash);
     setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
         mrenclave,
@@ -338,7 +345,7 @@ export async function runExample(mode: Mode) {
 
     hash = `0x${crypto.randomBytes(32).toString('hex')}`;
     nonce = await getSidechainNonce(wsp, parachainApi, mrenclave, key, aliceSubject);
-    console.log('request vc for alice ...');
+    console.log('request vc for alice ... nonce:' + nonce + ', hash:', hash);
     const requestVcCall = await createSignedTrustedCallRequestVc(
         parachainApi,
         mrenclave,

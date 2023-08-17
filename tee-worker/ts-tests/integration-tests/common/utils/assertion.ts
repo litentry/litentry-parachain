@@ -12,9 +12,9 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, RequestVCResponse, PalletVcManagementVcContext, TeerexPrimitivesEnclave } from 'parachain-api';
+import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, RequestVCResponse, PalletVcManagementVcContext } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
-import { PolkadotSigner, Signer, decryptWithAes } from './crypto';
+import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { decodeAddress } from '@polkadot/keyring';
 export async function assertFailedEvent(
@@ -47,28 +47,33 @@ export async function assertFailedEvent(
         );
     }
 }
-
-export async function assertInitialIdGraphCreated(
-    context: IntegrationTestContext,
-    signer: KeyringPair[],
-    events: any[]
-) {
+export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
+    const keyringType = signer.type()
+
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
-
+        // check who is signer
         const who = eventData.account.toHex();
+        const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
+        assert.equal(who, signerAddress);
+
+        // check event idGraph
+        const expectedPrimeIdentity = await buildIdentityHelper(
+            u8aToHex(signer.getAddressRaw()),
+            keyringType === 'ethereum' ? 'Evm' : 'Substrate',
+            context
+        );
         const idGraphData = parseIdGraph(context.sidechainRegistry, eventData.idGraph, aesKey);
-        assert.equal(idGraphData.length, 1);
-        assert.equal(who, u8aToHex(signer[index].addressRaw));
 
-        // Check identity in idgraph
-        const expectedIdentity = await buildIdentityHelper(u8aToHex(signer[index].addressRaw), 'Substrate', context);
-        const expectedTarget = expectedIdentity[`as${expectedIdentity.type}`];
-        const idGraphTarget = idGraphData[0][0][`as${idGraphData[0][0].type}`];
-        assert.equal(expectedTarget.toString(), idGraphTarget.toString());
+        // check idGraph LitentryPrimitivesIdentity
+        assert.deepEqual(
+            idGraphData[0][0].toHuman(),
+            expectedPrimeIdentity.toHuman(),
+            'event idGraph identity should be equal expectedIdentity'
+        );
 
-        // Check identityContext in idgraph
+        // check idGraph LitentryPrimitivesIdentityContext
         const idGraphContext = idGraphData[0][1];
         assert.isTrue(
             idGraphContext.linkBlock.toNumber() > 0,
@@ -76,9 +81,8 @@ export async function assertInitialIdGraphCreated(
         );
         assert.isTrue(idGraphContext.status.isActive, 'Check InitialIDGraph error: isActive should be true');
     }
-    console.log(colors.green('assertInitialIdGraphCreated complete'));
+    console.log(colors.green('assertInitialIdGraphCreated passed'));
 }
-
 export async function assertIdentityLinked(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
