@@ -277,7 +277,10 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     4. compare vc index vc payload id
     5. check vc signature
     6. compare vc wtih jsonSchema
+
+    note: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
 */
+
 
 export async function assertVc(context: IntegrationTestContext, signer: Signer, data: Bytes) {
     const vc = context.api.createType('RequestVCResponse', data) as unknown as RequestVCResponse;

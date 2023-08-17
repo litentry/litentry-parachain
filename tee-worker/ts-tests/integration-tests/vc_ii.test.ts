@@ -14,6 +14,7 @@ import {
     assertIdentityLinked,
     assertInitialIdGraphCreated,
     assertIsInSidechainBlock,
+    assertVc
 } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
@@ -56,21 +57,22 @@ describe('Test Identity (direct invocation)', function () {
 
 
     // https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
-    const assertions = [{
-        A1: null
-    }
-        , {
-        A2: 'A2'
-    }, {
-        A3: ['A3', 'A3', 'A3']
-    }, {
-        A4: '10'
-    },
-    { A6: null },
-    { A7: '10.01' },
-    { A8: ["Litentry"] },
-    { A10: '10' },
-    { A11: '10' }
+    const assertions = [
+        {
+            A1: null
+        },
+        {
+            A2: 'A2'
+        }, {
+            A3: ['A3', 'A3', 'A3']
+        }, {
+            A4: '10'
+        },
+        { A6: null },
+        { A7: '10.01' },
+        { A8: ["Litentry"] },
+        { A10: '10' },
+        { A11: '10' }
     ]
     this.timeout(6000000);
 
@@ -86,6 +88,7 @@ describe('Test Identity (direct invocation)', function () {
 
     it('needs a lot more work to be complete');
     it('most of the bob cases are missing');
+
     step(`setting user shielding key (alice)`, async function () {
         const wallet = context.substrateWallet['alice'];
         const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
@@ -128,18 +131,16 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     assertions.forEach((assertion) => {
-
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
-            console.log(assertion);
-            console.log(Object.keys(assertion)[0]);
-
             let currentNonce = (
                 await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
             ).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            console.log('request vc for alice ...');
+            console.log(`request vc ${Object.keys(assertion)[0]} for alice ...`);
+            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+
             const requestVcCall = await createSignedTrustedCallRequestVc(
                 context.api,
                 context.mrEnclave,
@@ -150,256 +151,40 @@ describe('Test Identity (direct invocation)', function () {
                 requestIdentifier
             );
 
-            const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+            const callValue = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
 
-            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
+            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, callValue);
+            const events = await eventsPromise;
+            const vcIssuedEvents = events
+                .map(({ event }) => event)
+                .filter(({ section, method }) => section === 'vcManagement' && method === 'VCIssued');
 
-
-
+            assert.equal(vcIssuedEvents.length, 1, `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`);
+            await assertVc(context, new PolkadotSigner(context.substrateWallet.alice), callValue.value)
         })
-
-
     })
 
-    // step(`request vc A1 (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A1: null }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-
-    // step(`request vc A2  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A2: ['A2'] }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-
-    // step(`request vc A3  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A2: ['A3', 'A3', 'A3'] }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-
-    // step(`request vc A4  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A4: '10' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-
-    // step(`request vc A6  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A6: null }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-    //     console.log(res.toHuman());
-
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-    // step(`request vc A7  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A7: '10.01' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-
-    //     // const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     // console.log(requestVcRes);
-
-    // });
-
-    // step(`request vc A8 (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A8: ["Litentry"] }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-
-    // step(`request vc A10  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A10: '10' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-    // step(`request vc A11  (alice)`, async function () {
-    //     const nonce = await getSidechainNonce(
-    //         context.tee,
-    //         context.api,
-    //         context.mrEnclave,
-    //         teeShieldingKey,
-    //         aliceSubject
-    //     );
-    //     const hash = `0x${randomBytes(32).toString('hex')}`;
-    //     console.log('request vc for alice ...');
-    //     const requestVcCall = await createSignedTrustedCallRequestVc(
-    //         context.api,
-    //         context.mrEnclave,
-    //         nonce,
-    //         new PolkadotSigner(context.substrateWallet.alice),
-    //         aliceSubject,
-    //         context.api.createType('CorePrimitivesAssertion', { A11: '10' }).toHex(),
-    //         hash
-    //     );
-    //     const res = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
-
-    //     const requestVcRes = context.api.createType('RequestVCResponse', res.value);
-
-    //     console.log(requestVcRes);
-
-    // });
-
+    step('request vc without shielding key (bob)', async function () {
+        const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
+        const nonce = await getSidechainNonce(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            bobSubject
+        );
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const requestVcCall = await createSignedTrustedCallRequestVc(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', nonce),
+            new PolkadotSigner(context.substrateWallet.bob),
+            aliceSubject,
+            context.api.createType('CorePrimitivesAssertion', { A1: null }).toHex(),
+            requestIdentifier
+        );
+        const callValue = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+        assert.isTrue(callValue.do_watch.isFalse);
+        assert.isTrue(callValue.status.asTrustedOperationStatus[0].isInvalid, 'request vc without shieldingkey should be invalid');
+    });
 });
