@@ -1990,8 +1990,7 @@ declare const _default: {
             WrongWeb2Handle: string;
             UnexpectedMessage: string;
             WrongSignatureType: string;
-            VerifySubstrateSignatureFailed: string;
-            VerifyEvmSignatureFailed: string;
+            VerifyWeb3SignatureFailed: string;
             RecoverEvmAddressFailed: string;
             Web3NetworkOutOfBounds: string;
         };

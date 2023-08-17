@@ -46,8 +46,7 @@ pub enum ErrorDetail {
 	WrongWeb2Handle,
 	UnexpectedMessage,
 	WrongSignatureType,
-	VerifySubstrateSignatureFailed,
-	VerifyEvmSignatureFailed,
+	VerifyWeb3SignatureFailed,
 	RecoverEvmAddressFailed,
 	Web3NetworkOutOfBounds,
 }

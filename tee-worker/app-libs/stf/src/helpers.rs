@@ -163,14 +163,7 @@ pub fn verify_web3_identity(
 	//       will merge it to `VerifyWeb3SignatureFailed` after the campaign
 	//       https://github.com/litentry/litentry-parachain/issues/2033
 	if !data.signature().verify(raw_msg, identity) {
-		match data {
-			Web3ValidationData::Substrate(_) =>
-				return Err(StfError::LinkIdentityFailed(
-					ErrorDetail::VerifySubstrateSignatureFailed,
-				)),
-			Web3ValidationData::Evm(_) =>
-				return Err(StfError::LinkIdentityFailed(ErrorDetail::VerifyEvmSignatureFailed)),
-		}
+		Err(StfError::LinkIdentityFailed(ErrorDetail::VerifyWeb3SignatureFailed))
 	}
 
 	Ok(())
