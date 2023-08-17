@@ -12,8 +12,11 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
-
+import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, RequestVCResponse, PalletVcManagementVcContext, TeerexPrimitivesEnclave } from 'parachain-api';
+import { Bytes } from '@polkadot/types-codec';
+import { PolkadotSigner, Signer, decryptWithAes } from './crypto';
+import { blake2AsHex } from '@polkadot/util-crypto';
+import { decodeAddress } from '@polkadot/keyring';
 export async function assertFailedEvent(
     context: IntegrationTestContext,
     events: FrameSystemEventRecord[],
@@ -260,4 +263,73 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     expect(isValid).to.be.true;
     expect(vc.type[0] === 'VerifiableCredential' && proofJson.type === 'Ed25519Signature2020').to.be.true;
     return true;
+}
+
+
+
+
+/* 
+    assert vc
+    steps:
+    1. compare vc account with signer
+    2. check vc status should be Active
+    3. compare vc payload hash(blake vc payload) with vc hash
+    4. compare vc index vc payload id
+    5. check vc signature
+    6. compare vc wtih jsonSchema
+*/
+
+export async function assertVc(context: IntegrationTestContext, signer: Signer, data: Bytes) {
+    const vc = context.api.createType('RequestVCResponse', data) as unknown as RequestVCResponse;
+
+    const vcHash = vc.vc_hash.toString()
+    const signerAddress = u8aToHex(signer.getAddressRaw())
+
+    // step 1
+    const vcAccount = vc.account.toString()
+    const decodedAccount = decodeAddress(vcAccount);
+    assert.equal(u8aToHex(decodedAccount), signerAddress, 'Check VC error: signer should be equal to vc account');
+
+
+    // step 2
+    const vcIndex = vc.vc_index.toString()
+    const vcRegistry = await context.api.query.vcManagement.vcRegistry(vcIndex) as unknown as PalletVcManagementVcContext
+    const vcStatus = vcRegistry.toHuman()['status']
+    assert.equal(vcStatus, 'Active', 'Check VcRegistry error:status should be equal to Active');
+
+    // step 3
+    // decryptWithAes function added 0x prefix
+    const vcPayload = vc.vc_payload
+    const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
+    const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
+    assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');
+
+    // step 4
+    const vcPayloadJson = JSON.parse(decryptVcPayload);
+    const { proof, ...vcWithoutProof } = vcPayloadJson;
+    assert.equal(vcIndex, vcPayloadJson.id, 'Check VcIndex error: VcIndex should be equal to vcPayload id');
+
+    // step 5
+    const enclaveCount = await context.api.query.teerex.enclaveCount();
+    const enclaveRegistry = await context.api.query.teerex.enclaveRegistry(enclaveCount) as any;
+
+    const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
+
+    const message = Buffer.from(vcWithoutProof.issuer.mrenclave);
+
+    const vcPubkey = Buffer.from(hexToU8a(`${enclaveRegistry.toHuman()['vcPubkey']}`));
+    const signatureStatus = await ed.verify(signature, message, vcPubkey);
+
+    assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
+
+    // step 6
+    const ajv = new Ajv();
+
+    const validate = ajv.compile(jsonSchema);
+
+    const isValid = validate(vcPayloadJson);
+
+    assert.isTrue(isValid, 'Check Vc payload error: vcPayload should be valid');
+    assert.equal(vcWithoutProof.type[0], 'VerifiableCredential', 'Check Vc payload type error: vcPayload type should be VerifiableCredential');
+    assert.equal(proof.type, 'Ed25519Signature2020', 'Check Vc proof type error: proof type should be Ed25519Signature2020');
 }

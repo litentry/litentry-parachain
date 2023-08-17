@@ -9,6 +9,8 @@ import type { AnyTuple } from "@polkadot/types/types";
 
 export type {
     CorePrimitivesErrorErrorDetail,
+    PalletVcManagementVcContext,
+    TeerexPrimitivesEnclave
 } from "@polkadot/types/lookup";
 
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
@@ -21,6 +23,8 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
+    RequestVCResponse,
+
 } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
