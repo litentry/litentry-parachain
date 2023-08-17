@@ -5,7 +5,7 @@
 .github
 .idea
 ci/
-docker/
+docker/*yml
 docs/
 local-setup/
 scripts/

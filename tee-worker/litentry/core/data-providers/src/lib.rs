@@ -15,6 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::large_enum_variant)]
+#![allow(clippy::result_large_err)]
 
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -50,7 +52,10 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-use litentry_primitives::{ErrorDetail, ErrorString, IntoErrorDetail};
+use litentry_primitives::{
+	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
+	VCMPError,
+};
 use std::{
 	format,
 	string::{String, ToString},
@@ -68,7 +73,7 @@ pub mod twitter_official;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-pub const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+pub const LIT_TOKEN_ADDRESS: &str = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723";
 pub const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 pub const WETH_TOKEN_ADDRESS: &str = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 pub const UNISWAP_TOKEN_ADDRESS: &str = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
@@ -188,4 +193,16 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)
+}
+
+pub trait ConvertParameterString {
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError>;
+}
+
+impl ConvertParameterString for AchainableParams {
+	fn to_string(&self, field: &ParameterString) -> Result<String, VCMPError> {
+		vec_to_string(field.to_vec()).map_err(|_| {
+			VCMPError::RequestVCFailed(Assertion::Achainable(self.clone()), ErrorDetail::ParseError)
+		})
+	}
 }

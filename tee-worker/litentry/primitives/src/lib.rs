@@ -34,10 +34,14 @@ use sp_std::vec::Vec;
 pub use validation_data::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use itp_utils::hex::hex_encode;
 use log::error;
 pub use parentchain_primitives::{
 	all_evm_web3networks, all_substrate_web3networks, all_web3networks,
-	AccountId as ParentchainAccountId, AesOutput, Assertion, Balance as ParentchainBalance,
+	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
+	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
+	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
+	AchainableParams, AchainableToken, AesOutput, Assertion, Balance as ParentchainBalance,
 	BlockNumber as ParentchainBlockNumber, BoundedWeb3Network, ErrorDetail, ErrorString,
 	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
 	IntoErrorDetail, ParameterString, SchemaContentString, SchemaIdString,
@@ -64,6 +68,8 @@ pub enum LitentryMultiSignature {
 	Ecdsa(ecdsa::Signature),
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
 	Ethereum(EthereumSignature),
+	/// Same as the above, but the payload bytes are hex-encoded and prepended with a readable prefix
+	EthereumPrettified(EthereumSignature),
 }
 
 impl LitentryMultiSignature {
@@ -72,9 +78,7 @@ impl LitentryMultiSignature {
 			Identity::Substrate(address) =>
 				self.verify_substrate(substrate_wrap(msg).as_slice(), address)
 					|| self.verify_substrate(msg, address),
-			Identity::Evm(address) =>
-				self.verify_evm(evm_eip191_wrap(msg).as_slice(), address)
-					|| self.verify_evm(msg, address),
+			Identity::Evm(address) => self.verify_evm(msg, address),
 			_ => false,
 		}
 	}
@@ -103,22 +107,32 @@ impl LitentryMultiSignature {
 	}
 
 	fn verify_evm(&self, msg: &[u8], signer: &Address20) -> bool {
-		match (self, signer) {
-			(Self::Ethereum(ref sig), who) => {
-				let digest = keccak_256(msg);
-				return match recover_evm_address(&digest, sig.as_ref()) {
-					Ok(recovered_evm_address) => recovered_evm_address == who.as_ref().as_slice(),
-					Err(_e) => {
-						error!(
-							"Could not verify evm signature msg: {:?}, signer {:?}",
-							msg, signer
-						);
-						false
-					},
-				}
+		match self {
+			Self::Ethereum(ref sig) => {
+				let data = msg;
+				return verify_evm_signature(evm_eip191_wrap(data).as_slice(), sig, signer)
+					|| verify_evm_signature(data, sig, signer)
+			},
+			Self::EthereumPrettified(ref sig) => {
+				let user_readable_message =
+					"Litentry authorization token: ".to_string() + &hex_encode(msg);
+				let data = user_readable_message.as_bytes();
+				return verify_evm_signature(evm_eip191_wrap(data).as_slice(), sig, signer)
+					|| verify_evm_signature(data, sig, signer)
 			},
 			_ => false,
 		}
+	}
+}
+
+fn verify_evm_signature(data: &[u8], sig: &EthereumSignature, who: &Address20) -> bool {
+	let digest = keccak_256(data);
+	return match recover_evm_address(&digest, sig.as_ref()) {
+		Ok(recovered_evm_address) => recovered_evm_address == who.as_ref().as_slice(),
+		Err(_e) => {
+			error!("Could not verify evm signature msg: {:?}, signer {:?}", data, who);
+			false
+		},
 	}
 }
 

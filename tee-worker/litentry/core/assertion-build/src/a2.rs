@@ -23,9 +23,10 @@ extern crate sgx_tstd as std;
 use crate::*;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 
-const VC_A2_SUBJECT_DESCRIPTION: &str =
-	"The user has obtained an ID-Hubber role in a Litentry Discord channel";
-const VC_A2_SUBJECT_TYPE: &str = "Discord ID-Hubber Role Verification";
+const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord. 
+Server link: https://discord.gg/phBSa3eMX9
+Guild ID: 807161594245152800.";
+const VC_A2_SUBJECT_TYPE: &str = "Litentry Discord Member";
 
 pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<Credential> {
 	debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who));
@@ -41,17 +42,16 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			discord_cnt += 1;
-			if let Ok(response) = client.check_join(guild_id.to_vec(), address.to_vec()) {
-				if response.data {
-					has_joined = true;
+			let resp = client.check_join(guild_id.to_vec(), address.to_vec()).map_err(|e| {
+				Error::RequestVCFailed(Assertion::A2(guild_id.clone()), e.into_error_detail())
+			})?;
+			if resp.data {
+				has_joined = true;
 
-					//Assign role "ID-Hubber" to each discord account
-					if let Ok(response) =
-						client.assign_id_hubber(guild_id.to_vec(), address.to_vec())
-					{
-						if !response.data {
-							error!("assign_id_hubber {} {}", response.message, response.msg_code);
-						}
+				//Assign role "ID-Hubber" to each discord account
+				if let Ok(response) = client.assign_id_hubber(guild_id.to_vec(), address.to_vec()) {
+					if !response.data {
+						error!("assign_id_hubber {} {}", response.message, response.msg_code);
 					}
 				}
 			}

@@ -121,7 +121,7 @@ impl A14Client {
 			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_auth_key.clone().as_str(),
 		);
 		let client =
-			build_client("https://label-production.graph.tdf-labs.io/v1/run/label/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
+			build_client("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
 		A14Client { client }
 	}
 

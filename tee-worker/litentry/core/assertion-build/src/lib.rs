@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::result_large_err)]
 
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
@@ -47,14 +48,18 @@ pub mod a4;
 pub mod a6;
 pub mod a7;
 pub mod a8;
+pub mod achainable;
 
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
-	Assertion, ErrorDetail, ErrorString, Identity, IdentityNetworkTuple, IntoErrorDetail,
-	ParameterString, VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
+	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
+	AchainableBasic, AchainableBetweenPercents, AchainableDate, AchainableDateInterval,
+	AchainableDatePercent, AchainableParams, AchainableToken, Assertion, ErrorDetail, ErrorString,
+	Identity, IdentityNetworkTuple, IntoErrorDetail, ParameterString, VCMPError as Error,
+	Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};
@@ -119,7 +124,7 @@ mod tests {
 		let network1: Vec<Web3Network> = vec![];
 		let network2 = vec![Web3Network::Polkadot, Web3Network::Litentry];
 		let network3 = vec![Web3Network::Litentry, Web3Network::Khala, Web3Network::Kusama];
-		let network4 = vec![Web3Network::BSC];
+		let network4 = vec![Web3Network::Bsc];
 
 		identities.push((id1, network1));
 		identities.push((id2, network2));
@@ -136,6 +141,6 @@ mod tests {
 			&(Web3Network::Litentry, vec![[2u8; 32].to_hex(), [3u8; 32].to_hex()])
 		);
 		assert_eq!(result.get(3).unwrap(), &(Web3Network::Khala, vec![[3u8; 32].to_hex()]));
-		assert_eq!(result.get(4).unwrap(), &(Web3Network::BSC, vec![[4u8; 20].to_hex()]));
+		assert_eq!(result.get(4).unwrap(), &(Web3Network::Bsc, vec![[4u8; 20].to_hex()]));
 	}
 }

@@ -20,15 +20,20 @@ use crate::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
+	initialization::global_components::GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	utils::get_validator_accessor_from_solo_or_parachain,
 };
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
+use itp_component_container::ComponentGetter;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
-use itp_sgx_crypto::Rsa3072Seal;
+use itp_sgx_crypto::{
+	ed25519_derivation::DeriveEd25519,
+	key_repository::{AccessKey, AccessPubkey},
+};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_primitives::types::AccountId;
@@ -45,6 +50,8 @@ use its_sidechain::rpc_handler::{
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::debug;
+use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
@@ -62,14 +69,16 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<R, G, S>(
-	top_pool_author: Arc<R>,
-	getter_executor: Arc<G>,
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, S>(
+	top_pool_author: Arc<Author>,
+	getter_executor: Arc<GetterExecutor>,
+	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<S>>,
 ) -> IoHandler
 where
-	R: AuthorApi<H256, H256> + Send + Sync + 'static,
-	G: ExecuteGetter + Send + Sync + 'static,
+	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
+	GetterExecutor: ExecuteGetter + Send + Sync + 'static,
+	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
 	S: HandleState + Send + Sync + 'static,
 	S::StateT: SgxExternalitiesTrait,
 {
@@ -82,7 +91,7 @@ where
 	// author_getShieldingKey
 	let rsa_pubkey_name: &str = "author_getShieldingKey";
 	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
-		let rsa_pubkey = match Rsa3072Seal::unseal_pubkey() {
+		let rsa_pubkey = match shielding_key.retrieve_pubkey() {
 			Ok(key) => key,
 			Err(status) => {
 				let error_msg: String = format!("Could not get rsa pubkey due to: {}", status);
@@ -100,6 +109,38 @@ where
 		};
 		let json_value =
 			RpcReturnValue::new(rsa_pubkey_json.encode(), false, DirectRequestStatus::Ok);
+		Ok(json!(json_value.to_hex()))
+	});
+
+	// author_getEnclaveSignerAccount
+	let rsa_pubkey_name: &str = "author_getEnclaveSignerAccount";
+	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
+		let shielding_key_repository = match GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get() {
+			Ok(s) => s,
+			Err(e) => {
+				let error_msg: String = format!("{:?}", e);
+				debug!("{:?}", e);
+				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		};
+		let enclave_signer_public_key = match shielding_key_repository
+			.retrieve_key()
+			.and_then(|keypair| keypair.derive_ed25519().map(|keypair| keypair.public().to_hex()))
+		{
+			Err(e) => {
+				let error_msg: String = format!("{:?}", e);
+				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+			Ok(public_key) => public_key,
+		};
+		debug!("[Enclave] enclave_signer_public_key: {:?}", enclave_signer_public_key);
+
+		let json_value = RpcReturnValue {
+			do_watch: false,
+			value: enclave_signer_public_key.encode(),
+			status: DirectRequestStatus::Ok,
+		};
+
 		Ok(json!(json_value.to_hex()))
 	});
 
@@ -152,7 +193,7 @@ where
 					},
 					Err(e) => {
 						let error_msg = format!("load shard failure due to: {:?}", e);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				}
 			},

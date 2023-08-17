@@ -24,8 +24,8 @@ use crate::*;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 
 const VC_A3_SUBJECT_DESCRIPTION: &str =
-	"The user has commented in a specific Discord channel with a specific role";
-const VC_A3_SUBJECT_TYPE: &str = "Discord Member Verification";
+	"You have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882";
+const VC_A3_SUBJECT_TYPE: &str = "Active Discord ID-Hubber";
 
 pub fn build(
 	req: &AssertionBuildRequest,
@@ -59,16 +59,23 @@ pub fn build(
 	let mut client = DiscordLitentryClient::new();
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
-			if let Ok(response) = client.check_id_hubber(
-				guild_id.to_vec(),
-				channel_id.to_vec(),
-				role_id.to_vec(),
-				address.to_vec(),
-			) {
-				if response.data {
-					has_commented = true;
-					break
-				}
+			let resp = client
+				.check_id_hubber(
+					guild_id.to_vec(),
+					channel_id.to_vec(),
+					role_id.to_vec(),
+					address.to_vec(),
+				)
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+						e.into_error_detail(),
+					)
+				})?;
+
+			if resp.data {
+				has_commented = true;
+				break
 			}
 		}
 	}

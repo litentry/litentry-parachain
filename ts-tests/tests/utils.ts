@@ -18,7 +18,7 @@ export class ParachainConfig {
 export function loadConfig() {
     require('dotenv').config();
     switch (process.env.NODE_ENV) {
-        case 'development':
+        case 'local':
             return require('../config.local.json')
         case 'test':
         case 'ci':
