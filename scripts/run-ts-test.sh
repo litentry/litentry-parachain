@@ -3,6 +3,7 @@
 set -eo pipefail
 
 bridge=false
+evm=false
 
 case "$1" in
     litentry|litmus|rococo) export PARACHAIN_TYPE=$1 ;;

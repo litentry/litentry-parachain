@@ -25,7 +25,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     
         let eveMappedAccount = context.eve.address.slice(0, 42);
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
-        const tx = context.api.tx.evm.call(eveMappedAccount, evmAccount.address, '0x', value, 4294967295, 1, null);
+        const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 4294967295, 1, null);
         await signAndSend(tx, context.eve);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
@@ -138,7 +138,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         let eveMappedAccount = context.eve.address.slice(0, 42);
         let value = 100000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         // Sign Tx with substrate signature, try manipulate evm account out of substrate signature's control
-        const tx = context.api.tx.evm.call(evmAccount.address, eveMappedAccount, '0x', value, 4294967295, 1, null);
+        const tx = context.api.tx.evm.call(evmAccountRaw.address, eveMappedAccount, '0x', value, 4294967295, 1, null);
         await signAndSend(tx, context.eve);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
