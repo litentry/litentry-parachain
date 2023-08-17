@@ -8,5 +8,11 @@
 			"integration-tests"
 		]
 	},
+	"scripts": {
+		"update": "yarn workspace parachain-api update-metadata && yarn workspace sidechain-api update-metadata",
+		"build": "yarn workspace parachain-api build && yarn workspace sidechain-api build",
+		"update-build": "yarn update && yarn build",
+		"format": "yarn workspace parachain-api format && yarn workspace sidechain-api format && yarn workspace integration-tests format"
+	},
 	"packageManager": "yarn@3.6.1"
 }

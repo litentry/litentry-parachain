@@ -26,6 +26,8 @@ Generate parachain type: `corepack yarn workspace parachain-api build`
 
 Generate sidechain type: `corepack yarn workspace sidechain-api build`
 
+Alternatively, you can run `corepack yarn update-build` to do all things above in one go.
+
 ## Local
 
 [Start parachain && worker](https://github.com/litentry/litentry-parachain/blob/dev/README.md)

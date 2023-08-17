@@ -22,9 +22,37 @@ import { assert } from 'chai';
 import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { TransactionSubmit } from './common/type-definitions';
+import type { IntegrationTestContext, TransactionSubmit } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
+import { sendRequest } from './common/call';
+import * as base58 from 'micro-base58';
+import { decodeRpcBytesAsString } from './common/call';
+
+async function getEnclaveSignerPublicKey (context: IntegrationTestContext): Promise<string> {
+    const request = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
+    const response = await sendRequest(context.tee, request, context.api);
+    if (!response.status.isOk) {
+        throw new Error("Get author_getEnclaveSignerAccount response error!");
+    }
+    const enclaveSignerAccount = decodeRpcBytesAsString(response.value);
+    console.log("enclaveSignerAccount", enclaveSignerAccount);
+    return enclaveSignerAccount;
+}
+
+async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
+    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
+    const res = await sendRequest(context.tee, request, context.api);
+    console.log("workerAddr", workerAddr);
+    const resHex = res.value.toString();
+    let nonce = 0;
+    if(resHex){
+        nonce = context.api.createType('Index', ('0x' + resHex.slice(2)?.match(/../g)?.reverse().join(''))).toNumber();
+    }   
+    console.log("resHex:", resHex);
+    console.log("nonce is:", nonce);
+    return nonce;
+}
 
 describeLitentry('Test Identity', 0, (context) => {
     const errorAesKey = '0xError';
@@ -36,6 +64,13 @@ describeLitentry('Test Identity', 0, (context) => {
     let eveValidations: LitentryValidationData[] = [];
     let bobValidations: LitentryValidationData[] = [];
     let web3networks: Web3Network[][] = [];
+    let base58mrEnclave: string;
+    let workerAddress: string;
+
+    step('init', async () => {
+        base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
+        workerAddress = await getEnclaveSignerPublicKey (context);
+    });
 
     step('check user sidechain storage before create', async function () {
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
@@ -125,6 +160,7 @@ describeLitentry('Test Identity', 0, (context) => {
         // - a `mock_user` twitter
         // - alice's evm identity
         // - eve's substrate identity (as she can't link her own substrate again)
+        let nonce = await getNonce(base58mrEnclave, workerAddress, context);
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const eveSubstrateIdentity = await buildIdentityHelper(
@@ -144,19 +180,14 @@ describeLitentry('Test Identity', 0, (context) => {
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
         aliceIdentities = [charlieSubstrateIdentity];
 
-        // TODO: #1899 being lazy - the nonce here is hardcoded
-        //       it's better to retrieve the starting nonce from the sidechain and increment
-        //       it for each such request, similar to the construction of substrate tx
-        //       However, beware that we should query the nonce of the enclave-signer-account
-        //       not alice or bob, as it's the indirect calls are signed by the enclave signer
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
-        const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], 3, 'twitter');
+        const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], nonce, 'twitter');
 
         const evmValidations = await buildValidations(
             context,
             [aliceSubject],
             [evmIdentity],
-            4,
+            nonce + 1,
             'ethereum',
             undefined,
             [context.ethersWallet.alice]
@@ -166,7 +197,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [eveSubstrateIdentity],
-            5,
+            nonce + 2,
             'substrate',
             context.substrateWallet.eve
         );
@@ -214,14 +245,13 @@ describeLitentry('Test Identity', 0, (context) => {
             },
         };
         const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
-
+        nonce = await getNonce(base58mrEnclave, workerAddress, context);
+        console.log("nonce for step link identities", nonce);
         const msg = generateVerificationMessage(
             context,
             bobSubject,
             charlieSubstrateIdentity,
-            // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
-            // due to the callback trustedCall
-            9
+            nonce
         );
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
@@ -341,16 +371,13 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const aliceIdentities = [twitterIdentity];
 
-        // TODO: being lazy - the nonce here is hardcoded
-        //       it's better to retrieve the starting nonce from the sidechain and increment
-        //       it for each such request, similar to the construction of substrate tx
-        //       However, beware that we should query the nonce of the enclave-signer-account
-        //       not alice or bob, as it's the indirect calls are signed by the enclave signer
+        const nonce = await getNonce(base58mrEnclave, workerAddress, context);
+        console.log("nonce for step link already linked identity", nonce);
         const aliceTwitterValidations = await buildValidations(
             context,
             [aliceSubject],
             [twitterIdentity],
-            15,
+            nonce,
             'twitter',
             context.substrateWallet.alice,
             []

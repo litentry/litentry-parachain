@@ -284,11 +284,7 @@ async function latestBlock(
     );
 }
 
-async function waitForBlock(
-    connection: WebSocketAsPromised,
-    shard: HexString,
-    lowerBound: number
-): Promise<number> {
+async function waitForBlock(connection: WebSocketAsPromised, shard: HexString, lowerBound: number): Promise<number> {
     const task = async () => {
         const resp = await latestBlock(connection, shard);
         const blockNumber = resp.result?.number;

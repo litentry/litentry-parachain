@@ -20,15 +20,20 @@ use crate::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
+	initialization::global_components::GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	utils::get_validator_accessor_from_solo_or_parachain,
 };
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
+use itp_component_container::ComponentGetter;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
-use itp_sgx_crypto::key_repository::AccessPubkey;
+use itp_sgx_crypto::{
+	ed25519_derivation::DeriveEd25519,
+	key_repository::{AccessKey, AccessPubkey},
+};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::getter_executor::ExecuteGetter;
 use itp_stf_primitives::types::AccountId;
@@ -46,6 +51,7 @@ use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
@@ -106,6 +112,38 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
+	// author_getEnclaveSignerAccount
+	let rsa_pubkey_name: &str = "author_getEnclaveSignerAccount";
+	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
+		let shielding_key_repository = match GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get() {
+			Ok(s) => s,
+			Err(e) => {
+				let error_msg: String = format!("{:?}", e);
+				debug!("{:?}", e);
+				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+		};
+		let enclave_signer_public_key = match shielding_key_repository
+			.retrieve_key()
+			.and_then(|keypair| keypair.derive_ed25519().map(|keypair| keypair.public().to_hex()))
+		{
+			Err(e) => {
+				let error_msg: String = format!("{:?}", e);
+				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+			},
+			Ok(public_key) => public_key,
+		};
+		debug!("[Enclave] enclave_signer_public_key: {:?}", enclave_signer_public_key);
+
+		let json_value = RpcReturnValue {
+			do_watch: false,
+			value: enclave_signer_public_key.encode(),
+			status: DirectRequestStatus::Ok,
+		};
+
+		Ok(json!(json_value.to_hex()))
+	});
+
 	// author_getNextNonce
 	let state_storage = state.clone();
 
@@ -155,7 +193,7 @@ where
 					},
 					Err(e) => {
 						let error_msg = format!("load shard failure due to: {:?}", e);
-						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
+						Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				}
 			},
