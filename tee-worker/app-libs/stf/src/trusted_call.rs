@@ -22,7 +22,7 @@ use sp_core::{H160, U256};
 use std::vec::Vec;
 
 use crate::{
-	helpers::{ensure_enclave_signer, ensure_self},
+	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_self},
 	trusted_call_result::*,
 	Runtime, StfError, System, TrustedOperation,
 };
@@ -39,8 +39,9 @@ pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
-	ErrorDetail, IMPError, Identity, ParentchainAccountId, ParentchainBlockNumber,
-	UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, ValidationData, Web3Network,
+	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainAccountId,
+	ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError,
+	ValidationData, Web3Network,
 };
 use log::*;
 use sp_core::crypto::AccountId32;
@@ -51,7 +52,6 @@ use std::{format, prelude::v1::*, sync::Arc, vec};
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 use itp_node_api::metadata::NodeMetadataTrait;
-use litentry_primitives::LitentryMultiSignature;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
@@ -582,12 +582,12 @@ where
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 				);
-				Self::link_identity_internal(
+				let verification_done = Self::link_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who,
-					identity,
+					who.clone(),
+					identity.clone(),
 					validation_data,
-					web3networks,
+					web3networks.clone(),
 					nonce,
 					top_hash,
 					hash,
@@ -596,14 +596,27 @@ where
 				.map_err(|e| {
 					add_call_from_imp_error(
 						calls,
-						node_metadata_repo,
+						node_metadata_repo.clone(),
 						Some(account),
 						e.to_imp_error(),
 						hash,
 					);
 					e
 				})?;
-				Ok(TrustedCallResult::Streamed)
+
+				if verification_done {
+					Self::handle_link_identity_callback(
+						calls,
+						node_metadata_repo,
+						enclave_signer_account::<AccountId>().into(),
+						who,
+						identity,
+						web3networks,
+						hash,
+					)
+				} else {
+					Ok(TrustedCallResult::Streamed)
+				}
 			},
 			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
 				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
@@ -685,48 +698,16 @@ where
 				};
 				Ok(TrustedCallResult::ActivateIdentity(res))
 			},
-			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) => {
-				debug!("link_identity_callback, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
-				let call_index = node_metadata_repo
-					.get_from_metadata(|m| m.identity_linked_call_indexes())??;
-
-				let key = Self::link_identity_callback_internal(
-					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who.clone(),
-					identity.clone(),
+			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) =>
+				Self::handle_link_identity_callback(
+					calls,
+					node_metadata_repo,
+					signer,
+					who,
+					identity,
 					web3networks,
-				)
-				.map_err(|e| {
-					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
-						calls,
-						node_metadata_repo,
-						Some(account.clone()),
-						e.to_imp_error(),
-						hash,
-					);
-					e
-				})?;
-				let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-				debug!("pushing identity_linked event ...");
-				calls.push(OpaqueCall::from_tuple(&(
-					call_index,
-					account.clone(),
-					aes_encrypt_default(&key, &identity.encode()),
-					aes_encrypt_default(&key, &id_graph.encode()),
 					hash,
-				)));
-
-				let res = LinkIdentityResult {
-					account,
-					identity: aes_encrypt_default(&key, &identity.encode()),
-					id_graph: aes_encrypt_default(&key, &id_graph.encode()),
-				};
-				Ok(TrustedCallResult::LinkIdentity(res))
-			},
+				),
 			TrustedCall::request_vc(signer, who, assertion, hash) => {
 				debug!(
 					"request_vc, who: {}, assertion: {:?}",

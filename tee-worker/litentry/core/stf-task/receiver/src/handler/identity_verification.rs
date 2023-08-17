@@ -21,7 +21,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use lc_stf_task_sender::IdentityVerificationRequest;
+use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
 use std::sync::Arc;
@@ -33,7 +33,7 @@ pub(crate) struct IdentityVerificationHandler<
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
-	pub(crate) req: IdentityVerificationRequest,
+	pub(crate) req: Web2IdentityVerificationRequest,
 	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
 }
 
