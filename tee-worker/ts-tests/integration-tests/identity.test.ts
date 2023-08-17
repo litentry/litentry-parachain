@@ -8,11 +8,11 @@ import {
     buildIdentityTxs,
     buildValidations,
     checkUserShieldingKeys,
-    assertIdentityLinked,
     assertIdentityDeactivated,
     assertInitialIdGraphCreated,
     buildIdentityFromKeypair,
     assertIdentityActivated,
+    assertLinkedEvent,
     PolkadotSigner,
 } from './common/utils';
 import { aesKey } from './common/call';
@@ -60,7 +60,7 @@ describeLitentry('Test Identity', 0, (context) => {
     const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
     let signatureSubstrate;
     let eveIdentities: LitentryPrimitivesIdentity[] = [];
-    let aliceIdentities: LitentryPrimitivesIdentity[] = [];
+    let charlieIdentities: LitentryPrimitivesIdentity[] = [];
     let eveValidations: LitentryValidationData[] = [];
     let bobValidations: LitentryValidationData[] = [];
     let web3networks: Web3Network[][] = [];
@@ -121,11 +121,10 @@ describeLitentry('Test Identity', 0, (context) => {
             ['UserShieldingKeySet']
         );
 
-        await assertInitialIdGraphCreated(
-            context,
-            [context.substrateWallet.alice, context.substrateWallet.bob],
-            respEvents
-        );
+        // check alice
+        await assertInitialIdGraphCreated(context, new PolkadotSigner(context.substrateWallet.alice), [respEvents[0]]);
+        // check bob
+        await assertInitialIdGraphCreated(context, new PolkadotSigner(context.substrateWallet.bob), [respEvents[1]]);
     });
 
     step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
@@ -178,7 +177,7 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
-        aliceIdentities = [charlieSubstrateIdentity];
+        charlieIdentities = [charlieSubstrateIdentity];
 
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
         const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], nonce, 'twitter');
@@ -230,7 +229,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityLinked']
         );
 
-        assertIdentityLinked(context, context.substrateWallet.alice, aliceRespEvents, eveIdentities);
+        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.alice), aliceRespEvents, eveIdentities);
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
@@ -274,7 +273,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const bobTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.bob,
-            aliceIdentities,
+            charlieIdentities,
             'linkIdentity',
             bobValidations,
             [bobSubstrateNetworks]
@@ -287,7 +286,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        assertIdentityLinked(context, context.substrateWallet.bob, bobRespEvents, aliceIdentities);
+        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.bob), bobRespEvents, charlieIdentities);
     });
 
     step('check IDGraph after LinkIdentity', async function () {
@@ -427,7 +426,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const bobTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.bob,
-            aliceIdentities,
+            charlieIdentities,
             'deactivateIdentity'
         );
         const bobDeactivatedEvents = await sendTxsWithUtility(
