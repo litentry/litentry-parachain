@@ -73,7 +73,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             evmAccountRaw.privateKey
         );
 
-        const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction);
+        const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction!);
         console.log(`Tx successful with hash: ${transferReceipt.transactionHash}`);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
@@ -112,7 +112,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             },
             evmAccountRaw.privateKey
         );
-        const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction);
+        const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction!);
         // Expect EVM revert
         assert(!transferReceipt.status, "Transaction with wrong signature succeed");
 

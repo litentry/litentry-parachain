@@ -79,7 +79,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             );
 
             // Send tx and wait for receipt
-            const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
+            const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
             console.log(`Contract deployed at address: ${createReceipt.contractAddress}`);
 
             return createReceipt;
@@ -131,7 +131,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
           );
     
           // Send Tx and Wait for Receipt
-          const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction);
+          const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
           console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
         };
         const setMsg = await setMessage(deployedContract, evmAccountRaw, 'Goodbye World');
