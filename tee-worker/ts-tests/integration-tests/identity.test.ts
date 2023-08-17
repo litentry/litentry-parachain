@@ -251,8 +251,6 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             bobSubject,
             charlieSubstrateIdentity,
-            // 9 because each previous linking of Alice's identity would trigger an additional nonce bump
-            // due to the callback trustedCall
             nonce
         );
         console.log('post verification msg to substrate: ', msg);
