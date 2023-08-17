@@ -6,8 +6,6 @@ set -eo pipefail
 # - generate: generate the systemd service files from the template
 # - restart: restart the parachain, or the worker, or both
 # - upgrade-worker: uprade the worker0 to the rev in local repo
-#
-# Note: this script must be run with `sudo` or `root`
 
 # ------------------------------
 # path setting
@@ -17,8 +15,9 @@ ROOTDIR=$(git rev-parse --show-toplevel)
 BASEDIR=/opt/litentry
 PARACHAIN_BASEDIR="$BASEDIR/parachain"
 WORKER_BASEDIR="$BASEDIR/worker"
-LOG_BACKUP_BASEDIR="$BASEDIR/log-backup"
-WORKER_BACKUP_BASEDIR="$BASEDIR/worker-backup"
+BACKUP_BASEDIR="$BASEDIR/backup"
+LOG_BACKUP_BASEDIR="$BACKUP_BASEDIR/log"
+WORKER_BACKUP_BASEDIR="$BACKUP_BASEDIR/worker"
 RELAYCHAIN_ALICE_BASEDIR="$PARACHAIN_BASEDIR/relay-alice"
 RELAYCHAIN_BOB_BASEDIR="$PARACHAIN_BASEDIR/relay-bob"
 PARACHAIN_ALICE_BASEDIR="$PARACHAIN_BASEDIR/para-alice"
@@ -50,6 +49,9 @@ NEW_MRENCLAVE=
 OLD_SHARD=
 LATEST_FINALIZED_BLOCK=
 
+SGX_SDK=/opt/intel/sgxsdk
+SGX_ENCLAVE_SIGNER=$SGX_SDK/bin/x64/sgx_sign
+
 # ------------------------------
 # main()
 # ------------------------------
@@ -57,7 +59,7 @@ LATEST_FINALIZED_BLOCK=
 function main {
   # 0/ check if $USER has sudo
   if sudo -l -U $USER 2>/dev/null | grep -q 'may run the following'; then
-    source /opt/intel/sgxsdk/environment
+    source "$SGX_SDK/environment"
   else
     echo "$USER doesn't have sudo permission"
     exit 1
@@ -66,7 +68,7 @@ function main {
   # 1/ create folders if missing
   sudo mkdir -p "$BASEDIR"
   sudo chown $USER:$GROUPS "$BASEDIR" 
-  for d in "$LOG_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
+  for d in "$LOG_BACKUP_BASEDIR" "$WORKER_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
     "$PARACHAIN_ALICE_BASEDIR" "$WORKER_BASEDIR"; do
     mkdir -p "$d"
   done
@@ -204,10 +206,10 @@ function display_help {
   echo "  --prod                      Use a prod configuration to build and run the worker (default: false)"
   echo ""
   echo "examples:"
-  echo "  sudo ./deploy.sh generate --config tmp.json"
-  echo "  sudo ./deploy.sh restart --build --config github-staging-one-worker.json"
-  echo "  sudo ./deploy.sh restart --build --config github-staging-one-worker.json --discard"
-  echo "  sudo ./deploy.sh upgrade-worker --build --config github-staging-one-worker.json"
+  echo "  ./deploy.sh generate --config tmp.json"
+  echo "  ./deploy.sh restart --config tmp.json --discard --build"
+  echo "  ./deploy.sh restart --build --config github-staging-one-worker.json --discard"
+  echo "  ./deploy.sh upgrade-worker --build --config github-staging-one-worker.json"
   echo ""
   echo "notes:"
   echo "  - This script requires an OS that supports systemd."
@@ -375,9 +377,7 @@ function stop_worker_services {
 
 function stop_parachain_services {
   echo "Stopping parachain services ..."
-  sudo systemctl stop para-alice.service
-  sudo systemctl stop relay-alice.service
-  sudo systemctl stop relay-bob.service
+  sudo systemctl stop para-alice.service relay-alice.service relay-bob.service
 }
 
 function stop_services {
@@ -448,13 +448,10 @@ function setup_working_dir {
 }
 
 function get_old_mrenclave {
-  # TODO: this is not entirely correct
-  #       the tee-worker/ folder must be of old state
-  cd $ROOTDIR/tee-worker || exit 
-  OLD_MRENCLAVE=$(make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}')
-
-  cd bin || exit 
+  cd "$WORKER_BASEDIR/w0" || exit
   OLD_SHARD=$(./litentry-worker mrenclave)
+  OLD_MRENCLAVE=$($SGX_ENCLAVE_SIGNER dump -enclave ./enclave.signed.so -dumpfile df.out && ./extract_identity < df.out && rm df.out \
+                 2>&1 | grep MRENCLAVE | awk '{print $2}')
 }
 
 function upgrade_worker {
