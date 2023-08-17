@@ -20,6 +20,7 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self},
+	trusted_call_result::{SetUserShieldingKeyResult, TrustedCallResult},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -37,7 +38,6 @@ use litentry_primitives::{
 };
 use log::*;
 use std::{sync::Arc, vec::Vec};
-use crate::trusted_call_result::{SetUserShieldingKeyResult, TrustedCallResult};
 
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
@@ -105,10 +105,7 @@ impl TrustedCallSigned {
 		)));
 
 		debug!("populating user_shielding_key_set rpc reponse ...");
-		let res = SetUserShieldingKeyResult {
-			account,
-			id_graph: encrypted_id_graph,
-		};
+		let res = SetUserShieldingKeyResult { account, id_graph: encrypted_id_graph };
 		Ok(TrustedCallResult::SetUserShieldingKey(res))
 	}
 
