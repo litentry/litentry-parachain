@@ -12,7 +12,13 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, RequestVCResponse, PalletVcManagementVcContext } from 'parachain-api';
+import {
+    CorePrimitivesErrorErrorDetail,
+    FrameSystemEventRecord,
+    WorkerRpcReturnValue,
+    RequestVCResponse,
+    PalletVcManagementVcContext,
+} from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
@@ -49,7 +55,7 @@ export async function assertFailedEvent(
 }
 export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
-    const keyringType = signer.type()
+    const keyringType = signer.type();
 
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
@@ -269,9 +275,6 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-
-
-
 /* 
     assert vc
     steps:
@@ -282,31 +285,31 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     5. check vc signature
     6. compare vc wtih jsonSchema
 
-    note: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
+    TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
 */
-
 
 export async function assertVc(context: IntegrationTestContext, signer: Signer, data: Bytes) {
     const vc = context.api.createType('RequestVCResponse', data) as unknown as RequestVCResponse;
 
-    const vcHash = vc.vc_hash.toString()
-    const signerAddress = u8aToHex(signer.getAddressRaw())
+    const vcHash = vc.vc_hash.toString();
+    const signerAddress = u8aToHex(signer.getAddressRaw());
 
     // step 1
-    const vcAccount = vc.account.toString()
+    const vcAccount = vc.account.toString();
     const decodedAccount = decodeAddress(vcAccount);
     assert.equal(u8aToHex(decodedAccount), signerAddress, 'Check VC error: signer should be equal to vc account');
 
-
     // step 2
-    const vcIndex = vc.vc_index.toString()
-    const vcRegistry = await context.api.query.vcManagement.vcRegistry(vcIndex) as unknown as PalletVcManagementVcContext
-    const vcStatus = vcRegistry.toHuman()['status']
+    const vcIndex = vc.vc_index.toString();
+    const vcRegistry = (await context.api.query.vcManagement.vcRegistry(
+        vcIndex
+    )) as unknown as PalletVcManagementVcContext;
+    const vcStatus = vcRegistry.toHuman()['status'];
     assert.equal(vcStatus, 'Active', 'Check VcRegistry error:status should be equal to Active');
 
     // step 3
     // decryptWithAes function added 0x prefix
-    const vcPayload = vc.vc_payload
+    const vcPayload = vc.vc_payload;
     const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
     const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
     assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');
@@ -318,7 +321,7 @@ export async function assertVc(context: IntegrationTestContext, signer: Signer, 
 
     // step 5
     const enclaveCount = await context.api.query.teerex.enclaveCount();
-    const enclaveRegistry = await context.api.query.teerex.enclaveRegistry(enclaveCount) as any;
+    const enclaveRegistry = (await context.api.query.teerex.enclaveRegistry(enclaveCount)) as any;
 
     const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
 
@@ -337,6 +340,14 @@ export async function assertVc(context: IntegrationTestContext, signer: Signer, 
     const isValid = validate(vcPayloadJson);
 
     assert.isTrue(isValid, 'Check Vc payload error: vcPayload should be valid');
-    assert.equal(vcWithoutProof.type[0], 'VerifiableCredential', 'Check Vc payload type error: vcPayload type should be VerifiableCredential');
-    assert.equal(proof.type, 'Ed25519Signature2020', 'Check Vc proof type error: proof type should be Ed25519Signature2020');
+    assert.equal(
+        vcWithoutProof.type[0],
+        'VerifiableCredential',
+        'Check Vc payload type error: vcPayload type should be VerifiableCredential'
+    );
+    assert.equal(
+        proof.type,
+        'Ed25519Signature2020',
+        'Check Vc proof type error: proof type should be Ed25519Signature2020'
+    );
 }

@@ -1,42 +1,18 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
+import { assertInitialIdGraphCreated, assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
-    buildIdentityFromKeypair,
-    buildIdentityHelper,
-    buildValidations,
-    initIntegrationTestContext,
-    PolkadotSigner,
-} from './common/utils';
-import {
-    assertFailedEvent,
-    assertIdentityLinked,
-    assertInitialIdGraphCreated,
-    assertIsInSidechainBlock,
-    assertVc
-} from './common/utils/assertion';
-import {
-    createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallSetUserShieldingKey,
-    createSignedTrustedGetterIdGraph,
-    createSignedTrustedGetterUserShieldingKey,
-    createSignedTrustedCallDeactivateIdentity,
-    createSignedTrustedCallActivateIdentity,
-    decodeIdGraph,
     getSidechainNonce,
     getTeeShieldingKey,
-    sendRequestFromGetter,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
-import { aesKey, keyNonce } from './common/call';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
+import { aesKey } from './common/call';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
-import { Vec } from '@polkadot/types';
-import { ethers } from 'ethers';
-import type { HexString } from '@polkadot/util/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 
 describe('Test Identity (direct invocation)', function () {
@@ -44,36 +20,26 @@ describe('Test Identity (direct invocation)', function () {
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceSubject: LitentryPrimitivesIdentity = undefined as any;
 
-    // Alice links:
-    // - a `mock_user` twitter
-    // - alice's evm identity
-    // - eve's substrate identity (as alice can't link her own substrate again)
-    const linkIdentityRequestParams: {
-        nonce: number;
-        identity: LitentryPrimitivesIdentity;
-        validation: LitentryValidationData;
-        networks: Vec<Web3Network>;
-    }[] = [];
-
-
     // https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
     const assertions = [
         {
-            A1: null
+            A1: null,
         },
         {
-            A2: 'A2'
-        }, {
-            A3: ['A3', 'A3', 'A3']
-        }, {
-            A4: '10'
+            A2: 'A2',
+        },
+        {
+            A3: ['A3', 'A3', 'A3'],
+        },
+        {
+            A4: '10',
         },
         { A6: null },
         { A7: '10.01' },
-        { A8: ["Litentry"] },
+        { A8: ['Litentry'] },
         { A10: '10' },
-        { A11: '10' }
-    ]
+        { A11: '10' },
+    ];
     this.timeout(6000000);
 
     before(async () => {
@@ -92,13 +58,7 @@ describe('Test Identity (direct invocation)', function () {
     step(`setting user shielding key (alice)`, async function () {
         const wallet = context.substrateWallet['alice'];
         const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
-        const nonce = await getSidechainNonce(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            subject
-        );
+        const nonce = await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, subject);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
@@ -127,7 +87,7 @@ describe('Test Identity (direct invocation)', function () {
             .map(({ event }) => event)
             .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
 
-        // await assertInitialIdGraphCreated(context, new PolkadotSigner(wallet), userShieldingKeySetEvents);
+        await assertInitialIdGraphCreated(context, new PolkadotSigner(wallet), userShieldingKeySetEvents);
     });
 
     assertions.forEach((assertion) => {
@@ -151,7 +111,13 @@ describe('Test Identity (direct invocation)', function () {
                 requestIdentifier
             );
 
-            const callValue = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+            const callValue = await sendRequestFromTrustedCall(
+                context.tee,
+                context.api,
+                context.mrEnclave,
+                teeShieldingKey,
+                requestVcCall
+            );
 
             await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, callValue);
             const events = await eventsPromise;
@@ -159,20 +125,18 @@ describe('Test Identity (direct invocation)', function () {
                 .map(({ event }) => event)
                 .filter(({ section, method }) => section === 'vcManagement' && method === 'VCIssued');
 
-            assert.equal(vcIssuedEvents.length, 1, `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`);
-            await assertVc(context, new PolkadotSigner(context.substrateWallet.alice), callValue.value)
-        })
-    })
+            assert.equal(
+                vcIssuedEvents.length,
+                1,
+                `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
+            );
+            await assertVc(context, new PolkadotSigner(context.substrateWallet.alice), callValue.value);
+        });
+    });
 
     step('request vc without shielding key (bob)', async function () {
         const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
-        const nonce = await getSidechainNonce(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            bobSubject
-        );
+        const nonce = await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, bobSubject);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const requestVcCall = await createSignedTrustedCallRequestVc(
             context.api,
@@ -183,8 +147,17 @@ describe('Test Identity (direct invocation)', function () {
             context.api.createType('CorePrimitivesAssertion', { A1: null }).toHex(),
             requestIdentifier
         );
-        const callValue = await sendRequestFromTrustedCall(context.tee, context.api, context.mrEnclave, teeShieldingKey, requestVcCall);
+        const callValue = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            requestVcCall
+        );
         assert.isTrue(callValue.do_watch.isFalse);
-        assert.isTrue(callValue.status.asTrustedOperationStatus[0].isInvalid, 'request vc without shieldingkey should be invalid');
+        assert.isTrue(
+            callValue.status.asTrustedOperationStatus[0].isInvalid,
+            'request vc without shieldingkey should be invalid'
+        );
     });
 });

@@ -7,7 +7,7 @@ import {
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
-    EthersSigner
+    EthersSigner,
 } from './common/utils';
 import {
     assertFailedEvent,
@@ -28,7 +28,6 @@ import {
     getTeeShieldingKey,
     sendRequestFromGetter,
     sendRequestFromTrustedCall,
-
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
@@ -106,7 +105,11 @@ describe('Test Identity (evm direct invocation)', function () {
 
         // check event length
         assert.equal(userShieldingKeySetEvents.length, 1, 'userShieldingKeySetEvents.length should be 1');
-        await assertInitialIdGraphCreated(context, new EthersSigner(context.ethersWallet.alice), userShieldingKeySetEvents);
+        await assertInitialIdGraphCreated(
+            context,
+            new EthersSigner(context.ethersWallet.alice),
+            userShieldingKeySetEvents
+        );
     });
 
     step('check user shielding key from sidechain storage after user shielding key setting(alice)', async function () {
@@ -129,7 +132,11 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('check idgraph from sidechain storage before linking', async function () {
-        const idgraphGetter = await createSignedTrustedGetterIdGraph(context.api, new EthersSigner(context.ethersWallet.alice), aliceEvmSubject);
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new EthersSigner(context.ethersWallet.alice),
+            aliceEvmSubject
+        );
         const res = await sendRequestFromGetter(
             context.tee,
             context.api,
@@ -167,7 +174,10 @@ describe('Test Identity (evm direct invocation)', function () {
             undefined,
             [context.ethersWallet.bob]
         );
-        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']) as unknown as Vec<Web3Network>; // @fixme #1878
+        const bobEvmNetworks = context.api.createType('Vec<Web3Network>', [
+            'Ethereum',
+            'Bsc',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: bobEvmNonce,
             identity: bobEvmIdentity,
@@ -189,7 +199,10 @@ describe('Test Identity (evm direct invocation)', function () {
             'substrate',
             context.substrateWallet.eve
         );
-        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', ['Litentry', 'Khala']) as unknown as Vec<Web3Network>;  // @fixme #1878
+        const eveSubstrateNetworks = context.api.createType('Vec<Web3Network>', [
+            'Litentry',
+            'Khala',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: eveSubstrateNonce,
             identity: eveSubstrateIdentity,
@@ -237,11 +250,18 @@ describe('Test Identity (evm direct invocation)', function () {
 
         // check event data
         assert.equal(linkedIdentityEvents.length, 2);
-        await assertLinkedEvent(context, new EthersSigner(context.ethersWallet.alice), linkedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
+        await assertLinkedEvent(context, new EthersSigner(context.ethersWallet.alice), linkedIdentityEvents, [
+            bobEvmIdentity,
+            eveSubstrateIdentity,
+        ]);
     });
 
     step('check user sidechain storage after linking', async function () {
-        const idgraphGetter = await createSignedTrustedGetterIdGraph(context.api, new EthersSigner(context.ethersWallet.alice), aliceEvmSubject);
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new EthersSigner(context.ethersWallet.alice),
+            aliceEvmSubject
+        );
         const res = await sendRequestFromGetter(
             context.tee,
             context.api,
@@ -353,7 +373,11 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
-        const idgraphGetter = await createSignedTrustedGetterIdGraph(context.api, new EthersSigner(context.ethersWallet.alice), aliceEvmSubject);
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new EthersSigner(context.ethersWallet.alice),
+            aliceEvmSubject
+        );
         const res = await sendRequestFromGetter(
             context.tee,
             context.api,
@@ -452,7 +476,11 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
-        const idgraphGetter = await createSignedTrustedGetterIdGraph(context.api, new EthersSigner(context.ethersWallet.alice), aliceEvmSubject);
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new EthersSigner(context.ethersWallet.alice),
+            aliceEvmSubject
+        );
         const res = await sendRequestFromGetter(
             context.tee,
             context.api,
@@ -486,7 +514,11 @@ describe('Test Identity (evm direct invocation)', function () {
         const nonce = getNextNonce();
 
         // prime identity
-        const substratePrimeIdentity = await buildIdentityHelper(u8aToHex(new EthersSigner(context.ethersWallet.alice).getAddressRaw()), 'Evm', context);
+        const substratePrimeIdentity = await buildIdentityHelper(
+            u8aToHex(new EthersSigner(context.ethersWallet.alice).getAddressRaw()),
+            'Evm',
+            context
+        );
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);

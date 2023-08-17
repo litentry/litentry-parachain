@@ -29,28 +29,28 @@ import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 import { decodeRpcBytesAsString } from './common/call';
 
-async function getEnclaveSignerPublicKey (context: IntegrationTestContext): Promise<string> {
+async function getEnclaveSignerPublicKey(context: IntegrationTestContext): Promise<string> {
     const request = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
     const response = await sendRequest(context.tee, request, context.api);
     if (!response.status.isOk) {
-        throw new Error("Get author_getEnclaveSignerAccount response error!");
+        throw new Error('Get author_getEnclaveSignerAccount response error!');
     }
     const enclaveSignerAccount = decodeRpcBytesAsString(response.value);
-    console.log("enclaveSignerAccount", enclaveSignerAccount);
+    console.log('enclaveSignerAccount', enclaveSignerAccount);
     return enclaveSignerAccount;
 }
 
 async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
     const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
     const res = await sendRequest(context.tee, request, context.api);
-    console.log("workerAddr", workerAddr);
+    console.log('workerAddr', workerAddr);
     const resHex = res.value.toString();
     let nonce = 0;
-    if(resHex){
-        nonce = context.api.createType('Index', ('0x' + resHex.slice(2)?.match(/../g)?.reverse().join(''))).toNumber();
-    }   
-    console.log("resHex:", resHex);
-    console.log("nonce is:", nonce);
+    if (resHex) {
+        nonce = context.api.createType('Index', '0x' + resHex.slice(2)?.match(/../g)?.reverse().join('')).toNumber();
+    }
+    console.log('resHex:', resHex);
+    console.log('nonce is:', nonce);
     return nonce;
 }
 
@@ -69,7 +69,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('init', async () => {
         base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-        workerAddress = await getEnclaveSignerPublicKey (context);
+        workerAddress = await getEnclaveSignerPublicKey(context);
     });
 
     step('check user sidechain storage before create', async function () {
@@ -229,7 +229,12 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityLinked']
         );
 
-        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.alice), aliceRespEvents, eveIdentities);
+        await assertLinkedEvent(
+            context,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceRespEvents,
+            eveIdentities
+        );
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
@@ -245,13 +250,8 @@ describeLitentry('Test Identity', 0, (context) => {
         };
         const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
         nonce = await getNonce(base58mrEnclave, workerAddress, context);
-        console.log("nonce for step link identities", nonce);
-        const msg = generateVerificationMessage(
-            context,
-            bobSubject,
-            charlieSubstrateIdentity,
-            nonce
-        );
+        console.log('nonce for step link identities', nonce);
+        const msg = generateVerificationMessage(context, bobSubject, charlieSubstrateIdentity, nonce);
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
         // sign the wrapped version as in polkadot-extension
@@ -286,7 +286,12 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.bob), bobRespEvents, charlieIdentities);
+        await assertLinkedEvent(
+            context,
+            new PolkadotSigner(context.substrateWallet.bob),
+            bobRespEvents,
+            charlieIdentities
+        );
     });
 
     step('check IDGraph after LinkIdentity', async function () {
@@ -371,7 +376,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const aliceIdentities = [twitterIdentity];
 
         const nonce = await getNonce(base58mrEnclave, workerAddress, context);
-        console.log("nonce for step link already linked identity", nonce);
+        console.log('nonce for step link already linked identity', nonce);
         const aliceTwitterValidations = await buildValidations(
             context,
             [aliceSubject],
