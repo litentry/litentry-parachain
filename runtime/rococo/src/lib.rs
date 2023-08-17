@@ -562,14 +562,13 @@ parameter_types! {
 
 pub struct EnsureRootOrTwoThirdsCouncilWrapper;
 impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrTwoThirdsCouncilWrapper {
-	type Success = Treasury::Currency::Balance;
+	type Success = Balance;
 	fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
 		match EnsureRootOrTwoThirdsCouncil::try_origin(o) {
-			Ok(_) => return Ok(Treasury::Currency::Balance::max_value()),
-			Err(o) => o,
+			Ok(_) => Ok(Balance::max_value()),
+			Err(o) => Err(o),
 		}
 	}
-
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
 		Ok(RuntimeOrigin::root())
