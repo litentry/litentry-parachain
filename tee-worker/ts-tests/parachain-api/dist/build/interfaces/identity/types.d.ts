@@ -238,7 +238,15 @@ export interface TrustedCall extends Enum {
         Vec<Web3Network>,
         H256
     ]>;
-    readonly type: "BalanceSetBalance" | "BalanceTransfer" | "BalanceUnshield" | "BalanceShield" | "SetUserShieldingKey" | "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "RequestVc" | "SetIdentityNetworks";
+    readonly isSetUserShieldingKeyWithNetworks: boolean;
+    readonly asSetUserShieldingKeyWithNetworks: ITuple<[
+        LitentryIdentity,
+        LitentryIdentity,
+        UserShieldingKeyType,
+        Vec<Web3Network>,
+        H256
+    ]>;
+    readonly type: "BalanceSetBalance" | "BalanceTransfer" | "BalanceUnshield" | "BalanceShield" | "SetUserShieldingKey" | "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "RequestVc" | "SetIdentityNetworks" | "SetUserShieldingKeyWithNetworks";
 }
 /** @name TrustedCallSigned */
 export interface TrustedCallSigned extends Struct {

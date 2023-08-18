@@ -557,11 +557,10 @@ jobs:
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-vc-test
           - test_name: lit-identity-test
-          - test_name: lit-identity-direct-invocation-test
+          - test_name: lit-substrate-ii-identity-test
+          - test_name: lit-evm-ii-identity-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-batch-test
-          - test_name: lit-bulk-identity-test
-          - test_name: lit-bulk-vc-test
 
     steps:
       - uses: actions/checkout@v3
