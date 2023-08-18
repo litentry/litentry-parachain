@@ -6,6 +6,12 @@ set -eo pipefail
 # - generate: generate the systemd service files from the template
 # - restart: restart the parachain, or the worker, or both
 # - upgrade-worker: uprade the worker0 to the rev in local repo
+#
+# TODO:
+# the combinations of flags are not yet well verified/organised, especially the following:
+# --only-worker
+# --build
+# --discard
 
 # ------------------------------
 # path setting
@@ -157,17 +163,27 @@ function main {
       prune
       build
       setup_working_dir
+      if [ "$ONLY_WORKER" = true ]; then
+        remove_clean_reset
+      fi
       restart_services
       exit
       ;;
     upgrade-worker)
+      # build the new worker, the code must be under $ROOTDIR/tee-worker already
+      build_worker
+      # update the schedule
+      set_scheduled_enclave
+
+      # wait until sidechain stalls
+      wait_for_sidechain
       backup_workers
       stop_worker_services
       get_old_mrenclave
-      build
       # TODO: actually we only need the copy-up
       setup_working_dir
-      upgrade_worker
+      migrate_shard
+      remove_clean_reset
       restart_services
       exit
       ;;
@@ -208,8 +224,8 @@ function display_help {
   echo "examples:"
   echo "  ./deploy.sh generate --config tmp.json"
   echo "  ./deploy.sh restart --config tmp.json --discard --build"
-  echo "  ./deploy.sh restart --build --config github-staging-one-worker.json --discard"
-  echo "  ./deploy.sh upgrade-worker --build --config github-staging-one-worker.json"
+  echo "  ./deploy.sh restart --config tmp.json --only-worker"
+  echo "  ./deploy.sh upgrade-worker --config tmp.json --only-worker"
   echo ""
   echo "notes:"
   echo "  - This script requires an OS that supports systemd."
@@ -255,8 +271,8 @@ function backup_services {
 function prune {
   if [ "$DISCARD" = true ]; then
     echo "Pruning the existing state ..."
-    rm -rf "$PARACHAIN_BASEDIR/*"
-    rm -rf "$WORKER_BASEDIR/*"
+    rm -rf "$PARACHAIN_BASEDIR"/*
+    rm -rf "$WORKER_BASEDIR"/*
   fi
 }
 
@@ -290,6 +306,18 @@ function generate_services {
     echo "Restart the services to take effect"
 }
 
+function build_worker {
+  echo "Building worker ..."
+  cd $ROOTDIR/tee-worker/ || exit 
+  if [ "$PRODUCTION" = true ]; then
+    # we will get an error if SGX_COMMERCIAL_KEY is not set for prod
+    SGX_PRODUCTION=1 make
+  else
+    # use SW mode for dev
+    SGX_MODE=SW make
+  fi
+}
+
 # TODO: take github rev into consideration
 function build {
   if [ "$BUILD" = true ]; then
@@ -303,7 +331,6 @@ function build {
     chmod a+x "$polkadot_bin"
     if [ ! -s "$polkadot_bin" ]; then
       echo "$polkadot_bin is 0 bytes, download URL: $url" && exit 1
-      exit 1
     fi
     if ! "$polkadot_bin" --version &> /dev/null; then
       echo "Cannot execute $polkadot_bin, wrong executable?" && exit 1
@@ -326,17 +353,6 @@ function build {
       cp "$ROOTDIR/target/release/litentry-collator" "$PARACHAIN_BASEDIR"
     fi
     chmod a+x "$PARACHAIN_BASEDIR/litentry-collator"
-
-    # build worker
-    echo "Building worker ..."
-    cd $ROOTDIR/tee-worker/ || exit 
-    if [ "$PRODUCTION" = true ]; then
-      # we will get an error if SGX_COMMERCIAL_KEY is not set for prod
-      SGX_PRODUCTION=1 make
-    else
-      # use SW mode for dev
-      SGX_MODE=SW make
-    fi
   fi
 }
 
@@ -418,6 +434,7 @@ function register_parachain {
 }
 
 function setup_working_dir {
+    echo "Setting up working dir ..."
     cd "$ROOTDIR/tee-worker/bin" || exit
 
     if [ "$PRODUCTION" = false ]; then
@@ -450,49 +467,80 @@ function setup_working_dir {
 function get_old_mrenclave {
   cd "$WORKER_BASEDIR/w0" || exit
   OLD_SHARD=$(./litentry-worker mrenclave)
-  OLD_MRENCLAVE=$($SGX_ENCLAVE_SIGNER dump -enclave ./enclave.signed.so -dumpfile df.out && ./extract_identity < df.out && rm df.out \
-                 2>&1 | grep MRENCLAVE | awk '{print $2}')
+  $SGX_ENCLAVE_SIGNER dump -enclave ./enclave.signed.so -dumpfile df.out
+  OLD_MRENCLAVE=$($ROOTDIR/tee-worker/extract_identity < df.out | awk '{print $2}')
+  rm df.out
+  echo "old shard: $OLD_SHARD"
+  echo "old mrenclave: $OLD_MRENCLAVE"
 }
 
-function upgrade_worker {
-  echo "Upgrading worker ..."
+function set_scheduled_enclave {
+  echo "Setting scheduled enclave ..."
   cd $ROOTDIR/tee-worker || exit 
   NEW_MRENCLAVE=$(make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}')
+  echo "new mrenclave: $NEW_MRENCLAVE"
 
   latest_sidechain_block
-  latest_parentchain_block
 
   echo "Setting up the new worker on chain ..."
   cd $ROOTDIR/ts-tests/ || exit 
   corepack yarn install
   corepack yarn setup-enclave $NEW_MRENCLAVE $SCHEDULED_UPDATE_BLOCK
-
-  # TODO: make sure the worker is stopped
-  migrate_worker
 }
 
-# TODO: only works for w0
-function migrate_worker {
-  echo "Migrating shards for new worker ..."
-  cd "$WORKER_BASEDIR/w0" || exit 
+function wait_for_sidechain {
+  echo "Waiting for sidechain to reach block $SCHEDULED_UPDATE_BLOCK ..."
+  found=false
+  for _ in $(seq 1 30); do
+    sleep 20
+    block_number=$(grep -F 'Enclave produced sidechain blocks' $WORKER_BASEDIR/w0/worker.log | tail -n 1 | sed 's/.*\[//;s/]//')
+    echo "current sidechain block: $block_number"
+    if [ $((block_number+1)) -eq $SCHEDULED_UPDATE_BLOCK ]; then
+      echo "we should stall soon ..."
+    fi
+    if tail -n 50 $WORKER_BASEDIR/w0/worker.log | grep -q "Skipping sidechain block $SCHEDULED_UPDATE_BLOCK due to mismatch MRENCLAVE"; then
+      echo "we reach $SCHEDULED_UPDATE_BLOCK now"
+      found=true
+      break
+    fi
+  done
+  if [ $found = false ]; then
+    echo "not reached, timeout"
+    exit 1
+  fi
+}
 
-  echo "old MRENCLAVE: $OLD_MRENCLAVE"
-  echo "new MRENCLAVE: $NEW_MRENCLAVE"
-  ./litentry-worker migrate-shard --old-shard $OLD_MRENCLAVE --new-shard $NEW_MRENCLAVE
+function migrate_shard {
+  echo "Migrating shards for workers ..."
+  for ((i = 0; i < WORKER_COUNT; i++)); do
+    cd "$WORKER_BASEDIR/w$i" || exit
+    echo "old MRENCLAVE: $OLD_MRENCLAVE"
+    echo "new MRENCLAVE: $NEW_MRENCLAVE"
+    ./litentry-worker migrate-shard --old-shard $OLD_MRENCLAVE --new-shard $NEW_MRENCLAVE
 
-  cd shards || exit
-  rm -rf $OLD_SHARD
+    cd shards || exit
+    rm -rf $OLD_SHARD
+  done
+  echo "Done"
+}
+
+function remove_clean_reset {
+  echo "Removing --clean-reset flag for workers ..."
+  for ((i = 0; i < WORKER_COUNT; i++)); do
+    sudo sed -i 's/--clean-reset//' /etc/systemd/system/worker$i.service
+  done
   echo "Done"
 }
 
 # TODO: here we only read worker0 logs here
 function latest_sidechain_block {
-  block_number=$(grep -F 'Enclave produced sidechain blocks' $WORKER_BASEDIR/w0/log/worker.log | tail -n 1 | sed 's/.*\[//;s/]//')
-  SCHEDULED_UPDATE_BLOCK=$((block_number + 50))
+  block_number=$(grep -F 'Enclave produced sidechain blocks' $WORKER_BASEDIR/w0/worker.log | tail -n 1 | sed 's/.*\[//;s/]//')
+  SCHEDULED_UPDATE_BLOCK=$((block_number + 30))
   echo "Current sidechain block: $block_number, scheduled update block: $SCHEDULED_UPDATE_BLOCK"
 }
 
-function latest_parentchain_block {
+# TODO: unused
+function _latest_parentchain_block {
   # JSON-RPC request payload
   request='{"jsonrpc":"2.0","id":1,"method":"chain_getHeader","params":[]}'
 
