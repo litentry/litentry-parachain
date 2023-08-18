@@ -556,7 +556,7 @@ jobs:
           - test_name: lit-resume-worker
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-vc-test
-          - test_name: lit-vc-ii-test
+          - test_name: lit-ii-vc-test
           - test_name: lit-identity-test
           - test_name: lit-substrate-ii-identity-test
           - test_name: lit-evm-ii-identity-test

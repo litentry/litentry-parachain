@@ -160,13 +160,13 @@ describeLitentry('Test Identity', 0, (context) => {
         // - alice's evm identity
         // - eve's substrate identity (as she can't link her own substrate again)
         let nonce = await getNonce(base58mrEnclave, workerAddress, context);
-        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const eveSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.eve.addressRaw),
             'Substrate',
             context
         );
+        const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
 
         // Bob links:
         // - charlie's substrate identity
@@ -176,17 +176,16 @@ describeLitentry('Test Identity', 0, (context) => {
             context
         );
 
-        eveIdentities = [twitterIdentity, evmIdentity, eveSubstrateIdentity];
+        eveIdentities = [evmIdentity, eveSubstrateIdentity, twitterIdentity];
         charlieIdentities = [charlieSubstrateIdentity];
 
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
-        const twitterValidations = await buildValidations(context, [aliceSubject], [twitterIdentity], nonce, 'twitter');
 
         const evmValidations = await buildValidations(
             context,
             [aliceSubject],
             [evmIdentity],
-            nonce + 1,
+            nonce,
             'ethereum',
             undefined,
             [context.ethersWallet.alice]
@@ -196,12 +195,20 @@ describeLitentry('Test Identity', 0, (context) => {
             context,
             [aliceSubject],
             [eveSubstrateIdentity],
-            nonce + 2,
+            nonce + 1,
             'substrate',
             context.substrateWallet.eve
         );
 
-        eveValidations = [...twitterValidations, ...evmValidations, ...eveSubstrateValidations];
+        const twitterValidations = await buildValidations(
+            context,
+            [aliceSubject],
+            [twitterIdentity],
+            nonce + 2,
+            'twitter'
+        );
+
+        eveValidations = [...evmValidations, ...eveSubstrateValidations, ...twitterValidations];
 
         const twitterNetworks = context.api.createType('Vec<Web3Network>', []) as unknown as Web3Network[];
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']) as unknown as Web3Network[];
@@ -210,7 +217,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'Polkadot',
         ]) as unknown as Web3Network[];
 
-        web3networks = [twitterNetworks, evmNetworks, eveSubstrateNetworks];
+        web3networks = [evmNetworks, eveSubstrateNetworks, twitterNetworks];
 
         const aliceTxs = await buildIdentityTxs(
             context,
@@ -305,8 +312,8 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('link invalid identities', async function () {
-        const twitterIdentity = eveIdentities[0];
-        const ethereumValidation = eveValidations[1];
+        const twitterIdentity = eveIdentities[2];
+        const ethereumValidation = eveValidations[0];
 
         // link twitter identity with ethereum validation data
         // the `InvalidIdentity` error should be emitted prior to `AlreadyLinked` error
@@ -329,7 +336,7 @@ describeLitentry('Test Identity', 0, (context) => {
     });
 
     step('link identities with wrong signature', async function () {
-        const evmIdentity = eveIdentities[1];
+        const evmIdentity = eveIdentities[0];
 
         // link evm identity with wrong validation data(raw message)
         const ethereumSignature = (await context.ethersWallet.alice.signMessage(
