@@ -60,6 +60,7 @@ export async function buildIdentityFromKeypair(
                 return 'Substrate';
         }
     })();
+
     const address = signer.getAddressRaw();
     const identity = {
         [type]: address,
@@ -195,6 +196,7 @@ export function parseIdGraph(
             'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
             decryptedIdGraph
         ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+
     return idGraph;
 }
 

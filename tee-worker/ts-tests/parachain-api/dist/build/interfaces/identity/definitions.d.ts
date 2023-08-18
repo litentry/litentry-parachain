@@ -54,6 +54,7 @@ declare const _default: {
                 activate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
+                set_user_shielding_key_with_networks: string;
             };
         };
         UserShieldingKeyType: string;
