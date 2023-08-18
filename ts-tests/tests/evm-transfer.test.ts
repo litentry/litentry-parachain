@@ -23,7 +23,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     
         const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
     
-        let eveMappedAccount = context.eve.address.slice(0, 42);
+        let eveMappedAccount = context.eve.address.slice(0, 20);
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 4294967295, 1, null, null, []);
         await signAndSend(tx, context.eve);
@@ -54,7 +54,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             evmAccount.address
         );
 
-        let eveMappedAccount = context.eve.address.slice(0, 42);
+        let eveMappedAccount = context.eve.address.slice(0, 20);
 
         // Create Web3 instance
         const web3 = new Web3('http://localhost:9944');
@@ -135,7 +135,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     
         const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
     
-        let eveMappedAccount = context.eve.address.slice(0, 42);
+        let eveMappedAccount = context.eve.address.slice(0, 20);
         let value = 100000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         // Sign Tx with substrate signature, try manipulate evm account out of substrate signature's control
         const tx = context.api.tx.evm.call(evmAccountRaw.address, eveMappedAccount, '0x', value, 4294967295, 1, null, null, []);
