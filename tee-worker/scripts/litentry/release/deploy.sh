@@ -361,10 +361,13 @@ function restart_services {
   if [ "$ONLY_WORKER" = false ]; then
     echo "Restarting parachain services ..."
 
-    cd "$PARACHAIN_BASEDIR" || exit 
+    cd "$PARACHAIN_BASEDIR" || exit
+    # to be compatible with launch-local-binary
+    mkdir -p /tmp/parachain_dev
+
     ./polkadot build-spec --chain rococo-local --disable-default-bootnode --raw > rococo-local-chain-spec.json
-    ./litentry-collator export-genesis-state --chain $CHAIN-dev > genesis-state
-    ./litentry-collator export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
+    ./litentry-collator export-genesis-state --chain $CHAIN-dev > /tmp/parachain_dev/genesis-state
+    ./litentry-collator export-genesis-wasm --chain $CHAIN-dev > /tmp/parachain_dev/genesis-wasm
 
     sudo systemctl restart relay-alice.service
     sleep 5
@@ -373,6 +376,8 @@ function restart_services {
     sudo systemctl restart para-alice.service
     sleep 5
     register_parachain
+    
+    rm -r /tmp/parachain_dev
   fi
 
   echo "Restarting worker services ..."
