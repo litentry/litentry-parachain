@@ -362,12 +362,9 @@ function restart_services {
     echo "Restarting parachain services ..."
 
     cd "$PARACHAIN_BASEDIR" || exit
-    # to be compatible with launch-local-binary
-    mkdir -p /tmp/parachain_dev
-
     ./polkadot build-spec --chain rococo-local --disable-default-bootnode --raw > rococo-local-chain-spec.json
-    ./litentry-collator export-genesis-state --chain $CHAIN-dev > /tmp/parachain_dev/genesis-state
-    ./litentry-collator export-genesis-wasm --chain $CHAIN-dev > /tmp/parachain_dev/genesis-wasm
+    ./litentry-collator export-genesis-state --chain $CHAIN-dev > genesis-state
+    ./litentry-collator export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
 
     sudo systemctl restart relay-alice.service
     sleep 5
@@ -375,9 +372,7 @@ function restart_services {
     sleep 5
     sudo systemctl restart para-alice.service
     sleep 5
-    register_parachain
-    
-    rm -r /tmp/parachain_dev
+    register_parachain    
   fi
 
   echo "Restarting worker services ..."
@@ -422,8 +417,8 @@ function register_parachain {
       echo "NODE_ENV=$NODE_ENV" > .env
   fi
   # The genesis state path file needs to be updated as it is hardcoded to be /tmp/parachain_dev 
-  jq --arg genesis_state "$PARACHAIN_BASEDIR/genesis-state" --arg genesis_wasm "$PARACHAIN_BASEDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > updated_config.json
-  mv updated_config.json config.ci.json 
+  jq --arg genesis_state "$PARACHAIN_BASEDIR/genesis-state" --arg genesis_wasm "$PARACHAIN_BASEDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > config.ci.json.1
+  mv config.ci.json.1 config.ci.json
   corepack yarn
   corepack yarn register-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/register-parathread.log"
   print_divider
@@ -436,6 +431,7 @@ function register_parachain {
 
   echo "done. please check $PARACHAIN_BASEDIR for generated files if need"
   print_divider
+  git restore config.ci.json
 }
 
 function setup_working_dir {
