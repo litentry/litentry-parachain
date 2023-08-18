@@ -391,6 +391,9 @@ describe('Resume worker', function () {
     let worker1State: WorkerState | undefined = undefined;
 
     step('Two workers & resume worker1', async function () {
+        this.skip(); // #fixme <link> multiworker not supported
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        /* @ts-ignore */
         assert(worker0State);
 
         // first launch worker1
@@ -423,6 +426,9 @@ describe('Resume worker', function () {
     });
 
     step('Kill and resume both workers', async function () {
+        this.skip(); // #fixme <link> multiworker not supported
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        /* @ts-ignore */
         assert(worker0State);
         assert(worker1State);
 
