@@ -3,7 +3,6 @@ import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
-    assertFailedEvent,
     assertWorkerError,
     buildIdentityFromKeypair,
     buildIdentityHelper,
