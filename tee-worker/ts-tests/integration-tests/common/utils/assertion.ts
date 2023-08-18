@@ -14,8 +14,6 @@ import { aesKey } from '../call';
 import colors from 'colors';
 import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Signer } from './crypto';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, StfError, WorkerRpcReturnValue } from 'parachain-api';
-import { Signer } from './crypto';
 
 import { Response } from 'parachain-api/build/interfaces';
 
