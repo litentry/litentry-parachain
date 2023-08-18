@@ -676,11 +676,7 @@ describe('Test Identity (direct invocation)', function () {
         }
         assert.equal(deactivatedIdentityEvents.length, 3);
 
-        await assertIdentity(context, deactivatedIdentityEvents, [
-            twitterIdentity,
-            evmIdentity,
-            eveSubstrateIdentity,
-        ]);
+        await assertIdentity(context, deactivatedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -789,11 +785,7 @@ describe('Test Identity (direct invocation)', function () {
             assert.isTrue(isIdentityActivated);
         }
         assert.equal(activatedIdentityEvents.length, 3);
-        await assertIdentity(context, activatedIdentityEvents, [
-            twitterIdentity,
-            evmIdentity,
-            eveSubstrateIdentity,
-        ]);
+        await assertIdentity(context, activatedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {

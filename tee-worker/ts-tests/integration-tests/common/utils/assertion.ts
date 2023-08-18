@@ -12,17 +12,12 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
-import {
-    CorePrimitivesErrorErrorDetail,
-    FrameSystemEventRecord,
-    StfError,
-    WorkerRpcReturnValue,
-} from 'parachain-api';
-import { Signer } from './crypto'
+import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, StfError } from 'parachain-api';
+import { Signer } from './crypto';
+import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, StfError, WorkerRpcReturnValue } from 'parachain-api';
+import { Signer } from './crypto';
 
-import {
-    Response,
-} from 'parachain-api/build/interfaces';
+import { Response } from 'parachain-api/build/interfaces';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -56,7 +51,7 @@ export async function assertFailedEvent(
 }
 export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
-    const keyringType = signer.type()
+    const keyringType = signer.type();
 
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
@@ -276,10 +271,10 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-/*
-    assert linked event
+/* 
+    Compares ordered identities with corresponding ordered events
 
-    steps:
+    for each event following steps are executed:
     1. compare event account with signer
     2. compare event identity with expected identity
     3. compare event prime identity with expected prime identity
