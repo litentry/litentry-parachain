@@ -27,6 +27,14 @@ use lc_data_providers::{
 };
 use std::string::ToString;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::sync::SgxMutex as Mutex;
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::thread;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use std::time;
+
 const VC_A11_SUBJECT_DESCRIPTION: &str =
 	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
 const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Time";
@@ -45,6 +53,14 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
+	let addresses: Vec<String> = vec!["0x6E97a66f5D57476582f6C130d2e00A25EE52e0B8".into(),
+		// "0x46d316399616466d57a9da8c8e73154df58e56f8".into(),
+		// "0x2de0f34004a4ae7dba78394b5b97471e4cbe2c8c".into(),
+		// "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266".into(),
+		// "0x6725e40066e36dbedf6bbdce7e2fc4ed556d8980".into(),
+		// "0xec19dd802446f2fb6cae296eebe4aef94e6d67eb".into()
+		];
+
 	let mut is_hold = false;
 	let mut optimal_hold_index = 0_usize;
 	for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
@@ -53,6 +69,9 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		}
 
 		for address in &addresses {
+			error!(">>> index: {index} , date: {date}");
+			error!(">>> address: {address}");
+
 			let holding = ParamsBasicTypeWithAmountHolding::new(
 				&Web3Network::Ethereum,
 				q_min_balance.to_string(),

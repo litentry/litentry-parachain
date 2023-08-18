@@ -88,7 +88,29 @@ impl Send for DefaultSend {
 		request: &mut Request,
 		writer: &mut Vec<u8>,
 	) -> Result<Response, Error> {
-		request.send(writer).map_err(Error::HttpReqError)
+		debug!(">>> write: {:?}", writer);
+
+		debug!(">>> write1: {:?}", writer);
+		debug!(">>> request: {:?}", request);
+
+		let res = request.send(writer);
+
+		// .map_err(|e| {
+		// 	error!(">>> errorrr: {:?}", e);
+
+		// 	return Error::HttpReqError
+		// });
+
+		debug!(">>> res: {:?}", res);
+
+		match res {
+			Ok(res) => return  Ok(res),
+			Err(_e) => return Err(Error::HttpReqError(_e)),
+		}
+
+		// debug!(">>> res: {:?}", res);
+		
+		// Ok(res)
 	}
 }
 
@@ -191,6 +213,14 @@ where
 		T: RestPath<U>,
 	{
 		let url = join_url(base_url, T::get_path(params)?.as_str(), query)?;
+		let uri = match Uri::try_from(url.as_str()) {
+			Ok(uri) => Ok(uri),
+			Err(e) => {
+				debug!(">>> error: {:?}", e);
+				Err(Error::HttpReqError)
+			}
+		};
+
 		let uri = Uri::try_from(url.as_str()).map_err(Error::HttpReqError)?;
 
 		trace!("uri: {:?}", uri);
@@ -202,6 +232,8 @@ where
 
 		if let Some(body) = maybe_body.as_ref() {
 			if self.send_null_body || body != "null" {
+		debug!(">>> body: {}", body.len().to_string());
+
 				let len = HeaderValue::from_str(&body.len().to_string())
 					.map_err(|_| Error::RequestError)?;
 
@@ -220,6 +252,8 @@ where
 			debug!("no body to send");
 		}
 
+		debug!(">>> authorization: {:?}", self.authorization);
+
 		if let Some(ref auth) = self.authorization {
 			add_to_headers(
 				&mut request_headers,
@@ -235,6 +269,7 @@ where
 
 		// add user agent header
 		let pkg_version = env!("CARGO_PKG_VERSION");
+		debug!(">>> pkg_version: {}", pkg_version);
 		add_to_headers(
 			&mut request_headers,
 			USER_AGENT,

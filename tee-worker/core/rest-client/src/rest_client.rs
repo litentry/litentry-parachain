@@ -140,6 +140,8 @@ where
 			maybe_body,
 		)?;
 
+		error!(">>> make_request response: {:?}", response);
+		
 		self.response_headers = response.headers().clone();
 		let status_code = response.status_code();
 
