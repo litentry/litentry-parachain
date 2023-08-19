@@ -161,7 +161,7 @@ pub fn verify_web3_identity(
 
 	ensure!(
 		data.signature().verify(raw_msg, identity),
-		Err(StfError::LinkIdentityFailed(ErrorDetail::VerifyWeb3SignatureFailed))
+		StfError::LinkIdentityFailed(ErrorDetail::VerifyWeb3SignatureFailed)
 	);
 
 	Ok(())
