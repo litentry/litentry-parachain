@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_data_providers::{build_client, vec_to_string};
+use lc_data_providers::build_client;
 use serde::{Deserialize, Serialize};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -47,22 +47,12 @@ impl RestPath<String> for EarlyBirdResponse {
 	}
 }
 
-pub fn build(req: &AssertionBuildRequest, account: ParameterString) -> Result<Credential> {
-	debug!("Assertion A20 build, who: {:?}", account_id_to_string(&req.who));
+pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+	let account = req.who.to_account_id().unwrap();
+	let mut who = account_id_to_string(&account);
+	debug!("Assertion A20 build, who: {:?}", who);
 
-	let address = vec_to_string(account.to_vec()).map_err(|_| {
-		Error::RequestVCFailed(Assertion::A20(account.clone()), ErrorDetail::ParseError)
-	})?;
-
-	let is_owned = check_account_owner(req, &address);
-	if !is_owned {
-		return Err(Error::RequestVCFailed(
-			Assertion::A20(account),
-			ErrorDetail::StfError(ErrorString::truncate_from(
-				"You're not the account owner".into(),
-			)),
-		))
-	}
+	who.insert_str(0, "0x");
 
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
@@ -70,13 +60,13 @@ pub fn build(req: &AssertionBuildRequest, account: ParameterString) -> Result<Cr
 		"https://archive-test.litentry.io/events/does-user-joined-evm-campaign",
 		headers,
 	);
-	let query = vec![("account", address.as_str())];
+	let query = vec![("account", who.as_str())];
 	let value = client
 		.get_with::<String, EarlyBirdResponse>("".to_string(), query.as_slice())
 		.map(|data| data.has_joined)
 		.map_err(|e| {
 			Error::RequestVCFailed(
-				Assertion::A20(account.clone()),
+				Assertion::A20,
 				ErrorDetail::DataProviderError(ErrorString::truncate_from(
 					format!("{e:?}").as_bytes().to_vec(),
 				)),
@@ -90,25 +80,7 @@ pub fn build(req: &AssertionBuildRequest, account: ParameterString) -> Result<Cr
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A20(account), e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A20, e.into_error_detail()))
 		},
 	}
-}
-
-fn check_account_owner(req: &AssertionBuildRequest, address: &String) -> bool {
-	let main_account = account_id_to_string(&req.who);
-	if main_account == *address {
-		return true
-	}
-
-	let identities = transpose_identity(&req.identities);
-	for (_, addresses) in identities {
-		for target in addresses {
-			if target == *address {
-				return true
-			}
-		}
-	}
-
-	false
 }

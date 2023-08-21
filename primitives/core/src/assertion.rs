@@ -179,7 +179,7 @@ pub enum Assertion {
 	Achainable(AchainableParams),
 
 	// For EVM Version Early Bird
-	A20(ParameterString),									// (participant_account)
+	A20,
 }
 
 impl Assertion {
