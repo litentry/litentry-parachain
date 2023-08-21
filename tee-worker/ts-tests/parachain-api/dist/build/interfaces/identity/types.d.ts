@@ -224,11 +224,6 @@ export interface RequestVCResult extends Struct {
     readonly vc_hash: H256;
     readonly vc_payload: AesOutput;
 }
-/** @name Response */
-export interface Response extends Struct {
-    readonly req_ext_hash: H256;
-    readonly value: Bytes;
-}
 /** @name SetUserShieldingKeyResult */
 export interface SetUserShieldingKeyResult extends Struct {
     readonly account: AccountId;
@@ -381,6 +376,11 @@ export interface TrustedOperation extends Enum {
     readonly isGet: boolean;
     readonly asGet: Getter;
     readonly type: "IndirectCall" | "DirectCall" | "Get";
+}
+/** @name TrustedOperationResult */
+export interface TrustedOperationResult extends Struct {
+    readonly req_ext_hash: H256;
+    readonly value: Bytes;
 }
 /** @name TrustedOperationStatus */
 export interface TrustedOperationStatus extends Enum {

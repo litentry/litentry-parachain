@@ -270,7 +270,7 @@ export default {
                 UnclassifiedError: "Null",
             },
         },
-        Response: {
+        TrustedOperationResult: {
             req_ext_hash: "H256",
             value: "Vec<u8>",
         },

@@ -1241,6 +1241,7 @@ import type {
     TrustedGetter,
     TrustedGetterSigned,
     TrustedOperation,
+    TrustedOperationResult,
     TrustedOperationStatus,
     TwitterValidationData,
     UserShieldingKeyNonceType,
@@ -2306,6 +2307,7 @@ declare module "@polkadot/types/types/registry" {
         TrustedGetter: TrustedGetter;
         TrustedGetterSigned: TrustedGetterSigned;
         TrustedOperation: TrustedOperation;
+        TrustedOperationResult: TrustedOperationResult;
         TrustedOperationStatus: TrustedOperationStatus;
         TwitterValidationData: TwitterValidationData;
         Type: Type;

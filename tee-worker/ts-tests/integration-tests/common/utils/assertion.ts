@@ -15,7 +15,7 @@ import colors from 'colors';
 import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, StfError } from 'parachain-api';
 import { Signer } from './crypto';
 
-import { Response } from 'parachain-api/build/interfaces';
+import { TrustedOperationResult } from 'parachain-api/build/interfaces';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -362,7 +362,10 @@ export function assertWorkerError(
     check: (returnValue: StfError) => void,
     returnValue: WorkerRpcReturnValue
 ) {
-    const errDecodedRes = context.api.createType('Response', returnValue.value) as unknown as Response;
+    const errDecodedRes = context.api.createType(
+        'TrustedOperationResult',
+        returnValue.value
+    ) as unknown as TrustedOperationResult;
     assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
     const errValueDecoded = context.api.createType('StfError', errDecodedRes.value) as unknown as StfError;
     check(errValueDecoded);

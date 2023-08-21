@@ -264,7 +264,7 @@ export declare const definitions: {
                 UnclassifiedError: string;
             };
         };
-        Response: {
+        TrustedOperationResult: {
             req_ext_hash: string;
             value: string;
         };
