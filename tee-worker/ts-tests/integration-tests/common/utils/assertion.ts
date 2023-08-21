@@ -275,7 +275,6 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-
 /* 
     Compares ordered identities with corresponding ordered events
 
