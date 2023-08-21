@@ -19,8 +19,8 @@ use crate::{
 	error::Result,
 	initialization::global_components::{
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
-		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
 	sync::{EnclaveLock, EnclaveStateRWLock},
 	utils::{
@@ -41,9 +41,8 @@ use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_ocall_api::{EnclaveOnChainOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
-use itp_sgx_crypto::Ed25519Seal;
+use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_externalities::SgxExternalities;
-use itp_sgx_io::StaticSealedIO;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{Block, OpaqueCall, H256};
@@ -56,7 +55,7 @@ use its_primitives::{
 use its_sidechain::{
 	aura::{proposer_factory::ProposerFactory, Aura, SlotClaimStrategy},
 	consensus_common::{Environment, Error as ConsensusError, ProcessBlockImportQueue},
-	slots::{sgx::LastSlotSeal, yield_next_slot, PerShardSlotWorkerScheduler, SlotInfo},
+	slots::{yield_next_slot, LastSlot, PerShardSlotWorkerScheduler, SlotInfo},
 	validateer_fetch::ValidateerFetch,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
@@ -106,7 +105,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 	// itself, will  operate on a parentchain block that is potentially outdated by one block
 	// (in case we have a block in the queue, but not imported yet).
 	let current_parentchain_header = validator_access.execute_on_validator(|v| {
-		let latest_parentchain_header = v.latest_finalized_header(v.num_relays())?;
+		let latest_parentchain_header = v.latest_finalized_header()?;
 		Ok(latest_parentchain_header)
 	})?;
 
@@ -135,13 +134,13 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
-	let authority = Ed25519Seal::unseal_from_static_file()?;
+	let authority = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
 	match yield_next_slot(
 		slot_beginning_timestamp,
 		SLOT_DURATION,
 		latest_parentchain_header,
-		&mut LastSlotSeal,
+		&mut LastSlot,
 	)? {
 		Some(slot) => {
 			if slot.duration_remaining().is_none() {

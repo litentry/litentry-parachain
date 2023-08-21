@@ -39,9 +39,8 @@ use itp_settings::{
 	files::{RA_API_KEY_FILE, RA_DUMP_CERT_DER_FILE, RA_SPID_FILE},
 	worker::MR_ENCLAVE_SIZE,
 };
-use itp_sgx_crypto::Ed25519Seal;
+use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_io as io;
-use itp_sgx_io::StaticSealedIO;
 use itp_time_utils::now_as_secs;
 use log::*;
 use sgx_rand::{os, Rng};
@@ -49,12 +48,12 @@ use sgx_tcrypto::{rsgx_sha256_slice, SgxEccHandle};
 use sgx_tse::{rsgx_create_report, rsgx_verify_report};
 use sgx_types::{
 	c_int, sgx_epid_group_id_t, sgx_quote_nonce_t, sgx_quote_sign_type_t, sgx_report_data_t,
-	sgx_spid_t, sgx_status_t, sgx_target_info_t, SgxResult, *,
+	sgx_spid_t, sgx_status_t, sgx_status_t::SGX_ERROR_UNEXPECTED, sgx_target_info_t, SgxResult, *,
 };
-use sp_core::Pair;
+use sp_core::{ed25519, Pair};
 use std::{
 	borrow::ToOwned,
-	format,
+	env, format,
 	io::{Read, Write},
 	net::TcpStream,
 	prelude::v1::*,
@@ -83,15 +82,15 @@ pub trait AttestationHandler {
 	/// but instead generate a mock certificate.
 	fn generate_ias_ra_cert(&self, skip_ra: bool) -> EnclaveResult<Vec<u8>>;
 
-	/// Returns the DER encoded certificate and the raw DCAP quote.
+	/// Returns the DER encoded private_key, DER encoded certificate and the raw DCAP quote.
 	/// If skip_ra is set, it will not perform a remote attestation via IAS
 	/// but instead generate a mock certificate.
 	fn generate_dcap_ra_cert(
 		&self,
-		quoting_enclave_target_info: &sgx_target_info_t,
-		quote_size: u32,
+		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quote_size: Option<&u32>,
 		skip_ra: bool,
-	) -> EnclaveResult<(Vec<u8>, Vec<u8>)>;
+	) -> EnclaveResult<(Vec<u8>, Vec<u8>, Vec<u8>)>;
 
 	/// Get the measurement register value of the enclave
 	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]>;
@@ -108,20 +107,52 @@ pub trait AttestationHandler {
 
 	/// Create the remote attestation report and encapsulate it in a DER certificate
 	/// Returns a pair consisting of (private key DER, certificate DER)
-	fn create_ra_report_and_signature(
+	fn create_epid_ra_report_and_signature(
 		&self,
 		sign_type: sgx_quote_sign_type_t,
 		skip_ra: bool,
 	) -> EnclaveResult<(Vec<u8>, Vec<u8>)>;
 }
 
-pub struct IntelAttestationHandler<OCallApi> {
+pub struct IntelAttestationHandler<OCallApi, SigningKeyRepo> {
 	pub(crate) ocall_api: Arc<OCallApi>,
+	pub(crate) signing_key_repo: Arc<SigningKeyRepo>,
 }
 
-impl<OCallApi> AttestationHandler for IntelAttestationHandler<OCallApi>
+impl<OCallApi, AccessSigningKey> IntelAttestationHandler<OCallApi, AccessSigningKey>
 where
 	OCallApi: EnclaveAttestationOCallApi,
+	AccessSigningKey: AccessKey<KeyType = ed25519::Pair>,
+{
+	fn create_payload_epid(
+		&self,
+		pub_k: &[u8; 32],
+		sign_type: sgx_quote_sign_type_t,
+	) -> EnclaveResult<String> {
+		info!("    [Enclave] Create attestation report");
+		let (attn_report, sig, cert) = match self.create_epid_attestation_report(&pub_k, sign_type)
+		{
+			Ok(r) => r,
+			Err(e) => {
+				error!("    [Enclave] Error in create_attestation_report: {:?}", e);
+				return Err(e.into())
+			},
+		};
+		println!("    [Enclave] Create attestation report successful");
+		debug!("              attn_report = {:?}", attn_report);
+		debug!("              sig         = {:?}", sig);
+		debug!("              cert        = {:?}", cert);
+
+		// concat the information
+		Ok(attn_report + "|" + &sig + "|" + &cert)
+	}
+}
+
+impl<OCallApi, AccessSigningKey> AttestationHandler
+	for IntelAttestationHandler<OCallApi, AccessSigningKey>
+where
+	OCallApi: EnclaveAttestationOCallApi,
+	AccessSigningKey: AccessKey<KeyType = ed25519::Pair>,
 {
 	fn generate_ias_ra_cert(&self, skip_ra: bool) -> EnclaveResult<Vec<u8>> {
 		// Our certificate is unlinkable.
@@ -130,7 +161,7 @@ where
 		// FIXME: should call `create_ra_report_and_signature` in skip_ra mode as well:
 		// https://github.com/integritee-network/worker/issues/321.
 		let cert_der = if !skip_ra {
-			match self.create_ra_report_and_signature(sign_type, skip_ra) {
+			match self.create_epid_ra_report_and_signature(sign_type, skip_ra) {
 				Ok((_key_der, cert_der)) => cert_der,
 				Err(e) => return Err(e),
 			}
@@ -152,7 +183,8 @@ where
 		// our certificate is unlinkable
 		let sign_type = sgx_quote_sign_type_t::SGX_UNLINKABLE_SIGNATURE;
 
-		let (_key_der, cert_der) = match self.create_ra_report_and_signature(sign_type, false) {
+		let (_key_der, cert_der) = match self.create_epid_ra_report_and_signature(sign_type, false)
+		{
 			Ok(r) => r,
 			Err(e) => return Err(e),
 		};
@@ -173,11 +205,14 @@ where
 		quoting_enclave_target_info: &sgx_target_info_t,
 		quote_size: u32,
 	) -> EnclaveResult<()> {
-		let (_cert_der, dcap_quote) =
-			match self.generate_dcap_ra_cert(quoting_enclave_target_info, quote_size, false) {
-				Ok(r) => r,
-				Err(e) => return Err(e),
-			};
+		let (_priv_key_der, _cert_der, dcap_quote) = match self.generate_dcap_ra_cert(
+			Some(quoting_enclave_target_info),
+			Some(&quote_size),
+			false,
+		) {
+			Ok(r) => r,
+			Err(e) => return Err(e),
+		};
 
 		if let Err(err) = io::write(&dcap_quote, RA_DUMP_CERT_DER_FILE) {
 			error!(
@@ -190,12 +225,12 @@ where
 		Ok(())
 	}
 
-	fn create_ra_report_and_signature(
+	fn create_epid_ra_report_and_signature(
 		&self,
 		sign_type: sgx_quote_sign_type_t,
 		skip_ra: bool,
 	) -> EnclaveResult<(Vec<u8>, Vec<u8>)> {
-		let chain_signer = Ed25519Seal::unseal_from_static_file()?;
+		let chain_signer = self.signing_key_repo.retrieve_key()?;
 		info!("[Enclave Attestation] Ed25519 pub raw : {:?}", chain_signer.public().0);
 
 		info!("    [Enclave] Generate keypair");
@@ -207,36 +242,20 @@ where
 		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
 		let payload = if !skip_ra {
-			info!("    [Enclave] Create attestation report");
-			let (attn_report, sig, cert) =
-				match self.create_attestation_report(&chain_signer.public().0, sign_type) {
-					Ok(r) => r,
-					Err(e) => {
-						error!("    [Enclave] Error in create_attestation_report: {:?}", e);
-						return Err(e.into())
-					},
-				};
-			println!("    [Enclave] Create attestation report successful");
-			debug!("              attn_report = {:?}", attn_report);
-			debug!("              sig         = {:?}", sig);
-			debug!("              cert        = {:?}", cert);
-
-			// concat the information
-			attn_report + "|" + &sig + "|" + &cert
+			self.create_payload_epid(&chain_signer.public().0, sign_type)?
 		} else {
 			Default::default()
 		};
 
 		// generate an ECC certificate
 		info!("    [Enclave] Generate ECC Certificate");
-		let (key_der, cert_der) =
-			match cert::gen_ecc_cert(&payload.into_bytes(), &prv_k, &pub_k, &ecc_handle) {
-				Ok(r) => r,
-				Err(e) => {
-					error!("    [Enclave] gen_ecc_cert failed: {:?}", e);
-					return Err(e.into())
-				},
-			};
+		let (key_der, cert_der) = match cert::gen_ecc_cert(&payload, &prv_k, &pub_k, &ecc_handle) {
+			Ok(r) => r,
+			Err(e) => {
+				error!("    [Enclave] gen_ecc_cert failed: {:?}", e);
+				return Err(e.into())
+			},
+		};
 
 		let _ = ecc_handle.close();
 		info!("    [Enclave] Generate ECC Certificate successful");
@@ -245,11 +264,15 @@ where
 
 	fn generate_dcap_ra_cert(
 		&self,
-		quoting_enclave_target_info: &sgx_target_info_t,
-		quote_size: u32,
+		quoting_enclave_target_info: Option<&sgx_target_info_t>,
+		quote_size: Option<&u32>,
 		skip_ra: bool,
-	) -> EnclaveResult<(Vec<u8>, Vec<u8>)> {
-		let chain_signer = Ed25519Seal::unseal_from_static_file()?;
+	) -> EnclaveResult<(Vec<u8>, Vec<u8>, Vec<u8>)> {
+		if !skip_ra && quoting_enclave_target_info.is_none() && quote_size.is_none() {
+			error!("Enclave Attestation] remote attestation not skipped, but Quoting Enclave (QE) data is not available");
+			return Err(EnclaveError::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))
+		}
+		let chain_signer = self.signing_key_repo.retrieve_key()?;
 		info!("[Enclave Attestation] Ed25519 signer pub key: {:?}", chain_signer.public().0);
 
 		let ecc_handle = SgxEccHandle::new();
@@ -260,8 +283,8 @@ where
 		let qe_quote = if !skip_ra {
 			let qe_quote = match self.retrieve_qe_dcap_quote(
 				&chain_signer.public().0,
-				quoting_enclave_target_info,
-				quote_size,
+				quoting_enclave_target_info.unwrap(),
+				*quote_size.unwrap(),
 			) {
 				Ok(quote) => quote,
 				Err(e) => {
@@ -274,31 +297,39 @@ where
 			Default::default()
 		};
 
+		let qe_quote_base_64 = base64::encode(&qe_quote[..]);
 		// generate an ECC certificate
 		debug!("[Enclave] Generate ECC Certificate");
-		let (_key_der, cert_der) = match cert::gen_ecc_cert(&qe_quote, &prv_k, &pub_k, &ecc_handle)
-		{
-			Ok(r) => r,
-			Err(e) => {
-				error!("[Enclave] gen_ecc_cert failed: {:?}", e);
-				return Err(e.into())
-			},
-		};
+		let (key_der, cert_der) =
+			match cert::gen_ecc_cert(&qe_quote_base_64, &prv_k, &pub_k, &ecc_handle) {
+				Ok(r) => r,
+				Err(e) => {
+					error!("[Enclave] gen_ecc_cert failed: {:?}", e);
+					return Err(e.into())
+				},
+			};
 
 		let _ = ecc_handle.close();
 
-		Ok((cert_der, qe_quote))
+		debug!("[Enclave] Generated ECC cert info:");
+		trace!("[Enclave] Generated ECC cert info: key_der={:#?}", &key_der);
+		trace!("[Enclave] Generated ECC cert info: cert_der={:#?}", &cert_der);
+		trace!("[Enclave] Generated ECC cert info: qe_quote={:#?}", &qe_quote);
+		Ok((key_der, cert_der, qe_quote))
 	}
 }
 
-impl<OCallApi> IntelAttestationHandler<OCallApi>
+impl<OCallApi, AccessSigningKey> IntelAttestationHandler<OCallApi, AccessSigningKey> {
+	pub fn new(ocall_api: Arc<OCallApi>, signing_key_repo: Arc<AccessSigningKey>) -> Self {
+		Self { ocall_api, signing_key_repo }
+	}
+}
+
+impl<OCallApi, AccessSigningKey> IntelAttestationHandler<OCallApi, AccessSigningKey>
 where
 	OCallApi: EnclaveAttestationOCallApi,
+	AccessSigningKey: AccessKey<KeyType = ed25519::Pair>,
 {
-	pub fn new(ocall_api: Arc<OCallApi>) -> Self {
-		Self { ocall_api }
-	}
-
 	fn parse_response_attn_report(&self, resp: &[u8]) -> EnclaveResult<(String, String, String)> {
 		debug!("    [Enclave] Entering parse_response_attn_report");
 		let mut headers = [httparse::EMPTY_HEADER; 16];
@@ -356,17 +387,18 @@ where
 
 	fn log_resp_code(&self, resp_code: &mut Option<u16>) {
 		let msg = match resp_code {
-			Some(200) => "OK Operation Successful",
-			Some(401) => "Unauthorized Failed to authenticate or authorize request.",
-			Some(404) => "Not Found GID does not refer to a valid EPID group ID.",
-			Some(500) => "Internal error occurred",
+			Some(200) => "OK, operation successful",
+			Some(400) => "Bad request, quote is invalid, or linkability of quote/subscription does not match.",
+			Some(401) => "Unauthorized, failed to authenticate or authorize request.",
+			Some(404) => "Not found, GID does not refer to a valid EPID group ID.",
+			Some(500) => "Internal error occurred.",
 			Some(503) =>
 				"Service is currently not able to process the request (due to
 			a temporary overloading or maintenance). This is a
 			temporary state – the same request can be repeated after
-			some time. ",
+			some time.",
 			_ => {
-				error!("DBG:{:?}", resp_code);
+				error!("Error, received unknown HTTP response: {:?}", resp_code);
 				"Unknown error occured"
 			},
 		};
@@ -505,7 +537,7 @@ where
 			+ (u32::from(array[3]) << 24)
 	}
 
-	fn create_attestation_report(
+	fn create_epid_attestation_report(
 		&self,
 		pub_k: &[u8; 32],
 		sign_type: sgx_quote_sign_type_t,
@@ -628,8 +660,9 @@ where
 	}
 
 	fn load_spid(filename: &str) -> SgxResult<sgx_spid_t> {
-		match io::read_to_string(filename).map(|contents| decode_spid(&contents)) {
-			Ok(r) => r,
+		// Check if set as an environment variable
+		match env::var("IAS_EPID_SPID").or_else(|_| io::read_to_string(filename)) {
+			Ok(spid) => decode_spid(&spid),
 			Err(e) => {
 				error!("Failed to load SPID: {:?}", e);
 				Err(sgx_status_t::SGX_ERROR_UNEXPECTED)
@@ -638,7 +671,9 @@ where
 	}
 
 	fn get_ias_api_key() -> EnclaveResult<String> {
-		io::read_to_string(RA_API_KEY_FILE)
+		// Check if set as an environment variable
+		env::var("IAS_EPID_KEY")
+			.or_else(|_| io::read_to_string(RA_API_KEY_FILE))
 			.map(|key| key.trim_end().to_owned())
 			.map_err(|e| EnclaveError::Other(e.into()))
 	}

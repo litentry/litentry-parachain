@@ -6,6 +6,7 @@ import {
     buildValidations,
     checkErrorDetail,
     buildIdentityFromKeypair,
+    PolkadotSigner,
 } from './common/utils';
 import { aesKey } from './common/call';
 import { u8aToHex } from '@polkadot/util';
@@ -16,6 +17,7 @@ import { generateWeb3Wallets, assertIdentityLinked, assertIdentityDeactivated } 
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import { Vec } from '@polkadot/types';
 
 describeLitentry('Test Batch Utility', 0, (context) => {
     let identities: LitentryPrimitivesIdentity[] = [];
@@ -50,13 +52,13 @@ describeLitentry('Test Batch Utility', 0, (context) => {
 
     step('batch test: link identities', async function () {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
-        const aliceSubject = await buildIdentityFromKeypair(context.substrateWallet.alice, context);
+        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
 
         for (let index = 0; index < ethereumSigners.length; index++) {
             const signer = ethereumSigners[index];
             const ethereumIdentity = await buildIdentityHelper(signer.address, 'Evm', context);
             identities.push(ethereumIdentity);
-            we3networks.push(defaultNetworks);
+            we3networks.push(defaultNetworks as unknown as Vec<Web3Network>); // @fixme #1878
             signerIdentities.push(aliceSubject);
         }
 

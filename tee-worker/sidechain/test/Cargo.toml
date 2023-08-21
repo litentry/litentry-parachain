@@ -1,11 +1,11 @@
 [package]
-authors = ["Integritee AG <hello@integritee.network>"]
-edition = "2021"
-homepage = "https://integritee.network/"
-license = "Apache-2.0"
 name = "its-test"
-repository = "https://github.com/integritee-network/pallets/"
 version = "0.9.0"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+homepage = 'https://litentry.com/'
+repository = 'https://github.com/litentry/litentry-parachain'
+license = "Apache-2.0"
+edition = "2021"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
@@ -22,13 +22,13 @@ its-primitives = { path = "../primitives", default_features = false, features = 
 
 [features]
 default = ["std"]
-sgx = [
-    "sgx_tstd",
-]
 std = [
     "codec/std",
     "itp-types/std",
     "its-primitives/std",
     # substrate
     "sp-core/std",
+]
+sgx = [
+    "sgx_tstd",
 ]

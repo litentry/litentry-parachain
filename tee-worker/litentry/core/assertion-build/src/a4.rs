@@ -65,21 +65,15 @@ extern crate sgx_tstd as std;
 ///  
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableA4Holder, AchainableClient},
-	vec_to_string,
+	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
+	vec_to_string, LIT_TOKEN_ADDRESS,
 };
-
-// NOTE： The LIT_TOKEN_ADDRESS has been embedded into the interface when creating the label
-// ERC20 LIT token address
-// const LIT_TOKEN_ADDRESS: &str = "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723";
+use std::string::ToString;
 
 const VC_A4_SUBJECT_DESCRIPTION: &str =
-	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
-const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Assertion";
-const VC_A4_SUBJECT_TAG: [&str; 3] = ["Ethereum", "Litmus", "Litentry"];
+	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
+const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Time";
 
-// TODO:
-// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
@@ -115,29 +109,43 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 			break
 		}
 
+		let token =
+			if network == Web3Network::Ethereum { Some(LIT_TOKEN_ADDRESS.into()) } else { None };
+
 		let addresses: Vec<String> = addresses.into_iter().collect();
-		for index in 0..ASSERTION_FROM_DATE.len() {
+		for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
 			for address in &addresses {
-				match client.lit_holder_on_network(&network, address, index) {
-					Ok(is_lit_holder) =>
-						if is_lit_holder {
-							if index < optimal_hold_index {
-								optimal_hold_index = index;
-							}
+				let holding = ParamsBasicTypeWithAmountHolding::new(
+					&network,
+					q_min_balance.to_string(),
+					date.to_string(),
+					token.clone(),
+				);
+				let is_amount_holder = client.is_holder(address, holding).map_err(|e| {
+					error!("Assertion A4 request is_holder error: {:?}", e);
+					Error::RequestVCFailed(
+						Assertion::A4(min_balance.clone()),
+						e.into_error_detail(),
+					)
+				})?;
 
-							is_hold = true;
+				if is_amount_holder {
+					if index < optimal_hold_index {
+						optimal_hold_index = index;
+					}
 
-							break
-						},
-					Err(e) =>
-						error!("Assertion A4 request erc20_lit_holder_on_ethereum error: {:?}", e),
+					is_hold = true;
+
+					break
 				}
 			}
 		}
 
 		// TODO:
+		// There's an issue for this: https://github.com/litentry/litentry-parachain/issues/1655
+		//
 		// There is a problem here, because TDF does not support mixed network types,
-		// It is need to request TDF 2 (substrate+evm networks) * 7 (ASSERTION_FROM_DATE) = 14 http requests.
+		// It is need to request TDF 2 (substrate+evm networks) * 14 (ASSERTION_FROM_DATE) * addresses http requests.
 		// If TDF can handle mixed network type, and even supports from_date array,
 		// so that ideally, up to one http request can yield results.
 	}
@@ -147,13 +155,9 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		optimal_hold_index = 0;
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A4_SUBJECT_DESCRIPTION,
-				VC_A4_SUBJECT_TYPE,
-				VC_A4_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A4_SUBJECT_DESCRIPTION, VC_A4_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

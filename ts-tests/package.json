@@ -9,6 +9,7 @@
     "scripts": {
         "register-parathread": "ts-node tests/register-parathread.ts",
         "upgrade-parathread": "ts-node tests/upgrade-parathread.ts",
+        "setup-enclave": "ts-node tests/setup-enclave.ts",
         "test-filter": "mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
         "test-bridge": "mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
         "test-runtime-upgrade": "mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
@@ -40,5 +41,5 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
-    "packageManager": "yarn@3.6.0"
+    "packageManager": "yarn@3.6.1"
 }

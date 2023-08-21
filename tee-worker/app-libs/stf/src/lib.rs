@@ -22,6 +22,8 @@
 #![feature(derive_eq)]
 #![cfg_attr(all(not(target_env = "sgx"), not(feature = "std")), no_std)]
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
+#![allow(clippy::large_enum_variant)]
+#![allow(clippy::result_large_err)]
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
@@ -58,6 +60,7 @@ pub mod stf_sgx_tests;
 pub mod test_genesis;
 pub mod trusted_call;
 pub mod trusted_call_litentry;
+pub mod trusted_call_rpc_response;
 
 pub(crate) const ENCLAVE_ACCOUNT_KEY: &str = "Enclave_Account_Key";
 
@@ -93,6 +96,7 @@ pub enum StfError {
 	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
 	SetIdentityNetworksFailed(ErrorDetail),
 	InvalidAccount,
+	UnclassifiedError,
 }
 
 impl From<MetadataError> for StfError {
@@ -104,6 +108,27 @@ impl From<MetadataError> for StfError {
 impl From<MetadataProviderError> for StfError {
 	fn from(_e: MetadataProviderError) -> Self {
 		StfError::InvalidMetadata
+	}
+}
+
+impl From<IMPError> for StfError {
+	fn from(e: IMPError) -> Self {
+		match e {
+			IMPError::SetUserShieldingKeyFailed(d) => StfError::SetIdentityNetworksFailed(d),
+			IMPError::LinkIdentityFailed(d) => StfError::LinkIdentityFailed(d),
+			IMPError::DeactivateIdentityFailed(d) => StfError::DeactivateIdentityFailed(d),
+			IMPError::ActivateIdentityFailed(d) => StfError::ActivateIdentityFailed(d),
+			_ => StfError::UnclassifiedError,
+		}
+	}
+}
+
+impl From<VCMPError> for StfError {
+	fn from(e: VCMPError) -> Self {
+		match e {
+			VCMPError::RequestVCFailed(a, d) => StfError::RequestVCFailed(a, d),
+			_ => StfError::UnclassifiedError,
+		}
 	}
 }
 

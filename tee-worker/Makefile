@@ -75,11 +75,13 @@ ifeq ($(SGX_PRODUCTION), 1)
 	SGX_ENCLAVE_MODE = "Production Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.production.xml"
 	SGX_SIGN_KEY = $(SGX_COMMERCIAL_KEY)
+	SGX_SIGN_PASSFILE = $(SGX_PASSFILE)
 	WORKER_FEATURES := --features=production,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 else
 	SGX_ENCLAVE_MODE = "Development Mode"
 	SGX_ENCLAVE_CONFIG = "enclave-runtime/Enclave.config.xml"
 	SGX_SIGN_KEY = "enclave-runtime/Enclave_private.pem"
+	SGX_SIGN_PASSFILE = ""
 	WORKER_FEATURES := --features=default,$(WORKER_MODE),$(WORKER_FEATURES),$(ADDITIONAL_FEATURES)
 endif
 
@@ -99,7 +101,7 @@ CUSTOM_COMMON_PATH := ./rust-sgx-sdk/common
 ######## EDL settings ########
 Enclave_EDL_Files := enclave-runtime/Enclave_t.c enclave-runtime/Enclave_t.h service/Enclave_u.c service/Enclave_u.h
 
-######## Integritee-service settings ########
+######## litentry-worker settings ########
 SRC_Files := $(shell find . -type f -name '*.rs') $(shell find . -type f -name 'Cargo.toml')
 Worker_Rust_Flags := $(CARGO_TARGET) $(WORKER_FEATURES)
 Worker_Include_Paths := -I ./service -I./include -I$(SGX_SDK)/include -I$(CUSTOM_EDL_PATH)
@@ -109,12 +111,12 @@ Worker_Rust_Path := target/$(OUTPUT_PATH)
 Worker_Enclave_u_Object :=service/libEnclave_u.a
 Worker_Name := bin/app
 
-######## Integritee-cli settings ########
+######## litentry-cli settings ########
 Client_Rust_Flags := $(CARGO_TARGET) $(CLIENT_FEATURES)
 
 Client_Rust_Path := target/$(OUTPUT_PATH)
 Client_Path := bin
-Client_Binary := integritee-cli
+Client_Binary := litentry-cli
 Client_Name := $(Client_Path)/$(Client_Binary)
 
 ######## Enclave settings ########
@@ -157,7 +159,7 @@ $(Enclave_EDL_Files): $(SGX_EDGER8R) enclave-runtime/Enclave.edl
 	$(SGX_EDGER8R) --untrusted enclave-runtime/Enclave.edl --search-path $(SGX_SDK)/include --search-path $(CUSTOM_EDL_PATH) --untrusted-dir service
 	@echo "GEN  =>  $(Enclave_EDL_Files)"
 
-######## Integritee-service objects ########
+######## litentry-worker objects ########
 service/Enclave_u.o: $(Enclave_EDL_Files)
 	@$(CC) $(Worker_C_Flags) -c service/Enclave_u.c -o $@
 	@echo "CC   <=  $<"
@@ -168,16 +170,16 @@ $(Worker_Enclave_u_Object): service/Enclave_u.o
 
 $(Worker_Name): $(Worker_Enclave_u_Object) $(SRC_Files)
 	@echo
-	@echo "Building the integritee-service"
-	@SGX_SDK=$(SGX_SDK) SGX_MODE=$(SGX_MODE) cargo build -p integritee-service $(Worker_Rust_Flags)
+	@echo "Building the litentry-worker"
+	@SGX_SDK=$(SGX_SDK) SGX_MODE=$(SGX_MODE) cargo build -p litentry-worker $(Worker_Rust_Flags)
 	@echo "Cargo  =>  $@"
-	cp $(Worker_Rust_Path)/integritee-service ./bin
+	cp $(Worker_Rust_Path)/litentry-worker ./bin
 
-######## Integritee-client objects ########
+######## litentry-client objects ########
 $(Client_Name): $(SRC_Files)
 	@echo
-	@echo "Building the integritee-cli"
-	@cargo build -p integritee-cli $(Client_Rust_Flags)
+	@echo "Building the litentry-cli"
+	@cargo build -p litentry-cli $(Client_Rust_Flags)
 	@echo "Cargo  =>  $@"
 	cp $(Client_Rust_Path)/$(Client_Binary) ./bin
 
@@ -194,7 +196,22 @@ $(RustEnclave_Name): enclave enclave-runtime/Enclave_t.o
 $(Signed_RustEnclave_Name): $(RustEnclave_Name)
 	@echo
 	@echo "Signing the enclave: $(SGX_ENCLAVE_MODE)"
+	@echo "SGX_ENCLAVE_SIGNER: $(SGX_ENCLAVE_SIGNER)"
+	@echo "RustEnclave_Name: $(RustEnclave_Name)"
+	@echo "SGX_ENCLAVE_CONFIG: $(SGX_ENCLAVE_CONFIG)"
+	@echo "SGX_SIGN_PASSFILE: $(SGX_SIGN_PASSFILE)"
+	@echo "SGX_SIGN_KEY: $(SGX_SIGN_KEY)"
+
+
+ifeq ($(SGX_PRODUCTION), 1)
+	$(SGX_ENCLAVE_SIGNER) gendata -enclave $(RustEnclave_Name) -out enclave_sig.dat -config $(SGX_ENCLAVE_CONFIG)
+	openssl rsa -passin file:$(SGX_SIGN_PASSFILE) -pubout -in $(SGX_SIGN_KEY) -out intel_sgx.pub
+	openssl dgst -sha256 -passin file:$(SGX_SIGN_PASSFILE) -sign $(SGX_SIGN_KEY) -out signature.dat enclave_sig.dat
+	openssl dgst -sha256 -verify intel_sgx.pub -signature signature.dat enclave_sig.dat
+	$(SGX_ENCLAVE_SIGNER) catsig -enclave $(RustEnclave_Name) -config $(SGX_ENCLAVE_CONFIG) -out $@ -key intel_sgx.pub -sig signature.dat -unsigned enclave_sig.dat
+else
 	$(SGX_ENCLAVE_SIGNER) sign -key $(SGX_SIGN_KEY) -enclave $(RustEnclave_Name) -out $@ -config $(SGX_ENCLAVE_CONFIG)
+endif
 	@echo "SIGN =>  $@"
 	@echo
 	@echo "Enclave is in $(SGX_ENCLAVE_MODE)"
@@ -251,8 +268,8 @@ release-pkg:
 help:
 	@echo "Available targets"
 	@echo "  all      - builds all targets (default)"
-	@echo "  service   - builds the integritee-service"
-	@echo "  client   - builds the integritee-cli"
+	@echo "  service   - builds the litentry-worker"
+	@echo "  client   - builds the litentry-cli"
 	@echo "  githooks - installs the git hooks (copy .githooks/pre-commit to .git/hooks)"
 	@echo ""
 	@echo "  clean   - cleanup"

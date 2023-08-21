@@ -139,6 +139,8 @@ pub enum OCallBridgeError {
 	DirectInvocationError(String),
 	#[error("Node API factory error: {0}")]
 	NodeApiFactory(#[from] itp_node_api::node_api_factory::NodeApiFactoryError),
+	#[error("Worker request error: {0}")]
+	WorkerRequestError(String),
 }
 
 impl From<OCallBridgeError> for sgx_status_t {

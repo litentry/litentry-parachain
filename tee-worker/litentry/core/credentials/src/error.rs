@@ -33,8 +33,6 @@ pub enum Error {
 	EmptyCredentialSubject,
 	#[error("Empty Issuance Timestamp")]
 	EmptyIssuanceTimestamp,
-	#[error("Empty Proof Timestamp")]
-	EmptyProofTimestamp,
 	#[error("Invalid Proof")]
 	InvalidProof,
 	#[error("Credential Is Too Long")]

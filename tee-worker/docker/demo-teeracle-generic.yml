@@ -2,16 +2,24 @@
 #
 # The demo is parameterized with the interval that the teeracle uses to query its sources.
 # Set the `TEERACLE_INTERVAL_SECONDS` variable when invoking, e.g. `TEERACLE_INTERVAL_SECONDS=4 docker compose -f docker-compose.yml -f demo-teeracle-generic.yml up --exit-code-from demo-teeracle-generic`
+# Set the `ADDITIONAL_RUNTIME_FLAGS` variable to for additional flags.
+# To skip remote attestation: `export ADDITIONAL_RUNTIME_FLAG="--skip-ra"`
 services:
-  integritee-teeracle-worker:
-    image: integritee-worker:dev
-    container_name: integritee-teeracle-worker
+  integritee-teeracle-worker-${VERSION}:
+    image: integritee-worker:${VERSION:-dev}
+    hostname: integritee-teeracle-worker
+    devices:
+      - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
+      - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
+    volumes:
+      - "${AESMD:-/dev/null}:/var/run/aesmd"
+      - "${SGX_QCNL:-/dev/null}:/etc/sgx_default_qcnl.conf"
     build:
-      context: ..
+      context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-worker
     depends_on:
-      integritee-node:
+      integritee-node-${VERSION}:
         condition: service_healthy
     environment:
       - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=info,integritee_service::teeracle=debug,ita_stf=warn,ita_oracle=debug
@@ -22,22 +30,27 @@ services:
       interval: 10s
       timeout: 10s
       retries: 25
-    entrypoint:
-        "/usr/local/bin/integritee-service --clean-reset --ws-external -M integritee-teeracle-worker -T wss://integritee-teeracle-worker
+    command:
+        "--clean-reset --ws-external -M integritee-teeracle-worker -T wss://integritee-teeracle-worker
         -u ws://integritee-node -U ws://integritee-teeracle-worker -P 2011 -w 2101 -p 9912 -h 4645
-        run --dev --skip-ra --teeracle-interval ${TEERACLE_INTERVAL_SECONDS}s"
+        run --dev ${ADDITIONAL_RUNTIME_FLAGS} --teeracle-interval ${TEERACLE_INTERVAL_SECONDS}s"
     restart: always
   demo-teeracle-generic:
-    image: integritee-cli:dev
-    container_name: integritee-teeracle-demo
+    image: integritee-cli:${VERSION:-dev}
+    devices:
+      - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
+      - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
+    volumes:
+      - "${AESMD:-/dev/null}:/var/run/aesmd"
+      - "${SGX_QCNL:-/dev/null}:/etc/sgx_default_qcnl.conf"
     build:
-      context: ..
+      context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      integritee-node:
+      integritee-node-${VERSION}:
         condition: service_healthy
-      integritee-teeracle-worker:
+      integritee-teeracle-worker-${VERSION}:
         condition: service_healthy
     environment:
       - RUST_LOG=warn,sp_io=warn,integritee_cli::exchange_oracle=debug

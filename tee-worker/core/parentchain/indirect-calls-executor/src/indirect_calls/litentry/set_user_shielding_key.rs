@@ -24,9 +24,12 @@ use ita_stf::{TrustedCall, TrustedOperation};
 
 use itp_types::{ShardIdentifier, H256};
 use litentry_primitives::UserShieldingKeyType;
-use sp_runtime::traits::{AccountIdLookup, StaticLookup};
+use sp_core::crypto::AccountId32;
+use sp_runtime::{
+	traits::{AccountIdLookup, StaticLookup},
+	MultiAddress,
+};
 use std::vec::Vec;
-use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct SetUserShieldingKeyArgs {
@@ -38,7 +41,7 @@ impl SetUserShieldingKeyArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<GenericAddress>,
+		address: Option<MultiAddress<AccountId32, ()>>,
 		hash: H256,
 	) -> Result<()> {
 		let key =
@@ -64,7 +67,7 @@ impl SetUserShieldingKeyArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for SetUserShieldingKeyArgs {
-	type Args = (Option<GenericAddress>, H256);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash) = args;

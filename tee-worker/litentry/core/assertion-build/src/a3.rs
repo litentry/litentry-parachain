@@ -24,9 +24,8 @@ use crate::*;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 
 const VC_A3_SUBJECT_DESCRIPTION: &str =
-	"The user has commented in a specific Discord channel with a specific role";
-const VC_A3_SUBJECT_TYPE: &str = "Discord Member Verification";
-const VC_A3_SUBJECT_TAG: [&str; 1] = ["Discord"];
+	"You have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882";
+const VC_A3_SUBJECT_TYPE: &str = "Active Discord ID-Hubber";
 
 pub fn build(
 	req: &AssertionBuildRequest,
@@ -60,27 +59,30 @@ pub fn build(
 	let mut client = DiscordLitentryClient::new();
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
-			if let Ok(response) = client.check_id_hubber(
-				guild_id.to_vec(),
-				channel_id.to_vec(),
-				role_id.to_vec(),
-				address.to_vec(),
-			) {
-				if response.data {
-					has_commented = true;
-					break
-				}
+			let resp = client
+				.check_id_hubber(
+					guild_id.to_vec(),
+					channel_id.to_vec(),
+					role_id.to_vec(),
+					address.to_vec(),
+				)
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
+						e.into_error_detail(),
+					)
+				})?;
+
+			if resp.data {
+				has_commented = true;
+				break
 			}
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A3_SUBJECT_DESCRIPTION,
-				VC_A3_SUBJECT_TYPE,
-				VC_A3_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A3_SUBJECT_DESCRIPTION, VC_A3_SUBJECT_TYPE);
 			credential_unsigned.add_assertion_a3(
 				has_commented,
 				guild_id_s,
@@ -138,7 +140,8 @@ mod tests {
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			identities,
-			hash: Default::default(),
+			top_hash: Default::default(),
+			req_ext_hash: Default::default(),
 		};
 
 		let _ = build(&req, guild_id, channel_id, role_id);

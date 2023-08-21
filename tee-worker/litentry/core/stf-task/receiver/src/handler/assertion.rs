@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
+use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
 use ita_sgx_runtime::Hash;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_utils::stringify::account_id_to_string;
+use lc_credentials::DID;
 use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{Assertion, ErrorDetail, ErrorString, VCMPError};
+use litentry_primitives::{Assertion, ErrorDetail, ErrorString, Identity, VCMPError};
 use log::*;
 use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
@@ -50,7 +50,7 @@ where
 	O: EnclaveOnChainOCallApi,
 {
 	type Error = VCMPError;
-	type Result = ([u8; 32], [u8; 32], Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
+	type Result = (H256, H256, Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
@@ -81,6 +81,8 @@ where
 
 			Assertion::A14 => lc_assertion_build::a14::build(&self.req),
 
+			Assertion::Achainable(param) => lc_assertion_build::achainable::build(&self.req, param),
+
 			_ => {
 				unimplemented!()
 			},
@@ -99,11 +101,15 @@ where
 			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().credential_endpoint.clone();
 		credential.credential_subject.set_endpoint(credential_endpoint);
 
-		credential.issuer.id = account_id_to_string(&enclave_account);
-		let payload = credential.to_json().map_err(|_| {
-			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
-		})?;
-		debug!("Credential payload: {}", payload);
+		credential.issuer.id = DID::try_from(&Identity::Substrate(enclave_account.into()))
+			.map_err(|e| {
+				VCMPError::RequestVCFailed(
+					self.req.assertion.clone(),
+					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
+				)
+			})?
+			.format();
+		let payload = credential.issuer.mrenclave.clone();
 		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
@@ -120,17 +126,20 @@ where
 			)
 		})?;
 
-		let vc_index = credential.get_index().map_err(|e| {
-			VCMPError::RequestVCFailed(
-				self.req.assertion.clone(),
-				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
-			)
-		})?;
+		let vc_index = credential
+			.get_index()
+			.map_err(|e| {
+				VCMPError::RequestVCFailed(
+					self.req.assertion.clone(),
+					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
+				)
+			})?
+			.into();
 		let credential_str = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
 		debug!("Credential: {}, length: {}", credential_str, credential_str.len());
-		let vc_hash = blake2_256(credential_str.as_bytes());
+		let vc_hash = blake2_256(credential_str.as_bytes()).into();
 		debug!("VC hash: {:?}", vc_hash);
 		Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
 	}
@@ -148,11 +157,11 @@ where
 				vc_index,
 				vc_hash,
 				vc_payload,
-				self.req.hash,
+				self.req.req_ext_hash,
 			);
 			let _ = self
 				.context
-				.submit_trusted_call(&self.req.shard, &c)
+				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
 				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
 		} else {
 			error!("can't get enclave signer");
@@ -166,11 +175,11 @@ where
 				enclave_signer.into(),
 				Some(self.req.who.clone()),
 				error,
-				self.req.hash,
+				self.req.req_ext_hash,
 			);
 			let _ = self
 				.context
-				.submit_trusted_call(&self.req.shard, &c)
+				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
 				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
 		} else {
 			error!("can't get enclave signer");

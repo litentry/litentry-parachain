@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry Dev"]
+authors = ["Litentry Technologies GmbH <info@litentry.com>"]
 edition = "2021"
 name = "litentry-primitives"
 version = "0.1.0"
@@ -25,10 +25,12 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 strum = { version = "0.25.0", default-features = false }
 strum_macros = { version = "0.25.0", default-features = false }
 
-
 # sgx dependencies
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
+
+# internal dependencies
+itp-utils = { path = "../../core-primitives/utils", default-features = false }
 
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
 
@@ -47,6 +49,7 @@ std = [
     "base64/std",
     "serde/std",
     "serde_json/std",
+    "itp-utils/std",
     "sp-core/std",
     "sp-std/std",
     "sp-io/std",

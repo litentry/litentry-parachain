@@ -23,10 +23,10 @@ extern crate sgx_tstd as std;
 use crate::*;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 
-const VC_A2_SUBJECT_DESCRIPTION: &str =
-	"The user has obtained an ID-Hubber role in a Litentry Discord channel";
-const VC_A2_SUBJECT_TYPE: &str = "Discord ID-Hubber Role Verification";
-const VC_A2_SUBJECT_TAG: [&str; 1] = ["Discord"];
+const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord. 
+Server link: https://discord.gg/phBSa3eMX9
+Guild ID: 807161594245152800.";
+const VC_A2_SUBJECT_TYPE: &str = "Litentry Discord Member";
 
 pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<Credential> {
 	debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who));
@@ -42,30 +42,25 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			discord_cnt += 1;
-			if let Ok(response) = client.check_join(guild_id.to_vec(), address.to_vec()) {
-				if response.data {
-					has_joined = true;
+			let resp = client.check_join(guild_id.to_vec(), address.to_vec()).map_err(|e| {
+				Error::RequestVCFailed(Assertion::A2(guild_id.clone()), e.into_error_detail())
+			})?;
+			if resp.data {
+				has_joined = true;
 
-					//Assign role "ID-Hubber" to each discord account
-					if let Ok(response) =
-						client.assign_id_hubber(guild_id.to_vec(), address.to_vec())
-					{
-						if !response.data {
-							error!("assign_id_hubber {} {}", response.message, response.msg_code);
-						}
+				//Assign role "ID-Hubber" to each discord account
+				if let Ok(response) = client.assign_id_hubber(guild_id.to_vec(), address.to_vec()) {
+					if !response.data {
+						error!("assign_id_hubber {} {}", response.message, response.msg_code);
 					}
 				}
 			}
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A2_SUBJECT_DESCRIPTION,
-				VC_A2_SUBJECT_TYPE,
-				VC_A2_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A2_SUBJECT_DESCRIPTION, VC_A2_SUBJECT_TYPE);
 
 			let value = discord_cnt > 0 && has_joined;
 			credential_unsigned.add_assertion_a2(value, guild_id_s);
@@ -109,7 +104,8 @@ mod tests {
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::A2(guild_id.clone()),
 			identities,
-			hash: Default::default(),
+			top_hash: Default::default(),
+			req_ext_hash: Default::default(),
 		};
 
 		let _ = build(&req, guild_id);

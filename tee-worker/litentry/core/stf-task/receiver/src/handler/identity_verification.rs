@@ -21,7 +21,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use lc_stf_task_sender::IdentityVerificationRequest;
+use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
 use std::sync::Arc;
@@ -33,7 +33,7 @@ pub(crate) struct IdentityVerificationHandler<
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
-	pub(crate) req: IdentityVerificationRequest,
+	pub(crate) req: Web2IdentityVerificationRequest,
 	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
 }
 
@@ -61,11 +61,11 @@ where
 				self.req.who.clone(),
 				self.req.identity.clone(),
 				self.req.web3networks.clone(),
-				self.req.hash,
+				self.req.req_ext_hash,
 			);
 			let _ = self
 				.context
-				.submit_trusted_call(&self.req.shard, &c)
+				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
 				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
 		} else {
 			error!("can't get enclave signer");
@@ -79,11 +79,11 @@ where
 				enclave_signer.into(),
 				Some(self.req.who.clone()),
 				error,
-				self.req.hash,
+				self.req.req_ext_hash,
 			);
 			let _ = self
 				.context
-				.submit_trusted_call(&self.req.shard, &c)
+				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
 				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
 		} else {
 			error!("can't get enclave signer");

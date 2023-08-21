@@ -1,24 +1,29 @@
 services:
   demo-indirect-invocation:
-    image: integritee-cli:dev
-    container_name: integritee-indirect-invocation-demo
+    image: litentry-cli:dev
+    devices:
+      - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
+      - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
+    volumes:
+      - "${AESMD:-/dev/null}:/var/run/aesmd"
+      - "${SGX_QCNL:-/dev/null}:/etc/sgx_default_qcnl.conf"
     build:
-      context: ..
+      context: ${PWD}/..
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      integritee-node:
+      litentry-node:
         condition: service_healthy
-      integritee-worker-1:
+      litentry-worker-1:
         condition: service_healthy
     environment:
-      - RUST_LOG=warn,ws=warn,itc_rpc_client=debug,integritee_cli=debug
+      - RUST_LOG=warn,ws=warn,itc_rpc_client=debug,litentry_cli=debug
     networks:
-      - integritee-test-network
+      - litentry-test-network
     entrypoint:
-      "/usr/local/worker-cli/demo_indirect_invocation.sh -p 9912 -u ws://integritee-node
-      -V wss://integritee-worker-1 -A 2011 -C /usr/local/bin/integritee-cli 2>&1"
+      "/usr/local/worker-cli/demo_indirect_invocation.sh -p 9912 -u ws://litentry-node
+      -V wss://litentry-worker-1 -A 2011 -C /usr/local/bin/litentry-cli 2>&1"
     restart: "no"
 networks:
-  integritee-test-network:
+  litentry-test-network:
     driver: bridge

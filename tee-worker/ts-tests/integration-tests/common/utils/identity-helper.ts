@@ -2,7 +2,7 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
 import { AesOutput } from '../type-definitions';
-import { decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey } from './crypto';
+import { decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
@@ -43,11 +43,11 @@ export async function buildIdentityHelper(
 }
 
 export async function buildIdentityFromKeypair(
-    keyringPair: KeyringPair,
+    signer: Signer,
     context: IntegrationTestContext
 ): Promise<LitentryPrimitivesIdentity> {
     const type: string = (() => {
-        switch (keyringPair.type) {
+        switch (signer.type()) {
             case 'ethereum':
                 return 'Evm';
             case 'sr25519':
@@ -60,7 +60,8 @@ export async function buildIdentityFromKeypair(
                 return 'Substrate';
         }
     })();
-    const address = keyringPair.addressRaw;
+
+    const address = signer.getAddressRaw();
     const identity = {
         [type]: address,
     };
@@ -195,6 +196,7 @@ export function parseIdGraph(
             'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
             decryptedIdGraph
         ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+
     return idGraph;
 }
 

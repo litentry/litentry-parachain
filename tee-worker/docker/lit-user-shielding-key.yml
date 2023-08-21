@@ -1,6 +1,6 @@
 services:
   lit-user-shielding-key:
-    image: integritee-cli:dev
+    image: litentry-cli:dev
     container_name: litentry-user-shielding-key
     volumes:
       - ../cli:/usr/local/worker-cli
@@ -9,16 +9,16 @@ services:
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      integritee-node:
+      litentry-node:
         condition: service_healthy
-      integritee-worker-1:
+      litentry-worker-1:
         condition: service_healthy
     networks:
-      - integritee-test-network
+      - litentry-test-network
     entrypoint:
-      "/usr/local/worker-cli/lit_user_shielding_key.sh -p 9912 -u ws://integritee-node
-      -V wss://integritee-worker-1 -A 2011 -W wss://integritee-worker-2 -B 2012 -C /usr/local/bin/integritee-cli 2>&1"
+      "/usr/local/worker-cli/lit_user_shielding_key.sh -p 9912 -u ws://litentry-node
+      -V wss://litentry-worker-1 -A 2011 -W wss://litentry-worker-2 -B 2012 -C /usr/local/bin/litentry-cli 2>&1"
     restart: "no"
 networks:
-  integritee-test-network:
+  litentry-test-network:
     driver: bridge

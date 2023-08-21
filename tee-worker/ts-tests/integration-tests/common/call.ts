@@ -6,7 +6,6 @@ import type { RequestBody } from './type-definitions';
 import type { WorkerRpcReturnValue } from 'parachain-api';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import type { Bytes } from '@polkadot/types-codec';
-
 // TODO:
 // - better place to put these constants?
 // - maybe randomise it in test initialisation
@@ -31,7 +30,7 @@ export async function sendRequest(
     }
 
     // unfortunately, the res.value only contains the hash of top
-    if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid) {
+    if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
         console.log('Rpc trusted operation execution failed, hash: ', res.value);
     }
 
@@ -51,6 +50,7 @@ export async function getSidechainMetadata(
 ): Promise<{ sidechainMetaData: Metadata; sidechainRegistry: TypeRegistry }> {
     const request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
     const resp = await sendRequest(wsClient, request, api);
+
     const sidechainRegistry = new TypeRegistry();
     const sidechainMetaData = new Metadata(sidechainRegistry, resp.value);
 

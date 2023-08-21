@@ -115,28 +115,36 @@ declare module "@polkadot/api-base/types/events" {
         };
         identityManagement: {
             /**
+             * an identity was activated
+             **/
+            IdentityActivated: AugmentedEvent<
+                ApiType,
+                [who: LitentryPrimitivesIdentity, identity: LitentryPrimitivesIdentity],
+                { who: LitentryPrimitivesIdentity; identity: LitentryPrimitivesIdentity }
+            >;
+            /**
+             * an identity was deactivated
+             **/
+            IdentityDeactivated: AugmentedEvent<
+                ApiType,
+                [who: LitentryPrimitivesIdentity, identity: LitentryPrimitivesIdentity],
+                { who: LitentryPrimitivesIdentity; identity: LitentryPrimitivesIdentity }
+            >;
+            /**
              * an identity was linked
              **/
             IdentityLinked: AugmentedEvent<
                 ApiType,
-                [who: AccountId32, identity: LitentryPrimitivesIdentity],
-                { who: AccountId32; identity: LitentryPrimitivesIdentity }
-            >;
-            /**
-             * an identity was removed
-             **/
-            IdentityRemoved: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, identity: LitentryPrimitivesIdentity],
-                { who: AccountId32; identity: LitentryPrimitivesIdentity }
+                [who: LitentryPrimitivesIdentity, identity: LitentryPrimitivesIdentity],
+                { who: LitentryPrimitivesIdentity; identity: LitentryPrimitivesIdentity }
             >;
             /**
              * user shielding key was set
              **/
             UserShieldingKeySet: AugmentedEvent<
                 ApiType,
-                [who: AccountId32, key: U8aFixed],
-                { who: AccountId32; key: U8aFixed }
+                [who: LitentryPrimitivesIdentity, key: U8aFixed],
+                { who: LitentryPrimitivesIdentity; key: U8aFixed }
             >;
         };
         sudo: {

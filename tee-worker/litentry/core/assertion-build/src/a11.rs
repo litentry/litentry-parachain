@@ -22,17 +22,15 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableHoldingAssertion},
+	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
 	vec_to_string,
 };
+use std::string::ToString;
 
 const VC_A11_SUBJECT_DESCRIPTION: &str =
-	"The user has been consistently holding at least {x} amount of tokens before 2023 Jan 1st 00:00:00 UTC on the supporting networks";
-const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Assertion";
-const VC_A11_SUBJECT_TAG: [&str; 1] = ["Ethereum"];
+	"The length of time a user continues to hold a particular token (with particular threshold of token amount)";
+const VC_A11_SUBJECT_TYPE: &str = "ETH Holding Time";
 
-// TODO:
-// The currently used achainable api is created by creating a label, so all parameters (including min_balance) are hardcoded into the label, and the following pr will be reconstructed using SysemLabel, so the current parameters are retained, but will be ignored.
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
 	debug!("Assertion A11 build, who: {:?}", account_id_to_string(&req.who),);
 
@@ -49,32 +47,36 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = 0_usize;
-	for index in 0..ASSERTION_FROM_DATE.len() {
+	for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
 		if is_hold {
 			break
 		}
 
 		for address in &addresses {
-			match client.is_holder(&req.assertion, address, index) {
-				Ok(is_eth_holder) =>
-					if is_eth_holder {
-						optimal_hold_index = index;
-						is_hold = true;
+			let holding = ParamsBasicTypeWithAmountHolding::new(
+				&Web3Network::Ethereum,
+				q_min_balance.to_string(),
+				date.to_string(),
+				None,
+			);
 
-						break
-					},
-				Err(e) => error!("Assertion A11 request is_holder error: {:?}", e),
+			let is_eth_holder = client.is_holder(address, holding).map_err(|e| {
+				error!("Assertion A11 request is_holder error: {:?}", e);
+				Error::RequestVCFailed(Assertion::A11(min_balance.clone()), e.into_error_detail())
+			})?;
+
+			if is_eth_holder {
+				optimal_hold_index = index;
+				is_hold = true;
+
+				break
 			}
 		}
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.add_subject_info(
-				VC_A11_SUBJECT_DESCRIPTION,
-				VC_A11_SUBJECT_TYPE,
-				VC_A11_SUBJECT_TAG.to_vec(),
-			);
+			credential_unsigned.add_subject_info(VC_A11_SUBJECT_DESCRIPTION, VC_A11_SUBJECT_TYPE);
 			credential_unsigned.update_holder(
 				is_hold,
 				&q_min_balance,

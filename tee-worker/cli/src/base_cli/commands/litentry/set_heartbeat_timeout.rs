@@ -14,15 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	command_utils::{get_chain_api, get_pair_from_str},
-	Cli,
-};
+use crate::{command_utils::get_chain_api, Cli};
 
-use itp_node_api::api_client::TEEREX;
+use crate::{CliResult, CliResultOk};
+use itp_node_api::api_client::{ParentchainExtrinsicSigner, TEEREX};
 use log::*;
-use substrate_api_client::{compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
-
+use sp_keyring::AccountKeyring;
+use substrate_api_client::{compose_extrinsic, SubmitAndWatch, XtStatus};
 #[derive(Parser)]
 pub struct SetHeartbeatTimeoutCommand {
 	/// Heartbeat timeout
@@ -30,23 +28,24 @@ pub struct SetHeartbeatTimeoutCommand {
 }
 
 impl SetHeartbeatTimeoutCommand {
-	pub(crate) fn run(&self, cli: &Cli) {
-		let chain_api = get_chain_api(cli);
+	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
+		let mut chain_api = get_chain_api(cli);
 
 		// has to be //Alice as this is the genesis admin for teerex pallet,
 		// otherwise `set_heartbeat_timeout` call won't work
-		let alice = get_pair_from_str("//Alice");
-		let chain_api = chain_api.set_signer(alice.into());
+		chain_api.set_signer(ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair()));
 
 		// call set_heartbeat_timeout
-		let xt: UncheckedExtrinsicV4<_, _> = compose_extrinsic!(
+		let xt = compose_extrinsic!(
 			chain_api,
 			TEEREX,
 			"set_heartbeat_timeout",
 			codec::Compact(self.timeout)
 		);
-		let tx_hash = chain_api.send_extrinsic(xt.hex_encode(), XtStatus::Finalized).unwrap();
+		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
 
 		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+
+		Ok(CliResultOk::None)
 	}
 }

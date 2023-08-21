@@ -21,8 +21,7 @@ use crate::{error::Result, ImportParentchainBlocks};
 use ita_stf::ParentchainHeader;
 use itc_parentchain_indirect_calls_executor::ExecuteIndirectCalls;
 use itc_parentchain_light_client::{
-	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, LightClientState,
-	Validator,
+	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, Validator,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_stf_executor::traits::StfUpdateState;
@@ -119,11 +118,14 @@ impl<
 	fn import_parentchain_blocks(
 		&self,
 		blocks_to_import: Vec<Self::SignedBlockType>,
+		events_to_import: Vec<Vec<u8>>,
 	) -> Result<()> {
 		let mut calls = Vec::<OpaqueCall>::new();
 
 		debug!("Import blocks to light-client!");
-		for signed_block in blocks_to_import.into_iter() {
+		for (signed_block, _raw_events) in
+			blocks_to_import.into_iter().zip(events_to_import.into_iter())
+		{
 			// Check if there are any extrinsics in the to-be-imported block that we sent and cached in the light-client before.
 			// If so, remove them now from the cache.
 			if let Err(e) = self.validator_accessor.execute_mut_on_validator(|v| {
@@ -133,7 +135,7 @@ impl<
 				//
 				// v.check_xt_inclusion(v.num_relays(), &signed_block.block)?;
 
-				v.submit_block(v.num_relays(), &signed_block)
+				v.submit_block(&signed_block)
 			}) {
 				error!("[Validator] Header submission failed: {:?}", e);
 				return Err(e.into())

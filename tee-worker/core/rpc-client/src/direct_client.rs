@@ -20,7 +20,9 @@
 use crate::ws_client::{WsClient, WsClientControl};
 use base58::ToBase58;
 use codec::{Decode, Encode};
+use frame_metadata::RuntimeMetadataPrefixed;
 use ita_stf::Getter;
+use itp_api_client_types::Metadata;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::DirectRequestStatus;
@@ -35,7 +37,6 @@ use std::{
 	thread,
 	thread::JoinHandle,
 };
-use substrate_api_client::RuntimeMetadataPrefixed;
 use teerex_primitives::{MrEnclave, Request};
 
 pub use crate::error::{Error, Result};
@@ -53,7 +54,7 @@ pub trait DirectApi {
 	fn get_rsa_pubkey(&self) -> Result<Rsa3072PubKey>;
 	fn get_mu_ra_url(&self) -> Result<String>;
 	fn get_untrusted_worker_url(&self) -> Result<String>;
-	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed>;
+	fn get_state_metadata(&self) -> Result<Metadata>;
 	// litentry
 	fn get_state_metadata_raw(&self) -> Result<String>;
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
@@ -180,7 +181,7 @@ impl DirectApi for DirectClient {
 		Ok(untrusted_url)
 	}
 
-	fn get_state_metadata(&self) -> Result<RuntimeMetadataPrefixed> {
+	fn get_state_metadata(&self) -> Result<Metadata> {
 		let jsonrpc_call: String =
 			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
 
@@ -194,13 +195,8 @@ impl DirectApi for DirectClient {
 
 		// Decode Metadata.
 		let metadata = RuntimeMetadataPrefixed::decode(&mut rpc_return_value.value.as_slice())?;
-		Ok(metadata)
-	}
-
-	fn get_state_metadata_raw(&self) -> Result<String> {
-		let metadata = self.get_state_metadata().unwrap().to_hex();
-		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
-		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
+		println!("[+] Got metadata of enclave runtime");
+		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
@@ -218,7 +214,7 @@ impl DirectApi for DirectClient {
 
 	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
 		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call("state_getEnclave".to_string(), Default::default())?;
+			RpcRequest::compose_jsonrpc_call("state_getMrenclave".to_string(), Default::default())?;
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
@@ -235,6 +231,12 @@ impl DirectApi for DirectClient {
 
 	fn close(&self) -> Result<()> {
 		self.web_socket_control.close_connection()
+	}
+
+	fn get_state_metadata_raw(&self) -> Result<String> {
+		let metadata = self.get_state_metadata().unwrap().to_hex();
+		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
+		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 }
 

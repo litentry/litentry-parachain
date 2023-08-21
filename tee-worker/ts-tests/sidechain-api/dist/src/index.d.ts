@@ -7,6 +7,7 @@ export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
 export type {
     LitentryPrimitivesIdentity,
     PalletIdentityManagementTeeIdentityContext,
+    PalletIdentityManagementTeeError,
 } from "@polkadot/types/lookup";
 export { rawMetadata };
 type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;

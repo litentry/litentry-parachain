@@ -2,9 +2,9 @@
 name = "test-utils"
 description = "A crate for common utilities for tests"
 version = "0.1.0"
-authors = ["Integritee AG <hello@integritee.network>"]
-homepage = "https://integritee.network/"
-repository = "https://github.com/integritee-network/pallets/"
+authors = ['Litentry Technologies GmbH <info@litentry.com>']
+homepage = 'https://litentry.com/'
+repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
 edition = "2021"
 

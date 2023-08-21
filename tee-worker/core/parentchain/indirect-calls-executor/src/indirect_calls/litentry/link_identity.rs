@@ -24,8 +24,9 @@ use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, UserShieldingKeyNonceType, ValidationData, Web3Network};
 use log::debug;
+use sp_core::crypto::AccountId32;
+use sp_runtime::MultiAddress;
 use std::vec::Vec;
-use substrate_api_client::GenericAddress;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct LinkIdentityArgs {
@@ -41,7 +42,7 @@ impl LinkIdentityArgs {
 	fn internal_dispatch<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<GenericAddress>,
+		address: Option<MultiAddress<AccountId32, ()>>,
 		hash: H256,
 	) -> Result<()> {
 		let identity: Identity =
@@ -82,7 +83,7 @@ impl LinkIdentityArgs {
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for LinkIdentityArgs {
-	type Args = (Option<GenericAddress>, H256, u32);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, H256, u32);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		let (address, hash, _block) = args;
 		let e = Error::IMPHandlingError(IMPError::LinkIdentityFailed(ErrorDetail::ImportError));

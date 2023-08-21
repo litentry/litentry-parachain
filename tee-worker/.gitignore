@@ -14,7 +14,7 @@ log*
 
 # binaries
 bin/*.so
-bin/integritee-*
+bin/litentry-*
 bin/*.wasm
 
 # sealed data
@@ -77,3 +77,6 @@ log-backup
 # yarn
 ts-tests/.yarn
 ts-tests/.pnp.*
+
+# env files and configs
+.env

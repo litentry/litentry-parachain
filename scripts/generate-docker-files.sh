@@ -21,8 +21,7 @@ OUTDIR=generated-$CHAIN
 print_divider
 
 echo "installing parachain-launch ..."
-yarn set version stable
-YARN_ENABLE_IMMUTABLE_INSTALLS=false  yarn
+corepack yarn install
 print_divider
 
 # pull the polkadot image to make sure we are using the latest
@@ -33,8 +32,8 @@ docker pull -q "$POLKADOT_IMAGE"
 
 print_divider
 
-yarn start --version
-yarn start generate --config="$CONFIG" --output="$OUTDIR" --yes
+corepack yarn start --version
+corepack yarn start generate --config="$CONFIG" --output="$OUTDIR" --yes
 
 echo "Done, please check files under $ROOTDIR/docker/$OUTDIR/"
 print_divider

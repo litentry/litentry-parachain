@@ -11,7 +11,9 @@ import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { RequestEvent } from './type-definitions';
 
 import { u8aToHex } from '@polkadot/util';
-//transactions utils
+import { FrameSystemEventRecord } from 'parachain-api';
+
+// transaction utils
 export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
     return new Promise<SubmittableResult>((resolve, reject) => {
         tx.signAndSend(signer, (result) => {
@@ -80,7 +82,7 @@ export async function listenEvent(
     // eslint-disable-next-line no-async-promise-executor
     return new Promise<Event[]>(async (resolve, reject) => {
         let startBlock = 0;
-        let events: EventRecord[] = [];
+        const events: EventRecord[] = [];
         const unsubscribe = await api.rpc.chain.subscribeNewHeads(async (header) => {
             const currentBlockNumber = header.number.toNumber();
             if (startBlock == 0) startBlock = currentBlockNumber;
@@ -123,26 +125,27 @@ export async function listenEvent(
                 }
                 return phase.isApplyExtrinsic && section === event.section && methods.includes(event.method);
             });
-            //We're going to have to filter by signer, because multiple txs is going to mix
+            // We're going to have to filter by signer, because multiple txs is going to mix
             const filteredEventsWithSigner = eventsInExtrinsic
                 .filter((event) => {
                     const signerDatas = event.event.data.find(signerMatches);
                     return !!signerDatas;
                 })
                 .sort((a, b) => {
-                    //We need sort by signers order
-                    //First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
-                    //Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array.
-                    //Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
+                    // We need sort by signers order
+                    // First convert the signers array into an object signerToIndexMap, where the keys are each element in the signers array and the values are the index of that element in the array.
+                    // Then, for each of the filtered events that match the given section and methods, the function uses the find function to locate the index of a specific parameter in the signers array.
+                    // Then, it sorts the events based on this index so that the resulting event array is sorted according to the order of the signers array.
                     const signerIndexA = signerToIndexMap[a.event.data.find(signerMatches)!.toHex()];
                     const signerIndexB = signerToIndexMap[b.event.data.find(signerMatches)!.toHex()];
                     return signerIndexA - signerIndexB;
                 });
 
-            //There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
+            // There is no good compatibility method here.Only successful and failed events can be filtered normally, but it cannot filter error + successful events, which may need further optimization
             const eventsToUse = filteredEventsWithSigner.length > 0 ? filteredEventsWithSigner : eventsInExtrinsic;
 
-            events = [...eventsToUse];
+            // we should append the new events, as the desired events can be emitted in different blocks
+            events.push(...eventsToUse);
 
             if (events.length === txsLength) {
                 resolve(events.map((e) => e.event));
@@ -161,7 +164,7 @@ export async function sendTxsWithUtility(
     events: string[],
     listenTimeoutInBlockNumber?: number
 ): Promise<Event[]> {
-    //ensure the tx is in block
+    // ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
         context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
             if (result.status.isInBlock) {
@@ -217,3 +220,54 @@ export async function multiAccountTxSender(
     expect(eventsResp.length).to.be.equal(txs.length);
     return eventsResp;
 }
+
+// for DI-test
+
+export const subscribeToEventsWithExtHash = async (
+    requestIdentifier: string,
+    context: IntegrationTestContext
+): Promise<FrameSystemEventRecord[]> => {
+    return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
+        let blocksToScan = 30;
+        /* 
+        WARNING:The unsubscribe function is called inside the Promise callback, which is executed each time a new blockHeader is received. 
+               `unsubscribe` is intended to unsubscribe a blockHeader if certain conditions are met. 
+                If you use await, you will actually wait for this function to finish executing. 
+                However, since it doesn't return a Promise, using await doesn't make sense and can lead to problematic code behaviour.
+                soooooo, don't use await here
+        */
+        const unsubscribe = context.api.rpc.chain.subscribeNewHeads(async (blockHeader) => {
+            const shiftedApi = await context.api.at(blockHeader.hash);
+
+            const allBlockEvents = await shiftedApi.query.system.events();
+            const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
+
+            const matchingEvent = allExtrinsicEvents.find((eventRecord) => {
+                const eventData = eventRecord.event.data.toHuman();
+                return (
+                    eventData != undefined &&
+                    typeof eventData === 'object' &&
+                    'reqExtHash' in eventData &&
+                    eventData.reqExtHash === requestIdentifier
+                );
+            });
+
+            if (matchingEvent == undefined) {
+                blocksToScan -= 1;
+                if (blocksToScan < 1) {
+                    reject(new Error(`timed out listening for reqExtHash: ${requestIdentifier} in parachain events`));
+                    (await unsubscribe)();
+                }
+                return;
+            }
+
+            const extrinsicIndex = matchingEvent.phase.asApplyExtrinsic;
+            const requestEvents = allExtrinsicEvents.filter((eventRecord) =>
+                eventRecord.phase.asApplyExtrinsic.eq(extrinsicIndex)
+            );
+
+            resolve(requestEvents);
+            (await unsubscribe)();
+        });
+    });
+};

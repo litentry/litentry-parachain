@@ -1,9 +1,9 @@
 [package]
 name = "itp-types"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
-homepage = "https://integritee.network/"
-repository = "https://github.com/integritee-network/pallets/"
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+homepage = 'https://litentry.com/'
+repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
 edition = "2021"
 
@@ -26,13 +26,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
-
-[dev-dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39-tag-v0.7.0" }
-itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types" }
 
 [features]
 default = ["std"]
@@ -51,6 +44,5 @@ std = [
     "sp-runtime/std",
     # litentry
     "litentry-primitives/std",
-    "substrate-api-client/std",
 ]
 test = []

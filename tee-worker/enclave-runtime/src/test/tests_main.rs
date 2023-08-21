@@ -92,6 +92,12 @@ pub extern "C" fn test_main_entrance() -> size_t {
 		itp_stf_state_handler::test::sgx_tests::test_file_io_get_state_hash_works,
 		itp_stf_state_handler::test::sgx_tests::test_list_state_ids_ignores_files_not_matching_the_pattern,
 		itp_stf_state_handler::test::sgx_tests::test_in_memory_state_initializes_from_shard_directory,
+		itp_sgx_crypto::tests::aes_sealing_works,
+		itp_sgx_crypto::tests::using_get_aes_repository_twice_initializes_key_only_once,
+		itp_sgx_crypto::tests::ed25529_sealing_works,
+		itp_sgx_crypto::tests::using_get_ed25519_repository_twice_initializes_key_only_once,
+		itp_sgx_crypto::tests::rsa3072_sealing_works,
+		itp_sgx_crypto::tests::using_get_rsa3072_repository_twice_initializes_key_only_once,
 		test_compose_block,
 		test_submit_trusted_call_to_top_pool,
 		test_submit_trusted_getter_to_top_pool,
@@ -156,6 +162,10 @@ pub extern "C" fn test_main_entrance() -> size_t {
 
 		// EVM tests
 		run_evm_tests,
+
+		// light-client-test
+		itc_parentchain::light_client::io::sgx_tests::init_parachain_light_client_works,
+		itc_parentchain::light_client::io::sgx_tests::sealing_creates_backup,
 
 		// these unit test (?) need an ipfs node running..
 		// ipfs::test_creates_ipfs_content_struct_works,
@@ -632,7 +642,15 @@ pub fn test_retrieve_events() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	assert_eq!(TestStf::get_events(&mut state).len(), 3);
 }
@@ -657,7 +675,15 @@ pub fn test_retrieve_event_count() {
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 
 	let event_count = TestStf::get_event_count(&mut state);
 	assert_eq!(event_count, 3);
@@ -680,7 +706,15 @@ pub fn test_reset_events() {
 	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
-	TestStf::execute_call(&mut state, &shard, trusted_call, &mut opaque_vec, repo).unwrap();
+	TestStf::execute_call(
+		&mut state,
+		&shard,
+		trusted_call,
+		Default::default(),
+		&mut opaque_vec,
+		repo,
+	)
+	.unwrap();
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());
 	assert_eq!(receiver_acc_info.free, transfer_value);
 	// Ensure that there really have been events generated.

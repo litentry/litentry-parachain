@@ -21,9 +21,140 @@ use crate::{AccountId, BoundedWeb3Network, Web3Network};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::{vec, vec::Vec};
+use sp_std::{str, vec, vec::Vec};
 
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableAmountHolding {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub amount: ParameterString,
+	pub date: ParameterString,
+	pub token: Option<ParameterString>,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableAmountToken {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub amount: ParameterString,
+	pub token: Option<ParameterString>,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableAmount {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub amount: ParameterString,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableAmounts {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub amount1: ParameterString,
+	pub amount2: ParameterString,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableBasic {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableBetweenPercents {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub greater_than_or_equal_to: ParameterString,
+	pub less_than_or_equal_to: ParameterString,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableClassOfYear {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableDateInterval {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub start_date: ParameterString,
+	pub end_date: ParameterString,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableDatePercent {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub token: ParameterString,
+	pub date: ParameterString,
+	pub percent: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableDate {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub date: ParameterString,
+}
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableToken {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub token: ParameterString,
+}
+
+#[rustfmt::skip]
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum AchainableParams {
+	AmountHolding(AchainableAmountHolding),
+	AmountToken(AchainableAmountToken),
+	Amount(AchainableAmount),
+	Amounts(AchainableAmounts),
+	Basic(AchainableBasic),
+	BetweenPercents(AchainableBetweenPercents),
+	ClassOfYear(AchainableClassOfYear),
+	DateInterval(AchainableDateInterval),
+	DatePercent(AchainableDatePercent),
+	Date(AchainableDate),
+	Token(AchainableToken),
+}
+
+impl AchainableParams {
+	pub fn name(&self) -> ParameterString {
+		match self {
+			AchainableParams::AmountHolding(p) => p.name.clone(),
+			AchainableParams::AmountToken(p) => p.name.clone(),
+			AchainableParams::Amount(p) => p.name.clone(),
+			AchainableParams::Amounts(p) => p.name.clone(),
+			AchainableParams::Basic(p) => p.name.clone(),
+			AchainableParams::BetweenPercents(p) => p.name.clone(),
+			AchainableParams::ClassOfYear(p) => p.name.clone(),
+			AchainableParams::DateInterval(p) => p.name.clone(),
+			AchainableParams::DatePercent(p) => p.name.clone(),
+			AchainableParams::Date(p) => p.name.clone(),
+			AchainableParams::Token(p) => p.name.clone(),
+		}
+	}
+
+	pub fn chain(&self) -> Web3Network {
+		match self {
+			AchainableParams::AmountHolding(p) => p.chain,
+			AchainableParams::AmountToken(p) => p.chain,
+			AchainableParams::Amount(p) => p.chain,
+			AchainableParams::Amounts(p) => p.chain,
+			AchainableParams::Basic(p) => p.chain,
+			AchainableParams::BetweenPercents(p) => p.chain,
+			AchainableParams::ClassOfYear(p) => p.chain,
+			AchainableParams::DateInterval(p) => p.chain,
+			AchainableParams::DatePercent(p) => p.chain,
+			AchainableParams::Date(p) => p.chain,
+			AchainableParams::Token(p) => p.chain,
+		}
+	}
+}
 
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
@@ -34,7 +165,7 @@ pub enum Assertion {
 	A4(ParameterString),                                    // (minimum_amount)
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
-	A8(BoundedWeb3Network),             					// litentry, litmus, polkadot, kusama, khala, ethereum
+	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
 	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
@@ -44,6 +175,8 @@ pub enum Assertion {
 	A14,
 	// for Holder assertions we'll reuse A4/A7
 	// ----- end polkadot decoded 2023 -----
+
+	Achainable(AchainableParams),
 }
 
 impl Assertion {
@@ -68,18 +201,27 @@ impl Assertion {
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
 			Self::A14 => vec![Web3Network::Polkadot],
+			// Achainable Assertions
+			Self::Achainable(a) => vec![a.chain()],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
 	}
 }
 
-pub const ASSERTION_FROM_DATE: [&str; 7] = [
+pub const ASSERTION_FROM_DATE: [&str; 14] = [
 	"2017-01-01",
+	"2017-07-01",
 	"2018-01-01",
+	"2018-07-01",
 	"2019-01-01",
+	"2019-07-01",
 	"2020-01-01",
+	"2020-07-01",
 	"2021-01-01",
+	"2021-07-01",
 	"2022-01-01",
+	"2022-07-01",
 	"2023-01-01",
+	"2023-07-01",
 ];

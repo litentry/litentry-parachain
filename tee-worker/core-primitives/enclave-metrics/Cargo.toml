@@ -1,7 +1,7 @@
 [package]
 name = "itp-enclave-metrics"
 version = "0.9.0"
-authors = ["Integritee AG <hello@integritee.network>"]
+authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

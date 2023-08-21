@@ -23,36 +23,23 @@ extern crate sgx_tstd as std;
 use crate::*;
 
 const VC_A1_SUBJECT_DESCRIPTION: &str =
-	"The user has verified one identity in Web 2 and one identity in Web 3";
+	"You've identified at least one account/address in both Web2 and Web3.";
 const VC_A1_SUBJECT_TYPE: &str = "Basic Identity Verification";
-const VC_A1_SUBJECT_TAG: [&str; 1] = ["Litentry Network"];
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion A1 build, who: {:?}", account_id_to_string(&req.who));
 
-	let mut web2_cnt = 0;
-	let mut web3_cnt = 0;
-
-	for identity in &req.identities {
-		if identity.0.is_web2() {
-			web2_cnt += 1;
-		} else if identity.0.is_web3() {
-			web3_cnt += 1;
-		}
+	let mut is_web2 = false;
+	let mut is_web3 = false;
+	for (identity, _) in &req.identities {
+		is_web2 |= identity.is_web2();
+		is_web3 |= identity.is_web3();
 	}
 
-	match Credential::new_default(&req.who, &req.shard) {
+	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			// add subject info
-			credential_unsigned.add_subject_info(
-				VC_A1_SUBJECT_DESCRIPTION,
-				VC_A1_SUBJECT_TYPE,
-				VC_A1_SUBJECT_TAG.to_vec(),
-			);
-
-			// add assertion
-			let flag = web2_cnt != 0 && web3_cnt != 0;
-			credential_unsigned.add_assertion_a1(flag);
+			credential_unsigned.add_subject_info(VC_A1_SUBJECT_DESCRIPTION, VC_A1_SUBJECT_TYPE);
+			credential_unsigned.add_assertion_a1(is_web2 && is_web3);
 
 			Ok(credential_unsigned)
 		},

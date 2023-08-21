@@ -1,14 +1,19 @@
 name: Publish Docker image for new releases
 
+# Just disable it temporary
+# on:
+#   release:
+#     types:
+#       - published
 on:
-  release:
-    types:
-      - published
+  push:
+    branches:
+      - 'releases/**'
 
 jobs:
   main:
     name: Push Integritee Services to Dockerhub
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         binary: ["integritee-demo-validateer", "integritee-client"]

@@ -282,7 +282,7 @@ mod tests {
 		id = Identity::Substrate(Default::default());
 		networks = vec![];
 		assert!(!id.matches_web3networks(&networks));
-		networks = vec![Web3Network::BSC, Web3Network::Litentry];
+		networks = vec![Web3Network::Bsc, Web3Network::Litentry];
 		assert!(!id.matches_web3networks(&networks));
 		networks = vec![Web3Network::Litentry, Web3Network::Kusama];
 		assert!(id.matches_web3networks(&networks));
@@ -291,9 +291,9 @@ mod tests {
 		id = Identity::Evm(Default::default());
 		networks = vec![];
 		assert!(!id.matches_web3networks(&networks));
-		networks = vec![Web3Network::BSC, Web3Network::Litentry];
+		networks = vec![Web3Network::Bsc, Web3Network::Litentry];
 		assert!(!id.matches_web3networks(&networks));
-		networks = vec![Web3Network::BSC, Web3Network::Ethereum];
+		networks = vec![Web3Network::Bsc, Web3Network::Ethereum];
 		assert!(id.matches_web3networks(&networks));
 	}
 }

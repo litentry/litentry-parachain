@@ -1,6 +1,6 @@
 services:
   lit-batch-test:
-    image: integritee-cli:dev
+    image: litentry-cli:dev
     container_name: litentry-batch-test
     volumes:
       - ../ts-tests:/ts-tests
@@ -10,14 +10,14 @@ services:
       dockerfile: build.Dockerfile
       target: deployed-client
     depends_on:
-      integritee-node:
+      litentry-node:
         condition: service_healthy
-      integritee-worker-1:
+      litentry-worker-1:
         condition: service_healthy
     networks:
-      - integritee-test-network
+      - litentry-test-network
     entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-batch 2>&1' "
     restart: "no"
 networks:
-  integritee-test-network:
+  litentry-test-network:
     driver: bridge

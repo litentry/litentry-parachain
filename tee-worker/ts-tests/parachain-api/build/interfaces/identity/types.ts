@@ -6,11 +6,25 @@ import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
 import type { AccountId, Balance, BlockNumber, H256 } from "@polkadot/types/interfaces/runtime";
 
+/** @name ActivateIdentityResponse */
+export interface ActivateIdentityResponse extends Struct {
+    readonly account: AccountId;
+    readonly identity: AesOutput;
+    readonly req_ext_hash: H256;
+}
+
 /** @name Address20 */
 export interface Address20 extends U8aFixed {}
 
 /** @name Address32 */
 export interface Address32 extends U8aFixed {}
+
+/** @name AesOutput */
+export interface AesOutput extends Struct {
+    readonly ciphertext: Bytes;
+    readonly aad: Bytes;
+    readonly nonce: U8aFixed;
+}
 
 /** @name Assertion */
 export interface Assertion extends Enum {
@@ -53,11 +67,18 @@ export interface Assertion extends Enum {
 /** @name BoundedWeb3Network */
 export interface BoundedWeb3Network extends Vec<Web3Network> {}
 
+/** @name DeactivateIdentityResponse */
+export interface DeactivateIdentityResponse extends Struct {
+    readonly account: AccountId;
+    readonly identity: AesOutput;
+    readonly req_ext_hash: H256;
+}
+
 /** @name DirectRequestStatus */
 export interface DirectRequestStatus extends Enum {
     readonly isOk: boolean;
     readonly isTrustedOperationStatus: boolean;
-    readonly asTrustedOperationStatus: TrustedOperationStatus;
+    readonly asTrustedOperationStatus: ITuple<[TrustedOperationStatus, H256]>;
     readonly isError: boolean;
     readonly type: "Ok" | "TrustedOperationStatus" | "Error";
 }
@@ -110,6 +131,14 @@ export interface IdentityStatus extends Enum {
 /** @name IdentityString */
 export interface IdentityString extends Bytes {}
 
+/** @name LinkIdentityResponse */
+export interface LinkIdentityResponse extends Struct {
+    readonly account: AccountId;
+    readonly identity: AesOutput;
+    readonly id_graph: AesOutput;
+    readonly req_ext_hash: H256;
+}
+
 /** @name LitentryIdentity */
 export interface LitentryIdentity extends Enum {
     readonly isTwitter: boolean;
@@ -135,7 +164,9 @@ export interface LitentryMultiSignature extends Enum {
     readonly asEcdsa: Signature;
     readonly isEthereum: boolean;
     readonly asEthereum: EthereumSignature;
-    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum";
+    readonly isEthereumPrettified: boolean;
+    readonly asEthereumPrettified: EthereumSignature;
+    readonly type: "Ed25519" | "Sr25519" | "Ecdsa" | "Ethereum" | "EthereumPrettified";
 }
 
 /** @name LitentryValidationData */
@@ -160,6 +191,28 @@ export interface PublicGetter extends Enum {
 export interface Request extends Struct {
     readonly shard: ShardIdentifier;
     readonly cyphertext: Bytes;
+}
+
+/** @name RequestVCResponse */
+export interface RequestVCResponse extends Struct {
+    readonly account: AccountId;
+    readonly assertion: Assertion;
+    readonly vc_index: H256;
+    readonly vc_hash: H256;
+    readonly vc_payload: AesOutput;
+    readonly req_ext_hash: H256;
+}
+
+/** @name SetIdentityNetworksResponse */
+export interface SetIdentityNetworksResponse extends Struct {
+    readonly req_ext_hash: H256;
+}
+
+/** @name SetUserShieldingKeyResponse */
+export interface SetUserShieldingKeyResponse extends Struct {
+    readonly account: AccountId;
+    readonly id_graph: AesOutput;
+    readonly req_ext_hash: H256;
 }
 
 /** @name ShardIdentifier */
@@ -193,19 +246,23 @@ export interface TrustedCall extends Enum {
             H256
         ]
     >;
-    readonly isActivateIdentity: boolean;
-    readonly asActivateIdentity: ITuple<
-        [LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]
-    >;
     readonly isDeactivateIdentity: boolean;
     readonly asDeactivateIdentity: ITuple<
+        [LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]
+    >;
+    readonly isActivateIdentity: boolean;
+    readonly asActivateIdentity: ITuple<
         [LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]
     >;
     readonly isRequestVc: boolean;
     readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, H256]>;
     readonly isSetIdentityNetworks: boolean;
     readonly asSetIdentityNetworks: ITuple<
-        [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>]
+        [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]
+    >;
+    readonly isSetUserShieldingKeyWithNetworks: boolean;
+    readonly asSetUserShieldingKeyWithNetworks: ITuple<
+        [LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256]
     >;
     readonly type:
         | "BalanceSetBalance"
@@ -214,10 +271,11 @@ export interface TrustedCall extends Enum {
         | "BalanceShield"
         | "SetUserShieldingKey"
         | "LinkIdentity"
-        | "ActivateIdentity"
         | "DeactivateIdentity"
+        | "ActivateIdentity"
         | "RequestVc"
-        | "SetIdentityNetworks";
+        | "SetIdentityNetworks"
+        | "SetUserShieldingKeyWithNetworks";
 }
 
 /** @name TrustedCallSigned */
@@ -335,7 +393,6 @@ export interface Web3Network extends Enum {
     readonly isKhala: boolean;
     readonly isSubstrateTestnet: boolean;
     readonly isEthereum: boolean;
-    readonly isPolygon: boolean;
     readonly isBsc: boolean;
     readonly type:
         | "Polkadot"
@@ -346,7 +403,6 @@ export interface Web3Network extends Enum {
         | "Khala"
         | "SubstrateTestnet"
         | "Ethereum"
-        | "Polygon"
         | "Bsc";
 }
 
