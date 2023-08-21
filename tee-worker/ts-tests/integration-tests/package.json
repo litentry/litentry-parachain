@@ -3,6 +3,7 @@
 	"license": "ISC",
 	"type": "module",
 	"scripts": {
+		"check-format": "yarn prettier --check .",
 		"format": "yarn prettier --write .",
 		"test-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'identity.test.ts'",
 		"test-identity:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm --loader=ts-node/esm 'identity.test.ts'",
