@@ -145,7 +145,7 @@ jobs:
 
       - name: Tee-worker ts format check
         working-directory: ./tee-worker/ts-tests
-        run: corepack yarn format --check
+        run: corepack yarn check-format
 
   fmt:
     runs-on: ubuntu-latest
