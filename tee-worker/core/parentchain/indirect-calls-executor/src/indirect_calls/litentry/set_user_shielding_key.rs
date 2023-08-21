@@ -20,8 +20,9 @@ use crate::{
 };
 use codec::{Decode, Encode};
 
-use ita_stf::{TrustedCall, TrustedOperation};
+use ita_stf::TrustedCall;
 
+use crate::indirect_calls::litentry::args_executor::ArgsExecutor;
 use itp_types::{ShardIdentifier, H256};
 use litentry_primitives::UserShieldingKeyType;
 use sp_core::crypto::AccountId32;
@@ -37,32 +38,35 @@ pub struct SetUserShieldingKeyArgs {
 	encrypted_key: Vec<u8>,
 }
 
-impl SetUserShieldingKeyArgs {
-	fn internal_dispatch<Executor: IndirectExecutor>(
+impl ArgsExecutor for SetUserShieldingKeyArgs {
+	fn error(&self) -> Error {
+		Error::IMPHandlingError(IMPError::SetUserShieldingKeyFailed(ErrorDetail::ImportError))
+	}
+
+	fn name() -> &'static str {
+		"SetUserShieldingKey"
+	}
+
+	fn shard(&self) -> ShardIdentifier {
+		self.shard
+	}
+
+	fn prepare_trusted_call<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<MultiAddress<AccountId32, ()>>,
+		address: MultiAddress<AccountId32, ()>,
 		hash: H256,
-	) -> Result<()> {
+	) -> Result<TrustedCall> {
 		let key =
 			UserShieldingKeyType::decode(&mut executor.decrypt(&self.encrypted_key)?.as_slice())?;
-
-		if let Some(address) = address {
-			let account = AccountIdLookup::lookup(address)?;
-			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call = TrustedCall::set_user_shielding_key(
-				enclave_account_id.into(),
-				account.into(),
-				key,
-				hash,
-			);
-			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
-			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-
-			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
-		}
-		Ok(())
+		let account = AccountIdLookup::lookup(address).unwrap();
+		let enclave_account_id = executor.get_enclave_account().unwrap();
+		Ok(TrustedCall::set_user_shielding_key(
+			enclave_account_id.into(),
+			account.into(),
+			key,
+			hash,
+		))
 	}
 }
 
@@ -70,20 +74,6 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for SetUserShielding
 	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, hash) = args;
-		let e =
-			Error::IMPHandlingError(IMPError::SetUserShieldingKeyFailed(ErrorDetail::ImportError));
-		if self.internal_dispatch(executor, address, hash).is_err() {
-			if let Err(internal_e) =
-				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
-			{
-				log::warn!(
-					"fail to handle internal errors in set_user_shielding_key: {:?}",
-					internal_e
-				);
-			}
-			return Err(e)
-		}
-		Ok(())
+		self.execute(executor, args.0, args.1)
 	}
 }
