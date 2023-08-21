@@ -28,8 +28,8 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, Everything,
-		FindAuthor, InstanceFilter, SortedMembers, WithdrawReasons,
+		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
+		Everything, FindAuthor, InstanceFilter, SortedMembers, WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	ConsensusEngineId, PalletId, RuntimeDebug,
@@ -241,7 +241,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9167,
+	spec_version: 9168,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -649,6 +649,21 @@ parameter_types! {
 	pub const MaximumReasonLength: u32 = 8192;
 }
 
+pub struct EnsureRootOrTwoThirdsCouncilWrapper;
+impl EnsureOrigin<RuntimeOrigin> for EnsureRootOrTwoThirdsCouncilWrapper {
+	type Success = Balance;
+	fn try_origin(o: RuntimeOrigin) -> Result<Self::Success, RuntimeOrigin> {
+		match EnsureRootOrTwoThirdsCouncil::try_origin(o) {
+			Ok(_) => Ok(Balance::max_value()),
+			Err(o) => Err(o),
+		}
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<RuntimeOrigin, ()> {
+		Ok(RuntimeOrigin::root())
+	}
+}
+
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
@@ -659,7 +674,8 @@ impl pallet_treasury::Config for Runtime {
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
 	type ProposalBondMaximum = ProposalBondMaximum;
-	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
+	// Once passed, at most all is allowed to be spent
+	type SpendOrigin = EnsureRootOrTwoThirdsCouncilWrapper;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -1328,6 +1344,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Vesting(pallet_vesting::Call::vest { .. }) |
 			// ChainBridge
 			RuntimeCall::ChainBridge(_) |
+			// Bounties
+			RuntimeCall::Bounties(_) |
 			// BridgeTransfer
 			RuntimeCall::BridgeTransfer(_) |
 			// XTokens::transfer for normal users
