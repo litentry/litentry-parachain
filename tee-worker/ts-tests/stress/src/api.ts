@@ -34,21 +34,28 @@ import WsWebSocket from "ws";
 import type { HexString } from "@polkadot/util/types";
 import { ethers } from "ethers";
 import { PublicGetter } from "parachain-api";
-import { Wallet, logLine } from "../bin/stress";
 
-async function buildIdentityHelper(
-    address: HexString | string,
-    type: LitentryPrimitivesIdentity["type"],
-    sidechainRegistry: SidechainTypeRegistry
-): Promise<LitentryPrimitivesIdentity> {
-    const identity = {
-        [type]: address,
-    };
-    return sidechainRegistry.createType(
-        "LitentryPrimitivesIdentity",
-        identity
-    ) as unknown as LitentryPrimitivesIdentity;
+async function logLine(log: WritableStream<string>, message: string): Promise<void> {
+    const writer = log.getWriter();
+    await writer.write(`${message}\n`);
+    await writer.releaseLock();
 }
+
+export type Wallet =
+    | {
+          type: "substrate";
+          keyringPair: KeyringPair;
+      }
+    | { type: "evm"; wallet: ethers.Wallet };
+
+export type Api = {
+    parachainApi: ParachainApiPromise;
+    mrEnclave: `0x${string}`;
+    teeShieldingKey: crypto.KeyObject;
+    teeWorker: WebSocketAsPromised;
+    sidechainRegistry: SidechainTypeRegistry;
+};
+
 function encryptWithAes(key: string, nonce: Uint8Array, cleartext: Buffer): HexString {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const cipher = crypto.createCipheriv("aes-256-gcm", secretKey, nonce, {
@@ -59,8 +66,10 @@ function encryptWithAes(key: string, nonce: Uint8Array, cleartext: Buffer): HexS
     encrypted += cipher.getAuthTag().toString("hex");
     return `0x${encrypted}`;
 }
+
 // MOCK_VERIFICATION_NONCE: UserShieldingKeyNonceType = [1u8; 12];
 export const keyNonce = "0x010101010101010101010101";
+
 function generateVerificationMessage(
     parachainApi: ParachainApiPromise,
     sidechainRegistry: SidechainTypeRegistry,
@@ -123,6 +132,7 @@ export async function buildValidation(
                   },
     }) as unknown as LitentryValidationData;
 }
+
 export async function buildIdentityFromWallet(
     wallet: Wallet,
     sidechainRegistry: SidechainTypeRegistry
@@ -168,6 +178,7 @@ export async function buildIdentityFromWallet(
 export function decodeRpcBytesAsString(value: Bytes): string {
     return u8aToString(compactStripLength(hexToU8a(value.toHex()))[1]);
 }
+
 type RequestBody = {
     id: number;
     jsonrpc: string;
@@ -177,27 +188,30 @@ type RequestBody = {
 export async function sendRequest(
     wsClient: WebSocketAsPromised,
     request: RequestBody,
-    api: ParachainApiPromise
+    api: ParachainApiPromise,
+    log: WritableStream<string>
 ): Promise<WorkerRpcReturnValue> {
     const rawRes = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
     const res: WorkerRpcReturnValue = api.createType("WorkerRpcReturnValue", rawRes.result);
     if (res.status.isError) {
-        logLine("Rpc response error: " + decodeRpcBytesAsString(res.value));
+        logLine(log, "Rpc response error: " + decodeRpcBytesAsString(res.value));
     }
 
     // unfortunately, the res.value only contains the hash of top
-    if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus.isInvalid) {
-        logLine("Rpc trusted operation execution failed, hash: ", res.value);
+    if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
+        logLine(log, `Rpc trusted operation execution failed, hash: ${res.value}`);
     }
 
     return res;
 }
+
 export async function getSidechainMetadata(
     wsClient: WebSocketAsPromised,
-    parachainApi: ParachainApiPromise
+    parachainApi: ParachainApiPromise,
+    log: WritableStream<string>
 ): Promise<{ sidechainMetaData: SidechainMetadata; sidechainRegistry: SidechainTypeRegistry }> {
     const request = { jsonrpc: "2.0", method: "state_getMetadata", params: [], id: 1 };
-    const resp = await sendRequest(wsClient, request, parachainApi);
+    const resp = await sendRequest(wsClient, request, parachainApi, log);
 
     const sidechainRegistry = new SidechainTypeRegistry();
     const sidechainMetaData = new SidechainMetadata(sidechainRegistry, resp.value);
@@ -205,12 +219,16 @@ export async function getSidechainMetadata(
     sidechainRegistry.setMetadata(sidechainMetaData);
     return { sidechainMetaData, sidechainRegistry };
 }
-export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
+
+export async function initWorkerConnection(
+    endpoint: string,
+    log: WritableStream<string>
+): Promise<WebSocketAsPromised> {
     const wsp = new WebSocketAsPromised(endpoint, {
         createWebSocket: (url: string) => {
             const socket = new WsWebSocket(url);
             socket.on("error", (error) => {
-                logLine(`Socket to ${url} caught error ${JSON.stringify(error)})}`);
+                logLine(log, `Socket to ${url} caught error ${JSON.stringify(error)})}`);
             });
             return socket as unknown as WebSocket;
         },
@@ -224,6 +242,7 @@ export async function initWorkerConnection(endpoint: string): Promise<WebSocketA
     await wsp.open();
     return wsp;
 }
+
 const createPublicGetter = (
     parachainApi: ParachainApiPromise,
     publicGetter: [string, string],
@@ -236,12 +255,48 @@ const createPublicGetter = (
 
     return getter;
 };
+
+export const createSignedTrustedGetter = (
+    parachainApi: ParachainApiPromise,
+    trustedGetter: [string, string],
+    signer: KeyringPair,
+    params: any
+) => {
+    const [variant, argType] = trustedGetter;
+    const getter = parachainApi.createType("TrustedGetter", {
+        [variant]: parachainApi.createType(argType, params),
+    });
+    const payload = getter.toU8a();
+    const signature = parachainApi.createType("LitentryMultiSignature", {
+        [signer.type]: signer.sign(payload),
+    });
+    return parachainApi.createType("TrustedGetterSigned", {
+        getter: getter,
+        signature: signature,
+    });
+};
+
+export function createSignedTrustedGetterUserShieldingKey(
+    parachainApi: ParachainApiPromise,
+    signer: KeyringPair,
+    subject: LitentryPrimitivesIdentity
+) {
+    const getterSigned = createSignedTrustedGetter(
+        parachainApi,
+        ["user_shielding_key", "(LitentryIdentity)"],
+        signer,
+        subject.toHuman()
+    );
+    return parachainApi.createType("Getter", { trusted: getterSigned }) as unknown as Getter;
+}
+
 const sendRequestFromGetter = async (
     teeWorker: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    getter: Getter
+    getter: Getter,
+    log: WritableStream<string>
 ): Promise<WorkerRpcReturnValue> => {
     // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
     //            this is what `state_executeGetter` expects in rust
@@ -259,8 +314,9 @@ const sendRequestFromGetter = async (
         params: [u8aToHex(requestParam)],
         id: 1,
     };
-    return sendRequest(teeWorker, request, parachainApi);
+    return sendRequest(teeWorker, request, parachainApi, log);
 };
+
 function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
         {
@@ -271,6 +327,7 @@ function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8
         plaintext
     );
 }
+
 const createRequest = async (
     wsp: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
@@ -290,18 +347,21 @@ const createRequest = async (
 
     return parachainApi.createType("Request", { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
 };
+
 function decodeNonce(nonceInHex: string) {
     const optionalType = Option(Vector(u8));
     const encodedNonce = optionalType.dec(nonceInHex) as number[];
     const nonce = u32.dec(new Uint8Array(encodedNonce));
     return nonce;
 }
+
 export const getSidechainNonce = async (
     teeWorker: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    subject: LitentryPrimitivesIdentity
+    subject: LitentryPrimitivesIdentity,
+    log: WritableStream<string>
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(
         parachainApi,
@@ -314,32 +374,13 @@ export const getSidechainNonce = async (
         parachainApi,
         mrenclave,
         teeShieldingKey,
-        getter
+        getter,
+        log
     );
     const nonceValue = decodeNonce(nonce.value.toHex());
     return parachainApi.createType("Index", nonceValue) as Index;
 };
 
-export type PublicKeyJson = {
-    n: Uint8Array;
-    e: Uint8Array;
-};
-const getTeeShieldingKey = async (wsp: WebSocketAsPromised, parachainApi: ParachainApiPromise) => {
-    const request = { jsonrpc: "2.0", method: "author_getShieldingKey", params: [], id: 1 };
-    const res = await sendRequest(wsp, request, parachainApi);
-    const k = JSON.parse(decodeRpcBytesAsString(res.value)) as PublicKeyJson;
-
-    return createPublicKey({
-        key: {
-            alg: "RSA-OAEP-256",
-            kty: "RSA",
-            use: "enc",
-            n: Buffer.from(k.n.reverse()).toString("base64url"),
-            e: Buffer.from(k.e.reverse()).toString("base64url"),
-        },
-        format: "jwk",
-    });
-};
 export async function getEnclave(api: ParachainApiPromise): Promise<{
     mrEnclave: `0x${string}`;
     teeShieldingKey: KeyObject;
@@ -370,6 +411,7 @@ export async function getEnclave(api: ParachainApiPromise): Promise<{
         teeShieldingKey,
     };
 }
+
 const createSignedTrustedCall = async (
     parachainApi: ParachainApiPromise,
     trustedCall: [string, string],
@@ -408,98 +450,6 @@ const createSignedTrustedCall = async (
         signature: signature,
     }) as unknown as TrustedCallSigned;
 };
-export function createSignedTrustedCallLinkIdentity(
-    parachainApi: ParachainApiPromise,
-    mrenclave: string,
-    nonce: Codec,
-    signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
-    identity: string,
-    validationData: string,
-    web3networks: string,
-    keyNonce: string,
-    hash: string
-) {
-    return createSignedTrustedCall(
-        parachainApi,
-        [
-            "link_identity",
-            "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
-        ],
-        signer,
-        mrenclave,
-        nonce,
-        [
-            subject.toHuman(),
-            subject.toHuman(),
-            identity,
-            validationData,
-            web3networks,
-            keyNonce,
-            hash,
-        ]
-    );
-}
-function createSignedTrustedCallDeactivateIdentity(
-    parachainApi: ParachainApiPromise,
-    mrenclave: string,
-    nonce: Codec,
-    signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
-    identity: string,
-    hash: string
-) {
-    return createSignedTrustedCall(
-        parachainApi,
-        ["deactivate_identity", "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)"],
-        signer,
-        mrenclave,
-        nonce,
-        [subject.toHuman(), subject.toHuman(), identity, hash]
-    );
-}
-
-export function createSignedTrustedCallActivateIdentity(
-    parachainApi: ParachainApiPromise,
-    mrenclave: string,
-    nonce: Codec,
-    signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
-    identity: string,
-    hash: string
-) {
-    return createSignedTrustedCall(
-        parachainApi,
-        ["activate_identity", "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)"],
-        signer,
-        mrenclave,
-        nonce,
-        [subject.toHuman(), subject.toHuman(), identity, hash]
-    );
-}
-export function createSignedTrustedCallSetUserShieldingKey(
-    parachainApi: ParachainApiPromise,
-    mrenclave: string,
-    nonce: Codec,
-    signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
-    key: string,
-    hash: string,
-    withWrappedBytes = false
-) {
-    return createSignedTrustedCall(
-        parachainApi,
-        [
-            "set_user_shielding_key",
-            "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
-        ],
-        signer,
-        mrenclave,
-        nonce,
-        [subject.toHuman(), subject.toHuman(), key, hash],
-        withWrappedBytes
-    );
-}
 
 export const subscribeToEventsWithExtHash = async (
     requestIdentifier: string,
@@ -543,44 +493,14 @@ export const subscribeToEventsWithExtHash = async (
         });
     });
 };
-const createSignedTrustedGetter = (
-    parachainApi: ParachainApiPromise,
-    trustedGetter: [string, string],
-    signer: KeyringPair,
-    params: any
-) => {
-    const [variant, argType] = trustedGetter;
-    const getter = parachainApi.createType("TrustedGetter", {
-        [variant]: parachainApi.createType(argType, params),
-    });
-    const payload = getter.toU8a();
-    const signature = parachainApi.createType("LitentryMultiSignature", {
-        [signer.type]: signer.sign(payload),
-    });
-    return parachainApi.createType("TrustedGetterSigned", {
-        getter: getter,
-        signature: signature,
-    });
-};
-function createSignedTrustedGetterUserShieldingKey(
-    parachainApi: ParachainApiPromise,
-    signer: KeyringPair,
-    subject: LitentryPrimitivesIdentity
-) {
-    const getterSigned = createSignedTrustedGetter(
-        parachainApi,
-        ["user_shielding_key", "(LitentryIdentity)"],
-        signer,
-        subject.toHuman()
-    );
-    return parachainApi.createType("Getter", { trusted: getterSigned }) as unknown as Getter;
-}
+
 export const sendRequestFromTrustedCall = async (
     wsp: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    call: TrustedCallSigned
+    call: TrustedCallSigned,
+    log: WritableStream<string>
 ) => {
     // construct trusted operation
     const trustedOperation = parachainApi.createType("TrustedOperation", { direct_call: call });
@@ -599,8 +519,104 @@ export const sendRequestFromTrustedCall = async (
         params: [u8aToHex(requestParam)],
         id: 1,
     };
-    return sendRequest(wsp, request, parachainApi);
+    return sendRequest(wsp, request, parachainApi, log);
 };
+
+export function createSignedTrustedCallSetUserShieldingKey(
+    parachainApi: ParachainApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Wallet,
+    subject: LitentryPrimitivesIdentity,
+    key: string,
+    hash: string,
+    withWrappedBytes = false
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        [
+            "set_user_shielding_key",
+            "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
+        ],
+        signer,
+        mrenclave,
+        nonce,
+        [subject.toHuman(), subject.toHuman(), key, hash],
+        withWrappedBytes
+    );
+}
+
+export function createSignedTrustedCallLinkIdentity(
+    parachainApi: ParachainApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Wallet,
+    subject: LitentryPrimitivesIdentity,
+    identity: string,
+    validationData: string,
+    web3networks: string,
+    keyNonce: string,
+    hash: string
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        [
+            "link_identity",
+            "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
+        ],
+        signer,
+        mrenclave,
+        nonce,
+        [
+            subject.toHuman(),
+            subject.toHuman(),
+            identity,
+            validationData,
+            web3networks,
+            keyNonce,
+            hash,
+        ]
+    );
+}
+
+export function createSignedTrustedCallDeactivateIdentity(
+    parachainApi: ParachainApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Wallet,
+    subject: LitentryPrimitivesIdentity,
+    identity: LitentryPrimitivesIdentity,
+    hash: string
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        ["deactivate_identity", "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)"],
+        signer,
+        mrenclave,
+        nonce,
+        [subject.toHuman(), subject.toHuman(), identity.toHuman(), hash]
+    );
+}
+
+export function createSignedTrustedCallActivateIdentity(
+    parachainApi: ParachainApiPromise,
+    mrenclave: string,
+    nonce: Codec,
+    signer: Wallet,
+    subject: LitentryPrimitivesIdentity,
+    identity: LitentryPrimitivesIdentity,
+    hash: string
+) {
+    return createSignedTrustedCall(
+        parachainApi,
+        ["activate_identity", "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)"],
+        signer,
+        mrenclave,
+        nonce,
+        [subject.toHuman(), subject.toHuman(), identity.toHuman(), hash]
+    );
+}
+
 export function createSignedTrustedCallRequestVc(
     parachainApi: ParachainApiPromise,
     mrenclave: string,
