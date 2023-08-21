@@ -149,10 +149,15 @@ where
 			},
 			Ok(result) => {
 				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
-					Response {
-						req_ext_hash: h.clone(),
-						value: result.get_encoded_result()
-					}.encode()
+					let encoded_result = result.get_encoded_result();
+					if encoded_result == true.encode() {
+						encoded_result
+					} else {
+						Response {
+							req_ext_hash: h.clone(),
+							value: encoded_result
+						}.encode()
+					}
 				}).unwrap_or_default();
 
 				if let StatePostProcessing::Prune = post_processing {
