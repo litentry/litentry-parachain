@@ -10,6 +10,7 @@
 		"generate-from-defs": "ts-node --esm node_modules/.bin/polkadot-types-from-defs  --package parachain-api/interfaces --input build/interfaces --endpoint build/litentry-parachain-metadata.json",
 		"generate-from-chain": "ts-node --esm node_modules/.bin/polkadot-types-from-chain --package parachain-api/interfaces --output build/interfaces --endpoint build/litentry-parachain-metadata.json --strict",
 		"format": "yarn prettier --write .",
+		"check-format": "yarn prettier --check .",
 		"compile": "tsc",
 		"build": "yarn prepare-dir && yarn generate-from-defs && yarn generate-from-chain && yarn format && yarn compile"
 	},

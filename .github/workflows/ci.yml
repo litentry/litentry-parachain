@@ -167,6 +167,14 @@ jobs:
         run: |
           cargo fmt --all -- --check
 
+      - name: Tee-worker install npm deps
+        working-directory: ./tee-worker/ts-tests
+        run: corepack yarn install
+
+      - name: Tee-worker check ts code format
+        working-directory: ./tee-worker/ts-tests
+        run: corepack yarn check-format
+
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
