@@ -413,8 +413,8 @@ export interface TrustedOperation extends Enum {
     readonly type: "IndirectCall" | "DirectCall" | "Get";
 }
 
-/** @name TrustedOperationResult */
-export interface TrustedOperationResult extends Struct {
+/** @name TrustedOperationResponse */
+export interface TrustedOperationResponse extends Struct {
     readonly req_ext_hash: H256;
     readonly value: Bytes;
 }

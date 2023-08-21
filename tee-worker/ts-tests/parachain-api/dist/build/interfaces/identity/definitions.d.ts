@@ -243,7 +243,7 @@ declare const _default: {
                 UnclassifiedError: string;
             };
         };
-        TrustedOperationResult: {
+        TrustedOperationResponse: {
             req_ext_hash: string;
             value: string;
         };

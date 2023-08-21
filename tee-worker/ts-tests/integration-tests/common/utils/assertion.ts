@@ -12,10 +12,14 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue, StfError } from 'parachain-api';
+import {
+    CorePrimitivesErrorErrorDetail,
+    FrameSystemEventRecord,
+    WorkerRpcReturnValue,
+    StfError,
+    TrustedOperationResponse,
+} from 'parachain-api';
 import { Signer } from './crypto';
-
-import { TrustedOperationResult } from 'parachain-api/build/interfaces';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -363,9 +367,9 @@ export function assertWorkerError(
     returnValue: WorkerRpcReturnValue
 ) {
     const errDecodedRes = context.api.createType(
-        'TrustedOperationResult',
+        'TrustedOperationResponse',
         returnValue.value
-    ) as unknown as TrustedOperationResult;
+    ) as unknown as TrustedOperationResponse;
     assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
     const errValueDecoded = context.api.createType('StfError', errDecodedRes.value) as unknown as StfError;
     check(errValueDecoded);
