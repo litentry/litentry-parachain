@@ -23,6 +23,7 @@ use crate::{
 		new_partial, AdditionalConfig, Block, LitentryParachainRuntimeExecutor,
 		LitmusParachainRuntimeExecutor, RococoParachainRuntimeExecutor,
 	},
+	service_without_evm::*,
 };
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
@@ -218,30 +219,20 @@ impl SubstrateCli for RelayChainCli {
 macro_rules! construct_benchmark_partials {
 	($config:expr, |$partials:ident| $code:expr) => {
 		if $config.chain_spec.is_litmus() {
-			let $partials = new_partial::<
-				litmus_parachain_runtime::RuntimeApi,
-				LitmusParachainRuntimeExecutor,
-				_,
-			>(
+			let $partials = new_partial_without_evm::<litmus_parachain_runtime::RuntimeApi, _>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<
+				crate::service_without_evm::build_import_queue_without_evm::<
 					litmus_parachain_runtime::RuntimeApi,
-					LitmusParachainRuntimeExecutor,
 				>,
 			)?;
 			$code
 		} else if $config.chain_spec.is_litentry() {
-			let $partials = new_partial::<
-				litentry_parachain_runtime::RuntimeApi,
-				LitentryParachainRuntimeExecutor,
-				_,
-			>(
+			let $partials = new_partial_without_evm::<litentry_parachain_runtime::RuntimeApi, _>(
 				&$config,
 				false,
-				crate::service::build_import_queue::<
+				crate::service_without_evm::build_import_queue_without_evm::<
 					litentry_parachain_runtime::RuntimeApi,
-					LitentryParachainRuntimeExecutor,
 				>,
 			)?;
 			$code
@@ -271,28 +262,26 @@ macro_rules! construct_async_run {
 
 		if runner.config().chain_spec.is_litmus() {
 			runner.async_run(|$config| {
-				let $components = new_partial::<
+				let $components = new_partial_without_evm::<
 					litmus_parachain_runtime::RuntimeApi,
-					LitmusParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
 					false,
-					crate::service::build_import_queue::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>,
+					crate::service_without_evm::build_import_queue_without_evm::<litmus_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
 			})
 		} else if runner.config().chain_spec.is_litentry() {
 			runner.async_run(|$config| {
-				let $components = new_partial::<
+				let $components = new_partial_without_evm::<
 					litentry_parachain_runtime::RuntimeApi,
-					LitentryParachainRuntimeExecutor,
 					_
 				>(
 					&$config,
 					false,
-					crate::service::build_import_queue::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>,
+					crate::service_without_evm::build_import_queue_without_evm::<litentry_parachain_runtime::RuntimeApi>,
 				)?;
 				let task_manager = $components.task_manager;
 				{ $( $code )* }.map(|v| (v, task_manager))
@@ -569,24 +558,22 @@ pub fn run() -> Result<()> {
                 };
 
 				if config.chain_spec.is_litmus() {
-					crate::service::start_node::<litmus_parachain_runtime::RuntimeApi, LitmusParachainRuntimeExecutor>(
+					crate::service_without_evm::start_node_without_evm::<litmus_parachain_runtime::RuntimeApi>(
 						config,
 						polkadot_config,
 						collator_options,
 						id,
-						additional_config,
 						hwbench,
 					)
 					.await
 					.map(|r| r.0)
 					.map_err(Into::into)
 				} else if config.chain_spec.is_litentry() {
-					crate::service::start_node::<litentry_parachain_runtime::RuntimeApi, LitentryParachainRuntimeExecutor>(
+					crate::service_without_evm::start_node_without_evm::<litentry_parachain_runtime::RuntimeApi>(
 						config,
 						polkadot_config,
 						collator_options,
 						id,
-						additional_config,
 						hwbench,
 					)
 					.await

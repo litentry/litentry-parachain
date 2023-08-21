@@ -23,6 +23,8 @@ mod cli;
 mod command;
 mod evm_tracing_types;
 mod rpc;
+mod rpc_without_evm;
+mod service_without_evm;
 mod standalone_block_import;
 mod tracing;
 
