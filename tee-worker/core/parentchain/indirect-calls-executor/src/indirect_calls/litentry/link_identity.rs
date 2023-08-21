@@ -16,10 +16,11 @@
 
 use crate::{
 	error::{Error, ErrorDetail, IMPError, Result},
+	indirect_calls::litentry::args_executor::ArgsExecutor,
 	IndirectDispatch, IndirectExecutor,
 };
 use codec::{Decode, Encode};
-use ita_stf::{TrustedCall, TrustedOperation};
+use ita_stf::TrustedCall;
 use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{Identity, UserShieldingKeyNonceType, ValidationData, Web3Network};
@@ -38,13 +39,25 @@ pub struct LinkIdentityArgs {
 	nonce: UserShieldingKeyNonceType,
 }
 
-impl LinkIdentityArgs {
-	fn internal_dispatch<Executor: IndirectExecutor>(
+impl ArgsExecutor for LinkIdentityArgs {
+	fn error(&self) -> Error {
+		Error::IMPHandlingError(IMPError::LinkIdentityFailed(ErrorDetail::ImportError))
+	}
+
+	fn name() -> &'static str {
+		"LinkIdentity"
+	}
+
+	fn shard(&self) -> ShardIdentifier {
+		self.shard
+	}
+
+	fn prepare_trusted_call<Executor: IndirectExecutor>(
 		&self,
 		executor: &Executor,
-		address: Option<MultiAddress<AccountId32, ()>>,
+		_address: MultiAddress<AccountId, ()>,
 		hash: H256,
-	) -> Result<()> {
+	) -> Result<TrustedCall> {
 		let identity: Identity =
 			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
 		let validation_data = ValidationData::decode(
@@ -53,8 +66,7 @@ impl LinkIdentityArgs {
 		let web3networks: Vec<Web3Network> =
 			Decode::decode(&mut executor.decrypt(&self.encrypted_web3networks)?.as_slice())?;
 
-		if address.is_some() {
-			debug!(
+		debug!(
 				"indirect call LinkIdentity, who:{:?}, keyNonce: {:?}, identity: {:?}, validation_data: {:?}",
 				account_id_to_string(&self.account),
 				self.nonce,
@@ -62,39 +74,22 @@ impl LinkIdentityArgs {
 				validation_data
 			);
 
-			let enclave_account_id = executor.get_enclave_account()?;
-			let trusted_call = TrustedCall::link_identity(
-				enclave_account_id.into(),
-				self.account.clone().into(),
-				identity,
-				validation_data,
-				web3networks,
-				self.nonce,
-				hash,
-			);
-			let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &self.shard)?;
-			let trusted_operation = TrustedOperation::indirect_call(signed_trusted_call);
-
-			let encrypted_trusted_call = executor.encrypt(&trusted_operation.encode())?;
-			executor.submit_trusted_call(self.shard, encrypted_trusted_call);
-		}
-		Ok(())
+		let enclave_account_id = executor.get_enclave_account().unwrap();
+		Ok(TrustedCall::link_identity(
+			enclave_account_id.into(),
+			self.account.clone().into(),
+			identity,
+			validation_data,
+			web3networks,
+			self.nonce,
+			hash,
+		))
 	}
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for LinkIdentityArgs {
-	type Args = (Option<MultiAddress<AccountId32, ()>>, H256, u32);
+	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
-		let (address, hash, _block) = args;
-		let e = Error::IMPHandlingError(IMPError::LinkIdentityFailed(ErrorDetail::ImportError));
-		if self.internal_dispatch(executor, address, hash).is_err() {
-			if let Err(internal_e) =
-				executor.submit_trusted_call_from_error(self.shard, None, &e, hash)
-			{
-				log::warn!("fail to handle internal errors in verify_identity: {:?}", internal_e);
-			}
-			return Err(e)
-		}
-		Ok(())
+		self.execute(executor, args.0, args.1)
 	}
 }
