@@ -63,7 +63,7 @@ pub fn build(req: &AssertionBuildRequest, account: ParameterString) -> Result<Cr
 	let query = vec![("account", address.as_str())];
 	let value = client
 		.get_with::<String, EarlyBirdResponse>("".to_string(), query.as_slice())
-		.and_then(|data| Ok(data.has_joined))
+		.map(|data| data.has_joined)
 		.map_err(|e| {
 			Error::RequestVCFailed(
 				Assertion::A20(account.clone()),
@@ -80,7 +80,7 @@ pub fn build(req: &AssertionBuildRequest, account: ParameterString) -> Result<Cr
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::A20(account.clone()), e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::A20(account), e.into_error_detail()))
 		},
 	}
 }
