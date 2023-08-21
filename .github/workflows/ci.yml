@@ -1,6 +1,6 @@
 name: General CI
 
-# this file is a joint CI of parachain and tee-worker, it contains:
+# This file is a joint CI of parachain and tee-worker, it contains:
 # - build (of docker images)
 # - format check
 # - unit tests
