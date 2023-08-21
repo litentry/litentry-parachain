@@ -54,6 +54,16 @@ pub fn build(req: &AssertionBuildRequest, account: ParameterString) -> Result<Cr
 		Error::RequestVCFailed(Assertion::A20(account.clone()), ErrorDetail::ParseError)
 	})?;
 
+	let is_owned = check_account_owner(req, &address);
+	if !is_owned {
+		return Err(Error::RequestVCFailed(
+			Assertion::A20(account),
+			ErrorDetail::StfError(ErrorString::truncate_from(
+				"You're not the account owner".into(),
+			)),
+		))
+	}
+
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
 	let mut client = build_client(
@@ -83,4 +93,22 @@ pub fn build(req: &AssertionBuildRequest, account: ParameterString) -> Result<Cr
 			Err(Error::RequestVCFailed(Assertion::A20(account), e.into_error_detail()))
 		},
 	}
+}
+
+fn check_account_owner(req: &AssertionBuildRequest, address: &String) -> bool {
+	let main_account = account_id_to_string(&req.who);
+	if main_account == *address {
+		return true
+	}
+
+	let identities = transpose_identity(&req.identities);
+	for (_, addresses) in identities {
+		for target in addresses {
+			if target == *address {
+				return true
+			}
+		}
+	}
+
+	false
 }
