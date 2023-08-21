@@ -1,0 +1,7 @@
+- [ ] Random address generator > dump to JSON
+- [ ] Load addresses from JSON file
+- [ ] Loop over addresses
+    - [ ] Set shielding key; check success from parachain; measure timing
+    - [ ] Link another address; check success from parachain; measure timing
+    - [ ] Request A1; check success from parachain; measure timing
+    - [ ] Request A4; check success from parachain; measure timing

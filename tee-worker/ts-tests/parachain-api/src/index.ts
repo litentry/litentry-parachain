@@ -19,7 +19,9 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
+    PublicGetter,
 } from "../build/interfaces";
+
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider }; // @fixme don't export WsProvider :P

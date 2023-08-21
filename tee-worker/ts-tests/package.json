@@ -5,7 +5,8 @@
 		"packages": [
 			"parachain-api",
 			"sidechain-api",
-			"integration-tests"
+			"integration-tests",
+			"stress"
 		]
 	},
 	"scripts": {
