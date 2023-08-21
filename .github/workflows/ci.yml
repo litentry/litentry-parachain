@@ -139,11 +139,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Tee-worker install deps
+        working-directory: ./tee-worker/ts-tests
+        run: corepack yarn install
+
       - name: Tee-worker ts format check
         working-directory: ./tee-worker/ts-tests
-        run: |
-          corepack yarn install
-          corepack yarn format --check
+        run: corepack yarn format --check
 
   fmt:
     runs-on: ubuntu-latest
