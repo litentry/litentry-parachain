@@ -1,9 +1,7 @@
 import "@polkadot/api/augment";
 import "@polkadot/types-augment";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
-
-// Before we finalize the complete submission of the 'dist' files, we'll temporarily use the 'prepare-build' path here. Otherwise, CI can't find the files.
-import { identity } from "../../prepare-build/interfaces/definitions";
+import { identity } from "../build/interfaces/definitions";
 export { ApiPromise, Keyring, WsProvider }; // @fixme don't export WsProvider :P
 export const definitions = identity; // @fixme don't export?
 export async function create(provider) {

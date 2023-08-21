@@ -60,6 +60,8 @@ export default {
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
                 set_identity_networks:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
+                set_user_shielding_key_with_networks:
+                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
@@ -150,6 +152,7 @@ export default {
                 Sr25519: "sr25519::Signature",
                 Ecdsa: "ecdsa::Signature",
                 Ethereum: "EthereumSignature",
+                EthereumPrettified: "EthereumSignature",
             },
         },
         EthereumSignature: "([u8; 65])",

@@ -18,11 +18,13 @@
 use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 
 use codec::{Decode, Encode};
+use frame_support::ensure;
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_nonce, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
+	aes_encrypt_nonce, ErrorDetail, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
+	Web3ValidationData,
 };
 use log::*;
 use sp_core::blake2_256;
@@ -145,4 +147,31 @@ pub fn get_expected_raw_message(
 	let mut payload = sidechain_nonce.encode();
 	payload.append(&mut encrypted_data);
 	blake2_256(payload.as_slice()).to_vec()
+}
+
+pub fn verify_web3_identity(
+	identity: &Identity,
+	raw_msg: &[u8],
+	data: &Web3ValidationData,
+) -> StfResult<()> {
+	ensure!(
+		raw_msg == data.message().as_slice(),
+		StfError::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
+	);
+
+	// TODO: just to make it backwards compatible
+	//       will merge it to `VerifyWeb3SignatureFailed` after the campaign
+	//       https://github.com/litentry/litentry-parachain/issues/2033
+	if !data.signature().verify(raw_msg, identity) {
+		match data {
+			Web3ValidationData::Substrate(_) =>
+				return Err(StfError::LinkIdentityFailed(
+					ErrorDetail::VerifySubstrateSignatureFailed,
+				)),
+			Web3ValidationData::Evm(_) =>
+				return Err(StfError::LinkIdentityFailed(ErrorDetail::VerifyEvmSignatureFailed)),
+		}
+	}
+
+	Ok(())
 }
