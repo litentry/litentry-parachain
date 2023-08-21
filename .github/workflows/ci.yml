@@ -484,7 +484,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: failure()
         with:
-          name: ${{ matrix.chain }}-ts-tests-artifacts
+          name: ${{ matrix.chain }}-ts-tests-artifact
           path: /tmp/parachain_dev/
           if-no-files-found: ignore
           retention-days: 3
