@@ -177,6 +177,9 @@ pub enum Assertion {
 	// ----- end polkadot decoded 2023 -----
 
 	Achainable(AchainableParams),
+
+	// For EVM Version Early Bird
+	A20(ParameterString),									// (participant_account)
 }
 
 impl Assertion {
