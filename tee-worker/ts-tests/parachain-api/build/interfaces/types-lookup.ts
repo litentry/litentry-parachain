@@ -2934,9 +2934,6 @@ declare module "@polkadot/types/lookup" {
         readonly isA13: boolean;
         readonly asA13: AccountId32;
         readonly isA14: boolean;
-        readonly isAchainable: boolean;
-        readonly asAchainable: CorePrimitivesAssertionAchainableParams;
-        readonly isA20: boolean;
         readonly type:
             | "A1"
             | "A2"
@@ -2949,13 +2946,7 @@ declare module "@polkadot/types/lookup" {
             | "A10"
             | "A11"
             | "A13"
-<<<<<<< HEAD
             | "A14";
-=======
-            | "A14"
-            | "Achainable"
-            | "A20";
->>>>>>> dev
     }
 
     /** @name CorePrimitivesNetworkWeb3Network (149) */
