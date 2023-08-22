@@ -1,31 +1,26 @@
-export type Measurement = {
+export type Measurement<Label, Result> = {
+    label: Label;
     start: number;
     end: number;
-    success: boolean;
+    result: Result;
 };
 
-export type MeasurementTracker = (step: string, measurement: Measurement) => Promise<void>;
+export type Runner<Label, Result> = (label: Label, step: () => Promise<Result>) => Promise<Result>;
 
-export function newMeasurementTracker(epoch: number): MeasurementTracker {
-    const stream = new WritableStream<string>({
-        write: (chunk) => {
-            process.stdout.write(chunk);
-        },
-    });
-    return async (step: string, measurement: Measurement) => {
-        process.stderr.write(".");
-        const start = measurement.start - epoch;
-        const end = measurement.end - epoch;
-        const csvLine = `"${step}", ${start}, ${end}, ${measurement.success}\n`;
-        const writer = stream.getWriter();
-        await writer.write(csvLine);
+export function newTimedRunner<Label, Result>(
+    output: WritableStream<Measurement<Label, Result>>
+): Runner<Label, Result> {
+    return async (label, step) => {
+        const start = Date.now();
+        const result = await step();
+        const end = Date.now();
+        const writer = output.getWriter();
+        await writer.write({ label, start, end, result });
         writer.releaseLock();
+        return result;
     };
 }
 
-export async function timed(step: () => Promise<boolean>): Promise<Measurement> {
-    const start = Date.now();
-    const success = await step();
-    const end = Date.now();
-    return { start, end, success };
+export function newPassthroughRunner<Result>(): Runner<unknown, Result> {
+    return async (_, step) => await step();
 }

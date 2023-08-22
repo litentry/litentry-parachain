@@ -1,4 +1,4 @@
-import { Consumer } from "./consumer";
+import { Consumer } from "./util/consumer";
 import { ContextManager } from "./context-manager";
 
 export type JobQueue<Context, QueueResult> = Iterator<Consumer<Context>, QueueResult, never>;

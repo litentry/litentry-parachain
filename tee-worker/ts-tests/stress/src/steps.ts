@@ -11,14 +11,15 @@ import {
     keyNonce,
     sendRequestFromTrustedCall,
     subscribeToEventsWithExtHash,
-} from "./api";
+} from "./litentry-api";
 import WebSocketAsPromised from "websocket-as-promised";
 import { ApiPromise as ParachainApiPromise } from "parachain-api";
 import crypto, { randomBytes } from "crypto";
 import { Index } from "@polkadot/types/interfaces";
-import { Measurement, timed } from "./measurement";
+import { Measurement, Runner } from "./measurement";
 
 export async function setShieldingKey(
+    runner: Runner<string, boolean>,
     primary: Wallet,
     sidechainRegistry: SidechainTypeRegistry,
     teeWorker: WebSocketAsPromised,
@@ -29,7 +30,7 @@ export async function setShieldingKey(
     nonce: Index,
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
-): Promise<Measurement> {
+): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
 
     const setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
@@ -44,7 +45,7 @@ export async function setShieldingKey(
 
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    return await timed(async () => {
+    await runner("setShieldingKey", async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,
@@ -63,6 +64,7 @@ export async function setShieldingKey(
 }
 
 export async function linkIdentity(
+    runner: Runner<string, boolean>,
     primary: Wallet,
     secondary: Wallet,
     sidechainRegistry: SidechainTypeRegistry,
@@ -74,7 +76,7 @@ export async function linkIdentity(
     nonce: Index,
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
-): Promise<Measurement> {
+): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
     const primarySubject = await buildIdentityFromWallet(primary, sidechainRegistry);
     const secondaryIdentity = await buildIdentityFromWallet(secondary, sidechainRegistry);
@@ -107,7 +109,7 @@ export async function linkIdentity(
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    return await timed(async () => {
+    await runner("linkIdentity", async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,
@@ -125,6 +127,7 @@ export async function linkIdentity(
 }
 
 export async function requestVc1(
+    runner: Runner<string, boolean>,
     primary: Wallet,
     sidechainRegistry: SidechainTypeRegistry,
     teeWorker: WebSocketAsPromised,
@@ -134,7 +137,7 @@ export async function requestVc1(
     nonce: Index,
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
-): Promise<Measurement> {
+): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
     const requestVcCall = await createSignedTrustedCallRequestVc(
         parachainApi,
@@ -148,7 +151,7 @@ export async function requestVc1(
 
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    return await timed(async () => {
+    await runner("requestVc1", async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,
@@ -167,6 +170,7 @@ export async function requestVc1(
 }
 
 export async function requestVc4(
+    runner: Runner<string, boolean>,
     primary: Wallet,
     sidechainRegistry: SidechainTypeRegistry,
     teeWorker: WebSocketAsPromised,
@@ -176,7 +180,7 @@ export async function requestVc4(
     nonce: Index,
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
-): Promise<Measurement> {
+): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
     const requestVcCall = await createSignedTrustedCallRequestVc(
         parachainApi,
@@ -190,7 +194,7 @@ export async function requestVc4(
 
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    return await timed(async () => {
+    await runner("requestVc4", async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,
@@ -209,6 +213,7 @@ export async function requestVc4(
 }
 
 export async function deactivateIdentity(
+    runner: Runner<string, boolean>,
     primary: Wallet,
     secondary: Wallet,
     sidechainRegistry: SidechainTypeRegistry,
@@ -220,7 +225,7 @@ export async function deactivateIdentity(
     nonce: Index,
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
-): Promise<Measurement> {
+): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
     const secondaryIdentity = await buildIdentityFromWallet(secondary, sidechainRegistry);
 
@@ -234,7 +239,7 @@ export async function deactivateIdentity(
         requestIdentifier
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
-    return timed(async () => {
+    await runner("deactivateIdentity", async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,
@@ -252,6 +257,7 @@ export async function deactivateIdentity(
 }
 
 export async function activateIdentity(
+    runner: Runner<string, boolean>,
     primary: Wallet,
     secondary: Wallet,
     sidechainRegistry: SidechainTypeRegistry,
@@ -262,7 +268,7 @@ export async function activateIdentity(
     nonce: Index,
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
-): Promise<Measurement> {
+): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
     const secondaryIdentity = await buildIdentityFromWallet(secondary, sidechainRegistry);
 
@@ -276,7 +282,7 @@ export async function activateIdentity(
         requestIdentifier
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
-    return timed(async () => {
+    await runner("activateIdentity", async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,

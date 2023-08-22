@@ -1,4 +1,4 @@
-import { Consumer } from "./consumer";
+import { Consumer } from "./util/consumer";
 
 type ContextFactory<Context> = () => Promise<{
     context: Context;
