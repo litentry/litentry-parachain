@@ -9,14 +9,14 @@ from datetime import datetime
 
 
 def run_subprocess(
-    args, stdout: Union[None, int, IO], stderr: Union[None, int, IO], cwd: str = "./"
+    log_level, args, stdout: Union[None, int, IO], stderr: Union[None, int, IO], cwd: str = "./"
 ):
     """Wrapper around subprocess that allows a less verbose call"""
 
     # todo: make configurable
     env = dict(
         os.environ,
-        RUST_LOG="debug,ws=warn,sp_io=warn,substrate_api_client=warn,enclave=debug",
+        RUST_LOG=log_level,
     )
 
     return (
