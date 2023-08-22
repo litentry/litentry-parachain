@@ -1,4 +1,4 @@
-[tee-worker]
+[litentry-worker]
 RUST_LOG="info"
 litentry_worker="debug"
 ws="warn"
@@ -29,7 +29,7 @@ lc_data_providers="debug"
 itp_top_pool="debug"
 itc_parentchain_indirect_calls_executor="debug"
 
-[worker-cli]
+[litentry-cli]
 RUST_LOG="debug"
 ws="warn"
 sp_io="warn"

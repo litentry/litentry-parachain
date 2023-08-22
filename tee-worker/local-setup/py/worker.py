@@ -70,7 +70,7 @@ class Worker:
             return "Shard exists already, will not initialize."
 
         return run_subprocess(
-            self.log_level_dic['worker-cli'],
+            self.log_level_dic['litentry-cli'],
             self.cli + ["init-shard", shard],
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -140,7 +140,7 @@ class Worker:
         if not self._mrenclave:
             # `std_out` needs to be subProcess.PIPE here!
             self._mrenclave = run_subprocess(
-                self.log_level_dic['worker-cli'],
+                self.log_level_dic['litentry-cli'],
                 self.cli + ["mrenclave"],
                 stdout=subprocess.PIPE,
                 stderr=self.std_err,
@@ -150,7 +150,7 @@ class Worker:
 
     def write_shielding_pub(self):
         return run_subprocess(
-            self.log_level_dic['worker-cli'],
+            self.log_level_dic['litentry-cli'],
             self.cli + ["shielding-key"],
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -159,7 +159,7 @@ class Worker:
 
     def write_signer_pub(self):
         return run_subprocess(
-            self.log_level_dic['worker-cli'],
+            self.log_level_dic['litentry-cli'],
             self.cli + ["signing-key"],
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -175,7 +175,7 @@ class Worker:
             subcommand_flags = ["request-state"]
 
         return run_subprocess(
-            self.log_level_dic['worker-cli'],
+            self.log_level_dic['litentry-cli'],
             self.cli + flags + subcommand_flags,
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -195,7 +195,7 @@ class Worker:
 
         env = dict(
             os.environ,
-            RUST_LOG=self.log_level_dic['tee-worker'],
+            RUST_LOG=self.log_level_dic['litentry-worker'],
         )
 
         worker_cmd = self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags)
