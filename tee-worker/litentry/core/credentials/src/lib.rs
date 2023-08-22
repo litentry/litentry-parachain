@@ -432,11 +432,6 @@ impl Credential {
 	}
 
 	pub fn add_assertion_a8(&mut self, networks: Vec<Web3Network>, min: u64, max: u64) {
-		let value = min != 0;
-
-		let min = format!("{}", min);
-		let max = format!("{}", max);
-
 		let mut or_logic = AssertionLogic::new_or();
 		for network in networks {
 			let network = format!("{:?}", network);
@@ -444,15 +439,18 @@ impl Credential {
 			or_logic = or_logic.add_item(network_logic);
 		}
 
-		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterEq, &min);
-		let max_item = AssertionLogic::new_item("$total_txs", Op::LessThan, &max);
+		let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterEq, &format!("{}", min));
+		let mut assertion = AssertionLogic::new_and().add_item(min_item);
 
-		let assertion = AssertionLogic::new_and()
-			.add_item(min_item)
-			.add_item(max_item)
-			.add_item(or_logic);
+		if max != u64::MAX {
+			let max_item =
+				AssertionLogic::new_item("$total_txs", Op::LessThan, &format!("{}", max));
+			assertion = assertion.add_item(max_item);
+		};
+		assertion = assertion.add_item(or_logic);
+
 		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(value);
+		self.credential_subject.values.push(min != 0);
 	}
 
 	pub fn add_assertion_a12(&mut self, twitter_screen_name: String, value: bool) {
@@ -678,6 +676,56 @@ mod tests {
 				.add_item(minimum_amount_logic)
 				.add_item(from_date_logic)
 				.add_item(to_date);
+
+			assert_eq!(credential_unsigned.credential_subject.values[0], true);
+			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+		}
+	}
+
+	#[test]
+	fn test_a8_works() {
+		let who = AccountId::from([0; 32]);
+		let identity = who.into();
+		let shard = ShardIdentifier::default();
+
+		let networks = vec![Web3Network::Ethereum];
+
+		{
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
+			credential_unsigned.add_assertion_a8(networks.clone(), 0, 1);
+
+			let mut or_logic = AssertionLogic::new_or();
+			for network in networks.clone() {
+				let network = format!("{:?}", network);
+				let network_logic = AssertionLogic::new_item("$network", Op::Equal, &network);
+				or_logic = or_logic.add_item(network_logic);
+			}
+
+			let min_item = AssertionLogic::new_item("$total_txs", Op::GreaterEq, &format!("{}", 0));
+			let mut assertion = AssertionLogic::new_and().add_item(min_item);
+			let max_item = AssertionLogic::new_item("$total_txs", Op::LessThan, &format!("{}", 1));
+			assertion = assertion.add_item(max_item);
+			assertion = assertion.add_item(or_logic);
+
+			assert_eq!(credential_unsigned.credential_subject.values[0], false);
+			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
+		}
+
+		{
+			let mut credential_unsigned = Credential::new(&identity, &shard.clone()).unwrap();
+			credential_unsigned.add_assertion_a8(networks.clone(), 500, u64::MAX);
+
+			let mut or_logic = AssertionLogic::new_or();
+			for network in networks {
+				let network = format!("{:?}", network);
+				let network_logic = AssertionLogic::new_item("$network", Op::Equal, &network);
+				or_logic = or_logic.add_item(network_logic);
+			}
+
+			let min_item =
+				AssertionLogic::new_item("$total_txs", Op::GreaterEq, &format!("{}", 500));
+			let mut assertion = AssertionLogic::new_and().add_item(min_item);
+			assertion = assertion.add_item(or_logic);
 
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
 			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
