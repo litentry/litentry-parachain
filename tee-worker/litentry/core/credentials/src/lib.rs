@@ -495,6 +495,12 @@ impl Credential {
 		self.credential_subject.values.push(value);
 	}
 
+	pub fn add_assertion_a20(&mut self, value: bool) {
+		let governance = AssertionLogic::new_item("$has_joined", Op::Equal, &value.to_string());
+		self.credential_subject.assertions.push(governance);
+		self.credential_subject.values.push(value);
+	}
+
 	pub fn add_achainable(&mut self, value: bool, from: String, to: String) {
 		let min_item = AssertionLogic::new_item("$from_date", Op::GreaterEq, &from);
 		let max_item = AssertionLogic::new_item("$to_date", Op::LessThan, &to);
