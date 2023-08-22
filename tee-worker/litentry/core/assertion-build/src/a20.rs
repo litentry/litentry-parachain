@@ -48,11 +48,13 @@ impl RestPath<String> for EarlyBirdResponse {
 }
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	let account = req.who.to_account_id().unwrap();
-	let mut who = account_id_to_string(&account);
-	debug!("Assertion A20 build, who: {:?}", who);
-
+	let mut who = match req.who {
+		Identity::Substrate(account) => account_id_to_string(&account),
+		Identity::Evm(account) => account_id_to_string(&account),
+		_ => unreachable!(),
+	};
 	who.insert_str(0, "0x");
+	debug!("Assertion A20 build, who: {:?}", who);
 
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
