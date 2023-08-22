@@ -18,6 +18,7 @@ import {
     WorkerRpcReturnValue,
     StfError,
     TrustedOperationResponse,
+    LinkIdentityResult,
 } from 'parachain-api';
 import { Signer } from './crypto';
 
@@ -373,4 +374,27 @@ export function assertWorkerError(
     assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
     const errValueDecoded = context.api.createType('StfError', errDecodedRes.value) as unknown as StfError;
     check(errValueDecoded);
+}
+
+export function assertIdentityLinkedResult(
+    context: IntegrationTestContext,
+    requestIdentifier: string,
+    expectedIdentity: LitentryPrimitivesIdentity,
+    returnValue: WorkerRpcReturnValue
+) {
+    const decodedRes = context.api.createType(
+        'TrustedOperationResponse',
+        returnValue.value
+    ) as unknown as TrustedOperationResponse;
+    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
+
+    const decodedLinkResult = context.api.createType(
+        'LinkIdentityResult',
+        decodedRes.value
+    ) as unknown as LinkIdentityResult;
+
+    assert.equal(
+        expectedIdentity.toString(),
+        parseIdentity(context.sidechainRegistry, decodedLinkResult.identity, aesKey).toString()
+    );
 }
