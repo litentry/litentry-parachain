@@ -16,6 +16,7 @@ export type {
     Getter,
     TrustedOperationResponse,
     StfError,
+    LinkIdentityResult,
 } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
