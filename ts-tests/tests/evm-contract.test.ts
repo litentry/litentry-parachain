@@ -32,7 +32,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             context.eve.address
         );
         const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } = await context.api.query.system.account(
-            evmAccount.address
+            evmAccountRaw.mappedAddress
         );
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
@@ -46,7 +46,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000'
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
-          evmAccountRaw.address
+          evmAccountRaw.mappedAddress
         );
 
         const { compiled } = await import("./compile.mjs");

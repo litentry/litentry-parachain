@@ -32,7 +32,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             context.eve.address
         );
         const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } = await context.api.query.system.account(
-            evmAccount.address
+            evmAccountRaw.mappedAddress
         );
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
@@ -51,7 +51,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         };
         const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
-            evmAccount.address
+            evmAccountRaw.mappedAddress
         );
 
         let eveMappedAccount = context.eve.address.slice(0, 20);
@@ -80,7 +80,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             context.eve.address
         );
         const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } = await context.api.query.system.account(
-            evmAccount.address
+            evmAccountRaw.mappedAddress
         );
 
         expect(evmAccountCurrentNonce.toNumber()).to.equal(evmAccountInitNonce.toNumber() + 1);
@@ -145,7 +145,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             context.eve.address
         );
         const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } = await context.api.query.system.account(
-            evmAccount.address
+            evmAccountRaw.mappedAddress
         );
         
         // Extrinsic succeed with failed origin
