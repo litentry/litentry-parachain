@@ -23,7 +23,7 @@ use crate::{
 		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self,
 		get_expected_raw_message, verify_web3_identity,
 	},
-	trusted_call_rpc_response::{LinkIdentityResponse, SetUserShieldingKeyResponse},
+	trusted_call_result::{LinkIdentityResult, SetUserShieldingKeyResult, TrustedCallResult},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -67,8 +67,7 @@ impl TrustedCallSigned {
 		key: UserShieldingKeyType,
 		web3networks: Vec<Web3Network>,
 		hash: H256,
-		rpc_response_value: &mut Vec<u8>,
-	) -> StfResult<()>
+	) -> StfResult<TrustedCallResult>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
 		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
@@ -109,13 +108,8 @@ impl TrustedCallSigned {
 		)));
 
 		debug!("populating user_shielding_key_set rpc reponse ...");
-		let res = SetUserShieldingKeyResponse {
-			account,
-			id_graph: encrypted_id_graph,
-			req_ext_hash: hash,
-		};
-		*rpc_response_value = res.encode();
-		Ok(())
+		let res = SetUserShieldingKeyResult { account, id_graph: encrypted_id_graph };
+		Ok(TrustedCallResult::SetUserShieldingKey(res))
 	}
 
 	#[allow(clippy::too_many_arguments)]
@@ -319,8 +313,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 		hash: H256,
-		rpc_response_value: &mut Vec<u8>,
-	) -> StfResult<()>
+	) -> StfResult<TrustedCallResult>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
 		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
@@ -358,14 +351,10 @@ impl TrustedCallSigned {
 			aes_encrypt_default(&key, &id_graph.encode()),
 			hash,
 		)));
-
-		let res = LinkIdentityResponse {
+		Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
 			account,
 			identity: aes_encrypt_default(&key, &identity.encode()),
 			id_graph: aes_encrypt_default(&key, &id_graph.encode()),
-			req_ext_hash: hash,
-		};
-		*rpc_response_value = res.encode();
-		Ok(())
+		}))
 	}
 }

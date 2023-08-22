@@ -20,6 +20,9 @@ export type {
     TrustedCallSigned,
     Getter,
     PublicGetter,
+    TrustedOperationResponse,
+    StfError,
+    LinkIdentityResult,
 } from "../build/interfaces";
 
 export type { Codec } from "@polkadot/types/types";

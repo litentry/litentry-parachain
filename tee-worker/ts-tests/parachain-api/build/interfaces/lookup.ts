@@ -1,6 +1,8 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
+
 /* eslint-disable sort-keys */
+
 export default {
     /**
      * Lookup3: frame_system::AccountInfo<Index, pallet_balances::AccountData<Balance>>
@@ -854,7 +856,8 @@ export default {
             },
             CancelledDelegationRequest: {
                 delegator: "AccountId32",
-                cancelledRequest: "PalletParachainStakingDelegationRequestsCancelledScheduledRequest",
+                cancelledRequest:
+                    "PalletParachainStakingDelegationRequestsCancelledScheduledRequest",
                 collator: "AccountId32",
             },
             Delegation: {
@@ -1080,7 +1083,8 @@ export default {
             NotifyTargetSendFail: "(XcmV3MultiLocation,u64,XcmV3TraitsError)",
             NotifyTargetMigrationFail: "(XcmVersionedMultiLocation,u64)",
             InvalidQuerierVersion: "(XcmV3MultiLocation,u64)",
-            InvalidQuerier: "(XcmV3MultiLocation,u64,XcmV3MultiLocation,Option<XcmV3MultiLocation>)",
+            InvalidQuerier:
+                "(XcmV3MultiLocation,u64,XcmV3MultiLocation,Option<XcmV3MultiLocation>)",
             VersionNotifyStarted: "(XcmV3MultiLocation,XcmV3MultiassetMultiAssets)",
             VersionNotifyRequested: "(XcmV3MultiLocation,XcmV3MultiassetMultiAssets)",
             VersionNotifyUnrequested: "(XcmV3MultiLocation,XcmV3MultiassetMultiAssets)",
