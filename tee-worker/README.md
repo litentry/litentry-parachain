@@ -15,7 +15,7 @@ make SGX_MODE=SW
 cd ./tee-worker/ts-tests
 nvm use
 corepack yarn
-corepack yarn workspace integration-tests test-identity:local
+corepack yarn workspace integration-tests test-ii-identity:local
 # other ts test
 ```
 

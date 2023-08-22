@@ -156,13 +156,13 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
 				set_shied.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::LinkIdentity(verify_id, address, hash) =>
-				verify_id.dispatch(executor, (address.clone(), *hash, block)),
+				verify_id.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::DeactivateIdentity(deactivate_identity, address, hash) =>
 				deactivate_identity.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::ActivateIdentity(activate_identity, address, hash) =>
 				activate_identity.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::RequestVC(request_vc, address, hash) =>
-				request_vc.dispatch(executor, (address.clone(), *hash, block)),
+				request_vc.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::UpdateScheduledEnclave(update_enclave_args) =>
 				update_enclave_args.dispatch(executor, ()),
 			IndirectCall::RemoveScheduledEnclave(remove_enclave_args) =>
