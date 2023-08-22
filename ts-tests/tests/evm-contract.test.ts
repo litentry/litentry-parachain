@@ -25,7 +25,8 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     
         let eveMappedAccount = context.eve.address.slice(0, 20);
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
-        const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 1, null, null, []);
+        // 25000 is min_gas_price setup
+        const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
         await signAndSend(tx, context.eve);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
