@@ -1,7 +1,7 @@
 services:
-    lit-substrate-ii-identity-test:
+    lit-ii-batch-test:
         image: litentry-cli:dev
-        container_name: litentry-substrate-ii-identity-test
+        container_name: litentry-ii-batch-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../cli:/usr/local/worker-cli
@@ -18,7 +18,7 @@ services:
                 condition: service_healthy
         networks:
             - litentry-test-network
-        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-substrate-ii-identity 2>&1' "
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-ii-batch 2>&1' "
         restart: "no"
 networks:
     litentry-test-network:

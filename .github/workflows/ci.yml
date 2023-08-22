@@ -580,12 +580,12 @@ jobs:
           - test_name: lit-user-shielding-key
           - test_name: lit-resume-worker
           - test_name: lit-set-heartbeat-timeout
-          - test_name: lit-vc-test
-          - test_name: lit-identity-test
-          - test_name: lit-substrate-ii-identity-test
-          - test_name: lit-evm-ii-identity-test
+          - test_name: lit-ii-vc-test
+          - test_name: lit-ii-identity-test
+          - test_name: lit-di-substrate-identity-test
+          - test_name: lit-di-evm-identity-test
           - test_name: lit-parentchain-nonce
-          - test_name: lit-batch-test
+          - test_name: lit-ii-batch-test
 
     steps:
       - uses: actions/checkout@v3
