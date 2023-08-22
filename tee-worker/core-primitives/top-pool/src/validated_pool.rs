@@ -693,8 +693,8 @@ where
 		}
 	}
 
-	pub fn set_rpc_response_value(&self, rpc_responses_value: Vec<(ExtrinsicHash<B>, Vec<u8>)>) {
-		for (top_hash, encoded_value) in rpc_responses_value {
+	pub fn set_rpc_response_value(&self, rpc_response_value: Vec<(ExtrinsicHash<B>, Vec<u8>)>) {
+		for (top_hash, encoded_value) in rpc_response_value {
 			self.listener.write().unwrap().set_rpc_response_value(&top_hash, encoded_value);
 		}
 	}

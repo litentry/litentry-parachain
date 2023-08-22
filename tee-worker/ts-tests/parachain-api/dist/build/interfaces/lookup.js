@@ -2162,6 +2162,7 @@ export default {
 			A13: "AccountId32",
 			A14: "Null",
 			Achainable: "CorePrimitivesAssertionAchainableParams",
+			A20: "Null",
 		},
 	},
 	/**
