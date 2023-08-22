@@ -267,9 +267,9 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
 }
 
 /* 
-    assert linked event
+    Compares ordered identities with corresponding ordered events
 
-    steps:
+    for each event following steps are executed:
     1. compare event account with signer
     2. compare event identity with expected identity
     3. compare event prime identity with expected prime identity
@@ -283,6 +283,14 @@ export async function assertLinkedEvent(
     events: any[],
     expectedIdentities: LitentryPrimitivesIdentity[]
 ) {
+    events.forEach((ev) => {
+        console.log(ev.toHuman());
+    });
+
+    expectedIdentities.forEach((i) => {
+        console.log(i.toHuman());
+    });
+
     assert.isAtLeast(events.length, 1, 'Check assertLinkedEvent error: events length should be greater than 1');
 
     const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);

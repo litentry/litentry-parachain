@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod activate_identity;
+mod args_executor;
 pub mod deactivate_identity;
 pub mod link_identity;
 pub mod request_vc;

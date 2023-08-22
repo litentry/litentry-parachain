@@ -1,6 +1,6 @@
 name: General CI
 
-# this file is a joint CI of parachain and tee-worker, it contains:
+# This file is a joint CI of parachain and tee-worker, it contains:
 # - build (of docker images)
 # - format check
 # - unit tests
@@ -166,6 +166,14 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
+
+      - name: Tee-worker install npm deps
+        working-directory: ./tee-worker/ts-tests
+        run: corepack yarn install
+
+      - name: Tee-worker check ts code format
+        working-directory: ./tee-worker/ts-tests
+        run: corepack yarn check-format
 
       - name: Fail early
         if: failure()
@@ -455,11 +463,28 @@ jobs:
         run: |
           make test-ts-docker-${{ matrix.chain }}
 
+      - name: Collect docker logs if test fails
+        continue-on-error: true
+        uses: jwalton/gh-docker-logs@v2
+        if: failure()
+        with:
+          tail: all
+          dest: docker-logs
+
+      - name: Upload docker logs if test fails
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: ${{ matrix.chain }}-ts-tests-docker-logs
+          path: docker-logs
+          if-no-files-found: ignore
+          retention-days: 3
+
       - name: Archive logs if test fails
         uses: actions/upload-artifact@v3
         if: failure()
         with:
-          name: ${{ matrix.chain }}-ts-tests-artifacts
+          name: ${{ matrix.chain }}-ts-tests-artifact
           path: /tmp/parachain_dev/
           if-no-files-found: ignore
           retention-days: 3
@@ -555,12 +580,12 @@ jobs:
           - test_name: lit-user-shielding-key
           - test_name: lit-resume-worker
           - test_name: lit-set-heartbeat-timeout
-          - test_name: lit-vc-test
-          - test_name: lit-identity-test
-          - test_name: lit-substrate-ii-identity-test
-          - test_name: lit-evm-ii-identity-test
+          - test_name: lit-ii-vc-test
+          - test_name: lit-ii-identity-test
+          - test_name: lit-di-substrate-identity-test
+          - test_name: lit-di-evm-identity-test
           - test_name: lit-parentchain-nonce
-          - test_name: lit-batch-test
+          - test_name: lit-ii-batch-test
 
     steps:
       - uses: actions/checkout@v3
