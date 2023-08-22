@@ -16,6 +16,7 @@ import {
     requestVc4,
 } from "src/steps";
 import { newUserSession } from "src/user-session";
+import { assert } from "chai";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
@@ -164,7 +165,17 @@ describe("load test runner", () => {
             jobs.push(newProcess());
         }
         await Promise.all(jobs);
-    });
 
-    const measurementsByGroup = Object.grou;
+        assert.equal(measurementCounts.size, 6);
+        assert.equal(measurementCounts.get("setShieldingKey"), 3);
+        [
+            "linkIdentity",
+            "requestVc1",
+            "requestVc4",
+            "deactivateIdentity",
+            "activateIdentity",
+        ].forEach((label) => {
+            assert.equal(measurementCounts.get(label), 6);
+        });
+    });
 });
