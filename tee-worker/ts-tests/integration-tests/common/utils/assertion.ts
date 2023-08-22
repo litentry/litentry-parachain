@@ -13,7 +13,7 @@ import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
 import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
-import { Signer } from './crypto'
+import { Signer } from './crypto';
 export async function assertFailedEvent(
     context: IntegrationTestContext,
     events: FrameSystemEventRecord[],
@@ -46,7 +46,7 @@ export async function assertFailedEvent(
 }
 export async function assertInitialIdGraphCreated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     assert.isAtLeast(events.length, 1, 'Check InitialIDGraph error: events length should be greater than 1');
-    const keyringType = signer.type()
+    const keyringType = signer.type();
 
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
