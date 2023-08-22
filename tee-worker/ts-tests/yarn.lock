@@ -4098,7 +4098,6 @@ __metadata:
     js-base64: ^3.7.5
     micro-base58: ^0.5.1
     mocha: ^10.1.0
-    mocha-steps: ^1.3.0
     parachain-api: "workspace:*"
     prettier: 2.8.1
     scale-ts: ^0.2.11
