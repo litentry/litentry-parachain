@@ -15,6 +15,7 @@ class Worker:
         cwd: str = "./",
         source_dir: str = "./",
         std_err: Union[None, int, IO] = STDOUT,
+        log_level_dic: {} = {},
     ):
         """
         litentry-worker wrapper.
@@ -39,6 +40,7 @@ class Worker:
         self.std_err = std_err
         # cache fields
         self._mrenclave = None
+        self.log_level_dic = log_level_dic
 
     def setup_cwd(self):
         mkdir_p(self.cwd)
@@ -68,6 +70,7 @@ class Worker:
             return "Shard exists already, will not initialize."
 
         return run_subprocess(
+            self.log_level_dic['litentry-cli'],
             self.cli + ["init-shard", shard],
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -137,6 +140,7 @@ class Worker:
         if not self._mrenclave:
             # `std_out` needs to be subProcess.PIPE here!
             self._mrenclave = run_subprocess(
+                self.log_level_dic['litentry-cli'],
                 self.cli + ["mrenclave"],
                 stdout=subprocess.PIPE,
                 stderr=self.std_err,
@@ -146,6 +150,7 @@ class Worker:
 
     def write_shielding_pub(self):
         return run_subprocess(
+            self.log_level_dic['litentry-cli'],
             self.cli + ["shielding-key"],
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -154,6 +159,7 @@ class Worker:
 
     def write_signer_pub(self):
         return run_subprocess(
+            self.log_level_dic['litentry-cli'],
             self.cli + ["signing-key"],
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -169,6 +175,7 @@ class Worker:
             subcommand_flags = ["request-state"]
 
         return run_subprocess(
+            self.log_level_dic['litentry-cli'],
             self.cli + flags + subcommand_flags,
             stdout=subprocess.PIPE,
             stderr=self.std_err,
@@ -186,17 +193,9 @@ class Worker:
         :return: process handle for the spawned background process.
         """
 
-        # TODO: make this configurable
         env = dict(
             os.environ,
-            RUST_LOG="info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,"
-            "itc_parentchain_light_client=info,"
-            "jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,"
-            "its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,"
-            "its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itc_direct_rpc_server=debug,"
-            "itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,"
-            "lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,"
-            "lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug,",
+            RUST_LOG=self.log_level_dic['litentry-worker'],
         )
 
         worker_cmd = self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags)

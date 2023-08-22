@@ -120,6 +120,10 @@ where
 			batch_execution_result.get_executed_operation_hashes().to_vec();
 		let number_executed_transactions = executed_operation_hashes.len();
 
+		// store the rpc response value to top pool
+		let rpc_responses_values = batch_execution_result.get_rpc_responses_values();
+		self.top_pool_author.set_rpc_response_value(rpc_responses_values);
+
 		// Remove all not successfully executed operations from the top pool.
 		let failed_operations = batch_execution_result.get_failed_operations();
 		self.top_pool_author.remove_calls_from_pool(
@@ -132,10 +136,6 @@ where
 				})
 				.collect(),
 		);
-
-		// store the rpc response value to top pool
-		let rpc_responses_value = batch_execution_result.get_rpc_responses_values();
-		self.top_pool_author.set_rpc_response_value(rpc_responses_value);
 
 		// 3) Compose sidechain block.
 		let sidechain_block = self

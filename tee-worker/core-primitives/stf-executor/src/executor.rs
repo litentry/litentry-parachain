@@ -31,7 +31,7 @@ use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
-	ExecuteCall, StateCallInterface, UpdateState,
+	EncodeResult, ExecuteCall, StateCallInterface, UpdateState,
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -96,19 +96,22 @@ where
 		let mrenclave = self.ocall_api.get_mrenclave_of_self()?;
 
 		let top_or_hash = TrustedOperationOrHash::from_top(trusted_operation.clone());
+		let operation_hash = trusted_operation.hash();
+		debug!("Operation hash {:?}", operation_hash);
+
 
 		// TODO(Litentry): do we need to send any error notification to parachain?
 		let trusted_call = match trusted_operation.to_call().ok_or(Error::InvalidTrustedCallType) {
 			Ok(c) => c,
 			Err(e) => {
 				error!("Error: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
+				return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, vec![], vec![]))
 			},
 		};
 
 		if !trusted_call.verify_signature(&mrenclave.m, &shard) {
 			error!("TrustedCallSigned: bad signature");
-			return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
+			return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, vec![], vec![]))
 		}
 
 		// Necessary because light client sync may not be up to date
@@ -126,7 +129,7 @@ where
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		let rpc_response_value = match Stf::execute_call(
+		return match Stf::execute_call(
 			state,
 			shard,
 			trusted_call.clone(),
@@ -136,19 +139,34 @@ where
 		) {
 			Err(e) => {
 				error!("Stf execute failed: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash, extrinsic_call_backs))
+				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
+					TrustedOperationResponse {
+						req_ext_hash: h.clone(),
+						value: e.encode()
+					}.encode()
+				}).unwrap_or_default();
+				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
-			Ok(res) => res,
+			Ok(result) => {
+				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
+					let encoded_result = result.get_encoded_result();
+					// if the result is true, we need to store raw result instead of response so rpc_responder can continue watching, see rpc_responder
+					if encoded_result == true.encode() {
+						encoded_result
+					} else {
+						TrustedOperationResponse {
+							req_ext_hash: h.clone(),
+							value: encoded_result
+						}.encode()
+					}
+				}).unwrap_or_default();
+
+				if let StatePostProcessing::Prune = post_processing {
+					state.prune_state_diff();
+				}
+				Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
+			},
 		};
-
-		let operation_hash = trusted_operation.hash();
-		debug!("Operation hash {:?}", operation_hash);
-
-		if let StatePostProcessing::Prune = post_processing {
-			state.prune_state_diff();
-		}
-
-		Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 	}
 }
 
@@ -312,4 +330,10 @@ fn into_map(
 	storage_entries: Vec<StorageEntryVerified<Vec<u8>>>,
 ) -> BTreeMap<Vec<u8>, Option<Vec<u8>>> {
 	storage_entries.into_iter().map(|e| e.into_tuple()).collect()
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub(crate) struct TrustedOperationResponse {
+	pub req_ext_hash: H256,
+	pub value: Vec<u8>,
 }
