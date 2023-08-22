@@ -140,7 +140,7 @@ where
 			Err(e) => {
 				error!("Stf execute failed: {:?}", e);
 				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
-					Response {
+					TrustedOperationResponse {
 						req_ext_hash: h.clone(),
 						value: e.encode()
 					}.encode()
@@ -150,10 +150,11 @@ where
 			Ok(result) => {
 				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
 					let encoded_result = result.get_encoded_result();
+					// if the result is true, we need to store raw result instead of response so rpc_responder can continue watching, see rpc_responder
 					if encoded_result == true.encode() {
 						encoded_result
 					} else {
-						Response {
+						TrustedOperationResponse {
 							req_ext_hash: h.clone(),
 							value: encoded_result
 						}.encode()
@@ -332,7 +333,7 @@ fn into_map(
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct Response {
+pub(crate) struct TrustedOperationResponse {
 	pub req_ext_hash: H256,
 	pub value: Vec<u8>,
 }
