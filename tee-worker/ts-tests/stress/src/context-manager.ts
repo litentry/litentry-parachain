@@ -16,7 +16,7 @@ export class ContextManager<Context extends {}> {
         try {
             return await task(context);
         } finally {
-            exit();
+            await exit();
         }
     }
 
