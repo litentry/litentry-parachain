@@ -16,7 +16,7 @@ import {
     CorePrimitivesErrorErrorDetail,
     FrameSystemEventRecord,
     WorkerRpcReturnValue,
-    RequestVCResponse,
+    RequestVCResult,
     PalletVcManagementVcContext,
     StfError,
     TrustedOperationResponse,
@@ -417,7 +417,7 @@ export function assertIdentityLinkedResult(
 */
 
 export async function assertVc(context: IntegrationTestContext, signer: Signer, data: Bytes) {
-    const vc = context.api.createType('RequestVCResponse', data) as unknown as RequestVCResponse;
+    const vc = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
 
     const vcHash = vc.vc_hash.toString();
     const signerAddress = u8aToHex(signer.getAddressRaw());

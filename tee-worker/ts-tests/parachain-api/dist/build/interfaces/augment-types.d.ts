@@ -1209,6 +1209,7 @@ import type {
     Address32,
     AesOutput,
     Assertion,
+    AssertionSupportedNetwork,
     BoundedWeb3Network,
     DeactivateIdentityResult,
     DirectRequestStatus,
