@@ -10,6 +10,14 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     console.log(`Test Balance Transfer`);
 
     step('Transfer Value from Eve to EVM external account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            await signAndSend(extrinsic, context.alice);
+        }
+
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
             context.eve.address
@@ -38,9 +46,22 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(BigInt(value));
+
+        
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
     });
 
     step('Deploy and test contract by EVM external account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            await signAndSend(extrinsic, context.alice);
+        }
+
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
@@ -139,6 +160,9 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const sayMsg = await sayMessage(deployedContract);
         const setResult = (sayMsg === 'Goodbye World') ? 1 : 0;
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
-        
+
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
     });
 });

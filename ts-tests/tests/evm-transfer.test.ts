@@ -10,6 +10,14 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     console.log(`Test Balance Transfer`);
 
     step('Transfer Value from Eve to EVM external account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            await signAndSend(extrinsic, context.alice);
+        }
+
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
             context.eve.address
@@ -28,53 +36,6 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
         await signAndSend(tx, context.eve);
-        let expectResult = false;
-        const block = await context.api.rpc.chain.getBlock();
-        const blockNumber = block.block.header.number;
-        const unsubscribe = await context.api.rpc.chain.subscribeNewHeads(async (header) => {
-            console.log(`Chain is at block: #${header.number}`);
-            const signedBlock = await context.api.rpc.chain.getBlock(header.hash);
-            const apiAt = await context.api.at(signedBlock.block.header.hash);
-            const allRecords = await apiAt.query.system.events();
-            if (header.number.toNumber() > blockNumber.toNumber() + 4) {
-                unsubscribe();
-                assert.fail('expect the transaction fail in the last 4 blocks, but not found');
-            }
-            signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (!(ex.method.section === 'evm' && ex.method.method === 'call')) {
-                    return;
-                }
-                allRecords
-                    .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
-                    .forEach(({ event }) => {
-                        if (context.api.events.system.ExtrinsicFailed.is(event)) {
-                            const [dispatchError, dispatchInfo] = event.data;
-                            let errorInfo;
-                            // decode the error
-                            if (dispatchError.isModule) {
-                                // for module errors, we have the section indexed, lookup
-                                // (For specific known errors, we can also do a check against the
-                                // api.errors.<module>.<ErrorName>.is(dispatchError.asModule) guard)
-                                const decoded = context.api.registry.findMetaError(
-                                    dispatchError.asModule
-                                );
-                                errorInfo = `${decoded.section}.${decoded.name}`;
-                            } else {
-                                // Other, CannotLookup, BadOrigin, no extra info
-                                errorInfo = dispatchError.toString();
-                            }
-                            expectResult = true;
-                            console.log(`evm.call:: ExtrinsicFailed:: ${errorInfo}`);
-                            return;
-                        }
-                    });
-            });
-            if (expectResult) {
-                unsubscribe();
-                assert.exists('');
-            }
-        });
-        await sleep(39);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
@@ -85,9 +46,21 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
 
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(BigInt(value));
+
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
     });
 
     step('Transfer some value back to Eve Mapped account from EVM external account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            await signAndSend(extrinsic, context.alice);
+        }
+
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
             context.eve.address
@@ -133,9 +106,22 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
 
         expect(evmAccountCurrentNonce.toNumber()).to.equal(evmAccountInitNonce.toNumber() + 1);
         expect(eveCurrentBalance.free.toBigInt()).to.equal(eveInitBalance.free.toBigInt() + BigInt(100000000000));
+
+        
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
     });
 
     step('Test evm signature can not access ultra vires evm account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            await signAndSend(extrinsic, context.alice);
+        }
+
         // EVM account 1
         const evmAccountRaw = {
             privateKey: '0x7daadde6e9d1377640070b143cfbde103b078c008d35ee2c7ed989878f2187c7',
@@ -164,9 +150,21 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // Expect EVM revert
         assert(!transferReceipt.status, "Transaction with wrong signature succeed");
 
+        
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
     });
 
     step('Test substrate signature can not access ultra vires evm/substrate account', async function () {
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We do not test mode in initialization since ts-test concerns filter function too.
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+        if ('Test' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            await signAndSend(extrinsic, context.alice);
+        }
+
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
             context.eve.address
@@ -201,5 +199,9 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         // Which means balance unchanged
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt());
+
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
+        await signAndSend(extrinsic, context.alice);
     });
 });

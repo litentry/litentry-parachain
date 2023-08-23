@@ -1385,7 +1385,10 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::cancel_candidate_bond_less { .. }) |
 			// Group
 			RuntimeCall::IMPExtrinsicWhitelist(_) |
-			RuntimeCall::VCMPExtrinsicWhitelist(_)
+			RuntimeCall::VCMPExtrinsicWhitelist(_) |
+			// EVM
+			RuntimeCall::EVM(_) |
+			RuntimeCall::Ethereum(_)
 		)
 	}
 }
