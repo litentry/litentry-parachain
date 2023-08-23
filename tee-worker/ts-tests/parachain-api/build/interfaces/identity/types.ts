@@ -49,7 +49,7 @@ export interface Assertion extends Enum {
     readonly isA3: boolean;
     readonly asA3: ITuple<[Bytes, Bytes, Bytes]>;
     readonly isA4: boolean;
-    readonly asA4: Bytes;
+    readonly asA4: u128;
     readonly isA5: boolean;
     readonly asA5: ITuple<[Bytes, Bytes]>;
     readonly isA6: boolean;

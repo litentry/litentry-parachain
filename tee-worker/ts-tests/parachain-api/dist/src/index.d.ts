@@ -14,7 +14,6 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
-    PublicGetter,
     TrustedOperationResponse,
     StfError,
     LinkIdentityResult,

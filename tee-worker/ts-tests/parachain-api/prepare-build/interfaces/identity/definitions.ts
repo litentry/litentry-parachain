@@ -192,7 +192,7 @@ export default {
                 A1: "Null",
                 A2: "Bytes",
                 A3: "(Bytes,Bytes,Bytes)",
-                A4: "Bytes",
+                A4: "u128",
                 A5: "(Bytes,Bytes)",
                 A6: "Null",
                 A7: "u128",
