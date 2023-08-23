@@ -4,7 +4,7 @@ import {
     definitions as teeTypes,
 } from "parachain-api";
 import { initWorkerConnection, getSidechainMetadata, getEnclave, Api } from "./litentry-api";
-import { ContextManager } from "src/context-manager";
+import { ContextManager } from "./context-manager";
 import { withRetry } from "./util/with-retry";
 
 export const apiContextManager = (

@@ -1,8 +1,8 @@
 import { LitentryPrimitivesIdentity } from "sidechain-api";
 import { Index } from "@polkadot/types/interfaces";
 import { buildIdentityFromWallet, getSidechainNonce, Wallet, Api } from "./litentry-api";
-import { Runner } from "src/measurement";
-import { setShieldingKey } from "src/steps";
+import { Runner } from "./measurement";
+import { setShieldingKey } from "./steps";
 
 export type UserSession = {
     primary: Wallet;

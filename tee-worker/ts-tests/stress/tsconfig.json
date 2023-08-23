@@ -12,7 +12,7 @@
 		"baseUrl": "."
 	},
 	"paths": {
-		"parachain-api/*": ["../parachain-api/src/*", "../parachain-api/build/*"],
+		"parachain-api/*": ["../parachain-api/dist/*", "../parachain-api/build/*"],
 		"sidechain-api/*": ["../sidechain-api/src/*", "../sidechain-api/build/*"]
 	},
 	"references": [{ "path": "../parachain-api" }, { "path": "../sidechain-api" }],

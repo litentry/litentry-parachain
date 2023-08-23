@@ -5,9 +5,9 @@
 	"scripts": {
 		"format": "yarn prettier --write .",
 		"check-format": "yarn prettier --check .",
-		"run": "NODE_TLS_REJECT_UNAUTHORIZED=0 ts-node bin/stress.ts",
-		"test-stress-script:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'test/test.ts'",
-		"test-stress-script:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'test/test.ts'",
+		"run-script": "NODE_TLS_REJECT_UNAUTHORIZED=0 ts-node bin/stress.ts",
+		"test-stress-script:local": "cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'test/test.ts'",
+		"test-stress-script:staging": "cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'test/test.ts'",
 		"preinstall": "npx only-allow yarn"
 	},
 	"dependencies": {

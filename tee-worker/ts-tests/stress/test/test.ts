@@ -1,21 +1,20 @@
+import crypto from "crypto";
 import dotenv from "dotenv";
-
 import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
-import { apiContextManager } from "src/api-context-manager";
-
-import { Config } from "src/config";
-import { processQueue, repeat } from "src/job-queue";
-import { Measurement, newTimedRunner } from "src/measurement";
-import { randomWallet } from "src/random-wallet";
+import { apiContextManager } from "../src/api-context-manager";
+import { Config } from "../src/config";
+import { processQueue, repeat } from "../src/job-queue";
+import { Measurement, newTimedRunner } from "../src/measurement";
+import { randomWallet } from "../src/random-wallet";
 import {
     activateIdentity,
     deactivateIdentity,
     linkIdentity,
     requestVc1,
     requestVc4,
-} from "src/steps";
-import { newUserSession } from "src/user-session";
+} from "../src/steps";
+import { newUserSession } from "../src/user-session";
 import { assert } from "chai";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef

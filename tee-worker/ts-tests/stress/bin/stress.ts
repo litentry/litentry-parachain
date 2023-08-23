@@ -2,12 +2,12 @@ import { u8aToHex } from "@polkadot/util";
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 import crypto from "crypto";
 import { Api } from "../src/litentry-api";
-import { processQueue, repeat } from "src/job-queue";
-import { Measurement, Runner, newTimedRunner } from "src/measurement";
-import { linkIdentity, requestVc1, requestVc4 } from "src/steps";
+import { processQueue, repeat } from "../src/job-queue";
+import { Measurement, Runner, newTimedRunner } from "../src/measurement";
+import { linkIdentity, requestVc1, requestVc4 } from "../src/steps";
 import { apiContextManager } from "../src/api-context-manager";
 import { UserSession, newUserSession } from "../src/user-session";
-import { randomWallet } from "src/random-wallet";
+import { randomWallet } from "../src/random-wallet";
 import { loadConfig } from "../src/config";
 
 const newStepGenerator = (
@@ -67,7 +67,8 @@ const newStepGenerator = (
 };
 
 async function main() {
-    const config = loadConfig(process.argv[0]);
+    console.warn(process.argv);
+    const config = loadConfig(process.argv[process.argv.length - 1]);
 
     const log = new WritableStream<string>({
         write: (chunk) => {
