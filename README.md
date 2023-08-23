@@ -1,4 +1,5 @@
 # Litentry Parachain
+![](https://res.cloudinary.com/brandpad/image/upload/c_scale,dpr_auto,f_auto,w_768/v1673016042/19618/parachain-logo-color-black-t)
 
 [![general ci](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml)
 [![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
@@ -9,9 +10,9 @@ A parachain is an application-specific data structure that is globally coherent 
 
 Basically, parachains are layer-1 blockchains that connect to the relaychains (Polkadot or Kusama), which validates the state transition of connected parachains, providing a shared state across the entire ecosystem. Since the validator set on the relaychain is expected to be secure with a large amount of stake put up to back it, it is desirable for parachains to benefit from this shared security.
 
-To achieve identity aggregation, Litentry has a requirement of storing sensitive user data, like web3 addresses, computed credit scores, and VCs in the trusted execution environment (TEE). Litentry builds a TEE side chain for this purpose and it is composed of multiple TEE-equipped nodes, to guarantee the security of data storage and data processing without exposing users' private data. A core component of this is the Litentry TEE worker which is based on Integritee's worker. It executes functions with specified inputs and resource limits in response to TEE calls and operations to ensure a sufficient level of scaling.
+To achieve identity aggregation, Litentry has a requirement to store sensitive user data, like web3 addresses, computed credit scores, and VCs in the trusted execution environment (TEE). Litentry builds a TEE side chain for this purpose and it is composed of multiple TEE-equipped nodes, to guarantee the security of data storage and data processing without exposing users' private data. A core component of this is the Litentry TEE worker which is based on Integritee's worker. It executes functions with specified inputs and resource limits in response to TEE calls and operations to ensure a sufficient level of scaling.
 
-Overall, our architecture is made of up Relaychains ( Polkadot and Kusama), Parachains (Litentry and Litmus), and the TEE sidechain which is supported by Integritee and enables the runtime to execute in an SGX secure run environment.
+Overall, our architecture is made of up Relaychains ( Polkadot and Kusama), Parachains (Litentry and Litmus), and the TEE sidechain which is supported by  and enables the runtime to execute in an SGX secure run environment.
 
 To serve as the backbone platform for various Litentry products and achieve a transparent and decentralized user experience, we have different chain-specs/runtimes compiled into one single binary. They are:
 
@@ -59,19 +60,10 @@ The wasms should be located under `target/release/wbuild/litentry-parachain-runt
 
 Similarly, use `make build-runtime-litmus` and `make build-runtime-rococo` to build the litmus-parachain-runtime and rococo-parachain-runtime, respectively.
 
-## Launch a standalone node
-
-Simply run
-
-```
-make launch-standalone
-```
-
-A standalone node will be launched without relaychain, where blocks are finalized immediately. The node is accessible via ws 9944 port.
 
 ## Launch a local network with relaychain + parachain
 
-We take rococo-parachain for example, but generally speaking, launching a local network works with either of the three chain-settings.
+Take rococo-parachain for example, but generally speaking, launching a local network works with either of the three chain-settings.
 
 To start a local network with 2 relaychain nodes and 1 parachain node, there're two ways:
 
@@ -97,7 +89,7 @@ to stop the processes and tidy things up.
 
 Only when option 1 doesn't work and you suspect the docker-image went wrong.
 
-In this case we could try to launch the network with raw binaries.
+In this case, try to launch the network with raw binaries.
 
 **On Linux host:**
 
@@ -154,18 +146,11 @@ GPLv3
 
 ## Preparation
 
-1. env: [Setup **SGX TEE** Environment](https://web3builders.notion.site/Setup-SGX-TEE-Environment-68066770831b45b7b632e682cf159477?pvs=4) 
-2. add VSCode configs for indexing and parsing tee-worker codes
-
-```
-"rust-analyzer.linkedProjects": [
-        "tee-worker/Cargo.toml"
-    ],
-```
+- Env: [Setup **SGX TEE** Environment](https://web3builders.notion.site/Setup-SGX-TEE-Environment-68066770831b45b7b632e682cf159477?pvs=4) 
 
 ## Build
 
-We need to build the `integritee-service` before we launch the entire system
+The `Litentry-worker` needs to be built before the launch of the entire system
 
 ```
 git clone https://github.com/litentry/litentry-parachain
@@ -182,7 +167,7 @@ In order to create a local docker setup, you can run the following command
 ```
 ./local-setup/launch.py local-setup/github-action-config-one-worker.json
 ```
-This will create three docker containers, 2 Relay Chain Validators and 1 Parachain Collator. However it will be using the default ports as present in .env.dev . If you want to run the system by offseting the default ports by a certain value. You can run this command instead:
+This will create three docker containers, 2 Relay Chain Validators, and 1 Parachain Collator. However, it will be using the default ports as present in .env.dev. If you want to run the system by offsetting the default ports by a certain value. You can run this command instead:
 
 ```
 ./local-setup/launch.py local-setup/development-worker.json local-docker 100
@@ -196,7 +181,7 @@ In order to create a local binary setup, using default ports, you can run the fo
 ./local-setup/launch.py local-setup/github-action-config-one-worker.json local-binary
 ```
 
-If you want to launch the same system by offseting the port values, you can use this command 
+If you want to launch the same system by offsetting the port values, you can use this command 
 ```
 ./local-setup/launch.py local-setup/development-worker.json local-binary 100
 ```
@@ -216,15 +201,12 @@ cargo build --release --features "skip-extrinsic-filtering skip-ias-check skip-s
 
 `--rpc-port` is used to set the rpc port and `--ws-port` is used to set the ws port for the node. You then have to update the `config.json` with the port that is being used and then run the command 
 
-**Note: The `Integritee-Node` is not maintained by Parachain Team actively, Please check the repository if it has all the latest updates from `Lintentry-Parachain` .**
+**Note: The `Integritee-Node` is not maintained by Parachain Team actively, Please check the [repository]([url](https://github.com/litentry/integritee-node)) if it has all the latest updates from `Litentry-Parachain` .**
 
 ### TEE Worker Tests 
-```
-cd ./litentry-parachain/tee-worker/ts-tests
-nvm use
-corepack yarn install
-corepack yarn run test-identity:local # example
-```
+
+Refer to [tee-worker ts-tests](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/ts-tests/README.md)
+
 ### Clean-up
 
 In the worker launch terminal, `Ctrl + C` should interrupt and clean everything up automatically.
@@ -249,5 +231,5 @@ make clean-binary
 ### Additional Info:
 
 1. Change the RUST_LOG level: `litentry-parachain/tee-worker/local-setup/py/worker.py`
-2. Check existed ts-tests: `litentry-parachain/tee-worker/ts-tests/package.json`
+2. Check existing ts-tests: `litentry-parachain/tee-worker/ts-tests/package.json`
 3. JSON config parameters: `litentry-parachain/tee-worker/service/src/cli.yml`
