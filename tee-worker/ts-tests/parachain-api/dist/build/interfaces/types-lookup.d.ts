@@ -2829,6 +2829,7 @@ declare module "@polkadot/types/lookup" {
         readonly isA14: boolean;
         readonly isAchainable: boolean;
         readonly asAchainable: CorePrimitivesAssertionAchainableParams;
+        readonly isA20: boolean;
         readonly type:
             | "A1"
             | "A2"
@@ -2842,7 +2843,8 @@ declare module "@polkadot/types/lookup" {
             | "A11"
             | "A13"
             | "A14"
-            | "Achainable";
+            | "Achainable"
+            | "A20";
     }
     /** @name CorePrimitivesNetworkWeb3Network (149) */
     interface CorePrimitivesNetworkWeb3Network extends Enum {

@@ -1,7 +1,17 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Bytes, Enum, Struct, U8aFixed, Vec, bool, u32 } from "@polkadot/types-codec";
+import type {
+    Bytes,
+    Enum,
+    Struct,
+    Text,
+    U8aFixed,
+    Vec,
+    bool,
+    u128,
+    u32,
+} from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
 import type {
@@ -10,20 +20,20 @@ import type {
     Balance,
     BlockNumber,
     H256,
+    Index,
 } from "@polkadot/types/interfaces/runtime";
 
-/** @name ActivateIdentityResponse */
-export interface ActivateIdentityResponse extends Struct {
+/** @name ActivateIdentityResult */
+export interface ActivateIdentityResult extends Struct {
     readonly account: AccountId;
     readonly identity: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name Address20 */
-export interface Address20 extends U8aFixed {}
+export interface Address20 extends U8aFixed { }
 
 /** @name Address32 */
-export interface Address32 extends U8aFixed {}
+export interface Address32 extends U8aFixed { }
 
 /** @name AesOutput */
 export interface AesOutput extends Struct {
@@ -57,19 +67,19 @@ export interface Assertion extends Enum {
     readonly asA13: AccountId32;
     readonly isA14: boolean;
     readonly type:
-        | "A1"
-        | "A2"
-        | "A3"
-        | "A4"
-        | "A6"
-        | "A7"
-        | "A8"
-        | "A9"
-        | "A10"
-        | "A11"
-        | "A12"
-        | "A13"
-        | "A14";
+    | "A1"
+    | "A2"
+    | "A3"
+    | "A4"
+    | "A6"
+    | "A7"
+    | "A8"
+    | "A9"
+    | "A10"
+    | "A11"
+    | "A12"
+    | "A13"
+    | "A14";
 }
 
 /** @name AssertionSupportedNetwork */
@@ -83,24 +93,23 @@ export interface AssertionSupportedNetwork extends Enum {
     readonly isEthereum: boolean;
     readonly isTestNet: boolean;
     readonly type:
-        | "Litentry"
-        | "Litmus"
-        | "LitentryRococo"
-        | "Polkadot"
-        | "Kusama"
-        | "Khala"
-        | "Ethereum"
-        | "TestNet";
+    | "Litentry"
+    | "Litmus"
+    | "LitentryRococo"
+    | "Polkadot"
+    | "Kusama"
+    | "Khala"
+    | "Ethereum"
+    | "TestNet";
 }
 
 /** @name BoundedWeb3Network */
-export interface BoundedWeb3Network extends Vec<Web3Network> {}
+export interface BoundedWeb3Network extends Vec<Web3Network> { }
 
-/** @name DeactivateIdentityResponse */
-export interface DeactivateIdentityResponse extends Struct {
+/** @name DeactivateIdentityResult */
+export interface DeactivateIdentityResult extends Struct {
     readonly account: AccountId;
     readonly identity: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name DirectRequestStatus */
@@ -119,8 +128,45 @@ export interface DiscordValidationData extends Struct {
     readonly guild_id: Bytes;
 }
 
+/** @name ErrorDetail */
+export interface ErrorDetail extends Enum {
+    readonly isImportError: boolean;
+    readonly isUnauthorizedSigner: boolean;
+    readonly isStfError: boolean;
+    readonly asStfError: Bytes;
+    readonly isSendStfRequestFailed: boolean;
+    readonly isUserShieldingKeyNotFound: boolean;
+    readonly isParseError: boolean;
+    readonly isDataProviderError: boolean;
+    readonly asDataProviderError: Bytes;
+    readonly isInvalidIdentity: boolean;
+    readonly isWrongWeb2Handle: boolean;
+    readonly isUnexpectedMessage: boolean;
+    readonly isWrongSignatureType: boolean;
+    readonly isVerifySubstrateSignatureFailed: boolean;
+    readonly isVerifyEvmSignatureFailed: boolean;
+    readonly isRecoverEvmAddressFailed: boolean;
+    readonly isWeb3NetworkOutOfBounds: boolean;
+    readonly type:
+    | "ImportError"
+    | "UnauthorizedSigner"
+    | "StfError"
+    | "SendStfRequestFailed"
+    | "UserShieldingKeyNotFound"
+    | "ParseError"
+    | "DataProviderError"
+    | "InvalidIdentity"
+    | "WrongWeb2Handle"
+    | "UnexpectedMessage"
+    | "WrongSignatureType"
+    | "VerifySubstrateSignatureFailed"
+    | "VerifyEvmSignatureFailed"
+    | "RecoverEvmAddressFailed"
+    | "Web3NetworkOutOfBounds";
+}
+
 /** @name EthereumSignature */
-export interface EthereumSignature extends U8aFixed {}
+export interface EthereumSignature extends U8aFixed { }
 
 /** @name GenericEventWithAccount */
 export interface GenericEventWithAccount extends Struct {
@@ -158,14 +204,13 @@ export interface IdentityStatus extends Enum {
 }
 
 /** @name IdentityString */
-export interface IdentityString extends Bytes {}
+export interface IdentityString extends Bytes { }
 
-/** @name LinkIdentityResponse */
-export interface LinkIdentityResponse extends Struct {
+/** @name LinkIdentityResult */
+export interface LinkIdentityResult extends Struct {
     readonly account: AccountId;
     readonly identity: AesOutput;
     readonly id_graph: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name LitentryIdentity */
@@ -222,30 +267,71 @@ export interface Request extends Struct {
     readonly cyphertext: Bytes;
 }
 
-/** @name RequestVCResponse */
-export interface RequestVCResponse extends Struct {
+/** @name RequestVCResult */
+export interface RequestVCResult extends Struct {
     readonly account: AccountId;
     readonly assertion: Assertion;
     readonly vc_index: H256;
     readonly vc_hash: H256;
     readonly vc_payload: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
-/** @name SetIdentityNetworksResponse */
-export interface SetIdentityNetworksResponse extends Struct {
-    readonly req_ext_hash: H256;
-}
-
-/** @name SetUserShieldingKeyResponse */
-export interface SetUserShieldingKeyResponse extends Struct {
+/** @name SetUserShieldingKeyResult */
+export interface SetUserShieldingKeyResult extends Struct {
     readonly account: AccountId;
     readonly id_graph: AesOutput;
-    readonly req_ext_hash: H256;
 }
 
 /** @name ShardIdentifier */
-export interface ShardIdentifier extends H256 {}
+export interface ShardIdentifier extends H256 { }
+
+/** @name StfError */
+export interface StfError extends Enum {
+    readonly isMissingPrivileges: boolean;
+    readonly asMissingPrivileges: LitentryIdentity;
+    readonly isRequireEnclaveSignerAccount: boolean;
+    readonly isDispatch: boolean;
+    readonly asDispatch: Text;
+    readonly isMissingFunds: boolean;
+    readonly isInvalidNonce: boolean;
+    readonly asInvalidNonce: ITuple<[Index, Index]>;
+    readonly isStorageHashMismatch: boolean;
+    readonly isInvalidStorageDiff: boolean;
+    readonly isInvalidMetadata: boolean;
+    readonly isSetUserShieldingKeyFailed: boolean;
+    readonly asSetUserShieldingKeyFailed: ErrorDetail;
+    readonly isLinkIdentityFailed: boolean;
+    readonly asLinkIdentityFailed: ErrorDetail;
+    readonly isDeactivateIdentityFailed: boolean;
+    readonly asDeactivateIdentityFailed: ErrorDetail;
+    readonly isActivateIdentityFailed: boolean;
+    readonly asActivateIdentityFailed: ErrorDetail;
+    readonly isRequestVCFailed: boolean;
+    readonly asRequestVCFailed: ITuple<[Assertion, ErrorDetail]>;
+    readonly isSetScheduledMrEnclaveFailed: boolean;
+    readonly isSetIdentityNetworksFailed: boolean;
+    readonly asSetIdentityNetworksFailed: ErrorDetail;
+    readonly isInvalidAccount: boolean;
+    readonly isUnclassifiedError: boolean;
+    readonly type:
+    | "MissingPrivileges"
+    | "RequireEnclaveSignerAccount"
+    | "Dispatch"
+    | "MissingFunds"
+    | "InvalidNonce"
+    | "StorageHashMismatch"
+    | "InvalidStorageDiff"
+    | "InvalidMetadata"
+    | "SetUserShieldingKeyFailed"
+    | "LinkIdentityFailed"
+    | "DeactivateIdentityFailed"
+    | "ActivateIdentityFailed"
+    | "RequestVCFailed"
+    | "SetScheduledMrEnclaveFailed"
+    | "SetIdentityNetworksFailed"
+    | "InvalidAccount"
+    | "UnclassifiedError";
+}
 
 /** @name TrustedCall */
 export interface TrustedCall extends Enum {
@@ -294,17 +380,17 @@ export interface TrustedCall extends Enum {
         [LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256]
     >;
     readonly type:
-        | "BalanceSetBalance"
-        | "BalanceTransfer"
-        | "BalanceUnshield"
-        | "BalanceShield"
-        | "SetUserShieldingKey"
-        | "LinkIdentity"
-        | "DeactivateIdentity"
-        | "ActivateIdentity"
-        | "RequestVc"
-        | "SetIdentityNetworks"
-        | "SetUserShieldingKeyWithNetworks";
+    | "BalanceSetBalance"
+    | "BalanceTransfer"
+    | "BalanceUnshield"
+    | "BalanceShield"
+    | "SetUserShieldingKey"
+    | "LinkIdentity"
+    | "DeactivateIdentity"
+    | "ActivateIdentity"
+    | "RequestVc"
+    | "SetIdentityNetworks"
+    | "SetUserShieldingKeyWithNetworks";
 }
 
 /** @name TrustedCallSigned */
@@ -327,11 +413,11 @@ export interface TrustedGetter extends Enum {
     readonly isIdGraphStats: boolean;
     readonly asIdGraphStats: LitentryIdentity;
     readonly type:
-        | "FreeBalance"
-        | "ReservedBalance"
-        | "UserShieldingKey"
-        | "IdGraph"
-        | "IdGraphStats";
+    | "FreeBalance"
+    | "ReservedBalance"
+    | "UserShieldingKey"
+    | "IdGraph"
+    | "IdGraphStats";
 }
 
 /** @name TrustedGetterSigned */
@@ -351,6 +437,12 @@ export interface TrustedOperation extends Enum {
     readonly type: "IndirectCall" | "DirectCall" | "Get";
 }
 
+/** @name TrustedOperationResponse */
+export interface TrustedOperationResponse extends Struct {
+    readonly req_ext_hash: H256;
+    readonly value: Bytes;
+}
+
 /** @name TrustedOperationStatus */
 export interface TrustedOperationStatus extends Enum {
     readonly isSubmitted: boolean;
@@ -366,17 +458,17 @@ export interface TrustedOperationStatus extends Enum {
     readonly isDropped: boolean;
     readonly isInvalid: boolean;
     readonly type:
-        | "Submitted"
-        | "Future"
-        | "Ready"
-        | "Broadcast"
-        | "InSidechainBlock"
-        | "Retracted"
-        | "FinalityTimeout"
-        | "Finalized"
-        | "Usurped"
-        | "Dropped"
-        | "Invalid";
+    | "Submitted"
+    | "Future"
+    | "Ready"
+    | "Broadcast"
+    | "InSidechainBlock"
+    | "Retracted"
+    | "FinalityTimeout"
+    | "Finalized"
+    | "Usurped"
+    | "Dropped"
+    | "Invalid";
 }
 
 /** @name TwitterValidationData */
@@ -385,10 +477,10 @@ export interface TwitterValidationData extends Struct {
 }
 
 /** @name UserShieldingKeyNonceType */
-export interface UserShieldingKeyNonceType extends U8aFixed {}
+export interface UserShieldingKeyNonceType extends U8aFixed { }
 
 /** @name UserShieldingKeyType */
-export interface UserShieldingKeyType extends U8aFixed {}
+export interface UserShieldingKeyType extends U8aFixed { }
 
 /** @name VCRequested */
 export interface VCRequested extends Struct {
@@ -424,15 +516,15 @@ export interface Web3Network extends Enum {
     readonly isEthereum: boolean;
     readonly isBsc: boolean;
     readonly type:
-        | "Polkadot"
-        | "Kusama"
-        | "Litentry"
-        | "Litmus"
-        | "LitentryRococo"
-        | "Khala"
-        | "SubstrateTestnet"
-        | "Ethereum"
-        | "Bsc";
+    | "Polkadot"
+    | "Kusama"
+    | "Litentry"
+    | "Litmus"
+    | "LitentryRococo"
+    | "Khala"
+    | "SubstrateTestnet"
+    | "Ethereum"
+    | "Bsc";
 }
 
 /** @name Web3ValidationData */

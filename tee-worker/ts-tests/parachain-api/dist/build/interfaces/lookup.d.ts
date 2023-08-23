@@ -2142,6 +2142,7 @@ declare const _default: {
             A13: string;
             A14: string;
             Achainable: string;
+            A20: string;
         };
     };
     /**

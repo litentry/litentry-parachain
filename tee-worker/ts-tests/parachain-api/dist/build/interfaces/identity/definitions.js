@@ -211,37 +211,73 @@ export default {
 		GenericEventWithAccount: {
 			account: "AccountId",
 		},
-		SetUserShieldingKeyResponse: {
+		SetUserShieldingKeyResult: {
 			account: "AccountId",
 			id_graph: "AesOutput",
-			req_ext_hash: "H256",
 		},
-		LinkIdentityResponse: {
+		LinkIdentityResult: {
 			account: "AccountId",
 			identity: "AesOutput",
 			id_graph: "AesOutput",
-			req_ext_hash: "H256",
 		},
-		DeactivateIdentityResponse: {
+		DeactivateIdentityResult: {
 			account: "AccountId",
 			identity: "AesOutput",
-			req_ext_hash: "H256",
 		},
-		ActivateIdentityResponse: {
+		ActivateIdentityResult: {
 			account: "AccountId",
 			identity: "AesOutput",
-			req_ext_hash: "H256",
 		},
-		SetIdentityNetworksResponse: {
-			req_ext_hash: "H256",
-		},
-		RequestVCResponse: {
+		RequestVCResult: {
 			account: "AccountId",
 			assertion: "Assertion",
 			vc_index: "H256",
 			vc_hash: "H256",
 			vc_payload: "AesOutput",
+		},
+		ErrorDetail: {
+			_enum: {
+				ImportError: "Null",
+				UnauthorizedSigner: "Null",
+				StfError: "(Bytes)",
+				SendStfRequestFailed: "Null",
+				UserShieldingKeyNotFound: "Null",
+				ParseError: "Null",
+				DataProviderError: "(Bytes)",
+				InvalidIdentity: "Null",
+				WrongWeb2Handle: "Null",
+				UnexpectedMessage: "Null",
+				WrongSignatureType: "Null",
+				VerifySubstrateSignatureFailed: "Null",
+				VerifyEvmSignatureFailed: "Null",
+				RecoverEvmAddressFailed: "Null",
+				Web3NetworkOutOfBounds: "Null",
+			},
+		},
+		StfError: {
+			_enum: {
+				MissingPrivileges: "(LitentryIdentity)",
+				RequireEnclaveSignerAccount: "Null",
+				Dispatch: "(String)",
+				MissingFunds: "Null",
+				InvalidNonce: "(Index, Index)",
+				StorageHashMismatch: "Null",
+				InvalidStorageDiff: "Null",
+				InvalidMetadata: "Null",
+				SetUserShieldingKeyFailed: "(ErrorDetail)",
+				LinkIdentityFailed: "(ErrorDetail)",
+				DeactivateIdentityFailed: "(ErrorDetail)",
+				ActivateIdentityFailed: "(ErrorDetail)",
+				RequestVCFailed: "(Assertion, ErrorDetail)",
+				SetScheduledMrEnclaveFailed: "Null",
+				SetIdentityNetworksFailed: "(ErrorDetail)",
+				InvalidAccount: "Null",
+				UnclassifiedError: "Null",
+			},
+		},
+		TrustedOperationResponse: {
 			req_ext_hash: "H256",
+			value: "Vec<u8>",
 		},
 		AesOutput: {
 			ciphertext: "Vec<u8>",

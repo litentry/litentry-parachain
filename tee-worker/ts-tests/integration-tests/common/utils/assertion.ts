@@ -18,11 +18,15 @@ import {
     WorkerRpcReturnValue,
     RequestVCResponse,
     PalletVcManagementVcContext,
+    StfError,
+    TrustedOperationResponse,
+    LinkIdentityResult,
 } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { decodeAddress } from '@polkadot/keyring';
+
 export async function assertFailedEvent(
     context: IntegrationTestContext,
     events: FrameSystemEventRecord[],
@@ -292,14 +296,6 @@ export async function assertLinkedEvent(
     events: any[],
     expectedIdentities: LitentryPrimitivesIdentity[]
 ) {
-    events.forEach((ev) => {
-        console.log(ev.toHuman());
-    });
-
-    expectedIdentities.forEach((i) => {
-        console.log(i.toHuman());
-    });
-
     assert.isAtLeast(events.length, 1, 'Check assertLinkedEvent error: events length should be greater than 1');
 
     const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
@@ -370,6 +366,43 @@ export async function assertIdentity(
     console.log(colors.green('assertIdentity passed'));
 }
 
+export function assertWorkerError(
+    context: IntegrationTestContext,
+    requestIdentifier: string,
+    check: (returnValue: StfError) => void,
+    returnValue: WorkerRpcReturnValue
+) {
+    const errDecodedRes = context.api.createType(
+        'TrustedOperationResponse',
+        returnValue.value
+    ) as unknown as TrustedOperationResponse;
+    assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
+    const errValueDecoded = context.api.createType('StfError', errDecodedRes.value) as unknown as StfError;
+    check(errValueDecoded);
+}
+
+export function assertIdentityLinkedResult(
+    context: IntegrationTestContext,
+    requestIdentifier: string,
+    expectedIdentity: LitentryPrimitivesIdentity,
+    returnValue: WorkerRpcReturnValue
+) {
+    const decodedRes = context.api.createType(
+        'TrustedOperationResponse',
+        returnValue.value
+    ) as unknown as TrustedOperationResponse;
+    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
+
+    const decodedLinkResult = context.api.createType(
+        'LinkIdentityResult',
+        decodedRes.value
+    ) as unknown as LinkIdentityResult;
+
+    assert.equal(
+        expectedIdentity.toString(),
+        parseIdentity(context.sidechainRegistry, decodedLinkResult.identity, aesKey).toString()
+    );
+}
 /* 
     assert vc
     steps:
