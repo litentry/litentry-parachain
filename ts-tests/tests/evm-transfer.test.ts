@@ -46,11 +46,13 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             const apiAt = await context.api.at(signedBlock.block.header.hash);
             const allRecords = await apiAt.query.system.events();
             if (header.number.toNumber() > blockNumber.toNumber() + 4) {
+                console.log(`No expected transaction fail found`);
                 unsubscribe();
                 assert.fail('expect the transaction fail in the last 4 blocks, but not found');
             }
             signedBlock.block.extrinsics.forEach((ex, index) => {
                 if (!(ex.method.section === 'evm' && ex.method.method === 'call')) {
+                    console.log(`Extra extrinsic found, section: ${ex.method.section}, method: ${ex.method.method}`);
                     return;
                 }
                 allRecords
@@ -75,6 +77,17 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
                             expectResult = true;
                             console.log(`evm.call:: ExtrinsicFailed:: ${errorInfo}`);
                             return;
+                        } else if (context.api.events.system.ExtrinsicSuccess.is(event)) {
+                            const [dispatchInfo] = event.data;
+                            let successInfo = dispatchInfo.class.toString();
+                            console.log(`Some ExtrinsicSuccess:: ${successInfo}`);
+
+                        } else if (context.api.events.system.NewAccount.is(event)) {
+                            const [account] = event.data;
+                            let newAccountInfo = account.toString();
+                            console.log(`New Account:: ${newAccountInfo}`);
+                        } else {
+                            console.log(`Event found, Something`);
                         }
                     });
             });
