@@ -44,7 +44,8 @@ use handler::{
 };
 use ita_sgx_runtime::Hash;
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
-use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_enclave_metrics::EnclaveMetric;
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -169,7 +170,7 @@ where
 	S: StfEnclaveSigning,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 {
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
@@ -179,11 +180,27 @@ where
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
+		if let Err(e) =
+			context.ocall_api.update_metric(EnclaveMetric::StfCallIncrement(req.clone()))
+		{
+			warn!("Failed to update metric for top pool size: {:?}", e);
+		}
+
+		let start_time = std::time::Instant::now();
 		match &req {
 			RequestType::IdentityVerification(req) =>
 				IdentityVerificationHandler { req: req.clone(), context: context.clone() }.start(),
 			RequestType::AssertionVerification(req) =>
 				AssertionHandler { req: req.clone(), context: context.clone() }.start(),
+		}
+		let elapsed_time = start_time.elapsed();
+
+		log::debug!("Observing Execution time for Histogram");
+		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::StfCallObserveExecutionTime(
+			elapsed_time.as_secs_f64(),
+			req.clone(),
+		)) {
+			warn!("Failed to update metric for top pool size: {:?}", e);
 		}
 	}
 }

@@ -24,6 +24,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
+use lc_stf_task_sender::RequestType;
 use std::string::String;
 use substrate_fixed::types::U32F32;
 
@@ -37,7 +38,8 @@ pub enum EnclaveMetric {
 	TopPoolSizeIncrement,
 	TopPoolSizeDecrement,
 	ExchangeRateOracle(ExchangeRateOracleMetric),
-	// OracleMetric(OracleMetric<MetricsInfo>),
+	StfCallIncrement(RequestType),
+	StfCallObserveExecutionTime(f64, RequestType), // OracleMetric(OracleMetric<MetricsInfo>),
 }
 
 #[derive(Encode, Decode, Debug)]

@@ -37,8 +37,15 @@ use itc_rest_client::{
 };
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
+use lc_stf_task_sender::RequestType;
+use litentry_primitives::{
+	Assertion, Identity, IdentityNetworkTuple, Web2ValidationData, Web3Network,
+};
 use log::*;
-use prometheus::{proto::MetricFamily, register_int_gauge, IntGauge};
+use prometheus::{
+	proto::MetricFamily, register_histogram_vec, register_int_gauge, register_int_gauge_vec,
+	HistogramVec, IntGauge, IntGaugeVec, Opts,
+};
 use serde::{Deserialize, Serialize};
 use std::{net::SocketAddr, sync::Arc};
 use warp::{Filter, Rejection, Reply};
@@ -54,6 +61,12 @@ lazy_static! {
 			.unwrap();
 	static ref ENCLAVE_SIDECHAIN_TOP_POOL_SIZE: IntGauge =
 		register_int_gauge!("litentry_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
+			.unwrap();
+	static ref ENCLAVE_STF_CALLS: IntGaugeVec =
+		register_int_gauge_vec!("litentry_worker_enclave_stf_total_calls", "Litentry Stf Calls", &["a", "b"])
+			.unwrap();
+	static ref ENCLAVE_STF_CALLS_EXECUTION: HistogramVec =
+		register_histogram_vec!("litentry_worker_enclave_stf_exeuction_times", "Litentry Stf Call Exeuction Time", &["a", "b"])
 			.unwrap();
 }
 
@@ -171,6 +184,15 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			EnclaveMetric::TopPoolSizeDecrement => {
 				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.dec();
 			},
+			EnclaveMetric::StfCallIncrement(request) => {
+				handle_stf_call_request(request)
+				// ENCLAVE_STF_CALLS.with_label_values(&["link_identity", "web3"]).inc();
+			},
+			EnclaveMetric::StfCallObserveExecutionTime(time, req) => {
+				log::debug!("Observing Execution time for Histogram onto registry");
+				// ENCLAVE_STF_CALLS_EXECUTION.with_label_values(&["link_identity", "Twitter"]).observe(time)
+				observe_stf_call_execution_time(time, req);
+			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
 			#[cfg(not(feature = "teeracle"))]
@@ -182,7 +204,101 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 	}
 }
 
-// Data structure that matches with REST API JSON
+fn handle_stf_call_request(req: RequestType) {
+	match req {
+		RequestType::IdentityVerification(request) => match request.identity {
+			Identity::Twitter(_) =>
+				ENCLAVE_STF_CALLS.with_label_values(&["link_identity", "Twitter"]).inc(),
+			Identity::Discord(_) =>
+				ENCLAVE_STF_CALLS.with_label_values(&["link_identity", "Discord"]).inc(),
+			Identity::Github(_) =>
+				ENCLAVE_STF_CALLS.with_label_values(&["link_identity", "Github"]).inc(),
+			Identity::Substrate(_) =>
+				ENCLAVE_STF_CALLS.with_label_values(&["link_identity", "Substrate"]).inc(),
+			Identity::Evm(_) =>
+				ENCLAVE_STF_CALLS.with_label_values(&["link_identity", "Evm"]).inc(),
+		},
+		RequestType::AssertionVerification(request) => match request.assertion {
+			Assertion::A1 => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A1"]).inc(),
+			Assertion::A2(_) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A2"]).inc(),
+			Assertion::A3(..) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A3"]).inc(),
+			Assertion::A4(_) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A4"]).inc(),
+			Assertion::A6 => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A6"]).inc(),
+			Assertion::A7(_) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A7"]).inc(),
+			Assertion::A8(_) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A8"]).inc(),
+			Assertion::A9 => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A9"]).inc(),
+			Assertion::A10(_) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A10"]).inc(),
+			Assertion::A11(_) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A11"]).inc(),
+			Assertion::A13(_) => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A13"]).inc(),
+			Assertion::A14 => ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "A14"]).inc(),
+			Assertion::Achainable(..) =>
+				ENCLAVE_STF_CALLS.with_label_values(&["request_vc", "Achainable"]).inc(),
+		},
+	}
+}
+
+fn observe_stf_call_execution_time(time: f64, req: RequestType) {
+	match req {
+		RequestType::IdentityVerification(request) => match request.identity {
+			Identity::Twitter(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["link_identity", "Twitter"])
+				.observe(time),
+			Identity::Discord(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["link_identity", "Discord"])
+				.observe(time),
+			Identity::Github(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["link_identity", "Github"])
+				.observe(time),
+			Identity::Substrate(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["link_identity", "Substrate"])
+				.observe(time),
+			Identity::Evm(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["link_identity", "Evm"])
+				.observe(time),
+		},
+		RequestType::AssertionVerification(request) => match request.assertion {
+			Assertion::A1 => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A1"])
+				.observe(time),
+			Assertion::A2(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A2"])
+				.observe(time),
+			Assertion::A3(..) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A3"])
+				.observe(time),
+			Assertion::A4(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A4"])
+				.observe(time),
+			Assertion::A6 => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A6"])
+				.observe(time),
+			Assertion::A7(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A7"])
+				.observe(time),
+			Assertion::A8(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A8"])
+				.observe(time),
+			Assertion::A9 => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A9"])
+				.observe(time),
+			Assertion::A10(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A10"])
+				.observe(time),
+			Assertion::A11(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A11"])
+				.observe(time),
+			Assertion::A13(_) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A13"])
+				.observe(time),
+			Assertion::A14 => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "A14"])
+				.observe(time),
+			Assertion::Achainable(..) => ENCLAVE_STF_CALLS_EXECUTION
+				.with_label_values(&["request_vc", "Achainable"])
+				.observe(time),
+		},
+	}
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct PrometheusMarblerunEvents(pub Vec<PrometheusMarblerunEvent>);
