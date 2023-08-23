@@ -15,7 +15,11 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
             let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+            let temp = await context.api.rpc.chain.getBlock();
+            console.log(`setMode await Before: ${temp.block.header.number}`);
             await signAndSend(extrinsic, context.alice);
+            temp = await context.api.rpc.chain.getBlock();
+            console.log(`setMode await end: ${temp.block.header.number}`);
         }
 
         // Get the initial balance of Eve and EVM external account
@@ -35,7 +39,11 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
+        let temp = await context.api.rpc.chain.getBlock();
+        console.log(`evm call await before: ${temp.block.header.number}`);
         await signAndSend(tx, context.eve);
+        temp = await context.api.rpc.chain.getBlock();
+        console.log(`evm call await end: ${temp.block.header.number}`);
 
         let expectResult = false;
         const block = await context.api.rpc.chain.getBlock();
