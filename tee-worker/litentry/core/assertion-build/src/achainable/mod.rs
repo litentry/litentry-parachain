@@ -114,9 +114,9 @@ pub fn request_achainable_classofyear(
 			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
 		})?;
 
-		// If parse metadata field error, return Invalid immediately
+		// If parsing the current metadata field fails, continue to parse the next address
 		if year.parse::<u32>().is_err() {
-			return Ok((false, INVALID_CLASS_OF_YEAR.into()))
+			continue
 		}
 
 		if year < longest_created_year {
