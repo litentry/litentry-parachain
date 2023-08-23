@@ -162,6 +162,14 @@ where
 
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&mut self, old_hash: H, new_hash: H) {
-		self.fire(&old_hash, |s| s.swap_rpc_connection_hash(new_hash));
+		// It's possible that the old top (hash) is already removed from the pool when we
+		// request to swap hashes, in this case we just create one to facilitate the swap
+		if let Some(w) = self.watchers.get(&old_hash) {
+			w.swap_rpc_connection_hash(new_hash);
+		} else {
+			// do not insert it to `watchers`, will be deallocated if it goes out of scope
+			Watcher::new_watcher(old_hash.clone(), self.rpc_response_sender.clone())
+				.swap_rpc_connection_hash(new_hash);
+		}
 	}
 }
