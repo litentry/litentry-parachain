@@ -28,6 +28,53 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
         await signAndSend(tx, context.eve);
+        let expectResult = false;
+        const block = await context.api.rpc.chain.getBlock();
+        const blockNumber = block.block.header.number;
+        const unsubscribe = await context.api.rpc.chain.subscribeNewHeads(async (header) => {
+            console.log(`Chain is at block: #${header.number}`);
+            const signedBlock = await context.api.rpc.chain.getBlock(header.hash);
+            const apiAt = await context.api.at(signedBlock.block.header.hash);
+            const allRecords = await apiAt.query.system.events();
+            if (header.number.toNumber() > blockNumber.toNumber() + 4) {
+                unsubscribe();
+                assert.fail('expect the transaction fail in the last 4 blocks, but not found');
+            }
+            signedBlock.block.extrinsics.forEach((ex, index) => {
+                if (!(ex.method.section === 'evm' && ex.method.method === 'call')) {
+                    return;
+                }
+                allRecords
+                    .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
+                    .forEach(({ event }) => {
+                        if (context.api.events.system.ExtrinsicFailed.is(event)) {
+                            const [dispatchError, dispatchInfo] = event.data;
+                            let errorInfo;
+                            // decode the error
+                            if (dispatchError.isModule) {
+                                // for module errors, we have the section indexed, lookup
+                                // (For specific known errors, we can also do a check against the
+                                // api.errors.<module>.<ErrorName>.is(dispatchError.asModule) guard)
+                                const decoded = context.api.registry.findMetaError(
+                                    dispatchError.asModule
+                                );
+                                errorInfo = `${decoded.section}.${decoded.name}`;
+                            } else {
+                                // Other, CannotLookup, BadOrigin, no extra info
+                                errorInfo = dispatchError.toString();
+                            }
+                            expectResult = true;
+                            console.log(`evm.call:: ExtrinsicFailed:: ${errorInfo}`);
+                            return;
+                        }
+                    });
+            });
+            if (expectResult) {
+                unsubscribe();
+                assert.exists('');
+            }
+        });
+        await sleep(39);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
