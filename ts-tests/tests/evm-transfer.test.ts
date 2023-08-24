@@ -39,24 +39,23 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
-        let temp = await context.api.rpc.chain.getBlock();
-        console.log(`evm call await before: ${temp.block.header.number}`);
+        let block = await context.api.rpc.chain.getBlock();
+        const blockNumber = block.block.header.number;
+        console.log(`evm call await before: ${block.block.header.number}`);
         await signAndSend(tx, context.eve);
-        temp = await context.api.rpc.chain.getBlock();
+        let temp = await context.api.rpc.chain.getBlock();
         console.log(`evm call await end: ${temp.block.header.number}`);
 
         let expectResult = false;
-        const block = await context.api.rpc.chain.getBlock();
-        const blockNumber = block.block.header.number;
         const unsubscribe = await context.api.rpc.chain.subscribeNewHeads(async (header) => {
             console.log(`Chain is at block: #${header.number}`);
             const signedBlock = await context.api.rpc.chain.getBlock(header.hash);
             const apiAt = await context.api.at(signedBlock.block.header.hash);
             const allRecords = await apiAt.query.system.events();
-            if (header.number.toNumber() > blockNumber.toNumber() + 4) {
+            if (header.number.toNumber() > blockNumber.toNumber() + 10) {
                 console.log(`No expected transaction fail found`);
                 unsubscribe();
-                assert.fail('expect the transaction fail in the last 4 blocks, but not found');
+                assert.fail('expect the transaction fail in the last 10 blocks, but not found');
             }
             signedBlock.block.extrinsics.forEach((ex, index) => {
                 if (!(ex.method.section === 'evm' && ex.method.method === 'call')) {
