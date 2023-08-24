@@ -30,7 +30,7 @@ function getConfig(): Config {
 }
 
 describe("load test runner", () => {
-    it("starts threads, runs tests, and collects results", async () => {
+    it("starts threads, runs tests, and collects results", async function () {
         await cryptoWaitReady();
         const config = getConfig();
 
