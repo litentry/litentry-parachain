@@ -29,7 +29,9 @@ function getConfig(): Config {
     };
 }
 
-describe("load test runner", () => {
+describe("load test runner", function () {
+    this.timeout(6000000);
+
     it("starts threads, runs tests, and collects results", async function () {
         await cryptoWaitReady();
         const config = getConfig();
