@@ -103,6 +103,54 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
                 assert.exists('');
             }
         });
+        for (let i = 0; i < 10; i++) {
+            console.log(`Double check at block: #${blockNumber.toNumber() + i}`);
+            let blockHash = await context.api.rpc.chain.getBlockHash(blockNumber.toNumber() + i);
+            const signedBlock = await context.api.rpc.chain.getBlock(blockHash);
+            const apiAt = await context.api.at(signedBlock.block.header.hash);
+            const allRecords = await apiAt.query.system.events();
+            signedBlock.block.extrinsics.forEach((ex, index) => {
+                if (!(ex.method.section === 'evm' && ex.method.method === 'call')) {
+                    console.log(`Extra extrinsic found, section: ${ex.method.section}, method: ${ex.method.method}`);
+                    return;
+                }
+                allRecords
+                    .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
+                    .forEach(({ event }) => {
+                        if (context.api.events.system.ExtrinsicFailed.is(event)) {
+                            const [dispatchError, dispatchInfo] = event.data;
+                            let errorInfo;
+                            // decode the error
+                            if (dispatchError.isModule) {
+                                // for module errors, we have the section indexed, lookup
+                                // (For specific known errors, we can also do a check against the
+                                // api.errors.<module>.<ErrorName>.is(dispatchError.asModule) guard)
+                                const decoded = context.api.registry.findMetaError(
+                                    dispatchError.asModule
+                                );
+                                errorInfo = `${decoded.section}.${decoded.name}`;
+                            } else {
+                                // Other, CannotLookup, BadOrigin, no extra info
+                                errorInfo = dispatchError.toString();
+                            }
+                            expectResult = true;
+                            console.log(`evm.call:: ExtrinsicFailed:: ${errorInfo}`);
+                            return;
+                        } else if (context.api.events.system.ExtrinsicSuccess.is(event)) {
+                            const [dispatchInfo] = event.data;
+                            let successInfo = dispatchInfo.class.toString();
+                            console.log(`Some ExtrinsicSuccess:: ${successInfo}`);
+
+                        } else if (context.api.events.system.NewAccount.is(event)) {
+                            const [account] = event.data;
+                            let newAccountInfo = account.toString();
+                            console.log(`New Account:: ${newAccountInfo}`);
+                        } else {
+                            console.log(`Event found, Something`);
+                        }
+                    });
+            });
+        }
         await sleep(39);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
