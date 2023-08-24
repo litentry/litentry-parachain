@@ -48,6 +48,8 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         await signAndSend(tx, context.eve);
         let temp = await context.api.rpc.chain.getBlock();
         console.log(`evm call await end: ${temp.block.header.number}`);
+        // Wait extra 2 blocks for finalization
+        await sleep(24);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
@@ -109,6 +111,8 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const transferReceipt = await web3.eth.sendSignedTransaction(transferTransaction.rawTransaction!);
         console.log(`Tx successful with hash: ${transferReceipt.transactionHash}`);
 
+        // Wait extra 2 blocks for finalization
+        await sleep(24);
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
         );
@@ -200,6 +204,8 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const tx = context.api.tx.evm.call(evmAccountRaw.address, eveMappedAccount, '0x', value, 1000000, 25000, null, null, []);
         await signAndSend(tx, context.eve);
 
+        // Wait extra 2 blocks for finalization
+        await sleep(24);
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
         );
