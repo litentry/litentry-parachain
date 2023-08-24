@@ -35,8 +35,8 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     
         const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
     
-        let eveMappedAccount = context.eve.address.slice(0, 20);
-        console.log(`eve address: ${context.eve.address}`);
+        let eveMappedAccount = context.eve.publicKey.slice(0, 20);
+        console.log(`eve address: ${context.eve.publicKey}`);
         console.log(`eveMappedAccount: ${eveMappedAccount}`);
 
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
