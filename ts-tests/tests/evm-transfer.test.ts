@@ -2,7 +2,7 @@ import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
-import { hexToU8a } from '@polkadot/util';
+import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
 import Web3 from "web3";
 
@@ -49,113 +49,6 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         let temp = await context.api.rpc.chain.getBlock();
         console.log(`evm call await end: ${temp.block.header.number}`);
 
-        let expectResult = false;
-        const unsubscribe = await context.api.rpc.chain.subscribeNewHeads(async (header) => {
-            console.log(`Chain is at block: #${header.number}`);
-            const signedBlock = await context.api.rpc.chain.getBlock(header.hash);
-            const apiAt = await context.api.at(signedBlock.block.header.hash);
-            const allRecords = await apiAt.query.system.events();
-            if (header.number.toNumber() > blockNumber.toNumber() + 10) {
-                console.log(`No expected transaction fail found`);
-                unsubscribe();
-                assert.fail('expect the transaction fail in the last 10 blocks, but not found');
-            }
-            signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (!(ex.method.section === 'evm' && ex.method.method === 'call')) {
-                    console.log(`Extra extrinsic found, section: ${ex.method.section}, method: ${ex.method.method}`);
-                    return;
-                }
-                allRecords
-                    .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
-                    .forEach(({ event }) => {
-                        if (context.api.events.system.ExtrinsicFailed.is(event)) {
-                            const [dispatchError, dispatchInfo] = event.data;
-                            let errorInfo;
-                            // decode the error
-                            if (dispatchError.isModule) {
-                                // for module errors, we have the section indexed, lookup
-                                // (For specific known errors, we can also do a check against the
-                                // api.errors.<module>.<ErrorName>.is(dispatchError.asModule) guard)
-                                const decoded = context.api.registry.findMetaError(
-                                    dispatchError.asModule
-                                );
-                                errorInfo = `${decoded.section}.${decoded.name}`;
-                            } else {
-                                // Other, CannotLookup, BadOrigin, no extra info
-                                errorInfo = dispatchError.toString();
-                            }
-                            expectResult = true;
-                            console.log(`evm.call:: ExtrinsicFailed:: ${errorInfo}`);
-                            return;
-                        } else if (context.api.events.system.ExtrinsicSuccess.is(event)) {
-                            const [dispatchInfo] = event.data;
-                            let successInfo = dispatchInfo.class.toString();
-                            console.log(`Some ExtrinsicSuccess:: ${successInfo}`);
-
-                        } else if (context.api.events.system.NewAccount.is(event)) {
-                            const [account] = event.data;
-                            let newAccountInfo = account.toString();
-                            console.log(`New Account:: ${newAccountInfo}`);
-                        } else {
-                            console.log(`Event found, Something`);
-                        }
-                    });
-            });
-            if (expectResult) {
-                unsubscribe();
-                assert.exists('');
-            }
-        });
-        for (let i = 0; i < 10; i++) {
-            console.log(`Double check at block: #${blockNumber.toNumber() + i}`);
-            let blockHash = await context.api.rpc.chain.getBlockHash(blockNumber.toNumber() + i);
-            const signedBlock = await context.api.rpc.chain.getBlock(blockHash);
-            const apiAt = await context.api.at(signedBlock.block.header.hash);
-            const allRecords = await apiAt.query.system.events();
-            signedBlock.block.extrinsics.forEach((ex, index) => {
-                if (!(ex.method.section === 'evm' && ex.method.method === 'call')) {
-                    console.log(`Extra extrinsic found, section: ${ex.method.section}, method: ${ex.method.method}`);
-                    return;
-                }
-                allRecords
-                    .filter(({ phase }) => phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index))
-                    .forEach(({ event }) => {
-                        if (context.api.events.system.ExtrinsicFailed.is(event)) {
-                            const [dispatchError, dispatchInfo] = event.data;
-                            let errorInfo;
-                            // decode the error
-                            if (dispatchError.isModule) {
-                                // for module errors, we have the section indexed, lookup
-                                // (For specific known errors, we can also do a check against the
-                                // api.errors.<module>.<ErrorName>.is(dispatchError.asModule) guard)
-                                const decoded = context.api.registry.findMetaError(
-                                    dispatchError.asModule
-                                );
-                                errorInfo = `${decoded.section}.${decoded.name}`;
-                            } else {
-                                // Other, CannotLookup, BadOrigin, no extra info
-                                errorInfo = dispatchError.toString();
-                            }
-                            expectResult = true;
-                            console.log(`evm.call:: ExtrinsicFailed:: ${errorInfo}`);
-                            return;
-                        } else if (context.api.events.system.ExtrinsicSuccess.is(event)) {
-                            const [dispatchInfo] = event.data;
-                            let successInfo = dispatchInfo.class.toString();
-                            console.log(`Some ExtrinsicSuccess:: ${successInfo}`);
-
-                        } else if (context.api.events.system.NewAccount.is(event)) {
-                            const [account] = event.data;
-                            let newAccountInfo = account.toString();
-                            console.log(`New Account:: ${newAccountInfo}`);
-                        } else {
-                            console.log(`Event found, Something`);
-                        }
-                    });
-            });
-        }
-        await sleep(39);
-
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
         );
@@ -194,7 +87,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
 
-        let eveMappedAccount = context.eve.address.slice(0, 20);
+        let eveMappedAccount = u8aToHex(context.eve.publicKey.slice(0, 20));
 
         // Create Web3 instance
         const web3 = new Web3('http://localhost:9944');
@@ -300,7 +193,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     
         const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
     
-        let eveMappedAccount = context.eve.address.slice(0, 20);
+        let eveMappedAccount = context.eve.publicKey.slice(0, 20);
         let value = 100000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         // Sign Tx with substrate signature, try manipulate evm account out of substrate signature's control
         // 25000 is min_gas_price setup

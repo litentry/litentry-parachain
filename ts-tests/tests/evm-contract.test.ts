@@ -31,7 +31,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
     
         const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
     
-        let eveMappedAccount = context.eve.address.slice(0, 20);
+        let eveMappedAccount = context.eve.publicKey.slice(0, 20);
         let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
