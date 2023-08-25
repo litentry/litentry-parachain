@@ -250,6 +250,27 @@ pub mod tests {
 	}
 
 	#[test]
+	fn updating_status_event_with_finalized_state_doesnt_remove_connection_if_force_watch_set() {
+		let connection_hash = H256::random();
+		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
+
+		let websocket_responder = Arc::new(TestResponseChannel::default());
+		let rpc_responder =
+			RpcResponder::new(connection_registry.clone(), websocket_responder.clone());
+		rpc_responder
+			.update_connection_state(connection_hash.clone(), vec![], true)
+			.unwrap();
+
+		let result = rpc_responder
+			.update_status_event(connection_hash.clone(), TrustedOperationStatus::Finalized);
+
+		assert!(result.is_ok());
+
+		verify_open_connection(&connection_hash, connection_registry);
+		assert_eq!(1, websocket_responder.number_of_updates());
+	}
+
+	#[test]
 	fn updating_status_event_with_ready_state_keeps_connection_and_sends_update() {
 		let connection_hash = H256::random();
 		let connection_registry: Arc<ConnectionRegistry<_, u64>> =
