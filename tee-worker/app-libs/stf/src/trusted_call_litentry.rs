@@ -108,7 +108,7 @@ impl TrustedCallSigned {
 		)));
 
 		debug!("populating user_shielding_key_set rpc reponse ...");
-		let res = SetUserShieldingKeyResult { account, id_graph: encrypted_id_graph };
+		let res = SetUserShieldingKeyResult { id_graph: encrypted_id_graph };
 		Ok(TrustedCallResult::SetUserShieldingKey(res))
 	}
 
@@ -352,8 +352,6 @@ impl TrustedCallSigned {
 			hash,
 		)));
 		Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
-			account,
-			identity: aes_encrypt_default(&key, &identity.encode()),
 			id_graph: aes_encrypt_default(&key, &id_graph.encode()),
 		}))
 	}

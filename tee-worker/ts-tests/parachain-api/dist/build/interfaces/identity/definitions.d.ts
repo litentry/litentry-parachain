@@ -180,25 +180,12 @@ declare const _default: {
             account: string;
         };
         SetUserShieldingKeyResult: {
-            account: string;
             id_graph: string;
         };
         LinkIdentityResult: {
-            account: string;
-            identity: string;
             id_graph: string;
         };
-        DeactivateIdentityResult: {
-            account: string;
-            identity: string;
-        };
-        ActivateIdentityResult: {
-            account: string;
-            identity: string;
-        };
         RequestVCResult: {
-            account: string;
-            assertion: string;
             vc_index: string;
             vc_hash: string;
             vc_payload: string;

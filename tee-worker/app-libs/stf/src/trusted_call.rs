@@ -650,13 +650,7 @@ where
 					aes_encrypt_default(&key, &identity.encode()),
 					hash,
 				)));
-
-				debug!("populating identity_deactivated rpc reponse ...");
-				let res = DeactivateIdentityResult {
-					account,
-					identity: aes_encrypt_default(&key, &identity.encode()),
-				};
-				Ok(TrustedCallResult::DeactivateIdentity(res))
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::activate_identity(signer, who, identity, hash) => {
 				debug!("activate_identity, who: {}", account_id_to_string(&who));
@@ -690,13 +684,7 @@ where
 					aes_encrypt_default(&key, &identity.encode()),
 					hash,
 				)));
-
-				debug!("populating identity_activated rpc reponse ...");
-				let res = ActivateIdentityResult {
-					account,
-					identity: aes_encrypt_default(&key, &identity.encode()),
-				};
-				Ok(TrustedCallResult::ActivateIdentity(res))
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) =>
 				Self::handle_link_identity_callback(
@@ -786,8 +774,6 @@ where
 					hash,
 				)));
 				let res = RequestVCResult {
-					account,
-					assertion,
 					vc_index,
 					vc_hash,
 					vc_payload: aes_encrypt_default(&key, &vc_payload),
