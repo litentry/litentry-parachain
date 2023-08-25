@@ -646,7 +646,7 @@ where
 				debug!("pushing identity_deactivated event ...");
 				calls.push(OpaqueCall::from_tuple(&(
 					call_index,
-					account.clone(),
+					account,
 					aes_encrypt_default(&key, &identity.encode()),
 					hash,
 				)));
@@ -680,7 +680,7 @@ where
 				debug!("pushing identity_activated event ...");
 				calls.push(OpaqueCall::from_tuple(&(
 					call_index,
-					account.clone(),
+					account,
 					aes_encrypt_default(&key, &identity.encode()),
 					hash,
 				)));
@@ -766,8 +766,8 @@ where
 
 				calls.push(OpaqueCall::from_tuple(&(
 					call_index,
-					account.clone(),
-					assertion.clone(),
+					account,
+					assertion,
 					vc_index,
 					vc_hash,
 					aes_encrypt_default(&key, &vc_payload),

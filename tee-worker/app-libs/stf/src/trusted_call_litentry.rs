@@ -102,7 +102,7 @@ impl TrustedCallSigned {
 		let encrypted_id_graph = aes_encrypt_default(&key, &id_graph.encode());
 		calls.push(OpaqueCall::from_tuple(&(
 			call_index,
-			account.clone(),
+			account,
 			encrypted_id_graph.clone(),
 			hash,
 		)));
@@ -346,7 +346,7 @@ impl TrustedCallSigned {
 		debug!("pushing identity_linked event ...");
 		calls.push(OpaqueCall::from_tuple(&(
 			call_index,
-			account.clone(),
+			account,
 			aes_encrypt_default(&key, &identity.encode()),
 			aes_encrypt_default(&key, &id_graph.encode()),
 			hash,
