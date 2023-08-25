@@ -34,6 +34,7 @@ describe("load test runner", function () {
 
     it("starts threads, runs tests, and collects results", async function () {
         await cryptoWaitReady();
+
         const config = getConfig();
 
         const log = new WritableStream<string>({
