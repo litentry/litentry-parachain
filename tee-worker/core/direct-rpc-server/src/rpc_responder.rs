@@ -95,11 +95,9 @@ where
 		let do_watch = continue_watching(&status_update)
 			|| (result.value == true.encode()
 				&& matches!(
-					result.status,
-					DirectRequestStatus::TrustedOperationStatus(
-						TrustedOperationStatus::InSidechainBlock(_),
-						_
-					)
+					// use "upcoming" status_update, the `result.status` contains the previous status
+					status_update,
+					TrustedOperationStatus::InSidechainBlock(_),
 				));
 
 		// update response
