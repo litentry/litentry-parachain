@@ -180,25 +180,18 @@ where
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
-		if let Err(e) =
-			context.ocall_api.update_metric(EnclaveMetric::StfCallIncrement(req.clone()))
-		{
-			warn!("Failed to update metric for top pool size: {:?}", e);
-		}
-
 		let start_time = std::time::Instant::now();
+
 		match &req {
 			RequestType::IdentityVerification(req) =>
 				IdentityVerificationHandler { req: req.clone(), context: context.clone() }.start(),
 			RequestType::AssertionVerification(req) =>
 				AssertionHandler { req: req.clone(), context: context.clone() }.start(),
 		}
-		let elapsed_time = start_time.elapsed();
 
-		log::debug!("Observing Execution time for Histogram");
 		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::StfCallObserveExecutionTime(
-			elapsed_time.as_secs_f64(),
 			req.clone(),
+			start_time.elapsed().as_secs_f64(),
 		)) {
 			warn!("Failed to update metric for top pool size: {:?}", e);
 		}

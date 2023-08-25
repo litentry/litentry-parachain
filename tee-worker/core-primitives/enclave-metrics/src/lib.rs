@@ -38,8 +38,8 @@ pub enum EnclaveMetric {
 	TopPoolSizeIncrement,
 	TopPoolSizeDecrement,
 	ExchangeRateOracle(ExchangeRateOracleMetric),
-	StfCallIncrement(RequestType),
-	StfCallObserveExecutionTime(f64, RequestType), // OracleMetric(OracleMetric<MetricsInfo>),
+	StfCallObserveExecutionTime(RequestType, f64),
+	// OracleMetric(OracleMetric<MetricsInfo>),
 }
 
 #[derive(Encode, Decode, Debug)]
