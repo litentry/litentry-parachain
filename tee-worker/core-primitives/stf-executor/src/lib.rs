@@ -66,36 +66,43 @@ pub type RpcResponseValue = Vec<u8>;
 /// - for failed top, we apply the parachain effects too
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExecutionStatus {
-	Success(H256, Vec<OpaqueCall>, RpcResponseValue),
+	Success(H256, Vec<OpaqueCall>, RpcResponseValue, bool),
 	Failure(H256, Vec<OpaqueCall>, RpcResponseValue),
 }
 
 impl ExecutionStatus {
 	pub fn get_extrinsic_callbacks(&self) -> Vec<OpaqueCall> {
 		match self {
-			ExecutionStatus::Success(_, opaque_calls, _) => opaque_calls.clone(),
+			ExecutionStatus::Success(_, opaque_calls, _, _) => opaque_calls.clone(),
 			ExecutionStatus::Failure(_, opaque_calls, _) => opaque_calls.clone(),
 		}
 	}
 
 	pub fn get_executed_operation_hash(&self) -> Option<H256> {
 		match self {
-			ExecutionStatus::Success(operation_hash, _, _) => Some(*operation_hash),
+			ExecutionStatus::Success(operation_hash, _, _, _) => Some(*operation_hash),
 			_ => None,
 		}
 	}
 
 	pub fn get_operation_hash(&self) -> H256 {
 		match self {
-			ExecutionStatus::Success(operation_hash, _, _) => *operation_hash,
+			ExecutionStatus::Success(operation_hash, _, _, _) => *operation_hash,
 			ExecutionStatus::Failure(operation_hash, _, _) => *operation_hash,
 		}
 	}
 
 	pub fn get_rpc_response_value(&self) -> RpcResponseValue {
 		match self {
-			ExecutionStatus::Success(_, _, res) => res.clone(),
+			ExecutionStatus::Success(_, _, res, _) => res.clone(),
 			ExecutionStatus::Failure(_, _, res) => res.clone(),
+		}
+	}
+
+	pub fn get_force_wait(&self) -> bool {
+		match self {
+			ExecutionStatus::Success(_, _, _, wait) => *wait,
+			_ => false,
 		}
 	}
 }
@@ -116,12 +123,14 @@ impl ExecutedOperation {
 		trusted_operation_or_hash: TrustedOperationOrHash<H256>,
 		extrinsic_call_backs: Vec<OpaqueCall>,
 		rpc_response_value: RpcResponseValue,
+		force_connection_wait: bool,
 	) -> Self {
 		ExecutedOperation {
 			status: ExecutionStatus::Success(
 				operation_hash,
 				extrinsic_call_backs,
 				rpc_response_value,
+				force_connection_wait,
 			),
 			trusted_operation_or_hash,
 		}
@@ -184,11 +193,16 @@ where
 		self.executed_operations.iter().filter(|ec| !ec.is_success()).cloned().collect()
 	}
 
-	// Litentry: returns all (top_hash, rpc_response_value) tuples
-	pub fn get_rpc_responses_values(&self) -> Vec<(H256, RpcResponseValue)> {
+	// Litentry: returns all (top_hash, (rpc_response_value, force_wait) tuples
+	pub fn get_connection_updates(&self) -> Vec<(H256, (RpcResponseValue, bool))> {
 		self.executed_operations
 			.iter()
-			.map(|ec| (ec.status.get_operation_hash(), ec.status.get_rpc_response_value()))
+			.map(|ec| {
+				(
+					ec.status.get_operation_hash(),
+					(ec.status.get_rpc_response_value(), ec.status.get_force_wait()),
+				)
+			})
 			.collect()
 	}
 }
@@ -262,6 +276,7 @@ mod tests {
 			TrustedOperationOrHash::Hash(hash),
 			opaque_call,
 			vec![],
+			false,
 		);
 		(operation, hash)
 	}

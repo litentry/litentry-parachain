@@ -20,7 +20,7 @@
 
 use crate::AccountId;
 use codec::{Decode, Encode};
-use itp_stf_interface::EncodeResult;
+use itp_stf_interface::StfExecutionResult;
 use itp_types::H256;
 use litentry_primitives::{AesOutput, Assertion};
 use std::vec::Vec;
@@ -36,18 +36,21 @@ pub enum TrustedCallResult {
 	RequestVC(RequestVCResult),
 }
 
-impl EncodeResult for TrustedCallResult {
+impl StfExecutionResult for TrustedCallResult {
 	fn get_encoded_result(self) -> Vec<u8> {
 		match self {
 			Self::Empty => Vec::default(),
-			// true means that there are more results to come, see rpc_responder
-			Self::Streamed => true.encode(),
+			Self::Streamed => Vec::default(),
 			Self::SetUserShieldingKey(result) => result.encode(),
 			Self::LinkIdentity(result) => result.encode(),
 			Self::DeactivateIdentity(result) => result.encode(),
 			Self::ActivateIdentity(result) => result.encode(),
 			Self::RequestVC(result) => result.encode(),
 		}
+	}
+
+	fn force_connection_wait(&self) -> bool {
+		matches!(self, Self::Streamed)
 	}
 }
 
