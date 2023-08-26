@@ -427,7 +427,7 @@ where
 		client.clone(),
 		backend.clone(),
 		frontier_backend.clone(),
-		&task_manager,
+		&mut task_manager,
 		&parachain_config,
 		additional_config.evm_tracing_config.clone(),
 	);
@@ -846,7 +846,7 @@ where
 		client.clone(),
 		backend.clone(),
 		frontier_backend.clone(),
-		&task_manager,
+		&mut task_manager,
 		&config,
 		evm_tracing_config.clone(),
 	);
@@ -993,7 +993,7 @@ pub fn start_node_evm_impl<RuntimeApi, Executor>(
 	client: Arc<ParachainClient<RuntimeApi, Executor>>,
 	backend: Arc<ParachainBackend>,
 	frontier_backend: Arc<fc_db::Backend<Block>>,
-	task_manager: &TaskManager,
+	task_manager: &mut TaskManager,
 	config: &Configuration,
 	evm_tracing_config: crate::evm_tracing_types::EvmTracingConfig,
 ) -> (

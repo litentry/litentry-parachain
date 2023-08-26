@@ -6,8 +6,10 @@ import { hexToU8a } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
 import Web3 from "web3";
 
-describeLitentry('Test EVM Module Transfer', ``, (context) => {
-    console.log(`Test Balance Transfer`);
+import { compiled } from "./compile";
+
+describeLitentry('Test EVM Module Contract', ``, (context) => {
+    console.log(`Test EVM Module Contract`);
 
     step('Transfer Value from Eve to EVM external account', async function () {
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
@@ -28,17 +30,16 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
             mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000'
         };
-    
-        const evmAccount = createPair({ toSS58: encodeAddress, type: 'ethereum' }, { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) });
+        const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
+            evmAccountRaw.mappedAddress
+        );
     
         let eveMappedAccount = context.eve.publicKey.slice(0, 20);
-        let value = 200000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
+        let value = 20000000000000; // 20 000 000 000 000
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
         await signAndSend(tx, context.eve);
 
-        // Wait extra 2 blocks for finalization
-        await sleep(24);
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
         );
@@ -46,9 +47,10 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
 
-        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
-        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(BigInt(value));
-
+        // If a substrate account using pallet_evm to trigger evm transaction,
+        // it will bump 2 for nonce (one for substrate extrinsic, one for evm). 
+        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 2);
+        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt() + BigInt(value));
         
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
@@ -73,7 +75,6 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
           evmAccountRaw.mappedAddress
         );
 
-        const { compiled } = await import("./compile.mjs");
         // Get the bytecode and API
         const bytecode = compiled.evm.bytecode.object;
         const abi = compiled.abi;
@@ -81,7 +82,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const web3 = new Web3('http://localhost:9944');
 
         // Create deploy function
-        const deploy = async (accountFrom) => {
+        const deploy = async (accountFrom: any) => {
             console.log(`Attempting to deploy from account ${accountFrom.address}`);
 
             // Create contract instance
@@ -110,12 +111,12 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         };
 
         const deployed = await deploy(evmAccountRaw);
-        console.log('deployed', deployed);
-        const result = (deployed.contractAddress === '0x687528e4BC4040DC9ADBA05C1f00aE3633faa731') ? 1 : 0;
-        assert.equal(1, result, 'Contract address mismatch');
+        if (!deployed.contractAddress) {
+            console.log('deployed', deployed);
+        }
 
         // Test get message contract method
-        const sayMessage = async (contractAddress) => {
+        const sayMessage = async (contractAddress: string) => {
           // 4. Create contract instance
           const hello = new web3.eth.Contract(abi, contractAddress);
           console.log(`Making a call to contract at address: ${contractAddress}`);
@@ -128,13 +129,12 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
           return data;
         };
 
-        const deployedContract = '0x687528e4BC4040DC9ADBA05C1f00aE3633faa731';
-        const message = await sayMessage(deployedContract);
+        const message = await sayMessage(deployed.contractAddress!);
         const initialResult = (message === 'Hello World') ? 1 : 0;
         assert.equal(1, initialResult, 'Contract initial storage query mismatch');
 
         // Test set message contract method
-        const setMessage = async (contractAddress, accountFrom, message) => {
+        const setMessage = async (contractAddress: string, accountFrom: any, message: string) => {
           console.log(
               `Calling the setMessage function in contract at address: ${contractAddress}`
           );
@@ -158,8 +158,8 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
           const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
           console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
         };
-        const setMsg = await setMessage(deployedContract, evmAccountRaw, 'Goodbye World');
-        const sayMsg = await sayMessage(deployedContract);
+        const setMsg = await setMessage(deployed.contractAddress!, evmAccountRaw, 'Goodbye World');
+        const sayMsg = await sayMessage(deployed.contractAddress!);
         const setResult = (sayMsg === 'Goodbye World') ? 1 : 0;
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
 
