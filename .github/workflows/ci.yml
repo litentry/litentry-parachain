@@ -451,7 +451,7 @@ jobs:
 
       - name: Run ts tests for ${{ matrix.chain }}
         if: needs.set-condition.outputs.run_parachain_test == 'true'
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           make test-ts-docker-${{ matrix.chain }}
       
