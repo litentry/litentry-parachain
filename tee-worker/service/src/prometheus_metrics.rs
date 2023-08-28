@@ -61,10 +61,10 @@ lazy_static! {
 		register_int_gauge!("litentry_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
 			.unwrap();
 	static ref ENCLAVE_STF_TASKS: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_stf_total_calls", "Litentry Stf Calls", &["request_type", "variant"])
+		register_int_gauge_vec!("litentry_worker_enclave_stf_total_tasks", "Litentry Stf Tasks", &["request_type", "variant"])
 			.unwrap();
 	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
-		register_histogram_vec!("litentry_worker_enclave_stf_exeuction_times", "Litentry Stf Call Exeuction Time", &["request_type", "variant"])
+		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
 			.unwrap();
 }
 
