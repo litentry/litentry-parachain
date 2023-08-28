@@ -60,10 +60,10 @@ lazy_static! {
 	static ref ENCLAVE_SIDECHAIN_TOP_POOL_SIZE: IntGauge =
 		register_int_gauge!("litentry_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
 			.unwrap();
-	static ref ENCLAVE_STF_CALLS: IntGaugeVec =
+	static ref ENCLAVE_STF_TASKS: IntGaugeVec =
 		register_int_gauge_vec!("litentry_worker_enclave_stf_total_calls", "Litentry Stf Calls", &["request_type", "variant"])
 			.unwrap();
-	static ref ENCLAVE_STF_CALLS_EXECUTION: HistogramVec =
+	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
 		register_histogram_vec!("litentry_worker_enclave_stf_exeuction_times", "Litentry Stf Call Exeuction Time", &["request_type", "variant"])
 			.unwrap();
 }
@@ -198,12 +198,12 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 
 // Function to increment STF calls with labels
 fn inc_stf_calls(category: &str, label: &str) {
-	ENCLAVE_STF_CALLS.with_label_values(&[category, label]).inc();
+	ENCLAVE_STF_TASKS.with_label_values(&[category, label]).inc();
 }
 
 // Function to observe STF call execution time with labels
 fn observe_execution_time(category: &str, label: &str, time: f64) {
-	ENCLAVE_STF_CALLS_EXECUTION.with_label_values(&[category, label]).observe(time);
+	ENCLAVE_STF_TASKS_EXECUTION.with_label_values(&[category, label]).observe(time);
 }
 
 // Handle STF call request and increment metrics
