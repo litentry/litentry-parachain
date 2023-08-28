@@ -214,39 +214,32 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 		RequestType::AssertionVerification(_) => "request_vc",
 	};
 
-	match req {
-		RequestType::IdentityVerification(request) => {
-			let label = match request.identity {
-				Identity::Twitter(_) => "Twitter",
-				Identity::Discord(_) => "Discord",
-				Identity::Github(_) => "Github",
-				Identity::Substrate(_) => "Substrate",
-				Identity::Evm(_) => "Evm",
-			};
-			inc_stf_calls(category, label);
-			observe_execution_time(category, label, time)
+	let label = match req {
+		RequestType::IdentityVerification(request) => match request.identity {
+			Identity::Twitter(_) => "Twitter",
+			Identity::Discord(_) => "Discord",
+			Identity::Github(_) => "Github",
+			Identity::Substrate(_) => "Substrate",
+			Identity::Evm(_) => "Evm",
 		},
-		RequestType::AssertionVerification(request) => {
-			let label = match request.assertion {
-				Assertion::A1 => "A1",
-				Assertion::A2(_) => "A2",
-				Assertion::A3(..) => "A3",
-				Assertion::A4(_) => "A4",
-				Assertion::A6 => "A6",
-				Assertion::A7(_) => "A7",
-				Assertion::A8(_) => "A8",
-				Assertion::A9 => "A9",
-				Assertion::A10(_) => "A10",
-				Assertion::A11(_) => "A11",
-				Assertion::A13(_) => "A13",
-				Assertion::A14 => "A14",
-				Assertion::A20 => "A20",
-				Assertion::Achainable(..) => "Achainable",
-			};
-			inc_stf_calls(category, label);
-			observe_execution_time(category, label, time)
+		RequestType::AssertionVerification(request) => match request.assertion {
+			Assertion::A1 => "A1",
+			Assertion::A2(_) => "A2",
+			Assertion::A3(..) => "A3",
+			Assertion::A4(_) => "A4",
+			Assertion::A6 => "A6",
+			Assertion::A7(_) => "A7",
+			Assertion::A8(_) => "A8",
+			Assertion::A9 => "A9",
+			Assertion::A10(_) => "A10",
+			Assertion::A11(_) => "A11",
+			Assertion::A13(_) => "A13",
+			Assertion::A14 => "A14",
+			Assertion::Achainable(..) => "Achainable",
 		},
-	}
+	};
+	inc_stf_calls(category, label);
+	observe_execution_time(category, label, time)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
