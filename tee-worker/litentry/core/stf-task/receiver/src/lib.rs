@@ -54,7 +54,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{format, string::String, sync::Arc};
+use std::{boxed::Box, format, string::String, sync::Arc};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -190,7 +190,7 @@ where
 		}
 
 		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::StfCallObserveExecutionTime(
-			req.clone(),
+			Box::new(req),
 			start_time.elapsed().as_secs_f64(),
 		)) {
 			warn!("Failed to update metric for top pool size: {:?}", e);

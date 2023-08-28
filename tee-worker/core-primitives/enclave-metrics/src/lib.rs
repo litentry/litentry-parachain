@@ -25,7 +25,7 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use lc_stf_task_sender::RequestType;
-use std::string::String;
+use std::{boxed::Box, string::String};
 use substrate_fixed::types::U32F32;
 
 // FIXME: Copied from ita-oracle because of cyclic deps. Should be removed after integritee-network/pallets#71
@@ -38,7 +38,7 @@ pub enum EnclaveMetric {
 	TopPoolSizeIncrement,
 	TopPoolSizeDecrement,
 	ExchangeRateOracle(ExchangeRateOracleMetric),
-	StfCallObserveExecutionTime(RequestType, f64),
+	StfCallObserveExecutionTime(Box<RequestType>, f64),
 	// OracleMetric(OracleMetric<MetricsInfo>),
 }
 

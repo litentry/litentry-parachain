@@ -183,7 +183,7 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.dec();
 			},
 			EnclaveMetric::StfCallObserveExecutionTime(req, time) => {
-				handle_stf_call_request(req, time);
+				handle_stf_call_request(*req, time);
 			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
