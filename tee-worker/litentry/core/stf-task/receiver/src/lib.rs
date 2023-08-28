@@ -189,7 +189,7 @@ where
 				AssertionHandler { req: req.clone(), context: context.clone() }.start(),
 		}
 
-		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::StfCallObserveExecutionTime(
+		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::StfTaskExecutionTime(
 			Box::new(req),
 			start_time.elapsed().as_secs_f64(),
 		)) {

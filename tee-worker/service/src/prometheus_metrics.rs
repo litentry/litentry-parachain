@@ -182,7 +182,7 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			EnclaveMetric::TopPoolSizeDecrement => {
 				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.dec();
 			},
-			EnclaveMetric::StfCallObserveExecutionTime(req, time) => {
+			EnclaveMetric::StfTaskExecutionTime(req, time) => {
 				handle_stf_call_request(*req, time);
 			},
 			#[cfg(feature = "teeracle")]
