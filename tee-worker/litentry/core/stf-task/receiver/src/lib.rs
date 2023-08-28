@@ -193,7 +193,7 @@ where
 			Box::new(req),
 			start_time.elapsed().as_secs_f64(),
 		)) {
-			warn!("Failed to update metric for top pool size: {:?}", e);
+			warn!("Failed to update metric for stf execution: {:?}", e);
 		}
 	}
 }
