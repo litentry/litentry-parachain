@@ -208,7 +208,7 @@ export async function createSignedTrustedCallRequestVc(
 ) {
     return await createSignedTrustedCall(
         parachainApi,
-        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, H256)'],
+        ['request_vc', '(LitentryIdentity, LitentryIdentity, CorePrimitivesAssertion, H256)'],
         signer,
         mrenclave,
         nonce,

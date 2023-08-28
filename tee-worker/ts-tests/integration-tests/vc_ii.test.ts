@@ -39,6 +39,15 @@ describe('Test Identity (direct invocation)', function () {
         { A8: ['Litentry'] },
         { A10: '10' },
         { A11: '10' },
+        {
+            Achainable: {
+                Amount: {
+                    name: 'Balance over {amount}',
+                    chain: 'Litentry',
+                    amount: '0',
+                }
+            }
+        }
     ];
     this.timeout(6000000);
 
