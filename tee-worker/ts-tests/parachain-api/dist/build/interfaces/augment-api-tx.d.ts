@@ -5575,9 +5575,6 @@ declare module "@polkadot/api-base/types/submittable" {
                         | {
                               A14: any;
                           }
-                        | {
-                              Achainable: any;
-                          }
                         | string
                         | Uint8Array,
                     hash: H256 | string | Uint8Array
@@ -5647,9 +5644,6 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               A14: any;
-                          }
-                        | {
-                              Achainable: any;
                           }
                         | string
                         | Uint8Array
@@ -5733,9 +5727,6 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               A14: any;
-                          }
-                        | {
-                              Achainable: any;
                           }
                         | string
                         | Uint8Array,
