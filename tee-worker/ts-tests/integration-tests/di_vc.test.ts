@@ -39,7 +39,6 @@ describe('Test Identity (direct invocation)', function () {
         { A8: ['Litentry'] },
         { A10: '10' },
         { A11: '10' },
-
     ];
     this.timeout(6000000);
 
@@ -131,7 +130,10 @@ describe('Test Identity (direct invocation)', function () {
                 1,
                 `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
             );
-            const trustedOperationResponse = context.api.createType('TrustedOperationResponse', callValue.value) as unknown as TrustedOperationResponse;
+            const trustedOperationResponse = context.api.createType(
+                'TrustedOperationResponse',
+                callValue.value
+            ) as unknown as TrustedOperationResponse;
             await assertVc(context, new PolkadotSigner(context.substrateWallet.alice), trustedOperationResponse.value);
         });
     });
