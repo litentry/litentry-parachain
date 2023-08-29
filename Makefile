@@ -26,13 +26,13 @@ help:
 
 # build release
 
-.PHONY: build-all ## Build release all with `tee-dev` feature
+.PHONY: build-all ## Build release all
 build-all:
-	cargo build --locked --release --features=tee-dev
+	cargo build --locked --release
 
-.PHONY: build-node ## Build release node with `tee-dev` feature
+.PHONY: build-node ## Build release node
 build-node:
-	cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release --features=tee-dev
+	cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release
 
 .PHONY: build-runtime-litentry ## Build litentry release runtime
 build-runtime-litentry:
@@ -221,7 +221,7 @@ cargofix:
 update:
 	cargo update
 	cd tee-worker && cargo update
-	cd tee-worker/enclave-runtime && cargo update 
+	cd tee-worker/enclave-runtime && cargo update
 
 # shellcheck
 
