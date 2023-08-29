@@ -1,18 +1,6 @@
 import "@polkadot/types/types/registry";
 import type {
     CorePrimitivesAssertion,
-    CorePrimitivesAssertionAchainableAmount,
-    CorePrimitivesAssertionAchainableAmountHolding,
-    CorePrimitivesAssertionAchainableAmountToken,
-    CorePrimitivesAssertionAchainableAmounts,
-    CorePrimitivesAssertionAchainableBasic,
-    CorePrimitivesAssertionAchainableBetweenPercents,
-    CorePrimitivesAssertionAchainableClassOfYear,
-    CorePrimitivesAssertionAchainableDate,
-    CorePrimitivesAssertionAchainableDateInterval,
-    CorePrimitivesAssertionAchainableDatePercent,
-    CorePrimitivesAssertionAchainableParams,
-    CorePrimitivesAssertionAchainableToken,
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesErrorImpError,
     CorePrimitivesErrorVcmpError,
@@ -335,18 +323,6 @@ import type {
 declare module "@polkadot/types/types/registry" {
     interface InterfaceTypes {
         CorePrimitivesAssertion: CorePrimitivesAssertion;
-        CorePrimitivesAssertionAchainableAmount: CorePrimitivesAssertionAchainableAmount;
-        CorePrimitivesAssertionAchainableAmountHolding: CorePrimitivesAssertionAchainableAmountHolding;
-        CorePrimitivesAssertionAchainableAmountToken: CorePrimitivesAssertionAchainableAmountToken;
-        CorePrimitivesAssertionAchainableAmounts: CorePrimitivesAssertionAchainableAmounts;
-        CorePrimitivesAssertionAchainableBasic: CorePrimitivesAssertionAchainableBasic;
-        CorePrimitivesAssertionAchainableBetweenPercents: CorePrimitivesAssertionAchainableBetweenPercents;
-        CorePrimitivesAssertionAchainableClassOfYear: CorePrimitivesAssertionAchainableClassOfYear;
-        CorePrimitivesAssertionAchainableDate: CorePrimitivesAssertionAchainableDate;
-        CorePrimitivesAssertionAchainableDateInterval: CorePrimitivesAssertionAchainableDateInterval;
-        CorePrimitivesAssertionAchainableDatePercent: CorePrimitivesAssertionAchainableDatePercent;
-        CorePrimitivesAssertionAchainableParams: CorePrimitivesAssertionAchainableParams;
-        CorePrimitivesAssertionAchainableToken: CorePrimitivesAssertionAchainableToken;
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;
         CorePrimitivesErrorImpError: CorePrimitivesErrorImpError;
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;
