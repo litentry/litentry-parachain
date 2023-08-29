@@ -39,6 +39,8 @@ describe('Test Identity (direct invocation)', function () {
         { A8: ['Litentry'] },
         { A10: '10' },
         { A11: '10' },
+
+        //TODO add Achainable https://github.com/litentry/litentry-parachain/issues/2080
     ];
     this.timeout(6000000);
 
