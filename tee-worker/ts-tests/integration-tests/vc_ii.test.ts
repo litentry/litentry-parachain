@@ -45,9 +45,9 @@ describe('Test Identity (direct invocation)', function () {
                     name: 'Balance over {amount}',
                     chain: 'Litentry',
                     amount: '0',
-                }
-            }
-        }
+                },
+            },
+        },
     ];
     this.timeout(6000000);
 
