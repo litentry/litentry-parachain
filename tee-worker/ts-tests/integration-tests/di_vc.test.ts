@@ -39,15 +39,7 @@ describe('Test Identity (direct invocation)', function () {
         { A8: ['Litentry'] },
         { A10: '10' },
         { A11: '10' },
-        {
-            Achainable: {
-                Amount: {
-                    name: 'Balance over {amount}',
-                    chain: 'Litentry',
-                    amount: '0',
-                },
-            },
-        },
+
     ];
     this.timeout(6000000);
 
@@ -116,7 +108,7 @@ describe('Test Identity (direct invocation)', function () {
                 context.api.createType('Index', nonce),
                 new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
-                context.api.createType('CorePrimitivesAssertion', assertion).toHex(),
+                context.api.createType('Assertion', assertion).toHex(),
                 requestIdentifier
             );
 
@@ -153,7 +145,7 @@ describe('Test Identity (direct invocation)', function () {
             context.api.createType('Index', nonce),
             new PolkadotSigner(context.substrateWallet.bob),
             aliceSubject,
-            context.api.createType('CorePrimitivesAssertion', { A1: null }).toHex(),
+            context.api.createType('Assertion', { A1: null }).toHex(),
             requestIdentifier
         );
         const callValue = await sendRequestFromTrustedCall(
