@@ -114,7 +114,7 @@ pub fn request_achainable_classofyear(
 			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
 		})?;
 
-		// If parsing the current metadata field fails, continue to parse the next address
+		// In some cases,the metadata field TDF will return null, so if there is a parsing error, we need to continue requesting the next address
 		if year.parse::<u32>().is_err() {
 			continue
 		}
