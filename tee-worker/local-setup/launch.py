@@ -266,26 +266,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run a setup consisting of a node and some workers"
     )
-    parser.add_argument("config", type=str, help="Config for the node and workers")
+    parser.add_argument("--config", type=str, help="Config for the node and workers")
     parser.add_argument(
-        "parachain",
+        "--parachain",
         nargs="?",
         default="local-docker",
         type=str,
         help="Config for parachain selection: local-docker / local-binary / remote",
     )
     parser.add_argument(
-        "log_config_path",
+        "--log_config_path",
         nargs="?",
         default="./local-setup/worker-log-level-config.toml",
         type=str,
         help="log level config file path"
     )
     parser.add_argument(
-        "offset", nargs="?", default="0", type=int, help="offset for port"
+        "--offset", nargs="?", default="0", type=int, help="offset for port"
     )
     parser.add_argument(
-        "parachain_dir", nargs="?", default="/tmp/parachain_dev", help="Parachain directory for local binary"
+        "--parachain_dir", nargs="?", default="/tmp/parachain_dev", help="Parachain directory for local binary"
     )
     args = parser.parse_args()
 
