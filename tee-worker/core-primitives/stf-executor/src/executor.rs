@@ -31,7 +31,7 @@ use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
-	EncodeResult, ExecuteCall, StateCallInterface, UpdateState,
+	ExecuteCall, StateCallInterface, StfExecutionResult, UpdateState,
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -148,23 +148,18 @@ where
 				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
 			Ok(result) => {
+				let force_connection_wait = result.force_connection_wait();
 				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
-					let encoded_result = result.get_encoded_result();
-					// if the result is true, we need to store raw result instead of response so rpc_responder can continue watching, see rpc_responder
-					if encoded_result == true.encode() {
-						encoded_result
-					} else {
-						TrustedOperationResponse {
-							req_ext_hash: h.clone(),
-							value: encoded_result
-						}.encode()
-					}
+					TrustedOperationResponse {
+						req_ext_hash: h.clone(),
+						value: result.get_encoded_result()
+					}.encode()
 				}).unwrap_or_default();
 
 				if let StatePostProcessing::Prune = post_processing {
 					state.prune_state_diff();
 				}
-				Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
+				Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value, force_connection_wait))
 			},
 		};
 	}

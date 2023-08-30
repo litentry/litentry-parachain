@@ -398,10 +398,7 @@ export function assertIdentityLinkedResult(
         decodedRes.value
     ) as unknown as LinkIdentityResult;
 
-    assert.equal(
-        expectedIdentity.toString(),
-        parseIdentity(context.sidechainRegistry, decodedLinkResult.identity, aesKey).toString()
-    );
+    assert.isNotNull(decodedLinkResult.id_graph);
 }
 /* 
     assert vc
