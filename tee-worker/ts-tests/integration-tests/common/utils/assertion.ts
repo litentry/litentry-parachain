@@ -283,7 +283,7 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     Compares ordered identities with corresponding ordered events
 
     for each event following steps are executed:
-    1. compare event account with signer
+    1. compare event account with subject
     2. compare event identity with expected identity
     3. compare event prime identity with expected prime identity
     4. compare event web3networks with expected web3networks
@@ -417,18 +417,18 @@ export function assertIdentityLinkedResult(
 */
 
 export async function assertVc(context: IntegrationTestContext, signer: Signer, data: Bytes) {
-    const vc = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
+    const results = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
 
-    const vcHash = vc.vc_hash.toString();
+    const vcHash = results.vc_hash.toString();
     const signerAddress = u8aToHex(signer.getAddressRaw());
 
     // step 1
-    const vcAccount = vc.account.toString();
+    const vcAccount = results.account.toString();
     const decodedAccount = decodeAddress(vcAccount);
     assert.equal(u8aToHex(decodedAccount), signerAddress, 'Check VC error: signer should be equal to vc account');
 
     // step 2
-    const vcIndex = vc.vc_index.toString();
+    const vcIndex = results.vc_index.toString();
     const vcRegistry = (await context.api.query.vcManagement.vcRegistry(
         vcIndex
     )) as unknown as PalletVcManagementVcContext;
@@ -437,7 +437,7 @@ export async function assertVc(context: IntegrationTestContext, signer: Signer, 
 
     // step 3
     // decryptWithAes function added 0x prefix
-    const vcPayload = vc.vc_payload;
+    const vcPayload = results.vc_payload;
     const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
     const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
     assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');

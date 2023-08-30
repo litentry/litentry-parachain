@@ -54,9 +54,6 @@ describe('Test Identity (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
-    it('needs a lot more work to be complete');
-    it('most of the bob cases are missing');
-
     step(`setting user shielding key (alice)`, async function () {
         const wallet = context.substrateWallet['alice'];
         const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
