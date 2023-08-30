@@ -25,6 +25,7 @@ from py.helpers import GracefulKiller, mkdir_p
 
 import socket
 import toml
+import datetime
 
 log_dir = "log"
 mkdir_p(log_dir)
@@ -79,6 +80,14 @@ def is_port_open(port):
     except OSError:
         return False
 
+def is_directory_accessible(directory_path):
+    if os.path.exists(directory_path):
+        if os.access(directory_path, os.W_OK):
+            return True
+        else:
+            return False
+    else:
+        return True
 
 # Function to reallocate port if it is not available
 def reallocate_ports(env_name, port):
@@ -288,6 +297,16 @@ if __name__ == "__main__":
         "--parachain_dir", nargs="?", default="/tmp/parachain_dev", help="Parachain directory for local binary"
     )
     args = parser.parse_args()
+    
+    if not is_directory_accessible(args.parachain_dir): 
+        print("Directory is not accessible, Reassigning the directory")
+        today = datetime.datetime.now()
+        formatted_date = today.strftime('%d-%m-%Y')
+        directory_name = f"parachain_dev-{formatted_date}"
+        temp_directory_path = os.path.join('/tmp', directory_name)
+        args.parachain_dir = temp_directory_path 
+        print("Directory has been reassigned to:", temp_directory_path)
+        
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
