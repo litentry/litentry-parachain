@@ -199,25 +199,12 @@ export default {
 			account: "AccountId",
 		},
 		SetUserShieldingKeyResult: {
-			account: "AccountId",
 			id_graph: "AesOutput",
 		},
 		LinkIdentityResult: {
-			account: "AccountId",
-			identity: "AesOutput",
 			id_graph: "AesOutput",
 		},
-		DeactivateIdentityResult: {
-			account: "AccountId",
-			identity: "AesOutput",
-		},
-		ActivateIdentityResult: {
-			account: "AccountId",
-			identity: "AesOutput",
-		},
 		RequestVCResult: {
-			account: "AccountId",
-			assertion: "Assertion",
 			vc_index: "H256",
 			vc_hash: "H256",
 			vc_payload: "AesOutput",

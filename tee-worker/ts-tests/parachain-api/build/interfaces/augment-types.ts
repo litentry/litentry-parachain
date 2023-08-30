@@ -1210,13 +1210,11 @@ import type {
     XcmpMessageFormat,
 } from "@polkadot/types/interfaces/xcm";
 import type {
-    ActivateIdentityResult,
     Address20,
     Address32,
     AesOutput,
     Assertion,
     BoundedWeb3Network,
-    DeactivateIdentityResult,
     DirectRequestStatus,
     DiscordValidationData,
     ErrorDetail,
@@ -1277,7 +1275,6 @@ declare module "@polkadot/types/types/registry" {
         AccountVote: AccountVote;
         AccountVoteSplit: AccountVoteSplit;
         AccountVoteStandard: AccountVoteStandard;
-        ActivateIdentityResult: ActivateIdentityResult;
         ActiveEraInfo: ActiveEraInfo;
         ActiveGilt: ActiveGilt;
         ActiveGiltsTotal: ActiveGiltsTotal;
@@ -1514,7 +1511,6 @@ declare module "@polkadot/types/types/registry" {
         CrateVersion: CrateVersion;
         CreatedBlock: CreatedBlock;
         Data: Data;
-        DeactivateIdentityResult: DeactivateIdentityResult;
         DeferredOffenceOf: DeferredOffenceOf;
         DefunctVoter: DefunctVoter;
         DelayKind: DelayKind;
