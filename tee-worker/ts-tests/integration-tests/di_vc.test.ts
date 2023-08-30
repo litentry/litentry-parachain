@@ -52,7 +52,6 @@ describe('Test Vc (direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
-
     });
 
     step(`setting user shielding key (alice)`, async function () {
@@ -92,7 +91,6 @@ describe('Test Vc (direct invocation)', function () {
 
     assertions.forEach((assertion) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
-
             let currentNonce = (
                 await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
             ).toNumber();

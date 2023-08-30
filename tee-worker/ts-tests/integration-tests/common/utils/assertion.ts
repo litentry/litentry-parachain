@@ -433,7 +433,6 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
     const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
     assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');
 
-
     /* DID format
     did:litentry:substrate:0x12345...
     did:litentry:evm:0x123456...
@@ -441,12 +440,16 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
     */
 
     // step 3
-    const credentialSubjectId = JSON.parse(decryptVcPayload).credentialSubject.id
-    const expectSubject = Object.entries(JSON.parse(subject.toString()))
+    const credentialSubjectId = JSON.parse(decryptVcPayload).credentialSubject.id;
+    const expectSubject = Object.entries(JSON.parse(subject.toString()));
 
     // convert to DID format
-    const expectDid = 'did:litentry:' + expectSubject[0][0] + ':' + expectSubject[0][1]
-    assert.equal(expectDid, credentialSubjectId, 'Check credentialSubjec error: expectDid should be equal to credentialSubject id')
+    const expectDid = 'did:litentry:' + expectSubject[0][0] + ':' + expectSubject[0][1];
+    assert.equal(
+        expectDid,
+        credentialSubjectId,
+        'Check credentialSubjec error: expectDid should be equal to credentialSubject id'
+    );
 
     // step 4
     const vcPayloadJson = JSON.parse(decryptVcPayload);
