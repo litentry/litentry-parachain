@@ -15,7 +15,7 @@ import { aesKey } from './common/call';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { TrustedOperationResponse } from 'parachain-api';
-describe('Test Identity (direct invocation)', function () {
+describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceSubject: LitentryPrimitivesIdentity = undefined as any;
@@ -52,6 +52,7 @@ describe('Test Identity (direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+
     });
 
     step(`setting user shielding key (alice)`, async function () {
@@ -91,6 +92,7 @@ describe('Test Identity (direct invocation)', function () {
 
     assertions.forEach((assertion) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
+
             let currentNonce = (
                 await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
             ).toNumber();
@@ -133,7 +135,7 @@ describe('Test Identity (direct invocation)', function () {
                 'TrustedOperationResponse',
                 callValue.value
             ) as unknown as TrustedOperationResponse;
-            await assertVc(context, new PolkadotSigner(context.substrateWallet.alice), trustedOperationResponse.value);
+            await assertVc(context, aliceSubject, trustedOperationResponse.value);
         });
     });
 

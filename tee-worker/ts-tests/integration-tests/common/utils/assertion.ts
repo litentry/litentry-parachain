@@ -283,7 +283,7 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     Compares ordered identities with corresponding ordered events
 
     for each event following steps are executed:
-    1. compare event account with subject
+    1. compare event account with signer
     2. compare event identity with expected identity
     3. compare event prime identity with expected prime identity
     4. compare event web3networks with expected web3networks
@@ -406,28 +406,21 @@ export function assertIdentityLinkedResult(
 /* 
     assert vc
     steps:
-    1. compare vc account with signer
-    2. check vc status should be Active
-    3. compare vc payload hash(blake vc payload) with vc hash
-    4. compare vc index vc payload id
+    1. check vc status should be Active
+    2. compare vc payload hash(blake vc payload) with vc hash
+    3. check subject
+    4. compare vc index with vcPayload id
     5. check vc signature
     6. compare vc wtih jsonSchema
 
     TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
 */
 
-export async function assertVc(context: IntegrationTestContext, signer: Signer, data: Bytes) {
+export async function assertVc(context: IntegrationTestContext, subject: LitentryPrimitivesIdentity, data: Bytes) {
     const results = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
-
     const vcHash = results.vc_hash.toString();
-    const signerAddress = u8aToHex(signer.getAddressRaw());
 
     // step 1
-    const vcAccount = results.account.toString();
-    const decodedAccount = decodeAddress(vcAccount);
-    assert.equal(u8aToHex(decodedAccount), signerAddress, 'Check VC error: signer should be equal to vc account');
-
-    // step 2
     const vcIndex = results.vc_index.toString();
     const vcRegistry = (await context.api.query.vcManagement.vcRegistry(
         vcIndex
@@ -435,12 +428,28 @@ export async function assertVc(context: IntegrationTestContext, signer: Signer, 
     const vcStatus = vcRegistry.toHuman()['status'];
     assert.equal(vcStatus, 'Active', 'Check VcRegistry error:status should be equal to Active');
 
-    // step 3
+    // step 2
     // decryptWithAes function added 0x prefix
     const vcPayload = results.vc_payload;
     const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
+
     const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
     assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');
+
+
+    /* DID format
+    did:litentry:substrate:0x12345...
+    did:litentry:evm:0x123456...
+    did:litentry:twitter:my_twitter_handle
+    */
+
+    // step 3
+    const credentialSubjectId = JSON.parse(decryptVcPayload).credentialSubject.id
+    const expectSubject = Object.entries(JSON.parse(subject.toString()))
+
+    // convert to DID format
+    const expectDid = 'did:litentry:' + expectSubject[0][0] + ':' + expectSubject[0][1]
+    assert.equal(expectDid, credentialSubjectId, 'Check credentialSubjec error: expectDid should be equal to credentialSubject id')
 
     // step 4
     const vcPayloadJson = JSON.parse(decryptVcPayload);
