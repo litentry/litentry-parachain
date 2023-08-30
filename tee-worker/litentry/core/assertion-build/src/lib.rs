@@ -113,11 +113,12 @@ pub fn transpose_identity(
 mod tests {
 	use super::*;
 	use itp_utils::ToHexPrefixed;
+	use litentry_primitives::IdentityString;
 
 	#[test]
 	fn transpose_identity_works() {
 		let mut identities: Vec<IdentityNetworkTuple> = vec![];
-		let id1 = Identity::Twitter("alice1".as_bytes().to_vec().try_into().unwrap());
+		let id1 = Identity::Twitter(IdentityString::new("alice1".as_bytes().to_vec()));
 		let id2 = [2u8; 32].into();
 		let id3 = [3u8; 32].into();
 		let id4 = [4u8; 20].into();
