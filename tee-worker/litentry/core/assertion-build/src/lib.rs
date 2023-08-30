@@ -50,6 +50,7 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 pub mod achainable;
+pub mod oneblock;
 
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;

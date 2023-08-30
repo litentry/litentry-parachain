@@ -180,6 +180,7 @@ pub enum Assertion {
 
 	// For EVM Version Early Bird
 	A20,
+	Oneblock,
 }
 
 impl Assertion {
