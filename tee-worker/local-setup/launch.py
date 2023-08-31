@@ -80,14 +80,11 @@ def is_port_open(port):
     except OSError:
         return False
 
-def is_directory_accessible(directory_path):
+def is_directory_present(directory_path):
     if os.path.exists(directory_path):
-        if os.access(directory_path, os.W_OK):
-            return True
-        else:
-            return False
+        return True 
     else:
-        return True
+        return False
 
 # Function to reallocate port if it is not available
 def reallocate_ports(env_name, port):
@@ -293,22 +290,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "--offset", nargs="?", default="0", type=int, help="offset for port"
     )
-    parser.add_argument(
-        "--parachain_dir", nargs="?", default="/tmp/parachain_dev", help="Parachain directory for local binary"
-    )
     args = parser.parse_args()
     
-    if not is_directory_accessible(args.parachain_dir): 
-        print("Directory is not accessible, Reassigning the directory")
+    if is_directory_present("/tmp/parachain_dev"): 
+        print("/tmp/parachain_dev already exists, Reassigning the directory")
         today = datetime.datetime.now()
         formatted_date = today.strftime('%d-%m-%Y')
-        directory_name = f"parachain-dev-{formatted_date}"
+        directory_name = f"parachain_dev_{formatted_date}"
         temp_directory_path = os.path.join('/tmp', directory_name)
-        args.parachain_dir = temp_directory_path 
+        parachain_dir = temp_directory_path 
         print("Directory has been reassigned to:", temp_directory_path)
-        
+    else: 
+        parachain_dir = "/tmp/parachain_dev"
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, args.parachain_dir) == 0:
+    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
         killer.exit_gracefully()
