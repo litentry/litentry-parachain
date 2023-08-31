@@ -17,10 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use core::{
-	fmt::{Debug, Formatter},
-	ops::Deref,
-};
+use core::fmt::{Debug, Formatter};
 #[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
 
@@ -75,6 +72,10 @@ impl IdentityString {
 	pub fn new(inner: Vec<u8>) -> Self {
 		IdentityString { inner: BoundedVec::truncate_from(inner) }
 	}
+
+	pub fn inner_ref(&self) -> &[u8] {
+		self.inner.as_ref()
+	}
 }
 
 impl Debug for IdentityString {
@@ -87,14 +88,6 @@ impl Debug for IdentityString {
 		{
 			f.debug_struct("IdentityString").field("inner", &self.inner).finish()
 		}
-	}
-}
-
-impl Deref for IdentityString {
-	type Target = BoundedVec<u8, MaxStringLength>;
-
-	fn deref(&self) -> &Self::Target {
-		&self.inner
 	}
 }
 

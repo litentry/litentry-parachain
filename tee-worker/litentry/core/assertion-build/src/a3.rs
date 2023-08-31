@@ -64,7 +64,7 @@ pub fn build(
 					guild_id.to_vec(),
 					channel_id.to_vec(),
 					role_id.to_vec(),
-					address.to_vec(),
+					address.inner_ref().to_vec(),
 				)
 				.map_err(|e| {
 					Error::RequestVCFailed(
