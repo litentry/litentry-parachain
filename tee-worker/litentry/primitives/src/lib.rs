@@ -26,6 +26,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 mod aes;
 mod ethereum_signature;
 mod identity;
+mod macros;
 mod validation_data;
 
 pub use aes::*;

@@ -21,6 +21,7 @@ use core::fmt::{Debug, Formatter};
 #[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
 
+use crate::if_production_or;
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parentchain_primitives::{AccountId, Web3Network};
@@ -80,14 +81,10 @@ impl IdentityString {
 
 impl Debug for IdentityString {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		#[cfg(feature = "production")]
-		{
-			f.debug_struct("IdentityString").finish()
-		}
-		#[cfg(not(feature = "production"))]
-		{
+		if_production_or!(
+			f.debug_struct("IdentityString").finish(),
 			f.debug_struct("IdentityString").field("inner", &self.inner).finish()
-		}
+		)
 	}
 }
 
@@ -109,14 +106,10 @@ impl From<[u8; 20]> for Address20 {
 
 impl Debug for Address20 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		#[cfg(feature = "production")]
-		{
-			f.debug_tuple("Address20").finish()
-		}
-		#[cfg(not(feature = "production"))]
-		{
+		if_production_or!(
+			f.debug_tuple("Address20").finish(),
 			f.debug_tuple("Address20").field(&self.0).finish()
-		}
+		)
 	}
 }
 
@@ -169,14 +162,10 @@ impl From<ed25519::Public> for Address32 {
 
 impl Debug for Address32 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-		#[cfg(feature = "production")]
-		{
-			f.debug_tuple("Address32").finish()
-		}
-		#[cfg(not(feature = "production"))]
-		{
+		if_production_or!(
+			f.debug_tuple("Address32").finish(),
 			f.debug_tuple("Address32").field(&self.0).finish()
-		}
+		)
 	}
 }
 
