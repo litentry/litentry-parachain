@@ -18,11 +18,6 @@ import type {
     H256,
     Index,
 } from "@polkadot/types/interfaces/runtime";
-/** @name ActivateIdentityResult */
-export interface ActivateIdentityResult extends Struct {
-    readonly account: AccountId;
-    readonly identity: AesOutput;
-}
 /** @name Address20 */
 export interface Address20 extends U8aFixed {}
 /** @name Address32 */
@@ -72,11 +67,6 @@ export interface Assertion extends Enum {
 }
 /** @name BoundedWeb3Network */
 export interface BoundedWeb3Network extends Vec<Web3Network> {}
-/** @name DeactivateIdentityResult */
-export interface DeactivateIdentityResult extends Struct {
-    readonly account: AccountId;
-    readonly identity: AesOutput;
-}
 /** @name DirectRequestStatus */
 export interface DirectRequestStatus extends Enum {
     readonly isOk: boolean;
@@ -163,8 +153,6 @@ export interface IdentityStatus extends Enum {
 export interface IdentityString extends Bytes {}
 /** @name LinkIdentityResult */
 export interface LinkIdentityResult extends Struct {
-    readonly account: AccountId;
-    readonly identity: AesOutput;
     readonly id_graph: AesOutput;
 }
 /** @name LitentryIdentity */
@@ -218,15 +206,12 @@ export interface Request extends Struct {
 }
 /** @name RequestVCResult */
 export interface RequestVCResult extends Struct {
-    readonly account: AccountId;
-    readonly assertion: Assertion;
     readonly vc_index: H256;
     readonly vc_hash: H256;
     readonly vc_payload: AesOutput;
 }
 /** @name SetUserShieldingKeyResult */
 export interface SetUserShieldingKeyResult extends Struct {
-    readonly account: AccountId;
     readonly id_graph: AesOutput;
 }
 /** @name ShardIdentifier */
