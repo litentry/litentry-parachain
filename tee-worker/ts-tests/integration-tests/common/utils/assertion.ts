@@ -16,11 +16,16 @@ import {
     CorePrimitivesErrorErrorDetail,
     FrameSystemEventRecord,
     WorkerRpcReturnValue,
+    RequestVCResult,
+    PalletVcManagementVcContext,
     StfError,
     TrustedOperationResponse,
     LinkIdentityResult,
 } from 'parachain-api';
-import { Signer } from './crypto';
+import { Bytes } from '@polkadot/types-codec';
+import { Signer, decryptWithAes } from './crypto';
+import { blake2AsHex } from '@polkadot/util-crypto';
+import { decodeAddress } from '@polkadot/keyring';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -394,4 +399,92 @@ export function assertIdentityLinkedResult(
     ) as unknown as LinkIdentityResult;
 
     assert.isNotNull(decodedLinkResult.id_graph);
+}
+/* 
+    assert vc
+    steps:
+    1. check vc status should be Active
+    2. compare vc payload hash(blake vc payload) with vc hash
+    3. check subject
+    4. compare vc index with vcPayload id
+    5. check vc signature
+    6. compare vc wtih jsonSchema
+
+    TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
+*/
+
+export async function assertVc(context: IntegrationTestContext, subject: LitentryPrimitivesIdentity, data: Bytes) {
+    const results = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
+    const vcHash = results.vc_hash.toString();
+
+    // step 1
+    const vcIndex = results.vc_index.toString();
+    const vcRegistry = (await context.api.query.vcManagement.vcRegistry(
+        vcIndex
+    )) as unknown as PalletVcManagementVcContext;
+    const vcStatus = vcRegistry.toHuman()['status'];
+    assert.equal(vcStatus, 'Active', 'Check VcRegistry error:status should be equal to Active');
+
+    // step 2
+    // decryptWithAes function added 0x prefix
+    const vcPayload = results.vc_payload;
+    const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
+
+    const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
+    assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');
+
+    /* DID format
+    did:litentry:substrate:0x12345...
+    did:litentry:evm:0x123456...
+    did:litentry:twitter:my_twitter_handle
+    */
+
+    // step 3
+    const credentialSubjectId = JSON.parse(decryptVcPayload).credentialSubject.id;
+    const expectSubject = Object.entries(JSON.parse(subject.toString()));
+
+    // convert to DID format
+    const expectDid = 'did:litentry:' + expectSubject[0][0] + ':' + expectSubject[0][1];
+    assert.equal(
+        expectDid,
+        credentialSubjectId,
+        'Check credentialSubjec error: expectDid should be equal to credentialSubject id'
+    );
+
+    // step 4
+    const vcPayloadJson = JSON.parse(decryptVcPayload);
+    const { proof, ...vcWithoutProof } = vcPayloadJson;
+    assert.equal(vcIndex, vcPayloadJson.id, 'Check VcIndex error: VcIndex should be equal to vcPayload id');
+
+    // step 5
+    const enclaveCount = await context.api.query.teerex.enclaveCount();
+    const enclaveRegistry = (await context.api.query.teerex.enclaveRegistry(enclaveCount)) as any;
+
+    const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
+
+    const message = Buffer.from(vcWithoutProof.issuer.mrenclave);
+
+    const vcPubkey = Buffer.from(hexToU8a(`${enclaveRegistry.toHuman()['vcPubkey']}`));
+    const signatureStatus = await ed.verify(signature, message, vcPubkey);
+
+    assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
+
+    // step 6
+    const ajv = new Ajv();
+
+    const validate = ajv.compile(jsonSchema);
+
+    const isValid = validate(vcPayloadJson);
+
+    assert.isTrue(isValid, 'Check Vc payload error: vcPayload should be valid');
+    assert.equal(
+        vcWithoutProof.type[0],
+        'VerifiableCredential',
+        'Check Vc payload type error: vcPayload type should be VerifiableCredential'
+    );
+    assert.equal(
+        proof.type,
+        'Ed25519Signature2020',
+        'Check Vc proof type error: proof type should be Ed25519Signature2020'
+    );
 }

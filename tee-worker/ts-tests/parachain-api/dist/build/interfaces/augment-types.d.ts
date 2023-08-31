@@ -1208,6 +1208,7 @@ import type {
     Address32,
     AesOutput,
     Assertion,
+    AssertionSupportedNetwork,
     BoundedWeb3Network,
     DirectRequestStatus,
     DiscordValidationData,
@@ -1287,6 +1288,7 @@ declare module "@polkadot/types/types/registry" {
         Approvals: Approvals;
         ArithmeticError: ArithmeticError;
         Assertion: Assertion;
+        AssertionSupportedNetwork: AssertionSupportedNetwork;
         AssetApproval: AssetApproval;
         AssetApprovalKey: AssetApprovalKey;
         AssetBalance: AssetBalance;
