@@ -284,7 +284,7 @@ if __name__ == "__main__":
         help="Config for parachain selection: local-docker / local-binary / remote",
     )
     parser.add_argument(
-        "--log_config_path",
+        "--log",
         nargs="?",
         default="./local-setup/worker-log-level-config.toml",
         type=str,
@@ -302,7 +302,7 @@ if __name__ == "__main__":
         print("Directory is not accessible, Reassigning the directory")
         today = datetime.datetime.now()
         formatted_date = today.strftime('%d-%m-%Y')
-        directory_name = f"parachain_dev-{formatted_date}"
+        directory_name = f"parachain-dev-{formatted_date}"
         temp_directory_path = os.path.join('/tmp', directory_name)
         args.parachain_dir = temp_directory_path 
         print("Directory has been reassigned to:", temp_directory_path)
