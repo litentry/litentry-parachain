@@ -1,8 +1,10 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
+    assertIdentityLinkedResult,
+    assertWorkerError,
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
@@ -66,9 +68,6 @@ describe('Test Identity (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
-    it('needs a lot more work to be complete');
-    it('most of the bob cases are missing');
-
     step('linking identity with without user shielding key(charlie)', async function () {
         const charlieSubject = await buildIdentityFromKeypair(
             new PolkadotSigner(context.substrateWallet.charlie),
@@ -126,6 +125,18 @@ describe('Test Identity (direct invocation)', function () {
         */
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isUserShieldingKeyNotFound,
+                    `expected UserShieldingKeyNotFound, received ${v.asLinkIdentityFailed.type} instead`
+                );
+            },
+            res
+        );
 
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
@@ -327,6 +338,8 @@ describe('Test Identity (direct invocation)', function () {
                 teeShieldingKey,
                 linkIdentityCall
             );
+            assertIdentityLinkedResult(context, requestIdentifier, identity, res);
+
             await assertIsInSidechainBlock('linkIdentityCall', res);
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityLinked = false;
@@ -440,9 +453,19 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isInvalidIdentity,
+                    `expected InvalidIdentity, received ${v.asLinkIdentityFailed.type} instead`
+                );
+            },
+            res
+        );
         const events = await eventsPromise;
-
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'InvalidIdentity');
     });
 
@@ -500,13 +523,24 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isUnexpectedMessage,
+                    `expected UnexpectedMessage, received ${v.asLinkIdentityFailed.type} instead`
+                );
+            },
+            res
+        );
         const events = await eventsPromise;
 
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UnexpectedMessage');
     });
 
-    step('linking aleady linked identity', async function () {
+    step('linking already linked identity', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
@@ -547,7 +581,19 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asLinkIdentityFailed.type} instead`
+                );
+                assert.equal(u8aToString(v.asLinkIdentityFailed.asStfError), 'IdentityAlreadyLinked');
+            },
+            res
+        );
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'IdentityAlreadyLinked');
     });
@@ -946,7 +992,22 @@ describe('Test Identity (direct invocation)', function () {
         );
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(
+                    v.isDeactivateIdentityFailed,
+                    `expected DeactivateIdentityFailed, received ${v.type} instead`
+                );
+                assert.isTrue(
+                    v.asDeactivateIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asDeactivateIdentityFailed.type} instead`
+                );
+                assert.equal(u8aToString(v.asDeactivateIdentityFailed.asStfError), 'DeactivatePrimeIdentityDisallowed');
+            },
+            res
+        );
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');
     });

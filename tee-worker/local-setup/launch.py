@@ -24,6 +24,7 @@ from py.worker import Worker
 from py.helpers import GracefulKiller, mkdir_p
 
 import socket
+import toml
 
 log_dir = "log"
 mkdir_p(log_dir)
@@ -46,19 +47,21 @@ PORTS = [
 ]
 
 
-def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
+def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO], log_config_path):
     print(f"Setting up worker in {work_dir}")
     print(f"Copying files from {source_dir}")
-    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err)
+
+    log_level_dic = setup_worker_log_level(log_config_path)
+    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err, log_level_dic=log_level_dic)
     worker.init_clean()
     print("Initialized worker.")
     return worker
 
 
-def run_worker(config, i: int):
+def run_worker(config, i: int, log_config_path):
     log = open(f"{log_dir}/worker{i}.log", "w+")
     # TODO: either hard-code 'local-setup' directory, or take from input config.json
-    w = setup_worker(f"tmp/w{i}", config["source"], log)
+    w = setup_worker(f"tmp/w{i}", config["source"], log, log_config_path)
 
     print(f"Starting worker {i} in background")
     return w.run_in_background(
@@ -164,8 +167,30 @@ def setup_environment(offset, config, parachain_dir):
             for flag in config["workers"][0]["flags"]
         ]
 
+def setup_worker_log_level(log_config_path):
+    log_level_dic = {}
+    with open(log_config_path) as f:
+        log_data = toml.load(f)
 
-def main(processes, config_path, parachain_type, offset, parachain_dir):
+        # Section
+        for (section, item) in log_data.items():
+            log_level_string = "";
+            indx = 0
+
+            for (k, v) in item.items():
+                if indx == 0:
+                    log_level_string += v+","
+                else:
+                    log_level_string += k+"="+v+","
+
+                indx += 1
+                
+            log_level_dic[section] = log_level_string
+    
+    return log_level_dic
+
+
+def main(processes, config_path, parachain_type, log_config_path, offset, parachain_dir):
     with open(config_path) as config_file:
         config = json.load(config_file)
 
@@ -192,7 +217,7 @@ def main(processes, config_path, parachain_type, offset, parachain_dir):
     worker_i = 0
     worker_num = len(config["workers"])
     for w_conf in config["workers"]:
-        processes.append(run_worker(w_conf, worker_i))
+        processes.append(run_worker(w_conf, worker_i, log_config_path))
         print()
         # Wait a bit for worker to start up.
         sleep(300)
@@ -250,6 +275,13 @@ if __name__ == "__main__":
         help="Config for parachain selection: local-docker / local-binary / remote",
     )
     parser.add_argument(
+        "log_config_path",
+        nargs="?",
+        default="./local-setup/worker-log-level-config.toml",
+        type=str,
+        help="log level config file path"
+    )
+    parser.add_argument(
         "offset", nargs="?", default="0", type=int, help="offset for port"
     )
     parser.add_argument(
@@ -259,5 +291,5 @@ if __name__ == "__main__":
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.offset, args.parachain_dir) == 0:
+    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, args.parachain_dir) == 0:
         killer.exit_gracefully()

@@ -166,50 +166,77 @@ declare const _default: {
                 A2: string;
                 A3: string;
                 A4: string;
-                A5: string;
                 A6: string;
                 A7: string;
                 A8: string;
                 A9: string;
                 A10: string;
                 A11: string;
+                A12: string;
                 A13: string;
+                A14: string;
             };
+        };
+        AssertionSupportedNetwork: {
+            _enum: string[];
         };
         GenericEventWithAccount: {
             account: string;
         };
-        SetUserShieldingKeyResponse: {
-            account: string;
+        SetUserShieldingKeyResult: {
             id_graph: string;
-            req_ext_hash: string;
         };
-        LinkIdentityResponse: {
-            account: string;
-            identity: string;
+        LinkIdentityResult: {
             id_graph: string;
-            req_ext_hash: string;
         };
-        DeactivateIdentityResponse: {
-            account: string;
-            identity: string;
-            req_ext_hash: string;
-        };
-        ActivateIdentityResponse: {
-            account: string;
-            identity: string;
-            req_ext_hash: string;
-        };
-        SetIdentityNetworksResponse: {
-            req_ext_hash: string;
-        };
-        RequestVCResponse: {
-            account: string;
-            assertion: string;
+        RequestVCResult: {
             vc_index: string;
             vc_hash: string;
             vc_payload: string;
+        };
+        ErrorDetail: {
+            _enum: {
+                ImportError: string;
+                UnauthorizedSigner: string;
+                StfError: string;
+                SendStfRequestFailed: string;
+                UserShieldingKeyNotFound: string;
+                ParseError: string;
+                DataProviderError: string;
+                InvalidIdentity: string;
+                WrongWeb2Handle: string;
+                UnexpectedMessage: string;
+                WrongSignatureType: string;
+                VerifySubstrateSignatureFailed: string;
+                VerifyEvmSignatureFailed: string;
+                RecoverEvmAddressFailed: string;
+                Web3NetworkOutOfBounds: string;
+            };
+        };
+        StfError: {
+            _enum: {
+                MissingPrivileges: string;
+                RequireEnclaveSignerAccount: string;
+                Dispatch: string;
+                MissingFunds: string;
+                InvalidNonce: string;
+                StorageHashMismatch: string;
+                InvalidStorageDiff: string;
+                InvalidMetadata: string;
+                SetUserShieldingKeyFailed: string;
+                LinkIdentityFailed: string;
+                DeactivateIdentityFailed: string;
+                ActivateIdentityFailed: string;
+                RequestVCFailed: string;
+                SetScheduledMrEnclaveFailed: string;
+                SetIdentityNetworksFailed: string;
+                InvalidAccount: string;
+                UnclassifiedError: string;
+            };
+        };
+        TrustedOperationResponse: {
             req_ext_hash: string;
+            value: string;
         };
         AesOutput: {
             ciphertext: string;

@@ -23,7 +23,7 @@ use std::vec::Vec;
 
 use crate::{
 	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_self},
-	trusted_call_rpc_response::*,
+	trusted_call_result::*,
 	Runtime, StfError, System, TrustedOperation,
 };
 use codec::{Decode, Encode};
@@ -177,6 +177,36 @@ impl TrustedCall {
 		}
 	}
 
+	pub fn identifier(&self) -> Option<&H256> {
+		match self {
+			TrustedCall::balance_set_balance(..) => None,
+			TrustedCall::balance_transfer(..) => None,
+			TrustedCall::balance_unshield(..) => None,
+			TrustedCall::balance_shield(..) => None,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_withdraw(..) => None,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_call(..) => None,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_create(..) => None,
+			#[cfg(feature = "evm")]
+			TrustedCall::evm_create2(..) => None,
+			// litentry
+			TrustedCall::set_user_shielding_key(_, _, _, hash) => Some(hash),
+			TrustedCall::set_user_shielding_key_with_networks(_, _, _, _, hash) => Some(hash),
+			TrustedCall::link_identity(_, _, _, _, _, _, hash) => Some(hash),
+			TrustedCall::deactivate_identity(_, _, _, hash) => Some(hash),
+			TrustedCall::activate_identity(_, _, _, hash) => Some(hash),
+			TrustedCall::request_vc(_, _, _, hash) => Some(hash),
+			TrustedCall::set_identity_networks(_, _, _, _, hash) => Some(hash),
+			TrustedCall::link_identity_callback(_, _, _, _, hash) => Some(hash),
+			TrustedCall::request_vc_callback(_, _, _, _, _, _, hash) => Some(hash),
+			TrustedCall::handle_imp_error(_, _, _, hash) => Some(hash),
+			TrustedCall::handle_vcmp_error(_, _, _, hash) => Some(hash),
+			TrustedCall::send_erroneous_parentchain_call(_) => None,
+		}
+	}
+
 	pub fn sign(
 		&self,
 		pair: &KeyPair,
@@ -238,6 +268,7 @@ where
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error = StfError;
+	type Result = TrustedCallResult;
 
 	// TODO(Kai@litentry):
 	// If this function returns Err(), it will feed the executor with Ok(ExecutedOperation::failed()),
@@ -278,9 +309,8 @@ where
 		top_hash: H256,
 		calls: &mut Vec<OpaqueCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
-	) -> Result<Vec<u8>, Self::Error> {
+	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
-		let mut rpc_response_value: Vec<u8> = vec![];
 		let call_hash = blake2_256(&self.call.encode());
 		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
 		let system_nonce = System::account_nonce(&account_id);
@@ -321,7 +351,7 @@ where
 				//
 				// Alternatively, removing the customised "impl From<..> for StfError" and use map_err directly
 				// would also work
-				Ok::<(), Self::Error>(())
+				Ok::<Self::Result, Self::Error>(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_transfer(from, to, value) => {
 				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
@@ -341,7 +371,7 @@ where
 				.map_err(|e| {
 					Self::Error::Dispatch(format!("Balance Transfer error: {:?}", e.error))
 				})?;
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_unshield(account_incognito, beneficiary, value, shard) => {
 				debug!(
@@ -362,7 +392,7 @@ where
 					shard,
 					call_hash,
 				)));
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_shield(enclave_account, who, value) => {
 				let account_id: AccountId32 =
@@ -378,7 +408,7 @@ where
 					Vec::<itp_types::H256>::new(),
 					b"shielded some funds!".to_vec(),
 				)));
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_withdraw(from, address, value) => {
@@ -390,7 +420,7 @@ where
 					.map_err(|e| {
 						Self::Error::Dispatch(format!("Evm Withdraw error: {:?}", e.error))
 					})?;
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_call(
@@ -426,7 +456,7 @@ where
 					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 				))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Call error: {:?}", e.error)))?;
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create(
@@ -464,7 +494,7 @@ where
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create error: {:?}", e.error)))?;
 				let contract_address = evm_create_address(source, nonce_evm_account);
 				info!("Trying to create evm contract with address {:?}", contract_address);
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create2(
@@ -503,7 +533,7 @@ where
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create2 error: {:?}", e.error)))?;
 				let contract_address = evm_create2_address(source, salt, code_hash);
 				info!("Trying to create evm contract with address {:?}", contract_address);
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			// Litentry trusted calls
 			// the reason that most calls have an internal handling fn is that we want to capture the error and
@@ -522,7 +552,6 @@ where
 					key,
 					web3networks,
 					hash,
-					&mut rpc_response_value,
 				)
 			},
 			TrustedCall::set_user_shielding_key_with_networks(
@@ -539,7 +568,6 @@ where
 				key,
 				web3networks,
 				hash,
-				&mut rpc_response_value,
 			),
 			TrustedCall::link_identity(
 				signer,
@@ -585,12 +613,9 @@ where
 						identity,
 						web3networks,
 						hash,
-						&mut rpc_response_value,
 					)
 				} else {
-					// see `RpcResponder::update_status_event` why it's set to `true.encode()` here
-					rpc_response_value = true.encode();
-					Ok(())
+					Ok(TrustedCallResult::Streamed)
 				}
 			},
 			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
@@ -621,19 +646,11 @@ where
 				debug!("pushing identity_deactivated event ...");
 				calls.push(OpaqueCall::from_tuple(&(
 					call_index,
-					account.clone(),
+					account,
 					aes_encrypt_default(&key, &identity.encode()),
 					hash,
 				)));
-
-				debug!("populating identity_deactivated rpc reponse ...");
-				let res = DeactivateIdentityResponse {
-					account,
-					identity: aes_encrypt_default(&key, &identity.encode()),
-					req_ext_hash: hash,
-				};
-				rpc_response_value = res.encode();
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::activate_identity(signer, who, identity, hash) => {
 				debug!("activate_identity, who: {}", account_id_to_string(&who));
@@ -663,19 +680,11 @@ where
 				debug!("pushing identity_activated event ...");
 				calls.push(OpaqueCall::from_tuple(&(
 					call_index,
-					account.clone(),
+					account,
 					aes_encrypt_default(&key, &identity.encode()),
 					hash,
 				)));
-
-				debug!("populating identity_activated rpc reponse ...");
-				let res = ActivateIdentityResponse {
-					account,
-					identity: aes_encrypt_default(&key, &identity.encode()),
-					req_ext_hash: hash,
-				};
-				rpc_response_value = res.encode();
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) =>
 				Self::handle_link_identity_callback(
@@ -686,7 +695,6 @@ where
 					identity,
 					web3networks,
 					hash,
-					&mut rpc_response_value,
 				),
 			TrustedCall::request_vc(signer, who, assertion, hash) => {
 				debug!(
@@ -717,8 +725,7 @@ where
 					);
 					e
 				})?;
-				rpc_response_value = true.encode();
-				Ok(())
+				Ok(TrustedCallResult::Streamed)
 			},
 			TrustedCall::request_vc_callback(
 				signer,
@@ -759,25 +766,21 @@ where
 
 				calls.push(OpaqueCall::from_tuple(&(
 					call_index,
-					account.clone(),
-					assertion.clone(),
+					account,
+					assertion,
 					vc_index,
 					vc_hash,
 					aes_encrypt_default(&key, &vc_payload),
 					hash,
 				)));
-				let res = RequestVCResponse {
-					account,
-					assertion,
+				let res = RequestVCResult {
 					vc_index,
 					vc_hash,
 					vc_payload: aes_encrypt_default(&key, &vc_payload),
-					req_ext_hash: hash,
 				};
-				rpc_response_value = res.encode();
-				Ok(())
+				Ok(TrustedCallResult::RequestVC(res))
 			},
-			TrustedCall::set_identity_networks(signer, who, identity, web3networks, hash) => {
+			TrustedCall::set_identity_networks(signer, who, identity, web3networks, _) => {
 				debug!("set_identity_networks, networks: {:?}", web3networks);
 				// only support DI requests from the signer but we leave the room for changes
 				ensure!(
@@ -787,9 +790,7 @@ where
 				IMTCall::set_identity_networks { who, identity, web3networks }
 					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
-				let res = SetIdentityNetworksResponse { req_ext_hash: hash };
-				rpc_response_value = res.encode();
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
@@ -801,7 +802,7 @@ where
 					e.clone(),
 					hash,
 				);
-				return Err(e.into())
+				Err(e.into())
 			},
 			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
@@ -813,7 +814,7 @@ where
 					e.clone(),
 					hash,
 				);
-				return Err(e.into())
+				Err(e.into())
 			},
 			TrustedCall::send_erroneous_parentchain_call(account) => {
 				// intentionally send wrong parameters, only used in testing
@@ -822,10 +823,9 @@ where
 					"set_user_shielding_key".as_bytes(),
 					account.encode(),
 				)));
-				Ok(())
+				Ok(TrustedCallResult::Empty)
 			},
-		}?;
-		Ok(rpc_response_value)
+		}
 	}
 
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
