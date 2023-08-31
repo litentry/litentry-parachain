@@ -1,0 +1,18 @@
+{
+	"type": "module",
+	"license": "ISC",
+	"workspaces": {
+		"packages": [
+			"parachain-api",
+			"sidechain-api"
+		]
+	},
+	"scripts": {
+		"update": "yarn workspace parachain-api update-metadata && yarn workspace sidechain-api update-metadata",
+		"build": "yarn workspace parachain-api build && yarn workspace sidechain-api build",
+		"update-build": "yarn update && yarn build",
+		"format": "yarn workspace parachain-api format && yarn workspace sidechain-api format && yarn workspace integration-tests format",
+		"check-format": "yarn workspace parachain-api check-format && yarn workspace sidechain-api check-format && yarn workspace integration-tests check-format"
+	},
+	"packageManager": "yarn@3.6.1"
+}
