@@ -11,6 +11,8 @@
 		"test-di-substrate-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_substrate_identity.test.ts'",
 		"test-di-evm-identity:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
 		"test-di-evm-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
+		"test-di-vc:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
+		"test-di-vc:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
 		"test-resuming-worker:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
 		"test-resuming-worker:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
 		"test-ii-vc:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",

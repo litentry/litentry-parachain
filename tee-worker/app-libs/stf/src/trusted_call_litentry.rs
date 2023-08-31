@@ -102,13 +102,13 @@ impl TrustedCallSigned {
 		let encrypted_id_graph = aes_encrypt_default(&key, &id_graph.encode());
 		calls.push(OpaqueCall::from_tuple(&(
 			call_index,
-			account.clone(),
+			account,
 			encrypted_id_graph.clone(),
 			hash,
 		)));
 
 		debug!("populating user_shielding_key_set rpc reponse ...");
-		let res = SetUserShieldingKeyResult { account, id_graph: encrypted_id_graph };
+		let res = SetUserShieldingKeyResult { id_graph: encrypted_id_graph };
 		Ok(TrustedCallResult::SetUserShieldingKey(res))
 	}
 
@@ -346,14 +346,12 @@ impl TrustedCallSigned {
 		debug!("pushing identity_linked event ...");
 		calls.push(OpaqueCall::from_tuple(&(
 			call_index,
-			account.clone(),
+			account,
 			aes_encrypt_default(&key, &identity.encode()),
 			aes_encrypt_default(&key, &id_graph.encode()),
 			hash,
 		)));
 		Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
-			account,
-			identity: aes_encrypt_default(&key, &identity.encode()),
 			id_graph: aes_encrypt_default(&key, &id_graph.encode()),
 		}))
 	}

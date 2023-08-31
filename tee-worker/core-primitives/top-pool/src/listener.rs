@@ -155,9 +155,9 @@ where
 		}
 	}
 
-	/// Litentry: set the rpc response value for a given TrustedOperation `tx`.
-	pub fn set_rpc_response_value(&mut self, tx: &H, encoded_value: Vec<u8>) {
-		self.fire(tx, |s| s.set_rpc_response_value(encoded_value));
+	/// Litentry: set the rpc response value and force_wait flag for a given TrustedOperation `tx`.
+	pub fn update_connection_state(&mut self, tx: &H, encoded_value: Vec<u8>, force_wait: bool) {
+		self.fire(tx, |s| s.update_connection_state(encoded_value, force_wait));
 	}
 
 	/// Litentry: swap the old hash with the new one in rpc connection registry
