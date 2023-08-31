@@ -79,6 +79,7 @@ itp-rpc = { path = "../core-primitives/rpc" }
 itp-stf-primitives = { path = "../core-primitives/stf-primitives" }
 lc-data-providers = { path = "../litentry/core/data-providers" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
+lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
