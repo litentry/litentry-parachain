@@ -63,9 +63,6 @@ describe('Test Identity (evm direct invocation)', function () {
         aliceEvmSubject = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
     });
 
-    it('needs a lot more work to be complete');
-    it('most of the bob cases are missing');
-
     step(`setting user shielding key (alice evm account)`, async function () {
         const nonce = await getSidechainNonce(
             context.tee,
