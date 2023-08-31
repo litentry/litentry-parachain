@@ -4,6 +4,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+pub mod dev_beginner;
+pub mod dev_outstanding;
+pub mod dev_undergraduate;
+
 use crate::*;
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
@@ -46,6 +50,10 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 			Err(Error::RequestVCFailed(Assertion::Oneblock, e.into_error_detail()))
 		},
 	}
+}
+
+pub fn fetch_notion_data() -> Result<bool> {
+	todo!()
 }
 
 #[cfg(test)]
