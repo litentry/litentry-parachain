@@ -68,9 +68,6 @@ describe('Test Identity (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
-    it('needs a lot more work to be complete');
-    it('most of the bob cases are missing');
-
     step('linking identity with without user shielding key(charlie)', async function () {
         const charlieSubject = await buildIdentityFromKeypair(
             new PolkadotSigner(context.substrateWallet.charlie),

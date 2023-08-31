@@ -166,15 +166,19 @@ declare const _default: {
                 A2: string;
                 A3: string;
                 A4: string;
-                A5: string;
                 A6: string;
                 A7: string;
                 A8: string;
                 A9: string;
                 A10: string;
                 A11: string;
+                A12: string;
                 A13: string;
+                A14: string;
             };
+        };
+        AssertionSupportedNetwork: {
+            _enum: string[];
         };
         GenericEventWithAccount: {
             account: string;
