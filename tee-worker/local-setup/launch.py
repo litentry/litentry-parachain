@@ -203,6 +203,7 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
     # Litentry
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
+        os.environ['TMPDIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
@@ -305,5 +306,5 @@ if __name__ == "__main__":
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
+    if main(process_list, args.config, args.parachain, args.log, args.offset, parachain_dir) == 0:
         killer.exit_gracefully()
