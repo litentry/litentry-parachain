@@ -80,12 +80,6 @@ def is_port_open(port):
     except OSError:
         return False
 
-def is_directory_present(directory_path):
-    if os.path.exists(directory_path):
-        return True 
-    else:
-        return False
-
 # Function to reallocate port if it is not available
 def reallocate_ports(env_name, port):
     # Offset the original port by 100
@@ -293,16 +287,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     
-    if is_directory_present("/tmp/parachain_dev"): 
-        print("/tmp/parachain_dev already exists, Reassigning the directory")
-        today = datetime.datetime.now()
-        formatted_date = today.strftime('%d-%m-%Y')
-        directory_name = f"parachain_dev_{formatted_date}"
-        temp_directory_path = os.path.join('/tmp', directory_name)
-        parachain_dir = temp_directory_path 
-        print("Directory has been reassigned to:", temp_directory_path)
-    else: 
-        parachain_dir = "/tmp/parachain_dev"
+    today = datetime.datetime.now()
+    formatted_date = today.strftime('%d_%m_%Y_%H%M')
+    directory_name = f"parachain_dev_{formatted_date}"
+    temp_directory_path = os.path.join('/tmp', directory_name)
+    parachain_dir = temp_directory_path 
+    print("Directory has been assigned to:", temp_directory_path)
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
