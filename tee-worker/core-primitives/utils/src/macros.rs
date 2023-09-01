@@ -8,3 +8,12 @@ macro_rules! if_production_or {
 		}
 	};
 }
+
+#[macro_export]
+macro_rules! if_not_production {
+	($expression:expr) => {
+		if cfg!(not(feature = "production")) {
+			$expression
+		}
+	};
+}

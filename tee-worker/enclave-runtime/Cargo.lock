@@ -2767,6 +2767,7 @@ dependencies = [
  "http",
  "http_req",
  "itc-rest-client",
+ "itp-utils",
  "lazy_static",
  "litentry-primitives",
  "log",

@@ -6104,6 +6104,7 @@ dependencies = [
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
  "itc-rest-client",
  "itp-stf-primitives",
+ "itp-utils",
  "lazy_static",
  "lc-mock-server",
  "litentry-primitives",

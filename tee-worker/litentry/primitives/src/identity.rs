@@ -21,8 +21,8 @@ use core::fmt::{Debug, Formatter};
 #[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
 
-use crate::if_production_or;
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
+use itp_utils::if_production_or;
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};

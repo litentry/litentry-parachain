@@ -25,6 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use itp_utils::if_not_production;
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -100,25 +101,25 @@ pub struct TargetTwitterUser {
 }
 
 impl RestPath<String> for Tweet {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
 impl<T> RestPath<String> for TwitterAPIV2Response<T> {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
 impl RestPath<String> for Relationship {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
 impl RestPath<String> for Retweeted {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
@@ -183,7 +184,7 @@ impl TwitterOfficialClient {
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_tweet(&mut self, tweet_id: Vec<u8>) -> Result<Tweet, Error> {
 		let tweet_id = vec_to_string(tweet_id)?;
-		debug!("Twitter query tweet, id: {}", tweet_id);
+		if_not_production!(debug!("Twitter query tweet, id: {}", tweet_id));
 
 		let path = format!("/2/tweets/{}", tweet_id);
 		let query: Vec<(&str, &str)> = vec![("expansions", "author_id")];
@@ -212,7 +213,7 @@ impl TwitterOfficialClient {
 	/// the verification will fail.
 	pub fn query_retweeted_by(&mut self, original_tweet_id: Vec<u8>) -> Result<Retweeted, Error> {
 		let original_tweet_id = vec_to_string(original_tweet_id)?;
-		debug!("Twitter original tweet id: {}", original_tweet_id);
+		if_not_production!(debug!("Twitter original tweet id: {}", original_tweet_id));
 
 		let path = format!("/2/tweets/{}/retweeted_by", original_tweet_id);
 		let query: Vec<(&str, &str)> = vec![("max_results", "100")];
@@ -228,7 +229,7 @@ impl TwitterOfficialClient {
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_user_by_name(&mut self, user_name: Vec<u8>) -> Result<TwitterUser, Error> {
 		let user = vec_to_string(user_name)?;
-		debug!("Twitter query user by name, name: {}", user);
+		if_not_production!(debug!("Twitter query user by name, name: {}", user));
 
 		let query = vec![("user.fields", "public_metrics")];
 		let resp = self
@@ -246,7 +247,7 @@ impl TwitterOfficialClient {
 	/// V2, rate limit: 300/15min(per App) 900/15min(per User)
 	pub fn query_user_by_id(&mut self, id: Vec<u8>) -> Result<TwitterUser, Error> {
 		let id = vec_to_string(id)?;
-		debug!("Twitter query user by id, id: {}", id);
+		if_not_production!(debug!("Twitter query user by id, id: {}", id));
 
 		let query = vec![("user.fields", "public_metrics")];
 		let resp = self
