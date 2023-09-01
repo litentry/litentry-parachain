@@ -39,7 +39,9 @@
 		"mocha-steps": "^1.3.0",
 		"scale-ts": "^0.2.11",
 		"websocket-as-promised": "^2.0.1",
-		"ws": "^8.8.1"
+		"ws": "^8.8.1",
+		"parachain-api": "../../client-api/parachain-api/src/index.ts",
+		"sidechain-api": "../../client-api/sidechain-api/src/index.ts"
 	},
 	"devDependencies": {
 		"@ethersproject/providers": "^5.7.2",
