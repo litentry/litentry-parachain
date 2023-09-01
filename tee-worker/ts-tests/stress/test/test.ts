@@ -33,18 +33,22 @@ describe("load test runner", function () {
     this.timeout(6000000);
 
     it("starts threads, runs tests, and collects results", async function () {
+        /**
+         * The test will start some threads and count the measurements here;
+         * we check at the end that the expected number of requests was counted for each type.
+         */
+        const measurementCounts = new Map<string, number>();
+
+        /**
+         * Setup global context (shared across threads)
+         */
         await cryptoWaitReady();
-
         const config = getConfig();
-
         const log = new WritableStream<string>({
             write: (chunk) => {
                 process.stderr.write(chunk);
             },
         });
-
-        const measurementCounts = new Map<string, number>();
-
         const measurementOutput = new WritableStream<Measurement<string, boolean>>({
             write: (measurement) => {
                 if (!measurement.result) {
@@ -58,7 +62,13 @@ describe("load test runner", function () {
         });
         const runner = newTimedRunner(measurementOutput);
 
+        /**
+         * Define the job to be ran by each thread
+         */
         const newProcess = async () => {
+            /**
+             * Setup thread-specific context
+             */
             const primary = randomWallet();
             const cryptoKey = await crypto.subtle.generateKey(
                 {
@@ -70,7 +80,6 @@ describe("load test runner", function () {
             );
             const exportedKey = await crypto.subtle.exportKey("raw", cryptoKey);
             const userShieldingKey = u8aToHex(new Uint8Array(exportedKey));
-
             const contextManager = apiContextManager(config, log).map(async (api) => {
                 return {
                     api,
@@ -78,6 +87,9 @@ describe("load test runner", function () {
                 };
             });
 
+            /**
+             * Start the execution loop
+             */
             await processQueue(
                 contextManager,
                 repeat(config.iterations, async ({ api, session }) => {
@@ -154,6 +166,7 @@ describe("load test runner", function () {
                     );
                 }),
                 async (error) => {
+                    // Log the error, but continue to the next iteration
                     const writer = log.getWriter();
                     await writer.write(
                         `${error instanceof Error ? error.message : JSON.stringify(error)}\n`
@@ -162,12 +175,19 @@ describe("load test runner", function () {
                 }
             );
         };
+
+        /**
+         * Start all the threads and await completion
+         */
         const jobs: Promise<void>[] = [];
         for (let c = config.connections; c; c--) {
             jobs.push(newProcess());
         }
         await Promise.all(jobs);
 
+        /**
+         * Check for successful execution.
+         */
         assert.equal(measurementCounts.size, 6);
         assert.equal(measurementCounts.get("setShieldingKey"), 3);
         [
