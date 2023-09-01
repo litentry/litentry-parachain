@@ -3,22 +3,10 @@ import "@polkadot/types-augment";
 import { ApiOptions, ApiTypes, AugmentedEvent } from "@polkadot/api/types";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import type { AnyTuple } from "@polkadot/types/types";
-export type { CorePrimitivesErrorErrorDetail } from "@polkadot/types/lookup";
+export type { CorePrimitivesErrorErrorDetail, PalletVcManagementVcContext, TeerexPrimitivesEnclave, } from "@polkadot/types/lookup";
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type {
-    Assertion,
-    LitentryIdentity,
-    LitentryValidationData,
-    Web3Network,
-    WorkerRpcReturnValue,
-    TrustedCallSigned,
-    Getter,
-    PublicGetter,
-    TrustedOperationResponse,
-    StfError,
-    LinkIdentityResult,
-} from "../build/interfaces";
+export type { Assertion, LitentryIdentity, LitentryValidationData, Web3Network, WorkerRpcReturnValue, TrustedCallSigned, Getter, PublicGetter, RequestVCResult, TrustedOperationResponse, StfError, LinkIdentityResult, } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
 export { ApiPromise, Keyring, WsProvider };
@@ -190,39 +178,30 @@ export declare const definitions: {
                 A2: string;
                 A3: string;
                 A4: string;
-                A5: string;
                 A6: string;
                 A7: string;
                 A8: string;
                 A9: string;
                 A10: string;
                 A11: string;
+                A12: string;
                 A13: string;
+                A14: string;
             };
+        };
+        AssertionSupportedNetwork: {
+            _enum: string[];
         };
         GenericEventWithAccount: {
             account: string;
         };
         SetUserShieldingKeyResult: {
-            account: string;
             id_graph: string;
         };
         LinkIdentityResult: {
-            account: string;
-            identity: string;
             id_graph: string;
         };
-        DeactivateIdentityResult: {
-            account: string;
-            identity: string;
-        };
-        ActivateIdentityResult: {
-            account: string;
-            identity: string;
-        };
         RequestVCResult: {
-            account: string;
-            assertion: string;
             vc_index: string;
             vc_hash: string;
             vc_payload: string;
@@ -282,8 +261,5 @@ type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
 export declare function create(provider: ProviderInterface): Promise<ApiPromise>;
 type GuardType<GuardFunction> = GuardFunction extends (x: any) => x is infer Type ? Type : never;
 type IEventLike = Parameters<AugmentedEvent<never>["is"]>[0];
-export declare function filterEvents<ApiType extends ApiTypes, T extends AnyTuple, N>(
-    eventType: AugmentedEvent<ApiType, T, N>,
-    events: IEventLike[]
-): GuardType<AugmentedEvent<ApiType, T, N>["is"]>[];
+export declare function filterEvents<ApiType extends ApiTypes, T extends AnyTuple, N>(eventType: AugmentedEvent<ApiType, T, N>, events: IEventLike[]): GuardType<AugmentedEvent<ApiType, T, N>["is"]>[];
 //# sourceMappingURL=index.d.ts.map

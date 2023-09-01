@@ -262,7 +262,8 @@ pub trait TrustedOperationPool: Send + Sync {
 	fn on_block_imported(&self, hashes: &[Self::Hash], block_hash: SidechainBlockHash);
 
 	/// Litentry: set the rpc response value
-	fn set_rpc_response_value(&self, rpc_response_value: Vec<(TxHash<Self>, Vec<u8>)>);
+	#[allow(clippy::type_complexity)]
+	fn update_connection_state(&self, updates: Vec<(TxHash<Self>, (Vec<u8>, bool))>);
 
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	fn swap_rpc_connection_hash(&self, old_hash: TxHash<Self>, new_hash: TxHash<Self>);

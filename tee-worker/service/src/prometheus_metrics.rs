@@ -37,8 +37,13 @@ use itc_rest_client::{
 };
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
+use lc_stf_task_sender::RequestType;
+use litentry_primitives::{Assertion, Identity};
 use log::*;
-use prometheus::{proto::MetricFamily, register_int_gauge, IntGauge};
+use prometheus::{
+	proto::MetricFamily, register_histogram_vec, register_int_gauge, register_int_gauge_vec,
+	HistogramVec, IntGauge, IntGaugeVec,
+};
 use serde::{Deserialize, Serialize};
 use std::{net::SocketAddr, sync::Arc};
 use warp::{Filter, Rejection, Reply};
@@ -54,6 +59,12 @@ lazy_static! {
 			.unwrap();
 	static ref ENCLAVE_SIDECHAIN_TOP_POOL_SIZE: IntGauge =
 		register_int_gauge!("litentry_worker_enclave_sidechain_top_pool_size", "Enclave sidechain top pool size")
+			.unwrap();
+	static ref ENCLAVE_STF_TASKS: IntGaugeVec =
+		register_int_gauge_vec!("litentry_worker_enclave_stf_total_tasks", "Litentry Stf Tasks", &["request_type", "variant"])
+			.unwrap();
+	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
+		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
 			.unwrap();
 }
 
@@ -171,6 +182,9 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			EnclaveMetric::TopPoolSizeDecrement => {
 				ENCLAVE_SIDECHAIN_TOP_POOL_SIZE.dec();
 			},
+			EnclaveMetric::StfTaskExecutionTime(req, time) => {
+				handle_stf_call_request(*req, time);
+			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
 			#[cfg(not(feature = "teeracle"))]
@@ -182,7 +196,52 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 	}
 }
 
-// Data structure that matches with REST API JSON
+// Function to increment STF calls with labels
+fn inc_stf_calls(category: &str, label: &str) {
+	ENCLAVE_STF_TASKS.with_label_values(&[category, label]).inc();
+}
+
+// Function to observe STF call execution time with labels
+fn observe_execution_time(category: &str, label: &str, time: f64) {
+	ENCLAVE_STF_TASKS_EXECUTION.with_label_values(&[category, label]).observe(time);
+}
+
+// Handle STF call request and increment metrics
+fn handle_stf_call_request(req: RequestType, time: f64) {
+	// Determine the category based on the request type
+	let category = match req {
+		RequestType::IdentityVerification(_) => "link_identity",
+		RequestType::AssertionVerification(_) => "request_vc",
+	};
+
+	let label = match req {
+		RequestType::IdentityVerification(request) => match request.identity {
+			Identity::Twitter(_) => "Twitter",
+			Identity::Discord(_) => "Discord",
+			Identity::Github(_) => "Github",
+			Identity::Substrate(_) => "Substrate",
+			Identity::Evm(_) => "Evm",
+		},
+		RequestType::AssertionVerification(request) => match request.assertion {
+			Assertion::A1 => "A1",
+			Assertion::A2(_) => "A2",
+			Assertion::A3(..) => "A3",
+			Assertion::A4(_) => "A4",
+			Assertion::A6 => "A6",
+			Assertion::A7(_) => "A7",
+			Assertion::A8(_) => "A8",
+			Assertion::A9 => "A9",
+			Assertion::A10(_) => "A10",
+			Assertion::A11(_) => "A11",
+			Assertion::A13(_) => "A13",
+			Assertion::A14 => "A14",
+			Assertion::A20 => "A20",
+			Assertion::Achainable(..) => "Achainable",
+		},
+	};
+	inc_stf_calls(category, label);
+	observe_execution_time(category, label, time)
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct PrometheusMarblerunEvents(pub Vec<PrometheusMarblerunEvent>);

@@ -693,9 +693,14 @@ where
 		}
 	}
 
-	pub fn set_rpc_response_value(&self, rpc_response_value: Vec<(ExtrinsicHash<B>, Vec<u8>)>) {
-		for (top_hash, encoded_value) in rpc_response_value {
-			self.listener.write().unwrap().set_rpc_response_value(&top_hash, encoded_value);
+	#[allow(clippy::type_complexity)]
+	pub fn update_connection_state(&self, updates: Vec<(ExtrinsicHash<B>, (Vec<u8>, bool))>) {
+		for (top_hash, (encoded_value, force_wait)) in updates {
+			self.listener.write().unwrap().update_connection_state(
+				&top_hash,
+				encoded_value,
+				force_wait,
+			);
 		}
 	}
 

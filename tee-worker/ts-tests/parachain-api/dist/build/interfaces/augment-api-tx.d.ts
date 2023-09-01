@@ -1,69 +1,13 @@
 import "@polkadot/api-base/types/submittable";
-import type {
-    ApiTypes,
-    AugmentedSubmittable,
-    SubmittableExtrinsic,
-    SubmittableExtrinsicFunction,
-} from "@polkadot/api-base/types";
+import type { ApiTypes, AugmentedSubmittable, SubmittableExtrinsic, SubmittableExtrinsicFunction } from "@polkadot/api-base/types";
 import type { Data } from "@polkadot/types";
-import type {
-    Bytes,
-    Compact,
-    Option,
-    Struct,
-    U8aFixed,
-    Vec,
-    bool,
-    u128,
-    u16,
-    u32,
-    u64,
-    u8,
-} from "@polkadot/types-codec";
+import type { Bytes, Compact, Option, Struct, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from "@polkadot/types-codec";
 import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
-import type {
-    AccountId32,
-    Call,
-    H256,
-    MultiAddress,
-    Perbill,
-    Percent,
-} from "@polkadot/types/interfaces/runtime";
-import type {
-    CorePrimitivesAssertion,
-    CorePrimitivesErrorImpError,
-    CorePrimitivesErrorVcmpError,
-    CorePrimitivesKeyAesOutput,
-    CumulusPrimitivesParachainInherentParachainInherentData,
-    FrameSupportPreimagesBounded,
-    PalletAssetManagerAssetMetadata,
-    PalletDemocracyConviction,
-    PalletDemocracyMetadataOwner,
-    PalletDemocracyVoteAccountVote,
-    PalletExtrinsicFilterOperationalMode,
-    PalletIdentityBitFlags,
-    PalletIdentityIdentityInfo,
-    PalletIdentityJudgement,
-    PalletMultisigTimepoint,
-    PalletVestingVestingInfo,
-    RococoParachainRuntimeOriginCaller,
-    RococoParachainRuntimeProxyType,
-    RococoParachainRuntimeSessionKeys,
-    RuntimeCommonXcmImplCurrencyId,
-    SpWeightsWeightV2Weight,
-    SubstrateFixedFixedU64,
-    TeerexPrimitivesRequest,
-    XcmV3MultiLocation,
-    XcmV3WeightLimit,
-    XcmVersionedMultiAsset,
-    XcmVersionedMultiAssets,
-    XcmVersionedMultiLocation,
-    XcmVersionedXcm,
-} from "@polkadot/types/lookup";
+import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent } from "@polkadot/types/interfaces/runtime";
+import type { CorePrimitivesAssertion, CorePrimitivesErrorImpError, CorePrimitivesErrorVcmpError, CorePrimitivesKeyAesOutput, CumulusPrimitivesParachainInherentParachainInherentData, FrameSupportPreimagesBounded, PalletAssetManagerAssetMetadata, PalletDemocracyConviction, PalletDemocracyMetadataOwner, PalletDemocracyVoteAccountVote, PalletExtrinsicFilterOperationalMode, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletMultisigTimepoint, PalletVestingVestingInfo, RococoParachainRuntimeOriginCaller, RococoParachainRuntimeProxyType, RococoParachainRuntimeSessionKeys, RuntimeCommonXcmImplCurrencyId, SpWeightsWeightV2Weight, SubstrateFixedFixedU64, TeerexPrimitivesRequest, XcmV3MultiLocation, XcmV3WeightLimit, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from "@polkadot/types/lookup";
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
 export type __SubmittableExtrinsic<ApiType extends ApiTypes> = SubmittableExtrinsic<ApiType>;
-export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> =
-    SubmittableExtrinsicFunction<ApiType>;
+export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> = SubmittableExtrinsicFunction<ApiType>;
 declare module "@polkadot/api-base/types/submittable" {
     interface AugmentedSubmittables<ApiType extends ApiTypes> {
         assetManager: {
@@ -71,115 +15,70 @@ declare module "@polkadot/api-base/types/submittable" {
              * Add the xcm type mapping for a existing assetId, other assetType still exists if any.
              * TODO: Change add_asset_type with internal function wrapper
              **/
-            addAssetType: AugmentedSubmittable<
-                (
-                    assetId: u128 | AnyNumber | Uint8Array,
-                    newAssetType:
-                        | RuntimeCommonXcmImplCurrencyId
-                        | {
-                              SelfReserve: any;
-                          }
-                        | {
-                              ParachainReserve: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u128, RuntimeCommonXcmImplCurrencyId]
-            >;
+            addAssetType: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, newAssetType: RuntimeCommonXcmImplCurrencyId | {
+                SelfReserve: any;
+            } | {
+                ParachainReserve: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128,
+                RuntimeCommonXcmImplCurrencyId
+            ]>;
             /**
              * Register new asset with the asset manager
              * TODO::Reserve native token multilocation through GenesisBuild/RuntimeUpgrade
              * TODO::Add Multilocation filter for register
              **/
-            registerForeignAssetType: AugmentedSubmittable<
-                (
-                    assetType:
-                        | RuntimeCommonXcmImplCurrencyId
-                        | {
-                              SelfReserve: any;
-                          }
-                        | {
-                              ParachainReserve: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    metadata:
-                        | PalletAssetManagerAssetMetadata
-                        | {
-                              name?: any;
-                              symbol?: any;
-                              decimals?: any;
-                              minimalBalance?: any;
-                              isFrozen?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [RuntimeCommonXcmImplCurrencyId, PalletAssetManagerAssetMetadata]
-            >;
+            registerForeignAssetType: AugmentedSubmittable<(assetType: RuntimeCommonXcmImplCurrencyId | {
+                SelfReserve: any;
+            } | {
+                ParachainReserve: any;
+            } | string | Uint8Array, metadata: PalletAssetManagerAssetMetadata | {
+                name?: any;
+                symbol?: any;
+                decimals?: any;
+                minimalBalance?: any;
+                isFrozen?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                RuntimeCommonXcmImplCurrencyId,
+                PalletAssetManagerAssetMetadata
+            ]>;
             /**
              * We do not allow the destroy of asset id so far; So at least one AssetTpye should be
              * assigned to existing AssetId Both asset_type and potential new_default_asset_type must
              * be an existing relation with asset_id
              * TODO: Change remove_asset_type with internal function wrapper
              **/
-            removeAssetType: AugmentedSubmittable<
-                (
-                    assetType:
-                        | RuntimeCommonXcmImplCurrencyId
-                        | {
-                              SelfReserve: any;
-                          }
-                        | {
-                              ParachainReserve: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    newDefaultAssetType:
-                        | Option<RuntimeCommonXcmImplCurrencyId>
-                        | null
-                        | Uint8Array
-                        | RuntimeCommonXcmImplCurrencyId
-                        | {
-                              SelfReserve: any;
-                          }
-                        | {
-                              ParachainReserve: any;
-                          }
-                        | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [RuntimeCommonXcmImplCurrencyId, Option<RuntimeCommonXcmImplCurrencyId>]
-            >;
+            removeAssetType: AugmentedSubmittable<(assetType: RuntimeCommonXcmImplCurrencyId | {
+                SelfReserve: any;
+            } | {
+                ParachainReserve: any;
+            } | string | Uint8Array, newDefaultAssetType: Option<RuntimeCommonXcmImplCurrencyId> | null | Uint8Array | RuntimeCommonXcmImplCurrencyId | {
+                SelfReserve: any;
+            } | {
+                ParachainReserve: any;
+            } | string) => SubmittableExtrinsic<ApiType>, [
+                RuntimeCommonXcmImplCurrencyId,
+                Option<RuntimeCommonXcmImplCurrencyId>
+            ]>;
             /**
              * Change the amount of units we are charging per execution second
              * for a given ForeignAssetType
              * 0 means not support
              **/
-            setAssetUnitsPerSecond: AugmentedSubmittable<
-                (
-                    assetId: u128 | AnyNumber | Uint8Array,
-                    unitsPerSecond: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u128, u128]
-            >;
-            updateForeignAssetMetadata: AugmentedSubmittable<
-                (
-                    assetId: u128 | AnyNumber | Uint8Array,
-                    metadata:
-                        | PalletAssetManagerAssetMetadata
-                        | {
-                              name?: any;
-                              symbol?: any;
-                              decimals?: any;
-                              minimalBalance?: any;
-                              isFrozen?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u128, PalletAssetManagerAssetMetadata]
-            >;
+            setAssetUnitsPerSecond: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, unitsPerSecond: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128,
+                u128
+            ]>;
+            updateForeignAssetMetadata: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, metadata: PalletAssetManagerAssetMetadata | {
+                name?: any;
+                symbol?: any;
+                decimals?: any;
+                minimalBalance?: any;
+                isFrozen?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128,
+                PalletAssetManagerAssetMetadata
+            ]>;
         };
         balances: {
             /**
@@ -189,80 +88,50 @@ declare module "@polkadot/api-base/types/submittable" {
              * - Same as transfer, but additional read and write because the source account is not
              * assumed to be in the overlay.
              **/
-            forceTransfer: AugmentedSubmittable<
-                (
-                    source:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, MultiAddress, Compact<u128>]
-            >;
+            forceTransfer: AugmentedSubmittable<(source: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Unreserve some balance from a user by force.
              *
              * Can only be called by ROOT.
              **/
-            forceUnreserve: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, u128]
-            >;
+            forceUnreserve: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                u128
+            ]>;
             /**
              * Set the balances of a given account.
              *
@@ -273,32 +142,21 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * The dispatch origin for this call is `root`.
              **/
-            setBalance: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    newFree: Compact<u128> | AnyNumber | Uint8Array,
-                    newReserved: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>, Compact<u128>]
-            >;
+            setBalance: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, newFree: Compact<u128> | AnyNumber | Uint8Array, newReserved: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>,
+                Compact<u128>
+            ]>;
             /**
              * Transfer some liquid free balance to another account.
              *
@@ -323,31 +181,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `transfer_keep_alive` works the same way as `transfer`, but has an additional check
              * that the transfer will not kill the origin account.
              **/
-            transfer: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>]
-            >;
+            transfer: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Transfer the entire transferable balance from the caller account.
              *
@@ -366,31 +213,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * keep the sender account alive (true). ## Complexity
              * - O(1). Just like transfer, but reading the user's transferable balance first.
              **/
-            transferAll: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    keepAlive: bool | boolean | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, bool]
-            >;
+            transferAll: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                bool
+            ]>;
             /**
              * Same as the [`transfer`] call, but with a check that the transfer will not kill the
              * origin account.
@@ -399,31 +235,20 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * [`transfer`]: struct.Pallet.html#method.transfer
              **/
-            transferKeepAlive: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>]
-            >;
+            transferKeepAlive: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>
+            ]>;
         };
         bounties: {
             /**
@@ -435,10 +260,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            acceptCurator: AugmentedSubmittable<
-                (bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            acceptCurator: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Approve a bounty proposal. At a later time, the bounty will be funded and become active
              * and the original deposit will be returned.
@@ -448,10 +272,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            approveBounty: AugmentedSubmittable<
-                (bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            approveBounty: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Award bounty to a beneficiary account. The beneficiary will be able to claim the funds
              * after a delay.
@@ -464,31 +287,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            awardBounty: AugmentedSubmittable<
-                (
-                    bountyId: Compact<u32> | AnyNumber | Uint8Array,
-                    beneficiary:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, MultiAddress]
-            >;
+            awardBounty: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array, beneficiary: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                MultiAddress
+            ]>;
             /**
              * Claim the payout from an awarded bounty after payout delay.
              *
@@ -499,10 +311,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            claimBounty: AugmentedSubmittable<
-                (bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            claimBounty: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Cancel a proposed or active bounty. All the funds will be sent to treasury and
              * the curator deposit will be unreserved if possible.
@@ -514,10 +325,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            closeBounty: AugmentedSubmittable<
-                (bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            closeBounty: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Extend the expiry time of an active bounty.
              *
@@ -529,13 +339,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            extendBountyExpiry: AugmentedSubmittable<
-                (
-                    bountyId: Compact<u32> | AnyNumber | Uint8Array,
-                    remark: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, Bytes]
-            >;
+            extendBountyExpiry: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array, remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                Bytes
+            ]>;
             /**
              * Propose a new bounty.
              *
@@ -550,13 +357,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `value`: The total payment amount of this bounty, curator fee included.
              * - `description`: The description of this bounty.
              **/
-            proposeBounty: AugmentedSubmittable<
-                (
-                    value: Compact<u128> | AnyNumber | Uint8Array,
-                    description: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u128>, Bytes]
-            >;
+            proposeBounty: AugmentedSubmittable<(value: Compact<u128> | AnyNumber | Uint8Array, description: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u128>,
+                Bytes
+            ]>;
             /**
              * Assign a curator to a funded bounty.
              *
@@ -565,32 +369,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            proposeCurator: AugmentedSubmittable<
-                (
-                    bountyId: Compact<u32> | AnyNumber | Uint8Array,
-                    curator:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    fee: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, MultiAddress, Compact<u128>]
-            >;
+            proposeCurator: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array, curator: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, fee: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Unassign curator from a bounty.
              *
@@ -610,43 +403,34 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            unassignCurator: AugmentedSubmittable<
-                (bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            unassignCurator: AugmentedSubmittable<(bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
         };
         bridgeTransfer: {
-            setExternalBalances: AugmentedSubmittable<
-                (externalBalances: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u128]
-            >;
-            setMaximumIssuance: AugmentedSubmittable<
-                (maximumIssuance: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u128]
-            >;
+            setExternalBalances: AugmentedSubmittable<(externalBalances: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128
+            ]>;
+            setMaximumIssuance: AugmentedSubmittable<(maximumIssuance: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128
+            ]>;
             /**
              * Executes a simple currency transfer using the bridge account as the source
              **/
-            transfer: AugmentedSubmittable<
-                (
-                    to: AccountId32 | string | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array,
-                    rid: U8aFixed | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, u128, U8aFixed]
-            >;
+            transfer: AugmentedSubmittable<(to: AccountId32 | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, rid: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                u128,
+                U8aFixed
+            ]>;
             /**
              * Transfers some amount of the native token to some recipient on a (whitelisted)
              * destination chain.
              **/
-            transferNative: AugmentedSubmittable<
-                (
-                    amount: u128 | AnyNumber | Uint8Array,
-                    recipient: Bytes | string | Uint8Array,
-                    destId: u8 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u128, Bytes, u8]
-            >;
+            transferNative: AugmentedSubmittable<(amount: u128 | AnyNumber | Uint8Array, recipient: Bytes | string | Uint8Array, destId: u8 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128,
+                Bytes,
+                u8
+            ]>;
         };
         chainBridge: {
             /**
@@ -659,15 +443,12 @@ declare module "@polkadot/api-base/types/submittable" {
              * - weight of proposed call, regardless of whether execution is performed
              * # </weight>
              **/
-            acknowledgeProposal: AugmentedSubmittable<
-                (
-                    nonce: u64 | AnyNumber | Uint8Array,
-                    srcId: u8 | AnyNumber | Uint8Array,
-                    rId: U8aFixed | string | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u64, u8, U8aFixed, Call]
-            >;
+            acknowledgeProposal: AugmentedSubmittable<(nonce: u64 | AnyNumber | Uint8Array, srcId: u8 | AnyNumber | Uint8Array, rId: U8aFixed | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64,
+                u8,
+                U8aFixed,
+                Call
+            ]>;
             /**
              * Adds a new relayer to the relayer set.
              *
@@ -675,10 +456,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1) lookup and insert
              * # </weight>
              **/
-            addRelayer: AugmentedSubmittable<
-                (v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            addRelayer: AugmentedSubmittable<(v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Evaluate the state of a proposal given the current vote threshold.
              *
@@ -689,14 +469,11 @@ declare module "@polkadot/api-base/types/submittable" {
              * - weight of proposed call, regardless of whether execution is performed
              * # </weight>
              **/
-            evalVoteState: AugmentedSubmittable<
-                (
-                    nonce: u64 | AnyNumber | Uint8Array,
-                    srcId: u8 | AnyNumber | Uint8Array,
-                    prop: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u64, u8, Call]
-            >;
+            evalVoteState: AugmentedSubmittable<(nonce: u64 | AnyNumber | Uint8Array, srcId: u8 | AnyNumber | Uint8Array, prop: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64,
+                u8,
+                Call
+            ]>;
             /**
              * Commits a vote against a provided proposal.
              *
@@ -704,15 +481,12 @@ declare module "@polkadot/api-base/types/submittable" {
              * - Fixed, since execution of proposal should not be included
              * # </weight>
              **/
-            rejectProposal: AugmentedSubmittable<
-                (
-                    nonce: u64 | AnyNumber | Uint8Array,
-                    srcId: u8 | AnyNumber | Uint8Array,
-                    rId: U8aFixed | string | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u64, u8, U8aFixed, Call]
-            >;
+            rejectProposal: AugmentedSubmittable<(nonce: u64 | AnyNumber | Uint8Array, srcId: u8 | AnyNumber | Uint8Array, rId: U8aFixed | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64,
+                u8,
+                U8aFixed,
+                Call
+            ]>;
             /**
              * Removes an existing relayer from the set.
              *
@@ -720,10 +494,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1) lookup and removal
              * # </weight>
              **/
-            removeRelayer: AugmentedSubmittable<
-                (v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            removeRelayer: AugmentedSubmittable<(v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Removes a resource ID from the resource mapping.
              *
@@ -734,10 +507,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1) removal
              * # </weight>
              **/
-            removeResource: AugmentedSubmittable<
-                (id: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [U8aFixed]
-            >;
+            removeResource: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                U8aFixed
+            ]>;
             /**
              * Stores a method name on chain under an associated resource ID.
              *
@@ -745,13 +517,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1) write
              * # </weight>
              **/
-            setResource: AugmentedSubmittable<
-                (
-                    id: U8aFixed | string | Uint8Array,
-                    method: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [U8aFixed, Bytes]
-            >;
+            setResource: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, method: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                U8aFixed,
+                Bytes
+            ]>;
             /**
              * Sets the vote threshold for proposals.
              *
@@ -762,10 +531,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1) lookup and insert
              * # </weight>
              **/
-            setThreshold: AugmentedSubmittable<
-                (threshold: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            setThreshold: AugmentedSubmittable<(threshold: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Change extra bridge transfer fee that user should pay
              *
@@ -773,13 +541,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1) lookup and insert
              * # </weight>
              **/
-            updateFee: AugmentedSubmittable<
-                (
-                    destId: u8 | AnyNumber | Uint8Array,
-                    fee: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u8, u128]
-            >;
+            updateFee: AugmentedSubmittable<(destId: u8 | AnyNumber | Uint8Array, fee: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u8,
+                u128
+            ]>;
             /**
              * Enables a chain ID as a source or destination for a bridge transfer.
              *
@@ -787,10 +552,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1) lookup and insert
              * # </weight>
              **/
-            whitelistChain: AugmentedSubmittable<
-                (id: u8 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u8]
-            >;
+            whitelistChain: AugmentedSubmittable<(id: u8 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u8
+            ]>;
         };
         council: {
             /**
@@ -819,22 +583,15 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `P1` is the complexity of `proposal` preimage.
              * - `P2` is proposal-count (code-bounded)
              **/
-            close: AugmentedSubmittable<
-                (
-                    proposalHash: H256 | string | Uint8Array,
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    proposalWeightBound:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u32>, SpWeightsWeightV2Weight, Compact<u32>]
-            >;
+            close: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array, index: Compact<u32> | AnyNumber | Uint8Array, proposalWeightBound: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u32>,
+                SpWeightsWeightV2Weight,
+                Compact<u32>
+            ]>;
             /**
              * Close a vote that is either approved, disapproved or whose voting period has ended.
              *
@@ -861,15 +618,12 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `P1` is the complexity of `proposal` preimage.
              * - `P2` is proposal-count (code-bounded)
              **/
-            closeOldWeight: AugmentedSubmittable<
-                (
-                    proposalHash: H256 | string | Uint8Array,
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    proposalWeightBound: Compact<u64> | AnyNumber | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u32>, Compact<u64>, Compact<u32>]
-            >;
+            closeOldWeight: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array, index: Compact<u32> | AnyNumber | Uint8Array, proposalWeightBound: Compact<u64> | AnyNumber | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u32>,
+                Compact<u64>,
+                Compact<u32>
+            ]>;
             /**
              * Disapprove a proposal, close, and remove it from the system, regardless of its current
              * state.
@@ -882,10 +636,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * O(P) where P is the number of max proposals
              **/
-            disapproveProposal: AugmentedSubmittable<
-                (proposalHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            disapproveProposal: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Dispatch a proposal from a member using the `Member` origin.
              *
@@ -897,13 +650,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `M` members-count (code-bounded)
              * - `P` complexity of dispatching `proposal`
              **/
-            execute: AugmentedSubmittable<
-                (
-                    proposal: Call | IMethod | string | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Call, Compact<u32>]
-            >;
+            execute: AugmentedSubmittable<(proposal: Call | IMethod | string | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Call,
+                Compact<u32>
+            ]>;
             /**
              * Add a new proposal to either be voted on or executed directly.
              *
@@ -920,14 +670,11 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `P1` is proposal execution complexity (`threshold < 2`)
              * - `P2` is proposals-count (code-bounded) (`threshold >= 2`)
              **/
-            propose: AugmentedSubmittable<
-                (
-                    threshold: Compact<u32> | AnyNumber | Uint8Array,
-                    proposal: Call | IMethod | string | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, Call, Compact<u32>]
-            >;
+            propose: AugmentedSubmittable<(threshold: Compact<u32> | AnyNumber | Uint8Array, proposal: Call | IMethod | string | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                Call,
+                Compact<u32>
+            ]>;
             /**
              * Set the collective's membership.
              *
@@ -954,14 +701,11 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `N` new-members-count (code- and governance-bounded)
              * - `P` proposals-count (code-bounded)
              **/
-            setMembers: AugmentedSubmittable<
-                (
-                    newMembers: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[],
-                    prime: Option<AccountId32> | null | Uint8Array | AccountId32 | string,
-                    oldCount: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>, Option<AccountId32>, u32]
-            >;
+            setMembers: AugmentedSubmittable<(newMembers: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], prime: Option<AccountId32> | null | Uint8Array | AccountId32 | string, oldCount: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>,
+                Option<AccountId32>,
+                u32
+            ]>;
             /**
              * Add an aye or nay vote for the sender to the given proposal.
              *
@@ -973,14 +717,11 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - `O(M)` where `M` is members-count (code- and governance-bounded)
              **/
-            vote: AugmentedSubmittable<
-                (
-                    proposal: H256 | string | Uint8Array,
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    approve: bool | boolean | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u32>, bool]
-            >;
+            vote: AugmentedSubmittable<(proposal: H256 | string | Uint8Array, index: Compact<u32> | AnyNumber | Uint8Array, approve: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u32>,
+                bool
+            ]>;
         };
         councilMembership: {
             /**
@@ -988,30 +729,19 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * May only be called from `T::AddOrigin`.
              **/
-            addMember: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            addMember: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Swap out the sending member for some other key `new`.
              *
@@ -1019,30 +749,19 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Prime membership is passed from the origin account to `new`, if extant.
              **/
-            changeKey: AugmentedSubmittable<
-                (
-                    updated:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            changeKey: AugmentedSubmittable<(updated: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Remove the prime member if it exists.
              *
@@ -1054,71 +773,46 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * May only be called from `T::RemoveOrigin`.
              **/
-            removeMember: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            removeMember: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Change the membership to a new set, disregarding the existing membership. Be nice and
              * pass `members` pre-sorted.
              *
              * May only be called from `T::ResetOrigin`.
              **/
-            resetMembers: AugmentedSubmittable<
-                (
-                    members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>]
-            >;
+            resetMembers: AugmentedSubmittable<(members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>
+            ]>;
             /**
              * Set the prime member. Must be a current member.
              *
              * May only be called from `T::PrimeOrigin`.
              **/
-            setPrime: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            setPrime: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Swap out one member `remove` for another `add`.
              *
@@ -1126,49 +820,30 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Prime membership is *not* passed from `remove` to `add`, if extant.
              **/
-            swapMember: AugmentedSubmittable<
-                (
-                    remove:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    add:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, MultiAddress]
-            >;
+            swapMember: AugmentedSubmittable<(remove: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, add: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                MultiAddress
+            ]>;
         };
         cumulusXcm: {};
         democracy: {
@@ -1189,13 +864,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * Weight: `O(p)` (though as this is an high-privilege dispatch, we assume it has a
              * reasonable value).
              **/
-            blacklist: AugmentedSubmittable<
-                (
-                    proposalHash: H256 | string | Uint8Array,
-                    maybeRefIndex: Option<u32> | null | Uint8Array | u32 | AnyNumber
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Option<u32>]
-            >;
+            blacklist: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array, maybeRefIndex: Option<u32> | null | Uint8Array | u32 | AnyNumber) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Option<u32>
+            ]>;
             /**
              * Remove a proposal.
              *
@@ -1205,10 +877,9 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weight: `O(p)` where `p = PublicProps::<T>::decode_len()`
              **/
-            cancelProposal: AugmentedSubmittable<
-                (propIndex: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            cancelProposal: AugmentedSubmittable<(propIndex: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Remove a referendum.
              *
@@ -1218,10 +889,9 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * # Weight: `O(1)`.
              **/
-            cancelReferendum: AugmentedSubmittable<
-                (refIndex: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            cancelReferendum: AugmentedSubmittable<(refIndex: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Clears all public proposals.
              *
@@ -1252,42 +922,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * Weight: `O(R)` where R is the number of referendums the voter delegating to has
              * voted on. Weight is charged as if maximum votes.
              **/
-            delegate: AugmentedSubmittable<
-                (
-                    to:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    conviction:
-                        | PalletDemocracyConviction
-                        | "None"
-                        | "Locked1x"
-                        | "Locked2x"
-                        | "Locked3x"
-                        | "Locked4x"
-                        | "Locked5x"
-                        | "Locked6x"
-                        | number
-                        | Uint8Array,
-                    balance: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, PalletDemocracyConviction, u128]
-            >;
+            delegate: AugmentedSubmittable<(to: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, conviction: PalletDemocracyConviction | "None" | "Locked1x" | "Locked2x" | "Locked3x" | "Locked4x" | "Locked5x" | "Locked6x" | number | Uint8Array, balance: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                PalletDemocracyConviction,
+                u128
+            ]>;
             /**
              * Schedule an emergency cancellation of a referendum. Cannot happen twice to the same
              * referendum.
@@ -1298,10 +947,9 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weight: `O(1)`.
              **/
-            emergencyCancel: AugmentedSubmittable<
-                (refIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            emergencyCancel: AugmentedSubmittable<(refIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Schedule a referendum to be tabled once it is legal to schedule an external
              * referendum.
@@ -1310,24 +958,15 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * - `proposal_hash`: The preimage hash of the proposal.
              **/
-            externalPropose: AugmentedSubmittable<
-                (
-                    proposal:
-                        | FrameSupportPreimagesBounded
-                        | {
-                              Legacy: any;
-                          }
-                        | {
-                              Inline: any;
-                          }
-                        | {
-                              Lookup: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [FrameSupportPreimagesBounded]
-            >;
+            externalPropose: AugmentedSubmittable<(proposal: FrameSupportPreimagesBounded | {
+                Legacy: any;
+            } | {
+                Inline: any;
+            } | {
+                Lookup: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                FrameSupportPreimagesBounded
+            ]>;
             /**
              * Schedule a negative-turnout-bias referendum to be tabled next once it is legal to
              * schedule an external referendum.
@@ -1341,24 +980,15 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weight: `O(1)`
              **/
-            externalProposeDefault: AugmentedSubmittable<
-                (
-                    proposal:
-                        | FrameSupportPreimagesBounded
-                        | {
-                              Legacy: any;
-                          }
-                        | {
-                              Inline: any;
-                          }
-                        | {
-                              Lookup: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [FrameSupportPreimagesBounded]
-            >;
+            externalProposeDefault: AugmentedSubmittable<(proposal: FrameSupportPreimagesBounded | {
+                Legacy: any;
+            } | {
+                Inline: any;
+            } | {
+                Lookup: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                FrameSupportPreimagesBounded
+            ]>;
             /**
              * Schedule a majority-carries referendum to be tabled next once it is legal to schedule
              * an external referendum.
@@ -1372,24 +1002,15 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weight: `O(1)`
              **/
-            externalProposeMajority: AugmentedSubmittable<
-                (
-                    proposal:
-                        | FrameSupportPreimagesBounded
-                        | {
-                              Legacy: any;
-                          }
-                        | {
-                              Inline: any;
-                          }
-                        | {
-                              Lookup: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [FrameSupportPreimagesBounded]
-            >;
+            externalProposeMajority: AugmentedSubmittable<(proposal: FrameSupportPreimagesBounded | {
+                Legacy: any;
+            } | {
+                Inline: any;
+            } | {
+                Lookup: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                FrameSupportPreimagesBounded
+            ]>;
             /**
              * Schedule the currently externally-proposed majority-carries referendum to be tabled
              * immediately. If there is no externally-proposed referendum currently, or if there is one
@@ -1408,14 +1029,11 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weight: `O(1)`
              **/
-            fastTrack: AugmentedSubmittable<
-                (
-                    proposalHash: H256 | string | Uint8Array,
-                    votingPeriod: u32 | AnyNumber | Uint8Array,
-                    delay: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, u32, u32]
-            >;
+            fastTrack: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array, votingPeriod: u32 | AnyNumber | Uint8Array, delay: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                u32,
+                u32
+            ]>;
             /**
              * Propose a sensitive action to be taken.
              *
@@ -1427,25 +1045,16 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Emits `Proposed`.
              **/
-            propose: AugmentedSubmittable<
-                (
-                    proposal:
-                        | FrameSupportPreimagesBounded
-                        | {
-                              Legacy: any;
-                          }
-                        | {
-                              Inline: any;
-                          }
-                        | {
-                              Lookup: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [FrameSupportPreimagesBounded, Compact<u128>]
-            >;
+            propose: AugmentedSubmittable<(proposal: FrameSupportPreimagesBounded | {
+                Legacy: any;
+            } | {
+                Inline: any;
+            } | {
+                Lookup: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                FrameSupportPreimagesBounded,
+                Compact<u128>
+            ]>;
             /**
              * Remove a vote for a referendum.
              *
@@ -1463,31 +1072,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * Weight: `O(R + log R)` where R is the number of referenda that `target` has voted on.
              * Weight is calculated for the maximum number of vote.
              **/
-            removeOtherVote: AugmentedSubmittable<
-                (
-                    target:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    index: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, u32]
-            >;
+            removeOtherVote: AugmentedSubmittable<(target: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, index: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                u32
+            ]>;
             /**
              * Remove a vote for a referendum.
              *
@@ -1517,10 +1115,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * Weight: `O(R + log R)` where R is the number of referenda that `target` has voted on.
              * Weight is calculated for the maximum number of vote.
              **/
-            removeVote: AugmentedSubmittable<
-                (index: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            removeVote: AugmentedSubmittable<(index: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Signals agreement with a particular proposal.
              *
@@ -1529,10 +1126,9 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * - `proposal`: The index of the proposal to second.
              **/
-            second: AugmentedSubmittable<
-                (proposal: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            second: AugmentedSubmittable<(proposal: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Set or clear a metadata of a proposal or a referendum.
              *
@@ -1550,25 +1146,16 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `owner`: an identifier of a metadata owner.
              * - `maybe_hash`: The hash of an on-chain stored preimage. `None` to clear a metadata.
              **/
-            setMetadata: AugmentedSubmittable<
-                (
-                    owner:
-                        | PalletDemocracyMetadataOwner
-                        | {
-                              External: any;
-                          }
-                        | {
-                              Proposal: any;
-                          }
-                        | {
-                              Referendum: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    maybeHash: Option<H256> | null | Uint8Array | H256 | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [PalletDemocracyMetadataOwner, Option<H256>]
-            >;
+            setMetadata: AugmentedSubmittable<(owner: PalletDemocracyMetadataOwner | {
+                External: any;
+            } | {
+                Proposal: any;
+            } | {
+                Referendum: any;
+            } | string | Uint8Array, maybeHash: Option<H256> | null | Uint8Array | H256 | string) => SubmittableExtrinsic<ApiType>, [
+                PalletDemocracyMetadataOwner,
+                Option<H256>
+            ]>;
             /**
              * Undelegate the voting power of the sending account.
              *
@@ -1593,30 +1180,19 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weight: `O(R)` with R number of vote of target.
              **/
-            unlock: AugmentedSubmittable<
-                (
-                    target:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            unlock: AugmentedSubmittable<(target: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Veto and blacklist the external proposal hash.
              *
@@ -1628,10 +1204,9 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weight: `O(V + log(V))` where V is number of `existing vetoers`
              **/
-            vetoExternal: AugmentedSubmittable<
-                (proposalHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            vetoExternal: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Vote in a referendum. If `vote.is_aye()`, the vote is to enact the proposal;
              * otherwise it is a vote to keep the status quo.
@@ -1641,79 +1216,58 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `ref_index`: The index of the referendum to vote for.
              * - `vote`: The vote configuration.
              **/
-            vote: AugmentedSubmittable<
-                (
-                    refIndex: Compact<u32> | AnyNumber | Uint8Array,
-                    vote:
-                        | PalletDemocracyVoteAccountVote
-                        | {
-                              Standard: any;
-                          }
-                        | {
-                              Split: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, PalletDemocracyVoteAccountVote]
-            >;
+            vote: AugmentedSubmittable<(refIndex: Compact<u32> | AnyNumber | Uint8Array, vote: PalletDemocracyVoteAccountVote | {
+                Standard: any;
+            } | {
+                Split: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                PalletDemocracyVoteAccountVote
+            ]>;
         };
         dmpQueue: {
             /**
              * Service a single overweight message.
              **/
-            serviceOverweight: AugmentedSubmittable<
-                (
-                    index: u64 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u64, SpWeightsWeightV2Weight]
-            >;
+            serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64,
+                SpWeightsWeightV2Weight
+            ]>;
         };
         drop3: {
             /**
              * Approve a RewardPool proposal, must be called from admin
              **/
-            approveRewardPool: AugmentedSubmittable<
-                (id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
-            >;
+            approveRewardPool: AugmentedSubmittable<(id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64
+            ]>;
             /**
              * Close a reward pool, can be called by admin or reward pool owner
              *
              * Note here `approved` state is not required, which gives the owner a
              * chance to close it before the admin evaluates the proposal
              **/
-            closeRewardPool: AugmentedSubmittable<
-                (id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
-            >;
+            closeRewardPool: AugmentedSubmittable<(id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64
+            ]>;
             /**
              * Create a RewardPool proposal, can be called by any signed account
              **/
-            proposeRewardPool: AugmentedSubmittable<
-                (
-                    name: Bytes | string | Uint8Array,
-                    total: u128 | AnyNumber | Uint8Array,
-                    startAt: u32 | AnyNumber | Uint8Array,
-                    endAt: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, u128, u32, u32]
-            >;
+            proposeRewardPool: AugmentedSubmittable<(name: Bytes | string | Uint8Array, total: u128 | AnyNumber | Uint8Array, startAt: u32 | AnyNumber | Uint8Array, endAt: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                u128,
+                u32,
+                u32
+            ]>;
             /**
              * Reject a RewardPool proposal, must be called from admin
              **/
-            rejectRewardPool: AugmentedSubmittable<
-                (id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
-            >;
+            rejectRewardPool: AugmentedSubmittable<(id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64
+            ]>;
             /**
              * transfer an amount of reserved balance to some other user
              * must be called by reward pool owner
@@ -1721,36 +1275,30 @@ declare module "@polkadot/api-base/types/submittable" {
              * `repatriate_reserved()` requires that the destination account is active
              * otherwise `DeadAccount` error is returned. Is it OK in our case?
              **/
-            sendReward: AugmentedSubmittable<
-                (
-                    id: u64 | AnyNumber | Uint8Array,
-                    to: AccountId32 | string | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u64, AccountId32, u128]
-            >;
+            sendReward: AugmentedSubmittable<(id: u64 | AnyNumber | Uint8Array, to: AccountId32 | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64,
+                AccountId32,
+                u128
+            ]>;
             /**
              * Change the admin account
              * similar to sudo.set_key, the old account will be supplied in event
              **/
-            setAdmin: AugmentedSubmittable<
-                (updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            setAdmin: AugmentedSubmittable<(updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Start a reward pool, can be called by admin or reward pool owner
              **/
-            startRewardPool: AugmentedSubmittable<
-                (id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
-            >;
+            startRewardPool: AugmentedSubmittable<(id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64
+            ]>;
             /**
              * Stop a reward pool, can be called by admin or reward pool owner
              **/
-            stopRewardPool: AugmentedSubmittable<
-                (id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
-            >;
+            stopRewardPool: AugmentedSubmittable<(id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64
+            ]>;
         };
         extrinsicFilter: {
             /**
@@ -1758,13 +1306,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * (pallet_name_bytes, function_name_bytes) can uniquely identify an extrinsic
              * if function_name_bytes is None, all extrinsics in `pallet_name_bytes` will be blocked
              **/
-            blockExtrinsics: AugmentedSubmittable<
-                (
-                    palletNameBytes: Bytes | string | Uint8Array,
-                    functionNameBytes: Option<Bytes> | null | Uint8Array | Bytes | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Option<Bytes>]
-            >;
+            blockExtrinsics: AugmentedSubmittable<(palletNameBytes: Bytes | string | Uint8Array, functionNameBytes: Option<Bytes> | null | Uint8Array | Bytes | string) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Option<Bytes>
+            ]>;
             /**
              * Set the mode
              *
@@ -1775,116 +1320,72 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Weights should be 2 DB writes: 1 for mode and 1 for event
              **/
-            setMode: AugmentedSubmittable<
-                (
-                    mode:
-                        | PalletExtrinsicFilterOperationalMode
-                        | "Normal"
-                        | "Safe"
-                        | "Test"
-                        | number
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [PalletExtrinsicFilterOperationalMode]
-            >;
+            setMode: AugmentedSubmittable<(mode: PalletExtrinsicFilterOperationalMode | "Normal" | "Safe" | "Test" | number | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                PalletExtrinsicFilterOperationalMode
+            ]>;
             /**
              * unblock the given extrinsics
              * (pallet_name_bytes, function_name_bytes) can uniquely identify an extrinsic
              * if function_name_bytes is None, all extrinsics in `pallet_name_bytes` will be unblocked
              **/
-            unblockExtrinsics: AugmentedSubmittable<
-                (
-                    palletNameBytes: Bytes | string | Uint8Array,
-                    functionNameBytes: Option<Bytes> | null | Uint8Array | Bytes | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Option<Bytes>]
-            >;
+            unblockExtrinsics: AugmentedSubmittable<(palletNameBytes: Bytes | string | Uint8Array, functionNameBytes: Option<Bytes> | null | Uint8Array | Bytes | string) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Option<Bytes>
+            ]>;
         };
         identityManagement: {
             /**
              * Activate an identity
              **/
-            activateIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes]
-            >;
+            activateIdentity: AugmentedSubmittable<(shard: H256 | string | Uint8Array, encryptedIdentity: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Bytes
+            ]>;
             /**
              * add an account to the delegatees
              **/
-            addDelegatee: AugmentedSubmittable<
-                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            addDelegatee: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Deactivate an identity
              **/
-            deactivateIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes]
-            >;
-            identityActivated: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | {
-                              ciphertext?: any;
-                              aad?: any;
-                              nonce?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, H256]
-            >;
-            identityDeactivated: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | {
-                              ciphertext?: any;
-                              aad?: any;
-                              nonce?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, H256]
-            >;
-            identityLinked: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    identity:
-                        | CorePrimitivesKeyAesOutput
-                        | {
-                              ciphertext?: any;
-                              aad?: any;
-                              nonce?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    idGraph:
-                        | CorePrimitivesKeyAesOutput
-                        | {
-                              ciphertext?: any;
-                              aad?: any;
-                              nonce?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, CorePrimitivesKeyAesOutput, H256]
-            >;
+            deactivateIdentity: AugmentedSubmittable<(shard: H256 | string | Uint8Array, encryptedIdentity: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Bytes
+            ]>;
+            identityActivated: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array, identity: CorePrimitivesKeyAesOutput | {
+                ciphertext?: any;
+                aad?: any;
+                nonce?: any;
+            } | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                CorePrimitivesKeyAesOutput,
+                H256
+            ]>;
+            identityDeactivated: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array, identity: CorePrimitivesKeyAesOutput | {
+                ciphertext?: any;
+                aad?: any;
+                nonce?: any;
+            } | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                CorePrimitivesKeyAesOutput,
+                H256
+            ]>;
+            identityLinked: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array, identity: CorePrimitivesKeyAesOutput | {
+                ciphertext?: any;
+                aad?: any;
+                nonce?: any;
+            } | string | Uint8Array, idGraph: CorePrimitivesKeyAesOutput | {
+                ciphertext?: any;
+                aad?: any;
+                nonce?: any;
+            } | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                CorePrimitivesKeyAesOutput,
+                CorePrimitivesKeyAesOutput,
+                H256
+            ]>;
             /**
              * Link an identity with given network types and validation data.
              * We do the origin check for this extrinsic, it has to be
@@ -1909,118 +1410,84 @@ declare module "@polkadot/api-base/types/submittable" {
              * randomly generated by the caller. Not necessarily encrypted but I'm
              * happy to adjust it if required.
              **/
-            linkIdentity: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    user: AccountId32 | string | Uint8Array,
-                    encryptedIdentity: Bytes | string | Uint8Array,
-                    encryptedValidationData: Bytes | string | Uint8Array,
-                    encryptedWeb3networks: Bytes | string | Uint8Array,
-                    nonce: U8aFixed | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, AccountId32, Bytes, Bytes, Bytes, U8aFixed]
-            >;
+            linkIdentity: AugmentedSubmittable<(shard: H256 | string | Uint8Array, user: AccountId32 | string | Uint8Array, encryptedIdentity: Bytes | string | Uint8Array, encryptedValidationData: Bytes | string | Uint8Array, encryptedWeb3networks: Bytes | string | Uint8Array, nonce: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                AccountId32,
+                Bytes,
+                Bytes,
+                Bytes,
+                U8aFixed
+            ]>;
             /**
              * remove an account from the delegatees
              **/
-            removeDelegatee: AugmentedSubmittable<
-                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            removeDelegatee: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Set or update user's shielding key
              **/
-            setUserShieldingKey: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    encryptedKey: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes]
-            >;
-            someError: AugmentedSubmittable<
-                (
-                    account: Option<AccountId32> | null | Uint8Array | AccountId32 | string,
-                    error:
-                        | CorePrimitivesErrorImpError
-                        | {
-                              SetUserShieldingKeyFailed: any;
-                          }
-                        | {
-                              LinkIdentityFailed: any;
-                          }
-                        | {
-                              DeactivateIdentityFailed: any;
-                          }
-                        | {
-                              ActivateIdentityFailed: any;
-                          }
-                        | {
-                              ImportScheduledEnclaveFailed: any;
-                          }
-                        | {
-                              UnclassifiedError: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Option<AccountId32>, CorePrimitivesErrorImpError, H256]
-            >;
+            setUserShieldingKey: AugmentedSubmittable<(shard: H256 | string | Uint8Array, encryptedKey: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Bytes
+            ]>;
+            someError: AugmentedSubmittable<(account: Option<AccountId32> | null | Uint8Array | AccountId32 | string, error: CorePrimitivesErrorImpError | {
+                SetUserShieldingKeyFailed: any;
+            } | {
+                LinkIdentityFailed: any;
+            } | {
+                DeactivateIdentityFailed: any;
+            } | {
+                ActivateIdentityFailed: any;
+            } | {
+                ImportScheduledEnclaveFailed: any;
+            } | {
+                UnclassifiedError: any;
+            } | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Option<AccountId32>,
+                CorePrimitivesErrorImpError,
+                H256
+            ]>;
             /**
              * ---------------------------------------------------
              * The following extrinsics are supposed to be called by TEE only
              * ---------------------------------------------------
              **/
-            userShieldingKeySet: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    idGraph:
-                        | CorePrimitivesKeyAesOutput
-                        | {
-                              ciphertext?: any;
-                              aad?: any;
-                              nonce?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesKeyAesOutput, H256]
-            >;
+            userShieldingKeySet: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array, idGraph: CorePrimitivesKeyAesOutput | {
+                ciphertext?: any;
+                aad?: any;
+                nonce?: any;
+            } | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                CorePrimitivesKeyAesOutput,
+                H256
+            ]>;
         };
         impExtrinsicWhitelist: {
             /**
              * Adds a new group member
              **/
-            addGroupMember: AugmentedSubmittable<
-                (v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            addGroupMember: AugmentedSubmittable<(v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Batch adding of new group members
              **/
-            batchAddGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>]
-            >;
+            batchAddGroupMembers: AugmentedSubmittable<(vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>
+            ]>;
             /**
              * Batch Removing existing group members
              **/
-            batchRemoveGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>]
-            >;
+            batchRemoveGroupMembers: AugmentedSubmittable<(vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>
+            ]>;
             /**
              * Removes an existing group members
              **/
-            removeGroupMember: AugmentedSubmittable<
-                (v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            removeGroupMember: AugmentedSubmittable<(v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Swith GroupControlOn off
              **/
@@ -2063,38 +1530,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * - Storage: inserts one item, value size bounded by `MaxSignatories`, with a deposit
              * taken for its lifetime of `DepositBase + threshold * DepositFactor`.
              **/
-            approveAsMulti: AugmentedSubmittable<
-                (
-                    threshold: u16 | AnyNumber | Uint8Array,
-                    otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[],
-                    maybeTimepoint:
-                        | Option<PalletMultisigTimepoint>
-                        | null
-                        | Uint8Array
-                        | PalletMultisigTimepoint
-                        | {
-                              height?: any;
-                              index?: any;
-                          }
-                        | string,
-                    callHash: U8aFixed | string | Uint8Array,
-                    maxWeight:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    u16,
-                    Vec<AccountId32>,
-                    Option<PalletMultisigTimepoint>,
-                    U8aFixed,
-                    SpWeightsWeightV2Weight
-                ]
-            >;
+            approveAsMulti: AugmentedSubmittable<(threshold: u16 | AnyNumber | Uint8Array, otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], maybeTimepoint: Option<PalletMultisigTimepoint> | null | Uint8Array | PalletMultisigTimepoint | {
+                height?: any;
+                index?: any;
+            } | string, callHash: U8aFixed | string | Uint8Array, maxWeight: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u16,
+                Vec<AccountId32>,
+                Option<PalletMultisigTimepoint>,
+                U8aFixed,
+                SpWeightsWeightV2Weight
+            ]>;
             /**
              * Register approval for a dispatch to be made from a deterministic composite account if
              * approved by a total of `threshold - 1` of `other_signatories`.
@@ -2136,38 +1584,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * - Storage: inserts one item, value size bounded by `MaxSignatories`, with a deposit
              * taken for its lifetime of `DepositBase + threshold * DepositFactor`.
              **/
-            asMulti: AugmentedSubmittable<
-                (
-                    threshold: u16 | AnyNumber | Uint8Array,
-                    otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[],
-                    maybeTimepoint:
-                        | Option<PalletMultisigTimepoint>
-                        | null
-                        | Uint8Array
-                        | PalletMultisigTimepoint
-                        | {
-                              height?: any;
-                              index?: any;
-                          }
-                        | string,
-                    call: Call | IMethod | string | Uint8Array,
-                    maxWeight:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    u16,
-                    Vec<AccountId32>,
-                    Option<PalletMultisigTimepoint>,
-                    Call,
-                    SpWeightsWeightV2Weight
-                ]
-            >;
+            asMulti: AugmentedSubmittable<(threshold: u16 | AnyNumber | Uint8Array, otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], maybeTimepoint: Option<PalletMultisigTimepoint> | null | Uint8Array | PalletMultisigTimepoint | {
+                height?: any;
+                index?: any;
+            } | string, call: Call | IMethod | string | Uint8Array, maxWeight: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u16,
+                Vec<AccountId32>,
+                Option<PalletMultisigTimepoint>,
+                Call,
+                SpWeightsWeightV2Weight
+            ]>;
             /**
              * Immediately dispatch a multi-signature call using a single approval from the caller.
              *
@@ -2182,13 +1611,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * O(Z + C) where Z is the length of the call and C its execution weight.
              **/
-            asMultiThreshold1: AugmentedSubmittable<
-                (
-                    otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[],
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>, Call]
-            >;
+            asMultiThreshold1: AugmentedSubmittable<(otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>,
+                Call
+            ]>;
             /**
              * Cancel a pre-existing, on-going multisig transaction. Any deposit reserved previously
              * for this operation will be unreserved on success.
@@ -2212,22 +1638,15 @@ declare module "@polkadot/api-base/types/submittable" {
              * - I/O: 1 read `O(S)`, one remove.
              * - Storage: removes one item.
              **/
-            cancelAsMulti: AugmentedSubmittable<
-                (
-                    threshold: u16 | AnyNumber | Uint8Array,
-                    otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[],
-                    timepoint:
-                        | PalletMultisigTimepoint
-                        | {
-                              height?: any;
-                              index?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    callHash: U8aFixed | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u16, Vec<AccountId32>, PalletMultisigTimepoint, U8aFixed]
-            >;
+            cancelAsMulti: AugmentedSubmittable<(threshold: u16 | AnyNumber | Uint8Array, otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], timepoint: PalletMultisigTimepoint | {
+                height?: any;
+                index?: any;
+            } | string | Uint8Array, callHash: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u16,
+                Vec<AccountId32>,
+                PalletMultisigTimepoint,
+                U8aFixed
+            ]>;
         };
         parachainIdentity: {
             /**
@@ -2242,30 +1661,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - `O(R)` where `R` registrar-count (governance-bounded and code-bounded).
              **/
-            addRegistrar: AugmentedSubmittable<
-                (
-                    account:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            addRegistrar: AugmentedSubmittable<(account: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Add the given account to the sender's subs.
              *
@@ -2275,52 +1683,32 @@ declare module "@polkadot/api-base/types/submittable" {
              * The dispatch origin for this call must be _Signed_ and the sender must have a registered
              * sub identity of `sub`.
              **/
-            addSub: AugmentedSubmittable<
-                (
-                    sub:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    data:
-                        | Data
-                        | {
-                              None: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              BlakeTwo256: any;
-                          }
-                        | {
-                              Sha256: any;
-                          }
-                        | {
-                              Keccak256: any;
-                          }
-                        | {
-                              ShaThree256: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Data]
-            >;
+            addSub: AugmentedSubmittable<(sub: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, data: Data | {
+                None: any;
+            } | {
+                Raw: any;
+            } | {
+                BlakeTwo256: any;
+            } | {
+                Sha256: any;
+            } | {
+                Keccak256: any;
+            } | {
+                ShaThree256: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Data
+            ]>;
             /**
              * Cancel a previous request.
              *
@@ -2338,10 +1726,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - where `R` registrar-count (governance-bounded).
              * - where `X` additional-field-count (deposit-bounded and code-bounded).
              **/
-            cancelRequest: AugmentedSubmittable<
-                (regIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            cancelRequest: AugmentedSubmittable<(regIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Clear an account's identity info and all sub-accounts and return all deposits.
              *
@@ -2379,30 +1766,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * - where `S` subs-count (hard- and deposit-bounded).
              * - where `X` additional-field-count (deposit-bounded and code-bounded).
              **/
-            killIdentity: AugmentedSubmittable<
-                (
-                    target:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            killIdentity: AugmentedSubmittable<(target: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Provide a judgement for an account's identity.
              *
@@ -2422,57 +1798,36 @@ declare module "@polkadot/api-base/types/submittable" {
              * - where `R` registrar-count (governance-bounded).
              * - where `X` additional-field-count (deposit-bounded and code-bounded).
              **/
-            provideJudgement: AugmentedSubmittable<
-                (
-                    regIndex: Compact<u32> | AnyNumber | Uint8Array,
-                    target:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    judgement:
-                        | PalletIdentityJudgement
-                        | {
-                              Unknown: any;
-                          }
-                        | {
-                              FeePaid: any;
-                          }
-                        | {
-                              Reasonable: any;
-                          }
-                        | {
-                              KnownGood: any;
-                          }
-                        | {
-                              OutOfDate: any;
-                          }
-                        | {
-                              LowQuality: any;
-                          }
-                        | {
-                              Erroneous: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    identity: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, MultiAddress, PalletIdentityJudgement, H256]
-            >;
+            provideJudgement: AugmentedSubmittable<(regIndex: Compact<u32> | AnyNumber | Uint8Array, target: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, judgement: PalletIdentityJudgement | {
+                Unknown: any;
+            } | {
+                FeePaid: any;
+            } | {
+                Reasonable: any;
+            } | {
+                KnownGood: any;
+            } | {
+                OutOfDate: any;
+            } | {
+                LowQuality: any;
+            } | {
+                Erroneous: any;
+            } | string | Uint8Array, identity: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                MultiAddress,
+                PalletIdentityJudgement,
+                H256
+            ]>;
             /**
              * Remove the sender as a sub-account.
              *
@@ -2495,82 +1850,51 @@ declare module "@polkadot/api-base/types/submittable" {
              * The dispatch origin for this call must be _Signed_ and the sender must have a registered
              * sub identity of `sub`.
              **/
-            removeSub: AugmentedSubmittable<
-                (
-                    sub:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            removeSub: AugmentedSubmittable<(sub: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Alter the associated name of the given sub-account.
              *
              * The dispatch origin for this call must be _Signed_ and the sender must have a registered
              * sub identity of `sub`.
              **/
-            renameSub: AugmentedSubmittable<
-                (
-                    sub:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    data:
-                        | Data
-                        | {
-                              None: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              BlakeTwo256: any;
-                          }
-                        | {
-                              Sha256: any;
-                          }
-                        | {
-                              Keccak256: any;
-                          }
-                        | {
-                              ShaThree256: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Data]
-            >;
+            renameSub: AugmentedSubmittable<(sub: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, data: Data | {
+                None: any;
+            } | {
+                Raw: any;
+            } | {
+                BlakeTwo256: any;
+            } | {
+                Sha256: any;
+            } | {
+                Keccak256: any;
+            } | {
+                ShaThree256: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Data
+            ]>;
             /**
              * Request a judgement from a registrar.
              *
@@ -2594,13 +1918,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - where `R` registrar-count (governance-bounded).
              * - where `X` additional-field-count (deposit-bounded and code-bounded).
              **/
-            requestJudgement: AugmentedSubmittable<
-                (
-                    regIndex: Compact<u32> | AnyNumber | Uint8Array,
-                    maxFee: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, Compact<u128>]
-            >;
+            requestJudgement: AugmentedSubmittable<(regIndex: Compact<u32> | AnyNumber | Uint8Array, maxFee: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                Compact<u128>
+            ]>;
             /**
              * Change the account associated with a registrar.
              *
@@ -2614,31 +1935,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `O(R)`.
              * - where `R` registrar-count (governance-bounded).
              **/
-            setAccountId: AugmentedSubmittable<
-                (
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    updated:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, MultiAddress]
-            >;
+            setAccountId: AugmentedSubmittable<(index: Compact<u32> | AnyNumber | Uint8Array, updated: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                MultiAddress
+            ]>;
             /**
              * Set the fee required for a judgement to be requested from a registrar.
              *
@@ -2652,13 +1962,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `O(R)`.
              * - where `R` registrar-count (governance-bounded).
              **/
-            setFee: AugmentedSubmittable<
-                (
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    fee: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, Compact<u128>]
-            >;
+            setFee: AugmentedSubmittable<(index: Compact<u32> | AnyNumber | Uint8Array, fee: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                Compact<u128>
+            ]>;
             /**
              * Set the field information for a registrar.
              *
@@ -2672,13 +1979,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `O(R)`.
              * - where `R` registrar-count (governance-bounded).
              **/
-            setFields: AugmentedSubmittable<
-                (
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    fields: PalletIdentityBitFlags
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, PalletIdentityBitFlags]
-            >;
+            setFields: AugmentedSubmittable<(index: Compact<u32> | AnyNumber | Uint8Array, fields: PalletIdentityBitFlags) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                PalletIdentityBitFlags
+            ]>;
             /**
              * Set an account's identity information and reserve the appropriate deposit.
              *
@@ -2696,26 +2000,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * - where `X` additional-field-count (deposit-bounded and code-bounded)
              * - where `R` judgements-count (registrar-count-bounded)
              **/
-            setIdentity: AugmentedSubmittable<
-                (
-                    info:
-                        | PalletIdentityIdentityInfo
-                        | {
-                              additional?: any;
-                              display?: any;
-                              legal?: any;
-                              web?: any;
-                              riot?: any;
-                              email?: any;
-                              pgpFingerprint?: any;
-                              image?: any;
-                              twitter?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [PalletIdentityIdentityInfo]
-            >;
+            setIdentity: AugmentedSubmittable<(info: PalletIdentityIdentityInfo | {
+                additional?: any;
+                display?: any;
+                legal?: any;
+                web?: any;
+                riot?: any;
+                email?: any;
+                pgpFingerprint?: any;
+                image?: any;
+                twitter?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                PalletIdentityIdentityInfo
+            ]>;
             /**
              * Set the sub-accounts of the sender.
              *
@@ -2732,39 +2029,24 @@ declare module "@polkadot/api-base/types/submittable" {
              * - where `P` old-subs-count (hard- and deposit-bounded).
              * - where `S` subs-count (hard- and deposit-bounded).
              **/
-            setSubs: AugmentedSubmittable<
-                (
-                    subs:
-                        | Vec<ITuple<[AccountId32, Data]>>
-                        | [
-                              AccountId32 | string | Uint8Array,
-                              (
-                                  | Data
-                                  | {
-                                        None: any;
-                                    }
-                                  | {
-                                        Raw: any;
-                                    }
-                                  | {
-                                        BlakeTwo256: any;
-                                    }
-                                  | {
-                                        Sha256: any;
-                                    }
-                                  | {
-                                        Keccak256: any;
-                                    }
-                                  | {
-                                        ShaThree256: any;
-                                    }
-                                  | string
-                                  | Uint8Array
-                              )
-                          ][]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<ITuple<[AccountId32, Data]>>]
-            >;
+            setSubs: AugmentedSubmittable<(subs: Vec<ITuple<[AccountId32, Data]>> | [
+                AccountId32 | string | Uint8Array,
+                (Data | {
+                    None: any;
+                } | {
+                    Raw: any;
+                } | {
+                    BlakeTwo256: any;
+                } | {
+                    Sha256: any;
+                } | {
+                    Keccak256: any;
+                } | {
+                    ShaThree256: any;
+                } | string | Uint8Array)
+            ][]) => SubmittableExtrinsic<ApiType>, [
+                Vec<ITuple<[AccountId32, Data]>>
+            ]>;
         };
         parachainInfo: {};
         parachainStaking: {
@@ -2772,10 +2054,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * add white list of candidates
              * This function should be safe to delete after restriction removed
              **/
-            addCandidatesWhitelist: AugmentedSubmittable<
-                (candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            addCandidatesWhitelist: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Cancel pending request to adjust the collator candidate self bond
              **/
@@ -2783,10 +2064,9 @@ declare module "@polkadot/api-base/types/submittable" {
             /**
              * Cancel request to change an existing delegation.
              **/
-            cancelDelegationRequest: AugmentedSubmittable<
-                (candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            cancelDelegationRequest: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Cancel open request to leave candidates
              * - only callable by collator account
@@ -2801,75 +2081,59 @@ declare module "@polkadot/api-base/types/submittable" {
             /**
              * Increase collator candidate self bond by `more`
              **/
-            candidateBondMore: AugmentedSubmittable<
-                (more: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u128]
-            >;
+            candidateBondMore: AugmentedSubmittable<(more: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128
+            ]>;
             /**
              * If caller is not a delegator and not a collator, then join the set of delegators
              * If caller is a delegator, then makes delegation to change their delegation state
              **/
-            delegate: AugmentedSubmittable<
-                (
-                    candidate: AccountId32 | string | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, u128]
-            >;
+            delegate: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                u128
+            ]>;
             /**
              * If caller is not a delegator and not a collator, then join the set of delegators
              * If caller is a delegator, then makes delegation to change their delegation state
              * Sets the auto-compound config for the delegation
              **/
-            delegateWithAutoCompound: AugmentedSubmittable<
-                (
-                    candidate: AccountId32 | string | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array,
-                    autoCompound: Percent | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, u128, Percent]
-            >;
+            delegateWithAutoCompound: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, autoCompound: Percent | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                u128,
+                Percent
+            ]>;
             /**
              * Bond more for delegators wrt a specific collator candidate.
              **/
-            delegatorBondMore: AugmentedSubmittable<
-                (
-                    candidate: AccountId32 | string | Uint8Array,
-                    more: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, u128]
-            >;
+            delegatorBondMore: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array, more: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                u128
+            ]>;
             /**
              * Execute pending request to adjust the collator candidate self bond
              **/
-            executeCandidateBondLess: AugmentedSubmittable<
-                (candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            executeCandidateBondLess: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Execute pending request to change an existing delegation
              **/
-            executeDelegationRequest: AugmentedSubmittable<
-                (
-                    delegator: AccountId32 | string | Uint8Array,
-                    candidate: AccountId32 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, AccountId32]
-            >;
+            executeDelegationRequest: AugmentedSubmittable<(delegator: AccountId32 | string | Uint8Array, candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                AccountId32
+            ]>;
             /**
              * Execute leave candidates request
              **/
-            executeLeaveCandidates: AugmentedSubmittable<
-                (candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            executeLeaveCandidates: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Execute the right to exit the set of delegators and revoke all ongoing delegations.
              **/
-            executeLeaveDelegators: AugmentedSubmittable<
-                (delegator: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            executeLeaveDelegators: AugmentedSubmittable<(delegator: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Temporarily leave the set of collator candidates without unbonding
              **/
@@ -2881,35 +2145,29 @@ declare module "@polkadot/api-base/types/submittable" {
             /**
              * Join the set of collator candidates
              **/
-            joinCandidates: AugmentedSubmittable<
-                (bond: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u128]
-            >;
+            joinCandidates: AugmentedSubmittable<(bond: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128
+            ]>;
             /**
              * remove white list of candidates
              * This function should be safe to delete after restriction removed
              **/
-            removeCandidatesWhitelist: AugmentedSubmittable<
-                (candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            removeCandidatesWhitelist: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Request by collator candidate to decrease self bond by `less`
              **/
-            scheduleCandidateBondLess: AugmentedSubmittable<
-                (less: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u128]
-            >;
+            scheduleCandidateBondLess: AugmentedSubmittable<(less: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u128
+            ]>;
             /**
              * Request bond less for delegators wrt a specific collator candidate.
              **/
-            scheduleDelegatorBondLess: AugmentedSubmittable<
-                (
-                    candidate: AccountId32 | string | Uint8Array,
-                    less: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, u128]
-            >;
+            scheduleDelegatorBondLess: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array, less: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                u128
+            ]>;
             /**
              * Request to leave the set of candidates. If successful, the account is immediately
              * removed from the candidate pool to prevent selection as a collator.
@@ -2925,124 +2183,95 @@ declare module "@polkadot/api-base/types/submittable" {
              * Request to revoke an existing delegation. If successful, the delegation is scheduled
              * to be allowed to be revoked via the `execute_delegation_request` extrinsic.
              **/
-            scheduleRevokeDelegation: AugmentedSubmittable<
-                (collator: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            scheduleRevokeDelegation: AugmentedSubmittable<(collator: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Sets the auto-compounding reward percentage for a delegation.
              **/
-            setAutoCompound: AugmentedSubmittable<
-                (
-                    candidate: AccountId32 | string | Uint8Array,
-                    value: Percent | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, Percent]
-            >;
+            setAutoCompound: AugmentedSubmittable<(candidate: AccountId32 | string | Uint8Array, value: Percent | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                Percent
+            ]>;
             /**
              * Set blocks per round
              * - if called with `new` less than length of current round, will transition immediately
              * in the next block
              * - also updates per-round inflation config
              **/
-            setBlocksPerRound: AugmentedSubmittable<
-                (updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            setBlocksPerRound: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Set the commission for all collators
              **/
-            setCollatorCommission: AugmentedSubmittable<
-                (updated: Perbill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Perbill]
-            >;
+            setCollatorCommission: AugmentedSubmittable<(updated: Perbill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Perbill
+            ]>;
             /**
              * Set the annual inflation rate to derive per-round inflation
              **/
-            setInflation: AugmentedSubmittable<
-                (
-                    schedule:
-                        | ({
-                              readonly min: Perbill;
-                              readonly ideal: Perbill;
-                              readonly max: Perbill;
-                          } & Struct)
-                        | {
-                              min?: any;
-                              ideal?: any;
-                              max?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    {
-                        readonly min: Perbill;
-                        readonly ideal: Perbill;
-                        readonly max: Perbill;
-                    } & Struct
-                ]
-            >;
+            setInflation: AugmentedSubmittable<(schedule: ({
+                readonly min: Perbill;
+                readonly ideal: Perbill;
+                readonly max: Perbill;
+            } & Struct) | {
+                min?: any;
+                ideal?: any;
+                max?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                {
+                    readonly min: Perbill;
+                    readonly ideal: Perbill;
+                    readonly max: Perbill;
+                } & Struct
+            ]>;
             /**
              * Set the account that will hold funds set aside for parachain bond
              **/
-            setParachainBondAccount: AugmentedSubmittable<
-                (updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            setParachainBondAccount: AugmentedSubmittable<(updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Set the percent of inflation set aside for parachain bond
              **/
-            setParachainBondReservePercent: AugmentedSubmittable<
-                (updated: Percent | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Percent]
-            >;
+            setParachainBondReservePercent: AugmentedSubmittable<(updated: Percent | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Percent
+            ]>;
             /**
              * Set the expectations for total staked. These expectations determine the issuance for
              * the round according to logic in `fn compute_issuance`
              **/
-            setStakingExpectations: AugmentedSubmittable<
-                (
-                    expectations:
-                        | ({
-                              readonly min: u128;
-                              readonly ideal: u128;
-                              readonly max: u128;
-                          } & Struct)
-                        | {
-                              min?: any;
-                              ideal?: any;
-                              max?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    {
-                        readonly min: u128;
-                        readonly ideal: u128;
-                        readonly max: u128;
-                    } & Struct
-                ]
-            >;
+            setStakingExpectations: AugmentedSubmittable<(expectations: ({
+                readonly min: u128;
+                readonly ideal: u128;
+                readonly max: u128;
+            } & Struct) | {
+                min?: any;
+                ideal?: any;
+                max?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                {
+                    readonly min: u128;
+                    readonly ideal: u128;
+                    readonly max: u128;
+                } & Struct
+            ]>;
             /**
              * Set the total number of collator candidates selected per round
              * - changes are not applied until the start of the next round
              **/
-            setTotalSelected: AugmentedSubmittable<
-                (updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            setTotalSelected: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
         };
         parachainSystem: {
-            authorizeUpgrade: AugmentedSubmittable<
-                (codeHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
-            enactAuthorizedUpgrade: AugmentedSubmittable<
-                (code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes]
-            >;
+            authorizeUpgrade: AugmentedSubmittable<(codeHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
+            enactAuthorizedUpgrade: AugmentedSubmittable<(code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes
+            ]>;
             /**
              * Set the current validation data.
              *
@@ -3054,25 +2283,17 @@ declare module "@polkadot/api-base/types/submittable" {
              * As a side effect, this function upgrades the current validation function
              * if the appropriate time has come.
              **/
-            setValidationData: AugmentedSubmittable<
-                (
-                    data:
-                        | CumulusPrimitivesParachainInherentParachainInherentData
-                        | {
-                              validationData?: any;
-                              relayChainState?: any;
-                              downwardMessages?: any;
-                              horizontalMessages?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [CumulusPrimitivesParachainInherentParachainInherentData]
-            >;
-            sudoSendUpwardMessage: AugmentedSubmittable<
-                (message: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes]
-            >;
+            setValidationData: AugmentedSubmittable<(data: CumulusPrimitivesParachainInherentParachainInherentData | {
+                validationData?: any;
+                relayChainState?: any;
+                downwardMessages?: any;
+                horizontalMessages?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                CumulusPrimitivesParachainInherentParachainInherentData
+            ]>;
+            sudoSendUpwardMessage: AugmentedSubmittable<(message: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes
+            ]>;
         };
         polkadotXcm: {
             /**
@@ -3088,29 +2309,17 @@ declare module "@polkadot/api-base/types/submittable" {
              * NOTE: A successful return to this does *not* imply that the `msg` was executed successfully
              * to completion; only that *some* of it was executed.
              **/
-            execute: AugmentedSubmittable<
-                (
-                    message:
-                        | XcmVersionedXcm
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    maxWeight:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedXcm, SpWeightsWeightV2Weight]
-            >;
+            execute: AugmentedSubmittable<(message: XcmVersionedXcm | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, maxWeight: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedXcm,
+                SpWeightsWeightV2Weight
+            ]>;
             /**
              * Set a safe XCM version (the version that XCM should be encoded with if the most recent
              * version a destination can accept is unknown).
@@ -3118,33 +2327,22 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `origin`: Must be Root.
              * - `maybe_xcm_version`: The default XCM encoding version, or `None` to disable.
              **/
-            forceDefaultXcmVersion: AugmentedSubmittable<
-                (
-                    maybeXcmVersion: Option<u32> | null | Uint8Array | u32 | AnyNumber
-                ) => SubmittableExtrinsic<ApiType>,
-                [Option<u32>]
-            >;
+            forceDefaultXcmVersion: AugmentedSubmittable<(maybeXcmVersion: Option<u32> | null | Uint8Array | u32 | AnyNumber) => SubmittableExtrinsic<ApiType>, [
+                Option<u32>
+            ]>;
             /**
              * Ask a location to notify us regarding their XCM version and any changes to it.
              *
              * - `origin`: Must be Root.
              * - `location`: The location to which we should subscribe for XCM version notifications.
              **/
-            forceSubscribeVersionNotify: AugmentedSubmittable<
-                (
-                    location:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedMultiLocation]
-            >;
+            forceSubscribeVersionNotify: AugmentedSubmittable<(location: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiLocation
+            ]>;
             /**
              * Require that a particular destination should no longer notify us regarding any XCM
              * version changes.
@@ -3153,21 +2351,13 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `location`: The location to which we are currently subscribed for XCM version
              * notifications which we no longer desire.
              **/
-            forceUnsubscribeVersionNotify: AugmentedSubmittable<
-                (
-                    location:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedMultiLocation]
-            >;
+            forceUnsubscribeVersionNotify: AugmentedSubmittable<(location: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiLocation
+            ]>;
             /**
              * Extoll that a particular destination can be communicated with through a particular
              * version of XCM.
@@ -3176,20 +2366,13 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `location`: The destination that is being described.
              * - `xcm_version`: The latest version of XCM that `location` supports.
              **/
-            forceXcmVersion: AugmentedSubmittable<
-                (
-                    location:
-                        | XcmV3MultiLocation
-                        | {
-                              parents?: any;
-                              interior?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    xcmVersion: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmV3MultiLocation, u32]
-            >;
+            forceXcmVersion: AugmentedSubmittable<(location: XcmV3MultiLocation | {
+                parents?: any;
+                interior?: any;
+            } | string | Uint8Array, xcmVersion: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmV3MultiLocation,
+                u32
+            ]>;
             /**
              * Transfer some assets from the local chain to the sovereign account of a destination
              * chain and forward a notification XCM.
@@ -3210,58 +2393,29 @@ declare module "@polkadot/api-base/types/submittable" {
              * fees.
              * - `weight_limit`: The remote-side weight limit, if any, for the XCM fee purchase.
              **/
-            limitedReserveTransferAssets: AugmentedSubmittable<
-                (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    feeAssetItem: u32 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiAssets,
-                    u32,
-                    XcmV3WeightLimit
-                ]
-            >;
+            limitedReserveTransferAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, assets: XcmVersionedMultiAssets | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array, weightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiAssets,
+                u32,
+                XcmV3WeightLimit
+            ]>;
             /**
              * Teleport some assets from the local chain to some destination chain.
              *
@@ -3281,58 +2435,29 @@ declare module "@polkadot/api-base/types/submittable" {
              * fees.
              * - `weight_limit`: The remote-side weight limit, if any, for the XCM fee purchase.
              **/
-            limitedTeleportAssets: AugmentedSubmittable<
-                (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    feeAssetItem: u32 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiAssets,
-                    u32,
-                    XcmV3WeightLimit
-                ]
-            >;
+            limitedTeleportAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, assets: XcmVersionedMultiAssets | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array, weightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiAssets,
+                u32,
+                XcmV3WeightLimit
+            ]>;
             /**
              * Transfer some assets from the local chain to the sovereign account of a destination
              * chain and forward a notification XCM.
@@ -3351,67 +2476,36 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `fee_asset_item`: The index into `assets` of the item which should be used to pay
              * fees.
              **/
-            reserveTransferAssets: AugmentedSubmittable<
-                (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    feeAssetItem: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32]
-            >;
-            send: AugmentedSubmittable<
-                (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    message:
-                        | XcmVersionedXcm
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedMultiLocation, XcmVersionedXcm]
-            >;
+            reserveTransferAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, assets: XcmVersionedMultiAssets | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiAssets,
+                u32
+            ]>;
+            send: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, message: XcmVersionedXcm | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiLocation,
+                XcmVersionedXcm
+            ]>;
             /**
              * Teleport some assets from the local chain to some destination chain.
              *
@@ -3429,42 +2523,24 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `fee_asset_item`: The index into `assets` of the item which should be used to pay
              * fees.
              **/
-            teleportAssets: AugmentedSubmittable<
-                (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    feeAssetItem: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32]
-            >;
+            teleportAssets: AugmentedSubmittable<(dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, beneficiary: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, assets: XcmVersionedMultiAssets | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, feeAssetItem: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiLocation,
+                XcmVersionedMultiAssets,
+                u32
+            ]>;
         };
         preimage: {
             /**
@@ -3473,20 +2549,18 @@ declare module "@polkadot/api-base/types/submittable" {
              * If the preimage was previously requested, no fees or deposits are taken for providing
              * the preimage. Otherwise, a deposit is taken proportional to the size of the preimage.
              **/
-            notePreimage: AugmentedSubmittable<
-                (bytes: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes]
-            >;
+            notePreimage: AugmentedSubmittable<(bytes: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes
+            ]>;
             /**
              * Request a preimage be uploaded to the chain without paying any fees or deposits.
              *
              * If the preimage requests has already been provided on-chain, we unreserve any deposit
              * a user may have paid, and take the control of the preimage out of their hands.
              **/
-            requestPreimage: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            requestPreimage: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Clear an unrequested preimage from the runtime storage.
              *
@@ -3495,19 +2569,17 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `hash`: The hash of the preimage to be removed from the store.
              * - `len`: The length of the preimage of `hash`.
              **/
-            unnotePreimage: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            unnotePreimage: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Clear a previously made request for a preimage.
              *
              * NOTE: THIS MUST NOT BE CALLED ON `hash` MORE TIMES THAN `request_preimage`.
              **/
-            unrequestPreimage: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            unrequestPreimage: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
         };
         proxy: {
             /**
@@ -3521,40 +2593,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `delay`: The announcement period required of the initial proxy. Will generally be
              * zero.
              **/
-            addProxy: AugmentedSubmittable<
-                (
-                    delegate:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    proxyType:
-                        | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
-                        | number
-                        | Uint8Array,
-                    delay: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, RococoParachainRuntimeProxyType, u32]
-            >;
+            addProxy: AugmentedSubmittable<(delegate: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, proxyType: RococoParachainRuntimeProxyType | "Any" | "NonTransfer" | "CancelProxy" | "Collator" | "Governance" | number | Uint8Array, delay: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                RococoParachainRuntimeProxyType,
+                u32
+            ]>;
             /**
              * Publish the hash of a proxy-call that will be made in the future.
              *
@@ -3572,31 +2625,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `real`: The account that the proxy will make a call on behalf of.
              * - `call_hash`: The hash of the call to be made by the `real` account.
              **/
-            announce: AugmentedSubmittable<
-                (
-                    real:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    callHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, H256]
-            >;
+            announce: AugmentedSubmittable<(real: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, callHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                H256
+            ]>;
             /**
              * Spawn a fresh new account that is guaranteed to be otherwise inaccessible, and
              * initialize it with a proxy of `proxy_type` for `origin` sender.
@@ -3617,22 +2659,11 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Fails if there are insufficient funds to pay for deposit.
              **/
-            createPure: AugmentedSubmittable<
-                (
-                    proxyType:
-                        | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
-                        | number
-                        | Uint8Array,
-                    delay: u32 | AnyNumber | Uint8Array,
-                    index: u16 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [RococoParachainRuntimeProxyType, u32, u16]
-            >;
+            createPure: AugmentedSubmittable<(proxyType: RococoParachainRuntimeProxyType | "Any" | "NonTransfer" | "CancelProxy" | "Collator" | "Governance" | number | Uint8Array, delay: u32 | AnyNumber | Uint8Array, index: u16 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                RococoParachainRuntimeProxyType,
+                u32,
+                u16
+            ]>;
             /**
              * Removes a previously spawned pure proxy.
              *
@@ -3651,42 +2682,23 @@ declare module "@polkadot/api-base/types/submittable" {
              * Fails with `NoPermission` in case the caller is not a previously created pure
              * account whose `pure` call has corresponding parameters.
              **/
-            killPure: AugmentedSubmittable<
-                (
-                    spawner:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    proxyType:
-                        | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
-                        | number
-                        | Uint8Array,
-                    index: u16 | AnyNumber | Uint8Array,
-                    height: Compact<u32> | AnyNumber | Uint8Array,
-                    extIndex: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, RococoParachainRuntimeProxyType, u16, Compact<u32>, Compact<u32>]
-            >;
+            killPure: AugmentedSubmittable<(spawner: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, proxyType: RococoParachainRuntimeProxyType | "Any" | "NonTransfer" | "CancelProxy" | "Collator" | "Governance" | number | Uint8Array, index: u16 | AnyNumber | Uint8Array, height: Compact<u32> | AnyNumber | Uint8Array, extIndex: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                RococoParachainRuntimeProxyType,
+                u16,
+                Compact<u32>,
+                Compact<u32>
+            ]>;
             /**
              * Dispatch the given `call` from an account that the sender is authorised for through
              * `add_proxy`.
@@ -3698,42 +2710,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `force_proxy_type`: Specify the exact proxy type to be used and checked for this call.
              * - `call`: The call to be made by the `real` account.
              **/
-            proxy: AugmentedSubmittable<
-                (
-                    real:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    forceProxyType:
-                        | Option<RococoParachainRuntimeProxyType>
-                        | null
-                        | Uint8Array
-                        | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
-                        | number,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Option<RococoParachainRuntimeProxyType>, Call]
-            >;
+            proxy: AugmentedSubmittable<(real: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, forceProxyType: Option<RococoParachainRuntimeProxyType> | null | Uint8Array | RococoParachainRuntimeProxyType | "Any" | "NonTransfer" | "CancelProxy" | "Collator" | "Governance" | number, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Option<RococoParachainRuntimeProxyType>,
+                Call
+            ]>;
             /**
              * Dispatch the given `call` from an account that the sender is authorized for through
              * `add_proxy`.
@@ -3747,61 +2738,32 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `force_proxy_type`: Specify the exact proxy type to be used and checked for this call.
              * - `call`: The call to be made by the `real` account.
              **/
-            proxyAnnounced: AugmentedSubmittable<
-                (
-                    delegate:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    real:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    forceProxyType:
-                        | Option<RococoParachainRuntimeProxyType>
-                        | null
-                        | Uint8Array
-                        | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
-                        | number,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, MultiAddress, Option<RococoParachainRuntimeProxyType>, Call]
-            >;
+            proxyAnnounced: AugmentedSubmittable<(delegate: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, real: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, forceProxyType: Option<RococoParachainRuntimeProxyType> | null | Uint8Array | RococoParachainRuntimeProxyType | "Any" | "NonTransfer" | "CancelProxy" | "Collator" | "Governance" | number, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                MultiAddress,
+                Option<RococoParachainRuntimeProxyType>,
+                Call
+            ]>;
             /**
              * Remove the given announcement of a delegate.
              *
@@ -3814,31 +2776,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `delegate`: The account that previously announced the call.
              * - `call_hash`: The hash of the call to be made.
              **/
-            rejectAnnouncement: AugmentedSubmittable<
-                (
-                    delegate:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    callHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, H256]
-            >;
+            rejectAnnouncement: AugmentedSubmittable<(delegate: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, callHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                H256
+            ]>;
             /**
              * Remove a given announcement.
              *
@@ -3851,31 +2802,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `real`: The account that the proxy will make a call on behalf of.
              * - `call_hash`: The hash of the call to be made by the `real` account.
              **/
-            removeAnnouncement: AugmentedSubmittable<
-                (
-                    real:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    callHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, H256]
-            >;
+            removeAnnouncement: AugmentedSubmittable<(real: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, callHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                H256
+            ]>;
             /**
              * Unregister all proxy accounts for the sender.
              *
@@ -3894,129 +2834,74 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `proxy`: The account that the `caller` would like to remove as a proxy.
              * - `proxy_type`: The permissions currently enabled for the removed proxy account.
              **/
-            removeProxy: AugmentedSubmittable<
-                (
-                    delegate:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    proxyType:
-                        | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
-                        | number
-                        | Uint8Array,
-                    delay: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, RococoParachainRuntimeProxyType, u32]
-            >;
+            removeProxy: AugmentedSubmittable<(delegate: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, proxyType: RococoParachainRuntimeProxyType | "Any" | "NonTransfer" | "CancelProxy" | "Collator" | "Governance" | number | Uint8Array, delay: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                RococoParachainRuntimeProxyType,
+                u32
+            ]>;
         };
         scheduler: {
             /**
              * Cancel an anonymously scheduled task.
              **/
-            cancel: AugmentedSubmittable<
-                (
-                    when: u32 | AnyNumber | Uint8Array,
-                    index: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u32, u32]
-            >;
+            cancel: AugmentedSubmittable<(when: u32 | AnyNumber | Uint8Array, index: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32,
+                u32
+            ]>;
             /**
              * Cancel a named scheduled task.
              **/
-            cancelNamed: AugmentedSubmittable<
-                (id: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [U8aFixed]
-            >;
+            cancelNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                U8aFixed
+            ]>;
             /**
              * Anonymously schedule a task.
              **/
-            schedule: AugmentedSubmittable<
-                (
-                    when: u32 | AnyNumber | Uint8Array,
-                    maybePeriodic:
-                        | Option<ITuple<[u32, u32]>>
-                        | null
-                        | Uint8Array
-                        | ITuple<[u32, u32]>
-                        | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array],
-                    priority: u8 | AnyNumber | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u32, Option<ITuple<[u32, u32]>>, u8, Call]
-            >;
+            schedule: AugmentedSubmittable<(when: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | Uint8Array | ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array], priority: u8 | AnyNumber | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32,
+                Option<ITuple<[u32, u32]>>,
+                u8,
+                Call
+            ]>;
             /**
              * Anonymously schedule a task after a delay.
              **/
-            scheduleAfter: AugmentedSubmittable<
-                (
-                    after: u32 | AnyNumber | Uint8Array,
-                    maybePeriodic:
-                        | Option<ITuple<[u32, u32]>>
-                        | null
-                        | Uint8Array
-                        | ITuple<[u32, u32]>
-                        | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array],
-                    priority: u8 | AnyNumber | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u32, Option<ITuple<[u32, u32]>>, u8, Call]
-            >;
+            scheduleAfter: AugmentedSubmittable<(after: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | Uint8Array | ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array], priority: u8 | AnyNumber | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32,
+                Option<ITuple<[u32, u32]>>,
+                u8,
+                Call
+            ]>;
             /**
              * Schedule a named task.
              **/
-            scheduleNamed: AugmentedSubmittable<
-                (
-                    id: U8aFixed | string | Uint8Array,
-                    when: u32 | AnyNumber | Uint8Array,
-                    maybePeriodic:
-                        | Option<ITuple<[u32, u32]>>
-                        | null
-                        | Uint8Array
-                        | ITuple<[u32, u32]>
-                        | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array],
-                    priority: u8 | AnyNumber | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, Call]
-            >;
+            scheduleNamed: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, when: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | Uint8Array | ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array], priority: u8 | AnyNumber | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                U8aFixed,
+                u32,
+                Option<ITuple<[u32, u32]>>,
+                u8,
+                Call
+            ]>;
             /**
              * Schedule a named task after a delay.
              **/
-            scheduleNamedAfter: AugmentedSubmittable<
-                (
-                    id: U8aFixed | string | Uint8Array,
-                    after: u32 | AnyNumber | Uint8Array,
-                    maybePeriodic:
-                        | Option<ITuple<[u32, u32]>>
-                        | null
-                        | Uint8Array
-                        | ITuple<[u32, u32]>
-                        | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array],
-                    priority: u8 | AnyNumber | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, Call]
-            >;
+            scheduleNamedAfter: AugmentedSubmittable<(id: U8aFixed | string | Uint8Array, after: u32 | AnyNumber | Uint8Array, maybePeriodic: Option<ITuple<[u32, u32]>> | null | Uint8Array | ITuple<[u32, u32]> | [u32 | AnyNumber | Uint8Array, u32 | AnyNumber | Uint8Array], priority: u8 | AnyNumber | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                U8aFixed,
+                u32,
+                Option<ITuple<[u32, u32]>>,
+                u8,
+                Call
+            ]>;
         };
         session: {
             /**
@@ -4045,33 +2930,23 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `O(1)`. Actual cost depends on the number of length of `T::Keys::key_ids()` which is
              * fixed.
              **/
-            setKeys: AugmentedSubmittable<
-                (
-                    keys:
-                        | RococoParachainRuntimeSessionKeys
-                        | {
-                              aura?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    proof: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [RococoParachainRuntimeSessionKeys, Bytes]
-            >;
+            setKeys: AugmentedSubmittable<(keys: RococoParachainRuntimeSessionKeys | {
+                aura?: any;
+            } | string | Uint8Array, proof: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                RococoParachainRuntimeSessionKeys,
+                Bytes
+            ]>;
         };
         sidechain: {
             /**
              * The integritee worker calls this function for every imported sidechain_block.
              **/
-            confirmImportedSidechainBlock: AugmentedSubmittable<
-                (
-                    shardId: H256 | string | Uint8Array,
-                    blockNumber: u64 | AnyNumber | Uint8Array,
-                    nextFinalizationCandidateBlockNumber: u64 | AnyNumber | Uint8Array,
-                    blockHeaderHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, u64, u64, H256]
-            >;
+            confirmImportedSidechainBlock: AugmentedSubmittable<(shardId: H256 | string | Uint8Array, blockNumber: u64 | AnyNumber | Uint8Array, nextFinalizationCandidateBlockNumber: u64 | AnyNumber | Uint8Array, blockHeaderHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                u64,
+                u64,
+                H256
+            ]>;
         };
         sudo: {
             /**
@@ -4083,30 +2958,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            setKey: AugmentedSubmittable<
-                (
-                    updated:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            setKey: AugmentedSubmittable<(updated: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Authenticates the sudo key and dispatches a function call with `Root` origin.
              *
@@ -4115,10 +2979,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            sudo: AugmentedSubmittable<
-                (call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Call]
-            >;
+            sudo: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Call
+            ]>;
             /**
              * Authenticates the sudo key and dispatches a function call with `Signed` origin from
              * a given account.
@@ -4128,31 +2991,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            sudoAs: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Call]
-            >;
+            sudoAs: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Call
+            ]>;
             /**
              * Authenticates the sudo key and dispatches a function call with `Root` origin.
              * This function does not check the weight of the call, and instead allows the
@@ -4163,20 +3015,13 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            sudoUncheckedWeight: AugmentedSubmittable<
-                (
-                    call: Call | IMethod | string | Uint8Array,
-                    weight:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Call, SpWeightsWeightV2Weight]
-            >;
+            sudoUncheckedWeight: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array, weight: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Call,
+                SpWeightsWeightV2Weight
+            ]>;
         };
         system: {
             /**
@@ -4185,77 +3030,61 @@ declare module "@polkadot/api-base/types/submittable" {
              * **NOTE:** We rely on the Root origin to provide us the number of subkeys under
              * the prefix we are removing to accurately calculate the weight of this function.
              **/
-            killPrefix: AugmentedSubmittable<
-                (
-                    prefix: Bytes | string | Uint8Array,
-                    subkeys: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, u32]
-            >;
+            killPrefix: AugmentedSubmittable<(prefix: Bytes | string | Uint8Array, subkeys: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                u32
+            ]>;
             /**
              * Kill some items from storage.
              **/
-            killStorage: AugmentedSubmittable<
-                (
-                    keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<Bytes>]
-            >;
+            killStorage: AugmentedSubmittable<(keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<Bytes>
+            ]>;
             /**
              * Make some on-chain remark.
              *
              * ## Complexity
              * - `O(1)`
              **/
-            remark: AugmentedSubmittable<
-                (remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes]
-            >;
+            remark: AugmentedSubmittable<(remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes
+            ]>;
             /**
              * Make some on-chain remark and emit event.
              **/
-            remarkWithEvent: AugmentedSubmittable<
-                (remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes]
-            >;
+            remarkWithEvent: AugmentedSubmittable<(remark: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes
+            ]>;
             /**
              * Set the new runtime code.
              *
              * ## Complexity
              * - `O(C + S)` where `C` length of `code` and `S` complexity of `can_set_code`
              **/
-            setCode: AugmentedSubmittable<
-                (code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes]
-            >;
+            setCode: AugmentedSubmittable<(code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes
+            ]>;
             /**
              * Set the new runtime code without doing any checks of the given `code`.
              *
              * ## Complexity
              * - `O(C)` where `C` length of `code`
              **/
-            setCodeWithoutChecks: AugmentedSubmittable<
-                (code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes]
-            >;
+            setCodeWithoutChecks: AugmentedSubmittable<(code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes
+            ]>;
             /**
              * Set the number of pages in the WebAssembly environment's heap.
              **/
-            setHeapPages: AugmentedSubmittable<
-                (pages: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u64]
-            >;
+            setHeapPages: AugmentedSubmittable<(pages: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64
+            ]>;
             /**
              * Set some items of storage.
              **/
-            setStorage: AugmentedSubmittable<
-                (
-                    items:
-                        | Vec<ITuple<[Bytes, Bytes]>>
-                        | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<ITuple<[Bytes, Bytes]>>]
-            >;
+            setStorage: AugmentedSubmittable<(items: Vec<ITuple<[Bytes, Bytes]>> | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]) => SubmittableExtrinsic<ApiType>, [
+                Vec<ITuple<[Bytes, Bytes]>>
+            ]>;
         };
         technicalCommittee: {
             /**
@@ -4284,22 +3113,15 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `P1` is the complexity of `proposal` preimage.
              * - `P2` is proposal-count (code-bounded)
              **/
-            close: AugmentedSubmittable<
-                (
-                    proposalHash: H256 | string | Uint8Array,
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    proposalWeightBound:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u32>, SpWeightsWeightV2Weight, Compact<u32>]
-            >;
+            close: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array, index: Compact<u32> | AnyNumber | Uint8Array, proposalWeightBound: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u32>,
+                SpWeightsWeightV2Weight,
+                Compact<u32>
+            ]>;
             /**
              * Close a vote that is either approved, disapproved or whose voting period has ended.
              *
@@ -4326,15 +3148,12 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `P1` is the complexity of `proposal` preimage.
              * - `P2` is proposal-count (code-bounded)
              **/
-            closeOldWeight: AugmentedSubmittable<
-                (
-                    proposalHash: H256 | string | Uint8Array,
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    proposalWeightBound: Compact<u64> | AnyNumber | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u32>, Compact<u64>, Compact<u32>]
-            >;
+            closeOldWeight: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array, index: Compact<u32> | AnyNumber | Uint8Array, proposalWeightBound: Compact<u64> | AnyNumber | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u32>,
+                Compact<u64>,
+                Compact<u32>
+            ]>;
             /**
              * Disapprove a proposal, close, and remove it from the system, regardless of its current
              * state.
@@ -4347,10 +3166,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * O(P) where P is the number of max proposals
              **/
-            disapproveProposal: AugmentedSubmittable<
-                (proposalHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            disapproveProposal: AugmentedSubmittable<(proposalHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Dispatch a proposal from a member using the `Member` origin.
              *
@@ -4362,13 +3180,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `M` members-count (code-bounded)
              * - `P` complexity of dispatching `proposal`
              **/
-            execute: AugmentedSubmittable<
-                (
-                    proposal: Call | IMethod | string | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Call, Compact<u32>]
-            >;
+            execute: AugmentedSubmittable<(proposal: Call | IMethod | string | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Call,
+                Compact<u32>
+            ]>;
             /**
              * Add a new proposal to either be voted on or executed directly.
              *
@@ -4385,14 +3200,11 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `P1` is proposal execution complexity (`threshold < 2`)
              * - `P2` is proposals-count (code-bounded) (`threshold >= 2`)
              **/
-            propose: AugmentedSubmittable<
-                (
-                    threshold: Compact<u32> | AnyNumber | Uint8Array,
-                    proposal: Call | IMethod | string | Uint8Array,
-                    lengthBound: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>, Call, Compact<u32>]
-            >;
+            propose: AugmentedSubmittable<(threshold: Compact<u32> | AnyNumber | Uint8Array, proposal: Call | IMethod | string | Uint8Array, lengthBound: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>,
+                Call,
+                Compact<u32>
+            ]>;
             /**
              * Set the collective's membership.
              *
@@ -4419,14 +3231,11 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `N` new-members-count (code- and governance-bounded)
              * - `P` proposals-count (code-bounded)
              **/
-            setMembers: AugmentedSubmittable<
-                (
-                    newMembers: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[],
-                    prime: Option<AccountId32> | null | Uint8Array | AccountId32 | string,
-                    oldCount: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>, Option<AccountId32>, u32]
-            >;
+            setMembers: AugmentedSubmittable<(newMembers: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], prime: Option<AccountId32> | null | Uint8Array | AccountId32 | string, oldCount: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>,
+                Option<AccountId32>,
+                u32
+            ]>;
             /**
              * Add an aye or nay vote for the sender to the given proposal.
              *
@@ -4438,14 +3247,11 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - `O(M)` where `M` is members-count (code- and governance-bounded)
              **/
-            vote: AugmentedSubmittable<
-                (
-                    proposal: H256 | string | Uint8Array,
-                    index: Compact<u32> | AnyNumber | Uint8Array,
-                    approve: bool | boolean | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u32>, bool]
-            >;
+            vote: AugmentedSubmittable<(proposal: H256 | string | Uint8Array, index: Compact<u32> | AnyNumber | Uint8Array, approve: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u32>,
+                bool
+            ]>;
         };
         technicalCommitteeMembership: {
             /**
@@ -4453,30 +3259,19 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * May only be called from `T::AddOrigin`.
              **/
-            addMember: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            addMember: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Swap out the sending member for some other key `new`.
              *
@@ -4484,30 +3279,19 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Prime membership is passed from the origin account to `new`, if extant.
              **/
-            changeKey: AugmentedSubmittable<
-                (
-                    updated:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            changeKey: AugmentedSubmittable<(updated: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Remove the prime member if it exists.
              *
@@ -4519,71 +3303,46 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * May only be called from `T::RemoveOrigin`.
              **/
-            removeMember: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            removeMember: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Change the membership to a new set, disregarding the existing membership. Be nice and
              * pass `members` pre-sorted.
              *
              * May only be called from `T::ResetOrigin`.
              **/
-            resetMembers: AugmentedSubmittable<
-                (
-                    members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>]
-            >;
+            resetMembers: AugmentedSubmittable<(members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>
+            ]>;
             /**
              * Set the prime member. Must be a current member.
              *
              * May only be called from `T::PrimeOrigin`.
              **/
-            setPrime: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            setPrime: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Swap out one member `remove` for another `add`.
              *
@@ -4591,116 +3350,69 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * Prime membership is *not* passed from `remove` to `add`, if extant.
              **/
-            swapMember: AugmentedSubmittable<
-                (
-                    remove:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    add:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, MultiAddress]
-            >;
+            swapMember: AugmentedSubmittable<(remove: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, add: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                MultiAddress
+            ]>;
         };
         teeracle: {
-            addToWhitelist: AugmentedSubmittable<
-                (
-                    dataSource: Bytes | string | Uint8Array,
-                    mrenclave: U8aFixed | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, U8aFixed]
-            >;
-            removeFromWhitelist: AugmentedSubmittable<
-                (
-                    dataSource: Bytes | string | Uint8Array,
-                    mrenclave: U8aFixed | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, U8aFixed]
-            >;
-            updateExchangeRate: AugmentedSubmittable<
-                (
-                    dataSource: Bytes | string | Uint8Array,
-                    tradingPair: Bytes | string | Uint8Array,
-                    newValue:
-                        | Option<SubstrateFixedFixedU64>
-                        | null
-                        | Uint8Array
-                        | SubstrateFixedFixedU64
-                        | {
-                              bits?: any;
-                          }
-                        | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Bytes, Option<SubstrateFixedFixedU64>]
-            >;
-            updateOracle: AugmentedSubmittable<
-                (
-                    oracleName: Bytes | string | Uint8Array,
-                    dataSource: Bytes | string | Uint8Array,
-                    newBlob: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Bytes, Bytes]
-            >;
+            addToWhitelist: AugmentedSubmittable<(dataSource: Bytes | string | Uint8Array, mrenclave: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                U8aFixed
+            ]>;
+            removeFromWhitelist: AugmentedSubmittable<(dataSource: Bytes | string | Uint8Array, mrenclave: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                U8aFixed
+            ]>;
+            updateExchangeRate: AugmentedSubmittable<(dataSource: Bytes | string | Uint8Array, tradingPair: Bytes | string | Uint8Array, newValue: Option<SubstrateFixedFixedU64> | null | Uint8Array | SubstrateFixedFixedU64 | {
+                bits?: any;
+            } | string) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Bytes,
+                Option<SubstrateFixedFixedU64>
+            ]>;
+            updateOracle: AugmentedSubmittable<(oracleName: Bytes | string | Uint8Array, dataSource: Bytes | string | Uint8Array, newBlob: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Bytes,
+                Bytes
+            ]>;
         };
         teerex: {
-            callWorker: AugmentedSubmittable<
-                (
-                    request:
-                        | TeerexPrimitivesRequest
-                        | {
-                              shard?: any;
-                              cyphertext?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [TeerexPrimitivesRequest]
-            >;
+            callWorker: AugmentedSubmittable<(request: TeerexPrimitivesRequest | {
+                shard?: any;
+                cyphertext?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                TeerexPrimitivesRequest
+            ]>;
             /**
              * The integritee worker calls this function for every processed parentchain_block to
              * confirm a state update.
              **/
-            confirmProcessedParentchainBlock: AugmentedSubmittable<
-                (
-                    blockHash: H256 | string | Uint8Array,
-                    blockNumber: Compact<u32> | AnyNumber | Uint8Array,
-                    trustedCallsMerkleRoot: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u32>, H256]
-            >;
+            confirmProcessedParentchainBlock: AugmentedSubmittable<(blockHash: H256 | string | Uint8Array, blockNumber: Compact<u32> | AnyNumber | Uint8Array, trustedCallsMerkleRoot: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u32>,
+                H256
+            ]>;
             /**
              * Publish a hash as a result of an arbitrary enclave operation.
              *
@@ -4710,64 +3422,44 @@ declare module "@polkadot/api-base/types/submittable" {
              * `data` can be anything worthwhile publishing related to the hash. If it is a
              * utf8-encoded string, the UIs will usually even render the text.
              **/
-            publishHash: AugmentedSubmittable<
-                (
-                    hash: H256 | string | Uint8Array,
-                    extraTopics: Vec<H256> | (H256 | string | Uint8Array)[],
-                    data: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Vec<H256>, Bytes]
-            >;
-            registerDcapEnclave: AugmentedSubmittable<
-                (
-                    dcapQuote: Bytes | string | Uint8Array,
-                    workerUrl: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Bytes]
-            >;
-            registerEnclave: AugmentedSubmittable<
-                (
-                    raReport: Bytes | string | Uint8Array,
-                    workerUrl: Bytes | string | Uint8Array,
-                    shieldingKey: Option<Bytes> | null | Uint8Array | Bytes | string,
-                    vcPubkey: Option<Bytes> | null | Uint8Array | Bytes | string
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Bytes, Option<Bytes>, Option<Bytes>]
-            >;
-            registerQuotingEnclave: AugmentedSubmittable<
-                (
-                    enclaveIdentity: Bytes | string | Uint8Array,
-                    signature: Bytes | string | Uint8Array,
-                    certificateChain: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Bytes, Bytes]
-            >;
-            registerTcbInfo: AugmentedSubmittable<
-                (
-                    tcbInfo: Bytes | string | Uint8Array,
-                    signature: Bytes | string | Uint8Array,
-                    certificateChain: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, Bytes, Bytes]
-            >;
-            removeScheduledEnclave: AugmentedSubmittable<
-                (
-                    sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u64>]
-            >;
+            publishHash: AugmentedSubmittable<(hash: H256 | string | Uint8Array, extraTopics: Vec<H256> | (H256 | string | Uint8Array)[], data: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Vec<H256>,
+                Bytes
+            ]>;
+            registerDcapEnclave: AugmentedSubmittable<(dcapQuote: Bytes | string | Uint8Array, workerUrl: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Bytes
+            ]>;
+            registerEnclave: AugmentedSubmittable<(raReport: Bytes | string | Uint8Array, workerUrl: Bytes | string | Uint8Array, shieldingKey: Option<Bytes> | null | Uint8Array | Bytes | string, vcPubkey: Option<Bytes> | null | Uint8Array | Bytes | string) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Bytes,
+                Option<Bytes>,
+                Option<Bytes>
+            ]>;
+            registerQuotingEnclave: AugmentedSubmittable<(enclaveIdentity: Bytes | string | Uint8Array, signature: Bytes | string | Uint8Array, certificateChain: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Bytes,
+                Bytes
+            ]>;
+            registerTcbInfo: AugmentedSubmittable<(tcbInfo: Bytes | string | Uint8Array, signature: Bytes | string | Uint8Array, certificateChain: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                Bytes,
+                Bytes
+            ]>;
+            removeScheduledEnclave: AugmentedSubmittable<(sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u64>
+            ]>;
             /**
              * Change the admin account
              * similar to sudo.set_key, the old account will be supplied in event
              **/
-            setAdmin: AugmentedSubmittable<
-                (updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
-            setHeartbeatTimeout: AugmentedSubmittable<
-                (timeout: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u64>]
-            >;
+            setAdmin: AugmentedSubmittable<(updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
+            setHeartbeatTimeout: AugmentedSubmittable<(timeout: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u64>
+            ]>;
             /**
              * Set registered mrenclave
              * This is a workaround to overcome the problem that the ra-report seems to contain
@@ -4776,10 +3468,9 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * To be removed once the issue is solved
              **/
-            setMrenclave: AugmentedSubmittable<
-                (newMrenclave: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [U8aFixed]
-            >;
+            setMrenclave: AugmentedSubmittable<(newMrenclave: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                U8aFixed
+            ]>;
             /**
              * Sent by a client who requests to get shielded funds managed by an enclave. For this
              * on-chain balance is sent to the bonding_account of the enclave. The bonding_account does
@@ -4787,34 +3478,25 @@ declare module "@polkadot/api-base/types/submittable" {
              * withing the pallet_teerex. Note: The bonding_account is bit-equivalent to the worker
              * shard.
              **/
-            shieldFunds: AugmentedSubmittable<
-                (
-                    incognitoAccountEncrypted: Bytes | string | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array,
-                    bondingAccount: AccountId32 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, u128, AccountId32]
-            >;
+            shieldFunds: AugmentedSubmittable<(incognitoAccountEncrypted: Bytes | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, bondingAccount: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                u128,
+                AccountId32
+            ]>;
             unregisterEnclave: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
             /**
              * Sent by enclaves only as a result of an `unshield` request from a client to an enclave.
              **/
-            unshieldFunds: AugmentedSubmittable<
-                (
-                    publicAccount: AccountId32 | string | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array,
-                    bondingAccount: AccountId32 | string | Uint8Array,
-                    callHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, u128, AccountId32, H256]
-            >;
-            updateScheduledEnclave: AugmentedSubmittable<
-                (
-                    sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array,
-                    mrEnclave: U8aFixed | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u64>, U8aFixed]
-            >;
+            unshieldFunds: AugmentedSubmittable<(publicAccount: AccountId32 | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, bondingAccount: AccountId32 | string | Uint8Array, callHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                u128,
+                AccountId32,
+                H256
+            ]>;
+            updateScheduledEnclave: AugmentedSubmittable<(sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array, mrEnclave: U8aFixed | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u64>,
+                U8aFixed
+            ]>;
         };
         timestamp: {
             /**
@@ -4834,10 +3516,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * `on_finalize`)
              * - 1 event handler `on_timestamp_set`. Must be `O(1)`.
              **/
-            set: AugmentedSubmittable<
-                (now: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Compact<u64>]
-            >;
+            set: AugmentedSubmittable<(now: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u64>
+            ]>;
         };
         tips: {
             /**
@@ -4855,10 +3536,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * is charged as upper bound given by `ContainsLengthBound`. The actual cost depends on
              * the implementation of `T::Tippers`.
              **/
-            closeTip: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            closeTip: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Report something `reason` that deserves a tip and claim any eventual the finder's fee.
              *
@@ -4877,31 +3557,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `O(R)` where `R` length of `reason`.
              * - encoding and hashing of 'reason'
              **/
-            reportAwesome: AugmentedSubmittable<
-                (
-                    reason: Bytes | string | Uint8Array,
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, MultiAddress]
-            >;
+            reportAwesome: AugmentedSubmittable<(reason: Bytes | string | Uint8Array, who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                MultiAddress
+            ]>;
             /**
              * Retract a prior tip-report from `report_awesome`, and cancel the process of tipping.
              *
@@ -4920,10 +3589,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `O(1)`
              * - Depends on the length of `T::Hash` which is fixed.
              **/
-            retractTip: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            retractTip: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Remove and slash an already-open tip.
              *
@@ -4936,10 +3604,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            slashTip: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            slashTip: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * Declare a tip value for an already-open tip.
              *
@@ -4963,13 +3630,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * Actually weight could be lower as it depends on how many tips are in `OpenTip` but it
              * is weighted as if almost full i.e of length `T-1`.
              **/
-            tip: AugmentedSubmittable<
-                (
-                    hash: H256 | string | Uint8Array,
-                    tipValue: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Compact<u128>]
-            >;
+            tip: AugmentedSubmittable<(hash: H256 | string | Uint8Array, tipValue: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Compact<u128>
+            ]>;
             /**
              * Give a tip for something new; no finder's fee will be taken.
              *
@@ -4991,32 +3655,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * `T::Tippers`.
              * - `O(R)`: hashing and encoding of reason of length `R`
              **/
-            tipNew: AugmentedSubmittable<
-                (
-                    reason: Bytes | string | Uint8Array,
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    tipValue: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Bytes, MultiAddress, Compact<u128>]
-            >;
+            tipNew: AugmentedSubmittable<(reason: Bytes | string | Uint8Array, who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, tipValue: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                MultiAddress,
+                Compact<u128>
+            ]>;
         };
         tokens: {
             /**
@@ -5030,51 +3683,32 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `currency_id`: currency type.
              * - `amount`: free balance amount to tranfer.
              **/
-            forceTransfer: AugmentedSubmittable<
-                (
-                    source:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    currencyId: u128 | AnyNumber | Uint8Array,
-                    amount: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, MultiAddress, u128, Compact<u128>]
-            >;
+            forceTransfer: AugmentedSubmittable<(source: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, currencyId: u128 | AnyNumber | Uint8Array, amount: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                MultiAddress,
+                u128,
+                Compact<u128>
+            ]>;
             /**
              * Set the balances of a given account.
              *
@@ -5085,33 +3719,22 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * The dispatch origin for this call is `root`.
              **/
-            setBalance: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    currencyId: u128 | AnyNumber | Uint8Array,
-                    newFree: Compact<u128> | AnyNumber | Uint8Array,
-                    newReserved: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, u128, Compact<u128>, Compact<u128>]
-            >;
+            setBalance: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, currencyId: u128 | AnyNumber | Uint8Array, newFree: Compact<u128> | AnyNumber | Uint8Array, newReserved: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                u128,
+                Compact<u128>,
+                Compact<u128>
+            ]>;
             /**
              * Transfer some liquid free balance to another account.
              *
@@ -5127,32 +3750,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `currency_id`: currency type.
              * - `amount`: free balance amount to tranfer.
              **/
-            transfer: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    currencyId: u128 | AnyNumber | Uint8Array,
-                    amount: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, u128, Compact<u128>]
-            >;
+            transfer: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, currencyId: u128 | AnyNumber | Uint8Array, amount: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                u128,
+                Compact<u128>
+            ]>;
             /**
              * Transfer all remaining balance to the given account.
              *
@@ -5174,32 +3786,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * except at least the existential deposit, which will guarantee to
              * keep the sender account alive (true).
              **/
-            transferAll: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    currencyId: u128 | AnyNumber | Uint8Array,
-                    keepAlive: bool | boolean | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, u128, bool]
-            >;
+            transferAll: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, currencyId: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                u128,
+                bool
+            ]>;
             /**
              * Same as the [`transfer`] call, but with a check that the transfer
              * will not kill the origin account.
@@ -5213,32 +3814,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `currency_id`: currency type.
              * - `amount`: free balance amount to tranfer.
              **/
-            transferKeepAlive: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    currencyId: u128 | AnyNumber | Uint8Array,
-                    amount: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, u128, Compact<u128>]
-            >;
+            transferKeepAlive: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, currencyId: u128 | AnyNumber | Uint8Array, amount: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                u128,
+                Compact<u128>
+            ]>;
         };
         treasury: {
             /**
@@ -5250,12 +3840,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            approveProposal: AugmentedSubmittable<
-                (
-                    proposalId: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            approveProposal: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Put forward a suggestion for spending. A deposit proportional to the value
              * is reserved and slashed if the proposal is rejected. It is returned once the
@@ -5264,31 +3851,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1)
              **/
-            proposeSpend: AugmentedSubmittable<
-                (
-                    value: Compact<u128> | AnyNumber | Uint8Array,
-                    beneficiary:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u128>, MultiAddress]
-            >;
+            proposeSpend: AugmentedSubmittable<(value: Compact<u128> | AnyNumber | Uint8Array, beneficiary: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u128>,
+                MultiAddress
+            ]>;
             /**
              * Reject a proposed spend. The original deposit will be slashed.
              *
@@ -5297,12 +3873,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1)
              **/
-            rejectProposal: AugmentedSubmittable<
-                (
-                    proposalId: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            rejectProposal: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Force a previously approved proposal to be removed from the approval queue.
              * The original deposit will no longer be returned.
@@ -5318,12 +3891,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * i.e., the proposal has not been approved. This could also mean the proposal does not
              * exist altogether, thus there is no way it would have been approved in the first place.
              **/
-            removeApproval: AugmentedSubmittable<
-                (
-                    proposalId: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u32>]
-            >;
+            removeApproval: AugmentedSubmittable<(proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u32>
+            ]>;
             /**
              * Propose and approve a spend of treasury funds.
              *
@@ -5334,31 +3904,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * NOTE: For record-keeping purposes, the proposer is deemed to be equivalent to the
              * beneficiary.
              **/
-            spend: AugmentedSubmittable<
-                (
-                    amount: Compact<u128> | AnyNumber | Uint8Array,
-                    beneficiary:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Compact<u128>, MultiAddress]
-            >;
+            spend: AugmentedSubmittable<(amount: Compact<u128> | AnyNumber | Uint8Array, beneficiary: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Compact<u128>,
+                MultiAddress
+            ]>;
         };
         utility: {
             /**
@@ -5376,13 +3935,10 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * The dispatch origin for this call must be _Signed_.
              **/
-            asDerivative: AugmentedSubmittable<
-                (
-                    index: u16 | AnyNumber | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u16, Call]
-            >;
+            asDerivative: AugmentedSubmittable<(index: u16 | AnyNumber | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u16,
+                Call
+            ]>;
             /**
              * Send a batch of dispatch calls.
              *
@@ -5403,12 +3959,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * and the error of the failed call. If all were successful, then the `BatchCompleted`
              * event is deposited.
              **/
-            batch: AugmentedSubmittable<
-                (
-                    calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<Call>]
-            >;
+            batch: AugmentedSubmittable<(calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<Call>
+            ]>;
             /**
              * Send a batch of dispatch calls and atomically execute them.
              * The whole transaction will rollback and fail if any of the calls failed.
@@ -5424,12 +3977,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(C) where C is the number of calls to be batched.
              **/
-            batchAll: AugmentedSubmittable<
-                (
-                    calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<Call>]
-            >;
+            batchAll: AugmentedSubmittable<(calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<Call>
+            ]>;
             /**
              * Dispatches a function call with a provided origin.
              *
@@ -5438,34 +3988,22 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            dispatchAs: AugmentedSubmittable<
-                (
-                    asOrigin:
-                        | RococoParachainRuntimeOriginCaller
-                        | {
-                              system: any;
-                          }
-                        | {
-                              Void: any;
-                          }
-                        | {
-                              Council: any;
-                          }
-                        | {
-                              TechnicalCommittee: any;
-                          }
-                        | {
-                              PolkadotXcm: any;
-                          }
-                        | {
-                              CumulusXcm: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [RococoParachainRuntimeOriginCaller, Call]
-            >;
+            dispatchAs: AugmentedSubmittable<(asOrigin: RococoParachainRuntimeOriginCaller | {
+                system: any;
+            } | {
+                Void: any;
+            } | {
+                Council: any;
+            } | {
+                TechnicalCommittee: any;
+            } | {
+                PolkadotXcm: any;
+            } | {
+                CumulusXcm: any;
+            } | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                RococoParachainRuntimeOriginCaller,
+                Call
+            ]>;
             /**
              * Send a batch of dispatch calls.
              * Unlike `batch`, it allows errors and won't interrupt.
@@ -5481,12 +4019,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(C) where C is the number of calls to be batched.
              **/
-            forceBatch: AugmentedSubmittable<
-                (
-                    calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<Call>]
-            >;
+            forceBatch: AugmentedSubmittable<(calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<Call>
+            ]>;
             /**
              * Dispatch a function call with a specified weight.
              *
@@ -5495,290 +4030,203 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * The dispatch origin for this call must be _Root_.
              **/
-            withWeight: AugmentedSubmittable<
-                (
-                    call: Call | IMethod | string | Uint8Array,
-                    weight:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Call, SpWeightsWeightV2Weight]
-            >;
+            withWeight: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array, weight: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Call,
+                SpWeightsWeightV2Weight
+            ]>;
         };
         vcManagement: {
-            activateSchema: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    index: u64 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, u64]
-            >;
+            activateSchema: AugmentedSubmittable<(shard: H256 | string | Uint8Array, index: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                u64
+            ]>;
             /**
              * add an account to the delegatees
              **/
-            addDelegatee: AugmentedSubmittable<
-                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
-            addSchema: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    id: Bytes | string | Uint8Array,
-                    content: Bytes | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, Bytes, Bytes]
-            >;
-            addVcRegistryItem: AugmentedSubmittable<
-                (
-                    index: H256 | string | Uint8Array,
-                    subject: AccountId32 | string | Uint8Array,
-                    assertion:
-                        | CorePrimitivesAssertion
-                        | {
-                              A1: any;
-                          }
-                        | {
-                              A2: any;
-                          }
-                        | {
-                              A3: any;
-                          }
-                        | {
-                              A4: any;
-                          }
-                        | {
-                              A6: any;
-                          }
-                        | {
-                              A7: any;
-                          }
-                        | {
-                              A8: any;
-                          }
-                        | {
-                              A9: any;
-                          }
-                        | {
-                              A10: any;
-                          }
-                        | {
-                              A11: any;
-                          }
-                        | {
-                              A13: any;
-                          }
-                        | {
-                              A14: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    hash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, AccountId32, CorePrimitivesAssertion, H256]
-            >;
+            addDelegatee: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
+            addSchema: AugmentedSubmittable<(shard: H256 | string | Uint8Array, id: Bytes | string | Uint8Array, content: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                Bytes,
+                Bytes
+            ]>;
+            addVcRegistryItem: AugmentedSubmittable<(index: H256 | string | Uint8Array, subject: AccountId32 | string | Uint8Array, assertion: CorePrimitivesAssertion | {
+                A1: any;
+            } | {
+                A2: any;
+            } | {
+                A3: any;
+            } | {
+                A4: any;
+            } | {
+                A6: any;
+            } | {
+                A7: any;
+            } | {
+                A8: any;
+            } | {
+                A9: any;
+            } | {
+                A10: any;
+            } | {
+                A11: any;
+            } | {
+                A13: any;
+            } | {
+                A14: any;
+            } | {
+                Achainable: any;
+            } | {
+                A20: any;
+            } | string | Uint8Array, hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                AccountId32,
+                CorePrimitivesAssertion,
+                H256
+            ]>;
             clearVcRegistry: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
-            disableSchema: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    index: u64 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, u64]
-            >;
-            disableVc: AugmentedSubmittable<
-                (index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            disableSchema: AugmentedSubmittable<(shard: H256 | string | Uint8Array, index: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                u64
+            ]>;
+            disableVc: AugmentedSubmittable<(index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
             /**
              * remove an account from the delegatees
              **/
-            removeDelegatee: AugmentedSubmittable<
-                (account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
-            removeVcRegistryItem: AugmentedSubmittable<
-                (index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
-            requestVc: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    assertion:
-                        | CorePrimitivesAssertion
-                        | {
-                              A1: any;
-                          }
-                        | {
-                              A2: any;
-                          }
-                        | {
-                              A3: any;
-                          }
-                        | {
-                              A4: any;
-                          }
-                        | {
-                              A6: any;
-                          }
-                        | {
-                              A7: any;
-                          }
-                        | {
-                              A8: any;
-                          }
-                        | {
-                              A9: any;
-                          }
-                        | {
-                              A10: any;
-                          }
-                        | {
-                              A11: any;
-                          }
-                        | {
-                              A13: any;
-                          }
-                        | {
-                              A14: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, CorePrimitivesAssertion]
-            >;
-            revokeSchema: AugmentedSubmittable<
-                (
-                    shard: H256 | string | Uint8Array,
-                    index: u64 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [H256, u64]
-            >;
-            revokeVc: AugmentedSubmittable<
-                (index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
-            setAdmin: AugmentedSubmittable<
-                (updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
-            someError: AugmentedSubmittable<
-                (
-                    account: Option<AccountId32> | null | Uint8Array | AccountId32 | string,
-                    error:
-                        | CorePrimitivesErrorVcmpError
-                        | {
-                              RequestVCFailed: any;
-                          }
-                        | {
-                              UnclassifiedError: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Option<AccountId32>, CorePrimitivesErrorVcmpError, H256]
-            >;
+            removeDelegatee: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
+            removeVcRegistryItem: AugmentedSubmittable<(index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
+            requestVc: AugmentedSubmittable<(shard: H256 | string | Uint8Array, assertion: CorePrimitivesAssertion | {
+                A1: any;
+            } | {
+                A2: any;
+            } | {
+                A3: any;
+            } | {
+                A4: any;
+            } | {
+                A6: any;
+            } | {
+                A7: any;
+            } | {
+                A8: any;
+            } | {
+                A9: any;
+            } | {
+                A10: any;
+            } | {
+                A11: any;
+            } | {
+                A13: any;
+            } | {
+                A14: any;
+            } | {
+                Achainable: any;
+            } | {
+                A20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                CorePrimitivesAssertion
+            ]>;
+            revokeSchema: AugmentedSubmittable<(shard: H256 | string | Uint8Array, index: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256,
+                u64
+            ]>;
+            revokeVc: AugmentedSubmittable<(index: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                H256
+            ]>;
+            setAdmin: AugmentedSubmittable<(updated: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
+            someError: AugmentedSubmittable<(account: Option<AccountId32> | null | Uint8Array | AccountId32 | string, error: CorePrimitivesErrorVcmpError | {
+                RequestVCFailed: any;
+            } | {
+                UnclassifiedError: any;
+            } | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Option<AccountId32>,
+                CorePrimitivesErrorVcmpError,
+                H256
+            ]>;
             /**
              * ---------------------------------------------------
              * The following extrinsics are supposed to be called by TEE only
              * ---------------------------------------------------
              **/
-            vcIssued: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    assertion:
-                        | CorePrimitivesAssertion
-                        | {
-                              A1: any;
-                          }
-                        | {
-                              A2: any;
-                          }
-                        | {
-                              A3: any;
-                          }
-                        | {
-                              A4: any;
-                          }
-                        | {
-                              A6: any;
-                          }
-                        | {
-                              A7: any;
-                          }
-                        | {
-                              A8: any;
-                          }
-                        | {
-                              A9: any;
-                          }
-                        | {
-                              A10: any;
-                          }
-                        | {
-                              A11: any;
-                          }
-                        | {
-                              A13: any;
-                          }
-                        | {
-                              A14: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    index: H256 | string | Uint8Array,
-                    hash: H256 | string | Uint8Array,
-                    vc:
-                        | CorePrimitivesKeyAesOutput
-                        | {
-                              ciphertext?: any;
-                              aad?: any;
-                              nonce?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [AccountId32, CorePrimitivesAssertion, H256, H256, CorePrimitivesKeyAesOutput, H256]
-            >;
+            vcIssued: AugmentedSubmittable<(account: AccountId32 | string | Uint8Array, assertion: CorePrimitivesAssertion | {
+                A1: any;
+            } | {
+                A2: any;
+            } | {
+                A3: any;
+            } | {
+                A4: any;
+            } | {
+                A6: any;
+            } | {
+                A7: any;
+            } | {
+                A8: any;
+            } | {
+                A9: any;
+            } | {
+                A10: any;
+            } | {
+                A11: any;
+            } | {
+                A13: any;
+            } | {
+                A14: any;
+            } | {
+                Achainable: any;
+            } | {
+                A20: any;
+            } | string | Uint8Array, index: H256 | string | Uint8Array, hash: H256 | string | Uint8Array, vc: CorePrimitivesKeyAesOutput | {
+                ciphertext?: any;
+                aad?: any;
+                nonce?: any;
+            } | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32,
+                CorePrimitivesAssertion,
+                H256,
+                H256,
+                CorePrimitivesKeyAesOutput,
+                H256
+            ]>;
         };
         vcmpExtrinsicWhitelist: {
             /**
              * Adds a new group member
              **/
-            addGroupMember: AugmentedSubmittable<
-                (v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            addGroupMember: AugmentedSubmittable<(v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Batch adding of new group members
              **/
-            batchAddGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>]
-            >;
+            batchAddGroupMembers: AugmentedSubmittable<(vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>
+            ]>;
             /**
              * Batch Removing existing group members
              **/
-            batchRemoveGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>]
-            >;
+            batchRemoveGroupMembers: AugmentedSubmittable<(vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>
+            ]>;
             /**
              * Removes an existing group members
              **/
-            removeGroupMember: AugmentedSubmittable<
-                (v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [AccountId32]
-            >;
+            removeGroupMember: AugmentedSubmittable<(v: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                AccountId32
+            ]>;
             /**
              * Swith GroupControlOn off
              **/
@@ -5805,58 +4253,35 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - `O(1)`.
              **/
-            forceVestedTransfer: AugmentedSubmittable<
-                (
-                    source:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    target:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    schedule:
-                        | PalletVestingVestingInfo
-                        | {
-                              locked?: any;
-                              perBlock?: any;
-                              startingBlock?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, MultiAddress, PalletVestingVestingInfo]
-            >;
+            forceVestedTransfer: AugmentedSubmittable<(source: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, target: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, schedule: PalletVestingVestingInfo | {
+                locked?: any;
+                perBlock?: any;
+                startingBlock?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                MultiAddress,
+                PalletVestingVestingInfo
+            ]>;
             /**
              * Merge two vesting schedules together, creating a new vesting schedule that unlocks over
              * the highest possible start and end blocks. If both schedules have already started the
@@ -5880,13 +4305,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `schedule1_index`: index of the first schedule to merge.
              * - `schedule2_index`: index of the second schedule to merge.
              **/
-            mergeSchedules: AugmentedSubmittable<
-                (
-                    schedule1Index: u32 | AnyNumber | Uint8Array,
-                    schedule2Index: u32 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u32, u32]
-            >;
+            mergeSchedules: AugmentedSubmittable<(schedule1Index: u32 | AnyNumber | Uint8Array, schedule2Index: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32,
+                u32
+            ]>;
             /**
              * Unlock any vested funds of the sender account.
              *
@@ -5914,39 +4336,24 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - `O(1)`.
              **/
-            vestedTransfer: AugmentedSubmittable<
-                (
-                    target:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    schedule:
-                        | PalletVestingVestingInfo
-                        | {
-                              locked?: any;
-                              perBlock?: any;
-                              startingBlock?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, PalletVestingVestingInfo]
-            >;
+            vestedTransfer: AugmentedSubmittable<(target: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, schedule: PalletVestingVestingInfo | {
+                locked?: any;
+                perBlock?: any;
+                startingBlock?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                PalletVestingVestingInfo
+            ]>;
             /**
              * Unlock any vested funds of a `target` account.
              *
@@ -5960,30 +4367,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - `O(1)`.
              **/
-            vestOther: AugmentedSubmittable<
-                (
-                    target:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            vestOther: AugmentedSubmittable<(target: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
         };
         xcmpQueue: {
             /**
@@ -6009,20 +4405,13 @@ declare module "@polkadot/api-base/types/submittable" {
              * Events:
              * - `OverweightServiced`: On success.
              **/
-            serviceOverweight: AugmentedSubmittable<
-                (
-                    index: u64 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [u64, SpWeightsWeightV2Weight]
-            >;
+            serviceOverweight: AugmentedSubmittable<(index: u64 | AnyNumber | Uint8Array, weightLimit: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u64,
+                SpWeightsWeightV2Weight
+            ]>;
             /**
              * Suspends all XCM executions for the XCMP queue, regardless of the sender's origin.
              *
@@ -6036,10 +4425,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `origin`: Must pass `Root`.
              * - `new`: Desired value for `QueueConfigData.drop_threshold`
              **/
-            updateDropThreshold: AugmentedSubmittable<
-                (updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            updateDropThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Overwrites the number of pages of messages which the queue must be reduced to before it signals that
              * message sending may recommence after it has been suspended.
@@ -6047,10 +4435,9 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `origin`: Must pass `Root`.
              * - `new`: Desired value for `QueueConfigData.resume_threshold`
              **/
-            updateResumeThreshold: AugmentedSubmittable<
-                (updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            updateResumeThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Overwrites the number of pages of messages which must be in the queue for the other side to be told to
              * suspend their sending.
@@ -6058,29 +4445,21 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `origin`: Must pass `Root`.
              * - `new`: Desired value for `QueueConfigData.suspend_value`
              **/
-            updateSuspendThreshold: AugmentedSubmittable<
-                (updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [u32]
-            >;
+            updateSuspendThreshold: AugmentedSubmittable<(updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                u32
+            ]>;
             /**
              * Overwrites the amount of remaining weight under which we stop processing messages.
              *
              * - `origin`: Must pass `Root`.
              * - `new`: Desired value for `QueueConfigData.threshold_weight`
              **/
-            updateThresholdWeight: AugmentedSubmittable<
-                (
-                    updated:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [SpWeightsWeightV2Weight]
-            >;
+            updateThresholdWeight: AugmentedSubmittable<(updated: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                SpWeightsWeightV2Weight
+            ]>;
             /**
              * Overwrites the speed to which the available weight approaches the maximum weight.
              * A lower number results in a faster progression. A value of 1 makes the entire weight available initially.
@@ -6088,19 +4467,12 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `origin`: Must pass `Root`.
              * - `new`: Desired value for `QueueConfigData.weight_restrict_decay`.
              **/
-            updateWeightRestrictDecay: AugmentedSubmittable<
-                (
-                    updated:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [SpWeightsWeightV2Weight]
-            >;
+            updateWeightRestrictDecay: AugmentedSubmittable<(updated: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                SpWeightsWeightV2Weight
+            ]>;
             /**
              * Overwrite the maximum amount of weight any individual message may consume.
              * Messages above this weight go into the overweight queue and may only be serviced explicitly.
@@ -6108,19 +4480,12 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `origin`: Must pass `Root`.
              * - `new`: Desired value for `QueueConfigData.xcmp_max_individual_weight`.
              **/
-            updateXcmpMaxIndividualWeight: AugmentedSubmittable<
-                (
-                    updated:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [SpWeightsWeightV2Weight]
-            >;
+            updateXcmpMaxIndividualWeight: AugmentedSubmittable<(updated: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                SpWeightsWeightV2Weight
+            ]>;
         };
         xTokens: {
             /**
@@ -6137,42 +4502,24 @@ declare module "@polkadot/api-base/types/submittable" {
              * by the network, and if the receiving chain would handle
              * messages correctly.
              **/
-            transfer: AugmentedSubmittable<
-                (
-                    currencyId:
-                        | RuntimeCommonXcmImplCurrencyId
-                        | {
-                              SelfReserve: any;
-                          }
-                        | {
-                              ParachainReserve: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [RuntimeCommonXcmImplCurrencyId, u128, XcmVersionedMultiLocation, XcmV3WeightLimit]
-            >;
+            transfer: AugmentedSubmittable<(currencyId: RuntimeCommonXcmImplCurrencyId | {
+                SelfReserve: any;
+            } | {
+                ParachainReserve: any;
+            } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, destWeightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                RuntimeCommonXcmImplCurrencyId,
+                u128,
+                XcmVersionedMultiLocation,
+                XcmV3WeightLimit
+            ]>;
             /**
              * Transfer `MultiAsset`.
              *
@@ -6187,41 +4534,23 @@ declare module "@polkadot/api-base/types/submittable" {
              * by the network, and if the receiving chain would handle
              * messages correctly.
              **/
-            transferMultiasset: AugmentedSubmittable<
-                (
-                    asset:
-                        | XcmVersionedMultiAsset
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedMultiAsset, XcmVersionedMultiLocation, XcmV3WeightLimit]
-            >;
+            transferMultiasset: AugmentedSubmittable<(asset: XcmVersionedMultiAsset | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, destWeightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiAsset,
+                XcmVersionedMultiLocation,
+                XcmV3WeightLimit
+            ]>;
             /**
              * Transfer several `MultiAsset` specifying the item to be used as fee
              *
@@ -6239,42 +4568,24 @@ declare module "@polkadot/api-base/types/submittable" {
              * by the network, and if the receiving chain would handle
              * messages correctly.
              **/
-            transferMultiassets: AugmentedSubmittable<
-                (
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    feeItem: u32 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [XcmVersionedMultiAssets, u32, XcmVersionedMultiLocation, XcmV3WeightLimit]
-            >;
+            transferMultiassets: AugmentedSubmittable<(assets: XcmVersionedMultiAssets | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, feeItem: u32 | AnyNumber | Uint8Array, dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, destWeightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiAssets,
+                u32,
+                XcmVersionedMultiLocation,
+                XcmV3WeightLimit
+            ]>;
             /**
              * Transfer `MultiAsset` specifying the fee and amount as separate.
              *
@@ -6298,56 +4609,28 @@ declare module "@polkadot/api-base/types/submittable" {
              * by the network, and if the receiving chain would handle
              * messages correctly.
              **/
-            transferMultiassetWithFee: AugmentedSubmittable<
-                (
-                    asset:
-                        | XcmVersionedMultiAsset
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    fee:
-                        | XcmVersionedMultiAsset
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    XcmVersionedMultiAsset,
-                    XcmVersionedMultiAsset,
-                    XcmVersionedMultiLocation,
-                    XcmV3WeightLimit
-                ]
-            >;
+            transferMultiassetWithFee: AugmentedSubmittable<(asset: XcmVersionedMultiAsset | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, fee: XcmVersionedMultiAsset | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, destWeightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                XcmVersionedMultiAsset,
+                XcmVersionedMultiAsset,
+                XcmVersionedMultiLocation,
+                XcmV3WeightLimit
+            ]>;
             /**
              * Transfer several currencies specifying the item to be used as fee
              *
@@ -6365,53 +4648,27 @@ declare module "@polkadot/api-base/types/submittable" {
              * by the network, and if the receiving chain would handle
              * messages correctly.
              **/
-            transferMulticurrencies: AugmentedSubmittable<
-                (
-                    currencies:
-                        | Vec<ITuple<[RuntimeCommonXcmImplCurrencyId, u128]>>
-                        | [
-                              (
-                                  | RuntimeCommonXcmImplCurrencyId
-                                  | {
-                                        SelfReserve: any;
-                                    }
-                                  | {
-                                        ParachainReserve: any;
-                                    }
-                                  | string
-                                  | Uint8Array
-                              ),
-                              u128 | AnyNumber | Uint8Array
-                          ][],
-                    feeItem: u32 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    Vec<ITuple<[RuntimeCommonXcmImplCurrencyId, u128]>>,
-                    u32,
-                    XcmVersionedMultiLocation,
-                    XcmV3WeightLimit
-                ]
-            >;
+            transferMulticurrencies: AugmentedSubmittable<(currencies: Vec<ITuple<[RuntimeCommonXcmImplCurrencyId, u128]>> | [
+                (RuntimeCommonXcmImplCurrencyId | {
+                    SelfReserve: any;
+                } | {
+                    ParachainReserve: any;
+                } | string | Uint8Array),
+                u128 | AnyNumber | Uint8Array
+            ][], feeItem: u32 | AnyNumber | Uint8Array, dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, destWeightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Vec<ITuple<[RuntimeCommonXcmImplCurrencyId, u128]>>,
+                u32,
+                XcmVersionedMultiLocation,
+                XcmV3WeightLimit
+            ]>;
             /**
              * Transfer native currencies specifying the fee and amount as
              * separate.
@@ -6435,49 +4692,25 @@ declare module "@polkadot/api-base/types/submittable" {
              * by the network, and if the receiving chain would handle
              * messages correctly.
              **/
-            transferWithFee: AugmentedSubmittable<
-                (
-                    currencyId:
-                        | RuntimeCommonXcmImplCurrencyId
-                        | {
-                              SelfReserve: any;
-                          }
-                        | {
-                              ParachainReserve: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array,
-                    fee: u128 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | {
-                              Unlimited: any;
-                          }
-                        | {
-                              Limited: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [
-                    RuntimeCommonXcmImplCurrencyId,
-                    u128,
-                    u128,
-                    XcmVersionedMultiLocation,
-                    XcmV3WeightLimit
-                ]
-            >;
+            transferWithFee: AugmentedSubmittable<(currencyId: RuntimeCommonXcmImplCurrencyId | {
+                SelfReserve: any;
+            } | {
+                ParachainReserve: any;
+            } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, fee: u128 | AnyNumber | Uint8Array, dest: XcmVersionedMultiLocation | {
+                V2: any;
+            } | {
+                V3: any;
+            } | string | Uint8Array, destWeightLimit: XcmV3WeightLimit | {
+                Unlimited: any;
+            } | {
+                Limited: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                RuntimeCommonXcmImplCurrencyId,
+                u128,
+                u128,
+                XcmVersionedMultiLocation,
+                XcmV3WeightLimit
+            ]>;
         };
     }
 }

@@ -91,14 +91,22 @@ impl<T: std::hash::Hash + traits::Member + Encode> RpcHash for T {
 	}
 }
 
+pub type ForceWait = bool;
+
 /// Registry for RPC connections (i.e. connections that are kept alive to send updates).
 pub trait RpcConnectionRegistry: Send + Sync {
 	type Hash: RpcHash;
 	type Connection: Copy + Debug;
 
-	fn store(&self, hash: Self::Hash, connection: Self::Connection, rpc_response: RpcResponse);
+	fn store(
+		&self,
+		hash: Self::Hash,
+		connection: Self::Connection,
+		rpc_response: RpcResponse,
+		force_wait: ForceWait,
+	);
 
-	fn withdraw(&self, hash: &Self::Hash) -> Option<(Self::Connection, RpcResponse)>;
+	fn withdraw(&self, hash: &Self::Hash) -> Option<(Self::Connection, RpcResponse, ForceWait)>;
 }
 
 /// Sends an RPC response back to the client.
@@ -113,8 +121,13 @@ pub trait SendRpcResponse: Send + Sync {
 
 	fn send_state(&self, hash: Self::Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()>;
 
-	// Litentry: update the `value` field in the returning structure
-	fn set_value(&self, hash: Self::Hash, encoded_value: Vec<u8>) -> DirectRpcResult<()>;
+	// Litentry: update the `value` field in the returning structure and connection force_wait flag
+	fn update_connection_state(
+		&self,
+		hash: Self::Hash,
+		encoded_value: Vec<u8>,
+		force_wait: bool,
+	) -> DirectRpcResult<()>;
 
 	// Litentry: swap the old hash with the new one in rpc connection registry
 	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()>;

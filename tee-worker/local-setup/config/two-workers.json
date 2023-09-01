@@ -37,7 +37,8 @@
         "--parentchain-start-block",
         "0",
         "--data-dir",
-        "/tmp/data-dir"
+        "/tmp/data-dir", 
+        "--enable-metrics"
       ],
       "subcommand_flags": [
         "--skip-ra",
@@ -65,7 +66,8 @@
         "--parentchain-start-block",
         "0",
         "--data-dir",
-        "/tmp/data-dir2"
+        "/tmp/data-dir2",
+        "--enable-metrics"
       ],
       "subcommand_flags": [
         "--skip-ra",
