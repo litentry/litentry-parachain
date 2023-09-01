@@ -1,32 +1,17 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type {
-    Bytes,
-    Enum,
-    Struct,
-    Text,
-    U8aFixed,
-    Vec,
-    bool,
-    u128,
-    u32,
-} from "@polkadot/types-codec";
+import type { Bytes, Enum, Struct, Text, U8aFixed, Vec, bool, u32 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
 import type {
     AccountId,
+    AccountId32,
     Balance,
     BlockNumber,
     H256,
     Index,
 } from "@polkadot/types/interfaces/runtime";
-
-/** @name ActivateIdentityResult */
-export interface ActivateIdentityResult extends Struct {
-    readonly account: AccountId;
-    readonly identity: AesOutput;
-}
 
 /** @name Address20 */
 export interface Address20 extends U8aFixed {}
@@ -49,44 +34,61 @@ export interface Assertion extends Enum {
     readonly isA3: boolean;
     readonly asA3: ITuple<[Bytes, Bytes, Bytes]>;
     readonly isA4: boolean;
-    readonly asA4: u128;
-    readonly isA5: boolean;
-    readonly asA5: ITuple<[Bytes, Bytes]>;
+    readonly asA4: Bytes;
     readonly isA6: boolean;
     readonly isA7: boolean;
-    readonly asA7: u128;
+    readonly asA7: Bytes;
     readonly isA8: boolean;
-    readonly asA8: Vec<Bytes>;
+    readonly asA8: Vec<AssertionSupportedNetwork>;
     readonly isA9: boolean;
     readonly isA10: boolean;
-    readonly asA10: u128;
+    readonly asA10: Bytes;
     readonly isA11: boolean;
-    readonly asA11: u128;
+    readonly asA11: Bytes;
+    readonly isA12: boolean;
+    readonly asA12: Bytes;
     readonly isA13: boolean;
-    readonly asA13: u32;
+    readonly asA13: AccountId32;
+    readonly isA14: boolean;
     readonly type:
         | "A1"
         | "A2"
         | "A3"
         | "A4"
-        | "A5"
         | "A6"
         | "A7"
         | "A8"
         | "A9"
         | "A10"
         | "A11"
-        | "A13";
+        | "A12"
+        | "A13"
+        | "A14";
+}
+
+/** @name AssertionSupportedNetwork */
+export interface AssertionSupportedNetwork extends Enum {
+    readonly isLitentry: boolean;
+    readonly isLitmus: boolean;
+    readonly isLitentryRococo: boolean;
+    readonly isPolkadot: boolean;
+    readonly isKusama: boolean;
+    readonly isKhala: boolean;
+    readonly isEthereum: boolean;
+    readonly isTestNet: boolean;
+    readonly type:
+        | "Litentry"
+        | "Litmus"
+        | "LitentryRococo"
+        | "Polkadot"
+        | "Kusama"
+        | "Khala"
+        | "Ethereum"
+        | "TestNet";
 }
 
 /** @name BoundedWeb3Network */
 export interface BoundedWeb3Network extends Vec<Web3Network> {}
-
-/** @name DeactivateIdentityResult */
-export interface DeactivateIdentityResult extends Struct {
-    readonly account: AccountId;
-    readonly identity: AesOutput;
-}
 
 /** @name DirectRequestStatus */
 export interface DirectRequestStatus extends Enum {
@@ -184,8 +186,6 @@ export interface IdentityString extends Bytes {}
 
 /** @name LinkIdentityResult */
 export interface LinkIdentityResult extends Struct {
-    readonly account: AccountId;
-    readonly identity: AesOutput;
     readonly id_graph: AesOutput;
 }
 
@@ -245,8 +245,6 @@ export interface Request extends Struct {
 
 /** @name RequestVCResult */
 export interface RequestVCResult extends Struct {
-    readonly account: AccountId;
-    readonly assertion: Assertion;
     readonly vc_index: H256;
     readonly vc_hash: H256;
     readonly vc_payload: AesOutput;
@@ -254,7 +252,6 @@ export interface RequestVCResult extends Struct {
 
 /** @name SetUserShieldingKeyResult */
 export interface SetUserShieldingKeyResult extends Struct {
-    readonly account: AccountId;
     readonly id_graph: AesOutput;
 }
 
