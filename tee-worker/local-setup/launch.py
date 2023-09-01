@@ -269,7 +269,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-c", "--config", type=str, help="Config for the node and workers")
     parser.add_argument(
-        "-p"
+        "-p",
         "--parachain",
         nargs="?",
         default="local-docker",
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         help="Config for parachain selection: local-docker / local-binary / remote",
     )
     parser.add_argument(
-        "-l"
+        "-l",
         "--log-config-path",
         nargs="?",
         default="./local-setup/worker-log-level-config.toml",
@@ -298,5 +298,5 @@ if __name__ == "__main__":
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.log, args.offset, parachain_dir) == 0:
+    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
         killer.exit_gracefully()
