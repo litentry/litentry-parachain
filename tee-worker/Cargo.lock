@@ -4647,6 +4647,7 @@ dependencies = [
  "http 0.2.9",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
+ "itp-utils",
  "log 0.4.19",
  "serde 1.0.175",
  "serde_json 1.0.103",

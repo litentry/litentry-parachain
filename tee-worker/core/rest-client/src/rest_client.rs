@@ -26,6 +26,7 @@ use crate::{
 	RestPost, RestPut,
 };
 
+use itp_utils::if_not_production;
 use log::*;
 use std::string::{String, ToString};
 
@@ -151,8 +152,8 @@ where
 
 		let body = String::from_utf8_lossy(&encoded_body).to_string();
 
-		trace!("response headers: {:?}", self.response_headers);
-		trace!("response body: {}", body);
+		if_not_production!(trace!("response headers: {:?}", self.response_headers));
+		if_not_production!(trace!("response body: {}", body));
 		Ok((self.body_wash_fn)(body))
 	}
 }
