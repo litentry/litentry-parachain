@@ -4,7 +4,7 @@
 #
 # Relaychain Configuration
 relaychain:
-  image: parity/polkadot:v0.9.42
+  image: parity/polkadot:v0.9.39
   chain: rococo-local
   env:
     RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
