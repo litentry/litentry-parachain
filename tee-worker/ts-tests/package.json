@@ -3,8 +3,6 @@
 	"license": "ISC",
 	"workspaces": {
 		"packages": [
-			"parachain-api",
-			"sidechain-api",
 			"integration-tests"
 		]
 	},
