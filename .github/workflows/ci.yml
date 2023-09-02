@@ -620,6 +620,10 @@ jobs:
           ls -l docker/generated-rococo/
           ls -l tee-worker/docker/litentry/
           shasum tee-worker/docker/litentry/*.json
+          if [ $(stat -c %s docker/generated-rococo/rococo-local.json) -ne 5040588 ]; then
+            echo "unexpected rococo-local.json size"
+            exit 1
+          fi
 
       # - name: Build litentry parachain docker images
       #   run: |
