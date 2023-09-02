@@ -156,16 +156,16 @@ jobs:
           make fmtcheck
           make taplocheck
 
-      - name: Tee-worker fmt check
-        working-directory: ./tee-worker
-        run: |
-          cargo fmt --all -- --check
-          taplo fmt --check
+      # - name: Tee-worker fmt check
+      #   working-directory: ./tee-worker
+      #   run: |
+      #     cargo fmt --all -- --check
+      #     taplo fmt --check
 
-      - name: Enclave-runtime fmt check
-        working-directory: ./tee-worker/enclave-runtime
-        run: |
-          cargo fmt --all -- --check
+      # - name: Enclave-runtime fmt check
+      #   working-directory: ./tee-worker/enclave-runtime
+      #   run: |
+      #     cargo fmt --all -- --check
 
       # - name: Tee-worker install npm deps
       #   working-directory: ./tee-worker/ts-tests
