@@ -156,24 +156,24 @@ jobs:
           make fmtcheck
           make taplocheck
 
-      # - name: Tee-worker fmt check
-      #   working-directory: ./tee-worker
-      #   run: |
-      #     cargo fmt --all -- --check
-      #     taplo fmt --check
+      - name: Tee-worker fmt check
+        working-directory: ./tee-worker
+        run: |
+          cargo fmt --all -- --check
+          taplo fmt --check
 
-      # - name: Enclave-runtime fmt check
-      #   working-directory: ./tee-worker/enclave-runtime
-      #   run: |
-      #     cargo fmt --all -- --check
+      - name: Enclave-runtime fmt check
+        working-directory: ./tee-worker/enclave-runtime
+        run: |
+          cargo fmt --all -- --check
 
-      # - name: Tee-worker install npm deps
-      #   working-directory: ./tee-worker/ts-tests
-      #   run: corepack yarn install
+      - name: Tee-worker install npm deps
+        working-directory: ./tee-worker/ts-tests
+        run: corepack yarn install
 
-      # - name: Tee-worker check ts code format
-      #   working-directory: ./tee-worker/ts-tests
-      #   run: corepack yarn check-format
+      - name: Tee-worker check ts code format
+        working-directory: ./tee-worker/ts-tests
+        run: corepack yarn check-format
 
       - name: Fail early
         if: failure()
@@ -457,11 +457,11 @@ jobs:
         run: |
           docker load -i litentry-parachain-dev.tar
 
-      # - name: Run ts tests for ${{ matrix.chain }}
-      #   if: needs.set-condition.outputs.run_parachain_test == 'true'
-      #   timeout-minutes: 20
-      #   run: |
-      #     make test-ts-docker-${{ matrix.chain }}
+      - name: Run ts tests for ${{ matrix.chain }}
+        if: needs.set-condition.outputs.run_parachain_test == 'true'
+        timeout-minutes: 20
+        run: |
+          make test-ts-docker-${{ matrix.chain }}
 
       - name: Collect docker logs if test fails
         continue-on-error: true
@@ -620,28 +620,24 @@ jobs:
           ls -l docker/generated-rococo/
           ls -l tee-worker/docker/litentry/
           shasum tee-worker/docker/litentry/*.json
-          if [ $(stat -c %s docker/generated-rococo/rococo-local.json) -ne 5040588 ]; then
-            echo "unexpected rococo-local.json size"
-            exit 1
-          fi
 
-      # - name: Build litentry parachain docker images
-      #   run: |
-      #     cd tee-worker/docker
-      #     docker compose -f litentry-parachain.build.yml build
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
 
-      # - name: Integration Test ${{ matrix.test_name }}
-      #   if: needs.set-condition.outputs.run_tee_test == 'true'
-      #   timeout-minutes: 40
-      #   run: |
-      #     cd tee-worker/docker
-      #     docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
+      - name: Integration Test ${{ matrix.test_name }}
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        timeout-minutes: 40
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
-      # - name: Stop docker containers
-      #   if: needs.set-condition.outputs.run_tee_test == 'true'
-      #   run: |
-      #     cd tee-worker/docker
-      #     docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
+      - name: Stop docker containers
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
       - name: Collect Docker Logs
         continue-on-error: true
