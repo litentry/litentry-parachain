@@ -23,6 +23,7 @@ use itc_tls_websocket_server::{error::WebSocketResult, ConnectionToken, WebSocke
 use jsonrpc_core::IoHandler;
 use log::*;
 use std::{string::String, sync::Arc};
+use itp_utils::if_not_production;
 
 pub struct RpcWsHandler<Watcher, Registry, Hash>
 where
@@ -64,7 +65,7 @@ where
 	) -> WebSocketResult<Option<String>> {
 		let maybe_rpc_response = self.rpc_io_handler.handle_request_sync(message.as_str());
 
-		debug!("RPC response string: {:?}", maybe_rpc_response);
+		if_not_production!(debug!("RPC response string: {:?}", maybe_rpc_response));
 
 		if let Ok(rpc_response) =
 			serde_json::from_str(maybe_rpc_response.clone().unwrap_or_default().as_str())
