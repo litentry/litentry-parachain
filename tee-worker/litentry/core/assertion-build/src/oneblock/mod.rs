@@ -4,9 +4,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-pub mod dev_beginner;
-pub mod dev_outstanding;
-pub mod dev_undergraduate;
+pub mod course;
 
 use crate::*;
 use http_req::response::Headers;
@@ -26,33 +24,41 @@ impl RestPath<String> for OneBlockResponse {
 		Ok(path)
 	}
 }
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			let mut headers = Headers::new();
-			headers.insert(
-				"Authorization",
-				"Bearer secret_Lq3i0MshwhytNjIYulKKvOfHrnTaUYQFinL3csCIyjw",
-			);
-			headers.insert("Notion-Version", "2022-06-28");
-			let mut client = build_client(
-		"https://api.notion.com/v1/blocks/32d13293a4dc46d4b042ee7b18189569/children?page_size=100",
-		headers,
-	);
-			let get_response = client.get::<String, OneBlockResponse>(String::default()).unwrap();
-			debug!("get_response: {:?}", get_response);
-			// add subject info
+pub fn build_(req: &AssertionBuildRequest, address: ParameterString) {
+	// match Credential::new(&req.who, &req.shard) {
+	// 	Ok(mut credential_unsigned) => {
+	// 		let mut headers = Headers::new();
+	// 		headers.insert(
+	// 			"Authorization",
+	// 			"Bearer secret_Lq3i0MshwhytNjIYulKKvOfHrnTaUYQFinL3csCIyjw",
+	// 		);
+	// 		headers.insert("Notion-Version", "2022-06-28");
+	// 		let mut client = build_client(
+	// 	"https://api.notion.com/v1/blocks/32d13293a4dc46d4b042ee7b18189569/children?page_size=100",
+	// 	headers,
+	// );
+	// 		let get_response = client.get::<String, OneBlockResponse>(String::default()).unwrap();
+	// 		debug!("get_response: {:?}", get_response);
+	// 		// add subject info
 
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::Oneblock, e.into_error_detail()))
-		},
-	}
+	// 		Ok(credential_unsigned)
+	// 	},
+	// 	Err(e) => {
+	// 		error!("Generate unsigned credential failed {:?}", e);
+	// 		Err(Error::RequestVCFailed(Assertion::Oneblock, e.into_error_detail()))
+	// 	},
+	// }
 }
 
-pub fn fetch_notion_data() -> Result<bool> {
+#[derive(Serialize, Deserialize, Debug)]
+pub enum CourseCompletionLevel {
+	Undergraduate,
+	Outstanding,
+	Beginner,
+	Invalid,
+}
+
+pub fn query_oneblock_status(_address: &String) -> Result<CourseCompletionLevel> {
 	todo!()
 }
 
