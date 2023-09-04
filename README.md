@@ -135,7 +135,7 @@ make test-ts-binary-rococo
 ./scripts/run-ts-test.sh rococo
 ```
 
-Remember to run the clean-up afterwards.
+Remember to run the clean-up afterward.
 
 ## License
 
@@ -192,7 +192,7 @@ Fix it manually by installing pycurl using pip3.
 
 ### 3. Remote <> Integritee Node
 
-If you are running the integritee node manually, Then be mindful of the port that is being set while launching the integritee node, For example:
+If you are running the integritee node manually, then be mindful of the port that is being set while launching the integritee node, for example:
 ```
 cargo build --release --features "skip-extrinsic-filtering skip-ias-check skip-scheduled-enclave-check"
 ./target/release/integritee-node --rpc-cors=all --ws-external --tmp --dev  --state-pruning archive  --blocks-pruning archive --rpc-port 9933 --ws-port 9944
