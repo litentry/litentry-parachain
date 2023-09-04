@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use itp_utils::if_not_production;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
 	vec_to_string,
@@ -32,7 +33,7 @@ const VC_A7_SUBJECT_DESCRIPTION: &str =
 const VC_A7_SUBJECT_TYPE: &str = "DOT Holding Time";
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
-	debug!("Assertion A7 build, who: {:?}", account_id_to_string(&req.who),);
+	if_not_production!(debug!("Assertion A7 build, who: {:?}", account_id_to_string(&req.who)));
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A7(min_balance.clone()), ErrorDetail::ParseError)

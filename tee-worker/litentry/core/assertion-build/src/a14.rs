@@ -33,6 +33,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
+use itp_utils::if_not_production;
 use lc_data_providers::{build_client, GLOBAL_DATA_PROVIDER_CONFIG};
 use rust_base58::ToBase58;
 use serde::{Deserialize, Serialize};
@@ -140,7 +141,7 @@ impl A14Client {
 }
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	debug!("Assertion A14 build, who: {:?}", account_id_to_string(&req.who));
+	if_not_production!(debug!("Assertion A14 build, who: {:?}", account_id_to_string(&req.who)));
 
 	// achainable expects polkadot addresses (those start with 1...)
 	let mut polkadot_addresses = vec![];

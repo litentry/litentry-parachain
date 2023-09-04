@@ -20,10 +20,10 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{DetermineWatch, RpcConnectionRegistry, RpcHash};
 use itc_tls_websocket_server::{error::WebSocketResult, ConnectionToken, WebSocketMessageHandler};
+use itp_utils::if_not_production;
 use jsonrpc_core::IoHandler;
 use log::*;
 use std::{string::String, sync::Arc};
-use itp_utils::if_not_production;
 
 pub struct RpcWsHandler<Watcher, Registry, Hash>
 where

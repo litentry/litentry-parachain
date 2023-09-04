@@ -30,6 +30,7 @@ use serde::{Deserialize, Serialize};
 use crate::sgx_reexport_prelude::*;
 
 use crate::*;
+use itp_utils::if_not_production;
 use std::string::ToString;
 
 const VC_A20_SUBJECT_DESCRIPTION: &str =
@@ -54,7 +55,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		_ => unreachable!(),
 	};
 	who.insert_str(0, "0x");
-	debug!("Assertion A20 build, who: {:?}", who);
+	if_not_production!(debug!("Assertion A20 build, who: {:?}", who));
 
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");

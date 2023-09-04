@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
+use itp_utils::if_not_production;
 use lc_data_providers::ConvertParameterString;
 
 const VC_SUBJECT_DESCRIPTION: &str = "Achainable amount holding";
@@ -30,7 +31,10 @@ pub fn build_amount_holding(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountHolding,
 ) -> Result<Credential> {
-	debug!("Assertion Achainable build_amount_holding, who: {:?}", account_id_to_string(&req.who));
+	if_not_production!(debug!(
+		"Assertion Achainable build_amount_holding, who: {:?}",
+		account_id_to_string(&req.who)
+	));
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities

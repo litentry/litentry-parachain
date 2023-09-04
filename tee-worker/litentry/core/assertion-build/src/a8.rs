@@ -21,13 +21,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
+use itp_utils::if_not_production;
 use lc_data_providers::achainable::{AchainableAccountTotalTransactions, AchainableClient};
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "Gets the range of number of transactions a user has made for a specific token on all supported networks (invalid transactions are also counted)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count";
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who),);
+	if_not_production!(debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who)));
 
 	let mut client = AchainableClient::new();
 	let mut total_txs: u64 = 0;

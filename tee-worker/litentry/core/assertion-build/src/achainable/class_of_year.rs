@@ -21,6 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_classofyear, *};
+use itp_utils::if_not_production;
 use lc_credentials::Credential;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{AchainableClassOfYear, AchainableParams};
@@ -60,7 +61,10 @@ pub fn build_class_of_year(
 	req: &AssertionBuildRequest,
 	param: AchainableClassOfYear,
 ) -> Result<Credential> {
-	debug!("Assertion Achainable build_class_of_year, who: {:?}", account_id_to_string(&req.who));
+	if_not_production!(debug!(
+		"Assertion Achainable build_class_of_year, who: {:?}",
+		account_id_to_string(&req.who)
+	));
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
