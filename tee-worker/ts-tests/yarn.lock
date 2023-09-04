@@ -1131,9 +1131,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*, @types/node@npm:^20.4.4":
-  version: 20.5.7
-  resolution: "@types/node@npm:20.5.7"
-  checksum: fc284c8e16ddc04569730d58e87eae349eb1c3dd9020cb79a1862d9d9add6f04e7367a236f3252db8db2572f90278e250f4cd43d27d264972b54394eaba1ed76
+  version: 20.5.9
+  resolution: "@types/node@npm:20.5.9"
+  checksum: 717490e94131722144878b4ca1a963ede1673bb8f2ef78c2f5b50b918df6dc9b35e7f8283e5c2a7a9f137730f7c08dc6228e53d4494a94c9ee16881e6ce6caed
   languageName: node
   linkType: hard
 
@@ -3043,15 +3043,15 @@ __metadata:
   linkType: hard
 
 "jackspeak@npm:^2.0.3":
-  version: 2.3.1
-  resolution: "jackspeak@npm:2.3.1"
+  version: 2.3.3
+  resolution: "jackspeak@npm:2.3.3"
   dependencies:
     "@isaacs/cliui": ^8.0.2
     "@pkgjs/parseargs": ^0.11.0
   dependenciesMeta:
     "@pkgjs/parseargs":
       optional: true
-  checksum: 34ea4d618d8d36ac104fe1053c85dfb6a63306cfe87e157ef42f18a7aa30027887370a4e163dd4993e45c6bf8a8ae003bf8476fdb8538e8ee5cd1938c27b15d0
+  checksum: 4313a7c0cc44c7753c4cb9869935f0b06f4cf96827515f63f58ff46b3d2f6e29aba6b3b5151778397c3f5ae67ef8bfc48871967bd10343c27e90cff198ec7808
   languageName: node
   linkType: hard
 
@@ -3657,10 +3657,10 @@ __metadata:
 
 "parachain-api@file:../../client-api/parachain-api::locator=integration-tests%40workspace%3Aintegration-tests":
   version: 0.0.0
-  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=0d6993&locator=integration-tests%40workspace%3Aintegration-tests"
+  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=3b8b11&locator=integration-tests%40workspace%3Aintegration-tests"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: 94b17b146c5ecd5e859691a86508e90ae0d0350edb46eaf54a61d079f77a5eee4cc7f4e5429260a5510c237df5aaaa1b819839121c88c5534b11909b18c84ea3
+  checksum: 805478cf9da55e6b8997d93ae4eed9ea45472cd380d9dcd8c68230f0903fb6c7ae03dfc343005a64c7aa6129693d5b926039f61b593ad1b70e56e1f35cc0da5d
   languageName: node
   linkType: hard
 
@@ -4014,10 +4014,10 @@ __metadata:
 
 "sidechain-api@file:../../client-api/sidechain-api::locator=integration-tests%40workspace%3Aintegration-tests":
   version: 0.0.0
-  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=809ed7&locator=integration-tests%40workspace%3Aintegration-tests"
+  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=b3ffce&locator=integration-tests%40workspace%3Aintegration-tests"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: 7a20db5d1cbd67e91366169c374e3aeb39c757f233c2f7fcc192e2eb8d62e191924bc037fe835e75e4efc783b41198ec9f730289bd33df24460892f8e4a7e0de
+  checksum: a63a417bdfd60ae463a945f0ba00db15e5322954a64a9cd09d60af718f65cbeccdea8fbbd7120d0d5e3af514fc05f2f0e578edbad7e583b148508d393239126c
   languageName: node
   linkType: hard
 
