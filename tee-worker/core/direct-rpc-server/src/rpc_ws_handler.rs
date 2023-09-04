@@ -76,6 +76,7 @@ where
 					connection_hash,
 					connection_token.into(),
 					rpc_response,
+					false,
 				);
 			}
 		}

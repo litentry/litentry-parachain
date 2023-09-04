@@ -19,7 +19,6 @@ use crate::{
 	response_channel::ResponseChannel, DirectRpcError, DirectRpcResult, RpcConnectionRegistry,
 	RpcHash, SendRpcResponse,
 };
-use codec::Encode;
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::{DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -78,7 +77,7 @@ where
 		debug!("updating status event, hash: {}, status: {:?}", hash.to_hex(), status_update);
 
 		// withdraw removes it from the registry
-		let (connection_token, rpc_response) = self
+		let (connection_token, rpc_response, force_wait) = self
 			.connection_registry
 			.withdraw(&hash)
 			.ok_or(DirectRpcError::InvalidConnectionHash)?;
@@ -89,16 +88,9 @@ where
 			.map_err(|e| DirectRpcError::Other(Box::new(e)))?;
 
 		// Litentry:
-		// a trick to use `result.value` as the flag to forcily watch this connection.
-		// If it's `true.encode()` it means we have streamed trustedCalls and there's more to come
-		// TODO: how about relying on req_ext_hash? See comment in `trusted_call.rs`
-		let do_watch = continue_watching(&status_update)
-			|| (result.value == true.encode()
-				&& matches!(
-					// use "upcoming" status_update, the `result.status` contains the previous status
-					status_update,
-					TrustedOperationStatus::InSidechainBlock(_),
-				));
+		// connections are per trusted call, but if we expect trusted call to have a side effect of creating another trusted call (callback)
+		// we force connection to wait for potential TOP execution
+		let do_watch = continue_watching(&status_update) || force_wait;
 
 		// update response
 		result.do_watch = do_watch;
@@ -111,7 +103,7 @@ where
 		self.encode_and_send_response(connection_token, &new_response)?;
 
 		if do_watch {
-			self.connection_registry.store(hash, connection_token, new_response);
+			self.connection_registry.store(hash, connection_token, new_response, force_wait);
 		}
 
 		debug!("updating status event successful");
@@ -123,7 +115,7 @@ where
 		debug!("sending state");
 
 		// withdraw removes it from the registry
-		let (connection_token, mut response) = self
+		let (connection_token, mut response, _force_wait) = self
 			.connection_registry
 			.withdraw(&hash)
 			.ok_or(DirectRpcError::InvalidConnectionHash)?;
@@ -145,11 +137,16 @@ where
 		Ok(())
 	}
 
-	fn set_value(&self, hash: Self::Hash, encoded_value: Vec<u8>) -> DirectRpcResult<()> {
+	fn update_connection_state(
+		&self,
+		hash: Self::Hash,
+		encoded_value: Vec<u8>,
+		force_wait: bool,
+	) -> DirectRpcResult<()> {
 		debug!("set response value");
 
 		// withdraw removes it from the registry
-		let (connection_token, rpc_response) = self
+		let (connection_token, rpc_response, _) = self
 			.connection_registry
 			.withdraw(&hash)
 			.ok_or(DirectRpcError::InvalidConnectionHash)?;
@@ -161,7 +158,7 @@ where
 
 		result.value = encoded_value;
 		new_response.result = result.to_hex();
-		self.connection_registry.store(hash, connection_token, new_response);
+		self.connection_registry.store(hash, connection_token, new_response, force_wait);
 
 		debug!("set response value OK");
 		Ok(())
@@ -170,13 +167,14 @@ where
 	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()> {
 		debug!("swap hash, old: {:?}, new: {:?}", old_hash, new_hash);
 
-		let (connection_token, rpc_response) = self
+		let (connection_token, rpc_response, force_wait) = self
 			.connection_registry
 			.withdraw(&old_hash)
 			.ok_or(DirectRpcError::InvalidConnectionHash)?;
 
-		// leave `rpc_response` untouched - it should be overwritten later anyway
-		self.connection_registry.store(new_hash, connection_token, rpc_response);
+		// leave `rpc_response` untouched - it should be overwritten later anyway and keep on force waiting
+		self.connection_registry
+			.store(new_hash, connection_token, rpc_response, force_wait);
 		debug!("swap hash OK");
 		Ok(())
 	}
@@ -252,6 +250,27 @@ pub mod tests {
 	}
 
 	#[test]
+	fn updating_status_event_with_finalized_state_doesnt_remove_connection_if_force_watch_set() {
+		let connection_hash = H256::random();
+		let connection_registry = create_registry_with_single_connection(connection_hash.clone());
+
+		let websocket_responder = Arc::new(TestResponseChannel::default());
+		let rpc_responder =
+			RpcResponder::new(connection_registry.clone(), websocket_responder.clone());
+		rpc_responder
+			.update_connection_state(connection_hash.clone(), vec![], true)
+			.unwrap();
+
+		let result = rpc_responder
+			.update_status_event(connection_hash.clone(), TrustedOperationStatus::Finalized);
+
+		assert!(result.is_ok());
+
+		verify_open_connection(&connection_hash, connection_registry);
+		assert_eq!(1, websocket_responder.number_of_updates());
+	}
+
+	#[test]
 	fn updating_status_event_with_ready_state_keeps_connection_and_sends_update() {
 		let connection_hash = H256::random();
 		let connection_registry: Arc<ConnectionRegistry<_, u64>> =
@@ -320,7 +339,7 @@ pub mod tests {
 		let connection_registry = TestConnectionRegistry::new();
 		let rpc_response = RpcResponseBuilder::new().with_id(2).build();
 
-		connection_registry.store(connection_hash.clone(), 1, rpc_response);
+		connection_registry.store(connection_hash.clone(), 1, rpc_response, false);
 		Arc::new(connection_registry)
 	}
 }

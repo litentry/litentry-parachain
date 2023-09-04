@@ -56,7 +56,7 @@ where
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error: Encode;
-	type Result: EncodeResult;
+	type Result: StfExecutionResult;
 
 	/// Execute a call on a specific state. Callbacks are added as an `OpaqueCall`.
 	///
@@ -87,7 +87,7 @@ where
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	type Error: Encode;
-	type Result: EncodeResult;
+	type Result: StfExecutionResult;
 
 	/// Execute a call. Callbacks are added as an `OpaqueCall`.
 	///
@@ -113,12 +113,16 @@ pub trait ExecuteGetter {
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>>;
 }
 
-pub trait EncodeResult {
+pub trait StfExecutionResult {
 	fn get_encoded_result(self) -> Vec<u8>;
+	fn force_connection_wait(&self) -> bool;
 }
 
-impl EncodeResult for () {
+impl StfExecutionResult for () {
 	fn get_encoded_result(self) -> Vec<u8> {
 		Vec::default()
+	}
+	fn force_connection_wait(&self) -> bool {
+		false
 	}
 }

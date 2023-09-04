@@ -128,10 +128,14 @@ where
 		}
 	}
 
-	// Litentry: set the new rpc response value
-	pub fn set_rpc_response_value(&mut self, encoded_value: Vec<u8>) {
-		if let Err(e) = self.rpc_response_sender.set_value(self.hash().clone(), encoded_value) {
-			warn!("failed to set response value to rpc client: {:?}", e);
+	// Litentry: set the new rpc response value and force_wait flag
+	pub fn update_connection_state(&mut self, encoded_value: Vec<u8>, force_wait: bool) {
+		if let Err(e) = self.rpc_response_sender.update_connection_state(
+			self.hash().clone(),
+			encoded_value,
+			force_wait,
+		) {
+			warn!("failed to update connection state: {:?}", e);
 		}
 	}
 

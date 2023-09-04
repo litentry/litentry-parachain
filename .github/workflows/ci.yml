@@ -584,6 +584,7 @@ jobs:
           - test_name: lit-ii-identity-test
           - test_name: lit-di-substrate-identity-test
           - test_name: lit-di-evm-identity-test
+          - test_name: lit-di-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
 
@@ -616,6 +617,9 @@ jobs:
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+          ls -l docker/generated-rococo/
+          ls -l tee-worker/docker/litentry/
+          shasum tee-worker/docker/litentry/*.json
 
       - name: Build litentry parachain docker images
         run: |
