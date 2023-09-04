@@ -26,7 +26,7 @@ use itp_api_client_types::Metadata;
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::DirectRequestStatus;
-use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{
@@ -119,14 +119,14 @@ impl DirectApi for DirectClient {
 	fn get(&self, request: &str) -> Result<String> {
 		let (port_in, port_out) = channel();
 
-		info!("[WorkerApi Direct]: (get) Sending request: {:?}", request);
+		if_not_production!(info!("[WorkerApi Direct]: (get) Sending request: {:?}", request));
 		WsClient::connect_one_shot(&self.url, request, port_in)?;
 		debug!("Waiting for web-socket result..");
 		port_out.recv().map_err(Error::MspcReceiver)
 	}
 
 	fn watch(&self, request: String, sender: MpscSender<String>) -> JoinHandle<()> {
-		info!("[WorkerApi Direct]: (watch) Sending request: {:?}", request);
+		if_not_production!(info!("[WorkerApi Direct]: (watch) Sending request: {:?}", request));
 		let url = self.url.clone();
 
 		let web_socket_control = self.web_socket_control.clone();
