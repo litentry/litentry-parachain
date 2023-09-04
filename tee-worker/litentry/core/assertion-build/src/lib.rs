@@ -85,9 +85,9 @@ pub fn transpose_identity(
 			match id {
 				Identity::Substrate(address) => {
 					let network = web3_network_to_chain(&n);
-					let address = ss58_address_of(address.as_ref(), &network);
-					if address.is_ok() {
-						addresses.push((address.unwrap(), n));
+					let ss58_address = ss58_address_of(address.as_ref(), &network);
+					if let Ok(address) = ss58_address {
+						addresses.push((address, n));
 						networks_set.insert(n);
 					}
 				},
