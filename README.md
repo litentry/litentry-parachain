@@ -183,7 +183,7 @@ In order to create a local binary setup, using default ports, you can run the fo
 
 If you want to launch the same system by offsetting the port values, you can use this command: 
 ```
-./local-setup/worker-log-level-config.toml 100 
+/local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json --parachain local-binary --offset 100
 ```
 In case you receive the following error:
 ```ModuleNotFoundError: No module named 'pycurl'```
@@ -200,7 +200,7 @@ cargo build --release --features "skip-extrinsic-filtering skip-ias-check skip-s
 
 `--rpc-port` is used to set the rpc port and `--ws-port` is used to set the ws port for the node. You then have to update the `config.json` with the port that is being used and then run the command 
 
-**Note: The `Integritee-Node` is not maintained by Parachain Team actively, Please check the [repository]([url](https://github.com/litentry/integritee-node)) if it has all the latest updates from `Litentry-Parachain` .**
+**Note: The `Integritee-Node` is not maintained by Parachain Team actively, Please check the [repository]([url](https://github.com/litentry/integritee-node/tree/litentry-runtime)) if it has all the latest updates from `Litentry-Parachain` .**
 
 ### TEE Worker Tests 
 
