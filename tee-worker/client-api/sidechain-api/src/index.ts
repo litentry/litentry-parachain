@@ -1,21 +1,25 @@
-import { ApiOptions } from "@polkadot/api/types";
-import { ApiPromise } from "@polkadot/api";
+export * from "@polkadot/api/types";
+export * from "@polkadot/api";
+export * from "@polkadot/types/lookup";
+export * from "../build/interfaces";
 
-import rawMetadata from "sidechain-api/litentry-sidechain-metadata.json";
-
-export { Metadata, TypeRegistry } from "@polkadot/types";
-export type { Index } from "@polkadot/types/interfaces";
-export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-export type {
+import {
+    PalletIdentityManagementTeeCall,
     LitentryPrimitivesIdentity,
     PalletIdentityManagementTeeIdentityContext,
+    PalletIdentityManagementTeeIdentityContextIdentityStatus,
+    CorePrimitivesNetworkWeb3Network,
+    SpRuntimeMultiSignature,
     PalletIdentityManagementTeeError,
 } from "@polkadot/types/lookup";
 
-export { rawMetadata };
-
-type ProviderInterface = Exclude<ApiOptions["provider"], undefined>;
-
-export async function create(provider: ProviderInterface): Promise<ApiPromise> {
-    return await ApiPromise.create({ provider });
-}
+// @fixme why doesn't work with `export * from '@polkadot/types/lookup' with the following types? But works with `export * from '@polkadot/types/lookup' with FrameSystem* types?
+export type {
+    PalletIdentityManagementTeeCall,
+    LitentryPrimitivesIdentity,
+    PalletIdentityManagementTeeIdentityContext,
+    PalletIdentityManagementTeeIdentityContextIdentityStatus,
+    CorePrimitivesNetworkWeb3Network,
+    SpRuntimeMultiSignature,
+    PalletIdentityManagementTeeError,
+};
