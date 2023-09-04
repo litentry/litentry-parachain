@@ -165,12 +165,12 @@ SGX_MODE=SW make
 
 In order to create a local docker setup, you can run the following command
 ```
-./local-setup/launch.py local-setup/github-action-config-one-worker.json
+./local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json
 ```
-This will create three docker containers, 2 Relay Chain Validators, and 1 Parachain Collator. However, it will be using the default ports as present in .env.dev. If you want to run the system by offsetting the default ports by a certain value. You can run this command instead:
+This will create three docker containers, 2 Relay Chain Validators, and 1 Parachain Collator. However, it will use the default ports as present in .env.dev. If you want to run the system by offsetting the default ports, you can run this command instead:
 
 ```
-./local-setup/launch.py local-setup/development-worker.json local-docker 100
+./local-setup/launch.py --config local-setup/development-worker.json --offset 100
 ```
 This will run the same containers and use the offset value of 100.
 
@@ -178,18 +178,17 @@ This will run the same containers and use the offset value of 100.
 
 In order to create a local binary setup, using default ports, you can run the following command:
 ```
-./local-setup/launch.py local-setup/github-action-config-one-worker.json local-binary
+/local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json --parachain local-binary
 ```
 
-If you want to launch the same system by offsetting the port values, you can use this command 
+If you want to launch the same system by offsetting the port values, you can use this command: 
 ```
-./local-setup/launch.py local-setup/development-worker.json local-binary 100
+./local-setup/worker-log-level-config.toml 100 
 ```
 In case you receive the following error:
 ```ModuleNotFoundError: No module named 'pycurl'```
 
 Fix it manually by installing pycurl using pip3. 
-
 
 ### 3. Remote <> Integritee Node
 
@@ -233,3 +232,5 @@ make clean-binary
 1. Change the RUST_LOG level: `litentry-parachain/tee-worker/local-setup/py/worker.py`
 2. Check existing ts-tests: `litentry-parachain/tee-worker/ts-tests/package.json`
 3. JSON config parameters: `litentry-parachain/tee-worker/service/src/cli.yml`
+
+
