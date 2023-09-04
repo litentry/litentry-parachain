@@ -18,11 +18,10 @@
 // passed back to the requester of trustedCall direct invocation (DI).
 // They are mostly translated from the callback extrinsics in IMP.
 
-use crate::AccountId;
 use codec::{Decode, Encode};
 use itp_stf_interface::StfExecutionResult;
 use itp_types::H256;
-use litentry_primitives::{AesOutput, Assertion};
+use litentry_primitives::AesOutput;
 use std::vec::Vec;
 
 #[derive(Encode, Decode)]
@@ -31,8 +30,6 @@ pub enum TrustedCallResult {
 	Streamed,
 	SetUserShieldingKey(SetUserShieldingKeyResult),
 	LinkIdentity(LinkIdentityResult),
-	DeactivateIdentity(DeactivateIdentityResult),
-	ActivateIdentity(ActivateIdentityResult),
 	RequestVC(RequestVCResult),
 }
 
@@ -43,8 +40,6 @@ impl StfExecutionResult for TrustedCallResult {
 			Self::Streamed => Vec::default(),
 			Self::SetUserShieldingKey(result) => result.encode(),
 			Self::LinkIdentity(result) => result.encode(),
-			Self::DeactivateIdentity(result) => result.encode(),
-			Self::ActivateIdentity(result) => result.encode(),
 			Self::RequestVC(result) => result.encode(),
 		}
 	}
@@ -56,33 +51,16 @@ impl StfExecutionResult for TrustedCallResult {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct SetUserShieldingKeyResult {
-	pub account: AccountId,
 	pub id_graph: AesOutput,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct LinkIdentityResult {
-	pub account: AccountId,
-	pub identity: AesOutput,
 	pub id_graph: AesOutput,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct DeactivateIdentityResult {
-	pub account: AccountId,
-	pub identity: AesOutput,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct ActivateIdentityResult {
-	pub account: AccountId,
-	pub identity: AesOutput,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct RequestVCResult {
-	pub account: AccountId,
-	pub assertion: Assertion,
 	pub vc_index: H256,
 	pub vc_hash: H256,
 	pub vc_payload: AesOutput,
