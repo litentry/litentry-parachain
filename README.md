@@ -227,10 +227,29 @@ If launched via binary
 ```
 make clean-binary 
 ```
+
+### How to know the Worker is Working
+
+![image (2)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/87dd72f6-0124-4007-9b14-dddc97d3d252)
+Waiting for block production to start
+
+![image (3)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/83872a38-abfe-4dc3-878f-9e25b7da6c2d)
+Block produced
+
+![image (4)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/d04c76f7-484a-4172-ac10-53a6d4714766)
+Parachain up; waiting for the worker to start
+
+![image (5)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/cb1cea60-bc5d-4b62-bae7-503583a135ee)
+Worker started!
+
+![image (6)](https://github.com/cryptoade1/litentry-parachain/assets/88367184/21ff630c-baa3-439d-b70a-03f621f49258)
+In logs, you’ll see the sidechain starts to produce blocks
+
 ### Additional Info:
 
 1. Change the RUST_LOG level: `litentry-parachain/tee-worker/local-setup/py/worker.py`
 2. Check existing ts-tests: `litentry-parachain/tee-worker/ts-tests/package.json`
 3. JSON config parameters: `litentry-parachain/tee-worker/service/src/cli.yml`
+
 
 
