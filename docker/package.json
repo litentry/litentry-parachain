@@ -4,9 +4,10 @@
   "main": "",
   "license": "GPL-3.0",
   "scripts": {
-    "start": "node_modules/@open-web3/parachain-launch/bin/parachain-launch"
+    "build": "cd node_modules/@open-web3/parachain-launch && yarn && yarn build",
+    "start": "node_modules/.bin/parachain-launch"
   },
   "dependencies": {
-    "@open-web3/parachain-launch": "^1.3.0"
+    "@open-web3/parachain-launch": "https://github.com/Kailai-Wang/parachain-launch#use-raw-binary"
   }
 }
