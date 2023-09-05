@@ -25,6 +25,7 @@
 #![allow(clippy::large_enum_variant)]
 #![allow(clippy::result_large_err)]
 
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -60,13 +61,13 @@ pub mod stf_sgx_tests;
 pub mod test_genesis;
 pub mod trusted_call;
 pub mod trusted_call_litentry;
-pub mod trusted_call_rpc_response;
+pub mod trusted_call_result;
 
 pub(crate) const ENCLAVE_ACCOUNT_KEY: &str = "Enclave_Account_Key";
 
 pub type StfResult<T> = Result<T, StfError>;
 
-#[derive(Debug, Display, PartialEq, Eq)]
+#[derive(Debug, Display, PartialEq, Eq, Encode, Decode, Clone)]
 pub enum StfError {
 	#[display(fmt = "Insufficient privileges {:?}, are you sure you are root?", _0)]
 	MissingPrivileges(Identity),
@@ -203,6 +204,15 @@ impl TrustedOperation {
 			TrustedOperation::direct_call(c) => c.call.sender_identity().to_account_id(),
 			TrustedOperation::indirect_call(c) => c.call.sender_identity().to_account_id(),
 			_ => None,
+		}
+	}
+
+	pub fn req_hash(&self) -> Option<&H256> {
+		match self {
+			TrustedOperation::direct_call(c) => c.call.identifier(),
+			TrustedOperation::indirect_call(c) => c.call.identifier(),
+			//todo: getters should also contain req_hash ?
+			TrustedOperation::get(_) => None,
 		}
 	}
 }

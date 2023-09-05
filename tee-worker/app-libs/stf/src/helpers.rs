@@ -18,11 +18,13 @@
 use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 
 use codec::{Decode, Encode};
+use frame_support::ensure;
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{
-	aes_encrypt_nonce, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
+	aes_encrypt_nonce, ErrorDetail, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
+	Web3ValidationData,
 };
 use log::*;
 use sp_core::blake2_256;
@@ -145,4 +147,22 @@ pub fn get_expected_raw_message(
 	let mut payload = sidechain_nonce.encode();
 	payload.append(&mut encrypted_data);
 	blake2_256(payload.as_slice()).to_vec()
+}
+
+pub fn verify_web3_identity(
+	identity: &Identity,
+	raw_msg: &[u8],
+	data: &Web3ValidationData,
+) -> StfResult<()> {
+	ensure!(
+		raw_msg == data.message().as_slice(),
+		StfError::LinkIdentityFailed(ErrorDetail::UnexpectedMessage)
+	);
+
+	ensure!(
+		data.signature().verify(raw_msg, identity),
+		StfError::LinkIdentityFailed(ErrorDetail::VerifyWeb3SignatureFailed)
+	);
+
+	Ok(())
 }

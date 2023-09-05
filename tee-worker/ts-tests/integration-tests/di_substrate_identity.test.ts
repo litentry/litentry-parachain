@@ -1,8 +1,10 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
+    assertIdentityLinkedResult,
+    assertWorkerError,
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
@@ -11,9 +13,10 @@ import {
 } from './common/utils';
 import {
     assertFailedEvent,
-    assertIdentityLinked,
+    assertIdentity,
     assertInitialIdGraphCreated,
     assertIsInSidechainBlock,
+    assertLinkedEvent,
 } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
@@ -27,6 +30,7 @@ import {
     getTeeShieldingKey,
     sendRequestFromGetter,
     sendRequestFromTrustedCall,
+    createSignedTrustedCallSetIdentityNetworks,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
@@ -63,9 +67,6 @@ describe('Test Identity (direct invocation)', function () {
         teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
-
-    it('needs a lot more work to be complete');
-    it('most of the bob cases are missing');
 
     step('linking identity with without user shielding key(charlie)', async function () {
         const charlieSubject = await buildIdentityFromKeypair(
@@ -124,6 +125,18 @@ describe('Test Identity (direct invocation)', function () {
         */
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isUserShieldingKeyNotFound,
+                    `expected UserShieldingKeyNotFound, received ${v.asLinkIdentityFailed.type} instead`
+                );
+            },
+            res
+        );
 
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UserShieldingKeyNotFound');
@@ -187,7 +200,7 @@ describe('Test Identity (direct invocation)', function () {
                 .map(({ event }) => event)
                 .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
 
-            await assertInitialIdGraphCreated(context, [wallet], userShieldingKeySetEvents);
+            await assertInitialIdGraphCreated(context, new PolkadotSigner(wallet), userShieldingKeySetEvents);
         });
     });
 
@@ -325,6 +338,8 @@ describe('Test Identity (direct invocation)', function () {
                 teeShieldingKey,
                 linkIdentityCall
             );
+            assertIdentityLinkedResult(context, requestIdentifier, identity, res);
+
             await assertIsInSidechainBlock('linkIdentityCall', res);
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityLinked = false;
@@ -341,8 +356,7 @@ describe('Test Identity (direct invocation)', function () {
         }
         assert.equal(linkedIdentityEvents.length, 3);
 
-        // this assertion doesn't check the evesubstrate identity, check it in the next step
-        assertIdentityLinked(context, context.substrateWallet.alice, linkedIdentityEvents, [
+        await assertLinkedEvent(context, new PolkadotSigner(context.substrateWallet.alice), linkedIdentityEvents, [
             twitterIdentity,
             evmIdentity,
             eveSubstrateIdentity,
@@ -439,9 +453,19 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isInvalidIdentity,
+                    `expected InvalidIdentity, received ${v.asLinkIdentityFailed.type} instead`
+                );
+            },
+            res
+        );
         const events = await eventsPromise;
-
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'InvalidIdentity');
     });
 
@@ -499,13 +523,24 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isUnexpectedMessage,
+                    `expected UnexpectedMessage, received ${v.asLinkIdentityFailed.type} instead`
+                );
+            },
+            res
+        );
         const events = await eventsPromise;
 
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'UnexpectedMessage');
     });
 
-    step('linking aleady linked identity', async function () {
+    step('linking already linked identity', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
@@ -546,7 +581,19 @@ describe('Test Identity (direct invocation)', function () {
 
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isLinkIdentityFailed, `expected LinkIdentityFailed, received ${v.type} instead`);
+                assert.isTrue(
+                    v.asLinkIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asLinkIdentityFailed.type} instead`
+                );
+                assert.equal(u8aToString(v.asLinkIdentityFailed.asStfError), 'IdentityAlreadyLinked');
+            },
+            res
+        );
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'IdentityAlreadyLinked');
     });
@@ -626,6 +673,9 @@ describe('Test Identity (direct invocation)', function () {
             });
             assert.isTrue(isIdentityDeactivated);
         }
+        assert.equal(deactivatedIdentityEvents.length, 3);
+
+        await assertIdentity(context, deactivatedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -734,6 +784,7 @@ describe('Test Identity (direct invocation)', function () {
             assert.isTrue(isIdentityActivated);
         }
         assert.equal(activatedIdentityEvents.length, 3);
+        await assertIdentity(context, activatedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
@@ -767,12 +818,151 @@ describe('Test Identity (direct invocation)', function () {
         }
     });
 
+    step('check idgraph from sidechain storage before setting identity network', async function () {
+        const expectedWeb3Networks = ['Polkadot', 'Litentry'];
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
+        const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        // we have 3 identities and the first one is the eveSubstrateIdentity and network is ['Polkadot', 'Litentry']
+        assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString());
+    });
+    step('setting identity network(alice)', async function () {
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+        const eveSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.eve.addressRaw),
+            'Substrate',
+            context
+        );
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const nonce = getNextNonce();
+
+        // we set the network to ['Litentry', 'Kusama']
+        const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', nonce),
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject,
+            eveSubstrateIdentity.toHex(),
+            context.api.createType('Vec<Web3Network>', ['Litentry', 'Kusama']).toHex(),
+            requestIdentifier
+        );
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            setIdentityNetworksCall
+        );
+        console.log('setIdentityNetworks call returned', res.toHuman());
+        assertIsInSidechainBlock('setIdentityNetworksCall', res);
+    });
+
+    step('check idgraph from sidechain storage after setting identity network', async function () {
+        const expectedWeb3Networks = ['Kusama', 'Litentry'];
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
+        const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        // we have 3 identities and the first one should be changed to expectedWeb3Networks
+        assert.equal(
+            idgraph[0][1].web3networks.toHuman()?.toString(),
+            expectedWeb3Networks.toString(),
+            'idgraph should be changed after setting network'
+        );
+    });
+
+    step('setting incompatible identity network(alice)', async function () {
+        let currentNonce = (
+            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
+        ).toNumber();
+        const getNextNonce = () => currentNonce++;
+        const eveSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.eve.addressRaw),
+            'Substrate',
+            context
+        );
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const nonce = getNextNonce();
+
+        // alice address is not compatible with ethereum network
+        const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', nonce),
+            new PolkadotSigner(context.substrateWallet.alice),
+
+            aliceSubject,
+            eveSubstrateIdentity.toHex(),
+            context.api.createType('Vec<Web3Network>', ['BSC', 'Ethereum']).toHex(),
+            requestIdentifier
+        );
+        const res = await sendRequestFromTrustedCall(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            setIdentityNetworksCall
+        );
+        console.log('setIdentityNetworks call returned', res.toHuman());
+        assert.isTrue(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid);
+    });
+
+    step('check idgraph from sidechain storage after setting incompatible identity network', async function () {
+        const expectedWeb3Networks = ['Kusama', 'Litentry'];
+        const idgraphGetter = await createSignedTrustedGetterIdGraph(
+            context.api,
+            new PolkadotSigner(context.substrateWallet.alice),
+            aliceSubject
+        );
+        const res = await sendRequestFromGetter(
+            context.tee,
+            context.api,
+            context.mrEnclave,
+            teeShieldingKey,
+            idgraphGetter
+        );
+        const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
+
+        // we have 3 identities and the first one should be changed to expectedWeb3Networks
+        assert.equal(
+            idgraph[0][1].web3networks.toHuman()?.toString(),
+            expectedWeb3Networks.toString(),
+            'idgraph should not be changed after setting incompatible network'
+        );
+    });
     step('deactivating prime identity is disallowed', async function () {
         let currentNonce = (
             await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceSubject)
         ).toNumber();
         const getNextNonce = () => currentNonce++;
-        const nonce = getNextNonce();
+
+        //  nonce should be plus 1 why?
+        const nonce = getNextNonce() + 1;
 
         // prime identity
         const substratePrimeIdentity = await buildIdentityHelper(
@@ -802,7 +992,22 @@ describe('Test Identity (direct invocation)', function () {
         );
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(
+                    v.isDeactivateIdentityFailed,
+                    `expected DeactivateIdentityFailed, received ${v.type} instead`
+                );
+                assert.isTrue(
+                    v.asDeactivateIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asDeactivateIdentityFailed.type} instead`
+                );
+                assert.equal(u8aToString(v.asDeactivateIdentityFailed.asStfError), 'DeactivatePrimeIdentityDisallowed');
+            },
+            res
+        );
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');
     });

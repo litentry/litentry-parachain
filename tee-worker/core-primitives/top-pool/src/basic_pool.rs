@@ -246,8 +246,8 @@ where
 		self.pool.validated_pool().on_block_imported(hashes, block_hash);
 	}
 
-	fn set_rpc_response_value(&self, rpc_responses_value: Vec<(TxHash<Self>, Vec<u8>)>) {
-		self.pool.validated_pool().set_rpc_response_value(rpc_responses_value);
+	fn update_connection_state(&self, updates: Vec<(TxHash<Self>, (Vec<u8>, bool))>) {
+		self.pool.validated_pool().update_connection_state(updates);
 	}
 
 	fn swap_rpc_connection_hash(&self, old_hash: TxHash<Self>, new_hash: TxHash<Self>) {

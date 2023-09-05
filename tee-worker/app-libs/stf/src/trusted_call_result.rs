@@ -18,51 +18,50 @@
 // passed back to the requester of trustedCall direct invocation (DI).
 // They are mostly translated from the callback extrinsics in IMP.
 
-use crate::AccountId;
 use codec::{Decode, Encode};
+use itp_stf_interface::StfExecutionResult;
 use itp_types::H256;
-use litentry_primitives::{AesOutput, Assertion};
+use litentry_primitives::AesOutput;
+use std::vec::Vec;
+
+#[derive(Encode, Decode)]
+pub enum TrustedCallResult {
+	Empty,
+	Streamed,
+	SetUserShieldingKey(SetUserShieldingKeyResult),
+	LinkIdentity(LinkIdentityResult),
+	RequestVC(RequestVCResult),
+}
+
+impl StfExecutionResult for TrustedCallResult {
+	fn get_encoded_result(self) -> Vec<u8> {
+		match self {
+			Self::Empty => Vec::default(),
+			Self::Streamed => Vec::default(),
+			Self::SetUserShieldingKey(result) => result.encode(),
+			Self::LinkIdentity(result) => result.encode(),
+			Self::RequestVC(result) => result.encode(),
+		}
+	}
+
+	fn force_connection_wait(&self) -> bool {
+		matches!(self, Self::Streamed)
+	}
+}
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct SetUserShieldingKeyResponse {
-	pub account: AccountId,
+pub struct SetUserShieldingKeyResult {
 	pub id_graph: AesOutput,
-	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct LinkIdentityResponse {
-	pub account: AccountId,
-	pub identity: AesOutput,
+pub struct LinkIdentityResult {
 	pub id_graph: AesOutput,
-	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct DeactivateIdentityResponse {
-	pub account: AccountId,
-	pub identity: AesOutput,
-	pub req_ext_hash: H256,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct ActivateIdentityResponse {
-	pub account: AccountId,
-	pub identity: AesOutput,
-	pub req_ext_hash: H256,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct SetIdentityNetworksResponse {
-	pub req_ext_hash: H256,
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct RequestVCResponse {
-	pub account: AccountId,
-	pub assertion: Assertion,
+pub struct RequestVCResult {
 	pub vc_index: H256,
 	pub vc_hash: H256,
 	pub vc_payload: AesOutput,
-	pub req_ext_hash: H256,
 }

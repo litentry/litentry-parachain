@@ -34,18 +34,16 @@ Alternatively, you can run `corepack yarn update-build` to do all things above i
 
 ## Usage
 
-II identity test: `corepack yarn test-identity:local`
+II identity test: `corepack yarn test-ii-identity:local`
 
-II vc test: `corepack yarn test-vc:local`
+II vc test: `corepack yarn test-ii-vc:local`
 
-II batch identity test: `corepack yarn test-batch:local`
+II batch identity test: `corepack yarn test-ii-batch:local`
 
-Bulk II identity test: `corepack yarn test-bulk-identity:local`
+Direct invocation substrate identity test: `corepack yarn test-di-substrate-identity:local`
 
-Bulk II vc test: `corepack yarn test-bulk-vc:local`
+Direct invocation evm identity test: `corepack yarn test-di-evm-identity:local`
 
-DI identity test: `corepack yarn test-identity-direct-invocation:local`
+Direct invocation EVM examples: `corepack yarn workspace integration-tests ii-evm-examples`
 
-EVM DI examples: `corepack yarn workspace integration-tests evm-di-examples`
-
-Substrate DI examples: `corepack yarn workspace integration-tests substrate-di-examples`
+Direct invocation Substrate examples: `corepack yarn workspace integration-tests ii-substrate-examples`

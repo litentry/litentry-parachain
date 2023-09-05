@@ -2012,8 +2012,7 @@ export default {
             WrongWeb2Handle: "Null",
             UnexpectedMessage: "Null",
             WrongSignatureType: "Null",
-            VerifySubstrateSignatureFailed: "Null",
-            VerifyEvmSignatureFailed: "Null",
+            VerifyWeb3SignatureFailed: "Null",
             RecoverEvmAddressFailed: "Null",
             Web3NetworkOutOfBounds: "Null",
         },
@@ -2164,6 +2163,7 @@ export default {
             A13: "AccountId32",
             A14: "Null",
             Achainable: "CorePrimitivesAssertionAchainableParams",
+            A20: "Null",
         },
     },
     /**

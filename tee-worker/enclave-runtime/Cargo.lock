@@ -2009,6 +2009,7 @@ dependencies = [
 name = "itp-enclave-metrics"
 version = "0.9.0"
 dependencies = [
+ "lc-stf-task-sender",
  "parity-scale-codec",
  "sgx_tstd",
  "substrate-fixed",
@@ -2229,6 +2230,7 @@ dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
  "itp-types",
+ "parity-scale-codec",
 ]
 
 [[package]]
@@ -2839,6 +2841,7 @@ dependencies = [
  "ita-sgx-runtime",
  "ita-stf",
  "itc-rest-client",
+ "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-node-api",
  "itp-ocall-api",

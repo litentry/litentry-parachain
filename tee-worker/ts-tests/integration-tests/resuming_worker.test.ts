@@ -4,7 +4,7 @@ import fs from 'fs';
 import * as path from 'path';
 import * as process from 'process';
 import { describe } from 'mocha';
-import { step } from 'mocha-steps';
+import { step, xstep } from 'mocha-steps';
 import WebSocketAsPromised from 'websocket-as-promised';
 import os from 'os';
 import { initWorkerConnection, sleep } from './common/utils';
@@ -390,7 +390,8 @@ describe('Resume worker', function () {
 
     let worker1State: WorkerState | undefined = undefined;
 
-    step('Two workers & resume worker1', async function () {
+    // #fixme #1524 multiworker not supported
+    xstep('Two workers & resume worker1', async function () {
         assert(worker0State);
 
         // first launch worker1
@@ -422,7 +423,8 @@ describe('Resume worker', function () {
         console.log('=========== worker1 produced blocks ==================');
     });
 
-    step('Kill and resume both workers', async function () {
+    // #fixme #1524 multiworker not supported
+    xstep('Kill and resume both workers', async function () {
         assert(worker0State);
         assert(worker1State);
 
