@@ -1110,9 +1110,9 @@ __metadata:
   linkType: hard
 
 "@types/chai@npm:^4.3.3":
-  version: 4.3.5
-  resolution: "@types/chai@npm:4.3.5"
-  checksum: c8f26a88c6b5b53a3275c7f5ff8f107028e3cbb9ff26795fff5f3d9dea07106a54ce9e2dce5e40347f7c4cc35657900aaf0c83934a25a1ae12e61e0f5516e431
+  version: 4.3.6
+  resolution: "@types/chai@npm:4.3.6"
+  checksum: 32a6c18bf53fb3dbd89d1bfcadb1c6fd45cc0007c34e436393cc37a0a5a556f9e6a21d1e8dd71674c40cc36589d2f30bf4d9369d7787021e54d6e997b0d7300a
   languageName: node
   linkType: hard
 
@@ -3434,9 +3434,9 @@ __metadata:
   linkType: hard
 
 "mock-socket@npm:^9.2.1":
-  version: 9.2.1
-  resolution: "mock-socket@npm:9.2.1"
-  checksum: daf07689563163dbcefbefe23b2a9784a75d0af31706f23ad535c6ab2abbcdefa2e91acddeb50a3c39009139e47a8f909cbb38e8137452193ccb9331637fee3e
+  version: 9.3.0
+  resolution: "mock-socket@npm:9.3.0"
+  checksum: 525e967990fd87458de6283e10450beb16454a525cc2956c2ca52bfa97731ebde1e7b8ad605ff12a821a5742e4196d731f6ff819454995b0876d06cba90d4298
   languageName: node
   linkType: hard
 
@@ -4141,13 +4141,13 @@ __metadata:
   linkType: hard
 
 "string.prototype.trimstart@npm:^1.0.6":
-  version: 1.0.6
-  resolution: "string.prototype.trimstart@npm:1.0.6"
+  version: 1.0.7
+  resolution: "string.prototype.trimstart@npm:1.0.7"
   dependencies:
     call-bind: ^1.0.2
-    define-properties: ^1.1.4
-    es-abstract: ^1.20.4
-  checksum: 89080feef416621e6ef1279588994305477a7a91648d9436490d56010a1f7adc39167cddac7ce0b9884b8cdbef086987c4dcb2960209f2af8bac0d23ceff4f41
+    define-properties: ^1.2.0
+    es-abstract: ^1.22.1
+  checksum: 13d0c2cb0d5ff9e926fa0bec559158b062eed2b68cd5be777ffba782c96b2b492944e47057274e064549b94dd27cf81f48b27a31fee8af5b574cff253e7eb613
   languageName: node
   linkType: hard
 
@@ -4204,8 +4204,8 @@ __metadata:
   linkType: hard
 
 "tar@npm:^6.1.11, tar@npm:^6.1.2":
-  version: 6.1.15
-  resolution: "tar@npm:6.1.15"
+  version: 6.2.0
+  resolution: "tar@npm:6.2.0"
   dependencies:
     chownr: ^2.0.0
     fs-minipass: ^2.0.0
@@ -4213,7 +4213,7 @@ __metadata:
     minizlib: ^2.1.1
     mkdirp: ^1.0.3
     yallist: ^4.0.0
-  checksum: f23832fceeba7578bf31907aac744ae21e74a66f4a17a9e94507acf460e48f6db598c7023882db33bab75b80e027c21f276d405e4a0322d58f51c7088d428268
+  checksum: db4d9fe74a2082c3a5016630092c54c8375ff3b280186938cfd104f2e089c4fd9bad58688ef6be9cf186a889671bf355c7cda38f09bbf60604b281715ca57f5c
   languageName: node
   linkType: hard
 
