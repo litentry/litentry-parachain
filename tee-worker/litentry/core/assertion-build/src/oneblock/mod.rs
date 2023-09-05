@@ -9,6 +9,7 @@ pub mod course;
 use crate::*;
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
+use lc_credentials::oneblock::CourseCompletionLevel;
 use lc_data_providers::build_client;
 use serde::{Deserialize, Serialize};
 
@@ -48,14 +49,6 @@ pub fn build_(req: &AssertionBuildRequest, address: ParameterString) {
 	// 		Err(Error::RequestVCFailed(Assertion::Oneblock, e.into_error_detail()))
 	// 	},
 	// }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum CourseCompletionLevel {
-	Undergraduate,
-	Outstanding,
-	Beginner,
-	Invalid,
 }
 
 pub fn query_oneblock_status(_address: &String) -> Result<CourseCompletionLevel> {
