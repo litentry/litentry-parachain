@@ -618,6 +618,9 @@ jobs:
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+          ls -l docker/generated-rococo/
+          ls -l tee-worker/docker/litentry/
+          shasum tee-worker/docker/litentry/*.json
 
       - name: Build litentry parachain docker images
         run: |
