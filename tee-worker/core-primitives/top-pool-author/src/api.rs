@@ -130,7 +130,7 @@ where
 	}
 
 	fn hash_and_length(&self, ex: &StfTrustedOperation) -> (ExtrinsicHash<Self>, usize) {
-		debug!("[Pool] creating hash of {:?}", ex);
+		trace!("[Pool] creating hash of {:?}", ex);
 		ex.using_encoded(|x| (<<Block::Header as HeaderT>::Hashing as HashT>::hash(x), x.len()))
 	}
 
