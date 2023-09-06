@@ -59,11 +59,12 @@ def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO], 
 
 
 def run_worker(config, i: int, log_config_path):
-    log = open(f"{log_dir}/worker{i}.log", "w+")
+    id = config.get('id', i)
+    log = open(f"{log_dir}/worker-{id}.log", "w+")
     # TODO: either hard-code 'local-setup' directory, or take from input config.json
-    w = setup_worker(f"tmp/w{i}", config["source"], log, log_config_path)
+    w = setup_worker(f"tmp/w-{id}", config["source"], log, log_config_path)
 
-    print(f"Starting worker {i} in background")
+    print(f"Starting worker {id} in background")
     return w.run_in_background(
         log_file=log, flags=config["flags"], subcommand_flags=config["subcommand_flags"]
     )
