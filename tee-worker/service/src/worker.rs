@@ -161,10 +161,7 @@ where
 					peer_urls.insert(untrusted_worker_url);
 				},
 				Err(e) => {
-					warn!(
-						"Failed to get untrusted worker url (enclave: {}): {:?}",
-						enclave_url, e
-					);
+					warn!("Failed to get untrusted worker url (enclave: {}): {:?}", enclave_url, e);
 				},
 			}
 		}
