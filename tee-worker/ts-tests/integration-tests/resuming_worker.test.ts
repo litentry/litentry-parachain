@@ -3,7 +3,6 @@ import * as readline from 'readline';
 import fs from 'fs';
 import * as path from 'path';
 import * as process from 'process';
-import { describe } from 'mocha';
 import { step, xstep } from 'mocha-steps';
 import WebSocketAsPromised from 'websocket-as-promised';
 import os from 'os';
