@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry Technologies GmbH <info@litentry.com>"]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'core-primitives'
 version = '0.9.12'

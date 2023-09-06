@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Litentry Technologies GmbH.
+// Copyright 2020-2021 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify

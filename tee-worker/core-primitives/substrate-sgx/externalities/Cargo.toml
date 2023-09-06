@@ -1,7 +1,7 @@
 [package]
 name = "itp-sgx-externalities"
 version = "0.9.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network> and Parity Technologies <admin@parity.io>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network> and Parity Technologies <admin@parity.io>']
 edition = "2021"
 
 [dependencies]
