@@ -60,8 +60,8 @@ use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableDate, AchainableDateInterval,
 	AchainableDatePercent, AchainableParams, AchainableToken, Assertion, ErrorDetail, ErrorString,
-	Identity, IdentityNetworkTuple, IntoErrorDetail, ParameterString, VCMPError as Error,
-	Web3Network, ASSERTION_FROM_DATE,
+	Identity, IdentityNetworkTuple, IntoErrorDetail, OneBlockCourseType, ParameterString,
+	VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
 use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};

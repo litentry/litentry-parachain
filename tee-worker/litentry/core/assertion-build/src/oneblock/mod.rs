@@ -9,7 +9,6 @@ pub mod course;
 use crate::*;
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_credentials::oneblock::CourseCompletionLevel;
 use lc_data_providers::build_client;
 use serde::{Deserialize, Serialize};
 
@@ -26,7 +25,7 @@ impl RestPath<String> for OneBlockResponse {
 	}
 }
 
-fn fetch_data_from_notion() -> Result<OneBlockResponse> {
+fn fetch_data_from_notion(course_type: &OneBlockCourseType) -> Result<OneBlockResponse> {
 	let mut headers = Headers::new();
 	headers.insert("Authorization", "Bearer secret_s0uk06ciGBE0UpdAegGIiwFrLr9gSJ7ROuKCY3b6NVE");
 	headers.insert("Notion-Version", "2022-06-28");
@@ -38,7 +37,7 @@ fn fetch_data_from_notion() -> Result<OneBlockResponse> {
 
 	client.get::<String, OneBlockResponse>(String::default()).map_err(|e| {
 		Error::RequestVCFailed(
-			Assertion::Oneblock,
+			Assertion::Oneblock(course_type.clone()),
 			ErrorDetail::DataProviderError(ErrorString::truncate_from(
 				format!("{e:?}").as_bytes().to_vec(),
 			)),
@@ -46,7 +45,11 @@ fn fetch_data_from_notion() -> Result<OneBlockResponse> {
 	})
 }
 
-fn oneblock_course_level(data: &serde_json::Value, address: &str) -> Result<CourseCompletionLevel> {
+fn oneblock_course_result(
+	data: &serde_json::Value,
+	course_type: &OneBlockCourseType,
+	addresses: Vec<String>,
+) -> Result<bool> {
 	let get_results = |data: &serde_json::Value| -> Option<Vec<serde_json::Value>> {
 		data.get("results").and_then(|results| results.as_array()).cloned()
 	};
@@ -61,66 +64,62 @@ fn oneblock_course_level(data: &serde_json::Value, address: &str) -> Result<Cour
 			.cloned()
 	};
 
-	let get_cell_text = |cells: &serde_json::Value| -> Option<String> {
-		cells.as_array().filter(|cells| cells.len() == 1).and_then(|cell_data| {
-			cell_data[0].get("text").and_then(|data| {
-				data.get("content").and_then(|data| data.as_str()).map(|data| data.to_string())
+	let get_cell_text = |cells: &serde_json::Value| -> String {
+		cells
+			.as_array()
+			.filter(|cells| cells.len() == 1)
+			.and_then(|cell_data| {
+				cell_data[0].get("text").and_then(|data| {
+					data.get("content").and_then(|data| data.as_str()).map(|data| data.to_string())
+				})
 			})
-		})
+			.unwrap_or_default()
 	};
 
 	// If the first colume content of an table cell is not a numeric digit, then this is a invalid cell, no need to parse data.
 	// Using this method to differentiate student data.
 	let is_student_info_cell = |cells: &Vec<serde_json::Value>| -> bool {
-		get_cell_text(&cells[0])
-			.map(|text| text.parse::<u32>().is_ok())
-			.unwrap_or_default()
+		get_cell_text(&cells[0]).parse::<u32>().is_ok()
 	};
 
 	let get_student_address =
-		|cells: &Vec<serde_json::Value>| -> String { get_cell_text(&cells[2]).unwrap_or_default() };
+		|cells: &Vec<serde_json::Value>| -> String { get_cell_text(&cells[2]) };
 
-	// Get data ordering:  是否优秀毕业 > 是否毕业 > 课程观看进度
-	const LEVEL_FIELD_INDEX: [usize; 3] = [5, 4, 3];
-	let level = |cells: &Vec<serde_json::Value>| -> Result<CourseCompletionLevel> {
-		for (index, field) in LEVEL_FIELD_INDEX.iter().enumerate() {
-			let text = get_cell_text(&cells[*field]);
-			if let Some(text) = text {
-				if text == "♥" {
-					if index == 0 {
-						return Ok(CourseCompletionLevel::Outstanding)
-					} else if index == 1 {
-						return Ok(CourseCompletionLevel::Beginner)
-					} else {
-						return Ok(CourseCompletionLevel::Undergraduate)
-					}
-				} else {
-					continue
-				}
-			}
-		}
+	let level = |cells: &Vec<serde_json::Value>, course_type: &OneBlockCourseType| -> bool {
+		let cell_index: usize = match course_type {
+			OneBlockCourseType::CourseCompletion => 4,
+			OneBlockCourseType::CourseExcellenceCompletion => 5,
+			OneBlockCourseType::CourseParticipation => 3,
+		};
+		let text = get_cell_text(&cells[cell_index]);
 
-		Ok(CourseCompletionLevel::Invalid)
+		// TODO: HOW TO CHECK IF THIS TYPE OF COURSE VC IS VALID???
+		// JUST CHECK IF THIS BLANK IS EMPTY OR NOT???
+		!text.is_empty()
 	};
 
 	if let Some(results) = get_results(data) {
 		for object in results.iter() {
 			if let Some(cells) = get_table_row(object) {
-				if is_student_info_cell(&cells) && get_student_address(&cells) == address {
-					return level(&cells)
+				if is_student_info_cell(&cells) && addresses.contains(&get_student_address(&cells))
+				{
+					return Ok(level(&cells, course_type))
 				}
 			}
 		}
 	}
 
-	Ok(CourseCompletionLevel::Invalid)
+	Ok(false)
 }
 
-pub fn query_oneblock_status(_address: &str) -> Result<CourseCompletionLevel> {
-	let oneblock_response = fetch_data_from_notion()?;
+pub fn query_oneblock_status(
+	course_type: &OneBlockCourseType,
+	addresses: Vec<String>,
+) -> Result<bool> {
+	let oneblock_response = fetch_data_from_notion(course_type)?;
 	debug!("OneBlock Assertion Response: {oneblock_response:?}");
 
-	oneblock_course_level(&oneblock_response.data, _address)
+	oneblock_course_result(&oneblock_response.data, course_type, addresses)
 }
 
 #[cfg(test)]
@@ -132,12 +131,16 @@ mod tests {
 "#;
 
 	#[test]
-	fn oneblock_course_level_works() {
+	fn oneblock_course_result_works() {
 		let address = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQQ".to_string();
 		let oneblock_response: serde_json::Value = serde_json::from_str(RESPONSE_ONEBLOCK).unwrap();
 
-		let level = oneblock_course_level(&oneblock_response, &address);
-		assert!(level.is_ok());
-		assert_eq!(level.unwrap(), CourseCompletionLevel::Undergraduate);
+		let value = oneblock_course_result(
+			&oneblock_response,
+			&OneBlockCourseType::CourseParticipation,
+			vec![address],
+		);
+		assert!(value.is_ok());
+		assert_eq!(value.unwrap(), true);
 	}
 }

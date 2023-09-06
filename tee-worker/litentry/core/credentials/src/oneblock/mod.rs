@@ -2,7 +2,7 @@ use crate::{
 	assertion_logic::{AssertionLogic, Op},
 	Credential,
 };
-use serde::{Deserialize, Serialize};
+use litentry_primitives::OneBlockCourseType;
 
 /// Dev Undergraduate / Outstanding Substrate Developer / Dev Beginner
 // (type, description)
@@ -12,33 +12,24 @@ const VC_ONEBLOCK_COURSE_INFOS: [(&str, &str); 3] = [
 	("Substrate Blockchain Development Course Participation", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12."),
 ];
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
-pub enum CourseCompletionLevel {
-	Undergraduate,
-	Outstanding,
-	Beginner,
-	Invalid,
-}
-
 pub trait OneBlockAssertionUpdate {
-	fn update_notion_assertion(&mut self, level: &CourseCompletionLevel);
+	fn update_notion_assertion(&mut self, course_type: &OneBlockCourseType, value: bool);
 }
 
 impl OneBlockAssertionUpdate for Credential {
-	fn update_notion_assertion(&mut self, level: &CourseCompletionLevel) {
-		let (assertion_content, info) = match level {
-			CourseCompletionLevel::Undergraduate =>
-				("is_undergraduate", VC_ONEBLOCK_COURSE_INFOS[0]),
-			CourseCompletionLevel::Outstanding => ("is_outstanding", VC_ONEBLOCK_COURSE_INFOS[1]),
-			CourseCompletionLevel::Beginner | &CourseCompletionLevel::Invalid =>
-				("is_beginner", VC_ONEBLOCK_COURSE_INFOS[2]),
+	fn update_notion_assertion(&mut self, course_type: &OneBlockCourseType, value: bool) {
+		let (assertion_content, info) = match course_type {
+			OneBlockCourseType::CourseCompletion =>
+				("is_course_completion", VC_ONEBLOCK_COURSE_INFOS[0]),
+			OneBlockCourseType::CourseExcellenceCompletion =>
+				("is_course_excellence_completion", VC_ONEBLOCK_COURSE_INFOS[1]),
+			OneBlockCourseType::CourseParticipation =>
+				("is_course_participation", VC_ONEBLOCK_COURSE_INFOS[2]),
 		};
 
 		let assertion = AssertionLogic::new_item(assertion_content, Op::Equal, "true");
 		self.credential_subject.assertions.push(assertion);
-
-		// If and only if level == CourseCompletionLevel::Invalid, value will be FALSE
-		self.credential_subject.values.push(*level != CourseCompletionLevel::Invalid);
+		self.credential_subject.values.push(value);
 
 		self.add_subject_info(info.1, info.0);
 	}

@@ -85,7 +85,8 @@ where
 
 			Assertion::A20 => lc_assertion_build::a20::build(&self.req),
 
-			Assertion::Oneblock => lc_assertion_build::oneblock::course::build(&self.req),
+			Assertion::Oneblock(course_type) =>
+				lc_assertion_build::oneblock::course::build(&self.req, course_type),
 
 			_ => {
 				unimplemented!()
