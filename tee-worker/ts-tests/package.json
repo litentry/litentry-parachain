@@ -3,12 +3,13 @@
 	"license": "ISC",
 	"workspaces": {
 		"packages": [
-			"integration-tests"
+			"integration-tests",
+			"stress"
 		]
 	},
 	"scripts": {
-		"format": "yarn workspace integration-tests format",
-		"check-format": "yarn workspace integration-tests check-format"
+		"format": "yarn workspace integration-tests format && yarn workspace stress format",
+		"check-format": "yarn workspace integration-tests check-format && yarn workspace stress check-format"
 	},
 	"packageManager": "yarn@3.6.1"
 }

@@ -587,6 +587,7 @@ jobs:
           - test_name: lit-di-vc-test
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
+          - test_name: lit-test-stress-script
 
     steps:
       - uses: actions/checkout@v3

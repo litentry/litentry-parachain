@@ -4,7 +4,7 @@ import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { HexString } from '@polkadot/util/types';
 import { Bytes } from '@polkadot/types-codec';
-import { PubicKeyJson } from '../../common/type-definitions';
+import { PublicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
@@ -345,7 +345,7 @@ export const sendRequestFromGetter = async (
 export const getTeeShieldingKey = async (wsp: WebSocketAsPromised, parachainApi: ApiPromise) => {
     const request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
     const res = await sendRequest(wsp, request, parachainApi);
-    const k = JSON.parse(decodeRpcBytesAsString(res.value)) as PubicKeyJson;
+    const k = JSON.parse(decodeRpcBytesAsString(res.value)) as PublicKeyJson;
 
     return createPublicKey({
         key: {
