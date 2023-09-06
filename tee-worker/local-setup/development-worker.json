@@ -1,6 +1,7 @@
 {
   "workers": [
     {
+      "id": "dev",
       "source": "bin",
       "flags": [
         "--clean-reset",
