@@ -2,7 +2,7 @@
 
 # no `set -e` here as we allow commands to fail in this script
 
-TMPDIR=/tmp/parachain_dev
+TMPDIR=${TMPDIR:-"/tmp/parachain_dev*"}
 
 # for f in $(ls $TMPDIR/*.pid 2>/dev/null); do
 #   echo "Killing $f ..."

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-TMPDIR=/tmp/parachain_dev
+TMPDIR=${TMPDIR:-"/tmp/parachain_dev"}
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 
 DOCKER='local'
