@@ -30,6 +30,35 @@ const RES_BODY: &str = r#"
 {
 	"result": true
 }"#;
+const RES_BODY_INVALID_CLASS_OF_YEAR: &str = r#"
+{
+    "name": "Account created between {dates}",
+    "result": false,
+    "display": [],
+    "analyticsDisplay": [],
+    "metadata": [
+        null
+    ],
+    "runningCost": 1
+}
+"#;
+const RES_BODY_OK_CLASS_OF_YEAR: &str = r#"
+{
+    "name": "Account created between {dates}",
+    "result": true,
+    "display": [
+        {
+            "text": "Account created between 01/01/2015 and 01/09/2023",
+            "result": true
+        }
+    ],
+    "analyticsDisplay": [],
+    "metadata": [
+        "2017-10-27T07:38:14.000Z"
+    ],
+    "runningCost": 1
+}
+"#;
 const RES_ERRBODY: &str = r#"Error request."#;
 
 use lc_data_providers::achainable::ReqBody;
@@ -42,9 +71,16 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				return Response::builder().status(400).body(RES_ERRBODY.to_string())
 			}
 
-			// Total transaction
 			if body.name == "Account total transactions under {amount}" {
+				// Total transaction
 				Response::builder().body(RES_TOTALTRANSACTIONS.to_string())
+			} else if body.name == "Account created between {dates}" {
+				// Class of year invalid address
+				if body.address == "0x06e23f8209eCe9a33E24fd81440D46B08517adb5" {
+					Response::builder().body(RES_BODY_INVALID_CLASS_OF_YEAR.to_string())
+				} else {
+					Response::builder().body(RES_BODY_OK_CLASS_OF_YEAR.to_string())
+				}
 			} else {
 				Response::builder().body(RES_BODY.to_string())
 			}
