@@ -19,12 +19,12 @@ use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum OneBlockCourseType {
-    // Substrate Blockchain Development Course Completion
+	// Substrate Blockchain Development Course Completion
 	CourseCompletion,
 
-    // Substrate Blockchain Development Course Excellence Completion
+	// Substrate Blockchain Development Course Excellence Completion
 	CourseExcellenceCompletion,
 
-    // Substrate Blockchain Development Course Participation
+	// Substrate Blockchain Development Course Participation
 	CourseParticipation,
 }

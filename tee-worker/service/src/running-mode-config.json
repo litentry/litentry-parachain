@@ -8,7 +8,9 @@
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "credential_endpoint": "http://localhost:9933"
+        "credential_endpoint": "http://localhost:9933",
+        "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "oneblock_notion_url": "https://abc.com"
     },
     "mock": {
         "twitter_official_url": "http://localhost:19527",
@@ -19,7 +21,9 @@
         "discord_auth_token": "",
         "achainable_url": "http://localhost:19527",
         "achainable_auth_key": "",
-        "credential_endpoint": "http://localhost:9933"
+        "credential_endpoint": "http://localhost:9933",
+        "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "oneblock_notion_url": "https://abc.com"
     },
     "prod": {
         "twitter_official_url": "https://api.twitter.com",
@@ -30,7 +34,9 @@
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "credential_endpoint": ""
+        "credential_endpoint": "",
+        "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "oneblock_notion_url": "https://abc.com"
     },
     "staging": {
         "twitter_official_url": "https://api.twitter.com",
@@ -41,6 +47,8 @@
         "discord_auth_token": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "achainable_url": "https://label-production.graph.tdf-labs.io",
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "credential_endpoint": "wss://tee-staging.litentry.io"
+        "credential_endpoint": "wss://tee-staging.litentry.io",
+        "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "oneblock_notion_url": "https://abc.com"
     }
 }

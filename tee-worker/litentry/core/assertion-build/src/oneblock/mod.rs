@@ -7,10 +7,12 @@ extern crate sgx_tstd as std;
 pub mod course;
 
 use crate::*;
+use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_data_providers::build_client;
+use lc_data_providers::{build_client, GLOBAL_DATA_PROVIDER_CONFIG};
 use serde::{Deserialize, Serialize};
+use std::string::ToString;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -27,11 +29,15 @@ impl RestPath<String> for OneBlockResponse {
 
 fn fetch_data_from_notion(course_type: &OneBlockCourseType) -> Result<OneBlockResponse> {
 	let mut headers = Headers::new();
-	headers.insert("Authorization", "Bearer secret_s0uk06ciGBE0UpdAegGIiwFrLr9gSJ7ROuKCY3b6NVE");
+	headers.insert(CONNECTION.as_str(), "close");
 	headers.insert("Notion-Version", "2022-06-28");
+	headers.insert(
+		AUTHORIZATION.as_str(),
+		GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().oneblock_notion_key.clone().as_str(),
+	);
 
 	let mut client = build_client(
-		"https://api.notion.com/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children",
+		GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().oneblock_notion_url.clone().as_str(),
 		headers,
 	);
 
