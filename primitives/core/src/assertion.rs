@@ -180,6 +180,8 @@ pub enum Assertion {
 
 	// For EVM Version Early Bird
 	A20,
+
+	// For Oneblock
 	Oneblock(OneBlockCourseType),
 }
 
