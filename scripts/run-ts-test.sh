@@ -21,7 +21,7 @@ fi
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/ts-tests"
 
-TMPDIR=/tmp/parachain_dev
+TMPDIR=${TMPDIR:-"/tmp/parachain_dev"}
 
 [ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
 
