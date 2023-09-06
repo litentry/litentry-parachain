@@ -19,7 +19,7 @@
 ### Builder Stage
 ##################################################
 FROM litentry/litentry-tee-dev:edge AS builder
-LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 # set environment variables
 ENV SGX_SDK /opt/sgxsdk
@@ -51,7 +51,7 @@ RUN cargo test --release
 # Installation and setup of sccache should be moved to the integritee-dev image, so we don't
 # always need to compile and install sccache on CI (where we have no caching so far).
 FROM litentry/litentry-tee-dev:edge AS builder
-LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 # set environment variables
 ENV SGX_SDK /opt/sgxsdk
@@ -108,7 +108,7 @@ RUN corepack prepare yarn@3.6.1 --activate
 ### Deployed CLI client
 ##################################################
 FROM runner AS deployed-client
-LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG SCRIPT_DIR=/usr/local/worker-cli
 ARG LOG_DIR=/usr/local/log

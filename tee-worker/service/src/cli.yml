@@ -1,7 +1,7 @@
 name: "litentry-worker"
 version: "0.8.0"
 about: Worker using Intel SGX TEE for litentry parachain node
-authors: "Litentry Technologies GmbH <info@litentry.com>"
+authors: "Trust Computing GmbH <info@litentry.com>"
 
 # AppSettings can be defined as a list and are **not** ascii case sensitive
 settings:
