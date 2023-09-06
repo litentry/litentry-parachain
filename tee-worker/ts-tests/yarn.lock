@@ -4123,10 +4123,10 @@ __metadata:
     js-base64: ^3.7.5
     micro-base58: ^0.5.1
     mocha: ^10.1.0
-    parachain-api: "workspace:*"
+    parachain-api: ../../client-api/parachain-api
     prettier: 2.8.1
     scale-ts: ^0.2.11
-    sidechain-api: "workspace:*"
+    sidechain-api: ../../client-api/sidechain-api
     ts-node: ^10.9.1
     typescript: 5.0.4
     websocket-as-promised: ^2.0.1
