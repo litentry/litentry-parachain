@@ -1879,7 +1879,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.0.3":
+"dotenv@npm:^16.0.3, dotenv@npm:^16.3.1":
   version: 16.3.1
   resolution: "dotenv@npm:16.3.1"
   checksum: 15d75e7279018f4bafd0ee9706593dd14455ddb71b3bcba9c52574460b7ccaf67d5cf8b2c08a5af1a9da6db36c956a04a1192b101ee102a3e0cf8817bbcf3dfd
@@ -4071,6 +4071,45 @@ __metadata:
   languageName: node
   linkType: hard
 
+"stress@workspace:stress":
+  version: 0.0.0-use.local
+  resolution: "stress@workspace:stress"
+  dependencies:
+    "@ethersproject/providers": ^5.7.2
+    "@noble/ed25519": ^1.7.3
+    "@polkadot/api": ^10.9.1
+    "@polkadot/keyring": ^12.2.1
+    "@polkadot/typegen": ^10.9.1
+    "@polkadot/types": ^10.9.1
+    "@types/chai": ^4.3.3
+    "@types/mocha": ^10.0.0
+    "@types/node": ^20.4.4
+    "@types/ws": ^8.5.3
+    "@typescript-eslint/eslint-plugin": ^5.60.0
+    "@typescript-eslint/parser": ^5.60.0
+    add: ^2.0.6
+    ajv: ^8.12.0
+    chai: ^4.3.6
+    colors: ^1.4.0
+    cross-env: ^7.0.3
+    dotenv: ^16.3.1
+    eslint: ^8.43.0
+    ethers: ^5.7.2
+    js-base64: ^3.7.5
+    micro-base58: ^0.5.1
+    mocha: ^10.1.0
+    parachain-api: "workspace:*"
+    prettier: 2.8.1
+    scale-ts: ^0.2.11
+    sidechain-api: "workspace:*"
+    ts-node: ^10.9.1
+    typescript: 5.0.4
+    websocket-as-promised: ^2.0.1
+    ws: ^8.8.1
+    zod: ^3.21.4
+  languageName: unknown
+  linkType: soft
+
 "string-width-cjs@npm:string-width@^4.2.0, string-width@npm:^1.0.2 || 2 || 3 || 4, string-width@npm:^4.1.0, string-width@npm:^4.2.0, string-width@npm:^4.2.3":
   version: 4.2.3
   resolution: "string-width@npm:4.2.3"
@@ -4634,5 +4673,12 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: f77b3d8d00310def622123df93d4ee654fc6a0096182af8bd60679ddcdfb3474c56c6c7190817c84a2785648cdee9d721c0154eb45698c62176c322fb46fc700
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.21.4":
+  version: 3.21.4
+  resolution: "zod@npm:3.21.4"
+  checksum: f185ba87342ff16f7a06686767c2b2a7af41110c7edf7c1974095d8db7a73792696bcb4a00853de0d2edeb34a5b2ea6a55871bc864227dace682a0a28de33e1f
   languageName: node
   linkType: hard
