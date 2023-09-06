@@ -14,7 +14,7 @@ export type EnclaveResult = {
     vcPubkey: HexString;
     sgxMetadata: object;
 };
-export type PubicKeyJson = {
+export type PublicKeyJson = {
     n: Uint8Array;
     e: Uint8Array;
 };
