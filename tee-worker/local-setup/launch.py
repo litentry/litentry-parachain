@@ -25,6 +25,7 @@ from py.helpers import GracefulKiller, mkdir_p
 
 import socket
 import toml
+import datetime
 
 log_dir = "log"
 mkdir_p(log_dir)
@@ -59,11 +60,12 @@ def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO], 
 
 
 def run_worker(config, i: int, log_config_path):
-    log = open(f"{log_dir}/worker{i}.log", "w+")
+    id = config.get('id', i)
+    log = open(f"{log_dir}/worker-{id}.log", "w+")
     # TODO: either hard-code 'local-setup' directory, or take from input config.json
-    w = setup_worker(f"tmp/w{i}", config["source"], log, log_config_path)
+    w = setup_worker(f"tmp/w-{id}", config["source"], log, log_config_path)
 
-    print(f"Starting worker {i} in background")
+    print(f"Starting worker {id} in background")
     return w.run_in_background(
         log_file=log, flags=config["flags"], subcommand_flags=config["subcommand_flags"]
     )
@@ -78,7 +80,6 @@ def is_port_open(port):
         return True
     except OSError:
         return False
-
 
 # Function to reallocate port if it is not available
 def reallocate_ports(env_name, port):
@@ -197,6 +198,7 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
     # Litentry
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
+        os.environ['TMPDIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
@@ -266,30 +268,36 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run a setup consisting of a node and some workers"
     )
-    parser.add_argument("config", type=str, help="Config for the node and workers")
+    parser.add_argument("-c", "--config", type=str, help="Config for the node and workers")
     parser.add_argument(
-        "parachain",
+        "-p",
+        "--parachain",
         nargs="?",
         default="local-docker",
         type=str,
         help="Config for parachain selection: local-docker / local-binary / remote",
     )
     parser.add_argument(
-        "log_config_path",
+        "-l",
+        "--log-config-path",
         nargs="?",
         default="./local-setup/worker-log-level-config.toml",
         type=str,
         help="log level config file path"
     )
     parser.add_argument(
-        "offset", nargs="?", default="0", type=int, help="offset for port"
-    )
-    parser.add_argument(
-        "parachain_dir", nargs="?", default="/tmp/parachain_dev", help="Parachain directory for local binary"
+        "-o", "--offset", nargs="?", default="0", type=int, help="offset for port"
     )
     args = parser.parse_args()
+    
+    today = datetime.datetime.now()
+    formatted_date = today.strftime('%d_%m_%Y_%H%M')
+    directory_name = f"parachain_dev_{formatted_date}"
+    temp_directory_path = os.path.join('/tmp', directory_name)
+    parachain_dir = temp_directory_path 
+    print("Directory has been assigned to:", temp_directory_path)
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, args.parachain_dir) == 0:
+    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
         killer.exit_gracefully()
