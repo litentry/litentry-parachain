@@ -40,11 +40,11 @@
 		"eslint": "^8.43.0",
 		"ethers": "^5.7.2",
 		"mocha": "^10.1.0",
+		"parachain-api": "../../client-api/parachain-api",
 		"prettier": "2.8.1",
+		"sidechain-api": "../../client-api/sidechain-api",
 		"ts-node": "^10.9.1",
-		"typescript": "5.0.4",
-        "parachain-api": "../../client-api/parachain-api",
-		"sidechain-api": "../../client-api/sidechain-api"
+		"typescript": "5.0.4"
 	},
 	"packageManager": "yarn@3.6.1"
 }
