@@ -6,7 +6,7 @@ This folder contains a simple example of sending direct invocation to the tee wo
 
 ```
 cd <path-to-tee-worker>
-./local-setup/launch.py local-setup/github-action-config-one-worker.json
+./local-setup/launch.py --config local-setup/github-action-config-one-worker.json
 ```
 
 2. run the ts demo
