@@ -107,7 +107,7 @@ fn oneblock_course_result(
 	let get_student_address =
 		|cells: &Vec<serde_json::Value>| -> String { get_cell_text(&cells[2]) };
 
-	let level = |cells: &Vec<serde_json::Value>, course_type: &OneBlockCourseType| -> bool {
+	let qualify = |cells: &Vec<serde_json::Value>, course_type: &OneBlockCourseType| -> bool {
 		let cell_index: usize = match course_type {
 			OneBlockCourseType::CourseCompletion => 4,
 			OneBlockCourseType::CourseExcellenceCompletion => 5,
@@ -125,7 +125,7 @@ fn oneblock_course_result(
 			if let Some(cells) = get_table_row(object) {
 				if is_student_info_cell(&cells) && addresses.contains(&get_student_address(&cells))
 				{
-					return Ok(level(&cells, course_type))
+					return Ok(qualify(&cells, course_type))
 				}
 			}
 		}
