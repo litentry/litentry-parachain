@@ -462,22 +462,6 @@ jobs:
         timeout-minutes: 30
         run: |
           make test-ts-docker-${{ matrix.chain }}
-      
-      - name: Collect Docker Logs
-        continue-on-error: true
-        if: always()
-        uses: jwalton/gh-docker-logs@v2
-        with:
-          tail: all
-          dest: docker-logs
-
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: docker-logs-${{ matrix.chain }}
-          path: docker-logs
-          if-no-files-found: ignore
 
       - name: Collect docker logs if test fails
         continue-on-error: true
