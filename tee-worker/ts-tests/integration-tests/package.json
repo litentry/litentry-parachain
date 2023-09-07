@@ -19,8 +19,6 @@
 		"test-ii-vc:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
 		"test-ii-batch:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
 		"test-ii-batch:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
-		"substrate-ii-examples": "yarn eslint . && ts-node examples/direct-invocation/substrate-ii-examples.ts",
-		"di-evm-examples": "yarn eslint . && ts-node examples/direct-invocation/di-evm-examples.ts",
 		"preinstall": "npx only-allow yarn"
 	},
 	"dependencies": {
