@@ -18,13 +18,13 @@
 
 mod chain_specs;
 #[macro_use]
-mod service;
+mod service_evm;
 mod cli;
 mod command;
 mod evm_tracing_types;
 mod rpc;
-mod rpc_without_evm;
-mod service_without_evm;
+mod rpc_evm;
+mod service;
 mod standalone_block_import;
 mod tracing;
 

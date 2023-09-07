@@ -40,11 +40,13 @@ pub mod pallet {
 		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// A unique id representing a single reward pool
+		/// EVM address type, usually H160
 		type EVMId: Default + Copy + PartialEq + core::fmt::Debug + codec::FullCodec + TypeInfo;
 	}
 
-	/// Map for PoolId <> RewardPool
+	/// Map for existing evm address and substrate address relation
+	/// We store them since the reverting proccess is not always achievable
+	/// without storage.
 	#[pallet::storage]
 	#[pallet::getter(fn reward_pools)]
 	pub type AddressMapping<T: Config> =
