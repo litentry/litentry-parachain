@@ -209,6 +209,18 @@ impl Assertion {
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
 			Self::Achainable(a) => vec![a.chain()],
+			// TODO:
+			// Currently, the supported network type has not been determined, so it is temporarily
+			// designated as all substrate networks
+			Self::Oneblock(..) => vec![
+				Web3Network::Polkadot,
+				Web3Network::Kusama,
+				Web3Network::Litentry,
+				Web3Network::Litmus,
+				Web3Network::LitentryRococo,
+				Web3Network::Khala,
+				Web3Network::SubstrateTestnet,
+			],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
