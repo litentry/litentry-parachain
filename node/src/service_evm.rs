@@ -236,7 +236,7 @@ where
 
 	let select_chain = if is_standalone { Some(LongestChain::new(backend.clone())) } else { None };
 
-	let frontier_backend = crate::rpc::open_frontier_backend(client.clone(), config)?;
+	let frontier_backend = crate::rpc_evm::open_frontier_backend(client.clone(), config)?;
 	let frontier_block_import =
 		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 
@@ -436,14 +436,14 @@ where
 		let client = client.clone();
 		let network = network.clone();
 		let transaction_pool = transaction_pool.clone();
-		let rpc_config = rpc::EvmTracingConfig {
+		let rpc_config = rpc_evm::EvmTracingConfig {
 			tracing_requesters,
 			trace_filter_max_count: additional_config.evm_tracing_config.ethapi_trace_max_count,
 			enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
 		};
 
 		Box::new(move |deny_unsafe, subscription| {
-			let deps = rpc::FullDeps {
+			let deps = rpc_evm::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				graph: transaction_pool.pool().clone(),
@@ -459,7 +459,7 @@ where
 				enable_evm_rpc: additional_config.enable_evm_rpc,
 			};
 
-			crate::rpc::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)
+			crate::rpc_evm::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)
 		})
 	};
 
@@ -942,7 +942,7 @@ where
 		let client = client.clone();
 		let network = network.clone();
 		let transaction_pool = transaction_pool.clone();
-		let rpc_config = rpc::EvmTracingConfig {
+		let rpc_config = rpc_evm::EvmTracingConfig {
 			tracing_requesters,
 			trace_filter_max_count: evm_tracing_config.ethapi_trace_max_count,
 			enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
@@ -966,7 +966,7 @@ where
 				enable_evm_rpc: true,
 			};
 
-			crate::rpc::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)
+			crate::rpc_evm::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)
 		})
 	};
 
