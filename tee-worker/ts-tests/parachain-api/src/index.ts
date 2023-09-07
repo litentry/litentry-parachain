@@ -7,7 +7,11 @@ import { identity } from "../build/interfaces/definitions";
 import { LitentryIdentity } from "../build/interfaces";
 import type { AnyTuple } from "@polkadot/types/types";
 
-export type { CorePrimitivesErrorErrorDetail } from "@polkadot/types/lookup";
+export type {
+    CorePrimitivesErrorErrorDetail,
+    PalletVcManagementVcContext,
+    TeerexPrimitivesEnclave,
+} from "@polkadot/types/lookup";
 
 export type { FrameSystemEventRecord } from "@polkadot/types/lookup";
 export type { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
@@ -19,6 +23,8 @@ export type {
     WorkerRpcReturnValue,
     TrustedCallSigned,
     Getter,
+    PublicGetter,
+    RequestVCResult,
     TrustedOperationResponse,
     StfError,
     LinkIdentityResult,

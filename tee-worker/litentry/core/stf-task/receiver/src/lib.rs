@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -44,7 +44,8 @@ use handler::{
 };
 use ita_sgx_runtime::Hash;
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
-use itp_ocall_api::EnclaveOnChainOCallApi;
+use itp_enclave_metrics::EnclaveMetric;
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -53,7 +54,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{format, string::String, sync::Arc};
+use std::{boxed::Box, format, string::String, sync::Arc};
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -169,7 +170,7 @@ where
 	S: StfEnclaveSigning,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
-	O: EnclaveOnChainOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 {
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
@@ -179,11 +180,20 @@ where
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
+		let start_time = std::time::Instant::now();
+
 		match &req {
 			RequestType::IdentityVerification(req) =>
 				IdentityVerificationHandler { req: req.clone(), context: context.clone() }.start(),
 			RequestType::AssertionVerification(req) =>
 				AssertionHandler { req: req.clone(), context: context.clone() }.start(),
+		}
+
+		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::StfTaskExecutionTime(
+			Box::new(req),
+			start_time.elapsed().as_secs_f64(),
+		)) {
+			warn!("Failed to update metric for stf execution: {:?}", e);
 		}
 	}
 }

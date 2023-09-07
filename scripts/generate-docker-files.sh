@@ -22,6 +22,8 @@ print_divider
 
 echo "installing parachain-launch ..."
 corepack yarn install
+corepack yarn upgrade
+corepack yarn build
 print_divider
 
 # pull the polkadot image to make sure we are using the latest

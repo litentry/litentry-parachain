@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry Technologies GmbH <info@litentry.com>"]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = "2021"
 name = "lc-stf-task-receiver"
 version = "0.1.0"
@@ -35,6 +35,7 @@ ita-stf = { path = "../../../../app-libs/stf", default-features = false }
 itc-rest-client = { path = "../../../../core/rest-client", default-features = false }
 itp-types = { path = "../../../../core-primitives/types", default-features = false }
 
+itp-enclave-metrics = { path = "../../../../core-primitives/enclave-metrics", default-features = false }
 itp-extrinsics-factory = { path = "../../../../core-primitives/extrinsics-factory", default-features = false }
 itp-node-api = { path = "../../../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../../../core-primitives/ocall-api", default-features = false }

@@ -166,39 +166,30 @@ declare const _default: {
                 A2: string;
                 A3: string;
                 A4: string;
-                A5: string;
                 A6: string;
                 A7: string;
                 A8: string;
                 A9: string;
                 A10: string;
                 A11: string;
+                A12: string;
                 A13: string;
+                A14: string;
             };
+        };
+        AssertionSupportedNetwork: {
+            _enum: string[];
         };
         GenericEventWithAccount: {
             account: string;
         };
         SetUserShieldingKeyResult: {
-            account: string;
             id_graph: string;
         };
         LinkIdentityResult: {
-            account: string;
-            identity: string;
             id_graph: string;
         };
-        DeactivateIdentityResult: {
-            account: string;
-            identity: string;
-        };
-        ActivateIdentityResult: {
-            account: string;
-            identity: string;
-        };
         RequestVCResult: {
-            account: string;
-            assertion: string;
             vc_index: string;
             vc_hash: string;
             vc_payload: string;

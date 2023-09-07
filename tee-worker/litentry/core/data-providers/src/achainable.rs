@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -1983,5 +1983,28 @@ mod tests {
 		assert!(res.is_ok());
 		let res = res.unwrap();
 		assert_eq!(res, true);
+	}
+
+	#[test]
+	fn class_of_year_invalid_address_works() {
+		use crate::achainable::{Params, ParamsBasicTypeWithClassOfYear};
+
+		init();
+
+		let invalid_address = "0x06e23f8209eCe9a33E24fd81440D46B08517adb5";
+
+		let name = "Account created between {dates}".into();
+		let network = &Web3Network::Ethereum;
+		let date1 = "2015-01-01".into();
+		let date2 = "2023-01-01".into();
+		let p = ParamsBasicTypeWithClassOfYear::new(name, network, date1, date2);
+
+		let mut client = AchainableClient::new();
+		let res =
+			client.query_class_of_year(invalid_address, Params::ParamsBasicTypeWithClassOfYear(p));
+		assert!(res.is_ok());
+
+		let year = res.unwrap();
+		assert_eq!(year, "Invalid".to_string());
 	}
 }

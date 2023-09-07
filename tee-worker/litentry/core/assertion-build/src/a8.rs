@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -84,7 +84,7 @@ Total transactions count range of assertion results:
 100		<= X < 200			=> true
 200		<= X < 300			=> true
 300		<= X < 500			=> true
-500 	<= X < u64::Max		=> true
+500 	<= X 				=> true
 */
 fn get_total_tx_ranges(total_txs: u64) -> (u64, u64) {
 	let min: u64;
