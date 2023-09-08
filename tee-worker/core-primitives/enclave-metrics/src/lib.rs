@@ -39,6 +39,8 @@ pub enum EnclaveMetric {
 	TopPoolSizeDecrement,
 	ExchangeRateOracle(ExchangeRateOracleMetric),
 	StfTaskExecutionTime(Box<RequestType>, f64),
+	SuccesfulTrustedOperationIncrement,
+	FailedTrustedOperationIncrement,
 	// OracleMetric(OracleMetric<MetricsInfo>),
 }
 

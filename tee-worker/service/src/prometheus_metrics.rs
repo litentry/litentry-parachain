@@ -45,7 +45,10 @@ use prometheus::{
 	HistogramVec, IntGauge, IntGaugeVec,
 };
 use serde::{Deserialize, Serialize};
-use std::{net::SocketAddr, sync::Arc};
+use std::{
+	net::SocketAddr,
+	sync::{atomic::Ordering, Arc},
+};
 use warp::{Filter, Rejection, Reply};
 
 lazy_static! {
@@ -65,6 +68,12 @@ lazy_static! {
 			.unwrap();
 	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
 		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
+			.unwrap();
+	static ref ENCLAVE_SUCCESFUL_TRUSTED_OPERATION: IntGauge =
+		register_int_gauge!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation")
+			.unwrap();
+	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: IntGauge =
+		register_int_gauge!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation")
 			.unwrap();
 }
 
@@ -184,6 +193,12 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			},
 			EnclaveMetric::StfTaskExecutionTime(req, time) => {
 				handle_stf_call_request(*req, time);
+			},
+			EnclaveMetric::SuccesfulTrustedOperationIncrement => {
+				ENCLAVE_SUCCESFUL_TRUSTED_OPERATION.inc();
+			},
+			EnclaveMetric::FailedTrustedOperationIncrement => {
+				ENCLAVE_FAILED_TRUSTED_OPERATION.inc();
 			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
