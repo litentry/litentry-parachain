@@ -29,6 +29,7 @@ use codec::{Decode, Encode};
 #[cfg(feature = "dcap")]
 use core::time::Duration;
 use frame_support::scale_info::TypeInfo;
+use ita_stf::TrustedCall;
 #[cfg(feature = "dcap")]
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
@@ -69,11 +70,11 @@ lazy_static! {
 	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
 		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
 			.unwrap();
-	static ref ENCLAVE_SUCCESFUL_TRUSTED_OPERATION: IntGauge =
-		register_int_gauge!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation")
+	static ref ENCLAVE_SUCCESFUL_TRUSTED_OPERATION: IntGaugeVec =
+		register_int_gauge_vec!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation", &["call", "block"])
 			.unwrap();
-	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: IntGauge =
-		register_int_gauge!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation")
+	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: IntGaugeVec =
+		register_int_gauge_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call", "block"])
 			.unwrap();
 }
 
@@ -194,11 +195,12 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			EnclaveMetric::StfTaskExecutionTime(req, time) => {
 				handle_stf_call_request(*req, time);
 			},
-			EnclaveMetric::SuccesfulTrustedOperationIncrement => {
-				ENCLAVE_SUCCESFUL_TRUSTED_OPERATION.inc();
+			EnclaveMetric::SuccesfulTrustedOperationIncrement(calls) => {
+				handle_succesful_trusted_operation(calls);
+				// ENCLAVE_SUCCESFUL_TRUSTED_OPERATION.inc();
 			},
-			EnclaveMetric::FailedTrustedOperationIncrement => {
-				ENCLAVE_FAILED_TRUSTED_OPERATION.inc();
+			EnclaveMetric::FailedTrustedOperationIncrement(calls) => {
+				handle_failed_trusted_operation(calls);
 			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
@@ -256,6 +258,66 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 	};
 	inc_stf_calls(category, label);
 	observe_execution_time(category, label, time)
+}
+
+fn handle_succesful_trusted_operation(call: TrustedCall) {
+	// What are the litentry trusted calls here?
+	let block = ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get();
+	let block_str: String = format!("{}", block);
+	match call {
+		TrustedCall::link_identity(..) => {
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["link_identity", &block_str])
+				.inc();
+		},
+		TrustedCall::request_vc(..) => {
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["request_vc", &block_str])
+				.inc();
+		},
+		TrustedCall::set_user_shielding_key(..) => {
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["set_user_shielding_key", &block_str])
+				.inc();
+		},
+		TrustedCall::set_user_shielding_key_with_networks(..) => {
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["set_user_shielding_key_with_networks", &block_str])
+				.inc();
+		},
+		_ => {
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["unsupported_trusted_operation", &block_str])
+				.inc();
+		},
+	}
+}
+
+fn handle_failed_trusted_operation(call: TrustedCall) {
+	let block = ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get();
+	let block_str: String = format!("{}", block);
+	match call {
+		TrustedCall::link_identity(..) => {
+			ENCLAVE_FAILED_TRUSTED_OPERATION
+				.with_label_values(&["link_identity", &block_str])
+				.inc();
+		},
+		TrustedCall::request_vc(..) => {
+			ENCLAVE_FAILED_TRUSTED_OPERATION
+				.with_label_values(&["request_vc", &block_str])
+				.inc();
+		},
+		TrustedCall::set_user_shielding_key(..) => {
+			ENCLAVE_FAILED_TRUSTED_OPERATION
+				.with_label_values(&["set_user_shielding_key", &block_str])
+				.inc();
+		},
+		_ => {
+			ENCLAVE_FAILED_TRUSTED_OPERATION
+				.with_label_values(&["unsupported_trusted_operation", &block_str])
+				.inc();
+		},
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]

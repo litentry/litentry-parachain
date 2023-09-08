@@ -4883,6 +4883,7 @@ dependencies = [
 name = "itp-enclave-metrics"
 version = "0.9.0"
 dependencies = [
+ "ita-stf",
  "lc-stf-task-sender",
  "parity-scale-codec",
  "sgx_tstd",

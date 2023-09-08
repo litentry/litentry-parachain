@@ -139,7 +139,7 @@ where
 			self.node_metadata_repo.clone(),
 		) {
 			Err(e) => {
-				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::FailedTrustedOperationIncrement) {
+				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::FailedTrustedOperationIncrement(trusted_call.call.clone())) {
 					warn!("Failed to update metric for failed trusted operations: {:?}", e);
 				}
 				error!("Stf execute failed: {:?}", e);
@@ -152,7 +152,7 @@ where
 				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
 			Ok(result) => {
-				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::SuccesfulTrustedOperationIncrement) {
+				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::SuccesfulTrustedOperationIncrement(trusted_call.call.clone())) {
 					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
 				}
 				let force_connection_wait = result.force_connection_wait();
