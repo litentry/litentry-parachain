@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2020-2023 Litentry Technologies GmbH.
+# Copyright 2020-2023 Trust Computing GmbH.
 
 set -euo pipefail
 
