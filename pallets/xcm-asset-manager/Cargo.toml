@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry Technologies GmbH <info@litentry.com>"]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = "2021"
 name = "pallet-asset-manager"
 version = "0.1.0"

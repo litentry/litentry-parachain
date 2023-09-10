@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -51,9 +51,11 @@ pub mod a7;
 pub mod a8;
 pub mod achainable;
 
+use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
 use lc_credentials::Credential;
+use lc_data_providers::achainable::web3_network_to_chain;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
@@ -63,6 +65,8 @@ use litentry_primitives::{
 	Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
+use rust_base58::ToBase58;
+use ss58_registry::Ss58AddressFormat;
 use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -80,10 +84,12 @@ pub fn transpose_identity(
 		networks.clone().into_iter().for_each(|n| {
 			match id {
 				Identity::Substrate(address) => {
-					let mut address = account_id_to_string(address.as_ref());
-					address.insert_str(0, "0x");
-					addresses.push((address, n));
-					networks_set.insert(n);
+					let network = web3_network_to_chain(&n);
+					let ss58_address = ss58_address_of(address.as_ref(), &network);
+					if let Ok(address) = ss58_address {
+						addresses.push((address, n));
+						networks_set.insert(n);
+					}
 				},
 				Identity::Evm(address) => {
 					let mut address = account_id_to_string(address.as_ref());
@@ -109,6 +115,39 @@ pub fn transpose_identity(
 		.collect()
 }
 
+// mostly copied from https://github.com/hack-ink/substrate-minimal/blob/main/subcryptor/src/lib.rs
+// no_std version is used here
+pub fn ss58_address_of(
+	public_key: &[u8],
+	network: &str,
+) -> core::result::Result<String, ErrorDetail> {
+	let network = Ss58AddressFormat::try_from(network).map_err(|_| ErrorDetail::ParseError)?;
+	let prefix = u16::from(network);
+	let mut bytes = match prefix {
+		0..=63 => vec![prefix as u8],
+		64..=16_383 => {
+			let first = ((prefix & 0b0000_0000_1111_1100) as u8) >> 2;
+			let second = ((prefix >> 8) as u8) | ((prefix & 0b0000_0000_0000_0011) as u8) << 6;
+
+			vec![first | 0b01000000, second]
+		},
+		_ => Err(ErrorDetail::ParseError)?,
+	};
+
+	bytes.extend(public_key);
+
+	let blake2b = {
+		let mut context = Blake2b::new(64);
+		context.update(b"SS58PRE");
+		context.update(&bytes);
+		context.finalize()
+	};
+
+	bytes.extend(&blake2b.as_bytes()[0..2]);
+
+	Ok(bytes.to_base58())
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -118,13 +157,21 @@ mod tests {
 	fn transpose_identity_works() {
 		let mut identities: Vec<IdentityNetworkTuple> = vec![];
 		let id1 = Identity::Twitter("alice1".as_bytes().to_vec().try_into().unwrap());
-		let id2 = [2u8; 32].into();
-		let id3 = [3u8; 32].into();
-		let id4 = [4u8; 20].into();
+		let id2 = [
+			122, 14, 95, 161, 63, 226, 172, 179, 35, 141, 125, 220, 137, 243, 163, 0, 157, 186,
+			194, 62, 45, 146, 65, 73, 222, 151, 78, 242, 131, 85, 243, 21,
+		]
+		.into();
+		let id3 = [
+			80, 35, 128, 158, 237, 244, 169, 75, 45, 16, 131, 141, 244, 63, 115, 159, 160, 91, 181,
+			12, 104, 74, 172, 100, 15, 193, 96, 5, 27, 206, 248, 12,
+		]
+		.into();
+		let id4 = [4_u8; 20].into();
 
 		let network1: Vec<Web3Network> = vec![];
 		let network2 = vec![Web3Network::Polkadot, Web3Network::Litentry];
-		let network3 = vec![Web3Network::Litentry, Web3Network::Khala, Web3Network::Kusama];
+		let network3 = vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Kusama];
 		let network4 = vec![Web3Network::Bsc];
 
 		identities.push((id1, network1));
@@ -134,14 +181,36 @@ mod tests {
 
 		let mut result = transpose_identity(&identities);
 		result.sort();
+		debug!(">> {result:?}");
 		assert_eq!(result.len(), 5);
-		assert_eq!(result.get(0).unwrap(), &(Web3Network::Polkadot, vec![[2u8; 32].to_hex()]));
-		assert_eq!(result.get(1).unwrap(), &(Web3Network::Kusama, vec![[3u8; 32].to_hex()]));
+		assert_eq!(
+			result.get(0).unwrap(),
+			&(
+				Web3Network::Polkadot,
+				vec!["13m37Uzx2PHjfGPt15TWXjqKBHTGVKFXKpZdxsQXDG3fL7F5".into()]
+			)
+		);
+		assert_eq!(
+			result.get(1).unwrap(),
+			&(Web3Network::Kusama, vec!["EPPtryxh22cfPGFQ6KY6Gb2No46hbhTcUuH5myMJNfbPkEf".into()])
+		);
 		assert_eq!(
 			result.get(2).unwrap(),
-			&(Web3Network::Litentry, vec![[2u8; 32].to_hex(), [3u8; 32].to_hex()])
+			&(
+				Web3Network::Litentry,
+				vec![
+					"49AV8EnSwQQGW5wG5ajFEg5VDKtPBzmfAyji34LrZmUn46Rt".into(),
+					"48DXPdgeqTPhC5zhfXqE3QJM7sCdHuxZ5ky5vbd5jAujYwyR".into()
+				]
+			)
 		);
-		assert_eq!(result.get(3).unwrap(), &(Web3Network::Khala, vec![[3u8; 32].to_hex()]));
+		assert_eq!(
+			result.get(3).unwrap(),
+			&(
+				Web3Network::Litmus,
+				vec!["jcP3mX494vUPJj8LzjjTmsq2zZrcXxTx1F2xywPY4RGsmMWQx".into()]
+			)
+		);
 		assert_eq!(result.get(4).unwrap(), &(Web3Network::Bsc, vec![[4u8; 20].to_hex()]));
 	}
 }

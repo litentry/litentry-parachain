@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@ extern crate sgx_tstd as std;
 use crate::sgx_reexport_prelude::*;
 
 use crate::*;
-use blake2_rfc::blake2b::Blake2b;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -34,46 +33,11 @@ use itc_rest_client::{
 	RestPath, RestPost,
 };
 use lc_data_providers::{build_client, GLOBAL_DATA_PROVIDER_CONFIG};
-use rust_base58::ToBase58;
 use serde::{Deserialize, Serialize};
-use ss58_registry::Ss58AddressFormat;
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
 	"The user has participated in any Polkadot on-chain governance events";
 const VC_A14_SUBJECT_TYPE: &str = "Polkadot Governance Participation Proof";
-
-// mostly copied from https://github.com/hack-ink/substrate-minimal/blob/main/subcryptor/src/lib.rs
-// no_std version is used here
-pub fn ss58_address_of(
-	public_key: &[u8],
-	network: &str,
-) -> core::result::Result<String, ErrorDetail> {
-	let network = Ss58AddressFormat::try_from(network).map_err(|_| ErrorDetail::ParseError)?;
-	let prefix = u16::from(network);
-	let mut bytes = match prefix {
-		0..=63 => vec![prefix as u8],
-		64..=16_383 => {
-			let first = ((prefix & 0b0000_0000_1111_1100) as u8) >> 2;
-			let second = ((prefix >> 8) as u8) | ((prefix & 0b0000_0000_0000_0011) as u8) << 6;
-
-			vec![first | 0b01000000, second]
-		},
-		_ => Err(ErrorDetail::ParseError)?,
-	};
-
-	bytes.extend(public_key);
-
-	let blake2b = {
-		let mut context = Blake2b::new(64);
-		context.update(b"SS58PRE");
-		context.update(&bytes);
-		context.finalize()
-	};
-
-	bytes.extend(&blake2b.as_bytes()[0..2]);
-
-	Ok(bytes.to_base58())
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
