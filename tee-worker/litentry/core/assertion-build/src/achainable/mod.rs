@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -114,9 +114,9 @@ pub fn request_achainable_classofyear(
 			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
 		})?;
 
-		// If parse metadata field error, return Invalid immediately
+		// In some cases,the metadata field TDF will return null, so if there is a parsing error, we need to continue requesting the next address
 		if year.parse::<u32>().is_err() {
-			return Ok((false, INVALID_CLASS_OF_YEAR.into()))
+			continue
 		}
 
 		if year < longest_created_year {

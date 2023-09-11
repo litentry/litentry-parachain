@@ -1,0 +1,6 @@
+{
+	"connections": 20,
+	"iterations": 10,
+	"substrateEndpoint": "ws://tee-staging.litentry.io:9944",
+	"workerEndpoint": "wss://tee-staging.litentry.io:2000"
+}
