@@ -51,6 +51,7 @@ pub use pallet::*;
 const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_DCAP_QUOTE_LEN: usize = 5000;
 const MAX_URL_LEN: usize = 256;
+const MAX_ENCLAVE_NUMBER: u64 = u64::MAX;
 /// Maximum number of topics for the `publish_hash` call.
 const TOPICS_LIMIT: usize = 5;
 /// Maximum number of bytes for the `data` in the `publish_hash` call.
@@ -216,6 +217,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
+			ensure!(Self::enclave_count() < MAX_ENCLAVE_NUMBER, <Error<T>>::ExceedEnclaveNumber);
 			log::info!("teerex: parameter length ok");
 
 			#[cfg(not(feature = "skip-ias-check"))]
@@ -640,6 +642,8 @@ pub mod pallet {
 		TooManyTopics,
 		/// The length of the `data` passed to `publish_hash` exceeds the limit.
 		DataTooLong,
+		/// The number of enclave exceed the upper limmit.
+		ExceedEnclaveNumber,
 	}
 }
 
