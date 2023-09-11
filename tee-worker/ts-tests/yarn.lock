@@ -3657,10 +3657,19 @@ __metadata:
 
 "parachain-api@file:../../client-api/parachain-api::locator=integration-tests%40workspace%3Aintegration-tests":
   version: 0.0.0
-  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=970ee5&locator=integration-tests%40workspace%3Aintegration-tests"
+  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=3c1072&locator=integration-tests%40workspace%3Aintegration-tests"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: bcaa1eff3093bb67afb9150357ac4d9370279d02257e954b1d8aa65cfacbb26a130dea174c4c140879b260d3c83824e639e24e0371596df78b23bc6ced6e0b8a
+  checksum: 3063e98cba44d3b6571846932825836cf2d79e80e1a60321c3aa8c91aae0fdb462d2e18aa704d13fed62d2a968c7f1eaa39c239293e00e07040b5cf4b4e574e5
+  languageName: node
+  linkType: hard
+
+"parachain-api@file:../../client-api/parachain-api::locator=stress%40workspace%3Astress":
+  version: 0.0.0
+  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=3c1072&locator=stress%40workspace%3Astress"
+  dependencies:
+    "@polkadot/api": ^10.9.1
+  checksum: 3063e98cba44d3b6571846932825836cf2d79e80e1a60321c3aa8c91aae0fdb462d2e18aa704d13fed62d2a968c7f1eaa39c239293e00e07040b5cf4b4e574e5
   languageName: node
   linkType: hard
 
@@ -4014,10 +4023,19 @@ __metadata:
 
 "sidechain-api@file:../../client-api/sidechain-api::locator=integration-tests%40workspace%3Aintegration-tests":
   version: 0.0.0
-  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=306da2&locator=integration-tests%40workspace%3Aintegration-tests"
+  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=bcded2&locator=integration-tests%40workspace%3Aintegration-tests"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: ee854f90f9d7ecab9504dd910f32d5926bd07e4cb775bbffb63948aec20e1a5c6d72430c633b181d55c8db50aa2f2e638bda462cbefde131052d2d96ef246e83
+  checksum: 62fb3f3e8a18307fcf316bee6d1bd34c06ea8b371dda51abc820110164f829962090b63544fa3fcdd04e289f0190f0aca78419c5c5d5e204c706b6e1fc61ead3
+  languageName: node
+  linkType: hard
+
+"sidechain-api@file:../../client-api/sidechain-api::locator=stress%40workspace%3Astress":
+  version: 0.0.0
+  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=bcded2&locator=stress%40workspace%3Astress"
+  dependencies:
+    "@polkadot/api": ^10.9.1
+  checksum: 62fb3f3e8a18307fcf316bee6d1bd34c06ea8b371dda51abc820110164f829962090b63544fa3fcdd04e289f0190f0aca78419c5c5d5e204c706b6e1fc61ead3
   languageName: node
   linkType: hard
 
