@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_uniswap_v2_or_v3_user, *};
-use itp_utils::if_not_production;
+use itp_utils::debug as lit_debug;
 use lc_data_providers::ConvertParameterString;
 use std::string::ToString;
 
@@ -45,10 +45,7 @@ use std::string::ToString;
 /// }
 ///
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
-	if_not_production!(debug!(
-		"Assertion Achainable build_basic, who: {:?}",
-		account_id_to_string(&req.who)
-	));
+	lit_debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities

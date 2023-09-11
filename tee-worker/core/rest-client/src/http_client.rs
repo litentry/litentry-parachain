@@ -29,7 +29,7 @@ use http_req::{
 	tls::Config,
 	uri::Uri,
 };
-use itp_utils::if_not_production;
+use itp_utils::trace as lit_trace;
 use log::*;
 use std::{
 	collections::HashMap,
@@ -194,7 +194,7 @@ where
 		let url = join_url(base_url, T::get_path(params)?.as_str(), query)?;
 		let uri = Uri::try_from(url.as_str()).map_err(Error::HttpReqError)?;
 
-		if_not_production!(trace!("uri: {:?}", uri));
+		lit_trace!("uri: {:?}", uri);
 
 		let mut request = Request::new(&uri);
 		request.method(method);
@@ -214,7 +214,7 @@ where
 						.expect("Request Header: invalid characters"),
 				);
 
-				if_not_production!(trace!("set request body: {}", body));
+				lit_trace!("set request body: {}", body);
 				request.body(body.as_bytes()); // takes body non-owned (!)
 			}
 		} else {
@@ -251,7 +251,7 @@ where
 			.read_timeout(self.timeout)
 			.write_timeout(self.timeout);
 
-		if_not_production!(trace!("request is: {:?}", request));
+		lit_trace!("request is: {:?}", request);
 
 		let mut writer = Vec::new();
 

@@ -25,8 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use itp_utils::if_not_production;
-use log::*;
+use itp_utils::debug as lit_debug;
 use serde::{Deserialize, Serialize};
 use std::{
 	default::Default,
@@ -86,10 +85,7 @@ impl DiscordLitentryClient {
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
-		if_not_production!(debug!(
-			"discord check join, guild_id: {}, handler: {}",
-			guild_id_s, handler_s
-		));
+		lit_debug!("discord check join, guild_id: {}, handler: {}", guild_id_s, handler_s);
 
 		let path = "/discord/joined".to_string();
 		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];
@@ -110,10 +106,13 @@ impl DiscordLitentryClient {
 		let channel_id_s = vec_to_string(channel_id)?;
 		let role_id_s = vec_to_string(role_id)?;
 		let handler_s = vec_to_string(handler)?;
-		if_not_production!(debug!(
+		lit_debug!(
 			"discord check id_hubber, guild_id: {}, channel_id: {}, role_id: {}, handler: {}",
-			guild_id_s, channel_id_s, role_id_s, handler_s
-		));
+			guild_id_s,
+			channel_id_s,
+			role_id_s,
+			handler_s
+		);
 
 		let path = "/discord/commented/idhubber".to_string();
 		let query = vec![
@@ -139,10 +138,7 @@ impl DiscordLitentryClient {
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
-		if_not_production!(debug!(
-			"discord assign id_hubber, guild_id: {}, handler: {}",
-			guild_id_s, handler_s
-		));
+		lit_debug!("discord assign id_hubber, guild_id: {}, handler: {}", guild_id_s, handler_s);
 
 		let path = "/discord/assgin/idhubber".to_string();
 		let query = vec![("guildid", guild_id_s.as_str()), ("handler", handler_s.as_str())];

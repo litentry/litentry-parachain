@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_utils::if_not_production;
+use itp_utils::debug as lit_debug;
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
 
 const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord. 
@@ -30,7 +30,7 @@ Guild ID: 807161594245152800.";
 const VC_A2_SUBJECT_TYPE: &str = "Litentry Discord Member";
 
 pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<Credential> {
-	if_not_production!(debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who)));
+	lit_debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who));
 
 	let mut discord_cnt: i32 = 0;
 	let mut has_joined: bool = false;

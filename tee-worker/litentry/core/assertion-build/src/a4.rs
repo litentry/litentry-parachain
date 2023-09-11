@@ -64,7 +64,7 @@ extern crate sgx_tstd as std;
 /// - `value` is false but the `from_date` is something other than 2017-01-01.
 ///  
 use crate::*;
-use itp_utils::if_not_production;
+use itp_utils::debug as lit_debug;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
 	vec_to_string, LIT_TOKEN_ADDRESS,
@@ -76,7 +76,7 @@ const VC_A4_SUBJECT_DESCRIPTION: &str =
 const VC_A4_SUBJECT_TYPE: &str = "LIT Holding Time";
 
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
-	if_not_production!(debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who)));
+	lit_debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A4(min_balance.clone()), ErrorDetail::ParseError)

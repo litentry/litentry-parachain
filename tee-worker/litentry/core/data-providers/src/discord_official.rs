@@ -25,8 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use itp_utils::if_not_production;
-use log::*;
+use itp_utils::debug as lit_debug;
 use serde::{Deserialize, Serialize};
 use std::{default::Default, format, string::String, vec, vec::Vec};
 
@@ -106,10 +105,7 @@ impl DiscordOfficialClient {
 	) -> Result<DiscordMessage, Error> {
 		let channel_id = vec_to_string(channel_id)?;
 		let message_id = vec_to_string(message_id)?;
-		if_not_production!(debug!(
-			"discord query msg, channel_id: {}, message_id: {}",
-			channel_id, message_id
-		));
+		lit_debug!("discord query msg, channel_id: {}, message_id: {}", channel_id, message_id);
 
 		let path = format!("/api/channels/{}/messages/{}", channel_id, message_id);
 		let query = vec![];
@@ -119,7 +115,7 @@ impl DiscordOfficialClient {
 	}
 
 	pub fn get_user_info(&mut self, user_id: String) -> Result<DiscordUser, Error> {
-		if_not_production!(debug!("discord query user, id: {}", user_id));
+		lit_debug!("discord query user, id: {}", user_id);
 
 		let path = format!("/api/users/{}", user_id);
 		let query = vec![];

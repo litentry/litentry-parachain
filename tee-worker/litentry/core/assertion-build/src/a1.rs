@@ -21,14 +21,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_utils::if_not_production;
+use itp_utils::debug as lit_debug;
 
 const VC_A1_SUBJECT_DESCRIPTION: &str =
 	"You've identified at least one account/address in both Web2 and Web3.";
 const VC_A1_SUBJECT_TYPE: &str = "Basic Identity Verification";
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	if_not_production!(debug!("Assertion A1 build, who: {:?}", account_id_to_string(&req.who)));
+	lit_debug!("Assertion A1 build, who: {:?}", account_id_to_string(&req.who));
 
 	let mut is_web2 = false;
 	let mut is_web3 = false;

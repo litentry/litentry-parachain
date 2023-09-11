@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_utils::if_not_production;
+use itp_utils::debug as lit_debug;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
 	vec_to_string, WBTC_TOKEN_ADDRESS,
@@ -34,7 +34,7 @@ const VC_A10_SUBJECT_TYPE: &str = "WBTC Holding Time";
 
 // WBTC Holder
 pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Result<Credential> {
-	if_not_production!(debug!("Assertion A10 build, who: {:?}", account_id_to_string(&req.who)));
+	lit_debug!("Assertion A10 build, who: {:?}", account_id_to_string(&req.who));
 
 	let q_min_balance = vec_to_string(min_balance.to_vec()).map_err(|_| {
 		Error::RequestVCFailed(Assertion::A10(min_balance.clone()), ErrorDetail::ParseError)
