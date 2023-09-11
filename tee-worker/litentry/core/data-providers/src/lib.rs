@@ -90,6 +90,8 @@ pub struct DataProviderConfig {
 	pub achainable_url: String,
 	pub achainable_auth_key: String,
 	pub credential_endpoint: String,
+	pub oneblock_notion_key: String,
+	pub oneblock_notion_url: String,
 }
 
 impl Default for DataProviderConfig {
@@ -110,6 +112,8 @@ impl DataProviderConfig {
 			achainable_url: "https://graph.tdf-labs.io/".to_string(),
 			achainable_auth_key: "".to_string(),
 			credential_endpoint: "".to_string(),
+			oneblock_notion_key: "".to_string(),
+			oneblock_notion_url: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -147,6 +151,14 @@ impl DataProviderConfig {
 	pub fn set_credential_endpoint(&mut self, v: String) {
 		debug!("set_credential_endpoint: {:?}", v);
 		self.credential_endpoint = v;
+	}
+	pub fn set_oneblock_notion_key(&mut self, v: String) {
+		debug!("set_oneblock_notion_key: {:?}", v);
+		self.oneblock_notion_key = v;
+	}
+	pub fn set_oneblock_notion_url(&mut self, v: String) {
+		debug!("set_oneblock_notion_url: {:?}", v);
+		self.oneblock_notion_url = v;
 	}
 }
 

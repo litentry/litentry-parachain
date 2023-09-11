@@ -942,6 +942,12 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
 		data_provider_config.set_credential_endpoint(v);
 	}
+	if let Ok(v) = env::var("ONEBLOCK_NOTION_KEY") {
+		data_provider_config.set_oneblock_notion_key(v);
+	}
+	if let Ok(v) = env::var("ONEBLOCK_NOTION_URL") {
+		data_provider_config.set_oneblock_notion_url(v);
+	}
 
 	data_provider_config
 }
