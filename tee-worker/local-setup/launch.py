@@ -2,7 +2,7 @@
 """
 Launch handily a local dev setup consisting of the parachain network and some workers.
 
-Example usage: `./local-setup/launch.py local-setup/development-worker.json local-binary`
+Example usage: `./local-setup/launch.py --config local-setup/development-worker.json --parachain local-binary`
 
 The worker log is piped to `./log/worker0.log` etc. folder in the current-working dir.
 

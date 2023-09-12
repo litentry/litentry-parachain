@@ -36,6 +36,9 @@ pub use key::*;
 mod vc;
 pub use vc::*;
 
+mod oneblock;
+pub use oneblock::*;
+
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{
