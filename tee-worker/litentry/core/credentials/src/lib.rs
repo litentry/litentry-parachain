@@ -76,6 +76,7 @@ use rust_base58::ToBase58;
 
 pub mod error;
 pub use error::Error;
+pub mod oneblock;
 pub mod schema;
 
 pub mod assertion_logic;
