@@ -77,6 +77,10 @@ pallet-ethereum = { git = "https://github.com/paritytech/frontier", branch = "po
 pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.39", default-features = false }
 
 # evm-tracing
+# Moonbeam Team did not export its corresponding code
+# Astar team maintained one as pallets under Astar-frame repo
+# Due to the confliction of usbtrate/polkadot source
+# Litentry maintained Astar team repo for further usage
 moonbeam-primitives-ext = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.39" }
 moonbeam-rpc-debug = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.39" }
 moonbeam-rpc-primitives-debug = { git = "https://github.com/litentry/astar-frame", branch = "polkadot-v0.9.39", default-features = false }
