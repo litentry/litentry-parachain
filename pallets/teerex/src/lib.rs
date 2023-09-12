@@ -424,6 +424,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
+			ensure!(Self::enclave_count() < MAX_ENCLAVE_NUMBER, <Error<T>>::ExceedEnclaveNumber);
 			log::info!("teerex: parameter length ok");
 
 			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
