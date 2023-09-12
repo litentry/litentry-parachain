@@ -33,4 +33,5 @@ tee_src: &tee_src
 tee_test: &tee_test
   - 'tee-worker/ts-tests/**'
   - 'tee-worker/cli/*.sh'
+  - 'tee-worker/client-api/**'
   - 'docker/**'
