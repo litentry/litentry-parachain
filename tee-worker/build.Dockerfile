@@ -100,7 +100,7 @@ FROM ubuntu:22.04 AS runner
 RUN apt update && apt install -y libssl-dev iproute2 curl
 
 ## ts-tests
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash
 RUN apt-get install -y nodejs jq
 RUN corepack enable
 RUN corepack prepare yarn@3.6.1 --activate
