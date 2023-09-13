@@ -8,7 +8,7 @@ use litentry_primitives::OneBlockCourseType;
 // (type, description)
 const VC_ONEBLOCK_COURSE_INFOS: [(&str, &str); 3] = [
 	("Substrate Blockchain Development Course Completion", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. We hope you will keep your enthusiasm and keep exploring in the future path."),
-	("Substrate Blockchain Development Course Outstanding Student", r#"Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. You stood out from all the students and were awarded the "Outstanding Student" title."#),
+	("Substrate Blockchain Development Course Outstanding Student", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. You stood out from all the students and were awarded the [Outstanding Student] title."),
 	("Substrate Blockchain Development Course Participation", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12."),
 ];
 
