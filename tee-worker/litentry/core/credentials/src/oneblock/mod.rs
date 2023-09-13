@@ -20,11 +20,11 @@ impl OneBlockAssertionUpdate for Credential {
 	fn update_notion_assertion(&mut self, course_type: &OneBlockCourseType, value: bool) {
 		let (assertion_content, info) = match course_type {
 			OneBlockCourseType::CourseCompletion =>
-				("$is_course_completion", VC_ONEBLOCK_COURSE_INFOS[0]),
+				("$course_completed", VC_ONEBLOCK_COURSE_INFOS[0]),
 			OneBlockCourseType::CourseOutstanding =>
-				("$is_course_outstanding_student", VC_ONEBLOCK_COURSE_INFOS[1]),
+				("$excellent_completion", VC_ONEBLOCK_COURSE_INFOS[1]),
 			OneBlockCourseType::CourseParticipation =>
-				("$is_course_participation", VC_ONEBLOCK_COURSE_INFOS[2]),
+				("$course_participated", VC_ONEBLOCK_COURSE_INFOS[2]),
 		};
 
 		let assertion = AssertionLogic::new_item(assertion_content, Op::Equal, "true");
