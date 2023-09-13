@@ -4,11 +4,11 @@ use crate::{
 };
 use litentry_primitives::OneBlockCourseType;
 
-/// Dev Undergraduate / Outstanding Substrate Developer / Dev Beginner
+/// Course Completion / Course Outstanding Student / Course Participation
 // (type, description)
 const VC_ONEBLOCK_COURSE_INFOS: [(&str, &str); 3] = [
 	("Substrate Blockchain Development Course Completion", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. We hope you will keep your enthusiasm and keep exploring in the future path."),
-	("Substrate Blockchain Development Course Excellence Completion", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. You stood out from all the students and were awarded the \"Outstanding Student\" title."),
+	("Substrate Blockchain Development Course Outstanding Student", r#"Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. You stood out from all the students and were awarded the "Outstanding Student" title."#),
 	("Substrate Blockchain Development Course Participation", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12."),
 ];
 
@@ -20,11 +20,11 @@ impl OneBlockAssertionUpdate for Credential {
 	fn update_notion_assertion(&mut self, course_type: &OneBlockCourseType, value: bool) {
 		let (assertion_content, info) = match course_type {
 			OneBlockCourseType::CourseCompletion =>
-				("is_course_completion", VC_ONEBLOCK_COURSE_INFOS[0]),
-			OneBlockCourseType::CourseExcellenceCompletion =>
-				("is_course_excellence_completion", VC_ONEBLOCK_COURSE_INFOS[1]),
+				("$is_course_completion", VC_ONEBLOCK_COURSE_INFOS[0]),
+			OneBlockCourseType::CourseOutstanding =>
+				("$is_course_outstanding_student", VC_ONEBLOCK_COURSE_INFOS[1]),
 			OneBlockCourseType::CourseParticipation =>
-				("is_course_participation", VC_ONEBLOCK_COURSE_INFOS[2]),
+				("$is_course_participation", VC_ONEBLOCK_COURSE_INFOS[2]),
 		};
 
 		let assertion = AssertionLogic::new_item(assertion_content, Op::Equal, "true");
