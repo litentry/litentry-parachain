@@ -16,7 +16,7 @@ Adapt or create your own config file, as in the example of [`two-workers.json`](
 ### Launch worker and node in terminal one
 You can launch the workers and the node with:
 ```bash
-./local-setup/launch.py ./local-setup/config/two-workers.json
+./local-setup/launch.py --config ./local-setup/config/two-workers.json
 ```
 wait a little until all workers have been launched. You can stop the worker and node simply by pressing `Ctrl + c`.
 
