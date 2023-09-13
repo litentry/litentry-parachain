@@ -33,6 +33,7 @@ parachains:
     - --execution=wasm
     - --state-pruning=archive
     - --blocks-pruning=archive
+    - --enable-evm-rpc
   relaychainFlags:
     - --execution=wasm
   env:

@@ -68,14 +68,13 @@ fn fetch_data_from_notion(course_type: &OneBlockCourseType) -> Result<OneBlockRe
 }
 
 const ONEBLOCK_TABLE_COL_NUM: usize = 6;
-const ONEBLOCK_COURSES_CONTENT: [&str; 6] =
+const ONEBLOCK_COURSE_PARTICIPATION_CONTENT: [&str; 6] =
 	["第一课", "第二课", "第三课", "第四课", "第五课", "第六课"];
-const ONEBLOCK_GRADUATE_CONTENT: [&str; 2] = ["YES", "NO"];
-const ONEBLOCK_OUTSTANDING_CONTENT: [&str; 2] = ["YES", "NO"];
+const ONEBLOCK_COURSE_COMPLETION_CONTENT: [&str; 2] = ["YES", "NO"];
+const ONEBLOCK_COURSE_OUTSTANDING_CONTENT: [&str; 2] = ["YES", "NO"];
 
 #[derive(Debug)]
 pub struct OneBlockData {
-	// COLs info in one ROW
 	// 学号	 | 姓名	 | substrate地址 | 课程观看进度 | 是否毕业 | 是否优秀毕业
 	rows: Vec<serde_json::Value>,
 }
@@ -90,19 +89,19 @@ impl OneBlockData {
 		self.get_column_text(&columns[0]).parse::<u32>().is_ok()
 	}
 
-	pub fn get_address(&self, columns: &[serde_json::Value]) -> String {
+	pub fn get_student_address(&self, columns: &[serde_json::Value]) -> String {
 		self.get_column_text(&columns[2])
 	}
 
-	pub fn get_watch_progress(&self, columns: &[serde_json::Value]) -> String {
+	pub fn get_course_participation_text(&self, columns: &[serde_json::Value]) -> String {
 		self.get_column_text(&columns[3])
 	}
 
-	pub fn get_graduate(&self, columns: &[serde_json::Value]) -> String {
+	pub fn get_course_completion_text(&self, columns: &[serde_json::Value]) -> String {
 		self.get_column_text(&columns[4]).to_ascii_uppercase()
 	}
 
-	pub fn get_outstanding(&self, columns: &[serde_json::Value]) -> String {
+	pub fn get_course_outstanding_text(&self, columns: &[serde_json::Value]) -> String {
 		self.get_column_text(&columns[5]).to_ascii_uppercase()
 	}
 
@@ -110,7 +109,7 @@ impl OneBlockData {
 		for row in self.rows.iter() {
 			if let Some(columns) = self.collect_columns(row) {
 				if self.check_student_number(&columns)
-					&& addresses.contains(&self.get_address(&columns))
+					&& addresses.contains(&self.get_student_address(&columns))
 				{
 					return self.qualify(&columns, course_type)
 				}
@@ -158,16 +157,16 @@ impl OneBlockAssertionQualify for OneBlockData {
 	fn qualify(&self, columns: &[serde_json::Value], course_type: &OneBlockCourseType) -> bool {
 		match course_type {
 			OneBlockCourseType::CourseCompletion => {
-				let text = self.get_graduate(columns);
-				ONEBLOCK_GRADUATE_CONTENT[0] == text
+				let text = self.get_course_completion_text(columns);
+				ONEBLOCK_COURSE_COMPLETION_CONTENT[0] == text
 			},
-			OneBlockCourseType::CourseExcellenceCompletion => {
-				let text = self.get_outstanding(columns);
-				ONEBLOCK_OUTSTANDING_CONTENT[0] == text
+			OneBlockCourseType::CourseOutstanding => {
+				let text = self.get_course_outstanding_text(columns);
+				ONEBLOCK_COURSE_OUTSTANDING_CONTENT[0] == text
 			},
 			OneBlockCourseType::CourseParticipation => {
-				let text = self.get_watch_progress(columns);
-				ONEBLOCK_COURSES_CONTENT[5] == text
+				let text = self.get_course_participation_text(columns);
+				ONEBLOCK_COURSE_PARTICIPATION_CONTENT[5] == text
 			},
 		}
 	}
@@ -230,7 +229,7 @@ mod tests {
 
 		let outstanding = check_oneblock_data(
 			&oneblock_response,
-			&OneBlockCourseType::CourseExcellenceCompletion,
+			&OneBlockCourseType::CourseOutstanding,
 			vec![address.clone()],
 		);
 		assert!(outstanding);

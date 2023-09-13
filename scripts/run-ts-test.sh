@@ -3,6 +3,7 @@
 set -eo pipefail
 
 bridge=false
+evm=false
 
 case "$1" in
     litentry|litmus|rococo) export PARACHAIN_TYPE=$1 ;;
@@ -11,6 +12,10 @@ esac
     
 if [ "$2" = "bridge" ]; then
     bridge=true
+fi
+
+if [ "$3" = "evm" ]; then
+    evm=true
 fi
 
 ROOTDIR=$(git rev-parse --show-toplevel)
@@ -25,4 +30,9 @@ corepack yarn
 corepack yarn test-filter 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
 if $bridge; then
     corepack yarn test-bridge 2>&1 | tee -a "$TMPDIR/parachain_ci_test.log"
+fi
+
+if $evm; then
+    corepack yarn test-evm-transfer 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
+    corepack yarn test-evm-contract 2>&1 | tee "$TMPDIR/parachain_ci_test.log"
 fi
