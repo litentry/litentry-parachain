@@ -22,8 +22,8 @@ pub enum OneBlockCourseType {
 	// Substrate Blockchain Development Course Completion
 	CourseCompletion,
 
-	// Substrate Blockchain Development Course Excellence Completion
-	CourseExcellenceCompletion,
+	// Substrate Blockchain Development Course Outstanding Student
+	CourseOutstanding,
 
 	// Substrate Blockchain Development Course Participation
 	CourseParticipation,
