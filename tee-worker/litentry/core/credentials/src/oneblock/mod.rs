@@ -22,7 +22,7 @@ impl OneBlockAssertionUpdate for Credential {
 			OneBlockCourseType::CourseCompletion =>
 				("$course_completed", VC_ONEBLOCK_COURSE_INFOS[0]),
 			OneBlockCourseType::CourseOutstanding =>
-				("$excellent_completion", VC_ONEBLOCK_COURSE_INFOS[1]),
+				("$outstanding_student", VC_ONEBLOCK_COURSE_INFOS[1]),
 			OneBlockCourseType::CourseParticipation =>
 				("$course_participated", VC_ONEBLOCK_COURSE_INFOS[2]),
 		};
