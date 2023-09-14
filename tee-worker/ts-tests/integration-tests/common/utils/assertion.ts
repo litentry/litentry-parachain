@@ -21,11 +21,11 @@ import {
     StfError,
     TrustedOperationResponse,
     LinkIdentityResult,
+    SetUserShieldingKeyResult,
 } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { decodeAddress } from '@polkadot/keyring';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -400,6 +400,38 @@ export function assertIdentityLinkedResult(
 
     assert.isNotNull(decodedLinkResult.id_graph);
 }
+
+export function assertSetUserShieldingKeyResult(
+    context: IntegrationTestContext,
+    requestIdentifier: string,
+    returnValue: WorkerRpcReturnValue
+) {
+    const decodedRes = context.api.createType(
+        'TrustedOperationResponse',
+        returnValue.value
+    ) as unknown as TrustedOperationResponse;
+    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
+
+    const decodedLinkResult = context.api.createType(
+        'SetUserShieldingKeyResult',
+        decodedRes.value
+    ) as unknown as SetUserShieldingKeyResult;
+
+    assert.isNotNull(decodedLinkResult.id_graph);
+}
+
+export function assertTrustedOperationResponse(
+    context: IntegrationTestContext,
+    requestIdentifier: string,
+    returnValue: WorkerRpcReturnValue
+) {
+    const decodedRes = context.api.createType(
+        'TrustedOperationResponse',
+        returnValue.value
+    ) as unknown as TrustedOperationResponse;
+    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
+}
+
 /* 
     assert vc
     steps:

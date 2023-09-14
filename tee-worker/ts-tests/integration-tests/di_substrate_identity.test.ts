@@ -4,6 +4,8 @@ import { assert } from 'chai';
 import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
     assertIdentityLinkedResult,
+    assertSetUserShieldingKeyResult,
+    assertTrustedOperationResponse,
     assertWorkerError,
     buildIdentityFromKeypair,
     buildIdentityHelper,
@@ -193,6 +195,8 @@ describe('Test Identity (direct invocation)', function () {
                 teeShieldingKey,
                 setUserShieldingKeyCall
             );
+
+            assertSetUserShieldingKeyResult(context, requestIdentifier, res);
             await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
             const events = await eventsPromise;
@@ -339,8 +343,8 @@ describe('Test Identity (direct invocation)', function () {
                 linkIdentityCall
             );
             assertIdentityLinkedResult(context, requestIdentifier, identity, res);
-
             await assertIsInSidechainBlock('linkIdentityCall', res);
+
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityLinked = false;
             events.forEach((event) => {
@@ -658,6 +662,7 @@ describe('Test Identity (direct invocation)', function () {
                 deactivateIdentityCall
             );
 
+            assertTrustedOperationResponse(context, requestIdentifier, res);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
@@ -768,6 +773,7 @@ describe('Test Identity (direct invocation)', function () {
                 deactivateIdentityCall
             );
 
+            assertTrustedOperationResponse(context, requestIdentifier, res);
             await assertIsInSidechainBlock('activateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
@@ -868,6 +874,7 @@ describe('Test Identity (direct invocation)', function () {
             teeShieldingKey,
             setIdentityNetworksCall
         );
+        assertTrustedOperationResponse(context, requestIdentifier, res);
         console.log('setIdentityNetworks call returned', res.toHuman());
         assertIsInSidechainBlock('setIdentityNetworksCall', res);
     });
@@ -927,6 +934,18 @@ describe('Test Identity (direct invocation)', function () {
             context.mrEnclave,
             teeShieldingKey,
             setIdentityNetworksCall
+        );
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isDispatch, `expected Dispatch, received ${v.type} instead`);
+                assert.equal(
+                    v.asDispatch.toString(),
+                    ' error: Module(ModuleError { index: 6, error: [5, 0, 0, 0], message: Some("WrongWeb3NetworkTypes") })'
+                );
+            },
+            res
         );
         console.log('setIdentityNetworks call returned', res.toHuman());
         assert.isTrue(res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid);

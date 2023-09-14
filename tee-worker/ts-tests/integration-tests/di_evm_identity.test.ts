@@ -1,13 +1,17 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
     EthersSigner,
+    assertSetUserShieldingKeyResult,
+    assertIdentityLinkedResult,
+    assertTrustedOperationResponse,
+    assertWorkerError,
 } from './common/utils';
 import {
     assertFailedEvent,
@@ -92,6 +96,8 @@ describe('Test Identity (evm direct invocation)', function () {
             teeShieldingKey,
             setUserShieldingKeyCall
         );
+
+        assertSetUserShieldingKeyResult(context, requestIdentifier, res);
         await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
         const events = await eventsPromise;
@@ -230,7 +236,10 @@ describe('Test Identity (evm direct invocation)', function () {
                 teeShieldingKey,
                 linkIdentityCall
             );
+
+            assertIdentityLinkedResult(context, requestIdentifier, identity, res);
             await assertIsInSidechainBlock('linkIdentityCall', res);
+
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityLinked = false;
             events.forEach((event) => {
@@ -348,6 +357,7 @@ describe('Test Identity (evm direct invocation)', function () {
                 deactivateIdentityCall
             );
 
+            assertTrustedOperationResponse(context, requestIdentifier, res);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
@@ -451,6 +461,7 @@ describe('Test Identity (evm direct invocation)', function () {
                 deactivateIdentityCall
             );
 
+            assertTrustedOperationResponse(context, requestIdentifier, res);
             await assertIsInSidechainBlock('activateIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
@@ -538,6 +549,22 @@ describe('Test Identity (evm direct invocation)', function () {
         );
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(
+                    v.isDeactivateIdentityFailed,
+                    `expected DeactivateIdentityFailed, received ${v.type} instead`
+                );
+                assert.isTrue(
+                    v.asDeactivateIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asDeactivateIdentityFailed.type} instead`
+                );
+                assert.equal(u8aToString(v.asDeactivateIdentityFailed.asStfError), 'DeactivatePrimeIdentityDisallowed');
+            },
+            res
+        );
 
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');

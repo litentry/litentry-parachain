@@ -2,6 +2,7 @@ import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import {
+    assertSetUserShieldingKeyResult,
     assertWorkerError,
     buildIdentityFromKeypair,
     initIntegrationTestContext,
@@ -84,6 +85,8 @@ describe('Test Vc (direct invocation)', function () {
             teeShieldingKey,
             setUserShieldingKeyCall
         );
+
+        assertSetUserShieldingKeyResult(context, requestIdentifier, res);
         await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
         const events = await eventsPromise;
@@ -115,7 +118,7 @@ describe('Test Vc (direct invocation)', function () {
                 requestIdentifier
             );
 
-            const callValue = await sendRequestFromTrustedCall(
+            const res = await sendRequestFromTrustedCall(
                 context.tee,
                 context.api,
                 context.mrEnclave,
@@ -123,7 +126,7 @@ describe('Test Vc (direct invocation)', function () {
                 requestVcCall
             );
 
-            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, callValue);
+            await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
             const events = await eventsPromise;
             const vcIssuedEvents = events
                 .map(({ event }) => event)
@@ -136,7 +139,7 @@ describe('Test Vc (direct invocation)', function () {
             );
             const trustedOperationResponse = context.api.createType(
                 'TrustedOperationResponse',
-                callValue.value
+                res.value
             ) as unknown as TrustedOperationResponse;
             await assertVc(context, aliceSubject, trustedOperationResponse.value);
         });
