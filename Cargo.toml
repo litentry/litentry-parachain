@@ -5,6 +5,7 @@ members = [
     'pallets/bridge-transfer',
     'pallets/drop3',
     'pallets/extrinsic-filter',
+    'pallets/evm-address',
     'pallets/identity-management',
     'pallets/vc-management',
     'pallets/sidechain',

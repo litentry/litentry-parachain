@@ -17,9 +17,7 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{
-	all_substrate_web3networks, AccountId, BoundedWeb3Network, OneBlockCourseType, Web3Network,
-};
+use crate::{AccountId, BoundedWeb3Network, OneBlockCourseType, Web3Network};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -211,11 +209,8 @@ impl Assertion {
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
 			Self::Achainable(a) => vec![a.chain()],
-			// TODO:
-			// Currently, the supported network type has not been determined, so it is temporarily
-			// designated as all substrate networks.
-			// Issue: https://github.com/litentry/litentry-parachain/issues/2111
-			Self::Oneblock(..) => all_substrate_web3networks(),
+			// Oneblock Assertion
+			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
