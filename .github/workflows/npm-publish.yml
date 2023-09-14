@@ -1,0 +1,61 @@
+name: Publish to NPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: true
+      version:
+        description: 'NPM package version'
+        required: true
+      tag:
+        type: choice
+        description: 'Select the GitHub Release tag'
+        options:
+          - 'latest'
+          - 'staging'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Use Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Install dependencies
+        run: |
+          cd tee-worker/client-api
+          corepack yarn install
+
+      - name: Build and Publish
+        run: |
+          branch_name="${{ github.event.inputs.branch }}"
+          npm_package_version="${{ github.event.inputs.version }}"
+          tag="${{ github.event.inputs.tag }}"
+
+          if [ "$branch_name" == "dev" ]; then
+            cd tee-worker/client-api/parachain-api
+            corepack yarn build
+            npm dist-tag add banana-test-api@$npm_package_version $tag
+            npm publish --tag $tag
+
+            cd tee-worker/client-api/sidechain-api
+            corepack yarn build
+            npm dist-tag add apple-test-api@$npm_package_version $tag
+            npm publish --tag $tag
+          else
+            echo "Not on the 'dev' branch, skipping npm publish."
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
