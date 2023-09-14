@@ -326,8 +326,7 @@ jobs:
 
       - name: Build docker image
         if: |
-          needs.set-condition.outputs.rebuild_parachain == 'true' &&
-          needs.set-condition.outputs.push_docker == 'true'
+          needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
           ./scripts/build-docker.sh production tee-prod
           echo "============================="
