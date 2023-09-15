@@ -75,7 +75,48 @@ pub(crate) fn execute_getter_from_cli_args(
 	getter: &Getter,
 ) -> TrustedOpResult {
 	let shard = read_shard(trusted_args).unwrap();
-	Ok(get_worker_api_direct(cli).get_state(shard, getter))
+	let direct_api = get_worker_api_direct(cli);
+	get_state(&direct_api, shard, getter)
+}
+
+pub(crate) fn get_state(
+	direct_api: &DirectClient,
+	shard: ShardIdentifier,
+	getter: &Getter,
+) -> TrustedOpResult {
+	// Compose jsonrpc call.
+	let data = Request { shard, cyphertext: getter.encode() };
+	let rpc_method = "state_executeGetter".to_owned();
+	let jsonrpc_call: String =
+		RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
+
+	let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
+
+	// Decode RPC response.
+	let rpc_response: RpcResponse = serde_json::from_str(&rpc_response_str)
+		.map_err(|err| TrustedOperationError::Default { msg: err.to_string() })?;
+	let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result)
+		// Replace with `inspect_err` once it's stable.
+		.map_err(|err| {
+			error!("Failed to decode RpcReturnValue: {:?}", err);
+			TrustedOperationError::Default { msg: "RpcReturnValue::from_hex".to_string() }
+		})?;
+
+	if rpc_return_value.status == DirectRequestStatus::Error {
+		println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+		return Err(TrustedOperationError::Default {
+			msg: "[Error] DirectRequestStatus::Error".to_string(),
+		})
+	}
+
+	let maybe_state = Option::decode(&mut rpc_return_value.value.as_slice())
+		// Replace with `inspect_err` once it's stable.
+		.map_err(|err| {
+			error!("Failed to decode return value: {:?}", err);
+			TrustedOperationError::Default { msg: "Option::decode".to_string() }
+		})?;
+
+	Ok(maybe_state)
 }
 
 fn send_indirect_request(
@@ -230,6 +271,9 @@ fn send_direct_request(
 						},
 						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+							if let Ok(value) = Hash::decode(&mut return_value.value.as_slice()) {
+								println!("Trusted call {:?} is {:?}", value, status);
+							}
 							if connection_can_be_closed(status) {
 								direct_api.close().unwrap();
 								return Ok(None)
@@ -300,11 +344,15 @@ pub(crate) fn wait_until(
 							},
 							DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 								debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
-								if until(status.clone()) {
-									return Some((top_hash, Instant::now()))
-								} else if status == TrustedOperationStatus::Invalid {
-									error!("Invalid request");
-									return None
+								if let Ok(value) = Hash::decode(&mut return_value.value.as_slice())
+								{
+									println!("Trusted call {:?} is {:?}", value, status);
+									if until(status.clone()) {
+										return Some((top_hash, Instant::now()))
+									} else if status == TrustedOperationStatus::Invalid {
+										error!("Invalid request");
+										return None
+									}
 								}
 							},
 							DirectRequestStatus::Ok => {

@@ -61,11 +61,6 @@ pub enum BaseCommand {
 	/// query sgx-runtime metadata and print it as json to stdout
 	PrintSgxMetadata,
 
-	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
-	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
-	/// we want to keep our changes isolated
-	PrintSgxMetadataRaw,
-
 	/// send some bootstrapping funds to supplied account(s)
 	Faucet(FaucetCommand),
 
@@ -85,6 +80,11 @@ pub enum BaseCommand {
 	ShieldFunds(ShieldFundsCommand),
 
 	// Litentry's commands below
+	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
+	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
+	/// we want to keep our changes isolated
+	PrintSgxMetadataRaw,
+
 	/// set the user's shielding key
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
@@ -103,7 +103,6 @@ impl BaseCommand {
 			BaseCommand::ListAccounts => list_accounts(),
 			BaseCommand::PrintMetadata => print_metadata(cli),
 			BaseCommand::PrintSgxMetadata => print_sgx_metadata(cli),
-			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::Faucet(cmd) => cmd.run(cli),
 			BaseCommand::Transfer(cmd) => cmd.run(cli),
 			BaseCommand::ListWorkers => list_workers(cli),
@@ -111,6 +110,7 @@ impl BaseCommand {
 			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
 			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
+			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),

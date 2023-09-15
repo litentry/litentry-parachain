@@ -146,11 +146,9 @@ impl BenchmarkCommand {
 			let account = get_pair_from_str(trusted_args, a.to_string().as_str());
 			let initial_balance = 10000000;
 
-			let funding_identity = funding_account_keys.public().into();
-
 			// Transfer amount from Alice to new account.
 			let top: TrustedOperation = TrustedCall::balance_transfer(
-				funding_identity,
+				funding_account_keys.public().into(),
 				account.public().into(),
 				initial_balance,
 			)
@@ -206,11 +204,9 @@ impl BenchmarkCommand {
 					// Get nonce of account.
 					let nonce = get_nonce(client.account.clone(), shard, &client.client_api);
 
-					let client_identity = client.account.public().into();
-
 					// Transfer money from client account to new account.
 					let top: TrustedOperation = TrustedCall::balance_transfer(
-						client_identity,
+						client.account.public().into(),
 						new_account.public().into(),
 						EXISTENTIAL_DEPOSIT,
 					)

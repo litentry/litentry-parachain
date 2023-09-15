@@ -5365,6 +5365,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
+ "teerex-primitives",
 ]
 
 [[package]]

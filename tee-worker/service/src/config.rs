@@ -261,6 +261,7 @@ impl From<&ArgMatches<'_>> for Config {
 		};
 
 		let run_config = m.subcommand_matches("run").map(RunConfig::from);
+
 		let is_mock_server_enabled = m.is_present("enable-mock-server");
 		let mock_server_port = m.value_of("mock-server-port").unwrap_or(DEFAULT_MOCK_SERVER_PORT);
 		let parentchain_start_block =

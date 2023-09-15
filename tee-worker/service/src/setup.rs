@@ -139,6 +139,7 @@ fn remove_file_if_it_exists(root_directory: &Path, file_name: &str) -> ServiceRe
 	}
 	Ok(())
 }
+
 #[cfg(test)]
 mod tests {
 	use super::*;

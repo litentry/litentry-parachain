@@ -33,7 +33,7 @@ use itp_stf_interface::{
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_storage::storage_value_key;
-use itp_types::{OpaqueCall, H256};
+use itp_types::{parentchain::ParentchainId, OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::StaticLookup;
@@ -116,9 +116,13 @@ where
 		});
 	}
 
-	fn storage_hashes_to_update_on_block() -> Vec<Vec<u8>> {
+	fn storage_hashes_to_update_on_block(parentchain_id: &ParentchainId) -> Vec<Vec<u8>> {
 		// Get all shards that are currently registered.
-		vec![shards_key_hash()]
+		match parentchain_id {
+			ParentchainId::Integritee => vec![shards_key_hash()],
+			ParentchainId::TargetA => vec![],
+			ParentchainId::TargetB => vec![],
+		}
 	}
 }
 

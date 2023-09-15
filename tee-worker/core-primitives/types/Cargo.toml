@@ -26,6 +26,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 
 [features]
 default = ["std"]
@@ -36,8 +37,7 @@ std = [
     "serde_json/std",
     "primitive-types/std",
     "itp-sgx-runtime-primitives/std",
-    # "teerex-primitives/std",
-    # "enclave-bridge-primitives/std",
+    "teerex-primitives/std",
     # substrate
     "frame-system/std",
     "pallet-balances/std",

@@ -41,7 +41,7 @@ use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::traits::{Block as ParentchainBlockTrait, Header, Keccak256};
-use std::{sync::Arc, vec::Vec};
+use std::{fmt::Debug, sync::Arc, vec::Vec};
 
 pub struct IndirectCallsExecutor<
 	ShieldingKeyRepository,
@@ -49,12 +49,13 @@ pub struct IndirectCallsExecutor<
 	TopPoolAuthor,
 	NodeMetadataProvider,
 	IndirectCallsFilter,
+	EventCreator,
 > {
 	pub(crate) shielding_key_repo: Arc<ShieldingKeyRepository>,
 	pub(crate) stf_enclave_signer: Arc<StfEnclaveSigner>,
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) node_meta_data_provider: Arc<NodeMetadataProvider>,
-	_phantom: PhantomData<IndirectCallsFilter>,
+	_phantom: PhantomData<(IndirectCallsFilter, EventCreator)>,
 }
 impl<
 		ShieldingKeyRepository,
@@ -62,6 +63,7 @@ impl<
 		TopPoolAuthor,
 		NodeMetadataProvider,
 		IndirectCallsFilter,
+		EventCreator,
 	>
 	IndirectCallsExecutor<
 		ShieldingKeyRepository,
@@ -69,6 +71,7 @@ impl<
 		TopPoolAuthor,
 		NodeMetadataProvider,
 		IndirectCallsFilter,
+		EventCreator,
 	>
 {
 	pub fn new(
@@ -93,6 +96,7 @@ impl<
 		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
+		EventCreator,
 	> ExecuteIndirectCalls
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
@@ -100,6 +104,7 @@ impl<
 		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
+		EventCreator,
 	> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -107,13 +112,15 @@ impl<
 	StfEnclaveSigner: StfEnclaveSigning,
 	TopPoolAuthor: AuthorApi<H256, H256> + Send + Sync + 'static,
 	NodeMetadataProvider: AccessNodeMetadata,
-	NodeMetadataProvider::MetadataType: NodeMetadataTrait,
-	FilterIndirectCalls: FilterCalls<NodeMetadataProvider::MetadataType>,
-	FilterIndirectCalls::Call: IndirectDispatch<Self, Args = u32> + Encode,
+	FilterIndirectCalls: FilterIntoDataFrom<NodeMetadataProvider::MetadataType>,
+	NodeMetadataProvider::MetadataType: NodeMetadataTrait + Clone,
+	FilterIndirectCalls::Output: IndirectDispatch<Self> + Encode + Debug,
+	EventCreator: EventsFromMetadata<NodeMetadataProvider::MetadataType>,
 {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
 		block: &ParentchainBlock,
+		events: &[u8],
 	) -> Result<OpaqueCall>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
@@ -149,7 +156,7 @@ impl<
 			let encoded_xt_opaque = xt_opaque.encode();
 
 			let maybe_call = self.node_meta_data_provider.get_from_metadata(|metadata| {
-				FilterIndirectCalls::filter_into_with_metadata(&encoded_xt_opaque, metadata)
+				FilterIndirectCalls::filter_into_from_metadata(&encoded_xt_opaque, metadata)
 			})?;
 
 			let call = match maybe_call {
@@ -157,12 +164,16 @@ impl<
 				None => continue,
 			};
 
-			if let Err(e) = call.dispatch(self, block_number_u32) {
-				log::warn!("Error executing the indirect call: {:?}", e);
+			if let ExtrinsicStatus::Failed = xt_status {
+				warn!("Parentchain Extrinsic Failed, {:?} wont be dispatched", call);
 				continue
-			};
+			}
 
-			executed_calls.push(hash_of(&call))
+			if let Err(e) = call.dispatch(self) {
+				warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
+			} else {
+				executed_calls.push(hash_of(&call));
+			}
 		}
 		debug!("successfully processed {} indirect invocations", executed_calls.len());
 		// Include a processed parentchain block confirmation for each block.
@@ -210,6 +221,7 @@ impl<
 		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
+		EventFilter,
 	> IndirectExecutor
 	for IndirectCallsExecutor<
 		ShieldingKeyRepository,
@@ -217,6 +229,7 @@ impl<
 		TopPoolAuthor,
 		NodeMetadataProvider,
 		FilterIndirectCalls,
+		EventFilter,
 	> where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt<Error = itp_sgx_crypto::Error>
@@ -305,9 +318,12 @@ mod test {
 	};
 	use codec::{Decode, Encode};
 	use ita_stf::TrustedOperation;
-	use itc_parentchain_test::parentchain_block_builder::ParentchainBlockBuilder;
+	use itc_parentchain_test::ParentchainBlockBuilder;
 	use itp_node_api::{
-		api_client::{ParentchainExtrinsicParams, ParentchainUncheckedExtrinsic},
+		api_client::{
+			ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
+			ParentchainUncheckedExtrinsic,
+		},
 		metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 	};
 	use itp_sgx_crypto::mocks::KeyRepositoryMock;
@@ -315,11 +331,12 @@ mod test {
 	use itp_stf_primitives::types::AccountId;
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn};
+	use itp_types::{
+		parentchain::Address, Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn,
+	};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
-	use substrate_api_client::ExtrinsicParams;
 
 	type TestShieldingKeyRepo = KeyRepositoryMock<ShieldingCryptoMock>;
 	type TestStfEnclaveSigner = StfEnclaveSignerMock;
@@ -352,7 +369,7 @@ mod test {
 			.build();
 
 		indirect_calls_executor
-			.execute_indirect_calls_in_extrinsics(&parentchain_block)
+			.execute_indirect_calls_in_extrinsics(&parentchain_block, &Vec::new())
 			.unwrap();
 
 		assert_eq!(1, top_pool_author.pending_tops(shard_id()).unwrap().len());
@@ -364,7 +381,7 @@ mod test {
 
 		let mr_enclave = [33u8; 32];
 		let (indirect_calls_executor, top_pool_author, shielding_key_repo) =
-			test_fixtures(mr_enclave, NodeMetadataMock::new());
+			test_fixtures(mr_enclave.clone(), NodeMetadataMock::new());
 		let shielding_key = shielding_key_repo.retrieve_key().unwrap();
 
 		let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
@@ -377,7 +394,7 @@ mod test {
 			.build();
 
 		indirect_calls_executor
-			.execute_indirect_calls_in_extrinsics(&parentchain_block)
+			.execute_indirect_calls_in_extrinsics(&parentchain_block, &Vec::new())
 			.unwrap();
 
 		assert_eq!(1, top_pool_author.pending_tops(shard_id()).unwrap().len());
@@ -488,7 +505,13 @@ mod test {
 	}
 
 	fn default_extrinsic_params() -> ParentchainExtrinsicParams {
-		ParentchainExtrinsicParams::new(0, 0, 0, H256::default(), Default::default())
+		ParentchainExtrinsicParams::new(
+			0,
+			0,
+			0,
+			H256::default(),
+			ParentchainAdditionalParams::default(),
+		)
 	}
 	fn test_fixtures(
 		mr_enclave: [u8; 32],
