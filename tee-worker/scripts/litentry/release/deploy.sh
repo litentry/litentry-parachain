@@ -325,7 +325,7 @@ function build {
 
     # download polkadot
     echo "Downloading polkadot binary ..."
-    url="https://github.com/paritytech/polkadot/releases/download/v0.9.39/polkadot"
+    url="https://github.com/paritytech/polkadot/releases/download/v0.9.42/polkadot"
     polkadot_bin="$PARACHAIN_BASEDIR/polkadot"
     wget -O "$polkadot_bin" -q "$url"
     chmod a+x "$polkadot_bin"
