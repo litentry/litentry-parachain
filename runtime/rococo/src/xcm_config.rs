@@ -26,6 +26,7 @@ use frame_support::{
 	weights::IdentityFee,
 	PalletId,
 };
+use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
@@ -328,6 +329,7 @@ impl pallet_xcm::Config for Runtime {
 	type WeightInfo = pallet_xcm::TestWeightInfo;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {

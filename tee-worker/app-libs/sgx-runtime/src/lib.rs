@@ -270,7 +270,6 @@ impl pallet_sudo::Config for Runtime {
 
 impl pallet_parentchain::Config for Runtime {
 	type WeightInfo = ();
-	type RuntimeEvent = RuntimeEvent;
 }
 
 impl pallet_imt::Config for Runtime {

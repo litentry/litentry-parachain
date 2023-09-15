@@ -19,10 +19,10 @@ use crate::{
 	error::Result,
 	indirect_calls::{
 		ActivateIdentityArgs, CallWorkerArgs, DeactivateIdentityArgs, LinkIdentityArgs,
-		RemoveScheduledEnclaveArgs, RequestVCArgs, SetUserShieldingKeyArgs, ShiedFundsArgs,
+		RemoveScheduledEnclaveArgs, RequestVCArgs, SetUserShieldingKeyArgs, ShieldFundsArgs,
 		UpdateScheduledEnclaveArgs,
 	},
-	parentchain_extrinsic_parser::ParseExtrinsic,
+	parentchain_parser::ParseExtrinsic,
 	IndirectDispatch, IndirectExecutor,
 };
 use codec::{Decode, Encode};
@@ -89,7 +89,7 @@ where
 		let call_args = &mut &xt.call_args[..];
 
 		if index == metadata.shield_funds_call_indexes().ok()? {
-			let args = decode_and_log_error::<ShiedFundsArgs>(call_args)?;
+			let args = decode_and_log_error::<ShieldFundsArgs>(call_args)?;
 			Some(IndirectCall::ShieldFunds(args))
 		} else if index == metadata.call_worker_call_indexes().ok()? {
 			let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;
@@ -134,7 +134,7 @@ where
 /// can implemeent their own indirect call there.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
-	ShieldFunds(ShiedFundsArgs),
+	ShieldFunds(ShieldFundsArgs),
 	CallWorker(CallWorkerArgs),
 	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<MultiAddress<AccountId32, ()>>, H256),
 	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
@@ -202,7 +202,7 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 	for _i in 0..call_count.len() {
 		let index: CallIndex = Decode::decode(call_args).ok()?;
 		if index == metadata.shield_funds_call_indexes().ok()? {
-			let args = decode_and_log_error::<ShiedFundsArgs>(call_args)?;
+			let args = decode_and_log_error::<ShieldFundsArgs>(call_args)?;
 			calls.push(IndirectCall::ShieldFunds(args))
 		} else if index == metadata.call_worker_call_indexes().ok()? {
 			let args = decode_and_log_error::<CallWorkerArgs>(call_args)?;

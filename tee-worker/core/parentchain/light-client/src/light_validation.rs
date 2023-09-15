@@ -256,7 +256,7 @@ where
 {
 	fn send_extrinsics(&mut self, extrinsics: Vec<OpaqueExtrinsic>) -> Result<(), Error> {
 		for xt in extrinsics.iter() {
-			self.submit_xt_to_be_included(0u64, xt.clone());
+			self.submit_xt_to_be_included(xt.clone());
 		}
 
 		self.ocall_api

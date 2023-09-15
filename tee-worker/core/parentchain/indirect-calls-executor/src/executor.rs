@@ -22,6 +22,7 @@ use crate::sgx_reexport_prelude::*;
 use crate::{
 	error::{Error, Result},
 	filter_calls::FilterCalls,
+	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
 	traits::{ExecuteIndirectCalls, IndirectDispatch, IndirectExecutor},
 };
 use binary_merkle_tree::merkle_root;

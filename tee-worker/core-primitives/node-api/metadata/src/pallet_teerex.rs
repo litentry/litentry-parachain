@@ -70,14 +70,6 @@ impl TeerexCallIndexes for NodeMetadata {
 		self.call_indexes(TEEREX, "register_quoting_enclave")
 	}
 
-	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "register_tcb_info")
-	}
-
-	fn unregister_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "unregister_enclave")
-	}
-
 	fn call_worker_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(TEEREX, "call_worker")
 	}
@@ -104,6 +96,10 @@ impl TeerexCallIndexes for NodeMetadata {
 
 	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]> {
 		self.call_indexes(TEEREX, "remove_scheduled_enclave")
+	}
+
+	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "register_tcb_info")
 	}
 }
 

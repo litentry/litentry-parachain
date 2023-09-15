@@ -35,7 +35,7 @@ use ita_stf::{
 };
 use itc_parentchain::indirect_calls_executor::{
 	filter_metadata::{ShieldFundsAndInvokeFilter, TestEventCreator},
-	parentchain_extrinsic_parser::ParentchainExtrinsicParser,
+	parentchain_parser::ParentchainExtrinsicParser,
 	ExecuteIndirectCalls, IndirectCallsExecutor,
 };
 use itc_parentchain_test::{
