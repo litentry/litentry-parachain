@@ -20,7 +20,7 @@ use itp_types::{
 	parentchain::{Hash, Header, StorageProof},
 	H256,
 };
-use sp_finality_grandpa::AuthorityList;
+use sp_consensus_grandpa::AuthorityList;
 use substrate_api_client::{Error::Metadata, Events, MetadataError::PalletNotFound};
 
 pub struct ParentchainApiMock {

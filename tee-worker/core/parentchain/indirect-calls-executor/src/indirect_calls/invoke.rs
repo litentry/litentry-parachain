@@ -20,13 +20,12 @@ use codec::{Decode, Encode};
 use itp_types::Request;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct CallWorkerArgs {
+pub struct InvokeArgs {
 	request: Request,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CallWorkerArgs {
-	type Args = ();
-	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
+impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for InvokeArgs {
+	fn dispatch(&self, executor: &Executor) -> Result<()> {
 		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
 		executor.submit_trusted_call(self.request.shard, self.request.cyphertext.clone());
 		Ok(())

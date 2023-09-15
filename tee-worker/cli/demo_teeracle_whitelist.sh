@@ -28,10 +28,10 @@ trap "echo The demo is terminated (SIGTERM); exit 1" SIGTERM
 while getopts ":p:P:d:i:u:V:C:" opt; do
     case $opt in
         p)
-            NPORT=$OPTARG
+            INTEGRITEE_RPC_PORT=$OPTARG
             ;;
         P)
-            WORKER1PORT=$OPTARG
+            WORKER_1_PORT=$OPTARG
             ;;
         d)
             DURATION=$OPTARG
@@ -40,23 +40,26 @@ while getopts ":p:P:d:i:u:V:C:" opt; do
             INTERVAL=$OPTARG
             ;;
         u)
-            NODEURL=$OPTARG
+            INTEGRITEE_RPC_URL=$OPTARG
             ;;
         V)
-            WORKER1URL=$OPTARG
+            WORKER_1_URL=$OPTARG
             ;;
         C)
             CLIENT_BIN=$OPTARG
             ;;
+        *)
+            echo "invalid arg ${OPTARG}"
+            exit 1
     esac
 done
 
 # using default port if none given as arguments
-NPORT=${NPORT:-9944}
-NODEURL=${NODEURL:-"ws://127.0.0.1"}
+INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
+INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
 
-WORKER1PORT=${WORKER1PORT:-2000}
-WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
+WORKER_1_PORT=${WORKER_1_PORT:-2000}
+WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
 
 CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
@@ -67,21 +70,22 @@ LISTEN_TO_EXCHANGE_RATE_EVENTS_CMD="oracle listen-to-exchange-rate-events"
 ADD_TO_WHITELIST_CMD="oracle add-to-whitelist"
 
 echo "Using client binary ${CLIENT_BIN}"
-echo "Using node uri ${NODEURL}:${NPORT}"
-echo "Using trusted-worker uri ${WORKER1URL}:${WORKER1PORT}"
+${CLIENT_BIN} --version
+echo "Using node uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
+echo "Using trusted-worker uri ${WORKER_1_URL}:${WORKER_1_PORT}"
 echo "Using worker market data update interval ${INTERVAL}"
-echo "Count the update events for ${DURATION}"
+echo "Count the update events for ${DURATION} blocks"
 echo ""
 
 COIN_GECKO="https://api.coingecko.com/"
 COIN_MARKET_CAP="https://pro-api.coinmarketcap.com/"
-let "MIN_EXPECTED_NUM_OF_EVENTS=$DURATION/$INTERVAL-3"
+let "MIN_EXPECTED_NUM_OF_EVENTS=$DURATION*6/$INTERVAL-3"
 echo "Minimum expected number of events with a single oracle source: ${MIN_EXPECTED_NUM_OF_EVENTS}"
 
 let "MIN_EXPECTED_NUM_OF_EVENTS_2 = 2*$MIN_EXPECTED_NUM_OF_EVENTS"
 echo "Minimum expected number of events with two oracle sources: ${MIN_EXPECTED_NUM_OF_EVENTS_2}"
 
-CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1URL}"
+CLIENT="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_1_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_1_URL}"
 
 echo "* Query on-chain enclave registry:"
 ${CLIENT} list-workers
@@ -94,7 +98,7 @@ echo "Reading MRENCLAVE from worker list: ${MRENCLAVE}"
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }
 echo ""
 
-echo "Listen to ExchangeRateUpdated events for ${DURATION} seconds. There should be no trusted oracle source!"
+echo "Listen to ExchangeRateUpdated events for ${DURATION} blocks. There should be no trusted oracle source!"
 #${CLIENT} ${LISTEN_TO_EXCHANGE_RATE_EVENTS_CMD} ${DURATION}
 #echo ""
 
@@ -107,12 +111,12 @@ ${CLIENT} ${ADD_TO_WHITELIST_CMD} //Alice ${COIN_GECKO} ${MRENCLAVE}
 echo "MRENCLAVE in whitelist for ${COIN_GECKO}"
 echo ""
 
-echo "Listen to ExchangeRateUpdated events for ${DURATION} seconds, after a trusted oracle source has been added to the whitelist."
+echo "Listen to ExchangeRateUpdated events for ${DURATION} blocks, after a trusted oracle source has been added to the whitelist."
 #${CLIENT} ${LISTEN_TO_EXCHANGE_RATE_EVENTS_CMD} ${DURATION}
 #echo ""
 
 read EVENTS_COUNT <<< $($CLIENT ${LISTEN_TO_EXCHANGE_RATE_EVENTS_CMD} ${DURATION} | awk '/  EVENTS_COUNT: / { print $2; exit }')
-echo "Got ${EVENTS_COUNT} exchange rate updates from the trusted oracle source in ${DURATION} second(s)"
+echo "Got ${EVENTS_COUNT} exchange rate updates from the trusted oracle source in ${DURATION} blocks(s)"
 echo ""
 
 echo "Add ${COIN_MARKET_CAP} for ${MRENCLAVE} as trusted oracle source"
@@ -120,12 +124,12 @@ ${CLIENT} ${ADD_TO_WHITELIST_CMD} //Alice ${COIN_MARKET_CAP} ${MRENCLAVE}
 echo "MRENCLAVE in whitelist for ${COIN_MARKET_CAP}"
 echo ""
 
-echo "Listen to ExchangeRateUpdated events for ${DURATION} seconds, after a second trusted oracle source has been added to the whitelist."
+echo "Listen to ExchangeRateUpdated events for ${DURATION} blocks, after a second trusted oracle source has been added to the whitelist."
 #${CLIENT} ${LISTEN_TO_EXCHANGE_RATE_EVENTS_CMD} ${DURATION}
 #echo ""
 
 read EVENTS_COUNT_2 <<< $($CLIENT ${LISTEN_TO_EXCHANGE_RATE_EVENTS_CMD} ${DURATION} | awk '/  EVENTS_COUNT: / { print $2; exit }')
-echo "Got ${EVENTS_COUNT_2} exchange rate updates from 2 trusted oracle sources in ${DURATION} second(s)"
+echo "Got ${EVENTS_COUNT_2} exchange rate updates from 2 trusted oracle sources in ${DURATION} blocks(s)"
 echo ""
 
 echo "Results :"

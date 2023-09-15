@@ -71,7 +71,7 @@ ENV SGX_PRODUCTION=$SGX_PRODUCTION
 ENV HOME=/home/ubuntu/repo
 
 RUN rustup default stable
-RUN cargo install sccache
+RUN cargo install sccache --locked
 
 ENV SCCACHE_CACHE_SIZE="20G"
 ENV SCCACHE_DIR=$HOME/.cache/sccache

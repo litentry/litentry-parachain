@@ -21,11 +21,11 @@ use sp_core::storage::StorageKey;
 pub const TEEREX: &str = "Teerex";
 
 pub trait TeerexCallIndexes {
-	fn register_ias_enclave_call_indexes(&self) -> Result<[u8; 2]>;
+	fn register_sgx_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
-	fn register_dcap_enclave_call_indexes(&self) -> Result<[u8; 2]>;
+	fn unregister_sovereign_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
-	fn unregister_enclave_call_indexes(&self) -> Result<[u8; 2]>;
+	fn unregister_proxied_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn register_quoting_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
@@ -48,18 +48,22 @@ pub trait TeerexCallIndexes {
 }
 
 pub trait TeerexStorageKey {
-	fn enclave_count_storage_key(&self) -> Result<StorageKey>;
+	fn sovereign_enclaves_storage_map_key(&self, index: u64) -> Result<StorageKey>;
 
-	fn enclave_registry_storage_map_key(&self, index: u64) -> Result<StorageKey>;
+	fn proxied_enclaves_storage_map_key(&self, index: u64) -> Result<StorageKey>;
 }
 
 impl TeerexCallIndexes for NodeMetadata {
-	fn register_ias_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "register_enclave")
+	fn register_sgx_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "register_sgx_enclave")
 	}
 
-	fn register_dcap_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "register_dcap_enclave")
+	fn unregister_sovereign_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "unregister_sovereign_enclave")
+	}
+
+	fn unregister_proxied_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "unregister_proxied_enclave")
 	}
 
 	fn register_quoting_enclave_call_indexes(&self) -> Result<[u8; 2]> {
@@ -104,11 +108,10 @@ impl TeerexCallIndexes for NodeMetadata {
 }
 
 impl TeerexStorageKey for NodeMetadata {
-	fn enclave_count_storage_key(&self) -> Result<StorageKey> {
-		self.storage_value_key(TEEREX, "EnclaveCount")
+	fn sovereign_enclaves_storage_map_key(&self, index: u64) -> Result<StorageKey> {
+		self.storage_map_key(TEEREX, "SovereignEnclaves", index)
 	}
-
-	fn enclave_registry_storage_map_key(&self, index: u64) -> Result<StorageKey> {
-		self.storage_map_key(TEEREX, "EnclaveRegistry", index)
+	fn proxied_enclaves_storage_map_key(&self, index: u64) -> Result<StorageKey> {
+		self.storage_map_key(TEEREX, "ProxiedEnclaves", index)
 	}
 }

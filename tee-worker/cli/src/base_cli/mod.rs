@@ -24,25 +24,23 @@ use crate::{
 			link_identity::LinkIdentityCommand, set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 		},
+		register_tcb_info::RegisterTcbInfoCommand,
 		shield_funds::ShieldFundsCommand,
 		transfer::TransferCommand,
 	},
 	command_utils::*,
-	Cli, CliResult, CliResultOk,
+	Cli, CliResult, CliResultOk, ED25519_KEY_TYPE, SR25519_KEY_TYPE,
 };
 use base58::ToBase58;
-use chrono::{DateTime, Utc};
 use clap::Subcommand;
+use codec::Encode;
 use itc_rpc_client::direct_client::DirectApi;
 use itp_node_api::api_client::PalletTeerexApi;
-use sp_application_crypto::{ed25519, sr25519};
-use sp_core::{crypto::Ss58Codec, Pair};
-use std::{
-	path::PathBuf,
-	time::{Duration, UNIX_EPOCH},
-};
+use sp_core::crypto::Ss58Codec;
+use sp_keystore::Keystore;
+use std::path::PathBuf;
 use substrate_api_client::Metadata;
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+use substrate_client_keystore::LocalKeystore;
 
 mod commands;
 
@@ -80,6 +78,9 @@ pub enum BaseCommand {
 	/// listen to parentchain events
 	Listen(ListenCommand),
 
+	/// Register TCB info for FMSPC
+	RegisterTcbInfo(RegisterTcbInfoCommand),
+
 	/// Transfer funds from an parentchain account to an incognito account
 	ShieldFunds(ShieldFundsCommand),
 
@@ -107,6 +108,7 @@ impl BaseCommand {
 			BaseCommand::Transfer(cmd) => cmd.run(cli),
 			BaseCommand::ListWorkers => list_workers(cli),
 			BaseCommand::Listen(cmd) => cmd.run(cli),
+			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
 			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
@@ -118,8 +120,8 @@ impl BaseCommand {
 
 fn new_account() -> CliResult {
 	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-	let key: sr25519::AppPair = store.generate().unwrap();
-	let key_base58 = key.public().to_ss58check();
+	let key = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
+	let key_base58 = key.to_ss58check();
 	drop(store);
 	println!("{}", key_base58);
 	Ok(CliResultOk::PubKeysBase58 {
@@ -132,14 +134,14 @@ fn list_accounts() -> CliResult {
 	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
 	println!("sr25519 keys:");
 	let mut keys_sr25519 = vec![];
-	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
+	for pubkey in store.sr25519_public_keys(SR25519_KEY_TYPE).into_iter() {
 		let key_ss58 = pubkey.to_ss58check();
 		println!("{}", key_ss58);
 		keys_sr25519.push(key_ss58);
 	}
 	println!("ed25519 keys:");
 	let mut keys_ed25519 = vec![];
-	for pubkey in store.public_keys::<ed25519::AppPublic>().unwrap().into_iter() {
+	for pubkey in store.ed25519_public_keys(ED25519_KEY_TYPE).into_iter() {
 		let key_ss58 = pubkey.to_ss58check();
 		println!("{}", key_ss58);
 		keys_ed25519.push(key_ss58);
@@ -175,29 +177,22 @@ fn print_sgx_metadata_raw(cli: &Cli) -> CliResult {
 
 fn list_workers(cli: &Cli) -> CliResult {
 	let api = get_chain_api(cli);
-	let wcount = api.enclave_count(None).unwrap();
-	println!("number of workers registered: {}", wcount);
-
-	let mut mr_enclaves = Vec::with_capacity(wcount as usize);
-
-	for w in 1..=wcount {
-		let enclave = api.enclave(w, None).unwrap();
-		if enclave.is_none() {
-			println!("error reading enclave data");
-			continue
-		};
-		let enclave = enclave.unwrap();
-		let timestamp =
-			DateTime::<Utc>::from(UNIX_EPOCH + Duration::from_millis(enclave.timestamp));
-		let mr_enclave = enclave.mr_enclave.to_base58();
-		println!("Enclave {}", w);
-		println!("   AccountId: {}", enclave.pubkey.to_ss58check());
-		println!("   MRENCLAVE: {}", mr_enclave);
-		println!("   RA timestamp: {}", timestamp);
-		println!("   URL: {}", enclave.url);
-
-		mr_enclaves.push(mr_enclave);
-	}
-
-	Ok(CliResultOk::MrEnclaveBase58 { mr_enclaves })
+	let enclaves = api.all_enclaves(None).unwrap();
+	println!("number of enclaves registered: {}", enclaves.len());
+	let fingerprints = enclaves
+		.iter()
+		.map(|enclave| {
+			println!("Enclave");
+			println!("   signer: {:?}", enclave.instance_signer());
+			println!("   MRENCLAVE: {}", enclave.fingerprint().0.to_base58());
+			println!("   RA timestamp: {}", enclave.attestation_timestamp());
+			println!(
+				"   URL: {}",
+				String::from_utf8(enclave.instance_url().unwrap_or_else(|| "none".encode()))
+					.unwrap()
+			);
+			enclave.fingerprint().0.to_base58()
+		})
+		.collect();
+	Ok(CliResultOk::MrEnclaveBase58 { mr_enclaves: fingerprints })
 }

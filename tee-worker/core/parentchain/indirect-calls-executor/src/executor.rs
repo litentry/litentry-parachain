@@ -29,7 +29,8 @@ use codec::Encode;
 use core::marker::PhantomData;
 use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_node_api::metadata::{
-	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_enclave_bridge::EnclaveBridgeCallIndexes, provider::AccessNodeMetadata,
+	NodeMetadataTrait,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -120,11 +121,31 @@ impl<
 		let block_number = *block.header().number();
 		let block_hash = block.hash();
 
-		debug!("Scanning block {:?} for relevant xt", block_number);
-		let block_number_u32: u32 = block_number.try_into().unwrap_or_default();
+		trace!("Scanning block {:?} for relevant xt", block_number);
 		let mut executed_calls = Vec::<H256>::new();
 
-		for xt_opaque in block.extrinsics().iter() {
+		let events = self
+			.node_meta_data_provider
+			.get_from_metadata(|metadata| {
+				EventCreator::create_from_metadata(metadata.clone(), block_hash, events)
+			})?
+			.ok_or_else(|| Error::Other("Could not create events from metadata".into()))?;
+
+		let xt_statuses = events.get_extrinsic_statuses()?;
+		trace!("xt_statuses:: {:?}", xt_statuses);
+
+		let filter_events = events.get_transfer_events();
+
+		if let Ok(events) = filter_events {
+			events.iter().for_each(|event| info!("Found transfer_event: {:?}", event))
+		}
+
+		// This would be catastrophic but should never happen
+		if xt_statuses.len() != block.extrinsics().len() {
+			return Err(Error::Other("Extrinsic Status and Extrinsic count not equal".into()))
+		}
+
+		for (xt_opaque, xt_status) in block.extrinsics().iter().zip(xt_statuses.iter()) {
 			let encoded_xt_opaque = xt_opaque.encode();
 
 			let maybe_call = self.node_meta_data_provider.get_from_metadata(|metadata| {
@@ -143,7 +164,7 @@ impl<
 
 			executed_calls.push(hash_of(&call))
 		}
-
+		debug!("successfully processed {} indirect invocations", executed_calls.len());
 		// Include a processed parentchain block confirmation for each block.
 		self.create_processed_parentchain_block_call::<ParentchainBlock>(
 			block_hash,
@@ -164,13 +185,18 @@ impl<
 		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
 			meta_data.confirm_processed_parentchain_block_call_indexes()
 		})??;
-
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
+
+		let fallback = ShardIdentifier::default();
+		let handled_shards = self.top_pool_author.list_handled_shards();
+		trace!("got handled shards: {:?}", handled_shards);
+		let shard = handled_shards.get(0).unwrap_or(&fallback);
+		trace!("prepared confirm_processed_parentchain_block() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);
 		let parentchain_block_number: ParentchainBlockNumber =
 			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
-
 		Ok(OpaqueCall::from_tuple(&(
 			call,
+			shard,
 			block_hash,
 			codec::Compact(parentchain_block_number),
 			root,
@@ -253,6 +279,10 @@ impl<
 		Ok(self.stf_enclave_signer.get_enclave_account()?)
 	}
 
+	fn get_default_shard(&self) -> ShardIdentifier {
+		self.top_pool_author.list_handled_shards().first().copied().unwrap_or_default()
+	}
+
 	fn sign_call_with_self(
 		&self,
 		trusted_call: &TrustedCall,
@@ -270,8 +300,8 @@ pub(crate) fn hash_of<T: Encode>(xt: &T) -> H256 {
 mod test {
 	use super::*;
 	use crate::{
-		filter_calls::ShieldFundsAndCallWorkerFilter,
-		parentchain_extrinsic_parser::ParentchainExtrinsicParser,
+		filter_metadata::{ShieldFundsAndInvokeFilter, TestEventCreator},
+		parentchain_parser::ParentchainExtrinsicParser,
 	};
 	use codec::{Decode, Encode};
 	use ita_stf::TrustedOperation;
@@ -300,7 +330,8 @@ mod test {
 		TestStfEnclaveSigner,
 		TestTopPoolAuthor,
 		TestNodeMetadataRepository,
-		ShieldFundsAndCallWorkerFilter<ParentchainExtrinsicParser>,
+		ShieldFundsAndInvokeFilter<ParentchainExtrinsicParser>,
+		TestEventCreator,
 	>;
 
 	type Seed = [u8; 32];
@@ -314,8 +345,7 @@ mod test {
 			test_fixtures([0u8; 32], NodeMetadataMock::new());
 
 		let opaque_extrinsic =
-			OpaqueExtrinsic::from_bytes(call_worker_unchecked_extrinsic().encode().as_slice())
-				.unwrap();
+			OpaqueExtrinsic::from_bytes(invoke_unchecked_extrinsic().encode().as_slice()).unwrap();
 
 		let parentchain_block = ParentchainBlockBuilder::default()
 			.with_extrinsics(vec![opaque_extrinsic])
@@ -373,6 +403,7 @@ mod test {
 			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
 		let expected_call = (
 			confirm_processed_parentchain_block_indexes,
+			ShardIdentifier::default(),
 			block_hash,
 			codec::Compact(1u32),
 			H256::default(),
@@ -424,17 +455,17 @@ mod test {
 
 		let shield_funds_indexes = dummy_metadata.shield_funds_call_indexes().unwrap();
 		ParentchainUncheckedExtrinsic::<ShieldFundsFn>::new_signed(
-			(shield_funds_indexes, target_account, 1000u128, shard_id()),
+			(shield_funds_indexes, shard_id(), target_account, 1000u128),
 			MultiAddress::Address32([1u8; 32]),
 			MultiSignature::Ed25519(default_signature()),
 			default_extrinsic_params().signed_extra(),
 		)
 	}
 
-	fn call_worker_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<CallWorkerFn> {
+	fn invoke_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<CallWorkerFn> {
 		let request = Request { shard: shard_id(), cyphertext: vec![1u8, 2u8] };
 		let dummy_metadata = NodeMetadataMock::new();
-		let call_worker_indexes = dummy_metadata.call_worker_call_indexes().unwrap();
+		let call_worker_indexes = dummy_metadata.invoke_call_indexes().unwrap();
 
 		ParentchainUncheckedExtrinsic::<CallWorkerFn>::new_signed(
 			(call_worker_indexes, request),

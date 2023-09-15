@@ -25,7 +25,7 @@ use itc_parentchain_light_client::{
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_stf_executor::traits::StfUpdateState;
-use itp_types::{OpaqueCall, H256};
+use itp_types::{parentchain::IdentifyParentchain, OpaqueCall, H256};
 use log::*;
 use sp_runtime::{
 	generic::SignedBlock as SignedBlockG,
@@ -40,14 +40,7 @@ pub struct ParentchainBlockImporter<
 	StfExecutor,
 	ExtrinsicsFactory,
 	IndirectCallsExecutor,
-> where
-	ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
-	NumberFor<ParentchainBlock>: BlockNumberOps,
-	ValidatorAccessor: ValidatorAccess<ParentchainBlock>,
-	StfExecutor: StfUpdateState,
-	ExtrinsicsFactory: CreateExtrinsics,
-	IndirectCallsExecutor: ExecuteIndirectCalls,
-{
+> {
 	validator_accessor: Arc<ValidatorAccessor>,
 	stf_executor: Arc<StfExecutor>,
 	extrinsics_factory: Arc<ExtrinsicsFactory>,
@@ -68,13 +61,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
-	> where
-	ParentchainBlock: ParentchainBlockTrait<Hash = H256, Header = ParentchainHeader>,
-	NumberFor<ParentchainBlock>: BlockNumberOps,
-	ValidatorAccessor: ValidatorAccess<ParentchainBlock>,
-	StfExecutor: StfUpdateState,
-	ExtrinsicsFactory: CreateExtrinsics,
-	IndirectCallsExecutor: ExecuteIndirectCalls,
+	>
 {
 	pub fn new(
 		validator_accessor: Arc<ValidatorAccessor>,
@@ -108,7 +95,7 @@ impl<
 	> where
 	ParentchainBlock: ParentchainBlockTrait<Hash = H256, Header = ParentchainHeader>,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
-	ValidatorAccessor: ValidatorAccess<ParentchainBlock>,
+	ValidatorAccessor: ValidatorAccess<ParentchainBlock> + IdentifyParentchain,
 	StfExecutor: StfUpdateState,
 	ExtrinsicsFactory: CreateExtrinsics,
 	IndirectCallsExecutor: ExecuteIndirectCalls,
@@ -121,9 +108,10 @@ impl<
 		events_to_import: Vec<Vec<u8>>,
 	) -> Result<()> {
 		let mut calls = Vec::<OpaqueCall>::new();
+		let id = self.validator_accessor.parentchain_id();
 
-		debug!("Import blocks to light-client!");
-		for (signed_block, _raw_events) in
+		debug!("[{:?}] Import blocks to light-client!", id);
+		for (signed_block, raw_events) in
 			blocks_to_import.into_iter().zip(events_to_import.into_iter())
 		{
 			// Check if there are any extrinsics in the to-be-imported block that we sent and cached in the light-client before.
@@ -137,14 +125,17 @@ impl<
 
 				v.submit_block(&signed_block)
 			}) {
-				error!("[Validator] Header submission failed: {:?}", e);
+				error!("[{:?}] Header submission to light client failed: {:?}", id, e);
 				return Err(e.into())
 			}
 
 			let block = signed_block.block;
 			// Perform state updates.
-			if let Err(e) = self.stf_executor.update_states(block.header()) {
-				error!("Error performing state updates upon block import");
+			if let Err(e) = self
+				.stf_executor
+				.update_states(block.header(), &self.validator_accessor.parentchain_id())
+			{
+				error!("[{:?}] Error performing state updates upon block import", id);
 				return Err(e.into())
 			}
 
@@ -154,11 +145,12 @@ impl<
 				Ok(parentchain_calls) => {
 					calls.push(parentchain_calls);
 				},
-				Err(_) => error!("Error executing relevant extrinsics"),
+				Err(_) => error!("[{:?}] Error executing relevant extrinsics", id),
 			};
 
 			info!(
-				"Successfully imported parentchain block (number: {}, hash: {})",
+				"[{:?}] Successfully imported parentchain block (number: {}, hash: {})",
+				id,
 				block.header().number,
 				block.header().hash()
 			);

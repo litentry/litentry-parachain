@@ -20,9 +20,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::{
-	error::Result, pallet_imp::IMPCallIndexes, pallet_sidechain::SidechainCallIndexes,
-	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
+	error::Result, pallet_enclave_bridge::EnclaveBridgeCallIndexes, pallet_imp::IMPCallIndexes,
+	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -31,6 +32,8 @@ pub use crate::error::Error;
 pub use itp_api_client_types::{Metadata, MetadataError};
 
 pub mod error;
+pub mod pallet_balances;
+pub mod pallet_enclave_bridge;
 pub mod pallet_imp;
 pub mod pallet_sidechain;
 pub mod pallet_system;
@@ -48,6 +51,7 @@ pub mod metadata_mocks;
 
 pub trait NodeMetadataTrait:
 	TeerexCallIndexes
+	+ EnclaveBridgeCallIndexes
 	+ SidechainCallIndexes
 	+ IMPCallIndexes
 	+ VCMPCallIndexes
@@ -57,6 +61,7 @@ pub trait NodeMetadataTrait:
 }
 impl<
 		T: TeerexCallIndexes
+			+ EnclaveBridgeCallIndexes
 			+ SidechainCallIndexes
 			+ IMPCallIndexes
 			+ VCMPCallIndexes
