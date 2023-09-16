@@ -16,7 +16,7 @@
         "mock",
         "--enable-mock-server",
         "--parentchain-start-block",
-        "143",
+        "0",
         "--enable-metrics"
       ],
       "subcommand_flags": [
