@@ -4,6 +4,7 @@ import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
+import { IntegrationTestContext } from './type-definitions';
 
 // format and setup
 const keyring = new Keyring({ type: 'sr25519' });
@@ -54,4 +55,19 @@ export function twox64Concat(data: HexString | Uint8Array): Uint8Array {
 
 export function identity(data: HexString | Uint8Array): Uint8Array {
     return u8aToU8a(data);
+}
+
+export function createJsonRpcRequest(method: string, params: any, id: number): any {
+    return {
+        jsonrpc: '2.0',
+        method,
+        params,
+        id,
+    };
+}
+
+export function nextRequestId(context: IntegrationTestContext): number {
+    const nextId = context.requestId + 1;
+    context.requestId = nextId;
+    return nextId;
 }

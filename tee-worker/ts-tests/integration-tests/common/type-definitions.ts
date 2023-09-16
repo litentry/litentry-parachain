@@ -36,6 +36,7 @@ export type IntegrationTestContext = {
     sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
     chainIdentifier: number;
+    requestId: number;
 };
 
 export class AesOutput {

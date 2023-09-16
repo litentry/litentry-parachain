@@ -19,7 +19,6 @@ import {
     RequestVCResult,
     PalletVcManagementVcContext,
     StfError,
-    TrustedOperationResponse,
     LinkIdentityResult,
     SetUserShieldingKeyResult,
 } from 'parachain-api';
@@ -368,68 +367,33 @@ export async function assertIdentity(
 
 export function assertWorkerError(
     context: IntegrationTestContext,
-    requestIdentifier: string,
     check: (returnValue: StfError) => void,
     returnValue: WorkerRpcReturnValue
 ) {
-    const errDecodedRes = context.api.createType(
-        'TrustedOperationResponse',
-        returnValue.value
-    ) as unknown as TrustedOperationResponse;
-    assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
-    const errValueDecoded = context.api.createType('StfError', errDecodedRes.value) as unknown as StfError;
+    const errValueDecoded = context.api.createType('StfError', returnValue.value) as unknown as StfError;
     check(errValueDecoded);
 }
 
 export function assertIdentityLinkedResult(
     context: IntegrationTestContext,
-    requestIdentifier: string,
     expectedIdentity: LitentryPrimitivesIdentity,
     returnValue: WorkerRpcReturnValue
 ) {
-    const decodedRes = context.api.createType(
-        'TrustedOperationResponse',
-        returnValue.value
-    ) as unknown as TrustedOperationResponse;
-    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
-
     const decodedLinkResult = context.api.createType(
         'LinkIdentityResult',
-        decodedRes.value
+        returnValue.value
     ) as unknown as LinkIdentityResult;
 
     assert.isNotNull(decodedLinkResult.id_graph);
 }
 
-export function assertSetUserShieldingKeyResult(
-    context: IntegrationTestContext,
-    requestIdentifier: string,
-    returnValue: WorkerRpcReturnValue
-) {
-    const decodedRes = context.api.createType(
-        'TrustedOperationResponse',
-        returnValue.value
-    ) as unknown as TrustedOperationResponse;
-    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
-
+export function assertSetUserShieldingKeyResult(context: IntegrationTestContext, returnValue: WorkerRpcReturnValue) {
     const decodedLinkResult = context.api.createType(
         'SetUserShieldingKeyResult',
-        decodedRes.value
+        returnValue.value
     ) as unknown as SetUserShieldingKeyResult;
 
     assert.isNotNull(decodedLinkResult.id_graph);
-}
-
-export function assertTrustedOperationResponse(
-    context: IntegrationTestContext,
-    requestIdentifier: string,
-    returnValue: WorkerRpcReturnValue
-) {
-    const decodedRes = context.api.createType(
-        'TrustedOperationResponse',
-        returnValue.value
-    ) as unknown as TrustedOperationResponse;
-    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
 }
 
 /* 

@@ -28,9 +28,10 @@ import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
 import * as base58 from 'micro-base58';
 import { decodeRpcBytesAsString } from './common/call';
+import { createJsonRpcRequest, nextRequestId } from './common/helpers';
 
 async function getEnclaveSignerPublicKey(context: IntegrationTestContext): Promise<string> {
-    const request = { jsonrpc: '2.0', method: 'author_getEnclaveSignerAccount', params: [], id: 1 };
+    const request = createJsonRpcRequest('author_getEnclaveSignerAccount', [], nextRequestId(context));
     const response = await sendRequest(context.tee, request, context.api);
     if (!response.status.isOk) {
         throw new Error('Get author_getEnclaveSignerAccount response error!');
@@ -41,7 +42,7 @@ async function getEnclaveSignerPublicKey(context: IntegrationTestContext): Promi
 }
 
 async function getNonce(base58mrEnclave: string, workerAddr: string, context: IntegrationTestContext): Promise<number> {
-    const request = { jsonrpc: '2.0', method: 'author_getNextNonce', params: [base58mrEnclave, workerAddr], id: 1 };
+    const request = createJsonRpcRequest('author_getNextNonce', [base58mrEnclave, workerAddr], nextRequestId(context));
     const res = await sendRequest(context.tee, request, context.api);
     console.log('workerAddr', workerAddr);
     const resHex = res.value.toString();

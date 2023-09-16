@@ -1,11 +1,11 @@
 import { ApiPromise } from '@polkadot/api';
 import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { HexString } from '@polkadot/util/types';
 import type { RequestBody } from './type-definitions';
 import type { WorkerRpcReturnValue } from 'parachain-api';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import type { Bytes } from '@polkadot/types-codec';
+import { createJsonRpcRequest } from './helpers';
 // TODO:
 // - better place to put these constants?
 // - maybe randomise it in test initialisation
@@ -46,9 +46,10 @@ export function decodeRpcBytesAsString(value: Bytes): string {
 
 export async function getSidechainMetadata(
     wsClient: WebSocketAsPromised,
-    api: ApiPromise
+    api: ApiPromise,
+    requestId: number
 ): Promise<{ sidechainMetaData: Metadata; sidechainRegistry: TypeRegistry }> {
-    const request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
+    const request = createJsonRpcRequest('state_getMetadata', Uint8Array.from([]), requestId);
     const resp = await sendRequest(wsClient, request, api);
 
     const sidechainRegistry = new TypeRegistry();
@@ -56,15 +57,4 @@ export async function getSidechainMetadata(
 
     sidechainRegistry.setMetadata(sidechainMetaData);
     return { sidechainMetaData, sidechainRegistry };
-}
-
-export async function getSideChainStorage(
-    wsClient: WebSocketAsPromised,
-    rpcMethod: string,
-    api: ApiPromise,
-    mrenclave: HexString,
-    storageKey: string
-): Promise<WorkerRpcReturnValue> {
-    const request = { jsonrpc: '2.0', method: rpcMethod, params: [mrenclave, storageKey], id: 1 };
-    return await sendRequest(wsClient, request, api);
 }
