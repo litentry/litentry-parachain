@@ -190,3 +190,10 @@ export const jsonSchema = {
     },
     required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceDate', 'proof'],
 };
+
+export type JsonRpcRequest = {
+    jsonrpc: string;
+    method: string;
+    params: any;
+    id: number;
+};

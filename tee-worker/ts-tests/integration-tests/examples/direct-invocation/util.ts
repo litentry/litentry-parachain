@@ -4,7 +4,7 @@ import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { HexString } from '@polkadot/util/types';
 import { Bytes } from '@polkadot/types-codec';
-import { IntegrationTestContext, PublicKeyJson } from '../../common/type-definitions';
+import { IntegrationTestContext, JsonRpcRequest, PublicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
@@ -31,30 +31,33 @@ import { createJsonRpcRequest, nextRequestId } from '../../common/helpers';
 //
 async function sendRequest(
     wsClient: WebSocketAsPromised,
-    request: any,
+    request: JsonRpcRequest,
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const p = new Promise<WorkerRpcReturnValue>((resolve) =>
         wsClient.onMessage.addListener((data) => {
-            const result = JSON.parse(data.toString()).result;
-            const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
+            const parsed = JSON.parse(data);
+            if (parsed.id === request.id) {
+                const result = parsed.result;
+                const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
 
-            if (res.status.isError) {
-                console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
-            }
+                if (res.status.isError) {
+                    console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
+                }
 
-            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
-                console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
-            }
+                if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
+                    console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+                }
 
-            // resolve it once `do_watch` is false, meaning it's the final response
-            if (res.do_watch.isFalse) {
-                // TODO: maybe only remove this listener
-                wsClient.onMessage.removeAllListeners();
-                resolve(res);
-            } else {
-                // `do_watch` is true means: hold on - there's still something coming
-                console.log('do_watch is true, continue watching ...');
+                // resolve it once `do_watch` is false, meaning it's the final response
+                if (res.do_watch.isFalse) {
+                    // TODO: maybe only remove this listener
+                    wsClient.onMessage.removeAllListeners();
+                    resolve(res);
+                } else {
+                    // `do_watch` is true means: hold on - there's still something coming
+                    console.log('do_watch is true, continue watching ...');
+                }
             }
         })
     );
