@@ -73,7 +73,9 @@ pub mod worker {
 	// the maximum size of any extrinsic that the enclave will ever generate in B
 	pub const EXTRINSIC_MAX_SIZE: usize = 13_000;
 	// the maximum size of the header
-	pub const HEADER_MAX_SIZE: usize = 200;
+	// Litentry: change it to 300 after the evm pallet being fused
+	// see https://github.com/litentry/litentry-parachain/actions/runs/6168159073/job/16742757562
+	pub const HEADER_MAX_SIZE: usize = 300;
 	// maximum size of shielding key
 	pub const SHIELDING_KEY_SIZE: usize = 8192;
 	// maximum size of signing key
