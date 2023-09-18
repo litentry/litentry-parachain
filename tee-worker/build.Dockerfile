@@ -29,60 +29,20 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 ENV CARGO_NET_GIT_FETCH_WITH_CLI true
 ENV SGX_MODE SW
 
-ENV HOME=/home/ubuntu/repo
-
-ARG WORKER_MODE_ARG
-ENV WORKER_MODE=$WORKER_MODE_ARG
-
-ARG ADDITIONAL_FEATURES_ARG
-ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
-
-WORKDIR $HOME/tee-worker
-COPY . $HOME
-
-RUN make
-
-RUN cargo test --release
-
-
-### Cached Builder Stage (WIP)
-##################################################
-# A builder stage that uses sccache to speed up local builds with docker
-# Installation and setup of sccache should be moved to the integritee-dev image, so we don't
-# always need to compile and install sccache on CI (where we have no caching so far).
-FROM litentry/litentry-tee-dev:edge AS builder
-LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
-
-# set environment variables
-ENV SGX_SDK /opt/sgxsdk
-ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
-ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
-ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
-ENV CARGO_NET_GIT_FETCH_WITH_CLI true
-
-# Default SGX MODE is software mode
-ARG SGX_MODE=SW
-ENV SGX_MODE=$SGX_MODE
-
-ARG SGX_PRODUCTION=0
-ENV SGX_PRODUCTION=$SGX_PRODUCTION
-
-
-ENV HOME=/home/ubuntu/repo
+ENV HOME=/home/ubuntu
 
 RUN rustup default stable
-RUN cargo install sccache
+RUN cargo install sccache --locked
 
 ENV SCCACHE_CACHE_SIZE="20G"
 ENV SCCACHE_DIR=$HOME/.cache/sccache
 ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
 
 ARG WORKER_MODE_ARG
-ARG ADDITIONAL_FEATURES_ARG
 ENV WORKER_MODE=$WORKER_MODE_ARG
-ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
-ARG FINGERPRINT=none
+ARG ADDITIONAL_FEATURES_ARG
+ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
 WORKDIR $HOME/tee-worker
 COPY . $HOME
@@ -91,7 +51,7 @@ RUN --mount=type=cache,id=cargo-registry-cache,target=/opt/rust/registry/cache,s
 	--mount=type=cache,id=cargo-registry-index,target=/opt/rust/registry/index,sharing=private \
 	--mount=type=cache,id=cargo-git,target=/opt/rust/git/db,sharing=private \
 	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
-	echo ${FINGERPRINT} && make && make identity && cargo test --release && sccache --show-stats
+	make && cargo test --release && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################
