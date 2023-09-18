@@ -376,30 +376,43 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
+
+        name: Build and push
+        uses: docker/build-push-action@v5
         with:
-          buildkitd-flags: --debug
-          driver: docker-container
+          push: true
+          tags: user/app:latest
 
       - name: Build worker (sidechain)
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        env:
-          DOCKER_BUILDKIT: 1
-        run: >
-          docker build -t litentry/litentry-worker
-          --target deployed-worker
-          --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
-          -f tee-worker/build.Dockerfile .
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: litentry/litentry-worker:latest
+          target: deployed-worker
+          build-args: |
+            WORKER_MODE_ARG=sidechain
+            ADDITIONAL_FEATURES_ARG=
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: false
 
       - name: Build cli (sidechain)
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        env:
-          DOCKER_BUILDKIT: 1
-        run: >
-          docker build -t litentry/litentry-cli
-          --target deployed-client
-          --build-arg WORKER_MODE_ARG=sidechain --build-arg ADDITIONAL_FEATURES_ARG=
-          -f tee-worker/build.Dockerfile .
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: litentry/litentry-worker:latest
+          target: deployed-client
+          build-args: |
+            WORKER_MODE_ARG=sidechain
+            ADDITIONAL_FEATURES_ARG=
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: false
 
       - name: Pull and tag worker and cli image optionally
         if: needs.set-condition.outputs.rebuild_tee == 'false'
