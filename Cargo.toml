@@ -39,5 +39,6 @@ inherits = "release"
 [profile.production]
 codegen-units = 1
 inherits = "release"
-lto = true
+lto = "thin"
 strip = "symbols"
+incremental = false
