@@ -91,7 +91,7 @@ ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 ### Deployed worker service
 ##################################################
 FROM runner AS deployed-worker
-LABEL maintainer="litentry-dev"
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 WORKDIR /usr/local/bin
 

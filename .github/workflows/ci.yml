@@ -383,6 +383,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
           target: deployed-worker
@@ -398,13 +399,14 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
           target: deployed-client
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
-          cache-from: type=gha
+          # no cache-from as we expect it to reuse the local layer cache when building litentry-worker
           cache-to: type=gha,mode=max
           push: false
 
