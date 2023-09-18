@@ -101,13 +101,6 @@ export type TransactionSubmit = {
     nonce: number;
 };
 
-//call types
-export type RequestBody = {
-    id: number;
-    jsonrpc: string;
-    method: string;
-};
-
 export const jsonSchema = {
     type: 'object',
     properties: {
