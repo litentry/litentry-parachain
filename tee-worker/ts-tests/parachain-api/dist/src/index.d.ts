@@ -20,7 +20,6 @@ export type {
     Getter,
     PublicGetter,
     RequestVCResult,
-    TrustedOperationResponse,
     StfError,
     LinkIdentityResult,
     SetUserShieldingKeyResult,
@@ -263,10 +262,6 @@ export declare const definitions: {
                 InvalidAccount: string;
                 UnclassifiedError: string;
             };
-        };
-        TrustedOperationResponse: {
-            req_ext_hash: string;
-            value: string;
         };
         AesOutput: {
             ciphertext: string;

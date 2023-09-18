@@ -20,7 +20,6 @@ import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey } from './common/call';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { TrustedOperationResponse } from 'parachain-api';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -123,11 +122,7 @@ describe('Test Vc (direct invocation)', function () {
                 1,
                 `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
             );
-            const trustedOperationResponse = context.api.createType(
-                'TrustedOperationResponse',
-                res.value
-            ) as unknown as TrustedOperationResponse;
-            await assertVc(context, aliceSubject, trustedOperationResponse.value);
+            await assertVc(context, aliceSubject, res.value);
         });
     });
 

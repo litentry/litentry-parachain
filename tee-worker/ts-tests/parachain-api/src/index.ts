@@ -25,7 +25,6 @@ export type {
     Getter,
     PublicGetter,
     RequestVCResult,
-    TrustedOperationResponse,
     StfError,
     LinkIdentityResult,
     SetUserShieldingKeyResult,
