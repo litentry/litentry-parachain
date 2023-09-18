@@ -406,7 +406,7 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
-          # no cache-from as we expect it to reuse the local layer cache when building litentry-worker
+          cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false
 
