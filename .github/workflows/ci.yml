@@ -378,12 +378,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-        name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: user/app:latest
-
       - name: Build worker (sidechain)
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
