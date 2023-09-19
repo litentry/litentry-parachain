@@ -28,8 +28,8 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use itp_utils::debug as lit_debug;
 use litentry_primitives::{AchainableParams, VCMPError, Web3Network};
+use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
@@ -103,7 +103,7 @@ impl AchainablePost for AchainableClient {
 		let response = self
 			.client
 			.post_capture::<SystemLabelReqPath, ReqBody, serde_json::Value>(params, body);
-		lit_debug!("ReqBody response: {:?}", response);
+		debug!("ReqBody response: {:?}", response);
 		response.map_err(|e| Error::AchainableError(format!("Achainable response error: {}", e)))
 	}
 }
@@ -697,7 +697,7 @@ impl AchainableTotalTransactionsParser for AchainableClient {
 			})
 			.flatten();
 
-		lit_debug!("Total txs, display text: {:?}", display_text);
+		debug!("Total txs, display text: {:?}", display_text);
 
 		if let Some(display_text) = display_text {
 			// TODO:

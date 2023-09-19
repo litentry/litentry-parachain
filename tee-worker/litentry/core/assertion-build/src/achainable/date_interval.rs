@@ -21,17 +21,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
-use itp_utils::debug as lit_debug;
 use lc_credentials::Credential;
 
 pub fn build_date_interval(
 	req: &AssertionBuildRequest,
 	param: AchainableDateInterval,
 ) -> Result<Credential> {
-	lit_debug!(
-		"Assertion Achainable build_date_interval, who: {:?}",
-		account_id_to_string(&req.who)
-	);
+	debug!("Assertion Achainable build_date_interval, who: {:?}", account_id_to_string(&req.who));
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities

@@ -21,7 +21,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use itp_utils::debug as lit_debug;
 use lc_data_providers::twitter_official::TwitterOfficialClient;
 
 const VC_A6_SUBJECT_DESCRIPTION: &str = "The range of the user's Twitter follower count";
@@ -35,7 +34,7 @@ const VC_A6_SUBJECT_TYPE: &str = "Twitter Follower Amount";
 ///    * 10,000+ followers
 ///    * 100,000+ followers
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	lit_debug!("Assertion A6 build, who: {:?}", account_id_to_string(&req.who));
+	debug!("Assertion A6 build, who: {:?}", account_id_to_string(&req.who),);
 
 	let mut client = TwitterOfficialClient::v2();
 	let mut sum: u32 = 0;
@@ -55,6 +54,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 			}
 		}
 	}
+
 	let min: u32;
 	let max: u32;
 

@@ -26,7 +26,7 @@ use crate::{
 	RestPost, RestPut,
 };
 
-use itp_utils::trace as lit_trace;
+use log::*;
 use std::string::{String, ToString};
 
 /// REST client to make HTTP GET and POST requests.
@@ -151,8 +151,8 @@ where
 
 		let body = String::from_utf8_lossy(&encoded_body).to_string();
 
-		lit_trace!("response headers: {:?}", self.response_headers);
-		lit_trace!("response body: {}", body);
+		trace!("response headers: {:?}", self.response_headers);
+		trace!("response body: {}", body);
 		Ok((self.body_wash_fn)(body))
 	}
 }

@@ -20,8 +20,8 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{DetermineWatch, RpcConnectionRegistry, RpcHash};
 use itc_tls_websocket_server::{error::WebSocketResult, ConnectionToken, WebSocketMessageHandler};
-use itp_utils::debug as lit_debug;
 use jsonrpc_core::IoHandler;
+use log::*;
 use std::{string::String, sync::Arc};
 
 pub struct RpcWsHandler<Watcher, Registry, Hash>
@@ -64,7 +64,7 @@ where
 	) -> WebSocketResult<Option<String>> {
 		let maybe_rpc_response = self.rpc_io_handler.handle_request_sync(message.as_str());
 
-		lit_debug!("RPC response string: {:?}", maybe_rpc_response);
+		debug!("RPC response string: {:?}", maybe_rpc_response);
 
 		if let Ok(rpc_response) =
 			serde_json::from_str(maybe_rpc_response.clone().unwrap_or_default().as_str())
@@ -99,7 +99,6 @@ pub mod tests {
 	use itp_types::DirectRequestStatus;
 	use itp_utils::ToHexPrefixed;
 	use jsonrpc_core::Params;
-	use log::debug;
 	use serde_json::json;
 
 	type TestConnectionRegistry = ConnectionRegistry<String, ConnectionToken>;

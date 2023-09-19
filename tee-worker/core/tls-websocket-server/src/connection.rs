@@ -22,7 +22,6 @@ use crate::{
 	error::WebSocketError, stream_state::StreamState, WebSocketConnection, WebSocketMessageHandler,
 	WebSocketResult,
 };
-use itp_utils::debug as lit_debug;
 use log::*;
 use mio::{event::Event, net::TcpStream, Poll, Ready, Token};
 use rustls::{ServerSession, Session};
@@ -231,7 +230,7 @@ where
 				if !web_socket.can_write() {
 					return Err(WebSocketError::ConnectionClosed)
 				}
-				lit_debug!("Write message to connection {}: {}", self.connection_token.0, message);
+				debug!("Write message to connection {}: {}", self.connection_token.0, message);
 				web_socket
 					.write_message(Message::Text(message))
 					.map_err(|e| WebSocketError::SocketWriteError(format!("{:?}", e)))

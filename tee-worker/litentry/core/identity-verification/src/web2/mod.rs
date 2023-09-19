@@ -25,7 +25,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 use crate::{ensure, Error, Result};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use itp_utils::debug as lit_debug;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
@@ -35,6 +34,7 @@ use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
 	Web2ValidationData,
 };
+use log::*;
 use std::{string::ToString, vec::Vec};
 
 pub trait DecryptionVerificationPayload<K: ShieldingCryptoDecrypt> {
@@ -58,7 +58,7 @@ pub fn verify(
 	raw_msg: &[u8],
 	data: &Web2ValidationData,
 ) -> Result<()> {
-	lit_debug!("verify web2 identity, who: {:?}", who);
+	debug!("verify web2 identity, who: {:?}", who);
 
 	let (user_name, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
