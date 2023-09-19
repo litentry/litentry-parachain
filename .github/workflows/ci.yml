@@ -378,6 +378,53 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: worker-cargo-registry
+          key: worker-cargo-registry-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          restore-keys: |
+            worker-cargo-registry-
+
+      - name: Cache cargo git
+        uses: actions/cache@v3
+        with:
+          path: worker-cargo-git
+          key: worker-cargo-git-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          restore-keys: |
+            worker-cargo-git-
+
+      - name: Cache sccache
+        uses: actions/cache@v3
+        with:
+          path: worker-sccache
+          key: worker-sccache-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          restore-keys: |
+            worker-sccache-
+
+      # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache
+      # see
+      # https://github.com/moby/buildkit/issues/1512
+      # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
+      # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
+      - name: inject worker-cargo-registry
+        uses: reproducible-containers/buildkit-cache-dance@v2.1.2
+        with:
+          cache-source: worker-cargo-registry
+          cache-target: /opt/rust/registry
+
+      - name: inject worker-cargo-git
+        uses: reproducible-containers/buildkit-cache-dance@v2.1.2
+        with:
+          cache-source: worker-cargo-git
+          cache-target: /opt/rust/git
+
+      - name: inject worker-sccache
+        uses: reproducible-containers/buildkit-cache-dance@v2.1.2
+        with:
+          cache-source: worker-sccache
+          cache-target: /home/ubuntu/.cache/sccache
+
       - name: Build worker (sidechain)
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
@@ -391,7 +438,7 @@ jobs:
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
           push: false
 
       - name: Build cli (sidechain)
@@ -407,7 +454,7 @@ jobs:
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
           push: false
 
       - name: Pull and tag worker and cli image optionally
