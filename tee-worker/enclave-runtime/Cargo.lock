@@ -1890,7 +1890,6 @@ dependencies = [
  "base64 0.13.1",
  "http",
  "http_req",
- "itp-utils",
  "log",
  "serde 1.0.175",
  "serde_json 1.0.103",
@@ -1906,7 +1905,6 @@ version = "0.9.0"
 dependencies = [
  "bit-vec",
  "chrono 0.4.26",
- "itp-utils",
  "log",
  "mio",
  "mio-extras",
@@ -2769,7 +2767,6 @@ dependencies = [
  "http",
  "http_req",
  "itc-rest-client",
- "itp-utils",
  "lazy_static",
  "litentry-primitives",
  "log",

@@ -22,7 +22,6 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # sgx dependencies
 hex-sgx = { package = "hex", git = "https://github.com/mesalock-linux/rust-hex-sgx", tag = "sgx_1.1.3", features = ["sgx_tstd"], optional = true }
@@ -50,7 +49,6 @@ sgx = [
     "url_sgx",
     "sgx_tstd",
     "itc-rest-client/sgx",
-    "itp-utils/sgx",
     "litentry-primitives/sgx",
 ]
 std = [
@@ -60,7 +58,6 @@ std = [
     "thiserror",
     "url",
     "itc-rest-client/std",
-    "itp-utils/std",
     "log/std",
     "serde/std",
     "serde_json/std",

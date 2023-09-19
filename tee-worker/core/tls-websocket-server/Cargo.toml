@@ -32,9 +32,6 @@ tungstenite = { version = "0.15.0", optional = true, features = ["rustls-tls-web
 webpki = { version = "0.21", optional = true }
 yasna = { version = "0.4", optional = true, features = ["bit-vec", "num-bigint", "chrono", "std"] }
 
-#local crates
-itp-utils = { default-features = false, path = "../../core-primitives/utils" }
-
 # Substrate dependencies
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
@@ -62,7 +59,6 @@ sgx = [
     "tungstenite_sgx",
     "webpki_sgx",
     "yasna_sgx",
-    "itp-utils/sgx",
 ]
 std = [
     "mio",
@@ -75,6 +71,5 @@ std = [
     "webpki",
     "yasna",
     "log/std",
-    "itp-utils/std",
 ]
 mocks = []

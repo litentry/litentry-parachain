@@ -25,9 +25,6 @@ log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
-#local crates
-itp-utils = { default-features = false, path = "../../core-primitives/utils" }
-
 [features]
 default = ["std"]
 std = [
@@ -41,7 +38,6 @@ std = [
     "serde/std",
     "serde_json/std",
     "log/std",
-    "itp-utils/std",
 ]
 sgx = [
     "http-sgx",
@@ -50,5 +46,4 @@ sgx = [
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
-    "itp-utils/sgx",
 ]
