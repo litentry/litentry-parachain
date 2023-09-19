@@ -45,16 +45,15 @@ WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN \
-  --mount=type=cache,target=/var/cache/apt \
   --mount=type=cache,target=/var/lib/apt \
   apt update && \
   apt install --no-install-recommends -y \
   git make automake autoconf pkgconf file go-md2man
 
-RUN --mount=type=cache,target=/opt/rust/registry \
-	--mount=type=cache,target=/opt/rust/git/db \
-	--mount=type=cache,target=/home/ubuntu/.cache/sccache \
-	cargo build -p lc-data-providers && sccache --show-stats
+# RUN --mount=type=cache,target=/opt/rust/registry \
+# 	--mount=type=cache,target=/opt/rust/git/db \
+# 	--mount=type=cache,target=/home/ubuntu/.cache/sccache \
+# 	cargo build -p lc-data-providers && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################
@@ -63,10 +62,10 @@ FROM ubuntu:22.04 AS runner
 RUN apt update && apt install -y libssl-dev iproute2 curl
 
 ## ts-tests
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
-RUN apt-get install -y nodejs jq
-RUN corepack enable
-RUN corepack prepare yarn@3.6.1 --activate
+# RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
+# RUN apt-get install -y nodejs jq
+# RUN corepack enable
+# RUN corepack prepare yarn@3.6.1 --activate
 
 ### Deployed CLI client
 ##################################################
