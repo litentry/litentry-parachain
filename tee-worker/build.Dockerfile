@@ -50,9 +50,9 @@ RUN \
   apt install --no-install-recommends -y \
   git make automake autoconf pkgconf file go-md2man
 
-RUN --mount=type=cache,target=/opt/rust/registry \
-	--mount=type=cache,target=/opt/rust/git/db \
-	--mount=type=cache,target=/home/ubuntu/.cache/sccache \
+RUN --mount=type=cache,target=/opt/rust/registry,sharing=locked \
+	--mount=type=cache,target=/opt/rust/git/db,sharing=locked \
+	--mount=type=cache,target=/home/ubuntu/.cache/sccache,sharing=locked \
 	cd hello_world && cargo build && sccache --show-stats
 
 ### Base Runner Stage
