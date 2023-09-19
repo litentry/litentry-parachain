@@ -45,7 +45,7 @@ WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN --mount=type=cache,target=/opt/rust/registry \
-	--mount=type=cache,target=/opt/rust/git \
+	--mount=type=cache,target=/opt/rust/git/db \
 	--mount=type=cache,target=/home/ubuntu/.cache/sccache \
 	cargo build -p lc-data-providers && sccache --show-stats
 

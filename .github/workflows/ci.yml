@@ -389,7 +389,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: worker-cargo-registry
-          key: worker-cargo-registry-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          key: worker-cargo-registry-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock, tee-worker/**/Cargo.toml') }}
           restore-keys: |
             worker-cargo-registry-${{ env.REF_VERSION }}-
             worker-cargo-registry-
@@ -398,7 +398,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: worker-cargo-git
-          key: worker-cargo-git-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          key: worker-cargo-git-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock, tee-worker/**/Cargo.toml') }}
           restore-keys: |
             worker-cargo-git-${{ env.REF_VERSION }}-
             worker-cargo-git-
@@ -407,7 +407,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: worker-sccache
-          key: worker-sccache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          key: worker-sccache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock, tee-worker/**/Cargo.toml') }}
           restore-keys: |
             worker-sccache-${{ env.REF_VERSION }}-
             worker-sccache-
@@ -427,7 +427,7 @@ jobs:
         uses: reproducible-containers/buildkit-cache-dance@v2.1.2
         with:
           cache-source: worker-cargo-git
-          cache-target: /opt/rust/git
+          cache-target: /opt/rust/git/db
 
       - name: inject worker-sccache
         uses: reproducible-containers/buildkit-cache-dance@v2.1.2
