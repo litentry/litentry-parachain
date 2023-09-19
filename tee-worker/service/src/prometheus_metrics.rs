@@ -39,17 +39,14 @@ use itc_rest_client::{
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
 use lc_stf_task_sender::RequestType;
-use litentry_primitives::{Address32, Assertion, Identity};
+use litentry_primitives::{Assertion, Identity};
 use log::*;
 use prometheus::{
 	proto::MetricFamily, register_histogram_vec, register_int_gauge, register_int_gauge_vec,
 	HistogramVec, IntGauge, IntGaugeVec,
 };
 use serde::{Deserialize, Serialize};
-use std::{
-	net::SocketAddr,
-	sync::{atomic::Ordering, Arc},
-};
+use std::{net::SocketAddr, sync::Arc};
 use warp::{Filter, Rejection, Reply};
 
 lazy_static! {
@@ -264,7 +261,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 fn format_caller(caller_option: Option<Identity>) -> String {
 	if let Some(caller) = caller_option {
 		// Note: This unwrap should be unfallable technically
-		return format!("{}", caller.to_account_id().unwrap().to_string())
+		return caller.to_account_id().unwrap().to_string()
 	}
 	"0xDeadBeef".to_string()
 }
