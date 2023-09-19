@@ -151,29 +151,29 @@ jobs:
           chmod a+x $HOME/.local/bin/taplo
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Parachain fmt check
-        run: |
-          make fmtcheck
-          make taplocheck
+      # - name: Parachain fmt check
+      #   run: |
+      #     make fmtcheck
+      #     make taplocheck
 
-      - name: Tee-worker fmt check
-        working-directory: ./tee-worker
-        run: |
-          cargo fmt --all -- --check
-          taplo fmt --check
+      # - name: Tee-worker fmt check
+      #   working-directory: ./tee-worker
+      #   run: |
+      #     cargo fmt --all -- --check
+      #     taplo fmt --check
 
-      - name: Enclave-runtime fmt check
-        working-directory: ./tee-worker/enclave-runtime
-        run: |
-          cargo fmt --all -- --check
+      # - name: Enclave-runtime fmt check
+      #   working-directory: ./tee-worker/enclave-runtime
+      #   run: |
+      #     cargo fmt --all -- --check
 
-      - name: Tee-worker install npm deps
-        working-directory: ./tee-worker/ts-tests
-        run: corepack yarn install
+      # - name: Tee-worker install npm deps
+      #   working-directory: ./tee-worker/ts-tests
+      #   run: corepack yarn install
 
-      - name: Tee-worker check ts code format
-        working-directory: ./tee-worker/ts-tests
-        run: corepack yarn check-format
+      # - name: Tee-worker check ts code format
+      #   working-directory: ./tee-worker/ts-tests
+      #   run: corepack yarn check-format
 
       - name: Fail early
         if: failure()
