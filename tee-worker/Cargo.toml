@@ -4,6 +4,7 @@ members = [
     "app-libs/oracle",
     "app-libs/sgx-runtime",
     "app-libs/stf",
+    "hello_world",
     "cli",
     "core/direct-rpc-server",
     "core/offchain-worker-executor",
