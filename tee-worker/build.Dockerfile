@@ -50,10 +50,12 @@ RUN \
   apt install --no-install-recommends -y \
   git make automake autoconf pkgconf file go-md2man
 
+RUN rustup show
+
 RUN \
 	--mount=type=cache,target=/opt/rust/git/db \
 	--mount=type=cache,target=/home/ubuntu/.cache/sccache \
-	cd hello_world && cargo build && sccache --show-stats
+	cargo build -p lc-data-providers && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################
