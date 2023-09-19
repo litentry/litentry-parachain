@@ -357,6 +357,11 @@ jobs:
 
   tee-build:
     runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
     needs:
       - fmt
       - set-condition
@@ -377,6 +382,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: network=host
 
       - name: Cache cargo registry
         uses: actions/cache@v3
@@ -428,21 +435,21 @@ jobs:
           cache-source: worker-sccache
           cache-target: /home/ubuntu/.cache/sccache
 
+      # see https://docs.docker.com/build/ci/github-actions/named-contexts/#using-with-a-container-builder
       - name: Build local builder
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
-          load: true
           file: tee-worker/build.Dockerfile
-          tags: local-builder:latest
+          tags: localhost:5000/local-builder:latest
           target: builder
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: false
+          push: true
 
       - run: docker images --all
 
@@ -451,6 +458,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          build-contexts: |
+            local-builder=docker-image://localhost:5000/local-builder:latest   
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
@@ -464,6 +473,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          build-contexts: |
+            local-builder=docker-image://localhost:5000/local-builder:latest   
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
