@@ -2,19 +2,6 @@ name: Publish to NPM
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch name'
-        required: true
-      version:
-        description: 'NPM package version'
-        required: true
-      tag:
-        type: choice
-        description: 'Select the GitHub Release tag'
-        options:
-          - 'latest'
-          - 'staging'
 
 jobs:
   publish:
@@ -38,24 +25,42 @@ jobs:
           cd tee-worker/client-api
           corepack yarn install
 
-      - name: Build and Publish
+      - name: Build and Publish Parachain
         run: |
-          branch_name="${{ github.event.inputs.branch }}"
-          npm_package_version="${{ github.event.inputs.version }}"
-          tag="${{ github.event.inputs.tag }}"
-
-          if [ "$branch_name" == "dev" ]; then
+          branch_name="${{ github.ref }}"
+          echo "Branch Name: $branch_name" 
+          if [ "$branch_name" == "refs/heads/dev" ]; then
             cd tee-worker/client-api/parachain-api
             corepack yarn build
-            npm dist-tag add banana-test-api@$npm_package_version $tag
-            npm publish --tag $tag
+            npm publish
+            echo "Published Parachain on the 'dev' branch."
+          elif [ "$branch_name" == "refs/heads/staging" ]; then
+            cd tee-worker/client-api/parachain-api
+            corepack yarn build
+            npm publish --tag staging
+            echo "Published Parachain on the 'staging' branch with 'staging' tag."
+          else
+            echo "Not on 'dev' or 'staging' branch, skipping Parachain publish."
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Build and Publish Sidechain
+        run: |
+          branch_name="${{ github.ref }}"
+          echo "Branch Name: $branch_name" 
+          if [ "$branch_name" == "refs/heads/dev" ]; then
             cd tee-worker/client-api/sidechain-api
             corepack yarn build
-            npm dist-tag add apple-test-api@$npm_package_version $tag
-            npm publish --tag $tag
+            npm publish
+            echo "Published Sidechain on the 'dev' branch."
+          elif [ "$branch_name" == "refs/heads/staging" ]; then
+            cd tee-worker/client-api/sidechain-api
+            corepack yarn build
+            npm publish --tag staging
+            echo "Published Sidechain on the 'staging' branch with 'staging' tag."
           else
-            echo "Not on the 'dev' branch, skipping npm publish."
+            echo "Not on 'dev' or 'staging' branch, skipping Sidechain publish."
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
