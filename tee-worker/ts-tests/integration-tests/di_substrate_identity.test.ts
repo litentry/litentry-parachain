@@ -164,7 +164,7 @@ describe('Test Identity (direct invocation)', function () {
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setUserShieldingKeyCall);
 
-            assertSetUserShieldingKeyResult(context, res);
+            assertSetUserShieldingKeyResult(context, res, subject);
             await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
             const events = await eventsPromise;
@@ -272,7 +272,25 @@ describe('Test Identity (direct invocation)', function () {
             validation: eveSubstrateValidation,
             networks: eveSubstrateNetworks,
         });
+
         const linkedIdentityEvents: any[] = [];
+        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
+            [
+                [twitterIdentity, true],
+                [aliceSubject, true],
+            ],
+            [
+                [evmIdentity, true],
+                [twitterIdentity, true],
+                [aliceSubject, true],
+            ],
+            [
+                [eveSubstrateIdentity, true],
+                [evmIdentity, true],
+                [twitterIdentity, true],
+                [aliceSubject, true],
+            ],
+        ];
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
@@ -290,7 +308,9 @@ describe('Test Identity (direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-            assertIdentityLinkedResult(context, identity, res);
+
+            assertIdentityLinkedResult(context, identity, res, expectedIdGraphs[0]);
+            expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);

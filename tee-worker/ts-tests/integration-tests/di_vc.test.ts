@@ -79,7 +79,7 @@ describe('Test Vc (direct invocation)', function () {
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setUserShieldingKeyCall);
 
-        assertSetUserShieldingKeyResult(context, res);
+        assertSetUserShieldingKeyResult(context, res, subject);
         await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
         const events = await eventsPromise;
