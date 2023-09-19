@@ -7,6 +7,6 @@
         "rootDir": ".",
         "outDir": "build"
     },
-    "include": ["tests/**/*.ts"],
+    "include": ["tests/**/*.ts", "tests/**/*.d.ts"],
     "exclude": ["node_modules"]
 }

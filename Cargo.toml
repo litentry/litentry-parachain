@@ -5,6 +5,7 @@ members = [
     'pallets/bridge-transfer',
     'pallets/drop3',
     'pallets/extrinsic-filter',
+    'pallets/evm-address',
     'pallets/identity-management',
     'pallets/vc-management',
     'pallets/sidechain',
@@ -38,5 +39,6 @@ inherits = "release"
 [profile.production]
 codegen-units = 1
 inherits = "release"
-lto = true
+lto = "thin"
 strip = "symbols"
+incremental = false

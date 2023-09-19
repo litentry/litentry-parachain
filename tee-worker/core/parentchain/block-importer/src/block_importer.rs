@@ -123,7 +123,7 @@ impl<
 		let mut calls = Vec::<OpaqueCall>::new();
 
 		debug!("Import blocks to light-client!");
-		for (signed_block, _raw_events) in
+		for (signed_block, raw_events) in
 			blocks_to_import.into_iter().zip(events_to_import.into_iter())
 		{
 			// Check if there are any extrinsics in the to-be-imported block that we sent and cached in the light-client before.
@@ -150,7 +150,10 @@ impl<
 
 			// Execute indirect calls that were found in the extrinsics of the block,
 			// incl. shielding and unshielding.
-			match self.indirect_calls_executor.execute_indirect_calls_in_extrinsics(&block) {
+			match self
+				.indirect_calls_executor
+				.execute_indirect_calls_in_extrinsics(&block, &raw_events)
+			{
 				Ok(parentchain_calls) => {
 					calls.push(parentchain_calls);
 				},

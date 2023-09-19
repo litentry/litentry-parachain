@@ -50,6 +50,7 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 pub mod achainable;
+pub mod oneblock;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;
@@ -61,8 +62,8 @@ use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableDate, AchainableDateInterval,
 	AchainableDatePercent, AchainableParams, AchainableToken, Assertion, ErrorDetail, ErrorString,
-	Identity, IdentityNetworkTuple, IntoErrorDetail, ParameterString, VCMPError as Error,
-	Web3Network, ASSERTION_FROM_DATE,
+	Identity, IdentityNetworkTuple, IntoErrorDetail, OneBlockCourseType, ParameterString,
+	VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
 use rust_base58::ToBase58;
