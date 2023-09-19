@@ -44,6 +44,13 @@ ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
+RUN \
+  --mount=type=cache,target=/var/cache/apt \
+  --mount=type=cache,target=/var/lib/apt \
+  apt update && \
+  apt install --no-install-recommends -y \
+  git make automake autoconf pkgconf file go-md2man
+
 RUN --mount=type=cache,target=/opt/rust/registry \
 	--mount=type=cache,target=/opt/rust/git/db \
 	--mount=type=cache,target=/home/ubuntu/.cache/sccache \

@@ -412,6 +412,14 @@ jobs:
             worker-sccache-${{ env.REF_VERSION }}-
             worker-sccache-
 
+      - name: Cache var-lib-apt
+        uses: actions/cache@v3
+        with:
+          path: var-lib-apt
+          key: var-lib-apt-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: |
+            var-lib-apt-
+
       # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache
       # see
       # https://github.com/moby/buildkit/issues/1512
@@ -434,6 +442,12 @@ jobs:
         with:
           cache-source: worker-sccache
           cache-target: /home/ubuntu/.cache/sccache
+
+      - name: inject var-lib-apt into docker
+        uses: reproducible-containers/buildkit-cache-dance@v2.1.2
+        with:
+          cache-source: var-lib-apt
+          cache-target: /var/lib/apt
 
       # see https://docs.docker.com/build/ci/github-actions/named-contexts/#using-with-a-container-builder
       - name: Build local builder
