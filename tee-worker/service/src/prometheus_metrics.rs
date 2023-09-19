@@ -39,7 +39,7 @@ use itc_rest_client::{
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
 use lc_stf_task_sender::RequestType;
-use litentry_primitives::{Assertion, Identity};
+use litentry_primitives::{Address32, Assertion, Identity};
 use log::*;
 use prometheus::{
 	proto::MetricFamily, register_histogram_vec, register_int_gauge, register_int_gauge_vec,
@@ -196,11 +196,10 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				handle_stf_call_request(*req, time);
 			},
 			EnclaveMetric::SuccesfulTrustedOperationIncrement(calls) => {
-				handle_succesful_trusted_operation(calls);
-				// ENCLAVE_SUCCESFUL_TRUSTED_OPERATION.inc();
+				handle_trusted_operation(calls, inc_succesfull_trusted_operation_metric);
 			},
 			EnclaveMetric::FailedTrustedOperationIncrement(calls) => {
-				handle_failed_trusted_operation(calls);
+				handle_trusted_operation(calls, inc_failed_trusted_operation_metric);
 			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
@@ -260,98 +259,61 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 	observe_execution_time(category, label, time)
 }
 
-fn handle_succesful_trusted_operation(call: TrustedCall) {
-	// What are the litentry trusted calls here?
-	let block = ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get();
-	let block_str: String = format!("{}", block);
-	match call {
-		TrustedCall::link_identity(caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["link_identity", &block_str, &caller])
-				.inc();
-		},
-		TrustedCall::request_vc(caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["request_vc", &block_str, &caller])
-				.inc();
-		},
-		TrustedCall::set_user_shielding_key(caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["set_user_shielding_key", &block_str, &caller])
-				.inc();
-		},
-		TrustedCall::set_user_shielding_key_with_networks(caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["set_user_shielding_key_with_networks", &block_str, &caller])
-				.inc();
-		},
-		TrustedCall::link_identity_callback(_enclave, caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["link_identity_callback", &block_str, &caller])
-				.inc();
-		},
-		TrustedCall::request_vc_callback(_enclave, caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["request_vc_callback", &block_str, &caller])
-				.inc();
-		},
-		TrustedCall::handle_vcmp_error(_enclave, caller, ..) => {
-			let caller = caller.unwrap().to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["request_vc_callback", &block_str, &caller])
-				.inc();
-		},
-		_ => {
-			let caller = String::from("0xDeadBeef");
-			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["unsupported_trusted_operation", &block_str, &caller])
-				.inc();
-		},
+// This function will handle the conversion of the caller into a formatted string.
+fn format_caller(caller_option: Option<Identity>) -> String {
+	if let Some(caller) = caller_option {
+		// Note: This unwrap should be unfallable technically
+		return format!("{}", caller.to_account_id().unwrap().to_string())
 	}
+	"0xDeadBeef".to_string()
 }
 
-fn handle_failed_trusted_operation(call: TrustedCall) {
-	let block = ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get();
-	let block_str: String = format!("{}", block);
+// This function will increment the metric with provided label values.
+fn inc_succesfull_trusted_operation_metric(operation: &str, block_str: &str, caller: &str) {
+	ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+		.with_label_values(&[operation, block_str, caller])
+		.inc();
+}
+
+fn inc_failed_trusted_operation_metric(operation: &str, block_str: &str, caller: &str) {
+	ENCLAVE_FAILED_TRUSTED_OPERATION
+		.with_label_values(&[operation, block_str, caller])
+		.inc();
+}
+
+fn handle_trusted_operation<F>(call: TrustedCall, record_metric_fn: F)
+where
+	F: Fn(&str, &str, &str),
+{
+	let block_str = format!("{}", ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get());
 	match call {
 		TrustedCall::link_identity(caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_FAILED_TRUSTED_OPERATION
-				.with_label_values(&["link_identity", &block_str, &caller])
-				.inc();
+			record_metric_fn("link_identity", &block_str, &format_caller(Some(caller)));
 		},
 		TrustedCall::request_vc(caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_FAILED_TRUSTED_OPERATION
-				.with_label_values(&["request_vc", &block_str, &caller])
-				.inc();
+			record_metric_fn("request_vc", &block_str, &format_caller(Some(caller)));
 		},
 		TrustedCall::set_user_shielding_key(caller, ..) => {
-			let caller = caller.to_account_id().unwrap();
-			let caller = format!("{}", caller.to_string());
-			ENCLAVE_FAILED_TRUSTED_OPERATION
-				.with_label_values(&["set_user_shielding_key", &block_str, &caller])
-				.inc();
+			record_metric_fn("set_user_shielding_key", &block_str, &format_caller(Some(caller)));
+		},
+		TrustedCall::set_user_shielding_key_with_networks(caller, ..) => {
+			record_metric_fn(
+				"set_user_shielding_key_with_networks",
+				&block_str,
+				&format_caller(Some(caller)),
+			);
+		},
+		TrustedCall::link_identity_callback(_enclave, caller, ..) => {
+			record_metric_fn("link_identity_callback", &block_str, &format_caller(Some(caller)));
+		},
+		TrustedCall::request_vc_callback(_enclave, caller, ..) => {
+			record_metric_fn("request_vc_callback", &block_str, &format_caller(Some(caller)));
+		},
+		TrustedCall::handle_vcmp_error(_enclave, caller, ..) => {
+			record_metric_fn("handle_vcmp_error", &block_str, &format_caller(caller));
 		},
 		_ => {
-			ENCLAVE_FAILED_TRUSTED_OPERATION
-				.with_label_values(&["unsupported_trusted_operation", &block_str])
-				.inc();
+			record_metric_fn("unsupported_trusted_operation", &block_str, "0xDeadBeef");
 		},
 	}
 }
