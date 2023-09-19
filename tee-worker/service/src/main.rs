@@ -121,7 +121,6 @@ mod utils;
 mod worker;
 mod worker_peers_updater;
 
-// A dummy comment
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type EnclaveWorker =
