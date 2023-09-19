@@ -310,6 +310,15 @@ where
 		TrustedCall::handle_vcmp_error(_enclave, caller, ..) => {
 			record_metric_fn("handle_vcmp_error", &block_str, &format_caller(caller));
 		},
+		TrustedCall::handle_imp_error(_enclave, caller, ..) => {
+			record_metric_fn("handle_icmp_error", &block_str, &format_caller(caller));
+		},
+		TrustedCall::deactivate_identity(caller, ..) => {
+			record_metric_fn("deactivate_identity", &block_str, &format_caller(Some(caller)));
+		},
+		TrustedCall::activate_identity(caller, ..) => {
+			record_metric_fn("activate_identity", &block_str, &format_caller(Some(caller)));
+		},
 		_ => {
 			record_metric_fn("unsupported_trusted_operation", &block_str, "0xDeadBeef");
 		},
