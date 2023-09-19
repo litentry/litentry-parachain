@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:experimental
+# syntax=docker/dockerfile:1
 # Copyright 2021 Integritee AG
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
