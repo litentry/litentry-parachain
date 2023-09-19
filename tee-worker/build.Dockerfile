@@ -50,7 +50,7 @@ COPY . $HOME
 RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry,sharing=private \
 	--mount=type=cache,id=cargo-git,target=/opt/rust/git,sharing=private \
 	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
-	make && cargo test --release && sccache --show-stats
+	cargo build -p lc-data-providers && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################
@@ -75,16 +75,15 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-COPY --from=builder /home/ubuntu/tee-worker/bin/litentry-cli /usr/local/bin
+# COPY --from=builder /home/ubuntu/tee-worker/bin/litentry-cli /usr/local/bin
 COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
 
-RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
+# RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
 
-RUN ldd /usr/local/bin/litentry-cli && \
-    /usr/local/bin/litentry-cli --version
+# RUN ldd /usr/local/bin/litentry-cli && /usr/local/bin/litentry-cli --version
 
-ENTRYPOINT ["/usr/local/bin/litentry-cli"]
+ENTRYPOINT ["/bin/bash"]
 
 
 ### Deployed worker service
@@ -95,19 +94,18 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 WORKDIR /usr/local/bin
 
 COPY --from=builder /opt/sgxsdk /opt/sgxsdk
-COPY --from=builder /home/ubuntu/tee-worker/bin/* /usr/local/bin
+# COPY --from=builder /home/ubuntu/tee-worker/bin/* /usr/local/bin
 COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
-RUN chmod +x /usr/local/bin/litentry-worker
+# RUN chmod +x /usr/local/bin/litentry-worker
 RUN ls -al /usr/local/bin
 
 # checks
 ENV SGX_SDK /opt/sgxsdk
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
-RUN ldd /usr/local/bin/litentry-worker && \
-    /usr/local/bin/litentry-worker --version
+# RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
 
-ENTRYPOINT ["/usr/local/bin/litentry-worker"]
+ENTRYPOINT ["/bin/bash"]
