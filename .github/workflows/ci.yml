@@ -428,7 +428,23 @@ jobs:
           cache-source: worker-sccache
           cache-target: /home/ubuntu/.cache/sccache
 
-      - name: Build worker (sidechain)
+      - name: Build local builder
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          file: tee-worker/build.Dockerfile
+          tags: local-builder:latest
+          target: builder
+          build-args: |
+            WORKER_MODE_ARG=sidechain
+            ADDITIONAL_FEATURES_ARG=
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: false
+
+      - name: Build worker
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
         with:
@@ -437,14 +453,11 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
           target: deployed-worker
-          build-args: |
-            WORKER_MODE_ARG=sidechain
-            ADDITIONAL_FEATURES_ARG=
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false
 
-      - name: Build cli (sidechain)
+      - name: Build cli
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
         with:
@@ -453,9 +466,6 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
           target: deployed-client
-          build-args: |
-            WORKER_MODE_ARG=sidechain
-            ADDITIONAL_FEATURES_ARG=
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false

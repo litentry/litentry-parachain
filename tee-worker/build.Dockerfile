@@ -72,8 +72,8 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-# COPY --from=builder /home/ubuntu/tee-worker/bin/litentry-cli /usr/local/bin
-COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+# COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/litentry-cli /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
 
 # RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
@@ -90,11 +90,11 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 WORKDIR /usr/local/bin
 
-COPY --from=builder /opt/sgxsdk /opt/sgxsdk
-# COPY --from=builder /home/ubuntu/tee-worker/bin/* /usr/local/bin
-COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
-COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
-COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
+# COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
 # RUN chmod +x /usr/local/bin/litentry-worker
