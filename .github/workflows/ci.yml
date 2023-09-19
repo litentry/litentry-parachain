@@ -448,7 +448,7 @@ jobs:
           context: .
           load: true
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:latest
+          tags: litentry/litentry-cli:latest
           target: deployed-client
           build-args: |
             WORKER_MODE_ARG=sidechain
