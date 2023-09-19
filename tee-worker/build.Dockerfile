@@ -18,7 +18,7 @@
 
 ### Builder Stage
 ##################################################
-FROM litentry/litentry-tee-dev:edge AS builder
+FROM litentry/litentry-tee-dev:latest AS builder
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 # set environment variables
