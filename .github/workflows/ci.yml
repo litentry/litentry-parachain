@@ -224,7 +224,7 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: "litentry/litentry-tee-dev:edge"
+    container: "litentry/litentry-tee-dev:latest"
     steps:
       - uses: actions/checkout@v3
 
@@ -382,24 +382,27 @@ jobs:
         uses: actions/cache@v3
         with:
           path: worker-cargo-registry
-          key: worker-cargo-registry-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          key: worker-cargo-registry-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock') }}
           restore-keys: |
+            worker-cargo-registry-${{ env.REF_VERSION }}-
             worker-cargo-registry-
 
       - name: Cache cargo git
         uses: actions/cache@v3
         with:
           path: worker-cargo-git
-          key: worker-cargo-git-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          key: worker-cargo-git-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock') }}
           restore-keys: |
+            worker-cargo-git-${{ env.REF_VERSION }}-
             worker-cargo-git-
 
       - name: Cache sccache
         uses: actions/cache@v3
         with:
           path: worker-sccache
-          key: worker-sccache-${{ hashFiles('tee-worker/**/Cargo.lock') }}
+          key: worker-sccache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock') }}
           restore-keys: |
+            worker-sccache-${{ env.REF_VERSION }}-
             worker-sccache-
 
       # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache

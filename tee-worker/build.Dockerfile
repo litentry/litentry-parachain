@@ -31,9 +31,6 @@ ENV SGX_MODE SW
 
 ENV HOME=/home/ubuntu
 
-RUN rustup default stable
-RUN cargo install sccache --locked
-
 ENV SCCACHE_CACHE_SIZE="20G"
 ENV SCCACHE_DIR=$HOME/.cache/sccache
 ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
