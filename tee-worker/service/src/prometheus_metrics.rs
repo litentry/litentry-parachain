@@ -71,10 +71,10 @@ lazy_static! {
 		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
 			.unwrap();
 	static ref ENCLAVE_SUCCESFUL_TRUSTED_OPERATION: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation", &["call", "block"])
+		register_int_gauge_vec!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation", &["call", "block", "caller"])
 			.unwrap();
 	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call", "block"])
+		register_int_gauge_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call", "block", "caller"])
 			.unwrap();
 }
 
@@ -265,29 +265,59 @@ fn handle_succesful_trusted_operation(call: TrustedCall) {
 	let block = ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get();
 	let block_str: String = format!("{}", block);
 	match call {
-		TrustedCall::link_identity(..) => {
+		TrustedCall::link_identity(caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
 			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["link_identity", &block_str])
+				.with_label_values(&["link_identity", &block_str, &caller])
 				.inc();
 		},
-		TrustedCall::request_vc(..) => {
+		TrustedCall::request_vc(caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
 			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["request_vc", &block_str])
+				.with_label_values(&["request_vc", &block_str, &caller])
 				.inc();
 		},
-		TrustedCall::set_user_shielding_key(..) => {
+		TrustedCall::set_user_shielding_key(caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
 			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["set_user_shielding_key", &block_str])
+				.with_label_values(&["set_user_shielding_key", &block_str, &caller])
 				.inc();
 		},
-		TrustedCall::set_user_shielding_key_with_networks(..) => {
+		TrustedCall::set_user_shielding_key_with_networks(caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
 			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["set_user_shielding_key_with_networks", &block_str])
+				.with_label_values(&["set_user_shielding_key_with_networks", &block_str, &caller])
+				.inc();
+		},
+		TrustedCall::link_identity_callback(_enclave, caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["link_identity_callback", &block_str, &caller])
+				.inc();
+		},
+		TrustedCall::request_vc_callback(_enclave, caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["request_vc_callback", &block_str, &caller])
+				.inc();
+		},
+		TrustedCall::handle_vcmp_error(_enclave, caller, ..) => {
+			let caller = caller.unwrap().to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
+			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
+				.with_label_values(&["request_vc_callback", &block_str, &caller])
 				.inc();
 		},
 		_ => {
+			let caller = String::from("0xDeadBeef");
 			ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-				.with_label_values(&["unsupported_trusted_operation", &block_str])
+				.with_label_values(&["unsupported_trusted_operation", &block_str, &caller])
 				.inc();
 		},
 	}
@@ -297,19 +327,25 @@ fn handle_failed_trusted_operation(call: TrustedCall) {
 	let block = ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get();
 	let block_str: String = format!("{}", block);
 	match call {
-		TrustedCall::link_identity(..) => {
+		TrustedCall::link_identity(caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
 			ENCLAVE_FAILED_TRUSTED_OPERATION
-				.with_label_values(&["link_identity", &block_str])
+				.with_label_values(&["link_identity", &block_str, &caller])
 				.inc();
 		},
-		TrustedCall::request_vc(..) => {
+		TrustedCall::request_vc(caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
 			ENCLAVE_FAILED_TRUSTED_OPERATION
-				.with_label_values(&["request_vc", &block_str])
+				.with_label_values(&["request_vc", &block_str, &caller])
 				.inc();
 		},
-		TrustedCall::set_user_shielding_key(..) => {
+		TrustedCall::set_user_shielding_key(caller, ..) => {
+			let caller = caller.to_account_id().unwrap();
+			let caller = format!("{}", caller.to_string());
 			ENCLAVE_FAILED_TRUSTED_OPERATION
-				.with_label_values(&["set_user_shielding_key", &block_str])
+				.with_label_values(&["set_user_shielding_key", &block_str, &caller])
 				.inc();
 		},
 		_ => {
