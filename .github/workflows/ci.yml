@@ -444,6 +444,8 @@ jobs:
           cache-to: type=gha,mode=max
           push: false
 
+      - run: docker images --all
+
       - name: Build worker
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
