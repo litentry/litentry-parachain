@@ -451,8 +451,6 @@ jobs:
           cache-to: type=gha,mode=max
           push: true
 
-      - run: docker images --all
-
       - name: Build worker
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
@@ -464,8 +462,6 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
           target: deployed-worker
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           push: false
 
       - name: Build cli
@@ -479,8 +475,6 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
           target: deployed-client
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           push: false
 
       - name: Pull and tag worker and cli image optionally
