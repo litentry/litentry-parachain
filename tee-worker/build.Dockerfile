@@ -44,8 +44,8 @@ ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
-RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry,sharing=private \
-	--mount=type=cache,id=cargo-git,target=/opt/rust/git,sharing=private \
+RUN --mount=type=cache,id=cargo-registry,target=/opt/rust/registry \
+	--mount=type=cache,id=cargo-git,target=/opt/rust/git \
 	--mount=type=cache,id=cargo-sccache-${WORKER_MODE}${ADDITIONAL_FEATURES},target=/home/ubuntu/.cache/sccache \
 	cargo build -p lc-data-providers && sccache --show-stats
 
