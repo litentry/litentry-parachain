@@ -73,17 +73,11 @@ COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 ##################################################
 FROM ubuntu:22.04 AS runner
 
+RUN apt update && apt install -y libssl-dev iproute2 curl
+
 ## install packages for ts-tests
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
-RUN apt-get update && apt-get install -y \
-  nodejs \
-  jq \
-  libssl-dev \
-  iproute2 \
-  curl \
-  && rm -rf /var/lib/apt/lists/* && \
-  rm -rf /var/cache/apt/archives/*
-
+RUN apt-get install -y nodejs jq
 RUN corepack enable && corepack prepare yarn@3.6.1 --activate
 
 ### Deployed CLI client
