@@ -53,7 +53,7 @@ WORKDIR $HOME/tee-worker
 COPY . $HOME
 COPY worker-sccache /opt/rust/worker-sccache
 
-RUN cargo build -p lc-data-providers && sccache --show-stats
+RUN make && sccache --show-stats
 
 ### Base image for built artefacts
 ##################################################
