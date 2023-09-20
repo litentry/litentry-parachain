@@ -23,6 +23,7 @@ name: General CI
 # - parachain-build-dev
 # - parachain-build-tee-prod
 # - tee-build
+# - tee-packup
 #
 # [4] please note that job-level if `env` is not supported:
 # https://github.com/actions/runner/issues/1189
@@ -291,13 +292,13 @@ jobs:
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain -o litentry-parachain-dev.tar
+          docker save litentry/litentry-parachain | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload docker image
         uses: actions/upload-artifact@v3
         with:
-          name: parachain-artifact-dev
-          path: litentry-parachain-dev.tar
+          name: litentry-parachain-dev
+          path: litentry-parachain-dev.tar.gz
           if-no-files-found: error
 
       - name: Fail early
@@ -342,13 +343,13 @@ jobs:
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain:tee-prod -o litentry-parachain-tee-prod.tar
+          docker save litentry/litentry-parachain:tee-prod | gzip > litentry-parachain-tee-prod.tar.gz
 
       - name: Upload docker image
         uses: actions/upload-artifact@v3
         with:
           name: parachain-artifact-tee-prod
-          path: litentry-parachain-tee-prod.tar
+          path: litentry-parachain-tee-prod.tar.gz
           if-no-files-found: error
 
       - name: Fail early
@@ -357,11 +358,7 @@ jobs:
 
   tee-build:
     runs-on: ubuntu-latest
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
+    if: needs.set-condition.outputs.rebuild_tee == 'true'
     needs:
       - fmt
       - set-condition
@@ -382,14 +379,12 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: network=host
 
       - name: Cache cargo git
         uses: actions/cache@v3
         with:
           path: worker-cargo-git
-          key: worker-cargo-git-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock, tee-worker/**/Cargo.toml') }}
+          key: worker-cargo-git-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
           restore-keys: |
             worker-cargo-git-${{ env.REF_VERSION }}-
             worker-cargo-git-
@@ -398,18 +393,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: worker-sccache
-          key: worker-sccache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock, tee-worker/**/Cargo.toml') }}
+          key: worker-sccache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
           restore-keys: |
             worker-sccache-${{ env.REF_VERSION }}-
             worker-sccache-
-
-      - name: Cache var-lib-apt
-        uses: actions/cache@v3
-        with:
-          path: var-lib-apt
-          key: var-lib-apt-${{ hashFiles('**/Dockerfile') }}
-          restore-keys: |
-            var-lib-apt-
 
       # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache
       # see
@@ -428,53 +415,86 @@ jobs:
           cache-source: worker-sccache
           cache-target: /home/ubuntu/.cache/sccache
 
-      - name: inject var-lib-apt into docker
-        uses: reproducible-containers/buildkit-cache-dance@v2.1.2
-        with:
-          cache-source: var-lib-apt
-          cache-target: /var/lib/apt
-
-      # see https://docs.docker.com/build/ci/github-actions/named-contexts/#using-with-a-container-builder
+      # buildkit-cache-dance seems to have some race conditions when followed by
+      # multiple build-pusha-actions, the root cause is unclear.
+      # To play safe we split it into two steps, first build a local builder, and
+      # then pass it to `tee-packup` job to actually build the final images
       - name: Build local builder
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
+          load: true
           file: tee-worker/build.Dockerfile
-          tags: localhost:5000/local-builder:latest
-          target: builder
+          tags: local-builder:latest
+          target: local-builder
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: true
+          push: false
 
-      # - name: Build worker
-      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: .
-      #     build-contexts: |
-      #       local-builder=docker-image://localhost:5000/local-builder:latest   
-      #     load: true
-      #     file: tee-worker/build.Dockerfile
-      #     tags: litentry/litentry-worker:latest
-      #     target: deployed-worker
-      #     push: false
+      - name: Save image
+        run: |
+          docker images
+          docker save local-builder:latest | gzip > local-builder.tar.gz
 
-      # - name: Build cli
-      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: .
-      #     build-contexts: |
-      #       local-builder=docker-image://localhost:5000/local-builder:latest   
-      #     load: true
-      #     file: tee-worker/build.Dockerfile
-      #     tags: litentry/litentry-cli:latest
-      #     target: deployed-client
-      #     push: false
+      - name: Upload docker images
+        uses: actions/upload-artifact@v3
+        with:
+          name: local-builder
+          path: local-builder.tar.gz
+          if-no-files-found: error
+
+  tee-packup:
+    runs-on: ubuntu-latest
+    needs:
+      - tee-build
+      - set-condition
+    if: |
+      always() &&
+      (needs.tee-build.result == 'success' || needs.tee-build.result == 'skipped')
+    steps:
+      - uses: actions/checkout@v3
+
+      # use `docker` driver to access host images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+
+      - uses: actions/download-artifact@v3
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        with:
+          name: local-builder
+
+      - name: Load docker image
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        run: |
+          docker load < local-builder.tar.gz
+          docker images
+
+      - name: Build worker
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          file: tee-worker/build.Dockerfile
+          tags: litentry/litentry-worker:latest
+          target: deployed-worker
+          push: false
+
+      - name: Build cli
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          file: tee-worker/build.Dockerfile
+          tags: litentry/litentry-cli:latest
+          target: deployed-client
+          push: false
 
       - name: Pull and tag worker and cli image optionally
         if: needs.set-condition.outputs.rebuild_tee == 'false'
@@ -484,27 +504,27 @@ jobs:
 
       - run: docker images --all
 
-      # - name: Pallet unittests
-      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
-      #   working-directory: ./tee-worker
-      #   run: |
-      #     rustup show
-      #     cargo test --locked --release -p pallet-* --lib
+      - name: Pallet unittests
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        working-directory: ./tee-worker
+        run: |
+          rustup show
+          cargo test --locked --release -p pallet-* --lib
 
-      # - name: Test enclave
-      #   # cargo test is not supported in the enclave
-      #   # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-      #   run: docker run litentry/litentry-worker test --all
+      - name: Test enclave
+        # cargo test is not supported in the enclave
+        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run litentry/litentry-worker test --all
 
-      # - name: Save docker images
-      #   run: docker save litentry/litentry-worker litentry/litentry-cli -o litentry-tee.tar
+      - name: Save docker images
+        run: docker save litentry/litentry-worker litentry/litentry-cli | gzip > litentry-tee.tar.gz
 
-      # - name: Upload docker images
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: tee-artifact
-      #     path: litentry-tee.tar
-      #     if-no-files-found: error
+      - name: Upload docker images
+        uses: actions/upload-artifact@v3
+        with:
+          name: litentry-tee
+          path: litentry-tee.tar.gz
+          if-no-files-found: error
 
       - name: Fail early
         if: failure()
@@ -526,11 +546,11 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: parachain-artifact-dev
+          name: litentry-parachain-dev
 
       - name: Load docker image
         run: |
-          docker load -i litentry-parachain-dev.tar
+          docker load < litentry-parachain-dev.tar.gz
 
       - name: Run ts tests for ${{ matrix.chain }}
         if: needs.set-condition.outputs.run_parachain_test == 'true'
@@ -637,7 +657,7 @@ jobs:
     needs:
       - set-condition
       - parachain-build-dev
-      - tee-build
+      - tee-packup
     env:
       WORKER_IMAGE_TAG: litentry-worker:dev
       CLIENT_IMAGE_TAG: litentry-cli:dev
@@ -673,16 +693,16 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: parachain-artifact-dev
+          name: litentry-parachain-dev
 
       - uses: actions/download-artifact@v3
         with:
-          name: tee-artifact
+          name: litentry-tee
 
       - name: Load docker image
         run: |
-          docker load -i litentry-parachain-dev.tar
-          docker load -i litentry-tee.tar
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-tee.tar.gz
 
       - name: Re-name Image Tags
         run: |
@@ -756,7 +776,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: parachain-artifact-dev
+          name: litentry-parachain-dev
 
       - uses: actions/download-artifact@v3
         with:
@@ -764,13 +784,13 @@ jobs:
 
       - uses: actions/download-artifact@v3
         with:
-          name: tee-artifact
+          name: litentry-tee
 
       - name: Load docker image
         run: |
-          docker load -i litentry-parachain-dev.tar
-          docker load -i litentry-parachain-tee-prod.tar
-          docker load -i litentry-tee.tar
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-parachain-tee-prod.tar.gz
+          docker load < litentry-tee.tar.gz
 
       - name: Dockerhub login
         uses: docker/login-action@v2

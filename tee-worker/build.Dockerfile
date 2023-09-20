@@ -23,17 +23,23 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 # set environment variables
 ENV SGX_SDK /opt/sgxsdk
-ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/root/.cargo/bin"
+ENV PATH "$PATH:${SGX_SDK}/bin:${SGX_SDK}/bin/x64:/opt/rust/bin"
 ENV PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${SGX_SDK}/pkgconfig"
 ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 ENV CARGO_NET_GIT_FETCH_WITH_CLI true
-ENV SGX_MODE SW
-
-ENV HOME=/home/ubuntu
 
 ENV SCCACHE_CACHE_SIZE="20G"
 ENV SCCACHE_DIR=$HOME/.cache/sccache
 ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
+
+# Default SGX MODE is software mode
+ARG SGX_MODE=SW
+ENV SGX_MODE=$SGX_MODE
+
+ARG SGX_PRODUCTION=0
+ENV SGX_PRODUCTION=$SGX_PRODUCTION
+
+ENV HOME=/home/ubuntu
 
 ARG WORKER_MODE_ARG
 ENV WORKER_MODE=$WORKER_MODE_ARG
@@ -41,33 +47,44 @@ ENV WORKER_MODE=$WORKER_MODE_ARG
 ARG ADDITIONAL_FEATURES_ARG
 ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
+ARG FINGERPRINT=none
+
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN \
-  --mount=type=cache,target=/var/lib/apt \
-  apt update && \
-  apt install --no-install-recommends -y \
-  git make automake autoconf pkgconf file go-md2man
-
-RUN rustup show
-
-RUN \
   --mount=type=cache,target=/opt/rust/git/db \
   --mount=type=cache,target=/home/ubuntu/.cache/sccache \
-  make && sccache --show-stats
+  make && cargo test --release && sccache --show-stats
+
+### Base image for built artefacts
+##################################################
+### we need it to shrink the docker image size to pass around
+### see local-builder in ci.yml
+FROM ubuntu:22.04 AS local-builder
+
+COPY --from=builder /home/ubuntu/tee-worker/bin/* /opt/worker/bin/
+COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /opt/worker/cli/
+COPY --from=builder /opt/sgxsdk /opt/sgxsdk
+COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 ### Base Runner Stage
 ##################################################
 FROM ubuntu:22.04 AS runner
 
-RUN apt update && apt install -y libssl-dev iproute2 curl
+## install packages for ts-tests
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
+RUN apt-get update && apt-get install -y \
+  nodejs \
+  jq \
+  libssl-dev \
+  iproute2 \
+  curl \
+  && rm -rf /var/lib/apt/lists/* && \
+  rm -rf /var/cache/apt/archives/*
 
-## ts-tests
-# RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
-# RUN apt-get install -y nodejs jq
-# RUN corepack enable
-# RUN corepack prepare yarn@3.6.1 --activate
+RUN corepack enable && corepack prepare yarn@3.6.1 --activate
 
 ### Deployed CLI client
 ##################################################
@@ -80,37 +97,38 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-# COPY --from=local-builder /home/ubuntu/tee-worker/bin/litentry-cli /usr/local/bin
-COPY --from=local-builder /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+# please note it's the `local-builder`image, not the previous stage, as they are executed in separate GHA jobs
+COPY --from=local-builder:latest /opt/worker/bin/litentry-cli /usr/local/bin
+COPY --from=local-builder:latest /opt/worker/cli/*.sh /usr/local/worker-cli/
 
-# RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
+RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
 
-# RUN ldd /usr/local/bin/litentry-cli && /usr/local/bin/litentry-cli --version
+RUN ldd /usr/local/bin/litentry-cli && /usr/local/bin/litentry-cli --version
 
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 
 
 ### Deployed worker service
 ##################################################
 FROM runner AS deployed-worker
-LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
+LABEL maintainer="litentry-dev"
 
 WORKDIR /usr/local/bin
 
-COPY --from=local-builder /opt/sgxsdk /opt/sgxsdk
-# COPY --from=local-builder /home/ubuntu/tee-worker/bin/* /usr/local/bin
-COPY --from=local-builder /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
-COPY --from=local-builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
-COPY --from=local-builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
+COPY --from=local-builder:latest /opt/worker/bin/* /usr/local/bin
+COPY --from=local-builder:latest /opt/worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
-# RUN chmod +x /usr/local/bin/litentry-worker
+RUN chmod +x /usr/local/bin/litentry-worker
 RUN ls -al /usr/local/bin
 
 # checks
 ENV SGX_SDK /opt/sgxsdk
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
-# RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
+RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
 
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["/usr/local/bin/litentry-worker"]
