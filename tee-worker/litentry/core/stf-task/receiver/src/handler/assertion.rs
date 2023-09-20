@@ -22,7 +22,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use lc_credentials::DID;
-use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
+use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Assertion, ErrorDetail, ErrorString, Identity, VCMPError};
 use log::*;
@@ -102,9 +102,11 @@ where
 			)
 		})?;
 
-		let credential_endpoint =
-			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().credential_endpoint.clone();
-		credential.credential_subject.set_endpoint(credential_endpoint);
+		let data_provider_config = DataProviderConfigReader::read()
+			.map_err(|e| VCMPError::RequestVCFailed(self.req.assertion.clone(), e))?;
+		credential
+			.credential_subject
+			.set_endpoint(data_provider_config.credential_endpoint);
 
 		credential.issuer.id = DID::try_from(&Identity::Substrate(enclave_account.into()))
 			.map_err(|e| {

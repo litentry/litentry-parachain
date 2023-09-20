@@ -28,7 +28,7 @@ use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
-	UserInfo,
+	DataProviderConfigReader, ReadDataProviderConfig, UserInfo,
 };
 use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
@@ -84,7 +84,10 @@ pub fn verify(
 			ref message_id,
 			..
 		}) => {
-			let mut client = DiscordOfficialClient::new();
+			let data_provider_config =
+				DataProviderConfigReader::read().map_err(Error::UnclassifiedError)?;
+
+			let mut client = DiscordOfficialClient::new(&data_provider_config);
 			let message: DiscordMessage = client
 				.query_message(channel_id.to_vec(), message_id.to_vec())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;

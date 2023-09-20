@@ -167,6 +167,22 @@ lazy_static! {
 		RwLock::new(DataProviderConfig::new());
 }
 
+pub struct DataProviderConfigReader;
+pub trait ReadDataProviderConfig {
+	fn read() -> Result<DataProviderConfig, ErrorDetail>;
+}
+
+impl ReadDataProviderConfig for DataProviderConfigReader {
+	fn read() -> Result<DataProviderConfig, ErrorDetail> {
+		match GLOBAL_DATA_PROVIDER_CONFIG.read() {
+			Ok(c) => Ok(c.clone()),
+			Err(e) => Err(ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				format!("{e:?}").as_bytes().to_vec(),
+			))),
+		}
+	}
+}
+
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
 	#[error("Request error: {0}")]
