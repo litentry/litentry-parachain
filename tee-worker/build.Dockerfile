@@ -51,7 +51,7 @@ ARG FINGERPRINT=none
 
 WORKDIR $HOME/tee-worker
 COPY . $HOME
-COPY worker-sccache /opt/rust/
+COPY worker-sccache /opt/rust/worker-sccache
 
 RUN cargo build -p lc-data-providers && sccache --show-stats
 
