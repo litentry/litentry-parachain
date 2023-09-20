@@ -1,7 +1,12 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
+import {
+    assertWorkerError,
+    buildIdentityFromKeypair,
+    initIntegrationTestContext,
+    PolkadotSigner,
+} from './common/utils';
 import { assertInitialIdGraphCreated, assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     createSignedTrustedCallSetUserShieldingKey,
@@ -146,7 +151,7 @@ describe('Test Vc (direct invocation)', function () {
             context.mrEnclave,
             context.api.createType('Index', nonce),
             new PolkadotSigner(context.substrateWallet.bob),
-            aliceSubject,
+            bobSubject,
             context.api.createType('Assertion', { A1: null }).toHex(),
             requestIdentifier
         );
@@ -156,6 +161,16 @@ describe('Test Vc (direct invocation)', function () {
             context.mrEnclave,
             teeShieldingKey,
             requestVcCall
+        );
+        assertWorkerError(
+            context,
+            requestIdentifier,
+            (v) => {
+                assert.isTrue(v.isRequestVCFailed, `expected RequestVCFailed, received ${v.type} instead`);
+                assert.isTrue(v.asRequestVCFailed[0].isA1);
+                assert.isTrue(v.asRequestVCFailed[1].isUserShieldingKeyNotFound);
+            },
+            callValue
         );
         assert.isTrue(callValue.do_watch.isFalse);
         assert.isTrue(

@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_sidechain`.
@@ -63,8 +63,8 @@ impl<T: frame_system::Config> pallet_sidechain::WeightInfo for WeightInfo<T> {
 		//  Measured:  `371`
 		//  Estimated: `9280`
 		// Minimum execution time: 35_998 nanoseconds.
-		Weight::from_ref_time(36_557_000)
-			.saturating_add(Weight::from_proof_size(9280))
+		Weight::from_parts(36_557_000, 0)
+			.saturating_add(Weight::from_parts(0, 9280))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}

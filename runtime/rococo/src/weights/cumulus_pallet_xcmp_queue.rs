@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `cumulus_pallet_xcmp_queue`.
@@ -55,8 +55,8 @@ impl<T: frame_system::Config> cumulus_pallet_xcmp_queue::WeightInfo for WeightIn
 		//  Measured:  `109`
 		//  Estimated: `604`
 		// Minimum execution time: 8_043 nanoseconds.
-		Weight::from_ref_time(8_384_000)
-			.saturating_add(Weight::from_proof_size(604))
+		Weight::from_parts(8_384_000, 0)
+			.saturating_add(Weight::from_parts(0, 604))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -67,8 +67,8 @@ impl<T: frame_system::Config> cumulus_pallet_xcmp_queue::WeightInfo for WeightIn
 		//  Measured:  `109`
 		//  Estimated: `604`
 		// Minimum execution time: 8_312 nanoseconds.
-		Weight::from_ref_time(8_984_000)
-			.saturating_add(Weight::from_proof_size(604))
+		Weight::from_parts(8_984_000, 0)
+			.saturating_add(Weight::from_parts(0, 604))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}

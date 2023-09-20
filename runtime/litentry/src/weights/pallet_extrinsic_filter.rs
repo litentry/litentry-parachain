@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_extrinsic_filter`.
@@ -57,12 +57,12 @@ impl<T: frame_system::Config> pallet_extrinsic_filter::WeightInfo for WeightInfo
 		//  Measured:  `109`
 		//  Estimated: `2584`
 		// Minimum execution time: 22_173 nanoseconds.
-		Weight::from_ref_time(19_919_740)
-			.saturating_add(Weight::from_proof_size(2584))
+		Weight::from_parts(19_919_740, 0)
+			.saturating_add(Weight::from_parts(0, 2584))
 			// Standard Error: 98
-			.saturating_add(Weight::from_ref_time(3_609).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(3_609, 0).saturating_mul(p.into()))
 			// Standard Error: 98
-			.saturating_add(Weight::from_ref_time(4_056).saturating_mul(f.into()))
+			.saturating_add(Weight::from_parts(4_056, 0).saturating_mul(f.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -75,15 +75,15 @@ impl<T: frame_system::Config> pallet_extrinsic_filter::WeightInfo for WeightInfo
 		//  Measured:  `145 + p * (1 ±0) + f * (1 ±0)`
 		//  Estimated: `2621 + p * (1 ±0) + f * (1 ±0)`
 		// Minimum execution time: 39_045 nanoseconds.
-		Weight::from_ref_time(21_466_551)
-			.saturating_add(Weight::from_proof_size(2621))
+		Weight::from_parts(21_466_551, 0)
+			.saturating_add(Weight::from_parts(0, 2621))
 			// Standard Error: 128
-			.saturating_add(Weight::from_ref_time(19_007).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(19_007, 0).saturating_mul(p.into()))
 			// Standard Error: 128
-			.saturating_add(Weight::from_ref_time(18_993).saturating_mul(f.into()))
+			.saturating_add(Weight::from_parts(18_993, 0).saturating_mul(f.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
-			.saturating_add(Weight::from_proof_size(1).saturating_mul(p.into()))
-			.saturating_add(Weight::from_proof_size(1).saturating_mul(f.into()))
+			.saturating_add(Weight::from_parts(0, 1).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(0, 1).saturating_mul(f.into()))
 	}
 }

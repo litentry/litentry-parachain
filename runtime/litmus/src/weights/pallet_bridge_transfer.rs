@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_bridge_transfer`.
@@ -63,8 +63,8 @@ impl<T: frame_system::Config> pallet_bridge_transfer::WeightInfo for WeightInfo<
 		//  Measured:  `631`
 		//  Estimated: `13670`
 		// Minimum execution time: 76_270 nanoseconds.
-		Weight::from_ref_time(77_356_000)
-			.saturating_add(Weight::from_proof_size(13670))
+		Weight::from_parts(77_356_000, 0)
+			.saturating_add(Weight::from_parts(0, 13670))
 			.saturating_add(T::DbWeight::get().reads(6))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
@@ -79,8 +79,8 @@ impl<T: frame_system::Config> pallet_bridge_transfer::WeightInfo for WeightInfo<
 		//  Measured:  `244`
 		//  Estimated: `4081`
 		// Minimum execution time: 37_181 nanoseconds.
-		Weight::from_ref_time(38_522_000)
-			.saturating_add(Weight::from_proof_size(4081))
+		Weight::from_parts(38_522_000, 0)
+			.saturating_add(Weight::from_parts(0, 4081))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -91,8 +91,8 @@ impl<T: frame_system::Config> pallet_bridge_transfer::WeightInfo for WeightInfo<
 		//  Measured:  `109`
 		//  Estimated: `604`
 		// Minimum execution time: 14_629 nanoseconds.
-		Weight::from_ref_time(15_161_000)
-			.saturating_add(Weight::from_proof_size(604))
+		Weight::from_parts(15_161_000, 0)
+			.saturating_add(Weight::from_parts(0, 604))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -103,8 +103,8 @@ impl<T: frame_system::Config> pallet_bridge_transfer::WeightInfo for WeightInfo<
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 3_454 nanoseconds.
-		Weight::from_ref_time(3_678_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(3_678_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 }

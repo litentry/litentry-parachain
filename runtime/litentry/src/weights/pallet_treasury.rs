@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_treasury`.
@@ -53,8 +53,8 @@ impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 245 nanoseconds.
-		Weight::from_ref_time(299_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(299_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 	/// Storage: Treasury ProposalCount (r:1 w:1)
 	/// Proof: Treasury ProposalCount (max_values: Some(1), max_size: Some(4), added: 499, mode: MaxEncodedLen)
@@ -65,8 +65,8 @@ impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
 		//  Measured:  `213`
 		//  Estimated: `499`
 		// Minimum execution time: 35_185 nanoseconds.
-		Weight::from_ref_time(36_057_000)
-			.saturating_add(Weight::from_proof_size(499))
+		Weight::from_parts(36_057_000, 0)
+			.saturating_add(Weight::from_parts(0, 499))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -79,8 +79,8 @@ impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
 		//  Measured:  `538`
 		//  Estimated: `7789`
 		// Minimum execution time: 55_130 nanoseconds.
-		Weight::from_ref_time(56_604_000)
-			.saturating_add(Weight::from_proof_size(7789))
+		Weight::from_parts(56_604_000, 0)
+			.saturating_add(Weight::from_parts(0, 7789))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
 	}
@@ -94,10 +94,10 @@ impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
 		//  Measured:  `517 + p * (9 ±0)`
 		//  Estimated: `3480`
 		// Minimum execution time: 14_100 nanoseconds.
-		Weight::from_ref_time(18_238_739)
-			.saturating_add(Weight::from_proof_size(3480))
+		Weight::from_parts(18_238_739, 0)
+			.saturating_add(Weight::from_parts(0, 3480))
 			// Standard Error: 3_314
-			.saturating_add(Weight::from_ref_time(131_638).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(131_638, 0).saturating_mul(p.into()))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -108,8 +108,8 @@ impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
 		//  Measured:  `165`
 		//  Estimated: `897`
 		// Minimum execution time: 11_351 nanoseconds.
-		Weight::from_ref_time(11_841_000)
-			.saturating_add(Weight::from_proof_size(897))
+		Weight::from_parts(11_841_000, 0)
+			.saturating_add(Weight::from_parts(0, 897))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -129,14 +129,14 @@ impl<T: frame_system::Config> pallet_treasury::WeightInfo for WeightInfo<T> {
 		//  Measured:  `129 + p * (315 ±0)`
 		//  Estimated: `4522 + p * (7789 ±0)`
 		// Minimum execution time: 43_324 nanoseconds.
-		Weight::from_ref_time(43_657_000)
-			.saturating_add(Weight::from_proof_size(4522))
+		Weight::from_parts(43_657_000, 0)
+			.saturating_add(Weight::from_parts(0, 4522))
 			// Standard Error: 677_465
-			.saturating_add(Weight::from_ref_time(60_051_757).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(60_051_757, 0).saturating_mul(p.into()))
 			.saturating_add(T::DbWeight::get().reads(4))
 			.saturating_add(T::DbWeight::get().reads((3_u64).saturating_mul(p.into())))
 			.saturating_add(T::DbWeight::get().writes(4))
 			.saturating_add(T::DbWeight::get().writes((3_u64).saturating_mul(p.into())))
-			.saturating_add(Weight::from_proof_size(7789).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(0, 7789).saturating_mul(p.into()))
 	}
 }

@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_teerex`.
@@ -63,8 +63,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		//  Measured:  `451`
 		//  Estimated: `10227`
 		// Minimum execution time: 2_039_284 nanoseconds.
-		Weight::from_ref_time(2_067_966_000)
-			.saturating_add(Weight::from_proof_size(10227))
+		Weight::from_parts(2_067_966_000, 0)
+			.saturating_add(Weight::from_parts(0, 10227))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -79,8 +79,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		//  Measured:  `523`
 		//  Estimated: `7014`
 		// Minimum execution time: 42_390 nanoseconds.
-		Weight::from_ref_time(43_599_000)
-			.saturating_add(Weight::from_proof_size(7014))
+		Weight::from_parts(43_599_000, 0)
+			.saturating_add(Weight::from_parts(0, 7014))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
@@ -89,8 +89,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 14_729 nanoseconds.
-		Weight::from_ref_time(15_297_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(15_297_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
@@ -103,8 +103,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		//  Measured:  `423`
 		//  Estimated: `6299`
 		// Minimum execution time: 38_712 nanoseconds.
-		Weight::from_ref_time(40_620_000)
-			.saturating_add(Weight::from_proof_size(6299))
+		Weight::from_parts(40_620_000, 0)
+			.saturating_add(Weight::from_parts(0, 6299))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -121,16 +121,16 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		//  Measured:  `381`
 		//  Estimated: `8568 + t * (2475 ±0)`
 		// Minimum execution time: 33_533 nanoseconds.
-		Weight::from_ref_time(30_879_350)
-			.saturating_add(Weight::from_proof_size(8568))
+		Weight::from_parts(30_879_350, 0)
+			.saturating_add(Weight::from_parts(0, 8568))
 			// Standard Error: 1_774
-			.saturating_add(Weight::from_ref_time(14_703).saturating_mul(l.into()))
+			.saturating_add(Weight::from_parts(14_703, 0).saturating_mul(l.into()))
 			// Standard Error: 39_598
-			.saturating_add(Weight::from_ref_time(2_856_008).saturating_mul(t.into()))
+			.saturating_add(Weight::from_parts(2_856_008, 0).saturating_mul(t.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(t.into())))
 			.saturating_add(T::DbWeight::get().writes(1))
 			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(t.into())))
-			.saturating_add(Weight::from_proof_size(2475).saturating_mul(t.into()))
+			.saturating_add(Weight::from_parts(0, 2475).saturating_mul(t.into()))
 	}
 }

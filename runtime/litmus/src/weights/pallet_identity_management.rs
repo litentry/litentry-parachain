@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_identity_management`.
@@ -55,8 +55,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 11_886 nanoseconds.
-		Weight::from_ref_time(12_420_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(12_420_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
 	/// Storage: IdentityManagement Delegatee (r:1 w:1)
@@ -66,8 +66,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `79`
 		//  Estimated: `2523`
 		// Minimum execution time: 19_088 nanoseconds.
-		Weight::from_ref_time(19_502_000)
-			.saturating_add(Weight::from_proof_size(2523))
+		Weight::from_parts(19_502_000, 0)
+			.saturating_add(Weight::from_parts(0, 2523))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -78,8 +78,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `76`
 		//  Estimated: `571`
 		// Minimum execution time: 18_106 nanoseconds.
-		Weight::from_ref_time(18_796_000)
-			.saturating_add(Weight::from_proof_size(571))
+		Weight::from_parts(18_796_000, 0)
+			.saturating_add(Weight::from_parts(0, 571))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
@@ -89,8 +89,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `76`
 		//  Estimated: `571`
 		// Minimum execution time: 15_352 nanoseconds.
-		Weight::from_ref_time(15_848_000)
-			.saturating_add(Weight::from_proof_size(571))
+		Weight::from_parts(15_848_000, 0)
+			.saturating_add(Weight::from_parts(0, 571))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
@@ -100,8 +100,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `76`
 		//  Estimated: `571`
 		// Minimum execution time: 15_330 nanoseconds.
-		Weight::from_ref_time(15_787_000)
-			.saturating_add(Weight::from_proof_size(571))
+		Weight::from_parts(15_787_000, 0)
+			.saturating_add(Weight::from_parts(0, 571))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
@@ -111,8 +111,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `76`
 		//  Estimated: `571`
 		// Minimum execution time: 15_577 nanoseconds.
-		Weight::from_ref_time(16_338_000)
-			.saturating_add(Weight::from_proof_size(571))
+		Weight::from_parts(16_338_000, 0)
+			.saturating_add(Weight::from_parts(0, 571))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -122,8 +122,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `242`
 		//  Estimated: `2717`
 		// Minimum execution time: 20_328 nanoseconds.
-		Weight::from_ref_time(20_940_000)
-			.saturating_add(Weight::from_proof_size(2717))
+		Weight::from_parts(20_940_000, 0)
+			.saturating_add(Weight::from_parts(0, 2717))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -133,8 +133,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `242`
 		//  Estimated: `2717`
 		// Minimum execution time: 20_861 nanoseconds.
-		Weight::from_ref_time(21_620_000)
-			.saturating_add(Weight::from_proof_size(2717))
+		Weight::from_parts(21_620_000, 0)
+			.saturating_add(Weight::from_parts(0, 2717))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -144,8 +144,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `242`
 		//  Estimated: `2717`
 		// Minimum execution time: 20_677 nanoseconds.
-		Weight::from_ref_time(21_672_000)
-			.saturating_add(Weight::from_proof_size(2717))
+		Weight::from_parts(21_672_000, 0)
+			.saturating_add(Weight::from_parts(0, 2717))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -155,8 +155,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `242`
 		//  Estimated: `2717`
 		// Minimum execution time: 20_171 nanoseconds.
-		Weight::from_ref_time(20_838_000)
-			.saturating_add(Weight::from_proof_size(2717))
+		Weight::from_parts(20_838_000, 0)
+			.saturating_add(Weight::from_parts(0, 2717))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -166,8 +166,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 		//  Measured:  `242`
 		//  Estimated: `2717`
 		// Minimum execution time: 20_493 nanoseconds.
-		Weight::from_ref_time(21_327_000)
-			.saturating_add(Weight::from_proof_size(2717))
+		Weight::from_parts(21_327_000, 0)
+			.saturating_add(Weight::from_parts(0, 2717))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
 }

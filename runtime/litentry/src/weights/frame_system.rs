@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `frame_system`.
@@ -54,10 +54,10 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 2_474 nanoseconds.
-		Weight::from_ref_time(2_521_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(2_521_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 1
-			.saturating_add(Weight::from_ref_time(572).saturating_mul(b.into()))
+			.saturating_add(Weight::from_parts(572, 0).saturating_mul(b.into()))
 	}
 	/// The range of component `b` is `[0, 3932160]`.
 	fn remark_with_event(b: u32, ) -> Weight {
@@ -65,10 +65,10 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 9_884 nanoseconds.
-		Weight::from_ref_time(356_543_783)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(356_543_783, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 65
-			.saturating_add(Weight::from_ref_time(3_046).saturating_mul(b.into()))
+			.saturating_add(Weight::from_parts(3_046, 0).saturating_mul(b.into()))
 	}
 	/// Storage: System Digest (r:1 w:1)
 	/// Proof Skipped: System Digest (max_values: Some(1), max_size: None, mode: Measured)
@@ -79,8 +79,8 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `495`
 		// Minimum execution time: 4_884 nanoseconds.
-		Weight::from_ref_time(5_444_000)
-			.saturating_add(Weight::from_proof_size(495))
+		Weight::from_parts(5_444_000, 0)
+			.saturating_add(Weight::from_parts(0, 495))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -92,10 +92,10 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 2_423 nanoseconds.
-		Weight::from_ref_time(2_477_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(2_477_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 5_428
-			.saturating_add(Weight::from_ref_time(1_115_073).saturating_mul(i.into()))
+			.saturating_add(Weight::from_parts(1_115_073, 0).saturating_mul(i.into()))
 			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(i.into())))
 	}
 	/// Storage: Skipped Metadata (r:0 w:0)
@@ -106,10 +106,10 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 2_535 nanoseconds.
-		Weight::from_ref_time(2_624_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(2_624_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 10_139
-			.saturating_add(Weight::from_ref_time(866_801).saturating_mul(i.into()))
+			.saturating_add(Weight::from_parts(866_801, 0).saturating_mul(i.into()))
 			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(i.into())))
 	}
 	/// Storage: Skipped Metadata (r:0 w:0)
@@ -120,12 +120,12 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 		//  Measured:  `85 + p * (69 ±0)`
 		//  Estimated: `87 + p * (70 ±0)`
 		// Minimum execution time: 4_779 nanoseconds.
-		Weight::from_ref_time(4_949_000)
-			.saturating_add(Weight::from_proof_size(87))
+		Weight::from_parts(4_949_000, 0)
+			.saturating_add(Weight::from_parts(0, 87))
 			// Standard Error: 18_752
-			.saturating_add(Weight::from_ref_time(2_049_722).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(2_049_722, 0).saturating_mul(p.into()))
 			.saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(p.into())))
 			.saturating_add(T::DbWeight::get().writes((1_u64).saturating_mul(p.into())))
-			.saturating_add(Weight::from_proof_size(70).saturating_mul(p.into()))
+			.saturating_add(Weight::from_parts(0, 70).saturating_mul(p.into()))
 	}
 }

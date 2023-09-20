@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_session`.
@@ -57,8 +57,8 @@ impl<T: frame_system::Config> pallet_session::WeightInfo for WeightInfo<T> {
 		//  Measured:  `270`
 		//  Estimated: `5490`
 		// Minimum execution time: 22_622 nanoseconds.
-		Weight::from_ref_time(23_868_000)
-			.saturating_add(Weight::from_proof_size(5490))
+		Weight::from_parts(23_868_000, 0)
+			.saturating_add(Weight::from_parts(0, 5490))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
@@ -71,8 +71,8 @@ impl<T: frame_system::Config> pallet_session::WeightInfo for WeightInfo<T> {
 		//  Measured:  `242`
 		//  Estimated: `2959`
 		// Minimum execution time: 15_802 nanoseconds.
-		Weight::from_ref_time(16_377_000)
-			.saturating_add(Weight::from_proof_size(2959))
+		Weight::from_parts(16_377_000, 0)
+			.saturating_add(Weight::from_parts(0, 2959))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}

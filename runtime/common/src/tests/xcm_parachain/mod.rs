@@ -1010,8 +1010,9 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 					id: XCMAssetId::Concrete((Parent, Here).into()),
 					fun: Fungibility::Fungible(10 * 4),
 				},
-				weight_limit: WeightLimit::Limited(Weight::from_ref_time(
+				weight_limit: WeightLimit::Limited(Weight::from_parts(
 					200_000_000u64 * 4u64 * <u128 as TryInto<u64>>::try_into(RELAY_UNIT).unwrap(),
+					0,
 				)),
 			},
 			Instruction::DepositAsset {
@@ -1142,7 +1143,7 @@ where
 				weight_limit: WeightLimit::Limited(
 					R::UnitWeightCost::get()
 						.saturating_mul(5)
-						.saturating_add(Weight::from_ref_time(1_000_000_000u64)),
+						.saturating_add(Weight::from_parts(1_000_000_000u64, 0)),
 				),
 			},
 			Instruction::Transact {
