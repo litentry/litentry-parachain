@@ -367,16 +367,16 @@ jobs:
       - set-condition
       - sequentialise
     steps:
-      # - name: Free up disk space
-      #   # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
-      #   # before: 23 GB | after: 48 GB
-      #   if: startsWith(runner.name, 'GitHub Actions')
-      #   run: |
-      #     sudo rm -rf /usr/local/lib/android
-      #     sudo rm -rf /usr/share/dotnet
-      #     sudo rm -rf /opt/ghc
-      #     sudo rm -rf /usr/local/share/boost
-      #     sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      - name: Free up disk space
+        # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
+        # before: 23 GB | after: 48 GB
+        if: startsWith(runner.name, 'GitHub Actions')
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
       - uses: actions/checkout@v3
 
