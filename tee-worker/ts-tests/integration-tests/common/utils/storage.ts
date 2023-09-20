@@ -2,7 +2,7 @@ import { u8aToHex, u8aConcat } from '@polkadot/util';
 import { xxhashAsU8a } from '@polkadot/util-crypto';
 import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { sendRequest } from '../call';
-import { blake2128Concat, twox64Concat, identity } from '../helpers';
+import { blake2128Concat, twox64Concat, identity, createJsonRpcRequest, nextRequestId } from '../helpers';
 import type { IntegrationTestContext } from '../type-definitions';
 import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { HexString } from '@polkadot/util/types';
@@ -102,12 +102,7 @@ export async function checkUserShieldingKeys(
 
     const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
-    const request = {
-        jsonrpc: '2.0',
-        method: 'state_getStorage',
-        params: [base58mrEnclave, storageKey],
-        id: 1,
-    };
+    const request = createJsonRpcRequest('state_getStorage', [base58mrEnclave, storageKey], nextRequestId(context));
     const resp = await sendRequest(context.tee, request, context.api);
     return resp.value.toHex();
 }
@@ -124,12 +119,7 @@ export async function checkIdGraph(
 
     const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
 
-    const request = {
-        jsonrpc: '2.0',
-        method: 'state_getStorage',
-        params: [base58mrEnclave, storageKey],
-        id: 1,
-    };
+    const request = createJsonRpcRequest('state_getStorage', [base58mrEnclave, storageKey], nextRequestId(context));
     const resp = await sendRequest(context.tee, request, context.api);
     const idGraph = context.sidechainRegistry.createType(
         'PalletIdentityManagementTeeIdentityContext',

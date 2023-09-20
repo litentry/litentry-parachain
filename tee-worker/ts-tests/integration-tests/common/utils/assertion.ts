@@ -19,13 +19,13 @@ import {
     RequestVCResult,
     PalletVcManagementVcContext,
     StfError,
-    TrustedOperationResponse,
     LinkIdentityResult,
+    SetUserShieldingKeyResult,
 } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import { decodeAddress } from '@polkadot/keyring';
+import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -75,24 +75,29 @@ export async function assertInitialIdGraphCreated(context: IntegrationTestContex
             context
         );
         const idGraphData = parseIdGraph(context.sidechainRegistry, eventData.idGraph, aesKey);
-
-        // check idGraph LitentryPrimitivesIdentity
-        assert.deepEqual(
-            idGraphData[0][0].toHuman(),
-            expectedPrimeIdentity.toHuman(),
-            'event idGraph identity should be equal expectedIdentity'
-        );
-
-        // check idGraph LitentryPrimitivesIdentityContext
-        const idGraphContext = idGraphData[0][1];
-        assert.isTrue(
-            idGraphContext.linkBlock.toNumber() > 0,
-            'Check InitialIDGraph error: link_block should be greater than 0'
-        );
-        assert.isTrue(idGraphContext.status.isActive, 'Check InitialIDGraph error: isActive should be true');
+        assertIdGraph(idGraphData, [[expectedPrimeIdentity, true]]);
     }
     console.log(colors.green('assertInitialIdGraphCreated passed'));
 }
+
+export function assertIdGraph(
+    actual: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
+    expected: [LitentryPrimitivesIdentity, boolean][]
+) {
+    assert.equal(actual.length, expected.length);
+    expected.forEach((expected, i) => {
+        assert.deepEqual(
+            actual[i][0].toJSON(),
+            expected[0].toJSON(),
+            'event idGraph identity should be equal expectedIdentity'
+        );
+
+        const idGraphContext = actual[0][1];
+        assert.isTrue(idGraphContext.linkBlock.toNumber() > 0, 'link_block should be greater than 0');
+        assert.equal(idGraphContext.status.isActive, expected[1], 'isActive should be ' + expected[1]);
+    });
+}
+
 export async function assertIdentityLinked(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
@@ -368,38 +373,44 @@ export async function assertIdentity(
 
 export function assertWorkerError(
     context: IntegrationTestContext,
-    requestIdentifier: string,
     check: (returnValue: StfError) => void,
     returnValue: WorkerRpcReturnValue
 ) {
-    const errDecodedRes = context.api.createType(
-        'TrustedOperationResponse',
-        returnValue.value
-    ) as unknown as TrustedOperationResponse;
-    assert.equal(u8aToHex(errDecodedRes.req_ext_hash), requestIdentifier);
-    const errValueDecoded = context.api.createType('StfError', errDecodedRes.value) as unknown as StfError;
+    const errValueDecoded = context.api.createType('StfError', returnValue.value) as unknown as StfError;
     check(errValueDecoded);
 }
 
 export function assertIdentityLinkedResult(
     context: IntegrationTestContext,
-    requestIdentifier: string,
     expectedIdentity: LitentryPrimitivesIdentity,
-    returnValue: WorkerRpcReturnValue
+    returnValue: WorkerRpcReturnValue,
+    expectedIdGraphIdentities: [LitentryPrimitivesIdentity, boolean][]
 ) {
-    const decodedRes = context.api.createType(
-        'TrustedOperationResponse',
-        returnValue.value
-    ) as unknown as TrustedOperationResponse;
-    assert.equal(decodedRes.req_ext_hash.toHex(), requestIdentifier);
-
-    const decodedLinkResult = context.api.createType(
+    const decodedResult = context.api.createType(
         'LinkIdentityResult',
-        decodedRes.value
+        returnValue.value
     ) as unknown as LinkIdentityResult;
 
-    assert.isNotNull(decodedLinkResult.id_graph);
+    assert.isNotNull(decodedResult.id_graph);
+    const idGraphData = parseIdGraph(context.sidechainRegistry, decodedResult.id_graph, aesKey);
+    assertIdGraph(idGraphData, expectedIdGraphIdentities);
 }
+
+export function assertSetUserShieldingKeyResult(
+    context: IntegrationTestContext,
+    returnValue: WorkerRpcReturnValue,
+    expectedPrimeIdentity: LitentryPrimitivesIdentity
+) {
+    const decodedResult = context.api.createType(
+        'SetUserShieldingKeyResult',
+        returnValue.value
+    ) as unknown as SetUserShieldingKeyResult;
+
+    assert.isNotNull(decodedResult.id_graph);
+    const idGraphData = parseIdGraph(context.sidechainRegistry, decodedResult.id_graph, aesKey);
+    assertIdGraph(idGraphData, [[expectedPrimeIdentity, true]]);
+}
+
 /* 
     assert vc
     steps:

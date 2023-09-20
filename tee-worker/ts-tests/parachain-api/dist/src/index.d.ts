@@ -20,9 +20,9 @@ export type {
     Getter,
     PublicGetter,
     RequestVCResult,
-    TrustedOperationResponse,
     StfError,
     LinkIdentityResult,
+    SetUserShieldingKeyResult,
 } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
@@ -262,10 +262,6 @@ export declare const definitions: {
                 InvalidAccount: string;
                 UnclassifiedError: string;
             };
-        };
-        TrustedOperationResponse: {
-            req_ext_hash: string;
-            value: string;
         };
         AesOutput: {
             ciphertext: string;

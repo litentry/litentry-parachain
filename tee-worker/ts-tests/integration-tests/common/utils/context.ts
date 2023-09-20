@@ -56,8 +56,9 @@ export async function initIntegrationTestContext(
     const chainIdentifier = api.registry.chainSS58 as number;
 
     const wsp = await initWorkerConnection(workerEndpoint);
+    const requestId = 1;
 
-    const { sidechainMetaData, sidechainRegistry } = await getSidechainMetadata(wsp, api);
+    const { sidechainMetaData, sidechainRegistry } = await getSidechainMetadata(wsp, api, requestId);
     const web3Signers = await generateWeb3Wallets(walletsNumber);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return {
@@ -71,6 +72,7 @@ export async function initIntegrationTestContext(
         sidechainRegistry,
         web3Signers,
         chainIdentifier,
+        requestId,
     };
 }
 
