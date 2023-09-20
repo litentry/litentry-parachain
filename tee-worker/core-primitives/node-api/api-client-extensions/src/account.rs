@@ -25,6 +25,7 @@ use substrate_api_client::{
 pub trait AccountApi {
 	fn get_nonce_of(&self, who: &AccountId) -> ApiResult<Index>;
 	fn get_free_balance(&self, who: &AccountId) -> ApiResult<Balance>;
+	fn get_account_next_index(&self, who: &AccountId) -> ApiResult<Index>;
 }
 
 impl<Signer, Client, Params, Runtime> AccountApi for Api<Signer, Client, Params, Runtime>
@@ -40,5 +41,9 @@ where
 
 	fn get_free_balance(&self, who: &AccountId) -> ApiResult<Balance> {
 		Ok(self.get_account_data(who)?.map_or_else(|| 0, |data| data.free))
+	}
+
+	fn get_account_next_index(&self, who: &AccountId) -> ApiResult<Index> {
+		self.get_system_account_next_index(who.clone())
 	}
 }

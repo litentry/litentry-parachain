@@ -18,8 +18,8 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client, ConvertParameterString, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG,
-	LIT_TOKEN_ADDRESS, UNISWAP_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
+	build_client, ConvertParameterString, DataProviderConfig, Error, HttpError, LIT_TOKEN_ADDRESS,
+	UNISWAP_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -40,24 +40,15 @@ pub struct AchainableClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
-impl Default for AchainableClient {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl AchainableClient {
-	pub fn new() -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_auth_key.clone().as_str(),
+			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
-		let client = build_client(
-			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_url.clone().as_str(),
-			headers,
-		);
+		let client = build_client(data_provider_config.achainable_url.clone().as_str(), headers);
 
 		AchainableClient { client }
 	}
@@ -1310,27 +1301,31 @@ fn request_basic_type_with_token(
 
 #[cfg(test)]
 mod tests {
-	use crate::achainable::{
-		AchainableAccountTotalTransactions, AchainableClient, AchainableTagAccount,
-		AchainableTagBalance, AchainableTagDeFi, AchainableTagDotsama, GLOBAL_DATA_PROVIDER_CONFIG,
+	use crate::{
+		achainable::{
+			AchainableAccountTotalTransactions, AchainableClient, AchainableTagAccount,
+			AchainableTagBalance, AchainableTagDeFi, AchainableTagDotsama,
+		},
+		DataProviderConfigReader, ReadDataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG,
 	};
 	use lc_mock_server::{default_getter, run};
 	use litentry_primitives::Web3Network;
 	use std::sync::Arc;
 
-	fn init() {
+	fn new_achainable_client() -> AchainableClient {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(Arc::new(default_getter), 0).unwrap();
 		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
+
+		let data_provider_config = DataProviderConfigReader::read().unwrap();
+		AchainableClient::new(&data_provider_config)
 	}
 
 	#[test]
 	fn total_transactions_work() {
-		init();
-
 		let addresses = vec!["0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5".to_string()];
 
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let r = client.total_transactions(&Web3Network::Litentry, &addresses);
 		assert!(r.is_ok());
 		let r = r.unwrap();
@@ -1339,9 +1334,8 @@ mod tests {
 
 	#[test]
 	fn fresh_account_works() {
-		init();
+		let mut client = new_achainable_client();
 
-		let mut client = AchainableClient::new();
 		let res: Result<bool, crate::Error> =
 			client.fresh_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
 		assert!(res.is_ok());
@@ -1351,9 +1345,7 @@ mod tests {
 
 	#[test]
 	fn og_account_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.og_account("0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1362,9 +1354,7 @@ mod tests {
 
 	#[test]
 	fn class_of_year_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.class_of_year(
 			"0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5",
 			crate::achainable::EClassOfYear::Year2020.get(),
@@ -1376,9 +1366,7 @@ mod tests {
 
 	#[test]
 	fn address_found_on_bsc_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.address_found_on_bsc("0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1387,9 +1375,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_validator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_polkadot_validator("17bR6rzVsVrzVJS1hM4dSJU43z2MUmz7ZDpPLh8y2fqVg7m");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1398,9 +1384,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_validator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_kusama_validator("ESRBbWstgpPV1pVBsqjMo717rA8HLrtQvEUVwAGeFZyKcia");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1409,9 +1393,7 @@ mod tests {
 
 	#[test]
 	fn polkadot_dolphin_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.polkadot_dolphin("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1420,9 +1402,7 @@ mod tests {
 
 	#[test]
 	fn kusama_dolphin_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.kusama_dolphin("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1431,9 +1411,7 @@ mod tests {
 
 	#[test]
 	fn polkadot_whale_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.polkadot_whale("1soESeTVLfse9e2G8dRSMUyJ2SWad33qhtkjQTv9GMToRvP");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1442,9 +1420,7 @@ mod tests {
 
 	#[test]
 	fn kusama_whale_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.kusama_whale("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1453,9 +1429,7 @@ mod tests {
 
 	#[test]
 	fn under_10_eth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.under_10_eth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1464,9 +1438,7 @@ mod tests {
 
 	#[test]
 	fn under_10_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.under_10_lit_holder("0x2A038e100F8B85DF21e4d44121bdBfE0c288A869");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1475,9 +1447,7 @@ mod tests {
 
 	#[test]
 	fn over_100_eth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.over_100_eth_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1486,9 +1456,7 @@ mod tests {
 
 	#[test]
 	fn between_10_to_100_eth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.between_10_to_100_eth_holder("0x082aB5505CdeA46caeF670754E962830Aa49ED2C");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1497,9 +1465,7 @@ mod tests {
 
 	#[test]
 	fn eth_millionaire_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.eth_millionaire("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1508,9 +1474,7 @@ mod tests {
 
 	#[test]
 	fn eth2_validator_eligible_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.eth2_validator_eligible("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1519,9 +1483,7 @@ mod tests {
 
 	#[test]
 	fn over_100_weth_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.over_100_weth_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1530,9 +1492,7 @@ mod tests {
 
 	#[test]
 	fn over_100_lit_bep20_amount_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.over_100_lit_bep20_amount("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1541,9 +1501,7 @@ mod tests {
 
 	#[test]
 	fn native_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.native_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1552,9 +1510,7 @@ mod tests {
 
 	#[test]
 	fn erc20_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.erc20_lit_holder("0x4b978322643F9Bf6C15bf26d866B81E99F26b8DA");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1563,9 +1519,7 @@ mod tests {
 
 	#[test]
 	fn bep20_lit_holder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.bep20_lit_holder("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1574,9 +1528,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_treasury_proposal_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_polkadot_treasury_proposal_beneficiary(
 			"5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW",
 		);
@@ -1587,9 +1539,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_treasury_proposal_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_kusama_treasury_proposal_beneficiary(
 			"CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq",
 		);
@@ -1600,9 +1550,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_tip_finder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_polkadot_tip_finder("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1611,9 +1559,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_tip_finder_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_kusama_tip_finder("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1622,9 +1568,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_tip_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_polkadot_tip_beneficiary("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
@@ -1634,9 +1578,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_tip_beneficiary_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_kusama_tip_beneficiary("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
@@ -1646,9 +1588,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_opengov_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_polkadot_opengov_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
@@ -1658,9 +1598,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_opengov_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_kusama_opengov_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
@@ -1670,9 +1608,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_fellowship_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client
 			.is_polkadot_fellowship_proposer("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
@@ -1682,9 +1618,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_fellowship_proposer_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_kusama_fellowship_proposer("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
@@ -1694,9 +1628,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_fellowship_member_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client
 			.is_polkadot_fellowship_member("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
@@ -1706,9 +1638,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_fellowship_member_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_kusama_fellowship_member("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
@@ -1718,9 +1648,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_ex_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_polkadot_ex_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
@@ -1730,9 +1658,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_ex_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_kusama_ex_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1741,9 +1667,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_polkadot_councilor("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1752,9 +1676,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_councilor_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.is_kusama_councilor("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1763,9 +1685,7 @@ mod tests {
 
 	#[test]
 	fn is_polkadot_bounty_curator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_polkadot_bounty_curator("5CAGKg1NAArpEgze7F7KEnw8T2uFVcAWf6mJNTWeg9PWkdVW");
 		assert!(res.is_ok());
@@ -1775,9 +1695,7 @@ mod tests {
 
 	#[test]
 	fn is_kusama_bounty_curator_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.is_kusama_bounty_curator("CsCrPSvLBPSSxJuQmDr18FFZPAQCtKVmsMu9YRTe5VToGeq");
 		assert!(res.is_ok());
@@ -1787,9 +1705,7 @@ mod tests {
 
 	#[test]
 	fn uniswap_v2_user_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.uniswap_v2_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1798,9 +1714,7 @@ mod tests {
 
 	#[test]
 	fn uniswap_v3_user_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.uniswap_v3_user("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1809,9 +1723,7 @@ mod tests {
 
 	#[test]
 	fn uniswap_v2_lp_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.uniswap_v2_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1820,9 +1732,7 @@ mod tests {
 
 	#[test]
 	fn uniswap_v3_lp_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.uniswap_v3_lp_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1831,9 +1741,7 @@ mod tests {
 
 	#[test]
 	fn usdc_uniswap_v2_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.usdc_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1842,9 +1750,7 @@ mod tests {
 
 	#[test]
 	fn usdc_uniswap_v3_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.usdc_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1853,9 +1759,7 @@ mod tests {
 
 	#[test]
 	fn usdt_uniswap_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.usdt_uniswap_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1864,9 +1768,7 @@ mod tests {
 
 	#[test]
 	fn usdt_uniswap_v2_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.usdt_uniswap_v2_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1875,9 +1777,7 @@ mod tests {
 
 	#[test]
 	fn usdt_uniswap_v3_lp_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.usdt_uniswap_v3_lp("0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1886,9 +1786,7 @@ mod tests {
 
 	#[test]
 	fn aave_v2_lender_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.aave_v2_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1897,9 +1795,7 @@ mod tests {
 
 	#[test]
 	fn aave_v2_borrower_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.aave_v2_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1908,9 +1804,7 @@ mod tests {
 
 	#[test]
 	fn aave_v3_lender_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.aave_v3_lender("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1919,9 +1813,7 @@ mod tests {
 
 	#[test]
 	fn aave_v3_borrower_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.aave_v3_borrower("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1930,9 +1822,7 @@ mod tests {
 
 	#[test]
 	fn curve_trader_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.curve_trader("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1941,9 +1831,7 @@ mod tests {
 
 	#[test]
 	fn curve_trader_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.curve_trader_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1952,9 +1840,7 @@ mod tests {
 
 	#[test]
 	fn curve_liquidity_provider_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res = client.curve_liquidity_provider("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
 		let res = res.unwrap();
@@ -1963,9 +1849,7 @@ mod tests {
 
 	#[test]
 	fn curve_liquidity_provider_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.curve_liquidity_provider_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
@@ -1975,9 +1859,7 @@ mod tests {
 
 	#[test]
 	fn swapped_with_metamask_in_2022_works() {
-		init();
-
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.swapped_with_metamask_in_2022("0x335c0552eb130f3Dfbe6efcB4D2895aED1E9938b");
 		assert!(res.is_ok());
@@ -1988,9 +1870,6 @@ mod tests {
 	#[test]
 	fn class_of_year_invalid_address_works() {
 		use crate::achainable::{Params, ParamsBasicTypeWithClassOfYear};
-
-		init();
-
 		let invalid_address = "0x06e23f8209eCe9a33E24fd81440D46B08517adb5";
 
 		let name = "Account created between {dates}".into();
@@ -1999,7 +1878,7 @@ mod tests {
 		let date2 = "2023-01-01".into();
 		let p = ParamsBasicTypeWithClassOfYear::new(name, network, date1, date2);
 
-		let mut client = AchainableClient::new();
+		let mut client = new_achainable_client();
 		let res =
 			client.query_class_of_year(invalid_address, Params::ParamsBasicTypeWithClassOfYear(p));
 		assert!(res.is_ok());
