@@ -53,9 +53,9 @@ RUN \
 RUN rustup show
 
 RUN \
-	--mount=type=cache,target=/opt/rust/git/db \
-	--mount=type=cache,target=/home/ubuntu/.cache/sccache \
-	cargo build -p lc-data-providers && sccache --show-stats
+  --mount=type=cache,target=/opt/rust/git/db \
+  --mount=type=cache,target=/home/ubuntu/.cache/sccache \
+  make && sccache --show-stats
 
 ### Base Runner Stage
 ##################################################
