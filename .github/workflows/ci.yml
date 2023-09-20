@@ -509,6 +509,7 @@ jobs:
         working-directory: ./tee-worker
         run: |
           rustup show
+          cargo test --locked --release
           cargo test --locked --release -p pallet-* --lib
 
       - name: Test enclave

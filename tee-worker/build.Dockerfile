@@ -55,7 +55,7 @@ COPY . $HOME
 RUN \
   --mount=type=cache,target=/opt/rust/git/db \
   --mount=type=cache,target=/home/ubuntu/.cache/sccache \
-  make && cargo test --release && sccache --show-stats
+  make && sccache --show-stats
 
 ### Base image for built artefacts
 ##################################################
