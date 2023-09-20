@@ -234,10 +234,6 @@ declare const _default: {
                 UnclassifiedError: string;
             };
         };
-        TrustedOperationResponse: {
-            req_ext_hash: string;
-            value: string;
-        };
         AesOutput: {
             ciphertext: string;
             aad: string;
