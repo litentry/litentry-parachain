@@ -18,8 +18,6 @@
 #![allow(clippy::large_enum_variant)]
 #![allow(clippy::result_large_err)]
 
-// a dummy comment
-// another one
 extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
