@@ -1,13 +1,16 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
 import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
     EthersSigner,
+    assertSetUserShieldingKeyResult,
+    assertIdentityLinkedResult,
+    assertWorkerError,
 } from './common/utils';
 import {
     assertFailedEvent,
@@ -38,7 +41,8 @@ import { subscribeToEventsWithExtHash } from './common/transactions';
 describe('Test Identity (evm direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
-    let aliceEvmSubject: LitentryPrimitivesIdentity = undefined as any;
+    let aliceEvmIdentity: LitentryPrimitivesIdentity = undefined as any;
+    let bobEvmIdentity: LitentryPrimitivesIdentity;
 
     // Alice links:
     // - a `mock_user` twitter
@@ -58,19 +62,14 @@ describe('Test Identity (evm direct invocation)', function () {
             process.env.NODE_ENDPOINT!, // @fixme evil assertion; centralize env access
             0
         );
-        teeShieldingKey = await getTeeShieldingKey(context.tee, context.api);
+        teeShieldingKey = await getTeeShieldingKey(context);
 
-        aliceEvmSubject = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
+        aliceEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
+        bobEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.bob), context);
     });
 
     step(`setting user shielding key (alice evm account)`, async function () {
-        const nonce = await getSidechainNonce(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            aliceEvmSubject
-        );
+        const nonce = await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
@@ -79,19 +78,15 @@ describe('Test Identity (evm direct invocation)', function () {
             context.mrEnclave,
             nonce,
             new EthersSigner(context.ethersWallet.alice),
-            aliceEvmSubject,
+            aliceEvmIdentity,
             aesKey,
             requestIdentifier
         );
 
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            setUserShieldingKeyCall
-        );
+        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setUserShieldingKeyCall);
+
+        assertSetUserShieldingKeyResult(context, res, aliceEvmIdentity);
         await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
         const events = await eventsPromise;
@@ -113,16 +108,10 @@ describe('Test Identity (evm direct invocation)', function () {
         const shieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(
             context.api,
             new EthersSigner(context.ethersWallet.alice),
-            aliceEvmSubject
+            aliceEvmIdentity
         );
 
-        const shieldingKeyGetResult = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            shieldingKeyGetter
-        );
+        const shieldingKeyGetResult = await sendRequestFromGetter(context, teeShieldingKey, shieldingKeyGetter);
         console.log('shieldingKeyGetResult.value.toHex()', shieldingKeyGetResult.value.toHex());
         const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
         assert.equal(k.value.toString(), aesKey, 'respShieldingKey should be equal aesKey after set');
@@ -132,15 +121,9 @@ describe('Test Identity (evm direct invocation)', function () {
         const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
             new EthersSigner(context.ethersWallet.alice),
-            aliceEvmSubject
+            aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            idgraphGetter
-        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idgraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -148,23 +131,20 @@ describe('Test Identity (evm direct invocation)', function () {
         const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
         assert.deepEqual(
             idGraphNodeIdentity.toHuman(),
-            aliceEvmSubject.toHuman(),
+            aliceEvmIdentity.toHuman(),
             'idGraph should include main address'
         );
         assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
     });
 
     step('linking identities (alice evm account)', async function () {
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceEvmSubject)
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const bobEvmNonce = getNextNonce();
-        const bobEvmIdentity = await buildIdentityHelper(context.ethersWallet.bob.address, 'Evm', context);
         const [bobEvmValidation] = await buildValidations(
             context,
-            [aliceEvmSubject],
+            [aliceEvmIdentity],
             [bobEvmIdentity],
             bobEvmNonce,
             'ethereum',
@@ -190,7 +170,7 @@ describe('Test Identity (evm direct invocation)', function () {
         );
         const [eveSubstrateValidation] = await buildValidations(
             context,
-            [aliceEvmSubject],
+            [aliceEvmIdentity],
             [eveSubstrateIdentity],
             eveSubstrateNonce,
             'substrate',
@@ -207,6 +187,17 @@ describe('Test Identity (evm direct invocation)', function () {
             networks: eveSubstrateNetworks,
         });
         const linkedIdentityEvents: any[] = [];
+        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
+            [
+                [bobEvmIdentity, true],
+                [aliceEvmIdentity, true],
+            ],
+            [
+                [eveSubstrateIdentity, true],
+                [bobEvmIdentity, true],
+                [aliceEvmIdentity, true],
+            ],
+        ];
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
@@ -215,7 +206,7 @@ describe('Test Identity (evm direct invocation)', function () {
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
                 new EthersSigner(context.ethersWallet.alice),
-                aliceEvmSubject,
+                aliceEvmIdentity,
                 identity.toHex(),
                 validation.toHex(),
                 networks.toHex(),
@@ -223,14 +214,12 @@ describe('Test Identity (evm direct invocation)', function () {
                 requestIdentifier
             );
 
-            const res = await sendRequestFromTrustedCall(
-                context.tee,
-                context.api,
-                context.mrEnclave,
-                teeShieldingKey,
-                linkIdentityCall
-            );
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
+
+            assertIdentityLinkedResult(context, identity, res, expectedIdGraphs[0]);
+            expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
+
             const events = (await eventsPromise).map(({ event }) => event);
             let isIdentityLinked = false;
             events.forEach((event) => {
@@ -257,15 +246,9 @@ describe('Test Identity (evm direct invocation)', function () {
         const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
             new EthersSigner(context.ethersWallet.alice),
-            aliceEvmSubject
+            aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            idgraphGetter
-        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idgraphGetter);
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
@@ -297,9 +280,7 @@ describe('Test Identity (evm direct invocation)', function () {
         }
     });
     step('deactivating identity(alice evm account)', async function () {
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceEvmSubject)
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const deactivateIdentityRequestParams: {
@@ -308,7 +289,6 @@ describe('Test Identity (evm direct invocation)', function () {
         }[] = [];
 
         const bobEvmNonce = getNextNonce();
-        const bobEvmIdentity = await buildIdentityHelper(context.ethersWallet.bob.address, 'Evm', context);
 
         deactivateIdentityRequestParams.push({
             nonce: bobEvmNonce,
@@ -335,18 +315,12 @@ describe('Test Identity (evm direct invocation)', function () {
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
                 new EthersSigner(context.ethersWallet.alice),
-                aliceEvmSubject,
+                aliceEvmIdentity,
                 identity.toHex(),
                 requestIdentifier
             );
 
-            const res = await sendRequestFromTrustedCall(
-                context.tee,
-                context.api,
-                context.mrEnclave,
-                teeShieldingKey,
-                deactivateIdentityCall
-            );
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
 
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
 
@@ -373,15 +347,9 @@ describe('Test Identity (evm direct invocation)', function () {
         const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
             new EthersSigner(context.ethersWallet.alice),
-            aliceEvmSubject
+            aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            idgraphGetter
-        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idgraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -400,9 +368,7 @@ describe('Test Identity (evm direct invocation)', function () {
         }
     });
     step('activating identity(alice evm account)', async function () {
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceEvmSubject)
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const activateIdentityRequestParams: {
@@ -411,7 +377,6 @@ describe('Test Identity (evm direct invocation)', function () {
         }[] = [];
 
         const bobEvmNonce = getNextNonce();
-        const bobEvmIdentity = await buildIdentityHelper(context.ethersWallet.bob.address, 'Evm', context);
 
         activateIdentityRequestParams.push({
             nonce: bobEvmNonce,
@@ -438,18 +403,12 @@ describe('Test Identity (evm direct invocation)', function () {
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
                 new EthersSigner(context.ethersWallet.alice),
-                aliceEvmSubject,
+                aliceEvmIdentity,
                 identity.toHex(),
                 requestIdentifier
             );
 
-            const res = await sendRequestFromTrustedCall(
-                context.tee,
-                context.api,
-                context.mrEnclave,
-                teeShieldingKey,
-                deactivateIdentityCall
-            );
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
 
             await assertIsInSidechainBlock('activateIdentityCall', res);
 
@@ -476,15 +435,9 @@ describe('Test Identity (evm direct invocation)', function () {
         const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
             new EthersSigner(context.ethersWallet.alice),
-            aliceEvmSubject
+            aliceEvmIdentity
         );
-        const res = await sendRequestFromGetter(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            idgraphGetter
-        );
+        const res = await sendRequestFromGetter(context, teeShieldingKey, idgraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -504,9 +457,7 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('deactivating prime identity is disallowed', async function () {
-        let currentNonce = (
-            await getSidechainNonce(context.tee, context.api, context.mrEnclave, teeShieldingKey, aliceEvmSubject)
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
 
@@ -524,20 +475,29 @@ describe('Test Identity (evm direct invocation)', function () {
             context.mrEnclave,
             context.api.createType('Index', nonce),
             new EthersSigner(context.ethersWallet.alice),
-            aliceEvmSubject,
+            aliceEvmIdentity,
             substratePrimeIdentity.toHex(),
             requestIdentifier
         );
 
-        const res = await sendRequestFromTrustedCall(
-            context.tee,
-            context.api,
-            context.mrEnclave,
-            teeShieldingKey,
-            deactivateIdentityCall
-        );
+        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
         assert.isTrue(res.do_watch.isFalse);
         assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
+        assertWorkerError(
+            context,
+            (v) => {
+                assert.isTrue(
+                    v.isDeactivateIdentityFailed,
+                    `expected DeactivateIdentityFailed, received ${v.type} instead`
+                );
+                assert.isTrue(
+                    v.asDeactivateIdentityFailed.isStfError,
+                    `expected StfError, received ${v.asDeactivateIdentityFailed.type} instead`
+                );
+                assert.equal(u8aToString(v.asDeactivateIdentityFailed.asStfError), 'DeactivatePrimeIdentityDisallowed');
+            },
+            res
+        );
 
         const events = await eventsPromise;
         await assertFailedEvent(context, events, 'DeactivateIdentityFailed', 'DeactivatePrimeIdentityDisallowed');

@@ -44,6 +44,4 @@ Direct invocation substrate identity test: `corepack yarn test-di-substrate-iden
 
 Direct invocation evm identity test: `corepack yarn test-di-evm-identity:local`
 
-Direct invocation EVM examples: `corepack yarn workspace integration-tests ii-evm-examples`
-
-Direct invocation Substrate examples: `corepack yarn workspace integration-tests ii-substrate-examples`
+Direct invocation vc test: `corepack yarn test-di-vc:local`

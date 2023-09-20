@@ -504,7 +504,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	);
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
 	info!("Last synced parachain block = {:?}", &last_synced_header.number);
-	let nonce = node_api.get_nonce_of(&tee_accountid).unwrap();
+	let nonce = node_api.get_account_next_index(&tee_accountid).unwrap();
 	info!("Enclave nonce = {:?}", nonce);
 	enclave
 		.set_nonce(nonce)
