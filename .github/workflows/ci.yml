@@ -403,7 +403,8 @@ jobs:
             worker-sccache-
 
       - name: Create cache folder if not exist
-        run: [ ! -d worker-sccache ] && mkdir -p worker-sccache || true
+        run: |
+          [ ! -d worker-sccache ] && mkdir -p worker-sccache || true
 
       # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache
       # see
