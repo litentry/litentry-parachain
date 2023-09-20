@@ -23,7 +23,6 @@ name: General CI
 # - parachain-build-dev
 # - parachain-build-tee-prod
 # - tee-build
-# - tee-packup
 #
 # [4] please note that job-level if `env` is not supported:
 # https://github.com/actions/runner/issues/1189
@@ -244,6 +243,12 @@ jobs:
           cargo clippy --release  --features teeracle -- -D warnings
           cargo clippy --release  --features offchain-worker -- -D warnings
 
+      - name: Pallet unittests
+        working-directory: ./tee-worker
+        run: |
+          cargo test --locked --release
+          cargo test --locked --release -p pallet-* --lib
+
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
@@ -363,6 +368,11 @@ jobs:
       - fmt
       - set-condition
       - sequentialise
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
     steps:
       - name: Free up disk space
         # see https://github.com/litentry/litentry-parachain/actions/runs/5654952764/job/15319056206
@@ -379,15 +389,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Cache cargo git
-        uses: actions/cache@v3
         with:
-          path: worker-cargo-git
-          key: worker-cargo-git-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
-          restore-keys: |
-            worker-cargo-git-${{ env.REF_VERSION }}-
-            worker-cargo-git-
+          # network=host driver-opt needed to push to local registry
+          driver-opts: network=host
 
       - name: Cache sccache
         uses: actions/cache@v3
@@ -398,87 +402,50 @@ jobs:
             worker-sccache-${{ env.REF_VERSION }}-
             worker-sccache-
 
+      - name: Create cache folder if not exist
+        run: [ ! -d worker-sccache ] && mkdir -p worker-sccache || true
+
       # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache
       # see
       # https://github.com/moby/buildkit/issues/1512
       # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
       # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
-      - name: inject worker-cargo-git
-        uses: reproducible-containers/buildkit-cache-dance@v2.1.2
-        with:
-          cache-source: worker-cargo-git
-          cache-target: /opt/rust/git/db
+      #
+      # the reproducible-containers/buildkit-cache-dance seems to be unstable too in my test
+      # sometimes it works, sometimes it results in empty cache, root cause unclear
+      #
+      # thus a manual persistence of rust cache is maintained during sccache
 
-      - name: inject worker-sccache
-        uses: reproducible-containers/buildkit-cache-dance@v2.1.2
-        with:
-          cache-source: worker-sccache
-          cache-target: /home/ubuntu/.cache/sccache
-
-      # buildkit-cache-dance seems to have some race conditions when followed by
-      # multiple build-pusha-actions, the root cause is unclear.
-      # To play safe we split it into two steps, first build a local builder, and
-      # then pass it to `tee-packup` job to actually build the final images
       - name: Build local builder
         uses: docker/build-push-action@v5
         with:
           context: .
-          load: true
+          load: false
           file: tee-worker/build.Dockerfile
-          tags: local-builder:latest
-          target: local-builder
+          tags: localhost:5000/local-builder:latest
+          target: slim-builder
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: false
+          push: true
 
-      - name: Save image
+      - name: Copy caches from the built image
         run: |
-          docker images
-          docker save local-builder:latest | gzip > local-builder.tar.gz
-
-      - name: Upload docker images
-        uses: actions/upload-artifact@v3
-        with:
-          name: local-builder
-          path: local-builder.tar.gz
-          if-no-files-found: error
-
-  tee-packup:
-    runs-on: ubuntu-latest
-    needs:
-      - tee-build
-      - set-condition
-    if: |
-      always() &&
-      (needs.tee-build.result == 'success' || needs.tee-build.result == 'skipped')
-    steps:
-      - uses: actions/checkout@v3
-
-      # use `docker` driver to access host images
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker
-
-      - uses: actions/download-artifact@v3
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        with:
-          name: local-builder
-
-      - name: Load docker image
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        run: |
-          docker load < local-builder.tar.gz
-          docker images
+          docker images --all
+          rm -rf worker-sccache
+          docker pull localhost:5000/local-builder:latest
+          docker images --all
+          docker cp "$(docker create --rm localhost:5000/local-builder:latest):/opt/rust/worker-sccache" .
 
       - name: Build worker
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
+          build-contexts:
+            local-builder=docker-image://localhost:5000/local-builder:latest
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
@@ -490,6 +457,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          build-contexts:
+            local-builder=docker-image://localhost:5000/local-builder:latest
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
@@ -503,14 +472,6 @@ jobs:
           docker pull litentry/litentry-cli
 
       - run: docker images --all
-
-      - name: Pallet unittests
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        working-directory: ./tee-worker
-        run: |
-          rustup show
-          cargo test --locked --release
-          cargo test --locked --release -p pallet-* --lib
 
       - name: Test enclave
         # cargo test is not supported in the enclave
@@ -658,7 +619,7 @@ jobs:
     needs:
       - set-condition
       - parachain-build-dev
-      - tee-packup
+      - tee-build
     env:
       WORKER_IMAGE_TAG: litentry-worker:dev
       CLIENT_IMAGE_TAG: litentry-cli:dev

@@ -29,7 +29,7 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 ENV CARGO_NET_GIT_FETCH_WITH_CLI true
 
 ENV SCCACHE_CACHE_SIZE="20G"
-ENV SCCACHE_DIR=$HOME/.cache/sccache
+ENV SCCACHE_DIR="/opt/rust/worker-sccache"
 ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
 
 # Default SGX MODE is software mode
@@ -51,17 +51,15 @@ ARG FINGERPRINT=none
 
 WORKDIR $HOME/tee-worker
 COPY . $HOME
+COPY worker-sccache /opt/rust/
 
-RUN \
-  --mount=type=cache,target=/opt/rust/git/db \
-  --mount=type=cache,target=/home/ubuntu/.cache/sccache \
-  make && sccache --show-stats
+RUN make && sccache --show-stats
 
 ### Base image for built artefacts
 ##################################################
 ### we need it to shrink the docker image size to pass around
 ### see local-builder in ci.yml
-FROM ubuntu:22.04 AS local-builder
+FROM ubuntu:22.04 AS slim-builder
 
 COPY --from=builder /home/ubuntu/tee-worker/bin/* /opt/worker/bin/
 COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /opt/worker/cli/
