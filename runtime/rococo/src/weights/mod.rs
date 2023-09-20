@@ -25,6 +25,7 @@ pub mod pallet_bridge_transfer;
 pub mod pallet_collective;
 pub mod pallet_democracy;
 pub mod pallet_drop3;
+pub mod pallet_evm;
 pub mod pallet_extrinsic_filter;
 pub mod pallet_identity;
 pub mod pallet_identity_management;

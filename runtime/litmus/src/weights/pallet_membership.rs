@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_membership`.
@@ -62,13 +62,13 @@ impl<T: frame_system::Config> pallet_membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `241 + m * (64 ±0)`
 		//  Estimated: `4915 + m * (192 ±0)`
 		// Minimum execution time: 24_310 nanoseconds.
-		Weight::from_ref_time(25_667_878)
-			.saturating_add(Weight::from_proof_size(4915))
+		Weight::from_parts(25_667_878, 0)
+			.saturating_add(Weight::from_parts(0, 4915))
 			// Standard Error: 781
-			.saturating_add(Weight::from_ref_time(44_323).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(44_323, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(2))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -86,13 +86,13 @@ impl<T: frame_system::Config> pallet_membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `346 + m * (64 ±0)`
 		//  Estimated: `5754 + m * (192 ±0)`
 		// Minimum execution time: 27_971 nanoseconds.
-		Weight::from_ref_time(30_088_906)
-			.saturating_add(Weight::from_proof_size(5754))
+		Weight::from_parts(30_088_906, 0)
+			.saturating_add(Weight::from_parts(0, 5754))
 			// Standard Error: 2_570
-			.saturating_add(Weight::from_ref_time(60_906).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(60_906, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -110,13 +110,13 @@ impl<T: frame_system::Config> pallet_membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `346 + m * (64 ±0)`
 		//  Estimated: `5754 + m * (192 ±0)`
 		// Minimum execution time: 28_606 nanoseconds.
-		Weight::from_ref_time(30_510_440)
-			.saturating_add(Weight::from_proof_size(5754))
+		Weight::from_parts(30_510_440, 0)
+			.saturating_add(Weight::from_parts(0, 5754))
 			// Standard Error: 1_668
-			.saturating_add(Weight::from_ref_time(56_655).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(56_655, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -134,13 +134,13 @@ impl<T: frame_system::Config> pallet_membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `345 + m * (64 ±0)`
 		//  Estimated: `5754 + m * (192 ±0)`
 		// Minimum execution time: 27_481 nanoseconds.
-		Weight::from_ref_time(29_691_023)
-			.saturating_add(Weight::from_proof_size(5754))
+		Weight::from_parts(29_691_023, 0)
+			.saturating_add(Weight::from_parts(0, 5754))
 			// Standard Error: 2_610
-			.saturating_add(Weight::from_ref_time(249_422).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(249_422, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(3))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:1)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -158,13 +158,13 @@ impl<T: frame_system::Config> pallet_membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `345 + m * (64 ±0)`
 		//  Estimated: `5754 + m * (192 ±0)`
 		// Minimum execution time: 28_533 nanoseconds.
-		Weight::from_ref_time(31_225_564)
-			.saturating_add(Weight::from_proof_size(5754))
+		Weight::from_parts(31_225_564, 0)
+			.saturating_add(Weight::from_parts(0, 5754))
 			// Standard Error: 2_171
-			.saturating_add(Weight::from_ref_time(60_574).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(60_574, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(4))
-			.saturating_add(Weight::from_proof_size(192).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 192).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Members (r:1 w:0)
 	/// Proof: CouncilMembership Members (max_values: Some(1), max_size: Some(3202), added: 3697, mode: MaxEncodedLen)
@@ -178,13 +178,13 @@ impl<T: frame_system::Config> pallet_membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `139 + m * (32 ±0)`
 		//  Estimated: `3837 + m * (32 ±0)`
 		// Minimum execution time: 12_176 nanoseconds.
-		Weight::from_ref_time(13_080_140)
-			.saturating_add(Weight::from_proof_size(3837))
+		Weight::from_parts(13_080_140, 0)
+			.saturating_add(Weight::from_parts(0, 3837))
 			// Standard Error: 625
-			.saturating_add(Weight::from_ref_time(12_586).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(12_586, 0).saturating_mul(m.into()))
 			.saturating_add(T::DbWeight::get().reads(1))
 			.saturating_add(T::DbWeight::get().writes(2))
-			.saturating_add(Weight::from_proof_size(32).saturating_mul(m.into()))
+			.saturating_add(Weight::from_parts(0, 32).saturating_mul(m.into()))
 	}
 	/// Storage: CouncilMembership Prime (r:0 w:1)
 	/// Proof: CouncilMembership Prime (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
@@ -196,8 +196,8 @@ impl<T: frame_system::Config> pallet_membership::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 4_435 nanoseconds.
-		Weight::from_ref_time(4_941_146)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(4_941_146, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			.saturating_add(T::DbWeight::get().writes(2))
 	}
 }

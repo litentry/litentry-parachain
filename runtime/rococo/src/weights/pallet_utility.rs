@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_utility`.
@@ -54,18 +54,18 @@ impl<T: frame_system::Config> pallet_utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 9_914 nanoseconds.
-		Weight::from_ref_time(161_896_774)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(161_896_774, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 156_692
-			.saturating_add(Weight::from_ref_time(8_907_003).saturating_mul(c.into()))
+			.saturating_add(Weight::from_parts(8_907_003, 0).saturating_mul(c.into()))
 	}
 	fn as_derivative() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 6_789 nanoseconds.
-		Weight::from_ref_time(7_411_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(7_411_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 	/// The range of component `c` is `[0, 1000]`.
 	fn batch_all(c: u32, ) -> Weight {
@@ -73,18 +73,18 @@ impl<T: frame_system::Config> pallet_utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 10_208 nanoseconds.
-		Weight::from_ref_time(484_067_635)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(484_067_635, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 124_341
-			.saturating_add(Weight::from_ref_time(8_421_558).saturating_mul(c.into()))
+			.saturating_add(Weight::from_parts(8_421_558, 0).saturating_mul(c.into()))
 	}
 	fn dispatch_as() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 12_996 nanoseconds.
-		Weight::from_ref_time(13_670_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(13_670_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 	/// The range of component `c` is `[0, 1000]`.
 	fn force_batch(c: u32, ) -> Weight {
@@ -92,9 +92,9 @@ impl<T: frame_system::Config> pallet_utility::WeightInfo for WeightInfo<T> {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 10_129 nanoseconds.
-		Weight::from_ref_time(10_341_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(10_341_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 			// Standard Error: 90_765
-			.saturating_add(Weight::from_ref_time(9_481_477).saturating_mul(c.into()))
+			.saturating_add(Weight::from_parts(9_481_477, 0).saturating_mul(c.into()))
 	}
 }

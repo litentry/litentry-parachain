@@ -42,7 +42,7 @@
 #![allow(unused_parens)]
 #![allow(unused_imports)]
 
-use frame_support::{traits::Get, weights::Weight};
+use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_timestamp`.
@@ -59,8 +59,8 @@ impl<T: frame_system::Config> pallet_timestamp::WeightInfo for WeightInfo<T> {
 		//  Measured:  `183`
 		//  Estimated: `3839`
 		// Minimum execution time: 18_333 nanoseconds.
-		Weight::from_ref_time(18_829_000)
-			.saturating_add(Weight::from_proof_size(3839))
+		Weight::from_parts(18_829_000, 0)
+			.saturating_add(Weight::from_parts(0, 3839))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
@@ -69,7 +69,7 @@ impl<T: frame_system::Config> pallet_timestamp::WeightInfo for WeightInfo<T> {
 		//  Measured:  `94`
 		//  Estimated: `0`
 		// Minimum execution time: 6_332 nanoseconds.
-		Weight::from_ref_time(6_687_000)
-			.saturating_add(Weight::from_proof_size(0))
+		Weight::from_parts(6_687_000, 0)
+			.saturating_add(Weight::from_parts(0, 0))
 	}
 }
