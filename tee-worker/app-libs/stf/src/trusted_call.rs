@@ -335,10 +335,9 @@ where
 					free_balance,
 					reserved_balance
 				);
-				ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+				ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 					who: MultiAddress::Id(who),
 					new_free: free_balance,
-					new_reserved: reserved_balance,
 				}
 				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 				.map_err(|e| {
@@ -387,9 +386,9 @@ where
 				)?;
 				calls.push(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.unshield_funds_call_indexes())??,
+					shard,
 					beneficiary,
 					value,
-					shard,
 					call_hash,
 				)));
 				Ok(TrustedCallResult::Empty)
@@ -863,10 +862,9 @@ fn unshield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 		return Err(StfError::MissingFunds)
 	}
 
-	ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 		who: MultiAddress::Id(account),
 		new_free: account_info.data.free - amount,
-		new_reserved: account_info.data.reserved,
 	}
 	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Unshield funds error: {:?}", e.error)))?;
@@ -875,10 +873,9 @@ fn unshield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 
 fn shield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 	let account_info = System::account(&account);
-	ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 		who: MultiAddress::Id(account),
 		new_free: account_info.data.free + amount,
-		new_reserved: account_info.data.reserved,
 	}
 	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Shield funds error: {:?}", e.error)))?;

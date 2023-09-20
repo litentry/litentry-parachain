@@ -21,22 +21,50 @@ use crate::{
 	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge},
 };
 use codec::{Decode, Encode};
+use itp_api_client_types::ParentchainApi;
 use itp_enclave_api::enclave_base::EnclaveBase;
-use itp_node_api::{api_client::AccountApi, node_api_factory::CreateNodeApi};
-use itp_types::{WorkerRequest, WorkerResponse};
+use itp_node_api::node_api_factory::CreateNodeApi;
+use itp_types::{parentchain::ParentchainId, WorkerRequest, WorkerResponse};
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::{sync::Arc, thread, vec::Vec};
 use substrate_api_client::{serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
 
-pub struct WorkerOnChainOCall<E, F> {
-	enclave_api: Arc<E>,
-	node_api_factory: Arc<F>,
+pub struct WorkerOnChainOCall<F> {
+	integritee_api_factory: Arc<F>,
+	target_a_parentchain_api_factory: Option<Arc<F>>,
+	target_b_parentchain_api_factory: Option<Arc<F>>,
 }
 
-impl<E, F> WorkerOnChainOCall<E, F> {
-	pub fn new(enclave_api: Arc<E>, node_api_factory: Arc<F>) -> Self {
-		WorkerOnChainOCall { enclave_api, node_api_factory }
+impl<F> WorkerOnChainOCall<F> {
+	pub fn new(
+		integritee_api_factory: Arc<F>,
+		target_a_parentchain_api_factory: Option<Arc<F>>,
+		target_b_parentchain_api_factory: Option<Arc<F>>,
+	) -> Self {
+		WorkerOnChainOCall {
+			integritee_api_factory,
+			target_a_parentchain_api_factory,
+			target_b_parentchain_api_factory,
+		}
+	}
+}
+
+impl<F: CreateNodeApi> WorkerOnChainOCall<F> {
+	pub fn create_api(&self, parentchain_id: ParentchainId) -> OCallBridgeResult<ParentchainApi> {
+		Ok(match parentchain_id {
+			ParentchainId::Integritee => self.integritee_api_factory.create_api()?,
+			ParentchainId::TargetA => self
+				.target_a_parentchain_api_factory
+				.as_ref()
+				.ok_or(OCallBridgeError::TargetAParentchainNotInitialized)
+				.and_then(|f| f.create_api().map_err(Into::into))?,
+			ParentchainId::TargetB => self
+				.target_b_parentchain_api_factory
+				.as_ref()
+				.ok_or(OCallBridgeError::TargetBParentchainNotInitialized)
+				.and_then(|f| f.create_api().map_err(Into::into))?,
+		})
 	}
 }
 
@@ -45,19 +73,22 @@ where
 	E: EnclaveBase,
 	F: CreateNodeApi,
 {
-	fn worker_request(&self, request: Vec<u8>) -> OCallBridgeResult<Vec<u8>> {
+	fn worker_request(
+		&self,
+		request: Vec<u8>,
+		parentchain_id: Vec<u8>,
+	) -> OCallBridgeResult<Vec<u8>> {
 		debug!("    Entering ocall_worker_request");
 
-		let requests: Vec<WorkerRequest> =
-			Decode::decode(&mut request.as_slice()).map_err(|_| {
-				OCallBridgeError::WorkerRequestError("Could not deserialize requests".to_string())
-			})?;
+		let requests: Vec<WorkerRequest> = Decode::decode(&mut request.as_slice())?;
 		if requests.is_empty() {
 			debug!("requests is empty, returning empty vector");
 			return Ok(Vec::<u8>::new().encode())
 		}
 
-		let api = self.node_api_factory.create_api()?;
+		let parentchain_id = ParentchainId::decode(&mut parentchain_id.as_slice())?;
+
+		let api = self.create_api(parentchain_id)?;
 
 		let resp: Vec<WorkerResponse<Vec<u8>>> = requests
 			.into_iter()
@@ -84,7 +115,11 @@ where
 		Ok(encoded_response)
 	}
 
-	fn send_to_parentchain(&self, extrinsics_encoded: Vec<u8>) -> OCallBridgeResult<()> {
+	fn send_to_parentchain(
+		&self,
+		extrinsics_encoded: Vec<u8>,
+		parentchain_id: Vec<u8>,
+	) -> OCallBridgeResult<()> {
 		// TODO: improve error handling, using a mut status is not good design?
 		let mut status: OCallBridgeResult<()> = Ok(());
 
@@ -100,12 +135,21 @@ where
 			};
 
 		if !extrinsics.is_empty() {
+			let parentchain_id = ParentchainId::decode(&mut parentchain_id.as_slice())?;
+			debug!(
+				"Enclave wants to send {} extrinsics to parentchain: {:?}",
+				extrinsics.len(),
+				parentchain_id
+			);
+			let api = self.create_api(parentchain_id)?;
 			let mut send_extrinsic_failed = false;
-			debug!("Enclave wants to send {} extrinsics", extrinsics.len());
-			let api = self.node_api_factory.create_api()?;
 			for call in extrinsics.into_iter() {
 				if let Err(e) = api.submit_opaque_extrinsic(call.encode().into()) {
-					error!("Could not send extrsinic to node: {:?}", e);
+					error!(
+						"Could not send extrinsic to node: {:?}, error: {:?}",
+						serde_json::to_string(&call),
+						e
+					);
 					send_extrinsic_failed = true;
 				}
 			}
@@ -181,9 +225,11 @@ mod tests {
 		let mock_enclave = Arc::new(EnclaveMock {});
 		let mock_node_api_factory = Arc::new(MockNodeApiFactory::new());
 
-		let on_chain_ocall = WorkerOnChainOCall::new(mock_enclave, mock_node_api_factory);
+		let on_chain_ocall = WorkerOnChainOCall::new(mock_node_api_factory, None, None);
 
-		let response = on_chain_ocall.worker_request(Vec::<u8>::new().encode()).unwrap();
+		let response = on_chain_ocall
+			.worker_request(Vec::<u8>::new().encode(), ParentchainId::Integritee.encode())
+			.unwrap();
 
 		assert!(!response.is_empty()); // the encoded empty vector is not empty
 		let decoded_response: Vec<u8> = Decode::decode(&mut response.as_slice()).unwrap();

@@ -26,8 +26,8 @@ use std::{
 	time::Duration,
 };
 
-static DEFAULT_NODE_SERVER: &str = "ws://127.0.0.1";
-static DEFAULT_NODE_PORT: &str = "9944";
+static DEFAULT_INTEGRITEE_RPC_URL: &str = "ws://127.0.0.1";
+static DEFAULT_INTEGRITEE_RPC_PORT: &str = "9944";
 static DEFAULT_TRUSTED_PORT: &str = "2000";
 static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
@@ -39,8 +39,12 @@ static DEFAULT_PARENTCHAIN_START_BLOCK: &str = "0";
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {
-	pub node_ip: String,
-	pub node_port: String,
+	pub integritee_rpc_url: String,
+	pub integritee_rpc_port: String,
+	pub target_a_parentchain_rpc_url: Option<String>,
+	pub target_a_parentchain_rpc_port: Option<String>,
+	pub target_b_parentchain_rpc_url: Option<String>,
+	pub target_b_parentchain_rpc_port: Option<String>,
 	pub worker_ip: String,
 	/// Trusted worker address that will be advertised on the parentchain.
 	pub trusted_external_worker_address: Option<String>,
@@ -79,8 +83,12 @@ pub struct Config {
 #[allow(clippy::too_many_arguments)]
 impl Config {
 	pub fn new(
-		node_ip: String,
-		node_port: String,
+		integritee_rpc_url: String,
+		integritee_rpc_port: String,
+		target_a_parentchain_rpc_url: Option<String>,
+		target_a_parentchain_rpc_port: Option<String>,
+		target_b_parentchain_rpc_url: Option<String>,
+		target_b_parentchain_rpc_port: Option<String>,
 		worker_ip: String,
 		trusted_external_worker_address: Option<String>,
 		trusted_worker_port: String,
@@ -99,8 +107,12 @@ impl Config {
 		parentchain_start_block: String,
 	) -> Self {
 		Self {
-			node_ip,
-			node_port,
+			integritee_rpc_url,
+			integritee_rpc_port,
+			target_a_parentchain_rpc_url,
+			target_a_parentchain_rpc_port,
+			target_b_parentchain_rpc_url,
+			target_b_parentchain_rpc_port,
 			worker_ip,
 			trusted_external_worker_address,
 			trusted_worker_port,
@@ -120,9 +132,39 @@ impl Config {
 		}
 	}
 
-	/// Returns the client url of the node (including ws://).
-	pub fn node_url(&self) -> String {
-		format!("{}:{}", self.node_ip, self.node_port)
+	/// Integritee RPC endpoint (including ws://).
+	pub fn integritee_rpc_endpoint(&self) -> String {
+		format!("{}:{}", self.integritee_rpc_url, self.integritee_rpc_port)
+	}
+
+	pub fn target_a_parentchain_rpc_endpoint(&self) -> Option<String> {
+		if self.target_a_parentchain_rpc_url.is_some()
+			&& self.target_a_parentchain_rpc_port.is_some()
+		{
+			return Some(format!(
+				"{}:{}",
+				// Can be done better, but this code is obsolete anyhow with clap v4.
+				self.target_a_parentchain_rpc_url.clone().unwrap(),
+				self.target_a_parentchain_rpc_port.clone().unwrap()
+			))
+		};
+
+		None
+	}
+
+	pub fn target_b_parentchain_rpc_endpoint(&self) -> Option<String> {
+		if self.target_b_parentchain_rpc_url.is_some()
+			&& self.target_b_parentchain_rpc_port.is_some()
+		{
+			return Some(format!(
+				"{}:{}",
+				// Can be done better, but this code is obsolete anyhow with clap v4.
+				self.target_b_parentchain_rpc_url.clone().unwrap(),
+				self.target_b_parentchain_rpc_port.clone().unwrap()
+			))
+		};
+
+		None
 	}
 
 	pub fn trusted_worker_url_internal(&self) -> String {
@@ -219,13 +261,18 @@ impl From<&ArgMatches<'_>> for Config {
 		};
 
 		let run_config = m.subcommand_matches("run").map(RunConfig::from);
+
 		let is_mock_server_enabled = m.is_present("enable-mock-server");
 		let mock_server_port = m.value_of("mock-server-port").unwrap_or(DEFAULT_MOCK_SERVER_PORT);
 		let parentchain_start_block =
 			m.value_of("parentchain-start-block").unwrap_or(DEFAULT_PARENTCHAIN_START_BLOCK);
 		Self::new(
-			m.value_of("node-server").unwrap_or(DEFAULT_NODE_SERVER).into(),
-			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
+			m.value_of("integritee-rpc-url").unwrap_or(DEFAULT_INTEGRITEE_RPC_URL).into(),
+			m.value_of("integritee-rpc-port").unwrap_or(DEFAULT_INTEGRITEE_RPC_PORT).into(),
+			m.value_of("target-a-parentchain-rpc-url").map(Into::into),
+			m.value_of("target-a-parentchain-rpc-port").map(Into::into),
+			m.value_of("target-b-parentchain-rpc-url").map(Into::into),
+			m.value_of("target-b-parentchain-rpc-port").map(Into::into),
 			if m.is_present("ws-external") { "0.0.0.0".into() } else { "127.0.0.1".into() },
 			m.value_of("trusted-external-address")
 				.map(|url| add_port_if_necessary(url, trusted_port)),
@@ -369,8 +416,12 @@ mod test {
 		let config = Config::from(&empty_args);
 		let expected_worker_ip = "127.0.0.1";
 
-		assert_eq!(config.node_ip, DEFAULT_NODE_SERVER);
-		assert_eq!(config.node_port, DEFAULT_NODE_PORT);
+		assert_eq!(config.integritee_rpc_url, DEFAULT_INTEGRITEE_RPC_URL);
+		assert_eq!(config.integritee_rpc_port, DEFAULT_INTEGRITEE_RPC_PORT);
+		assert_eq!(config.target_a_parentchain_rpc_url, None);
+		assert_eq!(config.target_a_parentchain_rpc_port, None);
+		assert_eq!(config.target_b_parentchain_rpc_url, None);
+		assert_eq!(config.target_b_parentchain_rpc_port, None);
 		assert_eq!(config.trusted_worker_port, DEFAULT_TRUSTED_PORT);
 		assert_eq!(config.untrusted_worker_port, DEFAULT_UNTRUSTED_PORT);
 		assert_eq!(config.mu_ra_port, DEFAULT_MU_RA_PORT);
@@ -388,7 +439,7 @@ mod test {
 	}
 
 	#[test]
-	fn worker_ip_is_set_correcty_for_set_ws_external_flag() {
+	fn worker_ip_is_set_correctly_for_set_ws_external_flag() {
 		let expected_worker_ip = "0.0.0.0";
 
 		let mut args = ArgMatches::default();
@@ -417,8 +468,8 @@ mod test {
 
 		let mut args = ArgMatches::default();
 		args.args = HashMap::from([
-			("node-server", Default::default()),
-			("node-port", Default::default()),
+			("integritee-rpc-url", Default::default()),
+			("integritee-rpc-port", Default::default()),
 			("ws-external", Default::default()),
 			("trusted-external-address", Default::default()),
 			("untrusted-external-address", Default::default()),
@@ -432,8 +483,8 @@ mod test {
 			("parentchain-start-block", Default::default()),
 		]);
 		// Workaround because MatchedArg is private.
-		args.args.get_mut("node-server").unwrap().vals = vec![node_ip.into()];
-		args.args.get_mut("node-port").unwrap().vals = vec![node_port.into()];
+		args.args.get_mut("integritee-rpc-url").unwrap().vals = vec![node_ip.into()];
+		args.args.get_mut("integritee-rpc-port").unwrap().vals = vec![node_port.into()];
 		args.args.get_mut("trusted-external-address").unwrap().vals = vec![trusted_ext_addr.into()];
 		args.args.get_mut("untrusted-external-address").unwrap().vals =
 			vec![untrusted_ext_addr.into()];
@@ -449,8 +500,8 @@ mod test {
 
 		let config = Config::from(&args);
 
-		assert_eq!(config.node_ip, node_ip);
-		assert_eq!(config.node_port, node_port);
+		assert_eq!(config.integritee_rpc_url, node_ip);
+		assert_eq!(config.integritee_rpc_port, node_port);
 		assert_eq!(config.trusted_worker_port, trusted_port);
 		assert_eq!(config.untrusted_worker_port, untrusted_port);
 		assert_eq!(config.mu_ra_port, mu_ra_port);

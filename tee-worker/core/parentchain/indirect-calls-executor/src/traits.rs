@@ -30,6 +30,7 @@ pub trait ExecuteIndirectCalls {
 	fn execute_indirect_calls_in_extrinsics<ParentchainBlock>(
 		&self,
 		block: &ParentchainBlock,
+		events: &[u8],
 	) -> Result<OpaqueCall>
 	where
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>;
@@ -71,6 +72,8 @@ pub trait IndirectExecutor {
 	fn encrypt(&self, value: &[u8]) -> Result<Vec<u8>>;
 
 	fn get_enclave_account(&self) -> Result<AccountId>;
+
+	fn get_default_shard(&self) -> ShardIdentifier;
 
 	fn sign_call_with_self(
 		&self,

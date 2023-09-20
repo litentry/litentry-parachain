@@ -42,10 +42,15 @@ pub mod files {
 	pub static SIDECHAIN_PURGE_LIMIT: u64 = 100; // keep the last.. sidechainblocks when purging
 
 	// used by enclave
-	pub const RSA3072_SEALED_KEY_FILE: &str = "rsa3072_key_sealed.bin";
-	pub const SEALED_SIGNER_SEED_FILE: &str = "ed25519_key_sealed.bin";
-	pub const AES_KEY_FILE_AND_INIT_V: &str = "aes_key_sealed.bin";
-	pub const LIGHT_CLIENT_DB_PATH: &str = "light_client_db.bin";
+	/// Path to the light-client db for the Integritee parentchain.
+	pub const INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "integritee_lcdb";
+
+	/// Path to the light-client db for the Target A parentchain.
+	pub const TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "target_a_lcdb";
+
+	/// Path to the light-client db for the Target B parentchain.
+	pub const TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "target_b_lcdb";
+
 	// litentry
 	pub const SCHEDULED_ENCLAVE_FILE: &str = "scheduled_enclave_sealed.bin";
 

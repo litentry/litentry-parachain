@@ -61,7 +61,7 @@ impl IDGraphStats {
 				println!("Total number: {}", total_number);
 				Ok(CliResultOk::None)
 			},
-			_ => Err(CliError::BaseOp { msg: "invalid id graph stats".to_string() }),
+			_ => Err(CliError::Extrinsic { msg: "invalid id graph stats".to_string() }),
 		}
 	}
 }

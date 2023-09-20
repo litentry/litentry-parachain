@@ -60,7 +60,7 @@ impl LinkIdentityCommand {
 		let identity: Result<Identity, _> = serde_json::from_str(self.identity.as_str());
 		if let Err(e) = identity {
 			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return Err(CliError::BaseOp {
+			return Err(CliError::Extrinsic {
 				msg: format!("Deserialize Identity error: {:?}", e.to_string()),
 			})
 		}

@@ -22,6 +22,7 @@ use crate::{
 };
 use codec::{Decode, Encode};
 
+use crate::pallet_enclave_bridge::EnclaveBridgeCallIndexes;
 use itp_api_client_types::Metadata;
 
 impl TryFrom<NodeMetadataMock> for Metadata {
@@ -35,16 +36,18 @@ impl TryFrom<NodeMetadataMock> for Metadata {
 #[derive(Default, Encode, Decode, Debug, Clone)]
 pub struct NodeMetadataMock {
 	teerex_module: u8,
-	register_ias_enclave: u8,
-	register_dcap_enclave: u8,
-	unregister_enclave: u8,
+	register_sgx_enclave: u8,
+	unregister_sovereign_enclave: u8,
+	unregister_proxied_enclave: u8,
 	register_quoting_enclave: u8,
 	register_tcb_info: u8,
-	call_worker: u8,
-	processed_parentchain_block: u8,
+	enclave_bridge_module: u8,
+	invoke: u8,
+	confirm_processed_parentchain_block: u8,
 	shield_funds: u8,
 	unshield_funds: u8,
 	publish_hash: u8,
+	update_shard_config: u8,
 	sidechain_module: u8,
 	// litentry
 	update_scheduled_enclave: u8,
@@ -82,16 +85,18 @@ impl NodeMetadataMock {
 	pub fn new() -> Self {
 		NodeMetadataMock {
 			teerex_module: 50u8,
-			register_ias_enclave: 0u8,
-			register_dcap_enclave: 6,
-			unregister_enclave: 1u8,
-			register_quoting_enclave: 7,
-			register_tcb_info: 8,
-			call_worker: 2u8,
-			processed_parentchain_block: 3u8,
-			shield_funds: 4u8,
-			unshield_funds: 5u8,
-			publish_hash: 9u8,
+			register_sgx_enclave: 0u8,
+			unregister_sovereign_enclave: 1u8,
+			unregister_proxied_enclave: 2u8,
+			register_quoting_enclave: 3,
+			register_tcb_info: 4,
+			enclave_bridge_module: 54u8,
+			invoke: 0u8,
+			confirm_processed_parentchain_block: 1u8,
+			shield_funds: 2u8,
+			unshield_funds: 3u8,
+			publish_hash: 4u8,
+			update_shard_config: 5u8,
 			sidechain_module: 53u8,
 			// litentry
 			update_scheduled_enclave: 10u8,
@@ -128,16 +133,16 @@ impl NodeMetadataMock {
 }
 
 impl TeerexCallIndexes for NodeMetadataMock {
-	fn register_ias_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.register_ias_enclave])
+	fn register_sgx_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.register_sgx_enclave])
 	}
 
-	fn register_dcap_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.register_dcap_enclave])
+	fn unregister_sovereign_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.unregister_sovereign_enclave])
 	}
 
-	fn unregister_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.unregister_enclave])
+	fn unregister_proxied_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.unregister_proxied_enclave])
 	}
 
 	fn register_quoting_enclave_call_indexes(&self) -> Result<[u8; 2]> {
@@ -147,25 +152,31 @@ impl TeerexCallIndexes for NodeMetadataMock {
 	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teerex_module, self.register_tcb_info])
 	}
+}
 
-	fn call_worker_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.call_worker])
+impl EnclaveBridgeCallIndexes for NodeMetadataMock {
+	fn invoke_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.enclave_bridge_module, self.invoke])
 	}
 
 	fn confirm_processed_parentchain_block_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.processed_parentchain_block])
+		Ok([self.enclave_bridge_module, self.confirm_processed_parentchain_block])
 	}
 
 	fn shield_funds_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.shield_funds])
+		Ok([self.enclave_bridge_module, self.shield_funds])
 	}
 
 	fn unshield_funds_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.unshield_funds])
+		Ok([self.enclave_bridge_module, self.unshield_funds])
 	}
 
 	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.unshield_funds])
+		Ok([self.enclave_bridge_module, self.publish_hash])
+	}
+
+	fn update_shard_config_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.enclave_bridge_module, self.update_shard_config])
 	}
 
 	fn update_scheduled_enclave(&self) -> Result<[u8; 2]> {

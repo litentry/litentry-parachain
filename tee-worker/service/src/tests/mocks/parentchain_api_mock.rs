@@ -14,14 +14,14 @@
 	limitations under the License.
 
 */
+
 use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
 use itp_node_api::api_client::{ApiResult, ChainApi, SignedBlock};
 use itp_types::{
 	parentchain::{Hash, Header, StorageProof},
 	H256,
 };
-use sp_finality_grandpa::AuthorityList;
-use substrate_api_client::{Error::Metadata, Events, MetadataError::PalletNotFound};
+use sp_consensus_grandpa::AuthorityList;
 
 pub struct ParentchainApiMock {
 	parentchain: Vec<SignedBlock>,
@@ -92,10 +92,4 @@ impl ChainApi for ParentchainApiMock {
 	fn get_events_for_block(&self, _block_hash: Option<H256>) -> ApiResult<Vec<u8>> {
 		Ok(Default::default())
 	}
-
-	// fn events(&self, _hash: Option<H256>) -> ApiResult<Events<H256>> {
-	// 	// let metadata = metadata::<Event>();
-	// 	// Ok(Events::new(metadata, H256::default(), vec![].into()))
-	// 	Err(Metadata(PalletNotFound("abc".to_string())))
-	// }
 }

@@ -24,6 +24,7 @@
 #[macro_use]
 extern crate clap;
 extern crate chrono;
+extern crate core;
 extern crate env_logger;
 extern crate log;
 
@@ -45,17 +46,23 @@ pub mod commands;
 
 use crate::commands::Commands;
 use clap::Parser;
+use sp_application_crypto::KeyTypeId;
 use sp_core::{H160, H256};
 use substrate_api_client::Metadata;
 use thiserror::Error;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+pub(crate) const SR25519_KEY_TYPE: KeyTypeId = KeyTypeId(*b"sr25");
+pub(crate) const ED25519_KEY_TYPE: KeyTypeId = KeyTypeId(*b"ed25");
+
 #[derive(Parser)]
 #[clap(name = "integritee-cli")]
 #[clap(version = VERSION)]
 #[clap(author = "Integritee AG <hello@integritee.network>")]
-#[clap(about = "interact with integritee-node and workers", long_about = None)]
+#[cfg_attr(feature = "teeracle", clap(about = "interact with integritee-node and teeracle", long_about = None))]
+#[cfg_attr(feature = "sidechain", clap(about = "interact with integritee-node and sidechain", long_about = None))]
+#[cfg_attr(feature = "offchain-worker", clap(about = "interact with integritee-node and offchain-worker", long_about = None))]
 #[clap(after_help = "stf subcommands depend on the stf crate this has been built against")]
 pub struct Cli {
 	/// node url
@@ -106,8 +113,8 @@ pub enum CliResultOk {
 
 #[derive(Debug, Error)]
 pub enum CliError {
-	#[error("base operation error: {:?}", msg)]
-	BaseOp { msg: String },
+	#[error("extrinsic error: {:?}", msg)]
+	Extrinsic { msg: String },
 	#[error("trusted operation error: {:?}", msg)]
 	TrustedOp { msg: String },
 	#[error("EvmReadCommands error: {:?}", msg)]

@@ -55,14 +55,14 @@ pub trait DirectApi {
 	fn get_mu_ra_url(&self) -> Result<String>;
 	fn get_untrusted_worker_url(&self) -> Result<String>;
 	fn get_state_metadata(&self) -> Result<Metadata>;
-	// litentry
-	fn get_state_metadata_raw(&self) -> Result<String>;
-	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
-
-	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
 	fn send(&self, request: &str) -> Result<()>;
 	/// Close any open websocket connection.
 	fn close(&self) -> Result<()>;
+
+	// litentry
+	fn get_state_metadata_raw(&self) -> Result<String>;
+	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
+	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
 }
 
 impl DirectClient {
@@ -199,6 +199,20 @@ impl DirectApi for DirectClient {
 		Metadata::try_from(metadata).map_err(|e| e.into())
 	}
 
+	fn send(&self, request: &str) -> Result<()> {
+		self.web_socket_control.send(request)
+	}
+
+	fn close(&self) -> Result<()> {
+		self.web_socket_control.close_connection()
+	}
+
+	fn get_state_metadata_raw(&self) -> Result<String> {
+		let metadata = self.get_state_metadata().unwrap().to_hex();
+		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
+		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
+	}
+
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			"author_getNextNonce".to_owned(),
@@ -223,20 +237,6 @@ impl DirectApi for DirectClient {
 
 		info!("[+] Got enclave: {:?}", mrenclave);
 		Ok(mrenclave)
-	}
-
-	fn send(&self, request: &str) -> Result<()> {
-		self.web_socket_control.send(request)
-	}
-
-	fn close(&self) -> Result<()> {
-		self.web_socket_control.close_connection()
-	}
-
-	fn get_state_metadata_raw(&self) -> Result<String> {
-		let metadata = self.get_state_metadata().unwrap().to_hex();
-		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: 1 };
-		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 }
 

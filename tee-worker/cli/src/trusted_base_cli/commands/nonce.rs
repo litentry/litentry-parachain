@@ -31,9 +31,9 @@ pub struct NonceCommand {
 }
 
 impl NonceCommand {
-	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let (_mrenclave, shard) = get_identifiers(trusted_cli);
-		let who = get_pair_from_str(trusted_cli, &self.account);
+	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
+		let (_mrenclave, shard) = get_identifiers(trusted_args);
+		let who = get_pair_from_str(trusted_args, &self.account);
 		let worker_api_direct = get_worker_api_direct(cli);
 		let nonce_ret = worker_api_direct.get_next_nonce(&shard, &(who.public().into()));
 		let nonce = nonce_ret.expect("get nonce error!");

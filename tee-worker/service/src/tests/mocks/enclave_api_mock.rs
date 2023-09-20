@@ -17,9 +17,10 @@
 
 use codec::{Decode, Encode};
 use core::fmt::Debug;
+use enclave_bridge_primitives::EnclaveFingerprint;
 use frame_support::sp_runtime::traits::Block as ParentchainBlockTrait;
 use itc_parentchain::primitives::{
-	ParentchainInitParams,
+	ParentchainId, ParentchainInitParams,
 	ParentchainInitParams::{Parachain, Solochain},
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveResult};
@@ -49,8 +50,8 @@ impl EnclaveBase for EnclaveMock {
 		params: ParentchainInitParams,
 	) -> EnclaveResult<Header> {
 		let genesis_header_encoded = match params {
-			Solochain { params } => params.genesis_header.encode(),
-			Parachain { params } => params.genesis_header.encode(),
+			Solochain { params, .. } => params.genesis_header.encode(),
+			Parachain { params, .. } => params.genesis_header.encode(),
 		};
 		let header = Header::decode(&mut genesis_header_encoded.as_slice())?;
 		Ok(header)
@@ -60,15 +61,15 @@ impl EnclaveBase for EnclaveMock {
 		unimplemented!()
 	}
 
-	fn trigger_parentchain_block_import(&self) -> EnclaveResult<()> {
+	fn trigger_parentchain_block_import(&self, _: &ParentchainId) -> EnclaveResult<()> {
 		unimplemented!()
 	}
 
-	fn set_nonce(&self, _: u32) -> EnclaveResult<()> {
+	fn set_nonce(&self, _: u32, _: ParentchainId) -> EnclaveResult<()> {
 		unimplemented!()
 	}
 
-	fn set_node_metadata(&self, _metadata: Vec<u8>) -> EnclaveResult<()> {
+	fn set_node_metadata(&self, _metadata: Vec<u8>, _: ParentchainId) -> EnclaveResult<()> {
 		todo!()
 	}
 
@@ -80,8 +81,8 @@ impl EnclaveBase for EnclaveMock {
 		unreachable!()
 	}
 
-	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]> {
-		Ok([1u8; MR_ENCLAVE_SIZE])
+	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {
+		Ok([1u8; MR_ENCLAVE_SIZE].into())
 	}
 
 	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {
@@ -95,7 +96,7 @@ impl Sidechain for EnclaveMock {
 		_blocks: &[sp_runtime::generic::SignedBlock<ParentchainBlock>],
 		_events: &[Vec<u8>],
 		_events_proofs: &[StorageProof],
-		_nonce: u32,
+		_: &ParentchainId,
 	) -> EnclaveResult<()> {
 		Ok(())
 	}
