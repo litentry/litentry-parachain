@@ -62,6 +62,7 @@ impl<T: From<H160>> AddressMapping<T> for IntoAddressMapping {
 parameter_types! {
 	pub const ChainId: u64 = 42;
 	pub BlockGasLimit: U256 = U256::from(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS);
+	pub const GasLimitPovSizeRatio: u64 = 150_000_000 / (5 * 1024 * 1024);
 	//pub PrecompilesValue: FrontierPrecompiles<Runtime> = FrontierPrecompiles::<_>::new();
 }
 
@@ -81,6 +82,8 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
 	type FindAuthor = (); // Currently not available. Would need some more thoughts how prioritisation fees could be handled.
+	// BlockGasLimit / MAX_POV_SIZE
+	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
 	type WeightPerGas = ();
 	type OnCreate = ();
 	type Timestamp = Timestamp;
