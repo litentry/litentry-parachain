@@ -1,4 +1,4 @@
-name: Publish to NPM
+name: Release api package
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 18
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: https://npm.pkg.github.com/
 
       - name: Install Yarn
         run: npm install -g yarn
@@ -24,7 +24,6 @@ jobs:
         run: |
           cd tee-worker/client-api
           corepack yarn install
-
       - name: Build and Publish Parachain
         run: |
           branch_name="${{ github.ref }}"
@@ -43,7 +42,7 @@ jobs:
             echo "Not on 'dev' or 'staging' branch, skipping Parachain publish."
           fi
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Build and Publish Sidechain
         run: |
@@ -63,4 +62,4 @@ jobs:
             echo "Not on 'dev' or 'staging' branch, skipping Sidechain publish."
           fi
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
