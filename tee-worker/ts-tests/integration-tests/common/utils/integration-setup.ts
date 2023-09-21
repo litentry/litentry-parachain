@@ -23,6 +23,7 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             web3Signers: [] as Web3Wallets[],
             // default LitentryRococo
             chainIdentifier: 42,
+            requestId: 0,
         };
 
         before('Starting Litentry(parachain&tee)', async function () {

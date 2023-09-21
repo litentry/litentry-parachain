@@ -19,7 +19,7 @@ use crate::{
 	UserShieldingKeyType, Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::USER_SHIELDING_KEY_LEN;
+use litentry_primitives::{IdentityString, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
@@ -483,12 +483,12 @@ fn get_id_graph_works() {
 		// index 0 has the most recent identity
 		assert_eq!(
 			id_graph.get(0).unwrap().0,
-			Identity::Twitter("alice21".as_bytes().to_vec().try_into().unwrap())
+			Identity::Twitter(IdentityString::new("alice21".as_bytes().to_vec()))
 		);
 		// index 14 has the least recent identity
 		assert_eq!(
 			id_graph.get(14).unwrap().0,
-			Identity::Twitter("alice7".as_bytes().to_vec().try_into().unwrap())
+			Identity::Twitter(IdentityString::new("alice7".as_bytes().to_vec()))
 		);
 
 		// try to get more than id_graph length
@@ -496,7 +496,7 @@ fn get_id_graph_works() {
 		assert_eq!(id_graph.len(), 22);
 		assert_eq!(
 			id_graph.get(0).unwrap().0,
-			Identity::Twitter("alice21".as_bytes().to_vec().try_into().unwrap())
+			Identity::Twitter(IdentityString::new("alice21".as_bytes().to_vec()))
 		);
 		assert_eq!(id_graph.get(21).unwrap().0, [2u8; 32].into());
 	});

@@ -28,7 +28,7 @@ use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
-	UserInfo,
+	DataProviderConfigReader, ReadDataProviderConfig, UserInfo,
 };
 use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
@@ -84,7 +84,10 @@ pub fn verify(
 			ref message_id,
 			..
 		}) => {
-			let mut client = DiscordOfficialClient::new();
+			let data_provider_config =
+				DataProviderConfigReader::read().map_err(Error::UnclassifiedError)?;
+
+			let mut client = DiscordOfficialClient::new(&data_provider_config);
 			let message: DiscordMessage = client
 				.query_message(channel_id.to_vec(), message_id.to_vec())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
@@ -109,7 +112,7 @@ pub fn verify(
 	// - discord's username is case sensitive
 	match identity {
 		Identity::Twitter(address) => {
-			let handle = std::str::from_utf8(address.as_slice())
+			let handle = std::str::from_utf8(address.inner_ref())
 				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 			ensure!(
 				user_name.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
@@ -117,7 +120,7 @@ pub fn verify(
 			);
 		},
 		Identity::Discord(address) => {
-			let handle = std::str::from_utf8(address.as_slice())
+			let handle = std::str::from_utf8(address.inner_ref())
 				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 			ensure!(user_name.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));
 		},

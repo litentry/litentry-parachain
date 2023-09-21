@@ -25,9 +25,9 @@ export type {
     Getter,
     PublicGetter,
     RequestVCResult,
-    TrustedOperationResponse,
     StfError,
     LinkIdentityResult,
+    SetUserShieldingKeyResult,
 } from "../build/interfaces";
 export type { Codec } from "@polkadot/types/types";
 export type { Bytes } from "@polkadot/types-codec";
