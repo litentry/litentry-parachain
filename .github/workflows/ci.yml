@@ -456,7 +456,6 @@ jobs:
           echo "::endgroup::"
           echo "::group::pull localhost:5000/local-builder:latest"
           docker pull -q localhost:5000/local-builder:latest
-          docker save localhost:5000/local-builder:latest | gzip > local-builder.tar.gz
           echo "::endgroup::"
           echo "::group::docker images after pull"
           docker images --all
@@ -474,13 +473,6 @@ jobs:
           echo "::group::df -h ."
           df -h .
           echo "::endgroup::"
-
-      - name: Upload docker images
-        uses: actions/upload-artifact@v3
-        with:
-          name: local-builder
-          path: local-builder.tar.gz
-          if-no-files-found: error
 
       - name: Build worker
         if: needs.set-condition.outputs.rebuild_tee == 'true'

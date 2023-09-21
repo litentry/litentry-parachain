@@ -29,7 +29,7 @@ ENV LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:${SGX_SDK}/sdk_libs"
 ENV CARGO_NET_GIT_FETCH_WITH_CLI true
 
 ENV SCCACHE_CACHE_SIZE="20G"
-ENV SCCACHE_DIR="/opt/rust/worker-sccache"
+ENV SCCACHE_DIR="/opt/rust/sccache"
 ENV RUSTC_WRAPPER="/opt/rust/bin/sccache"
 
 # Default SGX MODE is software mode
