@@ -66,6 +66,7 @@ FROM ubuntu:22.04 AS slim-builder
 COPY --from=builder /home/ubuntu/tee-worker/bin/* /opt/worker/bin/
 COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /opt/worker/cli/
 COPY --from=builder /opt/sgxsdk /opt/sgxsdk
+COPY --from=builder /opt/rust/worker-sccache /opt/rust/worker-sccache
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
