@@ -61,6 +61,7 @@ RUN \
 
 RUN cargo test --release
 
+
 ### Minimal image for transferring built artefacts
 ##################################################
 FROM scratch AS stash
@@ -76,16 +77,14 @@ COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /opt/worker/cli/
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
+
 ### Base Runner Stage
 ##################################################
-FROM ubuntu:22.04 AS runner
+FROM node:18-bookworm-slim AS runner
 
-RUN apt update && apt install -y libssl-dev iproute2 curl
-
-## install packages for ts-tests
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash
-RUN apt-get install -y nodejs jq
+RUN apt update && apt install -y libssl-dev iproute2 jq curl
 RUN corepack enable && corepack prepare yarn@3.6.1 --activate
+
 
 ### Deployed CLI client
 ##################################################
