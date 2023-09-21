@@ -41,7 +41,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	for identity in &req.identities {
 		if let Identity::Twitter(address) = &identity.0 {
-			let twitter_handler = address.to_vec();
+			let twitter_handler = address.inner_ref().to_vec();
 			let user = client.query_user_by_name(twitter_handler).map_err(|e| {
 				Error::RequestVCFailed(
 					Assertion::A6,
@@ -55,7 +55,6 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		}
 	}
 
-	info!("sum followers: {}", sum);
 	let min: u32;
 	let max: u32;
 
