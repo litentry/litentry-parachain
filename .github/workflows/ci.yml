@@ -373,11 +373,20 @@ jobs:
         # before: 23 GB | after: 48 GB
         if: startsWith(runner.name, 'GitHub Actions')
         run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          echo "::group::Deleting stuff"
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf /usr/local/share/boost
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker image prune -af
+          echo "::endgroup::"
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
 
       - uses: actions/checkout@v3
 
@@ -399,6 +408,12 @@ jobs:
       - name: Create cache folder if not exist
         run: |
           [ ! -d worker-sccache ] && mkdir -p worker-sccache || true
+          echo "::group::List worker-sccache size"
+          du -sh worker-sccache
+          echo "::endgroup::"
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
 
       # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache
       # see
@@ -428,6 +443,9 @@ jobs:
 
       - name: Copy caches from the built image
         run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
           echo "::group::docker images"
           docker images --all
           echo "::endgroup::"

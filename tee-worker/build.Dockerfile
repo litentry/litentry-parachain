@@ -51,9 +51,10 @@ ARG FINGERPRINT=none
 
 WORKDIR $HOME/tee-worker
 COPY . $HOME
-COPY worker-sccache /opt/rust/worker-sccache
 
-RUN make && sccache --show-stats
+RUN \
+  cp -r /home/ubuntu/worker-sccache /opt/rust/ && rm -rf /home/ubuntu/worker-sccache && \
+  make && sccache --show-stats
 
 RUN cargo test --release
 
