@@ -243,12 +243,6 @@ jobs:
           cargo clippy --release  --features teeracle -- -D warnings
           cargo clippy --release  --features offchain-worker -- -D warnings
 
-      - name: Pallet unittests
-        working-directory: ./tee-worker
-        run: |
-          cargo test --locked --release
-          cargo test --locked --release -p pallet-* --lib
-
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
@@ -473,6 +467,13 @@ jobs:
           docker pull litentry/litentry-cli
 
       - run: docker images --all
+
+      - name: Pallet unittests
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        working-directory: ./tee-worker
+        run: |
+          rustup show
+          cargo test --locked --release -p pallet-* --lib
 
       - name: Test enclave
         # cargo test is not supported in the enclave

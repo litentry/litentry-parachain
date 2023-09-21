@@ -55,6 +55,8 @@ COPY worker-sccache /opt/rust/worker-sccache
 
 RUN make && sccache --show-stats
 
+RUN cargo test --release
+
 ### Base image for built artefacts
 ##################################################
 ### we need it to shrink the docker image size to pass around
