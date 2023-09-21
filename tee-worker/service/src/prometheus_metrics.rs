@@ -68,10 +68,10 @@ lazy_static! {
 		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
 			.unwrap();
 	static ref ENCLAVE_SUCCESFUL_TRUSTED_OPERATION: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation", &["call", "block", "caller"])
+		register_int_gauge_vec!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation", &["call"])
 			.unwrap();
 	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call", "block", "caller"])
+		register_int_gauge_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call"])
 			.unwrap();
 }
 
@@ -193,10 +193,10 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				handle_stf_call_request(*req, time);
 			},
 			EnclaveMetric::SuccesfulTrustedOperationIncrement(calls) => {
-				handle_trusted_operation(calls, inc_succesfull_trusted_operation_metric);
+				handle_trusted_operation(calls, inc_succesfull_trusted_operation_counter);
 			},
 			EnclaveMetric::FailedTrustedOperationIncrement(calls) => {
-				handle_trusted_operation(calls, inc_failed_trusted_operation_metric);
+				handle_trusted_operation(calls, inc_failed_trusted_operation_counter);
 			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
@@ -257,70 +257,52 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 	observe_execution_time(category, label, time)
 }
 
-// This function will handle the conversion of the caller into a formatted string.
-fn format_caller(caller_option: Option<Identity>) -> String {
-	if let Some(caller) = caller_option {
-		// Note: This unwrap should be unfallable technically
-		return caller.to_account_id().unwrap().to_string()
-	}
-	"0xDeadBeef".to_string()
-}
-
 // This function will increment the metric with provided label values.
-fn inc_succesfull_trusted_operation_metric(operation: &str, block_str: &str, caller: &str) {
-	ENCLAVE_SUCCESFUL_TRUSTED_OPERATION
-		.with_label_values(&[operation, block_str, caller])
-		.inc();
+fn inc_succesfull_trusted_operation_counter(operation: &str) {
+	ENCLAVE_SUCCESFUL_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
 }
 
-fn inc_failed_trusted_operation_metric(operation: &str, block_str: &str, caller: &str) {
-	ENCLAVE_FAILED_TRUSTED_OPERATION
-		.with_label_values(&[operation, block_str, caller])
-		.inc();
+fn inc_failed_trusted_operation_counter(operation: &str) {
+	ENCLAVE_FAILED_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
 }
 
 fn handle_trusted_operation<F>(call: TrustedCall, record_metric_fn: F)
 where
-	F: Fn(&str, &str, &str),
+	F: Fn(&str),
 {
-	let block_str = format!("{}", ENCLAVE_SIDECHAIN_BLOCK_HEIGHT.get());
 	match call {
-		TrustedCall::link_identity(caller, ..) => {
-			record_metric_fn("link_identity", &block_str, &format_caller(Some(caller)));
+		TrustedCall::link_identity(..) => {
+			record_metric_fn("link_identity");
 		},
-		TrustedCall::request_vc(caller, ..) => {
-			record_metric_fn("request_vc", &block_str, &format_caller(Some(caller)));
+		TrustedCall::request_vc(..) => {
+			record_metric_fn("request_vc");
 		},
-		TrustedCall::set_user_shielding_key(caller, ..) => {
-			record_metric_fn("set_user_shielding_key", &block_str, &format_caller(Some(caller)));
+		TrustedCall::set_user_shielding_key(..) => {
+			record_metric_fn("set_user_shielding_key");
 		},
-		TrustedCall::set_user_shielding_key_with_networks(caller, ..) => {
-			record_metric_fn(
-				"set_user_shielding_key_with_networks",
-				&block_str,
-				&format_caller(Some(caller)),
-			);
+		TrustedCall::set_user_shielding_key_with_networks(..) => {
+			record_metric_fn("set_user_shielding_key_with_networks");
 		},
-		TrustedCall::link_identity_callback(_enclave, caller, ..) => {
-			record_metric_fn("link_identity_callback", &block_str, &format_caller(Some(caller)));
+		TrustedCall::link_identity_callback(..) => {
+			record_metric_fn("link_identity_callback");
 		},
-		TrustedCall::request_vc_callback(_enclave, caller, ..) => {
-			record_metric_fn("request_vc_callback", &block_str, &format_caller(Some(caller)));
+		TrustedCall::request_vc_callback(..) => {
+			record_metric_fn("request_vc_callback");
 		},
-		TrustedCall::handle_vcmp_error(_enclave, caller, ..) => {
-			record_metric_fn("handle_vcmp_error", &block_str, &format_caller(caller));
+		TrustedCall::handle_vcmp_error(..) => {
+			record_metric_fn("handle_vcmp_error");
 		},
-		TrustedCall::handle_imp_error(_enclave, caller, ..) => {
-			record_metric_fn("handle_icmp_error", &block_str, &format_caller(caller));
+		TrustedCall::handle_imp_error(..) => {
+			record_metric_fn("handle_icmp_error");
 		},
-		TrustedCall::deactivate_identity(caller, ..) => {
-			record_metric_fn("deactivate_identity", &block_str, &format_caller(Some(caller)));
+		TrustedCall::deactivate_identity(..) => {
+			record_metric_fn("deactivate_identity");
 		},
-		TrustedCall::activate_identity(caller, ..) => {
-			record_metric_fn("activate_identity", &block_str, &format_caller(Some(caller)));
+		TrustedCall::activate_identity(..) => {
+			record_metric_fn("activate_identity");
 		},
 		_ => {
-			record_metric_fn("unsupported_trusted_operation", &block_str, "0xDeadBeef");
+			record_metric_fn("unsupported_trusted_operation");
 		},
 	}
 }
