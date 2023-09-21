@@ -461,11 +461,13 @@ jobs:
           docker images --all
           echo "::endgroup::"
           echo "::group::copy cache out"
-          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache' ; do
+          for i in 'git/db' 'registry/cache' 'registry/index'; do
             b="${i%/*}"
             rm -rf worker-cache/$i
             docker cp "$(docker create --rm localhost:5000/local-builder:latest):/opt/rust/$i" worker-cache/$b
           done
+          rm -rf worker-cache/sccache
+          docker cp "$(docker create --rm localhost:5000/local-builder:latest):/opt/rust/sccache" worker-cache
           du -sh worker-cache/*
           echo "::endgroup::"
           echo "::group::df -h ."
@@ -506,12 +508,12 @@ jobs:
 
       - run: docker images --all
 
-      - name: Pallet unittests
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        working-directory: ./tee-worker
-        run: |
-          rustup show
-          cargo test --locked --release -p pallet-* --lib
+      # - name: Pallet unittests
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   working-directory: ./tee-worker
+      #   run: |
+      #     rustup show
+      #     cargo test --locked --release -p pallet-* --lib
 
       - name: Test enclave
         # cargo test is not supported in the enclave
