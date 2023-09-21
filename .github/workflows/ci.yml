@@ -399,17 +399,20 @@ jobs:
       - name: Cache sccache
         uses: actions/cache@v3
         with:
-          path: worker-sccache
-          key: worker-sccache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
+          path: |
+            worker-cache
+          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
           restore-keys: |
-            worker-sccache-${{ env.REF_VERSION }}-
-            worker-sccache-
+            worker-cache-${{ env.REF_VERSION }}-
+            worker-cache-
 
       - name: Create cache folder if not exist
         run: |
-          [ ! -d worker-sccache ] && mkdir -p worker-sccache || true
-          echo "::group::List worker-sccache size"
-          du -sh worker-sccache
+          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
+            [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
+          done
+          echo "::group::List worker-cache size"
+          du -sh worker-cache/*
           echo "::endgroup::"
           echo "::group::Show disk usage"
           df -h .
@@ -449,7 +452,6 @@ jobs:
           echo "::group::docker images"
           docker images --all
           echo "::endgroup::"
-          rm -rf worker-sccache
           echo "::group::pull localhost:5000/local-builder:latest"
           docker pull -q localhost:5000/local-builder:latest
           echo "::endgroup::"
@@ -457,10 +459,14 @@ jobs:
           docker images --all
           echo "::endgroup::"
           echo "::group::copy cache out"
-          docker cp "$(docker create --rm localhost:5000/local-builder:latest):/opt/rust/worker-sccache" .
-          ls -l worker-sccache
+          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache' ; do
+            b="${i%/*}"
+            rm -rf worker-cache/$i
+            docker cp "$(docker create --rm localhost:5000/local-builder:latest):/opt/rust/$i" worker-cache/$b
+          done
+          du -sh worker-cache/*
           echo "::endgroup::"
-           echo "::group::df -h ."
+          echo "::group::df -h ."
           df -h .
           echo "::endgroup::"         
 

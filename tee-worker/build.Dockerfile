@@ -53,8 +53,11 @@ WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN \
-  cp -r /home/ubuntu/worker-sccache /opt/rust/ && rm -rf /home/ubuntu/worker-sccache && \
-  make && sccache --show-stats
+  rm -rf /opt/rust/registry/cache && mv worker-cache/registry/cache /opt/rust/registry && \
+  rm -rf /opt/rust/registry/index && mv worker-cache/registry/index /opt/rust/registry && \
+  rm -rf /opt/rust/git/db && mv worker-cache/git/db /opt/rust/git && \
+  rm -rf /opt/rust/sccache && mv worker-cache/sccache/opt/rust && \
+  cargo build --release -p lc-data-providers && sccache --show-stats
 
 RUN cargo test --release
 
@@ -70,6 +73,9 @@ COPY --from=builder /opt/sgxsdk /opt/sgxsdk
 COPY --from=builder /opt/rust/worker-sccache /opt/rust/worker-sccache
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+
+RUN touch /opt/worker/bin/litentry-worker /opt/worker/bin/litentry-cli && \
+  chmod a+x /opt/worker/bin/litentry-worker /opt/worker/bin/litentry-cli
 
 ### Base Runner Stage
 ##################################################
@@ -100,7 +106,7 @@ COPY --from=local-builder:latest /opt/worker/cli/*.sh /usr/local/worker-cli/
 RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
 
-RUN ldd /usr/local/bin/litentry-cli && /usr/local/bin/litentry-cli --version
+# RUN ldd /usr/local/bin/litentry-cli && /usr/local/bin/litentry-cli --version
 
 ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 
@@ -125,6 +131,6 @@ RUN ls -al /usr/local/bin
 # checks
 ENV SGX_SDK /opt/sgxsdk
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
-RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
+# RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
 
 ENTRYPOINT ["/usr/local/bin/litentry-worker"]
