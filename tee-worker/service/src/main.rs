@@ -84,7 +84,7 @@ use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
 	api::XtStatus, rpc::HandleSubscription, serde_impls::StorageKey, storage_key, GetHeader,
-	GetStorage, SubmitAndWatchUntilSuccess, SubmitAndWatch, SubscribeChain, SubscribeEvents,
+	GetStorage, SubmitAndWatch, SubmitAndWatchUntilSuccess, SubscribeChain, SubscribeEvents,
 };
 
 #[cfg(feature = "dcap")]
@@ -663,7 +663,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	if let Some(register_enclave_xt_header) = register_enclave_xt_header.clone() {
 		we_are_primary_validateer =
-			check_we_are_primary_validateer(&integritee_rpc_api, &register_enclave_xt_header).unwrap();
+			check_we_are_primary_validateer(&integritee_rpc_api, &register_enclave_xt_header)
+				.unwrap();
 	}
 
 	if we_are_primary_validateer {
@@ -927,14 +928,10 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 
 		loop {
 			info!("Polling for worker for shard ({} seconds interval)", POLL_INTERVAL_SECS);
-			if let Ok(Some(enclave)) =
-				node_api.worker_for_shard(&shard_for_initialized, None)
-			{
+			if let Ok(Some(enclave)) = node_api.worker_for_shard(&shard_for_initialized, None) {
 				// Set that the service is initialized.
 				initialization_handler.worker_for_shard_registered();
-				println!(
-					"[+] Found `WorkerForShard` on parentchain state",
-				);
+				println!("[+] Found `WorkerForShard` on parentchain state",);
 				break
 			}
 			thread::sleep(Duration::from_secs(POLL_INTERVAL_SECS));

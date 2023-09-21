@@ -28,11 +28,8 @@ use crate::{
 use binary_merkle_tree::merkle_root;
 use codec::Encode;
 use core::marker::PhantomData;
-use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation, TeerexCallIndexes};
-use itp_node_api::metadata::{
-	provider::AccessNodeMetadata,
-	NodeMetadataTrait,
-};
+use ita_stf::{TeerexCallIndexes, TrustedCall, TrustedCallSigned, TrustedOperation};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;

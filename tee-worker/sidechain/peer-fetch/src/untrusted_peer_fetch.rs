@@ -53,9 +53,7 @@ where
 			.worker_for_shard(shard, None)?
 			.ok_or_else(|| Error::NoPeerFoundForShard(*shard))?;
 
-		let trusted_worker_client = DirectWorkerApi::new(
-			validateer.url
-		);
+		let trusted_worker_client = DirectWorkerApi::new(validateer.url);
 		Ok(trusted_worker_client.get_untrusted_worker_url()?)
 	}
 }

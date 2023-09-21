@@ -27,7 +27,9 @@ use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, SubmitAndWatch, SubmitAndWatchUntilSuccess, XtStatus};
+use substrate_api_client::{
+	compose_extrinsic, SubmitAndWatch, SubmitAndWatchUntilSuccess, XtStatus,
+};
 
 #[derive(Parser)]
 pub struct ShieldFundsCommand {

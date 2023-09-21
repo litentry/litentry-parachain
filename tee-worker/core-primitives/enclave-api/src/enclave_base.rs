@@ -78,7 +78,6 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	// litentry
 	/// Migrate old shard to new shard.
 	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
-
 }
 
 /// EnclaveApi implementation for Enclave struct

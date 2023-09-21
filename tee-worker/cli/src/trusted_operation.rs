@@ -42,7 +42,8 @@ use std::{
 	time::Instant,
 };
 use substrate_api_client::{
-	compose_extrinsic, GetHeader, SubmitAndWatchUntilSuccess, SubscribeEvents, SubmitAndWatch, XtStatus,
+	compose_extrinsic, GetHeader, SubmitAndWatch, SubmitAndWatchUntilSuccess, SubscribeEvents,
+	XtStatus,
 };
 use teerex_primitives::Request;
 use thiserror::Error;

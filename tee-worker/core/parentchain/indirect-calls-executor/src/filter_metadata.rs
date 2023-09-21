@@ -19,9 +19,9 @@ use crate::{
 	error::Result,
 	event_filter::{FilterEvents, MockEvents},
 	indirect_calls::{
-		InvokeArgs, TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID, ActivateIdentityArgs, DeactivateIdentityArgs, LinkIdentityArgs,
+		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
 		RemoveScheduledEnclaveArgs, RequestVCArgs, SetUserShieldingKeyArgs, ShieldFundsArgs,
-		UpdateScheduledEnclaveArgs,
+		TransferToAliceShieldsFundsArgs, UpdateScheduledEnclaveArgs, ALICE_ACCOUNT_ID,
 	},
 	parentchain_parser::ParseExtrinsic,
 	IndirectDispatch, IndirectExecutor,
@@ -252,7 +252,8 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 		match self {
 			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor, ()),
 			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, ()),
-			IndirectCall::TransferToAliceShieldsFunds(trans_args) => trans_args.dispatch(executor, ()),
+			IndirectCall::TransferToAliceShieldsFunds(trans_args) =>
+				trans_args.dispatch(executor, ()),
 			// Litentry
 			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
 				set_shied.dispatch(executor, (address.clone(), *hash)),
