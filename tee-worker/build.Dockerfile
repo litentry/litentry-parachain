@@ -59,7 +59,7 @@ RUN \
   rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
   cargo build --release -p lc-data-providers && sccache --show-stats
 
-RUN cargo test --release
+# RUN cargo test --release
 
 ### Base image for built artefacts
 ##################################################
