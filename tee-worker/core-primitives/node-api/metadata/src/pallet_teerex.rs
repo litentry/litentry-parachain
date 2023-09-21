@@ -31,7 +31,7 @@ pub trait TeerexCallIndexes {
 
 	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]>;
 
-	fn call_worker_call_indexes(&self) -> Result<[u8; 2]>;
+	fn invoke_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn confirm_processed_parentchain_block_call_indexes(&self) -> Result<[u8; 2]>;
 
@@ -70,8 +70,12 @@ impl TeerexCallIndexes for NodeMetadata {
 		self.call_indexes(TEEREX, "register_quoting_enclave")
 	}
 
-	fn call_worker_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "call_worker")
+	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "register_tcb_info")
+	}
+
+	fn invoke_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "invoke")
 	}
 
 	fn confirm_processed_parentchain_block_call_indexes(&self) -> Result<[u8; 2]> {
@@ -96,10 +100,6 @@ impl TeerexCallIndexes for NodeMetadata {
 
 	fn remove_scheduled_enclave(&self) -> Result<[u8; 2]> {
 		self.call_indexes(TEEREX, "remove_scheduled_enclave")
-	}
-
-	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "register_tcb_info")
 	}
 }
 

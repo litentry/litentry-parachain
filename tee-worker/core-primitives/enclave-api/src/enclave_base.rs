@@ -29,7 +29,7 @@ use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_types::*;
 use sp_core::ed25519;
-use teerex_primitives::EnclaveFingerprint;
+// use teerex_primitives::EnclaveFingerprint;
 
 /// Trait for base/common Enclave API functions
 pub trait EnclaveBase: Send + Sync + 'static {
@@ -73,11 +73,12 @@ pub trait EnclaveBase: Send + Sync + 'static {
 
 	fn get_ecc_signing_pubkey(&self) -> EnclaveResult<ed25519::Public>;
 
+	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]>;
+
 	// litentry
 	/// Migrate old shard to new shard.
 	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()>;
 
-	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint>;
 }
 
 /// EnclaveApi implementation for Enclave struct
@@ -280,7 +281,7 @@ impl EnclaveBase for Enclave {
 		Ok(ed25519::Public::from_raw(pubkey))
 	}
 
-	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {
+	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 		let mut mr_enclave = [0u8; MR_ENCLAVE_SIZE];
 
@@ -296,7 +297,7 @@ impl EnclaveBase for Enclave {
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
-		Ok(mr_enclave.into())
+		Ok(mr_enclave)
 	}
 
 	fn migrate_shard(&self, old_shard: Vec<u8>, new_shard: Vec<u8>) -> EnclaveResult<()> {

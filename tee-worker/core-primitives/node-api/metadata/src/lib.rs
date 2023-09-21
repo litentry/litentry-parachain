@@ -20,7 +20,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::{
-	error::Result, pallet_enclave_bridge::EnclaveBridgeCallIndexes, pallet_imp::IMPCallIndexes,
+	error::Result, pallet_imp::IMPCallIndexes,
 	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
 	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
 	pallet_vcmp::VCMPCallIndexes,
@@ -51,7 +51,6 @@ pub mod metadata_mocks;
 
 pub trait NodeMetadataTrait:
 	TeerexCallIndexes
-	+ EnclaveBridgeCallIndexes
 	+ SidechainCallIndexes
 	+ IMPCallIndexes
 	+ VCMPCallIndexes
@@ -61,7 +60,6 @@ pub trait NodeMetadataTrait:
 }
 impl<
 		T: TeerexCallIndexes
-			+ EnclaveBridgeCallIndexes
 			+ SidechainCallIndexes
 			+ IMPCallIndexes
 			+ VCMPCallIndexes

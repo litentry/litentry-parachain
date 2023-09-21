@@ -152,31 +152,29 @@ impl TeerexCallIndexes for NodeMetadataMock {
 	fn register_tcb_info_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.teerex_module, self.register_tcb_info])
 	}
-}
 
-impl EnclaveBridgeCallIndexes for NodeMetadataMock {
 	fn invoke_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.enclave_bridge_module, self.invoke])
+		Ok([self.teerex_module, self.invoke])
 	}
 
 	fn confirm_processed_parentchain_block_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.enclave_bridge_module, self.confirm_processed_parentchain_block])
+		Ok([self.teerex_module, self.confirm_processed_parentchain_block])
 	}
 
 	fn shield_funds_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.enclave_bridge_module, self.shield_funds])
+		Ok([self.teerex_module, self.shield_funds])
 	}
 
 	fn unshield_funds_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.enclave_bridge_module, self.unshield_funds])
+		Ok([self.teerex_module, self.unshield_funds])
 	}
 
 	fn publish_hash_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.enclave_bridge_module, self.publish_hash])
+		Ok([self.teerex_module, self.publish_hash])
 	}
 
 	fn update_shard_config_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.enclave_bridge_module, self.update_shard_config])
+		Ok([self.teerex_module, self.update_shard_config])
 	}
 
 	fn update_scheduled_enclave(&self) -> Result<[u8; 2]> {

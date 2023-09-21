@@ -81,7 +81,7 @@ impl EnclaveBase for EnclaveMock {
 		unreachable!()
 	}
 
-	fn get_fingerprint(&self) -> EnclaveResult<EnclaveFingerprint> {
+	fn get_mrenclave(&self) -> EnclaveResult<EnclaveFingerprint> {
 		Ok([1u8; MR_ENCLAVE_SIZE].into())
 	}
 

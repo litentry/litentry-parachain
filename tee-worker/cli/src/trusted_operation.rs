@@ -23,7 +23,6 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
-use enclave_bridge_primitives::Request;
 use ita_stf::{Getter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, ENCLAVE_BRIDGE};
@@ -35,7 +34,7 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::ParentchainHash as Hash;
 use log::*;
 use my_node_runtime::{Hash, RuntimeEvent};
-use pallet_enclave_bridge::Event as EnclaveBridgeEvent;
+use pallet_teerex::Event as TeerexEvent;
 use sp_core::{sr25519 as sr25519_core, H256};
 use std::{
 	result::Result as StdResult,
@@ -45,6 +44,7 @@ use std::{
 use substrate_api_client::{
 	compose_extrinsic, GetHeader, SubmitAndWatchUntilSuccess, SubscribeEvents,
 };
+use teerex_primitives::Request;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

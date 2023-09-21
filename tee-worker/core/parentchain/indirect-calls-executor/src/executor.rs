@@ -21,16 +21,16 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	error::{Error, Result},
-	filter_calls::FilterCalls,
+	event_filter::{ExtrinsicStatus, FilterEvents},
 	filter_metadata::{EventsFromMetadata, FilterIntoDataFrom},
 	traits::{ExecuteIndirectCalls, IndirectDispatch, IndirectExecutor},
 };
 use binary_merkle_tree::merkle_root;
 use codec::Encode;
 use core::marker::PhantomData;
-use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation};
+use ita_stf::{TrustedCall, TrustedCallSigned, TrustedOperation, TeerexCallIndexes};
 use itp_node_api::metadata::{
-	pallet_enclave_bridge::EnclaveBridgeCallIndexes, provider::AccessNodeMetadata,
+	provider::AccessNodeMetadata,
 	NodeMetadataTrait,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -130,6 +130,7 @@ impl<
 		let block_hash = block.hash();
 
 		trace!("Scanning block {:?} for relevant xt", block_number);
+		let block_number_u32: u32 = block_number.try_into().unwrap_or_default();
 		let mut executed_calls = Vec::<H256>::new();
 
 		let events = self
@@ -170,11 +171,11 @@ impl<
 				continue
 			}
 
-			if let Err(e) = call.dispatch(self) {
-				warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
-			} else {
-				executed_calls.push(hash_of(&call));
-			}
+			// if let Err(e) = call.dispatch(self) {
+			// 	warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
+			// } else {
+			// 	executed_calls.push(hash_of(&call));
+			// }
 		}
 		debug!("successfully processed {} indirect invocations", executed_calls.len());
 		// Include a processed parentchain block confirmation for each block.

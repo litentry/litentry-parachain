@@ -42,7 +42,6 @@ mod executor;
 mod traits;
 
 pub mod error;
-pub mod filter_calls;
 pub mod filter_metadata;
 pub mod indirect_calls;
 pub mod parentchain_parser;

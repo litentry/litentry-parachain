@@ -2595,16 +2595,16 @@ checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 
 [[package]]
 name = "evm"
-version = "0.39.1"
+version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a49a4e11987c51220aa89dbe1a5cc877f5079fa6864c0a5b4533331db44e9365"
+checksum = "f4448c65b71e8e2b9718232d84d09045eeaaccb2320494e6bd6dbf7e58fec8ff"
 dependencies = [
  "auto_impl",
  "environmental 1.1.4",
  "ethereum",
- "evm-core",
- "evm-gasometer",
- "evm-runtime",
+ "evm-core 0.37.0",
+ "evm-gasometer 0.37.0",
+ "evm-runtime 0.37.0",
  "log 0.4.19",
  "parity-scale-codec",
  "primitive-types",
@@ -2612,6 +2612,59 @@ dependencies = [
  "scale-info",
  "serde 1.0.175",
  "sha3",
+]
+
+[[package]]
+name = "evm"
+version = "0.39.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a49a4e11987c51220aa89dbe1a5cc877f5079fa6864c0a5b4533331db44e9365"
+dependencies = [
+ "auto_impl",
+ "environmental 1.1.4",
+ "ethereum",
+ "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "evm-gasometer 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "evm-runtime 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.19",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "scale-info",
+ "serde 1.0.175",
+ "sha3",
+]
+
+[[package]]
+name = "evm"
+version = "0.39.1"
+source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+dependencies = [
+ "auto_impl",
+ "environmental 1.1.4",
+ "ethereum",
+ "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "evm-gasometer 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "log 0.4.19",
+ "parity-scale-codec",
+ "primitive-types",
+ "rlp",
+ "scale-info",
+ "serde 1.0.175",
+ "sha3",
+]
+
+[[package]]
+name = "evm-core"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64c51bec0eb68a891c2575c758eaaa1d61373fc51f7caaf216b1fb5c3fea3b5d"
+dependencies = [
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-info",
+ "serde 1.0.175",
 ]
 
 [[package]]
@@ -2627,15 +2680,62 @@ dependencies = [
 ]
 
 [[package]]
+name = "evm-core"
+version = "0.39.0"
+source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+dependencies = [
+ "parity-scale-codec",
+ "primitive-types",
+ "scale-info",
+ "serde 1.0.175",
+]
+
+[[package]]
+name = "evm-gasometer"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8b93c59c54fc26522d842f0e0d3f8e8be331c776df18ff3e540b53c2f64d509"
+dependencies = [
+ "environmental 1.1.4",
+ "evm-core 0.37.0",
+ "evm-runtime 0.37.0",
+ "primitive-types",
+]
+
+[[package]]
 name = "evm-gasometer"
 version = "0.39.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d43eadc395bd1a52990787ca1495c26b0248165444912be075c28909a853b8c"
 dependencies = [
  "environmental 1.1.4",
- "evm-core",
- "evm-runtime",
+ "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "evm-runtime 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "primitive-types",
+]
+
+[[package]]
+name = "evm-gasometer"
+version = "0.39.0"
+source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+dependencies = [
+ "environmental 1.1.4",
+ "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "primitive-types",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.37.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c79b9459ce64f1a28688397c4013764ce53cd57bb84efc16b5187fa9b05b13ad"
+dependencies = [
+ "auto_impl",
+ "environmental 1.1.4",
+ "evm-core 0.37.0",
+ "primitive-types",
+ "sha3",
 ]
 
 [[package]]
@@ -2646,7 +2746,19 @@ checksum = "2aa5b32f59ec582a5651978004e5c784920291263b7dcb6de418047438e37f4f"
 dependencies = [
  "auto_impl",
  "environmental 1.1.4",
- "evm-core",
+ "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "primitive-types",
+ "sha3",
+]
+
+[[package]]
+name = "evm-runtime"
+version = "0.39.0"
+source = "git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65#b7b82c7e1fc57b7449d6dfa6826600de37cc1e65"
+dependencies = [
+ "auto_impl",
+ "environmental 1.1.4",
+ "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "primitive-types",
  "sha3",
 ]
@@ -2654,14 +2766,14 @@ dependencies = [
 [[package]]
 name = "evm-tracing-events"
 version = "0.1.0"
-source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.39#e8cf6f5a7f8c02f13309613e228d4ce19ca71dd0"
+source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.42#d9a49c58f248f49e274b0730b8f4ef7f1e72c4b5"
 dependencies = [
  "environmental 1.1.4",
  "ethereum",
  "ethereum-types",
- "evm",
- "evm-gasometer",
- "evm-runtime",
+ "evm 0.37.0",
+ "evm-gasometer 0.37.0",
+ "evm-runtime 0.37.0",
  "parity-scale-codec",
  "sp-runtime-interface",
 ]
@@ -2991,7 +3103,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "hex 0.4.3",
  "impl-serde",
@@ -3001,15 +3113,16 @@ dependencies = [
  "scale-info",
  "serde 1.0.175",
  "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
+ "sp-runtime-interface",
  "sp-std 5.0.0",
 ]
 
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -3021,11 +3134,11 @@ dependencies = [
 [[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "ethereum",
  "ethereum-types",
- "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
+ "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "frame-support",
  "num_enum",
  "parity-scale-codec",
@@ -3037,7 +3150,7 @@ name = "fp-evm"
 version = "3.0.0-dev"
 source = "git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
- "evm",
+ "evm 0.39.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "frame-support",
  "parity-scale-codec",
  "scale-info",
@@ -3050,11 +3163,12 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
- "evm",
+ "evm 0.39.1 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "frame-support",
  "parity-scale-codec",
+ "scale-info",
  "serde 1.0.175",
  "sp-core",
  "sp-runtime",
@@ -3064,23 +3178,24 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "ethereum",
  "ethereum-types",
- "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
+ "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
  "sp-core",
  "sp-runtime",
+ "sp-state-machine",
  "sp-std 5.0.0",
 ]
 
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3092,7 +3207,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "parity-scale-codec",
  "serde 1.0.175",
@@ -4479,7 +4594,7 @@ dependencies = [
  "litentry-primitives",
  "pallet-aura",
  "pallet-balances",
- "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=polkadot-v0.9.39)",
+ "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-grandpa",
  "pallet-identity-management-tee",
  "pallet-insecure-randomness-collective-flip",
@@ -7017,7 +7132,7 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.19",
  "pallet-balances",
- "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=polkadot-v0.9.39)",
+ "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-teerex",
  "parity-scale-codec",
  "primitive-types",
@@ -7057,7 +7172,7 @@ dependencies = [
  "hex 0.4.3",
  "itp-utils",
  "log 0.4.19",
- "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=polkadot-v0.9.39)",
+ "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.7.3 (git+https://github.com/mesalock-linux/rand-sgx?tag=sgx_1.1.3)",
@@ -7516,19 +7631,19 @@ dependencies = [
 [[package]]
 name = "moonbeam-evm-tracer"
 version = "0.1.0"
-source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.39#e8cf6f5a7f8c02f13309613e228d4ce19ca71dd0"
+source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.42#d9a49c58f248f49e274b0730b8f4ef7f1e72c4b5"
 dependencies = [
  "ethereum-types",
- "evm",
- "evm-gasometer",
- "evm-runtime",
+ "evm 0.37.0",
+ "evm-gasometer 0.37.0",
+ "evm-runtime 0.37.0",
  "evm-tracing-events",
- "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
+ "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "moonbeam-primitives-ext",
- "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
+ "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
 ]
@@ -7536,7 +7651,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-primitives-ext"
 version = "0.1.0"
-source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.39#e8cf6f5a7f8c02f13309613e228d4ce19ca71dd0"
+source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.42#d9a49c58f248f49e274b0730b8f4ef7f1e72c4b5"
 dependencies = [
  "ethereum-types",
  "evm-tracing-events",
@@ -7549,7 +7664,7 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-primitives-debug"
 version = "0.1.0"
-source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.39#e8cf6f5a7f8c02f13309613e228d4ce19ca71dd0"
+source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.42#d9a49c58f248f49e274b0730b8f4ef7f1e72c4b5"
 dependencies = [
  "environmental 1.1.4",
  "ethereum",
@@ -7560,7 +7675,7 @@ dependencies = [
  "serde_json 1.0.103",
  "sp-api",
  "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
 ]
@@ -7568,12 +7683,13 @@ dependencies = [
 [[package]]
 name = "moonbeam-rpc-primitives-txpool"
 version = "0.6.0"
-source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.39#e8cf6f5a7f8c02f13309613e228d4ce19ca71dd0"
+source = "git+https://github.com/litentry/astar-frame?branch=polkadot-v0.9.42#d9a49c58f248f49e274b0730b8f4ef7f1e72c4b5"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
+ "scale-info",
  "sp-api",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
 ]
@@ -8149,23 +8265,23 @@ dependencies = [
 
 [[package]]
 name = "num_enum"
-version = "0.5.11"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f646caf906c20226733ed5b1374287eb97e3c2a5c227ce668c1f2ce20ae57c9"
+checksum = "7a015b430d3c108a207fd776d2e2196aaf8b1cf8cf93253e3a097ff3085076a1"
 dependencies = [
  "num_enum_derive",
 ]
 
 [[package]]
 name = "num_enum_derive"
-version = "0.5.11"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcbff9bc912032c62bf65ef1d5aea88983b420f4f839db1e9b0c281a25c9c799"
+checksum = "96667db765a921f7b295ffee8b60472b686a51d4f21c2ee4ffdb94c7013b65a6"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.27",
 ]
 
 [[package]]
@@ -8771,43 +8887,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-elections-phragmen"
-version = "5.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39#8c4b84520cee2d7de53cc33cb67605ce4efefba8"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log 0.4.19",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
- "sp-npos-elections",
- "sp-runtime",
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "ethereum",
  "ethereum-types",
- "evm",
+ "evm 0.39.1 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "fp-consensus",
  "fp-ethereum",
- "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
+ "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "fp-rpc",
  "fp-storage",
  "frame-support",
  "frame-system",
- "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
- "pallet-timestamp",
+ "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "scale-info",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
 ]
@@ -8818,9 +8915,9 @@ version = "6.0.0-dev"
 source = "git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42#a5a5e1e6ec08cd542a6084c310863150fb8841b1"
 dependencies = [
  "environmental 1.1.4",
- "evm",
- "fp-account 1.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=polkadot-v0.9.39)",
- "fp-evm 3.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=polkadot-v0.9.39)",
+ "evm 0.39.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fp-account 1.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
+ "fp-evm 3.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -8839,24 +8936,24 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39#3297c466619934d462e0b845c1ab1e81906dcb18"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42#2499d18c936edbcb7fcb711827db7abb9b4f4da4"
 dependencies = [
  "environmental 1.1.4",
- "evm",
- "fp-account 1.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
- "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
+ "evm 0.39.1 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
+ "fp-account 1.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
+ "fp-evm 3.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex 0.4.3",
+ "hex-literal 0.4.1",
  "impl-trait-for-tuples",
  "log 0.4.19",
- "pallet-timestamp",
  "parity-scale-codec",
  "rlp",
  "scale-info",
  "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
 ]
@@ -11043,7 +11140,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-drop3",
  "pallet-ethereum",
- "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.39)",
+ "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "pallet-evm-address",
  "pallet-extrinsic-filter",
  "pallet-group",

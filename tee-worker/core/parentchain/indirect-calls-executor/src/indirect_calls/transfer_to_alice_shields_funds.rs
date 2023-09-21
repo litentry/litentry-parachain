@@ -53,13 +53,14 @@ pub const ALICE_ACCOUNT_ID: AccountId = AccountId::new([
 ]);
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for TransferToAliceShieldsFundsArgs {
-	fn dispatch(&self, executor: &Executor) -> Result<()> {
+	type Args = ();
+	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		if self.destination == ALICE_ACCOUNT_ID.into() {
 			info!("Found Transfer to Alice extrinsic in block: \nAmount: {}", self.value);
 
 			let shard = executor.get_default_shard();
 			let trusted_call = TrustedCall::balance_shield(
-				executor.get_enclave_account()?,
+				executor.get_enclave_account()?.into(),
 				ALICE_ACCOUNT_ID,
 				self.value,
 			);

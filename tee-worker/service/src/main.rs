@@ -82,12 +82,10 @@ use log::*;
 use my_node_runtime::{Hash, RuntimeEvent};
 use serde_json::Value;
 use sgx_types::*;
-use sp_runtime::traits::Header as HeaderT;
 use substrate_api_client::{
 	api::XtStatus, rpc::HandleSubscription, serde_impls::StorageKey, storage_key, GetHeader,
 	GetStorage, SubmitAndWatchUntilSuccess, SubscribeChain, SubscribeEvents,
 };
-use teerex_primitives::AnySigner;
 
 #[cfg(feature = "dcap")]
 use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
@@ -308,7 +306,7 @@ fn main() {
 			enclave.dump_dcap_ra_cert_to_disk().unwrap();
 		}
 	} else if matches.is_present("mrenclave") {
-		println!("{}", enclave.get_fingerprint().unwrap().encode().to_base58());
+		println!("{}", enclave.get_mrenclave().unwrap().encode().to_base58());
 	} else if let Some(sub_matches) = matches.subcommand_matches("init-shard") {
 		setup::init_shard(
 			enclave.as_ref(),
@@ -436,8 +434,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	}
 	// ------------------------------------------------------------------------
 	// initialize the enclave
-	let mrenclave = enclave.get_fingerprint().unwrap();
-	println!("MRENCLAVE={}", mrenclave.0.to_base58());
+	let mrenclave = enclave.get_mrenclave().unwrap();
+	println!("MRENCLAVE={}", mrenclave[0].to_base58());
 	println!("MRENCLAVE in hex {:?}", hex::encode(mrenclave));
 
 	// ------------------------------------------------------------------------
@@ -540,7 +538,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let nonce = integritee_rpc_api.get_nonce_of(&tee_accountid).unwrap();
 	info!("Enclave nonce = {:?}", nonce);
 	enclave
-		.set_nonce(nonce)
+		.set_nonce(nonce, ParentchainId::Integritee)
 		.expect("Could not set nonce of enclave. Returning here...");
 
 	#[cfg(feature = "dcap")]
@@ -581,7 +579,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let tee_accountid2 = tee_accountid.clone();
 	let trusted_url2 = trusted_url.clone();
 	#[cfg(feature = "dcap")]
-	enclave.set_sgx_qpl_logging().expect("QPL logging setup failed");
+	enclave2.set_sgx_qpl_logging().expect("QPL logging setup failed");
 
 	#[cfg(not(feature = "dcap"))]
 	let register_xt = move || enclave2.generate_ias_ra_extrinsic(&trusted_url2, skip_ra).unwrap();
@@ -638,7 +636,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 							// After calling the perform_ra function, the nonce will be incremented by 1,
 							// so enclave is already registered, we should reset the nonce_cache
 							enclave
-								.set_nonce(nonce)
+								.set_nonce(nonce, ParentchainId::Integritee)
 								.expect("Could not set nonce of enclave. Returning here...");
 							found = true;
 							info!("fond enclave: {:?}", value);
@@ -665,7 +663,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	if let Some(register_enclave_xt_header) = register_enclave_xt_header.clone() {
 		we_are_primary_validateer =
-			check_we_are_primary_validateer(&integritee_rpc_api, &register_enclave_xt_header)
+			check_we_are_primary_validateer(&integritee_rpc_api, shard, &tee_accountid)
 				.unwrap();
 	}
 
@@ -838,7 +836,7 @@ fn init_target_parentchain<E>(
 
 		// Syncing all parentchain blocks, this might take a while..
 		let last_synched_header =
-			parentchain_handler.sync_parentchain(last_synched_header).unwrap();
+			parentchain_handler.sync_parentchain(last_synched_header, 0).unwrap();
 
 		// start parentchain syncing loop (subscribe to header updates)
 		thread::Builder::new()
@@ -931,13 +929,12 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 		loop {
 			info!("Polling for worker for shard ({} seconds interval)", POLL_INTERVAL_SECS);
 			if let Ok(Some(enclave)) =
-				node_api.primary_worker_for_shard(&shard_for_initialized, None)
+				node_api.worker_for_shard(&shard_for_initialized, None)
 			{
 				// Set that the service is initialized.
 				initialization_handler.worker_for_shard_registered();
 				println!(
-					"[+] Found `WorkerForShard` on parentchain state: {:?}",
-					enclave.instance_signer()
+					"[+] Found `WorkerForShard` on parentchain state",
 				);
 				break
 			}
@@ -971,68 +968,39 @@ fn print_events(events: Vec<Event>) {
 			RuntimeEvent::Teerex(re) => {
 				debug!("{:?}", re);
 				match &re {
-					my_node_runtime::pallet_teerex::Event::AddedSgxEnclave {
-						registered_by,
-						worker_url,
-						..
-					} => {
+					my_node_runtime::pallet_teerex::Event::AddedEnclave(sender, worker_url) => {
 						println!("[+] Received AddedEnclave event");
-						println!("    Sender (Worker):  {:?}", registered_by);
-						println!(
-							"    Registered URL: {:?}",
-							str::from_utf8(&worker_url.clone().unwrap_or("none".into())).unwrap()
-						);
+						println!("    Sender (Worker):  {:?}", sender);
+						println!("    Registered URL: {:?}", str::from_utf8(worker_url).unwrap());
 					},
-					_ => {
-						trace!("Ignoring unsupported pallet_teerex event");
-					},
-				}
-			},
-			RuntimeEvent::EnclaveBridge(re) => {
-				debug!("{:?}", re);
-				match &re {
-					my_node_runtime::pallet_enclave_bridge::Event::IndirectInvocationRegistered(
-						shard,
-					) => {
+					my_node_runtime::pallet_teerex::Event::Forwarded(shard) => {
 						println!(
 							"[+] Received trusted call for shard {}",
 							shard.encode().to_base58()
 						);
 					},
-					my_node_runtime::pallet_enclave_bridge::Event::ProcessedParentchainBlock {
-						shard,
+					my_node_runtime::pallet_teerex::Event::ProcessedParentchainBlock(
+						sender,
 						block_hash,
-						trusted_calls_merkle_root,
+						merkle_root,
 						block_number,
-					} => {
+					) => {
 						info!("[+] Received ProcessedParentchainBlock event");
-						debug!("    for shard:    {:?}", shard);
+						debug!("    From:    {:?}", sender);
 						debug!("    Block Hash: {:?}", hex::encode(block_hash));
-						debug!("    Merkle Root: {:?}", hex::encode(trusted_calls_merkle_root));
+						debug!("    Merkle Root: {:?}", hex::encode(merkle_root));
 						debug!("    Block Number: {:?}", block_number);
 					},
-					my_node_runtime::pallet_enclave_bridge::Event::ShieldFunds {
-						shard,
-						encrypted_beneficiary,
-						amount,
-					} => {
+					my_node_runtime::pallet_teerex::Event::ShieldFunds(incognito_account) => {
 						info!("[+] Received ShieldFunds event");
-						debug!("    for shard:    {:?}", shard);
-						debug!("    for enc. beneficiary:    {:?}", encrypted_beneficiary);
-						debug!("    Amount:    {:?}", amount);
+						debug!("    For:    {:?}", incognito_account);
 					},
-					my_node_runtime::pallet_enclave_bridge::Event::UnshieldedFunds {
-						shard,
-						beneficiary,
-						amount,
-					} => {
+					my_node_runtime::pallet_teerex::Event::UnshieldedFunds(incognito_account) => {
 						info!("[+] Received UnshieldedFunds event");
-						debug!("    for shard:    {:?}", shard);
-						debug!("    beneficiary:    {:?}", beneficiary);
-						debug!("    Amount:    {:?}", amount);
+						debug!("    For:    {:?}", incognito_account);
 					},
 					_ => {
-						trace!("Ignoring unsupported pallet_enclave_bridge event");
+						trace!("Ignoring unsupported pallet_teerex event");
 					},
 				}
 			},
@@ -1273,7 +1241,7 @@ fn check_we_are_primary_validateer(
 		.enclave(enclave_account, None)?
 		.expect("our enclave should be registered at this point");
 	trace!("our enclave is registered");
-	match node_api.primary_worker_for_shard(shard, None).unwrap() {
+	match node_api.worker_for_shard(shard, None).unwrap() {
 		Some(enclave) =>
 			match enclave.instance_signer() {
 				AnySigner::Known(MultiSigner::Ed25519(primary)) =>

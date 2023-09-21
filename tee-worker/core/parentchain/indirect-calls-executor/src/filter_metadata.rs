@@ -19,7 +19,9 @@ use crate::{
 	error::Result,
 	event_filter::{FilterEvents, MockEvents},
 	indirect_calls::{
-		InvokeArgs, ShieldFundsArgs, TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID,
+		InvokeArgs, TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID, ActivateIdentityArgs, DeactivateIdentityArgs, LinkIdentityArgs,
+		RemoveScheduledEnclaveArgs, RequestVCArgs, SetUserShieldingKeyArgs, ShieldFundsArgs,
+		UpdateScheduledEnclaveArgs,
 	},
 	parentchain_parser::ParseExtrinsic,
 	IndirectDispatch, IndirectExecutor,
@@ -30,7 +32,10 @@ use itp_api_client_types::{Events, Metadata};
 use itp_node_api::metadata::{
 	pallet_balances::BalancesCallIndexes, NodeMetadata, NodeMetadataTrait,
 };
-use itp_types::H256;
+use itp_types::{CallIndex, H256};
+use sp_core::crypto::AccountId32;
+use sp_runtime::MultiAddress;
+use sp_std::{vec, vec::Vec};
 
 pub trait EventsFromMetadata<NodeMetadata> {
 	type Output: FilterEvents;
@@ -128,6 +133,8 @@ where
 				return None
 			},
 		};
+		let address = if let Some(signature) = xt.signature { Some(signature.0) } else { None };
+
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
 		log::trace!(
@@ -142,6 +149,34 @@ where
 			log::debug!("executing invoke call");
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
+		}
+		// Litentry
+		else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
+			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
+			let hashed_extrinsic = xt.hashed_extrinsic;
+			Some(IndirectCall::SetUserShieldingKey(args, address, hashed_extrinsic))
+		} else if index == metadata.link_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
+			let hashed_extrinsic = xt.hashed_extrinsic;
+			Some(IndirectCall::LinkIdentity(args, address, hashed_extrinsic))
+		} else if index == metadata.deactivate_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<DeactivateIdentityArgs>(call_args)?;
+			let hashed_extrinsic = xt.hashed_extrinsic;
+			Some(IndirectCall::DeactivateIdentity(args, address, hashed_extrinsic))
+		} else if index == metadata.activate_identity_call_indexes().ok()? {
+			let args = decode_and_log_error::<ActivateIdentityArgs>(call_args)?;
+			let hashed_extrinsic = xt.hashed_extrinsic;
+			Some(IndirectCall::ActivateIdentity(args, address, hashed_extrinsic))
+		} else if index == metadata.request_vc_call_indexes().ok()? {
+			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
+			let hashed_extrinsic = xt.hashed_extrinsic;
+			Some(IndirectCall::RequestVC(args, address, hashed_extrinsic))
+		} else if index == metadata.update_scheduled_enclave().ok()? {
+			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
+			Some(IndirectCall::UpdateScheduledEnclave(args))
+		} else if index == metadata.remove_scheduled_enclave().ok()? {
+			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
+			Some(IndirectCall::RemoveScheduledEnclave(args))
 		} else {
 			None
 		}
@@ -201,14 +236,38 @@ pub enum IndirectCall {
 	ShieldFunds(ShieldFundsArgs),
 	Invoke(InvokeArgs),
 	TransferToAliceShieldsFunds(TransferToAliceShieldsFundsArgs),
+	// Litentry
+	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	DeactivateIdentity(DeactivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	ActivateIdentity(ActivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
+	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
-	fn dispatch(&self, executor: &Executor) -> Result<()> {
+	type Args = ();
+	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		match self {
-			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor),
-			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor),
-			IndirectCall::TransferToAliceShieldsFunds(args) => args.dispatch(executor),
+			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor, ()),
+			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, ()),
+			IndirectCall::TransferToAliceShieldsFunds(trans_args) => trans_args.dispatch(executor, ()),
+			// Litentry
+			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
+				set_shied.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::LinkIdentity(verify_id, address, hash) =>
+				verify_id.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::DeactivateIdentity(deactivate_identity, address, hash) =>
+				deactivate_identity.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::ActivateIdentity(activate_identity, address, hash) =>
+				activate_identity.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::RequestVC(request_vc, address, hash) =>
+				request_vc.dispatch(executor, (address.clone(), *hash)),
+			IndirectCall::UpdateScheduledEnclave(update_enclave_args) =>
+				update_enclave_args.dispatch(executor, ()),
+			IndirectCall::RemoveScheduledEnclave(remove_enclave_args) =>
+				remove_enclave_args.dispatch(executor, ()),
 		}
 	}
 }
@@ -240,7 +299,8 @@ mod seal {
 	}
 
 	impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CantExecute {
-		fn dispatch(&self, _: &Executor) -> Result<()> {
+		type Args = ();
+		fn dispatch(&self, _: &Executor, args: Self::Args) -> Result<()> {
 			// We should never get here because `CantExecute` is in a private module and the trait
 			// implementation is sealed and always returns `None` instead of a `CantExecute` instance.
 			// Regardless, we never want the enclave to panic, this is why we take this extra safety
