@@ -57,15 +57,14 @@ RUN \
   rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
   rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
   rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
-  cargo build --release -p lc-data-providers && sccache --show-stats
+  make && sccache --show-stats
 
-# RUN cargo test --release
+RUN cargo test --release
 
-### Base image for built artefacts
+### Minimal image for transferring built artefacts
 ##################################################
-### we need it to shrink the docker image size to pass around
-### see local-builder in ci.yml
-FROM ubuntu:22.04 AS slim-builder
+FROM scratch AS stash
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 COPY --from=builder /opt/sgxsdk /opt/sgxsdk
 COPY --from=builder /opt/rust/sccache /opt/rust/sccache
@@ -76,9 +75,6 @@ COPY --from=builder /home/ubuntu/tee-worker/bin/* /opt/worker/bin/
 COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /opt/worker/cli/
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
-
-RUN touch /opt/worker/bin/litentry-worker /opt/worker/bin/litentry-cli && \
-  chmod a+x /opt/worker/bin/litentry-worker /opt/worker/bin/litentry-cli
 
 ### Base Runner Stage
 ##################################################
@@ -102,14 +98,13 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-# please note it's the `local-builder`image, not the previous stage, as they are executed in separate GHA jobs
-COPY --from=local-builder:latest /opt/worker/bin/litentry-cli /usr/local/bin
-COPY --from=local-builder:latest /opt/worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-stash /opt/worker/bin/litentry-cli /usr/local/bin
+COPY --from=local-stash /opt/worker/cli/*.sh /usr/local/worker-cli/
 
 RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
 
-# RUN ldd /usr/local/bin/litentry-cli && /usr/local/bin/litentry-cli --version
+RUN ldd /usr/local/bin/litentry-cli && /usr/local/bin/litentry-cli --version
 
 ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 
@@ -117,15 +112,15 @@ ENTRYPOINT ["/usr/local/bin/litentry-cli"]
 ### Deployed worker service
 ##################################################
 FROM runner AS deployed-worker
-LABEL maintainer="litentry-dev"
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 WORKDIR /usr/local/bin
 
-COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
-COPY --from=local-builder:latest /opt/worker/bin/* /usr/local/bin
-COPY --from=local-builder:latest /opt/worker/cli/*.sh /usr/local/worker-cli/
-COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
-COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-stash /opt/sgxsdk /opt/sgxsdk
+COPY --from=local-stash /opt/worker/bin/* /usr/local/bin
+COPY --from=local-stash /opt/worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-stash /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=local-stash /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/litentry-worker
@@ -134,6 +129,6 @@ RUN ls -al /usr/local/bin
 # checks
 ENV SGX_SDK /opt/sgxsdk
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:$SGX_SDK/sdk_libs
-# RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
+RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
 
 ENTRYPOINT ["/usr/local/bin/litentry-worker"]

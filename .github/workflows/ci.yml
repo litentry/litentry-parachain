@@ -393,7 +393,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          # network=host driver-opt needed to push to local registry
           driver-opts: network=host
 
       - name: Cache worker-cache
@@ -414,31 +413,28 @@ jobs:
           done
           echo "::group::List worker-cache size"
           du -sh worker-cache/*
-          find worker-cache
           echo "::endgroup::"
           echo "::group::Show disk usage"
           df -h .
           echo "::endgroup::"
 
-      # cache mounts in buildkit won't be exported as image layers, so it's not synergised well with the buildkit cache
-      # see
+      # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
       # https://github.com/moby/buildkit/issues/1512
       # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
       # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
       #
-      # the reproducible-containers/buildkit-cache-dance seems to be unstable too in my test
+      # the `reproducible-containers/buildkit-cache-dance` seems to be unstable too in my test
       # sometimes it works, sometimes it results in empty cache, root cause unclear
       #
-      # thus a manual persistence of rust cache is maintained during sccache
-
+      # thus the persistence of rust cache (w/ sccache) is maintained manually
       - name: Build local builder
         uses: docker/build-push-action@v5
         with:
           context: .
           load: false
           file: tee-worker/build.Dockerfile
-          tags: localhost:5000/local-builder:latest
-          target: slim-builder
+          tags: localhost:5000/local-stash:latest
+          target: stash
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
@@ -454,8 +450,8 @@ jobs:
           echo "::group::docker images"
           docker images --all
           echo "::endgroup::"
-          echo "::group::pull localhost:5000/local-builder:latest"
-          docker pull -q localhost:5000/local-builder:latest
+          echo "::group::pull localhost:5000/local-stash:latest"
+          docker pull -q localhost:5000/local-stash:latest
           echo "::endgroup::"
           echo "::group::docker images after pull"
           docker images --all
@@ -464,10 +460,10 @@ jobs:
           for i in 'git/db' 'registry/cache' 'registry/index'; do
             b="${i%/*}"
             rm -rf worker-cache/$i
-            docker cp "$(docker create --rm localhost:5000/local-builder:latest):/opt/rust/$i" worker-cache/$b
+            docker cp "$(docker create --rm localhost:5000/local-stash:latest):/opt/rust/$i" worker-cache/$b
           done
           rm -rf worker-cache/sccache
-          docker cp "$(docker create --rm localhost:5000/local-builder:latest):/opt/rust/sccache" worker-cache
+          docker cp "$(docker create --rm localhost:5000/local-stash:latest):/opt/rust/sccache" worker-cache
           du -sh worker-cache/*
           echo "::endgroup::"
           echo "::group::df -h ."
@@ -480,7 +476,7 @@ jobs:
         with:
           context: .
           build-contexts:
-            local-builder=docker-image://localhost:5000/local-builder:latest
+            local-stash=docker-image://localhost:5000/local-stash:latest
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
@@ -493,7 +489,7 @@ jobs:
         with:
           context: .
           build-contexts:
-            local-builder=docker-image://localhost:5000/local-builder:latest
+            local-stash=docker-image://localhost:5000/local-stash:latest
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
@@ -508,17 +504,17 @@ jobs:
 
       - run: docker images --all
 
-      # - name: Pallet unittests
-      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
-      #   working-directory: ./tee-worker
-      #   run: |
-      #     rustup show
-      #     cargo test --locked --release -p pallet-* --lib
+      - name: Pallet unittests
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        working-directory: ./tee-worker
+        run: |
+          rustup show
+          cargo test --locked --release -p pallet-* --lib
 
-      # - name: Test enclave
-      #   # cargo test is not supported in the enclave
-      #   # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-      #   run: docker run litentry/litentry-worker test --all
+      - name: Test enclave
+        # cargo test is not supported in the enclave
+        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run litentry/litentry-worker test --all
 
       - name: Save docker images
         run: docker save litentry/litentry-worker litentry/litentry-cli | gzip > litentry-tee.tar.gz
