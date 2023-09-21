@@ -67,10 +67,13 @@ RUN \
 ### see local-builder in ci.yml
 FROM ubuntu:22.04 AS slim-builder
 
+COPY --from=builder /opt/sgxsdk /opt/sgxsdk
+COPY --from=builder /opt/rust/sccache /opt/rust/sccache
+COPY --from=builder /opt/rust/git/db /opt/rust/git/db
+COPY --from=builder /opt/rust/registry/index /opt/rust/registry/index
+COPY --from=builder /opt/rust/registry/cache /opt/rust/registry/cache
 COPY --from=builder /home/ubuntu/tee-worker/bin/* /opt/worker/bin/
 COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /opt/worker/cli/
-COPY --from=builder /opt/sgxsdk /opt/sgxsdk
-COPY --from=builder /opt/rust/worker-sccache /opt/rust/worker-sccache
 COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
