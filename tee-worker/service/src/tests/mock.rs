@@ -56,6 +56,7 @@
 // }
 
 // impl PalletTeerexApi for TestNodeApi {
+// 	type Hash = Hash;
 // 	fn enclave(
 // 		&self,
 // 		_account: &AccountId,

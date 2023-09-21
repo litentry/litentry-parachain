@@ -93,7 +93,7 @@ where
 			.map(|req| match req {
 				WorkerRequest::ChainStorage(key, hash) => WorkerResponse::ChainStorage(
 					key.clone(),
-					api.get_opaque_storage_by_key_hash(StorageKey(key.clone()), hash).unwrap(),
+					api.get_opaque_storage_by_key(StorageKey(key.clone()), hash).unwrap(),
 					api.get_storage_proof_by_keys(vec![StorageKey(key)], hash).unwrap().map(
 						|read_proof| read_proof.proof.into_iter().map(|bytes| bytes.0).collect(),
 					),
@@ -142,7 +142,7 @@ where
 			let api = self.create_api(parentchain_id)?;
 			let mut send_extrinsic_failed = false;
 			for call in extrinsics.into_iter() {
-				if let Err(e) = api.submit_opaque_extrinsic(call.encode().into()) {
+				if let Err(e) = api.submit_opaque_extrinsic(&call.encode().into()) {
 					error!(
 						"Could not send extrinsic to node: {:?}, error: {:?}",
 						serde_json::to_string(&call),

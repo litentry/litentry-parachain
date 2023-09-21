@@ -17,10 +17,12 @@
 */
 
 use crate::error::{Error, ServiceResult};
+use codec::{Decode, Encode};
 use itc_parentchain::{
 	light_client::light_client_init_params::{GrandpaParams, SimpleParams},
 	primitives::{ParentchainId, ParentchainInitParams},
 };
+use itp_api_client_types::ParentchainApi;
 use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain};
 use itp_node_api::api_client::ChainApi;
 use itp_storage::StorageProof;
@@ -29,6 +31,7 @@ use log::*;
 use sp_consensus_grandpa::VersionedAuthorityList;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{cmp::min, sync::Arc};
+use substrate_api_client::ac_primitives::{Block, Header as HeaderT};
 
 const BLOCK_SYNC_BATCH_SIZE: u32 = 1000;
 
@@ -69,9 +72,10 @@ pub(crate) struct ParentchainHandler<ParentchainApi, EnclaveApi> {
 	parentchain_init_params: ParentchainInitParams,
 }
 
-impl<ParentchainApi, EnclaveApi> ParentchainHandler<ParentchainApi, EnclaveApi>
+// #TODO: #1451: Reintroduce `ParentchainApi: ChainApi` once there is no trait bound conflict
+// any more with the api-clients own trait definitions.
+impl<EnclaveApi> ParentchainHandler<ParentchainApi, EnclaveApi>
 where
-	ParentchainApi: ChainApi,
 	EnclaveApi: EnclaveBase,
 {
 	pub fn new(
@@ -102,9 +106,25 @@ where
 
 			let authority_list = VersionedAuthorityList::from(grandpas);
 
-			(id, GrandpaParams::new(genesis_header, authority_list.into(), grandpa_proof)).into()
+			(
+				id,
+				GrandpaParams::new(
+					// #TODO: #1451: clean up type hacks
+					Header::decode(&mut genesis_header.encode().as_slice())?,
+					authority_list.into(),
+					grandpa_proof,
+				),
+			)
+				.into()
 		} else {
-			(id, SimpleParams::new(genesis_header)).into()
+			(
+				id,
+				SimpleParams::new(
+					// #TODO: #1451: clean up type hacks
+					Header::decode(&mut genesis_header.encode().as_slice())?,
+				),
+			)
+				.into()
 		};
 
 		Ok(Self::new(parentchain_api, enclave_api, parentchain_init_params))
@@ -119,10 +139,8 @@ where
 	}
 }
 
-impl<ParentchainApi, EnclaveApi> HandleParentchain
-	for ParentchainHandler<ParentchainApi, EnclaveApi>
+impl<EnclaveApi> HandleParentchain for ParentchainHandler<ParentchainApi, EnclaveApi>
 where
-	ParentchainApi: ChainApi,
 	EnclaveApi: Sidechain + EnclaveBase,
 {
 	fn init_parentchain_components(&self) -> ServiceResult<Header> {
@@ -142,7 +160,7 @@ where
 			.parentchain_api
 			.last_finalized_block()?
 			.ok_or(Error::MissingLastFinalizedBlock)?;
-		let curr_block_number = curr_block.block.header.number;
+		let curr_block_number = curr_block.block.header().number();
 
 		println!(
 			"[{:?}] Syncing blocks from {} to {}",
@@ -193,7 +211,7 @@ where
 				self.parentchain_id(),
 			)?;
 
-			until_synced_header = block_chunk_to_sync
+			let api_client_until_synced_header = block_chunk_to_sync
 				.last()
 				.map(|b| b.block.header.clone())
 				.ok_or(Error::EmptyChunk)?;
@@ -201,7 +219,12 @@ where
 			println!(
 				"[{:?}] Synced {} out of {} finalized parentchain blocks",
 				id, until_synced_header.number, curr_block_number,
-			)
+			);
+
+			// #TODO: #1451: fix api/client types
+			until_synced_header =
+				Header::decode(&mut api_client_until_synced_header.encode().as_slice())
+					.expect("Can decode previously encoded header; qed");
 		}
 	}
 

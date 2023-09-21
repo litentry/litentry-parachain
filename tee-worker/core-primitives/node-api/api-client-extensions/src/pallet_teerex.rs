@@ -16,7 +16,7 @@
 */
 
 use crate::ApiResult;
-use itp_types::{parentchain::Hash, Enclave, IpfsHash, MrEnclave, ShardIdentifier};
+use itp_types::{parentchain::Hash, AccountId, Enclave, IpfsHash, MrEnclave, ShardIdentifier};
 use sp_core::storage::StorageKey;
 use substrate_api_client::{
 	rpc::Request, storage_key, Api, ExtrinsicParams, FrameSystemConfig, GetStorage,
@@ -26,6 +26,7 @@ pub const TEEREX: &str = "Teerex";
 pub const SIDECHAIN: &str = "Sidechain";
 
 /// ApiClient extension that enables communication with the `teerex` pallet.
+// Todo: make generic over `Config` type instead?
 pub trait PalletTeerexApi {
 	fn enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<Enclave>>;
 	fn enclave_count(&self, at_block: Option<Hash>) -> ApiResult<u64>;
@@ -38,18 +39,17 @@ pub trait PalletTeerexApi {
 	fn latest_ipfs_hash(
 		&self,
 		shard: &ShardIdentifier,
-		at_block: Option<Hash>,
+		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<IpfsHash>>;
 
 	// litentry
 	fn all_scheduled_mrenclaves(&self, at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>>;
 }
 
-impl<Signer, Client, Params, Runtime> PalletTeerexApi for Api<Signer, Client, Params, Runtime>
+impl<RuntimeConfig, Client> PalletTeerexApi for Api<RuntimeConfig, Client>
 where
+	RuntimeConfig: Config,
 	Client: Request,
-	Runtime: FrameSystemConfig<Hash = Hash>,
-	Params: ExtrinsicParams<Runtime::Index, Runtime::Hash>,
 {
 	fn enclave(&self, index: u64, at_block: Option<Hash>) -> ApiResult<Option<Enclave>> {
 		self.get_storage_map(TEEREX, "EnclaveRegistry", index, at_block)
@@ -80,7 +80,7 @@ where
 	fn latest_ipfs_hash(
 		&self,
 		shard: &ShardIdentifier,
-		at_block: Option<Hash>,
+		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<IpfsHash>> {
 		self.get_storage_map(TEEREX, "LatestIPFSHash", shard, at_block)
 	}

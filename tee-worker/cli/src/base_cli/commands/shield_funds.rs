@@ -57,7 +57,7 @@ impl ShieldFundsCommand {
 
 		// Get the sender.
 		let from = get_pair_from_str(&self.from);
-		chain_api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from)));
+		chain_api.set_signer(sr25519_core::Pair::from(from).into());
 
 		// Get the recipient.
 		let to = get_accountid_from_str(&self.to);
@@ -75,7 +75,7 @@ impl ShieldFundsCommand {
 			shard
 		);
 
-		match chain_api.submit_and_watch_extrinsic_until_success(xt, true) {
+		match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized) {
 			Ok(xt_report) => {
 				println!(
 					"[+] shield funds success. extrinsic hash: {:?} / status: {:?} / block hash: {:?}",

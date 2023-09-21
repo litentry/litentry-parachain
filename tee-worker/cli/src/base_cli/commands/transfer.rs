@@ -24,7 +24,7 @@ use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::{crypto::Ss58Codec, sr25519 as sr25519_core, Pair};
 use substrate_api_client::{
-	extrinsic::BalancesExtrinsics, GetAccountInformation, SubmitAndWatchUntilSuccess,
+	extrinsic::BalancesExtrinsics, GetAccountInformation, SubmitAndWatch, XtStatus,
 };
 
 #[derive(Parser)]
@@ -46,9 +46,9 @@ impl TransferCommand {
 		info!("from ss58 is {}", from_account.public().to_ss58check());
 		info!("to ss58 is {}", to_account.to_ss58check());
 		let mut api = get_chain_api(cli);
-		api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from_account)));
-		let xt = api.balance_transfer_allow_death(Address::Id(to_account.clone()), self.amount);
-		let tx_report = api.submit_and_watch_extrinsic_until_success(xt, false).unwrap();
+		api.set_signer(from_account.into());
+		let xt = api.balance_transfer_allow_death(to_account.clone().into(), self.amount);
+		let tx_report = api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock).unwrap();
 		println!(
 			"[+] L1 extrinsic success. extrinsic hash: {:?} / status: {:?}",
 			tx_report.extrinsic_hash, tx_report.status

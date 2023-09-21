@@ -126,7 +126,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub type EnclaveWorker =
 	Worker<Config, NodeApiFactory, Enclave, InitializationHandler<WorkerModeProvider>>;
-pub type Event = substrate_api_client::EventRecord<RuntimeEvent, Hash>;
+pub type Event = substrate_api_client::ac_node_api::EventRecord<RuntimeEvent, Hash>;
 
 fn main() {
 	// Setup logging
@@ -798,7 +798,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let mut subscription = integritee_rpc_api.subscribe_events().unwrap();
 	println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Integritee);
 	loop {
-		if let Some(Ok(events)) = subscription.next_event::<RuntimeEvent, Hash>() {
+		if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
 			print_events(events)
 		}
 	}
@@ -862,7 +862,7 @@ fn init_target_parentchain<E>(
 	thread::Builder::new()
 		.name(format!("{:?}_parentchain_event_subscription", parentchain_id))
 		.spawn(move || loop {
-			if let Some(Ok(events)) = subscription.next_event::<RuntimeEvent, Hash>() {
+			if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
 				print_events(events)
 			}
 		})
@@ -1167,7 +1167,7 @@ fn send_extrinsic(
 
 	// fixme: wait ...until_success doesn't work due to https://github.com/scs/substrate-api-client/issues/624
 	// fixme: currently, we don't verify if the extrinsic was a success here
-	match api.submit_and_watch_opaque_extrinsic_until(extrinsic.into(), XtStatus::Finalized) {
+	match api.submit_and_watch_opaque_extrinsic_until(&extrinsic.into(), XtStatus::Finalized) {
 		Ok(xt_report) => {
 			info!(
 				"[+] L1 extrinsic success. extrinsic hash: {:?} / status: {:?}",

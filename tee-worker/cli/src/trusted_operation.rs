@@ -136,17 +136,24 @@ fn send_indirect_request(
 	);
 	let arg_signer = &trusted_args.xt_signer;
 	let signer = get_pair_from_str(arg_signer);
-	chain_api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer)));
+	chain_api.set_signer(signer.into());
 
 	let request = Request { shard, cyphertext: call_encrypted };
-	let xt = compose_extrinsic!(&chain_api, TEEREX, "call_worker", request);
+	let xt = compose_extrinsic!(&chain_api, TEEREX, "invoke", request);
 
-	// send and watch extrinsic until block is executed
-	let block_hash = chain_api
-		.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock)
-		.unwrap()
-		.block_hash
-		.unwrap();
+	let block_hash = match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock) {
+		Ok(xt_report) => {
+			println!(
+				"[+] invoke TrustedOperation extrinsic success. extrinsic hash: {:?} / status: {:?} / block hash: {:?}",
+				xt_report.extrinsic_hash, xt_report.status, xt_report.block_hash.unwrap()
+			);
+			xt_report.block_hash.unwrap()
+		},
+		Err(e) => {
+			error!("invoke TrustedOperation extrinsic failed {:?}", e);
+			return Err(TrustedOperationError::Extrinsic { msg: format!("{:?}", e) })
+		},
+	};
 
 	info!(
 		"Trusted call extrinsic sent and successfully included in parentchain block with hash {:?}.",
@@ -155,7 +162,7 @@ fn send_indirect_request(
 	info!("Waiting for execution confirmation from enclave...");
 	let mut subscription = chain_api.subscribe_events().unwrap();
 	loop {
-		let event_records = subscription.next_event::<RuntimeEvent, Hash>().unwrap().unwrap();
+		let event_records = subscription.next_events::<RuntimeEvent, Hash>().unwrap().unwrap();
 		for event_record in event_records {
 			if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
 				_signer,
