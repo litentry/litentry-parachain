@@ -36,6 +36,7 @@ use std::{
 	string::{String, ToString},
 	vec::Vec,
 };
+
 pub struct AchainableClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }

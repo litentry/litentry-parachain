@@ -112,7 +112,7 @@ pub fn verify(
 	// - discord's username is case sensitive
 	match identity {
 		Identity::Twitter(address) => {
-			let handle = std::str::from_utf8(address.as_slice())
+			let handle = std::str::from_utf8(address.inner_ref())
 				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 			ensure!(
 				user_name.to_ascii_lowercase().eq(&handle.to_string().to_ascii_lowercase()),
@@ -120,7 +120,7 @@ pub fn verify(
 			);
 		},
 		Identity::Discord(address) => {
-			let handle = std::str::from_utf8(address.as_slice())
+			let handle = std::str::from_utf8(address.inner_ref())
 				.map_err(|_| Error::LinkIdentityFailed(ErrorDetail::ParseError))?;
 			ensure!(user_name.eq(handle), Error::LinkIdentityFailed(ErrorDetail::WrongWeb2Handle));
 		},
