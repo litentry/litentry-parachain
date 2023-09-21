@@ -396,7 +396,7 @@ jobs:
           # network=host driver-opt needed to push to local registry
           driver-opts: network=host
 
-      - name: Cache sccache
+      - name: Cache worker-cache
         uses: actions/cache@v3
         with:
           path: |

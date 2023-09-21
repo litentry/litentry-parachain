@@ -52,6 +52,8 @@ ARG FINGERPRINT=none
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
+RUN ls -l worker-cache && find worker-cache
+
 RUN \
   rm -rf /opt/rust/registry/cache && mv worker-cache/registry/cache /opt/rust/registry && \
   rm -rf /opt/rust/registry/index && mv worker-cache/registry/index /opt/rust/registry && \
