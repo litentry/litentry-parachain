@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -76,6 +76,7 @@ use rust_base58::ToBase58;
 
 pub mod error;
 pub use error::Error;
+pub mod oneblock;
 pub mod schema;
 
 pub mod assertion_logic;
@@ -562,19 +563,19 @@ impl TryFrom<&Identity> for DID {
 			Identity::Substrate(address) => Ok(DID::Substrate(*address)),
 			Identity::Evm(address) => Ok(DID::Evm(*address)),
 			Identity::Twitter(handle) => {
-				let handle = from_utf8(handle.as_ref())
+				let handle = from_utf8(handle.inner_ref())
 					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
 					.to_string();
 				Ok(DID::Twitter(handle))
 			},
 			Identity::Discord(handle) => {
-				let handle = from_utf8(handle.as_ref())
+				let handle = from_utf8(handle.inner_ref())
 					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
 					.to_string();
 				Ok(DID::Discord(handle))
 			},
 			Identity::Github(handle) => {
-				let handle = from_utf8(handle.as_ref())
+				let handle = from_utf8(handle.inner_ref())
 					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
 					.to_string();
 				Ok(DID::Github(handle))

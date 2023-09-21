@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -100,25 +100,25 @@ pub struct TargetTwitterUser {
 }
 
 impl RestPath<String> for Tweet {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
 impl<T> RestPath<String> for TwitterAPIV2Response<T> {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
 impl RestPath<String> for Relationship {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
 impl RestPath<String> for Retweeted {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }

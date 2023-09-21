@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -18,11 +18,15 @@
 
 mod chain_specs;
 #[macro_use]
-mod service;
+mod service_evm;
 mod cli;
 mod command;
+mod evm_tracing_types;
 mod rpc;
+mod rpc_evm;
+mod service;
 mod standalone_block_import;
+mod tracing;
 
 fn main() -> sc_cli::Result<()> {
 	command::run()

@@ -12,6 +12,8 @@
         "setup-enclave": "ts-node tests/setup-enclave.ts",
         "test-filter": "mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
         "test-bridge": "mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
+        "test-evm-transfer": "mocha --exit --sort -r ts-node/register 'tests/evm-transfer.test.ts'",
+        "test-evm-contract": "mocha --exit --sort -r ts-node/register 'tests/evm-contract.test.ts'",
         "test-runtime-upgrade": "mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
         "test-all": "mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'",
         "preinstall": "npx only-allow yarn"
@@ -35,6 +37,7 @@
         "add": "^2.0.6",
         "dotenv": "^16.0.3",
         "ethers": "^5.7.2",
+        "solc": "0.8.18",
         "web3": "^1.8.1"
     },
     "compilerOptions": {

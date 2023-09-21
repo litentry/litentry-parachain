@@ -1,5 +1,5 @@
 [package]
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = '2021'
 homepage = 'https://litentry.com'
 name = 'pallet-identity-management-tee'

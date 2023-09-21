@@ -69,7 +69,7 @@ use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvide
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
-use itp_utils::write_slice_and_whitespace_pad;
+use itp_utils::{if_production_or, write_slice_and_whitespace_pad};
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
@@ -126,7 +126,10 @@ pub unsafe extern "C" fn init(
 	encoded_base_dir_size: u32,
 ) -> sgx_status_t {
 	// Initialize the logging environment in the enclave.
-	env_logger::init();
+	if_production_or!(
+		env_logger::Builder::new().filter(None, LevelFilter::Info).init(),
+		env_logger::init()
+	);
 
 	let mu_ra_url =
 		match String::decode(&mut slice::from_raw_parts(mu_ra_addr, mu_ra_addr_size as usize))

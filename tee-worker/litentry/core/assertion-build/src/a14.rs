@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@ extern crate sgx_tstd as std;
 use crate::sgx_reexport_prelude::*;
 
 use crate::*;
-use blake2_rfc::blake2b::Blake2b;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -33,47 +32,14 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use lc_data_providers::{build_client, GLOBAL_DATA_PROVIDER_CONFIG};
-use rust_base58::ToBase58;
+use lc_data_providers::{
+	build_client, DataProviderConfig, DataProviderConfigReader, ReadDataProviderConfig,
+};
 use serde::{Deserialize, Serialize};
-use ss58_registry::Ss58AddressFormat;
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
 	"The user has participated in any Polkadot on-chain governance events";
 const VC_A14_SUBJECT_TYPE: &str = "Polkadot Governance Participation Proof";
-
-// mostly copied from https://github.com/hack-ink/substrate-minimal/blob/main/subcryptor/src/lib.rs
-// no_std version is used here
-pub fn ss58_address_of(
-	public_key: &[u8],
-	network: &str,
-) -> core::result::Result<String, ErrorDetail> {
-	let network = Ss58AddressFormat::try_from(network).map_err(|_| ErrorDetail::ParseError)?;
-	let prefix = u16::from(network);
-	let mut bytes = match prefix {
-		0..=63 => vec![prefix as u8],
-		64..=16_383 => {
-			let first = ((prefix & 0b0000_0000_1111_1100) as u8) >> 2;
-			let second = ((prefix >> 8) as u8) | ((prefix & 0b0000_0000_0000_0011) as u8) << 6;
-
-			vec![first | 0b01000000, second]
-		},
-		_ => Err(ErrorDetail::ParseError)?,
-	};
-
-	bytes.extend(public_key);
-
-	let blake2b = {
-		let mut context = Blake2b::new(64);
-		context.update(b"SS58PRE");
-		context.update(&bytes);
-		context.finalize()
-	};
-
-	bytes.extend(&blake2b.as_bytes()[0..2]);
-
-	Ok(bytes.to_base58())
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -106,19 +72,13 @@ pub struct A14Client {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
-impl Default for A14Client {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl A14Client {
-	pub fn new() -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_auth_key.clone().as_str(),
+			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
 		let client =
 			build_client("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
@@ -152,8 +112,11 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		}
 	}
 
+	let data_provider_config =
+		DataProviderConfigReader::read().map_err(|e| Error::RequestVCFailed(Assertion::A14, e))?;
+
 	let mut value = false;
-	let mut client = A14Client::new();
+	let mut client = A14Client::new(&data_provider_config);
 
 	for address in polkadot_addresses {
 		let data = A14Data {

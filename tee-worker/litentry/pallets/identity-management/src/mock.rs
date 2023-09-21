@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -106,9 +106,7 @@ pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 
 pub fn alice_twitter_identity(suffix: u32) -> Identity {
-	let address = IdentityString::try_from(format!("alice{}", suffix).as_bytes().to_vec())
-		.expect("convert to BoundedVec failed");
-	Identity::Twitter(address)
+	Identity::Twitter(IdentityString::new(format!("alice{}", suffix).as_bytes().to_vec()))
 }
 
 pub fn alice_substrate_identity() -> Identity {

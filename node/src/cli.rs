@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::chain_specs;
+use crate::{chain_specs, evm_tracing_types::EthApiOptions};
 use clap::Parser;
 use std::path::PathBuf;
 
@@ -94,6 +94,21 @@ pub struct Cli {
 	/// Relay chain arguments
 	#[arg(raw = true, conflicts_with = "relay-chain-rpc-url")]
 	pub relay_chain_args: Vec<String>,
+
+	#[clap(flatten)]
+	pub eth_api_options: EthApiOptions,
+
+	/// Enable Ethereum compatible JSON-RPC servers (disabled by default).
+	#[clap(name = "enable-evm-rpc", long)]
+	pub enable_evm_rpc: bool,
+
+	/// Proposer's maximum block size limit in bytes
+	#[clap(long, default_value = sc_basic_authorship::DEFAULT_BLOCK_SIZE_LIMIT.to_string())]
+	pub proposer_block_size_limit: usize,
+
+	/// Proposer's soft deadline in percents of block size
+	#[clap(long, default_value = "50")]
+	pub proposer_soft_deadline_percent: u8,
 }
 
 #[derive(Debug)]

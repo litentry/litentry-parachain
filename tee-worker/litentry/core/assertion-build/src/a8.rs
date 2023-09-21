@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -21,15 +21,24 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::achainable::{AchainableAccountTotalTransactions, AchainableClient};
+use lc_data_providers::{
+	achainable::{AchainableAccountTotalTransactions, AchainableClient},
+	DataProviderConfigReader, ReadDataProviderConfig,
+};
+use litentry_primitives::BoundedWeb3Network;
 
 const VC_A8_SUBJECT_DESCRIPTION: &str = "Gets the range of number of transactions a user has made for a specific token on all supported networks (invalid transactions are also counted)";
 const VC_A8_SUBJECT_TYPE: &str = "EVM/Substrate Transaction Count";
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion A8 build, who: {:?}", account_id_to_string(&req.who),);
-
-	let mut client = AchainableClient::new();
+	// It should never fail because `req.assertion.get_supported_web3networks()`
+	// returns the vector which is converted from a BoundedVec
+	let bounded_web3networks: BoundedWeb3Network =
+		req.assertion.get_supported_web3networks().try_into().unwrap();
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::A8(bounded_web3networks.clone()), e))?;
+	let mut client = AchainableClient::new(&data_provider_config);
 	let mut total_txs: u64 = 0;
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
@@ -39,9 +48,10 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 		let txs = client.total_transactions(&network, &addresses).map_err(|e| {
 			error!("Assertion A8 query total_transactions error: {:?}", e);
-			let bounded_web3networks =
-				req.assertion.get_supported_web3networks().try_into().unwrap();
-			Error::RequestVCFailed(Assertion::A8(bounded_web3networks), e.into_error_detail())
+			Error::RequestVCFailed(
+				Assertion::A8(bounded_web3networks.clone()),
+				e.into_error_detail(),
+			)
 		})?;
 
 		total_txs += txs;
@@ -64,10 +74,6 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			// It should never fail because `req.assertion.get_supported_web3networks()`
-			// returns the vector which is converted from a BoundedVec
-			let bounded_web3networks =
-				req.assertion.get_supported_web3networks().try_into().unwrap();
 			Err(Error::RequestVCFailed(Assertion::A8(bounded_web3networks), e.into_error_detail()))
 		},
 	}

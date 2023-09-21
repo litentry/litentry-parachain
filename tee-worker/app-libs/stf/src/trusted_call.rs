@@ -177,36 +177,6 @@ impl TrustedCall {
 		}
 	}
 
-	pub fn identifier(&self) -> Option<&H256> {
-		match self {
-			TrustedCall::balance_set_balance(..) => None,
-			TrustedCall::balance_transfer(..) => None,
-			TrustedCall::balance_unshield(..) => None,
-			TrustedCall::balance_shield(..) => None,
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_withdraw(..) => None,
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_call(..) => None,
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_create(..) => None,
-			#[cfg(feature = "evm")]
-			TrustedCall::evm_create2(..) => None,
-			// litentry
-			TrustedCall::set_user_shielding_key(_, _, _, hash) => Some(hash),
-			TrustedCall::set_user_shielding_key_with_networks(_, _, _, _, hash) => Some(hash),
-			TrustedCall::link_identity(_, _, _, _, _, _, hash) => Some(hash),
-			TrustedCall::deactivate_identity(_, _, _, hash) => Some(hash),
-			TrustedCall::activate_identity(_, _, _, hash) => Some(hash),
-			TrustedCall::request_vc(_, _, _, hash) => Some(hash),
-			TrustedCall::set_identity_networks(_, _, _, _, hash) => Some(hash),
-			TrustedCall::link_identity_callback(_, _, _, _, hash) => Some(hash),
-			TrustedCall::request_vc_callback(_, _, _, _, _, _, hash) => Some(hash),
-			TrustedCall::handle_imp_error(_, _, _, hash) => Some(hash),
-			TrustedCall::handle_vcmp_error(_, _, _, hash) => Some(hash),
-			TrustedCall::send_erroneous_parentchain_call(_) => None,
-		}
-	}
-
 	pub fn sign(
 		&self,
 		pair: &KeyPair,

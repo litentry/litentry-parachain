@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -64,7 +64,7 @@ pub fn build(
 					guild_id.to_vec(),
 					channel_id.to_vec(),
 					role_id.to_vec(),
-					address.to_vec(),
+					address.inner_ref().to_vec(),
 				)
 				.map_err(|e| {
 					Error::RequestVCFailed(
@@ -127,7 +127,7 @@ mod tests {
 
 		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
 		let identities: Vec<IdentityNetworkTuple> =
-			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec)), vec![])];
+			vec![(Identity::Discord(IdentityString::new(handler_vec)), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let channel_id = BoundedVec::try_from(channel_id_vec).unwrap();

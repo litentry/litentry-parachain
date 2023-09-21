@@ -11,6 +11,7 @@ import type {
     Compact,
     Option,
     Struct,
+    U256,
     U8aFixed,
     Vec,
     bool,
@@ -24,6 +25,7 @@ import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
 import type {
     AccountId32,
     Call,
+    H160,
     H256,
     MultiAddress,
     Perbill,
@@ -35,6 +37,7 @@ import type {
     CorePrimitivesErrorVcmpError,
     CorePrimitivesKeyAesOutput,
     CumulusPrimitivesParachainInherentParachainInherentData,
+    EthereumTransactionTransactionV2,
     FrameSupportPreimagesBounded,
     PalletAssetManagerAssetMetadata,
     PalletDemocracyConviction,
@@ -1750,6 +1753,127 @@ declare module "@polkadot/api-base/types/submittable" {
             stopRewardPool: AugmentedSubmittable<
                 (id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [u64]
+            >;
+        };
+        ethereum: {
+            /**
+             * Transact an Ethereum transaction.
+             **/
+            transact: AugmentedSubmittable<
+                (
+                    transaction:
+                        | EthereumTransactionTransactionV2
+                        | {
+                              Legacy: any;
+                          }
+                        | {
+                              EIP2930: any;
+                          }
+                        | {
+                              EIP1559: any;
+                          }
+                        | string
+                        | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [EthereumTransactionTransactionV2]
+            >;
+        };
+        evm: {
+            /**
+             * Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
+             **/
+            call: AugmentedSubmittable<
+                (
+                    source: H160 | string | Uint8Array,
+                    target: H160 | string | Uint8Array,
+                    input: Bytes | string | Uint8Array,
+                    value: U256 | AnyNumber | Uint8Array,
+                    gasLimit: u64 | AnyNumber | Uint8Array,
+                    maxFeePerGas: U256 | AnyNumber | Uint8Array,
+                    maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    accessList:
+                        | Vec<ITuple<[H160, Vec<H256>]>>
+                        | [H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]][]
+                ) => SubmittableExtrinsic<ApiType>,
+                [
+                    H160,
+                    H160,
+                    Bytes,
+                    U256,
+                    u64,
+                    U256,
+                    Option<U256>,
+                    Option<U256>,
+                    Vec<ITuple<[H160, Vec<H256>]>>
+                ]
+            >;
+            /**
+             * Issue an EVM create operation. This is similar to a contract creation transaction in
+             * Ethereum.
+             **/
+            create: AugmentedSubmittable<
+                (
+                    source: H160 | string | Uint8Array,
+                    init: Bytes | string | Uint8Array,
+                    value: U256 | AnyNumber | Uint8Array,
+                    gasLimit: u64 | AnyNumber | Uint8Array,
+                    maxFeePerGas: U256 | AnyNumber | Uint8Array,
+                    maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    accessList:
+                        | Vec<ITuple<[H160, Vec<H256>]>>
+                        | [H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]][]
+                ) => SubmittableExtrinsic<ApiType>,
+                [
+                    H160,
+                    Bytes,
+                    U256,
+                    u64,
+                    U256,
+                    Option<U256>,
+                    Option<U256>,
+                    Vec<ITuple<[H160, Vec<H256>]>>
+                ]
+            >;
+            /**
+             * Issue an EVM create2 operation.
+             **/
+            create2: AugmentedSubmittable<
+                (
+                    source: H160 | string | Uint8Array,
+                    init: Bytes | string | Uint8Array,
+                    salt: H256 | string | Uint8Array,
+                    value: U256 | AnyNumber | Uint8Array,
+                    gasLimit: u64 | AnyNumber | Uint8Array,
+                    maxFeePerGas: U256 | AnyNumber | Uint8Array,
+                    maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    accessList:
+                        | Vec<ITuple<[H160, Vec<H256>]>>
+                        | [H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]][]
+                ) => SubmittableExtrinsic<ApiType>,
+                [
+                    H160,
+                    Bytes,
+                    H256,
+                    U256,
+                    u64,
+                    U256,
+                    Option<U256>,
+                    Option<U256>,
+                    Vec<ITuple<[H160, Vec<H256>]>>
+                ]
+            >;
+            /**
+             * Withdraw balance from EVM into currency/balances pallet.
+             **/
+            withdraw: AugmentedSubmittable<
+                (
+                    address: H160 | string | Uint8Array,
+                    value: u128 | AnyNumber | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [H160, u128]
             >;
         };
         extrinsicFilter: {
@@ -5460,6 +5584,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | {
                               CumulusXcm: any;
                           }
+                        | {
+                              Ethereum: any;
+                          }
                         | string
                         | Uint8Array,
                     call: Call | IMethod | string | Uint8Array
@@ -5581,6 +5708,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | {
                               A20: any;
                           }
+                        | {
+                              Oneblock: any;
+                          }
                         | string
                         | Uint8Array,
                     hash: H256 | string | Uint8Array
@@ -5656,6 +5786,9 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               A20: any;
+                          }
+                        | {
+                              Oneblock: any;
                           }
                         | string
                         | Uint8Array
@@ -5745,6 +5878,9 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               A20: any;
+                          }
+                        | {
+                              Oneblock: any;
                           }
                         | string
                         | Uint8Array,

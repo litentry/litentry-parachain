@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -241,5 +241,7 @@ fn generate_genesis(
 		vc_management: VCManagementConfig { admin: Some(root_key) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
+		ethereum: Default::default(),
+		evm: Default::default(),
 	}
 }

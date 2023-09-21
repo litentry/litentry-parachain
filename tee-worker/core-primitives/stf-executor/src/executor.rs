@@ -139,23 +139,12 @@ where
 		) {
 			Err(e) => {
 				error!("Stf execute failed: {:?}", e);
-				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
-					TrustedOperationResponse {
-						req_ext_hash: h.clone(),
-						value: e.encode()
-					}.encode()
-				}).unwrap_or_default();
+				let rpc_response_value: Vec<u8> = e.encode();
 				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
 			Ok(result) => {
 				let force_connection_wait = result.force_connection_wait();
-				let rpc_response_value: Vec<u8> = trusted_operation.req_hash().map(|h| {
-					TrustedOperationResponse {
-						req_ext_hash: h.clone(),
-						value: result.get_encoded_result()
-					}.encode()
-				}).unwrap_or_default();
-
+				let rpc_response_value: Vec<u8> = result.get_encoded_result();
 				if let StatePostProcessing::Prune = post_processing {
 					state.prune_state_diff();
 				}
@@ -325,10 +314,4 @@ fn into_map(
 	storage_entries: Vec<StorageEntryVerified<Vec<u8>>>,
 ) -> BTreeMap<Vec<u8>, Option<Vec<u8>>> {
 	storage_entries.into_iter().map(|e| e.into_tuple()).collect()
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub(crate) struct TrustedOperationResponse {
-	pub req_ext_hash: H256,
-	pub value: Vec<u8>,
 }
