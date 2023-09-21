@@ -53,10 +53,10 @@ WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN \
-  rm -rf /opt/rust/registry/cache && mv worker-cache/registry/cache /opt/rust/registry && \
-  rm -rf /opt/rust/registry/index && mv worker-cache/registry/index /opt/rust/registry && \
-  rm -rf /opt/rust/git/db && mv worker-cache/git/db /opt/rust/git && \
-  rm -rf /opt/rust/sccache && mv worker-cache/sccache /opt/rust && \
+  rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
+  rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
+  rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
+  rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
   cargo build --release -p lc-data-providers && sccache --show-stats
 
 RUN cargo test --release
