@@ -410,6 +410,7 @@ jobs:
         run: |
           for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
             [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
+            touch worker-cache/$i/nix 
           done
           echo "::group::List worker-cache size"
           du -sh worker-cache/*
