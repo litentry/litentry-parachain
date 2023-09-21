@@ -563,19 +563,19 @@ impl TryFrom<&Identity> for DID {
 			Identity::Substrate(address) => Ok(DID::Substrate(*address)),
 			Identity::Evm(address) => Ok(DID::Evm(*address)),
 			Identity::Twitter(handle) => {
-				let handle = from_utf8(handle.as_ref())
+				let handle = from_utf8(handle.inner_ref())
 					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
 					.to_string();
 				Ok(DID::Twitter(handle))
 			},
 			Identity::Discord(handle) => {
-				let handle = from_utf8(handle.as_ref())
+				let handle = from_utf8(handle.inner_ref())
 					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
 					.to_string();
 				Ok(DID::Discord(handle))
 			},
 			Identity::Github(handle) => {
-				let handle = from_utf8(handle.as_ref())
+				let handle = from_utf8(handle.inner_ref())
 					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
 					.to_string();
 				Ok(DID::Github(handle))
