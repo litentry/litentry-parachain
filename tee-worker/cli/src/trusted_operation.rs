@@ -25,7 +25,7 @@ use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
 use ita_stf::{Getter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
-use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, ENCLAVE_BRIDGE};
+use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
@@ -33,7 +33,7 @@ use itp_types::{BlockNumber, DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::ParentchainHash as Hash;
 use log::*;
-use my_node_runtime::{Hash, RuntimeEvent};
+use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;
 use sp_core::{sr25519 as sr25519_core, H256};
 use std::{
@@ -42,7 +42,7 @@ use std::{
 	time::Instant,
 };
 use substrate_api_client::{
-	compose_extrinsic, GetHeader, SubmitAndWatchUntilSuccess, SubscribeEvents,
+	compose_extrinsic, GetHeader, SubmitAndWatchUntilSuccess, SubscribeEvents, SubmitAndWatch, XtStatus,
 };
 use teerex_primitives::Request;
 use thiserror::Error;
@@ -139,42 +139,33 @@ fn send_indirect_request(
 	chain_api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer)));
 
 	let request = Request { shard, cyphertext: call_encrypted };
-	let xt = compose_extrinsic!(&chain_api, ENCLAVE_BRIDGE, "invoke", request);
+	let xt = compose_extrinsic!(&chain_api, TEEREX, "call_worker", request);
 
-	let block_hash = match chain_api.submit_and_watch_extrinsic_until_success(xt, false) {
-		Ok(xt_report) => {
-			println!(
-				"[+] invoke TrustedOperation extrinsic success. extrinsic hash: {:?} / status: {:?} / block hash: {:?}",
-				xt_report.extrinsic_hash, xt_report.status, xt_report.block_hash.unwrap()
-			);
-			xt_report.block_hash.unwrap()
-		},
-		Err(e) => {
-			error!("invoke TrustedOperation extrinsic failed {:?}", e);
-			return Err(TrustedOperationError::Extrinsic { msg: format!("{:?}", e) })
-		},
-	};
+	// send and watch extrinsic until block is executed
+	let block_hash = chain_api
+		.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock)
+		.unwrap()
+		.block_hash
+		.unwrap();
 
 	info!(
-		"Trusted call extrinsic sent for shard {} and successfully included in parentchain block with hash {:?}.",
-		shard.encode().to_base58(), block_hash
+		"Trusted call extrinsic sent and successfully included in parentchain block with hash {:?}.",
+		block_hash
 	);
 	info!("Waiting for execution confirmation from enclave...");
 	let mut subscription = chain_api.subscribe_events().unwrap();
 	loop {
 		let event_records = subscription.next_event::<RuntimeEvent, Hash>().unwrap().unwrap();
 		for event_record in event_records {
-			if let RuntimeEvent::EnclaveBridge(EnclaveBridgeEvent::ProcessedParentchainBlock {
-				shard,
-				block_hash: confirmed_block_hash,
-				trusted_calls_merkle_root,
-				block_number: confirmed_block_number,
-			}) = event_record.event
+			if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
+				_signer,
+				confirmed_block_hash,
+				_merkle_root,
+				confirmed_block_number,
+			)) = event_record.event
 			{
 				info!("Confirmation of ProcessedParentchainBlock received");
-				debug!("shard: {:?}", shard);
-				debug!("confirmed parentchain block Hash: {:?}", block_hash);
-				debug!("trusted calls merkle root: {:?}", trusted_calls_merkle_root);
+				debug!("Expected block Hash: {:?}", block_hash);
 				debug!("Confirmed stf block Hash: {:?}", confirmed_block_hash);
 				if let Err(e) = check_if_received_event_exceeds_expected(
 					&chain_api,
@@ -239,11 +230,8 @@ fn send_direct_request(
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args).unwrap();
 	let jsonrpc_call: String = get_json_request(shard, operation_call, encryption_key);
-	debug!(
-		"send_direct_request: trusted operation: {:?},  shard: {}",
-		operation_call,
-		shard.encode().to_base58()
-	);
+
+	debug!("get direct api");
 	let direct_api = get_worker_api_direct(cli);
 
 	debug!("setup sender and receiver");

@@ -21,13 +21,13 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use itp_node_api::api_client::{ParentchainExtrinsicSigner, ENCLAVE_BRIDGE};
+use itp_node_api::api_client::{ParentchainExtrinsicSigner, TEEREX};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, SubmitAndWatchUntilSuccess};
+use substrate_api_client::{compose_extrinsic, SubmitAndWatch, SubmitAndWatchUntilSuccess, XtStatus};
 
 #[derive(Parser)]
 pub struct ShieldFundsCommand {
@@ -68,11 +68,11 @@ impl ShieldFundsCommand {
 		// Compose the extrinsic.
 		let xt = compose_extrinsic!(
 			chain_api,
-			ENCLAVE_BRIDGE,
+			TEEREX,
 			"shield_funds",
-			shard,
 			encrypted_recevier,
-			self.amount
+			self.amount,
+			shard
 		);
 
 		match chain_api.submit_and_watch_extrinsic_until_success(xt, true) {

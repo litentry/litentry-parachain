@@ -84,7 +84,7 @@ use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
 	api::XtStatus, rpc::HandleSubscription, serde_impls::StorageKey, storage_key, GetHeader,
-	GetStorage, SubmitAndWatchUntilSuccess, SubscribeChain, SubscribeEvents,
+	GetStorage, SubmitAndWatchUntilSuccess, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
 
 #[cfg(feature = "dcap")]
@@ -435,7 +435,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// initialize the enclave
 	let mrenclave = enclave.get_mrenclave().unwrap();
-	println!("MRENCLAVE={}", mrenclave[0].to_base58());
+	println!("MRENCLAVE={}", mrenclave.to_base58());
 	println!("MRENCLAVE in hex {:?}", hex::encode(mrenclave));
 
 	// ------------------------------------------------------------------------
@@ -663,8 +663,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	if let Some(register_enclave_xt_header) = register_enclave_xt_header.clone() {
 		we_are_primary_validateer =
-			check_we_are_primary_validateer(&integritee_rpc_api, shard, &tee_accountid)
-				.unwrap();
+			check_we_are_primary_validateer(&integritee_rpc_api, &register_enclave_xt_header).unwrap();
 	}
 
 	if we_are_primary_validateer {
@@ -731,7 +730,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		// Initialize the sidechain
 		if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
 			last_synced_header = match sidechain_init_block_production(
-				enclave,
+				enclave.clone(),
 				register_enclave_xt_header,
 				we_are_primary_validateer,
 				parentchain_handler.clone(),
@@ -1008,39 +1007,39 @@ fn print_events(events: Vec<Event>) {
 			RuntimeEvent::Teeracle(re) => {
 				debug!("{:?}", re);
 				match &re {
-					my_node_runtime::pallet_teeracle::Event::ExchangeRateUpdated {
-						data_source,
-						trading_pair,
-						exchange_rate,
-					} => {
+					my_node_runtime::pallet_teeracle::Event::ExchangeRateUpdated(
+						source,
+						currency,
+						new_value,
+					) => {
 						println!("[+] Received ExchangeRateUpdated event");
-						println!("    Data source:  {}", data_source);
-						println!("    trading pair:  {}", trading_pair);
-						println!("    Exchange rate: {:?}", exchange_rate);
+						println!("    Data source:  {}", source);
+						println!("    Currency:  {}", currency);
+						println!("    Exchange rate: {:?}", new_value);
 					},
-					my_node_runtime::pallet_teeracle::Event::ExchangeRateDeleted {
-						data_source,
-						trading_pair,
-					} => {
+					my_node_runtime::pallet_teeracle::Event::ExchangeRateDeleted(
+						source,
+						currency,
+					) => {
 						println!("[+] Received ExchangeRateDeleted event");
-						println!("    Data source:  {}", data_source);
-						println!("    trading pair:  {}", trading_pair);
+						println!("    Data source:  {}", source);
+						println!("    Currency:  {}", currency);
 					},
-					my_node_runtime::pallet_teeracle::Event::AddedToWhitelist {
-						data_source,
-						enclave_fingerprint,
-					} => {
+					my_node_runtime::pallet_teeracle::Event::AddedToWhitelist(
+						source,
+						mrenclave,
+					) => {
 						println!("[+] Received AddedToWhitelist event");
-						println!("    Data source:  {}", data_source);
-						println!("    fingerprint:  {:?}", enclave_fingerprint);
+						println!("    Data source:  {}", source);
+						println!("    Currency:  {:?}", mrenclave);
 					},
-					my_node_runtime::pallet_teeracle::Event::RemovedFromWhitelist {
-						data_source,
-						enclave_fingerprint,
-					} => {
+					my_node_runtime::pallet_teeracle::Event::RemovedFromWhitelist(
+						source,
+						mrenclave,
+					) => {
 						println!("[+] Received RemovedFromWhitelist event");
-						println!("    Data source:  {}", data_source);
-						println!("    fingerprint:  {:?}", enclave_fingerprint);
+						println!("    Data source:  {}", source);
+						println!("    Currency:  {:?}", mrenclave);
 					},
 					_ => {
 						trace!("Ignoring unsupported pallet_teeracle event");
@@ -1049,15 +1048,13 @@ fn print_events(events: Vec<Event>) {
 			},
 			#[cfg(feature = "sidechain")]
 			RuntimeEvent::Sidechain(re) => match &re {
-				my_node_runtime::pallet_sidechain::Event::FinalizedSidechainBlock {
-					shard,
-					block_header_hash,
-					validateer,
-				} => {
-					info!("[+] Received FinalizedSidechainBlock event");
-					debug!("    for shard:    {:?}", shard);
-					debug!("    From:    {:?}", hex::encode(block_header_hash));
-					debug!("    validateer: {:?}", validateer);
+				my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
+					sender,
+					payload,
+				) => {
+					info!("[+] Received ProposedSidechainBlock event");
+					debug!("    From:    {:?}", sender);
+					debug!("    Payload: {:?}", hex::encode(payload));
 				},
 				_ => {
 					trace!("Ignoring unsupported pallet_sidechain event");
@@ -1233,35 +1230,11 @@ fn enclave_account<E: EnclaveBase>(enclave_api: &E) -> AccountId32 {
 /// Checks if we are the first validateer to register on the parentchain.
 fn check_we_are_primary_validateer(
 	node_api: &ParentchainApi,
-	shard: &ShardIdentifier,
-	enclave_account: &AccountId32,
+	register_enclave_xt_header: &Header,
 ) -> Result<bool, Error> {
-	// are we registered? else fail.
-	node_api
-		.enclave(enclave_account, None)?
-		.expect("our enclave should be registered at this point");
-	trace!("our enclave is registered");
-	match node_api.worker_for_shard(shard, None).unwrap() {
-		Some(enclave) =>
-			match enclave.instance_signer() {
-				AnySigner::Known(MultiSigner::Ed25519(primary)) =>
-					if primary.encode() == enclave_account.encode() {
-						debug!("We are primary worker on this shard adn we have been previously running.");
-						Ok(true)
-					} else {
-						debug!("The primary worker is {}", primary.to_ss58check());
-						Ok(false)
-					},
-				_ => {
-					warn!("the primary worker is of unknown type");
-					Ok(false)
-				},
-			},
-		None => {
-			debug!("We are the primary worker on this shard and the shard is untouched");
-			Ok(true)
-		},
-	}
+	let enclave_count_of_previous_block =
+		node_api.enclave_count(Some(*register_enclave_xt_header.parent_hash()))?;
+	Ok(enclave_count_of_previous_block == 0)
 }
 
 fn get_data_provider_config(config: &Config) -> DataProviderConfig {
