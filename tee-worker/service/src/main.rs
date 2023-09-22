@@ -648,14 +648,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 					Err(_) => {},
 				}
 			}
-			if !found {
-				println!("[>] Register the enclave (send the extrinsic)");
-				let register_enclave_xt_hash =
-					send_extrinsic(xt, &integritee_rpc_api, &tee_accountid, is_development_mode);
-				println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
-				register_enclave_xt_header =
-					integritee_rpc_api.get_header(register_enclave_xt_hash).unwrap();
-			}
+			// if !found {
+			// 	println!("[>] Register the enclave (send the extrinsic)");
+			// 	let register_enclave_xt_hash =
+			// 		send_extrinsic(xt, &integritee_rpc_api, &tee_accountid, is_development_mode);
+			// 	println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
+			// 	register_enclave_xt_header =
+			// 		integritee_rpc_api.get_header(register_enclave_xt_hash).unwrap();
+			// }
 		},
 		_ => panic!("unknown error"),
 	}

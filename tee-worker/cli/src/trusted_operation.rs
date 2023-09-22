@@ -25,7 +25,7 @@ use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
 use ita_stf::{Getter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
-use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, TEEREX};
+use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
@@ -35,14 +35,14 @@ use litentry_primitives::ParentchainHash as Hash;
 use log::*;
 use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;
-use sp_core::{sr25519 as sr25519_core, H256};
+use sp_core::{ H256};
 use std::{
 	result::Result as StdResult,
 	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
 use substrate_api_client::{
-	compose_extrinsic, GetChainInfo, GetHeader, SubmitAndWatch, SubmitAndWatchUntilSuccess,
+	ac_compose_macros::compose_extrinsic, GetChainInfo, SubmitAndWatch,
 	SubscribeEvents, XtStatus,
 };
 use teerex_primitives::Request;

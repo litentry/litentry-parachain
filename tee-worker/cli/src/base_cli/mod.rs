@@ -34,7 +34,6 @@ use crate::{
 use base58::ToBase58;
 use chrono::{DateTime, Utc};
 use clap::Subcommand;
-use codec::Encode;
 use itc_rpc_client::direct_client::DirectApi;
 use itp_node_api::api_client::PalletTeerexApi;
 use sp_core::crypto::Ss58Codec;
@@ -43,7 +42,6 @@ use std::{
 	path::PathBuf,
 	time::{Duration, UNIX_EPOCH},
 };
-use itp_node_api::metadata::Metadata;
 use substrate_client_keystore::LocalKeystore;
 
 mod commands;

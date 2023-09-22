@@ -17,10 +17,10 @@
 use crate::{command_utils::get_chain_api, Cli};
 
 use crate::{CliResult, CliResultOk};
-use itp_node_api::api_client::{ParentchainExtrinsicSigner, TEEREX};
+use itp_node_api::api_client::{TEEREX};
 use log::*;
 use sp_keyring::AccountKeyring;
-use substrate_api_client::{compose_extrinsic, SubmitAndWatch, XtStatus};
+use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 #[derive(Parser)]
 pub struct SetHeartbeatTimeoutCommand {
 	/// Heartbeat timeout
@@ -33,7 +33,7 @@ impl SetHeartbeatTimeoutCommand {
 
 		// has to be //Alice as this is the genesis admin for teerex pallet,
 		// otherwise `set_heartbeat_timeout` call won't work
-		chain_api.set_signer(ParentchainExtrinsicSigner::new(AccountKeyring::Alice.pair()));
+		chain_api.set_signer(AccountKeyring::Alice.pair().into());
 
 		// call set_heartbeat_timeout
 		let xt = compose_extrinsic!(

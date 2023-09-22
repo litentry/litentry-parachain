@@ -17,7 +17,7 @@
 
 use crate::ApiResult;
 use itp_api_client_types::{storage_key, traits::GetStorage, Api, Config, Request};
-use itp_types::{parentchain::Hash, AccountId, Enclave, IpfsHash, MrEnclave, ShardIdentifier};
+use itp_types::{ Enclave, IpfsHash, MrEnclave, ShardIdentifier};
 use sp_core::storage::StorageKey;
 // use substrate_api_client::{
 // 	rpc::Request, storage_key, Api, GetStorage,

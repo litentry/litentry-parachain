@@ -21,13 +21,12 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use itp_node_api::api_client::ParentchainExtrinsicSigner;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use log::*;
 use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, SubmitAndWatch, XtStatus};
+use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 
 #[derive(Parser)]
 pub struct SetUserShieldingKeyCommand {
@@ -56,7 +55,7 @@ impl SetUserShieldingKeyCommand {
 		};
 
 		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
-		chain_api.set_signer(ParentchainExtrinsicSigner::new(who));
+		chain_api.set_signer(who.into());
 
 		let mut key = [0u8; 32];
 		hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding key failed");

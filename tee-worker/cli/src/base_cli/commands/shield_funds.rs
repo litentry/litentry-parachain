@@ -21,14 +21,13 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use itp_node_api::api_client::{ParentchainExtrinsicSigner, TEEREX};
+use itp_node_api::api_client::{TEEREX};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
-use sp_core::sr25519 as sr25519_core;
 use substrate_api_client::{
-	compose_extrinsic, SubmitAndWatch, SubmitAndWatchUntilSuccess, XtStatus,
+	ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus,
 };
 
 #[derive(Parser)]
@@ -59,7 +58,7 @@ impl ShieldFundsCommand {
 
 		// Get the sender.
 		let from = get_pair_from_str(&self.from);
-		chain_api.set_signer(sr25519_core::Pair::from(from).into());
+		chain_api.set_signer(from.into());
 
 		// Get the recipient.
 		let to = get_accountid_from_str(&self.to);
@@ -72,9 +71,9 @@ impl ShieldFundsCommand {
 			chain_api,
 			TEEREX,
 			"shield_funds",
+			shard,
 			encrypted_recevier,
-			self.amount,
-			shard
+			self.amount
 		);
 
 		match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized) {

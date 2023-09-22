@@ -22,7 +22,7 @@ use crate::{
 	trusted_command_utils::{
 		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
 	},
-	trusted_operation::{get_json_request, get_state, perform_trusted_operation, wait_until},
+	trusted_operation::{get_json_request, wait_until},
 	Cli, CliResult, CliResultOk, SR25519_KEY_TYPE,
 };
 use codec::Decode;
