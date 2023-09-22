@@ -407,6 +407,10 @@ jobs:
       # sometimes it works, sometimes it results in empty cache, root cause unclear
       #
       # thus the persistence of rust cache (w/ sccache) is maintained manually
+      #
+      # there's no cache-from/to as the docker image layer is too large and it takes too long to sync
+      # moreoever, we are not so eager to have layer caches, as the most critical operation(cargo build)
+      # is "atomic" and can't be broken into layers.
       - name: Build local builder
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
@@ -419,8 +423,6 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
-          cache-from: type=gha
-          cache-to: type=gha,mode=min
           push: true
 
       - name: Copy caches from the built image
