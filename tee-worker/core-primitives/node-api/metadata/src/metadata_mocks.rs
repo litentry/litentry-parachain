@@ -22,7 +22,6 @@ use crate::{
 };
 use codec::{Decode, Encode};
 
-use crate::pallet_enclave_bridge::EnclaveBridgeCallIndexes;
 use itp_api_client_types::Metadata;
 
 impl TryFrom<NodeMetadataMock> for Metadata {
@@ -173,9 +172,9 @@ impl TeerexCallIndexes for NodeMetadataMock {
 		Ok([self.teerex_module, self.publish_hash])
 	}
 
-	fn update_shard_config_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.update_shard_config])
-	}
+	// fn update_shard_config_call_indexes(&self) -> Result<[u8; 2]> {
+	// 	Ok([self.teerex_module, self.update_shard_config])
+	// }
 
 	fn update_scheduled_enclave(&self) -> Result<[u8; 2]> {
 		Ok([self.teerex_module, self.update_scheduled_enclave])

@@ -43,7 +43,7 @@ use std::{
 };
 use substrate_api_client::{
 	compose_extrinsic, GetHeader, SubmitAndWatch, SubmitAndWatchUntilSuccess, SubscribeEvents,
-	XtStatus,
+	XtStatus, GetChainInfo,
 };
 use teerex_primitives::Request;
 use thiserror::Error;
