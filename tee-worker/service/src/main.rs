@@ -83,9 +83,8 @@ use my_node_runtime::{Hash, RuntimeEvent};
 use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
-	api::XtStatus, rpc::HandleSubscription, ac_primitives::serde_impls::StorageKey, storage_key,
-	GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
-	GetChainInfo,
+	ac_primitives::serde_impls::StorageKey, api::XtStatus, rpc::HandleSubscription, storage_key,
+	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
 
 #[cfg(feature = "dcap")]
@@ -627,11 +626,10 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				} else {
 					hex::decode(key.as_bytes()).unwrap()
 				};
-				match integritee_rpc_api
-					.get_storage_by_key::<TeerexEnclave<AccountId32, Vec<u8>>>(
-						StorageKey(key.clone()),
-						None,
-					) {
+				match integritee_rpc_api.get_storage_by_key::<TeerexEnclave<AccountId32, Vec<u8>>>(
+					StorageKey(key.clone()),
+					None,
+				) {
 					Ok(Some(value)) => {
 						if value.mr_enclave.to_vec() == mrenclave && value.url == trusted_url {
 							// After calling the perform_ra function, the nonce will be incremented by 1,

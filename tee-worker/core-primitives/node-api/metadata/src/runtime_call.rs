@@ -35,9 +35,7 @@ impl RuntimeCall for NodeMetadata {
 
 		match runtime_call {
 			Some(runtime_call) => Ok(runtime_call.id),
-			None => Err(Error::NodeMetadata(MetadataError::CallNotFound(
-				"RuntimeCall not found",
-			))),
+			None => Err(Error::NodeMetadata(MetadataError::CallNotFound("RuntimeCall not found"))),
 		}
 	}
 }
