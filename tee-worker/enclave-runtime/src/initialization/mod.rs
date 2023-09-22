@@ -250,7 +250,6 @@ pub(crate) fn init_enclave_sidechain_components(
 
 	let block_composer = Arc::new(BlockComposer::new(signer, state_key_repository));
 	GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.initialize(block_composer);
-	error!("Fail mode: {:?}", fail_mode);
 	if let Some(fail_mode) = fail_mode {
 		let fail_mode = FailSlotMode::from_str(&fail_mode)
 			.map_err(|_| Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
