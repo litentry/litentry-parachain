@@ -27,7 +27,7 @@ use itp_types::{parentchain::ParentchainId, WorkerRequest, WorkerResponse};
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::{sync::Arc, thread, vec::Vec};
-use substrate_api_client::{serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
+use substrate_api_client::{ac_primitives::serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
 
 pub struct WorkerOnChainOCall<F> {
 	integritee_api_factory: Arc<F>,

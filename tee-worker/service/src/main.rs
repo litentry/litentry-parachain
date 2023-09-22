@@ -83,8 +83,9 @@ use my_node_runtime::{Hash, RuntimeEvent};
 use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
-	api::XtStatus, rpc::HandleSubscription, serde_impls::StorageKey, storage_key, GetHeader,
-	GetStorage, SubmitAndWatch, SubmitAndWatchUntilSuccess, SubscribeChain, SubscribeEvents,
+	api::XtStatus, rpc::HandleSubscription, ac_primitives::serde_impls::StorageKey, storage_key,
+	GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
+	GetChainInfo,
 };
 
 #[cfg(feature = "dcap")]
@@ -627,7 +628,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 					hex::decode(key.as_bytes()).unwrap()
 				};
 				match integritee_rpc_api
-					.get_storage_by_key_hash::<TeerexEnclave<AccountId32, Vec<u8>>>(
+					.get_storage_by_key::<TeerexEnclave<AccountId32, Vec<u8>>>(
 						StorageKey(key.clone()),
 						None,
 					) {

@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{error::Result, Error, NodeMetadata};
+use itp_api_client_types::MetadataError;
 
 pub trait RuntimeCall {
 	fn retrieve(&self) -> Result<u32>;
@@ -34,7 +35,7 @@ impl RuntimeCall for NodeMetadata {
 
 		match runtime_call {
 			Some(runtime_call) => Ok(runtime_call.id),
-			None => Err(Error::NodeMetadata(substrate_api_client::MetadataError::CallNotFound(
+			None => Err(Error::NodeMetadata(MetadataError::CallNotFound(
 				"RuntimeCall not found",
 			))),
 		}
