@@ -29,7 +29,6 @@ use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sgx_types::*;
 use sp_core::ed25519;
-// use teerex_primitives::EnclaveFingerprint;
 
 /// Trait for base/common Enclave API functions
 pub trait EnclaveBase: Send + Sync + 'static {

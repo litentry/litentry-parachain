@@ -23,7 +23,7 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight =
 pub struct FixedGasPrice;
 impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> (U256, Weight) {
-		(1.into(), Weight::from_parts(1, 0))
+		(1.into(), Weight::from_parts(1, 0u64))
 	}
 }
 
@@ -41,7 +41,7 @@ pub struct FixedGasWeightMapping;
 
 impl GasWeightMapping for FixedGasWeightMapping {
 	fn gas_to_weight(gas: u64, _without_base_weight: bool) -> Weight {
-		Weight::from_parts(gas.saturating_mul(WEIGHT_PER_GAS), 0)
+		Weight::from_parts(gas.saturating_mul(WEIGHT_PER_GAS), 0u64)
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
 		weight.ref_time().wrapping_div(WEIGHT_PER_GAS)

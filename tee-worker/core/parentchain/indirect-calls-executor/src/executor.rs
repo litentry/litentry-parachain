@@ -168,11 +168,11 @@ impl<
 				continue
 			}
 
-			// if let Err(e) = call.dispatch(self) {
-			// 	warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
-			// } else {
-			// 	executed_calls.push(hash_of(&call));
-			// }
+			if let Err(e) = call.dispatch(self) {
+				warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
+			} else {
+				executed_calls.push(hash_of(&call));
+			}
 		}
 		debug!("successfully processed {} indirect invocations", executed_calls.len());
 		// Include a processed parentchain block confirmation for each block.
