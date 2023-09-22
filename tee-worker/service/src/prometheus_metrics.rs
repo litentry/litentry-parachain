@@ -192,7 +192,7 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			EnclaveMetric::StfTaskExecutionTime(req, time) => {
 				handle_stf_call_request(*req, time);
 			},
-			EnclaveMetric::SuccesfulTrustedOperationIncrement(calls) => {
+			EnclaveMetric::SuccessfulTrustedOperationIncrement(calls) => {
 				handle_trusted_operation(calls, inc_successful_trusted_operation_counter);
 			},
 			EnclaveMetric::FailedTrustedOperationIncrement(calls) => {

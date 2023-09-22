@@ -147,7 +147,7 @@ where
 				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
 			Ok(result) => {
-				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::SuccesfulTrustedOperationIncrement(trusted_call.call.clone())) {
+				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::SuccessfulTrustedOperationIncrement(trusted_call.call.clone())) {
 					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
 				}
 				let force_connection_wait = result.force_connection_wait();
