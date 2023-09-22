@@ -64,7 +64,7 @@ RUN cargo test --release
 
 ### Minimal image for transferring built artefacts
 ##################################################
-FROM scratch AS stash
+FROM alpine AS stash
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 COPY --from=builder /opt/sgxsdk /opt/sgxsdk

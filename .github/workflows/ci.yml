@@ -357,7 +357,6 @@ jobs:
 
   tee-build:
     runs-on: ubuntu-latest
-    if: needs.set-condition.outputs.rebuild_tee == 'true'
     needs:
       - fmt
       - set-condition
@@ -396,6 +395,7 @@ jobs:
           driver-opts: network=host
 
       - name: Cache worker-cache
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: actions/cache@v3
         with:
           path: |
@@ -406,6 +406,7 @@ jobs:
             worker-cache-
 
       - name: Create cache folder if not exist
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         run: |
           for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
             [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
@@ -428,6 +429,7 @@ jobs:
       #
       # thus the persistence of rust cache (w/ sccache) is maintained manually
       - name: Build local builder
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -443,6 +445,7 @@ jobs:
           push: true
 
       - name: Copy caches from the built image
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         run: |
           echo "::group::Show disk usage"
           df -h .
@@ -512,6 +515,7 @@ jobs:
           cargo test --locked --release -p pallet-* --lib
 
       - name: Test enclave
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
         run: docker run litentry/litentry-worker test --all
