@@ -18,6 +18,10 @@ function usage() {
 [ $# -ne 1 ] && (usage; exit 1)
 TEST=$1
 
+cd /client-api
+corepack yarn install
+corepack yarn update-build
+
 cd /ts-tests
 
 corepack yarn install
