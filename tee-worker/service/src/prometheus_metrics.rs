@@ -239,17 +239,14 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A1 => "A1",
 			Assertion::A2(_) => "A2",
 			Assertion::A3(..) => "A3",
-			Assertion::A4(_) => "A4",
 			Assertion::A6 => "A6",
-			Assertion::A7(_) => "A7",
 			Assertion::A8(_) => "A8",
-			Assertion::A10(_) => "A10",
-			Assertion::A11(_) => "A11",
 			Assertion::A13(_) => "A13",
 			Assertion::A14 => "A14",
 			Assertion::A20 => "A20",
 			Assertion::Achainable(..) => "Achainable",
 			Assertion::Oneblock(..) => "Oneblock",
+			Assertion::HoldingTime(_, _) => "HoldingTime",
 		},
 	};
 	inc_stf_calls(category, label);

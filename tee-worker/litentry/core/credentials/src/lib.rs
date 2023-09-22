@@ -76,10 +76,10 @@ use rust_base58::ToBase58;
 
 pub mod error;
 pub use error::Error;
+pub mod achainable;
+pub mod assertion_logic;
 pub mod oneblock;
 pub mod schema;
-
-pub mod assertion_logic;
 use assertion_logic::{AssertionLogic, Op};
 use itp_utils::hex::hex_encode;
 
