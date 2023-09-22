@@ -63,18 +63,10 @@ where
 			Assertion::A3(guild_id, channel_id, role_id) =>
 				lc_assertion_build::a3::build(&self.req, guild_id, channel_id, role_id),
 
-			Assertion::A4(min_balance) => lc_assertion_build::a4::build(&self.req, min_balance),
-
 			Assertion::A6 => lc_assertion_build::a6::build(&self.req),
-
-			Assertion::A7(min_balance) => lc_assertion_build::a7::build(&self.req, min_balance),
 
 			// no need to pass `networks` again because it's the same as the `get_supported_web3networks`
 			Assertion::A8(_networks) => lc_assertion_build::a8::build(&self.req),
-
-			Assertion::A10(min_balance) => lc_assertion_build::a10::build(&self.req, min_balance),
-
-			Assertion::A11(min_balance) => lc_assertion_build::a11::build(&self.req, min_balance),
 
 			Assertion::A13(owner) =>
 				lc_assertion_build::a13::build(&self.req, self.context.ocall_api.clone(), &owner),
@@ -87,6 +79,9 @@ where
 
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
+
+			Assertion::HoldingTime(htype, min_balance) =>
+				lc_assertion_build::holding_time::build(&self.req, htype, min_balance),
 
 			_ => {
 				unimplemented!()
