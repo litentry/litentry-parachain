@@ -19,6 +19,7 @@ use crate::{
 	error::Result,
 	initialization::global_components::{
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
+		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
@@ -46,6 +47,7 @@ use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{Block, OpaqueCall, H256};
+use itp_utils::if_not_production;
 use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor, SignedBlock,
@@ -136,6 +138,8 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let authority = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
+	let fail_on_demand = GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.get()?;
+
 	match yield_next_slot(
 		slot_beginning_timestamp,
 		SLOT_DURATION,
@@ -147,7 +151,6 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 				warn!("No time remaining in slot, skipping AURA execution");
 				return Ok(())
 			}
-
 			log_remaining_slot_duration(&slot, "Before AURA");
 
 			let shards = state_handler.list_shards()?;
@@ -156,6 +159,18 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 				stf_executor,
 				block_composer,
 			);
+
+			if_not_production!({
+				error!("Checking if should fail");
+				if let Some(ref fail_on_demand) = *fail_on_demand {
+					fail_on_demand.next_slot();
+					if fail_on_demand.check_before_on_slot() {
+						error!("failing...");
+
+						Result::Err(crate::error::Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
+					}
+				}
+			});
 
 			let (blocks, opaque_calls) =
 				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _>(
@@ -168,6 +183,14 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 					GLOBAL_SCHEDULED_ENCLAVE.clone(),
 					state_handler,
 				)?;
+
+			if_not_production!({
+				if let Some(ref fail_on_demand) = *fail_on_demand {
+					if fail_on_demand.check_after_on_slot() {
+						Result::Err(crate::error::Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
+					}
+				}
+			});
 
 			debug!("Aura executed successfully");
 
