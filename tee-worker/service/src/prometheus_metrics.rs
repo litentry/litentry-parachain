@@ -67,8 +67,8 @@ lazy_static! {
 	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
 		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
 			.unwrap();
-	static ref ENCLAVE_SUCCESFUL_TRUSTED_OPERATION: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_succesful_trusted_operation", "Litentry Succesful Trusted Operation", &["call"])
+	static ref ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION: IntGaugeVec =
+		register_int_gauge_vec!("litentry_worker_enclave_successful_trusted_operation", "Litentry Successful Trusted Operation", &["call"])
 			.unwrap();
 	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: IntGaugeVec =
 		register_int_gauge_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call"])
@@ -193,7 +193,7 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				handle_stf_call_request(*req, time);
 			},
 			EnclaveMetric::SuccesfulTrustedOperationIncrement(calls) => {
-				handle_trusted_operation(calls, inc_succesfull_trusted_operation_counter);
+				handle_trusted_operation(calls, inc_successful_trusted_operation_counter);
 			},
 			EnclaveMetric::FailedTrustedOperationIncrement(calls) => {
 				handle_trusted_operation(calls, inc_failed_trusted_operation_counter);
@@ -258,8 +258,8 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 }
 
 // This function will increment the metric with provided label values.
-fn inc_succesfull_trusted_operation_counter(operation: &str) {
-	ENCLAVE_SUCCESFUL_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
+fn inc_successful_trusted_operation_counter(operation: &str) {
+	ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
 }
 
 fn inc_failed_trusted_operation_counter(operation: &str) {
