@@ -24,7 +24,8 @@ use crate::*;
 use lc_credentials::achainable::amount_holding_time::AchainableAmountHoldingTimeUpdate;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
-	vec_to_string, LIT_TOKEN_ADDRESS, WBTC_TOKEN_ADDRESS,
+	vec_to_string, DataProviderConfigReader, ReadDataProviderConfig, LIT_TOKEN_ADDRESS,
+	WBTC_TOKEN_ADDRESS,
 };
 use litentry_primitives::AmountHoldingTimeType;
 use std::string::ToString;
@@ -81,7 +82,6 @@ pub fn build(
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
 	let q_min_balance = pre_build(&htype, &min_balance)?;
-
 	let identities = transpose_identity(&req.identities);
 	let (is_hold, optimal_hold_index) = do_build(identities, &htype, &q_min_balance)
 		.map_err(|e| emit_error(&htype, &min_balance, e))?;
@@ -108,7 +108,8 @@ fn do_build(
 	htype: &AmountHoldingTimeType,
 	q_min_balance: &String,
 ) -> core::result::Result<(bool, usize), ErrorDetail> {
-	let mut client = AchainableClient::new();
+	let data_provider_config = DataProviderConfigReader::read()?;
+	let mut client = AchainableClient::new(&data_provider_config);
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = usize::MAX;
