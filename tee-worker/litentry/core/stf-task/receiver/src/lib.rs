@@ -25,6 +25,7 @@ pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
 	pub use hex_sgx as hex;
 	pub use thiserror_sgx as thiserror;
+	pub use threadpool_sgx as threadpool;
 	pub use url_sgx as url;
 }
 
@@ -55,6 +56,7 @@ use itp_types::{ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
 use std::{boxed::Box, format, string::String, sync::Arc};
+use threadpool::ThreadPool;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -165,35 +167,45 @@ pub fn run_stf_task_receiver<K, A, S, H, O>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 ) -> Result<(), Error>
 where
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
-	H: HandleState,
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
+	S: StfEnclaveSigning + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
-	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
 {
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
+
+	// The total number of threads that will be used to spawn tasks in the ThreadPool
+	let n_workers = 4;
+	let pool = ThreadPool::new(n_workers);
 
 	loop {
 		let req = receiver
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
-		let start_time = std::time::Instant::now();
+		let context_pool = context.clone();
 
-		match &req {
-			RequestType::IdentityVerification(req) =>
-				IdentityVerificationHandler { req: req.clone(), context: context.clone() }.start(),
-			RequestType::AssertionVerification(req) =>
-				AssertionHandler { req: req.clone(), context: context.clone() }.start(),
-		}
+		pool.execute(move || {
+			let start_time = std::time::Instant::now();
 
-		if let Err(e) = context.ocall_api.update_metric(EnclaveMetric::StfTaskExecutionTime(
-			Box::new(req),
-			start_time.elapsed().as_secs_f64(),
-		)) {
-			warn!("Failed to update metric for stf execution: {:?}", e);
-		}
+			match &req {
+				RequestType::IdentityVerification(req) =>
+					IdentityVerificationHandler { req: req.clone(), context: context_pool.clone() }
+						.start(),
+				RequestType::AssertionVerification(req) =>
+					AssertionHandler { req: req.clone(), context: context_pool.clone() }.start(),
+			}
+
+			if let Err(e) =
+				context_pool.ocall_api.update_metric(EnclaveMetric::StfTaskExecutionTime(
+					Box::new(req),
+					start_time.elapsed().as_secs_f64(),
+				)) {
+				warn!("Failed to update metric for stf execution: {:?}", e);
+			}
+		});
 	}
 }
