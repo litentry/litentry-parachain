@@ -43,7 +43,7 @@ use std::{
 	path::PathBuf,
 	time::{Duration, UNIX_EPOCH},
 };
-use substrate_api_client::Metadata;
+use itp_node_api::metadata::Metadata;
 use substrate_client_keystore::LocalKeystore;
 
 mod commands;

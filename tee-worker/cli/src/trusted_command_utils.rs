@@ -48,7 +48,7 @@ macro_rules! get_layer_two_nonce {
 			trusted_operation::execute_getter_from_cli_args,
 		};
 
-		let getter = Getter::trusted(TrustedGetter::nonce(Identity::Substrate(
+		let getter = Getter::public(PublicGetter::nonce(Identity::Substrate(
 			$signer_pair.public().into(),
 		)));
 		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);

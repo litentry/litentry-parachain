@@ -168,7 +168,7 @@ impl<
 				continue
 			}
 
-			if let Err(e) = call.dispatch(self) {
+			if let Err(e) = call.dispatch(self, ()) {
 				warn!("Error executing the indirect call: {:?}. Error {:?}", call, e);
 			} else {
 				executed_calls.push(hash_of(&call));

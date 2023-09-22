@@ -54,6 +54,7 @@ pub const ALICE_ACCOUNT_ID: AccountId = AccountId::new([
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for TransferToAliceShieldsFundsArgs {
 	type Args = ();
+
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		if self.destination == ALICE_ACCOUNT_ID.into() {
 			info!("Found Transfer to Alice extrinsic in block: \nAmount: {}", self.value);

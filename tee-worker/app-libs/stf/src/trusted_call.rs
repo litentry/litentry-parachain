@@ -22,7 +22,7 @@ use sp_core::{H160, U256};
 use std::vec::Vec;
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_self},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
 	trusted_call_result::*,
 	Runtime, StfError, System, TrustedOperation,
 };
@@ -396,7 +396,7 @@ where
 			TrustedCall::balance_shield(enclave_account, who, value) => {
 				let account_id: AccountId32 =
 					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
-				ensure_enclave_signer(&account_id)?;
+				ensure_enclave_signer_account(&account_id)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
