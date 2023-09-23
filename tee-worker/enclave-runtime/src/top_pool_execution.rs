@@ -161,12 +161,9 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			);
 
 			if_not_production!({
-				error!("Checking if should fail");
 				if let Some(ref fail_on_demand) = *fail_on_demand {
 					fail_on_demand.next_slot();
 					if fail_on_demand.check_before_on_slot() {
-						error!("failing...");
-
 						Result::Err(crate::error::Error::Sgx(sgx_status_t::SGX_ERROR_UNEXPECTED))?;
 					}
 				}
