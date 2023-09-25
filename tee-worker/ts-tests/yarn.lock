@@ -56,10 +56,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:8.49.0":
-  version: 8.49.0
-  resolution: "@eslint/js@npm:8.49.0"
-  checksum: a6601807c8aeeefe866926ad92ed98007c034a735af20ff709009e39ad1337474243d47908500a3bde04e37bfba16bcf1d3452417f962e1345bc8756edd6b830
+"@eslint/js@npm:8.50.0":
+  version: 8.50.0
+  resolution: "@eslint/js@npm:8.50.0"
+  checksum: 302478f2acaaa7228729ec6a04f56641590185e1d8cd1c836a6db8a6b8009f80a57349341be9fbb9aa1721a7a569d1be3ffc598a33300d22816f11832095386c
   languageName: node
   linkType: hard
 
@@ -1131,9 +1131,9 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*, @types/node@npm:^20.4.4":
-  version: 20.6.3
-  resolution: "@types/node@npm:20.6.3"
-  checksum: 444a6f1f41cfa8d3e20ce0108e6e43960fb2ae0e481f233bb1c14d6252aa63a92e021de561cd317d9fdb411688f871065f40175a1f18763282dee2613a08f8a3
+  version: 20.6.5
+  resolution: "@types/node@npm:20.6.5"
+  checksum: b849e849cf7631458a65c5019c81962028e306d8c4455a48422277b240f5a7eb8a1f1dafa60306bd4c773b77263bb8b05c074b1026e868bd137bb2022cf63ea2
   languageName: node
   linkType: hard
 
@@ -2067,13 +2067,13 @@ __metadata:
   linkType: hard
 
 "eslint@npm:^8.43.0":
-  version: 8.49.0
-  resolution: "eslint@npm:8.49.0"
+  version: 8.50.0
+  resolution: "eslint@npm:8.50.0"
   dependencies:
     "@eslint-community/eslint-utils": ^4.2.0
     "@eslint-community/regexpp": ^4.6.1
     "@eslint/eslintrc": ^2.1.2
-    "@eslint/js": 8.49.0
+    "@eslint/js": 8.50.0
     "@humanwhocodes/config-array": ^0.11.11
     "@humanwhocodes/module-importer": ^1.0.1
     "@nodelib/fs.walk": ^1.2.8
@@ -2109,7 +2109,7 @@ __metadata:
     text-table: ^0.2.0
   bin:
     eslint: bin/eslint.js
-  checksum: 4dfe257e1e42da2f9da872b05aaaf99b0f5aa022c1a91eee8f2af1ab72651b596366320c575ccd4e0469f7b4c97aff5bb85ae3323ebd6a293c3faef4028b0d81
+  checksum: 9ebfe5615dc84700000d218e32ddfdcfc227ca600f65f18e5541ec34f8902a00356a9a8804d9468fd6c8637a5ef6a3897291dad91ba6579d5b32ffeae5e31768
   languageName: node
   linkType: hard
 
@@ -2513,8 +2513,8 @@ __metadata:
   linkType: hard
 
 "glob@npm:^10.2.2":
-  version: 10.3.5
-  resolution: "glob@npm:10.3.5"
+  version: 10.3.7
+  resolution: "glob@npm:10.3.7"
   dependencies:
     foreground-child: ^3.1.0
     jackspeak: ^2.0.3
@@ -2522,8 +2522,8 @@ __metadata:
     minipass: ^5.0.0 || ^6.0.2 || ^7.0.0
     path-scurry: ^1.10.1
   bin:
-    glob: dist/cjs/src/bin.js
-  checksum: 564f4799cae48c0bcc841c88a20b539b5701c27ed5596f8623f588b3c523262d3fc20eb1ea89cab9c75b0912faf40ca5501fc835f982225d0d0599282b09e97a
+    glob: dist/esm/bin.mjs
+  checksum: 9a27f1fa8774c3a8ab8f05c26a77276edaf5418aac29aff70c5d847ef75dabf536554cb113e945193323fb769fbe32edde12559d2d52266f38662595cbc7a031
   languageName: node
   linkType: hard
 
@@ -3670,19 +3670,19 @@ __metadata:
 
 "parachain-api@file:../../client-api/parachain-api::locator=integration-tests%40workspace%3Aintegration-tests":
   version: 0.0.0
-  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=e0432d&locator=integration-tests%40workspace%3Aintegration-tests"
+  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=998f58&locator=integration-tests%40workspace%3Aintegration-tests"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: d781f22d9545c1186ff58510870c3cd240f3ae682d41b31d9bbacb97c4f934faabfba5a14aaa900634bc5661b73dbe058fc315553c647f1f96d2756d8dad9944
+  checksum: 98436b427868cb319768e3a6aaef2361c5b6778e3edcf38efbb982fe7b8eade22ac21964563591c5de9fd3cf271f6bdd78825a4376996c3d880796f7ab5419a1
   languageName: node
   linkType: hard
 
 "parachain-api@file:../../client-api/parachain-api::locator=stress%40workspace%3Astress":
   version: 0.0.0
-  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=e0432d&locator=stress%40workspace%3Astress"
+  resolution: "parachain-api@file:../../client-api/parachain-api#../../client-api/parachain-api::hash=998f58&locator=stress%40workspace%3Astress"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: d781f22d9545c1186ff58510870c3cd240f3ae682d41b31d9bbacb97c4f934faabfba5a14aaa900634bc5661b73dbe058fc315553c647f1f96d2756d8dad9944
+  checksum: 98436b427868cb319768e3a6aaef2361c5b6778e3edcf38efbb982fe7b8eade22ac21964563591c5de9fd3cf271f6bdd78825a4376996c3d880796f7ab5419a1
   languageName: node
   linkType: hard
 
@@ -4049,19 +4049,19 @@ __metadata:
 
 "sidechain-api@file:../../client-api/sidechain-api::locator=integration-tests%40workspace%3Aintegration-tests":
   version: 0.0.0
-  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=bbff79&locator=integration-tests%40workspace%3Aintegration-tests"
+  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=ec9b3b&locator=integration-tests%40workspace%3Aintegration-tests"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: 7fa07ff8343f40fde8c2a65199d731e8d4990b802da766dc811a8b93801c186373686bc68a5cbe7dbd95667070f301dc7c6d8c07e89ee09c33872236b6bf9ccc
+  checksum: 8c3fd75be1bcf12735bb003ad9dab86c83b4f6dcaa49d6b63b3543bbd6994e85d8c59ba1c34636ee4738f97f95f5bca0c4cce10ec112997a66079c94cf736e05
   languageName: node
   linkType: hard
 
 "sidechain-api@file:../../client-api/sidechain-api::locator=stress%40workspace%3Astress":
   version: 0.0.0
-  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=bbff79&locator=stress%40workspace%3Astress"
+  resolution: "sidechain-api@file:../../client-api/sidechain-api#../../client-api/sidechain-api::hash=ec9b3b&locator=stress%40workspace%3Astress"
   dependencies:
     "@polkadot/api": ^10.9.1
-  checksum: 7fa07ff8343f40fde8c2a65199d731e8d4990b802da766dc811a8b93801c186373686bc68a5cbe7dbd95667070f301dc7c6d8c07e89ee09c33872236b6bf9ccc
+  checksum: 8c3fd75be1bcf12735bb003ad9dab86c83b4f6dcaa49d6b63b3543bbd6994e85d8c59ba1c34636ee4738f97f95f5bca0c4cce10ec112997a66079c94cf736e05
   languageName: node
   linkType: hard
 
