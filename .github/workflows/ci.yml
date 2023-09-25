@@ -218,7 +218,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-clippy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs:
       - fmt
       - set-condition
@@ -233,7 +233,7 @@ jobs:
           tool-cache: true
           swap-storage: false
           large-packages: false
-          
+
       - uses: actions/checkout@v3
 
       - name: Install dependencies
