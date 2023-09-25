@@ -12,7 +12,6 @@ import type {
     Bytes,
     Null,
     Option,
-    U256,
     U8aFixed,
     Vec,
     bool,
@@ -23,7 +22,7 @@ import type {
     u8,
 } from "@polkadot/types-codec";
 import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
-import type { AccountId32, Call, H160, H256, Perbill } from "@polkadot/types/interfaces/runtime";
+import type { AccountId32, Call, H256, Perbill } from "@polkadot/types/interfaces/runtime";
 import type {
     CumulusPalletDmpQueueConfigData,
     CumulusPalletDmpQueuePageIndexData,
@@ -31,10 +30,6 @@ import type {
     CumulusPalletXcmpQueueInboundChannelDetails,
     CumulusPalletXcmpQueueOutboundChannelDetails,
     CumulusPalletXcmpQueueQueueConfigData,
-    EthereumBlock,
-    EthereumReceiptReceiptV3,
-    EthereumTransactionTransactionV2,
-    FpRpcTransactionStatus,
     FrameSupportDispatchPerDispatchClassWeight,
     FrameSupportPreimagesBounded,
     FrameSystemAccountInfo,
@@ -566,78 +561,6 @@ declare module "@polkadot/api-base/types/storage" {
                 ApiType,
                 (arg: u64 | AnyNumber | Uint8Array) => Observable<Option<PalletDrop3RewardPool>>,
                 [u64]
-            >;
-        };
-        ethereum: {
-            blockHash: AugmentedQuery<
-                ApiType,
-                (arg: U256 | AnyNumber | Uint8Array) => Observable<H256>,
-                [U256]
-            >;
-            /**
-             * The current Ethereum block.
-             **/
-            currentBlock: AugmentedQuery<ApiType, () => Observable<Option<EthereumBlock>>, []>;
-            /**
-             * The current Ethereum receipts.
-             **/
-            currentReceipts: AugmentedQuery<
-                ApiType,
-                () => Observable<Option<Vec<EthereumReceiptReceiptV3>>>,
-                []
-            >;
-            /**
-             * The current transaction statuses.
-             **/
-            currentTransactionStatuses: AugmentedQuery<
-                ApiType,
-                () => Observable<Option<Vec<FpRpcTransactionStatus>>>,
-                []
-            >;
-            /**
-             * Current building block's transactions and receipts.
-             **/
-            pending: AugmentedQuery<
-                ApiType,
-                () => Observable<
-                    Vec<
-                        ITuple<
-                            [
-                                EthereumTransactionTransactionV2,
-                                FpRpcTransactionStatus,
-                                EthereumReceiptReceiptV3
-                            ]
-                        >
-                    >
-                >,
-                []
-            >;
-        };
-        evm: {
-            accountCodes: AugmentedQuery<
-                ApiType,
-                (arg: H160 | string | Uint8Array) => Observable<Bytes>,
-                [H160]
-            >;
-            accountStorages: AugmentedQuery<
-                ApiType,
-                (
-                    arg1: H160 | string | Uint8Array,
-                    arg2: H256 | string | Uint8Array
-                ) => Observable<H256>,
-                [H160, H256]
-            >;
-        };
-        evmAddress: {
-            /**
-             * Map for existing evm address and substrate address relation
-             * We store them since the reverting proccess is not always achievable
-             * without storage.
-             **/
-            addressMapping: AugmentedQuery<
-                ApiType,
-                (arg: H160 | string | Uint8Array) => Observable<Option<AccountId32>>,
-                [H160]
             >;
         };
         extrinsicFilter: {

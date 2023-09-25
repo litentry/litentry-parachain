@@ -20,13 +20,11 @@ import type {
     u8,
 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
-import type { AccountId32, H160, H256, Perbill, Percent } from "@polkadot/types/interfaces/runtime";
+import type { AccountId32, H256, Perbill, Percent } from "@polkadot/types/interfaces/runtime";
 import type {
     CorePrimitivesAssertion,
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesKeyAesOutput,
-    EthereumLog,
-    EvmCoreErrorExitReason,
     FrameSupportDispatchDispatchInfo,
     FrameSupportTokensMiscBalanceStatus,
     PalletAssetManagerAssetMetadata,
@@ -658,48 +656,6 @@ declare module "@polkadot/api-base/types/events" {
                 ApiType,
                 [to: AccountId32, amount: u128],
                 { to: AccountId32; amount: u128 }
-            >;
-        };
-        ethereum: {
-            /**
-             * An ethereum transaction was successfully executed.
-             **/
-            Executed: AugmentedEvent<
-                ApiType,
-                [from: H160, to: H160, transactionHash: H256, exitReason: EvmCoreErrorExitReason],
-                { from: H160; to: H160; transactionHash: H256; exitReason: EvmCoreErrorExitReason }
-            >;
-        };
-        evm: {
-            /**
-             * A contract has been created at given address.
-             **/
-            Created: AugmentedEvent<ApiType, [address: H160], { address: H160 }>;
-            /**
-             * A contract was attempted to be created, but the execution failed.
-             **/
-            CreatedFailed: AugmentedEvent<ApiType, [address: H160], { address: H160 }>;
-            /**
-             * A contract has been executed successfully with states applied.
-             **/
-            Executed: AugmentedEvent<ApiType, [address: H160], { address: H160 }>;
-            /**
-             * A contract has been executed with errors. States are reverted with only gas fees applied.
-             **/
-            ExecutedFailed: AugmentedEvent<ApiType, [address: H160], { address: H160 }>;
-            /**
-             * Ethereum events from contracts.
-             **/
-            Log: AugmentedEvent<ApiType, [log: EthereumLog], { log: EthereumLog }>;
-        };
-        evmAddress: {
-            /**
-             * AddressMapping added
-             **/
-            AddressMappingAdded: AugmentedEvent<
-                ApiType,
-                [evm: H160, accountId: AccountId32],
-                { evm: H160; accountId: AccountId32 }
             >;
         };
         extrinsicFilter: {

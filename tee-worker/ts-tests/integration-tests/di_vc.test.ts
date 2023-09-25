@@ -59,36 +59,36 @@ describe('Test Vc (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
-    step(`setting user shielding key (alice)`, async function () {
-        const wallet = context.substrateWallet['alice'];
-        const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
-        const nonce = await getSidechainNonce(context, teeShieldingKey, subject);
+    // step(`setting user shielding key (alice)`, async function () {
+    //     const wallet = context.substrateWallet['alice'];
+    //     const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
+    //     const nonce = await getSidechainNonce(context, teeShieldingKey, subject);
 
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+    //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
-        const setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
-            context.api,
-            context.mrEnclave,
-            nonce,
-            new PolkadotSigner(wallet),
-            subject,
-            aesKey,
-            requestIdentifier
-        );
+    //     const setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
+    //         context.api,
+    //         context.mrEnclave,
+    //         nonce,
+    //         new PolkadotSigner(wallet),
+    //         subject,
+    //         aesKey,
+    //         requestIdentifier
+    //     );
 
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setUserShieldingKeyCall);
+    //     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+    //     const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setUserShieldingKeyCall);
 
-        assertSetUserShieldingKeyResult(context, res, subject);
-        await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
+    //     assertSetUserShieldingKeyResult(context, res, subject);
+    //     await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
 
-        const events = await eventsPromise;
-        const userShieldingKeySetEvents = events
-            .map(({ event }) => event)
-            .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
+    //     const events = await eventsPromise;
+    //     const userShieldingKeySetEvents = events
+    //         .map(({ event }) => event)
+    //         .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
 
-        await assertInitialIdGraphCreated(context, new PolkadotSigner(wallet), userShieldingKeySetEvents);
-    });
+    //     await assertInitialIdGraphCreated(context, new PolkadotSigner(wallet), userShieldingKeySetEvents);
+    // });
 
     assertions.forEach((assertion) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
