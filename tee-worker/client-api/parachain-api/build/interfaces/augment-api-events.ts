@@ -419,11 +419,7 @@ declare module '@polkadot/api-base/types/events' {
             MetadataTransferred: AugmentedEvent<
                 ApiType,
                 [prevOwner: PalletDemocracyMetadataOwner, owner: PalletDemocracyMetadataOwner, hash_: H256],
-                {
-                    prevOwner: PalletDemocracyMetadataOwner;
-                    owner: PalletDemocracyMetadataOwner;
-                    hash_: H256;
-                }
+                { prevOwner: PalletDemocracyMetadataOwner; owner: PalletDemocracyMetadataOwner; hash_: H256 }
             >;
             /**
              * A proposal has been rejected by referendum.
@@ -509,11 +505,7 @@ declare module '@polkadot/api-base/types/events' {
             OverweightEnqueued: AugmentedEvent<
                 ApiType,
                 [messageId: U8aFixed, overweightIndex: u64, requiredWeight: SpWeightsWeightV2Weight],
-                {
-                    messageId: U8aFixed;
-                    overweightIndex: u64;
-                    requiredWeight: SpWeightsWeightV2Weight;
-                }
+                { messageId: U8aFixed; overweightIndex: u64; requiredWeight: SpWeightsWeightV2Weight }
             >;
             /**
              * Downward message from the overweight queue was executed.
@@ -624,21 +616,13 @@ declare module '@polkadot/api-base/types/events' {
             ActivateIdentityFailed: AugmentedEvent<
                 ApiType,
                 [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
-                {
-                    account: Option<AccountId32>;
-                    detail: CorePrimitivesErrorErrorDetail;
-                    reqExtHash: H256;
-                }
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
             >;
             ActivateIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             DeactivateIdentityFailed: AugmentedEvent<
                 ApiType,
                 [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
-                {
-                    account: Option<AccountId32>;
-                    detail: CorePrimitivesErrorErrorDetail;
-                    reqExtHash: H256;
-                }
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
             >;
             DeactivateIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             DelegateeAdded: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
@@ -672,31 +656,19 @@ declare module '@polkadot/api-base/types/events' {
             LinkIdentityFailed: AugmentedEvent<
                 ApiType,
                 [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
-                {
-                    account: Option<AccountId32>;
-                    detail: CorePrimitivesErrorErrorDetail;
-                    reqExtHash: H256;
-                }
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
             >;
             LinkIdentityRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             SetUserShieldingKeyFailed: AugmentedEvent<
                 ApiType,
                 [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
-                {
-                    account: Option<AccountId32>;
-                    detail: CorePrimitivesErrorErrorDetail;
-                    reqExtHash: H256;
-                }
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
             >;
             SetUserShieldingKeyRequested: AugmentedEvent<ApiType, [shard: H256], { shard: H256 }>;
             UnclassifiedError: AugmentedEvent<
                 ApiType,
                 [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
-                {
-                    account: Option<AccountId32>;
-                    detail: CorePrimitivesErrorErrorDetail;
-                    reqExtHash: H256;
-                }
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
             >;
             UserShieldingKeySet: AugmentedEvent<
                 ApiType,
@@ -1016,12 +988,7 @@ declare module '@polkadot/api-base/types/events' {
             DelegationDecreaseScheduled: AugmentedEvent<
                 ApiType,
                 [delegator: AccountId32, candidate: AccountId32, amountToDecrease: u128, executeRound: u32],
-                {
-                    delegator: AccountId32;
-                    candidate: AccountId32;
-                    amountToDecrease: u128;
-                    executeRound: u32;
-                }
+                { delegator: AccountId32; candidate: AccountId32; amountToDecrease: u128; executeRound: u32 }
             >;
             DelegationIncreased: AugmentedEvent<
                 ApiType,
@@ -1078,12 +1045,7 @@ declare module '@polkadot/api-base/types/events' {
             DelegatorLeftCandidate: AugmentedEvent<
                 ApiType,
                 [delegator: AccountId32, candidate: AccountId32, unstakedAmount: u128, totalCandidateStaked: u128],
-                {
-                    delegator: AccountId32;
-                    candidate: AccountId32;
-                    unstakedAmount: u128;
-                    totalCandidateStaked: u128;
-                }
+                { delegator: AccountId32; candidate: AccountId32; unstakedAmount: u128; totalCandidateStaked: u128 }
             >;
             /**
              * Annual inflation input (first 3) was used to derive new per-round inflation (last 3)
@@ -1486,11 +1448,7 @@ declare module '@polkadot/api-base/types/events' {
             Dispatched: AugmentedEvent<
                 ApiType,
                 [task: ITuple<[u32, u32]>, id: Option<U8aFixed>, result: Result<Null, SpRuntimeDispatchError>],
-                {
-                    task: ITuple<[u32, u32]>;
-                    id: Option<U8aFixed>;
-                    result: Result<Null, SpRuntimeDispatchError>;
-                }
+                { task: ITuple<[u32, u32]>; id: Option<U8aFixed>; result: Result<Null, SpRuntimeDispatchError> }
             >;
             /**
              * The given task was unable to be renewed since the agenda is full at that block.
@@ -1557,10 +1515,7 @@ declare module '@polkadot/api-base/types/events' {
             ExtrinsicFailed: AugmentedEvent<
                 ApiType,
                 [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo],
-                {
-                    dispatchError: SpRuntimeDispatchError;
-                    dispatchInfo: FrameSupportDispatchDispatchInfo;
-                }
+                { dispatchError: SpRuntimeDispatchError; dispatchInfo: FrameSupportDispatchDispatchInfo }
             >;
             /**
              * An extrinsic completed successfully.
@@ -2005,11 +1960,7 @@ declare module '@polkadot/api-base/types/events' {
             UnclassifiedError: AugmentedEvent<
                 ApiType,
                 [account: Option<AccountId32>, detail: CorePrimitivesErrorErrorDetail, reqExtHash: H256],
-                {
-                    account: Option<AccountId32>;
-                    detail: CorePrimitivesErrorErrorDetail;
-                    reqExtHash: H256;
-                }
+                { account: Option<AccountId32>; detail: CorePrimitivesErrorErrorDetail; reqExtHash: H256 }
             >;
             VCDisabled: AugmentedEvent<
                 ApiType,
@@ -2091,11 +2042,7 @@ declare module '@polkadot/api-base/types/events' {
             Fail: AugmentedEvent<
                 ApiType,
                 [messageHash: Option<U8aFixed>, error: XcmV3TraitsError, weight: SpWeightsWeightV2Weight],
-                {
-                    messageHash: Option<U8aFixed>;
-                    error: XcmV3TraitsError;
-                    weight: SpWeightsWeightV2Weight;
-                }
+                { messageHash: Option<U8aFixed>; error: XcmV3TraitsError; weight: SpWeightsWeightV2Weight }
             >;
             /**
              * An XCM exceeded the individual message weight budget.

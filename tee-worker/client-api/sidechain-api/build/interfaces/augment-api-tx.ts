@@ -349,13 +349,7 @@ declare module '@polkadot/api-base/types/submittable' {
                 (
                     header:
                         | SpRuntimeHeader
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,

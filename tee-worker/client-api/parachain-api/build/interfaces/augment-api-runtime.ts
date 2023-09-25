@@ -94,13 +94,7 @@ declare module '@polkadot/api-base/types/calls' {
                 (
                     header:
                         | Header
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => Observable<CollationInfo>
@@ -123,13 +117,7 @@ declare module '@polkadot/api-base/types/calls' {
                 (
                     header:
                         | Header
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
@@ -156,13 +144,7 @@ declare module '@polkadot/api-base/types/calls' {
                 (
                     header:
                         | Header
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => Observable<Null>

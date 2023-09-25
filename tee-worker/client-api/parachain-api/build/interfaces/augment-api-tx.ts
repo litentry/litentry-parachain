@@ -98,13 +98,7 @@ declare module '@polkadot/api-base/types/submittable' {
                         | Uint8Array,
                     metadata:
                         | PalletAssetManagerAssetMetadata
-                        | {
-                              name?: any;
-                              symbol?: any;
-                              decimals?: any;
-                              minimalBalance?: any;
-                              isFrozen?: any;
-                          }
+                        | { name?: any; symbol?: any; decimals?: any; minimalBalance?: any; isFrozen?: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -152,13 +146,7 @@ declare module '@polkadot/api-base/types/submittable' {
                     assetId: u128 | AnyNumber | Uint8Array,
                     metadata:
                         | PalletAssetManagerAssetMetadata
-                        | {
-                              name?: any;
-                              symbol?: any;
-                              decimals?: any;
-                              minimalBalance?: any;
-                              isFrozen?: any;
-                          }
+                        | { name?: any; symbol?: any; decimals?: any; minimalBalance?: any; isFrozen?: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,

@@ -160,10 +160,7 @@ declare module '@polkadot/api-base/types/events' {
             ExtrinsicFailed: AugmentedEvent<
                 ApiType,
                 [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo],
-                {
-                    dispatchError: SpRuntimeDispatchError;
-                    dispatchInfo: FrameSupportDispatchDispatchInfo;
-                }
+                { dispatchError: SpRuntimeDispatchError; dispatchInfo: FrameSupportDispatchDispatchInfo }
             >;
             /**
              * An extrinsic completed successfully.
