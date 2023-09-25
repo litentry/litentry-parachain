@@ -22,7 +22,6 @@ std = [
     "substrate-fixed/std",
     "codec/std",
     "ita-stf/std",
-
 ]
 sgx = [
     "sgx_tstd",
