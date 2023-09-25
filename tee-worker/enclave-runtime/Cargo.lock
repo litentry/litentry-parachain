@@ -2009,6 +2009,7 @@ dependencies = [
 name = "itp-enclave-metrics"
 version = "0.9.0"
 dependencies = [
+ "ita-stf",
  "lc-stf-task-sender",
  "parity-scale-codec",
  "sgx_tstd",
@@ -2199,6 +2200,7 @@ version = "0.9.0"
 dependencies = [
  "ita-stf",
  "itc-parentchain-test",
+ "itp-enclave-metrics",
  "itp-node-api",
  "itp-ocall-api",
  "itp-sgx-crypto",
