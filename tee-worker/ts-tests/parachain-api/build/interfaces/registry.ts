@@ -19,6 +19,7 @@ import type {
     CorePrimitivesAssertionAchainableDatePercent,
     CorePrimitivesAssertionAchainableParams,
     CorePrimitivesAssertionAchainableToken,
+    CorePrimitivesAssertionAmountHoldingTimeType,
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesErrorImpError,
     CorePrimitivesErrorVcmpError,
@@ -384,6 +385,7 @@ declare module "@polkadot/types/types/registry" {
         CorePrimitivesAssertionAchainableDatePercent: CorePrimitivesAssertionAchainableDatePercent;
         CorePrimitivesAssertionAchainableParams: CorePrimitivesAssertionAchainableParams;
         CorePrimitivesAssertionAchainableToken: CorePrimitivesAssertionAchainableToken;
+        CorePrimitivesAssertionAmountHoldingTimeType: CorePrimitivesAssertionAmountHoldingTimeType;
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;
         CorePrimitivesErrorImpError: CorePrimitivesErrorImpError;
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;
