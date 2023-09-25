@@ -42,8 +42,8 @@ use lc_stf_task_sender::RequestType;
 use litentry_primitives::{Assertion, Identity};
 use log::*;
 use prometheus::{
-	proto::MetricFamily, register_histogram_vec, register_int_gauge, register_int_gauge_vec,
-	HistogramVec, IntGauge, IntGaugeVec,
+	proto::MetricFamily, register_counter_vec, register_histogram_vec, register_int_gauge,
+	register_int_gauge_vec, CounterVec, HistogramVec, IntGauge, IntGaugeVec,
 };
 use serde::{Deserialize, Serialize};
 use std::{net::SocketAddr, sync::Arc};
@@ -67,11 +67,11 @@ lazy_static! {
 	static ref ENCLAVE_STF_TASKS_EXECUTION: HistogramVec =
 		register_histogram_vec!("litentry_worker_enclave_stf_tasks_execution_times", "Litentry Stf Tasks Exeuction Time", &["request_type", "variant"])
 			.unwrap();
-	static ref ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_successful_trusted_operation", "Litentry Successful Trusted Operation", &["call"])
+	static ref ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION: CounterVec =
+		register_counter_vec!("litentry_worker_enclave_successful_trusted_operation", "Litentry Successful Trusted Operation", &["call"])
 			.unwrap();
-	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: IntGaugeVec =
-		register_int_gauge_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call"])
+	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: CounterVec =
+		register_counter_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call"])
 			.unwrap();
 }
 
