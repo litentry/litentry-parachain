@@ -36,8 +36,8 @@ on:
     branches:
       - dev
     paths-ignore:
-      - "**/dependabot.yml"
-      - "**/README.md"
+      - '**/dependabot.yml'
+      - '**/README.md'
   pull_request:
     branches:
       - dev
@@ -171,6 +171,10 @@ jobs:
         working-directory: ./tee-worker/client-api
         run: corepack yarn install --inline-builds
 
+      - name: Tee-worker client-api build
+        working-directory: ./tee-worker/client-api
+        run: corepack yarn build
+
       - name: Tee-worker ts-tests install npm deps
         working-directory: ./tee-worker/ts-tests
         run: corepack yarn install --inline-builds
@@ -228,7 +232,7 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: "litentry/litentry-tee-dev:edge"
+    container: 'litentry/litentry-tee-dev:edge'
     steps:
       - uses: actions/checkout@v3
 
