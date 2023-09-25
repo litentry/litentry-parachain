@@ -1,1 +1,1 @@
-export { default as identity } from "./identity/definitions";
+export { default as identity } from './identity/definitions';

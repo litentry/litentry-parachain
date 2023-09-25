@@ -3,30 +3,29 @@
 
 // import type lookup before we augment - in some environments
 // this is required to allow for ambient/previous definitions
-import "@polkadot/api-base/types/submittable";
+import '@polkadot/api-base/types/submittable';
 
 import type {
     ApiTypes,
     AugmentedSubmittable,
     SubmittableExtrinsic,
     SubmittableExtrinsicFunction,
-} from "@polkadot/api-base/types";
-import type { Bytes, Compact, U8aFixed, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
-import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
-import type { Call, MultiAddress } from "@polkadot/types/interfaces/runtime";
+} from '@polkadot/api-base/types';
+import type { Bytes, Compact, U8aFixed, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
+import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
+import type { Call, MultiAddress } from '@polkadot/types/interfaces/runtime';
 import type {
     CorePrimitivesNetworkWeb3Network,
     LitentryPrimitivesIdentity,
     SpRuntimeHeader,
     SpWeightsWeightV2Weight,
-} from "@polkadot/types/lookup";
+} from '@polkadot/types/lookup';
 
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
 export type __SubmittableExtrinsic<ApiType extends ApiTypes> = SubmittableExtrinsic<ApiType>;
-export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> =
-    SubmittableExtrinsicFunction<ApiType>;
+export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> = SubmittableExtrinsicFunction<ApiType>;
 
-declare module "@polkadot/api-base/types/submittable" {
+declare module '@polkadot/api-base/types/submittable' {
     interface AugmentedSubmittables<ApiType extends ApiTypes> {
         balances: {
             /**
@@ -273,25 +272,21 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Vec<CorePrimitivesNetworkWeb3Network>
                         | (
                               | CorePrimitivesNetworkWeb3Network
-                              | "Polkadot"
-                              | "Kusama"
-                              | "Litentry"
-                              | "Litmus"
-                              | "LitentryRococo"
-                              | "Khala"
-                              | "SubstrateTestnet"
-                              | "Ethereum"
-                              | "Polygon"
-                              | "BSC"
+                              | 'Polkadot'
+                              | 'Kusama'
+                              | 'Litentry'
+                              | 'Litmus'
+                              | 'LitentryRococo'
+                              | 'Khala'
+                              | 'SubstrateTestnet'
+                              | 'Ethereum'
+                              | 'Polygon'
+                              | 'BSC'
                               | number
                               | Uint8Array
                           )[]
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    LitentryPrimitivesIdentity,
-                    LitentryPrimitivesIdentity,
-                    Vec<CorePrimitivesNetworkWeb3Network>
-                ]
+                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity, Vec<CorePrimitivesNetworkWeb3Network>]
             >;
             setIdentityNetworks: AugmentedSubmittable<
                 (
@@ -317,25 +312,21 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Vec<CorePrimitivesNetworkWeb3Network>
                         | (
                               | CorePrimitivesNetworkWeb3Network
-                              | "Polkadot"
-                              | "Kusama"
-                              | "Litentry"
-                              | "Litmus"
-                              | "LitentryRococo"
-                              | "Khala"
-                              | "SubstrateTestnet"
-                              | "Ethereum"
-                              | "Polygon"
-                              | "BSC"
+                              | 'Polkadot'
+                              | 'Kusama'
+                              | 'Litentry'
+                              | 'Litmus'
+                              | 'LitentryRococo'
+                              | 'Khala'
+                              | 'SubstrateTestnet'
+                              | 'Ethereum'
+                              | 'Polygon'
+                              | 'BSC'
                               | number
                               | Uint8Array
                           )[]
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    LitentryPrimitivesIdentity,
-                    LitentryPrimitivesIdentity,
-                    Vec<CorePrimitivesNetworkWeb3Network>
-                ]
+                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity, Vec<CorePrimitivesNetworkWeb3Network>]
             >;
             setUserShieldingKey: AugmentedSubmittable<
                 (
@@ -444,11 +435,7 @@ declare module "@polkadot/api-base/types/submittable" {
             sudoUncheckedWeight: AugmentedSubmittable<
                 (
                     call: Call | IMethod | string | Uint8Array,
-                    weight:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    weight: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [Call, SpWeightsWeightV2Weight]
             >;
@@ -471,9 +458,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * Kill some items from storage.
              **/
             killStorage: AugmentedSubmittable<
-                (
-                    keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<Bytes>]
             >;
             /**
@@ -525,9 +510,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             setStorage: AugmentedSubmittable<
                 (
-                    items:
-                        | Vec<ITuple<[Bytes, Bytes]>>
-                        | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]
+                    items: Vec<ITuple<[Bytes, Bytes]>> | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]
                 ) => SubmittableExtrinsic<ApiType>,
                 [Vec<ITuple<[Bytes, Bytes]>>]
             >;

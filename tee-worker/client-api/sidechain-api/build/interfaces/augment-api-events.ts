@@ -3,21 +3,21 @@
 
 // import type lookup before we augment - in some environments
 // this is required to allow for ambient/previous definitions
-import "@polkadot/api-base/types/events";
+import '@polkadot/api-base/types/events';
 
-import type { ApiTypes, AugmentedEvent } from "@polkadot/api-base/types";
-import type { Null, Option, Result, U8aFixed, u128 } from "@polkadot/types-codec";
-import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
+import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
+import type { Null, Option, Result, U8aFixed, u128 } from '@polkadot/types-codec';
+import type { AccountId32, H256 } from '@polkadot/types/interfaces/runtime';
 import type {
     FrameSupportDispatchDispatchInfo,
     FrameSupportTokensMiscBalanceStatus,
     LitentryPrimitivesIdentity,
     SpRuntimeDispatchError,
-} from "@polkadot/types/lookup";
+} from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
-declare module "@polkadot/api-base/types/events" {
+declare module '@polkadot/api-base/types/events' {
     interface AugmentedEvents<ApiType extends ApiTypes> {
         balances: {
             /**
@@ -31,11 +31,7 @@ declare module "@polkadot/api-base/types/events" {
             /**
              * Some amount was deposited (e.g. for transaction fees).
              **/
-            Deposit: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, amount: u128],
-                { who: AccountId32; amount: u128 }
-            >;
+            Deposit: AugmentedEvent<ApiType, [who: AccountId32, amount: u128], { who: AccountId32; amount: u128 }>;
             /**
              * An account was removed whose balance was non-zero but below ExistentialDeposit,
              * resulting in an outright loss.
@@ -56,11 +52,7 @@ declare module "@polkadot/api-base/types/events" {
             /**
              * Some balance was reserved (moved from free to reserved).
              **/
-            Reserved: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, amount: u128],
-                { who: AccountId32; amount: u128 }
-            >;
+            Reserved: AugmentedEvent<ApiType, [who: AccountId32, amount: u128], { who: AccountId32; amount: u128 }>;
             /**
              * Some balance was moved from the reserve of the first account to the second account.
              * Final argument indicates the destination balance type.
@@ -83,11 +75,7 @@ declare module "@polkadot/api-base/types/events" {
             /**
              * Some amount was removed from the account (e.g. for misbehavior).
              **/
-            Slashed: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, amount: u128],
-                { who: AccountId32; amount: u128 }
-            >;
+            Slashed: AugmentedEvent<ApiType, [who: AccountId32, amount: u128], { who: AccountId32; amount: u128 }>;
             /**
              * Transfer succeeded.
              **/
@@ -99,19 +87,11 @@ declare module "@polkadot/api-base/types/events" {
             /**
              * Some balance was unreserved (moved from reserved to free).
              **/
-            Unreserved: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, amount: u128],
-                { who: AccountId32; amount: u128 }
-            >;
+            Unreserved: AugmentedEvent<ApiType, [who: AccountId32, amount: u128], { who: AccountId32; amount: u128 }>;
             /**
              * Some amount was withdrawn from the account (e.g. for transaction fees).
              **/
-            Withdraw: AugmentedEvent<
-                ApiType,
-                [who: AccountId32, amount: u128],
-                { who: AccountId32; amount: u128 }
-            >;
+            Withdraw: AugmentedEvent<ApiType, [who: AccountId32, amount: u128], { who: AccountId32; amount: u128 }>;
         };
         identityManagement: {
             /**
@@ -151,11 +131,7 @@ declare module "@polkadot/api-base/types/events" {
             /**
              * The \[sudoer\] just switched identity; the old key is supplied if one existed.
              **/
-            KeyChanged: AugmentedEvent<
-                ApiType,
-                [oldSudoer: Option<AccountId32>],
-                { oldSudoer: Option<AccountId32> }
-            >;
+            KeyChanged: AugmentedEvent<ApiType, [oldSudoer: Option<AccountId32>], { oldSudoer: Option<AccountId32> }>;
             /**
              * A sudo just took place. \[result\]
              **/
@@ -183,10 +159,7 @@ declare module "@polkadot/api-base/types/events" {
              **/
             ExtrinsicFailed: AugmentedEvent<
                 ApiType,
-                [
-                    dispatchError: SpRuntimeDispatchError,
-                    dispatchInfo: FrameSupportDispatchDispatchInfo
-                ],
+                [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo],
                 {
                     dispatchError: SpRuntimeDispatchError;
                     dispatchInfo: FrameSupportDispatchDispatchInfo;
@@ -203,11 +176,7 @@ declare module "@polkadot/api-base/types/events" {
             /**
              * An account was reaped.
              **/
-            KilledAccount: AugmentedEvent<
-                ApiType,
-                [account: AccountId32],
-                { account: AccountId32 }
-            >;
+            KilledAccount: AugmentedEvent<ApiType, [account: AccountId32], { account: AccountId32 }>;
             /**
              * A new account was created.
              **/
@@ -215,11 +184,7 @@ declare module "@polkadot/api-base/types/events" {
             /**
              * On on-chain remark happened.
              **/
-            Remarked: AugmentedEvent<
-                ApiType,
-                [sender: AccountId32, hash_: H256],
-                { sender: AccountId32; hash_: H256 }
-            >;
+            Remarked: AugmentedEvent<ApiType, [sender: AccountId32, hash_: H256], { sender: AccountId32; hash_: H256 }>;
         };
         transactionPayment: {
             /**

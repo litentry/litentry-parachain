@@ -1,15 +1,15 @@
-import "@polkadot/api-base/types/events";
-import type { ApiTypes, AugmentedEvent } from "@polkadot/api-base/types";
-import type { Null, Option, Result, U8aFixed, u128 } from "@polkadot/types-codec";
-import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
+import '@polkadot/api-base/types/events';
+import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
+import type { Null, Option, Result, U8aFixed, u128 } from '@polkadot/types-codec';
+import type { AccountId32, H256 } from '@polkadot/types/interfaces/runtime';
 import type {
     FrameSupportDispatchDispatchInfo,
     FrameSupportTokensMiscBalanceStatus,
     LitentryPrimitivesIdentity,
     SpRuntimeDispatchError,
-} from "@polkadot/types/lookup";
+} from '@polkadot/types/lookup';
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
-declare module "@polkadot/api-base/types/events" {
+declare module '@polkadot/api-base/types/events' {
     interface AugmentedEvents<ApiType extends ApiTypes> {
         balances: {
             /**
@@ -222,10 +222,7 @@ declare module "@polkadot/api-base/types/events" {
              **/
             ExtrinsicFailed: AugmentedEvent<
                 ApiType,
-                [
-                    dispatchError: SpRuntimeDispatchError,
-                    dispatchInfo: FrameSupportDispatchDispatchInfo
-                ],
+                [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo],
                 {
                     dispatchError: SpRuntimeDispatchError;
                     dispatchInfo: FrameSupportDispatchDispatchInfo;

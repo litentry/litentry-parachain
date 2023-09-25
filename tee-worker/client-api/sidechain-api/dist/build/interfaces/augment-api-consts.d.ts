@@ -1,14 +1,14 @@
-import "@polkadot/api-base/types/consts";
-import type { ApiTypes, AugmentedConst } from "@polkadot/api-base/types";
-import type { u128, u16, u32, u64, u8 } from "@polkadot/types-codec";
+import '@polkadot/api-base/types/consts';
+import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
+import type { u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type {
     FrameSystemLimitsBlockLength,
     FrameSystemLimitsBlockWeights,
     SpVersionRuntimeVersion,
     SpWeightsRuntimeDbWeight,
-} from "@polkadot/types/lookup";
+} from '@polkadot/types/lookup';
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
-declare module "@polkadot/api-base/types/consts" {
+declare module '@polkadot/api-base/types/consts' {
     interface AugmentedConsts<ApiType extends ApiTypes> {
         balances: {
             /**

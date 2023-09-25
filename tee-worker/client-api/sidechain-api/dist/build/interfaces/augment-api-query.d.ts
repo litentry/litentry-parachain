@@ -1,18 +1,8 @@
-import "@polkadot/api-base/types/storage";
-import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from "@polkadot/api-base/types";
-import type {
-    Bytes,
-    Null,
-    Option,
-    U8aFixed,
-    Vec,
-    bool,
-    u128,
-    u32,
-    u64,
-} from "@polkadot/types-codec";
-import type { AnyNumber, ITuple } from "@polkadot/types-codec/types";
-import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
+import '@polkadot/api-base/types/storage';
+import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from '@polkadot/api-base/types';
+import type { Bytes, Null, Option, U8aFixed, Vec, bool, u128, u32, u64 } from '@polkadot/types-codec';
+import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
+import type { AccountId32, H256 } from '@polkadot/types/interfaces/runtime';
 import type {
     FrameSupportDispatchPerDispatchClassWeight,
     FrameSystemAccountInfo,
@@ -26,11 +16,11 @@ import type {
     PalletIdentityManagementTeeIdentityContext,
     PalletTransactionPaymentReleases,
     SpRuntimeDigest,
-} from "@polkadot/types/lookup";
-import type { Observable } from "@polkadot/types/types";
+} from '@polkadot/types/lookup';
+import type { Observable } from '@polkadot/types/types';
 export type __AugmentedQuery<ApiType extends ApiTypes> = AugmentedQuery<ApiType, () => unknown>;
 export type __QueryableStorageEntry<ApiType extends ApiTypes> = QueryableStorageEntry<ApiType>;
-declare module "@polkadot/api-base/types/storage" {
+declare module '@polkadot/api-base/types/storage' {
     interface AugmentedQueries<ApiType extends ApiTypes> {
         balances: {
             /**
@@ -74,9 +64,7 @@ declare module "@polkadot/api-base/types/storage" {
              **/
             locks: AugmentedQuery<
                 ApiType,
-                (
-                    arg: AccountId32 | string | Uint8Array
-                ) => Observable<Vec<PalletBalancesBalanceLock>>,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesBalanceLock>>,
                 [AccountId32]
             >;
             /**
@@ -84,9 +72,7 @@ declare module "@polkadot/api-base/types/storage" {
              **/
             reserves: AugmentedQuery<
                 ApiType,
-                (
-                    arg: AccountId32 | string | Uint8Array
-                ) => Observable<Vec<PalletBalancesReserveData>>,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesReserveData>>,
                 [AccountId32]
             >;
             /**
@@ -251,19 +237,11 @@ declare module "@polkadot/api-base/types/storage" {
             /**
              * Map of block numbers to block hashes.
              **/
-            blockHash: AugmentedQuery<
-                ApiType,
-                (arg: u32 | AnyNumber | Uint8Array) => Observable<H256>,
-                [u32]
-            >;
+            blockHash: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<H256>, [u32]>;
             /**
              * The current weight for the block.
              **/
-            blockWeight: AugmentedQuery<
-                ApiType,
-                () => Observable<FrameSupportDispatchPerDispatchClassWeight>,
-                []
-            >;
+            blockWeight: AugmentedQuery<ApiType, () => Observable<FrameSupportDispatchPerDispatchClassWeight>, []>;
             /**
              * Digest of the current block, also part of the block header.
              **/
@@ -310,11 +288,7 @@ declare module "@polkadot/api-base/types/storage" {
             /**
              * Extrinsics data for the current block (maps an extrinsic's index to its data).
              **/
-            extrinsicData: AugmentedQuery<
-                ApiType,
-                (arg: u32 | AnyNumber | Uint8Array) => Observable<Bytes>,
-                [u32]
-            >;
+            extrinsicData: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Bytes>, [u32]>;
             /**
              * Stores the `spec_version` and `spec_name` of when the last runtime upgrade happened.
              **/
@@ -353,11 +327,7 @@ declare module "@polkadot/api-base/types/storage" {
         };
         transactionPayment: {
             nextFeeMultiplier: AugmentedQuery<ApiType, () => Observable<u128>, []>;
-            storageVersion: AugmentedQuery<
-                ApiType,
-                () => Observable<PalletTransactionPaymentReleases>,
-                []
-            >;
+            storageVersion: AugmentedQuery<ApiType, () => Observable<PalletTransactionPaymentReleases>, []>;
         };
     }
 }

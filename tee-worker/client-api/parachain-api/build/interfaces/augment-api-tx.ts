@@ -3,15 +3,15 @@
 
 // import type lookup before we augment - in some environments
 // this is required to allow for ambient/previous definitions
-import "@polkadot/api-base/types/submittable";
+import '@polkadot/api-base/types/submittable';
 
 import type {
     ApiTypes,
     AugmentedSubmittable,
     SubmittableExtrinsic,
     SubmittableExtrinsicFunction,
-} from "@polkadot/api-base/types";
-import type { Data } from "@polkadot/types";
+} from '@polkadot/api-base/types';
+import type { Data } from '@polkadot/types';
 import type {
     Bytes,
     Compact,
@@ -25,16 +25,9 @@ import type {
     u32,
     u64,
     u8,
-} from "@polkadot/types-codec";
-import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
-import type {
-    AccountId32,
-    Call,
-    H256,
-    MultiAddress,
-    Perbill,
-    Percent,
-} from "@polkadot/types/interfaces/runtime";
+} from '@polkadot/types-codec';
+import type { AnyNumber, IMethod, ITuple } from '@polkadot/types-codec/types';
+import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent } from '@polkadot/types/interfaces/runtime';
 import type {
     CorePrimitivesAssertion,
     CorePrimitivesErrorImpError,
@@ -65,14 +58,13 @@ import type {
     XcmVersionedMultiAssets,
     XcmVersionedMultiLocation,
     XcmVersionedXcm,
-} from "@polkadot/types/lookup";
+} from '@polkadot/types/lookup';
 
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
 export type __SubmittableExtrinsic<ApiType extends ApiTypes> = SubmittableExtrinsic<ApiType>;
-export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> =
-    SubmittableExtrinsicFunction<ApiType>;
+export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> = SubmittableExtrinsicFunction<ApiType>;
 
-declare module "@polkadot/api-base/types/submittable" {
+declare module '@polkadot/api-base/types/submittable' {
     interface AugmentedSubmittables<ApiType extends ApiTypes> {
         assetManager: {
             /**
@@ -954,9 +946,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * May only be called from `T::ResetOrigin`.
              **/
             resetMembers: AugmentedSubmittable<
-                (
-                    members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<AccountId32>]
             >;
             /**
@@ -1104,13 +1094,13 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Uint8Array,
                     conviction:
                         | PalletDemocracyConviction
-                        | "None"
-                        | "Locked1x"
-                        | "Locked2x"
-                        | "Locked3x"
-                        | "Locked4x"
-                        | "Locked5x"
-                        | "Locked6x"
+                        | 'None'
+                        | 'Locked1x'
+                        | 'Locked2x'
+                        | 'Locked3x'
+                        | 'Locked4x'
+                        | 'Locked5x'
+                        | 'Locked6x'
                         | number
                         | Uint8Array,
                     balance: u128 | AnyNumber | Uint8Array
@@ -1423,12 +1413,7 @@ declare module "@polkadot/api-base/types/submittable" {
             vote: AugmentedSubmittable<
                 (
                     refIndex: Compact<u32> | AnyNumber | Uint8Array,
-                    vote:
-                        | PalletDemocracyVoteAccountVote
-                        | { Standard: any }
-                        | { Split: any }
-                        | string
-                        | Uint8Array
+                    vote: PalletDemocracyVoteAccountVote | { Standard: any } | { Split: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [Compact<u32>, PalletDemocracyVoteAccountVote]
             >;
@@ -1440,11 +1425,7 @@ declare module "@polkadot/api-base/types/submittable" {
             serviceOverweight: AugmentedSubmittable<
                 (
                     index: u64 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    weightLimit: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [u64, SpWeightsWeightV2Weight]
             >;
@@ -1549,13 +1530,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             setMode: AugmentedSubmittable<
                 (
-                    mode:
-                        | PalletExtrinsicFilterOperationalMode
-                        | "Normal"
-                        | "Safe"
-                        | "Test"
-                        | number
-                        | Uint8Array
+                    mode: PalletExtrinsicFilterOperationalMode | 'Normal' | 'Safe' | 'Test' | number | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [PalletExtrinsicFilterOperationalMode]
             >;
@@ -1740,18 +1715,14 @@ declare module "@polkadot/api-base/types/submittable" {
              * Batch adding of new group members
              **/
             batchAddGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<AccountId32>]
             >;
             /**
              * Batch Removing existing group members
              **/
             batchRemoveGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<AccountId32>]
             >;
             /**
@@ -1815,19 +1786,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { height?: any; index?: any }
                         | string,
                     callHash: U8aFixed | string | Uint8Array,
-                    maxWeight:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    maxWeight: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    u16,
-                    Vec<AccountId32>,
-                    Option<PalletMultisigTimepoint>,
-                    U8aFixed,
-                    SpWeightsWeightV2Weight
-                ]
+                [u16, Vec<AccountId32>, Option<PalletMultisigTimepoint>, U8aFixed, SpWeightsWeightV2Weight]
             >;
             /**
              * Register approval for a dispatch to be made from a deterministic composite account if
@@ -1882,19 +1843,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { height?: any; index?: any }
                         | string,
                     call: Call | IMethod | string | Uint8Array,
-                    maxWeight:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    maxWeight: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    u16,
-                    Vec<AccountId32>,
-                    Option<PalletMultisigTimepoint>,
-                    Call,
-                    SpWeightsWeightV2Weight
-                ]
+                [u16, Vec<AccountId32>, Option<PalletMultisigTimepoint>, Call, SpWeightsWeightV2Weight]
             >;
             /**
              * Immediately dispatch a multi-signature call using a single approval from the caller.
@@ -1944,11 +1895,7 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     threshold: u16 | AnyNumber | Uint8Array,
                     otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[],
-                    timepoint:
-                        | PalletMultisigTimepoint
-                        | { height?: any; index?: any }
-                        | string
-                        | Uint8Array,
+                    timepoint: PalletMultisigTimepoint | { height?: any; index?: any } | string | Uint8Array,
                     callHash: U8aFixed | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [u16, Vec<AccountId32>, PalletMultisigTimepoint, U8aFixed]
@@ -2688,11 +2635,7 @@ declare module "@polkadot/api-base/types/submittable" {
             execute: AugmentedSubmittable<
                 (
                     message: XcmVersionedXcm | { V2: any } | { V3: any } | string | Uint8Array,
-                    maxWeight:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    maxWeight: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedXcm, SpWeightsWeightV2Weight]
             >;
@@ -2704,9 +2647,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * - `maybe_xcm_version`: The default XCM encoding version, or `None` to disable.
              **/
             forceDefaultXcmVersion: AugmentedSubmittable<
-                (
-                    maybeXcmVersion: Option<u32> | null | Uint8Array | u32 | AnyNumber
-                ) => SubmittableExtrinsic<ApiType>,
+                (maybeXcmVersion: Option<u32> | null | Uint8Array | u32 | AnyNumber) => SubmittableExtrinsic<ApiType>,
                 [Option<u32>]
             >;
             /**
@@ -2717,12 +2658,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             forceSubscribeVersionNotify: AugmentedSubmittable<
                 (
-                    location:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array
+                    location: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiLocation]
             >;
@@ -2736,12 +2672,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             forceUnsubscribeVersionNotify: AugmentedSubmittable<
                 (
-                    location:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array
+                    location: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiLocation]
             >;
@@ -2755,11 +2686,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             forceXcmVersion: AugmentedSubmittable<
                 (
-                    location:
-                        | XcmV3MultiLocation
-                        | { parents?: any; interior?: any }
-                        | string
-                        | Uint8Array,
+                    location: XcmV3MultiLocation | { parents?: any; interior?: any } | string | Uint8Array,
                     xcmVersion: u32 | AnyNumber | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmV3MultiLocation, u32]
@@ -2786,39 +2713,13 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             limitedReserveTransferAssets: AugmentedSubmittable<
                 (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    beneficiary: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    assets: XcmVersionedMultiAssets | { V2: any } | { V3: any } | string | Uint8Array,
                     feeAssetItem: u32 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    weightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiAssets,
-                    u32,
-                    XcmV3WeightLimit
-                ]
+                [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32, XcmV3WeightLimit]
             >;
             /**
              * Teleport some assets from the local chain to some destination chain.
@@ -2841,39 +2742,13 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             limitedTeleportAssets: AugmentedSubmittable<
                 (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    beneficiary: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    assets: XcmVersionedMultiAssets | { V2: any } | { V3: any } | string | Uint8Array,
                     feeAssetItem: u32 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    weightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiLocation,
-                    XcmVersionedMultiAssets,
-                    u32,
-                    XcmV3WeightLimit
-                ]
+                [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32, XcmV3WeightLimit]
             >;
             /**
              * Transfer some assets from the local chain to the sovereign account of a destination
@@ -2895,36 +2770,16 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             reserveTransferAssets: AugmentedSubmittable<
                 (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    beneficiary: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    assets: XcmVersionedMultiAssets | { V2: any } | { V3: any } | string | Uint8Array,
                     feeAssetItem: u32 | AnyNumber | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32]
             >;
             send: AugmentedSubmittable<
                 (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
                     message: XcmVersionedXcm | { V2: any } | { V3: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiLocation, XcmVersionedXcm]
@@ -2948,24 +2803,9 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             teleportAssets: AugmentedSubmittable<
                 (
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    beneficiary:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    beneficiary: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    assets: XcmVersionedMultiAssets | { V2: any } | { V3: any } | string | Uint8Array,
                     feeAssetItem: u32 | AnyNumber | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32]
@@ -3039,11 +2879,11 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Uint8Array,
                     proxyType:
                         | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
+                        | 'Any'
+                        | 'NonTransfer'
+                        | 'CancelProxy'
+                        | 'Collator'
+                        | 'Governance'
                         | number
                         | Uint8Array,
                     delay: u32 | AnyNumber | Uint8Array
@@ -3106,11 +2946,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     proxyType:
                         | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
+                        | 'Any'
+                        | 'NonTransfer'
+                        | 'CancelProxy'
+                        | 'Collator'
+                        | 'Governance'
                         | number
                         | Uint8Array,
                     delay: u32 | AnyNumber | Uint8Array,
@@ -3149,11 +2989,11 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Uint8Array,
                     proxyType:
                         | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
+                        | 'Any'
+                        | 'NonTransfer'
+                        | 'CancelProxy'
+                        | 'Collator'
+                        | 'Governance'
                         | number
                         | Uint8Array,
                     index: u16 | AnyNumber | Uint8Array,
@@ -3189,11 +3029,11 @@ declare module "@polkadot/api-base/types/submittable" {
                         | null
                         | Uint8Array
                         | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
+                        | 'Any'
+                        | 'NonTransfer'
+                        | 'CancelProxy'
+                        | 'Collator'
+                        | 'Governance'
                         | number,
                     call: Call | IMethod | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -3237,11 +3077,11 @@ declare module "@polkadot/api-base/types/submittable" {
                         | null
                         | Uint8Array
                         | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
+                        | 'Any'
+                        | 'NonTransfer'
+                        | 'CancelProxy'
+                        | 'Collator'
+                        | 'Governance'
                         | number,
                     call: Call | IMethod | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -3332,11 +3172,11 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Uint8Array,
                     proxyType:
                         | RococoParachainRuntimeProxyType
-                        | "Any"
-                        | "NonTransfer"
-                        | "CancelProxy"
-                        | "Collator"
-                        | "Governance"
+                        | 'Any'
+                        | 'NonTransfer'
+                        | 'CancelProxy'
+                        | 'Collator'
+                        | 'Governance'
                         | number
                         | Uint8Array,
                     delay: u32 | AnyNumber | Uint8Array
@@ -3555,11 +3395,7 @@ declare module "@polkadot/api-base/types/submittable" {
             sudoUncheckedWeight: AugmentedSubmittable<
                 (
                     call: Call | IMethod | string | Uint8Array,
-                    weight:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    weight: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [Call, SpWeightsWeightV2Weight]
             >;
@@ -3582,9 +3418,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * Kill some items from storage.
              **/
             killStorage: AugmentedSubmittable<
-                (
-                    keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<Bytes>]
             >;
             /**
@@ -3636,9 +3470,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             setStorage: AugmentedSubmittable<
                 (
-                    items:
-                        | Vec<ITuple<[Bytes, Bytes]>>
-                        | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]
+                    items: Vec<ITuple<[Bytes, Bytes]>> | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]
                 ) => SubmittableExtrinsic<ApiType>,
                 [Vec<ITuple<[Bytes, Bytes]>>]
             >;
@@ -3903,9 +3735,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * May only be called from `T::ResetOrigin`.
              **/
             resetMembers: AugmentedSubmittable<
-                (
-                    members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (members: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<AccountId32>]
             >;
             /**
@@ -3999,11 +3829,7 @@ declare module "@polkadot/api-base/types/submittable" {
         teerex: {
             callWorker: AugmentedSubmittable<
                 (
-                    request:
-                        | TeerexPrimitivesRequest
-                        | { shard?: any; cyphertext?: any }
-                        | string
-                        | Uint8Array
+                    request: TeerexPrimitivesRequest | { shard?: any; cyphertext?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [TeerexPrimitivesRequest]
             >;
@@ -4069,9 +3895,7 @@ declare module "@polkadot/api-base/types/submittable" {
                 [Bytes, Bytes, Bytes]
             >;
             removeScheduledEnclave: AugmentedSubmittable<
-                (
-                    sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
+                (sidechainBlockNumber: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [Compact<u64>]
             >;
             /**
@@ -4173,10 +3997,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * is charged as upper bound given by `ContainsLengthBound`. The actual cost depends on
              * the implementation of `T::Tippers`.
              **/
-            closeTip: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            closeTip: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H256]>;
             /**
              * Report something `reason` that deserves a tip and claim any eventual the finder's fee.
              *
@@ -4244,10 +4065,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            slashTip: AugmentedSubmittable<
-                (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [H256]
-            >;
+            slashTip: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H256]>;
             /**
              * Declare a tip value for an already-open tip.
              *
@@ -4489,9 +4307,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1).
              **/
             approveProposal: AugmentedSubmittable<
-                (
-                    proposalId: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
+                (proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [Compact<u32>]
             >;
             /**
@@ -4526,9 +4342,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(1)
              **/
             rejectProposal: AugmentedSubmittable<
-                (
-                    proposalId: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
+                (proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [Compact<u32>]
             >;
             /**
@@ -4547,9 +4361,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * exist altogether, thus there is no way it would have been approved in the first place.
              **/
             removeApproval: AugmentedSubmittable<
-                (
-                    proposalId: Compact<u32> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
+                (proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [Compact<u32>]
             >;
             /**
@@ -4622,9 +4434,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * event is deposited.
              **/
             batch: AugmentedSubmittable<
-                (
-                    calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<Call>]
             >;
             /**
@@ -4643,9 +4453,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(C) where C is the number of calls to be batched.
              **/
             batchAll: AugmentedSubmittable<
-                (
-                    calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<Call>]
             >;
             /**
@@ -4688,9 +4496,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * - O(C) where C is the number of calls to be batched.
              **/
             forceBatch: AugmentedSubmittable<
-                (
-                    calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (calls: Vec<Call> | (Call | IMethod | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<Call>]
             >;
             /**
@@ -4704,11 +4510,7 @@ declare module "@polkadot/api-base/types/submittable" {
             withWeight: AugmentedSubmittable<
                 (
                     call: Call | IMethod | string | Uint8Array,
-                    weight:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    weight: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [Call, SpWeightsWeightV2Weight]
             >;
@@ -4865,11 +4667,7 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Uint8Array,
                     index: H256 | string | Uint8Array,
                     hash: H256 | string | Uint8Array,
-                    vc:
-                        | CorePrimitivesKeyAesOutput
-                        | { ciphertext?: any; aad?: any; nonce?: any }
-                        | string
-                        | Uint8Array,
+                    vc: CorePrimitivesKeyAesOutput | { ciphertext?: any; aad?: any; nonce?: any } | string | Uint8Array,
                     reqExtHash: H256 | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, CorePrimitivesAssertion, H256, H256, CorePrimitivesKeyAesOutput, H256]
@@ -4887,18 +4685,14 @@ declare module "@polkadot/api-base/types/submittable" {
              * Batch adding of new group members
              **/
             batchAddGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<AccountId32>]
             >;
             /**
              * Batch Removing existing group members
              **/
             batchRemoveGroupMembers: AugmentedSubmittable<
-                (
-                    vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]
-                ) => SubmittableExtrinsic<ApiType>,
+                (vs: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
                 [Vec<AccountId32>]
             >;
             /**
@@ -5093,11 +4887,7 @@ declare module "@polkadot/api-base/types/submittable" {
             serviceOverweight: AugmentedSubmittable<
                 (
                     index: u64 | AnyNumber | Uint8Array,
-                    weightLimit:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    weightLimit: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [u64, SpWeightsWeightV2Weight]
             >;
@@ -5148,11 +4938,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             updateThresholdWeight: AugmentedSubmittable<
                 (
-                    updated:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    updated: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [SpWeightsWeightV2Weight]
             >;
@@ -5165,11 +4951,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             updateWeightRestrictDecay: AugmentedSubmittable<
                 (
-                    updated:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    updated: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [SpWeightsWeightV2Weight]
             >;
@@ -5182,11 +4964,7 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             updateXcmpMaxIndividualWeight: AugmentedSubmittable<
                 (
-                    updated:
-                        | SpWeightsWeightV2Weight
-                        | { refTime?: any; proofSize?: any }
-                        | string
-                        | Uint8Array
+                    updated: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [SpWeightsWeightV2Weight]
             >;
@@ -5215,18 +4993,8 @@ declare module "@polkadot/api-base/types/submittable" {
                         | string
                         | Uint8Array,
                     amount: u128 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    destWeightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [RuntimeCommonXcmImplCurrencyId, u128, XcmVersionedMultiLocation, XcmV3WeightLimit]
             >;
@@ -5247,18 +5015,8 @@ declare module "@polkadot/api-base/types/submittable" {
             transferMultiasset: AugmentedSubmittable<
                 (
                     asset: XcmVersionedMultiAsset | { V2: any } | { V3: any } | string | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    destWeightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiAsset, XcmVersionedMultiLocation, XcmV3WeightLimit]
             >;
@@ -5281,25 +5039,10 @@ declare module "@polkadot/api-base/types/submittable" {
              **/
             transferMultiassets: AugmentedSubmittable<
                 (
-                    assets:
-                        | XcmVersionedMultiAssets
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
+                    assets: XcmVersionedMultiAssets | { V2: any } | { V3: any } | string | Uint8Array,
                     feeItem: u32 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    destWeightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiAssets, u32, XcmVersionedMultiLocation, XcmV3WeightLimit]
             >;
@@ -5330,25 +5073,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     asset: XcmVersionedMultiAsset | { V2: any } | { V3: any } | string | Uint8Array,
                     fee: XcmVersionedMultiAsset | { V2: any } | { V3: any } | string | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    destWeightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    XcmVersionedMultiAsset,
-                    XcmVersionedMultiAsset,
-                    XcmVersionedMultiLocation,
-                    XcmV3WeightLimit
-                ]
+                [XcmVersionedMultiAsset, XcmVersionedMultiAsset, XcmVersionedMultiLocation, XcmV3WeightLimit]
             >;
             /**
              * Transfer several currencies specifying the item to be used as fee
@@ -5382,25 +5110,10 @@ declare module "@polkadot/api-base/types/submittable" {
                               u128 | AnyNumber | Uint8Array
                           ][],
                     feeItem: u32 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    destWeightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    Vec<ITuple<[RuntimeCommonXcmImplCurrencyId, u128]>>,
-                    u32,
-                    XcmVersionedMultiLocation,
-                    XcmV3WeightLimit
-                ]
+                [Vec<ITuple<[RuntimeCommonXcmImplCurrencyId, u128]>>, u32, XcmVersionedMultiLocation, XcmV3WeightLimit]
             >;
             /**
              * Transfer native currencies specifying the fee and amount as
@@ -5435,26 +5148,10 @@ declare module "@polkadot/api-base/types/submittable" {
                         | Uint8Array,
                     amount: u128 | AnyNumber | Uint8Array,
                     fee: u128 | AnyNumber | Uint8Array,
-                    dest:
-                        | XcmVersionedMultiLocation
-                        | { V2: any }
-                        | { V3: any }
-                        | string
-                        | Uint8Array,
-                    destWeightLimit:
-                        | XcmV3WeightLimit
-                        | { Unlimited: any }
-                        | { Limited: any }
-                        | string
-                        | Uint8Array
+                    dest: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array,
+                    destWeightLimit: XcmV3WeightLimit | { Unlimited: any } | { Limited: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
-                [
-                    RuntimeCommonXcmImplCurrencyId,
-                    u128,
-                    u128,
-                    XcmVersionedMultiLocation,
-                    XcmV3WeightLimit
-                ]
+                [RuntimeCommonXcmImplCurrencyId, u128, u128, XcmVersionedMultiLocation, XcmV3WeightLimit]
             >;
         };
     } // AugmentedSubmittables

@@ -1,1 +1,1 @@
-export { default as dummynocustom } from "./dummynocustom/definitions";
+export { default as dummynocustom } from './dummynocustom/definitions';

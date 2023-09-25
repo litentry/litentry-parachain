@@ -1,4 +1,4 @@
-import "@polkadot/types/types/registry";
+import '@polkadot/types/types/registry';
 import type {
     CorePrimitivesAssertion,
     CorePrimitivesAssertionAchainableAmount,
@@ -361,8 +361,8 @@ import type {
     XcmVersionedMultiLocation,
     XcmVersionedResponse,
     XcmVersionedXcm,
-} from "@polkadot/types/lookup";
-declare module "@polkadot/types/types/registry" {
+} from '@polkadot/types/lookup';
+declare module '@polkadot/types/types/registry' {
     interface InterfaceTypes {
         CorePrimitivesAssertion: CorePrimitivesAssertion;
         CorePrimitivesAssertionAchainableAmount: CorePrimitivesAssertionAchainableAmount;
