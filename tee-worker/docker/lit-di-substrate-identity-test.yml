@@ -1,6 +1,6 @@
 services:
     lit-di-substrate-identity-test:
-        image: litentry-cli:dev
+        image: litentry-cli:latest
         container_name: litentry-di-substrate-identity-test
         volumes:
             - ../ts-tests:/ts-tests

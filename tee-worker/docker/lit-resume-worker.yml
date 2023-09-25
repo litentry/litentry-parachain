@@ -1,6 +1,6 @@
 services:
   lit-resume-worker:
-    image: litentry-worker:dev
+    image: litentry-worker:latest
     container_name: litentry-worker
     volumes:
       - ../ts-tests:/ts-tests

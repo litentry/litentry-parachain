@@ -643,11 +643,6 @@ jobs:
       - set-condition
       - parachain-build-dev
       - tee-build
-    env:
-      WORKER_IMAGE_TAG: litentry-worker:dev
-      CLIENT_IMAGE_TAG: litentry-cli:dev
-      COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
-      TEERACLE_INTERVAL_SECONDS: 10
 
     strategy:
       fail-fast: false
@@ -688,12 +683,6 @@ jobs:
         run: |
           docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-tee.tar.gz
-
-      - name: Re-name Image Tags
-        run: |
-          docker tag litentry/litentry-worker ${{ env.WORKER_IMAGE_TAG }}
-          docker tag litentry/litentry-cli ${{ env.CLIENT_IMAGE_TAG }}
-          docker images --all
 
       - name: Generate parachain artefacts
         run: |
