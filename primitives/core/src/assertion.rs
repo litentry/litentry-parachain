@@ -164,8 +164,6 @@ pub enum Assertion {
 	A3(ParameterString, ParameterString, ParameterString),  // (guild_id, channel_id, role_id)
 	A6,
 	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
-	A10(ParameterString),                                   // (minimum_amount)
-	A11(ParameterString),                                   // (minimum_amount)
 
 	// ----- begin polkadot decoded 2023 -----
 	A13(AccountId),                                         // (participant_account), can only be requested by delegatee
