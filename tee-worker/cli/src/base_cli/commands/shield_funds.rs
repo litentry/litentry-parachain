@@ -21,14 +21,12 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use itp_node_api::api_client::{TEEREX};
+use itp_node_api::api_client::TEEREX;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
-use substrate_api_client::{
-	ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus,
-};
+use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 
 #[derive(Parser)]
 pub struct ShieldFundsCommand {

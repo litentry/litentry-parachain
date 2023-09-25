@@ -35,15 +35,14 @@ use litentry_primitives::ParentchainHash as Hash;
 use log::*;
 use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;
-use sp_core::{ H256};
+use sp_core::H256;
 use std::{
 	result::Result as StdResult,
 	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
 use substrate_api_client::{
-	ac_compose_macros::compose_extrinsic, GetChainInfo, SubmitAndWatch,
-	SubscribeEvents, XtStatus,
+	ac_compose_macros::compose_extrinsic, GetChainInfo, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
 use teerex_primitives::Request;
 use thiserror::Error;

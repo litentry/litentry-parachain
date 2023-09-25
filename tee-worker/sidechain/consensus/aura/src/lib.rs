@@ -44,7 +44,7 @@ use its_primitives::{
 };
 use its_validateer_fetch::ValidateerFetch;
 use lc_scheduled_enclave::ScheduledEnclaveUpdater;
-use sp_core::{crypto::UncheckedFrom, ByteArray};
+use sp_core::ByteArray;
 use sp_runtime::{
 	app_crypto::{sp_core::H256, Pair},
 	generic::SignedBlock as SignedParentchainBlock,
@@ -169,7 +169,6 @@ impl<
 		StateHandler,
 	> where
 	AuthorityPair: Pair,
-	AuthorityPair::Public: UncheckedFrom<[u8; 32]>,
 	// todo: Relax hash trait bound, but this needs a change to some other parts in the code.
 	ParentchainBlock: ParentchainBlockTrait<Hash = BlockHash>,
 	E: Environment<ParentchainBlock, SignedSidechainBlock, Error = ConsensusError>,
@@ -203,14 +202,9 @@ impl<
 	fn epoch_data(
 		&self,
 		header: &ParentchainBlock::Header,
-		shard: ShardIdentifierFor<Self::Output>,
 		_slot: Slot,
 	) -> Result<Self::EpochData, ConsensusError> {
-		authorities::<_, AuthorityPair, SignedSidechainBlock, ParentchainBlock::Header>(
-			&self.ocall_api,
-			header,
-			shard,
-		)
+		authorities::<_, AuthorityPair, ParentchainBlock::Header>(&self.ocall_api, header)
 	}
 
 	fn authorities_len(&self, epoch_data: &Self::EpochData) -> Option<usize> {
@@ -298,23 +292,20 @@ fn proposing_remaining_duration<ParentchainBlock: ParentchainBlockTrait>(
 	std::cmp::min(slot_remaining, proposing_duration)
 }
 
-fn authorities<ValidateerFetcher, P, SignedSidechainBlock, ParentchainHeader>(
+fn authorities<ValidateerFetcher, P, ParentchainHeader>(
 	ocall_api: &ValidateerFetcher,
 	header: &ParentchainHeader,
-	shard: ShardIdentifierFor<SignedSidechainBlock>,
 ) -> Result<Vec<AuthorityId<P>>, ConsensusError>
 where
 	ValidateerFetcher: ValidateerFetch + EnclaveOnChainOCallApi,
 	P: Pair,
-	P::Public: UncheckedFrom<[u8; 32]>,
 	ParentchainHeader: ParentchainHeaderTrait<Hash = H256>,
-	SignedSidechainBlock: its_primitives::traits::SignedBlock,
 {
 	Ok(ocall_api
-		.current_validateers::<ParentchainHeader, SignedSidechainBlock>(header, shard)
+		.current_validateers(header)
 		.map_err(|e| ConsensusError::CouldNotGetAuthorities(e.to_string()))?
-		.iter()
-		.map(|account| P::Public::unchecked_from(*account.as_ref()))
+		.into_iter()
+		.filter_map(|e| AuthorityId::<P>::from_slice(e.pubkey.as_ref()).ok())
 		.collect())
 }
 
@@ -322,15 +313,15 @@ where
 mod tests {
 	use super::*;
 	use crate::test::{
-		fixtures::{types::TestAura, SLOT_DURATION},
+		fixtures::{types::TestAura, validateer, SLOT_DURATION},
 		mocks::environment_mock::EnvironmentMock,
 	};
 	use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
 	use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
 	use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
 	use itp_types::{
-		AccountId, Block as ParentchainBlock, Enclave, Header as ParentchainHeader,
-		ShardIdentifier, SignedBlock as SignedParentchainBlock,
+		Block as ParentchainBlock, Enclave, Header as ParentchainHeader, ShardIdentifier,
+		SignedBlock as SignedParentchainBlock,
 	};
 	use its_consensus_slots::PerShardSlotWorkerScheduler;
 	use lc_scheduled_enclave::ScheduledEnclaveMock;
@@ -374,8 +365,8 @@ mod tests {
 		vec![Keyring::Alice.public(), Keyring::Bob.public(), Keyring::Charlie.public()]
 	}
 
-	fn create_validateer_set_from_publics(authorities: Vec<Public>) -> Vec<AccountId> {
-		authorities.iter().map(|a| AccountId::from(a.clone())).collect()
+	fn create_validateer_set_from_publics(authorities: Vec<Public>) -> Vec<Enclave> {
+		authorities.iter().map(|a| validateer(a.clone().into())).collect()
 	}
 
 	fn onchain_mock(
@@ -383,8 +374,7 @@ mod tests {
 		authorities: Vec<Public>,
 	) -> OnchainMock {
 		let validateers = create_validateer_set_from_publics(authorities);
-		let shard = ShardIdentifier::default();
-		OnchainMock::default().add_validateer_set(parentchain_header, shard, Some(validateers))
+		OnchainMock::default().add_validateer_set(parentchain_header, Some(validateers))
 	}
 
 	fn onchain_mock_with_default_authorities_and_header() -> OnchainMock {
@@ -553,14 +543,9 @@ mod tests {
 			Keyring::Bob.public(),
 			Keyring::Charlie.public(),
 		]);
-		let shard = ShardIdentifier::default();
 		let onchain_mock = OnchainMock::default()
-			.add_validateer_set(
-				&already_imported_parentchain_header,
-				shard,
-				Some(validateer_set_one),
-			)
-			.add_validateer_set(&latest_parentchain_header, shard, Some(validateer_set_two));
+			.add_validateer_set(&already_imported_parentchain_header, Some(validateer_set_one))
+			.add_validateer_set(&latest_parentchain_header, Some(validateer_set_two));
 
 		let mut aura = get_aura(onchain_mock, parentchain_block_import_trigger.clone());
 
@@ -593,14 +578,9 @@ mod tests {
 			Keyring::Bob.public(),
 			Keyring::Charlie.public(),
 		]);
-		let shard = ShardIdentifier::default();
 		let onchain_mock = OnchainMock::default()
-			.add_validateer_set(
-				&already_imported_parentchain_header,
-				shard,
-				Some(validateer_set_one),
-			)
-			.add_validateer_set(&latest_parentchain_header, shard, Some(validateer_set_two));
+			.add_validateer_set(&already_imported_parentchain_header, Some(validateer_set_one))
+			.add_validateer_set(&latest_parentchain_header, Some(validateer_set_two));
 
 		let mut aura = get_aura(onchain_mock, parentchain_block_import_trigger.clone());
 

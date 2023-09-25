@@ -42,7 +42,7 @@ use ita_sgx_runtime::{pallet_imt::UserShieldingKeys, IdentityManagement, Runtime
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use litentry_primitives::{ErrorString};
+use litentry_primitives::ErrorString;
 use std::{format, string::String};
 
 pub use getter::*;

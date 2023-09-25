@@ -16,112 +16,93 @@
 */
 
 use crate::error::{Error, Result};
-use itp_enclave_bridge_storage::{EnclaveBridgeStorage, EnclaveBridgeStorageKeys};
+use frame_support::ensure;
 use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_types::{
-	parentchain::{AccountId, ParentchainId},
-	ShardSignerStatus,
-};
-use its_primitives::traits::{Block as SidechainBlockTrait, Header as HeaderTrait, SignedBlock};
-use log::trace;
+use itp_teerex_storage::{TeeRexStorage, TeerexStorageKeys};
+use itp_types::{parentchain::ParentchainId, Enclave};
 use sp_core::H256;
 use sp_runtime::traits::Header as HeaderT;
 use sp_std::prelude::Vec;
 
-type ShardIdentifierFor<SignedSidechainBlock> =
-<<<SignedSidechainBlock as SignedBlock>::Block as SidechainBlockTrait>::HeaderType as HeaderTrait>::ShardIdentifier;
-
 pub trait ValidateerFetch {
-	fn current_validateers<
-		Header: HeaderT<Hash = H256>,
-		SignedSidechainBlock: its_primitives::traits::SignedBlock,
-	>(
+	fn current_validateers<Header: HeaderT<Hash = H256>>(
 		&self,
 		latest_header: &Header,
-		shard: ShardIdentifierFor<SignedSidechainBlock>,
-	) -> Result<Vec<AccountId>>;
-	fn validateer_count<
-		Header: HeaderT<Hash = H256>,
-		SignedSidechainBlock: its_primitives::traits::SignedBlock,
-	>(
-		&self,
-		latest_header: &Header,
-		shard: ShardIdentifierFor<SignedSidechainBlock>,
-	) -> Result<u64>;
+	) -> Result<Vec<Enclave>>;
+	fn validateer_count<Header: HeaderT<Hash = H256>>(&self, latest_header: &Header)
+		-> Result<u64>;
 }
 
 impl<OnchainStorage: EnclaveOnChainOCallApi> ValidateerFetch for OnchainStorage {
-	fn current_validateers<
-		Header: HeaderT<Hash = H256>,
-		SignedSidechainBlock: its_primitives::traits::SignedBlock,
-	>(
+	fn current_validateers<Header: HeaderT<Hash = H256>>(
 		&self,
 		header: &Header,
-		shard: ShardIdentifierFor<SignedSidechainBlock>,
-	) -> Result<Vec<AccountId>> {
-		let shard_status: Vec<ShardSignerStatus> = self
-			.get_storage_verified(
-				EnclaveBridgeStorage::shard_status::<ShardIdentifierFor<SignedSidechainBlock>>(
-					shard,
-				),
-				header,
-				&ParentchainId::Integritee,
-			)?
-			.into_tuple()
-			.1
-			.ok_or_else(|| Error::Other("Could not get validateer count from chain"))?;
-		trace!("fetched {} validateers for shard {:?}", shard_status.len(), shard);
-		Ok(shard_status.iter().map(|sss: &ShardSignerStatus| sss.signer.clone()).collect())
+	) -> Result<Vec<Enclave>> {
+		let count = self.validateer_count(header)?;
+
+		let mut hashes = Vec::with_capacity(count as usize);
+		for i in 1..=count {
+			hashes.push(TeeRexStorage::enclave(i))
+		}
+
+		let enclaves: Vec<Enclave> = self
+			.get_multiple_storages_verified(hashes, header, &ParentchainId::Integritee)?
+			.into_iter()
+			.filter_map(|e| e.into_tuple().1)
+			.collect();
+		ensure!(
+			enclaves.len() == count as usize,
+			Error::Other("Found less validateers onchain than validateer count")
+		);
+		Ok(enclaves)
 	}
 
-	fn validateer_count<
-		Header: HeaderT<Hash = H256>,
-		SignedSidechainBlock: its_primitives::traits::SignedBlock,
-	>(
-		&self,
-		header: &Header,
-		shard: ShardIdentifierFor<SignedSidechainBlock>,
-	) -> Result<u64> {
-		Ok(self.current_validateers::<Header, SignedSidechainBlock>(header, shard)?.len() as u64)
+	fn validateer_count<Header: HeaderT<Hash = H256>>(&self, header: &Header) -> Result<u64> {
+		self.get_storage_verified(
+			TeeRexStorage::enclave_count(),
+			header,
+			&ParentchainId::Integritee,
+		)?
+		.into_tuple()
+		.1
+		.ok_or_else(|| Error::Other("Could not get validateer count from chain"))
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-
+	use codec::Encode;
 	use itc_parentchain_test::ParentchainHeaderBuilder;
 	use itp_test::mock::onchain_mock::{validateer_set, OnchainMock};
-	use itp_types::ShardIdentifier;
+	use std::string::ToString;
 
 	#[test]
 	pub fn get_validateer_count_works() {
 		let header = ParentchainHeaderBuilder::default().build();
-		let shard = ShardIdentifier::default();
-		let mock = OnchainMock::default().add_validateer_set(&header, shard, None);
-		assert_eq!(
-			mock.validateer_count::<itp_types::Header, its_primitives::types::SignedBlock>(
-				&header, shard
-			)
-			.unwrap(),
-			4u64
-		);
+		let mock = OnchainMock::default().add_validateer_set(&header, None);
+		assert_eq!(mock.validateer_count(&header).unwrap(), 4u64);
 	}
 
 	#[test]
 	pub fn get_validateer_set_works() {
 		let header = ParentchainHeaderBuilder::default().build();
-		let shard = ShardIdentifier::default();
-		let mock = OnchainMock::default().add_validateer_set(&header, shard, None);
+		let mock = OnchainMock::default().add_validateer_set(&header, None);
 
 		let validateers = validateer_set();
 
+		assert_eq!(mock.current_validateers(&header).unwrap(), validateers);
+	}
+
+	#[test]
+	pub fn if_validateer_count_bigger_than_returned_validateers_return_err() {
+		let header = ParentchainHeaderBuilder::default().build();
+		let mut mock = OnchainMock::default().add_validateer_set(&header, None);
+		mock.insert_at_header(&header, TeeRexStorage::enclave_count(), 5u64.encode());
+
 		assert_eq!(
-			mock.current_validateers::<itp_types::Header, its_primitives::types::SignedBlock>(
-				&header, shard
-			)
-			.unwrap(),
-			validateers
+			mock.current_validateers(&header).unwrap_err().to_string(),
+			"Found less validateers onchain than validateer count".to_string()
 		);
 	}
 }

@@ -17,7 +17,7 @@
 use crate::{command_utils::get_chain_api, Cli};
 
 use crate::{CliResult, CliResultOk};
-use itp_node_api::api_client::{TEEREX};
+use itp_node_api::api_client::TEEREX;
 use log::*;
 use sp_keyring::AccountKeyring;
 use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};

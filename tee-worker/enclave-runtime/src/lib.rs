@@ -55,7 +55,8 @@ use crate::{
 	utils::{
 		get_node_metadata_repository_from_integritee_solo_or_parachain,
 		get_node_metadata_repository_from_target_a_solo_or_parachain,
-		get_node_metadata_repository_from_target_b_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
+		get_node_metadata_repository_from_target_b_solo_or_parachain,
+		get_validator_accessor_from_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
 	},
 };
 use codec::Decode;
@@ -65,6 +66,8 @@ use itc_parentchain::{
 	},
 	primitives::ParentchainId,
 };
+use itc_parentchain::light_client::concurrent_access::ValidatorAccess;
+use itc_parentchain::light_client::Validator;
 use itp_component_container::ComponentGetter;
 use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;

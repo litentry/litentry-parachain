@@ -60,7 +60,7 @@ pub fn get_state_request_works() {
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
 	let getter =
-		Getter::trusted(TrustedGetter::nonce(Identity::Substrate(Address32::from([0u8; 32]))));
+		Getter::public(PublicGetter::nonce(Identity::Substrate(Address32::from([0u8; 32]))));
 
 	let request = Request { shard: ShardIdentifier::default(), cyphertext: getter.encode() };
 

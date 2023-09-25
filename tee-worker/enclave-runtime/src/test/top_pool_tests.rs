@@ -31,7 +31,7 @@ use crate::test::{
 use codec::Encode;
 use ita_stf::{
 	test_genesis::{endowed_account, unendowed_account},
-	TrustedCall, TrustedOperation,
+	TeerexCallIndexes, TrustedCall, TrustedOperation,
 };
 use itc_parentchain::indirect_calls_executor::{
 	filter_metadata::{ShieldFundsAndInvokeFilter, TestEventCreator},
@@ -47,10 +47,7 @@ use itp_node_api::{
 		ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
 		ParentchainUncheckedExtrinsic,
 	},
-	metadata::{
-		metadata_mocks::NodeMetadataMock, pallet_enclave_bridge::EnclaveBridgeCallIndexes,
-		provider::NodeMetadataRepository,
-	},
+	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 };
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
@@ -147,7 +144,7 @@ pub fn submit_shielding_call_to_top_pool() {
 	let block_with_shielding_call = create_shielding_call_extrinsic(shard_id, &shielding_key);
 
 	let _ = indirect_calls_executor
-		.execute_indirect_calls_in_extrinsics(&block_with_shielding_call)
+		.execute_indirect_calls_in_extrinsics(&block_with_shielding_call, &Vec::new())
 		.unwrap();
 
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
@@ -199,7 +196,7 @@ fn create_shielding_call_extrinsic<ShieldingKey: ShieldingCryptoEncrypt>(
 	let shield_funds_indexes = dummy_node_metadata.shield_funds_call_indexes().unwrap();
 	let opaque_extrinsic = OpaqueExtrinsic::from_bytes(
 		ParentchainUncheckedExtrinsic::<ShieldFundsFn>::new_signed(
-			(shield_funds_indexes, shard, target_account, 1000u128),
+			(shield_funds_indexes, target_account, 1000u128, shard),
 			Address::Address32([1u8; 32]),
 			MultiSignature::Ed25519(signature),
 			default_extra_for_test.signed_extra(),
