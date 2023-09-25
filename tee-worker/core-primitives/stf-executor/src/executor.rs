@@ -26,8 +26,9 @@ use ita_stf::{
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
 	ParentchainHeader, TrustedCallSigned, TrustedOperation,
 };
+use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
+use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
@@ -54,7 +55,7 @@ pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf> {
 impl<OCallApi, StateHandler, NodeMetadataRepository, Stf>
 	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf>
 where
-	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
+	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
@@ -138,11 +139,17 @@ where
 			self.node_metadata_repo.clone(),
 		) {
 			Err(e) => {
+				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::FailedTrustedOperationIncrement(trusted_call.call.clone())) {
+					warn!("Failed to update metric for failed trusted operations: {:?}", e);
+				}
 				error!("Stf execute failed: {:?}", e);
 				let rpc_response_value: Vec<u8> = e.encode();
 				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
 			Ok(result) => {
+				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::SuccessfulTrustedOperationIncrement(trusted_call.call.clone())) {
+					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
+				}
 				let force_connection_wait = result.force_connection_wait();
 				let rpc_response_value: Vec<u8> = result.get_encoded_result();
 				if let StatePostProcessing::Prune = post_processing {
@@ -236,7 +243,7 @@ where
 impl<OCallApi, StateHandler, NodeMetadataRepository, Stf> StateUpdateProposer
 	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf>
 where
-	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
+	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode + StateHash,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
