@@ -224,23 +224,13 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: "litentry/litentry-tee-dev:latest"
+    # container: "litentry/litentry-tee-dev:latest"
     steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
       - uses: actions/checkout@v3
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
-          rustup show
+          ./tee-worker/scripts/litentry/ubuntu_setup.sh
 
       - name: Pallet unittests
         if: needs.set-condition.outputs.rebuild_tee == 'true'

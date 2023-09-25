@@ -13,7 +13,7 @@ rustup show
 
 # install substrate build deps
 sudo apt-get update
-sudo apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev gnupg2
+sudo apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev gnupg2 protobuf-compiler
 
 # install llvm
 sudo apt-get update
