@@ -32,10 +32,9 @@ use itp_api_client_types::{Events, Metadata};
 use itp_node_api::metadata::{
 	pallet_balances::BalancesCallIndexes, NodeMetadata, NodeMetadataTrait,
 };
-use itp_types::{CallIndex, H256};
+use itp_types::H256;
 use sp_core::crypto::AccountId32;
 use sp_runtime::MultiAddress;
-use sp_std::{vec, vec::Vec};
 
 pub trait EventsFromMetadata<NodeMetadata> {
 	type Output: FilterEvents;
@@ -302,7 +301,7 @@ mod seal {
 
 	impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CantExecute {
 		type Args = ();
-		fn dispatch(&self, _: &Executor, args: Self::Args) -> Result<()> {
+		fn dispatch(&self, _: &Executor, _args: Self::Args) -> Result<()> {
 			// We should never get here because `CantExecute` is in a private module and the trait
 			// implementation is sealed and always returns `None` instead of a `CantExecute` instance.
 			// Regardless, we never want the enclave to panic, this is why we take this extra safety

@@ -25,8 +25,8 @@ use itp_ocall_api::{
 use itp_storage::Error::StorageValueUnavailable;
 use itp_teerex_storage::{TeeRexStorage, TeerexStorageKeys};
 use itp_types::{
-	parentchain::ParentchainId, storage::StorageEntryVerified, AccountId, BlockHash, Enclave,
-	ShardIdentifier, WorkerRequest, WorkerResponse,
+	parentchain::ParentchainId, storage::StorageEntryVerified, BlockHash, Enclave, ShardIdentifier,
+	WorkerRequest, WorkerResponse,
 };
 use sgx_types::*;
 use sp_core::H256;

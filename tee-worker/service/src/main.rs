@@ -84,7 +84,7 @@ use serde_json::Value;
 use sgx_types::*;
 use substrate_api_client::{
 	ac_primitives::serde_impls::StorageKey, api::XtStatus, rpc::HandleSubscription, storage_key,
-	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
+	GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
 
 #[cfg(feature = "dcap")]
@@ -99,7 +99,7 @@ use sp_keyring::AccountKeyring;
 use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
 extern crate config as rs_config;
 use itc_parentchain::primitives::ParentchainId;
-use sp_runtime::{traits::Header as HeaderTrait, MultiSigner};
+use sp_runtime::traits::Header as HeaderTrait;
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 
 mod account_funding;

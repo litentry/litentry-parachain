@@ -127,7 +127,6 @@ impl<
 		let block_hash = block.hash();
 
 		trace!("Scanning block {:?} for relevant xt", block_number);
-		let block_number_u32: u32 = block_number.try_into().unwrap_or_default();
 		let mut executed_calls = Vec::<H256>::new();
 
 		let events = self

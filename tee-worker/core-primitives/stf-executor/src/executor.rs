@@ -31,7 +31,7 @@ use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
-	ExecuteCall, StateCallInterface, StfExecutionResult, UpdateState,
+	StateCallInterface, StfExecutionResult, UpdateState,
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};

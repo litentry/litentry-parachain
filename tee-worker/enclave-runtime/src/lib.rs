@@ -64,10 +64,9 @@ use itc_parentchain::{
 	block_import_dispatcher::{
 		triggered_dispatcher::TriggerParentchainBlockImport, DispatchBlockImport,
 	},
+	light_client::{concurrent_access::ValidatorAccess, Validator},
 	primitives::ParentchainId,
 };
-use itc_parentchain::light_client::concurrent_access::ValidatorAccess;
-use itc_parentchain::light_client::Validator;
 use itp_component_container::ComponentGetter;
 use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;

@@ -72,7 +72,7 @@ where
 		&self,
 		signed_block: SignedSidechainBlock,
 		parentchain_header: &ParentchainBlock::Header,
-		shard: ShardIdentifierFor<SignedSidechainBlock>,
+		_shard: ShardIdentifierFor<SignedSidechainBlock>,
 		ctx: &Self::Context,
 	) -> Result<Self::BlockImportParams, ConsensusError> {
 		let authorities =

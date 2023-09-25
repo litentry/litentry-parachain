@@ -16,17 +16,14 @@
 
 */
 
-use crate::{
-	enclave_account,
-	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge},
-};
+use crate::ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge};
 use codec::{Decode, Encode};
 use itp_api_client_types::ParentchainApi;
-use itp_node_api::node_api_factory::{CreateNodeApi, NodeApiFactory};
+use itp_node_api::node_api_factory::CreateNodeApi;
 use itp_types::{parentchain::ParentchainId, WorkerRequest, WorkerResponse};
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
-use std::{sync::Arc, thread, vec::Vec};
+use std::{sync::Arc, vec::Vec};
 use substrate_api_client::{ac_primitives::serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
 
 pub struct WorkerOnChainOCall<F> {
