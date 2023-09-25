@@ -183,6 +183,9 @@ pub enum Assertion {
 
 	// For Oneblock
 	Oneblock(OneBlockCourseType),
+
+	// For New Api
+	AchainableJsonObject(ParameterString),
 }
 
 impl Assertion {

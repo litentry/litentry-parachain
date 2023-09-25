@@ -44,6 +44,7 @@ pub mod class_of_year;
 pub mod date;
 pub mod date_interval;
 pub mod date_percent;
+pub mod ajson;
 pub mod token;
 
 pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Credential> {
