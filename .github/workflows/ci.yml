@@ -464,7 +464,7 @@ jobs:
           context: .
           file: tee-worker/build.Dockerfile
           tags: local-builder:latest
-          target: stash
+          target: builder
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
