@@ -206,8 +206,8 @@ jobs:
         run: rustup show
 
       - name: Install dependencies
-        run: >
-          sudo apt-get update &&
+        run: |
+          sudo apt-get update
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Run cargo clippy check
@@ -230,13 +230,20 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update && \
+          sudo apt-get update
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+          rustup show
+
+      - name: Pallet unittests
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        working-directory: ./tee-worker
+        run: |
+          cargo test --release -p pallet-* --lib
+          cargo test --release
 
       - name: Tee-worker clippy
         working-directory: ./tee-worker
         run: |
-          rustup show
           cargo clippy --release -- -D warnings
           cargo clippy --release  --features evm -- -D warnings
           cargo clippy --release  --features sidechain -- -D warnings
@@ -246,7 +253,6 @@ jobs:
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
-          rustup show
           cargo clippy --release  -- -D warnings
           cargo clippy --release  --features evm -- -D warnings
           cargo clippy --release  --features sidechain -- -D warnings
@@ -487,13 +493,6 @@ jobs:
           docker pull litentry/litentry-cli
 
       - run: docker images --all
-
-      - name: Pallet unittests
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        working-directory: ./tee-worker
-        run: |
-          rustup show
-          cargo test --locked --release -p pallet-* --lib
 
       - name: Test enclave
         if: needs.set-condition.outputs.rebuild_tee == 'true'

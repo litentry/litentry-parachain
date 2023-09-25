@@ -59,8 +59,6 @@ RUN \
   rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
   make && sccache --show-stats
 
-RUN cargo test --release
-
 
 ### Minimal image for transferring built artefacts
 ##################################################
