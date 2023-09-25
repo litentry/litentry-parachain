@@ -226,6 +226,14 @@ jobs:
     if: needs.set-condition.outputs.rebuild_tee == 'true'
     # container: "litentry/litentry-tee-dev:latest"
     steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+          
       - uses: actions/checkout@v3
 
       - name: Install dependencies
