@@ -55,7 +55,12 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{boxed::Box, format, string::String, sync::Arc};
+use std::{
+	boxed::Box,
+	format,
+	string::String,
+	sync::{Arc, SgxMutex as Mutex},
+};
 use threadpool::ThreadPool;
 
 #[derive(Debug, thiserror::Error, Clone)]
@@ -177,9 +182,23 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
+	let (sender, to_receiver) = std::sync::mpsc::channel::<i32>();
+
+	std::thread::spawn(move || {
+		let mut counter_i32 = 0_i32;
+		loop {
+			let counter = to_receiver.recv().unwrap();
+			counter_i32 = counter_i32 + 1;
+			error!("Received a message to the message channel");
+			error!("Total Messages received so far: {:?}", counter_i32);
+		}
+	});
+
 	// The total number of threads that will be used to spawn tasks in the ThreadPool
-	let n_workers = 4;
+	let n_workers = 2;
 	let pool = ThreadPool::new(n_workers);
+
+	let sender_c = Arc::new(Mutex::new(sender));
 
 	loop {
 		let req = receiver
@@ -187,6 +206,7 @@ where
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
 		let context_pool = context.clone();
+		let sender_pool = sender_c.clone();
 
 		pool.execute(move || {
 			let start_time = std::time::Instant::now();
@@ -194,9 +214,10 @@ where
 			match &req {
 				RequestType::IdentityVerification(req) =>
 					IdentityVerificationHandler { req: req.clone(), context: context_pool.clone() }
-						.start(),
+						.start(sender_pool),
 				RequestType::AssertionVerification(req) =>
-					AssertionHandler { req: req.clone(), context: context_pool.clone() }.start(),
+					AssertionHandler { req: req.clone(), context: context_pool.clone() }
+						.start(sender_pool),
 			}
 
 			if let Err(e) =

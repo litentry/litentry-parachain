@@ -17,14 +17,17 @@
 pub mod assertion;
 pub mod identity_verification;
 
+use std::sync::{Arc, SgxMutex as Mutex};
+
 pub trait TaskHandler {
 	type Error;
 	type Result;
-	fn start(&self) {
+	fn start(&self, sender: Arc<Mutex<std::sync::mpsc::Sender<i32>>>) {
 		match self.on_process() {
 			Ok(r) => self.on_success(r),
 			Err(e) => self.on_failure(e),
 		}
+		sender.lock().unwrap().send(0_i32).unwrap();
 	}
 	fn on_process(&self) -> Result<Self::Result, Self::Error>;
 	fn on_success(&self, r: Self::Result);
