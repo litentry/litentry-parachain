@@ -16,11 +16,13 @@
 
 use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
+use ita_stf::H256;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
+use itp_types::ShardIdentifier;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
@@ -53,7 +55,11 @@ where
 		lc_identity_verification::verify(&self.req)
 	}
 
-	fn on_success(&self, _result: Self::Result) {
+	fn on_success(
+		&self,
+		_result: Self::Result,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	) {
 		debug!("verify identity OK");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::link_identity_callback(

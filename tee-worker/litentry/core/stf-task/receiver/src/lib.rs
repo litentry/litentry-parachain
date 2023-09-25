@@ -182,23 +182,33 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	let (sender, to_receiver) = std::sync::mpsc::channel::<i32>();
+	let (sender, to_receiver) = std::sync::mpsc::channel::<(ShardIdentifier, H256, TrustedCall)>();
 
+	let context_x = context.clone();
 	std::thread::spawn(move || {
 		let mut counter_i32 = 0_i32;
 		loop {
-			let counter = to_receiver.recv().unwrap();
-			counter_i32 = counter_i32 + 1;
+			// Need the following to make a TrustedCall
+			// 		&self,
+			// shard: &ShardIdentifier,
+			// old_top_hash: &H256,
+			// trusted_call: &TrustedCall,
+			let (shard, hash, call) = to_receiver.recv().unwrap();
+			// counter_i32 = counter_i32 + 1;
 			error!("Received a message to the message channel");
 			error!("Total Messages received so far: {:?}", counter_i32);
+			error!("Submitting trusted call");
+			if let Err(e) = context_x.submit_trusted_call(&shard, &hash, &call) {
+				error!("Submit Trusted Call failed: {:?}", e)
+			}
 		}
 	});
 
 	// The total number of threads that will be used to spawn tasks in the ThreadPool
-	let n_workers = 2;
+	let n_workers = 4;
 	let pool = ThreadPool::new(n_workers);
 
-	let sender_c = Arc::new(Mutex::new(sender));
+	let sender_c = sender.clone();
 
 	loop {
 		let req = receiver

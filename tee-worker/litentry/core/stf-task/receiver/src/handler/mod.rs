@@ -17,19 +17,26 @@
 pub mod assertion;
 pub mod identity_verification;
 
+use ita_stf::{TrustedCall, H256};
+use itp_types::ShardIdentifier;
+
 use std::sync::{Arc, SgxMutex as Mutex};
 
 pub trait TaskHandler {
 	type Error;
 	type Result;
-	fn start(&self, sender: Arc<Mutex<std::sync::mpsc::Sender<i32>>>) {
+	fn start(&self, sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>) {
 		match self.on_process() {
-			Ok(r) => self.on_success(r),
+			Ok(r) => self.on_success(r, sender),
 			Err(e) => self.on_failure(e),
 		}
-		sender.lock().unwrap().send(0_i32).unwrap();
+		// sender.send(0_i32).unwrap();
 	}
 	fn on_process(&self) -> Result<Self::Result, Self::Error>;
-	fn on_success(&self, r: Self::Result);
+	fn on_success(
+		&self,
+		r: Self::Result,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	);
 	fn on_failure(&self, e: Self::Error);
 }
