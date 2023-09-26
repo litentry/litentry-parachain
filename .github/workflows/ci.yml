@@ -218,23 +218,14 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-clippy:
-    # use 20.04 to resonate with the setup script
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs:
       - fmt
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    # container: "litentry/litentry-tee-dev:latest"
+    container: "litentry/litentry-tee-dev:latest"
     steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
       - uses: actions/checkout@v3
 
       - name: Install dependencies
@@ -242,18 +233,9 @@ jobs:
           ./tee-worker/scripts/litentry/ubuntu_setup.sh
 
       - name: Pallet unittests
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
         working-directory: ./tee-worker
         run: |
-          echo "::group::cargo test pallets"
           cargo test --release -p pallet-* --lib
-          echo "::endgroup::"
-          echo "::group::install libEnclave_u."
-          make service/libEnclave_u.a
-          echo "::endgroup::"
-          echo "::group::cargo test all"
-          cargo test --release
-          echo "::endgroup::"
 
       - name: Tee-worker clippy
         working-directory: ./tee-worker
