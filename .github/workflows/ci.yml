@@ -218,6 +218,7 @@ jobs:
         uses: andymckay/cancel-action@0.3
 
   tee-clippy:
+    # use 20.04 to resonate with the setup script
     runs-on: ubuntu-20.04
     needs:
       - fmt
