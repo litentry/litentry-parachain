@@ -32,6 +32,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use codec::Encode;
+use core::str::FromStr;
 use derive_more::From;
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::handle_state::HandleState;
@@ -53,6 +54,12 @@ use std::{fmt::Debug, sync::Arc, time::Duration, vec::Vec};
 mod slot_stream;
 mod slots;
 
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
+
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+
 #[cfg(test)]
 mod mocks;
 
@@ -73,6 +80,52 @@ pub struct SlotResult<SignedSidechainBlock: SignedSidechainBlockTrait> {
 	/// Any sidechain stf that invokes a parentchain stf must not commit its state change
 	/// before the parentchain effect has been finalized.
 	pub parentchain_effects: Vec<OpaqueCall>,
+}
+
+pub struct FailSlotOnDemand {
+	// we need to keep a internal counter because node's slot number is a function of slot_beginning_timestamp and SLOT_DURATION
+	current_slot: RwLock<u64>,
+	fail_at_slot: u64,
+	mode: FailSlotMode,
+}
+
+impl FailSlotOnDemand {
+	pub fn new(fail_at_slot: u64, mode: FailSlotMode) -> Self {
+		Self { current_slot: Default::default(), fail_at_slot, mode }
+	}
+
+	pub fn next_slot(&self) {
+		let mut current_slot_lock = self.current_slot.write().unwrap();
+		*current_slot_lock += 1;
+	}
+
+	pub fn check_before_on_slot(&self) -> bool {
+		let current_slot = self.current_slot.read().unwrap();
+		*current_slot == self.fail_at_slot && matches!(&self.mode, FailSlotMode::BeforeOnSlot)
+	}
+
+	pub fn check_after_on_slot(&self) -> bool {
+		let current_slot = self.current_slot.read().unwrap();
+		*current_slot == self.fail_at_slot && matches!(&self.mode, FailSlotMode::AfterOnSlot)
+	}
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum FailSlotMode {
+	BeforeOnSlot,
+	AfterOnSlot,
+}
+
+impl FromStr for FailSlotMode {
+	type Err = &'static str;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		match s {
+			"BeforeOnSlot" => Ok(FailSlotMode::BeforeOnSlot),
+			"AfterOnSlot" => Ok(FailSlotMode::AfterOnSlot),
+			_ => Err("no match"),
+		}
+	}
 }
 
 /// A worker that should be invoked at every new slot for a specific shard.

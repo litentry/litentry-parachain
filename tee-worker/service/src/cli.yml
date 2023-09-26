@@ -109,6 +109,17 @@ args:
         takes_value: true
         required: false
         default_value: "0"
+    - fail-slot-mode:
+        long: fail-slot-mode
+        help: Set the mode of failing a slot, values [BeforeOnSlot, AfterOnSlot]
+        takes_value: true
+        required: false
+    - fail-at:
+        long: fail-at
+        help: Set the slot to fail on
+        takes_value: true
+        required: false
+        default_value: "0"
 
 subcommands:
     - run:
