@@ -25,6 +25,12 @@ importers:
       '@polkadot/types':
         specifier: ^10.9.1
         version: 10.9.1
+      '@polkadot/types-codec':
+        specifier: 9.14.2
+        version: registry.npmjs.org/@polkadot/types-codec@9.14.2
+      '@polkadot/util':
+        specifier: 12.3.2
+        version: registry.npmjs.org/@polkadot/util@12.3.2
       add:
         specifier: ^2.0.6
         version: 2.0.6
@@ -696,9 +702,9 @@ packages:
       '@polkadot/rpc-augment': 10.9.1
       '@polkadot/types': 10.9.1
       '@polkadot/types-augment': 10.9.1
-      '@polkadot/types-codec': 10.9.1
-      '@polkadot/util': 12.3.2
-      tslib: 2.6.0
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -710,9 +716,9 @@ packages:
     dependencies:
       '@polkadot/rpc-core': 10.9.1
       '@polkadot/types': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       rxjs: 7.8.1
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -727,11 +733,11 @@ packages:
       '@polkadot/api-base': 10.9.1
       '@polkadot/rpc-core': 10.9.1
       '@polkadot/types': 10.9.1
-      '@polkadot/types-codec': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/util-crypto': 12.3.2(@polkadot/util@12.3.2)
       rxjs: 7.8.1
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -750,10 +756,10 @@ packages:
       '@polkadot/rpc-provider': 10.9.1
       '@polkadot/types': 10.9.1
       '@polkadot/types-augment': 10.9.1
-      '@polkadot/types-codec': 10.9.1
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
       '@polkadot/types-create': 10.9.1
       '@polkadot/types-known': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/util-crypto': 12.3.2(@polkadot/util@12.3.2)
       eventemitter3: 5.0.1
       rxjs: 7.8.1
@@ -770,15 +776,15 @@ packages:
       '@polkadot/util': 12.3.2
       '@polkadot/util-crypto': 12.3.2
     dependencies:
-      '@polkadot/util': 12.3.2
-      '@polkadot/util-crypto': 12.3.2(@polkadot/util@12.3.2)
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/util-crypto': registry.npmjs.org/@polkadot/util-crypto@12.3.2(@polkadot/util@12.3.2)
       tslib: 2.6.0
 
   /@polkadot/networks@12.3.2:
     resolution: {integrity: sha512-uCkyybKoeEm1daKr0uT/9oNDHDDzCy2/ZdVl346hQqfdR1Ct3BaxMjxqvdmb5N8aCw0cBWSfgsxAYtw8ESmllQ==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@substrate/ss58-registry': 1.41.0
       tslib: 2.6.0
 
@@ -788,9 +794,9 @@ packages:
     dependencies:
       '@polkadot/rpc-core': 10.9.1
       '@polkadot/types': 10.9.1
-      '@polkadot/types-codec': 10.9.1
-      '@polkadot/util': 12.3.2
-      tslib: 2.6.0
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -803,9 +809,9 @@ packages:
       '@polkadot/rpc-augment': 10.9.1
       '@polkadot/rpc-provider': 10.9.1
       '@polkadot/types': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       rxjs: 7.8.1
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -818,17 +824,17 @@ packages:
       '@polkadot/keyring': 12.3.2(@polkadot/util-crypto@12.3.2)(@polkadot/util@12.3.2)
       '@polkadot/types': 10.9.1
       '@polkadot/types-support': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/util-crypto': 12.3.2(@polkadot/util@12.3.2)
       '@polkadot/x-fetch': 12.3.2
-      '@polkadot/x-global': 12.3.2
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
       '@polkadot/x-ws': 12.3.2
       eventemitter3: 5.0.1
       mock-socket: 9.2.1
       nock: 13.3.1
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
     optionalDependencies:
-      '@substrate/connect': 0.7.26
+      '@substrate/connect': registry.npmjs.org/@substrate/connect@0.7.26
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -845,10 +851,10 @@ packages:
       '@polkadot/rpc-provider': 10.9.1
       '@polkadot/types': 10.9.1
       '@polkadot/types-augment': 10.9.1
-      '@polkadot/types-codec': 10.9.1
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
       '@polkadot/types-create': 10.9.1
       '@polkadot/types-support': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/util-crypto': 12.3.2(@polkadot/util@12.3.2)
       '@polkadot/x-ws': 12.3.2
       handlebars: 4.7.7
@@ -864,24 +870,16 @@ packages:
     engines: {node: '>=16'}
     dependencies:
       '@polkadot/types': 10.9.1
-      '@polkadot/types-codec': 10.9.1
-      '@polkadot/util': 12.3.2
-      tslib: 2.6.0
-
-  /@polkadot/types-codec@10.9.1:
-    resolution: {integrity: sha512-mJ5OegKGraY1FLvEa8FopRCr3pQrhDkcn5RNOjmgJQozENVeRaxhk0NwxYz7IojFvSDnKnc6lNQfKaaSe5pLHg==}
-    engines: {node: '>=16'}
-    dependencies:
-      '@polkadot/util': 12.3.2
-      '@polkadot/x-bigint': 12.3.2
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       tslib: 2.6.0
 
   /@polkadot/types-create@10.9.1:
     resolution: {integrity: sha512-OVz50MGTTuiuVnRP/zAx4CTuLioc0hsiwNwqN2lNhmIJGtnQ4Vy/7mQRsIWehiYz6g0Vzzm5B3qWkTXO1NSN5w==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/types-codec': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       tslib: 2.6.0
 
   /@polkadot/types-known@10.9.1:
@@ -890,16 +888,16 @@ packages:
     dependencies:
       '@polkadot/networks': 12.3.2
       '@polkadot/types': 10.9.1
-      '@polkadot/types-codec': 10.9.1
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
       '@polkadot/types-create': 10.9.1
-      '@polkadot/util': 12.3.2
-      tslib: 2.6.0
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
 
   /@polkadot/types-support@10.9.1:
     resolution: {integrity: sha512-XsieuLDsszvMZQlleacQBfx07i/JkwQV/UxH9q8Hz7Okmaz9pEVEW1h3ka2/cPuC7a4l32JhaORBUYshBZNdJg==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       tslib: 2.6.0
 
   /@polkadot/types@10.9.1:
@@ -908,9 +906,9 @@ packages:
     dependencies:
       '@polkadot/keyring': 12.3.2(@polkadot/util-crypto@12.3.2)(@polkadot/util@12.3.2)
       '@polkadot/types-augment': 10.9.1
-      '@polkadot/types-codec': 10.9.1
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
       '@polkadot/types-create': 10.9.1
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/util-crypto': 12.3.2(@polkadot/util@12.3.2)
       rxjs: 7.8.1
       tslib: 2.6.0
@@ -924,25 +922,13 @@ packages:
       '@noble/curves': 1.1.0
       '@noble/hashes': 1.3.1
       '@polkadot/networks': 12.3.2
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/wasm-crypto': 7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
       '@polkadot/wasm-util': 7.2.1(@polkadot/util@12.3.2)
-      '@polkadot/x-bigint': 12.3.2
+      '@polkadot/x-bigint': registry.npmjs.org/@polkadot/x-bigint@12.3.2
       '@polkadot/x-randomvalues': 12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1)
       '@scure/base': 1.1.1
-      tslib: 2.6.0
-
-  /@polkadot/util@12.3.2:
-    resolution: {integrity: sha512-y/JShcGyOamCUiSIg++XZuLHt1ktSKBaSH2K5Nw5NXlgP0+7am+GZzqPB8fQ4qhYLruEOv+YRiz0GC1Zr9S+wg==}
-    engines: {node: '>=16'}
-    dependencies:
-      '@polkadot/x-bigint': 12.3.2
-      '@polkadot/x-global': 12.3.2
-      '@polkadot/x-textdecoder': 12.3.2
-      '@polkadot/x-textencoder': 12.3.2
-      '@types/bn.js': 5.1.1
-      bn.js: 5.2.1
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
 
   /@polkadot/wasm-bridge@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2):
     resolution: {integrity: sha512-uV/LHREDBGBbHrrv7HTki+Klw0PYZzFomagFWII4lp6Toj/VCvRh5WMzooVC+g/XsBGosAwrvBhoModabyHx+A==}
@@ -951,7 +937,7 @@ packages:
       '@polkadot/util': '*'
       '@polkadot/x-randomvalues': '*'
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/wasm-util': 7.2.1(@polkadot/util@12.3.2)
       '@polkadot/x-randomvalues': 12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1)
       tslib: 2.6.0
@@ -962,7 +948,7 @@ packages:
     peerDependencies:
       '@polkadot/util': '*'
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       tslib: 2.6.0
 
   /@polkadot/wasm-crypto-init@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2):
@@ -972,7 +958,7 @@ packages:
       '@polkadot/util': '*'
       '@polkadot/x-randomvalues': '*'
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/wasm-bridge': 7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
       '@polkadot/wasm-crypto-asmjs': 7.2.1(@polkadot/util@12.3.2)
       '@polkadot/wasm-crypto-wasm': 7.2.1(@polkadot/util@12.3.2)
@@ -986,7 +972,7 @@ packages:
     peerDependencies:
       '@polkadot/util': '*'
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/wasm-util': 7.2.1(@polkadot/util@12.3.2)
       tslib: 2.6.0
 
@@ -997,7 +983,7 @@ packages:
       '@polkadot/util': '*'
       '@polkadot/x-randomvalues': '*'
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/wasm-bridge': 7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
       '@polkadot/wasm-crypto-asmjs': 7.2.1(@polkadot/util@12.3.2)
       '@polkadot/wasm-crypto-init': 7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
@@ -1012,29 +998,29 @@ packages:
     peerDependencies:
       '@polkadot/util': '*'
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       tslib: 2.6.0
 
   /@polkadot/x-bigint@12.3.2:
     resolution: {integrity: sha512-JLqLgfGXe/x+hZJETd5ZqfpVsbwyMsH5Nn1Q20ineMMjXN/ig+kVR8Mc15LXBMuw4g7LldFW6UUrotWnuMI8Yw==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/x-global': 12.3.2
-      tslib: 2.6.0
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
 
   /@polkadot/x-fetch@12.3.2:
     resolution: {integrity: sha512-3IEuZ5S+RI/t33NsdPLIIa5COfDCfpUW2sbaByEczn75aD1jLqJZSEDwiBniJ2osyNd4uUxBf6e5jw7LAZeZJg==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/x-global': 12.3.2
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
       node-fetch: 3.3.1
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
 
   /@polkadot/x-global@12.3.2:
     resolution: {integrity: sha512-yVZq6oIegjlyh5rUZiTklgu+fL+W/DG1ypEa02683tUCB3avV5cA3PAHKptMSlb6FpweHu37lKKrqfAWrraDxg==}
     engines: {node: '>=16'}
     dependencies:
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
 
   /@polkadot/x-randomvalues@12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1):
     resolution: {integrity: sha512-ywjIs8CWpvOGmq+3cGCNPOHxAjPHdBUiXyDccftx5BRVdmtbt36gK/V84bKr6Xs73FGu0jprUAOSRRsLZX/3dg==}
@@ -1043,22 +1029,8 @@ packages:
       '@polkadot/util': 12.3.2
       '@polkadot/wasm-util': '*'
     dependencies:
-      '@polkadot/util': 12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
       '@polkadot/wasm-util': 7.2.1(@polkadot/util@12.3.2)
-      '@polkadot/x-global': 12.3.2
-      tslib: 2.6.0
-
-  /@polkadot/x-textdecoder@12.3.2:
-    resolution: {integrity: sha512-lY5bfA5xArJRWEJlYOlQQMJeTjWD8s0yMhchirVgf5xj8Id9vPGeUoneH+VFDEwgXxrqBvDFJ4smN4T/r6a/fg==}
-    engines: {node: '>=16'}
-    dependencies:
-      '@polkadot/x-global': 12.3.2
-      tslib: 2.6.0
-
-  /@polkadot/x-textencoder@12.3.2:
-    resolution: {integrity: sha512-iP3qEBiHzBckQ9zeY7ZHRWuu7mCEg5SMpOugs6UODRk8sx6KHzGQYlghBbWLit0uppPDVE0ifEwZ2n73djJHWQ==}
-    engines: {node: '>=16'}
-    dependencies:
       '@polkadot/x-global': 12.3.2
       tslib: 2.6.0
 
@@ -1066,8 +1038,8 @@ packages:
     resolution: {integrity: sha512-yM9Z64pLNlHpJE43+Xtr+iUXmYpFFY5u5hrke2PJt13O48H8f9Vb9cRaIh94appLyICoS0aekGhDkGH+MCspBA==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/x-global': 12.3.2
-      tslib: 2.6.0
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
       ws: 8.13.0
     transitivePeerDependencies:
       - bufferutil
@@ -1079,18 +1051,6 @@ packages:
   /@substrate/connect-extension-protocol@1.0.1:
     resolution: {integrity: sha512-161JhCC1csjH3GE5mPLEd7HbWtwNSPJBg3p1Ksz9SFlTzj/bgEwudiRN2y5i0MoLGCIJRYKyKGMxVnd29PzNjg==}
     requiresBuild: true
-    optional: true
-
-  /@substrate/connect@0.7.26:
-    resolution: {integrity: sha512-uuGSiroGuKWj1+38n1kY5HReer5iL9bRwPCzuoLtqAOmI1fGI0hsSI2LlNQMAbfRgr7VRHXOk5MTuQf5ulsFRw==}
-    requiresBuild: true
-    dependencies:
-      '@substrate/connect-extension-protocol': 1.0.1
-      eventemitter3: 4.0.7
-      smoldot: 1.0.4
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
     optional: true
 
   /@substrate/ss58-registry@1.41.0:
@@ -1112,11 +1072,6 @@ packages:
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
     dev: true
 
-  /@types/bn.js@5.1.1:
-    resolution: {integrity: sha512-qNrYbZqMx0uJAfKnKclPh+dTwK33KfLHYqtyODwd5HnXOjnkhc4qgn3BrK6RWyGZm5+sIFE7Q7Vz6QQtJB7w7g==}
-    dependencies:
-      '@types/node': 20.4.4
-
   /@types/chai@4.3.5:
     resolution: {integrity: sha512-mEo1sAde+UCE6b2hxn332f1g1E8WfYRu6p5SvTKr2ZKC1f7gFJXk4h5PyGP9Dt6gCaG8y8XhwnXWC6Iy2cmBng==}
     dev: true
@@ -1131,6 +1086,7 @@ packages:
 
   /@types/node@20.4.4:
     resolution: {integrity: sha512-CukZhumInROvLq3+b5gLev+vgpsIqC2D0deQr/yS1WnxvmYLlJXZpaQrQiseMY+6xusl79E04UjWoqyr+t1/Ew==}
+    dev: true
 
   /@types/semver@7.5.0:
     resolution: {integrity: sha512-G8hZ6XJiHnuhQKR7ZmysCeJWE08o8T0AXtk5darsCaTVsYZhhgUrq53jizaR2FvsoeCwJhlmwTjkXBY5Pn/ZHw==}
@@ -1382,6 +1338,7 @@ packages:
 
   /bn.js@5.2.1:
     resolution: {integrity: sha512-eXRvHzWyYPBuB4NBy0cmYQjGitUrtqwbvlzP3G6VFnNRbsZQIxQ10PbKKHt8gZ/HW/D/747aDl+QkDqg3KQLMQ==}
+    dev: true
 
   /brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
@@ -1461,7 +1418,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: registry.npmjs.org/fsevents@2.3.2
 
   /cliui@7.0.4:
     resolution: {integrity: sha512-OcRE68cOsVMXp1Yvonl/fzkQOyjLSu/8bhPDfQt0e0/Eb283TKP20Fs2MqoPsr9SwA595rRCA+QMzYc9nBP+JQ==}
@@ -1902,13 +1859,6 @@ packages:
   /fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
-  /fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
-    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
-    os: [darwin]
-    requiresBuild: true
-    optional: true
-
   /function-bind@1.1.1:
     resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
     dev: false
@@ -2031,7 +1981,7 @@ packages:
       source-map: 0.6.1
       wordwrap: 1.0.0
     optionalDependencies:
-      uglify-js: 3.17.4
+      uglify-js: registry.npmjs.org/uglify-js@3.17.4
 
   /has-bigints@1.0.2:
     resolution: {integrity: sha512-tSvCKtBr9lkF0Ex0aQiP9N+OpV4zi2r/Nee5VkRDbaqv35RLYMzbwQfFSZZH0kR+Rd6302UJZ2p/bJCEoR3VoQ==}
@@ -2636,7 +2586,7 @@ packages:
   /rxjs@7.8.1:
     resolution: {integrity: sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==}
     dependencies:
-      tslib: 2.6.0
+      tslib: registry.npmjs.org/tslib@2.6.0
 
   /safe-buffer@5.2.1:
     resolution: {integrity: sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==}
@@ -2890,13 +2840,6 @@ packages:
     hasBin: true
     dev: true
 
-  /uglify-js@3.17.4:
-    resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==}
-    engines: {node: '>=0.8.0'}
-    hasBin: true
-    requiresBuild: true
-    optional: true
-
   /unbox-primitive@1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
     dependencies:
@@ -3066,3 +3009,353 @@ packages:
   /zod@3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
     dev: false
+
+  registry.npmjs.org/@babel/runtime@7.23.1:
+    resolution: {integrity: sha512-hC2v6p8ZSI/W0HUzh3V8C5g+NwSKzKPtJwSpTjwl0o297GP9+ZLQSkdvHz46CM3LqyoXxq+5G9komY+eSqSO0g==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@babel/runtime/-/runtime-7.23.1.tgz}
+    name: '@babel/runtime'
+    version: 7.23.1
+    engines: {node: '>=6.9.0'}
+    dependencies:
+      regenerator-runtime: registry.npmjs.org/regenerator-runtime@0.14.0
+    dev: false
+
+  registry.npmjs.org/@noble/curves@1.1.0:
+    resolution: {integrity: sha512-091oBExgENk/kGj3AZmtBDMpxQPDtxQABR2B9lb1JbVTs6ytdzZNwvhxQ4MWasRNEzlbEH8jCWFCwhF/Obj5AA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@noble/curves/-/curves-1.1.0.tgz}
+    name: '@noble/curves'
+    version: 1.1.0
+    dependencies:
+      '@noble/hashes': registry.npmjs.org/@noble/hashes@1.3.1
+
+  registry.npmjs.org/@noble/hashes@1.3.1:
+    resolution: {integrity: sha512-EbqwksQwz9xDRGfDST86whPBgM65E0OH/pCgqW0GBVzO22bNE+NuIbeTb714+IfSjU3aRk47EUvXIb5bTsenKA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@noble/hashes/-/hashes-1.3.1.tgz}
+    name: '@noble/hashes'
+    version: 1.3.1
+    engines: {node: '>= 16'}
+
+  registry.npmjs.org/@polkadot/networks@12.3.2:
+    resolution: {integrity: sha512-uCkyybKoeEm1daKr0uT/9oNDHDDzCy2/ZdVl346hQqfdR1Ct3BaxMjxqvdmb5N8aCw0cBWSfgsxAYtw8ESmllQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/networks/-/networks-12.3.2.tgz}
+    name: '@polkadot/networks'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@substrate/ss58-registry': registry.npmjs.org/@substrate/ss58-registry@1.41.0
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/types-codec@10.9.1:
+    resolution: {integrity: sha512-mJ5OegKGraY1FLvEa8FopRCr3pQrhDkcn5RNOjmgJQozENVeRaxhk0NwxYz7IojFvSDnKnc6lNQfKaaSe5pLHg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/types-codec/-/types-codec-10.9.1.tgz}
+    name: '@polkadot/types-codec'
+    version: 10.9.1
+    engines: {node: '>=16'}
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/x-bigint': 12.3.2
+      tslib: 2.6.0
+
+  registry.npmjs.org/@polkadot/types-codec@9.14.2:
+    resolution: {integrity: sha512-AJ4XF7W1no4PENLBRU955V6gDxJw0h++EN3YoDgThozZ0sj3OxyFupKgNBZcZb2V23H8JxQozzIad8k+nJbO1w==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/types-codec/-/types-codec-9.14.2.tgz}
+    name: '@polkadot/types-codec'
+    version: 9.14.2
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@babel/runtime': registry.npmjs.org/@babel/runtime@7.23.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@10.4.2
+      '@polkadot/x-bigint': registry.npmjs.org/@polkadot/x-bigint@10.4.2
+    dev: false
+
+  registry.npmjs.org/@polkadot/util-crypto@12.3.2(@polkadot/util@12.3.2):
+    resolution: {integrity: sha512-pTpx+YxolY0BDT4RcGmgeKbHHD/dI6Ll9xRsqmVdIjpcVVY20uDNTyXs81ZNtfKgyod1y9JQkfNv2Dz9iEpTkQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/util-crypto/-/util-crypto-12.3.2.tgz}
+    id: registry.npmjs.org/@polkadot/util-crypto/12.3.2
+    name: '@polkadot/util-crypto'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': 12.3.2
+    dependencies:
+      '@noble/curves': registry.npmjs.org/@noble/curves@1.1.0
+      '@noble/hashes': registry.npmjs.org/@noble/hashes@1.3.1
+      '@polkadot/networks': registry.npmjs.org/@polkadot/networks@12.3.2
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/wasm-crypto': registry.npmjs.org/@polkadot/wasm-crypto@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
+      '@polkadot/wasm-util': registry.npmjs.org/@polkadot/wasm-util@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/x-bigint': registry.npmjs.org/@polkadot/x-bigint@12.3.2
+      '@polkadot/x-randomvalues': registry.npmjs.org/@polkadot/x-randomvalues@12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1)
+      '@scure/base': registry.npmjs.org/@scure/base@1.1.1
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/util@10.4.2:
+    resolution: {integrity: sha512-0r5MGICYiaCdWnx+7Axlpvzisy/bi1wZGXgCSw5+ZTyPTOqvsYRqM2X879yxvMsGfibxzWqNzaiVjToz1jvUaA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/util/-/util-10.4.2.tgz}
+    name: '@polkadot/util'
+    version: 10.4.2
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@babel/runtime': registry.npmjs.org/@babel/runtime@7.23.1
+      '@polkadot/x-bigint': registry.npmjs.org/@polkadot/x-bigint@10.4.2
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@10.4.2
+      '@polkadot/x-textdecoder': registry.npmjs.org/@polkadot/x-textdecoder@10.4.2
+      '@polkadot/x-textencoder': registry.npmjs.org/@polkadot/x-textencoder@10.4.2
+      '@types/bn.js': registry.npmjs.org/@types/bn.js@5.1.1
+      bn.js: registry.npmjs.org/bn.js@5.2.1
+    dev: false
+
+  registry.npmjs.org/@polkadot/util@12.3.2:
+    resolution: {integrity: sha512-y/JShcGyOamCUiSIg++XZuLHt1ktSKBaSH2K5Nw5NXlgP0+7am+GZzqPB8fQ4qhYLruEOv+YRiz0GC1Zr9S+wg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/util/-/util-12.3.2.tgz}
+    name: '@polkadot/util'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    dependencies:
+      '@polkadot/x-bigint': registry.npmjs.org/@polkadot/x-bigint@12.3.2
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
+      '@polkadot/x-textdecoder': registry.npmjs.org/@polkadot/x-textdecoder@12.3.2
+      '@polkadot/x-textencoder': registry.npmjs.org/@polkadot/x-textencoder@12.3.2
+      '@types/bn.js': registry.npmjs.org/@types/bn.js@5.1.1
+      bn.js: registry.npmjs.org/bn.js@5.2.1
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/wasm-bridge@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2):
+    resolution: {integrity: sha512-uV/LHREDBGBbHrrv7HTki+Klw0PYZzFomagFWII4lp6Toj/VCvRh5WMzooVC+g/XsBGosAwrvBhoModabyHx+A==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/wasm-bridge/-/wasm-bridge-7.2.1.tgz}
+    id: registry.npmjs.org/@polkadot/wasm-bridge/7.2.1
+    name: '@polkadot/wasm-bridge'
+    version: 7.2.1
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': '*'
+      '@polkadot/x-randomvalues': '*'
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/wasm-util': registry.npmjs.org/@polkadot/wasm-util@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/x-randomvalues': registry.npmjs.org/@polkadot/x-randomvalues@12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1)
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/wasm-crypto-asmjs@7.2.1(@polkadot/util@12.3.2):
+    resolution: {integrity: sha512-z/d21bmxyVfkzGsKef/FWswKX02x5lK97f4NPBZ9XBeiFkmzlXhdSnu58/+b1sKsRAGdW/Rn/rTNRDhW0GqCAg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/wasm-crypto-asmjs/-/wasm-crypto-asmjs-7.2.1.tgz}
+    id: registry.npmjs.org/@polkadot/wasm-crypto-asmjs/7.2.1
+    name: '@polkadot/wasm-crypto-asmjs'
+    version: 7.2.1
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': '*'
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/wasm-crypto-init@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2):
+    resolution: {integrity: sha512-GcEXtwN9LcSf32V9zSaYjHImFw16hCyo2Xzg4GLLDPPeaAAfbFr2oQMgwyDbvBrBjLKHVHjsPZyGhXae831amw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/wasm-crypto-init/-/wasm-crypto-init-7.2.1.tgz}
+    id: registry.npmjs.org/@polkadot/wasm-crypto-init/7.2.1
+    name: '@polkadot/wasm-crypto-init'
+    version: 7.2.1
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': '*'
+      '@polkadot/x-randomvalues': '*'
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/wasm-bridge': registry.npmjs.org/@polkadot/wasm-bridge@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
+      '@polkadot/wasm-crypto-asmjs': registry.npmjs.org/@polkadot/wasm-crypto-asmjs@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/wasm-crypto-wasm': registry.npmjs.org/@polkadot/wasm-crypto-wasm@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/wasm-util': registry.npmjs.org/@polkadot/wasm-util@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/x-randomvalues': registry.npmjs.org/@polkadot/x-randomvalues@12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1)
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/wasm-crypto-wasm@7.2.1(@polkadot/util@12.3.2):
+    resolution: {integrity: sha512-DqyXE4rSD0CVlLIw88B58+HHNyrvm+JAnYyuEDYZwCvzUWOCNos/DDg9wi/K39VAIsCCKDmwKqkkfIofuOj/lA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/wasm-crypto-wasm/-/wasm-crypto-wasm-7.2.1.tgz}
+    id: registry.npmjs.org/@polkadot/wasm-crypto-wasm/7.2.1
+    name: '@polkadot/wasm-crypto-wasm'
+    version: 7.2.1
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': '*'
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/wasm-util': registry.npmjs.org/@polkadot/wasm-util@7.2.1(@polkadot/util@12.3.2)
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/wasm-crypto@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2):
+    resolution: {integrity: sha512-SA2+33S9TAwGhniKgztVN6pxUKpGfN4Tre/eUZGUfpgRkT92wIUT2GpGWQE+fCCqGQgADrNiBcwt6XwdPqMQ4Q==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/wasm-crypto/-/wasm-crypto-7.2.1.tgz}
+    id: registry.npmjs.org/@polkadot/wasm-crypto/7.2.1
+    name: '@polkadot/wasm-crypto'
+    version: 7.2.1
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': '*'
+      '@polkadot/x-randomvalues': '*'
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/wasm-bridge': registry.npmjs.org/@polkadot/wasm-bridge@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
+      '@polkadot/wasm-crypto-asmjs': registry.npmjs.org/@polkadot/wasm-crypto-asmjs@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/wasm-crypto-init': registry.npmjs.org/@polkadot/wasm-crypto-init@7.2.1(@polkadot/util@12.3.2)(@polkadot/x-randomvalues@12.3.2)
+      '@polkadot/wasm-crypto-wasm': registry.npmjs.org/@polkadot/wasm-crypto-wasm@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/wasm-util': registry.npmjs.org/@polkadot/wasm-util@7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/x-randomvalues': registry.npmjs.org/@polkadot/x-randomvalues@12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1)
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/wasm-util@7.2.1(@polkadot/util@12.3.2):
+    resolution: {integrity: sha512-FBSn/3aYJzhN0sYAYhHB8y9JL8mVgxLy4M1kUXYbyo+8GLRQEN5rns8Vcb8TAlIzBWgVTOOptYBvxo0oj0h7Og==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/wasm-util/-/wasm-util-7.2.1.tgz}
+    id: registry.npmjs.org/@polkadot/wasm-util/7.2.1
+    name: '@polkadot/wasm-util'
+    version: 7.2.1
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': '*'
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/x-bigint@10.4.2:
+    resolution: {integrity: sha512-awRiox+/XSReLzimAU94fPldowiwnnMUkQJe8AebYhNocAj6SJU00GNoj6j6tAho6yleOwrTJXZaWFBaQVJQNg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-bigint/-/x-bigint-10.4.2.tgz}
+    name: '@polkadot/x-bigint'
+    version: 10.4.2
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@babel/runtime': registry.npmjs.org/@babel/runtime@7.23.1
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@10.4.2
+    dev: false
+
+  registry.npmjs.org/@polkadot/x-bigint@12.3.2:
+    resolution: {integrity: sha512-JLqLgfGXe/x+hZJETd5ZqfpVsbwyMsH5Nn1Q20ineMMjXN/ig+kVR8Mc15LXBMuw4g7LldFW6UUrotWnuMI8Yw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-bigint/-/x-bigint-12.3.2.tgz}
+    name: '@polkadot/x-bigint'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    dependencies:
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/x-global@10.4.2:
+    resolution: {integrity: sha512-g6GXHD/ykZvHap3M6wh19dO70Zm43l4jEhlxf5LtTo5/0/UporFCXr2YJYZqfbn9JbQwl1AU+NroYio+vtJdiA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-global/-/x-global-10.4.2.tgz}
+    name: '@polkadot/x-global'
+    version: 10.4.2
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@babel/runtime': registry.npmjs.org/@babel/runtime@7.23.1
+    dev: false
+
+  registry.npmjs.org/@polkadot/x-global@12.3.2:
+    resolution: {integrity: sha512-yVZq6oIegjlyh5rUZiTklgu+fL+W/DG1ypEa02683tUCB3avV5cA3PAHKptMSlb6FpweHu37lKKrqfAWrraDxg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-global/-/x-global-12.3.2.tgz}
+    name: '@polkadot/x-global'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    dependencies:
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/x-randomvalues@12.3.2(@polkadot/util@12.3.2)(@polkadot/wasm-util@7.2.1):
+    resolution: {integrity: sha512-ywjIs8CWpvOGmq+3cGCNPOHxAjPHdBUiXyDccftx5BRVdmtbt36gK/V84bKr6Xs73FGu0jprUAOSRRsLZX/3dg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-randomvalues/-/x-randomvalues-12.3.2.tgz}
+    id: registry.npmjs.org/@polkadot/x-randomvalues/12.3.2
+    name: '@polkadot/x-randomvalues'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@polkadot/util': 12.3.2
+      '@polkadot/wasm-util': '*'
+    dependencies:
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.3.2
+      '@polkadot/wasm-util': 7.2.1(@polkadot/util@12.3.2)
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/x-textdecoder@10.4.2:
+    resolution: {integrity: sha512-d3ADduOKUTU+cliz839+KCFmi23pxTlabH7qh7Vs1GZQvXOELWdqFOqakdiAjtMn68n1KVF4O14Y+OUm7gp/zA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-textdecoder/-/x-textdecoder-10.4.2.tgz}
+    name: '@polkadot/x-textdecoder'
+    version: 10.4.2
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@babel/runtime': registry.npmjs.org/@babel/runtime@7.23.1
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@10.4.2
+    dev: false
+
+  registry.npmjs.org/@polkadot/x-textdecoder@12.3.2:
+    resolution: {integrity: sha512-lY5bfA5xArJRWEJlYOlQQMJeTjWD8s0yMhchirVgf5xj8Id9vPGeUoneH+VFDEwgXxrqBvDFJ4smN4T/r6a/fg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-textdecoder/-/x-textdecoder-12.3.2.tgz}
+    name: '@polkadot/x-textdecoder'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    dependencies:
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@polkadot/x-textencoder@10.4.2:
+    resolution: {integrity: sha512-mxcQuA1exnyv74Kasl5vxBq01QwckG088lYjc3KwmND6+pPrW2OWagbxFX5VFoDLDAE+UJtnUHsjdWyOTDhpQA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-textencoder/-/x-textencoder-10.4.2.tgz}
+    name: '@polkadot/x-textencoder'
+    version: 10.4.2
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@babel/runtime': registry.npmjs.org/@babel/runtime@7.23.1
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@10.4.2
+    dev: false
+
+  registry.npmjs.org/@polkadot/x-textencoder@12.3.2:
+    resolution: {integrity: sha512-iP3qEBiHzBckQ9zeY7ZHRWuu7mCEg5SMpOugs6UODRk8sx6KHzGQYlghBbWLit0uppPDVE0ifEwZ2n73djJHWQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@polkadot/x-textencoder/-/x-textencoder-12.3.2.tgz}
+    name: '@polkadot/x-textencoder'
+    version: 12.3.2
+    engines: {node: '>=16'}
+    dependencies:
+      '@polkadot/x-global': registry.npmjs.org/@polkadot/x-global@12.3.2
+      tslib: registry.npmjs.org/tslib@2.6.0
+
+  registry.npmjs.org/@scure/base@1.1.1:
+    resolution: {integrity: sha512-ZxOhsSyxYwLJj3pLZCefNitxsj093tb2vq90mp2txoYeBqbcjDjqFhyM8eUjq/uFm6zJ+mUuqxlS2FkuSY1MTA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@scure/base/-/base-1.1.1.tgz}
+    name: '@scure/base'
+    version: 1.1.1
+
+  registry.npmjs.org/@substrate/connect@0.7.26:
+    resolution: {integrity: sha512-uuGSiroGuKWj1+38n1kY5HReer5iL9bRwPCzuoLtqAOmI1fGI0hsSI2LlNQMAbfRgr7VRHXOk5MTuQf5ulsFRw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@substrate/connect/-/connect-0.7.26.tgz}
+    name: '@substrate/connect'
+    version: 0.7.26
+    requiresBuild: true
+    dependencies:
+      '@substrate/connect-extension-protocol': 1.0.1
+      eventemitter3: 4.0.7
+      smoldot: 1.0.4
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    optional: true
+
+  registry.npmjs.org/@substrate/ss58-registry@1.41.0:
+    resolution: {integrity: sha512-TLz5VkEaJRNFzf1Oiix9gqknKer3aKbLfjK9XHBFCIhdxlQpI+S6lZGu3wT4DHAGXPakYfXb8+9ZIOtWLcQ/2Q==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@substrate/ss58-registry/-/ss58-registry-1.41.0.tgz}
+    name: '@substrate/ss58-registry'
+    version: 1.41.0
+
+  registry.npmjs.org/@types/bn.js@5.1.1:
+    resolution: {integrity: sha512-qNrYbZqMx0uJAfKnKclPh+dTwK33KfLHYqtyODwd5HnXOjnkhc4qgn3BrK6RWyGZm5+sIFE7Q7Vz6QQtJB7w7g==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@types/bn.js/-/bn.js-5.1.1.tgz}
+    name: '@types/bn.js'
+    version: 5.1.1
+    dependencies:
+      '@types/node': registry.npmjs.org/@types/node@20.4.4
+
+  registry.npmjs.org/@types/node@20.4.4:
+    resolution: {integrity: sha512-CukZhumInROvLq3+b5gLev+vgpsIqC2D0deQr/yS1WnxvmYLlJXZpaQrQiseMY+6xusl79E04UjWoqyr+t1/Ew==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@types/node/-/node-20.4.4.tgz}
+    name: '@types/node'
+    version: 20.4.4
+
+  registry.npmjs.org/bn.js@5.2.1:
+    resolution: {integrity: sha512-eXRvHzWyYPBuB4NBy0cmYQjGitUrtqwbvlzP3G6VFnNRbsZQIxQ10PbKKHt8gZ/HW/D/747aDl+QkDqg3KQLMQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/bn.js/-/bn.js-5.2.1.tgz}
+    name: bn.js
+    version: 5.2.1
+
+  registry.npmjs.org/fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz}
+    name: fsevents
+    version: 2.3.2
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+    requiresBuild: true
+    optional: true
+
+  registry.npmjs.org/regenerator-runtime@0.14.0:
+    resolution: {integrity: sha512-srw17NI0TUWHuGa5CFGGmhfNIeja30WMBfbslPNhf6JrqQlLN5gcrvig1oqPxiVaXb0oW0XRKtH6Nngs5lKCIA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/regenerator-runtime/-/regenerator-runtime-0.14.0.tgz}
+    name: regenerator-runtime
+    version: 0.14.0
+    dev: false
+
+  registry.npmjs.org/tslib@2.6.0:
+    resolution: {integrity: sha512-7At1WUettjcSRHXCyYtTselblcHl9PJFFVKiCAy/bY97+BPZXSQ2wbq0P9s8tK2G7dFQfNnlJnPAiArVBVBsfA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/tslib/-/tslib-2.6.0.tgz}
+    name: tslib
+    version: 2.6.0
+
+  registry.npmjs.org/uglify-js@3.17.4:
+    resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/uglify-js/-/uglify-js-3.17.4.tgz}
+    name: uglify-js
+    version: 3.17.4
+    engines: {node: '>=0.8.0'}
+    hasBin: true
+    requiresBuild: true
+    optional: true
