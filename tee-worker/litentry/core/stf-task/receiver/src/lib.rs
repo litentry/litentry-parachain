@@ -182,16 +182,17 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
+	// let (sender, to_receiver) = std::sync::mpsc::channel::<(&ShardIdentifier, &H256, &TrustedCall)>();
+
 	let (sender, to_receiver) = std::sync::mpsc::channel::<(ShardIdentifier, H256, TrustedCall)>();
 
-	let context_x = context.clone();
-	std::thread::spawn(move || {
-		let mut counter_i32 = 0_i32;
-		loop {
-			let (shard, hash, call) = to_receiver.recv().unwrap();
+	// Spawn thread to handle received tasks
+	let context_for_thread = context.clone();
+	std::thread::spawn(move || loop {
+		if let Ok((shard, hash, call)) = to_receiver.recv() {
 			error!("Submitting trusted call to the pool");
-			if let Err(e) = context_x.submit_trusted_call(&shard, &hash, &call) {
-				error!("Submit Trusted Call failed: {:?}", e)
+			if let Err(e) = context_for_thread.submit_trusted_call(&shard, &hash, &call) {
+				error!("Submit Trusted Call failed: {:?}", e);
 			}
 		}
 	});
