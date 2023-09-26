@@ -69,8 +69,8 @@ where
 				self.req.web3networks.clone(),
 				self.req.req_ext_hash,
 			);
-			if let Err(e) = sender.send((self.req.shard.clone(), self.req.top_hash.clone(), c)) {
-				error!("Unable to send message to the trusted_call_receiver");
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {
 			error!("can't get enclave signer");
@@ -90,8 +90,8 @@ where
 				error,
 				self.req.req_ext_hash,
 			);
-			if let Err(e) = sender.send((self.req.shard.clone(), self.req.top_hash.clone(), c)) {
-				error!("Unable to send message to the trusted_call_receiver");
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
 			}
 		} else {
 			error!("can't get enclave signer");
