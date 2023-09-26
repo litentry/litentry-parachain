@@ -29,6 +29,7 @@ pub trait AccountApi {
 
 	fn get_nonce_of(&self, who: &Self::AccountId) -> ApiResult<Self::Index>;
 	fn get_free_balance(&self, who: &Self::AccountId) -> ApiResult<Self::Balance>;
+	fn get_account_next_index(&self, who: &Self::AccountId) -> ApiResult<Self::Index>;
 }
 
 impl<Client> AccountApi for Api<ParentchainRuntimeConfig, Client>
@@ -45,5 +46,9 @@ where
 
 	fn get_free_balance(&self, who: &Self::AccountId) -> ApiResult<Self::Balance> {
 		Ok(self.get_account_data(who)?.map(|data| data.free).unwrap_or_default())
+	}
+
+	fn get_account_next_index(&self, who: &Self::AccountId) -> ApiResult<Self::Index> {
+		self.get_system_account_next_index(who.clone())
 	}
 }

@@ -32,6 +32,10 @@ extern "C" {
 	pub fn init_enclave_sidechain_components(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
+		fail_mode: *const u8,
+		fail_mode_size: u32,
+		fail_at: *const u8,
+		fail_at_size: u32,
 	) -> sgx_status_t;
 
 	pub fn init_direct_invocation_server(

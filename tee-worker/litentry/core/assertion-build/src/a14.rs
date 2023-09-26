@@ -32,7 +32,9 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use lc_data_providers::{build_client, GLOBAL_DATA_PROVIDER_CONFIG};
+use lc_data_providers::{
+	build_client, DataProviderConfig, DataProviderConfigReader, ReadDataProviderConfig,
+};
 use serde::{Deserialize, Serialize};
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
@@ -70,19 +72,13 @@ pub struct A14Client {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
-impl Default for A14Client {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl A14Client {
-	pub fn new() -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().achainable_auth_key.clone().as_str(),
+			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
 		let client =
 			build_client("https://label-production.graph.tdf-labs.io/v1/run/labels/a719e99c-1f9b-432e-8f1d-cb3de0f14dde", headers);
@@ -116,8 +112,11 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		}
 	}
 
+	let data_provider_config =
+		DataProviderConfigReader::read().map_err(|e| Error::RequestVCFailed(Assertion::A14, e))?;
+
 	let mut value = false;
-	let mut client = A14Client::new();
+	let mut client = A14Client::new(&data_provider_config);
 
 	for address in polkadot_addresses {
 		let data = A14Data {

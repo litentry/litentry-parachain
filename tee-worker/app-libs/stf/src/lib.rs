@@ -207,13 +207,4 @@ impl TrustedOperation {
 			_ => None,
 		}
 	}
-
-	pub fn req_hash(&self) -> Option<&H256> {
-		match self {
-			TrustedOperation::direct_call(c) => c.call.identifier(),
-			TrustedOperation::indirect_call(c) => c.call.identifier(),
-			//todo: getters should also contain req_hash ?
-			TrustedOperation::get(_) => None,
-		}
-	}
 }

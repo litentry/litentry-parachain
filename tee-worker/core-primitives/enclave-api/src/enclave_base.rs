@@ -41,7 +41,11 @@ pub trait EnclaveBase: Send + Sync + 'static {
 	) -> EnclaveResult<()>;
 
 	/// Initialize the enclave sidechain components.
-	fn init_enclave_sidechain_components(&self) -> EnclaveResult<()>;
+	fn init_enclave_sidechain_components(
+		&self,
+		fail_mode: Option<String>,
+		fail_at: u64,
+	) -> EnclaveResult<()>;
 
 	/// Initialize the direct invocation RPC server.
 	fn init_direct_invocation_server(&self, rpc_server_addr: String) -> EnclaveResult<()>;
@@ -112,10 +116,26 @@ impl EnclaveBase for Enclave {
 		Ok(())
 	}
 
-	fn init_enclave_sidechain_components(&self) -> EnclaveResult<()> {
+	fn init_enclave_sidechain_components(
+		&self,
+		fail_mode: Option<String>,
+		fail_at: u64,
+	) -> EnclaveResult<()> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
-		let result = unsafe { ffi::init_enclave_sidechain_components(self.eid, &mut retval) };
+		let encoded_fail_mode = fail_mode.encode();
+		let encoded_fail_at = fail_at.encode();
+
+		let result = unsafe {
+			ffi::init_enclave_sidechain_components(
+				self.eid,
+				&mut retval,
+				encoded_fail_mode.as_ptr(),
+				encoded_fail_mode.len() as u32,
+				encoded_fail_at.as_ptr(),
+				encoded_fail_at.len() as u32,
+			)
+		};
 
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));

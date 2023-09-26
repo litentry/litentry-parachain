@@ -92,6 +92,7 @@ use its_sidechain::{
 	aura::block_importer::BlockImporter as SidechainBlockImporter,
 	block_composer::BlockComposer,
 	consensus_common::{BlockImportConfirmationHandler, BlockImportQueueWorker, PeerBlockSync},
+	slots::FailSlotOnDemand,
 };
 use lazy_static::lazy_static;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
@@ -442,3 +443,8 @@ pub static GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT: ComponentContainer<
 pub static GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT: ComponentContainer<
 	EnclaveSidechainBlockSyncer,
 > = ComponentContainer::new("sidechain_block_syncer");
+
+/// Sidechain fail slot on demand.
+pub static GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT: ComponentContainer<
+	Option<FailSlotOnDemand>,
+> = ComponentContainer::new("sidechain_fail_slot_on_demand");

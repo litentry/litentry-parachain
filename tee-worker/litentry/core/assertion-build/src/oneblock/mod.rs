@@ -26,7 +26,7 @@ use crate::*;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_data_providers::{build_client, GLOBAL_DATA_PROVIDER_CONFIG};
+use lc_data_providers::{build_client, DataProviderConfigReader, ReadDataProviderConfig};
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
 
@@ -44,18 +44,17 @@ impl RestPath<String> for OneBlockResponse {
 }
 
 fn fetch_data_from_notion(course_type: &OneBlockCourseType) -> Result<OneBlockResponse> {
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::Oneblock(course_type.clone()), e))?;
+	let oneblock_notion_key = data_provider_config.oneblock_notion_key;
+	let oneblock_notion_url = data_provider_config.oneblock_notion_url;
+
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
 	headers.insert("Notion-Version", "2022-06-28");
-	headers.insert(
-		AUTHORIZATION.as_str(),
-		GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().oneblock_notion_key.clone().as_str(),
-	);
+	headers.insert(AUTHORIZATION.as_str(), oneblock_notion_key.as_str());
 
-	let mut client = build_client(
-		GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().oneblock_notion_url.clone().as_str(),
-		headers,
-	);
+	let mut client = build_client(oneblock_notion_url.as_str(), headers);
 
 	client.get::<String, OneBlockResponse>(String::default()).map_err(|e| {
 		Error::RequestVCFailed(

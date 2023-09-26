@@ -96,6 +96,7 @@ use sp_core::{
 };
 use sp_keyring::AccountKeyring;
 use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
+
 extern crate config as rs_config;
 use itc_parentchain::primitives::ParentchainId;
 use sp_runtime::traits::Header as HeaderTrait;
@@ -534,7 +535,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let (parentchain_handler, last_synced_header) =
 		init_parentchain(&enclave, &integritee_rpc_api, &tee_accountid, ParentchainId::Integritee);
 	info!("Last synced parachain block = {:?}", &last_synced_header.number);
-	let nonce = integritee_rpc_api.get_nonce_of(&tee_accountid).unwrap();
+	let nonce = integritee_rpc_api.get_account_next_index(&tee_accountid).unwrap();
 	info!("Enclave nonce = {:?}", nonce);
 	enclave
 		.set_nonce(nonce, ParentchainId::Integritee)
@@ -742,6 +743,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				sidechain_storage,
 				&last_synced_header,
 				parentchain_start_block,
+				config.clone().fail_slot_mode,
+				config.clone().fail_at,
 			) {
 				Ok(value) => value,
 				Err(error) => {

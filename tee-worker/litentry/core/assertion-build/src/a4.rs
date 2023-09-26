@@ -66,7 +66,7 @@ extern crate sgx_tstd as std;
 use crate::*;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
-	vec_to_string, LIT_TOKEN_ADDRESS,
+	vec_to_string, DataProviderConfigReader, ReadDataProviderConfig, LIT_TOKEN_ADDRESS,
 };
 use std::string::ToString;
 
@@ -81,7 +81,10 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		Error::RequestVCFailed(Assertion::A4(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
-	let mut client = AchainableClient::new();
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::A4(min_balance.clone()), e))?;
+
+	let mut client = AchainableClient::new(&data_provider_config);
 	let identities = transpose_identity(&req.identities);
 
 	let mut is_hold = false;

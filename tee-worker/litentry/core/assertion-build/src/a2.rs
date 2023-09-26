@@ -42,14 +42,16 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			discord_cnt += 1;
-			let resp = client.check_join(guild_id.to_vec(), address.to_vec()).map_err(|e| {
-				Error::RequestVCFailed(Assertion::A2(guild_id.clone()), e.into_error_detail())
-			})?;
+			let resp = client.check_join(guild_id.to_vec(), address.inner_ref().to_vec()).map_err(
+				|e| Error::RequestVCFailed(Assertion::A2(guild_id.clone()), e.into_error_detail()),
+			)?;
 			if resp.data {
 				has_joined = true;
 
 				//Assign role "ID-Hubber" to each discord account
-				if let Ok(response) = client.assign_id_hubber(guild_id.to_vec(), address.to_vec()) {
+				if let Ok(response) =
+					client.assign_id_hubber(guild_id.to_vec(), address.inner_ref().to_vec())
+				{
 					if !response.data {
 						error!("assign_id_hubber {} {}", response.message, response.msg_code);
 					}
@@ -93,8 +95,9 @@ mod tests {
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 
 		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
+
 		let identities: Vec<IdentityNetworkTuple> =
-			vec![(Identity::Discord(IdentityString::truncate_from(handler_vec)), vec![])];
+			vec![(Identity::Discord(IdentityString::new(handler_vec)), vec![])];
 
 		let guild_id = BoundedVec::try_from(guild_id_vec).unwrap();
 		let req = AssertionBuildRequest {

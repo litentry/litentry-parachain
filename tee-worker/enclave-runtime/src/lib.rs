@@ -75,7 +75,7 @@ use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvide
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
-use itp_utils::write_slice_and_whitespace_pad;
+use itp_utils::{if_production_or, write_slice_and_whitespace_pad};
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
@@ -132,7 +132,10 @@ pub unsafe extern "C" fn init(
 	encoded_base_dir_size: u32,
 ) -> sgx_status_t {
 	// Initialize the logging environment in the enclave.
-	env_logger::init();
+	if_production_or!(
+		env_logger::Builder::new().filter(None, LevelFilter::Info).init(),
+		env_logger::init()
+	);
 
 	let mu_ra_url =
 		match String::decode(&mut slice::from_raw_parts(mu_ra_addr, mu_ra_addr_size as usize))
@@ -375,8 +378,27 @@ fn sidechain_rpc_int(request: &str) -> Result<String> {
 /// (parentchain components) have been initialized (because we need the parentchain
 /// block import dispatcher).
 #[no_mangle]
-pub unsafe extern "C" fn init_enclave_sidechain_components() -> sgx_status_t {
-	if let Err(e) = initialization::init_enclave_sidechain_components() {
+pub unsafe extern "C" fn init_enclave_sidechain_components(
+	fail_mode: *const u8,
+	fail_mode_size: u32,
+	fail_at: *const u8,
+	fail_at_size: u32,
+) -> sgx_status_t {
+	let fail_mode = match Option::<String>::decode_raw(fail_mode, fail_mode_size as usize) {
+		Ok(s) => s,
+		Err(e) => {
+			error!("failed to decode fail mode {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+	let fail_at = match u64::decode_raw(fail_at, fail_at_size as usize) {
+		Ok(v) => v,
+		Err(e) => {
+			error!("failed to decode fail at {:?}", e);
+			return sgx_status_t::SGX_ERROR_UNEXPECTED
+		},
+	};
+	if let Err(e) = initialization::init_enclave_sidechain_components(fail_mode, fail_at) {
 		error!("Failed to initialize sidechain components: {:?}", e);
 		return sgx_status_t::SGX_ERROR_UNEXPECTED
 	}

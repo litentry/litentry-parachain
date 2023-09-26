@@ -137,9 +137,9 @@ fn bootstrap_funds_from_alice(
 	let alice_acc = AccountId32::from(*alice.public().as_array_ref());
 
 	let alice_free = api.get_free_balance(&alice_acc)?;
-	trace!("    Alice's free balance = {:?}", alice_free);
-	let nonce = api.get_nonce_of(&alice_acc)?;
-	trace!("    Alice's Account Nonce is {}", nonce);
+	info!("    Alice's free balance = {:?}", alice_free);
+	let nonce = api.get_account_next_index(&alice_acc)?;
+	info!("    Alice's Account Nonce is {}", nonce);
 
 	if funding_amount > alice_free {
 		println!(
