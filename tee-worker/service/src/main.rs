@@ -51,7 +51,6 @@ use enclave::{
 };
 use ita_stf::{Getter, TrustedGetter};
 use itc_rpc_client::direct_client::DirectClient;
-use itp_api_client_types::ParentchainRuntimeConfig;
 use itp_enclave_api::{
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
