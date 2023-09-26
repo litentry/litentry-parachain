@@ -69,16 +69,19 @@ where
 				self.req.web3networks.clone(),
 				self.req.req_ext_hash,
 			);
-			let _ = self
-				.context
-				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
-				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+			if let Err(e) = sender.send((self.req.shard.clone(), self.req.top_hash.clone(), c)) {
+				error!("Unable to send message to the trusted_call_receiver");
+			}
 		} else {
 			error!("can't get enclave signer");
 		}
 	}
 
-	fn on_failure(&self, error: Self::Error) {
+	fn on_failure(
+		&self,
+		error: Self::Error,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	) {
 		error!("verify identity failed:{:?}", error);
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(
@@ -87,10 +90,9 @@ where
 				error,
 				self.req.req_ext_hash,
 			);
-			let _ = self
-				.context
-				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
-				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+			if let Err(e) = sender.send((self.req.shard.clone(), self.req.top_hash.clone(), c)) {
+				error!("Unable to send message to the trusted_call_receiver");
+			}
 		} else {
 			error!("can't get enclave signer");
 		}

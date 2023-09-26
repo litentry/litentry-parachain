@@ -188,16 +188,8 @@ where
 	std::thread::spawn(move || {
 		let mut counter_i32 = 0_i32;
 		loop {
-			// Need the following to make a TrustedCall
-			// 		&self,
-			// shard: &ShardIdentifier,
-			// old_top_hash: &H256,
-			// trusted_call: &TrustedCall,
 			let (shard, hash, call) = to_receiver.recv().unwrap();
-			// counter_i32 = counter_i32 + 1;
-			error!("Received a message to the message channel");
-			error!("Total Messages received so far: {:?}", counter_i32);
-			error!("Submitting trusted call");
+			error!("Submitting trusted call to the pool");
 			if let Err(e) = context_x.submit_trusted_call(&shard, &hash, &call) {
 				error!("Submit Trusted Call failed: {:?}", e)
 			}

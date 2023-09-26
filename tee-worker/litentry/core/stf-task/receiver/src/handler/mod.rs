@@ -28,7 +28,7 @@ pub trait TaskHandler {
 	fn start(&self, sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>) {
 		match self.on_process() {
 			Ok(r) => self.on_success(r, sender),
-			Err(e) => self.on_failure(e),
+			Err(e) => self.on_failure(e, sender),
 		}
 		// sender.send(0_i32).unwrap();
 	}
@@ -38,5 +38,9 @@ pub trait TaskHandler {
 		r: Self::Result,
 		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	);
-	fn on_failure(&self, e: Self::Error);
+	fn on_failure(
+		&self,
+		e: Self::Error,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	);
 }
