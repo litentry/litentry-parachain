@@ -7,16 +7,15 @@
         "test": "tests"
     },
     "scripts": {
-        "register-parathread": "ts-node tests/register-parathread.ts",
-        "upgrade-parathread": "ts-node tests/upgrade-parathread.ts",
-        "setup-enclave": "ts-node tests/setup-enclave.ts",
-        "test-filter": "mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
-        "test-bridge": "mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
-        "test-evm-transfer": "mocha --exit --sort -r ts-node/register 'tests/evm-transfer.test.ts'",
-        "test-evm-contract": "mocha --exit --sort -r ts-node/register 'tests/evm-contract.test.ts'",
-        "test-runtime-upgrade": "mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
-        "test-all": "mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'",
-        "preinstall": "npx only-allow yarn"
+        "register-parathread": "pnpm exec ts-node tests/register-parathread.ts",
+        "upgrade-parathread": "pnpm exec ts-node tests/upgrade-parathread.ts",
+        "setup-enclave": "pnpm exec ts-node tests/setup-enclave.ts",
+        "test-filter": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/base-filter.test.ts'",
+        "test-bridge": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/bridge.test.ts'",
+        "test-evm-transfer": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/evm-transfer.test.ts'",
+        "test-evm-contract": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/evm-contract.test.ts'",
+        "test-runtime-upgrade": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
+        "test-all": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'"
     },
     "author": "Han Zhao",
     "license": "ISC",
@@ -44,5 +43,5 @@
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true
     },
-    "packageManager": "yarn@3.6.1"
+    "packageManager": "pnpm@8.7.6"
 }

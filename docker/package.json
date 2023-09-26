@@ -4,7 +4,7 @@
   "main": "",
   "license": "GPL-3.0",
   "scripts": {
-    "build": "cd node_modules/@open-web3/parachain-launch && yarn && yarn build",
+    "build": "cd node_modules/@open-web3/parachain-launch && pnpm install && pnpm run build",
     "start": "node_modules/.bin/parachain-launch"
   },
   "dependencies": {

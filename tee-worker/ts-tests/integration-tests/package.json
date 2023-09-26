@@ -3,23 +3,22 @@
 	"license": "ISC",
 	"type": "module",
 	"scripts": {
-		"check-format": "yarn prettier --check .",
-		"format": "yarn prettier --write .",
-		"test-ii-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_identity.test.ts'",
-		"test-ii-identity:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm --loader=ts-node/esm 'ii_identity.test.ts'",
-		"test-di-substrate-identity:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_substrate_identity.test.ts'",
-		"test-di-substrate-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_substrate_identity.test.ts'",
-		"test-di-evm-identity:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
-		"test-di-evm-identity:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
-		"test-di-vc:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
-		"test-di-vc:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
-		"test-resuming-worker:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
-		"test-resuming-worker:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
-		"test-ii-vc:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
-		"test-ii-vc:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
-		"test-ii-batch:local": "yarn eslint . && cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
-		"test-ii-batch:staging": "yarn eslint . && cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
-		"preinstall": "npx only-allow yarn"
+		"check-format": "pnpm exec prettier --check .",
+		"format": "pnpm exec prettier --write .",
+		"test-ii-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_identity.test.ts'",
+		"test-ii-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm --loader=ts-node/esm 'ii_identity.test.ts'",
+		"test-di-substrate-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_substrate_identity.test.ts'",
+		"test-di-substrate-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_substrate_identity.test.ts'",
+		"test-di-evm-identity:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
+		"test-di-evm-identity:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_evm_identity.test.ts'",
+		"test-di-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
+		"test-di-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'di_vc.test.ts'",
+		"test-resuming-worker:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
+		"test-resuming-worker:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
+		"test-ii-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
+		"test-ii-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
+		"test-ii-batch:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
+		"test-ii-batch:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'"
 	},
 	"dependencies": {
 		"@noble/ed25519": "^1.7.3",
@@ -57,5 +56,5 @@
 		"ts-node": "^10.9.1",
 		"typescript": "5.0.4"
 	},
-	"packageManager": "yarn@3.6.1"
+	"packageManager": "pnpm@8.7.6"
 }
