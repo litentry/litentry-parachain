@@ -6,11 +6,17 @@ settings:
 
 dependencies:
   '@polkadot/api':
-    specifier: ^10.3.4
+    specifier: 10.9.1
     version: 10.9.1
+  '@polkadot/keyring':
+    specifier: 12.4.2
+    version: 12.4.2(@polkadot/util-crypto@12.4.2)(@polkadot/util@12.4.2)
   '@polkadot/types':
-    specifier: ^10.3.4
+    specifier: 10.9.1
     version: 10.9.1
+  '@polkadot/util':
+    specifier: 12.4.2
+    version: 12.4.2
   add:
     specifier: ^2.0.6
     version: 2.0.6
@@ -674,9 +680,9 @@ packages:
       '@polkadot/types-support': 10.9.1
       '@polkadot/util': 12.4.2
       '@polkadot/util-crypto': 12.4.2(@polkadot/util@12.4.2)
-      '@polkadot/x-fetch': 12.4.2
+      '@polkadot/x-fetch': 12.5.1
       '@polkadot/x-global': 12.4.2
-      '@polkadot/x-ws': 12.4.2
+      '@polkadot/x-ws': 12.5.1
       eventemitter3: 5.0.1
       mock-socket: 9.2.1
       nock: 13.3.3
@@ -867,17 +873,24 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@polkadot/x-fetch@12.4.2:
-    resolution: {integrity: sha512-QEtYIUO6q6LupYkOl+vRwAkbBSSNHbALG8Y3+L/tFDubeXQl79vCkJFmsjhLewpsDIwTFTPNOwzA0ZEyb+0HZw==}
+  /@polkadot/x-fetch@12.5.1:
+    resolution: {integrity: sha512-Bc019lOKCoQJrthiS+H3LwCahGtl5tNnb2HK7xe3DBQIUx9r2HsF/uEngNfMRUFkUYg5TPCLFbEWU8NIREBS1A==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/x-global': 12.4.2
+      '@polkadot/x-global': 12.5.1
       node-fetch: 3.3.2
       tslib: 2.6.2
     dev: false
 
   /@polkadot/x-global@12.4.2:
     resolution: {integrity: sha512-CwbjSt1Grmn56xAj+hGC8ZB0uZxMl92K+VkBH0KxjgcbAX/D24ZD/0ds8pAnUYrO4aYHYq2j2MAGVSMdHcMBAQ==}
+    engines: {node: '>=16'}
+    dependencies:
+      tslib: 2.6.2
+    dev: false
+
+  /@polkadot/x-global@12.5.1:
+    resolution: {integrity: sha512-6K0YtWEg0eXInDOihU5aSzeb1t9TiDdX9ZuRly+58ALSqw5kPZYmQLbzE1d8HWzyXRXK+YH65GtLzfMGqfYHmw==}
     engines: {node: '>=16'}
     dependencies:
       tslib: 2.6.2
@@ -912,13 +925,13 @@ packages:
       tslib: 2.6.2
     dev: false
 
-  /@polkadot/x-ws@12.4.2:
-    resolution: {integrity: sha512-dYUtpbPa/JNd94tPAM9iHMzhR8MZ4wtOPh8gvueQRRYC8ZYQ9NPwjbBImY2FRfx7wCG1tFLAR6OEw4ToLLJNsA==}
+  /@polkadot/x-ws@12.5.1:
+    resolution: {integrity: sha512-efNMhB3Lh6pW2iTipMkqwrjpuUtb3EwR/jYZftiIGo5tDPB7rqoMOp9s6KRFJEIUfZkLnMUtbkZ5fHzUJaCjmQ==}
     engines: {node: '>=16'}
     dependencies:
-      '@polkadot/x-global': 12.4.2
+      '@polkadot/x-global': 12.5.1
       tslib: 2.6.2
-      ws: 8.13.0
+      ws: 8.14.2
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -2098,7 +2111,7 @@ packages:
       semver: 6.3.1
     dev: true
 
-  /eslint-plugin-prettier@3.4.1(eslint-config-prettier@7.2.0)(eslint@7.32.0)(prettier@2.8.8):
+  /eslint-plugin-prettier@3.4.1(eslint-config-prettier@7.2.0)(eslint@7.32.0)(prettier@2.8.3):
     resolution: {integrity: sha512-htg25EUYUeIhKHXjOinK4BgCcDwtLHjqaxCDsMy5nbnUMkKFvIhMVCp+5GFUXQ4Nr8lBsPqtGAqBenbpFqAA2g==}
     engines: {node: '>=6.0.0'}
     peerDependencies:
@@ -2111,7 +2124,7 @@ packages:
     dependencies:
       eslint: 7.32.0
       eslint-config-prettier: 7.2.0(eslint@7.32.0)
-      prettier: 2.8.8
+      prettier: 2.8.3
       prettier-linter-helpers: 1.0.0
     dev: true
 
@@ -2814,13 +2827,13 @@ packages:
       eslint: 7.32.0
       eslint-config-prettier: 7.2.0(eslint@7.32.0)
       eslint-plugin-node: 11.1.0(eslint@7.32.0)
-      eslint-plugin-prettier: 3.4.1(eslint-config-prettier@7.2.0)(eslint@7.32.0)(prettier@2.8.8)
+      eslint-plugin-prettier: 3.4.1(eslint-config-prettier@7.2.0)(eslint@7.32.0)(prettier@2.8.3)
       execa: 5.1.1
       inquirer: 7.3.3
       json5: 2.2.3
       meow: 9.0.0
       ncp: 2.0.0
-      prettier: 2.8.8
+      prettier: 2.8.3
       rimraf: 3.0.2
       typescript: 4.9.5
       write-file-atomic: 3.0.3
@@ -3922,12 +3935,6 @@ packages:
 
   /prettier@2.8.3:
     resolution: {integrity: sha512-tJ/oJ4amDihPoufT5sM0Z1SKEuKay8LfVAMlbbhnnkvt6BUserZylqo2PN+p9KeljLr0OHa2rXHU1T8reeoTrw==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    dev: true
-
-  /prettier@2.8.8:
-    resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
@@ -5208,6 +5215,21 @@ packages:
 
   /ws@8.13.0:
     resolution: {integrity: sha512-x9vcZYTrFPC7aSIbj7sRCYo7L/Xb8Iy+pW0ng0wt2vCJv7M9HOMy0UoN3rr+IFC7hb7vXoqS+P9ktyLLLhO+LA==}
+    engines: {node: '>=10.0.0'}
+    requiresBuild: true
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+    dev: false
+    optional: true
+
+  /ws@8.14.2:
+    resolution: {integrity: sha512-wEBG1ftX4jcglPxgFCMJmZ2PLtSbJ2Peg6TmpJFTbe9GZYOQCDPdMYu/Tm0/bGZkw8paZnJY45J4K2PZrLYq8g==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
