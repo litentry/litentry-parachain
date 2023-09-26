@@ -707,6 +707,7 @@ jobs:
         run: |
           docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-tee.tar.gz
+          docker images
 
       - name: Generate parachain artefacts
         run: |

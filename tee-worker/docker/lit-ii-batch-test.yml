@@ -1,6 +1,6 @@
 services:
     lit-ii-batch-test:
-        image: litentry-cli:latest
+        image: litentry/litentry-cli:latest
         container_name: litentry-ii-batch-test
         volumes:
             - ../ts-tests:/ts-tests

@@ -1,6 +1,6 @@
 services:
   demo-direct-call:
-    image: litentry-cli:latest
+    image: litentry/litentry-cli:latest
     devices:
       - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
       - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"

@@ -1,6 +1,6 @@
 services:
   lit-id-graph-stats:
-    image: litentry-cli:latest
+    image: litentry/litentry-cli:latest
     container_name: litentry-id-graph-stats
     volumes:
       - ../cli:/usr/local/worker-cli
