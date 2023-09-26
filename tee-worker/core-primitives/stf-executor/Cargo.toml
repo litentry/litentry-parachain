@@ -12,6 +12,7 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 
 # local dependencies
 ita-stf = { path = "../../app-libs/stf", default-features = false }
+itp-enclave-metrics = { path = "../enclave-metrics", default-features = false }
 itp-node-api = { path = "../node-api", default-features = false }
 itp-ocall-api = { path = "../ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
