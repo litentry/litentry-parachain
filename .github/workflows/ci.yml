@@ -230,7 +230,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          ./tee-worker/scripts/litentry/ubuntu_setup.sh
+          sudo apt-get update && \
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Pallet unittests
         working-directory: ./tee-worker
