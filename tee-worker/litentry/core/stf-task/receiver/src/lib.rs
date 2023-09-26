@@ -199,15 +199,13 @@ where
 	let n_workers = 4;
 	let pool = ThreadPool::new(n_workers);
 
-	let sender_c = sender.clone();
-
 	loop {
 		let req = receiver
 			.recv()
 			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
 
 		let context_pool = context.clone();
-		let sender_pool = sender_c.clone();
+		let sender_pool = sender.clone();
 
 		pool.execute(move || {
 			let start_time = std::time::Instant::now();
