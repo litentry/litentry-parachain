@@ -51,6 +51,7 @@ use enclave::{
 };
 use ita_stf::{Getter, TrustedGetter};
 use itc_rpc_client::direct_client::DirectClient;
+use itp_api_client_types::ParentchainRuntimeConfig;
 use itp_enclave_api::{
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
@@ -82,13 +83,12 @@ use log::*;
 use my_node_runtime::{Hash, RuntimeEvent};
 use serde_json::Value;
 use sgx_types::*;
+#[cfg(feature = "dcap")]
+use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
 use substrate_api_client::{
 	ac_primitives::serde_impls::StorageKey, api::XtStatus, rpc::HandleSubscription, storage_key,
 	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
-
-#[cfg(feature = "dcap")]
-use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
 
 use sp_core::{
 	crypto::{AccountId32, Ss58Codec},
@@ -653,8 +653,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				let register_enclave_xt_hash =
 					send_extrinsic(xt, &integritee_rpc_api, &tee_accountid, is_development_mode);
 				println!("[<] Extrinsic got finalized. Hash: {:?}\n", register_enclave_xt_hash);
-				register_enclave_xt_header =
-					integritee_rpc_api.get_header(register_enclave_xt_hash).unwrap();
+				let api_register_enclave_xt_header =
+					integritee_rpc_api.get_header(register_enclave_xt_hash).unwrap().unwrap();
+
+				// TODO: #1451: Fix api-client type hacks
+				// TODO(Litentry): keep an eye on it - it's a hacky way to convert `SubstrateHeader` to `Header`
+				let register_enclave_xt_header =
+					Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
+						.expect("Can decode previously encoded header; qed");
 			}
 		},
 		_ => panic!("unknown error"),
