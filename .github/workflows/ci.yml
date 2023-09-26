@@ -530,10 +530,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8.7.6
-
       - uses: actions/download-artifact@v3
         with:
           name: litentry-parachain-dev
@@ -541,6 +537,9 @@ jobs:
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
 
       - name: Run ts tests for ${{ matrix.chain }}
         if: needs.set-condition.outputs.run_parachain_test == 'true'
