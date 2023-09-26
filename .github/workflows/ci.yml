@@ -138,9 +138,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8.7.6
 
       - name: Install rust toolchain
         run: rustup show
@@ -169,6 +166,9 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
 
       - name: Tee-worker install npm deps
         working-directory: ./tee-worker/ts-tests
@@ -529,6 +529,10 @@ jobs:
           - rococo
     steps:
       - uses: actions/checkout@v3
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.7.6
 
       - uses: actions/download-artifact@v3
         with:
