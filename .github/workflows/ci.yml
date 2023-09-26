@@ -142,9 +142,9 @@ jobs:
         with:
           version: 8.7.6
       - uses: actions/setup-node@v3
-          with:
-            node-version: 'lts/hydrogen'
-            cache: 'pnpm'
+        with:
+          node-version: "lts/hydrogen"
+          cache: "pnpm"
 
       - name: Install rust toolchain
         run: rustup show
@@ -466,8 +466,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-contexts:
-            local-stash=docker-image://localhost:5000/local-stash:latest
+          build-contexts: local-stash=docker-image://localhost:5000/local-stash:latest
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
@@ -479,8 +478,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-contexts:
-            local-stash=docker-image://localhost:5000/local-stash:latest
+          build-contexts: local-stash=docker-image://localhost:5000/local-stash:latest
           load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
