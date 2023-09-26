@@ -55,12 +55,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error};
-use std::{
-	boxed::Box,
-	format,
-	string::String,
-	sync::{Arc, SgxMutex as Mutex},
-};
+use std::{boxed::Box, format, string::String, sync::Arc};
 use threadpool::ThreadPool;
 
 #[derive(Debug, thiserror::Error, Clone)]

@@ -20,8 +20,6 @@ pub mod identity_verification;
 use ita_stf::{TrustedCall, H256};
 use itp_types::ShardIdentifier;
 
-use std::sync::{Arc, SgxMutex as Mutex};
-
 pub trait TaskHandler {
 	type Error;
 	type Result;
