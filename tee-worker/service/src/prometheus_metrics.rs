@@ -243,7 +243,6 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A6 => "A6",
 			Assertion::A7(_) => "A7",
 			Assertion::A8(_) => "A8",
-			Assertion::A9 => "A9",
 			Assertion::A10(_) => "A10",
 			Assertion::A11(_) => "A11",
 			Assertion::A13(_) => "A13",
