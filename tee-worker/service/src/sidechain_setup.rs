@@ -54,6 +54,7 @@ pub(crate) fn sidechain_start_untrusted_rpc_server<Enclave, SidechainStorage>(
 	});
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn sidechain_init_block_production<Enclave, SidechainStorage, ParentchainHandler>(
 	enclave: Arc<Enclave>,
 	register_enclave_xt_header: Option<Header>,
@@ -62,6 +63,8 @@ pub(crate) fn sidechain_init_block_production<Enclave, SidechainStorage, Parentc
 	sidechain_storage: Arc<SidechainStorage>,
 	last_synced_header: &Header,
 	overriden_start_block: u32,
+	fail_mode: Option<String>,
+	fail_at: u64,
 ) -> ServiceResult<Header>
 where
 	Enclave: EnclaveBase + Sidechain,
@@ -84,7 +87,7 @@ where
 
 	// ------------------------------------------------------------------------
 	// Initialize sidechain components (has to be AFTER init_parentchain_components()
-	enclave.init_enclave_sidechain_components().unwrap();
+	enclave.init_enclave_sidechain_components(fail_mode, fail_at).unwrap();
 
 	// ------------------------------------------------------------------------
 	// Start interval sidechain block production (execution of trusted calls, sidechain block production).

@@ -87,8 +87,6 @@ impl RpcRequest {
 #[cfg(test)]
 pub mod tests {
 	use crate::Id;
-	use serde::{de::IntoDeserializer, Deserialize};
-	use serde_json::Deserializer;
 
 	#[test]
 	pub fn deserialize_string_id() {

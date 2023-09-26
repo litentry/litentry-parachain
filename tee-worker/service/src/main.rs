@@ -703,6 +703,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				sidechain_storage,
 				&last_synced_header,
 				parentchain_start_block,
+				config.fail_slot_mode,
+				config.fail_at,
 			) {
 				Ok(value) => value,
 				Err(error) => {
