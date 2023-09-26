@@ -182,8 +182,6 @@ where
 	let receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	// let (sender, to_receiver) = std::sync::mpsc::channel::<(&ShardIdentifier, &H256, &TrustedCall)>();
-
 	let (sender, to_receiver) = std::sync::mpsc::channel::<(ShardIdentifier, H256, TrustedCall)>();
 
 	// Spawn thread to handle received tasks
