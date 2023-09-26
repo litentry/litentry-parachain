@@ -35,6 +35,9 @@ dependencies:
   web3:
     specifier: ^1.8.1
     version: 1.10.1
+  web3-utils:
+    specifier: ^1.10.1
+    version: 1.10.1
 
 devDependencies:
   '@types/chai':
