@@ -169,11 +169,11 @@ jobs:
 
       - name: Tee-worker install npm deps
         working-directory: ./tee-worker/ts-tests
-        run: corepack pnpm install
+        run: pnpm install
 
       - name: Tee-worker check ts code format
         working-directory: ./tee-worker/ts-tests
-        run: corepack pnpm run check-format
+        run: pnpm run check-format
 
       - name: Fail early
         if: failure()
