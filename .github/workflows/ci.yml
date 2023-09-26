@@ -141,10 +141,6 @@ jobs:
       - uses: pnpm/action-setup@v2
         with:
           version: 8.7.6
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "lts/hydrogen"
-          cache: "pnpm"
 
       - name: Install rust toolchain
         run: rustup show
