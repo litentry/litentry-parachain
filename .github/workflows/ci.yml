@@ -699,6 +699,9 @@ jobs:
           docker tag litentry/litentry-cli ${{ env.CLIENT_IMAGE_TAG }}
           docker images --all
 
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
