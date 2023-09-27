@@ -2750,6 +2750,7 @@ dependencies = [
  "sp-core",
  "sp-std",
  "thiserror",
+ "threadpool",
  "url",
 ]
 
@@ -4742,6 +4743,14 @@ version = "1.0.0"
 source = "git+https://github.com/mesalock-linux/thread_local-rs-sgx#a8e6e6ce280c53358f7b9e6febe534cba9950547"
 dependencies = [
  "lazy_static",
+ "sgx_tstd",
+]
+
+[[package]]
+name = "threadpool"
+version = "1.8.0"
+source = "git+https://github.com/mesalock-linux/rust-threadpool-sgx?tag=sgx_1.1.3#098d98a85b7e2b02e2bb451a3dec0b027017ff4c"
+dependencies = [
  "sgx_tstd",
 ]
 
