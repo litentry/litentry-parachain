@@ -54,7 +54,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use log::{debug, error};
+use log::{debug, error, info};
 use std::{boxed::Box, format, string::String, sync::Arc};
 use threadpool::ThreadPool;
 
@@ -183,7 +183,7 @@ where
 	let context_for_thread = context.clone();
 	std::thread::spawn(move || loop {
 		if let Ok((shard, hash, call)) = to_receiver.recv() {
-			error!("Submitting trusted call to the pool");
+			info!("Submitting trusted call to the pool");
 			if let Err(e) = context_for_thread.submit_trusted_call(&shard, &hash, &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}

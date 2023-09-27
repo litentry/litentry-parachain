@@ -28,7 +28,6 @@ pub trait TaskHandler {
 			Ok(r) => self.on_success(r, sender),
 			Err(e) => self.on_failure(e, sender),
 		}
-		// sender.send(0_i32).unwrap();
 	}
 	fn on_process(&self) -> Result<Self::Result, Self::Error>;
 	fn on_success(
