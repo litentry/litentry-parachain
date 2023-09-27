@@ -27,9 +27,9 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 ARG PROFILE
 
 COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
-
+echo "http://th.archive.ubuntu.com/ubuntu jammy main" >> /etc/apt/sources.list
 # install netcat for healthcheck
-RUN apt-get update && apt-get install -yq netcat && cp /usr/bin/nc /usr/local/bin/
+RUN apt-get update && apt install libc6 && apt-get install -yq netcat && cp /usr/bin/nc /usr/local/bin/
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \
