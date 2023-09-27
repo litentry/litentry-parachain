@@ -34,6 +34,7 @@ use lc_data_providers::{
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
 
+pub mod ajson;
 pub mod amount;
 pub mod amount_holding;
 pub mod amount_token;
@@ -44,7 +45,6 @@ pub mod class_of_year;
 pub mod date;
 pub mod date_interval;
 pub mod date_percent;
-pub mod ajson;
 pub mod token;
 
 pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Credential> {

@@ -81,6 +81,17 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				} else {
 					Response::builder().body(RES_BODY_OK_CLASS_OF_YEAR.to_string())
 				}
+			} else if body.name == "Account found on {chain}" {
+				if body.address == "0x3f349bBaFEc1551819B8be1EfEA2fC46cA749aA1" {
+					Response::builder().body(RES_BODY.to_string())
+				} else {
+					let falsex = r#"
+{
+	"result": false
+}"#;
+
+					Response::builder().body(falsex.to_string())
+				}
 			} else {
 				Response::builder().body(RES_BODY.to_string())
 			}

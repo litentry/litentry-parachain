@@ -175,6 +175,7 @@ declare const _default: {
                 A12: string;
                 A13: string;
                 A14: string;
+                AchainableJsonObject: string;
             };
         };
         AssertionSupportedNetwork: {

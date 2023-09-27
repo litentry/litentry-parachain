@@ -6119,6 +6119,7 @@ name = "lc-assertion-build"
 version = "0.1.0"
 dependencies = [
  "blake2-rfc",
+ "env_logger 0.10.0",
  "frame-support",
  "futures 0.3.28",
  "futures 0.3.8",
@@ -6141,6 +6142,7 @@ dependencies = [
  "itp-utils",
  "lc-credentials",
  "lc-data-providers",
+ "lc-mock-server",
  "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.19",

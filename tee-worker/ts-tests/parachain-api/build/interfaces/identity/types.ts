@@ -50,6 +50,8 @@ export interface Assertion extends Enum {
     readonly isA13: boolean;
     readonly asA13: AccountId32;
     readonly isA14: boolean;
+    readonly isAchainableJsonObject: boolean;
+    readonly asAchainableJsonObject: Bytes;
     readonly type:
         | "A1"
         | "A2"
@@ -63,7 +65,8 @@ export interface Assertion extends Enum {
         | "A11"
         | "A12"
         | "A13"
-        | "A14";
+        | "A14"
+        | "AchainableJsonObject";
 }
 
 /** @name AssertionSupportedNetwork */

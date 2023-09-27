@@ -194,6 +194,7 @@ export default {
 				A12: "Bytes",
 				A13: "AccountId32",
 				A14: "Null",
+				AchainableJsonObject: "Bytes",
 			},
 		},
 		AssertionSupportedNetwork: {

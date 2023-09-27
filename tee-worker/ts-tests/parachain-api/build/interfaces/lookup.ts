@@ -2165,6 +2165,7 @@ export default {
             Achainable: "CorePrimitivesAssertionAchainableParams",
             A20: "Null",
             Oneblock: "CorePrimitivesOneblockOneBlockCourseType",
+            AchainableJsonObject: "Bytes",
         },
     },
     /**

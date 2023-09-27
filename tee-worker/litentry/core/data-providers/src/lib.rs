@@ -217,7 +217,7 @@ pub fn vec_to_string(vec: Vec<u8>) -> Result<String, Error> {
 }
 
 pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<DefaultSend>> {
-	debug!("base_url: {}", base_url);
+	println!("base_url: {}", base_url);
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
 	RestClient::new(http_client, base_url)

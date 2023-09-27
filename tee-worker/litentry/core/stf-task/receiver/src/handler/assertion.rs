@@ -88,7 +88,8 @@ where
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
 
-			Assertion::AchainableJsonObject(jobj) => lc_assertion_build::achainable::ajson::build(&self.req, jobj),
+			Assertion::AchainableJsonObject(jobj) =>
+				lc_assertion_build::achainable::ajson::build(&self.req, jobj),
 
 			_ => {
 				unimplemented!()

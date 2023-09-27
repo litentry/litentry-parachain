@@ -2939,6 +2939,8 @@ declare module "@polkadot/types/lookup" {
         readonly isA20: boolean;
         readonly isOneblock: boolean;
         readonly asOneblock: CorePrimitivesOneblockOneBlockCourseType;
+        readonly isAchainableJsonObject: boolean;
+        readonly asAchainableJsonObject: Bytes;
         readonly type:
             | "A1"
             | "A2"
@@ -2954,7 +2956,8 @@ declare module "@polkadot/types/lookup" {
             | "A14"
             | "Achainable"
             | "A20"
-            | "Oneblock";
+            | "Oneblock"
+            | "AchainableJsonObject";
     }
 
     /** @name CorePrimitivesNetworkWeb3Network (149) */

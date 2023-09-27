@@ -2143,6 +2143,7 @@ declare const _default: {
             Achainable: string;
             A20: string;
             Oneblock: string;
+            AchainableJsonObject: string;
         };
     };
     /**
