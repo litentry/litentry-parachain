@@ -6,7 +6,6 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
-sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_crypto_helper", default-features = false, optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["untrusted_time"] }
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
@@ -93,6 +92,5 @@ test = [
     "itc-parentchain-test",
     "itp-node-api/mocks",
     "itp-test",
-    "sgx-crypto-helper",
 ]
 mocks = []

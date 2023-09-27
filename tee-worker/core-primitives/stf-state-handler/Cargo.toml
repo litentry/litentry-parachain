@@ -6,7 +6,6 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
-sgx_tcrypto = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
@@ -60,7 +59,6 @@ std = [
 ]
 sgx = [
     "sgx_tstd",
-    "sgx_tcrypto",
     "rust-base58_sgx",
     "ita-stf/sgx",
     "itp-sgx-crypto/sgx",
