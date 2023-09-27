@@ -127,7 +127,19 @@ pub unsafe extern "C" fn init(
 ) -> sgx_status_t {
 	// Initialize the logging environment in the enclave.
 	if_production_or!(
-		env_logger::Builder::new().filter(None, LevelFilter::Info).init(),
+		{
+			let module_names = litentry_macros::local_modules!();
+			println!(
+				"Initializing logger to filter only following local modules: {:?}",
+				module_names
+			);
+			let mut builder = env_logger::Builder::new();
+			builder.filter(None, LevelFilter::Off);
+			module_names.into_iter().for_each(|module| {
+				builder.filter(Some(module), LevelFilter::Info);
+			});
+			builder.init();
+		},
 		env_logger::init()
 	);
 
