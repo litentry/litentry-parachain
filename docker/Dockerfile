@@ -29,7 +29,7 @@ ARG PROFILE
 COPY --from=builder /litentry/target/$PROFILE/litentry-collator /usr/local/bin
 RUN echo "deb http://th.archive.ubuntu.com/ubuntu jammy main" >> /etc/apt/sources.list
 # install netcat for healthcheck
-RUN apt-get update && apt install libc6 -y && apt-get install -yq netcat && cp /usr/bin/nc /usr/local/bin/
+RUN apt-get update && apt install libc6 libstdc++6 -y && apt-get install -yq netcat && cp /usr/bin/nc /usr/local/bin/
 
 RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \
