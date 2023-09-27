@@ -312,7 +312,7 @@ where
 		// This is the error of mimic XcmRouter: decl_test_network
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get(),
+				R::UnitWeightCost::get() * 2,
 				XcmError::Unroutable,
 			))
 			.into(),
@@ -590,7 +590,7 @@ where
 		// Unlike orml_xtoken, pallet_xcm fails with event when DustLost issue happens
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get(),
+				R::UnitWeightCost::get() * 2,
 				XcmError::FailedToTransactAsset(""),
 			))
 			.into(),
