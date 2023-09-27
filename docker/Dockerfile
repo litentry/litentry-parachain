@@ -21,7 +21,7 @@ RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 # ==========================
 # stage 2: packaging
 # ==========================
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
