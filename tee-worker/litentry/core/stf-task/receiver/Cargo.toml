@@ -7,7 +7,6 @@ version = "0.1.0"
 [dependencies]
 # std dependencies
 futures = { version = "0.3.8", optional = true }
-hex = { version = "0.4.3", optional = true }
 thiserror = { version = "1.0.26", optional = true }
 threadpool = { version = "1.8.0", optional = true }
 
@@ -71,7 +70,6 @@ sgx = [
 std = [
     "threadpool",
     "futures",
-    "hex",
     "log/std",
     "thiserror",
     "itp-types/std",

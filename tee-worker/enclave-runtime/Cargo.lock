@@ -534,7 +534,6 @@ dependencies = [
  "sp-std",
  "strum",
  "strum_macros",
- "xcm",
 ]
 
 [[package]]
@@ -613,17 +612,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1a467a65c5e759bce6e65eaf91cc29f466cdc57cb65777bd646872a8a1fd4de"
 dependencies = [
  "const-oid",
-]
-
-[[package]]
-name = "derivative"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
-dependencies = [
- "proc-macro2",
- "quote 1.0.32",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -3109,13 +3097,11 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "log",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -5030,32 +5016,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
 dependencies = [
  "tap",
-]
-
-[[package]]
-name = "xcm"
-version = "0.9.39-1"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.39#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
-dependencies = [
- "bounded-collections",
- "derivative",
- "impl-trait-for-tuples",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-weights",
- "xcm-procedural",
-]
-
-[[package]]
-name = "xcm-procedural"
-version = "0.9.39-1"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.39#c22e1c4173bf6966f5d1980f4299f7abe836f0c1"
-dependencies = [
- "Inflector",
- "proc-macro2",
- "quote 1.0.32",
- "syn 1.0.109",
 ]
 
 [[package]]

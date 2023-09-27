@@ -1425,7 +1425,6 @@ dependencies = [
  "sp-std 5.0.0",
  "strum 0.25.0",
  "strum_macros 0.25.2",
- "xcm",
 ]
 
 [[package]]
@@ -6140,7 +6139,6 @@ dependencies = [
  "futures 0.3.28",
  "futures 0.3.8",
  "hex 0.4.0",
- "hex 0.4.3",
  "ita-sgx-runtime",
  "ita-stf",
  "itp-enclave-metrics",
@@ -8315,13 +8313,9 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal 0.3.4",
- "log 0.4.19",
  "orml-traits",
  "parity-scale-codec",
  "scale-info",
- "serde 1.0.175",
- "smallvec 1.11.0",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -8533,7 +8527,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
  "pallet-bridge",
  "pallet-parachain-staking",
  "parity-scale-codec",
@@ -8796,7 +8789,6 @@ dependencies = [
 name = "pallet-evm-address"
 version = "0.1.0"
 dependencies = [
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",
@@ -8899,12 +8891,9 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
- "log 0.4.19",
  "pallet-teerex",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -9088,14 +9077,11 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "log 0.4.19",
  "parity-scale-codec",
  "scale-info",
- "serde 1.0.175",
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-runtime",
- "sp-std 5.0.0",
 ]
 
 [[package]]
@@ -9281,7 +9267,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "serde 1.0.175",
  "sgx-verify",
  "sp-core",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
@@ -9412,11 +9397,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex 0.4.3",
- "log 0.4.19",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
@@ -11864,8 +11846,6 @@ dependencies = [
  "polkadot-parachain",
  "runtime-common",
  "scale-info",
- "serde 1.0.175",
- "smallvec 1.11.0",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -11964,7 +11944,6 @@ dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.19",
@@ -11980,7 +11959,6 @@ dependencies = [
  "pallet-membership",
  "pallet-multisig",
  "pallet-teerex",
- "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",
@@ -13682,7 +13660,6 @@ dependencies = [
  "serde 1.0.175",
  "serde_json 1.0.103",
  "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-std 5.0.0",
  "teerex-primitives",
  "webpki 0.21.0",
@@ -13947,9 +13924,6 @@ dependencies = [
  "scale-info",
  "serde 1.0.175",
  "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
- "sp-runtime",
- "sp-std 5.0.0",
 ]
 
 [[package]]
@@ -15263,7 +15237,6 @@ name = "teeracle-primitives"
 version = "0.1.0"
 dependencies = [
  "common-primitives",
- "sp-std 5.0.0",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
 ]
 
@@ -15271,12 +15244,9 @@ dependencies = [
 name = "teerex-primitives"
 version = "0.1.0"
 dependencies = [
- "common-primitives",
  "parity-scale-codec",
  "scale-info",
- "serde 1.0.175",
  "sp-core",
- "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
  "sp-std 5.0.0",
 ]
 
