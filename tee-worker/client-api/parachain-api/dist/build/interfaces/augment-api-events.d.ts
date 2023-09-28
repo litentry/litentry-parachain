@@ -2082,10 +2082,7 @@ declare module '@polkadot/api-base/types/events' {
              *
              * \[ destination location, cost \]
              **/
-            VersionNotifyUnrequested: AugmentedEvent<
-                ApiType,
-                [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]
-            >;
+            VersionNotifyUnrequested: AugmentedEvent<ApiType, [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]>;
             /**
              * Generic event
              **/
