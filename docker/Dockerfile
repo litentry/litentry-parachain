@@ -6,7 +6,7 @@ ARG PROFILE
 # https://hub.docker.com/_/rust
 # our host is based on bullseye/sid => rust:latest
 # ==========================
-FROM rust:1.20.0 as builder
+FROM rust:1.40.0 as builder
 
 WORKDIR /litentry
 COPY . /litentry
