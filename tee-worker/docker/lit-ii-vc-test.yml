@@ -1,6 +1,6 @@
 services:
     lit-ii-vc-test:
-        image: litentry-cli:dev
+        image: litentry/litentry-cli:latest
         container_name: litentry-ii-vc-test
         volumes:
             - ../ts-tests:/ts-tests

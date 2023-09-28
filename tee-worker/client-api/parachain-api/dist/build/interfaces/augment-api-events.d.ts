@@ -98,6 +98,10 @@ declare module '@polkadot/api-base/types/events' {
                     unitsPerSecond: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         balances: {
             /**
@@ -221,6 +225,10 @@ declare module '@polkadot/api-base/types/events' {
                     amount: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         bounties: {
             /**
@@ -297,6 +305,10 @@ declare module '@polkadot/api-base/types/events' {
                     bond: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         bridgeTransfer: {
             /**
@@ -320,6 +332,10 @@ declare module '@polkadot/api-base/types/events' {
                     amount: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         chainBridge: {
             /**
@@ -387,6 +403,10 @@ declare module '@polkadot/api-base/types/events' {
              * Vote submitted in favour of proposal
              **/
             VoteFor: AugmentedEvent<ApiType, [u8, u64, AccountId32]>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         council: {
             /**
@@ -472,6 +492,10 @@ declare module '@polkadot/api-base/types/events' {
                     no: u32;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         councilMembership: {
             /**
@@ -498,6 +522,10 @@ declare module '@polkadot/api-base/types/events' {
              * Two members were swapped; see the transaction for who.
              **/
             MembersSwapped: AugmentedEvent<ApiType, []>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         cumulusXcm: {
             /**
@@ -515,6 +543,10 @@ declare module '@polkadot/api-base/types/events' {
              * \[ id \]
              **/
             UnsupportedVersion: AugmentedEvent<ApiType, [U8aFixed]>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         democracy: {
             /**
@@ -694,6 +726,10 @@ declare module '@polkadot/api-base/types/events' {
                     vote: PalletDemocracyVoteAccountVote;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         dmpQueue: {
             /**
@@ -776,6 +812,10 @@ declare module '@polkadot/api-base/types/events' {
                     requiredWeight: SpWeightsWeightV2Weight;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         drop3: {
             /**
@@ -874,6 +914,102 @@ declare module '@polkadot/api-base/types/events' {
                     amount: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
+        };
+        ethereum: {
+            /**
+             * An ethereum transaction was successfully executed.
+             **/
+            Executed: AugmentedEvent<
+                ApiType,
+                [from: H160, to: H160, transactionHash: H256, exitReason: EvmCoreErrorExitReason],
+                {
+                    from: H160;
+                    to: H160;
+                    transactionHash: H256;
+                    exitReason: EvmCoreErrorExitReason;
+                }
+            >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
+        };
+        evm: {
+            /**
+             * A contract has been created at given address.
+             **/
+            Created: AugmentedEvent<
+                ApiType,
+                [address: H160],
+                {
+                    address: H160;
+                }
+            >;
+            /**
+             * A contract was attempted to be created, but the execution failed.
+             **/
+            CreatedFailed: AugmentedEvent<
+                ApiType,
+                [address: H160],
+                {
+                    address: H160;
+                }
+            >;
+            /**
+             * A contract has been executed successfully with states applied.
+             **/
+            Executed: AugmentedEvent<
+                ApiType,
+                [address: H160],
+                {
+                    address: H160;
+                }
+            >;
+            /**
+             * A contract has been executed with errors. States are reverted with only gas fees applied.
+             **/
+            ExecutedFailed: AugmentedEvent<
+                ApiType,
+                [address: H160],
+                {
+                    address: H160;
+                }
+            >;
+            /**
+             * Ethereum events from contracts.
+             **/
+            Log: AugmentedEvent<
+                ApiType,
+                [log: EthereumLog],
+                {
+                    log: EthereumLog;
+                }
+            >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
+        };
+        evmAddress: {
+            /**
+             * AddressMapping added
+             **/
+            AddressMappingAdded: AugmentedEvent<
+                ApiType,
+                [evm: H160, accountId: AccountId32],
+                {
+                    evm: H160;
+                    accountId: AccountId32;
+                }
+            >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         extrinsicFilter: {
             /**
@@ -908,6 +1044,10 @@ declare module '@polkadot/api-base/types/events' {
                     newMode: PalletExtrinsicFilterOperationalMode;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         identityManagement: {
             ActivateIdentityFailed: AugmentedEvent<
@@ -1040,6 +1180,10 @@ declare module '@polkadot/api-base/types/events' {
                     reqExtHash: H256;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         impExtrinsicWhitelist: {
             /**
@@ -1050,6 +1194,10 @@ declare module '@polkadot/api-base/types/events' {
              * Group member removed from set
              **/
             GroupMemberRemoved: AugmentedEvent<ApiType, [AccountId32]>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         multisig: {
             /**
@@ -1115,6 +1263,10 @@ declare module '@polkadot/api-base/types/events' {
                     callHash: U8aFixed;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         parachainIdentity: {
             /**
@@ -1229,6 +1381,10 @@ declare module '@polkadot/api-base/types/events' {
                     deposit: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         parachainStaking: {
             /**
@@ -1684,6 +1840,10 @@ declare module '@polkadot/api-base/types/events' {
                     new_: u32;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         parachainSystem: {
             /**
@@ -1745,6 +1905,10 @@ declare module '@polkadot/api-base/types/events' {
              * The validation function has been scheduled to apply.
              **/
             ValidationFunctionStored: AugmentedEvent<ApiType, []>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         polkadotXcm: {
             /**
@@ -1918,7 +2082,14 @@ declare module '@polkadot/api-base/types/events' {
              *
              * \[ destination location, cost \]
              **/
-            VersionNotifyUnrequested: AugmentedEvent<ApiType, [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]>;
+            VersionNotifyUnrequested: AugmentedEvent<
+                ApiType,
+                [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]
+            >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         preimage: {
             /**
@@ -1951,6 +2122,10 @@ declare module '@polkadot/api-base/types/events' {
                     hash_: H256;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         proxy: {
             /**
@@ -2030,6 +2205,10 @@ declare module '@polkadot/api-base/types/events' {
                     disambiguationIndex: u16;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         scheduler: {
             /**
@@ -2099,6 +2278,10 @@ declare module '@polkadot/api-base/types/events' {
                     index: u32;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         session: {
             /**
@@ -2112,10 +2295,18 @@ declare module '@polkadot/api-base/types/events' {
                     sessionIndex: u32;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         sidechain: {
             FinalizedSidechainBlock: AugmentedEvent<ApiType, [AccountId32, H256]>;
             ProposedSidechainBlock: AugmentedEvent<ApiType, [AccountId32, H256]>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         sudo: {
             /**
@@ -2148,6 +2339,10 @@ declare module '@polkadot/api-base/types/events' {
                     sudoResult: Result<Null, SpRuntimeDispatchError>;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         system: {
             /**
@@ -2206,6 +2401,10 @@ declare module '@polkadot/api-base/types/events' {
                     hash_: H256;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         technicalCommittee: {
             /**
@@ -2291,6 +2490,10 @@ declare module '@polkadot/api-base/types/events' {
                     no: u32;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         technicalCommitteeMembership: {
             /**
@@ -2317,6 +2520,10 @@ declare module '@polkadot/api-base/types/events' {
              * Two members were swapped; see the transaction for who.
              **/
             MembersSwapped: AugmentedEvent<ApiType, []>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         teeracle: {
             AddedToWhitelist: AugmentedEvent<ApiType, [Bytes, U8aFixed]>;
@@ -2328,6 +2535,10 @@ declare module '@polkadot/api-base/types/events' {
             ExchangeRateUpdated: AugmentedEvent<ApiType, [Bytes, Bytes, Option<SubstrateFixedFixedU64>]>;
             OracleUpdated: AugmentedEvent<ApiType, [Bytes, Bytes]>;
             RemovedFromWhitelist: AugmentedEvent<ApiType, [Bytes, U8aFixed]>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         teerex: {
             AddedEnclave: AugmentedEvent<ApiType, [AccountId32, Bytes]>;
@@ -2365,6 +2576,10 @@ declare module '@polkadot/api-base/types/events' {
             ShieldFunds: AugmentedEvent<ApiType, [Bytes]>;
             UnshieldedFunds: AugmentedEvent<ApiType, [AccountId32]>;
             UpdatedScheduledEnclave: AugmentedEvent<ApiType, [u64, U8aFixed]>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         tips: {
             /**
@@ -2421,6 +2636,10 @@ declare module '@polkadot/api-base/types/events' {
                     deposit: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         tokens: {
             /**
@@ -2616,6 +2835,10 @@ declare module '@polkadot/api-base/types/events' {
                     amount: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         transactionPayment: {
             /**
@@ -2631,6 +2854,10 @@ declare module '@polkadot/api-base/types/events' {
                     tip: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         treasury: {
             /**
@@ -2729,6 +2956,10 @@ declare module '@polkadot/api-base/types/events' {
                     deactivated: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         utility: {
             /**
@@ -2775,6 +3006,10 @@ declare module '@polkadot/api-base/types/events' {
                     error: SpRuntimeDispatchError;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         vcManagement: {
             AdminChanged: AugmentedEvent<
@@ -2918,6 +3153,10 @@ declare module '@polkadot/api-base/types/events' {
                     index: H256;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         vcmpExtrinsicWhitelist: {
             /**
@@ -2928,6 +3167,10 @@ declare module '@polkadot/api-base/types/events' {
              * Group member removed from set
              **/
             GroupMemberRemoved: AugmentedEvent<ApiType, [AccountId32]>;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         vesting: {
             /**
@@ -2952,6 +3195,10 @@ declare module '@polkadot/api-base/types/events' {
                     unvested: u128;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         xcmpQueue: {
             /**
@@ -3031,6 +3278,10 @@ declare module '@polkadot/api-base/types/events' {
                     messageHash: Option<U8aFixed>;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
         xTokens: {
             /**
@@ -3051,6 +3302,10 @@ declare module '@polkadot/api-base/types/events' {
                     dest: XcmV3MultiLocation;
                 }
             >;
+            /**
+             * Generic event
+             **/
+            [key: string]: AugmentedEvent<ApiType>;
         };
     }
 }

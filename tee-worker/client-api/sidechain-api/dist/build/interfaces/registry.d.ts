@@ -1,4 +1,4 @@
-import '@polkadot/types/types/registry';
+import "@polkadot/types/types/registry";
 import type {
     CorePrimitivesNetworkWeb3Network,
     FrameSupportDispatchDispatchClass,
@@ -64,8 +64,8 @@ import type {
     SpVersionRuntimeVersion,
     SpWeightsRuntimeDbWeight,
     SpWeightsWeightV2Weight,
-} from '@polkadot/types/lookup';
-declare module '@polkadot/types/types/registry' {
+} from "@polkadot/types/lookup";
+declare module "@polkadot/types/types/registry" {
     interface InterfaceTypes {
         CorePrimitivesNetworkWeb3Network: CorePrimitivesNetworkWeb3Network;
         FrameSupportDispatchDispatchClass: FrameSupportDispatchDispatchClass;

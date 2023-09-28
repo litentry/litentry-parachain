@@ -24,5 +24,5 @@ corepack yarn update-build
 
 cd /ts-tests
 
-corepack yarn install
-corepack yarn run $TEST:staging
+pnpm install
+pnpm --filter integration-tests run $TEST:staging

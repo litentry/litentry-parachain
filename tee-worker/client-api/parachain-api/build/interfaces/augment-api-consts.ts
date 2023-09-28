@@ -5,9 +5,10 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/api-base/types/consts';
 
-import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
-import type { Option, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
-import type { Perbill, Percent, Permill } from '@polkadot/types/interfaces/runtime';
+import type { ApiTypes, AugmentedConst } from "@polkadot/api-base/types";
+import type { Option, U8aFixed, bool, u128, u16, u32, u64, u8 } from "@polkadot/types-codec";
+import type { Codec } from "@polkadot/types-codec/types";
+import type { Perbill, Percent, Permill } from "@polkadot/types/interfaces/runtime";
 import type {
     FrameSupportPalletId,
     FrameSystemLimitsBlockLength,
@@ -36,6 +37,10 @@ declare module '@polkadot/api-base/types/consts' {
              * The maximum number of named reserves that can exist on an account.
              **/
             maxReserves: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         bounties: {
             /**
@@ -79,11 +84,19 @@ declare module '@polkadot/api-base/types/consts' {
              * Benchmarks depend on this value, be sure to update weights file when changing this value
              **/
             maximumReasonLength: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         bridgeTransfer: {
             defaultMaximumIssuance: u128 & AugmentedConst<ApiType>;
             externalTotalIssuance: u128 & AugmentedConst<ApiType>;
             nativeTokenResourceId: U8aFixed & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         chainBridge: {
             /**
@@ -93,6 +106,10 @@ declare module '@polkadot/api-base/types/consts' {
              **/
             bridgeChainId: u8 & AugmentedConst<ApiType>;
             proposalLifetime: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         democracy: {
             /**
@@ -155,6 +172,10 @@ declare module '@polkadot/api-base/types/consts' {
              * How often (in blocks) to check for new votes.
              **/
             votingPeriod: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         drop3: {
             /**
@@ -165,6 +186,10 @@ declare module '@polkadot/api-base/types/consts' {
              * percent of the total amount slashed when proposal gets rejected
              **/
             slashPercent: Percent & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         multisig: {
             /**
@@ -186,6 +211,10 @@ declare module '@polkadot/api-base/types/consts' {
              * The maximum amount of signatories allowed in the multisig.
              **/
             maxSignatories: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         parachainIdentity: {
             /**
@@ -216,6 +245,10 @@ declare module '@polkadot/api-base/types/consts' {
              * be another trie item whose value is the size of an account ID plus 32 bytes.
              **/
             subAccountDeposit: u128 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         parachainStaking: {
             /**
@@ -290,6 +323,10 @@ declare module '@polkadot/api-base/types/consts' {
              * Number of rounds after which block authors are rewarded
              **/
             rewardPaymentDelay: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         proxy: {
             /**
@@ -329,6 +366,10 @@ declare module '@polkadot/api-base/types/consts' {
              * into account `32 + proxy_type.encode().len()` bytes of data.
              **/
             proxyDepositFactor: u128 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         scheduler: {
             /**
@@ -339,6 +380,10 @@ declare module '@polkadot/api-base/types/consts' {
              * The maximum number of scheduled calls in the queue for a single block.
              **/
             maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         system: {
             /**
@@ -369,6 +414,10 @@ declare module '@polkadot/api-base/types/consts' {
              * Get the chain's current version.
              **/
             version: SpVersionRuntimeVersion & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         teeracle: {
             maxOracleBlobLen: u32 & AugmentedConst<ApiType>;
@@ -376,6 +425,10 @@ declare module '@polkadot/api-base/types/consts' {
              * Max number of whitelisted oracle's releases allowed
              **/
             maxWhitelistedReleases: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         timestamp: {
             /**
@@ -385,6 +438,10 @@ declare module '@polkadot/api-base/types/consts' {
              * double this period on default settings.
              **/
             minimumPeriod: u64 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         tips: {
             /**
@@ -409,6 +466,10 @@ declare module '@polkadot/api-base/types/consts' {
              * The amount held on deposit for placing a tip report.
              **/
             tipReportDepositBase: u128 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         tokens: {
             maxLocks: u32 & AugmentedConst<ApiType>;
@@ -416,6 +477,10 @@ declare module '@polkadot/api-base/types/consts' {
              * The maximum number of named reserves that can exist on an account.
              **/
             maxReserves: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         transactionPayment: {
             /**
@@ -442,6 +507,10 @@ declare module '@polkadot/api-base/types/consts' {
              * transactions.
              **/
             operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         treasury: {
             /**
@@ -475,12 +544,20 @@ declare module '@polkadot/api-base/types/consts' {
              * Period between successive spends.
              **/
             spendPeriod: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         utility: {
             /**
              * The limit on the number of batched calls.
              **/
             batchedCallsLimit: u32 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         vesting: {
             maxVestingSchedules: u32 & AugmentedConst<ApiType>;
@@ -488,6 +565,10 @@ declare module '@polkadot/api-base/types/consts' {
              * The minimum amount transferred to call `vested_transfer`.
              **/
             minVestedTransfer: u128 & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
         xTokens: {
             /**
@@ -501,6 +582,10 @@ declare module '@polkadot/api-base/types/consts' {
              * Self chain location.
              **/
             selfLocation: XcmV3MultiLocation & AugmentedConst<ApiType>;
+            /**
+             * Generic const
+             **/
+            [key: string]: Codec;
         };
     } // AugmentedConsts
 } // declare module

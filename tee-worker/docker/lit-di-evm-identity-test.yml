@@ -1,6 +1,6 @@
 services:
     lit-di-evm-identity-test:
-        image: litentry-cli:dev
+        image: litentry/litentry-cli:latest
         container_name: litentry-di-evm-identity-test
         volumes:
             - ../ts-tests:/ts-tests
