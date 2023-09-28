@@ -1,3 +1,4 @@
+cargo-features = ["profile-overrides"]
 [workspace]
 members = [
     'node',
