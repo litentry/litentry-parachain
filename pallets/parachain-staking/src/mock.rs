@@ -418,10 +418,10 @@ fn geneses() {
 		.with_balances(vec![
 			(1, 1000),
 			(2, 300),
-			(3, 100),
-			(4, 100),
-			(5, 100),
-			(6, 100),
+			(3, 1100),
+			(4, 1100),
+			(5, 1100),
+			(6, 1100),
 			(7, 100),
 			(8, 9),
 			(9, 4),
@@ -441,7 +441,7 @@ fn geneses() {
 			// delegators
 			for x in 3..7 {
 				assert!(ParachainStaking::is_delegator(&x));
-				assert_eq!(Balances::free_balance(&x), 0);
+				assert_eq!(Balances::free_balance(&x), 1000);
 				assert_eq!(Balances::reserved_balance(&x), 100);
 			}
 			// uninvolved
