@@ -1,5 +1,5 @@
+//run: pnpm exec ts-node transfer-to-whitelist.ts
 
-//run:npx ts-node transfer-to-whitelist.ts
 import { initApi } from "./initApis";
 import colors from 'colors';
 let whiteList: any;
