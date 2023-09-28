@@ -116,12 +116,12 @@ async function setupCrossChainTransfer(
     const depositNonce = await pConfig.api.query.chainBridge.votes.entries(sourceChainID);
 
     const destResourceId = pConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
-    await eConfig.erc20.mint(eConfig.wallets.alice.address, toWei('100000'));
-    await eConfig.erc20.mint(eConfig.wallets.bob.address, toWei('100000'));
-    await eConfig.erc20.mint(eConfig.wallets.charlie.address, toWei('100000'));
-    await eConfig.erc20.mint(eConfig.wallets.dave.address, toWei('100000'));
-    await eConfig.erc20.mint(eConfig.wallets.eve.address, toWei('100000'));
-    await eConfig.erc20.mint(eConfig.erc20Handler.address, toWei('300'));
+    await eConfig.erc20.mint(eConfig.wallets.alice.address, toWei('100000', 'ether'));
+    await eConfig.erc20.mint(eConfig.wallets.bob.address, toWei('100000', 'ether'));
+    await eConfig.erc20.mint(eConfig.wallets.charlie.address, toWei('100000', 'ether'));
+    await eConfig.erc20.mint(eConfig.wallets.dave.address, toWei('100000', 'ether'));
+    await eConfig.erc20.mint(eConfig.wallets.eve.address, toWei('100000', 'ether'));
+    await eConfig.erc20.mint(eConfig.erc20Handler.address, toWei('300', 'ether'));
     await eConfig.bridge.adminSetResource(eConfig.erc20Handler.address, destResourceId, eConfig.erc20.address);
     await eConfig.bridge.adminSetDecimals(eConfig.erc20Handler.address, eConfig.erc20.address, 18, 12, opts);
     //  votes.entries equivalent to nonce
