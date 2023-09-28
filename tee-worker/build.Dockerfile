@@ -67,7 +67,7 @@ RUN cargo test --release
 FROM node:18-bookworm-slim AS runner
 
 RUN apt update && apt install -y libssl-dev iproute2 jq curl
-RUN corepack enable && corepack prepare yarn@3.6.1 --activate
+RUN corepack enable && corepack prepare pnpm@8.7.6 --activate && corepack enable pnpm
 
 
 ### Deployed CLI client

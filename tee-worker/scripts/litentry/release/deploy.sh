@@ -419,14 +419,14 @@ function register_parachain {
   # The genesis state path file needs to be updated as it is hardcoded to be /tmp/parachain_dev 
   jq --arg genesis_state "$PARACHAIN_BASEDIR/genesis-state" --arg genesis_wasm "$PARACHAIN_BASEDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > config.ci.json.1
   mv config.ci.json.1 config.ci.json
-  corepack yarn
-  corepack yarn register-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/register-parathread.log"
+  pnpm install
+  pnpm run register-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/register-parathread.log"
   print_divider
 
   echo "Upgrade parathread to parachain now ..."
   # Wait for 90s to allow onboarding finish, after that we do the upgrade
   sleep 90
-  corepack yarn upgrade-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/upgrade-parathread.log"
+  pnpm run upgrade-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/upgrade-parathread.log"
   print_divider
 
   echo "done. please check $PARACHAIN_BASEDIR for generated files if need"
@@ -459,8 +459,8 @@ function setup_working_dir {
       if [ "$PRODUCTION" = true ]; then
         echo "Transferring balance to the enclave account $enclave_account ..."
         cd $ROOTDIR/scripts/ts-utils/ || exit
-        yarn install
-        npx ts-node transfer.ts $enclave_account
+        pnpm install
+        pnpm exec ts-node transfer.ts $enclave_account
       fi
     done
 }
@@ -485,8 +485,8 @@ function set_scheduled_enclave {
 
   echo "Setting up the new worker on chain ..."
   cd $ROOTDIR/ts-tests/ || exit 
-  corepack yarn install
-  corepack yarn setup-enclave $NEW_MRENCLAVE $SCHEDULED_UPDATE_BLOCK
+  pnpm install
+  pnpm run setup-enclave $NEW_MRENCLAVE $SCHEDULED_UPDATE_BLOCK
 }
 
 function wait_for_sidechain {

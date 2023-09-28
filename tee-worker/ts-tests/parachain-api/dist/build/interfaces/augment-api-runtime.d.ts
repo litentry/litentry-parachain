@@ -58,6 +58,10 @@ declare module "@polkadot/api-base/types/calls" {
                 ApiType,
                 (accountId: AccountId | string | Uint8Array) => Observable<Index>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xdd718d5cc53262d4/1 */
         auraApi: {
@@ -69,6 +73,10 @@ declare module "@polkadot/api-base/types/calls" {
              * Returns the slot duration for Aura.
              **/
             slotDuration: AugmentedCall<ApiType, () => Observable<SlotDuration>>;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0x40fe3ad401f8959a/6 */
         blockBuilder: {
@@ -123,6 +131,10 @@ declare module "@polkadot/api-base/types/calls" {
                         | Uint8Array
                 ) => Observable<Vec<Extrinsic>>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xea93e3f16f3d6962/2 */
         collectCollationInfo: {
@@ -145,6 +157,10 @@ declare module "@polkadot/api-base/types/calls" {
                         | Uint8Array
                 ) => Observable<CollationInfo>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xe65b00e46cedd0aa/2 */
         convertTransactionRuntimeApi: {
@@ -169,6 +185,10 @@ declare module "@polkadot/api-base/types/calls" {
                         | Uint8Array
                 ) => Observable<Extrinsic>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xdf6acb689907609b/4 */
         core: {
@@ -211,6 +231,10 @@ declare module "@polkadot/api-base/types/calls" {
              * Returns the version of the runtime.
              **/
             version: AugmentedCall<ApiType, () => Observable<RuntimeVersion>>;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xbd78255d4feeea1f/4 */
         debugRuntimeApi: {
@@ -262,6 +286,10 @@ declare module "@polkadot/api-base/types/calls" {
                         | Uint8Array
                 ) => Observable<Result<ITuple<[]>, DispatchError>>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0x582211f65bb14b89/4 */
         ethereumRuntimeRPCApi: {
@@ -389,6 +417,10 @@ declare module "@polkadot/api-base/types/calls" {
                     index: u256 | AnyNumber | Uint8Array
                 ) => Observable<H256>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0x37e397fc7c91f5e4/1 */
         metadata: {
@@ -396,6 +428,10 @@ declare module "@polkadot/api-base/types/calls" {
              * Returns the metadata of a runtime
              **/
             metadata: AugmentedCall<ApiType, () => Observable<OpaqueMetadata>>;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xf78b278be53f454c/2 */
         offchainWorkerApi: {
@@ -418,6 +454,10 @@ declare module "@polkadot/api-base/types/calls" {
                         | Uint8Array
                 ) => Observable<Null>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xab3c0572291feb8b/1 */
         sessionKeys: {
@@ -437,6 +477,10 @@ declare module "@polkadot/api-base/types/calls" {
                 ApiType,
                 (seed: Option<Bytes> | null | Uint8Array | Bytes | string) => Observable<Bytes>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0xd2bc9897eed08f15/3 */
         taggedTransactionQueue: {
@@ -457,6 +501,10 @@ declare module "@polkadot/api-base/types/calls" {
                     blockHash: BlockHash | string | Uint8Array
                 ) => Observable<TransactionValidity>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
         /** 0x37c8bb1350a9a2a8/3 */
         transactionPaymentApi: {
@@ -503,6 +551,10 @@ declare module "@polkadot/api-base/types/calls" {
                         | Uint8Array
                 ) => Observable<Balance>
             >;
+            /**
+             * Generic call
+             **/
+            [key: string]: DecoratedCallBase<ApiType>;
         };
     }
 }

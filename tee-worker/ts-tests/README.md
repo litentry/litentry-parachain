@@ -13,20 +13,21 @@ ts-tests of tee-worker
 ```
 cd tee-worker/ts-tests
 nvm use
-corepack yarn
+corepack enable pnpm
+pnpm install
 ```
 
 ## Type Generated
 
-Update parachain metadata: `corepack yarn workspace parachain-api update-metadata` (requires the parachain is running)
+Update parachain metadata: `pnpm --filter parachain-api run update-metadata` (requires the parachain is running)
 
-Update sidechain metadata: `corepack yarn workspace sidechain-api update-metadata` (requires the worker is running)
+Update sidechain metadata: `pnpm --filter sidechain-api run update-metadata` (requires the worker is running)
 
-Generate parachain type: `corepack yarn workspace parachain-api build`
+Generate parachain type: `pnpm --filter parachain-api run build`
 
-Generate sidechain type: `corepack yarn workspace sidechain-api build`
+Generate sidechain type: `pnpm --filter sidechain-api run build`
 
-Alternatively, you can run `corepack yarn update-build` to do all things above in one go.
+Alternatively, you can run `pnpm --run update-build` to do all things above in one go.
 
 ## Local
 
@@ -34,14 +35,14 @@ Alternatively, you can run `corepack yarn update-build` to do all things above i
 
 ## Usage
 
-II identity test: `corepack yarn test-ii-identity:local`
+II identity test: `pnpm --filter integration-tests run test-ii-identity:local`
 
-II vc test: `corepack yarn test-ii-vc:local`
+II vc test: `pnpm --filter integration-tests run test-ii-vc:local`
 
-II batch identity test: `corepack yarn test-ii-batch:local`
+II batch identity test: `pnpm --filter integration-tests run test-ii-batch:local`
 
-Direct invocation substrate identity test: `corepack yarn test-di-substrate-identity:local`
+Direct invocation substrate identity test: `pnpm --filter integration-tests run test-di-substrate-identity:local`
 
-Direct invocation evm identity test: `corepack yarn test-di-evm-identity:local`
+Direct invocation evm identity test: `pnpm --filter integration-tests run test-di-evm-identity:local`
 
-Direct invocation vc test: `corepack yarn test-di-vc:local`
+Direct invocation vc test: `pnpm --filter integration-tests run test-di-vc:local`
