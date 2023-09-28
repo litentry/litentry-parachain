@@ -349,7 +349,7 @@ where
 		);
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Complete(
-				R::UnitWeightCost::get(),
+				R::UnitWeightCost::get() * 2,
 			))
 			.into(),
 		);
@@ -617,7 +617,7 @@ where
 			0
 		));
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get())).into(),
+			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get() * 2)).into(),
 		);
 
 		assert_eq!(
