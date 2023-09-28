@@ -63,7 +63,7 @@ importers:
         version: registry.npmjs.org/ajv@8.12.0
       chai:
         specifier: ^4.3.6
-        version: registry.npmjs.org/chai@4.3.9
+        version: registry.npmjs.org/chai@4.3.10
       colors:
         specifier: ^1.4.0
         version: registry.npmjs.org/colors@1.4.0
@@ -106,7 +106,7 @@ importers:
         version: registry.npmjs.org/@types/mocha@10.0.2
       '@types/node':
         specifier: ^20.4.4
-        version: registry.npmjs.org/@types/node@20.7.0
+        version: registry.npmjs.org/@types/node@20.7.1
       '@types/ws':
         specifier: ^8.5.3
         version: registry.npmjs.org/@types/ws@8.5.6
@@ -133,7 +133,7 @@ importers:
         version: registry.npmjs.org/prettier@2.8.1
       ts-node:
         specifier: ^10.9.1
-        version: registry.npmjs.org/ts-node@10.9.1(@types/node@20.7.0)(typescript@5.0.4)
+        version: registry.npmjs.org/ts-node@10.9.1(@types/node@20.7.1)(typescript@5.0.4)
       typescript:
         specifier: 5.0.4
         version: registry.npmjs.org/typescript@5.0.4
@@ -194,7 +194,7 @@ importers:
         version: registry.npmjs.org/@types/mocha@10.0.2
       '@types/node':
         specifier: ^20.4.4
-        version: registry.npmjs.org/@types/node@20.7.0
+        version: registry.npmjs.org/@types/node@20.7.1
       '@types/ws':
         specifier: ^8.5.3
         version: registry.npmjs.org/@types/ws@8.5.6
@@ -206,7 +206,7 @@ importers:
         version: registry.npmjs.org/@typescript-eslint/parser@5.62.0(eslint@8.50.0)(typescript@5.0.4)
       chai:
         specifier: ^4.3.6
-        version: registry.npmjs.org/chai@4.3.9
+        version: registry.npmjs.org/chai@4.3.10
       cross-env:
         specifier: ^7.0.3
         version: registry.npmjs.org/cross-env@7.0.3
@@ -233,7 +233,7 @@ importers:
         version: link:../../client-api/sidechain-api
       ts-node:
         specifier: ^10.9.1
-        version: registry.npmjs.org/ts-node@10.9.1(@types/node@20.7.0)(typescript@5.0.4)
+        version: registry.npmjs.org/ts-node@10.9.1(@types/node@20.7.1)(typescript@5.0.4)
       typescript:
         specifier: 5.0.4
         version: registry.npmjs.org/typescript@5.0.4
@@ -1372,7 +1372,7 @@ packages:
     name: '@types/bn.js'
     version: 5.1.2
     dependencies:
-      '@types/node': registry.npmjs.org/@types/node@20.7.0
+      '@types/node': registry.npmjs.org/@types/node@20.7.1
     dev: false
 
   registry.npmjs.org/@types/chai@4.3.6:
@@ -1393,10 +1393,10 @@ packages:
     version: 10.0.2
     dev: true
 
-  registry.npmjs.org/@types/node@20.7.0:
-    resolution: {integrity: sha512-zI22/pJW2wUZOVyguFaUL1HABdmSVxpXrzIqkjsHmyUjNhPoWM1CKfvVuXfetHhIok4RY573cqS0mZ1SJEnoTg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@types/node/-/node-20.7.0.tgz}
+  registry.npmjs.org/@types/node@20.7.1:
+    resolution: {integrity: sha512-LT+OIXpp2kj4E2S/p91BMe+VgGX2+lfO+XTpfXhh+bCk2LkQtHZSub8ewFBMGP5ClysPjTDFa4sMI8Q3n4T0wg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@types/node/-/node-20.7.1.tgz}
     name: '@types/node'
-    version: 20.7.0
+    version: 20.7.1
 
   registry.npmjs.org/@types/semver@7.5.3:
     resolution: {integrity: sha512-OxepLK9EuNEIPxWNME+C6WwbRAOOI2o2BaQEGzz5Lu2e4Z5eDnEo+/aVEDMIXywoJitJ7xWd641wrGLZdtwRyw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@types/semver/-/semver-7.5.3.tgz}
@@ -1409,7 +1409,7 @@ packages:
     name: '@types/ws'
     version: 8.5.6
     dependencies:
-      '@types/node': registry.npmjs.org/@types/node@20.7.0
+      '@types/node': registry.npmjs.org/@types/node@20.7.1
     dev: true
 
   registry.npmjs.org/@typescript-eslint/eslint-plugin@5.62.0(@typescript-eslint/parser@5.62.0)(eslint@8.50.0)(typescript@5.0.4):
@@ -1790,10 +1790,10 @@ packages:
     version: 6.3.0
     engines: {node: '>=10'}
 
-  registry.npmjs.org/chai@4.3.9:
-    resolution: {integrity: sha512-tH8vhfA1CfuYMkALXj+wmZcqiwqOfshU9Gry+NYiiLqIddrobkBhALv6XD4yDz68qapphYI4vSaqhqAdThCAAA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/chai/-/chai-4.3.9.tgz}
+  registry.npmjs.org/chai@4.3.10:
+    resolution: {integrity: sha512-0UXG04VuVbruMUYbJ6JctvH0YnC/4q3/AkT18q4NaITo91CUm0liMS9VqzT9vZhVQ/1eqPanMWjBM+Juhfb/9g==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/chai/-/chai-4.3.10.tgz}
     name: chai
-    version: 4.3.9
+    version: 4.3.10
     engines: {node: '>=4'}
     dependencies:
       assertion-error: registry.npmjs.org/assertion-error@1.1.0
@@ -3636,7 +3636,7 @@ packages:
     dependencies:
       is-number: registry.npmjs.org/is-number@7.0.0
 
-  registry.npmjs.org/ts-node@10.9.1(@types/node@20.7.0)(typescript@5.0.4):
+  registry.npmjs.org/ts-node@10.9.1(@types/node@20.7.1)(typescript@5.0.4):
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/ts-node/-/ts-node-10.9.1.tgz}
     id: registry.npmjs.org/ts-node/10.9.1
     name: ts-node
@@ -3658,7 +3658,7 @@ packages:
       '@tsconfig/node12': registry.npmjs.org/@tsconfig/node12@1.0.11
       '@tsconfig/node14': registry.npmjs.org/@tsconfig/node14@1.0.3
       '@tsconfig/node16': registry.npmjs.org/@tsconfig/node16@1.0.4
-      '@types/node': registry.npmjs.org/@types/node@20.7.0
+      '@types/node': registry.npmjs.org/@types/node@20.7.1
       acorn: registry.npmjs.org/acorn@8.10.0
       acorn-walk: registry.npmjs.org/acorn-walk@8.2.0
       arg: registry.npmjs.org/arg@4.1.3

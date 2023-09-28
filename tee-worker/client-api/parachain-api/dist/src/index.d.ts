@@ -1,11 +1,11 @@
-import '@polkadot/api/augment';
-import '@polkadot/types-augment';
-import '@polkadot/types/lookup';
 import '../build/interfaces/types-lookup.js';
-export * from '@polkadot/api/types';
-export * from '@polkadot/api';
+import '../build/interfaces/augment-types.js';
+import '../build/interfaces/registry.js';
+import '../build/interfaces/augment-api.js';
 export * from '@polkadot/types/lookup';
 export * from '../build/interfaces';
+export * from '@polkadot/api';
+export * from '@polkadot/api/types';
 export declare const definitions: {
     types: {
         WorkerRpcReturnValue: {
