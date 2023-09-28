@@ -167,6 +167,9 @@ jobs:
         run: |
           cargo fmt --all -- --check
 
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
       - name: Tee-worker client-api install npm deps
         working-directory: ./tee-worker/client-api
         run: pnpm install
@@ -178,8 +181,6 @@ jobs:
       - name: Tee-worker ts-tests install npm deps
         working-directory: ./tee-worker/ts-tests
         run: pnpm install
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
 
       - name: Tee-worker install npm deps
         working-directory: ./tee-worker/ts-tests
