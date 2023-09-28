@@ -79,9 +79,15 @@ importers:
       mocha-steps:
         specifier: ^1.3.0
         version: registry.npmjs.org/mocha-steps@1.3.0
+      parachain-api:
+        specifier: file:../../client-api/parachain-api
+        version: file:../client-api/parachain-api
       scale-ts:
         specifier: ^0.2.11
         version: registry.npmjs.org/scale-ts@0.2.12
+      sidechain-api:
+        specifier: file:../../client-api/sidechain-api
+        version: file:../client-api/sidechain-api
       websocket-as-promised:
         specifier: ^2.0.1
         version: registry.npmjs.org/websocket-as-promised@2.0.1
@@ -122,15 +128,9 @@ importers:
       ethers:
         specifier: ^5.7.2
         version: registry.npmjs.org/ethers@5.7.2
-      parachain-api:
-        specifier: link:../../client-api/parachain-api
-        version: link:../../client-api/parachain-api
       prettier:
         specifier: 2.8.1
         version: registry.npmjs.org/prettier@2.8.1
-      sidechain-api:
-        specifier: link:../../client-api/sidechain-api
-        version: link:../../client-api/sidechain-api
       ts-node:
         specifier: ^10.9.1
         version: registry.npmjs.org/ts-node@10.9.1(@types/node@20.7.0)(typescript@5.0.4)
@@ -239,6 +239,54 @@ importers:
         version: registry.npmjs.org/typescript@5.0.4
 
 packages:
+
+  file:../client-api/parachain-api:
+    resolution: {directory: ../client-api/parachain-api, type: directory}
+    name: parachain-api
+    dependencies:
+      '@polkadot/api': registry.npmjs.org/@polkadot/api@10.9.1
+      '@polkadot/api-augment': registry.npmjs.org/@polkadot/api-augment@10.9.1
+      '@polkadot/api-base': registry.npmjs.org/@polkadot/api-base@10.9.1
+      '@polkadot/api-derive': registry.npmjs.org/@polkadot/api-derive@10.9.1
+      '@polkadot/keyring': registry.npmjs.org/@polkadot/keyring@12.5.1(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)
+      '@polkadot/rpc-core': registry.npmjs.org/@polkadot/rpc-core@10.9.1
+      '@polkadot/types': registry.npmjs.org/@polkadot/types@10.9.1
+      '@polkadot/types-augment': registry.npmjs.org/@polkadot/types-augment@10.9.1
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
+      '@polkadot/types-create': registry.npmjs.org/@polkadot/types-create@10.9.1
+      '@polkadot/types-known': registry.npmjs.org/@polkadot/types-known@10.9.1
+      '@polkadot/types-support': registry.npmjs.org/@polkadot/types-support@10.9.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.5.1
+      '@polkadot/util-crypto': registry.npmjs.org/@polkadot/util-crypto@12.5.1(@polkadot/util@12.5.1)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
+
+  file:../client-api/sidechain-api:
+    resolution: {directory: ../client-api/sidechain-api, type: directory}
+    name: sidechain-api
+    dependencies:
+      '@polkadot/api': registry.npmjs.org/@polkadot/api@10.9.1
+      '@polkadot/api-augment': registry.npmjs.org/@polkadot/api-augment@10.9.1
+      '@polkadot/api-base': registry.npmjs.org/@polkadot/api-base@10.9.1
+      '@polkadot/api-derive': registry.npmjs.org/@polkadot/api-derive@10.9.1
+      '@polkadot/keyring': registry.npmjs.org/@polkadot/keyring@12.5.1(@polkadot/util-crypto@12.5.1)(@polkadot/util@12.5.1)
+      '@polkadot/rpc-core': registry.npmjs.org/@polkadot/rpc-core@10.9.1
+      '@polkadot/types': registry.npmjs.org/@polkadot/types@10.9.1
+      '@polkadot/types-augment': registry.npmjs.org/@polkadot/types-augment@10.9.1
+      '@polkadot/types-codec': registry.npmjs.org/@polkadot/types-codec@10.9.1
+      '@polkadot/types-create': registry.npmjs.org/@polkadot/types-create@10.9.1
+      '@polkadot/types-known': registry.npmjs.org/@polkadot/types-known@10.9.1
+      '@polkadot/types-support': registry.npmjs.org/@polkadot/types-support@10.9.1
+      '@polkadot/util': registry.npmjs.org/@polkadot/util@12.5.1
+      '@polkadot/util-crypto': registry.npmjs.org/@polkadot/util-crypto@12.5.1(@polkadot/util@12.5.1)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   registry.npmjs.org/@aashutoshrathi/word-wrap@1.2.6:
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.npmjs.org/@aashutoshrathi/word-wrap/-/word-wrap-1.2.6.tgz}
