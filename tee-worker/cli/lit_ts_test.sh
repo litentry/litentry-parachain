@@ -19,8 +19,8 @@ function usage() {
 TEST=$1
 
 cd /client-api
-corepack yarn install
-corepack yarn update-build
+pnpm install
+pnpm --filter integration-tests run $TEST:staging
 
 cd /ts-tests
 
