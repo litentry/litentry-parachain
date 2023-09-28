@@ -40,8 +40,8 @@
         "dotenv": "^16.0.3",
         "ethers": "^5.7.2",
         "solc": "0.8.18",
-        "web3": "^1.8.1",
-        "web3-utils": "^1.10.1"
+        "web3": "^4.1.2",
+        "web3-utils": "^4.0.6"
     },
     "compilerOptions": {
         "allowSyntheticDefaultImports": true,
