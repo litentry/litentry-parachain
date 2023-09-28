@@ -36,8 +36,8 @@ on:
     branches:
       - dev
     paths-ignore:
-      - "**/dependabot.yml"
-      - "**/README.md"
+      - '**/dependabot.yml'
+      - '**/README.md'
   pull_request:
     branches:
       - dev
@@ -91,7 +91,7 @@ jobs:
       run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
       run_tee_test: ${{ steps.env.outputs.run_tee_test }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -137,7 +137,7 @@ jobs:
   fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install rust toolchain
         run: rustup show
@@ -203,14 +203,14 @@ jobs:
       - sequentialise
     if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install rust toolchain
         run: rustup show
 
       - name: Install dependencies
-        run: >
-          sudo apt-get update &&
+        run: |
+          sudo apt-get update
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
       - name: Run cargo clippy check
@@ -227,34 +227,51 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: "litentry/litentry-tee-dev:latest"
+    container: 'litentry/litentry-tee-dev:latest'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
+      - name: Pallet unittests
+        working-directory: ./tee-worker
+        run: |
+          cargo test --release -p pallet-* --lib
+
       - name: Tee-worker clippy
         working-directory: ./tee-worker
         run: |
-          rustup show
+          echo "::group::cargo clippy all"
           cargo clippy --release -- -D warnings
-          cargo clippy --release  --features evm -- -D warnings
-          cargo clippy --release  --features sidechain -- -D warnings
-          cargo clippy --release  --features teeracle -- -D warnings
-          cargo clippy --release  --features offchain-worker -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain"
+          cargo clippy --release --features sidechain -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker"
+          cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm -- -D warnings
+          echo "::endgroup::"
 
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
-          rustup show
-          cargo clippy --release  -- -D warnings
-          cargo clippy --release  --features evm -- -D warnings
-          cargo clippy --release  --features sidechain -- -D warnings
-          cargo clippy --release  --features teeracle -- -D warnings
-          cargo clippy --release  --features offchain-worker -- -D warnings
+          echo "::group::cargo clippy all"
+          cargo clippy --release -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain"
+          cargo clippy --release --features sidechain -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker"
+          cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm -- -D warnings
+          echo "::endgroup::"
 
       - name: Fail early
         if: failure()
@@ -273,24 +290,28 @@ jobs:
         with:
           tool-cache: true
           swap-storage: false
+          large-packages: false
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build docker image
         if: needs.set-condition.outputs.rebuild_parachain == 'true'
         run: |
+          echo "::group::build docker image"
           make build-docker-release
-          echo "============================="
-          docker images
+          echo "::endgroup::"
+          echo "::group::docker images"
+          docker images --all
+          echo "::endgroup::"
 
       - name: Pull docker image optinally
         if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
-          docker pull litentry/litentry-parachain
+          docker pull litentry/litentry-parachain:latest
 
       - name: Save docker image
         run: |
-          docker save litentry/litentry-parachain | gzip > litentry-parachain-dev.tar.gz
+          docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload docker image
         uses: actions/upload-artifact@v3
@@ -316,17 +337,21 @@ jobs:
         with:
           tool-cache: true
           swap-storage: false
+          large-packages: false
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build docker image
         if: |
           needs.set-condition.outputs.rebuild_parachain == 'true' &&
           needs.set-condition.outputs.push_docker == 'true'
         run: |
+          echo "::group::build tee-prod docker image"
           ./scripts/build-docker.sh production tee-prod
-          echo "============================="
-          docker images
+          echo "::endgroup::"
+          echo "::group::docker images"
+          docker images --all
+          echo "::endgroup::"
 
       - name: Pull docker image optionally
         if: |
@@ -356,11 +381,6 @@ jobs:
       - fmt
       - set-condition
       - sequentialise
-    services:
-      registry:
-        image: registry:2
-        ports:
-          - 5000:5000
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
@@ -368,13 +388,17 @@ jobs:
         with:
           tool-cache: true
           swap-storage: false
+          large-packages: false
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: network=host
+          # use the docker driver to access the local image
+          # we don't need external caches or multi platforms here
+          # see https://docs.docker.com/build/drivers/
+          driver: docker
 
       - name: Cache worker-cache
         if: needs.set-condition.outputs.rebuild_tee == 'true'
@@ -419,14 +443,12 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          load: false
           file: tee-worker/build.Dockerfile
-          tags: localhost:5000/local-stash:latest
-          target: stash
+          tags: local-builder:latest
+          target: builder
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
-          push: true
 
       - name: Copy caches from the built image
         if: needs.set-condition.outputs.rebuild_tee == 'true'
@@ -437,20 +459,14 @@ jobs:
           echo "::group::docker images"
           docker images --all
           echo "::endgroup::"
-          echo "::group::pull localhost:5000/local-stash:latest"
-          docker pull -q localhost:5000/local-stash:latest
-          echo "::endgroup::"
-          echo "::group::docker images after pull"
-          docker images --all
-          echo "::endgroup::"
           echo "::group::copy cache out"
           for i in 'git/db' 'registry/cache' 'registry/index'; do
             b="${i%/*}"
             rm -rf worker-cache/$i
-            docker cp "$(docker create --rm localhost:5000/local-stash:latest):/opt/rust/$i" worker-cache/$b
+            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
           done
           rm -rf worker-cache/sccache
-          docker cp "$(docker create --rm localhost:5000/local-stash:latest):/opt/rust/sccache" worker-cache
+          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
           du -sh worker-cache/*
           echo "::endgroup::"
           echo "::group::df -h ."
@@ -467,7 +483,6 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
           target: deployed-worker
-          push: false
 
       - name: Build cli
         if: needs.set-condition.outputs.rebuild_tee == 'true'
@@ -479,31 +494,23 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
           target: deployed-client
-          push: false
 
       - name: Pull and tag worker and cli image optionally
         if: needs.set-condition.outputs.rebuild_tee == 'false'
         run: |
-          docker pull litentry/litentry-worker
-          docker pull litentry/litentry-cli
+          docker pull litentry/litentry-worker:latest
+          docker pull litentry/litentry-cli:latest
 
       - run: docker images --all
-
-      - name: Pallet unittests
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        working-directory: ./tee-worker
-        run: |
-          rustup show
-          cargo test --locked --release -p pallet-* --lib
 
       - name: Test enclave
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/litentry-worker test --all
+        run: docker run litentry/litentry-worker:latest test --all
 
       - name: Save docker images
-        run: docker save litentry/litentry-worker litentry/litentry-cli | gzip > litentry-tee.tar.gz
+        run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
 
       - name: Upload docker images
         uses: actions/upload-artifact@v3
@@ -528,7 +535,7 @@ jobs:
           - litentry
           - rococo
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v3
         with:
@@ -586,7 +593,7 @@ jobs:
     # run_parachain_test is related to ts-tests only
     if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run unittests
         run: |
@@ -614,7 +621,7 @@ jobs:
     # run_parachain_test is related to ts-tests only
     if: needs.set-condition.outputs.rebuild_parachain == 'true'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install toolchain
         run: rustup show
@@ -647,11 +654,6 @@ jobs:
       - set-condition
       - parachain-build-dev
       - tee-build
-    env:
-      WORKER_IMAGE_TAG: litentry-worker:dev
-      CLIENT_IMAGE_TAG: litentry-cli:dev
-      COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
-      TEERACLE_INTERVAL_SECONDS: 10
 
     strategy:
       fail-fast: false
@@ -674,7 +676,7 @@ jobs:
           - test_name: lit-test-stress-script
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Pull polkadot image
         run: |
@@ -692,12 +694,7 @@ jobs:
         run: |
           docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-tee.tar.gz
-
-      - name: Re-name Image Tags
-        run: |
-          docker tag litentry/litentry-worker ${{ env.WORKER_IMAGE_TAG }}
-          docker tag litentry/litentry-cli ${{ env.CLIENT_IMAGE_TAG }}
-          docker images --all
+          docker images
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
