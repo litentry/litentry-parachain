@@ -648,7 +648,7 @@ where
 			WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get())).into(),
+			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get() * 2)).into(),
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
