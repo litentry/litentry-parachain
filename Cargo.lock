@@ -1225,7 +1225,6 @@ dependencies = [
  "sp-std",
  "strum 0.25.0",
  "strum_macros 0.25.2",
- "xcm",
 ]
 
 [[package]]
@@ -5313,8 +5312,6 @@ dependencies = [
  "polkadot-runtime-parachains",
  "runtime-common",
  "scale-info",
- "serde",
- "smallvec",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -5401,8 +5398,6 @@ dependencies = [
  "polkadot-runtime-parachains",
  "runtime-common",
  "scale-info",
- "serde",
- "smallvec",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -6533,14 +6528,10 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal 0.3.4",
- "log",
  "orml-traits",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
- "serde",
- "smallvec",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -6738,7 +6729,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex",
  "hex-literal 0.4.1",
  "pallet-balances",
  "pallet-bridge",
@@ -6967,7 +6957,6 @@ name = "pallet-evm-address"
 version = "0.1.0"
 dependencies = [
  "fp-evm",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal 0.4.1",
@@ -7081,15 +7070,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex",
- "log",
  "pallet-balances",
  "pallet-group",
  "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7321,16 +7307,13 @@ dependencies = [
  "env_logger 0.9.3",
  "frame-support",
  "frame-system",
- "log",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-core",
  "sp-io",
  "sp-keyring",
  "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -7479,7 +7462,6 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex-literal 0.4.1",
  "log",
  "pallet-balances",
  "pallet-teerex",
@@ -7634,7 +7616,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sgx-verify",
  "sp-core",
  "sp-externalities",
@@ -7768,15 +7749,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "hex",
- "log",
  "pallet-balances",
  "pallet-group",
  "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -10108,8 +10086,6 @@ dependencies = [
  "polkadot-runtime-parachains",
  "runtime-common",
  "scale-info",
- "serde",
- "smallvec",
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -10299,7 +10275,6 @@ dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
@@ -10315,7 +10290,6 @@ dependencies = [
  "pallet-membership",
  "pallet-multisig",
  "pallet-teerex",
- "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting",
@@ -11817,7 +11791,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-core",
- "sp-io",
  "sp-std",
  "teerex-primitives",
  "webpki 0.21.0",
@@ -11917,9 +11890,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -13159,7 +13129,6 @@ name = "teeracle-primitives"
 version = "0.1.0"
 dependencies = [
  "common-primitives",
- "sp-std",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9)",
 ]
 
@@ -13167,13 +13136,10 @@ dependencies = [
 name = "teerex-primitives"
 version = "0.1.0"
 dependencies = [
- "common-primitives",
  "hex-literal 0.4.1",
  "parity-scale-codec",
  "scale-info",
- "serde",
  "sp-core",
- "sp-io",
  "sp-std",
 ]
 
@@ -13210,7 +13176,6 @@ name = "test-utils"
 version = "0.1.0"
 dependencies = [
  "hex-literal 0.4.1",
- "log",
  "teerex-primitives",
 ]
 
@@ -13784,7 +13749,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 

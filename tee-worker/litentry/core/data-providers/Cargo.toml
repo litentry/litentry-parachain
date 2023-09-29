@@ -8,7 +8,6 @@ version = "0.1.0"
 [dependencies]
 # std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-hex = { version = "0.4.3", optional = true }
 http = { version = "0.2", optional = true }
 http_req = { optional = true, features = ["rust-tls"], branch = "master", git = "https://github.com/integritee-network/http_req" }
 thiserror = { version = "1.0.26", optional = true }
@@ -52,7 +51,6 @@ sgx = [
     "litentry-primitives/sgx",
 ]
 std = [
-    "hex",
     "http",
     "http_req",
     "thiserror",
