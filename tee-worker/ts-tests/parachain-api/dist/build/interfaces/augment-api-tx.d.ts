@@ -5842,9 +5842,6 @@ declare module "@polkadot/api-base/types/submittable" {
                               A8: any;
                           }
                         | {
-                              A9: any;
-                          }
-                        | {
                               A10: any;
                           }
                         | {
@@ -5919,9 +5916,6 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               A8: any;
-                          }
-                        | {
-                              A9: any;
                           }
                         | {
                               A10: any;
@@ -6011,9 +6005,6 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               A8: any;
-                          }
-                        | {
-                              A9: any;
                           }
                         | {
                               A10: any;

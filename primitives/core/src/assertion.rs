@@ -166,7 +166,6 @@ pub enum Assertion {
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
 	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
-	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
 

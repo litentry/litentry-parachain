@@ -88,10 +88,6 @@ where
 
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
-
-			_ => {
-				unimplemented!()
-			},
 		}?;
 
 		// post-process the credential

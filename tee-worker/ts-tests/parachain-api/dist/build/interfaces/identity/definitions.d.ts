@@ -169,7 +169,6 @@ declare const _default: {
                 A6: string;
                 A7: string;
                 A8: string;
-                A9: string;
                 A10: string;
                 A11: string;
                 A12: string;
