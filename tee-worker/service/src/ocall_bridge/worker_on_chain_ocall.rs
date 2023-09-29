@@ -16,17 +16,14 @@
 
 */
 
-use crate::{
-	enclave_account,
-	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge},
-};
+use crate::ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge};
 use codec::{Decode, Encode};
 use itp_api_client_types::ParentchainApi;
 use itp_node_api::node_api_factory::CreateNodeApi;
 use itp_types::{parentchain::ParentchainId, WorkerRequest, WorkerResponse};
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
-use std::{sync::Arc, thread, vec::Vec};
+use std::{sync::Arc, /*thread,*/ vec::Vec};
 use substrate_api_client::{ac_primitives::serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
 
 pub struct WorkerOnChainOCall<F> {
@@ -140,7 +137,7 @@ where
 				parentchain_id
 			);
 			let api = self.create_api(parentchain_id)?;
-			let mut send_extrinsic_failed = false;
+			// let mut send_extrinsic_failed = false;
 			for call in extrinsics.into_iter() {
 				if let Err(e) = api.submit_opaque_extrinsic(&call.encode().into()) {
 					error!(
@@ -148,7 +145,7 @@ where
 						serde_json::to_string(&call),
 						e
 					);
-					send_extrinsic_failed = true;
+					// send_extrinsic_failed = true;
 				}
 			}
 

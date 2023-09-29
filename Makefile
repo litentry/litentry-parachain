@@ -195,7 +195,7 @@ taplocheck:
 fmt:
 	cargo fmt --all && taplo fmt
 	cd tee-worker && cargo fmt --all && taplo fmt
-	cd tee-worker/enclave-runtime && cargo fmt --all
+	cd tee-worker/enclave-runtime && cargo fmt --all && taplo fmt
 
 .PHONY: githooks ## install the githooks
 githooks:
@@ -221,7 +221,7 @@ cargofix:
 update:
 	cargo update
 	cd tee-worker && cargo update
-	cd tee-worker/enclave-runtime && cargo update 
+	cd tee-worker/enclave-runtime && cargo update
 
 # shellcheck
 

@@ -209,7 +209,8 @@ impl DirectApi for DirectClient {
 
 	fn get_state_metadata_raw(&self) -> Result<String> {
 		let metadata = self.get_state_metadata().unwrap().to_hex();
-		let rpc_response = RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: itp_rpc::Id::Number(1) };
+		let rpc_response =
+			RpcResponse { jsonrpc: "2.0".to_owned(), result: metadata, id: Id::Number(1) };
 		serde_json::to_string(&rpc_response).map_err(|e| Error::Custom(Box::new(e)))
 	}
 

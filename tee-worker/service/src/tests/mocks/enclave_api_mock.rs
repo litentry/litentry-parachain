@@ -17,7 +17,6 @@
 
 use codec::{Decode, Encode};
 use core::fmt::Debug;
-use enclave_bridge_primitives::EnclaveFingerprint;
 use itc_parentchain::primitives::{
 	ParentchainId, ParentchainInitParams,
 	ParentchainInitParams::{Parachain, Solochain},
@@ -84,8 +83,8 @@ impl EnclaveBase for EnclaveMock {
 		unreachable!()
 	}
 
-	fn get_mrenclave(&self) -> EnclaveResult<EnclaveFingerprint> {
-		Ok([1u8; MR_ENCLAVE_SIZE].into())
+	fn get_mrenclave(&self) -> EnclaveResult<[u8; MR_ENCLAVE_SIZE]> {
+		Ok([1u8; MR_ENCLAVE_SIZE])
 	}
 
 	fn migrate_shard(&self, _old_shard: Vec<u8>, _new_shard: Vec<u8>) -> EnclaveResult<()> {

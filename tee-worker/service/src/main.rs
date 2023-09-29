@@ -658,9 +658,10 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 				// TODO: #1451: Fix api-client type hacks
 				// TODO(Litentry): keep an eye on it - it's a hacky way to convert `SubstrateHeader` to `Header`
-				let register_enclave_xt_header =
+				register_enclave_xt_header = Some(
 					Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
-						.expect("Can decode previously encoded header; qed");
+						.expect("Can decode previously encoded header; qed"),
+				);
 			}
 		},
 		_ => panic!("unknown error"),
@@ -744,7 +745,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				&last_synced_header,
 				parentchain_start_block,
 				config.clone().fail_slot_mode,
-				config.clone().fail_at,
+				config.fail_at,
 			) {
 				Ok(value) => value,
 				Err(error) => {
@@ -935,7 +936,7 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 
 		loop {
 			info!("Polling for worker for shard ({} seconds interval)", POLL_INTERVAL_SECS);
-			if let Ok(Some(enclave)) = node_api.worker_for_shard(&shard_for_initialized, None) {
+			if let Ok(Some(_enclave)) = node_api.worker_for_shard(&shard_for_initialized, None) {
 				// Set that the service is initialized.
 				initialization_handler.worker_for_shard_registered();
 				println!("[+] Found `WorkerForShard` on parentchain state",);

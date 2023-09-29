@@ -1,94 +1,68 @@
-// /*
-// 	Copyright 2021 Integritee AG and Supercomputing Systems AG
+/*
+	Copyright 2021 Integritee AG and Supercomputing Systems AG
 
-// 	Licensed under the Apache License, Version 2.0 (the "License");
-// 	you may not use this file except in compliance with the License.
-// 	You may obtain a copy of the License at
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
 
-// 		http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
-// 	Unless required by applicable law or agreed to in writing, software
-// 	distributed under the License is distributed on an "AS IS" BASIS,
-// 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// 	See the License for the specific language governing permissions and
-// 	limitations under the License.
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
 
-// */
-// use codec::Encode;
-// use itp_node_api::api_client::{ApiResult, PalletTeerexApi};
-// use itp_types::{
-// 	AccountId, MrEnclave, MultiEnclave, SgxBuildMode, SgxEnclave, SgxReportData, SgxStatus,
-// 	ShardIdentifier, H256 as Hash,
-// };
-// use std::collections::HashSet;
+*/
 
-// pub struct TestNodeApi;
+use itp_node_api::api_client::{ApiResult, PalletTeerexApi};
+use itp_types::{Enclave, MrEnclave, ShardIdentifier, H256 as Hash};
+use std::collections::HashSet;
 
-// pub const W1_URL: &str = "127.0.0.1:22222";
-// pub const W2_URL: &str = "127.0.0.1:33333";
+pub struct TestNodeApi;
 
-// pub fn enclaves() -> Vec<MultiEnclave<Vec<u8>>> {
-// 	vec![
-// 		MultiEnclave::from(
-// 			SgxEnclave::new(
-// 				SgxReportData::default(),
-// 				[1; 32],
-// 				[1; 32],
-// 				1,
-// 				SgxBuildMode::Production,
-// 				SgxStatus::Ok,
-// 			)
-// 			.with_url(format!("wss://{}", W1_URL).encode()),
-// 		),
-// 		MultiEnclave::from(
-// 			SgxEnclave::new(
-// 				SgxReportData::default(),
-// 				[2; 32],
-// 				[2; 32],
-// 				2,
-// 				SgxBuildMode::Production,
-// 				SgxStatus::Ok,
-// 			)
-// 			.with_url(format!("wss://{}", W2_URL).encode()),
-// 		),
-// 	]
-// }
+pub const W1_URL: &str = "127.0.0.1:22222";
+pub const W2_URL: &str = "127.0.0.1:33333";
 
-// impl PalletTeerexApi for TestNodeApi {
-// 	type Hash = Hash;
-// 	fn enclave(
-// 		&self,
-// 		_account: &AccountId,
-// 		_at_block: Option<Hash>,
-// 	) -> ApiResult<Option<MultiEnclave<Vec<u8>>>> {
-// 		Ok(Some(enclaves().remove(0)))
-// 	}
-// 	fn enclave_count(&self, _at_block: Option<Hash>) -> ApiResult<u64> {
-// 		unreachable!()
-// 	}
+pub fn enclaves() -> Vec<Enclave> {
+	vec![
+		Enclave::new([0; 32].into(), [1; 32], 1, format!("wss://{}", W1_URL)),
+		Enclave::new([2; 32].into(), [3; 32], 2, format!("wss://{}", W2_URL)),
+	]
+}
 
-// 	fn all_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MultiEnclave<Vec<u8>>>> {
-// 		Ok(enclaves())
-// 	}
+impl PalletTeerexApi for TestNodeApi {
+	type Hash = Hash;
 
-// 	fn primary_worker_for_shard(
-// 		&self,
-// 		_: &ShardIdentifier,
-// 		_at_block: Option<Hash>,
-// 	) -> ApiResult<Option<MultiEnclave<Vec<u8>>>> {
-// 		unreachable!()
-// 	}
-// 	fn latest_ipfs_hash(
-// 		&self,
-// 		_: &ShardIdentifier,
-// 		_at_block: Option<Hash>,
-// 	) -> ApiResult<Option<[u8; 46]>> {
-// 		unreachable!()
-// 	}
+	fn enclave(&self, index: u64, _at_block: Option<Hash>) -> ApiResult<Option<Enclave>> {
+		Ok(Some(enclaves().remove(index as usize)))
+	}
+	fn enclave_count(&self, _at_block: Option<Hash>) -> ApiResult<u64> {
+		unreachable!()
+	}
 
-// 	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
-// 		let enclaves = enclaves();
-// 		let mr_enclaves: HashSet<_> = enclaves.into_iter().map(|e| e.mr_enclave).collect();
-// 		Ok(mr_enclaves.into_iter().collect())
-// 	}
-// }
+	fn all_enclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<Enclave>> {
+		Ok(enclaves())
+	}
+
+	fn worker_for_shard(
+		&self,
+		_: &ShardIdentifier,
+		_at_block: Option<Hash>,
+	) -> ApiResult<Option<Enclave>> {
+		unreachable!()
+	}
+	fn latest_ipfs_hash(
+		&self,
+		_: &ShardIdentifier,
+		_at_block: Option<Hash>,
+	) -> ApiResult<Option<[u8; 46]>> {
+		unreachable!()
+	}
+
+	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
+		let enclaves = enclaves();
+		let mr_enclaves: HashSet<_> = enclaves.into_iter().map(|e| e.mr_enclave).collect();
+		Ok(mr_enclaves.into_iter().collect())
+	}
+}
