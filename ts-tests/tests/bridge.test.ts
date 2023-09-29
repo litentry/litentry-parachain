@@ -4,40 +4,57 @@ import { toHex } from 'web3-utils';
 import { signAndSend, sleep } from './utils';
 import { assert } from 'chai';
 import { BigNumber, ethers } from 'ethers';
+import { BN } from 'bn.js';
 
-const BN = require('bn.js');
 const bn100e12 = new BN(10).pow(new BN(12)).mul(new BN(100));
 
 describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
     step('Transfer 100 Lit from eth to parachain', async function () {
+        console.log('@@@@@ A');
         let bridge = context.ethConfig.bridge.connect(context.ethConfig.wallets.bob);
+        console.log('@@@@@ B');
         let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
+        console.log('@@@@@ C');
         // substrate native token
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
+        console.log('@@@@@ D');
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
+        console.log('@@@@@ E');
         const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000,000'.replace(/,/g, '')).toString());
+        console.log('@@@@@ F');
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
+        console.log('@@@@@ G');
         //FERDIE key command: polkadot key inspect //Ferdie
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
 
         const beforeAccountData = await context.parachainConfig.api.query.system.account(
             context.parachainConfig.ferdie.address
         );
+        console.log('@@@@@ G');
         console.log('before deposit: ', beforeAccountData.toString());
+        console.log('@@@@@ H');
 
         // approve
         await erc20.approve(context.ethConfig.erc20Handler.address, depositAmount);
+        console.log('@@@@@ I');
         await sleep(6);
 
         // deposit
+        console.log('@@@@@ J');
         let data = createERCDepositData(depositAmount, 32, destinationRecipientAddress);
+        console.log('@@@@@ K');
         await bridge.deposit(destinationChainID, destResourceId, data);
+        console.log('@@@@@ L');
         await sleep(12 * 4);
+        console.log('@@@@@ M');
 
+        console.log('@@@@@ N');
         const afterAccountData = await context.parachainConfig.api.query.system.account(
             context.parachainConfig.ferdie.address
         );
+        console.log('@@@@@ N');
         console.log('after deposit: ', afterAccountData.toString());
+        console.log('@@@@@ N');
 
         assert.equal(
             bn100e12.add(beforeAccountData.data.free.toBn()).toString(),
