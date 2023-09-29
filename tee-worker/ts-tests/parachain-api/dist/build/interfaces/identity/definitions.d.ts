@@ -169,7 +169,6 @@ declare const _default: {
                 A6: string;
                 A7: string;
                 A8: string;
-                A9: string;
                 A10: string;
                 A11: string;
                 A12: string;
@@ -233,10 +232,6 @@ declare const _default: {
                 InvalidAccount: string;
                 UnclassifiedError: string;
             };
-        };
-        TrustedOperationResponse: {
-            req_ext_hash: string;
-            value: string;
         };
         AesOutput: {
             ciphertext: string;

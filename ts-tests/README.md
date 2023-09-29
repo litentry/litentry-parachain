@@ -14,7 +14,7 @@ This node.js project aims to test and verify Litentry Runtime as a whole, includ
 ./scripts/run-test.sh
 ```
 
-To run separate yarn targets, please check package.json
+To run separate pnpm targets, please check package.json
 
 ## Output
 

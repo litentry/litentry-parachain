@@ -179,7 +179,7 @@ generate-docker-compose-rococo:
 
 .PHONY: update-ts-dep ## update ts-tests dependencies
 update-ts-dep:
-	@cd ts-tests && npx npm-check-updates -u && corepack yarn
+	@cd ts-tests && pnpm dlx npm-check-updates -u && pnpm install
 
 # format
 

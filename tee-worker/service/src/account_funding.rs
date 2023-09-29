@@ -141,7 +141,7 @@ fn bootstrap_funds_from_alice(
 
 	let alice_free = api.get_free_balance(&alice_acc)?;
 	info!("    Alice's free balance = {:?}", alice_free);
-	let nonce = api.get_nonce_of(&alice_acc)?;
+	let nonce = api.get_account_next_index(&alice_acc)?;
 	info!("    Alice's Account Nonce is {}", nonce);
 
 	if funding_amount > alice_free {

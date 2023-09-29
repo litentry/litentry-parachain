@@ -17,13 +17,15 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use core::fmt::{Debug, Formatter};
 #[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
 
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
+use itp_utils::if_production_or;
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parentchain_primitives::{AccountId, Web3Network};
-use scale_info::TypeInfo;
+use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{crypto::AccountId32, ed25519, sr25519, ByteArray, H160};
 use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
@@ -33,10 +35,60 @@ use sp_std::vec::Vec;
 use strum_macros::EnumIter;
 
 pub type MaxStringLength = ConstU32<64>;
-pub type IdentityString = BoundedVec<u8, MaxStringLength>;
+pub type IdentityInnerString = BoundedVec<u8, MaxStringLength>;
+
 pub type HashedAddressMapping = GenericHashedAddressMapping<BlakeTwo256>;
 
-#[derive(Encode, Decode, Copy, Clone, Debug, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+impl Decode for IdentityString {
+	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+		let inner: BoundedVec<u8, MaxStringLength> = Decode::decode(input)?;
+		Ok(IdentityString { inner })
+	}
+}
+
+impl Encode for IdentityString {
+	fn encode(&self) -> Vec<u8> {
+		let mut res = Vec::new();
+		self.inner.encode_to(&mut res);
+		res
+	}
+}
+
+#[derive(Eq, PartialEq, Clone, MaxEncodedLen, Default)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct IdentityString {
+	#[cfg_attr(feature = "std", serde(flatten))]
+	pub inner: IdentityInnerString,
+}
+
+impl TypeInfo for IdentityString {
+	type Identity = BoundedVec<u8, MaxStringLength>;
+
+	fn type_info() -> Type {
+		TypeDefSequence::new(meta_type::<u8>()).into()
+	}
+}
+
+impl IdentityString {
+	pub fn new(inner: Vec<u8>) -> Self {
+		IdentityString { inner: BoundedVec::truncate_from(inner) }
+	}
+
+	pub fn inner_ref(&self) -> &[u8] {
+		self.inner.as_ref()
+	}
+}
+
+impl Debug for IdentityString {
+	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+		if_production_or!(
+			f.debug_struct("IdentityString").finish(),
+			f.debug_struct("IdentityString").field("inner", &self.inner).finish()
+		)
+	}
+}
+
+#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Address20([u8; 20]);
 
@@ -52,7 +104,16 @@ impl From<[u8; 20]> for Address20 {
 	}
 }
 
-#[derive(Encode, Decode, Copy, Clone, Debug, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+impl Debug for Address20 {
+	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+		if_production_or!(
+			f.debug_tuple("Address20").finish(),
+			f.debug_tuple("Address20").field(&self.0).finish()
+		)
+	}
+}
+
+#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Address32([u8; 32]);
 impl AsRef<[u8; 32]> for Address32 {
@@ -96,6 +157,15 @@ impl From<sr25519::Public> for Address32 {
 impl From<ed25519::Public> for Address32 {
 	fn from(k: ed25519::Public) -> Self {
 		k.0.into()
+	}
+}
+
+impl Debug for Address32 {
+	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+		if_production_or!(
+			f.debug_tuple("Address32").finish(),
+			f.debug_tuple("Address32").field(&self.0).finish()
+		)
 	}
 }
 
@@ -202,6 +272,7 @@ impl From<[u8; 20]> for Identity {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use codec::DecodeAll;
 	use sp_std::vec;
 	use strum::IntoEnumIterator;
 
@@ -272,7 +343,7 @@ mod tests {
 	#[test]
 	fn matches_web3networks_works() {
 		// web2 identity
-		let mut id = Identity::Twitter("alice".as_bytes().to_vec().try_into().unwrap());
+		let mut id = Identity::Twitter(IdentityString::new("alice".as_bytes().to_vec()));
 		let mut networks: Vec<Web3Network> = vec![];
 		assert!(id.matches_web3networks(&networks));
 		networks = vec![Web3Network::Litentry];
@@ -295,5 +366,21 @@ mod tests {
 		assert!(!id.matches_web3networks(&networks));
 		networks = vec![Web3Network::Bsc, Web3Network::Ethereum];
 		assert!(id.matches_web3networks(&networks));
+	}
+
+	#[test]
+	fn test_encode_identity_string() {
+		//it should be encoded to inner representation
+		let identity_string = IdentityString::new("mock_user".as_bytes().to_vec());
+		let inner: IdentityInnerString = BoundedVec::truncate_from("mock_user".as_bytes().to_vec());
+		assert_eq!(inner.encode(), identity_string.encode())
+	}
+
+	#[test]
+	fn test_decode_identity_string() {
+		let decoded: Vec<u8> = vec![36, 109, 111, 99, 107, 95, 117, 115, 101, 114];
+		let identity_string: IdentityString =
+			IdentityString::decode_all(&mut decoded.as_slice()).unwrap();
+		assert_eq!(identity_string, IdentityString::new("mock_user".as_bytes().to_vec()));
 	}
 }

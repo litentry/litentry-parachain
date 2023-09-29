@@ -141,7 +141,7 @@ where
 					let api = node_api_factory_cloned.create_api().unwrap();
 					let enclave_account = enclave_account(enclave_cloned.as_ref());
 					warn!("send_extrinsic failed, try to reset nonce ...");
-					match api.get_nonce_of(&enclave_account) {
+					match api.get_account_next_index(&enclave_account) {
 						Ok(nonce) => {
 							warn!("query on-chain nonce OK, reset nonce to: {}", nonce);
 							if let Err(e) = enclave_cloned.set_nonce(nonce) {

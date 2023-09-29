@@ -33,7 +33,6 @@ export interface Assertion extends Enum {
     readonly asA7: Bytes;
     readonly isA8: boolean;
     readonly asA8: Vec<AssertionSupportedNetwork>;
-    readonly isA9: boolean;
     readonly isA10: boolean;
     readonly asA10: Bytes;
     readonly isA11: boolean;
@@ -51,7 +50,6 @@ export interface Assertion extends Enum {
         | "A6"
         | "A7"
         | "A8"
-        | "A9"
         | "A10"
         | "A11"
         | "A12"
@@ -374,11 +372,6 @@ export interface TrustedOperation extends Enum {
     readonly isGet: boolean;
     readonly asGet: Getter;
     readonly type: "IndirectCall" | "DirectCall" | "Get";
-}
-/** @name TrustedOperationResponse */
-export interface TrustedOperationResponse extends Struct {
-    readonly req_ext_hash: H256;
-    readonly value: Bytes;
 }
 /** @name TrustedOperationStatus */
 export interface TrustedOperationStatus extends Enum {

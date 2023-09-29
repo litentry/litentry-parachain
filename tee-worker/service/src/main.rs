@@ -97,6 +97,7 @@ use sp_core::{
 };
 use sp_keyring::AccountKeyring;
 use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
+
 extern crate config as rs_config;
 use sp_runtime::traits::Header as HeaderTrait;
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
@@ -503,7 +504,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	);
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
 	info!("Last synced parachain block = {:?}", &last_synced_header.number);
-	let nonce = node_api.get_nonce_of(&tee_accountid).unwrap();
+	let nonce = node_api.get_account_next_index(&tee_accountid).unwrap();
 	info!("Enclave nonce = {:?}", nonce);
 	enclave
 		.set_nonce(nonce)
@@ -702,6 +703,8 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				sidechain_storage,
 				&last_synced_header,
 				parentchain_start_block,
+				config.fail_slot_mode,
+				config.fail_at,
 			) {
 				Ok(value) => value,
 				Err(error) => {

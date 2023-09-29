@@ -14,8 +14,9 @@ make SGX_MODE=SW
 # run the ts test script below if container started
 cd ./tee-worker/ts-tests
 nvm use
-corepack yarn
-corepack yarn workspace integration-tests test-ii-identity:local
+corepack enable pnpm
+pnpm install
+pnpm --filter integration-tests run test-ii-identity:local
 # other ts test
 ```
 

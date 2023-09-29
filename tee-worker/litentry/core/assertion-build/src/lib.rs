@@ -153,11 +153,12 @@ pub fn ss58_address_of(
 mod tests {
 	use super::*;
 	use itp_utils::ToHexPrefixed;
+	use litentry_primitives::IdentityString;
 
 	#[test]
 	fn transpose_identity_works() {
 		let mut identities: Vec<IdentityNetworkTuple> = vec![];
-		let id1 = Identity::Twitter("alice1".as_bytes().to_vec().try_into().unwrap());
+		let id1 = Identity::Twitter(IdentityString::new("alice1".as_bytes().to_vec()));
 		let id2 = [
 			122, 14, 95, 161, 63, 226, 172, 179, 35, 141, 125, 220, 137, 243, 163, 0, 157, 186,
 			194, 62, 45, 146, 65, 73, 222, 151, 78, 242, 131, 85, 243, 21,

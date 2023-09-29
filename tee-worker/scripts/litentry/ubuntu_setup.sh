@@ -13,19 +13,19 @@ rustup show
 
 # install substrate build deps
 sudo apt-get update
-sudo apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev gnupg2
+sudo apt-get install -y cmake pkg-config libssl-dev git clang libclang-dev gnupg2 protobuf-compiler
 
 # install llvm
 sudo apt-get update
 wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 10
 
 # override binutils
-wget https://download.01.org/intel-sgx/sgx-linux/2.15.1/as.ld.objdump.r4.tar.gz
+wget https://download.01.org/intel-sgx/sgx-linux/2.20/as.ld.objdump.r4.tar.gz
 tar xzf as.ld.objdump.r4.tar.gz
 sudo cp -f external/toolset/ubuntu20.04/* /usr/bin/
 
 # install sgx_sdk
-SDK_URL="https://download.01.org/intel-sgx/sgx-linux/2.15.1/distro/ubuntu20.04-server/sgx_linux_x64_sdk_2.15.101.1.bin"
+SDK_URL="https://download.01.org/intel-sgx/sgx-linux/2.20/distro/ubuntu20.04-server/sgx_linux_x64_sdk_2.20.100.4.bin"
 curl -o sdk.sh $SDK_URL
 chmod a+x sdk.sh
 echo -e 'no\n/opt' | ./sdk.sh
@@ -33,8 +33,8 @@ source /opt/sgxsdk/environment
 
 # install runtime sgx libs (psw)
 CODENAME=focal
-VERSION=2.15.101.1-focal1
-DCAP_VERSION=1.12.101.1-focal1
+VERSION=2.20.100.4-focal1
+DCAP_VERSION=1.17.100.4-focal1
 
 curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | sudo apt-key add - && \
 sudo add-apt-repository "deb https://download.01.org/intel-sgx/sgx_repo/ubuntu $CODENAME main" && \

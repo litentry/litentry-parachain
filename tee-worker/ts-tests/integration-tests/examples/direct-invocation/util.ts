@@ -4,7 +4,7 @@ import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { HexString } from '@polkadot/util/types';
 import { Bytes } from '@polkadot/types-codec';
-import { PublicKeyJson } from '../../common/type-definitions';
+import { IntegrationTestContext, JsonRpcRequest, PublicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer } from '../../common/utils';
 import { decodeRpcBytesAsString } from '../../common/call';
@@ -16,6 +16,7 @@ import { blake2AsHex } from '@polkadot/util-crypto';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { AesOutput as CustomAesOutput } from '../../common/type-definitions';
 import { AesOutput } from 'parachain-api/build/interfaces';
+import { createJsonRpcRequest, nextRequestId } from '../../common/helpers';
 
 // Send the request to worker ws
 // we should perform different actions based on the returned status:
@@ -30,30 +31,33 @@ import { AesOutput } from 'parachain-api/build/interfaces';
 //
 async function sendRequest(
     wsClient: WebSocketAsPromised,
-    request: any,
+    request: JsonRpcRequest,
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const p = new Promise<WorkerRpcReturnValue>((resolve) =>
         wsClient.onMessage.addListener((data) => {
-            const result = JSON.parse(data.toString()).result;
-            const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
+            const parsed = JSON.parse(data);
+            if (parsed.id === request.id) {
+                const result = parsed.result;
+                const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
 
-            if (res.status.isError) {
-                console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
-            }
+                if (res.status.isError) {
+                    console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
+                }
 
-            if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
-                console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
-            }
+                if (res.status.isTrustedOperationStatus && res.status.asTrustedOperationStatus[0].isInvalid) {
+                    console.log('Rpc trusted operation execution failed, hash: ', res.value.toHex());
+                }
 
-            // resolve it once `do_watch` is false, meaning it's the final response
-            if (res.do_watch.isFalse) {
-                // TODO: maybe only remove this listener
-                wsClient.onMessage.removeAllListeners();
-                resolve(res);
-            } else {
-                // `do_watch` is true means: hold on - there's still something coming
-                console.log('do_watch is true, continue watching ...');
+                // resolve it once `do_watch` is false, meaning it's the final response
+                if (res.do_watch.isFalse) {
+                    // TODO: maybe only remove this listener
+                    wsClient.onMessage.removeAllListeners();
+                    resolve(res);
+                } else {
+                    // `do_watch` is true means: hold on - there's still something coming
+                    console.log('do_watch is true, continue watching ...');
+                }
             }
         })
     );
@@ -280,71 +284,58 @@ export async function createSignedTrustedGetterIdGraph(
 }
 
 export const getSidechainNonce = async (
-    wsp: any,
-    parachainApi: ApiPromise,
-    mrenclave: string,
+    context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     subject: LitentryPrimitivesIdentity
 ): Promise<Index> => {
-    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject.toHuman());
-    const getter = parachainApi.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
-    const nonce = await sendRequestFromGetter(wsp, parachainApi, mrenclave, teeShieldingKey, getter);
+    const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], subject.toHuman());
+    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
+    const nonce = await sendRequestFromGetter(context, teeShieldingKey, getter);
     const nonceValue = decodeNonce(nonce.value.toHex());
-    return parachainApi.createType('Index', nonceValue) as Index;
+    return context.api.createType('Index', nonceValue) as Index;
 };
 
 export const sendRequestFromTrustedCall = async (
-    wsp: any,
-    parachainApi: ApiPromise,
-    mrenclave: string,
+    context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     call: TrustedCallSigned
 ) => {
     // construct trusted operation
-    const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
+    const trustedOperation = context.api.createType('TrustedOperation', { direct_call: call });
     console.log('top: ', trustedOperation.toJSON());
     console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
     // create the request parameter
     const requestParam = await createRequest(
-        wsp,
-        parachainApi,
-        mrenclave,
+        context.api,
+        context.mrEnclave,
         teeShieldingKey,
         false,
         trustedOperation.toU8a()
     );
-    const request = {
-        jsonrpc: '2.0',
-        method: 'author_submitAndWatchExtrinsic',
-        params: [u8aToHex(requestParam)],
-        id: 1,
-    };
-    return sendRequest(wsp, request, parachainApi);
+    const request = createJsonRpcRequest(
+        'author_submitAndWatchExtrinsic',
+        [u8aToHex(requestParam)],
+        nextRequestId(context)
+    );
+    return sendRequest(context.tee, request, context.api);
 };
 
 export const sendRequestFromGetter = async (
-    wsp: any,
-    parachainApi: ApiPromise,
-    mrenclave: string,
+    context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
     getter: Getter
 ): Promise<WorkerRpcReturnValue> => {
     // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
     //            this is what `state_executeGetter` expects in rust
-    const requestParam = await createRequest(wsp, parachainApi, mrenclave, teeShieldingKey, true, getter.toU8a());
-    const request = {
-        jsonrpc: '2.0',
-        method: 'state_executeGetter',
-        params: [u8aToHex(requestParam)],
-        id: 1,
-    };
-    return sendRequest(wsp, request, parachainApi);
+    const requestParam = await createRequest(context.api, context.mrEnclave, teeShieldingKey, true, getter.toU8a());
+    const request = createJsonRpcRequest('state_executeGetter', [u8aToHex(requestParam)], nextRequestId(context));
+    return sendRequest(context.tee, request, context.api);
 };
 
 // get TEE's shielding key directly via RPC
-export const getTeeShieldingKey = async (wsp: WebSocketAsPromised, parachainApi: ApiPromise) => {
-    const request = { jsonrpc: '2.0', method: 'author_getShieldingKey', params: [], id: 1 };
-    const res = await sendRequest(wsp, request, parachainApi);
+export const getTeeShieldingKey = async (context: IntegrationTestContext) => {
+    const request = createJsonRpcRequest('author_getShieldingKey', Uint8Array.from([]), nextRequestId(context));
+    const res = await sendRequest(context.tee, request, context.api);
     const k = JSON.parse(decodeRpcBytesAsString(res.value)) as PublicKeyJson;
 
     return createPublicKey({
@@ -361,7 +352,6 @@ export const getTeeShieldingKey = async (wsp: WebSocketAsPromised, parachainApi:
 
 // given an encoded trusted operation, construct a request bytes that are sent in RPC request parameters
 export const createRequest = async (
-    wsp: WebSocketAsPromised,
     parachainApi: ApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,

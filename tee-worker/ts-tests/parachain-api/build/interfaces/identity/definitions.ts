@@ -196,7 +196,6 @@ export default {
                 A6: "Null",
                 A7: "Bytes",
                 A8: "Vec<AssertionSupportedNetwork>",
-                A9: "Null",
                 A10: "Bytes",
                 A11: "Bytes",
                 A12: "Bytes",
@@ -269,10 +268,6 @@ export default {
                 InvalidAccount: "Null",
                 UnclassifiedError: "Null",
             },
-        },
-        TrustedOperationResponse: {
-            req_ext_hash: "H256",
-            value: "Vec<u8>",
         },
         AesOutput: {
             ciphertext: "Vec<u8>",
