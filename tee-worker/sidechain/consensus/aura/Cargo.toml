@@ -13,7 +13,6 @@ log = { version = "0.4", default-features = false }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # substrate deps
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
@@ -30,7 +29,6 @@ itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", d
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 its-block-composer = { path = "../../block-composer", default-features = false }
 its-block-verification = { path = "../../block-verification", optional = true, default-features = false }
 its-consensus-common = { path = "../common", default-features = false }
@@ -58,7 +56,6 @@ std = [
     "finality-grandpa/std",
     "log/std",
     #substrate
-    "frame-support/std",
     "sp-core/std",
     "sp-runtime/std",
     #local
@@ -72,7 +69,6 @@ std = [
     "itp-stf-state-handler/std",
     "itp-time-utils/std",
     "itp-types/std",
-    "itp-utils/std",
     "its-block-composer/std",
     "its-block-verification/std",
     "its-consensus-common/std",
@@ -92,7 +88,6 @@ sgx = [
     "itp-stf-executor/sgx",
     "itp-stf-state-handler/sgx",
     "itp-time-utils/sgx",
-    "itp-utils/sgx",
     "its-block-composer/sgx",
     "its-consensus-common/sgx",
     "its-consensus-slots/sgx",

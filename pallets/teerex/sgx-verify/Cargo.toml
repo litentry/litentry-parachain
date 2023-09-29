@@ -27,7 +27,6 @@ teerex-primitives = { path = "../../../primitives/teerex", default-features = fa
 # substrate dependencies
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 [dev-dependencies]
@@ -52,6 +51,5 @@ std = [
     # substrate
     "frame-support/std",
     "sp-core/std",
-    "sp-io/std",
     "sp-std/std",
 ]
