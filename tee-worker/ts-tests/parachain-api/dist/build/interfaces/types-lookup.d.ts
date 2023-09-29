@@ -2819,7 +2819,6 @@ declare module "@polkadot/types/lookup" {
         readonly asA7: Bytes;
         readonly isA8: boolean;
         readonly asA8: Vec<CorePrimitivesNetworkWeb3Network>;
-        readonly isA9: boolean;
         readonly isA10: boolean;
         readonly asA10: Bytes;
         readonly isA11: boolean;
@@ -2840,7 +2839,6 @@ declare module "@polkadot/types/lookup" {
             | "A6"
             | "A7"
             | "A8"
-            | "A9"
             | "A10"
             | "A11"
             | "A13"
