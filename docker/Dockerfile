@@ -4,9 +4,9 @@ ARG PROFILE
 # ==========================
 # stage 1: build
 # https://hub.docker.com/_/rust
-# our host is based on bullseye/sid => rust:latest
+# our host is based on bullseye/sid (ubuntu 20)
 # ==========================
-FROM rust:1.64 as builder
+FROM rust:bullseye as builder
 
 WORKDIR /litentry
 COPY . /litentry
