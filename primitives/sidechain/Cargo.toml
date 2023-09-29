@@ -15,9 +15,6 @@ serde = { version = "1.0", default-features = false }
 
 # substrate dependencies
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 
 [features]
@@ -31,7 +28,4 @@ std = [
     "serde/std",
     # substrate
     "sp-core/std",
-    "sp-io/std",
-    "sp-runtime/std",
-    "sp-std/std",
 ]
