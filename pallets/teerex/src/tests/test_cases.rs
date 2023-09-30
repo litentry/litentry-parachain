@@ -1026,3 +1026,18 @@ fn publish_hash_with_too_much_data_fails() {
 		);
 	})
 }
+
+#[test]
+fn add_enclave_works_exceeds_number() {
+	new_test_ext().execute_with(|| {
+		Timestamp::set_timestamp(TEST4_TIMESTAMP);
+		let signer = get_signer(TEST4_SIGNER_PUB);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer),
+			TEST4_CERT.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
+	})
+}
