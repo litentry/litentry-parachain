@@ -16,7 +16,6 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 sgx_urts = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
@@ -28,5 +27,4 @@ itp-types = { path = "../types" }
 
 # litentry
 lc-data-providers = { path = "../../litentry/core/data-providers" }
-litentry-primitives = { path = "../../litentry/primitives" }
 teerex-primitives = { path = "../../../primitives/teerex", default-features = false }

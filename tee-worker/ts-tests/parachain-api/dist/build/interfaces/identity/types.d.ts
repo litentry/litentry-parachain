@@ -33,7 +33,6 @@ export interface Assertion extends Enum {
     readonly asA7: Bytes;
     readonly isA8: boolean;
     readonly asA8: Vec<AssertionSupportedNetwork>;
-    readonly isA9: boolean;
     readonly isA10: boolean;
     readonly asA10: Bytes;
     readonly isA11: boolean;
@@ -51,7 +50,6 @@ export interface Assertion extends Enum {
         | "A6"
         | "A7"
         | "A8"
-        | "A9"
         | "A10"
         | "A11"
         | "A12"

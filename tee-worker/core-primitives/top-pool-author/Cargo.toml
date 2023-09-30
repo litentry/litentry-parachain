@@ -7,7 +7,6 @@ edition = "2021"
 [dependencies]
 # sgx dependencies
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 # local dependencies
 ita-stf = { path = "../../app-libs/stf", default-features = false }
@@ -19,7 +18,6 @@ itp-stf-state-handler = { path = "../stf-state-handler", default-features = fals
 itp-test = { path = "../test", default-features = false, optional = true }
 itp-top-pool = { path = "../top-pool", default-features = false }
 itp-types = { path = "../types", default-features = false }
-itp-utils = { path = "../utils", default-features = false }
 
 # sgx enabled external libraries
 jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
@@ -27,7 +25,6 @@ thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 
 # std compatible external libraries (make sure these versions match with the sgx-enabled ones above)
 jsonrpc-core = { version = "18", optional = true }
-thiserror = { version = "1.0", optional = true }
 
 # no-std compatible libraries
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -36,8 +33,6 @@ log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
-# litentry
-litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 [dev-dependencies]
 futures = { version = "0.3" }
@@ -46,6 +41,9 @@ itp-test = { path = "../test" }
 itp-top-pool = { path = "../top-pool", features = ["mocks"] }
 sgx-crypto-helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", package = "sgx_crypto_helper", default-features = false }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+# litentry
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+
 
 [features]
 default = ["std"]
@@ -57,10 +55,8 @@ std = [
     "itp-stf-state-handler/std",
     "itp-top-pool/std",
     "itp-types/std",
-    "itp-utils/std",
     "jsonrpc-core",
     "log/std",
-    "thiserror",
     # litentry
     "litentry-primitives/std",
 ]
@@ -72,7 +68,6 @@ sgx = [
     "itp-sgx-crypto/sgx",
     "itp-stf-state-handler/sgx",
     "itp-top-pool/sgx",
-    "itp-utils/sgx",
     "thiserror_sgx",
     # litentry
     "litentry-primitives/sgx",

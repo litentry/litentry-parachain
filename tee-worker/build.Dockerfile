@@ -70,28 +70,12 @@ RUN \
 RUN cargo test --release
 
 
-### Minimal image for transferring built artefacts
-##################################################
-FROM alpine AS stash
-LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
-
-COPY --from=builder /opt/sgxsdk /opt/sgxsdk
-COPY --from=builder /opt/rust/sccache /opt/rust/sccache
-COPY --from=builder /opt/rust/git/db /opt/rust/git/db
-COPY --from=builder /opt/rust/registry/index /opt/rust/registry/index
-COPY --from=builder /opt/rust/registry/cache /opt/rust/registry/cache
-COPY --from=builder /home/ubuntu/tee-worker/bin/* /opt/worker/bin/
-COPY --from=builder /home/ubuntu/tee-worker/cli/*.sh /opt/worker/cli/
-COPY --from=builder /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
-COPY --from=builder /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
-
-
 ### Base Runner Stage
 ##################################################
 FROM node:18-bookworm-slim AS runner
 
 RUN apt update && apt install -y libssl-dev iproute2 jq curl
-RUN corepack enable && corepack prepare yarn@3.6.1 --activate
+RUN corepack enable && corepack prepare pnpm@8.7.6 --activate && corepack enable pnpm
 
 
 ### Deployed CLI client
@@ -105,8 +89,8 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-COPY --from=local-stash /opt/worker/bin/litentry-cli /usr/local/bin
-COPY --from=local-stash /opt/worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/litentry-cli /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
 
 RUN chmod +x /usr/local/bin/litentry-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
@@ -123,11 +107,11 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 WORKDIR /usr/local/bin
 
-COPY --from=local-stash /opt/sgxsdk /opt/sgxsdk
-COPY --from=local-stash /opt/worker/bin/* /usr/local/bin
-COPY --from=local-stash /opt/worker/cli/*.sh /usr/local/worker-cli/
-COPY --from=local-stash /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
-COPY --from=local-stash /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
+COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/litentry-worker

@@ -188,7 +188,6 @@ export default {
 				A6: "Null",
 				A7: "Bytes",
 				A8: "Vec<AssertionSupportedNetwork>",
-				A9: "Null",
 				A10: "Bytes",
 				A11: "Bytes",
 				A12: "Bytes",

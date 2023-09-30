@@ -13,14 +13,12 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
 itp-api-client-types = { path = "../../../core-primitives/node-api/api-client-types", default-features = false }
 itp-node-api = { path = "../../../core-primitives/node-api", default-features = false }
-itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-runtime-primitives = { path = "../../../core-primitives/sgx-runtime-primitives", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # sgx enabled external libraries
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
@@ -40,16 +38,10 @@ binary-merkle-tree = { default-features = false, git = "https://github.com/parit
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
-# scs/integritee
-substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0", default-features = false }
-
 # litentry
-ita-sgx-runtime = { path = "../../../app-libs/sgx-runtime", default-features = false }
-itp-component-container = { path = "../../../core-primitives/component-container", default-features = false, optional = true }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false, optional = true }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
-pallet-imp = { package = "pallet-identity-management", path = "../../../../pallets/identity-management", default-features = false }
-pallet-vcmp = { package = "pallet-vc-management", path = "../../../../pallets/vc-management", default-features = false }
 parachain-core-primitives = { package = "core-primitives", path = "../../../../primitives/core", default-features = false }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
@@ -62,8 +54,8 @@ itp-test = { path = "../../../core-primitives/test" }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", features = ["mocks"] }
 itc-parentchain-test = { path = "../../../core/parentchain/test" }
 
-# litentry
-hex = "0.4.2"
+# scs/integritee
+substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42", default-features = false }
 
 [features]
 default = ["std"]
@@ -73,7 +65,6 @@ std = [
     "futures",
     "ita-stf/std",
     "itp-node-api/std",
-    "itp-ocall-api/std",
     "itp-sgx-crypto/std",
     "itp-stf-executor/std",
     "itp-top-pool-author/std",
@@ -88,12 +79,9 @@ std = [
     "sp-runtime/std",
     "thiserror",
     # litentry
-    "ita-sgx-runtime/std",
     "litentry-primitives/std",
-    "pallet-imp/std",
-    "pallet-vcmp/std",
+    "itp-utils/std",
     "lc-scheduled-enclave/std",
-    "itp-component-container/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -107,6 +95,5 @@ sgx = [
     # litentry
     "litentry-primitives/sgx",
     "lc-scheduled-enclave/sgx",
-    "itp-component-container/sgx",
     "itp-utils/sgx",
 ]

@@ -1,5 +1,5 @@
-//run:npx ts-node setup-enclave.ts $enclaveAccount $mrenclave $accountPassword
-//example:npx ts-node setup-enclave.ts 2KWd4sEmYj2VW42L2WUDDRKA4JwnKg76uoQ2keUBUwFHU9Dx a552654d1733c4054a3c7e5e86adf26b5d65c072b57b2550fe763821ebac54c6 123456
+//run: pnpm exec ts-node setup-enclave.ts $enclaveAccount $mrenclave $accountPassword
+//example: pnpm exec ts-node setup-enclave.ts 2KWd4sEmYj2VW42L2WUDDRKA4JwnKg76uoQ2keUBUwFHU9Dx a552654d1733c4054a3c7e5e86adf26b5d65c072b57b2550fe763821ebac54c6 123456
 const { Keyring } = require("@polkadot/api");
 import { initApi } from "./initApis";
 const { hexToU8a } = require("@polkadot/util");

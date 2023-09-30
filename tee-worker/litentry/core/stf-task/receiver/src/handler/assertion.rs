@@ -21,6 +21,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
+use itp_types::ShardIdentifier;
 use lc_credentials::DID;
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -87,10 +88,6 @@ where
 
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
-
-			_ => {
-				unimplemented!()
-			},
 		}?;
 
 		// post-process the credential
@@ -151,7 +148,11 @@ where
 		Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
 	}
 
-	fn on_success(&self, result: Self::Result) {
+	fn on_success(
+		&self,
+		result: Self::Result,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	) {
 		debug!("Assertion build OK");
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
 		// using enclave's shielding key is encrypted in chunks
@@ -166,16 +167,19 @@ where
 				vc_payload,
 				self.req.req_ext_hash,
 			);
-			let _ = self
-				.context
-				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
-				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
+			}
 		} else {
 			error!("can't get enclave signer");
 		}
 	}
 
-	fn on_failure(&self, error: Self::Error) {
+	fn on_failure(
+		&self,
+		error: Self::Error,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	) {
 		error!("Assertion build error: {error:?}");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_vcmp_error(
@@ -184,10 +188,9 @@ where
 				error,
 				self.req.req_ext_hash,
 			);
-			let _ = self
-				.context
-				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
-				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
+			}
 		} else {
 			error!("can't get enclave signer");
 		}

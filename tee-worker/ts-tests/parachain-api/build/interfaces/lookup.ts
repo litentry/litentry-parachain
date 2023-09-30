@@ -2157,7 +2157,6 @@ export default {
             A6: "Null",
             A7: "Bytes",
             A8: "Vec<CorePrimitivesNetworkWeb3Network>",
-            A9: "Null",
             A10: "Bytes",
             A11: "Bytes",
             A13: "AccountId32",

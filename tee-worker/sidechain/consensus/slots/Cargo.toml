@@ -17,7 +17,6 @@ its-block-verification = { path = "../../block-verification", default-features =
 its-primitives = { path = "../../primitives", default-features = false }
 
 # only for slot-stream
-futures = { version = "0.3", optional = true }
 futures-timer = { version = "3.0", optional = true }
 
 # sgx deps
@@ -28,8 +27,6 @@ sp-consensus-slots = { default-features = false, git = "https://github.com/parit
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # local deps
-itp-settings = { path = "../../../core-primitives/settings" }
-itp-sgx-io = { path = "../../../core-primitives/sgx/io", default-features = false }
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
 its-consensus-common = { path = "../common", default-features = false }
 
@@ -47,7 +44,7 @@ its-test = { path = "../../test" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 itp-test = { path = "../../../core-primitives/test" }
 tokio = { version = "1.6.1", features = ["full"] }
-
+itp-settings = { path = "../../../core-primitives/settings" }
 
 [features]
 default = ["std"]
@@ -55,13 +52,11 @@ std = [
     "codec/std",
     "log/std",
     # only for slot-stream
-    "futures",
     "futures-timer",
     # substrate
     "sp-consensus-slots/std",
     "sp-runtime/std",
     # local
-    "itp-sgx-io/std",
     "itp-time-utils/std",
     "itp-types/std",
     "its-primitives/std",
@@ -73,7 +68,6 @@ std = [
     "lc-scheduled-enclave/std",
 ]
 sgx = [
-    "itp-sgx-io/sgx",
     "itp-time-utils/sgx",
     "its-consensus-common/sgx",
     "sgx_tstd",
