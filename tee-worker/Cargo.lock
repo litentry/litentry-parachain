@@ -4472,7 +4472,6 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
- "hex-literal 0.3.4",
  "itp-sgx-runtime-primitives",
  "pallet-balances",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=polkadot-v0.9.39)",
