@@ -137,6 +137,7 @@ impl<
 						TrustedOperationOrHash::Hash(h),
 						Vec::new(),
 						Vec::new(),
+						false,
 					)
 				})
 				.collect();

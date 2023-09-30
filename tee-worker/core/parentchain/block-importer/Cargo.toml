@@ -1,7 +1,7 @@
 [package]
 name = "itc-parentchain-block-importer"
 version = "0.9.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
@@ -14,7 +14,6 @@ ita-stf = { path = "../../../app-libs/stf", default-features = false }
 itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { path = "../light-client", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
-itp-settings = { path = "../../../core-primitives/settings" }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 

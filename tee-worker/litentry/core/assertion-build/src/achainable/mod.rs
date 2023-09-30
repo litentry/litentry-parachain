@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -27,7 +27,10 @@ use self::{
 	date_percent::build_date_percent, token::build_token,
 };
 use crate::*;
-use lc_data_providers::achainable::{AchainableClient, AchainableTagDeFi, Params};
+use lc_data_providers::{
+	achainable::{AchainableClient, AchainableTagDeFi, Params},
+	DataProviderConfigReader, ReadDataProviderConfig,
+};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
 
@@ -61,7 +64,10 @@ pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Cre
 
 pub fn request_achainable(addresses: Vec<String>, param: AchainableParams) -> Result<bool> {
 	let request_param = Params::try_from(param.clone())?;
-	let mut client: AchainableClient = AchainableClient::new();
+
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
+	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
 
 	for address in &addresses {
 		let ret = client.query_system_label(address, request_param.clone()).map_err(|e| {
@@ -83,7 +89,10 @@ pub fn request_uniswap_v2_or_v3_user(
 	param: AchainableParams,
 ) -> Result<(bool, bool)> {
 	let _request_param = Params::try_from(param.clone())?;
-	let mut client: AchainableClient = AchainableClient::new();
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
+
+	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
 
 	let mut v2_user = false;
 	let mut v3_user = false;
@@ -106,7 +115,10 @@ pub fn request_achainable_classofyear(
 	param: AchainableParams,
 ) -> Result<(bool, String)> {
 	let request_param = Params::try_from(param.clone())?;
-	let mut client: AchainableClient = AchainableClient::new();
+
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
+	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
 
 	let mut longest_created_year = INVALID_CLASS_OF_YEAR.into();
 	for address in &addresses {
@@ -114,9 +126,9 @@ pub fn request_achainable_classofyear(
 			Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
 		})?;
 
-		// If parse metadata field error, return Invalid immediately
+		// In some cases,the metadata field TDF will return null, so if there is a parsing error, we need to continue requesting the next address
 		if year.parse::<u32>().is_err() {
-			return Ok((false, INVALID_CLASS_OF_YEAR.into()))
+			continue
 		}
 
 		if year < longest_created_year {

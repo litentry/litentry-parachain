@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod activate_identity;
+mod args_executor;
 pub mod deactivate_identity;
 pub mod link_identity;
 pub mod request_vc;

@@ -101,9 +101,10 @@ sleep 10
 
 # run a litentry-collator instance
 $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
-  --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all \
+  --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --rpc-methods=Unsafe \
   --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm \
   --state-pruning archive --blocks-pruning archive \
+  --enable-evm-rpc \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
   --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
@@ -116,8 +117,8 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-corepack yarn
-corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
+pnpm install
+pnpm run register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
 print_divider
 
 echo "upgrade parathread to parachain now ..."
@@ -129,8 +130,8 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-corepack yarn
-corepack yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
+pnpm install
+pnpm run upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
 print_divider
 
 echo "done. please check $TMPDIR for generated files if need"

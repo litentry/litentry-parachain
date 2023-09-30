@@ -1,0 +1,10 @@
+#! /usr/bin/bash
+
+mkdir -p stress-output
+
+for i in {1..30}; do
+   pnpm --filter stress run test > stress-output/process-$i.csv &
+done
+
+wait $(jobs -p)
+

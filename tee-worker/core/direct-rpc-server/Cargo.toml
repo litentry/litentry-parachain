@@ -1,13 +1,12 @@
 [package]
 name = "itc-direct-rpc-server"
 version = "0.9.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
 # sgx dependencies
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["net", "thread"] }
-sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # no-std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
@@ -53,7 +52,6 @@ sgx = [
     "itp-utils/sgx",
     "jsonrpc-core_sgx",
     "sgx_tstd",
-    "sgx_types",
     "thiserror_sgx",
 ]
 mocks = []

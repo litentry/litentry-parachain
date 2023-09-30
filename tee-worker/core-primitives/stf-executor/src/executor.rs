@@ -26,12 +26,13 @@ use ita_stf::{
 	stf_sgx::{shards_key_hash, storage_hashes_to_update_per_shard},
 	ParentchainHeader, TrustedCallSigned, TrustedOperation,
 };
+use itp_enclave_metrics::EnclaveMetric;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveOnChainOCallApi};
+use itp_ocall_api::{EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_interface::{
 	parentchain_pallet::ParentchainPalletInterface, runtime_upgrade::RuntimeUpgradeInterface,
-	ExecuteCall, StateCallInterface, UpdateState,
+	ExecuteCall, StateCallInterface, StfExecutionResult, UpdateState,
 };
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
@@ -54,7 +55,7 @@ pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf> {
 impl<OCallApi, StateHandler, NodeMetadataRepository, Stf>
 	StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf>
 where
-	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
+	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode,
 	NodeMetadataRepository: AccessNodeMetadata,
@@ -96,19 +97,22 @@ where
 		let mrenclave = self.ocall_api.get_mrenclave_of_self()?;
 
 		let top_or_hash = TrustedOperationOrHash::from_top(trusted_operation.clone());
+		let operation_hash = trusted_operation.hash();
+		debug!("Operation hash {:?}", operation_hash);
+
 
 		// TODO(Litentry): do we need to send any error notification to parachain?
 		let trusted_call = match trusted_operation.to_call().ok_or(Error::InvalidTrustedCallType) {
 			Ok(c) => c,
 			Err(e) => {
 				error!("Error: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
+				return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, vec![], vec![]))
 			},
 		};
 
 		if !trusted_call.verify_signature(&mrenclave.m, &shard) {
 			error!("TrustedCallSigned: bad signature");
-			return Ok(ExecutedOperation::failed(top_or_hash, vec![]))
+			return Ok(ExecutedOperation::failed(operation_hash, top_or_hash, vec![], vec![]))
 		}
 
 		// Necessary because light client sync may not be up to date
@@ -126,7 +130,7 @@ where
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce);
 		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
-		let rpc_response_value = match Stf::execute_call(
+		return match Stf::execute_call(
 			state,
 			shard,
 			trusted_call.clone(),
@@ -135,20 +139,25 @@ where
 			self.node_metadata_repo.clone(),
 		) {
 			Err(e) => {
+				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::FailedTrustedOperationIncrement(trusted_call.call.clone())) {
+					warn!("Failed to update metric for failed trusted operations: {:?}", e);
+				}
 				error!("Stf execute failed: {:?}", e);
-				return Ok(ExecutedOperation::failed(top_or_hash, extrinsic_call_backs))
+				let rpc_response_value: Vec<u8> = e.encode();
+				Ok(ExecutedOperation::failed(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 			},
-			Ok(res) => res,
+			Ok(result) => {
+				if let Err(e) = self.ocall_api.update_metric(EnclaveMetric::SuccessfulTrustedOperationIncrement(trusted_call.call.clone())) {
+					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
+				}
+				let force_connection_wait = result.force_connection_wait();
+				let rpc_response_value: Vec<u8> = result.get_encoded_result();
+				if let StatePostProcessing::Prune = post_processing {
+					state.prune_state_diff();
+				}
+				Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value, force_connection_wait))
+			},
 		};
-
-		let operation_hash = trusted_operation.hash();
-		debug!("Operation hash {:?}", operation_hash);
-
-		if let StatePostProcessing::Prune = post_processing {
-			state.prune_state_diff();
-		}
-
-		Ok(ExecutedOperation::success(operation_hash, top_or_hash, extrinsic_call_backs, rpc_response_value))
 	}
 }
 
@@ -234,7 +243,7 @@ where
 impl<OCallApi, StateHandler, NodeMetadataRepository, Stf> StateUpdateProposer
 	for StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf>
 where
-	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi,
+	OCallApi: EnclaveAttestationOCallApi + EnclaveOnChainOCallApi + EnclaveMetricsOCallApi,
 	StateHandler: HandleState<HashType = H256>,
 	StateHandler::StateT: SgxExternalitiesTrait + Encode + StateHash,
 	<StateHandler::StateT as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,

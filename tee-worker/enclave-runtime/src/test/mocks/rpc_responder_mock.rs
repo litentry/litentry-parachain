@@ -47,7 +47,12 @@ where
 		Ok(())
 	}
 
-	fn set_value(&self, _hash: Self::Hash, _encoded_value: Vec<u8>) -> DirectRpcResult<()> {
+	fn update_connection_state(
+		&self,
+		_hash: Self::Hash,
+		_encoded_value: Vec<u8>,
+		_force_wait: bool,
+	) -> DirectRpcResult<()> {
 		Ok(())
 	}
 

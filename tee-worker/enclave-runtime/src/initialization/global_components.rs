@@ -41,8 +41,9 @@ use itc_parentchain::{
 	},
 	block_importer::ParentchainBlockImporter,
 	indirect_calls_executor::{
-		filter_calls::ShieldFundsAndCallWorkerFilter,
-		parentchain_extrinsic_parser::ParentchainExtrinsicParser, IndirectCallsExecutor,
+		filter_metadata::{EventCreator, ShieldFundsAndCallWorkerFilter},
+		parentchain_parser::ParentchainExtrinsicParser,
+		IndirectCallsExecutor,
 	},
 	light_client::{
 		concurrent_access::ValidatorAccessor, io::LightClientStateSeal,
@@ -86,6 +87,7 @@ use its_sidechain::{
 	aura::block_importer::BlockImporter as SidechainBlockImporter,
 	block_composer::BlockComposer,
 	consensus_common::{BlockImportConfirmationHandler, BlockImportQueueWorker, PeerBlockSync},
+	slots::FailSlotOnDemand,
 };
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
@@ -140,6 +142,7 @@ pub type EnclaveIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
 	ShieldFundsAndCallWorkerFilter<ParentchainExtrinsicParser>,
+	EventCreator,
 >;
 pub type EnclaveValidatorAccessor = ValidatorAccessor<
 	LightValidation<ParentchainBlock, EnclaveOCallApi>,
@@ -307,3 +310,8 @@ pub static GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT: ComponentContainer<
 pub static GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT: ComponentContainer<
 	EnclaveSidechainBlockSyncer,
 > = ComponentContainer::new("sidechain_block_syncer");
+
+/// Sidechain fail slot on demand.
+pub static GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT: ComponentContainer<
+	Option<FailSlotOnDemand>,
+> = ComponentContainer::new("sidechain_fail_slot_on_demand");

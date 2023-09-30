@@ -42,7 +42,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	DirectRequestStatus, Index, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
 };
-use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
 use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
@@ -320,7 +320,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	if cfg!(not(feature = "production")) {
+	if_not_production!({
 		// state_updateScheduledEnclave
 		// params: sidechainBlockNumber, hex encoded mrenclave
 		let mrenclave_update_scheduled_name: &str = "state_updateScheduledEnclave";
@@ -412,7 +412,7 @@ where
 				Err(_err) => Ok(json!(compute_hex_encoded_return_error("parse error"))),
 			}
 		});
-	}
+	});
 
 	// system_health
 	let state_health_name: &str = "system_health";

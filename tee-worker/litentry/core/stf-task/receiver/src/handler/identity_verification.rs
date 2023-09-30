@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -16,11 +16,13 @@
 
 use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
 use ita_sgx_runtime::Hash;
+use ita_stf::H256;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
+use itp_types::ShardIdentifier;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
@@ -53,7 +55,11 @@ where
 		lc_identity_verification::verify(&self.req)
 	}
 
-	fn on_success(&self, _result: Self::Result) {
+	fn on_success(
+		&self,
+		_result: Self::Result,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	) {
 		debug!("verify identity OK");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::link_identity_callback(
@@ -63,16 +69,19 @@ where
 				self.req.web3networks.clone(),
 				self.req.req_ext_hash,
 			);
-			let _ = self
-				.context
-				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
-				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
+			}
 		} else {
 			error!("can't get enclave signer");
 		}
 	}
 
-	fn on_failure(&self, error: Self::Error) {
+	fn on_failure(
+		&self,
+		error: Self::Error,
+		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+	) {
 		error!("verify identity failed:{:?}", error);
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(
@@ -81,10 +90,9 @@ where
 				error,
 				self.req.req_ext_hash,
 			);
-			let _ = self
-				.context
-				.submit_trusted_call(&self.req.shard, &self.req.top_hash, &c)
-				.map_err(|e| error!("submit_trusted_call failed: {:?}", e));
+			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
+				error!("Unable to send message to the trusted_call_receiver: {:?}", e);
+			}
 		} else {
 			error!("can't get enclave signer");
 		}

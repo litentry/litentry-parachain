@@ -10,12 +10,13 @@ source /opt/intel/sgxsdk/environment
 # run clean if only SGX_MODE change
 make clean
 make SGX_MODE=SW
-./local-setup/launch.py local-setup/development-worker.json local-docker
+./local-setup/launch.py --config local-setup/development-worker.json --parachain local-docker
 # run the ts test script below if container started
 cd ./tee-worker/ts-tests
 nvm use
-corepack yarn
-corepack yarn workspace integration-tests test-identity:local
+corepack enable pnpm
+pnpm install
+pnpm --filter integration-tests run test-ii-identity:local
 # other ts test
 ```
 

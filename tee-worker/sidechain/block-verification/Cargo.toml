@@ -2,7 +2,7 @@
 name = "its-block-verification"
 description = "Verification logic for sidechain blocks"
 version = "0.9.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 homepage = 'https://litentry.com/'
 repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
@@ -20,7 +20,7 @@ its-primitives = { default-features = false, path = "../primitives" }
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-consensus-slots = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 # sgx deps
@@ -52,3 +52,4 @@ sgx = [
 itc-parentchain-test = { path = "../../core/parentchain/test" }
 its-test = { path = "../../sidechain/test" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }

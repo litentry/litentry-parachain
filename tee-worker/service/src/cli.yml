@@ -1,7 +1,7 @@
 name: "litentry-worker"
 version: "0.8.0"
 about: Worker using Intel SGX TEE for litentry parachain node
-authors: "Litentry Technologies GmbH <info@litentry.com>"
+authors: "Trust Computing GmbH <info@litentry.com>"
 
 # AppSettings can be defined as a list and are **not** ascii case sensitive
 settings:
@@ -106,6 +106,17 @@ args:
     - parentchain-start-block:
         long: parentchain-start-block
         help: Set the parentchain block number to start syncing with
+        takes_value: true
+        required: false
+        default_value: "0"
+    - fail-slot-mode:
+        long: fail-slot-mode
+        help: Set the mode of failing a slot, values [BeforeOnSlot, AfterOnSlot]
+        takes_value: true
+        required: false
+    - fail-at:
+        long: fail-at
+        help: Set the slot to fail on
         takes_value: true
         required: false
         default_value: "0"

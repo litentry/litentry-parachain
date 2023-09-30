@@ -2,7 +2,7 @@
 """
 Launch handily a local dev setup consisting of the parachain network and some workers.
 
-Example usage: `./local-setup/launch.py local-setup/development-worker.json local-binary`
+Example usage: `./local-setup/launch.py --config local-setup/development-worker.json --parachain local-binary`
 
 The worker log is piped to `./log/worker0.log` etc. folder in the current-working dir.
 
@@ -24,6 +24,8 @@ from py.worker import Worker
 from py.helpers import GracefulKiller, mkdir_p
 
 import socket
+import toml
+import datetime
 
 log_dir = "log"
 mkdir_p(log_dir)
@@ -46,21 +48,24 @@ PORTS = [
 ]
 
 
-def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO]):
+def setup_worker(work_dir: str, source_dir: str, std_err: Union[None, int, IO], log_config_path):
     print(f"Setting up worker in {work_dir}")
     print(f"Copying files from {source_dir}")
-    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err)
+
+    log_level_dic = setup_worker_log_level(log_config_path)
+    worker = Worker(cwd=work_dir, source_dir=source_dir, std_err=std_err, log_level_dic=log_level_dic)
     worker.init_clean()
     print("Initialized worker.")
     return worker
 
 
-def run_worker(config, i: int):
-    log = open(f"{log_dir}/worker{i}.log", "w+")
+def run_worker(config, i: int, log_config_path):
+    id = config.get('id', i)
+    log = open(f"{log_dir}/worker-{id}.log", "w+")
     # TODO: either hard-code 'local-setup' directory, or take from input config.json
-    w = setup_worker(f"tmp/w{i}", config["source"], log)
+    w = setup_worker(f"tmp/w-{id}", config["source"], log, log_config_path)
 
-    print(f"Starting worker {i} in background")
+    print(f"Starting worker {id} in background")
     return w.run_in_background(
         log_file=log, flags=config["flags"], subcommand_flags=config["subcommand_flags"]
     )
@@ -75,7 +80,6 @@ def is_port_open(port):
         return True
     except OSError:
         return False
-
 
 # Function to reallocate port if it is not available
 def reallocate_ports(env_name, port):
@@ -164,14 +168,37 @@ def setup_environment(offset, config, parachain_dir):
             for flag in config["workers"][0]["flags"]
         ]
 
+def setup_worker_log_level(log_config_path):
+    log_level_dic = {}
+    with open(log_config_path) as f:
+        log_data = toml.load(f)
 
-def main(processes, config_path, parachain_type, offset, parachain_dir):
+        # Section
+        for (section, item) in log_data.items():
+            log_level_string = "";
+            indx = 0
+
+            for (k, v) in item.items():
+                if indx == 0:
+                    log_level_string += v+","
+                else:
+                    log_level_string += k+"="+v+","
+
+                indx += 1
+                
+            log_level_dic[section] = log_level_string
+    
+    return log_level_dic
+
+
+def main(processes, config_path, parachain_type, log_config_path, offset, parachain_dir):
     with open(config_path) as config_file:
         config = json.load(config_file)
 
     # Litentry
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
+        os.environ['TMPDIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
@@ -192,10 +219,10 @@ def main(processes, config_path, parachain_type, offset, parachain_dir):
     worker_i = 0
     worker_num = len(config["workers"])
     for w_conf in config["workers"]:
-        processes.append(run_worker(w_conf, worker_i))
+        processes.append(run_worker(w_conf, worker_i, log_config_path))
         print()
         # Wait a bit for worker to start up.
-        sleep(300)
+        sleep(5)
 
         idx = 0
         if "-h" in w_conf["flags"]:
@@ -241,23 +268,36 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run a setup consisting of a node and some workers"
     )
-    parser.add_argument("config", type=str, help="Config for the node and workers")
+    parser.add_argument("-c", "--config", type=str, help="Config for the node and workers")
     parser.add_argument(
-        "parachain",
+        "-p",
+        "--parachain",
         nargs="?",
         default="local-docker",
         type=str,
         help="Config for parachain selection: local-docker / local-binary / remote",
     )
     parser.add_argument(
-        "offset", nargs="?", default="0", type=int, help="offset for port"
+        "-l",
+        "--log-config-path",
+        nargs="?",
+        default="./local-setup/worker-log-level-config.toml",
+        type=str,
+        help="log level config file path"
     )
     parser.add_argument(
-        "parachain_dir", nargs="?", default="/tmp/parachain_dev", help="Parachain directory for local binary"
+        "-o", "--offset", nargs="?", default="0", type=int, help="offset for port"
     )
     args = parser.parse_args()
+    
+    today = datetime.datetime.now()
+    formatted_date = today.strftime('%d_%m_%Y_%H%M')
+    directory_name = f"parachain_dev_{formatted_date}"
+    temp_directory_path = os.path.join('/tmp', directory_name)
+    parachain_dir = temp_directory_path 
+    print("Directory has been assigned to:", temp_directory_path)
 
     process_list = []
     killer = GracefulKiller(process_list, args.parachain)
-    if main(process_list, args.config, args.parachain, args.offset, args.parachain_dir) == 0:
+    if main(process_list, args.config, args.parachain, args.log_config_path, args.offset, parachain_dir) == 0:
         killer.exit_gracefully()

@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry Technologies GmbH <info@litentry.com>"]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'core-primitives'
 version = '0.9.12'
@@ -16,7 +16,6 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 
-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.39", default-features = false }
 
 [features]
 default = ["std"]
@@ -28,6 +27,5 @@ std = [
     "sp-core/std",
     "sp-runtime/std",
     "sp-std/std",
-    "xcm/std",
     "ring/std",
 ]

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -51,6 +51,8 @@ pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -
 			dpc.set_achainable_url(data_provider_config.achainable_url);
 			dpc.set_achainable_auth_key(data_provider_config.achainable_auth_key);
 			dpc.set_credential_endpoint(data_provider_config.credential_endpoint);
+			dpc.set_oneblock_notion_key(data_provider_config.oneblock_notion_key);
+			dpc.set_oneblock_notion_url(data_provider_config.oneblock_notion_url);
 		},
 		Err(e) => {
 			error!("Error while setting data provider config: {:?}", e);

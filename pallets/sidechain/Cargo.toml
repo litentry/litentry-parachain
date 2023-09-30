@@ -2,7 +2,7 @@
 name = "pallet-sidechain"
 description = "Pallet for litentry sidechains"
 version = "0.9.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 homepage = 'https://litentry.com/'
 repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
@@ -30,7 +30,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # benchmarking
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-hex-literal = { version = "0.4.1", optional = true }
 pallet-balances = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 test-utils = { path = "../test-utils", default-features = false, optional = true }
 
@@ -38,7 +37,6 @@ test-utils = { path = "../test-utils", default-features = false, optional = true
 env_logger = "0.9.0"
 externalities = { package = "sp-externalities", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-hex-literal = "0.4.1"
 pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 test-utils = { path = "../test-utils" }
@@ -65,7 +63,6 @@ std = [
 ]
 runtime-benchmarks = [
     "frame-benchmarking",
-    "hex-literal",
     "pallet-balances",
     "pallet-timestamp/runtime-benchmarks",
     "test-utils",

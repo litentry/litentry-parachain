@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -45,9 +45,8 @@ where
 				Response::builder().status(400).body(String::from("Error query"))
 			} else {
 				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
-				let twitter_identity = Identity::Twitter(
-					IdentityString::try_from(tweet_author_name.as_bytes().to_vec()).unwrap(),
-				);
+				let twitter_identity =
+					Identity::Twitter(IdentityString::new(tweet_author_name.as_bytes().to_vec()));
 				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
 					&alice.public().into(),

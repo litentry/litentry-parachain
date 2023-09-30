@@ -11,6 +11,7 @@ import type {
     Compact,
     Option,
     Struct,
+    U256,
     U8aFixed,
     Vec,
     bool,
@@ -24,6 +25,7 @@ import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
 import type {
     AccountId32,
     Call,
+    H160,
     H256,
     MultiAddress,
     Perbill,
@@ -35,6 +37,7 @@ import type {
     CorePrimitivesErrorVcmpError,
     CorePrimitivesKeyAesOutput,
     CumulusPrimitivesParachainInherentParachainInherentData,
+    EthereumTransactionTransactionV2,
     FrameSupportPreimagesBounded,
     PalletAssetManagerAssetMetadata,
     PalletDemocracyConviction,
@@ -180,6 +183,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [u128, PalletAssetManagerAssetMetadata]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         balances: {
             /**
@@ -424,6 +431,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [MultiAddress, Compact<u128>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         bounties: {
             /**
@@ -614,6 +625,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 (bountyId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [Compact<u32>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         bridgeTransfer: {
             setExternalBalances: AugmentedSubmittable<
@@ -647,6 +662,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [u128, Bytes, u8]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         chainBridge: {
             /**
@@ -791,6 +810,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 (id: u8 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [u8]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         council: {
             /**
@@ -981,6 +1004,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [H256, Compact<u32>, bool]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         councilMembership: {
             /**
@@ -1169,8 +1196,17 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [MultiAddress, MultiAddress]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
-        cumulusXcm: {};
+        cumulusXcm: {
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
+        };
         democracy: {
             /**
              * Permanently place a proposal into the blacklist. This prevents it from ever being
@@ -1657,6 +1693,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Compact<u32>, PalletDemocracyVoteAccountVote]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         dmpQueue: {
             /**
@@ -1676,6 +1716,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [u64, SpWeightsWeightV2Weight]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         drop3: {
             /**
@@ -1751,6 +1795,139 @@ declare module "@polkadot/api-base/types/submittable" {
                 (id: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [u64]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
+        };
+        ethereum: {
+            /**
+             * Transact an Ethereum transaction.
+             **/
+            transact: AugmentedSubmittable<
+                (
+                    transaction:
+                        | EthereumTransactionTransactionV2
+                        | {
+                              Legacy: any;
+                          }
+                        | {
+                              EIP2930: any;
+                          }
+                        | {
+                              EIP1559: any;
+                          }
+                        | string
+                        | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [EthereumTransactionTransactionV2]
+            >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
+        };
+        evm: {
+            /**
+             * Issue an EVM call operation. This is similar to a message call transaction in Ethereum.
+             **/
+            call: AugmentedSubmittable<
+                (
+                    source: H160 | string | Uint8Array,
+                    target: H160 | string | Uint8Array,
+                    input: Bytes | string | Uint8Array,
+                    value: U256 | AnyNumber | Uint8Array,
+                    gasLimit: u64 | AnyNumber | Uint8Array,
+                    maxFeePerGas: U256 | AnyNumber | Uint8Array,
+                    maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    accessList:
+                        | Vec<ITuple<[H160, Vec<H256>]>>
+                        | [H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]][]
+                ) => SubmittableExtrinsic<ApiType>,
+                [
+                    H160,
+                    H160,
+                    Bytes,
+                    U256,
+                    u64,
+                    U256,
+                    Option<U256>,
+                    Option<U256>,
+                    Vec<ITuple<[H160, Vec<H256>]>>
+                ]
+            >;
+            /**
+             * Issue an EVM create operation. This is similar to a contract creation transaction in
+             * Ethereum.
+             **/
+            create: AugmentedSubmittable<
+                (
+                    source: H160 | string | Uint8Array,
+                    init: Bytes | string | Uint8Array,
+                    value: U256 | AnyNumber | Uint8Array,
+                    gasLimit: u64 | AnyNumber | Uint8Array,
+                    maxFeePerGas: U256 | AnyNumber | Uint8Array,
+                    maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    accessList:
+                        | Vec<ITuple<[H160, Vec<H256>]>>
+                        | [H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]][]
+                ) => SubmittableExtrinsic<ApiType>,
+                [
+                    H160,
+                    Bytes,
+                    U256,
+                    u64,
+                    U256,
+                    Option<U256>,
+                    Option<U256>,
+                    Vec<ITuple<[H160, Vec<H256>]>>
+                ]
+            >;
+            /**
+             * Issue an EVM create2 operation.
+             **/
+            create2: AugmentedSubmittable<
+                (
+                    source: H160 | string | Uint8Array,
+                    init: Bytes | string | Uint8Array,
+                    salt: H256 | string | Uint8Array,
+                    value: U256 | AnyNumber | Uint8Array,
+                    gasLimit: u64 | AnyNumber | Uint8Array,
+                    maxFeePerGas: U256 | AnyNumber | Uint8Array,
+                    maxPriorityFeePerGas: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    nonce: Option<U256> | null | Uint8Array | U256 | AnyNumber,
+                    accessList:
+                        | Vec<ITuple<[H160, Vec<H256>]>>
+                        | [H160 | string | Uint8Array, Vec<H256> | (H256 | string | Uint8Array)[]][]
+                ) => SubmittableExtrinsic<ApiType>,
+                [
+                    H160,
+                    Bytes,
+                    H256,
+                    U256,
+                    u64,
+                    U256,
+                    Option<U256>,
+                    Option<U256>,
+                    Vec<ITuple<[H160, Vec<H256>]>>
+                ]
+            >;
+            /**
+             * Withdraw balance from EVM into currency/balances pallet.
+             **/
+            withdraw: AugmentedSubmittable<
+                (
+                    address: H160 | string | Uint8Array,
+                    value: u128 | AnyNumber | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [H160, u128]
+            >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         extrinsicFilter: {
             /**
@@ -1799,6 +1976,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Bytes, Option<Bytes>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         identityManagement: {
             /**
@@ -1987,6 +2168,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, CorePrimitivesKeyAesOutput, H256]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         impExtrinsicWhitelist: {
             /**
@@ -2029,6 +2214,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * Swith GroupControlOn on
              **/
             switchGroupControlOn: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         multisig: {
             /**
@@ -2228,6 +2417,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [u16, Vec<AccountId32>, PalletMultisigTimepoint, U8aFixed]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         parachainIdentity: {
             /**
@@ -2765,8 +2958,17 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Vec<ITuple<[AccountId32, Data]>>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
-        parachainInfo: {};
+        parachainInfo: {
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
+        };
         parachainStaking: {
             /**
              * add white list of candidates
@@ -3033,6 +3235,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 (updated: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [u32]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         parachainSystem: {
             authorizeUpgrade: AugmentedSubmittable<
@@ -3073,6 +3279,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 (message: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [Bytes]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         polkadotXcm: {
             /**
@@ -3465,6 +3675,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         preimage: {
             /**
@@ -3508,6 +3722,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 (hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [H256]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         proxy: {
             /**
@@ -3928,6 +4146,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [MultiAddress, RococoParachainRuntimeProxyType, u32]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         scheduler: {
             /**
@@ -4017,6 +4239,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [U8aFixed, u32, Option<ITuple<[u32, u32]>>, u8, Call]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         session: {
             /**
@@ -4058,6 +4284,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [RococoParachainRuntimeSessionKeys, Bytes]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         sidechain: {
             /**
@@ -4072,6 +4302,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [H256, u64, u64, H256]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         sudo: {
             /**
@@ -4177,6 +4411,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Call, SpWeightsWeightV2Weight]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         system: {
             /**
@@ -4256,6 +4494,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Vec<ITuple<[Bytes, Bytes]>>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         technicalCommittee: {
             /**
@@ -4446,6 +4688,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [H256, Compact<u32>, bool]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         technicalCommitteeMembership: {
             /**
@@ -4634,6 +4880,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [MultiAddress, MultiAddress]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         teeracle: {
             addToWhitelist: AugmentedSubmittable<
@@ -4674,6 +4924,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Bytes, Bytes, Bytes]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         teerex: {
             callWorker: AugmentedSubmittable<
@@ -4815,6 +5069,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Compact<u64>, U8aFixed]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         timestamp: {
             /**
@@ -4838,6 +5096,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 (now: Compact<u64> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [Compact<u64>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         tips: {
             /**
@@ -5017,6 +5279,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Bytes, MultiAddress, Compact<u128>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         tokens: {
             /**
@@ -5239,6 +5505,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [MultiAddress, u128, Compact<u128>]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         treasury: {
             /**
@@ -5359,6 +5629,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Compact<u128>, MultiAddress]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         utility: {
             /**
@@ -5460,6 +5734,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | {
                               CumulusXcm: any;
                           }
+                        | {
+                              Ethereum: any;
+                          }
                         | string
                         | Uint8Array,
                     call: Call | IMethod | string | Uint8Array
@@ -5509,6 +5786,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [Call, SpWeightsWeightV2Weight]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         vcManagement: {
             activateSchema: AugmentedSubmittable<
@@ -5561,9 +5842,6 @@ declare module "@polkadot/api-base/types/submittable" {
                               A8: any;
                           }
                         | {
-                              A9: any;
-                          }
-                        | {
                               A10: any;
                           }
                         | {
@@ -5577,6 +5855,12 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               Achainable: any;
+                          }
+                        | {
+                              A20: any;
+                          }
+                        | {
+                              Oneblock: any;
                           }
                         | string
                         | Uint8Array,
@@ -5634,9 +5918,6 @@ declare module "@polkadot/api-base/types/submittable" {
                               A8: any;
                           }
                         | {
-                              A9: any;
-                          }
-                        | {
                               A10: any;
                           }
                         | {
@@ -5650,6 +5931,12 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               Achainable: any;
+                          }
+                        | {
+                              A20: any;
+                          }
+                        | {
+                              Oneblock: any;
                           }
                         | string
                         | Uint8Array
@@ -5720,9 +6007,6 @@ declare module "@polkadot/api-base/types/submittable" {
                               A8: any;
                           }
                         | {
-                              A9: any;
-                          }
-                        | {
                               A10: any;
                           }
                         | {
@@ -5736,6 +6020,12 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               Achainable: any;
+                          }
+                        | {
+                              A20: any;
+                          }
+                        | {
+                              Oneblock: any;
                           }
                         | string
                         | Uint8Array,
@@ -5754,6 +6044,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, CorePrimitivesAssertion, H256, H256, CorePrimitivesKeyAesOutput, H256]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         vcmpExtrinsicWhitelist: {
             /**
@@ -5796,6 +6090,10 @@ declare module "@polkadot/api-base/types/submittable" {
              * Swith GroupControlOn on
              **/
             switchGroupControlOn: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         vesting: {
             /**
@@ -5993,6 +6291,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [MultiAddress]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         xcmpQueue: {
             /**
@@ -6130,6 +6432,10 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [SpWeightsWeightV2Weight]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
         xTokens: {
             /**
@@ -6487,6 +6793,10 @@ declare module "@polkadot/api-base/types/submittable" {
                     XcmV3WeightLimit
                 ]
             >;
+            /**
+             * Generic tx
+             **/
+            [key: string]: SubmittableExtrinsicFunction<ApiType>;
         };
     }
 }

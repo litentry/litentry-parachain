@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -46,8 +46,7 @@ pub enum ErrorDetail {
 	WrongWeb2Handle,
 	UnexpectedMessage,
 	WrongSignatureType,
-	VerifySubstrateSignatureFailed,
-	VerifyEvmSignatureFailed,
+	VerifyWeb3SignatureFailed,
 	RecoverEvmAddressFailed,
 	Web3NetworkOutOfBounds,
 }

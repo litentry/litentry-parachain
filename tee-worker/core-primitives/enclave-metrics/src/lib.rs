@@ -24,7 +24,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
-use std::string::String;
+use ita_stf::TrustedCall;
+use lc_stf_task_sender::RequestType;
+use std::{boxed::Box, string::String};
 use substrate_fixed::types::U32F32;
 
 // FIXME: Copied from ita-oracle because of cyclic deps. Should be removed after integritee-network/pallets#71
@@ -37,6 +39,9 @@ pub enum EnclaveMetric {
 	TopPoolSizeIncrement,
 	TopPoolSizeDecrement,
 	ExchangeRateOracle(ExchangeRateOracleMetric),
+	StfTaskExecutionTime(Box<RequestType>, f64),
+	SuccessfulTrustedOperationIncrement(TrustedCall),
+	FailedTrustedOperationIncrement(TrustedCall),
 	// OracleMetric(OracleMetric<MetricsInfo>),
 }
 

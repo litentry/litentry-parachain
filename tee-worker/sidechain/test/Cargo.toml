@@ -1,14 +1,13 @@
 [package]
 name = "its-test"
 version = "0.9.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 homepage = 'https://litentry.com/'
 repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 
 # sgx dependencies
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", features = ["untrusted_time"], optional = true }
@@ -23,7 +22,6 @@ its-primitives = { path = "../primitives", default_features = false, features = 
 [features]
 default = ["std"]
 std = [
-    "codec/std",
     "itp-types/std",
     "its-primitives/std",
     # substrate

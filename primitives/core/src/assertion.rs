@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{AccountId, BoundedWeb3Network, Web3Network};
+use crate::{AccountId, BoundedWeb3Network, OneBlockCourseType, Web3Network};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -166,7 +166,6 @@ pub enum Assertion {
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
 	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
-	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
 
@@ -177,6 +176,12 @@ pub enum Assertion {
 	// ----- end polkadot decoded 2023 -----
 
 	Achainable(AchainableParams),
+
+	// For EVM Version Early Bird
+	A20,
+
+	// For Oneblock
+	Oneblock(OneBlockCourseType),
 }
 
 impl Assertion {
@@ -203,6 +208,8 @@ impl Assertion {
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
 			Self::Achainable(a) => vec![a.chain()],
+			// Oneblock Assertion
+			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

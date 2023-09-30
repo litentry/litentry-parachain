@@ -1,5 +1,5 @@
 [package]
-authors = ["Litentry Technologies GmbH <info@litentry.com>"]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'litentry-parachain-runtime'
 version = '0.9.16'
@@ -9,8 +9,6 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 hex-literal = { version = '0.4.1' }
 log = { version = "0.4", default-features = false }
 scale-info = { version = "2.9.0", default-features = false, features = ["derive"] }
-serde = { version = "1.0", optional = true, features = ["derive"] }
-smallvec = "1.9.0"
 
 core-primitives = { path = "../../primitives/core", default-features = false }
 
@@ -144,7 +142,6 @@ runtime-benchmarks = [
 std = [
     "codec/std",
     "log/std",
-    "serde",
     "sp-api/std",
     "sp-block-builder/std",
     "sp-consensus-aura/std",

@@ -1210,31 +1210,31 @@ import type {
     XcmpMessageFormat,
 } from "@polkadot/types/interfaces/xcm";
 import type {
-    ActivateIdentityResponse,
     Address20,
     Address32,
     AesOutput,
     Assertion,
+    AssertionSupportedNetwork,
     BoundedWeb3Network,
-    DeactivateIdentityResponse,
     DirectRequestStatus,
     DiscordValidationData,
+    ErrorDetail,
     GenericEventWithAccount,
     Getter,
     IdentityContext,
     IdentityGenericEvent,
     IdentityStatus,
     IdentityString,
-    LinkIdentityResponse,
+    LinkIdentityResult,
     LitentryIdentity,
     LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
     Request,
-    RequestVCResponse,
-    SetIdentityNetworksResponse,
-    SetUserShieldingKeyResponse,
+    RequestVCResult,
+    SetUserShieldingKeyResult,
     ShardIdentifier,
+    StfError,
     TrustedCall,
     TrustedCallSigned,
     TrustedGetter,
@@ -1275,7 +1275,6 @@ declare module "@polkadot/types/types/registry" {
         AccountVote: AccountVote;
         AccountVoteSplit: AccountVoteSplit;
         AccountVoteStandard: AccountVoteStandard;
-        ActivateIdentityResponse: ActivateIdentityResponse;
         ActiveEraInfo: ActiveEraInfo;
         ActiveGilt: ActiveGilt;
         ActiveGiltsTotal: ActiveGiltsTotal;
@@ -1295,6 +1294,7 @@ declare module "@polkadot/types/types/registry" {
         Approvals: Approvals;
         ArithmeticError: ArithmeticError;
         Assertion: Assertion;
+        AssertionSupportedNetwork: AssertionSupportedNetwork;
         AssetApproval: AssetApproval;
         AssetApprovalKey: AssetApprovalKey;
         AssetBalance: AssetBalance;
@@ -1512,7 +1512,6 @@ declare module "@polkadot/types/types/registry" {
         CrateVersion: CrateVersion;
         CreatedBlock: CreatedBlock;
         Data: Data;
-        DeactivateIdentityResponse: DeactivateIdentityResponse;
         DeferredOffenceOf: DeferredOffenceOf;
         DefunctVoter: DefunctVoter;
         DelayKind: DelayKind;
@@ -1573,6 +1572,7 @@ declare module "@polkadot/types/types/registry" {
         EraPoints: EraPoints;
         EraRewardPoints: EraRewardPoints;
         EraRewards: EraRewards;
+        ErrorDetail: ErrorDetail;
         ErrorMetadataLatest: ErrorMetadataLatest;
         ErrorMetadataV10: ErrorMetadataV10;
         ErrorMetadataV11: ErrorMetadataV11;
@@ -1816,7 +1816,7 @@ declare module "@polkadot/types/types/registry" {
         LegacyTransaction: LegacyTransaction;
         Limits: Limits;
         LimitsTo264: LimitsTo264;
-        LinkIdentityResponse: LinkIdentityResponse;
+        LinkIdentityResult: LinkIdentityResult;
         LitentryIdentity: LitentryIdentity;
         LitentryMultiSignature: LitentryMultiSignature;
         LitentryValidationData: LitentryValidationData;
@@ -2074,7 +2074,7 @@ declare module "@polkadot/types/types/registry" {
         Reporter: Reporter;
         ReportIdOf: ReportIdOf;
         Request: Request;
-        RequestVCResponse: RequestVCResponse;
+        RequestVCResult: RequestVCResult;
         ReserveData: ReserveData;
         ReserveIdentifier: ReserveIdentifier;
         Response: Response;
@@ -2139,9 +2139,8 @@ declare module "@polkadot/types/types/registry" {
         SessionKeys9: SessionKeys9;
         SessionKeys9B: SessionKeys9B;
         SetId: SetId;
-        SetIdentityNetworksResponse: SetIdentityNetworksResponse;
         SetIndex: SetIndex;
-        SetUserShieldingKeyResponse: SetUserShieldingKeyResponse;
+        SetUserShieldingKeyResult: SetUserShieldingKeyResult;
         ShardIdentifier: ShardIdentifier;
         Si0Field: Si0Field;
         Si0LookupTypeId: Si0LookupTypeId;
@@ -2224,6 +2223,7 @@ declare module "@polkadot/types/types/registry" {
         StakingLedgerTo240: StakingLedgerTo240;
         Statement: Statement;
         StatementKind: StatementKind;
+        StfError: StfError;
         StorageChangeSet: StorageChangeSet;
         StorageData: StorageData;
         StorageDeposit: StorageDeposit;

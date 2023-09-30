@@ -1,5 +1,5 @@
 [package]
-authors = ['Litentry Technologies GmbH <info@litentry.com>']
+authors = ['Trust Computing GmbH <info@litentry.com>']
 edition = '2021'
 homepage = 'https://litentry.com'
 name = 'pallet-bridge-transfer'
@@ -25,8 +25,6 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 
 pallet-bridge = { path = "../bridge", default-features = false }
 pallet-parachain-staking = { path = "../parachain-staking", default-features = false }
-
-hex = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.4"

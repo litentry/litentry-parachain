@@ -1,10 +1,11 @@
 [package]
 name = "itp-stf-interface"
 version = "0.8.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 itp-node-api-metadata = { path = "../node-api/metadata", default-features = false }
 itp-node-api-metadata-provider = { path = "../node-api/metadata-provider", default-features = false }
 itp-types = { default-features = false, path = "../types" }

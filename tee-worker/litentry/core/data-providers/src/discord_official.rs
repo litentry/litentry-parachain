@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER_CONFIG};
+use crate::{build_client, vec_to_string, DataProviderConfig, Error, HttpError, UserInfo};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -27,7 +27,7 @@ use itc_rest_client::{
 };
 use log::*;
 use serde::{Deserialize, Serialize};
-use std::{default::Default, format, string::String, vec, vec::Vec};
+use std::{format, string::String, vec, vec::Vec};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessage {
@@ -56,12 +56,6 @@ impl RestPath<String> for DiscordUser {
 	}
 }
 
-impl Default for DiscordOfficialClient {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl RestPath<String> for DiscordMessage {
 	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
@@ -79,22 +73,15 @@ pub struct DiscordOfficialClient {
 }
 
 impl DiscordOfficialClient {
-	pub fn new() -> Self {
+	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(
 			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().discord_auth_token.clone().as_str(),
+			data_provider_config.discord_auth_token.clone().as_str(),
 		);
-		let client = build_client(
-			GLOBAL_DATA_PROVIDER_CONFIG
-				.read()
-				.unwrap()
-				.discord_official_url
-				.clone()
-				.as_str(),
-			headers,
-		);
+		let client =
+			build_client(data_provider_config.discord_official_url.clone().as_str(), headers);
 		DiscordOfficialClient { client }
 	}
 
@@ -127,6 +114,8 @@ impl DiscordOfficialClient {
 
 #[cfg(test)]
 mod tests {
+	use crate::{DataProviderConfigReader, ReadDataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG};
+
 	use super::*;
 	use lc_mock_server::{default_getter, run};
 	use std::sync::Arc;
@@ -143,7 +132,9 @@ mod tests {
 
 		let channel_id = "919848392035794945";
 		let message_id = "1";
-		let mut client = DiscordOfficialClient::new();
+
+		let data_provider_config = DataProviderConfigReader::read().unwrap();
+		let mut client = DiscordOfficialClient::new(&data_provider_config);
 		let result =
 			client.query_message(channel_id.as_bytes().to_vec(), message_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "query discord error: {:?}", result);

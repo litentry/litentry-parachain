@@ -1,5 +1,4 @@
 .env
-.yarn
 .pnp.*
 
 config.local.json

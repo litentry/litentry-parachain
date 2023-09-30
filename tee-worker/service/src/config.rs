@@ -36,8 +36,9 @@ static DEFAULT_UNTRUSTED_HTTP_PORT: &str = "4545";
 static DEFAULT_RUNNING_MODE: &str = "dev";
 static DEFAULT_MOCK_SERVER_PORT: &str = "19527";
 static DEFAULT_PARENTCHAIN_START_BLOCK: &str = "0";
+static DEFAULT_FAIL_AT: &str = "0";
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Config {
 	pub node_ip: String,
 	pub node_port: String,
@@ -74,6 +75,10 @@ pub struct Config {
 	pub mock_server_port: String,
 	/// the parentchain block number to start syncing with
 	pub parentchain_start_block: String,
+	/// mode to use for failing sidechain slot
+	pub fail_slot_mode: Option<String>,
+	/// slot number to fail at
+	pub fail_at: u64,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -97,6 +102,8 @@ impl Config {
 		enable_mock_server: bool,
 		mock_server_port: String,
 		parentchain_start_block: String,
+		fail_slot_mode: Option<String>,
+		fail_at: u64,
 	) -> Self {
 		Self {
 			node_ip,
@@ -117,6 +124,8 @@ impl Config {
 			enable_mock_server,
 			mock_server_port,
 			parentchain_start_block,
+			fail_slot_mode,
+			fail_at,
 		}
 	}
 
@@ -223,6 +232,8 @@ impl From<&ArgMatches<'_>> for Config {
 		let mock_server_port = m.value_of("mock-server-port").unwrap_or(DEFAULT_MOCK_SERVER_PORT);
 		let parentchain_start_block =
 			m.value_of("parentchain-start-block").unwrap_or(DEFAULT_PARENTCHAIN_START_BLOCK);
+		let fail_slot_mode = m.value_of("fail-slot-mode").map(|v| v.to_string());
+		let fail_at = m.value_of("fail-at").unwrap_or(DEFAULT_FAIL_AT).parse().unwrap();
 		Self::new(
 			m.value_of("node-server").unwrap_or(DEFAULT_NODE_SERVER).into(),
 			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
@@ -245,6 +256,8 @@ impl From<&ArgMatches<'_>> for Config {
 			is_mock_server_enabled,
 			mock_server_port.to_string(),
 			parentchain_start_block.to_string(),
+			fail_slot_mode,
+			fail_at,
 		)
 	}
 }
@@ -361,7 +374,7 @@ pub fn pwd() -> PathBuf {
 #[cfg(test)]
 mod test {
 	use super::*;
-	use std::collections::HashMap;
+	use std::{assert_matches::assert_matches, collections::HashMap};
 
 	#[test]
 	fn check_correct_config_assignment_for_empty_input() {
@@ -385,6 +398,8 @@ mod test {
 		assert_eq!(config.running_mode, DEFAULT_RUNNING_MODE);
 		assert_eq!(config.mock_server_port, DEFAULT_MOCK_SERVER_PORT);
 		assert_eq!(config.parentchain_start_block, DEFAULT_PARENTCHAIN_START_BLOCK);
+		assert_matches!(config.fail_slot_mode, Option::None);
+		assert_eq!(config.fail_at, DEFAULT_FAIL_AT.parse::<u64>().unwrap())
 	}
 
 	#[test]

@@ -2,7 +2,7 @@
 name = "sgx-verify"
 version = "0.1.4"
 description = "a certificate verification and IAS report parser crate for the teerex pallet"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 homepage = 'https://litentry.com/'
 repository = 'https://github.com/litentry/litentry-parachain'
 license = "GPL-3.0"
@@ -27,7 +27,6 @@ teerex-primitives = { path = "../../../primitives/teerex", default-features = fa
 # substrate dependencies
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 [dev-dependencies]
@@ -52,6 +51,5 @@ std = [
     # substrate
     "frame-support/std",
     "sp-core/std",
-    "sp-io/std",
     "sp-std/std",
 ]

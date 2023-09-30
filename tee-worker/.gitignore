@@ -74,9 +74,5 @@ upstream.patch
 # backup log files
 log-backup
 
-# yarn
-ts-tests/.yarn
-ts-tests/.pnp.*
-
 # env files and configs
 .env

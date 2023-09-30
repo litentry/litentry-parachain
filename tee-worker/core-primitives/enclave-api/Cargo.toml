@@ -1,7 +1,7 @@
 [package]
 name = "itp-enclave-api"
 version = "0.9.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
 [dependencies]
@@ -17,7 +17,6 @@ sgx_urts = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 itc-parentchain = { path = "../../core/parentchain/parentchain-crate" }
@@ -28,5 +27,4 @@ itp-types = { path = "../types" }
 
 # litentry
 lc-data-providers = { path = "../../litentry/core/data-providers" }
-litentry-primitives = { path = "../../litentry/primitives" }
 teerex-primitives = { path = "../../../primitives/teerex", default-features = false }

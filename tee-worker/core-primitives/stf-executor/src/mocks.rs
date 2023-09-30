@@ -84,7 +84,13 @@ where
 			.map(|c| {
 				let operation_hash = c.hash();
 				let top_or_hash = TrustedOperationOrHash::from_top(c.clone());
-				ExecutedOperation::success(operation_hash, top_or_hash, Vec::new(), Vec::new())
+				ExecutedOperation::success(
+					operation_hash,
+					top_or_hash,
+					Vec::new(),
+					Vec::new(),
+					false,
+				)
 			})
 			.collect();
 

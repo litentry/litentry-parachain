@@ -2,7 +2,7 @@
 name = "test-utils"
 description = "A crate for common utilities for tests"
 version = "0.1.0"
-authors = ['Litentry Technologies GmbH <info@litentry.com>']
+authors = ['Trust Computing GmbH <info@litentry.com>']
 homepage = 'https://litentry.com/'
 repository = 'https://github.com/litentry/litentry-parachain'
 license = "Apache-2.0"
@@ -10,7 +10,6 @@ edition = "2021"
 
 [dependencies]
 hex-literal = { version = "0.4.1" }
-log = { version = "0.4", default-features = false }
 
 [dependencies.teerex-primitives]
 default-features = false
@@ -21,6 +20,5 @@ path = "../../primitives/teerex"
 [features]
 default = ['std']
 std = [
-    "log/std",
     "teerex-primitives/std",
 ]

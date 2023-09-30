@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use crate::*;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
-	vec_to_string, WBTC_TOKEN_ADDRESS,
+	vec_to_string, DataProviderConfigReader, ReadDataProviderConfig, WBTC_TOKEN_ADDRESS,
 };
 use std::string::ToString;
 
@@ -39,7 +39,10 @@ pub fn build(req: &AssertionBuildRequest, min_balance: ParameterString) -> Resul
 		Error::RequestVCFailed(Assertion::A10(min_balance.clone()), ErrorDetail::ParseError)
 	})?;
 
-	let mut client = AchainableClient::new();
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::A10(min_balance.clone()), e))?;
+
+	let mut client = AchainableClient::new(&data_provider_config);
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()

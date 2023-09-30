@@ -4,9 +4,9 @@ ARG PROFILE
 # ==========================
 # stage 1: build
 # https://hub.docker.com/_/rust
-# our host is based on bullseye/sid => rust:latest
+# our host is based on bullseye/sid (ubuntu 20)
 # ==========================
-FROM rust:latest as builder
+FROM rust:bullseye as builder
 
 WORKDIR /litentry
 COPY . /litentry
@@ -22,7 +22,7 @@ RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 # stage 2: packaging
 # ==========================
 FROM ubuntu:20.04
-LABEL maintainer="Litentry Technologies GmbH <info@litentry.com>"
+LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
 

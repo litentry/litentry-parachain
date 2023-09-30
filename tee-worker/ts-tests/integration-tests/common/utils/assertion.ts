@@ -12,8 +12,21 @@ import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from '../type-definitions';
 import { aesKey } from '../call';
 import colors from 'colors';
-import { CorePrimitivesErrorErrorDetail, FrameSystemEventRecord, WorkerRpcReturnValue } from 'parachain-api';
-import { Signer } from './crypto';
+import {
+    CorePrimitivesErrorErrorDetail,
+    FrameSystemEventRecord,
+    WorkerRpcReturnValue,
+    RequestVCResult,
+    PalletVcManagementVcContext,
+    StfError,
+    LinkIdentityResult,
+    SetUserShieldingKeyResult,
+} from 'parachain-api';
+import { Bytes } from '@polkadot/types-codec';
+import { Signer, decryptWithAes } from './crypto';
+import { blake2AsHex } from '@polkadot/util-crypto';
+import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+
 export async function assertFailedEvent(
     context: IntegrationTestContext,
     events: FrameSystemEventRecord[],
@@ -62,24 +75,29 @@ export async function assertInitialIdGraphCreated(context: IntegrationTestContex
             context
         );
         const idGraphData = parseIdGraph(context.sidechainRegistry, eventData.idGraph, aesKey);
-
-        // check idGraph LitentryPrimitivesIdentity
-        assert.deepEqual(
-            idGraphData[0][0].toHuman(),
-            expectedPrimeIdentity.toHuman(),
-            'event idGraph identity should be equal expectedIdentity'
-        );
-
-        // check idGraph LitentryPrimitivesIdentityContext
-        const idGraphContext = idGraphData[0][1];
-        assert.isTrue(
-            idGraphContext.linkBlock.toNumber() > 0,
-            'Check InitialIDGraph error: link_block should be greater than 0'
-        );
-        assert.isTrue(idGraphContext.status.isActive, 'Check InitialIDGraph error: isActive should be true');
+        assertIdGraph(idGraphData, [[expectedPrimeIdentity, true]]);
     }
     console.log(colors.green('assertInitialIdGraphCreated passed'));
 }
+
+export function assertIdGraph(
+    actual: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][],
+    expected: [LitentryPrimitivesIdentity, boolean][]
+) {
+    assert.equal(actual.length, expected.length);
+    expected.forEach((expected, i) => {
+        assert.deepEqual(
+            actual[i][0].toJSON(),
+            expected[0].toJSON(),
+            'event idGraph identity should be equal expectedIdentity'
+        );
+
+        const idGraphContext = actual[0][1];
+        assert.isTrue(idGraphContext.linkBlock.toNumber() > 0, 'link_block should be greater than 0');
+        assert.equal(idGraphContext.status.isActive, expected[1], 'isActive should be ' + expected[1]);
+    });
+}
+
 export async function assertIdentityLinked(
     context: IntegrationTestContext,
     signers: KeyringPair | KeyringPair[],
@@ -283,14 +301,6 @@ export async function assertLinkedEvent(
     events: any[],
     expectedIdentities: LitentryPrimitivesIdentity[]
 ) {
-    events.forEach((ev) => {
-        console.log(ev.toHuman());
-    });
-
-    expectedIdentities.forEach((i) => {
-        console.log(i.toHuman());
-    });
-
     assert.isAtLeast(events.length, 1, 'Check assertLinkedEvent error: events length should be greater than 1');
 
     const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
@@ -359,4 +369,133 @@ export async function assertIdentity(
         assert.deepEqual(identity.toString(), expectedIdentities[index].toString());
     }
     console.log(colors.green('assertIdentity passed'));
+}
+
+export function assertWorkerError(
+    context: IntegrationTestContext,
+    check: (returnValue: StfError) => void,
+    returnValue: WorkerRpcReturnValue
+) {
+    const errValueDecoded = context.api.createType('StfError', returnValue.value) as unknown as StfError;
+    check(errValueDecoded);
+}
+
+export function assertIdentityLinkedResult(
+    context: IntegrationTestContext,
+    expectedIdentity: LitentryPrimitivesIdentity,
+    returnValue: WorkerRpcReturnValue,
+    expectedIdGraphIdentities: [LitentryPrimitivesIdentity, boolean][]
+) {
+    const decodedResult = context.api.createType(
+        'LinkIdentityResult',
+        returnValue.value
+    ) as unknown as LinkIdentityResult;
+
+    assert.isNotNull(decodedResult.id_graph);
+    const idGraphData = parseIdGraph(context.sidechainRegistry, decodedResult.id_graph, aesKey);
+    assertIdGraph(idGraphData, expectedIdGraphIdentities);
+}
+
+export function assertSetUserShieldingKeyResult(
+    context: IntegrationTestContext,
+    returnValue: WorkerRpcReturnValue,
+    expectedPrimeIdentity: LitentryPrimitivesIdentity
+) {
+    const decodedResult = context.api.createType(
+        'SetUserShieldingKeyResult',
+        returnValue.value
+    ) as unknown as SetUserShieldingKeyResult;
+
+    assert.isNotNull(decodedResult.id_graph);
+    const idGraphData = parseIdGraph(context.sidechainRegistry, decodedResult.id_graph, aesKey);
+    assertIdGraph(idGraphData, [[expectedPrimeIdentity, true]]);
+}
+
+/* 
+    assert vc
+    steps:
+    1. check vc status should be Active
+    2. compare vc payload hash(blake vc payload) with vc hash
+    3. check subject
+    4. compare vc index with vcPayload id
+    5. check vc signature
+    6. compare vc wtih jsonSchema
+
+    TODO: This is incomplete; we still need to further check: https://github.com/litentry/litentry-parachain/issues/1873
+*/
+
+export async function assertVc(context: IntegrationTestContext, subject: LitentryPrimitivesIdentity, data: Bytes) {
+    const results = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
+    const vcHash = results.vc_hash.toString();
+
+    // step 1
+    const vcIndex = results.vc_index.toString();
+    const vcRegistry = (await context.api.query.vcManagement.vcRegistry(
+        vcIndex
+    )) as unknown as PalletVcManagementVcContext;
+    const vcStatus = vcRegistry.toHuman()['status'];
+    assert.equal(vcStatus, 'Active', 'Check VcRegistry error:status should be equal to Active');
+
+    // step 2
+    // decryptWithAes function added 0x prefix
+    const vcPayload = results.vc_payload;
+    const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
+
+    const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
+    assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');
+
+    /* DID format
+    did:litentry:substrate:0x12345...
+    did:litentry:evm:0x123456...
+    did:litentry:twitter:my_twitter_handle
+    */
+
+    // step 3
+    const credentialSubjectId = JSON.parse(decryptVcPayload).credentialSubject.id;
+    const expectSubject = Object.entries(JSON.parse(subject.toString()));
+
+    // convert to DID format
+    const expectDid = 'did:litentry:' + expectSubject[0][0] + ':' + expectSubject[0][1];
+    assert.equal(
+        expectDid,
+        credentialSubjectId,
+        'Check credentialSubjec error: expectDid should be equal to credentialSubject id'
+    );
+
+    // step 4
+    const vcPayloadJson = JSON.parse(decryptVcPayload);
+    const { proof, ...vcWithoutProof } = vcPayloadJson;
+    assert.equal(vcIndex, vcPayloadJson.id, 'Check VcIndex error: VcIndex should be equal to vcPayload id');
+
+    // step 5
+    const enclaveCount = await context.api.query.teerex.enclaveCount();
+    const enclaveRegistry = (await context.api.query.teerex.enclaveRegistry(enclaveCount)) as any;
+
+    const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
+
+    const message = Buffer.from(vcWithoutProof.issuer.mrenclave);
+
+    const vcPubkey = Buffer.from(hexToU8a(`${enclaveRegistry.toHuman()['vcPubkey']}`));
+    const signatureStatus = await ed.verify(signature, message, vcPubkey);
+
+    assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
+
+    // step 6
+    const ajv = new Ajv();
+
+    const validate = ajv.compile(jsonSchema);
+
+    const isValid = validate(vcPayloadJson);
+
+    assert.isTrue(isValid, 'Check Vc payload error: vcPayload should be valid');
+    assert.equal(
+        vcWithoutProof.type[0],
+        'VerifiableCredential',
+        'Check Vc payload type error: vcPayload type should be VerifiableCredential'
+    );
+    assert.equal(
+        proof.type,
+        'Ed25519Signature2020',
+        'Check Vc proof type error: proof type should be Ed25519Signature2020'
+    );
 }

@@ -21,7 +21,7 @@ use std::sync::SgxRwLock as RwLock;
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 
-use crate::{RpcConnectionRegistry, RpcHash};
+use crate::{ForceWait, RpcConnectionRegistry, RpcHash};
 use itp_rpc::RpcResponse;
 use std::{collections::HashMap, fmt::Debug};
 
@@ -32,7 +32,8 @@ where
 	Hash: RpcHash,
 	Token: Copy + Send + Sync + Debug,
 {
-	connection_map: HashMapLock<<Self as RpcConnectionRegistry>::Hash, (Token, RpcResponse)>,
+	connection_map:
+		HashMapLock<<Self as RpcConnectionRegistry>::Hash, (Token, RpcResponse, ForceWait)>,
 }
 
 impl<Hash, Token> ConnectionRegistry<Hash, Token>
@@ -68,12 +69,18 @@ where
 	type Hash = Hash;
 	type Connection = Token;
 
-	fn store(&self, hash: Self::Hash, connection: Self::Connection, rpc_response: RpcResponse) {
+	fn store(
+		&self,
+		hash: Self::Hash,
+		connection: Self::Connection,
+		rpc_response: RpcResponse,
+		force_wait: ForceWait,
+	) {
 		let mut map = self.connection_map.write().expect("Lock poisoning");
-		map.insert(hash, (connection, rpc_response));
+		map.insert(hash, (connection, rpc_response, force_wait));
 	}
 
-	fn withdraw(&self, hash: &Self::Hash) -> Option<(Self::Connection, RpcResponse)> {
+	fn withdraw(&self, hash: &Self::Hash) -> Option<(Self::Connection, RpcResponse, ForceWait)> {
 		let mut map = self.connection_map.write().expect("Lock poisoning");
 		map.remove(hash)
 	}
@@ -82,6 +89,7 @@ where
 #[cfg(test)]
 pub mod tests {
 	use super::*;
+	use itp_rpc::Id;
 
 	type TestRegistry = ConnectionRegistry<String, u64>;
 
@@ -91,8 +99,8 @@ pub mod tests {
 
 		let hash = "first".to_string();
 
-		registry.store(hash.clone(), 1, dummy_rpc_response());
-		registry.store(hash.clone(), 2, dummy_rpc_response());
+		registry.store(hash.clone(), 1, dummy_rpc_response(), false);
+		registry.store(hash.clone(), 2, dummy_rpc_response(), false);
 
 		let connection_token = registry.withdraw(&hash).unwrap().0;
 		assert_eq!(2, connection_token);
@@ -110,7 +118,7 @@ pub mod tests {
 		let registry = TestRegistry::new();
 		let hash = "first".to_string();
 
-		registry.store(hash.clone(), 1, dummy_rpc_response());
+		registry.store(hash.clone(), 1, dummy_rpc_response(), false);
 
 		let connection = registry.withdraw(&hash);
 
@@ -119,6 +127,6 @@ pub mod tests {
 	}
 
 	fn dummy_rpc_response() -> RpcResponse {
-		RpcResponse { jsonrpc: String::new(), result: Default::default(), id: 1u32 }
+		RpcResponse { jsonrpc: String::new(), result: Default::default(), id: Id::Number(1u32) }
 	}
 }
