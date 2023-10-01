@@ -36,14 +36,14 @@ root_dir=$(git rev-parse --show-toplevel)
 
 start=$(date +%s)
 
-# clean_up
+clean_up
 
 cd "$root_dir"
 make fmt
 # make shellcheck # _shellcheck is not enforced in CI though
 
-# echo "[Step 1], Parachain clippy"
-# cd "$root_dir" && parachain_check
+echo "[Step 1], Parachain clippy"
+cd "$root_dir" && parachain_check
 
 echo "[Step 2], Worker clippy"
 cd "$root_dir/tee-worker" && worker_clippy
