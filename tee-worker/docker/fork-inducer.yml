@@ -30,6 +30,8 @@ services:
         condition: service_healthy
       litentry-worker-1-${VERSION}:
         condition: service_healthy
+      litentry-worker-2-${VERSION}:
+        condition: service_healthy
     networks:
       - litentry-test-network
     volumes:
