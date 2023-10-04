@@ -29,8 +29,8 @@
 	clippy::unreachable,
 	/* comment out for the moment. There are some upstream code `unimplemented` */
 	// clippy::unimplemented,
+	// clippy::panic_in_result_fn,
 	clippy::string_slice,
-	clippy::panic_in_result_fn,
 	clippy::panic,
 	clippy::indexing_slicing,
 	clippy::expect_used,
