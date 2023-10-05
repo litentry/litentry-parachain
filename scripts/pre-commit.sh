@@ -5,22 +5,22 @@
 set -eo pipefail
 
 function worker_clippy() {
-    cargo clippy -- -D warnings
-    cargo clippy --features evm -- -D warnings
-    cargo clippy --features sidechain -- -D warnings
-    cargo clippy --features teeracle -- -D warnings
-    cargo clippy --features offchain-worker -- -D warnings
+    cargo clippy --release -- -D warnings
+    cargo clippy --release --features evm -- -D warnings
+    cargo clippy --release --features sidechain -- -D warnings
+    cargo clippy --release --features teeracle -- -D warnings
+    cargo clippy --release --features offchain-worker -- -D warnings
 }
 
 function parachain_check() {
     make clippy
-    cargo test --locked -p pallet-* --lib
-    cargo test --locked -p pallet-* --lib --features=skip-ias-check
-    cargo test --locked -p pallet-* --lib --features=runtime-benchmarks
-    cargo test --locked -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
-    cargo test --locked -p rococo-parachain-runtime --lib
-    cargo test --locked -p litmus-parachain-runtime --lib
-    cargo test --locked -p litentry-parachain-runtime --lib
+    cargo test --locked --release -p pallet-* --lib
+    cargo test --locked --release -p pallet-* --lib --features=skip-ias-check
+    cargo test --locked --release -p pallet-* --lib --features=runtime-benchmarks
+    cargo test --locked --release -p pallet-* --lib --features=skip-ias-check,runtime-benchmarks
+    cargo test --locked --release -p rococo-parachain-runtime --lib
+    cargo test --locked --release -p litmus-parachain-runtime --lib
+    cargo test --locked --release -p litentry-parachain-runtime --lib
 }
 
 function clean_up() {

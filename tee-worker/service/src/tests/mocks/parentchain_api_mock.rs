@@ -36,6 +36,7 @@ impl ParentchainApiMock {
 
 	/// Initializes parentchain with a default block chain of a given length.
 	// Todo: Remove when #1451 is resolved
+	#[allow(unused)]
 	pub fn with_default_blocks(mut self, number_of_blocks: u32) -> Self {
 		self.parentchain = (1..=number_of_blocks)
 			.map(|n| {

@@ -14,44 +14,12 @@ dependencies = [
 
 [[package]]
 name = "ac-compose-macros"
-version = "0.4.0"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42#d17eb3389550e675350593829218e8949a7dd06b"
-dependencies = [
- "ac-primitives 0.7.0",
- "log 0.4.19",
- "maybe-async",
-]
-
-[[package]]
-name = "ac-compose-macros"
 version = "0.4.2"
 source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.14.0#e4ed74b0fb6c2fd5585f55c2702b97b56d99c7f6"
 dependencies = [
- "ac-primitives 0.9.0",
+ "ac-primitives",
  "log 0.4.19",
  "maybe-async",
-]
-
-[[package]]
-name = "ac-node-api"
-version = "0.4.0"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42#d17eb3389550e675350593829218e8949a7dd06b"
-dependencies = [
- "ac-primitives 0.7.0",
- "bitvec",
- "derive_more",
- "either",
- "frame-metadata",
- "hex 0.4.3",
- "log 0.4.19",
- "parity-scale-codec",
- "scale-info",
- "serde 1.0.175",
- "serde_json 1.0.103",
- "sp-application-crypto",
- "sp-core",
- "sp-runtime",
- "sp-runtime-interface",
 ]
 
 [[package]]
@@ -59,7 +27,7 @@ name = "ac-node-api"
 version = "0.5.1"
 source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.14.0#e4ed74b0fb6c2fd5585f55c2702b97b56d99c7f6"
 dependencies = [
- "ac-primitives 0.9.0",
+ "ac-primitives",
  "bitvec",
  "derive_more",
  "either",
@@ -77,27 +45,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-runtime-interface",
-]
-
-[[package]]
-name = "ac-primitives"
-version = "0.7.0"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42#d17eb3389550e675350593829218e8949a7dd06b"
-dependencies = [
- "impl-serde",
- "parity-scale-codec",
- "primitive-types",
- "scale-info",
- "serde 1.0.175",
- "serde_json 1.0.103",
- "sp-application-crypto",
- "sp-core",
- "sp-core-hashing 5.0.0",
- "sp-runtime",
- "sp-runtime-interface",
- "sp-staking",
- "sp-version",
- "sp-weights",
 ]
 
 [[package]]
@@ -4760,7 +4707,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "substrate-api-client 0.12.0",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
 ]
@@ -4932,7 +4878,7 @@ dependencies = [
  "sp-consensus-grandpa",
  "sp-core",
  "sp-runtime",
- "substrate-api-client 0.14.0",
+ "substrate-api-client",
 ]
 
 [[package]]
@@ -4943,7 +4889,7 @@ dependencies = [
  "rococo-parachain-runtime",
  "sp-core",
  "sp-runtime",
- "substrate-api-client 0.14.0",
+ "substrate-api-client",
 ]
 
 [[package]]
@@ -5059,7 +5005,7 @@ dependencies = [
  "sgx_types",
  "sp-core",
  "sp-runtime",
- "substrate-api-client 0.14.0",
+ "substrate-api-client",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
 ]
@@ -5123,7 +5069,7 @@ dependencies = [
  "parity-scale-codec",
  "primitive-types",
  "sp-core",
- "substrate-api-client 0.14.0",
+ "substrate-api-client",
  "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
 ]
 
@@ -6986,7 +6932,7 @@ dependencies = [
  "sp-keyring",
  "sp-keystore",
  "sp-runtime",
- "substrate-api-client 0.14.0",
+ "substrate-api-client",
  "substrate-client-keystore",
  "teerex-primitives",
  "thiserror 1.0.44",
@@ -7088,7 +7034,7 @@ dependencies = [
  "sp-core",
  "sp-keyring",
  "sp-runtime",
- "substrate-api-client 0.14.0",
+ "substrate-api-client",
  "teerex-primitives",
  "thiserror 1.0.44",
  "tokio",
@@ -13895,34 +13841,12 @@ dependencies = [
 
 [[package]]
 name = "substrate-api-client"
-version = "0.12.0"
-source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42#d17eb3389550e675350593829218e8949a7dd06b"
-dependencies = [
- "ac-compose-macros 0.4.0",
- "ac-node-api 0.4.0",
- "ac-primitives 0.7.0",
- "async-trait",
- "derive_more",
- "frame-metadata",
- "hex 0.4.3",
- "log 0.4.19",
- "maybe-async",
- "parity-scale-codec",
- "serde 1.0.175",
- "serde_json 1.0.103",
- "sp-core",
- "sp-runtime",
- "sp-runtime-interface",
-]
-
-[[package]]
-name = "substrate-api-client"
 version = "0.14.0"
 source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.14.0#e4ed74b0fb6c2fd5585f55c2702b97b56d99c7f6"
 dependencies = [
- "ac-compose-macros 0.4.2",
- "ac-node-api 0.5.1",
- "ac-primitives 0.9.0",
+ "ac-compose-macros",
+ "ac-node-api",
+ "ac-primitives",
  "async-trait",
  "derive_more",
  "frame-metadata",
@@ -13938,7 +13862,6 @@ dependencies = [
  "sp-runtime-interface",
  "tungstenite 0.18.0",
  "url 2.4.0",
- "ws",
 ]
 
 [[package]]
