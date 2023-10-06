@@ -22,7 +22,7 @@ use core::fmt::{Debug, Formatter};
 use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
-use itp_utils::if_production_or;
+use itp_utils::{hex::hex_encode, if_production_or};
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
@@ -33,6 +33,9 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 use strum_macros::EnumIter;
+
+#[cfg(any(feature = "sgx", feature = "std"))]
+use std::string::ToString;
 
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityInnerString = BoundedVec<u8, MaxStringLength>;
@@ -104,6 +107,19 @@ impl From<[u8; 20]> for Address20 {
 	}
 }
 
+impl<'a> TryFrom<&'a [u8]> for Address20 {
+	type Error = ();
+	fn try_from(x: &'a [u8]) -> Result<Address20, ()> {
+		if x.len() == 20 {
+			let mut data = [0; 20];
+			data.copy_from_slice(x);
+			Ok(Address20(data))
+		} else {
+			Err(())
+		}
+	}
+}
+
 impl Debug for Address20 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
 		if_production_or!(
@@ -132,6 +148,19 @@ impl From<AccountId32> for Address32 {
 	fn from(value: AccountId32) -> Self {
 		let raw: [u8; 32] = value.as_slice().try_into().unwrap();
 		Address32::from(raw)
+	}
+}
+
+impl<'a> TryFrom<&'a [u8]> for Address32 {
+	type Error = ();
+	fn try_from(x: &'a [u8]) -> Result<Address32, ()> {
+		if x.len() == 32 {
+			let mut data = [0; 32];
+			data.copy_from_slice(x);
+			Ok(Address32(data))
+		} else {
+			Err(())
+		}
 	}
 }
 
@@ -226,18 +255,65 @@ impl Identity {
 		}
 	}
 
-	pub fn to_did(&self) -> String {
-		format!(
+	#[cfg(any(feature = "std", feature = "sgx"))]
+	pub fn from_did(s: &str) -> Result<Self, std::boxed::Box<dyn std::error::Error + 'static>> {
+		let did_prefix = std::string::String::from("did:litentry:");
+		if s.starts_with(&did_prefix) {
+			let did_suffix = &s[did_prefix.len()..];
+			let v: Vec<&str> = did_suffix.split(':').collect();
+			if v.len() == 2 {
+				if v[0] == "substrate" {
+					let handle =
+						v[1].as_bytes().try_into().map_err(|_| "Address32 conversion error")?;
+					return Ok(Identity::Substrate(handle))
+				} else if v[0] == "evm" {
+					let handle =
+						v[1].as_bytes().try_into().map_err(|_| "Address20 conversion error")?;
+					return Ok(Identity::Evm(handle))
+				} else if v[0] == "github" {
+					return Ok(Identity::Github(IdentityString::new(v[1].as_bytes().to_vec())))
+				} else if v[0] == "discord" {
+					return Ok(Identity::Discord(IdentityString::new(v[1].as_bytes().to_vec())))
+				} else if v[0] == "twitter" {
+					return Ok(Identity::Twitter(IdentityString::new(v[1].as_bytes().to_vec())))
+				} else {
+					return Err("Unknown did type".into())
+				}
+			} else {
+				return Err("Wrong did suffix".into())
+			}
+		}
+
+		Err("Wrong did prefix".into())
+	}
+
+	#[cfg(any(feature = "std", feature = "sgx"))]
+	pub fn to_did(
+		&self,
+	) -> Result<std::string::String, std::boxed::Box<dyn std::error::Error + 'static>> {
+		Ok(std::format!(
 			"did:litentry:{}",
 			match self {
-				Identity::Evm(address) => format!("evm:{}", &hex_encode(address.as_ref())),
+				Identity::Evm(address) => std::format!("evm:{}", &hex_encode(address.as_ref())),
 				Identity::Substrate(address) =>
-					format!("substrate:{}", &hex_encode(address.as_ref())),
-				Identity::Twitter(handle) => format!("twitter:{}", handle),
-				Identity::Discord(handle) => format!("discord:{}", handle),
-				Identity::Github(handle) => format!("github:{}", handle),
+					std::format!("substrate:{}", &hex_encode(address.as_ref())),
+				Identity::Twitter(handle) => {
+					std::str::from_utf8(handle.inner_ref())
+						.map_err(|_| "twitter handle conversion error")?
+						.to_string()
+				},
+				Identity::Discord(handle) => {
+					std::str::from_utf8(handle.inner_ref())
+						.map_err(|_| "discord handle conversion error")?
+						.to_string()
+				},
+				Identity::Github(handle) => {
+					std::str::from_utf8(handle.inner_ref())
+						.map_err(|_| "github handle conversion error")?
+						.to_string()
+				},
 			}
-		)
+		))
 	}
 }
 
@@ -396,5 +472,49 @@ mod tests {
 		let identity_string: IdentityString =
 			IdentityString::decode_all(&mut decoded.as_slice()).unwrap();
 		assert_eq!(identity_string, IdentityString::new("mock_user".as_bytes().to_vec()));
+	}
+
+	#[test]
+	fn test_substrate_did_format() {
+		assert_eq!(Identity::Substrate([0; 32].into()).to_did().unwrap(), "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000")
+	}
+
+	#[test]
+	fn test_evm_did_format() {
+		assert_eq!(
+			Identity::Evm([0; 20].into()).to_did().unwrap(),
+			"did:litentry:evm:0x0000000000000000000000000000000000000000"
+		)
+	}
+
+	#[test]
+	fn test_discord_did_format() {
+		assert_eq!(
+			Identity::Discord(IdentityString::new("discord_handle".as_bytes().to_vec()))
+				.to_did()
+				.unwrap(),
+			"did:litentry:discord:discord_handle"
+		)
+	}
+
+	#[test]
+	fn test_twitter_format() {
+		assert_eq!(
+			Identity::Twitter(IdentityString::new("twitter_handle".as_bytes().to_vec()))
+				.to_did()
+				.unwrap(),
+			"did:litentry:twitter:twitter_handle"
+		)
+	}
+
+	#[test]
+
+	fn test_github_did_format() {
+		assert_eq!(
+			Identity::Github(IdentityString::new("github_handle".as_bytes().to_vec()))
+				.to_did()
+				.unwrap(),
+			"did:litentry:github:github_handle"
+		)
 	}
 }
