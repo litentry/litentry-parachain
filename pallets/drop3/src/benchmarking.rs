@@ -28,12 +28,7 @@ use sp_std::vec;
 
 const SEED: u32 = 0;
 
-// for initial endowment of the caller
 const DEFAULT_ED_MULTIPLIER: u32 = 10;
-// for reversation when creating proposals, must be smaller than `DEFAULT_ED_MULTIPLIER`
-// since polkadot v0.9.42, ED will be required in addition to any amount to be reserved
-// see https://forum.polkadot.network/t/polkadot-release-analysis-v0-9-41-v0-9-42/2828
-const RESERVE_ED_MULTIPLIER: u32 = 5;
 const TRANSFER_ED_MULTIPLIER: u32 = 2;
 
 // TODO:
@@ -68,6 +63,9 @@ fn run_to_block<T: Config>(n: T::BlockNumber) {
 // return the caller account
 fn create_default_caller<T: Config>() -> T::AccountId {
 	let caller: T::AccountId = account("caller", 0, SEED);
+	// endowed with a bit more balance
+	// since polkadot v0.9.42, ED will be required in addition to any amount to be reserved
+	// see https://forum.polkadot.network/t/polkadot-release-analysis-v0-9-41-v0-9-42/2828
 	let default_balance = T::Currency::minimum_balance()
 		.saturating_mul(DEFAULT_ED_MULTIPLIER.into())
 		.saturating_mul(2u32.into());
@@ -83,7 +81,7 @@ fn create_default_proposal<T: Config>(caller: T::AccountId) -> (T::PoolId, Vec<u
 	assert!(Drop3::<T>::propose_reward_pool(
 		RawOrigin::Signed(caller).into(),
 		name.clone(),
-		T::Currency::minimum_balance().saturating_mul(RESERVE_ED_MULTIPLIER.into()),
+		T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
 		1u32.into(),
 		5u32.into(),
 	)
@@ -155,7 +153,7 @@ benchmarks! {
 		assert_event::<T>(Event::RewardPoolRejected { id }.into());
 		assert_event::<T>(Event::BalanceSlashed {
 			who: caller.clone(),
-			amount: T::SlashPercent::get() * T::Currency::minimum_balance().saturating_mul(RESERVE_ED_MULTIPLIER.into()),
+			amount: T::SlashPercent::get() * T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
 		}.into());
 		assert_event::<T>(Event::RewardPoolRemoved { id, name, owner: caller }.into());
 	}
@@ -190,7 +188,7 @@ benchmarks! {
 	}: _(
 		RawOrigin::Signed(caller.clone()),
 		name.clone(),
-		T::Currency::minimum_balance().saturating_mul(RESERVE_ED_MULTIPLIER.into()),
+		T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into()),
 		1u32.into(),
 		5u32.into()
 	)
