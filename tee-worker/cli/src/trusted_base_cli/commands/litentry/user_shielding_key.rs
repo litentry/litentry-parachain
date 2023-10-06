@@ -40,7 +40,6 @@ impl UserShieldingKeyCommand {
 			.map(|v| UserShieldingKeyType::decode(&mut v.unwrap().as_slice()).ok());
 		println!("{}", hex::encode(key.unwrap().unwrap()));
 
-		// Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 		Ok(CliResultOk::None)
 	}
 }

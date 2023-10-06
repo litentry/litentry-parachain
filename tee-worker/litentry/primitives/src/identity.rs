@@ -225,6 +225,20 @@ impl Identity {
 			_ => None,
 		}
 	}
+
+	pub fn to_did(&self) -> String {
+		format!(
+			"did:litentry:{}",
+			match self {
+				Identity::Evm(address) => format!("evm:{}", &hex_encode(address.as_ref())),
+				Identity::Substrate(address) =>
+					format!("substrate:{}", &hex_encode(address.as_ref())),
+				Identity::Twitter(handle) => format!("twitter:{}", handle),
+				Identity::Discord(handle) => format!("discord:{}", handle),
+				Identity::Github(handle) => format!("github:{}", handle),
+			}
+		)
+	}
 }
 
 impl From<ed25519::Public> for Identity {
