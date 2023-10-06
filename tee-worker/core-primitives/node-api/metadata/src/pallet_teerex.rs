@@ -21,7 +21,7 @@ use sp_core::storage::StorageKey;
 pub const TEEREX: &str = "Teerex";
 
 pub trait TeerexCallIndexes {
-	fn register_sgx_enclave_call_indexes(&self) -> Result<[u8; 2]>;
+	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
 	fn unregister_sovereign_enclave_call_indexes(&self) -> Result<[u8; 2]>;
 
@@ -54,8 +54,8 @@ pub trait TeerexStorageKey {
 }
 
 impl TeerexCallIndexes for NodeMetadata {
-	fn register_sgx_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "register_sgx_enclave")
+	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(TEEREX, "register_enclave")
 	}
 
 	fn unregister_sovereign_enclave_call_indexes(&self) -> Result<[u8; 2]> {

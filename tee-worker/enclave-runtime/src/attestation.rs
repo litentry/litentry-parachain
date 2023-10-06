@@ -311,7 +311,7 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 	info!("    [Enclave] Compose register enclave getting callIDs:");
 
 	let call_ids = node_metadata_repo
-		.get_from_metadata(|m| m.register_sgx_enclave_call_indexes())?
+		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 	info!("    [Enclave] Compose register enclave call DCAP IDs: {:?}", call_ids);
 	let call = OpaqueCall::from_tuple(&(
@@ -333,7 +333,7 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 	info!("    [Enclave] Compose register enclave (skip-ra) getting callIDs:");
 
 	let call_ids = node_metadata_repo
-		.get_from_metadata(|m| m.register_sgx_enclave_call_indexes())?
+		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 	info!("    [Enclave] Compose register enclave (skip-ra) call DCAP IDs: {:?}", call_ids);
 	let call = OpaqueCall::from_tuple(&(
@@ -369,7 +369,7 @@ pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
 
 	info!("    [Enclave] Compose register enclave call");
 	let call_ids = node_metadata_repo
-		.get_from_metadata(|m| m.register_sgx_enclave_call_indexes())?
+		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 
 	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, Some(url), SgxAttestationMethod::Ias));
@@ -385,7 +385,7 @@ pub fn generate_ias_skip_ra_extrinsic_from_der_cert_internal(
 
 	info!("    [Enclave] Compose register ias enclave (skip-ra) call");
 	let call_ids = node_metadata_repo
-		.get_from_metadata(|m| m.register_sgx_enclave_call_indexes())?
+		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 
 	let shielding_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT

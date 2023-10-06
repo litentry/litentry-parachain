@@ -35,7 +35,7 @@ impl TryFrom<NodeMetadataMock> for Metadata {
 #[derive(Default, Encode, Decode, Debug, Clone)]
 pub struct NodeMetadataMock {
 	teerex_module: u8,
-	register_sgx_enclave: u8,
+	register_enclave: u8,
 	unregister_sovereign_enclave: u8,
 	unregister_proxied_enclave: u8,
 	register_quoting_enclave: u8,
@@ -84,7 +84,7 @@ impl NodeMetadataMock {
 	pub fn new() -> Self {
 		NodeMetadataMock {
 			teerex_module: 50u8,
-			register_sgx_enclave: 0u8,
+			register_enclave: 0u8,
 			unregister_sovereign_enclave: 1u8,
 			unregister_proxied_enclave: 2u8,
 			register_quoting_enclave: 3,
@@ -132,8 +132,8 @@ impl NodeMetadataMock {
 }
 
 impl TeerexCallIndexes for NodeMetadataMock {
-	fn register_sgx_enclave_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.teerex_module, self.register_sgx_enclave])
+	fn register_enclave_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.teerex_module, self.register_enclave])
 	}
 
 	fn unregister_sovereign_enclave_call_indexes(&self) -> Result<[u8; 2]> {
