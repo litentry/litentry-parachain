@@ -10,7 +10,6 @@ log = { version = "0.4", default-features = false }
 thiserror = { version = "1.0.26", optional = true }
 
 # local deps
-fork-tree = { path = "../../fork-tree", default-features = false }
 itc-parentchain-light-client = { path = "../../../core/parentchain/light-client", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
 itp-import-queue = { path = "../../../core-primitives/import-queue", default-features = false }
@@ -38,6 +37,7 @@ itc-parentchain-test = { path = "../../../core/parentchain/test" }
 itp-sgx-externalities = { default-features = false, path = "../../../core-primitives/substrate-sgx/externalities" }
 itp-test = { path = "../../../core-primitives/test" }
 its-test = { path = "../../test" }
+fork-tree = { path = "../../fork-tree", default-features = false }
 
 # substrate
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }

@@ -26,8 +26,6 @@ frame-system = { git = "https://github.com/paritytech/substrate", branch = "polk
 pallet-bridge = { path = "../bridge", default-features = false }
 pallet-parachain-staking = { path = "../parachain-staking", default-features = false }
 
-hex = { version = "0.4", default-features = false }
-
 [dev-dependencies]
 hex-literal = "0.4"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }

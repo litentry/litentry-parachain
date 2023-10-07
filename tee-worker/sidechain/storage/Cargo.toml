@@ -15,7 +15,7 @@ thiserror = "1.0"
 
 # integritee
 itp-settings = { path = "../../core-primitives/settings" }
-itp-types = { path = "../../core-primitives/types" }
+
 its-primitives = { path = "../primitives" }
 
 # Substrate dependencies
@@ -28,6 +28,7 @@ temp-dir = "0.1"
 # local
 itp-time-utils = { path = "../../core-primitives/time-utils" }
 its-test = { path = "../test" }
+itp-types = { path = "../../core-primitives/types" }
 
 [features]
 mocks = []

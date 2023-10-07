@@ -10,7 +10,6 @@ edition = "2021"
 
 [dependencies]
 hex-literal = { version = "0.4.1" }
-log = { version = "0.4", default-features = false }
 
 [dependencies.teerex-primitives]
 default-features = false
@@ -21,6 +20,5 @@ path = "../../primitives/teerex"
 [features]
 default = ['std']
 std = [
-    "log/std",
     "teerex-primitives/std",
 ]
