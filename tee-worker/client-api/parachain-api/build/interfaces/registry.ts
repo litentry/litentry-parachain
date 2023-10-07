@@ -24,6 +24,7 @@ import type {
     CorePrimitivesErrorVcmpError,
     CorePrimitivesKeyAesOutput,
     CorePrimitivesNetworkWeb3Network,
+    CorePrimitivesOneblockOneBlockCourseType,
     CumulusPalletDmpQueueCall,
     CumulusPalletDmpQueueConfigData,
     CumulusPalletDmpQueueError,
@@ -46,6 +47,26 @@ import type {
     CumulusPalletXcmpQueueOutboundState,
     CumulusPalletXcmpQueueQueueConfigData,
     CumulusPrimitivesParachainInherentParachainInherentData,
+    EthbloomBloom,
+    EthereumBlock,
+    EthereumHeader,
+    EthereumLog,
+    EthereumReceiptEip658ReceiptData,
+    EthereumReceiptReceiptV3,
+    EthereumTransactionAccessListItem,
+    EthereumTransactionEip1559Transaction,
+    EthereumTransactionEip2930Transaction,
+    EthereumTransactionLegacyTransaction,
+    EthereumTransactionTransactionAction,
+    EthereumTransactionTransactionSignature,
+    EthereumTransactionTransactionV2,
+    EthereumTypesHashH64,
+    EvmCoreErrorExitError,
+    EvmCoreErrorExitFatal,
+    EvmCoreErrorExitReason,
+    EvmCoreErrorExitRevert,
+    EvmCoreErrorExitSucceed,
+    FpRpcTransactionStatus,
     FrameSupportDispatchDispatchClass,
     FrameSupportDispatchDispatchInfo,
     FrameSupportDispatchPays,
@@ -128,6 +149,15 @@ import type {
     PalletDrop3Error,
     PalletDrop3Event,
     PalletDrop3RewardPool,
+    PalletEthereumCall,
+    PalletEthereumError,
+    PalletEthereumEvent,
+    PalletEthereumRawOrigin,
+    PalletEvmAddressError,
+    PalletEvmAddressEvent,
+    PalletEvmCall,
+    PalletEvmError,
+    PalletEvmEvent,
     PalletExtrinsicFilterCall,
     PalletExtrinsicFilterError,
     PalletExtrinsicFilterEvent,
@@ -359,6 +389,7 @@ declare module '@polkadot/types/types/registry' {
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;
         CorePrimitivesKeyAesOutput: CorePrimitivesKeyAesOutput;
         CorePrimitivesNetworkWeb3Network: CorePrimitivesNetworkWeb3Network;
+        CorePrimitivesOneblockOneBlockCourseType: CorePrimitivesOneblockOneBlockCourseType;
         CumulusPalletDmpQueueCall: CumulusPalletDmpQueueCall;
         CumulusPalletDmpQueueConfigData: CumulusPalletDmpQueueConfigData;
         CumulusPalletDmpQueueError: CumulusPalletDmpQueueError;
@@ -381,6 +412,26 @@ declare module '@polkadot/types/types/registry' {
         CumulusPalletXcmpQueueOutboundState: CumulusPalletXcmpQueueOutboundState;
         CumulusPalletXcmpQueueQueueConfigData: CumulusPalletXcmpQueueQueueConfigData;
         CumulusPrimitivesParachainInherentParachainInherentData: CumulusPrimitivesParachainInherentParachainInherentData;
+        EthbloomBloom: EthbloomBloom;
+        EthereumBlock: EthereumBlock;
+        EthereumHeader: EthereumHeader;
+        EthereumLog: EthereumLog;
+        EthereumReceiptEip658ReceiptData: EthereumReceiptEip658ReceiptData;
+        EthereumReceiptReceiptV3: EthereumReceiptReceiptV3;
+        EthereumTransactionAccessListItem: EthereumTransactionAccessListItem;
+        EthereumTransactionEip1559Transaction: EthereumTransactionEip1559Transaction;
+        EthereumTransactionEip2930Transaction: EthereumTransactionEip2930Transaction;
+        EthereumTransactionLegacyTransaction: EthereumTransactionLegacyTransaction;
+        EthereumTransactionTransactionAction: EthereumTransactionTransactionAction;
+        EthereumTransactionTransactionSignature: EthereumTransactionTransactionSignature;
+        EthereumTransactionTransactionV2: EthereumTransactionTransactionV2;
+        EthereumTypesHashH64: EthereumTypesHashH64;
+        EvmCoreErrorExitError: EvmCoreErrorExitError;
+        EvmCoreErrorExitFatal: EvmCoreErrorExitFatal;
+        EvmCoreErrorExitReason: EvmCoreErrorExitReason;
+        EvmCoreErrorExitRevert: EvmCoreErrorExitRevert;
+        EvmCoreErrorExitSucceed: EvmCoreErrorExitSucceed;
+        FpRpcTransactionStatus: FpRpcTransactionStatus;
         FrameSupportDispatchDispatchClass: FrameSupportDispatchDispatchClass;
         FrameSupportDispatchDispatchInfo: FrameSupportDispatchDispatchInfo;
         FrameSupportDispatchPays: FrameSupportDispatchPays;
@@ -463,6 +514,15 @@ declare module '@polkadot/types/types/registry' {
         PalletDrop3Error: PalletDrop3Error;
         PalletDrop3Event: PalletDrop3Event;
         PalletDrop3RewardPool: PalletDrop3RewardPool;
+        PalletEthereumCall: PalletEthereumCall;
+        PalletEthereumError: PalletEthereumError;
+        PalletEthereumEvent: PalletEthereumEvent;
+        PalletEthereumRawOrigin: PalletEthereumRawOrigin;
+        PalletEvmAddressError: PalletEvmAddressError;
+        PalletEvmAddressEvent: PalletEvmAddressEvent;
+        PalletEvmCall: PalletEvmCall;
+        PalletEvmError: PalletEvmError;
+        PalletEvmEvent: PalletEvmEvent;
         PalletExtrinsicFilterCall: PalletExtrinsicFilterCall;
         PalletExtrinsicFilterError: PalletExtrinsicFilterError;
         PalletExtrinsicFilterEvent: PalletExtrinsicFilterEvent;

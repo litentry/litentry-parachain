@@ -409,6 +409,68 @@ declare module '@polkadot/api-base/types/errors' {
              **/
             UnexpectedUnMovedAmount: AugmentedError<ApiType>;
         };
+        ethereum: {
+            /**
+             * Signature is invalid.
+             **/
+            InvalidSignature: AugmentedError<ApiType>;
+            /**
+             * Pre-log is present, therefore transact is not allowed.
+             **/
+            PreLogExists: AugmentedError<ApiType>;
+        };
+        evm: {
+            /**
+             * Not enough balance to perform action
+             **/
+            BalanceLow: AugmentedError<ApiType>;
+            /**
+             * Calculating total fee overflowed
+             **/
+            FeeOverflow: AugmentedError<ApiType>;
+            /**
+             * Gas limit is too high.
+             **/
+            GasLimitTooHigh: AugmentedError<ApiType>;
+            /**
+             * Gas limit is too low.
+             **/
+            GasLimitTooLow: AugmentedError<ApiType>;
+            /**
+             * Gas price is too low.
+             **/
+            GasPriceTooLow: AugmentedError<ApiType>;
+            /**
+             * Nonce is invalid
+             **/
+            InvalidNonce: AugmentedError<ApiType>;
+            /**
+             * Calculating total payment overflowed
+             **/
+            PaymentOverflow: AugmentedError<ApiType>;
+            /**
+             * EVM reentrancy
+             **/
+            Reentrancy: AugmentedError<ApiType>;
+            /**
+             * EIP-3607,
+             **/
+            TransactionMustComeFromEOA: AugmentedError<ApiType>;
+            /**
+             * Undefined error.
+             **/
+            Undefined: AugmentedError<ApiType>;
+            /**
+             * Withdraw fee failed
+             **/
+            WithdrawFailed: AugmentedError<ApiType>;
+        };
+        evmAddress: {
+            /**
+             * AddressMapping existed and conflicted
+             **/
+            AddressMappingConflicted: AugmentedError<ApiType>;
+        };
         extrinsicFilter: {
             /**
              * Error when a given extrinsic cannot be blocked (e.g. this pallet)
