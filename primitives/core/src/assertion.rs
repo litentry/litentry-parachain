@@ -162,8 +162,12 @@ pub enum Assertion {
 	A1,
 	A2(ParameterString),                                    // (guild_id)
 	A3(ParameterString, ParameterString, ParameterString),  // (guild_id, channel_id, role_id)
+	A4(ParameterString),                                    // (minimum_amount)
 	A6,
+	A7(ParameterString),                                    // (minimum_amount)
 	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
+	A10(ParameterString),                                   // (minimum_amount)
+	A11(ParameterString),                                   // (minimum_amount)
 
 	// ----- begin polkadot decoded 2023 -----
 	A13(AccountId),                                         // (participant_account), can only be requested by delegatee
@@ -178,8 +182,6 @@ pub enum Assertion {
 
 	// For Oneblock
 	Oneblock(OneBlockCourseType),
-
-	HoldingTime(AmountHoldingTimeType, ParameterString),    // (AmountHoldingTimeType, minimum_amount)
 }
 
 impl Assertion {
@@ -194,6 +196,12 @@ impl Assertion {
 	// the broader `Web3Network` (see network.rs)
 	pub fn get_supported_web3networks(&self) -> Vec<Web3Network> {
 		match self {
+			// LIT holder, not including `LitentryRococo` as it's not supported by any data provider
+			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
+			// DOT holder
+			Self::A7(..) => vec![Web3Network::Polkadot],
+			// WBTC/ETH holder
+			Self::A10(..) | Self::A11(..) => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
@@ -202,22 +210,6 @@ impl Assertion {
 			Self::Achainable(a) => vec![a.chain()],
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
-			// Holding Time
-			Self::HoldingTime(htype, _) => {
-				match htype {
-					// LIT holder, not including `LitentryRococo` as it's not supported by any data
-					// provider
-					AmountHoldingTimeType::LIT =>
-						vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
-
-					// DOT holder
-					AmountHoldingTimeType::DOT => vec![Web3Network::Polkadot],
-
-					// WBTC/ETH holder
-					AmountHoldingTimeType::WBTC | AmountHoldingTimeType::ETH =>
-						vec![Web3Network::Ethereum],
-				}
-			},
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

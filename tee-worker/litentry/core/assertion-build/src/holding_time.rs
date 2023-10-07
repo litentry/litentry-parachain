@@ -204,7 +204,17 @@ fn emit_error(
 	min_balance: &ParameterString,
 	e: ErrorDetail,
 ) -> Error {
-	Error::RequestVCFailed(Assertion::HoldingTime(htype.clone(), min_balance.clone()), e)
+	let a = if *htype == AmountHoldingTimeType::LIT {
+		Assertion::A4(min_balance.clone())
+	} else if *htype == AmountHoldingTimeType::DOT {
+		Assertion::A7(min_balance.clone())
+	} else if *htype == AmountHoldingTimeType::WBTC {
+		Assertion::A10(min_balance.clone())
+	} else {
+		Assertion::A11(min_balance.clone())
+	};
+
+	Error::RequestVCFailed(a, e)
 }
 
 fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> Option<String> {
