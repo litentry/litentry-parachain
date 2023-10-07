@@ -7,9 +7,9 @@ use litentry_primitives::OneBlockCourseType;
 /// Course Completion / Course Outstanding Student / Course Participation
 // (type, description)
 const VC_ONEBLOCK_COURSE_INFOS: [(&str, &str); 3] = [
-	("Substrate Blockchain Development Course Completion", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. We hope you will keep your enthusiasm and keep exploring in the future path."),
-	("Substrate Blockchain Development Course Outstanding Student", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12. You stood out from all the students and were awarded the [Outstanding Student] title."),
-	("Substrate Blockchain Development Course Participation", "Congratulations on completing the entire course jointly created by OneBlock+ and Parity:《Introduction to Substrate Blockchain Development Course》, Phase 12."),
+	("Completion - OneBlock+ Substrate Blockchain Development Course", "You have completed the course co-created by OneBlock+ and Parity: [Introduction to Substrate Blockchain Development, Phase 12]."),
+	("Outstanding Student - OneBlock+ Substrate Blockchain Development Course", "You were awarded the title [Outstanding Student] in the course [Introduction to Substrate Blockchain Development, Phase 12] co-created by OneBlock+ and Parity."),
+	("Participation - OneBlock+ Substrate Blockchain Development Course", "You were a participant to the course co-created by OneBlock+ and Parity: [Introduction to Substrate Blockchain Development, Phase 12]."),
 ];
 
 pub trait OneBlockAssertionUpdate {
