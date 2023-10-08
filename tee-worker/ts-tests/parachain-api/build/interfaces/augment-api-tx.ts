@@ -5018,7 +5018,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { A1: any }
                         | { A2: any }
                         | { A3: any }
+                        | { A4: any }
                         | { A6: any }
+                        | { A7: any }
                         | { A8: any }
                         | { A10: any }
                         | { A11: any }
@@ -5027,7 +5029,6 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { Achainable: any }
                         | { A20: any }
                         | { Oneblock: any }
-                        | { HoldingTime: any }
                         | string
                         | Uint8Array,
                     hash: H256 | string | Uint8Array
@@ -5065,7 +5066,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { A1: any }
                         | { A2: any }
                         | { A3: any }
+                        | { A4: any }
                         | { A6: any }
+                        | { A7: any }
                         | { A8: any }
                         | { A10: any }
                         | { A11: any }
@@ -5074,7 +5077,6 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { Achainable: any }
                         | { A20: any }
                         | { Oneblock: any }
-                        | { HoldingTime: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -5121,7 +5123,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { A1: any }
                         | { A2: any }
                         | { A3: any }
+                        | { A4: any }
                         | { A6: any }
+                        | { A7: any }
                         | { A8: any }
                         | { A10: any }
                         | { A11: any }
@@ -5130,7 +5134,6 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { Achainable: any }
                         | { A20: any }
                         | { Oneblock: any }
-                        | { HoldingTime: any }
                         | string
                         | Uint8Array,
                     index: H256 | string | Uint8Array,
