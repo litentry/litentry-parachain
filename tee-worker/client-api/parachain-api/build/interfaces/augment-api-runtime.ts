@@ -124,12 +124,12 @@ declare module "@polkadot/api-base/types/calls" {
                     header:
                         | Header
                         | {
-                            parentHash?: any;
-                            number?: any;
-                            stateRoot?: any;
-                            extrinsicsRoot?: any;
-                            digest?: any;
-                        }
+                              parentHash?: any;
+                              number?: any;
+                              stateRoot?: any;
+                              extrinsicsRoot?: any;
+                              digest?: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<CollationInfo>
@@ -173,12 +173,12 @@ declare module "@polkadot/api-base/types/calls" {
                     header:
                         | Header
                         | {
-                            parentHash?: any;
-                            number?: any;
-                            stateRoot?: any;
-                            extrinsicsRoot?: any;
-                            digest?: any;
-                        }
+                              parentHash?: any;
+                              number?: any;
+                              stateRoot?: any;
+                              extrinsicsRoot?: any;
+                              digest?: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
@@ -210,30 +210,30 @@ declare module "@polkadot/api-base/types/calls" {
                     transaction:
                         | EthTransaction
                         | {
-                            hash?: any;
-                            nonce?: any;
-                            blockHash?: any;
-                            blockNumber?: any;
-                            transactionIndex?: any;
-                            from?: any;
-                            to?: any;
-                            value?: any;
-                            gasPrice?: any;
-                            maxFeePerGas?: any;
-                            maxPriorityFeePerGas?: any;
-                            gas?: any;
-                            input?: any;
-                            creates?: any;
-                            raw?: any;
-                            publicKey?: any;
-                            chainId?: any;
-                            standardV?: any;
-                            v?: any;
-                            r?: any;
-                            s?: any;
-                            accessList?: any;
-                            transactionType?: any;
-                        }
+                              hash?: any;
+                              nonce?: any;
+                              blockHash?: any;
+                              blockNumber?: any;
+                              transactionIndex?: any;
+                              from?: any;
+                              to?: any;
+                              value?: any;
+                              gasPrice?: any;
+                              maxFeePerGas?: any;
+                              maxPriorityFeePerGas?: any;
+                              gas?: any;
+                              input?: any;
+                              creates?: any;
+                              raw?: any;
+                              publicKey?: any;
+                              chainId?: any;
+                              standardV?: any;
+                              v?: any;
+                              r?: any;
+                              s?: any;
+                              accessList?: any;
+                              transactionType?: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<Result<ITuple<[]>, DispatchError>>
@@ -384,12 +384,12 @@ declare module "@polkadot/api-base/types/calls" {
                     header:
                         | Header
                         | {
-                            parentHash?: any;
-                            number?: any;
-                            stateRoot?: any;
-                            extrinsicsRoot?: any;
-                            digest?: any;
-                        }
+                              parentHash?: any;
+                              number?: any;
+                              stateRoot?: any;
+                              extrinsicsRoot?: any;
+                              digest?: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
