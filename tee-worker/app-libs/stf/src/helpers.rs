@@ -19,6 +19,7 @@ use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 
 use codec::{Decode, Encode};
 use frame_support::ensure;
+use hex_literal::hex;
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
@@ -28,6 +29,7 @@ use litentry_primitives::{
 };
 use log::*;
 use sp_core::blake2_256;
+use sp_runtime::AccountId32;
 use std::prelude::v1::*;
 
 pub fn get_storage_value<V: Decode>(
@@ -121,6 +123,12 @@ pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 			signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who),
 		None => false,
 	}
+}
+
+pub fn ensure_enclave_signer_or_alice(signer: &AccountId32) -> bool {
+	const ALICE: AccountId32 =
+		AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
+	signer == &enclave_signer_account::<AccountId32>() || signer == &ALICE
 }
 
 pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(

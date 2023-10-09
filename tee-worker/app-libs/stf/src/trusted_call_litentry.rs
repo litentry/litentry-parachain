@@ -20,8 +20,8 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self,
-		get_expected_raw_message, verify_web3_identity,
+		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_alice,
+		ensure_enclave_signer_or_self, get_expected_raw_message, verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, SetUserShieldingKeyResult, TrustedCallResult},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
@@ -30,7 +30,7 @@ use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_utils::stringify::account_id_to_string;
+use itp_utils::{if_production_or, stringify::account_id_to_string};
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
@@ -273,10 +273,20 @@ impl TrustedCallSigned {
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 	) -> StfResult<UserShieldingKeyType> {
-		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer(&signer)
-			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
-
+		if_production_or!(
+			{
+				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
+				ensure_enclave_signer(&signer)
+					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
+			},
+			{
+				// In non-prod: we allow to use `Alice` as the dummy signer
+				ensure!(
+					ensure_enclave_signer_or_alice(&signer),
+					StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
+				);
+			}
+		);
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 

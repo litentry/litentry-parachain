@@ -22,7 +22,10 @@ use core::fmt::{Debug, Formatter};
 use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
-use itp_utils::{hex::hex_encode, if_production_or};
+use itp_utils::{
+	hex::{decode_hex, hex_encode},
+	if_production_or,
+};
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
@@ -33,9 +36,6 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 use strum_macros::EnumIter;
-
-#[cfg(any(feature = "sgx", feature = "std"))]
-use std::string::ToString;
 
 pub type MaxStringLength = ConstU32<64>;
 pub type IdentityInnerString = BoundedVec<u8, MaxStringLength>;
@@ -263,12 +263,18 @@ impl Identity {
 			let v: Vec<&str> = did_suffix.split(':').collect();
 			if v.len() == 2 {
 				if v[0] == "substrate" {
-					let handle =
-						v[1].as_bytes().try_into().map_err(|_| "Address32 conversion error")?;
+					let handle = decode_hex(v[1])
+						.unwrap()
+						.as_slice()
+						.try_into()
+						.map_err(|_| "Address32 conversion error")?;
 					return Ok(Identity::Substrate(handle))
 				} else if v[0] == "evm" {
-					let handle =
-						v[1].as_bytes().try_into().map_err(|_| "Address20 conversion error")?;
+					let handle = decode_hex(v[1])
+						.unwrap()
+						.as_slice()
+						.try_into()
+						.map_err(|_| "Address20 conversion error")?;
 					return Ok(Identity::Evm(handle))
 				} else if v[0] == "github" {
 					return Ok(Identity::Github(IdentityString::new(v[1].as_bytes().to_vec())))
@@ -297,21 +303,21 @@ impl Identity {
 				Identity::Evm(address) => std::format!("evm:{}", &hex_encode(address.as_ref())),
 				Identity::Substrate(address) =>
 					std::format!("substrate:{}", &hex_encode(address.as_ref())),
-				Identity::Twitter(handle) => {
+				Identity::Twitter(handle) => std::format!(
+					"twitter:{}",
 					std::str::from_utf8(handle.inner_ref())
 						.map_err(|_| "twitter handle conversion error")?
-						.to_string()
-				},
-				Identity::Discord(handle) => {
+				),
+				Identity::Discord(handle) => std::format!(
+					"discord:{}",
 					std::str::from_utf8(handle.inner_ref())
 						.map_err(|_| "discord handle conversion error")?
-						.to_string()
-				},
-				Identity::Github(handle) => {
+				),
+				Identity::Github(handle) => std::format!(
+					"github:{}",
 					std::str::from_utf8(handle.inner_ref())
 						.map_err(|_| "github handle conversion error")?
-						.to_string()
-				},
+				),
 			}
 		))
 	}
@@ -475,46 +481,43 @@ mod tests {
 	}
 
 	#[test]
-	fn test_substrate_did_format() {
-		assert_eq!(Identity::Substrate([0; 32].into()).to_did().unwrap(), "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000")
+	fn test_substrate_did() {
+		let identity = Identity::Substrate([0; 32].into());
+		let did_str = "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000";
+		assert_eq!(identity.to_did().unwrap(), did_str);
+		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
 	}
 
 	#[test]
-	fn test_evm_did_format() {
-		assert_eq!(
-			Identity::Evm([0; 20].into()).to_did().unwrap(),
-			"did:litentry:evm:0x0000000000000000000000000000000000000000"
-		)
+	fn test_evm_did() {
+		let identity = Identity::Evm([0; 20].into());
+		let did_str = "did:litentry:evm:0x0000000000000000000000000000000000000000";
+		assert_eq!(identity.to_did().unwrap(), did_str);
+		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
 	}
 
 	#[test]
-	fn test_discord_did_format() {
-		assert_eq!(
-			Identity::Discord(IdentityString::new("discord_handle".as_bytes().to_vec()))
-				.to_did()
-				.unwrap(),
-			"did:litentry:discord:discord_handle"
-		)
+	fn test_discord_did() {
+		let identity = Identity::Discord(IdentityString::new("discord_handle".as_bytes().to_vec()));
+		let did_str = "did:litentry:discord:discord_handle";
+		assert_eq!(identity.to_did().unwrap(), did_str);
+		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
 	}
 
 	#[test]
-	fn test_twitter_format() {
-		assert_eq!(
-			Identity::Twitter(IdentityString::new("twitter_handle".as_bytes().to_vec()))
-				.to_did()
-				.unwrap(),
-			"did:litentry:twitter:twitter_handle"
-		)
+	fn test_twitter_did() {
+		let identity = Identity::Twitter(IdentityString::new("twitter_handle".as_bytes().to_vec()));
+		let did_str = "did:litentry:twitter:twitter_handle";
+		assert_eq!(identity.to_did().unwrap(), did_str);
+		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
 	}
 
 	#[test]
 
-	fn test_github_did_format() {
-		assert_eq!(
-			Identity::Github(IdentityString::new("github_handle".as_bytes().to_vec()))
-				.to_did()
-				.unwrap(),
-			"did:litentry:github:github_handle"
-		)
+	fn test_github_did() {
+		let identity = Identity::Github(IdentityString::new("github_handle".as_bytes().to_vec()));
+		let did_str = "did:litentry:github:github_handle";
+		assert_eq!(identity.to_did().unwrap(), did_str);
+		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
 	}
 }

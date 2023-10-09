@@ -24,7 +24,7 @@ use crate::{
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::{Identity, UserShieldingKeyType};
+use litentry_primitives::{Identity, Web3Network};
 use log::*;
 use sp_core::Pair;
 
@@ -34,29 +34,37 @@ pub struct LinkIdentityCommand {
 	src_did: String,
 	/// The to-be-linked identity in did format
 	dst_did: String,
+	/// The Web3Network vec, separated by `,`
+	#[clap(num_args = 0.., value_delimiter = ',')]
+	networks: Vec<String>,
 }
 
 impl LinkIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
+		let alice = get_pair_from_str(trusted_cli, "//Alice");
+		let src_id: Identity = Identity::from_did(self.src_did.as_str()).unwrap();
+		let dst_id: Identity = Identity::from_did(self.dst_did.as_str()).unwrap();
+		let networks: Vec<Web3Network> =
+			self.networks.iter().map(|n| n.as_str().try_into().unwrap()).collect();
 		// let who = get_pair_from_str(trusted_cli, self.account.as_str());
 		// let identity: Identity = who.public().into();
 
-		// let (mrenclave, shard) = get_identifiers(trusted_cli);
-		// let nonce = get_layer_two_nonce!(who, cli, trusted_cli);
+		let (mrenclave, shard) = get_identifiers(trusted_cli);
+		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
 		// let mut key = UserShieldingKeyType::default();
 
 		// hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
 
-		// let top: TrustedOperation = TrustedCall::set_user_shielding_key(
-		// 	identity.clone(),
-		// 	identity,
-		// 	key,
-		// 	Default::default(),
-		// )
-		// .sign(&KeyPair::Sr25519(Box::new(who)), nonce, &mrenclave, &shard)
-		// .into_trusted_operation(trusted_cli.direct);
-		// Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
-		Ok(CliResultOk::None)
+		let top: TrustedOperation = TrustedCall::link_identity_callback(
+			alice.public().into(),
+			src_id,
+			dst_id,
+			networks,
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
+		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }
