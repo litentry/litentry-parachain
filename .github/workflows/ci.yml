@@ -170,7 +170,15 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Tee-worker install npm deps
+      - name: Tee-worker client-api install npm deps
+        working-directory: ./tee-worker/client-api
+        run: pnpm install
+
+      - name: Tee-worker client-api build
+        working-directory: ./tee-worker/client-api
+        run: pnpm run build
+
+      - name: Tee-worker ts-tests install npm deps
         working-directory: ./tee-worker/ts-tests
         run: pnpm install
 
@@ -478,8 +486,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-contexts: local-stash=docker-image://localhost:5000/local-stash:latest
-          load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:latest
           target: deployed-worker
@@ -489,8 +495,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          build-contexts: local-stash=docker-image://localhost:5000/local-stash:latest
-          load: true
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:latest
           target: deployed-client

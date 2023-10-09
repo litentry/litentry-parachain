@@ -10,6 +10,8 @@ ts-tests of tee-worker
 
 ## Installation
 
+###### ts-tests:
+
 ```
 cd tee-worker/ts-tests
 nvm use
@@ -17,7 +19,16 @@ corepack enable pnpm
 pnpm install
 ```
 
-## Type Generated
+###### client-api:
+
+```cd tee-worker/ts-tests
+cd tee-worker/client-api
+nvm use
+corepack enable pnpm
+pnpm install
+```
+
+## Type Generated(client-api folder)
 
 Update parachain metadata: `pnpm --filter parachain-api run update-metadata` (requires the parachain is running)
 
@@ -29,11 +40,13 @@ Generate sidechain type: `pnpm --filter sidechain-api run build`
 
 Alternatively, you can run `pnpm --run update-build` to do all things above in one go.
 
+##### Note: After updating the client-api, it is necessary to reinstall the `parachain-api` and `sidechain-api` dependencies within the ts-tests, or else the ts-tests won't work. In summary, you will need to execute the command `pnpm install` once more.
+
 ## Local
 
 [Start parachain && worker](https://github.com/litentry/litentry-parachain/blob/dev/README.md)
 
-## Usage
+## Usage(ts-tests folder)
 
 II identity test: `pnpm --filter integration-tests run test-ii-identity:local`
 
