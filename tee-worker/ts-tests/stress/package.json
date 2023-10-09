@@ -23,7 +23,7 @@
 		"scale-ts": "^0.2.11",
 		"websocket-as-promised": "^2.0.1",
 		"ws": "^8.8.1",
-		"zod": "^3.21.4"
+		"zod": "^3.22.3"
 	},
 	"devDependencies": {
 		"@ethersproject/providers": "^5.7.2",
