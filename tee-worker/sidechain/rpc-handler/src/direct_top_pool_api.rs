@@ -32,13 +32,21 @@ use itp_types::{DirectRequestStatus, Request, ShardIdentifier, TrustedOperationS
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use log::*;
-use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
+use std::{
+	borrow::ToOwned,
+	format,
+	string::String,
+	sync::{mpsc::SyncSender, Arc},
+	vec,
+	vec::Vec,
+};
 
 type Hash = sp_core::H256;
 
 pub fn add_top_pool_direct_rpc_methods<R>(
 	top_pool_author: Arc<R>,
 	mut io_handler: IoHandler,
+	sender: SyncSender<(Hash, Vec<String>)>,
 ) -> IoHandler
 where
 	R: AuthorApi<Hash, Hash> + Send + Sync + 'static,
@@ -47,14 +55,20 @@ where
 	let author_submit_and_watch_extrinsic_name: &str = "author_submitAndWatchExtrinsic";
 	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_and_watch_extrinsic_name, move |params: Params| {
-		let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params) {
-			Ok(hash_value) => RpcReturnValue {
-				do_watch: true,
-				value: vec![],
-				status: DirectRequestStatus::TrustedOperationStatus(
-					TrustedOperationStatus::Submitted,
-					hash_value,
-				),
+		let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params.clone()) {
+			Ok(hash_value) => {
+				if let Ok(parsed_params) = params.parse::<Vec<String>>() {
+					sender.send((hash_value, parsed_params)).unwrap();
+				}
+
+				RpcReturnValue {
+					do_watch: true,
+					value: vec![],
+					status: DirectRequestStatus::TrustedOperationStatus(
+						TrustedOperationStatus::Submitted,
+						hash_value,
+					),
+				}
 			}
 			.to_hex(),
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),

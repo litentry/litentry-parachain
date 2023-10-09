@@ -24,7 +24,7 @@ use itc_direct_rpc_server::{
 	rpc_ws_handler::RpcWsHandler,
 };
 use itc_tls_websocket_server::{ConnectionToken, WebSocketMessageHandler};
-use itp_rpc::{RpcRequest, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 use itp_sgx_crypto::get_rsa3072_repository;
 use itp_sgx_temp_dir::TempDir;
 use itp_stf_executor::{getter_executor::GetterExecutor, mocks::GetStateMock};
@@ -33,8 +33,13 @@ use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{DirectRequestStatus, Request, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use jsonrpc_core::Params;
 use litentry_primitives::{Address32, Identity};
-use std::{string::ToString, sync::Arc, vec::Vec};
+use std::{
+	string::{String, ToString},
+	sync::Arc,
+	vec::Vec,
+};
 
 pub fn get_state_request_works() {
 	type TestState = u64;
@@ -50,12 +55,14 @@ pub fn get_state_request_works() {
 	let getter_executor =
 		Arc::new(GetterExecutor::<_, GetStateMock<TestState>>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
+	let (sender, receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		Arc::new(rsa_repository),
 		None::<Arc<HandleStateMock>>,
+		sender,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 
@@ -64,9 +71,12 @@ pub fn get_state_request_works() {
 
 	let request = Request { shard: ShardIdentifier::default(), cyphertext: getter.encode() };
 
-	let request_string =
-		RpcRequest::compose_jsonrpc_call("state_executeGetter".to_string(), vec![request.to_hex()])
-			.unwrap();
+	let request_string = RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
+		"state_executeGetter".to_string(),
+		vec![request.to_hex()],
+	)
+	.unwrap();
 
 	let response_string =
 		rpc_handler.handle_message(ConnectionToken(1), request_string).unwrap().unwrap();

@@ -38,8 +38,8 @@ impl EnclaveBase for EnclaveMock {
 
 	fn init_enclave_sidechain_components(
 		&self,
-		fail_mode: Option<String>,
-		fail_at: u64,
+		_fail_mode: Option<String>,
+		_fail_at: u64,
 	) -> EnclaveResult<()> {
 		Ok(())
 	}

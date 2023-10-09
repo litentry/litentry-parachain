@@ -55,6 +55,8 @@ use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{borrow::ToOwned, format, str, string::String, sync::Arc, vec::Vec};
 
+type Hash = sp_core::H256;
+
 fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
 }
@@ -74,6 +76,7 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, S>(
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<S>>,
+	sender: std::sync::mpsc::SyncSender<(Hash, Vec<String>)>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
@@ -86,7 +89,7 @@ where
 	let pool_author = top_pool_author.clone();
 
 	// Add direct TOP pool rpc methods
-	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author, io);
+	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author, io, sender);
 
 	// author_getShieldingKey
 	let rsa_pubkey_name: &str = "author_getShieldingKey";

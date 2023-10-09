@@ -86,6 +86,7 @@ export default {
                 Usurped: null,
                 Dropped: null,
                 Invalid: null,
+                TopExecuted: "Bytes",
             },
         },
 

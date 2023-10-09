@@ -1,0 +1,36 @@
+[package]
+name = "itc-peer-top-broadcaster"
+version = "0.1.0"
+authors = ['Trust Computing GmbH <info@litentry.com>']
+edition = "2021"
+
+[dependencies]
+itc-direct-rpc-client = { path = "../direct-rpc-client", default-features = false }
+itc-direct-rpc-server = { path = "../direct-rpc-server", default-features = false }
+itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
+itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
+itp-types = { path = "../../core-primitives/types", default-features = false }
+itp-utils = { path = "../../core-primitives/utils", default-features = false }
+
+log = { version = "0.4", default-features = false }
+sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
+
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "itp-sgx-crypto/sgx",
+    "itp-utils/sgx",
+    "itc-direct-rpc-server/sgx",
+    "itc-direct-rpc-client/sgx",
+]
+std = [
+    "itp-sgx-crypto/std",
+    "itp-stf-primitives/std",
+    "itp-types/std",
+    "itp-utils/std",
+    "log/std",
+    "itc-direct-rpc-server/std",
+    "itc-direct-rpc-client/std",
+]

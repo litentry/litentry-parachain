@@ -6,6 +6,7 @@ edition = "2021"
 
 [dependencies]
 # sgx dependencies
+serde_json-sgx = { package = "serde_json", tag = "sgx_1.1.3", git = "https://github.com/mesalock-linux/serde-json-sgx", optional = true }
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # local dependencies

@@ -26,7 +26,7 @@ use codec::{Decode, Encode};
 use ita_stf::{Getter, TrustedOperation};
 use itc_rpc_client::direct_client::DirectApi;
 use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, TEEREX};
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, TrustedOperationStatus};
@@ -251,6 +251,7 @@ pub(crate) fn get_json_request(
 	// compose jsonrpc call
 	let request = Request { shard, cyphertext: operation_call_encrypted };
 	RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
 		"author_submitAndWatchExtrinsic".to_string(),
 		vec![request.to_hex()],
 	)

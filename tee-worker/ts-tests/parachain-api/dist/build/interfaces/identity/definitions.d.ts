@@ -79,6 +79,7 @@ declare const _default: {
                 Usurped: null;
                 Dropped: null;
                 Invalid: null;
+                TopExecuted: string;
             };
         };
         LitentryIdentity: {

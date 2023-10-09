@@ -1,20 +1,18 @@
 {
   "workers": [
     {
-      "id": "dev",
+      "id": 1,
       "source": "bin",
       "flags": [
         "--clean-reset",
         "-P",
-        "$TrustedWorkerPort",
+        "2000",
         "-w",
-        "$UntrustedWorkerPort",
+        "2001",
         "-r",
-        "$MuRaPort",
+        "3443",
         "-h",
-        "$UntrustedHttpPort",
-        "-p",
-        "$CollatorWSPort",
+        "4545",
         "--running-mode",
         "mock",
         "--enable-mock-server",
@@ -24,7 +22,8 @@
       ],
       "subcommand_flags": [
         "--skip-ra",
-        "--dev"
+        "--dev",
+        "--request-state"
       ]
     }
   ]

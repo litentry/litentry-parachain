@@ -22,13 +22,12 @@ use crate::{
 	error::{Error, Result as EnclaveResult},
 	initialization::global_components::{
 		EnclaveBlockImportConfirmationHandler, EnclaveGetterExecutor, EnclaveOCallApi,
-		EnclaveRpcConnectionRegistry, EnclaveRpcResponder, EnclaveShieldingKeyRepository,
-		EnclaveSidechainApi, EnclaveSidechainBlockImportQueue,
-		EnclaveSidechainBlockImportQueueWorker, EnclaveSidechainBlockImporter,
-		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
-		EnclaveStateInitializer, EnclaveStateObserver, EnclaveStateSnapshotRepository,
-		EnclaveStfEnclaveSigner, EnclaveTopPool, EnclaveTopPoolAuthor,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
+		EnclaveRpcResponder, EnclaveShieldingKeyRepository, EnclaveSidechainApi,
+		EnclaveSidechainBlockImportQueue, EnclaveSidechainBlockImportQueueWorker,
+		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
+		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
+		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
+		EnclaveTopPoolAuthor, GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
@@ -54,6 +53,7 @@ use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
 };
+use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
 	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
 	WebSocketServer,
@@ -152,13 +152,21 @@ pub(crate) fn init_enclave(
 	// validateer completely breaking (IO PipeError).
 	// Corresponding GH issues are #545 and #600.
 
+	let response_channel = Arc::new(RpcResponseChannel::default());
+	let rpc_responder =
+		Arc::new(EnclaveRpcResponder::new(connection_registry.clone(), response_channel));
+
 	let top_pool_author = create_top_pool_author(
-		connection_registry.clone(),
+		rpc_responder.clone(),
 		state_handler.clone(),
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
+	//
+	// let (sender, receiver) =
+	// 	sgx_tstd::sync::mpsc::sync_channel::<(Hash, sgx_tstd::vec::Vec<String>)>(1000);
+	let sender = init(shielding_key_repository.clone(), rpc_responder);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
@@ -166,6 +174,7 @@ pub(crate) fn init_enclave(
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
+		sender,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -306,14 +315,11 @@ pub(crate) fn migrate_shard(
 
 /// Initialize the TOP pool author component.
 pub fn create_top_pool_author(
-	connection_registry: Arc<EnclaveRpcConnectionRegistry>,
+	rpc_responder: Arc<EnclaveRpcResponder>,
 	state_handler: Arc<EnclaveStateHandler>,
 	ocall_api: Arc<EnclaveOCallApi>,
 	shielding_key_repository: Arc<EnclaveShieldingKeyRepository>,
 ) -> Arc<EnclaveTopPoolAuthor> {
-	let response_channel = Arc::new(RpcResponseChannel::default());
-	let rpc_responder = Arc::new(EnclaveRpcResponder::new(connection_registry, response_channel));
-
 	let side_chain_api = Arc::new(EnclaveSidechainApi::new());
 	let top_pool =
 		Arc::new(EnclaveTopPool::create(PoolOptions::default(), side_chain_api, rpc_responder));

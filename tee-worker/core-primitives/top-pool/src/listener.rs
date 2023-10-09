@@ -86,6 +86,12 @@ where
 		self.fire(hash, |watcher| watcher.broadcast(peers));
 	}
 
+	/// Notify listeners about top execution.
+	pub fn top_executed(&mut self, hash: &H, response: &[u8]) {
+		trace!(target: "txpool", "[{:?}] Top Executed", hash);
+		self.fire(hash, |watcher| watcher.top_executed(response));
+	}
+
 	/// New operation was added to the ready pool or promoted from the future pool.
 	pub fn ready(&mut self, tx: &H, old: Option<&H>) {
 		trace!(target: "txpool", "[{:?}] Ready (replaced with {:?})", tx, old);

@@ -53,6 +53,10 @@ where
 		Ok(())
 	}
 
+	fn update_force_wait(&self, _hash: Self::Hash, _force_wait: bool) -> DirectRpcResult<()> {
+		Ok(())
+	}
+
 	fn update_connection_state(
 		&self,
 		_hash: Self::Hash,

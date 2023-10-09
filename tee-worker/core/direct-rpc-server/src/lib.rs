@@ -121,6 +121,8 @@ pub trait SendRpcResponse: Send + Sync {
 
 	fn send_state(&self, hash: Self::Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()>;
 
+	fn update_force_wait(&self, hash: Self::Hash, force_wait: bool) -> DirectRpcResult<()>;
+
 	// Litentry: update the `value` field in the returning structure and connection force_wait flag
 	fn update_connection_state(
 		&self,

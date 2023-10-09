@@ -747,6 +747,7 @@ dependencies = [
  "itc-offchain-worker-executor",
  "itc-parentchain",
  "itc-parentchain-test",
+ "itc-peer-top-broadcaster",
  "itc-tls-websocket-server",
  "itp-attestation-handler",
  "itp-component-container",
@@ -1651,6 +1652,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "itc-crypto-helper"
+version = "0.1.0"
+dependencies = [
+ "serde 1.0.175",
+ "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
+ "sgx_crypto_helper",
+ "sgx_tstd",
+]
+
+[[package]]
+name = "itc-direct-rpc-client"
+version = "0.1.0"
+dependencies = [
+ "itc-crypto-helper",
+ "itp-rpc",
+ "itp-sgx-crypto",
+ "itp-types",
+ "itp-utils",
+ "log",
+ "parity-scale-codec",
+ "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?tag=sgx_1.1.3)",
+ "serde 1.0.175",
+ "serde_json 1.0.103",
+ "sgx_crypto_helper",
+ "sgx_tstd",
+ "tungstenite",
+ "url",
+ "webpki",
+]
+
+[[package]]
 name = "itc-direct-rpc-server"
 version = "0.9.0"
 dependencies = [
@@ -1784,6 +1816,20 @@ version = "0.9.0"
 dependencies = [
  "itp-types",
  "sp-runtime",
+]
+
+[[package]]
+name = "itc-peer-top-broadcaster"
+version = "0.1.0"
+dependencies = [
+ "itc-direct-rpc-client",
+ "itc-direct-rpc-server",
+ "itp-sgx-crypto",
+ "itp-stf-primitives",
+ "itp-types",
+ "itp-utils",
+ "log",
+ "sgx_tstd",
 ]
 
 [[package]]

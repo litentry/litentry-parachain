@@ -5,7 +5,7 @@ use codec::Decode;
 use frame_metadata::{RuntimeMetadata, StorageEntryType, StorageHasher};
 use ita_sgx_runtime::Runtime;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
 use log::{error, warn};
@@ -135,6 +135,7 @@ fn send_get_storage_request(
 	storage_entry_key: &Vec<u8>,
 ) -> Option<Vec<u8>> {
 	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
 		"state_getStorage".to_string(),
 		vec![mrenclave, format!("0x{}", hex::encode(storage_entry_key))],
 	)

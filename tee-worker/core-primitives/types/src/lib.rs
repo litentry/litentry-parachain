@@ -152,6 +152,8 @@ pub enum TrustedOperationStatus {
 	Dropped,
 	/// TrustedOperation is no longer valid in the current state.
 	Invalid,
+	/// TrustedOperation has been executed.
+	TopExecuted(Vec<u8>),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]

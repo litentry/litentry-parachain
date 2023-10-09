@@ -75,8 +75,12 @@ impl DirectClient {
 		// Compose jsonrpc call.
 		let data = Request { shard, cyphertext: getter.encode() };
 		let rpc_method = "state_executeGetter".to_owned();
-		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
+			rpc_method,
+			vec![data.to_hex()],
+		)
+		.unwrap();
 
 		let rpc_response_str = self.get(&jsonrpc_call).unwrap();
 
@@ -139,6 +143,7 @@ impl DirectApi for DirectClient {
 
 	fn get_rsa_pubkey(&self) -> Result<Rsa3072PubKey> {
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
 			"author_getShieldingKey".to_string(),
 			Default::default(),
 		)?;
@@ -154,8 +159,11 @@ impl DirectApi for DirectClient {
 	}
 
 	fn get_mu_ra_url(&self) -> Result<String> {
-		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call("author_getMuRaUrl".to_string(), Default::default())?;
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
+			"author_getMuRaUrl".to_string(),
+			Default::default(),
+		)?;
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
@@ -168,6 +176,7 @@ impl DirectApi for DirectClient {
 
 	fn get_untrusted_worker_url(&self) -> Result<String> {
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
 			"author_getUntrustedUrl".to_string(),
 			Default::default(),
 		)?;
@@ -182,8 +191,11 @@ impl DirectApi for DirectClient {
 	}
 
 	fn get_state_metadata(&self) -> Result<Metadata> {
-		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call("state_getMetadata".to_string(), Default::default())?;
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
+			"state_getMetadata".to_string(),
+			Default::default(),
+		)?;
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;
@@ -201,6 +213,7 @@ impl DirectApi for DirectClient {
 
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32> {
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
 			"author_getNextNonce".to_owned(),
 			vec![shard.encode().to_base58(), account.to_hex()],
 		)
@@ -213,8 +226,11 @@ impl DirectApi for DirectClient {
 	}
 
 	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
-		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call("state_getMrenclave".to_string(), Default::default())?;
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
+			"state_getMrenclave".to_string(),
+			Default::default(),
+		)?;
 
 		// Send json rpc call to ws server.
 		let response_str = self.get(&jsonrpc_call)?;

@@ -72,15 +72,11 @@ pub struct RpcRequest {
 
 impl RpcRequest {
 	pub fn compose_jsonrpc_call(
+		id: Id,
 		method: String,
 		params: Vec<String>,
 	) -> Result<String, serde_json::Error> {
-		serde_json::to_string(&RpcRequest {
-			jsonrpc: "2.0".to_owned(),
-			method,
-			params,
-			id: Id::Number(1),
-		})
+		serde_json::to_string(&RpcRequest { jsonrpc: "2.0".to_owned(), method, params, id })
 	}
 }
 

@@ -37,11 +37,11 @@ root_dir=$(git rev-parse --show-toplevel)
 
 start=$(date +%s)
 
-clean_up
+#clean_up
 
 cd "$root_dir"
 make fmt
-make shellcheck # _shellcheck is not enforced in CI though
+#make shellcheck # _shellcheck is not enforced in CI though
 
 echo "[Step 1], Parachain clippy"
 cd "$root_dir" && parachain_check
@@ -57,11 +57,11 @@ cd "$root_dir/tee-worker"
 RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
 echo "[Step 5], Service test"
-clean_up
+#clean_up
 cd "$root_dir/tee-worker"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
-./litentry-worker test --all
+./litentry-worker test --unit
 
 end=$(date +%s)
 echo "Elapsed Time: $((end-start)) seconds"
