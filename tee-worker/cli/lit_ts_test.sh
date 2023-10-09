@@ -20,7 +20,7 @@ TEST=$1
 
 cd /client-api
 pnpm install
-pnpm --filter integration-tests run $TEST:staging
+pnpm run build
 
 cd /ts-tests
 
