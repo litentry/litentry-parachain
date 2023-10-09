@@ -46,15 +46,9 @@ impl LinkIdentityCommand {
 		let dst_id: Identity = Identity::from_did(self.dst_did.as_str()).unwrap();
 		let networks: Vec<Web3Network> =
 			self.networks.iter().map(|n| n.as_str().try_into().unwrap()).collect();
-		// let who = get_pair_from_str(trusted_cli, self.account.as_str());
-		// let identity: Identity = who.public().into();
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
-
-		// let mut key = UserShieldingKeyType::default();
-
-		// hex::decode_to_slice(&self.key_hex, &mut key).expect("decoding shielding_key failed");
 
 		let top: TrustedOperation = TrustedCall::link_identity_callback(
 			alice.public().into(),

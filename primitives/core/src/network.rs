@@ -63,9 +63,9 @@ pub enum Web3Network {
 }
 
 // mainly used in CLI
-impl TryFrom<&'static str> for Web3Network {
+impl TryFrom<&str> for Web3Network {
 	type Error = ();
-	fn try_from(value: &'static str) -> Result<Self, Self::Error> {
+	fn try_from(value: &str) -> Result<Self, Self::Error> {
 		Web3Network::iter()
 			.find(|n| <Self as Into<&'static str>>::into(*n).to_lowercase() == value.to_lowercase())
 			.ok_or(())
