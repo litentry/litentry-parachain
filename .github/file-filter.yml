@@ -28,10 +28,8 @@ tee_src: &tee_src
   - 'tee-worker/build.Dockerfile'
   - 'tee-worker/enclave-runtime/**'
   - 'tee-worker/docker/**'
-  - 'tee-worker/client-api/**'
 
 tee_test: &tee_test
   - 'tee-worker/ts-tests/**'
   - 'tee-worker/cli/*.sh'
-  - 'tee-worker/client-api/**'
   - 'docker/**'
