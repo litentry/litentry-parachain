@@ -3,7 +3,7 @@
 
 // import type lookup before we augment - in some environments
 // this is required to allow for ambient/previous definitions
-import '@polkadot/types/types/registry';
+import "@polkadot/types/types/registry";
 
 import type {
     CorePrimitivesNetworkWeb3Network,
@@ -70,9 +70,9 @@ import type {
     SpVersionRuntimeVersion,
     SpWeightsRuntimeDbWeight,
     SpWeightsWeightV2Weight,
-} from '@polkadot/types/lookup';
+} from "@polkadot/types/lookup";
 
-declare module '@polkadot/types/types/registry' {
+declare module "@polkadot/types/types/registry" {
     interface InterfaceTypes {
         CorePrimitivesNetworkWeb3Network: CorePrimitivesNetworkWeb3Network;
         FrameSupportDispatchDispatchClass: FrameSupportDispatchDispatchClass;

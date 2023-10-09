@@ -3,7 +3,7 @@
 
 // import type lookup before we augment - in some environments
 // this is required to allow for ambient/previous definitions
-import '@polkadot/types/types/registry';
+import "@polkadot/types/types/registry";
 
 import type {
     CorePrimitivesAssertion,
@@ -367,9 +367,9 @@ import type {
     XcmVersionedMultiLocation,
     XcmVersionedResponse,
     XcmVersionedXcm,
-} from '@polkadot/types/lookup';
+} from "@polkadot/types/lookup";
 
-declare module '@polkadot/types/types/registry' {
+declare module "@polkadot/types/types/registry" {
     interface InterfaceTypes {
         CorePrimitivesAssertion: CorePrimitivesAssertion;
         CorePrimitivesAssertionAchainableAmount: CorePrimitivesAssertionAchainableAmount;

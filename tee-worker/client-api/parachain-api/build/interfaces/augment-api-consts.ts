@@ -3,11 +3,11 @@
 
 // import type lookup before we augment - in some environments
 // this is required to allow for ambient/previous definitions
-import '@polkadot/api-base/types/consts';
+import "@polkadot/api-base/types/consts";
 
-import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
-import type { Option, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
-import type { Perbill, Percent, Permill } from '@polkadot/types/interfaces/runtime';
+import type { ApiTypes, AugmentedConst } from "@polkadot/api-base/types";
+import type { Option, U8aFixed, bool, u128, u16, u32, u64, u8 } from "@polkadot/types-codec";
+import type { Perbill, Percent, Permill } from "@polkadot/types/interfaces/runtime";
 import type {
     FrameSupportPalletId,
     FrameSystemLimitsBlockLength,
@@ -16,11 +16,11 @@ import type {
     SpWeightsRuntimeDbWeight,
     SpWeightsWeightV2Weight,
     XcmV3MultiLocation,
-} from '@polkadot/types/lookup';
+} from "@polkadot/types/lookup";
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
-declare module '@polkadot/api-base/types/consts' {
+declare module "@polkadot/api-base/types/consts" {
     interface AugmentedConsts<ApiType extends ApiTypes> {
         balances: {
             /**

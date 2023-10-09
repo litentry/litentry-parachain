@@ -3,26 +3,37 @@
 
 // import type lookup before we augment - in some environments
 // this is required to allow for ambient/previous definitions
-import '@polkadot/api-base/types/calls';
+import "@polkadot/api-base/types/calls";
 
-import type { ApiTypes, AugmentedCall, DecoratedCallBase } from '@polkadot/api-base/types';
-import type { Bytes, Null, Option, Result, U256, Vec, bool, u256, u32, u64 } from '@polkadot/types-codec';
-import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
-import type { CheckInherentsResult, InherentData } from '@polkadot/types/interfaces/blockbuilder';
-import type { BlockHash } from '@polkadot/types/interfaces/chain';
-import type { AuthorityId } from '@polkadot/types/interfaces/consensus';
-import type { CollationInfo } from '@polkadot/types/interfaces/cumulus';
+import type { ApiTypes, AugmentedCall, DecoratedCallBase } from "@polkadot/api-base/types";
+import type {
+    Bytes,
+    Null,
+    Option,
+    Result,
+    U256,
+    Vec,
+    bool,
+    u256,
+    u32,
+    u64,
+} from "@polkadot/types-codec";
+import type { AnyNumber, ITuple } from "@polkadot/types-codec/types";
+import type { CheckInherentsResult, InherentData } from "@polkadot/types/interfaces/blockbuilder";
+import type { BlockHash } from "@polkadot/types/interfaces/chain";
+import type { AuthorityId } from "@polkadot/types/interfaces/consensus";
+import type { CollationInfo } from "@polkadot/types/interfaces/cumulus";
 import type {
     BlockV2,
     EthReceiptV3,
     EthTransaction,
     EthTransactionStatus,
     TransactionV2,
-} from '@polkadot/types/interfaces/eth';
-import type { EvmAccount, EvmCallInfo, EvmCreateInfo } from '@polkadot/types/interfaces/evm';
-import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
-import type { OpaqueMetadata } from '@polkadot/types/interfaces/metadata';
-import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
+} from "@polkadot/types/interfaces/eth";
+import type { EvmAccount, EvmCallInfo, EvmCreateInfo } from "@polkadot/types/interfaces/evm";
+import type { Extrinsic } from "@polkadot/types/interfaces/extrinsics";
+import type { OpaqueMetadata } from "@polkadot/types/interfaces/metadata";
+import type { FeeDetails, RuntimeDispatchInfo } from "@polkadot/types/interfaces/payment";
 import type {
     AccountId,
     Balance,
@@ -35,23 +46,26 @@ import type {
     Permill,
     SlotDuration,
     Weight,
-} from '@polkadot/types/interfaces/runtime';
-import type { RuntimeVersion } from '@polkadot/types/interfaces/state';
-import type { ApplyExtrinsicResult, DispatchError } from '@polkadot/types/interfaces/system';
-import type { TransactionSource, TransactionValidity } from '@polkadot/types/interfaces/txqueue';
-import type { IExtrinsic, Observable } from '@polkadot/types/types';
+} from "@polkadot/types/interfaces/runtime";
+import type { RuntimeVersion } from "@polkadot/types/interfaces/state";
+import type { ApplyExtrinsicResult, DispatchError } from "@polkadot/types/interfaces/system";
+import type { TransactionSource, TransactionValidity } from "@polkadot/types/interfaces/txqueue";
+import type { IExtrinsic, Observable } from "@polkadot/types/types";
 
 export type __AugmentedCall<ApiType extends ApiTypes> = AugmentedCall<ApiType>;
 export type __DecoratedCallBase<ApiType extends ApiTypes> = DecoratedCallBase<ApiType>;
 
-declare module '@polkadot/api-base/types/calls' {
+declare module "@polkadot/api-base/types/calls" {
     interface AugmentedCalls<ApiType extends ApiTypes> {
         /** 0xbc9d89904f5b923f/1 */
         accountNonceApi: {
             /**
              * The API to query account nonce (aka transaction index)
              **/
-            accountNonce: AugmentedCall<ApiType, (accountId: AccountId | string | Uint8Array) => Observable<Index>>;
+            accountNonce: AugmentedCall<
+                ApiType,
+                (accountId: AccountId | string | Uint8Array) => Observable<Index>
+            >;
         };
         /** 0xdd718d5cc53262d4/1 */
         auraApi: {
@@ -71,7 +85,9 @@ declare module '@polkadot/api-base/types/calls' {
              **/
             applyExtrinsic: AugmentedCall<
                 ApiType,
-                (extrinsic: Extrinsic | IExtrinsic | string | Uint8Array) => Observable<ApplyExtrinsicResult>
+                (
+                    extrinsic: Extrinsic | IExtrinsic | string | Uint8Array
+                ) => Observable<ApplyExtrinsicResult>
             >;
             /**
              * Check that the inherents are valid.
@@ -92,7 +108,9 @@ declare module '@polkadot/api-base/types/calls' {
              **/
             inherentExtrinsics: AugmentedCall<
                 ApiType,
-                (inherent: InherentData | { data?: any } | string | Uint8Array) => Observable<Vec<Extrinsic>>
+                (
+                    inherent: InherentData | { data?: any } | string | Uint8Array
+                ) => Observable<Vec<Extrinsic>>
             >;
         };
         /** 0xea93e3f16f3d6962/2 */
@@ -105,7 +123,13 @@ declare module '@polkadot/api-base/types/calls' {
                 (
                     header:
                         | Header
-                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
+                        | {
+                            parentHash?: any;
+                            number?: any;
+                            stateRoot?: any;
+                            extrinsicsRoot?: any;
+                            digest?: any;
+                        }
                         | string
                         | Uint8Array
                 ) => Observable<CollationInfo>
@@ -136,7 +160,9 @@ declare module '@polkadot/api-base/types/calls' {
              **/
             executeBlock: AugmentedCall<
                 ApiType,
-                (block: Block | { header?: any; extrinsics?: any } | string | Uint8Array) => Observable<Null>
+                (
+                    block: Block | { header?: any; extrinsics?: any } | string | Uint8Array
+                ) => Observable<Null>
             >;
             /**
              * Initialize a block with the given header.
@@ -146,7 +172,13 @@ declare module '@polkadot/api-base/types/calls' {
                 (
                     header:
                         | Header
-                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
+                        | {
+                            parentHash?: any;
+                            number?: any;
+                            stateRoot?: any;
+                            extrinsicsRoot?: any;
+                            digest?: any;
+                        }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
@@ -178,30 +210,30 @@ declare module '@polkadot/api-base/types/calls' {
                     transaction:
                         | EthTransaction
                         | {
-                              hash?: any;
-                              nonce?: any;
-                              blockHash?: any;
-                              blockNumber?: any;
-                              transactionIndex?: any;
-                              from?: any;
-                              to?: any;
-                              value?: any;
-                              gasPrice?: any;
-                              maxFeePerGas?: any;
-                              maxPriorityFeePerGas?: any;
-                              gas?: any;
-                              input?: any;
-                              creates?: any;
-                              raw?: any;
-                              publicKey?: any;
-                              chainId?: any;
-                              standardV?: any;
-                              v?: any;
-                              r?: any;
-                              s?: any;
-                              accessList?: any;
-                              transactionType?: any;
-                          }
+                            hash?: any;
+                            nonce?: any;
+                            blockHash?: any;
+                            blockNumber?: any;
+                            transactionIndex?: any;
+                            from?: any;
+                            to?: any;
+                            value?: any;
+                            gasPrice?: any;
+                            maxFeePerGas?: any;
+                            maxPriorityFeePerGas?: any;
+                            gas?: any;
+                            input?: any;
+                            creates?: any;
+                            raw?: any;
+                            publicKey?: any;
+                            chainId?: any;
+                            standardV?: any;
+                            v?: any;
+                            r?: any;
+                            s?: any;
+                            accessList?: any;
+                            transactionType?: any;
+                        }
                         | string
                         | Uint8Array
                 ) => Observable<Result<ITuple<[]>, DispatchError>>
@@ -212,11 +244,17 @@ declare module '@polkadot/api-base/types/calls' {
             /**
              * Returns pallet_evm::Accounts by address.
              **/
-            accountBasic: AugmentedCall<ApiType, (address: H160 | string | Uint8Array) => Observable<EvmAccount>>;
+            accountBasic: AugmentedCall<
+                ApiType,
+                (address: H160 | string | Uint8Array) => Observable<EvmAccount>
+            >;
             /**
              * For a given account address, returns pallet_evm::AccountCodes.
              **/
-            accountCodeAt: AugmentedCall<ApiType, (address: H160 | string | Uint8Array) => Observable<Bytes>>;
+            accountCodeAt: AugmentedCall<
+                ApiType,
+                (address: H160 | string | Uint8Array) => Observable<Bytes>
+            >;
             /**
              * Returns the converted FindAuthor::find_author authority id.
              **/
@@ -276,7 +314,13 @@ declare module '@polkadot/api-base/types/calls' {
             currentAll: AugmentedCall<
                 ApiType,
                 () => Observable<
-                    ITuple<[Option<BlockV2>, Option<Vec<EthReceiptV3>>, Option<Vec<EthTransactionStatus>>]>
+                    ITuple<
+                        [
+                            Option<BlockV2>,
+                            Option<Vec<EthReceiptV3>>,
+                            Option<Vec<EthTransactionStatus>>
+                        ]
+                    >
                 >
             >;
             /**
@@ -290,7 +334,10 @@ declare module '@polkadot/api-base/types/calls' {
             /**
              * Return the current transaction status.
              **/
-            currentTransactionStatuses: AugmentedCall<ApiType, () => Observable<Option<Vec<EthTransactionStatus>>>>;
+            currentTransactionStatuses: AugmentedCall<
+                ApiType,
+                () => Observable<Option<Vec<EthTransactionStatus>>>
+            >;
             /**
              * Return the elasticity multiplier.
              **/
@@ -313,7 +360,10 @@ declare module '@polkadot/api-base/types/calls' {
              **/
             storageAt: AugmentedCall<
                 ApiType,
-                (address: H160 | string | Uint8Array, index: u256 | AnyNumber | Uint8Array) => Observable<H256>
+                (
+                    address: H160 | string | Uint8Array,
+                    index: u256 | AnyNumber | Uint8Array
+                ) => Observable<H256>
             >;
         };
         /** 0x37e397fc7c91f5e4/1 */
@@ -333,7 +383,13 @@ declare module '@polkadot/api-base/types/calls' {
                 (
                     header:
                         | Header
-                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
+                        | {
+                            parentHash?: any;
+                            number?: any;
+                            stateRoot?: any;
+                            extrinsicsRoot?: any;
+                            digest?: any;
+                        }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
@@ -346,7 +402,9 @@ declare module '@polkadot/api-base/types/calls' {
              **/
             decodeSessionKeys: AugmentedCall<
                 ApiType,
-                (encoded: Bytes | string | Uint8Array) => Observable<Option<Vec<ITuple<[Bytes, KeyTypeId]>>>>
+                (
+                    encoded: Bytes | string | Uint8Array
+                ) => Observable<Option<Vec<ITuple<[Bytes, KeyTypeId]>>>>
             >;
             /**
              * Generate a set of session keys with optionally using the given seed.
@@ -364,7 +422,13 @@ declare module '@polkadot/api-base/types/calls' {
             validateTransaction: AugmentedCall<
                 ApiType,
                 (
-                    source: TransactionSource | 'InBlock' | 'Local' | 'External' | number | Uint8Array,
+                    source:
+                        | TransactionSource
+                        | "InBlock"
+                        | "Local"
+                        | "External"
+                        | number
+                        | Uint8Array,
                     tx: Extrinsic | IExtrinsic | string | Uint8Array,
                     blockHash: BlockHash | string | Uint8Array
                 ) => Observable<TransactionValidity>
@@ -395,13 +459,18 @@ declare module '@polkadot/api-base/types/calls' {
             /**
              * Query the output of the current LengthToFee given some input
              **/
-            queryLengthToFee: AugmentedCall<ApiType, (length: u32 | AnyNumber | Uint8Array) => Observable<Balance>>;
+            queryLengthToFee: AugmentedCall<
+                ApiType,
+                (length: u32 | AnyNumber | Uint8Array) => Observable<Balance>
+            >;
             /**
              * Query the output of the current WeightToFee given some input
              **/
             queryWeightToFee: AugmentedCall<
                 ApiType,
-                (weight: Weight | { refTime?: any; proofSize?: any } | string | Uint8Array) => Observable<Balance>
+                (
+                    weight: Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
+                ) => Observable<Balance>
             >;
         };
     } // AugmentedCalls
