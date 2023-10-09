@@ -182,10 +182,6 @@ jobs:
         working-directory: ./tee-worker/ts-tests
         run: pnpm install
 
-      - name: Tee-worker install npm deps
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm install
-
       - name: Tee-worker check ts code format
         working-directory: ./tee-worker/ts-tests
         run: pnpm run check-format
@@ -530,79 +526,6 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-
-  # client-api-build:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - parachain-build-dev
-  #     - tee-build
-  #   env:
-  #     WORKER_IMAGE_TAG: litentry-worker:dev
-  #     CLIENT_IMAGE_TAG: litentry-cli:dev
-
-  #   steps:
-  #     - uses: actions/checkout@v3
-
-  #     - name: Pull polkadot image
-  #       run: |
-  #         docker pull parity/polkadot
-
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: parachain-artifact-dev
-
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: tee-artifact
-
-  #     - name: Load docker image
-  #       run: |
-  #         docker load -i litentry-parachain-dev.tar
-  #         docker load -i litentry-tee.tar
-
-  #     - name: Re-name Image Tags
-  #       run: |
-  #         docker tag litentry/litentry-worker ${{ env.WORKER_IMAGE_TAG }}
-  #         docker tag litentry/litentry-cli ${{ env.CLIENT_IMAGE_TAG }}
-  #         docker images --all
-
-  #     - name: Generate parachain artefacts
-  #       run: |
-  #         ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-  #         ls -l docker/generated-rococo/
-  #         ls -l tee-worker/docker/litentry/
-  #         shasum tee-worker/docker/litentry/*.json
-
-  #     - name: Build litentry parachain docker images
-  #       run: |
-  #         cd tee-worker/docker
-  #         docker compose -f litentry-parachain.build.yml build
-
-  #     - name: Integration Test ${{ matrix.test_name }}
-  #       run: |
-  #         cd tee-worker/docker
-  #         docker compose -f docker-compose.yml -f client-api-build.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
-
-  #     - name: Stop docker containers
-  #       run: |
-  #         cd tee-worker/docker
-  #         docker compose -f docker-compose.yml -f client-api-build.yml stop
-
-  #     - name: Collect Docker Logs
-  #       continue-on-error: true
-  #       if: always()
-  #       uses: jwalton/gh-docker-logs@v2
-  #       with:
-  #         tail: all
-  #         dest: logs
-
-  #     - name: Upload logs
-  #       if: always()
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: logs-client-api-build
-  #         path: logs
-  #         if-no-files-found: ignore
 
   parachain-ts-test:
     runs-on: ubuntu-latest
