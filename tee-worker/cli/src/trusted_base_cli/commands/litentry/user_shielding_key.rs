@@ -21,20 +21,22 @@ use crate::{
 use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
-use litentry_primitives::UserShieldingKeyType;
-use sp_core::Pair;
+use litentry_primitives::{Identity, UserShieldingKeyType};
 
 #[derive(Parser)]
 pub struct UserShieldingKeyCommand {
-	/// AccountId in ss58check format
-	account: String,
+	// did format - will be converted to `Identity`
+	// not using e.g. ss58 format as we support both evm and substrate
+	did: String,
 }
 
 impl UserShieldingKeyCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let who = get_pair_from_str(trusted_cli, &self.account);
-		let top: TrustedOperation = TrustedGetter::user_shielding_key(who.public().into())
-			.sign(&KeyPair::Sr25519(Box::new(who)))
+		let alice = get_pair_from_str(trusted_cli, "//Alice");
+		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
+
+		let top: TrustedOperation = TrustedGetter::user_shielding_key(id)
+			.sign(&KeyPair::Sr25519(Box::new(alice)))
 			.into();
 		let key = perform_trusted_operation(cli, trusted_cli, &top)
 			.map(|v| UserShieldingKeyType::decode(&mut v.unwrap().as_slice()).ok());

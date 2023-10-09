@@ -32,6 +32,9 @@ use sp_core::blake2_256;
 use sp_runtime::AccountId32;
 use std::prelude::v1::*;
 
+pub const ALICE_ACCOUNTID32: AccountId32 =
+	AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
+
 pub fn get_storage_value<V: Decode>(
 	storage_prefix: &'static str,
 	storage_key_name: &'static str,
@@ -114,6 +117,13 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
+pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
+	signer: &AccountId,
+	who: &AccountId,
+) -> bool {
+	signer == who
+}
+
 pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
 	who: Option<AccountId>,
@@ -125,17 +135,14 @@ pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	}
 }
 
-pub fn ensure_enclave_signer_or_alice(signer: &AccountId32) -> bool {
-	const ALICE: AccountId32 =
-		AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
-	signer == &enclave_signer_account::<AccountId32>() || signer == &ALICE
+#[cfg(not(feature = "production"))]
+pub fn ensure_alice(signer: &AccountId32) -> bool {
+	signer == &ALICE_ACCOUNTID32
 }
 
-pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
-	signer: &AccountId,
-	who: &AccountId,
-) -> bool {
-	signer == who
+#[cfg(not(feature = "production"))]
+pub fn ensure_enclave_signer_or_alice(signer: &AccountId32) -> bool {
+	signer == &enclave_signer_account::<AccountId32>() || ensure_alice(signer)
 }
 
 // verification message format:

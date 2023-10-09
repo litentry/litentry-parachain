@@ -20,8 +20,8 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_alice,
-		ensure_enclave_signer_or_self, get_expected_raw_message, verify_web3_identity,
+		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self,
+		get_expected_raw_message, verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, SetUserShieldingKeyResult, TrustedCallResult},
 	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
@@ -42,6 +42,9 @@ use litentry_primitives::{
 use log::*;
 use std::{sync::Arc, vec::Vec};
 
+#[cfg(not(feature = "production"))]
+use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};
+
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
 		signer: AccountId,
@@ -49,10 +52,18 @@ impl TrustedCallSigned {
 		key: UserShieldingKeyType,
 		networks: Vec<Web3Network>,
 	) -> StfResult<UserShieldingKeyType> {
-		ensure!(
-			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
+		if_production_or!(
+			ensure!(
+				ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+				StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
+			),
+			ensure!(
+				ensure_enclave_signer_or_self(&signer, who.to_account_id())
+					|| ensure_alice(&signer),
+				StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
+			)
 		);
+
 		IMTCall::set_user_shielding_key { who, key, networks }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))

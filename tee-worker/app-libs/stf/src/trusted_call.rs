@@ -222,16 +222,6 @@ impl TrustedCallSigned {
 	}
 }
 
-// TODO: #91 signed return value
-/*
-pub struct TrustedReturnValue<T> {
-	pub value: T,
-	pub signer: AccountId
-}
-
-impl TrustedReturnValue
-*/
-
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
 	NodeMetadataRepository: AccessNodeMetadata,

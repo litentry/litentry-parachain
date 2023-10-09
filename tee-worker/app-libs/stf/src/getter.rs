@@ -20,7 +20,7 @@ use codec::{Decode, Encode};
 use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::types::KeyPair;
-use itp_utils::stringify::account_id_to_string;
+use itp_utils::{if_production_or, stringify::account_id_to_string};
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use std::prelude::v1::*;
@@ -33,6 +33,9 @@ use crate::evm_helpers::{get_evm_account, get_evm_account_codes, get_evm_account
 
 #[cfg(feature = "evm")]
 use sp_core::{H160, H256};
+
+#[cfg(not(feature = "production"))]
+use crate::helpers::ALICE_ACCOUNTID32;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -113,8 +116,20 @@ impl TrustedGetterSigned {
 	}
 
 	pub fn verify_signature(&self) -> bool {
-		self.signature
-			.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
+		// in non-prod, we accept signature from Alice too
+		if_production_or!(
+			{
+				self.signature
+					.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
+			},
+			{
+				self.signature
+					.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
+					|| self
+						.signature
+						.verify(self.getter.encode().as_slice(), &ALICE_ACCOUNTID32.into())
+			}
+		)
 	}
 }
 
