@@ -268,10 +268,10 @@ benchmarks! {
 			)?;
 			candidate_count += 1u32;
 		}
-		let (caller, min_candidate_stk) = create_funded_user::<T>("caller", USER_SEED, 0u32.into());
+		let (caller, total) = create_funded_user::<T>("caller", USER_SEED, 0u32.into());
 		//Due to the CandidateUnauthorized error, I had to add this line of code
 		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(),caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), min_candidate_stk)
+	}: _(RawOrigin::Signed(caller.clone()), total - 1u32.into())
 	verify {
 		assert!(Pallet::<T>::is_candidate(&caller));
 	}
@@ -628,7 +628,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total,
+			total - 1u32.into(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 	}: _(RawOrigin::Signed(caller.clone()), collator.clone(), bond_less)
@@ -757,7 +757,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total,
+			total - 1u32.into(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::schedule_delegator_bond_less(
