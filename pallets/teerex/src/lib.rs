@@ -123,6 +123,15 @@ pub mod pallet {
 	#[pallet::getter(fn enclave_count)]
 	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
 
+	#[pallet::type_value]
+	pub fn DefaultEnclaveCountMax() -> u64 {
+		MAX_ENCLAVE_NUMBER
+	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn enclave_count_max)]
+	pub type EnclaveCountMax<T: Config> = StorageValue<_, u64, ValueQuery, DefaultEnclaveCountMax>;
+
 	#[pallet::storage]
 	#[pallet::getter(fn quoting_enclave)]
 	pub type QuotingEnclaveRegistry<T: Config> = StorageValue<_, QuotingEnclave, ValueQuery>;
@@ -217,7 +226,10 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
-			ensure!(Self::enclave_count() < MAX_ENCLAVE_NUMBER, <Error<T>>::ExceedEnclaveNumber);
+			ensure!(
+				Self::enclave_count() <= Self::enclave_count_max(),
+				<Error<T>>::ExceedEnclaveNumber
+			);
 			log::info!("teerex: parameter length ok");
 
 			#[cfg(not(feature = "skip-ias-check"))]
@@ -424,7 +436,10 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
-			ensure!(Self::enclave_count() < MAX_ENCLAVE_NUMBER, <Error<T>>::ExceedEnclaveNumber);
+			ensure!(
+				Self::enclave_count() <= Self::enclave_count_max(),
+				<Error<T>>::ExceedEnclaveNumber
+			);
 			log::info!("teerex: parameter length ok");
 
 			let dummy_shielding_key: Option<Vec<u8>> = Default::default();

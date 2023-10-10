@@ -1030,14 +1030,39 @@ fn publish_hash_with_too_much_data_fails() {
 #[test]
 fn add_enclave_works_exceeds_number() {
 	new_test_ext().execute_with(|| {
+		<EnclaveCountMax<T>>::put(0u64);
 		Timestamp::set_timestamp(TEST4_TIMESTAMP);
 		let signer = get_signer(TEST4_SIGNER_PUB);
-		assert_ok!(Teerex::register_enclave(
-			RuntimeOrigin::signed(signer),
-			TEST4_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-		));
+		assert_err!(
+			Teerex::register_enclave(
+				RuntimeOrigin::signed(signer),
+				TEST4_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+			),
+			Error::<Test>::ExceedEnclaveNumber
+		);
+	})
+}
+
+#[test]
+fn add_dcap_enclave_works_exceeds_number() {
+	new_test_ext().execute_with(|| {
+		<EnclaveCountMax<T>>::put(0u64);
+		Timestamp::set_timestamp(VALID_TIMESTAMP);
+		let pubkey: [u8; 32] = [
+			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
+			55, 147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
+		];
+		let signer = get_signer(&pubkey);
+		assert_err!(
+			Teerex::register_dcap_enclave(
+				RuntimeOrigin::signed(signer),
+				TEST1_DCAP_QUOTE.to_vec(),
+				URL.to_vec(),
+			),
+			Error::<Test>::ExceedEnclaveNumber
+		);
 	})
 }
