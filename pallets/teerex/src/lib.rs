@@ -227,7 +227,7 @@ pub mod pallet {
 			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
 			ensure!(
-				Self::enclave_count() <= Self::enclave_count_max(),
+				Self::enclave_count() < Self::enclave_count_max(),
 				<Error<T>>::ExceedEnclaveNumber
 			);
 			log::info!("teerex: parameter length ok");
@@ -437,7 +437,7 @@ pub mod pallet {
 			ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
 			ensure!(
-				Self::enclave_count() <= Self::enclave_count_max(),
+				Self::enclave_count() < Self::enclave_count_max(),
 				<Error<T>>::ExceedEnclaveNumber
 			);
 			log::info!("teerex: parameter length ok");
