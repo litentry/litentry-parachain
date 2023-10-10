@@ -9,7 +9,8 @@ import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
 import { getEthereumSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
-import { default as teeTypes } from '../../../parachain-api/build/interfaces/identity/definitions';
+
+import { default as teeTypes } from '../../../../client-api/parachain-api/prepare-build/interfaces/identity/definitions';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
 
