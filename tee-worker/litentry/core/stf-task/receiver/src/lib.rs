@@ -61,6 +61,9 @@ use threadpool::ThreadPool;
 #[cfg(test)]
 mod mock;
 
+#[cfg(test)]
+mod test;
+
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
 	#[error("Request error: {0}")]

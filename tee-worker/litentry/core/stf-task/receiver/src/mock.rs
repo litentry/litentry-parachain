@@ -1,36 +1,22 @@
 use super::*;
 use base58::FromBase58;
 use codec::Decode;
-use itp_sgx_crypto::ed25519_derivation::DeriveEd25519;
-use itp_stf_executor::mocks::StfEnclaveSignerMock;
-use itp_test::mock::{
-	handle_state_mock::HandleStateMock, onchain_mock::OnchainMock,
-	shielding_crypto_mock::ShieldingCryptoMock,
-};
-// use itp_top_pool_author::mocks::AuthorApiMock;
-use ita_stf::{hash::TrustedOperationOrHash, Getter, TrustedCall, TrustedGetterSigned};
+use ita_stf::{hash::TrustedOperationOrHash, Getter, TrustedGetterSigned};
 use itp_top_pool::primitives::PoolFuture;
 use itp_top_pool_author::{error::Result, traits::OnBlockImported};
 use itp_types::AccountId;
 use jsonrpc_core::{futures::future::ready, Error as RpcError};
 use lazy_static::lazy_static;
-use lc_stf_task_sender::{
-	stf_task_sender::{SendStfRequest, StfRequestSender},
-	AssertionBuildRequest,
-};
+use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::Assertion;
-use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
-use sp_core::{blake2_256, ed25519::Pair as Ed25519Pair, sr25519, Pair};
+use sp_core::{blake2_256, sr25519, Pair};
 use std::{
 	collections::HashMap,
 	marker::PhantomData,
 	sync::{
-		mpsc,
 		mpsc::{Receiver, Sender},
 		Mutex, RwLock,
 	},
-	thread,
-	time::Duration,
 	vec::Vec,
 };
 
@@ -49,29 +35,9 @@ pub fn init_global_mock_author_api() -> Result<Receiver<Vec<u8>>> {
 	Ok(receiver)
 }
 
-#[test]
-fn test_mock_context() {
-	let shielding_key = ShieldingCryptoMock::default();
-	let author_mock: AuthorApiMock<H256, H256> = AuthorApiMock::default();
-	let stf_enclave_signer_mock = StfEnclaveSignerMock::default();
-	let handle_state_mock = HandleStateMock::default();
-	let onchain_mock = OnchainMock::default();
-	let context = StfTaskContext::new(
-		shielding_key.clone(),
-		author_mock.into(),
-		stf_enclave_signer_mock.into(),
-		handle_state_mock.into(),
-		onchain_mock.into(),
-	);
-	let handle = thread::spawn(move || {
-		run_stf_task_receiver(Arc::new(context)).unwrap();
-	});
-
-	let sender = StfRequestSender::default();
-
+pub fn construct_assertion_request(assertion: Assertion) -> RequestType {
 	let s: String = String::from("751h9re4VmXYTEyFtsVPDm7H8PHgbz9D3guUSd1vKyUf");
 	let s = s.from_base58().unwrap();
-	let mrenclave: [u8; 32] = s.clone().try_into().unwrap();
 	let shard: ShardIdentifier = ShardIdentifier::decode(&mut &s[..]).unwrap();
 
 	let seed = blake2_256(COMMON_SEED).to_vec();
@@ -84,58 +50,14 @@ fn test_mock_context() {
 		signer: public_id.into(),
 		enclave_account: public_id.into(),
 		who: public_id.into(),
-		assertion: Assertion::A1,
+		assertion,
 		identities: vec![],
 		top_hash: H256::zero(),
 		req_ext_hash: H256::zero(),
 	}
 	.into();
-
-	sender.send_stf_request(request).unwrap();
-
-	let request: RequestType = AssertionBuildRequest {
-		shard,
-		signer: public_id.into(),
-		enclave_account: public_id.into(),
-		who: public_id.into(),
-		assertion: Assertion::A6,
-		identities: vec![],
-		top_hash: H256::zero(),
-		req_ext_hash: H256::zero(),
-	}
-	.into();
-
-	sender.send_stf_request(request).unwrap();
-
-	let mut expected_output: Vec<Assertion> = vec![Assertion::A1, Assertion::A6];
-
-	let receiver = init_global_mock_author_api().unwrap();
-	while let Ok(ext) = receiver.recv() {
-		let decrypted = shielding_key.decrypt(&ext).unwrap();
-		let decoded: TrustedOperation = Decode::decode(&mut decrypted.as_ref()).unwrap();
-		match decoded {
-			TrustedOperation::direct_call(trusted_call_signed) =>
-				if let TrustedCall::request_vc_callback(_, _, assertion, ..) =
-					trusted_call_signed.call
-				{
-					println!("Received Request VC Callback for: {:?}", assertion);
-					assert_eq!(expected_output.remove(0), assertion);
-				},
-			_ => {
-				// Do nothing
-			},
-		}
-		if expected_output.len() == 0 {
-			break
-		}
-		// println!("Trusted Operation: {:?}", decoded)
-	}
-
-	// handle.join().unwrap();
+	request
 }
-
-#[test]
-fn test_run_stf_task_receiver() {}
 
 // We cannot use the AuthorApiMock as it is because it doesn't implement watch_top,
 // So we have to create our own AuthorApiMock
@@ -158,10 +80,10 @@ impl<Hash, BlockHash> AuthorApiMock<Hash, BlockHash> {
 	fn remove_top(
 		&self,
 		bytes_or_hash: Vec<TrustedOperationOrHash<H256>>,
-		shard: ShardIdentifier,
+		_shard: ShardIdentifier,
 		_inblock: bool,
 	) -> Result<Vec<H256>> {
-		let hashes = bytes_or_hash
+		let _hashes = bytes_or_hash
 			.into_iter()
 			.map(|x| match x {
 				TrustedOperationOrHash::Hash(h) => h,
@@ -174,7 +96,7 @@ impl<Hash, BlockHash> AuthorApiMock<Hash, BlockHash> {
 			})
 			.collect::<Vec<_>>();
 
-		let mut tops_lock = self.tops.write().unwrap();
+		// let mut tops_lock = self.tops.write().unwrap();
 
 		// Note: Not important for the test
 		// match tops_lock.get_mut(&shard) {
