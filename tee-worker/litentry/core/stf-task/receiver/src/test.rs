@@ -30,11 +30,14 @@ fn test_threadpool_behaviour() {
 	});
 
 	let sender = StfRequestSender::default();
-	let receiver = init_global_mock_author_api().unwrap();
+
+	// Sleep in order to initialize the components
+	std::thread::sleep(core::time::Duration::from_secs(2));
 
 	sender.send_stf_request(construct_assertion_request(Assertion::A1)).unwrap();
 	sender.send_stf_request(construct_assertion_request(Assertion::A6)).unwrap();
 
+	let receiver = init_global_mock_author_api().unwrap();
 	// As you see in the expected output, We receive A6 first even though A1 is requested first and is put to sleep
 	let mut expected_output: Vec<Assertion> = vec![Assertion::A6, Assertion::A1];
 
@@ -46,7 +49,6 @@ fn test_threadpool_behaviour() {
 				if let TrustedCall::request_vc_callback(_, _, assertion, ..) =
 					trusted_call_signed.call
 				{
-					println!("Received Request VC Callback for: {:?}", assertion);
 					assert_eq!(expected_output.remove(0), assertion);
 				},
 			_ => {
