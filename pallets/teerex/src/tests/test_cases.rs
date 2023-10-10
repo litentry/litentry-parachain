@@ -1030,7 +1030,7 @@ fn publish_hash_with_too_much_data_fails() {
 #[test]
 fn add_enclave_works_exceeds_number() {
 	new_test_ext().execute_with(|| {
-		<EnclaveCountMax<T>>::put(0u64);
+		crate::EnclaveCountMax::<Test>::put(0u64);
 		Timestamp::set_timestamp(TEST4_TIMESTAMP);
 		let signer = get_signer(TEST4_SIGNER_PUB);
 		assert_err!(
@@ -1049,7 +1049,7 @@ fn add_enclave_works_exceeds_number() {
 #[test]
 fn add_dcap_enclave_works_exceeds_number() {
 	new_test_ext().execute_with(|| {
-		<EnclaveCountMax<T>>::put(0u64);
+		crate::EnclaveCountMax::<Test>::put(0u64);
 		Timestamp::set_timestamp(VALID_TIMESTAMP);
 		let pubkey: [u8; 32] = [
 			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
