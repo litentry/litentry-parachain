@@ -30,7 +30,7 @@ substrate-fixed = { git = "https://github.com/encointer/substrate-fixed", defaul
 
 [dev-dependencies]
 similar-asserts = "1.1.0"
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", features = ["insecure_zero_ed"] }
+
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
