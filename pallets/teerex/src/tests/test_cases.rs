@@ -1031,6 +1031,7 @@ fn publish_hash_with_too_much_data_fails() {
 fn add_enclave_works_exceeds_number() {
 	new_test_ext().execute_with(|| {
 		crate::EnclaveCountMax::<Test>::put(0u64);
+		assert_eq!(Teerex::enclave_count_max(), 0);
 		Timestamp::set_timestamp(TEST4_TIMESTAMP);
 		let signer = get_signer(TEST4_SIGNER_PUB);
 		assert_err!(
