@@ -28,6 +28,23 @@ use litentry_primitives::{Identity, Web3Network};
 use log::*;
 use sp_core::Pair;
 
+use clap::Parser;
+
+// usage exmaple:
+//
+// # link `my_twitter` identity to substrate //Bob account
+// ./bin/litentry-cli trusted --mrenclave <mrenclave> \
+//   --direct link-identity \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
+//   did:litentry:twitter:my_twitter
+//
+// # link an evm identity to substrate //Bob account, with web3networks
+// ./bin/litentry-cli trusted --mrenclave <mrenclave> \
+//   --direct link-identity \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
+//   did:litentry:evm:0x0D9bFD1f18f5f4FD08247DC54aD3528909c4b3E9 \
+//   bsc,ethereum
+
 #[derive(Parser)]
 pub struct LinkIdentityCommand {
 	/// The prime identity in did format
