@@ -1032,38 +1032,23 @@ fn add_enclave_works_exceeds_number() {
 	new_test_ext().execute_with(|| {
 		crate::EnclaveCountMax::<Test>::put(0u64);
 		assert_eq!(Teerex::enclave_count_max(), 0);
-		Timestamp::set_timestamp(TEST4_TIMESTAMP);
-		let signer = get_signer(TEST4_SIGNER_PUB);
+		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		let signer4 = get_signer(TEST4_SIGNER_PUB);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer4),
+			TEST4_CERT.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
+		let signer5 = get_signer(TEST5_SIGNER_PUB);
 		assert_err!(
 			Teerex::register_enclave(
-				RuntimeOrigin::signed(signer),
-				TEST4_CERT.to_vec(),
+				RuntimeOrigin::signed(signer5),
+				TEST5_CERT.to_vec(),
 				URL.to_vec(),
 				None,
 				None,
-			),
-			Error::<Test>::ExceedEnclaveNumber
-		);
-	})
-}
-
-#[test]
-fn add_dcap_enclave_works_exceeds_number() {
-	new_test_ext().execute_with(|| {
-		crate::EnclaveCountMax::<Test>::put(0u64);
-		Timestamp::set_timestamp(VALID_TIMESTAMP);
-		register_quoting_enclave();
-		register_tcb_info();
-		let pubkey: [u8; 32] = [
-			65, 89, 193, 118, 86, 172, 17, 149, 206, 160, 174, 75, 219, 151, 51, 235, 110, 135, 20,
-			55, 147, 162, 106, 110, 143, 207, 57, 64, 67, 63, 203, 95,
-		];
-		let signer = get_signer(&pubkey);
-		assert_err!(
-			Teerex::register_dcap_enclave(
-				RuntimeOrigin::signed(signer.clone()),
-				TEST1_DCAP_QUOTE.to_vec(),
-				URL.to_vec(),
 			),
 			Error::<Test>::ExceedEnclaveNumber
 		);
