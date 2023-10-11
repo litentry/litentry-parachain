@@ -226,10 +226,6 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
-			ensure!(
-				Self::enclave_count() <= Self::enclave_count_max(),
-				<Error<T>>::ExceedEnclaveNumber
-			);
 			log::info!("teerex: parameter length ok");
 
 			#[cfg(not(feature = "skip-ias-check"))]
@@ -436,10 +432,6 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, <Error<T>>::RaReportTooLong);
 			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
-			ensure!(
-				Self::enclave_count() <= Self::enclave_count_max(),
-				<Error<T>>::ExceedEnclaveNumber
-			);
 			log::info!("teerex: parameter length ok");
 
 			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
@@ -672,6 +664,10 @@ impl<T: Config> Pallet<T> {
 			log::info!("Updating already registered enclave");
 			<EnclaveIndex<T>>::get(sender)
 		} else {
+			ensure!(
+				Self::enclave_count() < Self::enclave_count_max(),
+				<Error<T>>::ExceedEnclaveNumber
+			);
 			let enclaves_count = Self::enclave_count()
 				.checked_add(1)
 				.ok_or("[Teerex]: Overflow adding new enclave to registry")?;

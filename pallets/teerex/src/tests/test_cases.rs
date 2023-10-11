@@ -1033,14 +1033,6 @@ fn add_enclave_works_exceeds_number() {
 		crate::EnclaveCountMax::<Test>::put(0u64);
 		assert_eq!(Teerex::enclave_count_max(), 0);
 		Timestamp::set_timestamp(TEST5_TIMESTAMP);
-		let signer4 = get_signer(TEST4_SIGNER_PUB);
-		assert_ok!(Teerex::register_enclave(
-			RuntimeOrigin::signed(signer4),
-			TEST4_CERT.to_vec(),
-			URL.to_vec(),
-			None,
-			None,
-		));
 		let signer5 = get_signer(TEST5_SIGNER_PUB);
 		assert_err!(
 			Teerex::register_enclave(
