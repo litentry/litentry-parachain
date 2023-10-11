@@ -2,7 +2,7 @@ use super::*;
 use mock::*;
 
 use codec::Decode;
-use ita_stf::TrustedCall;
+use ita_stf::{TrustedCall, TrustedCallSigned};
 use itp_stf_executor::mocks::StfEnclaveSignerMock;
 use itp_test::mock::{
 	handle_state_mock::HandleStateMock, onchain_mock::OnchainMock,
@@ -47,16 +47,12 @@ fn test_threadpool_behaviour() {
 	while let Ok(ext) = receiver.recv() {
 		let decrypted = shielding_key.decrypt(&ext).unwrap();
 		let decoded: TrustedOperation = Decode::decode(&mut decrypted.as_ref()).unwrap();
-		match decoded {
-			TrustedOperation::direct_call(trusted_call_signed) =>
-				if let TrustedCall::request_vc_callback(_, _, assertion, ..) =
-					trusted_call_signed.call
-				{
-					assert_eq!(expected_output.remove(0), assertion);
-				},
-			_ => {
-				// Do nothing
-			},
+		if let TrustedOperation::direct_call(TrustedCallSigned {
+			call: TrustedCall::request_vc_callback(_, _, assertion, ..),
+			..
+		}) = decoded
+		{
+			assert_eq!(expected_output.remove(0), assertion);
 		}
 		if expected_output.len() == 0 {
 			break
