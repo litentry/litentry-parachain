@@ -41,6 +41,9 @@ fn test_threadpool_behaviour() {
 	// As you see in the expected output, We receive A6 first even though A1 is requested first and is put to sleep
 	let mut expected_output: Vec<Assertion> = vec![Assertion::A6, Assertion::A1];
 
+	let timeout_duration = core::time::Duration::from_secs(30);
+	let start_time = std::time::Instant::now();
+
 	while let Ok(ext) = receiver.recv() {
 		let decrypted = shielding_key.decrypt(&ext).unwrap();
 		let decoded: TrustedOperation = Decode::decode(&mut decrypted.as_ref()).unwrap();
@@ -57,6 +60,11 @@ fn test_threadpool_behaviour() {
 		}
 		if expected_output.len() == 0 {
 			break
+		}
+
+		// Timeout condition
+		if start_time.elapsed() > timeout_duration {
+			assert!(false, "Test exceeded the 60-second timeout");
 		}
 	}
 }
