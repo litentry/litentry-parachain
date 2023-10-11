@@ -51,7 +51,7 @@ pub use pallet::*;
 const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_DCAP_QUOTE_LEN: usize = 5000;
 const MAX_URL_LEN: usize = 256;
-const MAX_ENCLAVE_NUMBER: u64 = u64::MAX;
+const MAX_ENCLAVE_COUNT: u64 = u64::MAX;
 /// Maximum number of topics for the `publish_hash` call.
 const TOPICS_LIMIT: usize = 5;
 /// Maximum number of bytes for the `data` in the `publish_hash` call.
@@ -124,13 +124,13 @@ pub mod pallet {
 	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	#[pallet::type_value]
-	pub fn DefaultEnclaveCountMax() -> u64 {
-		MAX_ENCLAVE_NUMBER
+	pub fn DefaultMaxEnclaveCount() -> u64 {
+		MAX_ENCLAVE_COUNT
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn enclave_count_max)]
-	pub type EnclaveCountMax<T: Config> = StorageValue<_, u64, ValueQuery, DefaultEnclaveCountMax>;
+	pub type MaxEnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery, DefaultMaxEnclaveCount>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn quoting_enclave)]
@@ -650,8 +650,8 @@ pub mod pallet {
 		TooManyTopics,
 		/// The length of the `data` passed to `publish_hash` exceeds the limit.
 		DataTooLong,
-		/// The number of enclave exceed the upper limmit.
-		ExceedEnclaveNumber,
+		/// The number of enclave exceed the upper limit.
+		TooManyEnclaves,
 	}
 }
 
@@ -664,10 +664,7 @@ impl<T: Config> Pallet<T> {
 			log::info!("Updating already registered enclave");
 			<EnclaveIndex<T>>::get(sender)
 		} else {
-			ensure!(
-				Self::enclave_count() < Self::enclave_count_max(),
-				<Error<T>>::ExceedEnclaveNumber
-			);
+			ensure!(Self::enclave_count() < Self::enclave_count_max(), <Error<T>>::TooManyEnclaves);
 			let enclaves_count = Self::enclave_count()
 				.checked_add(1)
 				.ok_or("[Teerex]: Overflow adding new enclave to registry")?;

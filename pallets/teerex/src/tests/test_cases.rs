@@ -1030,7 +1030,7 @@ fn publish_hash_with_too_much_data_fails() {
 #[test]
 fn add_enclave_works_exceeds_number() {
 	new_test_ext().execute_with(|| {
-		crate::EnclaveCountMax::<Test>::put(0u64);
+		crate::MaxEnclaveCount::<Test>::put(0u64);
 		assert_eq!(Teerex::enclave_count_max(), 0);
 		Timestamp::set_timestamp(TEST5_TIMESTAMP);
 		let signer5 = get_signer(TEST5_SIGNER_PUB);
@@ -1042,7 +1042,24 @@ fn add_enclave_works_exceeds_number() {
 				None,
 				None,
 			),
-			Error::<Test>::ExceedEnclaveNumber
+			Error::<Test>::TooManyEnclaves
 		);
+	})
+}
+
+#[test]
+fn add_enclave_works_without_exceeds_number() {
+	new_test_ext().execute_with(|| {
+		crate::MaxEnclaveCount::<Test>::put(1u64);
+		assert_eq!(Teerex::enclave_count_max(), 1);
+		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		let signer5 = get_signer(TEST5_SIGNER_PUB);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer5),
+			TEST5_CERT.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
 	})
 }
