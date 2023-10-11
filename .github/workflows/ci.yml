@@ -237,14 +237,6 @@ jobs:
     if: needs.set-condition.outputs.rebuild_tee == 'true'
     container: 'litentry/litentry-tee-dev:latest'
     steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
       - uses: actions/checkout@v4
 
       - name: Install dependencies
@@ -271,6 +263,17 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy evm"
           cargo clippy --release --features evm -- -D warnings
+          echo "::endgroup::"
+
+      - name: Clean up disk
+        working-directory: ./tee-worker
+        run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          cargo clean --profile release
+          echo "::group::Show disk usage"
+          df -h .
           echo "::endgroup::"
 
       - name: Tee-enclave clippy
