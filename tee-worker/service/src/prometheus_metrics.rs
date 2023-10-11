@@ -226,24 +226,8 @@ fn handle_request_vc_callback(call: TrustedCall) {
 	}
 	if let TrustedCall::request_vc_callback(_, _, assertion, _, _, _, hash) = call.clone() {
 		if let Some(time) = hashmap.get(&hash) {
-			let label = match assertion {
-				Assertion::A1 => "A1",
-				Assertion::A2(_) => "A2",
-				Assertion::A3(..) => "A3",
-				Assertion::A4(_) => "A4",
-				Assertion::A6 => "A6",
-				Assertion::A7(_) => "A7",
-				Assertion::A8(_) => "A8",
-				Assertion::A10(_) => "A10",
-				Assertion::A11(_) => "A11",
-				Assertion::A13(_) => "A13",
-				Assertion::A14 => "A14",
-				Assertion::A20 => "A20",
-				Assertion::Achainable(..) => "Achainable",
-				Assertion::Oneblock(..) => "Oneblock",
-			};
 			ENCLAVE_CALLBACK_REQUEST
-				.with_label_values(&["request_vc", label])
+				.with_label_values(&["request_vc", label_from_assertion(&assertion)])
 				.observe(time.elapsed().as_secs_f64());
 		}
 	}
@@ -253,6 +237,35 @@ fn handle_request_vc_callback(call: TrustedCall) {
 				.with_label_values(&["request_vc", "error"])
 				.observe(time.elapsed().as_secs_f64());
 		}
+	}
+}
+
+fn label_from_assertion(assertion: &Assertion) -> &'static str {
+	match assertion {
+		Assertion::A1 => "A1",
+		Assertion::A2(_) => "A2",
+		Assertion::A3(..) => "A3",
+		Assertion::A4(_) => "A4",
+		Assertion::A6 => "A6",
+		Assertion::A7(_) => "A7",
+		Assertion::A8(_) => "A8",
+		Assertion::A10(_) => "A10",
+		Assertion::A11(_) => "A11",
+		Assertion::A13(_) => "A13",
+		Assertion::A14 => "A14",
+		Assertion::A20 => "A20",
+		Assertion::Achainable(..) => "Achainable",
+		Assertion::Oneblock(..) => "Oneblock",
+	}
+}
+
+fn label_from_identity(identity: &Identity) -> &'static str {
+	match identity {
+		Identity::Twitter(_) => "Twitter",
+		Identity::Discord(_) => "Discord",
+		Identity::Github(_) => "Github",
+		Identity::Substrate(_) => "Substrate",
+		Identity::Evm(_) => "Evm",
 	}
 }
 
@@ -273,31 +286,9 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 		RequestType::IdentityVerification(_) => "link_identity",
 		RequestType::AssertionVerification(_) => "request_vc",
 	};
-
-	let label = match req {
-		RequestType::IdentityVerification(request) => match request.identity {
-			Identity::Twitter(_) => "Twitter",
-			Identity::Discord(_) => "Discord",
-			Identity::Github(_) => "Github",
-			Identity::Substrate(_) => "Substrate",
-			Identity::Evm(_) => "Evm",
-		},
-		RequestType::AssertionVerification(request) => match request.assertion {
-			Assertion::A1 => "A1",
-			Assertion::A2(_) => "A2",
-			Assertion::A3(..) => "A3",
-			Assertion::A4(_) => "A4",
-			Assertion::A6 => "A6",
-			Assertion::A7(_) => "A7",
-			Assertion::A8(_) => "A8",
-			Assertion::A10(_) => "A10",
-			Assertion::A11(_) => "A11",
-			Assertion::A13(_) => "A13",
-			Assertion::A14 => "A14",
-			Assertion::A20 => "A20",
-			Assertion::Achainable(..) => "Achainable",
-			Assertion::Oneblock(..) => "Oneblock",
-		},
+	let label = match &req {
+		RequestType::IdentityVerification(request) => label_from_identity(&request.identity),
+		RequestType::AssertionVerification(request) => label_from_assertion(&request.assertion),
 	};
 	inc_stf_calls(category, label);
 	observe_execution_time(category, label, time)
