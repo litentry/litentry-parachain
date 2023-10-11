@@ -31,7 +31,7 @@ const PREFUNDING_AMOUNT: u128 = 1_000_000_000;
 #[derive(Parser)]
 pub struct FaucetCommand {
 	/// Account(s) to be funded, ss58check encoded
-	#[clap(min_values = 1, required = true)]
+	#[clap(num_args = 1.., required = true)]
 	accounts: Vec<String>,
 }
 

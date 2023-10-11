@@ -26,7 +26,6 @@ sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "m
 
 # internal dependencies
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
-
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
 
 [features]
