@@ -62,7 +62,7 @@ ${CLIENT} trusted --mrenclave $MRENCLAVE --direct send-erroneous-parentchain-cal
 echo ""
 
 sleep 20
-# wait for 20 `ProcessedParentchainBlock` events, which should take around 2 min (2 workers)
+# wait for 10 `ProcessedParentchainBlock` events, which should take around 2 min (1 worker)
 # if the incoming parentchain extrinsic is blocked (due to the wrong nonce), there won't be
 # such many events.
 set -e
