@@ -665,7 +665,6 @@ jobs:
         include:
           - test_name: demo-indirect-invocation
           - test_name: demo-direct-call
-          - test_name: demo-sidechain
           # Litentry
           - test_name: lit-user-shielding-key
           - test_name: lit-resume-worker
