@@ -24,7 +24,6 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
-use lc_credentials::DID;
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
@@ -114,14 +113,13 @@ where
 			.credential_subject
 			.set_endpoint(data_provider_config.credential_endpoint);
 
-		credential.issuer.id = DID::try_from(&Identity::Substrate(enclave_account.into()))
-			.map_err(|e| {
+		credential.issuer.id =
+			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
 				VCMPError::RequestVCFailed(
 					self.req.assertion.clone(),
 					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 				)
-			})?
-			.format();
+			})?;
 		let payload = credential.issuer.mrenclave.clone();
 		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
 			VCMPError::RequestVCFailed(

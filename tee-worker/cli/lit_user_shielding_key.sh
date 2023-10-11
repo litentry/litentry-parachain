@@ -43,6 +43,7 @@ echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
 ACC=//Bob
+ACC_DID="did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48"
 KEY="22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12"
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
@@ -73,7 +74,7 @@ echo ""
 
 sleep 20
 echo "* Get $ACC 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
+ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC_DID)
 echo ""
 
 if [ "$ACTUAL_KEY" = "$KEY" ]; then
@@ -89,12 +90,13 @@ echo "------------------------------"
 KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
 sleep 10
 echo "* Set $ACC 's shielding key to $KEY"
-${CLIENT} trusted --mrenclave $MRENCLAVE --direct set-user-shielding-key "$ACC" "$KEY"
+# note we have the did format in the direct invocation
+${CLIENT} trusted --mrenclave $MRENCLAVE --direct set-user-shielding-key $ACC_DID "$KEY"
 echo ""
 
 sleep 10
 echo "* Get $ACC 's shielding key"
-ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC)
+ACTUAL_KEY=$($CLIENT trusted --mrenclave $MRENCLAVE --direct user-shielding-key $ACC_DID)
 echo ""
 
 if [ "$ACTUAL_KEY" = "$KEY" ]; then
