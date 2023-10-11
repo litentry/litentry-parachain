@@ -46,7 +46,12 @@ use prometheus::{
 	register_int_gauge_vec, CounterVec, HistogramVec, IntGauge, IntGaugeVec,
 };
 use serde::{Deserialize, Serialize};
-use std::{net::SocketAddr, sync::Arc};
+use sp_core::H256;
+use std::{
+	collections::hash_map::HashMap,
+	net::SocketAddr,
+	sync::{Arc, Mutex},
+};
 use warp::{Filter, Rejection, Reply};
 
 lazy_static! {
@@ -73,6 +78,10 @@ lazy_static! {
 	static ref ENCLAVE_FAILED_TRUSTED_OPERATION: CounterVec =
 		register_counter_vec!("litentry_worker_enclave_failed_trusted_operation", "Litentry Failed Trusted Operation", &["call"])
 			.unwrap();
+	static ref ENCLAVE_CALLBACK_REQUEST: HistogramVec =
+		register_histogram_vec!("litentry_worker_enclave_callback_requests", "Litentry Callback Request", &["request_type", "variant"])
+			.unwrap();
+	static ref STF_REQUEST_EXT_HASH: Arc<Mutex<HashMap<H256, std::time::Instant>>> = Arc::new(Mutex::new(HashMap::new()));
 }
 
 pub async fn start_metrics_server<MetricsHandler>(
@@ -193,6 +202,7 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				handle_stf_call_request(*req, time);
 			},
 			EnclaveMetric::SuccessfulTrustedOperationIncrement(calls) => {
+				handle_request_vc_callback(calls.clone());
 				handle_trusted_operation(calls, inc_successful_trusted_operation_counter);
 			},
 			EnclaveMetric::FailedTrustedOperationIncrement(calls) => {
@@ -206,6 +216,43 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			},
 		}
 		Ok(())
+	}
+}
+
+fn handle_request_vc_callback(call: TrustedCall) {
+	let mut hashmap = STF_REQUEST_EXT_HASH.lock().unwrap();
+	if let TrustedCall::request_vc(_, _, _, hash) = call.clone() {
+		hashmap.insert(hash, std::time::Instant::now());
+	}
+	if let TrustedCall::request_vc_callback(_, _, assertion, _, _, _, hash) = call.clone() {
+		if let Some(time) = hashmap.get(&hash) {
+			let label = match assertion {
+				Assertion::A1 => "A1",
+				Assertion::A2(_) => "A2",
+				Assertion::A3(..) => "A3",
+				Assertion::A4(_) => "A4",
+				Assertion::A6 => "A6",
+				Assertion::A7(_) => "A7",
+				Assertion::A8(_) => "A8",
+				Assertion::A10(_) => "A10",
+				Assertion::A11(_) => "A11",
+				Assertion::A13(_) => "A13",
+				Assertion::A14 => "A14",
+				Assertion::A20 => "A20",
+				Assertion::Achainable(..) => "Achainable",
+				Assertion::Oneblock(..) => "Oneblock",
+			};
+			ENCLAVE_CALLBACK_REQUEST
+				.with_label_values(&["request_vc", label])
+				.observe(time.elapsed().as_secs_f64());
+		}
+	}
+	if let TrustedCall::handle_vcmp_error(_, _, _, hash) = call.clone() {
+		if let Some(time) = hashmap.get(&hash) {
+			ENCLAVE_CALLBACK_REQUEST
+				.with_label_values(&["request_vc", "error"])
+				.observe(time.elapsed().as_secs_f64());
+		}
 	}
 }
 
