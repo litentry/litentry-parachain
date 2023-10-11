@@ -30,7 +30,7 @@ use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_utils::stringify::account_id_to_string;
+use itp_utils::{if_production_or, stringify::account_id_to_string};
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
@@ -42,6 +42,9 @@ use litentry_primitives::{
 use log::*;
 use std::{sync::Arc, vec::Vec};
 
+#[cfg(not(feature = "production"))]
+use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};
+
 impl TrustedCallSigned {
 	pub fn set_user_shielding_key_internal(
 		signer: AccountId,
@@ -49,10 +52,18 @@ impl TrustedCallSigned {
 		key: UserShieldingKeyType,
 		networks: Vec<Web3Network>,
 	) -> StfResult<UserShieldingKeyType> {
-		ensure!(
-			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-			StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
+		if_production_or!(
+			ensure!(
+				ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+				StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
+			),
+			ensure!(
+				ensure_enclave_signer_or_self(&signer, who.to_account_id())
+					|| ensure_alice(&signer),
+				StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
+			)
 		);
+
 		IMTCall::set_user_shielding_key { who, key, networks }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
@@ -273,10 +284,20 @@ impl TrustedCallSigned {
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 	) -> StfResult<UserShieldingKeyType> {
-		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer(&signer)
-			.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
-
+		if_production_or!(
+			{
+				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
+				ensure_enclave_signer(&signer)
+					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
+			},
+			{
+				// In non-prod: we allow to use `Alice` as the dummy signer
+				ensure!(
+					ensure_enclave_signer_or_alice(&signer),
+					StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
+				);
+			}
+		);
 		let key = IdentityManagement::user_shielding_keys(&who)
 			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
