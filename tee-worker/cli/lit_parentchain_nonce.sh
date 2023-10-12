@@ -10,17 +10,11 @@ while getopts ":p:A:B:u:W:V:C:" opt; do
         A)
             WORKER1PORT=$OPTARG
             ;;
-        B)
-            WORKER2PORT=$OPTARG
-            ;;
         u)
             NODEURL=$OPTARG
             ;;
         V)
             WORKER1URL=$OPTARG
-            ;;
-        W)
-            WORKER2URL=$OPTARG
             ;;
         C)
             CLIENT_BIN=$OPTARG
@@ -67,9 +61,9 @@ echo "* Send wrong parentchain extrinsic"
 ${CLIENT} trusted --mrenclave $MRENCLAVE --direct send-erroneous-parentchain-call
 echo ""
 
-sleep 10
-# wait for 20 `ProcessedParentchainBlock` events, which should take around 2 min (2 workers)
+sleep 20
+# wait for 10 `ProcessedParentchainBlock` events, which should take around 2 min (1 worker)
 # if the incoming parentchain extrinsic is blocked (due to the wrong nonce), there won't be
 # such many events.
 set -e
-timeout -v --foreground 150s $CLIENT listen -e 20
+timeout -v --foreground 150s $CLIENT listen -e 10
