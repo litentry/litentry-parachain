@@ -18,7 +18,7 @@ version = "0.4.2"
 source = "git+https://github.com/scs/substrate-api-client.git?branch=polkadot-v0.9.42-tag-v0.14.0#e4ed74b0fb6c2fd5585f55c2702b97b56d99c7f6"
 dependencies = [
  "ac-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "maybe-async",
 ]
 
@@ -33,7 +33,7 @@ dependencies = [
  "either",
  "frame-metadata",
  "hex 0.4.3",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-bits 0.4.0",
  "scale-decode 0.8.0",
@@ -417,7 +417,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "concurrent-queue",
  "futures-lite",
- "log 0.4.19",
+ "log 0.4.20",
  "parking",
  "polling",
  "rustix 0.37.23",
@@ -599,7 +599,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "hash-db 0.16.0",
- "log 0.4.19",
+ "log 0.4.20",
 ]
 
 [[package]]
@@ -777,7 +777,7 @@ version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "eb5b05133427c07c4776906f673ccf36c21b102c9829c641a5b56bd151d44fd6"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -1322,7 +1322,7 @@ dependencies = [
  "cranelift-isle",
  "gimli 0.26.2",
  "hashbrown 0.12.3",
- "log 0.4.19",
+ "log 0.4.20",
  "regalloc2",
  "smallvec 1.11.0",
  "target-lexicon",
@@ -1359,7 +1359,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8483c2db6f45fe9ace984e5adc5d058102227e4c62e5aa2054e16b0275fd3a6e"
 dependencies = [
  "cranelift-codegen",
- "log 0.4.19",
+ "log 0.4.20",
  "smallvec 1.11.0",
  "target-lexicon",
 ]
@@ -1391,7 +1391,7 @@ dependencies = [
  "cranelift-entity",
  "cranelift-frontend",
  "itertools 0.10.5",
- "log 0.4.19",
+ "log 0.4.20",
  "smallvec 1.11.0",
  "wasmparser",
  "wasmtime-types",
@@ -1586,7 +1586,7 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
@@ -1608,7 +1608,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "polkadot-parachain",
  "scale-info",
@@ -1659,7 +1659,7 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "polkadot-runtime-common",
  "rand_chacha 0.3.1",
@@ -1731,7 +1731,7 @@ source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.42#f603
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "polkadot-runtime-common",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
@@ -2365,7 +2365,7 @@ checksum = "a12e6657c4c97ebab115a42dcee77225f7f482cdd841cf7088c657a42e9e00e7"
 dependencies = [
  "atty",
  "humantime",
- "log 0.4.19",
+ "log 0.4.20",
  "regex 1.9.5",
  "termcolor",
 ]
@@ -2378,7 +2378,7 @@ checksum = "85cdab6a89accf66733ad5a1693a4dcced6aeff64602b634530dd73c1f3ee9f0"
 dependencies = [
  "humantime",
  "is-terminal",
- "log 0.4.19",
+ "log 0.4.20",
  "regex 1.9.5",
  "termcolor",
 ]
@@ -2490,7 +2490,7 @@ dependencies = [
  "evm-core 0.37.0",
  "evm-gasometer 0.37.0",
  "evm-runtime 0.37.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "primitive-types",
  "rlp",
@@ -2511,7 +2511,7 @@ dependencies = [
  "evm-core 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "evm-gasometer 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "evm-runtime 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "primitive-types",
  "rlp",
@@ -2531,7 +2531,7 @@ dependencies = [
  "evm-core 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-gasometer 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
  "evm-runtime 0.39.0 (git+https://github.com/rust-blockchain/evm?rev=b7b82c7e1fc57b7449d6dfa6826600de37cc1e65)",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "primitive-types",
  "rlp",
@@ -2838,7 +2838,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84f2e425d9790201ba4af4630191feac6dcc98765b118d4d18e91d23c2353866"
 dependencies = [
  "env_logger 0.10.0",
- "log 0.4.19",
+ "log 0.4.20",
 ]
 
 [[package]]
@@ -2862,7 +2862,7 @@ dependencies = [
  "either",
  "futures 0.3.28",
  "futures-timer",
- "log 0.4.19",
+ "log 0.4.20",
  "num-traits 0.2.16",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -2975,7 +2975,7 @@ dependencies = [
  "hex 0.4.3",
  "impl-serde",
  "libsecp256k1",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -2993,7 +2993,7 @@ dependencies = [
  "hex 0.4.3",
  "impl-serde",
  "libsecp256k1",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -3113,7 +3113,7 @@ dependencies = [
  "frame-support-procedural",
  "frame-system",
  "linregress",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "paste",
  "scale-info",
@@ -3196,7 +3196,7 @@ dependencies = [
  "frame-support-procedural",
  "impl-trait-for-tuples",
  "k256",
- "log 0.4.19",
+ "log 0.4.20",
  "once_cell 1.18.0",
  "parity-scale-codec",
  "paste",
@@ -3262,7 +3262,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "frame-support",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -3691,7 +3691,7 @@ dependencies = [
  "aho-corasick",
  "bstr",
  "fnv 1.0.7",
- "log 0.4.19",
+ "log 0.4.20",
  "regex 1.9.5",
 ]
 
@@ -3796,7 +3796,7 @@ checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
 [[package]]
 name = "hashbrown_tstd"
 version = "0.12.0"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 
 [[package]]
 name = "hdrhistogram"
@@ -3985,7 +3985,7 @@ name = "http_req"
 version = "0.8.1"
 source = "git+https://github.com/integritee-network/http_req?branch=master#3723e88235f2b29bc1a31835853b072ffd0455fd"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "rustls 0.19.1",
  "unicase 2.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3997,7 +3997,7 @@ name = "http_req"
 version = "0.8.1"
 source = "git+https://github.com/integritee-network/http_req#3723e88235f2b29bc1a31835853b072ffd0455fd"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?branch=mesalock_sgx)",
  "sgx_tstd",
  "unicase 2.6.0 (git+https://github.com/mesalock-linux/unicase-sgx)",
@@ -4077,7 +4077,7 @@ dependencies = [
  "ct-logs",
  "futures-util 0.3.28",
  "hyper",
- "log 0.4.19",
+ "log 0.4.20",
  "rustls 0.19.1",
  "rustls-native-certs 0.5.0",
  "tokio",
@@ -4093,7 +4093,7 @@ checksum = "1788965e61b367cd03a62950836d5cd41560c3577d90e40e0819373194d1661c"
 dependencies = [
  "http 0.2.9",
  "hyper",
- "log 0.4.19",
+ "log 0.4.20",
  "rustls 0.20.8",
  "rustls-native-certs 0.6.3",
  "tokio",
@@ -4196,7 +4196,7 @@ dependencies = [
  "futures 0.3.28",
  "if-addrs",
  "ipnet",
- "log 0.4.19",
+ "log 0.4.20",
  "rtnetlink",
  "system-configuration",
  "tokio",
@@ -4313,7 +4313,7 @@ checksum = "1e8a11ae2da61704edada656798b61c94b35ecac2c58eb955156987d5e6be90b"
 dependencies = [
  "async-trait",
  "bytes 1.4.0",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "rtcp",
  "rtp",
@@ -4420,7 +4420,7 @@ dependencies = [
  "itp-enclave-metrics",
  "itp-ocall-api",
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "serde 1.0.175",
  "sgx_tstd",
@@ -4476,7 +4476,7 @@ dependencies = [
  "itp-utils",
  "lc-stf-task-sender",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-balances",
  "pallet-parentchain",
  "pallet-sudo",
@@ -4500,7 +4500,7 @@ dependencies = [
  "itp-utils",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "serde_json 1.0.103",
  "sgx_tstd",
@@ -4524,7 +4524,7 @@ dependencies = [
  "itp-test",
  "itp-top-pool-author",
  "itp-types",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -4552,7 +4552,7 @@ version = "0.9.0"
 dependencies = [
  "itc-parentchain-block-importer",
  "itp-import-queue",
- "log 0.4.19",
+ "log 0.4.20",
  "sgx_tstd",
  "sgx_types",
  "thiserror 1.0.44",
@@ -4569,7 +4569,7 @@ dependencies = [
  "itp-extrinsics-factory",
  "itp-stf-executor",
  "itp-types",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -4602,7 +4602,7 @@ dependencies = [
  "itp-utils",
  "lc-scheduled-enclave",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -4625,7 +4625,7 @@ dependencies = [
  "itp-storage",
  "itp-test",
  "itp-types",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -4652,7 +4652,7 @@ dependencies = [
  "http 0.2.9",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
- "log 0.4.19",
+ "log 0.4.20",
  "serde 1.0.175",
  "serde_json 1.0.103",
  "sgx_tstd",
@@ -4677,7 +4677,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "itp-utils",
- "log 0.4.19",
+ "log 0.4.20",
  "openssl",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -4705,7 +4705,7 @@ dependencies = [
  "its-storage",
  "its-test",
  "jsonrpsee 0.2.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sp-core",
  "tokio",
@@ -4718,7 +4718,7 @@ dependencies = [
  "bit-vec",
  "chrono 0.4.26",
  "env_logger 0.9.3",
- "log 0.4.19",
+ "log 0.4.20",
  "mio 0.6.21",
  "mio 0.6.23",
  "mio-extras 2.0.6 (git+https://github.com/integritee-network/mio-extras-sgx?rev=963234b)",
@@ -4812,7 +4812,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-io",
  "itp-time-utils",
- "log 0.4.19",
+ "log 0.4.20",
  "num-bigint 0.2.5",
  "parity-scale-codec",
  "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?rev=sgx_1.1.3)",
@@ -4854,7 +4854,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "lc-data-providers",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "serde_json 1.0.103",
  "sgx_crypto_helper",
@@ -4901,7 +4901,7 @@ dependencies = [
  "itp-node-api",
  "itp-nonce-cache",
  "itp-types",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -4967,7 +4967,7 @@ dependencies = [
  "itp-sgx-runtime-primitives",
  "itp-types",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "primitive-types",
  "sp-core",
@@ -5042,7 +5042,7 @@ dependencies = [
  "derive_more",
  "itp-sgx-io",
  "itp-sgx-temp-dir",
- "log 0.4.19",
+ "log 0.4.20",
  "ofb",
  "parity-scale-codec",
  "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx?tag=sgx_1.1.3)",
@@ -5062,7 +5062,7 @@ dependencies = [
  "derive_more",
  "environmental 1.1.3",
  "itp-hashing",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "postcard",
  "serde 1.0.175",
@@ -5117,7 +5117,7 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -5162,7 +5162,7 @@ dependencies = [
  "itp-stf-state-observer",
  "itp-time-utils",
  "itp-types",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "rust-base58 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
@@ -5178,7 +5178,7 @@ name = "itp-stf-state-observer"
 version = "0.9.0"
 dependencies = [
  "itp-types",
- "log 0.4.19",
+ "log 0.4.20",
  "sgx_tstd",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -5263,7 +5263,7 @@ dependencies = [
  "linked-hash-map 0.5.2",
  "linked-hash-map 0.5.6",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "parity-util-mem",
  "serde 1.0.175",
@@ -5292,7 +5292,7 @@ dependencies = [
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_crypto_helper",
  "sgx_tstd",
@@ -5345,7 +5345,7 @@ dependencies = [
  "itp-types",
  "its-primitives",
  "its-state",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -5365,7 +5365,7 @@ dependencies = [
  "itp-utils",
  "its-primitives",
  "its-test",
- "log 0.4.19",
+ "log 0.4.20",
  "sgx_tstd",
  "sp-consensus-slots",
  "sp-core",
@@ -5405,7 +5405,7 @@ dependencies = [
  "its-test",
  "its-validateer-fetch",
  "lc-scheduled-enclave",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -5434,7 +5434,7 @@ dependencies = [
  "its-primitives",
  "its-state",
  "its-test",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -5465,7 +5465,7 @@ dependencies = [
  "its-test",
  "lazy_static",
  "lc-scheduled-enclave",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-consensus-slots",
@@ -5488,7 +5488,7 @@ dependencies = [
  "its-storage",
  "its-test",
  "jsonrpsee 0.2.0",
- "log 0.4.19",
+ "log 0.4.20",
  "serde 1.0.175",
  "serde_json 1.0.103",
  "thiserror 1.0.44",
@@ -5520,7 +5520,7 @@ dependencies = [
  "its-primitives",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "rust-base58 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
@@ -5550,7 +5550,7 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-storage",
  "its-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -5569,7 +5569,7 @@ dependencies = [
  "itp-types",
  "its-primitives",
  "its-test",
- "log 0.4.19",
+ "log 0.4.20",
  "mockall",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -5647,7 +5647,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-executor 0.3.28",
  "futures-util 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "serde 1.0.175",
  "serde_derive 1.0.175",
  "serde_json 1.0.103",
@@ -5731,7 +5731,7 @@ dependencies = [
  "hyper-rustls 0.22.1",
  "jsonrpsee-types 0.2.0",
  "jsonrpsee-utils",
- "log 0.4.19",
+ "log 0.4.20",
  "serde 1.0.175",
  "serde_json 1.0.103",
  "thiserror 1.0.44",
@@ -5751,7 +5751,7 @@ dependencies = [
  "jsonrpsee-types 0.2.0",
  "jsonrpsee-utils",
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "serde 1.0.175",
  "serde_json 1.0.103",
  "socket2 0.4.9",
@@ -5819,7 +5819,7 @@ dependencies = [
  "futures-channel 0.3.28",
  "futures-util 0.3.28",
  "hyper",
- "log 0.4.19",
+ "log 0.4.20",
  "serde 1.0.175",
  "serde_json 1.0.103",
  "soketto 0.5.0",
@@ -5850,7 +5850,7 @@ dependencies = [
  "futures-util 0.3.28",
  "hyper",
  "jsonrpsee-types 0.2.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parking_lot 0.11.2",
  "rand 0.8.5",
  "rustc-hash",
@@ -5869,7 +5869,7 @@ dependencies = [
  "fnv 1.0.7",
  "futures 0.3.28",
  "jsonrpsee-types 0.2.0",
- "log 0.4.19",
+ "log 0.4.20",
  "pin-project",
  "rustls 0.19.1",
  "rustls-native-certs 0.5.0",
@@ -5893,7 +5893,7 @@ dependencies = [
  "futures-util 0.3.28",
  "jsonrpsee-types 0.2.0",
  "jsonrpsee-utils",
- "log 0.4.19",
+ "log 0.4.20",
  "rustc-hash",
  "serde 1.0.175",
  "serde_json 1.0.103",
@@ -6005,7 +6005,7 @@ dependencies = [
  "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "rust-base58 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
@@ -6030,7 +6030,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.7.3 (git+https://github.com/mesalock-linux/rand-sgx?tag=sgx_1.1.3)",
@@ -6061,7 +6061,7 @@ dependencies = [
  "lazy_static",
  "lc-mock-server",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "serde 1.0.175",
  "serde_json 1.0.103",
@@ -6086,7 +6086,7 @@ dependencies = [
  "lc-data-providers",
  "lc-stf-task-sender",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "sgx_tstd",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -6100,7 +6100,7 @@ dependencies = [
  "ita-stf",
  "lc-data-providers",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "serde_json 1.0.103",
  "sp-core",
  "tokio",
@@ -6115,7 +6115,7 @@ dependencies = [
  "itp-sgx-io",
  "itp-types",
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-std 5.0.0",
@@ -6147,7 +6147,7 @@ dependencies = [
  "lc-identity-verification",
  "lc-stf-task-sender",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -6166,7 +6166,7 @@ dependencies = [
  "itp-types",
  "lazy_static",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-runtime",
@@ -6253,7 +6253,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-timer",
  "instant",
- "log 0.4.19",
+ "log 0.4.20",
  "multiaddr 0.16.0",
  "multihash 0.16.3",
  "multistream-select",
@@ -6285,7 +6285,7 @@ dependencies = [
  "futures-timer",
  "instant",
  "libp2p-identity",
- "log 0.4.19",
+ "log 0.4.20",
  "multiaddr 0.17.1",
  "multihash 0.17.0",
  "multistream-select",
@@ -6309,7 +6309,7 @@ checksum = "8e42a271c1b49f789b92f7fc87749fa79ce5c7bdc88cbdfacb818a4bca47fec5"
 dependencies = [
  "futures 0.3.28",
  "libp2p-core 0.38.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parking_lot 0.12.1",
  "smallvec 1.11.0",
  "trust-dns-resolver",
@@ -6326,7 +6326,7 @@ dependencies = [
  "futures-timer",
  "libp2p-core 0.38.0",
  "libp2p-swarm",
- "log 0.4.19",
+ "log 0.4.20",
  "lru 0.8.1",
  "prost",
  "prost-build",
@@ -6344,7 +6344,7 @@ checksum = "9e2d584751cecb2aabaa56106be6be91338a60a0f4e420cf2af639204f596fc1"
 dependencies = [
  "bs58",
  "ed25519-dalek",
- "log 0.4.19",
+ "log 0.4.20",
  "multiaddr 0.17.1",
  "multihash 0.17.0",
  "quick-protobuf",
@@ -6370,7 +6370,7 @@ dependencies = [
  "instant",
  "libp2p-core 0.38.0",
  "libp2p-swarm",
- "log 0.4.19",
+ "log 0.4.20",
  "prost",
  "prost-build",
  "rand 0.8.5",
@@ -6393,7 +6393,7 @@ dependencies = [
  "if-watch",
  "libp2p-core 0.38.0",
  "libp2p-swarm",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "smallvec 1.11.0",
  "socket2 0.4.9",
@@ -6426,7 +6426,7 @@ dependencies = [
  "bytes 1.4.0",
  "futures 0.3.28",
  "libp2p-core 0.38.0",
- "log 0.4.19",
+ "log 0.4.20",
  "nohash-hasher",
  "parking_lot 0.12.1",
  "rand 0.8.5",
@@ -6444,7 +6444,7 @@ dependencies = [
  "curve25519-dalek 3.2.0",
  "futures 0.3.28",
  "libp2p-core 0.38.0",
- "log 0.4.19",
+ "log 0.4.20",
  "once_cell 1.18.0",
  "prost",
  "prost-build",
@@ -6468,7 +6468,7 @@ dependencies = [
  "instant",
  "libp2p-core 0.38.0",
  "libp2p-swarm",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "void",
 ]
@@ -6485,7 +6485,7 @@ dependencies = [
  "if-watch",
  "libp2p-core 0.38.0",
  "libp2p-tls",
- "log 0.4.19",
+ "log 0.4.20",
  "parking_lot 0.12.1",
  "quinn-proto",
  "rand 0.8.5",
@@ -6506,7 +6506,7 @@ dependencies = [
  "instant",
  "libp2p-core 0.38.0",
  "libp2p-swarm",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "smallvec 1.11.0",
  "unsigned-varint 0.7.1",
@@ -6525,7 +6525,7 @@ dependencies = [
  "instant",
  "libp2p-core 0.38.0",
  "libp2p-swarm-derive",
- "log 0.4.19",
+ "log 0.4.20",
  "pin-project",
  "rand 0.8.5",
  "smallvec 1.11.0",
@@ -6556,7 +6556,7 @@ dependencies = [
  "if-watch",
  "libc",
  "libp2p-core 0.38.0",
- "log 0.4.19",
+ "log 0.4.20",
  "socket2 0.4.9",
  "tokio",
 ]
@@ -6609,7 +6609,7 @@ dependencies = [
  "if-watch",
  "libp2p-core 0.38.0",
  "libp2p-noise",
- "log 0.4.19",
+ "log 0.4.20",
  "multihash 0.16.3",
  "prost",
  "prost-build",
@@ -6635,7 +6635,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-rustls",
  "libp2p-core 0.38.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parking_lot 0.12.1",
  "quicksink",
  "rw-stream-sink",
@@ -6652,7 +6652,7 @@ checksum = "4f63594a0aa818642d9d4915c791945053877253f08a3626f13416b5cd928a29"
 dependencies = [
  "futures 0.3.28",
  "libp2p-core 0.38.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parking_lot 0.12.1",
  "thiserror 1.0.44",
  "yamux",
@@ -6814,7 +6814,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-balances",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "pallet-teerex",
@@ -6856,7 +6856,7 @@ dependencies = [
  "core-primitives",
  "hex 0.4.3",
  "itp-utils",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -6915,7 +6915,7 @@ dependencies = [
  "lc-mock-server",
  "lc-stf-task-sender",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "mockall",
  "pallet-balances",
  "parity-scale-codec",
@@ -6973,9 +6973,9 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.4.19"
+version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b06a4cde4c0f271a446782e3eff8de789548ce57dbc8eca9292c27f4a42004b4"
+checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "lru"
@@ -7236,7 +7236,7 @@ dependencies = [
  "iovec 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "kernel32-sys",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "miow",
  "net2 0.2.39",
  "slab 0.4.8",
@@ -7261,7 +7261,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52403fe290012ce777c4626790c8951324a2b9e3316b3143779c72b029742f19"
 dependencies = [
  "lazycell",
- "log 0.4.19",
+ "log 0.4.20",
  "mio 0.6.23",
  "slab 0.4.8",
 ]
@@ -7272,7 +7272,7 @@ version = "2.0.6"
 source = "git+https://github.com/integritee-network/mio-extras-sgx?rev=963234b#963234bf55e44f9efff921938255126c48deef3a"
 dependencies = [
  "lazycell",
- "log 0.4.19",
+ "log 0.4.20",
  "mio 0.6.21",
  "mio 0.6.23",
  "sgx_tstd",
@@ -7396,7 +7396,7 @@ dependencies = [
  "futures-util 0.3.28",
  "http 0.2.9",
  "httparse 1.8.0",
- "log 0.4.19",
+ "log 0.4.20",
  "memchr 2.6.3",
  "mime",
  "spin 0.9.8",
@@ -7430,7 +7430,7 @@ dependencies = [
  "arrayref",
  "byteorder 1.4.3",
  "data-encoding",
- "log 0.4.19",
+ "log 0.4.20",
  "multibase",
  "multihash 0.17.0",
  "percent-encoding 2.3.0",
@@ -7532,7 +7532,7 @@ checksum = "c8552ab875c1313b97b8d20cb857b9fd63e2d1d6a0a1b53ce9821e575405f27a"
 dependencies = [
  "bytes 1.4.0",
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "pin-project",
  "smallvec 1.11.0",
  "unsigned-varint 0.7.1",
@@ -7588,7 +7588,7 @@ checksum = "07226173c32f2926027b63cce4bcd8076c3552846cbe7925f3aaffeac0a3b92e"
 dependencies = [
  "lazy_static",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "openssl",
  "openssl-probe",
  "openssl-sys",
@@ -7665,7 +7665,7 @@ checksum = "65b4b14489ab424703c092062176d52ba55485a89c076b4f9db05092b7223aa6"
 dependencies = [
  "bytes 1.4.0",
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "netlink-packet-core",
  "netlink-sys",
  "thiserror 1.0.44",
@@ -7681,7 +7681,7 @@ dependencies = [
  "bytes 1.4.0",
  "futures 0.3.28",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "tokio",
 ]
 
@@ -8351,7 +8351,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
@@ -8375,7 +8375,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
@@ -8390,7 +8390,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
@@ -8443,7 +8443,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -8460,7 +8460,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -8493,7 +8493,7 @@ dependencies = [
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-election-provider-support-benchmarking",
  "parity-scale-codec",
  "rand 0.8.5",
@@ -8557,7 +8557,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.3",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "rlp",
  "scale-info",
@@ -8582,7 +8582,7 @@ dependencies = [
  "hex 0.4.3",
  "hex-literal",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "rlp",
  "scale-info",
@@ -8626,7 +8626,7 @@ dependencies = [
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
@@ -8692,7 +8692,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.3",
  "litentry-primitives",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
@@ -8710,7 +8710,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -8727,7 +8727,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
@@ -8743,7 +8743,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-authorship",
  "pallet-balances",
  "pallet-session",
@@ -8777,7 +8777,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -8809,7 +8809,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
@@ -8826,7 +8826,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -8845,7 +8845,7 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-teerex",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -8868,7 +8868,7 @@ dependencies = [
  "frame-election-provider-support",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-authorship",
  "pallet-session",
  "parity-scale-codec",
@@ -8886,7 +8886,7 @@ name = "pallet-staking-reward-fn"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "sp-arithmetic",
 ]
 
@@ -8910,7 +8910,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-teerex",
  "parity-scale-codec",
  "scale-info",
@@ -8928,7 +8928,7 @@ version = "0.9.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -8948,7 +8948,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-inherents",
@@ -8966,7 +8966,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
@@ -9062,7 +9062,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
@@ -9078,7 +9078,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -9113,7 +9113,7 @@ dependencies = [
  "fs2",
  "hex 0.4.3",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "lz4",
  "memmap2",
  "parking_lot 0.12.1",
@@ -9486,7 +9486,7 @@ version = "0.9.42"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.42#6f991987c0b4cbbd7d4badc9ef08d83da5fefbfd"
 dependencies = [
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "mick-jaeger",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -9506,7 +9506,7 @@ dependencies = [
  "bs58",
  "futures 0.3.28",
  "futures-timer",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "polkadot-primitives",
  "prioritized-metered-channel",
@@ -9661,7 +9661,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "libsecp256k1",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-authorship",
  "pallet-balances",
  "pallet-election-provider-multi-phase",
@@ -9716,7 +9716,7 @@ dependencies = [
  "derive_more",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-authority-discovery",
  "pallet-authorship",
  "pallet-babe",
@@ -9768,7 +9768,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "concurrent-queue",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "pin-project-lite 0.2.10",
  "windows-sys 0.48.0",
 ]
@@ -10043,7 +10043,7 @@ dependencies = [
  "heck",
  "itertools 0.10.5",
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "multimap",
  "petgraph",
  "prettyplease",
@@ -10437,7 +10437,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "300d4fbfb40c1c66a78ba3ddd41c1110247cf52f97b87d0f2fc9209bd49b030c"
 dependencies = [
  "fxhash",
- "log 0.4.19",
+ "log 0.4.20",
  "slice-group-by",
  "smallvec 1.11.0",
 ]
@@ -10533,7 +10533,7 @@ dependencies = [
  "hyper-tls",
  "ipnet",
  "js-sys",
- "log 0.4.19",
+ "log 0.4.20",
  "mime",
  "native-tls",
  "once_cell 1.18.0",
@@ -10616,7 +10616,7 @@ source = "git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup#8b
 dependencies = [
  "cc",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "once_cell 1.18.0",
  "rkyv",
  "spin 0.5.2",
@@ -10704,7 +10704,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "hex-literal",
- "log 0.4.19",
+ "log 0.4.20",
  "moonbeam-evm-tracer",
  "moonbeam-rpc-primitives-debug",
  "moonbeam-rpc-primitives-txpool",
@@ -10811,7 +10811,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "322c53fd76a18698f1c27381d58091de3a043d356aa5bd0d510608b565f469a0"
 dependencies = [
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "netlink-packet-route",
  "netlink-proto",
  "nix",
@@ -10853,7 +10853,7 @@ dependencies = [
  "cumulus-primitives-parachain-inherent",
  "frame-support",
  "frame-system",
- "log 0.4.19",
+ "log 0.4.20",
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
@@ -11047,7 +11047,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35edb675feee39aec9c99fa5ff985081995a06d594114ae14cbe797ad7b7a6d7"
 dependencies = [
  "base64 0.13.1",
- "log 0.4.19",
+ "log 0.4.20",
  "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "sct 0.6.1",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -11059,7 +11059,7 @@ version = "0.20.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fff78fc74d175294f4e83b28343315ffcfb114b156f0185e9741cb5570f50e2f"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "sct 0.7.0",
  "webpki 0.22.0",
@@ -11150,7 +11150,7 @@ name = "sc-allocator"
 version = "4.1.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "sp-core",
  "sp-wasm-interface",
  "thiserror 1.0.44",
@@ -11166,7 +11166,7 @@ dependencies = [
  "futures-timer",
  "ip_network",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "prost",
  "prost-build",
@@ -11240,7 +11240,7 @@ dependencies = [
  "fdlimit",
  "futures 0.3.28",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "names",
  "parity-scale-codec",
  "rand 0.8.5",
@@ -11276,7 +11276,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "fnv 1.0.7",
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-executor",
@@ -11305,7 +11305,7 @@ dependencies = [
  "kvdb-memorydb",
  "kvdb-rocksdb",
  "linked-hash-map 0.5.6",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-db",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -11330,7 +11330,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-timer",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "mockall",
  "parking_lot 0.12.1",
  "sc-client-api",
@@ -11388,7 +11388,7 @@ name = "sc-executor-wasmi"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "sc-allocator",
  "sc-executor-common",
  "sp-runtime-interface",
@@ -11404,7 +11404,7 @@ dependencies = [
  "anyhow",
  "cfg-if 1.0.0",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "once_cell 1.18.0",
  "rustix 0.36.15",
  "sc-allocator",
@@ -11422,7 +11422,7 @@ dependencies = [
  "ansi_term",
  "futures 0.3.28",
  "futures-timer",
- "log 0.4.19",
+ "log 0.4.20",
  "sc-client-api",
  "sc-network",
  "sc-network-common",
@@ -11462,7 +11462,7 @@ dependencies = [
  "ip_network",
  "libp2p",
  "linked_hash_set",
- "log 0.4.19",
+ "log 0.4.20",
  "lru 0.8.1",
  "mockall",
  "parity-scale-codec",
@@ -11498,7 +11498,7 @@ dependencies = [
  "cid",
  "futures 0.3.28",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "prost",
  "prost-build",
  "sc-client-api",
@@ -11546,7 +11546,7 @@ dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.28",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "prost",
  "prost-build",
@@ -11571,7 +11571,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-timer",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "lru 0.8.1",
  "mockall",
  "parity-scale-codec",
@@ -11602,7 +11602,7 @@ dependencies = [
  "array-bytes 4.2.0",
  "futures 0.3.28",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "pin-project",
  "sc-network",
@@ -11652,7 +11652,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "futures 0.3.28",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "sc-utils",
  "serde_json 1.0.103",
  "wasm-timer",
@@ -11665,7 +11665,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "futures 0.3.28",
  "jsonrpsee 0.16.2",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-block-builder",
@@ -11714,7 +11714,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "http 0.2.9",
  "jsonrpsee 0.16.2",
- "log 0.4.19",
+ "log 0.4.20",
  "serde_json 1.0.103",
  "substrate-prometheus-endpoint",
  "tokio",
@@ -11732,7 +11732,7 @@ dependencies = [
  "futures-util 0.3.28",
  "hex 0.4.3",
  "jsonrpsee 0.16.2",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-chain-spec",
@@ -11759,7 +11759,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-timer",
  "jsonrpsee 0.16.2",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "pin-project",
@@ -11819,7 +11819,7 @@ name = "sc-state-db"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sp-core",
@@ -11833,7 +11833,7 @@ dependencies = [
  "clap 4.1.0",
  "fs4",
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "sc-client-db",
  "sc-utils",
  "sp-core",
@@ -11848,7 +11848,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "futures 0.3.28",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "rand_pcg",
  "regex 1.9.5",
@@ -11868,7 +11868,7 @@ dependencies = [
  "chrono 0.4.26",
  "futures 0.3.28",
  "libp2p",
- "log 0.4.19",
+ "log 0.4.20",
  "parking_lot 0.12.1",
  "pin-project",
  "rand 0.8.5",
@@ -11889,7 +11889,7 @@ dependencies = [
  "chrono 0.4.26",
  "lazy_static",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "once_cell 1.18.0",
  "parking_lot 0.12.1",
  "regex 1.9.5",
@@ -11930,7 +11930,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-timer",
  "linked-hash-map 0.5.6",
- "log 0.4.19",
+ "log 0.4.20",
  "num-traits 0.2.16",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -11955,7 +11955,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "async-trait",
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "serde 1.0.175",
  "sp-blockchain",
  "sp-runtime",
@@ -11971,7 +11971,7 @@ dependencies = [
  "futures 0.3.28",
  "futures-timer",
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "parking_lot 0.12.1",
  "prometheus",
  "sp-arithmetic",
@@ -12454,12 +12454,12 @@ dependencies = [
 [[package]]
 name = "sgx_alloc"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 
 [[package]]
 name = "sgx_backtrace_sys"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "cc",
  "sgx_build_helper",
@@ -12469,12 +12469,12 @@ dependencies = [
 [[package]]
 name = "sgx_build_helper"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 
 [[package]]
 name = "sgx_crypto_helper"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "itertools 0.11.0",
  "libc",
@@ -12493,12 +12493,12 @@ dependencies = [
 [[package]]
 name = "sgx_demangle"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 
 [[package]]
 name = "sgx_libc"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_types",
 ]
@@ -12506,7 +12506,7 @@ dependencies = [
 [[package]]
 name = "sgx_rand"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_trts",
  "sgx_tstd",
@@ -12516,7 +12516,7 @@ dependencies = [
 [[package]]
 name = "sgx_tcrypto"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_types",
 ]
@@ -12524,7 +12524,7 @@ dependencies = [
 [[package]]
 name = "sgx_tprotected_fs"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_trts",
  "sgx_types",
@@ -12533,7 +12533,7 @@ dependencies = [
 [[package]]
 name = "sgx_trts"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_libc",
  "sgx_types",
@@ -12542,7 +12542,7 @@ dependencies = [
 [[package]]
 name = "sgx_tse"
 version = "1.1.6"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/teaclave-sgx-sdk.git?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_types",
 ]
@@ -12550,7 +12550,7 @@ dependencies = [
 [[package]]
 name = "sgx_tstd"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "hashbrown_tstd",
  "sgx_alloc",
@@ -12566,12 +12566,12 @@ dependencies = [
 [[package]]
 name = "sgx_types"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 
 [[package]]
 name = "sgx_ucrypto"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "libc",
  "rand_core 0.3.1",
@@ -12582,7 +12582,7 @@ dependencies = [
 [[package]]
 name = "sgx_unwind"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "sgx_build_helper",
 ]
@@ -12590,7 +12590,7 @@ dependencies = [
 [[package]]
 name = "sgx_urts"
 version = "1.1.6"
-source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#f1776a7cec1caab2959813f87bb4924805b92011"
+source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "libc",
  "sgx_types",
@@ -12861,7 +12861,7 @@ dependencies = [
  "bytes 1.4.0",
  "futures 0.3.28",
  "httparse 1.8.0",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "sha-1 0.9.8",
 ]
@@ -12878,7 +12878,7 @@ dependencies = [
  "futures 0.3.28",
  "http 0.2.9",
  "httparse 1.8.0",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "sha-1 0.9.8",
 ]
@@ -12889,7 +12889,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "hash-db 0.16.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-api-proc-macro",
@@ -12975,7 +12975,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "lru 0.8.1",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -12994,7 +12994,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "async-trait",
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "sp-core",
  "sp-inherents",
  "sp-runtime",
@@ -13047,7 +13047,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "finality-grandpa",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -13089,7 +13089,7 @@ dependencies = [
  "impl-serde",
  "lazy_static",
  "libsecp256k1",
- "log 0.4.19",
+ "log 0.4.20",
  "merlin",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -13206,7 +13206,7 @@ version = "7.0.0"
 dependencies = [
  "itp-sgx-externalities",
  "libsecp256k1",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
@@ -13222,7 +13222,7 @@ dependencies = [
  "ed25519-dalek",
  "futures 0.3.28",
  "libsecp256k1",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "rustversion",
  "secp256k1",
@@ -13335,7 +13335,7 @@ dependencies = [
  "either",
  "hash256-std-hasher",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "paste",
  "rand 0.8.5",
@@ -13412,7 +13412,7 @@ version = "0.13.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "hash-db 0.16.0",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "rand 0.8.5",
@@ -13457,7 +13457,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "async-trait",
  "futures-timer",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sp-inherents",
  "sp-runtime",
@@ -13492,7 +13492,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "async-trait",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -13560,7 +13560,7 @@ source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.4
 dependencies = [
  "anyhow",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sp-std 5.0.0",
  "wasmi",
@@ -13754,7 +13754,7 @@ dependencies = [
  "frame-metadata",
  "frame-support",
  "hex 0.4.3",
- "log 0.4.19",
+ "log 0.4.20",
  "maybe-async",
  "parity-scale-codec",
  "serde 1.0.175",
@@ -13822,7 +13822,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "hyper",
- "log 0.4.19",
+ "log 0.4.20",
  "prometheus",
  "thiserror 1.0.44",
  "tokio",
@@ -14062,7 +14062,7 @@ checksum = "b82ca8f46f95b3ce96081fe3dd89160fdea970c254bb72925255d1b62aae692e"
 dependencies = [
  "byteorder 1.4.3",
  "integer-encoding",
- "log 0.4.19",
+ "log 0.4.20",
  "ordered-float",
  "threadpool 1.8.1",
 ]
@@ -14261,7 +14261,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54319c93411147bced34cb5609a80e0a8e44c5999c93903a81cd866630ec0bfd"
 dependencies = [
  "futures-util 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "tokio",
  "tungstenite 0.18.0",
 ]
@@ -14276,7 +14276,7 @@ dependencies = [
  "futures-core 0.3.28",
  "futures-io 0.3.28",
  "futures-sink 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "pin-project-lite 0.2.10",
  "tokio",
 ]
@@ -14412,7 +14412,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
 dependencies = [
  "cfg-if 1.0.0",
- "log 0.4.19",
+ "log 0.4.20",
  "pin-project-lite 0.2.10",
  "tracing-attributes",
  "tracing-core",
@@ -14479,7 +14479,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ddad33d2d10b1ed7eb9d1f518a5674713876e97e5bb9b7345a7984fbb4f922"
 dependencies = [
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "tracing-core",
 ]
 
@@ -14524,7 +14524,7 @@ checksum = "767abe6ffed88a1889671a102c2861ae742726f52e0a5a425b92c9fbfa7e9c85"
 dependencies = [
  "hash-db 0.16.0",
  "hashbrown 0.13.2",
- "log 0.4.19",
+ "log 0.4.20",
  "rustc-hex",
  "smallvec 1.11.0",
 ]
@@ -14639,7 +14639,7 @@ dependencies = [
  "bytes 1.4.0",
  "http 0.2.9",
  "httparse 1.8.0",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "rustls 0.19.1",
  "sha-1 0.9.8",
@@ -14661,7 +14661,7 @@ dependencies = [
  "bytes 1.4.0",
  "http 0.2.9",
  "httparse 1.8.0",
- "log 0.4.19",
+ "log 0.4.20",
  "native-tls",
  "rand 0.8.5",
  "sha1 0.10.5",
@@ -14679,7 +14679,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.1",
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "md-5",
  "rand 0.8.5",
  "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -14984,7 +14984,7 @@ dependencies = [
  "headers",
  "http 0.2.9",
  "hyper",
- "log 0.4.19",
+ "log 0.4.20",
  "mime",
  "mime_guess",
  "multer",
@@ -15038,7 +15038,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ef2b6d3c510e9625e5fe6f509ab07d66a760f0885d858736483c32ed7809abd"
 dependencies = [
  "bumpalo",
- "log 0.4.19",
+ "log 0.4.20",
  "once_cell 1.18.0",
  "proc-macro2",
  "quote",
@@ -15207,7 +15207,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "indexmap 1.9.3",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "object 0.29.0",
  "once_cell 1.18.0",
  "paste",
@@ -15244,7 +15244,7 @@ dependencies = [
  "bincode",
  "directories-next",
  "file-per-thread-logger",
- "log 0.4.19",
+ "log 0.4.20",
  "rustix 0.36.15",
  "serde 1.0.175",
  "sha2 0.10.7",
@@ -15266,7 +15266,7 @@ dependencies = [
  "cranelift-native",
  "cranelift-wasm",
  "gimli 0.26.2",
- "log 0.4.19",
+ "log 0.4.20",
  "object 0.29.0",
  "target-lexicon",
  "thiserror 1.0.44",
@@ -15284,7 +15284,7 @@ dependencies = [
  "cranelift-entity",
  "gimli 0.26.2",
  "indexmap 1.9.3",
- "log 0.4.19",
+ "log 0.4.20",
  "object 0.29.0",
  "serde 1.0.175",
  "target-lexicon",
@@ -15305,7 +15305,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "cpp_demangle",
  "gimli 0.26.2",
- "log 0.4.19",
+ "log 0.4.20",
  "object 0.29.0",
  "rustc-demangle",
  "serde 1.0.175",
@@ -15350,7 +15350,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "indexmap 1.9.3",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "mach",
  "memfd",
  "memoffset 0.6.5",
@@ -15473,7 +15473,7 @@ dependencies = [
  "hex 0.4.3",
  "interceptor",
  "lazy_static",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "rcgen 0.9.3",
  "regex 1.9.5",
@@ -15510,7 +15510,7 @@ checksum = "0ef36a4d12baa6e842582fe9ec16a57184ba35e1a09308307b67d43ec8883100"
 dependencies = [
  "bytes 1.4.0",
  "derive_builder",
- "log 0.4.19",
+ "log 0.4.20",
  "thiserror 1.0.44",
  "tokio",
  "webrtc-sctp",
@@ -15535,7 +15535,7 @@ dependencies = [
  "elliptic-curve 0.12.3",
  "hkdf",
  "hmac 0.12.1",
- "log 0.4.19",
+ "log 0.4.20",
  "oid-registry 0.6.1",
  "p256",
  "p384",
@@ -15567,7 +15567,7 @@ dependencies = [
  "arc-swap",
  "async-trait",
  "crc",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "serde 1.0.175",
  "serde_json 1.0.103",
@@ -15588,7 +15588,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f08dfd7a6e3987e255c4dbe710dde5d94d0f0574f8a21afa95d171376c143106"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "socket2 0.4.9",
  "thiserror 1.0.44",
  "tokio",
@@ -15618,7 +15618,7 @@ dependencies = [
  "async-trait",
  "bytes 1.4.0",
  "crc",
- "log 0.4.19",
+ "log 0.4.20",
  "rand 0.8.5",
  "thiserror 1.0.44",
  "tokio",
@@ -15639,7 +15639,7 @@ dependencies = [
  "bytes 1.4.0",
  "ctr 0.8.0",
  "hmac 0.11.0",
- "log 0.4.19",
+ "log 0.4.20",
  "rtcp",
  "rtp",
  "sha-1 0.9.8",
@@ -15662,7 +15662,7 @@ dependencies = [
  "ipnet",
  "lazy_static",
  "libc",
- "log 0.4.19",
+ "log 0.4.20",
  "nix",
  "rand 0.8.5",
  "thiserror 1.0.44",
@@ -15967,7 +15967,7 @@ dependencies = [
  "byteorder 1.4.3",
  "bytes 0.4.12",
  "httparse 1.8.0",
- "log 0.4.19",
+ "log 0.4.20",
  "mio 0.6.23",
  "mio-extras 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "openssl",
@@ -16075,7 +16075,7 @@ dependencies = [
  "bounded-collections",
  "derivative",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "scale-info",
  "serde 1.0.175",
@@ -16091,7 +16091,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "pallet-transaction-payment",
  "parity-scale-codec",
  "polkadot-parachain",
@@ -16112,7 +16112,7 @@ dependencies = [
  "environmental 1.1.4",
  "frame-support",
  "impl-trait-for-tuples",
- "log 0.4.19",
+ "log 0.4.20",
  "parity-scale-codec",
  "sp-arithmetic",
  "sp-core",
@@ -16149,7 +16149,7 @@ version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "797ff15cb41c855dfc21311da441e35cc583baa9ef238627ef33f05912d9367c"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "num-derive",
  "num-traits 0.2.16",
  "xous",
@@ -16162,7 +16162,7 @@ version = "0.9.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf13daca16910140fe4067135dfb56ca406e6f8951f93b1f087281a21fc055b6"
 dependencies = [
- "log 0.4.19",
+ "log 0.4.20",
  "num-derive",
  "num-traits 0.2.16",
  "rkyv",
@@ -16204,7 +16204,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5d9ba232399af1783a58d8eb26f6b5006fbefe2dc9ef36bd283324792d03ea5"
 dependencies = [
  "futures 0.3.28",
- "log 0.4.19",
+ "log 0.4.20",
  "nohash-hasher",
  "parking_lot 0.12.1",
  "rand 0.8.5",

@@ -19,9 +19,6 @@ use crate::ApiResult;
 use itp_api_client_types::{storage_key, traits::GetStorage, Api, Config, Request};
 use itp_types::{Enclave, IpfsHash, MrEnclave, ShardIdentifier};
 use sp_core::storage::StorageKey;
-// use substrate_api_client::{
-// 	rpc::Request, storage_key, Api, GetStorage,
-// };
 
 pub const TEEREX: &str = "Teerex";
 pub const SIDECHAIN: &str = "Sidechain";
@@ -61,7 +58,7 @@ where
 	}
 
 	fn enclave_count(&self, at_block: Option<Self::Hash>) -> ApiResult<u64> {
-		Ok(self.all_enclaves(at_block)?.len() as u64)
+		Ok(self.get_storage(TEEREX, "EnclaveCount", at_block)?.unwrap_or(0u64))
 	}
 
 	fn all_enclaves(&self, at_block: Option<Self::Hash>) -> ApiResult<Vec<Enclave>> {
