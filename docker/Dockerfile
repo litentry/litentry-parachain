@@ -1,5 +1,6 @@
 # global args that are used across multiple stages
 ARG PROFILE
+ARG HTTP_PROXY
 
 # ==========================
 # stage 1: build
@@ -7,6 +8,10 @@ ARG PROFILE
 # our host is based on bullseye/sid (ubuntu 20)
 # ==========================
 FROM rust:bullseye as builder
+ENV HTTP_PROXY=$HTTP_PROXY
+ENV HTTPS_PROXY=$HTTP_PROXY
+ENV http_proxy=$HTTP_PROXY
+ENV https_proxy=$HTTP_PROXY
 
 WORKDIR /litentry
 COPY . /litentry
@@ -22,6 +27,10 @@ RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 # stage 2: packaging
 # ==========================
 FROM ubuntu:20.04
+ENV HTTP_PROXY=$HTTP_PROXY
+ENV HTTPS_PROXY=$HTTP_PROXY
+ENV http_proxy=$HTTP_PROXY
+ENV https_proxy=$HTTP_PROXY
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
@@ -35,9 +44,9 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \
 	chown -R litentry:litentry /data && \
 	ln -s /data /litentry/.local/share/litentry-collator && \
-# unclutter and minimize the attack surface
+	# unclutter and minimize the attack surface
 	rm -rf /usr/bin /usr/sbin && \
-# check if executable works in this container
+	# check if executable works in this container
 	/usr/local/bin/litentry-collator --version
 
 USER litentry

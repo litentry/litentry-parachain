@@ -51,6 +51,9 @@ echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
 docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
+    --build-arg HTTP_PROXY="${HTTP_PROXY//localhost/host.docker.internal}" \
+    --add-host=host.docker.internal:host-gateway \
+    --network host \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 
 # Tag it with latest if no tag parameter was provided
