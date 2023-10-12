@@ -106,7 +106,7 @@ fn pre_build(htype: &AmountHoldingTimeType, min_balance: &ParameterString) -> Re
 fn do_build(
 	identities: Vec<(Web3Network, Vec<String>)>,
 	htype: &AmountHoldingTimeType,
-	q_min_balance: &String,
+	q_min_balance: &str,
 ) -> core::result::Result<(bool, usize), ErrorDetail> {
 	let data_provider_config = DataProviderConfigReader::read()?;
 	let mut client = AchainableClient::new(&data_provider_config);
