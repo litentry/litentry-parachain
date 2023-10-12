@@ -23,6 +23,14 @@ use ita_stf::{IDGraph, Runtime, TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::Identity;
 
+// usage example:
+//
+// ./bin/litentry-cli trusted -m <mrenclave> -d id-graph did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48
+//
+// returns:
+//
+// [(Twitter(IdentityString { inner: BoundedVec([109, 121, 104, 97, 110, 100, 108, 101], 64) }), IdentityContext { link_block: 193, web3networks: [], status: Active }), (Evm(Address20([13, 155, 253, 31, 24, 245, 244, 253, 8, 36, 125, 197, 74, 211, 82, 137, 9, 196, 179, 233])), IdentityContext { link_block: 84, web3networks: [Ethereum, Bsc], status: Active }), (Substrate(Address32([142, 175, 4, 21, 22, 135, 115, 99, 38, 201, 254, 161, 126, 37, 252, 82, 135, 97, 54, 147, 201, 18, 144, 156, 178, 38, 170, 71, 148, 242, 106, 72])), IdentityContext { link_block: 40, web3networks: [Polkadot, Kusama, Litentry, Litmus, LitentryRococo, Khala, SubstrateTestnet], status: Active })]
+
 #[derive(Parser)]
 pub struct IDGraphCommand {
 	// did format - will be converted to `Identity`
@@ -39,7 +47,7 @@ impl IDGraphCommand {
 			TrustedGetter::id_graph(id).sign(&KeyPair::Sr25519(Box::new(alice))).into();
 		let idgraph = perform_trusted_operation(cli, trusted_cli, &top)
 			.map(|v| IDGraph::<Runtime>::decode(&mut v.unwrap().as_slice()).ok());
-		println!("{:#?}", idgraph.unwrap().unwrap());
+		println!("{:?}", idgraph.unwrap().unwrap());
 
 		Ok(CliResultOk::None)
 	}
