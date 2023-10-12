@@ -232,3 +232,11 @@ pub const ASSERTION_FROM_DATE: [&str; 14] = [
 	"2023-01-01",
 	"2023-07-01",
 ];
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum AmountHoldingTimeType {
+	LIT,
+	DOT,
+	WBTC,
+	ETH,
+}
