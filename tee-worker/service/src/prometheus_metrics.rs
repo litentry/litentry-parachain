@@ -222,19 +222,18 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 fn handle_callback_calls(call: &TrustedCall) {
 	if let Ok(mut hashmap) = STF_REQUEST_EXT_HASH.lock() {
 		match call {
-			TrustedCall::link_identity(_, _, _, validation_data, _, _, hash) =>
-				if let ValidationData::Web2(_) = validation_data {
-					hashmap.insert(*hash, std::time::Instant::now());
-				},
+			TrustedCall::link_identity(_, _, _, ValidationData::Web2(_), _, _, hash) => {
+				hashmap.insert(*hash, std::time::Instant::now());
+			},
 			TrustedCall::link_identity_callback(_, _, identity, _, hash) => {
-				if let Some(time) = hashmap.remove(&hash) {
+				if let Some(time) = hashmap.remove(hash) {
 					ENCLAVE_CALLBACK_REQUEST
-						.with_label_values(&["link_identity", label_from_identity(&identity)])
+						.with_label_values(&["link_identity", label_from_identity(identity)])
 						.observe(time.elapsed().as_secs_f64());
 				}
 			},
 			TrustedCall::handle_imp_error(_, _, _, hash) =>
-				if let Some(time) = hashmap.remove(&hash) {
+				if let Some(time) = hashmap.remove(hash) {
 					ENCLAVE_CALLBACK_REQUEST
 						.with_label_values(&["link_identity", "error"])
 						.observe(time.elapsed().as_secs_f64());
@@ -243,14 +242,14 @@ fn handle_callback_calls(call: &TrustedCall) {
 				hashmap.insert(*hash, std::time::Instant::now());
 			},
 			TrustedCall::request_vc_callback(_, _, assertion, _, _, _, hash) => {
-				if let Some(time) = hashmap.remove(&hash) {
+				if let Some(time) = hashmap.remove(hash) {
 					ENCLAVE_CALLBACK_REQUEST
-						.with_label_values(&["request_vc", label_from_assertion(&assertion)])
+						.with_label_values(&["request_vc", label_from_assertion(assertion)])
 						.observe(time.elapsed().as_secs_f64());
 				}
 			},
 			TrustedCall::handle_vcmp_error(_, _, _, hash) =>
-				if let Some(time) = hashmap.remove(&hash) {
+				if let Some(time) = hashmap.remove(hash) {
 					ENCLAVE_CALLBACK_REQUEST
 						.with_label_values(&["request_vc", "error"])
 						.observe(time.elapsed().as_secs_f64());
