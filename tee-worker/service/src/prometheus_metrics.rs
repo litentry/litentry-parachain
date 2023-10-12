@@ -39,7 +39,7 @@ use itc_rest_client::{
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
 use lc_stf_task_sender::RequestType;
-use litentry_primitives::{Assertion, Identity};
+use litentry_primitives::{Assertion, Identity, ValidationData};
 use log::*;
 use prometheus::{
 	proto::MetricFamily, register_counter_vec, register_histogram_vec, register_int_gauge,
@@ -202,6 +202,7 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				handle_stf_call_request(*req, time);
 			},
 			EnclaveMetric::SuccessfulTrustedOperationIncrement(calls) => {
+				handle_request_imp_callback(calls.clone());
 				handle_request_vc_callback(calls.clone());
 				handle_trusted_operation(calls, inc_successful_trusted_operation_counter);
 			},
@@ -216,6 +217,32 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			},
 		}
 		Ok(())
+	}
+}
+
+fn handle_request_imp_callback(call: TrustedCall) {
+	let mut hashmap = STF_REQUEST_EXT_HASH.lock().unwrap();
+	if let TrustedCall::link_identity(_, _, _, validation_data, _, _, hash) = call.clone() {
+		// Perform a match for Web2 Validation
+		if let ValidationData::Web2(_) = validation_data {
+			hashmap.insert(hash, std::time::Instant::now());
+		}
+	}
+
+	if let TrustedCall::link_identity_callback(_, _, identity, _, hash) = call.clone() {
+		// Note: We don't have to check for the validation data
+		if let Some(time) = hashmap.get(&hash) {
+			ENCLAVE_CALLBACK_REQUEST
+				.with_label_values(&["link_identity", label_from_identity(&identity)])
+				.observe(time.elapsed().as_secs_f64());
+		}
+	}
+	if let TrustedCall::handle_imp_error(_, _, _, hash) = call.clone() {
+		if let Some(time) = hashmap.get(&hash) {
+			ENCLAVE_CALLBACK_REQUEST
+				.with_label_values(&["link_identity", "error"])
+				.observe(time.elapsed().as_secs_f64());
+		}
 	}
 }
 
