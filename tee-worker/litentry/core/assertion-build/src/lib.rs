@@ -38,18 +38,15 @@ pub mod sgx_reexport_prelude {
 use crate::sgx_reexport_prelude::*;
 
 pub mod a1;
-pub mod a10;
-pub mod a11;
 pub mod a13;
 pub mod a14;
 pub mod a2;
 pub mod a20;
 pub mod a3;
-pub mod a4;
 pub mod a6;
-pub mod a7;
 pub mod a8;
 pub mod achainable;
+pub mod holding_time;
 pub mod oneblock;
 
 use blake2_rfc::blake2b::Blake2b;
@@ -153,11 +150,12 @@ pub fn ss58_address_of(
 mod tests {
 	use super::*;
 	use itp_utils::ToHexPrefixed;
+	use litentry_primitives::IdentityString;
 
 	#[test]
 	fn transpose_identity_works() {
 		let mut identities: Vec<IdentityNetworkTuple> = vec![];
-		let id1 = Identity::Twitter("alice1".as_bytes().to_vec().try_into().unwrap());
+		let id1 = Identity::Twitter(IdentityString::new("alice1".as_bytes().to_vec()));
 		let id2 = [
 			122, 14, 95, 161, 63, 226, 172, 179, 35, 141, 125, 220, 137, 243, 163, 0, 157, 186,
 			194, 62, 45, 146, 65, 73, 222, 151, 78, 242, 131, 85, 243, 21,

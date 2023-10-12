@@ -1,4 +1,4 @@
-import { ApiPromise } from '@polkadot/api';
+import { ApiPromise } from 'parachain-api';
 import { KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { Metadata, TypeRegistry } from '@polkadot/types';
@@ -36,6 +36,7 @@ export type IntegrationTestContext = {
     sidechainRegistry: TypeRegistry;
     web3Signers: Web3Wallets[];
     chainIdentifier: number;
+    requestId: number;
 };
 
 export class AesOutput {
@@ -98,13 +99,6 @@ export type Assertion =
 export type TransactionSubmit = {
     tx: SubmittableExtrinsic<ApiTypes>;
     nonce: number;
-};
-
-//call types
-export type RequestBody = {
-    id: number;
-    jsonrpc: string;
-    method: string;
 };
 
 export const jsonSchema = {
@@ -188,4 +182,11 @@ export const jsonSchema = {
         },
     },
     required: ['id', 'type', 'credentialSubject', 'issuer', 'issuanceDate', 'proof'],
+};
+
+export type JsonRpcRequest = {
+    jsonrpc: string;
+    method: string;
+    params: any;
+    id: number;
 };

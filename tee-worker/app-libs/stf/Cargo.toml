@@ -8,6 +8,7 @@ edition = "2021"
 # crates.io
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 derive_more = { version = "0.99.5" }
+hex-literal = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 rlp = { version = "0.5", default-features = false }
 sha3 = { version = "0.10", default-features = false }
@@ -34,16 +35,13 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-application-crypto = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 
 # litentry
-lc-scheduled-enclave = { path = "../../litentry/core/scheduled-enclave", default-features = false }
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
-ring = { version = "0.16.20", default-features = false }
 
 [dev-dependencies]
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
@@ -61,14 +59,12 @@ sgx = [
     "itp-node-api-metadata-provider/sgx",
     # litentry
     "litentry-primitives/sgx",
-    "lc-scheduled-enclave/sgx",
     "lc-stf-task-sender/sgx",
 ]
 std = [
     # crates.io
     "codec/std",
     "log/std",
-    "rlp/std",
     # local
     "ita-sgx-runtime/std",
     "itp-hashing/std",
@@ -86,7 +82,6 @@ std = [
     "pallet-sudo/std",
     "frame-system/std",
     "frame-support/std",
-    "sp-application-crypto/std",
     "sp-runtime/std",
     "pallet-parentchain/std",
     "sp-io/std",
@@ -96,7 +91,6 @@ std = [
     "ita-sgx-runtime/std",
     "itp-node-api/std",
     "litentry-primitives/std",
-    "lc-scheduled-enclave/std",
     "lc-stf-task-sender/std",
 ]
 test = []

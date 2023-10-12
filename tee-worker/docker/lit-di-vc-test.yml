@@ -1,9 +1,10 @@
 services:
     lit-di-vc-test:
-        image: litentry-cli:dev
+        image: litentry/litentry-cli:latest
         container_name: litentry-di-vc-test
         volumes:
             - ../ts-tests:/ts-tests
+            - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
         build:
             context: ..
@@ -13,8 +14,6 @@ services:
             litentry-node:
                 condition: service_healthy
             litentry-worker-1:
-                condition: service_healthy
-            litentry-worker-2:
                 condition: service_healthy
         networks:
             - litentry-test-network

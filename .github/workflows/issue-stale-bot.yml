@@ -1,8 +1,6 @@
 name: Issue stale bot
 
 on:
-  schedule:
-    - cron: '30 2 * * *'
   workflow_dispatch:
 
 permissions:

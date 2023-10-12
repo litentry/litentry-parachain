@@ -10,40 +10,52 @@ ts-tests of tee-worker
 
 ## Installation
 
+###### ts-tests:
+
 ```
 cd tee-worker/ts-tests
 nvm use
-corepack yarn
+corepack enable pnpm
+pnpm install
 ```
 
-## Type Generated
+###### client-api:
 
-Update parachain metadata: `corepack yarn workspace parachain-api update-metadata` (requires the parachain is running)
+```cd tee-worker/ts-tests
+cd tee-worker/client-api
+nvm use
+corepack enable pnpm
+pnpm install
+```
 
-Update sidechain metadata: `corepack yarn workspace sidechain-api update-metadata` (requires the worker is running)
+## Type Generated(client-api folder)
 
-Generate parachain type: `corepack yarn workspace parachain-api build`
+Update parachain metadata: `pnpm --filter parachain-api run update-metadata` (requires the parachain is running)
 
-Generate sidechain type: `corepack yarn workspace sidechain-api build`
+Update sidechain metadata: `pnpm --filter sidechain-api run update-metadata` (requires the worker is running)
 
-Alternatively, you can run `corepack yarn update-build` to do all things above in one go.
+Generate parachain type: `pnpm --filter parachain-api run build`
+
+Generate sidechain type: `pnpm --filter sidechain-api run build`
+
+Alternatively, you can run `pnpm --run update-build` to do all things above in one go.
+
+##### Note: After updating the client-api, it is necessary to reinstall the `parachain-api` and `sidechain-api` dependencies within the ts-tests, or else the ts-tests won't work. In summary, you will need to execute the command `pnpm install` once more.
 
 ## Local
 
 [Start parachain && worker](https://github.com/litentry/litentry-parachain/blob/dev/README.md)
 
-## Usage
+## Usage(ts-tests folder)
 
-II identity test: `corepack yarn test-ii-identity:local`
+II identity test: `pnpm --filter integration-tests run test-ii-identity:local`
 
-II vc test: `corepack yarn test-ii-vc:local`
+II vc test: `pnpm --filter integration-tests run test-ii-vc:local`
 
-II batch identity test: `corepack yarn test-ii-batch:local`
+II batch identity test: `pnpm --filter integration-tests run test-ii-batch:local`
 
-Direct invocation substrate identity test: `corepack yarn test-di-substrate-identity:local`
+Direct invocation substrate identity test: `pnpm --filter integration-tests run test-di-substrate-identity:local`
 
-Direct invocation evm identity test: `corepack yarn test-di-evm-identity:local`
+Direct invocation evm identity test: `pnpm --filter integration-tests run test-di-evm-identity:local`
 
-Direct invocation EVM examples: `corepack yarn workspace integration-tests ii-evm-examples`
-
-Direct invocation Substrate examples: `corepack yarn workspace integration-tests ii-substrate-examples`
+Direct invocation vc test: `pnpm --filter integration-tests run test-di-vc:local`

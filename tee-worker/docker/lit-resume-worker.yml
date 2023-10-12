@@ -1,24 +1,23 @@
 services:
-  lit-resume-worker:
-    image: litentry-worker:dev
-    container_name: litentry-worker
-    volumes:
-      - ../ts-tests:/ts-tests
-      - ../cli:/usr/local/worker-cli
-    build:
-      context: ..
-      dockerfile: build.Dockerfile
-      target: deployed-worker
-    depends_on:
-      litentry-node:
-        condition: service_healthy
-    networks:
-      - litentry-test-network
-    entrypoint:
-      "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-resuming-worker 2>&1' "
-    restart: "no"
+    lit-resume-worker:
+        image: litentry/litentry-worker:latest
+        container_name: litentry-worker
+        volumes:
+            - ../ts-tests:/ts-tests
+            - ../client-api:/client-api
+            - ../cli:/usr/local/worker-cli
+        build:
+            context: ..
+            dockerfile: build.Dockerfile
+            target: deployed-worker
+        depends_on:
+            litentry-node:
+                condition: service_healthy
+        networks:
+            - litentry-test-network
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-resuming-worker 2>&1' "
+        restart: "no"
 networks:
-  litentry-test-network:
-    driver: bridge
-
+    litentry-test-network:
+        driver: bridge
 # docker compose -f docker-compose.yml -f resume-worker.yml up relaychain-alice relaychain-bob litentry-node --no-build --exit-code-from resume-worker -- resume-worker
