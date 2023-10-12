@@ -220,44 +220,45 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 }
 
 fn handle_callback_calls(call: &TrustedCall) {
-	let mut hashmap = STF_REQUEST_EXT_HASH.lock().unwrap();
-	match call {
-		TrustedCall::link_identity(_, _, _, validation_data, _, _, hash) =>
-			if let ValidationData::Web2(_) = validation_data {
+	if let Ok(mut hashmap) = STF_REQUEST_EXT_HASH.lock() {
+		match call {
+			TrustedCall::link_identity(_, _, _, validation_data, _, _, hash) =>
+				if let ValidationData::Web2(_) = validation_data {
+					hashmap.insert(*hash, std::time::Instant::now());
+				},
+			TrustedCall::link_identity_callback(_, _, identity, _, hash) => {
+				if let Some(time) = hashmap.remove(&hash) {
+					ENCLAVE_CALLBACK_REQUEST
+						.with_label_values(&["link_identity", label_from_identity(&identity)])
+						.observe(time.elapsed().as_secs_f64());
+				}
+			},
+			TrustedCall::handle_imp_error(_, _, _, hash) =>
+				if let Some(time) = hashmap.remove(&hash) {
+					ENCLAVE_CALLBACK_REQUEST
+						.with_label_values(&["link_identity", "error"])
+						.observe(time.elapsed().as_secs_f64());
+				},
+			TrustedCall::request_vc(_, _, _, hash) => {
 				hashmap.insert(*hash, std::time::Instant::now());
 			},
-		TrustedCall::link_identity_callback(_, _, identity, _, hash) => {
-			if let Some(time) = hashmap.get(&hash) {
-				ENCLAVE_CALLBACK_REQUEST
-					.with_label_values(&["link_identity", label_from_identity(&identity)])
-					.observe(time.elapsed().as_secs_f64());
-			}
-		},
-		TrustedCall::handle_imp_error(_, _, _, hash) =>
-			if let Some(time) = hashmap.get(&hash) {
-				ENCLAVE_CALLBACK_REQUEST
-					.with_label_values(&["link_identity", "error"])
-					.observe(time.elapsed().as_secs_f64());
+			TrustedCall::request_vc_callback(_, _, assertion, _, _, _, hash) => {
+				if let Some(time) = hashmap.remove(&hash) {
+					ENCLAVE_CALLBACK_REQUEST
+						.with_label_values(&["request_vc", label_from_assertion(&assertion)])
+						.observe(time.elapsed().as_secs_f64());
+				}
 			},
-		TrustedCall::request_vc(_, _, _, hash) => {
-			hashmap.insert(*hash, std::time::Instant::now());
-		},
-		TrustedCall::request_vc_callback(_, _, assertion, _, _, _, hash) => {
-			if let Some(time) = hashmap.get(&hash) {
-				ENCLAVE_CALLBACK_REQUEST
-					.with_label_values(&["request_vc", label_from_assertion(&assertion)])
-					.observe(time.elapsed().as_secs_f64());
-			}
-		},
-		TrustedCall::handle_vcmp_error(_, _, _, hash) =>
-			if let Some(time) = hashmap.get(&hash) {
-				ENCLAVE_CALLBACK_REQUEST
-					.with_label_values(&["request_vc", "error"])
-					.observe(time.elapsed().as_secs_f64());
+			TrustedCall::handle_vcmp_error(_, _, _, hash) =>
+				if let Some(time) = hashmap.remove(&hash) {
+					ENCLAVE_CALLBACK_REQUEST
+						.with_label_values(&["request_vc", "error"])
+						.observe(time.elapsed().as_secs_f64());
+				},
+			_ => {
+				// We will do nothing because these calls are not callback calls
 			},
-		_ => {
-			// We will do nothing because these calls are not callback calls
-		},
+		}
 	}
 }
 
