@@ -129,7 +129,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn enclave_count_max)]
+	#[pallet::getter(fn max_enclave_count)]
 	pub type MaxEnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery, DefaultMaxEnclaveCount>;
 
 	#[pallet::storage]
@@ -664,7 +664,7 @@ impl<T: Config> Pallet<T> {
 			log::info!("Updating already registered enclave");
 			<EnclaveIndex<T>>::get(sender)
 		} else {
-			ensure!(Self::enclave_count() < Self::enclave_count_max(), <Error<T>>::TooManyEnclaves);
+			ensure!(Self::enclave_count() < Self::max_enclave_count(), <Error<T>>::TooManyEnclaves);
 			let enclaves_count = Self::enclave_count()
 				.checked_add(1)
 				.ok_or("[Teerex]: Overflow adding new enclave to registry")?;
