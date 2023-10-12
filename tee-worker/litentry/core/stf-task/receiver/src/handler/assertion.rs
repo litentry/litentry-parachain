@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#![allow(clippy::result_large_err)]
+
 use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
 use ita_sgx_runtime::Hash;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -22,10 +24,12 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
-use lc_credentials::DID;
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{Assertion, ErrorDetail, ErrorString, Identity, VCMPError};
+use litentry_primitives::{
+	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
+	VCMPError,
+};
 use log::*;
 use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
@@ -64,18 +68,22 @@ where
 			Assertion::A3(guild_id, channel_id, role_id) =>
 				lc_assertion_build::a3::build(&self.req, guild_id, channel_id, role_id),
 
-			Assertion::A4(min_balance) => lc_assertion_build::a4::build(&self.req, min_balance),
+			Assertion::A4(min_balance) =>
+				build_holding_time(&self.req, AmountHoldingTimeType::LIT, min_balance),
 
 			Assertion::A6 => lc_assertion_build::a6::build(&self.req),
 
-			Assertion::A7(min_balance) => lc_assertion_build::a7::build(&self.req, min_balance),
+			Assertion::A7(min_balance) =>
+				build_holding_time(&self.req, AmountHoldingTimeType::DOT, min_balance),
 
 			// no need to pass `networks` again because it's the same as the `get_supported_web3networks`
 			Assertion::A8(_networks) => lc_assertion_build::a8::build(&self.req),
 
-			Assertion::A10(min_balance) => lc_assertion_build::a10::build(&self.req, min_balance),
+			Assertion::A10(min_balance) =>
+				build_holding_time(&self.req, AmountHoldingTimeType::WBTC, min_balance),
 
-			Assertion::A11(min_balance) => lc_assertion_build::a11::build(&self.req, min_balance),
+			Assertion::A11(min_balance) =>
+				build_holding_time(&self.req, AmountHoldingTimeType::ETH, min_balance),
 
 			Assertion::A13(owner) =>
 				lc_assertion_build::a13::build(&self.req, self.context.ocall_api.clone(), &owner),
@@ -105,14 +113,13 @@ where
 			.credential_subject
 			.set_endpoint(data_provider_config.credential_endpoint);
 
-		credential.issuer.id = DID::try_from(&Identity::Substrate(enclave_account.into()))
-			.map_err(|e| {
+		credential.issuer.id =
+			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
 				VCMPError::RequestVCFailed(
 					self.req.assertion.clone(),
 					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 				)
-			})?
-			.format();
+			})?;
 		let payload = credential.issuer.mrenclave.clone();
 		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
 			VCMPError::RequestVCFailed(
@@ -195,4 +202,12 @@ where
 			error!("can't get enclave signer");
 		}
 	}
+}
+
+fn build_holding_time(
+	req: &AssertionBuildRequest,
+	htype: AmountHoldingTimeType,
+	min_balance: ParameterString,
+) -> Result<lc_credentials::Credential, VCMPError> {
+	lc_assertion_build::holding_time::build(req, htype, min_balance)
 }

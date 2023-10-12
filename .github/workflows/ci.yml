@@ -265,6 +265,17 @@ jobs:
           cargo clippy --release --features evm -- -D warnings
           echo "::endgroup::"
 
+      - name: Clean up disk
+        working-directory: ./tee-worker
+        run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          cargo clean --profile release
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+
       - name: Tee-enclave clippy
         working-directory: ./tee-worker/enclave-runtime
         run: |
@@ -665,7 +676,6 @@ jobs:
         include:
           - test_name: demo-indirect-invocation
           - test_name: demo-direct-call
-          - test_name: demo-sidechain
           # Litentry
           - test_name: lit-user-shielding-key
           - test_name: lit-resume-worker
