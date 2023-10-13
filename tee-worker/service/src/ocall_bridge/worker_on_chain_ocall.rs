@@ -16,29 +16,36 @@
 
 */
 
-use crate::ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge};
+use crate::{
+	enclave_account,
+	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge},
+};
 use codec::{Decode, Encode};
 use itp_api_client_types::ParentchainApi;
-use itp_node_api::node_api_factory::CreateNodeApi;
+use itp_enclave_api::enclave_base::EnclaveBase;
+use itp_node_api::{api_client::AccountApi, node_api_factory::CreateNodeApi};
 use itp_types::{parentchain::ParentchainId, WorkerRequest, WorkerResponse};
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
-use std::{sync::Arc, /*thread,*/ vec::Vec};
+use std::{sync::Arc, thread, vec::Vec};
 use substrate_api_client::{ac_primitives::serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
 
-pub struct WorkerOnChainOCall<F> {
+pub struct WorkerOnChainOCall<E, F> {
+	enclave_api: Arc<E>,
 	integritee_api_factory: Arc<F>,
 	target_a_parentchain_api_factory: Option<Arc<F>>,
 	target_b_parentchain_api_factory: Option<Arc<F>>,
 }
 
-impl<F> WorkerOnChainOCall<F> {
+impl<E, F> WorkerOnChainOCall<E, F> {
 	pub fn new(
+		enclave_api: Arc<E>,
 		integritee_api_factory: Arc<F>,
 		target_a_parentchain_api_factory: Option<Arc<F>>,
 		target_b_parentchain_api_factory: Option<Arc<F>>,
 	) -> Self {
 		WorkerOnChainOCall {
+			enclave_api,
 			integritee_api_factory,
 			target_a_parentchain_api_factory,
 			target_b_parentchain_api_factory,
@@ -46,7 +53,7 @@ impl<F> WorkerOnChainOCall<F> {
 	}
 }
 
-impl<F: CreateNodeApi> WorkerOnChainOCall<F> {
+impl<E: EnclaveBase, F: CreateNodeApi> WorkerOnChainOCall<E, F> {
 	pub fn create_api(&self, parentchain_id: ParentchainId) -> OCallBridgeResult<ParentchainApi> {
 		Ok(match parentchain_id {
 			ParentchainId::Integritee => self.integritee_api_factory.create_api()?,
@@ -64,8 +71,9 @@ impl<F: CreateNodeApi> WorkerOnChainOCall<F> {
 	}
 }
 
-impl<F> WorkerOnChainBridge for WorkerOnChainOCall<F>
+impl<E, F> WorkerOnChainBridge for WorkerOnChainOCall<E, F>
 where
+	E: EnclaveBase,
 	F: CreateNodeApi,
 {
 	fn worker_request(
@@ -137,7 +145,7 @@ where
 				parentchain_id
 			);
 			let api = self.create_api(parentchain_id)?;
-			// let mut send_extrinsic_failed = false;
+			let mut send_extrinsic_failed = false;
 			for call in extrinsics.into_iter() {
 				if let Err(e) = api.submit_opaque_extrinsic(&call.encode().into()) {
 					error!(
@@ -145,7 +153,7 @@ where
 						serde_json::to_string(&call),
 						e
 					);
-					// send_extrinsic_failed = true;
+					send_extrinsic_failed = true;
 				}
 			}
 
@@ -172,25 +180,27 @@ where
 			//
 			// Another small thing that can be improved is to use rpc.system.accountNextIndex instead of system.account.nonce
 			// see https://polkadot.js.org/docs/api/cookbook/tx/#how-do-i-take-the-pending-tx-pool-into-account-in-my-nonce
-			// if send_extrinsic_failed {
-			// 	// drop &self lifetime
-			// 	let node_api_factory_cloned = self.node_api_factory.clone();
-			// 	let enclave_cloned = self.enclave_api.clone();
-			// 	thread::spawn(move || {
-			// 		let api = node_api_factory_cloned.create_api().unwrap();
-			// 		let enclave_account = enclave_account(enclave_cloned.as_ref());
-			// 		warn!("send_extrinsic failed, try to reset nonce ...");
-			// 		match api.get_nonce_of(&enclave_account) {
-			// 			Ok(nonce) => {
-			// 				warn!("query on-chain nonce OK, reset nonce to: {}", nonce);
-			// 				if let Err(e) = enclave_cloned.set_nonce(nonce) {
-			// 					warn!("failed to reset nonce due to: {:?}", e);
-			// 				}
-			// 			},
-			// 			Err(e) => warn!("query on-chain nonce failed: {:?}", e),
-			// 		}
-			// 	});
-			// }
+			if send_extrinsic_failed {
+				// drop &self lifetime
+				let node_api_factory_cloned = self.integritee_api_factory.clone();
+				let enclave_cloned = self.enclave_api.clone();
+				thread::spawn(move || {
+					let api = node_api_factory_cloned.create_api().unwrap();
+					let enclave_account = enclave_account(enclave_cloned.as_ref());
+					warn!("send_extrinsic failed, try to reset nonce ...");
+					match api.get_account_next_index(&enclave_account) {
+						Ok(nonce) => {
+							warn!("query on-chain nonce OK, reset nonce to: {}", nonce);
+							if let Err(e) =
+								enclave_cloned.set_nonce(nonce, ParentchainId::Integritee)
+							{
+								warn!("failed to reset nonce due to: {:?}", e);
+							}
+						},
+						Err(e) => warn!("query on-chain nonce failed: {:?}", e),
+					}
+				});
+			}
 		}
 
 		status

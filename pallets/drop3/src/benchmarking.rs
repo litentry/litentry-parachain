@@ -27,7 +27,6 @@ use sp_runtime::traits::One;
 use sp_std::vec;
 
 const SEED: u32 = 0;
-
 const DEFAULT_ED_MULTIPLIER: u32 = 10;
 const TRANSFER_ED_MULTIPLIER: u32 = 2;
 

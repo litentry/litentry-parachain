@@ -159,6 +159,7 @@ impl<
 
 	fn get_oc_api(&self) -> Arc<dyn WorkerOnChainBridge> {
 		Arc::new(WorkerOnChainOCall::new(
+			self.enclave_api.clone(),
 			self.integritee_rpc_api_factory.clone(),
 			self.target_a_parentchain_rpc_api_factory.clone(),
 			self.target_b_parentchain_rpc_api_factory.clone(),
