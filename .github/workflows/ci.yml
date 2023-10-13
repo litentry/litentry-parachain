@@ -261,9 +261,9 @@ jobs:
           echo "::group::cargo clippy sidechain"
           cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
-          # echo "::group::cargo clippy teeracle"
-          # cargo clippy --features teeracle -- -D warnings
-          # echo "::endgroup::"
+          echo "::group::cargo clippy teeracle"
+          cargo clippy --features teeracle -- -D warnings
+          echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clippy --release --features offchain-worker -- -D warnings
           echo "::endgroup::"
@@ -291,9 +291,9 @@ jobs:
           echo "::group::cargo clippy sidechain"
           cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
-          # echo "::group::cargo clippy teeracle"
-          # cargo clippy --features teeracle -- -D warnings
-          # echo "::endgroup::"
+          echo "::group::cargo clippy teeracle"
+          cargo clippy --features teeracle -- -D warnings
+          echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clippy --release --features offchain-worker -- -D warnings
           echo "::endgroup::"
