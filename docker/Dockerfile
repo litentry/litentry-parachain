@@ -1,6 +1,5 @@
 # global args that are used across multiple stages
 ARG PROFILE
-ARG HTTP_PROXY
 
 # ==========================
 # stage 1: build
@@ -8,10 +7,6 @@ ARG HTTP_PROXY
 # our host is based on bullseye/sid (ubuntu 20)
 # ==========================
 FROM rust:bullseye as builder
-ENV HTTP_PROXY=$HTTP_PROXY
-ENV HTTPS_PROXY=$HTTP_PROXY
-ENV http_proxy=$HTTP_PROXY
-ENV https_proxy=$HTTP_PROXY
 
 WORKDIR /litentry
 COPY . /litentry
@@ -27,10 +22,6 @@ RUN cargo build --locked --profile $PROFILE $BUILD_ARGS
 # stage 2: packaging
 # ==========================
 FROM ubuntu:20.04
-ENV HTTP_PROXY=$HTTP_PROXY
-ENV HTTPS_PROXY=$HTTP_PROXY
-ENV http_proxy=$HTTP_PROXY
-ENV https_proxy=$HTTP_PROXY
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
 ARG PROFILE
