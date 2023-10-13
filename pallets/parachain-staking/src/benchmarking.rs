@@ -255,6 +255,7 @@ benchmarks! {
 	// USER DISPATCHABLES
 
 	join_candidates {
+		let min_candidate_stk = min_candidate_stk::<T>();
 		let x in 3..1_000;
 		// Worst Case Complexity is insertion into an ordered list so \exists full list before call
 		let mut candidate_count = 1u32;
@@ -271,7 +272,7 @@ benchmarks! {
 		let (caller, total) = create_funded_user::<T>("caller", USER_SEED, 0u32.into());
 		//Due to the CandidateUnauthorized error, I had to add this line of code
 		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(),caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), total - 1u32.into())
+	}: _(RawOrigin::Signed(caller.clone()), min_candidate_stk)
 	verify {
 		assert!(Pallet::<T>::is_candidate(&caller));
 	}
