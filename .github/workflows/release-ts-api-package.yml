@@ -1,4 +1,4 @@
-name: Release api package
+name: Release Ts API package
 on:
   workflow_dispatch:
 
@@ -38,10 +38,10 @@ jobs:
           pnpm build
           npm publish --tag ${{ github.ref_name }}
 
-          echo "------------------------parachian api published------------------------"
+          echo "------------------------parachain API published------------------------"
 
           cd ../sidechain-api
           pnpm build
           npm publish --tag ${{ github.ref_name }}
 
-          echo "------------------------parachian api published------------------------"
+          echo "------------------------sidechain API published------------------------"
