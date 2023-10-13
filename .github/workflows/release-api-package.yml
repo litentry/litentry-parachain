@@ -1,77 +1,47 @@
 name: Release api package
-
 on:
   workflow_dispatch:
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Use Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 18
           registry-url: https://npm.pkg.github.com/
 
-      - name: Log in to GitHub Package Registry
+      - name: Setup npm config
         run: |
-          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TOKEN }}" > .npmrc
-          npm config set @litentry/litentry-parachain:registry https://npm.pkg.github.com
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
+          npm config set @litentry:registry https://npm.pkg.github.com
 
       - name: Install pnpm
-        run: npm install -g pnpm
+        run: corepack enable pnpm
 
       - name: Install dependencies
         run: |
           cd tee-worker/client-api
           pnpm install
 
-      - name: Build and Publish Parachain
+      - name: Build and publish parachain and sidechain
+        if: github.ref_name == 'dev' || github.ref_name == 'staging'
         run: |
-          branch_name="${{ github.ref }}"
-          echo "Branch Name: $branch_name" 
+          cd tee-worker/client-api/parachain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
 
-          if [ "$branch_name" == "refs/heads/dev" ]; then
-            cd tee-worker/client-api/parachain-api
-            pnpm build
-            npm publish --tag dev
-            echo "Published Parachain on the 'dev' branch."
+          echo "------------------------parachian api published------------------------"
 
-          elif [ "$branch_name" == "refs/heads/staging" ]; then
-            cd tee-worker/client-api/parachain-api
-            pnpm build
-            npm publish --tag staging
-            echo "Published Parachain on the 'staging' branch with 'staging' tag."
+          cd ../sidechain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
 
-          else
-            echo "Not on 'dev' or 'staging' branch, skipping Parachain publish."
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-
-      - name: Build and Publish Sidechain
-        run: |
-          branch_name="${{ github.ref }}"
-          echo "Branch Name: $branch_name" 
-
-          if [ "$branch_name" == "refs/heads/dev" ]; then
-            cd tee-worker/client-api/sidechain-api
-            pnpm build
-            npm publish --tag dev
-            echo "Published Sidechain on the 'dev' branch."
-
-          elif [ "$branch_name" == "refs/heads/staging" ]; then
-            cd tee-worker/client-api/sidechain-api
-            pnpm build
-            npm publish --tag staging
-            echo "Published Sidechain on the 'staging' branch with 'staging' tag."
-
-          else
-            echo "Not on 'dev' or 'staging' branch, skipping Sidechain publish."
-          fi
-
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          echo "------------------------parachian api published------------------------"
