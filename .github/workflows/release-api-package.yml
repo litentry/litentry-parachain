@@ -31,7 +31,7 @@ jobs:
           cd tee-worker/client-api
           pnpm install
 
-      - name: Build and publish parachain and sidechain
+      - name: Build and publish parachain and sidechain API
         if: github.ref_name == 'dev' || github.ref_name == 'staging'
         run: |
           cd tee-worker/client-api/parachain-api
