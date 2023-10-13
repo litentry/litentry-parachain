@@ -211,6 +211,7 @@ where
 mod tests {
 
 	use super::*;
+	use crate::tests::mocks::enclave_api_mock::EnclaveMock;
 	use itp_node_api::{
 		api_client::ParentchainApi,
 		node_api_factory::{CreateNodeApi, Result as NodeApiResult},
@@ -226,9 +227,11 @@ mod tests {
 			}
 		}
 
+		let mock_enclave = Arc::new(EnclaveMock {});
 		let mock_node_api_factory = Arc::new(MockNodeApiFactory::new());
 
-		let on_chain_ocall = WorkerOnChainOCall::new(mock_node_api_factory, None, None);
+		let on_chain_ocall =
+			WorkerOnChainOCall::new(mock_enclave, mock_node_api_factory, None, None);
 
 		let response = on_chain_ocall
 			.worker_request(Vec::<u8>::new().encode(), ParentchainId::Integritee.encode())
