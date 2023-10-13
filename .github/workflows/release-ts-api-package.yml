@@ -1,0 +1,47 @@
+name: Release Ts API package
+on:
+  workflow_dispatch:
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://npm.pkg.github.com/
+
+      - name: Setup npm config
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
+          npm config set @litentry:registry https://npm.pkg.github.com
+
+      - name: Install pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: |
+          cd tee-worker/client-api
+          pnpm install
+
+      - name: Build and publish parachain and sidechain API
+        if: github.ref_name == 'dev' || github.ref_name == 'staging'
+        run: |
+          cd tee-worker/client-api/parachain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
+
+          echo "------------------------parachain API published------------------------"
+
+          cd ../sidechain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
+
+          echo "------------------------sidechain API published------------------------"
