@@ -8,6 +8,7 @@ use itp_test::mock::{
 	handle_state_mock::HandleStateMock, onchain_mock::OnchainMock,
 	shielding_crypto_mock::ShieldingCryptoMock,
 };
+use itp_top_pool_author::mocks::AuthorApiMock;
 use lc_stf_task_sender::stf_task_sender::{SendStfRequest, StfRequestSender};
 use litentry_primitives::Assertion;
 
@@ -74,6 +75,8 @@ fn test_threadpool_behaviour() {
 
 	let mut expected_output: Vec<Assertion> =
 		vec![Assertion::A1, Assertion::A1, Assertion::A1, Assertion::A1, Assertion::A6];
+
+	let start_time = std::time::Instant::now();
 
 	while let Ok(ext) = receiver.recv() {
 		let decrypted = shielding_key.decrypt(&ext).unwrap();
