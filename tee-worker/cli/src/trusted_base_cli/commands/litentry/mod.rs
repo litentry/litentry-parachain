@@ -16,6 +16,7 @@
 
 pub mod id_graph_stats;
 pub mod link_identity;
+pub mod request_vc;
 pub mod send_erroneous_parentchain_call;
 pub mod set_user_shielding_key;
 pub mod user_shielding_key;
