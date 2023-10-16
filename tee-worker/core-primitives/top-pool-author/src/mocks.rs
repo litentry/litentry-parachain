@@ -199,6 +199,7 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 	}
 
 	fn watch_top(&self, ext: Vec<u8>, _shard: ShardIdentifier) -> PoolFuture<H256, RpcError> {
+		// Note: The below implementation is specific for litentry/core/stf-task/receiver/test.rs
 		let sender_guard = GLOBAL_MOCK_AUTHOR_API.lock().unwrap();
 		let sender = &*sender_guard;
 		sender.as_ref().expect("Not yet initialized").send(ext).unwrap();
