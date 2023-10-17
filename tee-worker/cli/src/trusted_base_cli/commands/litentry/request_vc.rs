@@ -34,9 +34,24 @@ use litentry_primitives::{
 use log::*;
 use sp_core::Pair;
 
+// usage example (you can always use --help on subcommands to see more details)
+//
+// a8:
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
+//
+// oneblock VC:
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
+//
+// achainable VC:
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
+
 fn to_para_str(s: &str) -> ParameterString {
 	ParameterString::truncate_from(s.as_bytes().to_vec())
 }
+
 #[derive(Parser)]
 pub struct RequestVcCommand {
 	/// did account to whom the vc will be issued
@@ -326,8 +341,9 @@ impl RequestVcCommand {
 			TrustedCall::request_vc(alice.public().into(), id, assertion, Default::default())
 				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
-		let vc = perform_trusted_operation(cli, trusted_cli, &top).unwrap();
 
+		// TODO: P-177, print actual VC content to stdout
+		let _vc = perform_trusted_operation(cli, trusted_cli, &top).unwrap();
 		Ok(CliResultOk::None)
 	}
 }
