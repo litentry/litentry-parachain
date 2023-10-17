@@ -57,7 +57,8 @@ fn create_funded_user<T: Config>(
 	// Then we should care about ED of pallet_balances here
 	let min_candidate_stk = min_candidate_stk::<T>();
 	// Extra plus as ED
-	let total = min_candidate_stk * 100u32.into() + extra + pallet_balances::Pallet<T>::ExistentialDeposit::get();
+	let total = min_candidate_stk * 100u32.into() +
+		extra + pallet_balances::Pallet::<T>::ExistentialDeposit::get();
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
 	(user, total)
@@ -72,7 +73,11 @@ fn create_funded_delegator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond { min_delegator_stk::<T>() } else { total - pallet_balances::Pallet<T>::ExistentialDeposit::get() };
+	let bond = if min_bond {
+		min_delegator_stk::<T>()
+	} else {
+		total - pallet_balances::Pallet::<T>::ExistentialDeposit::get()
+	};
 	Pallet::<T>::delegate(RawOrigin::Signed(user.clone()).into(), collator, bond)?;
 	Ok(user)
 }
@@ -85,7 +90,11 @@ fn create_funded_collator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond { min_candidate_stk::<T>() } else { total - pallet_balances::Pallet<T>::ExistentialDeposit::get() };
+	let bond = if min_bond {
+		min_candidate_stk::<T>()
+	} else {
+		total - pallet_balances::Pallet::<T>::ExistentialDeposit::get()
+	};
 	//Due to the CandidateUnauthorized error, I had to add this line of code
 	Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), user.clone())?;
 	Pallet::<T>::join_candidates(RawOrigin::Signed(user.clone()).into(), bond)?;
