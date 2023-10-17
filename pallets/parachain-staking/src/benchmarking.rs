@@ -57,7 +57,7 @@ fn create_funded_user<T: Config>(
 	// Then we should care about ED of pallet_balances here
 	let min_candidate_stk = min_candidate_stk::<T>();
 	// Extra plus as ED
-	let total = min_candidate_stk * 100u32.into() + extra + 1u32.into();
+	let total = min_candidate_stk * 100u32.into() + extra + pallet_balances::Pallet<T>::ExistentialDeposit::get();
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
 	(user, total)
@@ -711,7 +711,7 @@ benchmarks! {
 			collator.clone()
 		)?;
 	} verify {
-		let expected = total - 1u32.into() - bond_less;
+		let expected = total - pallet_balances::Pallet<T>::ExistentialDeposit::get() - bond_less;
 		assert_eq!(T::Currency::reserved_balance(&caller), expected);
 	}
 
