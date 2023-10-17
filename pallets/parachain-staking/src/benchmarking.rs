@@ -57,8 +57,7 @@ fn create_funded_user<T: Config>(
 	// Then we should care about ED of pallet_balances here
 	let min_candidate_stk = min_candidate_stk::<T>();
 	// Extra plus as ED
-	let total = min_candidate_stk * 100u32.into() +
-		extra + pallet_balances::Pallet::<T>::ExistentialDeposit::get();
+	let total = min_candidate_stk * 100u32.into() + extra + T::Currency::minimum_balance();
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
 	(user, total)
@@ -73,11 +72,8 @@ fn create_funded_delegator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond {
-		min_delegator_stk::<T>()
-	} else {
-		total - pallet_balances::Pallet::<T>::ExistentialDeposit::get()
-	};
+	let bond =
+		if min_bond { min_delegator_stk::<T>() } else { total - T::Currency::minimum_balance() };
 	Pallet::<T>::delegate(RawOrigin::Signed(user.clone()).into(), collator, bond)?;
 	Ok(user)
 }
@@ -90,11 +86,8 @@ fn create_funded_collator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond {
-		min_candidate_stk::<T>()
-	} else {
-		total - pallet_balances::Pallet::<T>::ExistentialDeposit::get()
-	};
+	let bond =
+		if min_bond { min_candidate_stk::<T>() } else { total - T::Currency::minimum_balance() };
 	//Due to the CandidateUnauthorized error, I had to add this line of code
 	Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), user.clone())?;
 	Pallet::<T>::join_candidates(RawOrigin::Signed(user.clone()).into(), bond)?;
@@ -638,7 +631,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total - pallet_balances::Pallet<T>::ExistentialDeposit::get(),
+			total - T::Currency::minimum_balance(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 	}: _(RawOrigin::Signed(caller.clone()), collator.clone(), bond_less)
@@ -702,7 +695,7 @@ benchmarks! {
 			caller.clone()).into(),
 			collator.clone(),
 			// Leaving an ED for account
-			total - pallet_balances::Pallet<T>::ExistentialDeposit::get(),
+			total - T::Currency::minimum_balance(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::schedule_delegator_bond_less(
@@ -720,7 +713,7 @@ benchmarks! {
 			collator.clone()
 		)?;
 	} verify {
-		let expected = total - pallet_balances::Pallet<T>::ExistentialDeposit::get() - bond_less;
+		let expected = total - T::Currency::minimum_balance() - bond_less;
 		assert_eq!(T::Currency::reserved_balance(&caller), expected);
 	}
 
@@ -767,7 +760,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total - pallet_balances::Pallet<T>::ExistentialDeposit::get(),
+			total - T::Currency::minimum_balance(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::schedule_delegator_bond_less(
