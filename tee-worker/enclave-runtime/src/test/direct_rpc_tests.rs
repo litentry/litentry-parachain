@@ -33,7 +33,6 @@ use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{DirectRequestStatus, Request, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use jsonrpc_core::Params;
 use litentry_primitives::{Address32, Identity};
 use std::{
 	string::{String, ToString},
@@ -55,7 +54,7 @@ pub fn get_state_request_works() {
 	let getter_executor =
 		Arc::new(GetterExecutor::<_, GetStateMock<TestState>>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
-	let (sender, receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
+	let (sender, _receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
