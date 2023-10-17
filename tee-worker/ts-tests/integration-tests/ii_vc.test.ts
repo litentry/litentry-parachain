@@ -78,7 +78,7 @@ describeLitentry('VC test', 0, async (context) => {
             const key = vcKeys[index];
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, {
                 [key]: allAssertions[key as keyof Assertion],
-            });
+            } as any);
             txs.push({ tx });
         }
 

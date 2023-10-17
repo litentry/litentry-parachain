@@ -16,10 +16,8 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 default = ["std"]
 sgx = [
     "sgx_tstd",
-    #    "sgx-crypto-helper/mesalock_sgx",
     "serde_json_sgx",
 ]
 std = [
-    #    "sgx-crypto-helper/ucrypto_help",
     "serde_json",
 ]

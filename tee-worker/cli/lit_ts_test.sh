@@ -18,6 +18,10 @@ function usage() {
 [ $# -ne 1 ] && (usage; exit 1)
 TEST=$1
 
+cd /client-api
+pnpm install
+pnpm run build
+
 cd /ts-tests
 
 pnpm install
