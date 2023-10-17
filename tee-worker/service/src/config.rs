@@ -26,8 +26,8 @@ use std::{
 	time::Duration,
 };
 
-static DEFAULT_INTEGRITEE_RPC_URL: &str = "ws://127.0.0.1";
-static DEFAULT_INTEGRITEE_RPC_PORT: &str = "9944";
+static DEFAULT_NODE_URL: &str = "ws://127.0.0.1";
+static DEFAULT_NODE_PORT: &str = "9944";
 static DEFAULT_TRUSTED_PORT: &str = "2000";
 static DEFAULT_UNTRUSTED_PORT: &str = "2001";
 static DEFAULT_MU_RA_PORT: &str = "3443";
@@ -278,8 +278,8 @@ impl From<&ArgMatches<'_>> for Config {
 		let fail_slot_mode = m.value_of("fail-slot-mode").map(|v| v.to_string());
 		let fail_at = m.value_of("fail-at").unwrap_or(DEFAULT_FAIL_AT).parse().unwrap();
 		Self::new(
-			m.value_of("integritee-rpc-url").unwrap_or(DEFAULT_INTEGRITEE_RPC_URL).into(),
-			m.value_of("integritee-rpc-port").unwrap_or(DEFAULT_INTEGRITEE_RPC_PORT).into(),
+			m.value_of("node-url").unwrap_or(DEFAULT_NODE_URL).into(),
+			m.value_of("node-port").unwrap_or(DEFAULT_NODE_PORT).into(),
 			m.value_of("target-a-parentchain-rpc-url").map(Into::into),
 			m.value_of("target-a-parentchain-rpc-port").map(Into::into),
 			m.value_of("target-b-parentchain-rpc-url").map(Into::into),
@@ -429,8 +429,8 @@ mod test {
 		let config = Config::from(&empty_args);
 		let expected_worker_ip = "127.0.0.1";
 
-		assert_eq!(config.integritee_rpc_url, DEFAULT_INTEGRITEE_RPC_URL);
-		assert_eq!(config.integritee_rpc_port, DEFAULT_INTEGRITEE_RPC_PORT);
+		assert_eq!(config.integritee_rpc_url, DEFAULT_NODE_URL);
+		assert_eq!(config.integritee_rpc_port, DEFAULT_NODE_PORT);
 		assert_eq!(config.target_a_parentchain_rpc_url, None);
 		assert_eq!(config.target_a_parentchain_rpc_port, None);
 		assert_eq!(config.target_b_parentchain_rpc_url, None);
@@ -483,8 +483,8 @@ mod test {
 
 		let mut args = ArgMatches::default();
 		args.args = HashMap::from([
-			("integritee-rpc-url", Default::default()),
-			("integritee-rpc-port", Default::default()),
+			("node-url", Default::default()),
+			("node-port", Default::default()),
 			("ws-external", Default::default()),
 			("trusted-external-address", Default::default()),
 			("untrusted-external-address", Default::default()),
@@ -498,8 +498,8 @@ mod test {
 			("parentchain-start-block", Default::default()),
 		]);
 		// Workaround because MatchedArg is private.
-		args.args.get_mut("integritee-rpc-url").unwrap().vals = vec![node_ip.into()];
-		args.args.get_mut("integritee-rpc-port").unwrap().vals = vec![node_port.into()];
+		args.args.get_mut("node-url").unwrap().vals = vec![node_ip.into()];
+		args.args.get_mut("node-port").unwrap().vals = vec![node_port.into()];
 		args.args.get_mut("trusted-external-address").unwrap().vals = vec![trusted_ext_addr.into()];
 		args.args.get_mut("untrusted-external-address").unwrap().vals =
 			vec![untrusted_ext_addr.into()];

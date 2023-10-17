@@ -35,9 +35,9 @@ RUN useradd -m -u 1000 -U -s /bin/sh -d /litentry litentry && \
 	mkdir -p /data /litentry/.local/share && \
 	chown -R litentry:litentry /data && \
 	ln -s /data /litentry/.local/share/litentry-collator && \
-# unclutter and minimize the attack surface
+	# unclutter and minimize the attack surface
 	rm -rf /usr/bin /usr/sbin && \
-# check if executable works in this container
+	# check if executable works in this container
 	/usr/local/bin/litentry-collator --version
 
 USER litentry
