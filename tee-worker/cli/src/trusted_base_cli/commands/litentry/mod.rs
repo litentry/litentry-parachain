@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod id_graph;
 pub mod id_graph_stats;
 pub mod link_identity;
 pub mod request_vc;

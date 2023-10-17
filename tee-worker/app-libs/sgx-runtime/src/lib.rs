@@ -82,7 +82,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 // litentry
-pub use pallet_imt::{self, Call as IdentityManagementCall, IdentityStatus};
+pub use pallet_imt::{self, Call as IdentityManagementCall, IDGraph, IdentityStatus};
 
 /// Block type as expected by this sgx-runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;

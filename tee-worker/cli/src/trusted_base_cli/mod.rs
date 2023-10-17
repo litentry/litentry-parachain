@@ -40,6 +40,8 @@ use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, Pair};
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
 
+use self::commands::litentry::id_graph::IDGraphCommand;
+
 mod commands;
 
 #[derive(Subcommand)]
@@ -85,7 +87,10 @@ pub enum TrustedBaseCommand {
 	/// Link the given identity to the prime identity, with specified networks
 	LinkIdentity(LinkIdentityCommand),
 
-	/// Request vc
+	/// The IDGraph for the given identity
+	IDGraph(IDGraphCommand),
+
+	/// Request VC
 	RequestVc(RequestVcCommand),
 }
 
@@ -106,6 +111,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
