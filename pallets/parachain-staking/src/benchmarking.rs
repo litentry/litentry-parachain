@@ -72,7 +72,7 @@ fn create_funded_delegator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond { min_delegator_stk::<T>() } else { total - 1u32.into() };
+	let bond = if min_bond { min_delegator_stk::<T>() } else { total - pallet_balances::Pallet<T>::ExistentialDeposit::get() };
 	Pallet::<T>::delegate(RawOrigin::Signed(user.clone()).into(), collator, bond)?;
 	Ok(user)
 }
@@ -85,7 +85,7 @@ fn create_funded_collator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond { min_candidate_stk::<T>() } else { total - 1u32.into() };
+	let bond = if min_bond { min_candidate_stk::<T>() } else { total - pallet_balances::Pallet<T>::ExistentialDeposit::get() };
 	//Due to the CandidateUnauthorized error, I had to add this line of code
 	Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), user.clone())?;
 	Pallet::<T>::join_candidates(RawOrigin::Signed(user.clone()).into(), bond)?;
@@ -629,7 +629,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total - 1u32.into(),
+			total - pallet_balances::Pallet<T>::ExistentialDeposit::get(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 	}: _(RawOrigin::Signed(caller.clone()), collator.clone(), bond_less)
@@ -693,7 +693,7 @@ benchmarks! {
 			caller.clone()).into(),
 			collator.clone(),
 			// Leaving an ED for account
-			total - 1u32.into(),
+			total - pallet_balances::Pallet<T>::ExistentialDeposit::get(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::schedule_delegator_bond_less(
@@ -758,7 +758,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total - 1u32.into(),
+			total - pallet_balances::Pallet<T>::ExistentialDeposit::get(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::schedule_delegator_bond_less(
