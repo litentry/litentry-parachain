@@ -54,7 +54,7 @@ impl EvmCreateCommands {
 			.copy_from_slice((<[u8; 32]>::from(from_acc.clone())).get(0..20).unwrap());
 		let sender_evm_acc: H160 = sender_evm_acc_slice.into();
 
-		let (mrenclave, shard) = get_identifiers(trusted_args);
+		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 
 		let sender_evm_substrate_addr =
 			HashedAddressMapping::<BlakeTwo256>::into_account_id(sender_evm_acc);

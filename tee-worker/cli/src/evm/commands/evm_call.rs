@@ -61,7 +61,7 @@ impl EvmCallCommands {
 
 		let function_hash = array_bytes::hex2bytes(&self.function).unwrap();
 
-		let (mrenclave, shard) = get_identifiers(trusted_args);
+		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 		let nonce = get_layer_two_nonce!(sender, cli, trusted_args);
 		let evm_nonce = get_layer_two_evm_nonce!(sender, cli, trusted_args);
 
