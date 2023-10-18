@@ -39,14 +39,22 @@ use itp_types::ShardIdentifier;
 use jsonrpc_core::{futures::future::ready, Error as RpcError};
 use lazy_static::lazy_static;
 use sp_core::{blake2_256, H256};
+#[cfg(not(feature = "std"))]
+use std::sync::SgxMutex as Mutex;
 use std::{
 	boxed::Box,
 	collections::HashMap,
 	marker::PhantomData,
-	sync::{mpsc::Sender, Arc, Mutex},
+	sync::{mpsc::Sender, Arc},
 	vec,
 	vec::Vec,
 };
+
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
+#[cfg(feature = "std")]
+use std::sync::Mutex;
 
 lazy_static! {
 	pub static ref GLOBAL_MOCK_AUTHOR_API: Arc<Mutex<Option<Sender<Vec<u8>>>>> =
