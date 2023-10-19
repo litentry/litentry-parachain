@@ -1,4 +1,4 @@
-name: Build Worker
+name: Release Ts API Package
 
 # This file is a joint CI of parachain and tee-worker, it contains:
 # - build (of docker images)
