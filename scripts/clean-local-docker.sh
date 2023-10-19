@@ -8,7 +8,7 @@ function usage() {
 
 [ $# -ne 1 ] && (usage; exit 1)
 
-TMPDIR=${TMPDIR:-"/tmp/parachain_dev*"}
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:?}
 CHAIN=$1
 
 ROOTDIR=$(git rev-parse --show-toplevel)
@@ -39,7 +39,7 @@ echo "remove generated images..."
 IMG=$(docker images --filter=reference="generated-$CHAIN*" --format "{{.Repository}}:{{.Tag}}")
 [ -z "$IMG" ] || docker rmi -f $IMG
 
-rm -rf "$TMPDIR"
+rm -rf "$LITENTRY_PARACHAIN_DIR"
 rm -rf "$ROOTDIR/ts-tests/bridge/bob.json"
 rm -rf "$ROOTDIR/ts-tests/bridge/data/"
 

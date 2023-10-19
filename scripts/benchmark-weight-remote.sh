@@ -17,13 +17,19 @@ function usage() {
 
 [ $# -ne 3 ] && (usage; exit 1)
 
+# setup TMPDIR
+export TMPDIR=$(mktemp -d)
+cleanup() {
+  echo "removing $1 ..."
+  rm -rf "$1"
+}
+trap 'cleanup $TMPDIR' INT TERM EXIT
+
 # pull docker image
 docker pull litentry/litentry-parachain:runtime-benchmarks
 
 # clone the repo
-TMPDIR=/tmp
 cd "$TMPDIR"
-[ -d litentry-parachain ] && rm -rf litentry-parachain
 git clone https://github.com/litentry/litentry-parachain
 cd litentry-parachain
 git checkout "$2"
