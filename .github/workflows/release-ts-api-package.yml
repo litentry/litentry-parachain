@@ -33,17 +33,6 @@ name: Release Ts API Package
 
 on:
   workflow_dispatch:
-    inputs:
-      rebuild-parachain-docker:
-        type: boolean
-        description: rebuild-parachain-docker
-        required: true
-        default: true
-      rebuild-tee-docker:
-        type: boolean
-        description: rebuild-tee-docker
-        required: true
-        default: true
 
 env:
   CARGO_TERM_COLOR: always
