@@ -15,67 +15,11 @@ jobs:
           - test_name: release-ts-api-package
 
     steps:
-      # - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # - name: Pull polkadot image
-      #   run: |
-      #     docker pull parity/polkadot
-
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: litentry-parachain-dev
-
-      # - uses: actions/download-artifact@v3
-      #   with:
-      #     name: litentry-tee
-
-      # - name: Load docker image
-      #   run: |
-      #     docker load < litentry-parachain-dev.tar.gz
-      #     docker load < litentry-tee.tar.gz
-      #     docker images
-
-      # - name: Enable corepack and pnpm
-      #   run: corepack enable && corepack enable pnpm
-
-      # - name: Generate parachain artefacts
-      #   run: |
-      #     ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-      #     ls -l docker/generated-rococo/
-      #     ls -l tee-worker/docker/litentry/
-      #     shasum tee-worker/docker/litentry/*.json
-
-      # - name: Build litentry parachain docker images
-      #   run: |
-      #     cd tee-worker/docker
-      #     docker compose -f litentry-parachain.build.yml build
-
-      - name: Integration Test ${{ matrix.test_name }}
-        timeout-minutes: 40
+      - name: test
         run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
-
-      - name: Stop docker containers
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
-
-      - name: Collect Docker Logs
-        continue-on-error: true
-        if: always()
-        uses: jwalton/gh-docker-logs@v2
-        with:
-          tail: all
-          dest: logs
-
-      - name: Upload logs
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: logs-${{ matrix.test_name }}
-          path: logs
-          if-no-files-found: ignore
+          docker compose -f docker-compose.yml -f lit-di-vc-test.yml up --no-build --exit-code-from lit-di-vc-test lit-di-vc-test
 
   # publish:
   #   runs-on: ubuntu-latest
