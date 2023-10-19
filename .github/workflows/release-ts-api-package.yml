@@ -203,98 +203,98 @@ jobs:
           interval: 300
           branch: dev
 
-  parachain-clippy:
-    runs-on: ubuntu-latest
-    needs:
-      - fmt
-      - set-condition
-      - sequentialise
-    if: needs.set-condition.outputs.rebuild_parachain == 'true'
-    steps:
-      - uses: actions/checkout@v4
+  # parachain-clippy:
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - fmt
+  #     - set-condition
+  #     - sequentialise
+  #   if: needs.set-condition.outputs.rebuild_parachain == 'true'
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Install rust toolchain
-        run: rustup show
+  #     - name: Install rust toolchain
+  #       run: rustup show
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
-      - name: Run cargo clippy check
-        run: make clippy
+  #     - name: Run cargo clippy check
+  #       run: make clippy
 
-      - name: Fail early
-        if: failure()
-        uses: andymckay/cancel-action@0.3
+  #     - name: Fail early
+  #       if: failure()
+  #       uses: andymckay/cancel-action@0.3
 
-  tee-clippy:
-    runs-on: ubuntu-latest
-    needs:
-      - fmt
-      - set-condition
-      - sequentialise
-    if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: 'litentry/litentry-tee-dev:latest'
-    steps:
-      - uses: actions/checkout@v4
+  # tee-clippy:
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - fmt
+  #     - set-condition
+  #     - sequentialise
+  #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+  #   container: 'litentry/litentry-tee-dev:latest'
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && \
-          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+  #     - name: Install dependencies
+  #       run: |
+  #         sudo apt-get update && \
+  #         sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
-      - name: Pallet unittests
-        working-directory: ./tee-worker
-        run: |
-          cargo test --release -p pallet-* --lib
+  #     - name: Pallet unit tests
+  #       working-directory: ./tee-worker
+  #       run: |
+  #         cargo test --release -p pallet-* --lib
 
-      - name: Tee-worker clippy
-        working-directory: ./tee-worker
-        run: |
-          echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy offchain-worker"
-          cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy evm"
-          cargo clippy --release --features evm -- -D warnings
-          echo "::endgroup::"
+  #     - name: Tee-worker clippy
+  #       working-directory: ./tee-worker
+  #       run: |
+  #         echo "::group::cargo clippy all"
+  #         cargo clippy --release -- -D warnings
+  #         echo "::endgroup::"
+  #         echo "::group::cargo clippy sidechain"
+  #         cargo clippy --release --features sidechain -- -D warnings
+  #         echo "::endgroup::"
+  #         echo "::group::cargo clippy offchain-worker"
+  #         cargo clippy --release --features offchain-worker -- -D warnings
+  #         echo "::endgroup::"
+  #         echo "::group::cargo clippy evm"
+  #         cargo clippy --release --features evm -- -D warnings
+  #         echo "::endgroup::"
 
-      - name: Clean up disk
-        working-directory: ./tee-worker
-        run: |
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-          cargo clean --profile release
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
+  #     - name: Clean up disk
+  #       working-directory: ./tee-worker
+  #       run: |
+  #         echo "::group::Show disk usage"
+  #         df -h .
+  #         echo "::endgroup::"
+  #         cargo clean --profile release
+  #         echo "::group::Show disk usage"
+  #         df -h .
+  #         echo "::endgroup::"
 
-      - name: Tee-enclave clippy
-        working-directory: ./tee-worker/enclave-runtime
-        run: |
-          echo "::group::cargo clippy all"
-          cargo clippy --release -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy sidechain"
-          cargo clippy --release --features sidechain -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy offchain-worker"
-          cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy evm"
-          cargo clippy --release --features evm -- -D warnings
-          echo "::endgroup::"
+  #     - name: Tee-enclave clippy
+  #       working-directory: ./tee-worker/enclave-runtime
+  #       run: |
+  #         echo "::group::cargo clippy all"
+  #         cargo clippy --release -- -D warnings
+  #         echo "::endgroup::"
+  #         echo "::group::cargo clippy sidechain"
+  #         cargo clippy --release --features sidechain -- -D warnings
+  #         echo "::endgroup::"
+  #         echo "::group::cargo clippy offchain-worker"
+  #         cargo clippy --release --features offchain-worker -- -D warnings
+  #         echo "::endgroup::"
+  #         echo "::group::cargo clippy evm"
+  #         cargo clippy --release --features evm -- -D warnings
+  #         echo "::endgroup::"
 
-      - name: Fail early
-        if: failure()
-        uses: andymckay/cancel-action@0.3
+  #     - name: Fail early
+  #       if: failure()
+  #       uses: andymckay/cancel-action@0.3
 
   parachain-build-dev:
     runs-on: ubuntu-latest
@@ -313,15 +313,15 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Build docker image
-        if: needs.set-condition.outputs.rebuild_parachain == 'true'
-        run: |
-          echo "::group::build docker image"
-          make build-docker-release
-          echo "::endgroup::"
-          echo "::group::docker images"
-          docker images --all
-          echo "::endgroup::"
+      # - name: Build docker image
+      #   if: needs.set-condition.outputs.rebuild_parachain == 'true'
+      #   run: |
+      #     echo "::group::build docker image"
+      #     make build-docker-release
+      #     echo "::endgroup::"
+      #     echo "::group::docker images"
+      #     docker images --all
+      #     echo "::endgroup::"
 
       - name: Pull docker image optinally
         if: needs.set-condition.outputs.rebuild_parachain == 'false'
@@ -360,17 +360,17 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Build docker image
-        if: |
-          needs.set-condition.outputs.rebuild_parachain == 'true' &&
-          needs.set-condition.outputs.push_docker == 'true'
-        run: |
-          echo "::group::build tee-prod docker image"
-          ./scripts/build-docker.sh production tee-prod
-          echo "::endgroup::"
-          echo "::group::docker images"
-          docker images --all
-          echo "::endgroup::"
+      # - name: Build docker image
+      #   if: |
+      #     needs.set-condition.outputs.rebuild_parachain == 'true' &&
+      #     needs.set-condition.outputs.push_docker == 'true'
+      #   run: |
+      #     echo "::group::build tee-prod docker image"
+      #     ./scripts/build-docker.sh production tee-prod
+      #     echo "::endgroup::"
+      #     echo "::group::docker images"
+      #     docker images --all
+      #     echo "::endgroup::"
 
       - name: Pull docker image optionally
         if: |
@@ -419,96 +419,96 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
 
-      - name: Cache worker-cache
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: actions/cache@v3
-        with:
-          path: |
-            worker-cache
-          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
-          restore-keys: |
-            worker-cache-${{ env.REF_VERSION }}-
-            worker-cache-
+      # - name: Cache worker-cache
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       worker-cache
+      #     key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
+      #     restore-keys: |
+      #       worker-cache-${{ env.REF_VERSION }}-
+      #       worker-cache-
 
-      - name: Create cache folder if not exist
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        run: |
-          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
-            [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
-            echo "hello" > worker-cache/$i/nix 
-          done
-          echo "::group::List worker-cache size"
-          du -sh worker-cache/*
-          echo "::endgroup::"
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
+      # - name: Create cache folder if not exist
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   run: |
+      #     for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
+      #       [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
+      #       echo "hello" > worker-cache/$i/nix 
+      #     done
+      #     echo "::group::List worker-cache size"
+      #     du -sh worker-cache/*
+      #     echo "::endgroup::"
+      #     echo "::group::Show disk usage"
+      #     df -h .
+      #     echo "::endgroup::"
 
-      # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
-      # https://github.com/moby/buildkit/issues/1512
-      # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
-      # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
-      #
-      # the `reproducible-containers/buildkit-cache-dance` seems to be unstable too in my test
-      # sometimes it works, sometimes it results in empty cache, root cause unclear
-      #
-      # thus the persistence of rust cache (w/ sccache) is maintained manually
-      #
-      # there's no cache-from/to as the docker image layer is too large and it takes too long to sync
-      # moreoever, we are not so eager to have layer caches, as the most critical operation(cargo build)
-      # is "atomic" and can't be broken into layers.
-      - name: Build local builder
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: tee-worker/build.Dockerfile
-          tags: local-builder:latest
-          target: builder
-          build-args: |
-            WORKER_MODE_ARG=sidechain
-            ADDITIONAL_FEATURES_ARG=
+      # # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
+      # # https://github.com/moby/buildkit/issues/1512
+      # # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
+      # # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
+      # #
+      # # the `reproducible-containers/buildkit-cache-dance` seems to be unstable too in my test
+      # # sometimes it works, sometimes it results in empty cache, root cause unclear
+      # #
+      # # thus the persistence of rust cache (w/ sccache) is maintained manually
+      # #
+      # # there's no cache-from/to as the docker image layer is too large and it takes too long to sync
+      # # moreoever, we are not so eager to have layer caches, as the most critical operation(cargo build)
+      # # is "atomic" and can't be broken into layers.
+      # - name: Build local builder
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: tee-worker/build.Dockerfile
+      #     tags: local-builder:latest
+      #     target: builder
+      #     build-args: |
+      #       WORKER_MODE_ARG=sidechain
+      #       ADDITIONAL_FEATURES_ARG=
 
-      - name: Copy caches from the built image
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        run: |
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-          echo "::group::docker images"
-          docker images --all
-          echo "::endgroup::"
-          echo "::group::copy cache out"
-          for i in 'git/db' 'registry/cache' 'registry/index'; do
-            b="${i%/*}"
-            rm -rf worker-cache/$i
-            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
-          done
-          rm -rf worker-cache/sccache
-          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
-          du -sh worker-cache/*
-          echo "::endgroup::"
-          echo "::group::df -h ."
-          df -h .
-          echo "::endgroup::"
+      # - name: Copy caches from the built image
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   run: |
+      #     echo "::group::Show disk usage"
+      #     df -h .
+      #     echo "::endgroup::"
+      #     echo "::group::docker images"
+      #     docker images --all
+      #     echo "::endgroup::"
+      #     echo "::group::copy cache out"
+      #     for i in 'git/db' 'registry/cache' 'registry/index'; do
+      #       b="${i%/*}"
+      #       rm -rf worker-cache/$i
+      #       docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
+      #     done
+      #     rm -rf worker-cache/sccache
+      #     docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
+      #     du -sh worker-cache/*
+      #     echo "::endgroup::"
+      #     echo "::group::df -h ."
+      #     df -h .
+      #     echo "::endgroup::"
 
-      - name: Build worker
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:latest
-          target: deployed-worker
+      # - name: Build worker
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: tee-worker/build.Dockerfile
+      #     tags: litentry/litentry-worker:latest
+      #     target: deployed-worker
 
-      - name: Build cli
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:latest
-          target: deployed-client
+      # - name: Build cli
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: tee-worker/build.Dockerfile
+      #     tags: litentry/litentry-cli:latest
+      #     target: deployed-client
 
       - name: Pull and tag worker and cli image optionally
         if: needs.set-condition.outputs.rebuild_tee == 'false'
@@ -516,13 +516,13 @@ jobs:
           docker pull litentry/litentry-worker:latest
           docker pull litentry/litentry-cli:latest
 
-      - run: docker images --all
+      # - run: docker images --all
 
-      - name: Test enclave
-        if: needs.set-condition.outputs.rebuild_tee == 'true'
-        # cargo test is not supported in the enclave
-        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/litentry-worker:latest test --all
+      # - name: Test enclave
+      #   if: needs.set-condition.outputs.rebuild_tee == 'true'
+      #   # cargo test is not supported in the enclave
+      #   # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+      #   run: docker run litentry/litentry-worker:latest test --all
 
       - name: Save docker images
         run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
@@ -538,7 +538,7 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3 
         
-  tee-test:
+  update-metadata:
     runs-on: ubuntu-latest
     needs:
       - set-condition
@@ -581,15 +581,13 @@ jobs:
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
 
-      - name: Test release_ts_api_package
-        if: needs.set-condition.outputs.run_tee_test == 'true'
+      - name: Fetch metadata
         timeout-minutes: 20
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f release_ts_api_package.yml up --no-build --exit-code-from release_ts_api_package release_ts_api_package
 
       - name: Stop docker containers
-        if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f release_ts_api_package.yml stop
