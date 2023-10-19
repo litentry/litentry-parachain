@@ -1,4 +1,4 @@
-name: Release Ts API package
+name: Release Ts API package2
 on:
   workflow_dispatch:
 
@@ -6,42 +6,115 @@ env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
 jobs:
-  publish:
+  getMetadata:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test_name: release-ts-api-package
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v3
+      - name: Pull polkadot image
+        run: |
+          docker pull parity/polkadot
+
+      - uses: actions/download-artifact@v3
         with:
-          node-version: 18
-          registry-url: https://npm.pkg.github.com/
+          name: litentry-parachain-dev
 
-      - name: Setup npm config
+      - uses: actions/download-artifact@v3
+        with:
+          name: litentry-tee
+
+      - name: Load docker image
         run: |
-          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
-          npm config set @litentry:registry https://npm.pkg.github.com
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-tee.tar.gz
+          docker images
 
-      - name: Install pnpm
-        run: corepack enable pnpm
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
 
-      - name: Install dependencies
+      - name: Generate parachain artefacts
         run: |
-          cd tee-worker/client-api
-          pnpm install
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+          ls -l docker/generated-rococo/
+          ls -l tee-worker/docker/litentry/
+          shasum tee-worker/docker/litentry/*.json
 
-      - name: Build and publish parachain and sidechain API
-        if: github.ref_name == 'dev' || github.ref_name == 'staging'
+      - name: Build litentry parachain docker images
         run: |
-          cd tee-worker/client-api/parachain-api
-          pnpm build
-          npm publish --tag ${{ github.ref_name }}
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
 
-          echo "------------------------parachain API published------------------------"
+      - name: Integration Test ${{ matrix.test_name }}
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        timeout-minutes: 40
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
-          cd ../sidechain-api
-          pnpm build
-          npm publish --tag ${{ github.ref_name }}
+      - name: Stop docker containers
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
-          echo "------------------------sidechain API published------------------------"
+      - name: Collect Docker Logs
+        continue-on-error: true
+        if: always()
+        uses: jwalton/gh-docker-logs@v2
+        with:
+          tail: all
+          dest: logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs-${{ matrix.test_name }}
+          path: logs
+          if-no-files-found: ignore
+
+  # publish:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout Code
+  #       uses: actions/checkout@v4
+
+  #     - name: Use Node.js
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 18
+  #         registry-url: https://npm.pkg.github.com/
+
+  #     - name: Setup npm config
+  #       run: |
+  #         echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
+  #         npm config set @litentry:registry https://npm.pkg.github.com
+
+  #     - name: Install pnpm
+  #       run: corepack enable pnpm
+
+  #     - name: Install dependencies
+  #       run: |
+  #         cd tee-worker/client-api
+  #         pnpm install
+
+  #     - name: Build and publish parachain and sidechain API
+  #       if: github.ref_name == 'dev' || github.ref_name == 'staging'
+  #       run: |
+  #         cd tee-worker/client-api/parachain-api
+  #         pnpm build
+  #         npm publish --tag ${{ github.ref_name }}
+
+  #         echo "------------------------parachain API published------------------------"
+
+  #         cd ../sidechain-api
+  #         pnpm build
+  #         npm publish --tag ${{ github.ref_name }}
+
+  #         echo "------------------------sidechain API published------------------------"
