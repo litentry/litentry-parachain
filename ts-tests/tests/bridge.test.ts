@@ -10,7 +10,9 @@ const bn100e12 = new BN(10).pow(new BN(12)).mul(new BN(100));
 
 describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
     step('Transfer 100 Lit from eth to parachain', async function () {
-        let bridge = context.ethConfig.bridge.connect(context.ethConfig.wallets.bob);
+      let bridge = context.ethConfig.bridge.connect(context.ethConfig.wallets.bob);
+        console.log("context.ethConfig.bridge", context.ethConfig.bridge.methods);
+      
         let erc20 = context.ethConfig.erc20.connect(context.ethConfig.wallets.bob);
         // substrate native token
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
@@ -31,8 +33,13 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
 
         // deposit
         let data = createERCDepositData(depositAmount, 32, destinationRecipientAddress);
+          
       
-        await bridge.deposit(destinationChainID, destResourceId, data, { gasLImit: 200000 });
+        // estimaste gas
+        const gasLimit = await bridge.estimateGas.deposit(destinationChainID, destResourceId, data);
+        console.log("gasLimit", gasLimit);
+      
+        await bridge.deposit(destinationChainID, destResourceId, data);
         await sleep(12 * 4);
 
         const afterAccountData = await context.parachainConfig.api.query.system.account(
