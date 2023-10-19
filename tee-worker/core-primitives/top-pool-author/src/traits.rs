@@ -63,11 +63,11 @@ pub trait AuthorApi<Hash, BlockHash> {
 		executed_calls: Vec<(hash::TrustedOperationOrHash<Hash>, bool)>,
 	) -> Vec<hash::TrustedOperationOrHash<Hash>>;
 
-	/// Submit an extrinsic to watch.
+	/// Submit a request to watch.
 	///
 	/// See [`TrustedOperationStatus`](sp_transaction_pool::TrustedOperationStatus) for details on transaction
 	/// life cycle.
-	fn watch_top(&self, ext: Vec<u8>, shard: ShardIdentifier) -> PoolFuture<Hash, RpcError>;
+	fn watch_top(&self, req: Vec<u8>, shard: ShardIdentifier) -> PoolFuture<Hash, RpcError>;
 
 	/// Litentry: set the rpc response value
 	fn update_connection_state(&self, updates: Vec<(Hash, (Vec<u8>, bool))>);

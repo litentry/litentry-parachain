@@ -81,6 +81,26 @@ where
 		Ok(json!(json_value))
 	});
 
+	// Litentry: a morphling of `author_submitAndWatchExtrinsic`
+	// a different name is used to highlight the request type
+	let author_submit_and_watch_aes_request_name: &str = "author_submitAndWatchAesRequest";
+	let watch_author = top_pool_author.clone();
+	io_handler.add_sync_method(author_submit_and_watch_aes_request_name, move |params: Params| {
+		let json_value = match author_submit_aes_request_inner(watch_author.clone(), params) {
+			Ok(hash_value) => RpcReturnValue {
+				do_watch: true,
+				value: vec![],
+				status: DirectRequestStatus::TrustedOperationStatus(
+					TrustedOperationStatus::Submitted,
+					hash_value,
+				),
+			}
+			.to_hex(),
+			Err(error) => compute_hex_encoded_return_error(error.as_str()),
+		};
+		Ok(json!(json_value))
+	});
+
 	// author_pendingExtrinsics
 	let author_pending_extrinsic_name: &str = "author_pendingExtrinsics";
 	let pending_author = top_pool_author.clone();

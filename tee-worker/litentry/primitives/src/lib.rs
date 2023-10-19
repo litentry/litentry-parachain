@@ -24,11 +24,13 @@ extern crate sgx_tstd as std;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 mod aes;
+mod aes_request;
 mod ethereum_signature;
 mod identity;
 mod validation_data;
 
 pub use aes::*;
+pub use aes_request::*;
 pub use ethereum_signature::*;
 pub use identity::*;
 use sp_std::vec::Vec;
@@ -46,7 +48,7 @@ pub use parentchain_primitives::{
 	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BoundedWeb3Network,
 	ErrorDetail, ErrorString, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
 	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
+	SchemaContentString, SchemaIdString, ShardIdentifier, Signature as ParentchainSignature,
 	UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, Web3Network, ASSERTION_FROM_DATE,
 	MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
 };
