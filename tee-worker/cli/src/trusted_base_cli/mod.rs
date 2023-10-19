@@ -21,6 +21,7 @@ use crate::{
 		get_storage::GetStorageCommand,
 		litentry::{
 			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
+			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 			user_shielding_key::UserShieldingKeyCommand,
@@ -88,6 +89,9 @@ pub enum TrustedBaseCommand {
 
 	/// The IDGraph for the given identity
 	IDGraph(IDGraphCommand),
+
+	/// Request VC
+	RequestVc(RequestVcCommand),
 }
 
 impl TrustedBaseCommand {
@@ -108,6 +112,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }
