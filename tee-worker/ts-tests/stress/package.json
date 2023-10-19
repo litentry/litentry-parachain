@@ -20,12 +20,10 @@
 		"colors": "^1.4.0",
 		"js-base64": "^3.7.5",
 		"micro-base58": "^0.5.1",
-		"parachain-api": "workspace:*",
 		"scale-ts": "^0.2.11",
-		"sidechain-api": "workspace:*",
 		"websocket-as-promised": "^2.0.1",
 		"ws": "^8.8.1",
-		"zod": "^3.21.4"
+		"zod": "^3.22.3"
 	},
 	"devDependencies": {
 		"@ethersproject/providers": "^5.7.2",
@@ -41,7 +39,9 @@
 		"eslint": "^8.43.0",
 		"ethers": "^5.7.2",
 		"mocha": "^10.1.0",
+		"parachain-api": "../../client-api/parachain-api",
 		"prettier": "2.8.1",
+		"sidechain-api": "../../client-api/sidechain-api",
 		"ts-node": "^10.9.1",
 		"typescript": "5.0.4"
 	},

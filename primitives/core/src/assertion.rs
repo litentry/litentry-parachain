@@ -166,7 +166,6 @@ pub enum Assertion {
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
 	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
-	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
 
@@ -233,3 +232,11 @@ pub const ASSERTION_FROM_DATE: [&str; 14] = [
 	"2023-01-01",
 	"2023-07-01",
 ];
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum AmountHoldingTimeType {
+	LIT,
+	DOT,
+	WBTC,
+	ETH,
+}

@@ -4,6 +4,7 @@ services:
         container_name: litentry-ii-identity-test
         volumes:
             - ../ts-tests:/ts-tests
+            - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
         build:
             context: ..
@@ -13,8 +14,6 @@ services:
             litentry-node:
                 condition: service_healthy
             litentry-worker-1:
-                condition: service_healthy
-            litentry-worker-2:
                 condition: service_healthy
         networks:
             - litentry-test-network

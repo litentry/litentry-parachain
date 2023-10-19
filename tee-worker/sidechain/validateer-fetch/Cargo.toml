@@ -7,7 +7,6 @@ edition = "2021"
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "chain-error"] }
 derive_more = "0.99.16"
-thiserror = "1.0.26"
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
@@ -17,7 +16,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # local deps
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
-itp-storage = { path = "../../core-primitives/storage", default-features = false }
 itp-teerex-storage = { path = "../../core-primitives/teerex-storage", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
 
@@ -29,7 +27,6 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "itp-types/std",
-    "itp-storage/std",
     "itp-ocall-api/std",
 ]
 

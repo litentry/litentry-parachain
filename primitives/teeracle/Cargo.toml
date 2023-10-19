@@ -14,14 +14,10 @@ common-primitives = { path = "../common", default-features = false }
 # encointer
 substrate-fixed = { tag = "v0.5.9", default-features = false, git = "https://github.com/encointer/substrate-fixed.git" }
 
-# substrate
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-
 
 [features]
 default = ["std"]
 std = [
     "common-primitives/std",
     "substrate-fixed/std",
-    "sp-std/std",
 ]

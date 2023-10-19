@@ -9,11 +9,9 @@ version = '0.1.0'
 [dependencies]
 # third-party dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
-log = { version = "0.4", default-features = false }
 scale-info = { version = "2.9.0", default-features = false, features = ["derive"] }
 
 # primitives
-sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
@@ -28,7 +26,6 @@ teerex-primitives = { path = "../../primitives/teerex", default-features = false
 
 # benchmarking
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false, optional = true }
-hex = { version = "0.4", default-features = false }
 test-utils = { path = "../test-utils", default-features = false, optional = true }
 
 [dev-dependencies]
@@ -54,7 +51,6 @@ std = [
     "sp-runtime/std",
     "sp-io/std",
     "sp-core/std",
-    "sp-arithmetic/std",
     "frame-support/std",
     "frame-system/std",
     "frame-benchmarking?/std",

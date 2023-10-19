@@ -20,7 +20,7 @@ use crate::{
 		balance::BalanceCommand,
 		get_storage::GetStorageCommand,
 		litentry::{
-			id_graph_stats::IDGraphStats,
+			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 			user_shielding_key::UserShieldingKeyCommand,
@@ -38,6 +38,8 @@ use log::*;
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, Pair};
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+
+use self::commands::litentry::id_graph::IDGraphCommand;
 
 mod commands;
 
@@ -66,18 +68,26 @@ pub enum TrustedBaseCommand {
 	Nonce(NonceCommand),
 
 	// Litentry's commands below
-	// for commands that should trigger parentchain extrins, check non-trusted commands
-	/// query a user's shielding key, the setter is non-trusted command
+	/// query a given user's shielding key
 	UserShieldingKey(UserShieldingKeyCommand),
 
+	/// set a given user's shielding key
 	SetUserShieldingKey(SetUserShieldingKeyCommand),
 
+	/// retrieve the sidechain's raw storage - should only work for non-prod
 	GetStorage(GetStorageCommand),
 
+	/// send an erroneous parentchain call intentionally, only used in tests
 	SendErroneousParentchainCall(SendErroneousParentchainCallCommand),
 
-	/// get count of all keys account + identity in the IDGraphs
+	/// Disabled for now: get count of all keys account + identity in the IDGraphs
 	IDGraphStats(IDGraphStats),
+
+	/// Link the given identity to the prime identity, with specified networks
+	LinkIdentity(LinkIdentityCommand),
+
+	/// The IDGraph for the given identity
+	IDGraph(IDGraphCommand),
 }
 
 impl TrustedBaseCommand {
@@ -96,6 +106,8 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

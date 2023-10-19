@@ -10,8 +10,8 @@ fn test_version() {
 	init();
 
 	let res = Cli::try_parse_from(vec!["placeholder_cli_path", "--version"]);
-
-	assert!(matches!(res, Err(clap::Error { kind: clap::ErrorKind::DisplayVersion, .. })));
+	let err = clap::Error::new(clap::error::ErrorKind::DisplayVersion);
+	assert!(matches!(res, Err(err)));
 }
 
 #[test]
@@ -19,6 +19,6 @@ fn test_help() {
 	init();
 
 	let res = Cli::try_parse_from(vec!["placeholder_cli_path", "--help"]);
-
-	assert!(matches!(res, Err(clap::Error { kind: clap::ErrorKind::DisplayHelp, .. })));
+	let err = clap::Error::new(clap::error::ErrorKind::DisplayHelp);
+	assert!(matches!(res, Err(err)));
 }
