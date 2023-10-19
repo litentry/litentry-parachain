@@ -19,7 +19,7 @@
 
 pub extern crate alloc;
 
-use alloc::vec::Vec;
+use alloc::{string::String, vec::Vec};
 use codec::{Decode, Encode};
 use core::result::Result as StdResult;
 use derive_more::{Display, From};
@@ -135,6 +135,8 @@ pub trait EnclaveSidechainOCallApi: Clone + Send + Sync {
 		maybe_until_block_hash: Option<BlockHash>,
 		shard_identifier: ShardIdentifier,
 	) -> SgxResult<Vec<SignedSidechainBlock>>;
+
+	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>>;
 }
 
 /// Newtype for IPFS CID

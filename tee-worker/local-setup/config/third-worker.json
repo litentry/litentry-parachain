@@ -1,26 +1,25 @@
 {
   "workers": [
     {
-      "id": 1,
+      "id": "3",
       "source": "bin",
       "flags": [
         "--clean-reset",
         "-T",
         "wss://localhost",
         "-P",
-        "2000",
+        "2020",
         "-w",
-        "2001",
+        "2021",
         "-r",
-        "3443",
+        "3463",
         "-h",
-        "4545",
+        "4565",
         "--running-mode",
         "mock",
         "--enable-mock-server",
         "--parentchain-start-block",
-        "0",
-        "--enable-metrics"
+        "0"
       ],
       "subcommand_flags": [
         "--skip-ra",

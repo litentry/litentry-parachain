@@ -27,7 +27,8 @@ use crate::{
 		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
+		EnclaveTopPoolAuthor, GLOBAL_ATTESTATION_HANDLER_COMPONENT,
+		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
@@ -163,10 +164,10 @@ pub(crate) fn init_enclave(
 		shielding_key_repository.clone(),
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
-	//
-	// let (sender, receiver) =
-	// 	sgx_tstd::sync::mpsc::sync_channel::<(Hash, sgx_tstd::vec::Vec<String>)>(1000);
-	let sender = init(shielding_key_repository.clone(), rpc_responder);
+
+	let (sender, broadcaster) = init(shielding_key_repository.clone(), rpc_responder);
+
+	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
@@ -210,6 +211,8 @@ pub(crate) fn init_enclave_sidechain_components(
 ) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let direct_rpc_broadcaster = GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.get()?;
+
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
 
@@ -229,6 +232,7 @@ pub(crate) fn init_enclave_sidechain_components(
 		top_pool_author,
 		parentchain_block_import_dispatcher,
 		ocall_api.clone(),
+		direct_rpc_broadcaster,
 	));
 
 	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;

@@ -47,4 +47,8 @@ impl SidechainBridge for SidechainBridgeMock {
 	) -> OCallBridgeResult<Vec<u8>> {
 		Ok(self.peer_blocks_encoded.clone())
 	}
+
+	fn get_trusted_peers_urls(&self) -> OCallBridgeResult<Vec<u8>> {
+		Ok(vec![])
+	}
 }

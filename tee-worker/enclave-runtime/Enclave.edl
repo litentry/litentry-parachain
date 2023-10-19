@@ -252,6 +252,8 @@ enclave {
 			[out, size = sidechain_blocks_size] uint8_t * sidechain_blocks, uint32_t sidechain_blocks_size
 		);
 
+		sgx_status_t ocall_get_trusted_peers_urls([out, size = peers_size] uint8_t * peers, uint32_t peers_size);
+
 		sgx_status_t ocall_send_to_parentchain(
 			[in, size = extrinsics_size] uint8_t * extrinsics, uint32_t extrinsics_size
 		);

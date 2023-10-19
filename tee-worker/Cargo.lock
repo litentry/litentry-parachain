@@ -5357,6 +5357,7 @@ dependencies = [
  "ita-stf",
  "itc-parentchain-block-import-dispatcher",
  "itc-parentchain-test",
+ "itc-peer-top-broadcaster",
  "itp-enclave-metrics",
  "itp-ocall-api",
  "itp-settings",

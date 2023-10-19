@@ -47,12 +47,17 @@ use std::{
 	vec::Vec,
 };
 
+pub trait PeerUpdater {
+	fn update(&self, peers: Vec<String>);
+}
+
 pub struct DirectRpcBroadcaster<ShieldingKeyRepository>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
 {
-	peers: HashMap<String, DirectRpcClient<ShieldingKeyRepository>>,
+	peers: Mutex<HashMap<String, DirectRpcClient<ShieldingKeyRepository>>>,
+	shielding_key_repository: Arc<ShieldingKeyRepository>,
 }
 
 impl<ShieldingKeyRepository> DirectRpcBroadcaster<ShieldingKeyRepository>
@@ -62,7 +67,6 @@ where
 {
 	pub fn new(peers: &[&str], key_repository: Arc<ShieldingKeyRepository>) -> Self {
 		let mut peers_map = HashMap::new();
-
 		for peer in peers {
 			match DirectRpcClient::new(peer, key_repository.clone()) {
 				Ok(client) => {
@@ -72,52 +76,65 @@ where
 			}
 		}
 
-		DirectRpcBroadcaster { peers: peers_map }
+		DirectRpcBroadcaster {
+			peers: Mutex::new(peers_map),
+			shielding_key_repository: key_repository,
+		}
 	}
 
-	pub fn broadcast<Hash: ToHexPrefixed>(&mut self, hash: Hash, params: Vec<String>) {
-		self.peers.values_mut().for_each(|peer| {
-			if let Err(e) = peer.send(hash.to_hex(), params.clone()) {
-				log::warn!("Could not send top to peer reason: {:?}", e);
-			}
-		});
+	pub fn broadcast<Hash: ToHexPrefixed>(&self, hash: Hash, params: Vec<String>) {
+		if let Ok(mut peers) = self.peers.lock() {
+			peers.values_mut().for_each(|peer| {
+				if let Err(e) = peer.send(hash.to_hex(), params.clone()) {
+					log::warn!("Could not send top to peer reason: {:?}", e);
+				}
+			});
+		}
 	}
 
 	pub fn collect_responses<T: FromHexPrefixed>(
-		&mut self,
+		&self,
 	) -> Vec<(T::Output, TrustedOperationStatus, bool)> {
-		self.peers
-			.values_mut()
-			.flat_map(|peer| {
-				if let Ok(response) = peer.read_response::<T>() {
-					if let Some(response) = response {
-						match response.1.status {
-							DirectRequestStatus::TrustedOperationStatus(status, _) =>
-								Some((response.0, status, response.1.do_watch)),
-							DirectRequestStatus::Ok | DirectRequestStatus::Error => {
-								log::warn!(
-									"Got unexpected direct request status: {:?}",
-									response.1.status
-								);
-								None
-							},
+		if let Ok(mut peers) = self.peers.lock() {
+			peers
+				.values_mut()
+				.flat_map(|peer| {
+					if let Ok(response) = peer.read_response::<T>() {
+						if let Some(response) = response {
+							match response.1.status {
+								DirectRequestStatus::TrustedOperationStatus(status, _) =>
+									Some((response.0, status, response.1.do_watch)),
+								DirectRequestStatus::Ok | DirectRequestStatus::Error => {
+									log::warn!(
+										"Got unexpected direct request status: {:?}",
+										response.1.status
+									);
+									None
+								},
+							}
+						} else {
+							None
 						}
 					} else {
+						log::warn!("Could not reed response from peer");
 						None
 					}
-				} else {
-					log::warn!("Could not reed response from peer");
-					None
-				}
-			})
-			.collect()
+				})
+				.collect()
+		} else {
+			vec![]
+		}
 	}
 }
 
+#[allow(clippy::type_complexity)]
 pub fn init<ShieldingKeyRepository, Registry, ResponseChannelType>(
 	shielding_key_repository: Arc<ShieldingKeyRepository>,
 	rpc_responder: Arc<RpcResponder<Registry, Hash, ResponseChannelType>>,
-) -> std::sync::mpsc::SyncSender<(Hash, Vec<String>)>
+) -> (
+	std::sync::mpsc::SyncSender<(Hash, Vec<String>)>,
+	Arc<DirectRpcBroadcaster<ShieldingKeyRepository>>,
+)
 where
 	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
@@ -126,67 +143,81 @@ where
 {
 	let (sender, receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
 
-	let peers = vec!["localhost:2010"];
-	let rpc_broadcaster =
-		Arc::new(Mutex::new(DirectRpcBroadcaster::new(&peers, shielding_key_repository)));
+	let peers = vec![];
+	let rpc_broadcaster = Arc::new(DirectRpcBroadcaster::new(&peers, shielding_key_repository));
 	let cloned_rpc_broadcaster = rpc_broadcaster.clone();
+	let return_rpc_broadcaster = rpc_broadcaster.clone();
 
 	std::thread::spawn(move || {
 		for received in receiver {
-			if let Ok(mut locked) = rpc_broadcaster.lock() {
-				locked.broadcast(received.0, received.1);
-			} else {
-				log::error!("Could not broadcast hash {} message", received.0)
-			}
+			rpc_broadcaster.broadcast(received.0, received.1);
 		}
 	});
 
 	std::thread::spawn(move || {
 		loop {
-			if let Ok(mut locked) = cloned_rpc_broadcaster.lock() {
-				let responses = locked.collect_responses::<Hash>();
-				for response in responses {
-					match response.1 {
-						// this will come from every peer so do not flood the client
-						TrustedOperationStatus::Submitted => {},
-						// this needs to come before block is imported, otherwise it's going to be ignored because TOP will be removed from the pool after block import
-						TrustedOperationStatus::TopExecuted(ref value) => {
-							match rpc_responder.update_connection_state(
+			let responses = cloned_rpc_broadcaster.collect_responses::<Hash>();
+			for response in responses {
+				match response.1 {
+					// this will come from every peer so do not flood the client
+					TrustedOperationStatus::Submitted => {},
+					// this needs to come before block is imported, otherwise it's going to be ignored because TOP will be removed from the pool after block import
+					TrustedOperationStatus::TopExecuted(ref value) => {
+						match rpc_responder.update_connection_state(
+							response.0,
+							value.clone(),
+							response.2,
+						) {
+							Ok(_) => {},
+							Err(e) => log::error!(
+								"Could not set connection {}, reason: {:?}",
 								response.0,
-								value.clone(),
-								response.2,
-							) {
-								Ok(_) => {},
-								Err(e) => log::error!(
-									"Could not set connection {}, reason: {:?}",
-									response.0,
-									e
-								),
-							};
-							if let Err(_e) =
-								rpc_responder.update_status_event(response.0, response.1)
-							{};
-						},
-						_ => {
-							match rpc_responder.update_force_wait(response.0, response.2) {
-								Ok(_) => {},
-								Err(e) => log::error!(
-									"Could not set connection {}, reason: {:?}",
-									response.0,
-									e
-								),
-							};
-							if let Err(_e) =
-								rpc_responder.update_status_event(response.0, response.1)
-							{};
-						},
-					}
+								e
+							),
+						};
+						if let Err(_e) = rpc_responder.update_status_event(response.0, response.1) {
+						};
+					},
+					_ => {
+						match rpc_responder.update_force_wait(response.0, response.2) {
+							Ok(_) => {},
+							Err(e) => log::error!(
+								"Could not set connection {}, reason: {:?}",
+								response.0,
+								e
+							),
+						};
+						if let Err(_e) = rpc_responder.update_status_event(response.0, response.1) {
+						};
+					},
 				}
-			} else {
-				log::warn!("Could not collect responses from peers")
 			}
 			std::thread::sleep(Duration::from_millis(10))
 		}
 	});
-	sender
+	(sender, return_rpc_broadcaster)
+}
+
+impl<ShieldingKeyRepository> PeerUpdater for DirectRpcBroadcaster<ShieldingKeyRepository>
+where
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
+{
+	fn update(&self, peers: Vec<String>) {
+		log::info!("updating peers: {:?}", &peers);
+		for peer in peers {
+			if let Ok(mut peers) = self.peers.lock() {
+				if !peers.contains_key(&peer) {
+					log::info!("i'm about to add a peer: {}", peer.clone());
+					match DirectRpcClient::new(&peer, self.shielding_key_repository.clone()) {
+						Ok(client) => {
+							peers.insert(peer.to_string(), client);
+						},
+						Err(e) =>
+							log::error!("Could not connect to peer {}, reason: {:?}", peer, e),
+					}
+				}
+			}
+		}
+	}
 }

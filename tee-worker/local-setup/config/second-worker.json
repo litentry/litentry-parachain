@@ -5,6 +5,8 @@
       "source": "bin",
       "flags": [
         "--clean-reset",
+        "-T",
+        "wss://localhost",
         "-P",
         "2010",
         "-w",

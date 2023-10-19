@@ -23,7 +23,10 @@ use crate::{
 			initialize_test_state::init_state,
 			test_setup::{enclave_call_signer, TestStf},
 		},
-		mocks::{propose_to_import_call_mock::ProposeToImportOCallApi, types::*},
+		mocks::{
+			peer_updater_mock::PeerUpdaterMock,
+			propose_to_import_call_mock::ProposeToImportOCallApi, types::*,
+		},
 	},
 	top_pool_execution::{exec_aura_on_slot, send_blocks_and_extrinsics},
 };
@@ -98,12 +101,14 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 		Arc::new(MetricsOCallMock::default()),
 	));
 	let parentchain_block_import_trigger = Arc::new(TestParentchainBlockImportTrigger::default());
+	let peer_updater_mock = Arc::new(PeerUpdaterMock {});
 	let block_importer = Arc::new(TestBlockImporter::new(
 		state_handler.clone(),
 		state_key_repo.clone(),
 		top_pool_author.clone(),
 		parentchain_block_import_trigger.clone(),
 		ocall_api.clone(),
+		peer_updater_mock,
 	));
 	let block_composer = Arc::new(TestBlockComposer::new(signer.clone(), state_key_repo.clone()));
 	let proposer_environment =

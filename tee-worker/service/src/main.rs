@@ -40,7 +40,7 @@ use crate::{
 	sync_block_broadcaster::SyncBlockBroadcaster,
 	utils::extract_shard,
 	worker::Worker,
-	worker_peers_updater::WorkerPeersUpdater,
+	worker_peers_registry::WorkerPeersRegistry,
 };
 use base58::ToBase58;
 use clap::{load_yaml, App};
@@ -120,7 +120,7 @@ mod teeracle;
 mod tests;
 mod utils;
 mod worker;
-mod worker_peers_updater;
+mod worker_peers_registry;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -174,7 +174,7 @@ fn main() {
 	));
 	let sync_block_broadcaster =
 		Arc::new(SyncBlockBroadcaster::new(tokio_handle.clone(), worker.clone()));
-	let peer_updater = Arc::new(WorkerPeersUpdater::new(worker));
+	let peer_updater = Arc::new(WorkerPeersRegistry::new(worker));
 	let untrusted_peer_fetcher = UntrustedPeerFetcher::new(node_api_factory.clone());
 	let peer_sidechain_block_fetcher =
 		Arc::new(BlockFetcher::<SignedSidechainBlock, _>::new(untrusted_peer_fetcher));

@@ -27,7 +27,7 @@ use its_primitives::types::block::SignedBlock as SignedSidechainBlockType;
 use its_sidechain::consensus_common::BlockImport;
 use sgx_types::SgxResult;
 use sp_runtime::{traits::Header as ParentchainHeaderTrait, OpaqueExtrinsic};
-use std::{sync::Arc, vec::Vec};
+use std::{string::String, sync::Arc, vec::Vec};
 
 /// OCallApi mock that routes the proposed sidechain blocks directly to the importer,
 /// short circuiting all the RPC calls.
@@ -112,5 +112,9 @@ impl EnclaveSidechainOCallApi for ProposeToImportOCallApi {
 		_shard_identifier: ShardIdentifier,
 	) -> SgxResult<Vec<SignedSidechainBlock>> {
 		Ok(Vec::new())
+	}
+
+	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
+		Ok(vec![])
 	}
 }

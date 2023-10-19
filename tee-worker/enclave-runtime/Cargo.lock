@@ -2402,6 +2402,7 @@ dependencies = [
  "finality-grandpa",
  "ita-stf",
  "itc-parentchain-block-import-dispatcher",
+ "itc-peer-top-broadcaster",
  "itp-enclave-metrics",
  "itp-ocall-api",
  "itp-settings",

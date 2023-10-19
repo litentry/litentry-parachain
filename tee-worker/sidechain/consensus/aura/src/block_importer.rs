@@ -23,6 +23,7 @@ pub use its_consensus_common::BlockImport;
 use crate::{AuraVerifier, EnclaveOnChainOCallApi, SidechainBlockTrait};
 use ita_stf::hash::TrustedOperationOrHash;
 use itc_parentchain_block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport;
+use itc_peer_top_broadcaster::PeerUpdater;
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
@@ -55,12 +56,14 @@ pub struct BlockImporter<
 	StateKeyRepository,
 	TopPoolAuthor,
 	ParentchainBlockImporter,
+	PeersUpdater,
 > {
 	state_handler: Arc<StateHandler>,
 	state_key_repository: Arc<StateKeyRepository>,
 	top_pool_author: Arc<TopPoolAuthor>,
 	parentchain_block_importer: Arc<ParentchainBlockImporter>,
 	ocall_api: Arc<OCallApi>,
+	peer_updater: Arc<PeersUpdater>,
 	_phantom: PhantomData<(Authority, ParentchainBlock, SignedSidechainBlock)>,
 }
 
@@ -73,6 +76,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 	>
 	BlockImporter<
 		Authority,
@@ -83,6 +87,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 	> where
 	Authority: Pair,
 	Authority::Public: std::fmt::Debug,
@@ -103,6 +108,7 @@ impl<
 	ParentchainBlockImporter: TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>
 		+ Send
 		+ Sync,
+	PeersUpdater: PeerUpdater,
 {
 	pub fn new(
 		state_handler: Arc<StateHandler>,
@@ -110,6 +116,7 @@ impl<
 		top_pool_author: Arc<TopPoolAuthor>,
 		parentchain_block_importer: Arc<ParentchainBlockImporter>,
 		ocall_api: Arc<OCallApi>,
+		peer_updater: Arc<PeersUpdater>,
 	) -> Self {
 		Self {
 			state_handler,
@@ -117,6 +124,7 @@ impl<
 			top_pool_author,
 			parentchain_block_importer,
 			ocall_api,
+			peer_updater,
 			_phantom: Default::default(),
 		}
 	}
@@ -158,6 +166,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 	> BlockImport<ParentchainBlock, SignedSidechainBlock>
 	for BlockImporter<
 		Authority,
@@ -168,6 +177,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 	> where
 	Authority: Pair,
 	Authority::Public: std::fmt::Debug,
@@ -188,6 +198,7 @@ impl<
 	ParentchainBlockImporter: TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>
 		+ Send
 		+ Sync,
+	PeersUpdater: PeerUpdater,
 {
 	type Verifier = AuraVerifier<Authority, ParentchainBlock, SignedSidechainBlock, OCallApi>;
 	type SidechainState = SgxExternalities;
@@ -256,6 +267,11 @@ impl<
 		sidechain_block: &SignedSidechainBlock::Block,
 		last_imported_parentchain_header: &ParentchainBlock::Header,
 	) -> Result<ParentchainBlock::Header, ConsensusError> {
+		// get new peer list on each parentchain block import
+		if let Ok(peers) = self.ocall_api.get_trusted_peers_urls() {
+			self.peer_updater.update(peers);
+		}
+
 		// We trigger the import of parentchain blocks up until the last one we've seen in the
 		// sidechain block that we're importing. This is done to prevent forks in the sidechain (#423)
 		let maybe_latest_imported_block = self

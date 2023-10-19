@@ -50,6 +50,7 @@ use itc_parentchain::{
 		light_validation::LightValidation, light_validation_state::LightValidationState,
 	},
 };
+use itc_peer_top_broadcaster::DirectRpcBroadcaster;
 use itc_tls_websocket_server::{
 	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 };
@@ -183,6 +184,7 @@ pub type EnclaveTopPoolAuthor = Author<
 	EnclaveShieldingKeyRepository,
 	EnclaveOCallApi,
 >;
+pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster<EnclaveShieldingKeyRepository>;
 pub type EnclaveSidechainBlockComposer =
 	BlockComposer<ParentchainBlock, SignedSidechainBlock, Pair, EnclaveStateKeyRepository>;
 pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<
@@ -194,6 +196,7 @@ pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<
 	EnclaveStateKeyRepository,
 	EnclaveTopPoolAuthor,
 	EnclaveTriggeredParentchainBlockImportDispatcher,
+	EnclaveDirectRpcBroadcaster,
 >;
 pub type EnclaveSidechainBlockImportQueue = ImportQueue<SignedSidechainBlock>;
 pub type EnclaveBlockImportConfirmationHandler = BlockImportConfirmationHandler<
@@ -264,6 +267,10 @@ pub static GLOBAL_STATE_OBSERVER_COMPONENT: ComponentContainer<EnclaveStateObser
 /// TOP pool author.
 pub static GLOBAL_TOP_POOL_AUTHOR_COMPONENT: ComponentContainer<EnclaveTopPoolAuthor> =
 	ComponentContainer::new("top_pool_author");
+
+pub static GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT: ComponentContainer<
+	EnclaveDirectRpcBroadcaster,
+> = ComponentContainer::new("direct_rpc_broadcaster");
 
 /// attestation handler
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =

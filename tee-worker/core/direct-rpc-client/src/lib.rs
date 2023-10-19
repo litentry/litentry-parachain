@@ -38,6 +38,7 @@ extern crate alloc;
 
 use alloc::format;
 use codec::Decode;
+use core::str::FromStr;
 
 use serde_json::from_str;
 
@@ -113,13 +114,14 @@ where
 		url: &str,
 		encryption_key: Arc<ShieldingKeyRepository>,
 	) -> Result<Self, Box<dyn Error>> {
-		let ws_server_url = Url::parse(format!("wss://{}", url).as_str())
-			.map_err(|e| format!("Could not connect, reason: {:?}", e))?;
+		let ws_server_url =
+			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
 		config.dangerous().set_certificate_verifier(Arc::new(NoCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
-		let stream = TcpStream::connect(url)
-			.map_err(|e| format!("Could not connect to {}, reason: {:?}", ws_server_url, e))?;
+		let addrs = ws_server_url.socket_addrs(|| None).unwrap();
+		let stream = TcpStream::connect(&*addrs)
+			.map_err(|e| format!("Could not connect to {:?}, reason: {:?}", &addrs, e))?;
 
 		let (mut socket, _response) =
 			client_tls_with_config(ws_server_url, stream, None, Some(connector))
