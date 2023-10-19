@@ -1,13 +1,540 @@
-name: Release Ts API package2
+name: Build Worker
+
+# This file is a joint CI of parachain and tee-worker, it contains:
+# - build (of docker images)
+# - format check
+# - unit tests
+# - integration tests
+
+# Some notes:
+#
+# [1] the tee-worker part is a modified version of tee-worker/.github/workflows/build_and_test.yml
+# with extra triggering control.
+#
+# [2] the original file (`tee-worker/.github/workflows/build_and_test.yml`) is kept to sync
+# upstream changes, therefore we need to manually apply the changes to this file.
+
+# [3] please beware that if a job in `needs` is skipped, its dependent job will also be skipped,
+# see https://github.com/actions/runner/issues/491
+#
+# jobs that will always be executed:
+# - fmt
+# - set-condition
+# - parachain-build-dev
+# - parachain-build-tee-prod
+# - tee-build
+#
+# [4] please note that job-level if `env` is not supported:
+# https://github.com/actions/runner/issues/1189
+# as a workaround, we need to put it in a step-level or use `needs.outputs`
+#
+# [5] parachain-build-tee-prod builds the parachain image without `tee-dev` feature
+# It's used with tee-worker production deployment with HW mode.
+
 on:
+  # push:
+  #   branches:
+  #     - dev
+  #   paths-ignore:
+  #     - '**/dependabot.yml'
+  #     - '**/README.md'
+  # pull_request:
+  #   branches:
+  #     - dev
+  #   types:
+  #     - opened
+  #     - reopened
+  #     - synchronize
+  #     - ready_for_review
   workflow_dispatch:
+    inputs:
+      rebuild-parachain-docker:
+        type: boolean
+        description: rebuild-parachain-docker
+        required: true
+        default: true
+      rebuild-tee-docker:
+        type: boolean
+        description: rebuild-tee-docker
+        required: true
+        default: true
+      # push-docker:
+      #   type: boolean
+      #   description: push-docker
+      #   required: true
+      #   default: false
 
 env:
-  NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
+  CARGO_TERM_COLOR: always
+  DOCKER_BUILDKIT: 1
+  # the branch or tag on which this workflow is triggered
+  # `head_ref` will only be set if the triggering event is `pull_request`
+  REF_VERSION: ${{ github.head_ref || github.ref_name }}
+
+concurrency:
+  # see https://stackoverflow.com/questions/74117321/if-condition-in-concurrency-in-gha
+  # along with the `sequentialise` job below, it guarantees:
+  # - for push in dev: all triggered CIs will be run sequentially, none is cancelled
+  # - for PR: later triggered CIs will cancel previous runs, maximum one CI will be run
+  group: ${{ github.workflow }}-${{ github.head_ref && github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  UpdateMetadata:
+  set-condition:
     runs-on: ubuntu-latest
+    # see https://github.com/orgs/community/discussions/25722
+    if: ${{ github.event_name == 'push' || !github.event.pull_request.draft }}
+    outputs:
+      rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
+      rebuild_tee: ${{ steps.env.outputs.rebuild_tee }}
+      push_docker: ${{ steps.env.outputs.push_docker }}
+      run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
+      run_tee_test: ${{ steps.env.outputs.run_tee_test }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Checks to see if any files in the PR/commit match one of the listed file types.
+      # We can use this filter to decide whether or not to build docker images
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: .github/file-filter.yml
+          list-files: shell
+
+      - name: Set condition
+        id: env
+        run: |
+          rebuild_parachain=false
+          rebuild_tee=false
+          push_docker=false
+          run_parachain_test=false
+          run_tee_test=false
+          if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
+            rebuild_parachain=true
+          fi
+          if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
+            rebuild_tee=true
+          fi
+          if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
+            push_docker=true
+          elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
+            push_docker=true
+          fi
+          if [ "${{ steps.filter.outputs.parachain_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ]; then
+            run_parachain_test=true
+          fi
+          if [ "${{ steps.filter.outputs.tee_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
+            run_tee_test=true
+          fi
+          echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
+          echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
+          echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
+          echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
+          echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
+
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust toolchain
+        run: rustup show
+
+      - name: Install pre-built taplo
+        run: |
+          mkdir -p $HOME/.local/bin
+          wget -q https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz
+          gzip -d taplo-linux-x86_64.gz
+          cp taplo-linux-x86_64 $HOME/.local/bin/taplo
+          chmod a+x $HOME/.local/bin/taplo
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Parachain fmt check
+        run: |
+          make fmtcheck
+          make taplocheck
+
+      - name: Tee-worker fmt check
+        working-directory: ./tee-worker
+        run: |
+          cargo fmt --all -- --check
+          taplo fmt --check
+
+      - name: Enclave-runtime fmt check
+        working-directory: ./tee-worker/enclave-runtime
+        run: |
+          cargo fmt --all -- --check
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Tee-worker client-api install npm deps
+        working-directory: ./tee-worker/client-api
+        run: pnpm install
+
+      - name: Tee-worker client-api build
+        working-directory: ./tee-worker/client-api
+        run: pnpm run build
+
+      - name: Tee-worker ts-tests install npm deps
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm install
+
+      - name: Tee-worker check ts code format
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm run check-format
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  # sequentialise the workflow runs on `dev` branch
+  # the if condition is applied in step level to make this job always `successful`
+  sequentialise:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for previous run
+        if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
+        uses: mktcode/consecutive-workflow-action@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          interval: 300
+          branch: dev
+
+  parachain-clippy:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    if: needs.set-condition.outputs.rebuild_parachain == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust toolchain
+        run: rustup show
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+      - name: Run cargo clippy check
+        run: make clippy
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  tee-clippy:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    if: needs.set-condition.outputs.rebuild_tee == 'true'
+    container: 'litentry/litentry-tee-dev:latest'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+      - name: Pallet unittests
+        working-directory: ./tee-worker
+        run: |
+          cargo test --release -p pallet-* --lib
+
+      - name: Tee-worker clippy
+        working-directory: ./tee-worker
+        run: |
+          echo "::group::cargo clippy all"
+          cargo clippy --release -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain"
+          cargo clippy --release --features sidechain -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker"
+          cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm -- -D warnings
+          echo "::endgroup::"
+
+      - name: Clean up disk
+        working-directory: ./tee-worker
+        run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          cargo clean --profile release
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+
+      - name: Tee-enclave clippy
+        working-directory: ./tee-worker/enclave-runtime
+        run: |
+          echo "::group::cargo clippy all"
+          cargo clippy --release -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain"
+          cargo clippy --release --features sidechain -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker"
+          cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy evm"
+          cargo clippy --release --features evm -- -D warnings
+          echo "::endgroup::"
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  parachain-build-dev:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+
+      - uses: actions/checkout@v4
+
+      - name: Build docker image
+        if: needs.set-condition.outputs.rebuild_parachain == 'true'
+        run: |
+          echo "::group::build docker image"
+          make build-docker-release
+          echo "::endgroup::"
+          echo "::group::docker images"
+          docker images --all
+          echo "::endgroup::"
+
+      - name: Pull docker image optinally
+        if: needs.set-condition.outputs.rebuild_parachain == 'false'
+        run: |
+          docker pull litentry/litentry-parachain:latest
+
+      - name: Save docker image
+        run: |
+          docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
+
+      - name: Upload docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: litentry-parachain-dev
+          path: litentry-parachain-dev.tar.gz
+          if-no-files-found: error
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  parachain-build-tee-prod:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+
+      - uses: actions/checkout@v4
+
+      - name: Build docker image
+        if: |
+          needs.set-condition.outputs.rebuild_parachain == 'true' &&
+          needs.set-condition.outputs.push_docker == 'true'
+        run: |
+          echo "::group::build tee-prod docker image"
+          ./scripts/build-docker.sh production tee-prod
+          echo "::endgroup::"
+          echo "::group::docker images"
+          docker images --all
+          echo "::endgroup::"
+
+      - name: Pull docker image optionally
+        if: |
+          needs.set-condition.outputs.rebuild_parachain == 'false' ||
+          needs.set-condition.outputs.push_docker == 'false'
+        run: |
+          docker pull litentry/litentry-parachain:tee-prod
+
+      - name: Save docker image
+        run: |
+          docker save litentry/litentry-parachain:tee-prod | gzip > litentry-parachain-tee-prod.tar.gz
+
+      - name: Upload docker image
+        uses: actions/upload-artifact@v3
+        with:
+          name: parachain-artifact-tee-prod
+          path: litentry-parachain-tee-prod.tar.gz
+          if-no-files-found: error
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
+  tee-build:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          # use the docker driver to access the local image
+          # we don't need external caches or multi platforms here
+          # see https://docs.docker.com/build/drivers/
+          driver: docker
+
+      - name: Cache worker-cache
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        uses: actions/cache@v3
+        with:
+          path: |
+            worker-cache
+          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
+          restore-keys: |
+            worker-cache-${{ env.REF_VERSION }}-
+            worker-cache-
+
+      - name: Create cache folder if not exist
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        run: |
+          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
+            [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
+            echo "hello" > worker-cache/$i/nix 
+          done
+          echo "::group::List worker-cache size"
+          du -sh worker-cache/*
+          echo "::endgroup::"
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+
+      # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
+      # https://github.com/moby/buildkit/issues/1512
+      # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
+      # https://hackmd.io/@kobzol/S17NS71bh (a great summary)
+      #
+      # the `reproducible-containers/buildkit-cache-dance` seems to be unstable too in my test
+      # sometimes it works, sometimes it results in empty cache, root cause unclear
+      #
+      # thus the persistence of rust cache (w/ sccache) is maintained manually
+      #
+      # there's no cache-from/to as the docker image layer is too large and it takes too long to sync
+      # moreoever, we are not so eager to have layer caches, as the most critical operation(cargo build)
+      # is "atomic" and can't be broken into layers.
+      - name: Build local builder
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: local-builder:latest
+          target: builder
+          build-args: |
+            WORKER_MODE_ARG=sidechain
+            ADDITIONAL_FEATURES_ARG=
+
+      - name: Copy caches from the built image
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          echo "::group::docker images"
+          docker images --all
+          echo "::endgroup::"
+          echo "::group::copy cache out"
+          for i in 'git/db' 'registry/cache' 'registry/index'; do
+            b="${i%/*}"
+            rm -rf worker-cache/$i
+            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
+          done
+          rm -rf worker-cache/sccache
+          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
+          du -sh worker-cache/*
+          echo "::endgroup::"
+          echo "::group::df -h ."
+          df -h .
+          echo "::endgroup::"
+
+      - name: Build worker
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: litentry/litentry-worker:latest
+          target: deployed-worker
+
+      - name: Build cli
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: litentry/litentry-cli:latest
+          target: deployed-client
+
+      - name: Pull and tag worker and cli image optionally
+        if: needs.set-condition.outputs.rebuild_tee == 'false'
+        run: |
+          docker pull litentry/litentry-worker:latest
+          docker pull litentry/litentry-cli:latest
+
+      - run: docker images --all
+
+      - name: Test enclave
+        if: needs.set-condition.outputs.rebuild_tee == 'true'
+        # cargo test is not supported in the enclave
+        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
+        run: docker run litentry/litentry-worker:latest test --all
+  tee-test:
+    runs-on: ubuntu-latest
+    needs:
+      - set-condition
+      - parachain-build-dev
+      - tee-build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test_name: release_ts_api_package
 
     steps:
       - uses: actions/checkout@v4
@@ -45,16 +572,18 @@ jobs:
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
 
-      - name: Fetch metadata
-        timeout-minutes: 40
+      - name: Test release_ts_api_package
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        timeout-minutes: 20
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f release-ts-api-package.yml up --no-build --exit-code-from release-ts-api-package release-ts-api-package
+          docker compose -f docker-compose.yml -f release_ts_api_package.yml up --no-build --exit-code-from release_ts_api_package release_ts_api_package
 
       - name: Stop docker containers
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f release-ts-api-package.yml stop
+          docker compose -f docker-compose.yml -f release_ts_api_package.yml stop
 
       - name: Collect Docker Logs
         continue-on-error: true
@@ -68,46 +597,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: logs-release-ts-api-package
+          name: logs-release_ts_api_package
           path: logs
           if-no-files-found: ignore
-
-  # publish:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout Code
-  #       uses: actions/checkout@v4
-
-  #     - name: Use Node.js
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 18
-  #         registry-url: https://npm.pkg.github.com/
-
-  #     - name: Setup npm config
-  #       run: |
-  #         echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
-  #         npm config set @litentry:registry https://npm.pkg.github.com
-
-  #     - name: Install pnpm
-  #       run: corepack enable pnpm
-
-  #     - name: Install dependencies
-  #       run: |
-  #         cd tee-worker/client-api
-  #         pnpm install
-
-  #     - name: Build and publish parachain and sidechain API
-  #       if: github.ref_name == 'dev' || github.ref_name == 'staging'
-  #       run: |
-  #         cd tee-worker/client-api/parachain-api
-  #         pnpm build
-  #         npm publish --tag ${{ github.ref_name }}
-
-  #         echo "------------------------parachain API published------------------------"
-
-  #         cd ../sidechain-api
-  #         pnpm build
-  #         npm publish --tag ${{ github.ref_name }}
-
-  #         echo "------------------------sidechain API published------------------------"
