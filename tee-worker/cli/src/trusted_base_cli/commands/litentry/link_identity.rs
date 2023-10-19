@@ -61,8 +61,11 @@ impl LinkIdentityCommand {
 		let alice = get_pair_from_str(trusted_cli, "//Alice");
 		let src_id: Identity = Identity::from_did(self.src_did.as_str()).unwrap();
 		let dst_id: Identity = Identity::from_did(self.dst_did.as_str()).unwrap();
-		let networks: Vec<Web3Network> =
-			self.networks.iter().map(|n| n.as_str().try_into().unwrap()).collect();
+		let networks: Vec<Web3Network> = self
+			.networks
+			.iter()
+			.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
+			.collect();
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);

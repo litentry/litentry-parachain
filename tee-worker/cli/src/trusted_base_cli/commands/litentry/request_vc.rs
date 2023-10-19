@@ -237,8 +237,11 @@ impl RequestVcCommand {
 			Command::A6 => Assertion::A6,
 			Command::A7(arg) => Assertion::A7(to_para_str(&arg.minimum_amount)),
 			Command::A8(arg) => {
-				let networks: Vec<Web3Network> =
-					arg.networks.iter().map(|n| n.as_str().try_into().unwrap()).collect();
+				let networks: Vec<Web3Network> = arg
+					.networks
+					.iter()
+					.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
+					.collect();
 				Assertion::A8(networks.try_into().unwrap())
 			},
 			Command::A10(arg) => Assertion::A10(to_para_str(&arg.minimum_amount)),
@@ -261,7 +264,11 @@ impl RequestVcCommand {
 				AchainableCommand::AmountHolding(arg) => Assertion::Achainable(
 					AchainableParams::AmountHolding(AchainableAmountHolding {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						amount: to_para_str(&arg.amount),
 						date: to_para_str(&arg.date),
 						token: arg.token.as_ref().map(|s| to_para_str(s)),
@@ -270,32 +277,52 @@ impl RequestVcCommand {
 				AchainableCommand::AmountToken(arg) =>
 					Assertion::Achainable(AchainableParams::AmountToken(AchainableAmountToken {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						amount: to_para_str(&arg.amount),
 						token: arg.token.as_ref().map(|s| to_para_str(s)),
 					})),
 				AchainableCommand::Amount(arg) =>
 					Assertion::Achainable(AchainableParams::Amount(AchainableAmount {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						amount: to_para_str(&arg.amount),
 					})),
 				AchainableCommand::Amounts(arg) =>
 					Assertion::Achainable(AchainableParams::Amounts(AchainableAmounts {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						amount1: to_para_str(&arg.amount1),
 						amount2: to_para_str(&arg.amount2),
 					})),
 				AchainableCommand::Basic(arg) =>
 					Assertion::Achainable(AchainableParams::Basic(AchainableBasic {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 					})),
 				AchainableCommand::BetweenPercents(arg) => Assertion::Achainable(
 					AchainableParams::BetweenPercents(AchainableBetweenPercents {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						greater_than_or_equal_to: to_para_str(&arg.greater_than_or_equal_to),
 						less_than_or_equal_to: to_para_str(&arg.less_than_or_equal_to),
 					}),
@@ -303,19 +330,31 @@ impl RequestVcCommand {
 				AchainableCommand::ClassOfYear(arg) =>
 					Assertion::Achainable(AchainableParams::ClassOfYear(AchainableClassOfYear {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 					})),
 				AchainableCommand::DateInterval(arg) =>
 					Assertion::Achainable(AchainableParams::DateInterval(AchainableDateInterval {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						start_date: to_para_str(&arg.start_date),
 						end_date: to_para_str(&arg.end_date),
 					})),
 				AchainableCommand::DatePercent(arg) =>
 					Assertion::Achainable(AchainableParams::DatePercent(AchainableDatePercent {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						date: to_para_str(&arg.date),
 						percent: to_para_str(&arg.percent),
 						token: to_para_str(&arg.token),
@@ -323,19 +362,25 @@ impl RequestVcCommand {
 				AchainableCommand::Date(arg) =>
 					Assertion::Achainable(AchainableParams::Date(AchainableDate {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						date: to_para_str(&arg.date),
 					})),
 				AchainableCommand::Token(arg) =>
 					Assertion::Achainable(AchainableParams::Token(AchainableToken {
 						name: to_para_str(&arg.name),
-						chain: arg.chain.as_str().try_into().unwrap(),
+						chain: arg
+							.chain
+							.as_str()
+							.try_into()
+							.expect("cannot convert to Web3Network"),
 						token: to_para_str(&arg.token),
 					})),
 			},
 		};
-
-		println!("assertion: {:?}", assertion);
 
 		let top: TrustedOperation =
 			TrustedCall::request_vc(alice.public().into(), id, assertion, Default::default())
