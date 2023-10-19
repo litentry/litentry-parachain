@@ -523,18 +523,27 @@ jobs:
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
         run: docker run litentry/litentry-worker:latest test --all
+
+      - name: Save docker images
+        run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
+
+      - name: Upload docker images
+        uses: actions/upload-artifact@v3
+        with:
+          name: litentry-tee
+          path: litentry-tee.tar.gz
+          if-no-files-found: error
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3 
+        
   tee-test:
     runs-on: ubuntu-latest
     needs:
       - set-condition
       - parachain-build-dev
       - tee-build
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - test_name: release_ts_api_package
 
     steps:
       - uses: actions/checkout@v4
