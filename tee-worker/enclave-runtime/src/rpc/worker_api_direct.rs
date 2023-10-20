@@ -49,6 +49,7 @@ use its_sidechain::rpc_handler::{
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_primitives::DecryptableRequest;
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
@@ -453,8 +454,8 @@ fn execute_getter_inner<G: ExecuteGetter>(
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let request = Request::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
-	let shard: ShardIdentifier = request.shard;
-	let encoded_trusted_getter: Vec<u8> = request.cyphertext;
+	let shard: ShardIdentifier = request.shard();
+	let encoded_trusted_getter: Vec<u8> = request.payload().to_vec();
 
 	let getter_result = getter_executor
 		.execute_getter(&shard, encoded_trusted_getter)

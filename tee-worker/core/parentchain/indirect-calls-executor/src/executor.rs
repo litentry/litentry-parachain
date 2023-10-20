@@ -36,7 +36,7 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier, H256};
+use itp_types::{OpaqueCall, Request, ShardIdentifier, H256};
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
@@ -229,7 +229,7 @@ impl<
 {
 	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>) {
 		if let Err(e) = futures::executor::block_on(
-			self.top_pool_author.submit_top(encrypted_trusted_call, shard),
+			self.top_pool_author.submit_top(Request::new(shard, encrypted_trusted_call)),
 		) {
 			error!("Error adding indirect trusted call to TOP pool: {:?}", e);
 		}
@@ -462,7 +462,7 @@ mod test {
 	}
 
 	fn call_worker_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<CallWorkerFn> {
-		let request = Request { shard: shard_id(), cyphertext: vec![1u8, 2u8] };
+		let request = Request::new(shard_id(), vec![1u8, 2u8]);
 		let dummy_metadata = NodeMetadataMock::new();
 		let call_worker_indexes = dummy_metadata.call_worker_call_indexes().unwrap();
 

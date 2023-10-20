@@ -31,6 +31,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Request, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
+use litentry_primitives::AesRequest;
 use log::*;
 use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
@@ -204,14 +205,34 @@ fn author_submit_extrinsic_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'stati
 	let request =
 		Request::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
 
-	let shard: ShardIdentifier = request.shard;
-	let encrypted_trusted_call: Vec<u8> = request.cyphertext;
-	let result = async { author.watch_top(encrypted_trusted_call, shard).await };
+	let result = async { author.watch_top(request).await };
 	let response: Result<Hash, RpcError> = executor::block_on(result);
 
 	match &response {
 		Ok(h) => debug!("Trusted operation submitted successfully ({:?})", h),
 		Err(e) => warn!("Submitting trusted operation failed: {:?}", e),
+	}
+
+	response.map_err(|e| format!("{:?}", e))
+}
+
+fn author_submit_aes_request_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'static>(
+	author: Arc<R>,
+	params: Params,
+) -> Result<Hash, String> {
+	debug!("Author submit and watch AesRequest..");
+
+	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+
+	let request =
+		AesRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+
+	let result = async { author.watch_top(request).await };
+	let response: Result<Hash, RpcError> = executor::block_on(result);
+
+	match &response {
+		Ok(h) => debug!("AesRequest submitted successfully ({:?})", h),
+		Err(e) => warn!("Submitting AesRequest failed: {:?}", e),
 	}
 
 	response.map_err(|e| format!("{:?}", e))

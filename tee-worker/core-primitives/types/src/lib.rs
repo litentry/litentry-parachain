@@ -20,8 +20,9 @@
 
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
+use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use litentry_primitives::UserShieldingKeyNonceType;
-use sp_std::vec::Vec;
+use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 
 pub mod parentchain;
 pub mod storage;
@@ -35,11 +36,9 @@ pub type PalletString = Vec<u8>;
 #[cfg(feature = "std")]
 pub type PalletString = String;
 
-pub use sp_core::{crypto::AccountId32 as AccountId, H256};
-
-pub use litentry_primitives::Assertion;
-
 pub use itp_sgx_runtime_primitives::types::*;
+pub use litentry_primitives::{Assertion, DecryptableRequest};
+pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
 pub type IpfsHash = [u8; 46];
 pub type MrEnclave = [u8; 32];
@@ -94,8 +93,32 @@ impl Encode for OpaqueCall {
 // Note in the pallet teerex this is a struct. But for the codec this does not matter.
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, Debug)]
 pub struct Request {
-	pub shard: ShardIdentifier,
-	pub cyphertext: Vec<u8>,
+	shard: ShardIdentifier,
+	cyphertext: Vec<u8>,
+}
+
+impl Request {
+	pub fn new(shard: ShardIdentifier, payload: Vec<u8>) -> Self {
+		Request { shard, cyphertext: payload }
+	}
+}
+impl DecryptableRequest for Request {
+	type Error = ();
+
+	fn shard(&self) -> ShardIdentifier {
+		self.shard
+	}
+
+	fn payload(&self) -> &[u8] {
+		self.cyphertext.as_slice()
+	}
+
+	fn decrypt<T: Debug>(
+		&mut self,
+		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
+	) -> core::result::Result<Vec<u8>, ()> {
+		enclave_shielding_key.decrypt(self.cyphertext.as_slice()).map_err(|_| ())
+	}
 }
 
 // Todo: move this improved enclave definition into a primitives crate in the pallet_teerex repo.

@@ -33,10 +33,11 @@ pub use aes::*;
 pub use aes_request::*;
 pub use ethereum_signature::*;
 pub use identity::*;
-use sp_std::vec::Vec;
+use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 pub use validation_data::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::hex::hex_encode;
 use log::error;
 pub use parentchain_primitives::{
@@ -181,3 +182,18 @@ fn evm_eip191_wrap(msg: &[u8]) -> Vec<u8> {
 }
 
 pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);
+
+// Represent a request that can be decrypted by the enclave
+// Both itp_types::Request and AesRequest should impelement this
+pub trait DecryptableRequest {
+	type Error;
+	// the shard getter
+	fn shard(&self) -> ShardIdentifier;
+	// the raw payload - AFAICT only used in mock
+	fn payload(&self) -> &[u8];
+	// how to decrypt the payload
+	fn decrypt<T: Debug>(
+		&mut self,
+		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
+	) -> core::result::Result<Vec<u8>, Self::Error>;
+}

@@ -33,6 +33,7 @@ use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::onchain_mock::OnchainMock;
 use itp_top_pool_author::{mocks::AuthorApiMock, traits::AuthorApi};
+use itp_types::Request;
 use litentry_primitives::Identity;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::Pair;
@@ -112,8 +113,10 @@ pub fn nonce_is_computed_correctly() {
 	);
 	let trusted_call_1_signed =
 		enclave_signer.sign_call_with_self(&trusted_call_1, &shard).unwrap();
-	top_pool_author
-		.submit_top(TrustedOperation::indirect_call(trusted_call_1_signed.clone()).encode(), shard);
+	top_pool_author.submit_top(Request::new(
+		shard,
+		TrustedOperation::indirect_call(trusted_call_1_signed.clone()).encode(),
+	));
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls_for(shard, &enclave_account).len());
 
 	// create the second trusted_call and submit it
@@ -124,8 +127,10 @@ pub fn nonce_is_computed_correctly() {
 	);
 	let trusted_call_2_signed =
 		enclave_signer.sign_call_with_self(&trusted_call_2, &shard).unwrap();
-	top_pool_author
-		.submit_top(TrustedOperation::indirect_call(trusted_call_2_signed.clone()).encode(), shard);
+	top_pool_author.submit_top(Request::new(
+		shard,
+		TrustedOperation::indirect_call(trusted_call_2_signed.clone()).encode(),
+	));
 	assert_eq!(2, top_pool_author.get_pending_trusted_calls_for(shard, &enclave_account).len());
 	// there should be no pending trusted calls for non-enclave-account
 	assert_eq!(

@@ -17,7 +17,7 @@
 
 use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
-use itp_types::Request;
+use itp_types::{DecryptableRequest, Request};
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct CallWorkerArgs {
@@ -28,7 +28,7 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CallWorkerArgs {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
-		executor.submit_trusted_call(self.request.shard, self.request.cyphertext.clone());
+		executor.submit_trusted_call(self.request.shard(), self.request.payload().to_vec());
 		Ok(())
 	}
 }

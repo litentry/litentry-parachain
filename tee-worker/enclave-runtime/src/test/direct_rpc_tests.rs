@@ -62,7 +62,7 @@ pub fn get_state_request_works() {
 	let getter =
 		Getter::public(PublicGetter::nonce(Identity::Substrate(Address32::from([0u8; 32]))));
 
-	let request = Request { shard: ShardIdentifier::default(), cyphertext: getter.encode() };
+	let request = Request::new(ShardIdentifier::default(), getter.encode());
 
 	let request_string =
 		RpcRequest::compose_jsonrpc_call("state_executeGetter".to_string(), vec![request.to_hex()])

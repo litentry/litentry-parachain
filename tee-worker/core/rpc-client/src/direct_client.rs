@@ -25,7 +25,7 @@ use ita_stf::Getter;
 use itp_api_client_types::Metadata;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
-use itp_types::DirectRequestStatus;
+use itp_types::{DirectRequestStatus, Request};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -37,7 +37,7 @@ use std::{
 	thread,
 	thread::JoinHandle,
 };
-use teerex_primitives::{MrEnclave, Request};
+use teerex_primitives::MrEnclave;
 
 pub use crate::error::{Error, Result};
 
@@ -73,7 +73,7 @@ impl DirectClient {
 	// litentry: moved from `cli/src/trusted_operation.rs` as it's more widely used
 	pub fn get_state(&self, shard: ShardIdentifier, getter: &Getter) -> Option<Vec<u8>> {
 		// Compose jsonrpc call.
-		let data = Request { shard, cyphertext: getter.encode() };
+		let data = Request::new(shard, getter.encode());
 		let rpc_method = "state_executeGetter".to_owned();
 		let jsonrpc_call: String =
 			RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
