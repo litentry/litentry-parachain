@@ -219,10 +219,10 @@ pub struct TokenArg {
 
 impl RequestVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let alice = get_pair_from_str(trusted_cli, "//Alice");
+		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
 
-		let (mrenclave, shard) = get_identifiers(trusted_cli);
+		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
 		let assertion = match &self.command {

@@ -40,7 +40,7 @@ pub struct IDGraphCommand {
 
 impl IDGraphCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let alice = get_pair_from_str(trusted_cli, "//Alice");
+		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
 
 		let top: TrustedOperation =
