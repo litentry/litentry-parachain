@@ -1,70 +1,14 @@
 name: Release Ts API Package
 
-# This file is a joint CI of parachain and tee-worker, it contains:
-# - build (of docker images)
-# - format check
-# - unit tests
-# - integration tests
+# Reference: ci.yml
 
-# Some notes:
-#
-# [1] the tee-worker part is a modified version of tee-worker/.github/workflows/build_and_test.yml
-# with extra triggering control.
-#
-# [2] the original file (`tee-worker/.github/workflows/build_and_test.yml`) is kept to sync
-# upstream changes, therefore we need to manually apply the changes to this file.
-
-# [3] please beware that if a job in `needs` is skipped, its dependent job will also be skipped,
-# see https://github.com/actions/runner/issues/491
-#
-# jobs that will always be executed:
-# - fmt
-# - set-condition
-# - parachain-build-dev
-# - parachain-build-tee-prod
-# - tee-build
-#
-# [4] please note that job-level if `env` is not supported:
-# https://github.com/actions/runner/issues/1189
-# as a workaround, we need to put it in a step-level or use `needs.outputs`
-#
-# [5] parachain-build-tee-prod builds the parachain image without `tee-dev` feature
-# It's used with tee-worker production deployment with HW mode.
 
 on:
   workflow_dispatch:
 
-env:
-  CARGO_TERM_COLOR: always
-  DOCKER_BUILDKIT: 1
-  # the branch or tag on which this workflow is triggered
-  # `head_ref` will only be set if the triggering event is `pull_request`
-  REF_VERSION: ${{ github.head_ref || github.ref_name }}
-
-concurrency:
-  # see https://stackoverflow.com/questions/74117321/if-condition-in-concurrency-in-gha
-  # along with the `sequentialise` job below, it guarantees:
-  # - for push in dev: all triggered CIs will be run sequentially, none is cancelled
-  # - for PR: later triggered CIs will cancel previous runs, maximum one CI will be run
-  group: ${{ github.workflow }}-${{ github.head_ref && github.ref || github.run_id }}
-  cancel-in-progress: true
-
 jobs:
-  sequentialise:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for previous run
-        if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-        uses: mktcode/consecutive-workflow-action@main
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          interval: 300
-          branch: dev
-
   parachain-build-dev:
     runs-on: ubuntu-latest
-    needs:
-      - sequentialise
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
@@ -97,8 +41,6 @@ jobs:
 
   parachain-build-tee-prod:
     runs-on: ubuntu-latest
-    needs:
-      - sequentialise
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
@@ -131,8 +73,6 @@ jobs:
 
   tee-build:
     runs-on: ubuntu-latest
-    needs:
-      - sequentialise
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
