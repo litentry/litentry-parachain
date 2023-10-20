@@ -16,9 +16,8 @@ cd /client-api
 pnpm install
 
 cd /client-api/parachain-api
-curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' http://litentry-node:9912
 
-# curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' http://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json
+curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' http://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
 
@@ -26,11 +25,9 @@ cd /
 ls
 cd ./bin
 ls
-./bin/litentry-cli print-sgx-metadata-raw > ./client-api/sidechain-api/prepare-build/litentry-sidechain-metadata.json
+./bin/litentry-cli print-sgx-metadata-raw
 
 echo "update sidechain metadata"
 
-git status
-git diff
 # pnpm run build
 
