@@ -6,7 +6,7 @@ set -euo pipefail
 
 function usage() {
     echo "Usage: $0 <Options>"
-    echo "publishing"
+    echo "updating metadata"
 }
 
 [ $# -ne 1 ] && (usage; exit 1)
@@ -14,6 +14,9 @@ TEST=$1
 
 cd /client-api
 pnpm install
-pnpm run build
+pnpm run update-metadata
+git status
+git diff
+# pnpm run build
 
-echo "building api package"
+echo "update metadata"
