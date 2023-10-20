@@ -159,7 +159,7 @@ pub(crate) fn get_pending_trusted_calls_for(
 	trusted_args: &TrustedCli,
 	who: &AccountId,
 ) -> Vec<TrustedOperation> {
-	let shard = read_shard(trusted_args).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
 	let direct_api = get_worker_api_direct(cli);
 	let rpc_method = "author_pendingTrustedCallsFor".to_owned();
 	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
