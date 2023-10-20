@@ -5,7 +5,6 @@ services:
         volumes:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
-            - ../bin:/bin
             - ../cli:/usr/local/worker-cli
         build:
             context: ..
