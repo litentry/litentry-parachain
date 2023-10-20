@@ -18,8 +18,11 @@ cd /client-api/parachain-api
 curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
+cd /
+ls
+
 cd /client-api/sidechain-api
-curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://litentry-worker-1:2011 > prepare-build/litentry-sidechain-metadata.json
+curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' https://litentry-worker-1:2011 > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
 
 git status
