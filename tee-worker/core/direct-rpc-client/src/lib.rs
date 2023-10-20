@@ -220,9 +220,10 @@ where
 			.map_err(|e| format!("Could not encrypt request, reason: {:?}", e))?;
 		// send request
 		let request = Request { shard: req.shard, cyphertext: encrypted_request };
+		// if it's broadcasted it's not going to be broadcasted again
 		let request = RpcRequest::compose_jsonrpc_call(
 			Id::Text(request_id),
-			"author_submitAndWatchExtrinsic".to_string(),
+			"author_submitAndWatchBroadcastedExtrinsic".to_string(),
 			vec![request.to_hex()],
 		)
 		.map_err(|e| format!("Could not compose RpcRequest, reason: {:?}", e))?;

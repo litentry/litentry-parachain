@@ -51,6 +51,6 @@ where
 
 	fn read_trusted_peers(&self) -> WorkerResult<Vec<Url>> {
 		let peer_urls = self.worker.read_peers_urls()?;
-		Ok(peer_urls.into_iter().map(|urls| urls.trusted).collect())
+		Ok(peer_urls.into_iter().filter(|urls| !urls.me).map(|urls| urls.trusted).collect())
 	}
 }

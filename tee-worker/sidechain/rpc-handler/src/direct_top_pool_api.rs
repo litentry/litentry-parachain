@@ -76,6 +76,31 @@ where
 		Ok(json!(json_value))
 	});
 
+	// author_submitAndWatchBroadcastedExtrinsic
+	let author_submit_and_watch_broadcasted_extrinsic_name: &str =
+		"author_submitAndWatchBroadcastedExtrinsic";
+	let watch_author = top_pool_author.clone();
+	io_handler.add_sync_method(
+		author_submit_and_watch_broadcasted_extrinsic_name,
+		move |params: Params| {
+			let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params) {
+				Ok(hash_value) => {
+					RpcReturnValue {
+						do_watch: true,
+						value: vec![],
+						status: DirectRequestStatus::TrustedOperationStatus(
+							TrustedOperationStatus::Submitted,
+							hash_value,
+						),
+					}
+				}
+				.to_hex(),
+				Err(error) => compute_hex_encoded_return_error(error.as_str()),
+			};
+			Ok(json!(json_value))
+		},
+	);
+
 	// author_submitExtrinsic
 	let author_submit_extrinsic_name: &str = "author_submitExtrinsic";
 	let submit_author = top_pool_author.clone();

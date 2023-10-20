@@ -45,11 +45,12 @@ pub type Url = String;
 pub struct PeerUrls {
 	pub trusted: Url,
 	pub untrusted: Url,
+	pub me: bool,
 }
 
 impl PeerUrls {
-	pub fn new(trusted: Url, untrusted: Url) -> Self {
-		PeerUrls { trusted, untrusted }
+	pub fn new(trusted: Url, untrusted: Url, me: bool) -> Self {
+		PeerUrls { trusted, untrusted, me }
 	}
 }
 
@@ -181,6 +182,7 @@ where
 	Enclave: EnclaveBase + itp_enclave_api::remote_attestation::TlsRemoteAttestation,
 {
 	fn search_peers(&self) -> WorkerResult<HashSet<PeerUrls>> {
+		let worker_url_external = self._config.trusted_worker_url_external();
 		let node_api = self
 			.node_api_factory
 			.create_api()
@@ -193,7 +195,12 @@ where
 			let worker_api_direct = DirectWorkerApi::new(worker_trusted_url.clone());
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
-					peer_urls.insert(PeerUrls::new(worker_trusted_url, untrusted_worker_url));
+					let is_me = worker_trusted_url == worker_url_external;
+					peer_urls.insert(PeerUrls::new(
+						worker_trusted_url,
+						untrusted_worker_url,
+						is_me,
+					));
 				},
 				Err(e) => {
 					warn!(
@@ -271,10 +278,12 @@ mod tests {
 		peer_urls.insert(PeerUrls {
 			untrusted: format!("ws://{}", W1_URL),
 			trusted: format!("ws://{}", W1_URL),
+			me: false,
 		});
 		peer_urls.insert(PeerUrls {
 			untrusted: format!("ws://{}", W2_URL),
 			trusted: format!("ws://{}", W2_URL),
+			me: false,
 		});
 
 		let worker = Worker::new(
