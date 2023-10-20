@@ -135,6 +135,10 @@ jobs:
         with:
           name: litentry-tee
 
+      - name: Install websocat
+        run: | 
+          sudo apt-get install websocat
+          
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz

@@ -3,10 +3,8 @@ services:
         image: litentry/litentry-cli:latest
         container_name: litentry-release-ts-api-package
         volumes:
-            - ../ts-tests:/ts-tests
             - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
-            - ../bin:/usr/local/worker-bin
         build:
             context: ..
             dockerfile: build.Dockerfile

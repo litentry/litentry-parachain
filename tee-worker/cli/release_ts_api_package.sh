@@ -10,6 +10,7 @@ function usage() {
 }
 
 [ $# -ne 1 ] && (usage; exit 1)
+whereis websocat
 
 cd /client-api
 pnpm install
