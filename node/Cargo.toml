@@ -142,3 +142,11 @@ try-runtime = [
 tee-dev = [
     "rococo-parachain-runtime/tee-dev",
 ]
+
+# bypasses wasm builds for cargo checks
+# for IDE only, DO NOT ENABLE ON RELEASE
+fast-check = [
+    "litentry-parachain-runtime/fast-check",
+    "litmus-parachain-runtime/fast-check",
+    "rococo-parachain-runtime/fast-check",
+]

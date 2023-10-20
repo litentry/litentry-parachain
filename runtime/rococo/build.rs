@@ -17,6 +17,9 @@
 use substrate_wasm_builder::WasmBuilder;
 
 fn main() {
+	if cfg!(feature = "fast-check") {
+		return
+	}
 	WasmBuilder::new()
 		.with_current_project()
 		.export_heap_base()

@@ -90,7 +90,11 @@ use pallet_evm::{
 };
 // Make the WASM binary available.
 #[cfg(feature = "std")]
+#[cfg(not(feature = "fast-check"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+
+#[cfg(feature = "fast-check")]
+pub const WASM_BINARY: Option<&[u8]> = None;
 
 pub mod asset_config;
 pub mod constants;

@@ -107,6 +107,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 
 [features]
 default = ["std"]
+fast-check = []
 fast-runtime = []
 runtime-benchmarks = [
     "cumulus-pallet-session-benchmarking/runtime-benchmarks",
