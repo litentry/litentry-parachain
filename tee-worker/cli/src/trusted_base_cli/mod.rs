@@ -21,6 +21,7 @@ use crate::{
 		get_storage::GetStorageCommand,
 		litentry::{
 			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
+			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 			user_shielding_key::UserShieldingKeyCommand,
@@ -38,6 +39,8 @@ use log::*;
 use sp_application_crypto::{ed25519, sr25519};
 use sp_core::{crypto::Ss58Codec, Pair};
 use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+
+use self::commands::litentry::id_graph::IDGraphCommand;
 
 mod commands;
 
@@ -83,6 +86,12 @@ pub enum TrustedBaseCommand {
 
 	/// Link the given identity to the prime identity, with specified networks
 	LinkIdentity(LinkIdentityCommand),
+
+	/// The IDGraph for the given identity
+	IDGraph(IDGraphCommand),
+
+	/// Request VC
+	RequestVc(RequestVcCommand),
 }
 
 impl TrustedBaseCommand {
@@ -102,6 +111,8 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }

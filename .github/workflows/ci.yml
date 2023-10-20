@@ -62,7 +62,7 @@ on:
         type: boolean
         description: push-docker
         required: true
-        default: fasle
+        default: false
 
 env:
   CARGO_TERM_COLOR: always

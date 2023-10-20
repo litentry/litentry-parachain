@@ -44,6 +44,7 @@ echo "ARGS: $ARGS"
 
 GITUSER=litentry
 GITREPO=litentry-parachain
+PROXY="${HTTP_PROXY//localhost/host.docker.internal}"
 
 # Build the image
 echo "------------------------------------------------------------"
@@ -51,6 +52,12 @@ echo "Building ${GITUSER}/${GITREPO}:${TAG} docker image ..."
 docker build ${NOCACHE_FLAG} --pull -f ./docker/Dockerfile \
     --build-arg PROFILE="$PROFILE" \
     --build-arg BUILD_ARGS="$ARGS" \
+    --build-arg HTTP_PROXY="$PROXY" \
+    --build-arg HTTPS_PROXY="$PROXY" \
+    --build-arg http_proxy="$PROXY" \
+    --build-arg https_proxy="$PROXY" \
+    --add-host=host.docker.internal:host-gateway \
+    --network host \
     -t ${GITUSER}/${GITREPO}:${TAG} .
 
 # Tag it with latest if no tag parameter was provided

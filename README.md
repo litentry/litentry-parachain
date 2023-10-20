@@ -161,6 +161,11 @@ SGX_MODE=SW make
 
 ## Launch
 
+Before executing `launch.py`, the following Python libraries need to be installed
+```
+pip install python-dotenv pycurl docker toml
+```
+
 ### 1. Start a local docker setup
 
 In order to create a local docker setup, you can run the following command
