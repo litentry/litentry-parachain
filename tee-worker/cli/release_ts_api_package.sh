@@ -14,7 +14,11 @@ TEST=$1
 
 cd /client-api
 pnpm install
-pnpm run update
+cd parachain-api
+curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json
+
+cd ../sidechain-api
+curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http:///litentry-worker-1:2011> prepare-build/litentry-sidechain-metadata.json
 git status
 git diff
 # pnpm run build
