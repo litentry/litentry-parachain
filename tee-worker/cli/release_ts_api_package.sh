@@ -14,7 +14,7 @@ TEST=$1
 
 cd /client-api
 pnpm install
-pnpm run update-metadata
+pnpm run update
 git status
 git diff
 # pnpm run build
