@@ -19,7 +19,7 @@ curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2
 echo "update parachain metadata"
 
 cd /client-api/sidechain-api
-curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http:///litentry-worker-1:2011> prepare-build/litentry-sidechain-metadata.json
+curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://litentry-worker-1:2011 > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
 
 git status
