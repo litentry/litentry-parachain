@@ -29,7 +29,7 @@ use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, TEERE
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::{BlockNumber, DirectRequestStatus, Request, TrustedOperationStatus};
+use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::ParentchainHash as Hash;
 use log::*;
@@ -44,7 +44,6 @@ use std::{
 use substrate_api_client::{
 	compose_extrinsic, GetHeader, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
-use teerex_primitives::Request as TeerexRequest;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -91,7 +90,7 @@ fn send_request(
 	let signer = get_pair_from_str(arg_signer);
 	chain_api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer)));
 
-	let request = TeerexRequest { shard, cyphertext: call_encrypted };
+	let request = RsaRequest::new(shard, call_encrypted);
 	let xt = compose_extrinsic!(&chain_api, TEEREX, "call_worker", request);
 
 	// send and watch extrinsic until block is executed
@@ -249,7 +248,7 @@ pub(crate) fn get_json_request(
 	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
 
 	// compose jsonrpc call
-	let request = Request::new(shard, operation_call_encrypted);
+	let request = RsaRequest::new(shard, operation_call_encrypted);
 	RpcRequest::compose_jsonrpc_call(
 		"author_submitAndWatchExtrinsic".to_string(),
 		vec![request.to_hex()],

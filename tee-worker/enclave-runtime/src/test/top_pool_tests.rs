@@ -59,7 +59,7 @@ use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
 use itp_types::{
-	parentchain::Address, AccountId, Block, Request, ShardIdentifier, ShieldFundsFn, H256,
+	parentchain::Address, AccountId, Block, RsaRequest, ShardIdentifier, ShieldFundsFn, H256,
 };
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
@@ -96,8 +96,10 @@ pub fn process_indirect_call_in_top_pool() {
 	let encrypted_indirect_call =
 		encrypted_indirect_call(ocall_api.as_ref(), &shard_id, &shielding_key);
 
-	executor::block_on(top_pool_author.submit_top(Request::new(shard_id, encrypted_indirect_call)))
-		.unwrap();
+	executor::block_on(
+		top_pool_author.submit_top(RsaRequest::new(shard_id, encrypted_indirect_call)),
+	)
+	.unwrap();
 
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
 }

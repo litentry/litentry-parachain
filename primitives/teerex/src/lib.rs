@@ -202,12 +202,20 @@ pub type Pcesvn = u16;
 pub type ShardIdentifier = H256;
 pub type SidechainBlockNumber = u64;
 
+// Litentry: use the name `RsaRequest` to differentiate from `AesRequest` in
+// `tee-worker/litentry/primitives/src/aes_request.rs` `Rsa` implies that the payload is
+// RSA-encrypted (using enclave's shielding key)
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
-pub struct Request {
+pub struct RsaRequest {
 	pub shard: ShardIdentifier,
-	pub cyphertext: Vec<u8>,
+	pub payload: Vec<u8>,
 }
 
+impl RsaRequest {
+	pub fn new(shard: ShardIdentifier, payload: Vec<u8>) -> Self {
+		Self { shard, payload }
+	}
+}
 #[cfg(test)]
 mod tests {
 	use super::*;

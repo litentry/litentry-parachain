@@ -40,7 +40,7 @@ use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	DirectRequestStatus, Index, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
+	DirectRequestStatus, Index, MrEnclave, RsaRequest, ShardIdentifier, SidechainBlockNumber, H256,
 };
 use itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
@@ -452,7 +452,7 @@ fn execute_getter_inner<G: ExecuteGetter>(
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
-	let request = Request::from_hex(param).map_err(|e| format!("{:?}", e))?;
+	let request = RsaRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let shard: ShardIdentifier = request.shard();
 	let encoded_trusted_getter: Vec<u8> = request.payload().to_vec();

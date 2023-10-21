@@ -207,7 +207,7 @@ mod tests {
 	use crate::test_fixtures::{create_indirect_trusted_operation, shard_id};
 	use codec::Encode;
 	use futures::executor::block_on;
-	use itp_types::Request;
+	use itp_types::RsaRequest;
 	use std::vec;
 
 	#[test]
@@ -216,8 +216,8 @@ mod tests {
 		let shard = shard_id();
 		let trusted_operation = create_indirect_trusted_operation();
 
-		let _ =
-			block_on(author.submit_top(Request::new(shard, trusted_operation.encode()))).unwrap();
+		let _ = block_on(author.submit_top(RsaRequest::new(shard, trusted_operation.encode())))
+			.unwrap();
 
 		assert_eq!(1, author.pending_tops(shard).unwrap().len());
 		assert_eq!(1, author.get_pending_trusted_calls(shard).len());

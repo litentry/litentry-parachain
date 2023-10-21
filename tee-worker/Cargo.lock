@@ -6755,7 +6755,6 @@ dependencies = [
  "sp-runtime",
  "substrate-api-client",
  "substrate-client-keystore",
- "teerex-primitives",
  "thiserror 1.0.44",
 ]
 

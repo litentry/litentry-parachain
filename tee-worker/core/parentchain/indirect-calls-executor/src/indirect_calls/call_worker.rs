@@ -17,11 +17,11 @@
 
 use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
-use itp_types::{DecryptableRequest, Request};
+use itp_types::{DecryptableRequest, RsaRequest};
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct CallWorkerArgs {
-	request: Request,
+	request: RsaRequest,
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CallWorkerArgs {

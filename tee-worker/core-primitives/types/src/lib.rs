@@ -48,7 +48,7 @@ pub type CallIndex = [u8; 2];
 // pallet teerex
 pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
 pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
-pub type CallWorkerFn = (CallIndex, Request);
+pub type CallWorkerFn = (CallIndex, RsaRequest);
 
 pub type UpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
 pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
@@ -90,19 +90,19 @@ impl Encode for OpaqueCall {
 	}
 }
 
-// Note in the pallet teerex this is a struct. But for the codec this does not matter.
+// Litentry: re-defined due to orphan rule - it needs to be kept identical to that in teerex-primitives
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, Debug)]
-pub struct Request {
+pub struct RsaRequest {
 	shard: ShardIdentifier,
-	cyphertext: Vec<u8>,
+	payload: Vec<u8>,
 }
 
-impl Request {
+impl RsaRequest {
 	pub fn new(shard: ShardIdentifier, payload: Vec<u8>) -> Self {
-		Request { shard, cyphertext: payload }
+		Self { shard, payload }
 	}
 }
-impl DecryptableRequest for Request {
+impl DecryptableRequest for RsaRequest {
 	type Error = ();
 
 	fn shard(&self) -> ShardIdentifier {
@@ -110,14 +110,14 @@ impl DecryptableRequest for Request {
 	}
 
 	fn payload(&self) -> &[u8] {
-		self.cyphertext.as_slice()
+		self.payload.as_slice()
 	}
 
 	fn decrypt<T: Debug>(
 		&mut self,
 		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
 	) -> core::result::Result<Vec<u8>, ()> {
-		enclave_shielding_key.decrypt(self.cyphertext.as_slice()).map_err(|_| ())
+		enclave_shielding_key.decrypt(self.payload.as_slice()).map_err(|_| ())
 	}
 }
 
