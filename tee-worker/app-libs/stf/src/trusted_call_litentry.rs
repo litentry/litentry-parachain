@@ -233,9 +233,16 @@ impl TrustedCallSigned {
 		match assertion {
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
 			Assertion::A13(_) => (),
-			_ => ensure!(
-				ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-				StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
+			_ => if_production_or!(
+				ensure!(
+					ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
+				),
+				ensure!(
+					ensure_enclave_signer_or_self(&signer, who.to_account_id())
+						|| ensure_alice(&signer),
+					StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner)
+				)
 			),
 		}
 

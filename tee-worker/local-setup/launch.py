@@ -205,13 +205,13 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
     # Litentry
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
-        os.environ['TMPDIR'] = parachain_dir
+        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
     elif parachain_type == "local-binary":
         # Export Parachain Directory as Global Variable
-        os.environ['TMPDIR'] = parachain_dir
+        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
     elif parachain_type == "remote":

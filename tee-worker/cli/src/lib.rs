@@ -57,9 +57,10 @@ pub(crate) const SR25519_KEY_TYPE: KeyTypeId = KeyTypeId(*b"sr25");
 pub(crate) const ED25519_KEY_TYPE: KeyTypeId = KeyTypeId(*b"ed25");
 
 #[derive(Parser)]
-#[clap(name = "integritee-cli")]
+#[clap(name = "litentry-cli")]
 #[clap(version = VERSION)]
-#[clap(author = "Integritee AG <hello@integritee.network>")]
+#[clap(author = "Trust Computing GmbH <info@litentry.com>, Integritee AG <hello@integritee.network>")]
+#[clap(about = "cli tool to interact with litentry-parachain and workers", long_about = None)]
 #[cfg_attr(feature = "teeracle", clap(about = "interact with integritee-node and teeracle", long_about = None))]
 #[cfg_attr(feature = "sidechain", clap(about = "interact with integritee-node and sidechain", long_about = None))]
 #[cfg_attr(feature = "offchain-worker", clap(about = "interact with integritee-node and offchain-worker", long_about = None))]
