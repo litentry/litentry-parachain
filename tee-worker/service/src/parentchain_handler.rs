@@ -215,7 +215,6 @@ where
 				.last()
 				.map(|b| b.block.header.clone())
 				.ok_or(Error::EmptyChunk)?;
-			start_block = until_synced_header.number + 1;
 			println!(
 				"[{:?}] Synced {} out of {} finalized parentchain blocks",
 				id, until_synced_header.number, curr_block_number,
@@ -225,6 +224,8 @@ where
 			until_synced_header =
 				Header::decode(&mut api_client_until_synced_header.encode().as_slice())
 					.expect("Can decode previously encoded header; qed");
+
+			start_block = until_synced_header.number + 1;
 		}
 	}
 
