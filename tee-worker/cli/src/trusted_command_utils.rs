@@ -40,7 +40,9 @@ use substrate_client_keystore::LocalKeystore;
 #[macro_export]
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
+		use ita_stf::TrustedGetter;
 		use $crate::trusted_command_utils::get_pending_trusted_calls_for;
+
 		let top: TrustedOperation = TrustedGetter::nonce($signer_pair.public().into())
 			.sign(&KeyPair::Sr25519(Box::new($signer_pair.clone())))
 			.into();

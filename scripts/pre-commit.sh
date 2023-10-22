@@ -53,7 +53,7 @@ cd "$root_dir/tee-worker/enclave-runtime" && worker_clippy
 
 echo "[Step 4], Worker cargo test"
 cd "$root_dir/tee-worker"
-RUST_LOG=info SKIP_WASM_BUILD=1 cargo test -- --show-output
+RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 
 echo "[Step 5], Service test"
 clean_up
