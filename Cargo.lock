@@ -1217,6 +1217,7 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
+ "litentry-macros",
  "parity-scale-codec",
  "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
  "scale-info",
@@ -5216,6 +5217,15 @@ dependencies = [
  "tokio",
  "try-runtime-cli",
  "xcm",
+]
+
+[[package]]
+name = "litentry-macros"
+version = "0.9.12"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
 ]
 
 [[package]]

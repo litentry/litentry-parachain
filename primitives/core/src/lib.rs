@@ -17,6 +17,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
 
+pub use litentry_macros::*;
+
 pub use constants::*;
 pub use opaque::*;
 pub use types::*;
