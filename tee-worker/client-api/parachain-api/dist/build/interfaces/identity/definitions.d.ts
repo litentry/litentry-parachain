@@ -151,9 +151,9 @@ declare const _default: {
         };
         BoundedWeb3Network: string;
         ShardIdentifier: string;
-        Request: {
+        RsaRequest: {
             shard: string;
-            cyphertext: string;
+            payload: string;
         };
         VCRequested: {
             account: string;

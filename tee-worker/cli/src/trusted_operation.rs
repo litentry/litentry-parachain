@@ -250,7 +250,7 @@ pub(crate) fn get_json_request(
 	// compose jsonrpc call
 	let request = RsaRequest::new(shard, operation_call_encrypted);
 	RpcRequest::compose_jsonrpc_call(
-		"author_submitAndWatchExtrinsic".to_string(),
+		"author_submitAndWatchRsaRequest".to_string(),
 		vec![request.to_hex()],
 	)
 	.unwrap()

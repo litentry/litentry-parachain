@@ -336,16 +336,16 @@ const createRequest = async (
     isGetter: boolean,
     top: Uint8Array
 ) => {
-    let cyphertext;
+    let payload;
     if (isGetter) {
-        cyphertext = compactAddLength(top);
+        payload = compactAddLength(top);
     } else {
-        cyphertext = compactAddLength(
+        payload = compactAddLength(
             bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top))
         );
     }
 
-    return parachainApi.createType("Request", { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
+    return parachainApi.createType("RsaRequest", { shard: hexToU8a(mrenclave), payload }).toU8a();
 };
 
 function decodeNonce(nonceInHex: string) {
@@ -515,7 +515,7 @@ export const sendRequestFromTrustedCall = async (
     );
     const request = {
         jsonrpc: "2.0",
-        method: "author_submitAndWatchExtrinsic",
+        method: "author_submitAndWatchRsRequest",
         params: [u8aToHex(requestParam)],
         id: 1,
     };

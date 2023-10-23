@@ -44,10 +44,10 @@ pub fn add_top_pool_direct_rpc_methods<R>(
 where
 	R: AuthorApi<Hash, Hash> + Send + Sync + 'static,
 {
-	// author_submitAndWatchExtrinsic
-	let author_submit_and_watch_extrinsic_name: &str = "author_submitAndWatchExtrinsic";
+	// author_submitAndWatchRsaRequest
+	let author_submit_and_watch_rsa_request_name: &str = "author_submitAndWatchRsaRequest";
 	let watch_author = top_pool_author.clone();
-	io_handler.add_sync_method(author_submit_and_watch_extrinsic_name, move |params: Params| {
+	io_handler.add_sync_method(author_submit_and_watch_rsa_request_name, move |params: Params| {
 		let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: true,
@@ -63,8 +63,8 @@ where
 		Ok(json!(json_value))
 	});
 
-	// author_submitExtrinsic
-	let author_submit_extrinsic_name: &str = "author_submitExtrinsic";
+	// author_submitRsaRequest
+	let author_submit_extrinsic_name: &str = "author_submitRsaRequest";
 	let submit_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
 		let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params) {
@@ -82,7 +82,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	// Litentry: a morphling of `author_submitAndWatchExtrinsic`
+	// Litentry: a morphling of `author_submitAndWatchRsaRequest`
 	// a different name is used to highlight the request type
 	let author_submit_and_watch_aes_request_name: &str = "author_submitAndWatchAesRequest";
 	let watch_author = top_pool_author.clone();

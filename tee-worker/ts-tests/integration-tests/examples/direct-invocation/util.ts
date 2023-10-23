@@ -313,7 +313,7 @@ export const sendRequestFromTrustedCall = async (
         trustedOperation.toU8a()
     );
     const request = createJsonRpcRequest(
-        'author_submitAndWatchExtrinsic',
+        'author_submitAndWatchRsaRequest',
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );
@@ -358,14 +358,14 @@ export const createRequest = async (
     isGetter: boolean,
     top: Uint8Array
 ) => {
-    let cyphertext;
+    let payload;
     if (isGetter) {
-        cyphertext = compactAddLength(top);
+        payload = compactAddLength(top);
     } else {
-        cyphertext = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
+        payload = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
     }
 
-    return parachainApi.createType('Request', { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
+    return parachainApi.createType('RsaRequest', { shard: hexToU8a(mrenclave), payload }).toU8a();
 };
 
 export function decodeNonce(nonceInHex: string) {

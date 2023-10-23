@@ -235,17 +235,17 @@ export interface PublicGetter extends Enum {
     readonly type: "SomeValue" | "Nonce";
 }
 
-/** @name Request */
-export interface Request extends Struct {
-    readonly shard: ShardIdentifier;
-    readonly cyphertext: Bytes;
-}
-
 /** @name RequestVCResult */
 export interface RequestVCResult extends Struct {
     readonly vc_index: H256;
     readonly vc_hash: H256;
     readonly vc_payload: AesOutput;
+}
+
+/** @name RsaRequest */
+export interface RsaRequest extends Struct {
+    readonly shard: ShardIdentifier;
+    readonly payload: Bytes;
 }
 
 /** @name SetUserShieldingKeyResult */

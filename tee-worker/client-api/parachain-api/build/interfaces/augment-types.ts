@@ -1230,8 +1230,8 @@ import type {
     LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
-    Request,
     RequestVCResult,
+    RsaRequest,
     SetUserShieldingKeyResult,
     ShardIdentifier,
     StfError,
@@ -2073,7 +2073,6 @@ declare module "@polkadot/types/types/registry" {
         ReportedRoundStates: ReportedRoundStates;
         Reporter: Reporter;
         ReportIdOf: ReportIdOf;
-        Request: Request;
         RequestVCResult: RequestVCResult;
         ReserveData: ReserveData;
         ReserveIdentifier: ReserveIdentifier;
@@ -2089,6 +2088,7 @@ declare module "@polkadot/types/types/registry" {
         RoundSnapshot: RoundSnapshot;
         RoundState: RoundState;
         RpcMethods: RpcMethods;
+        RsaRequest: RsaRequest;
         RuntimeApiMetadataLatest: RuntimeApiMetadataLatest;
         RuntimeApiMetadataV15: RuntimeApiMetadataV15;
         RuntimeApiMethodMetadataV15: RuntimeApiMethodMetadataV15;
