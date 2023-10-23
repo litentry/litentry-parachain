@@ -82,6 +82,7 @@ impl ArgsExecutor for LinkIdentityArgs {
 			validation_data,
 			web3networks,
 			self.nonce,
+			None,
 			hash,
 		))
 	}

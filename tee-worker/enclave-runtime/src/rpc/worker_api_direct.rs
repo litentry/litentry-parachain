@@ -445,6 +445,8 @@ where
 	io
 }
 
+// Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
+// in unencrypted, see P-183
 fn execute_getter_inner<G: ExecuteGetter>(
 	getter_executor: &G,
 	params: Params,

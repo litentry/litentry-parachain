@@ -122,11 +122,12 @@ pub enum TrustedCall {
 		ValidationData,
 		Vec<Web3Network>,
 		UserShieldingKeyNonceType,
+		Option<UserShieldingKeyType>,
 		H256,
 	),
 	deactivate_identity(Identity, Identity, Identity, H256),
 	activate_identity(Identity, Identity, Identity, H256),
-	request_vc(Identity, Identity, Assertion, H256),
+	request_vc(Identity, Identity, Assertion, Option<UserShieldingKeyType>, H256),
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
 	set_user_shielding_key_with_networks(
 		Identity,
@@ -138,8 +139,24 @@ pub enum TrustedCall {
 
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(Identity, Identity, Identity, Vec<Web3Network>, H256),
-	request_vc_callback(Identity, Identity, Assertion, H256, H256, Vec<u8>, H256),
+	link_identity_callback(
+		Identity,
+		Identity,
+		Identity,
+		Vec<Web3Network>,
+		Option<UserShieldingKeyType>,
+		H256,
+	),
+	request_vc_callback(
+		Identity,
+		Identity,
+		Assertion,
+		H256,
+		H256,
+		Vec<u8>,
+		Option<UserShieldingKeyType>,
+		H256,
+	),
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
 	send_erroneous_parentchain_call(Identity),
@@ -536,6 +553,7 @@ where
 				validation_data,
 				web3networks,
 				nonce,
+				maybe_key,
 				hash,
 			) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
@@ -543,6 +561,7 @@ where
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 				);
 				let verification_done = Self::link_identity_internal(
+					shard,
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					identity.clone(),
@@ -550,8 +569,8 @@ where
 					web3networks.clone(),
 					nonce,
 					top_hash,
+					maybe_key,
 					hash,
-					shard,
 				)
 				.map_err(|e| {
 					add_call_from_imp_error(
@@ -572,6 +591,7 @@ where
 						who,
 						identity,
 						web3networks,
+						maybe_key,
 						hash,
 					)
 				} else {
@@ -646,17 +666,24 @@ where
 				)));
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) =>
-				Self::handle_link_identity_callback(
-					calls,
-					node_metadata_repo,
-					signer,
-					who,
-					identity,
-					web3networks,
-					hash,
-				),
-			TrustedCall::request_vc(signer, who, assertion, hash) => {
+			TrustedCall::link_identity_callback(
+				signer,
+				who,
+				identity,
+				web3networks,
+				maybe_key,
+				hash,
+			) => Self::handle_link_identity_callback(
+				calls,
+				node_metadata_repo,
+				signer,
+				who,
+				identity,
+				web3networks,
+				maybe_key,
+				hash,
+			),
+			TrustedCall::request_vc(signer, who, assertion, maybe_key, hash) => {
 				debug!(
 					"request_vc, who: {}, assertion: {:?}",
 					account_id_to_string(&who),
@@ -672,6 +699,7 @@ where
 					assertion,
 					top_hash,
 					hash,
+					maybe_key,
 					shard,
 				)
 				.map_err(|e| {
@@ -694,6 +722,7 @@ where
 				vc_index,
 				vc_hash,
 				vc_payload,
+				_maybe_key, // TODO: will be used when user shielding key is removed (P-174)
 				hash,
 			) => {
 				debug!(
