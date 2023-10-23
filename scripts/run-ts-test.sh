@@ -21,7 +21,7 @@ fi
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR/ts-tests"
 
-LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:?}
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 [ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
 
 [ -f .env ] || echo "NODE_ENV=ci" >.env
