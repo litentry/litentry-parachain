@@ -263,7 +263,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy teeracle"
           cargo clean --profile release
-          cargo clippy --features teeracle -- -D warnings
+          cargo clippy --release --features teeracle -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
@@ -295,7 +295,7 @@ jobs:
           echo "::endgroup::"
           echo "::group::cargo clippy teeracle"
           cargo clean --profile release
-          cargo clippy --features teeracle -- -D warnings
+          cargo clippy --release --features teeracle -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
           cargo clean --profile release
