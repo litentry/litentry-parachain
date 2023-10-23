@@ -70,6 +70,7 @@ env:
   # the branch or tag on which this workflow is triggered
   # `head_ref` will only be set if the triggering event is `pull_request`
   REF_VERSION: ${{ github.head_ref || github.ref_name }}
+  LITENTRY_PARACHAIN_DIR: /tmp/litentry
 
 concurrency:
   # see https://stackoverflow.com/questions/74117321/if-condition-in-concurrency-in-gha
