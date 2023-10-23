@@ -45,7 +45,7 @@ pub struct EvmCreateCommands {
 
 impl EvmCreateCommands {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
-		let from = get_pair_from_str(trusted_args, &self.from);
+		let from = get_pair_from_str(trusted_args, &self.from, cli);
 		let from_acc: AccountId = from.public().into();
 		println!("from ss58 is {}", from.public().to_ss58check());
 
