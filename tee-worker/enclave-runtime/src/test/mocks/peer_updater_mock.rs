@@ -4,5 +4,5 @@ use sgx_tstd::{string::String, vec::Vec};
 pub struct PeerUpdaterMock {}
 
 impl PeerUpdater for PeerUpdaterMock {
-	fn update(&self, peers: Vec<String>) {}
+	fn update(&self, _peers: Vec<String>) {}
 }

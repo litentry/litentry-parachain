@@ -35,7 +35,6 @@ use itc_direct_rpc_server::{
 	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry,
 	SendRpcResponse,
 };
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt};
 use itp_stf_primitives::types::Hash;
 use itp_types::{DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -51,24 +50,15 @@ pub trait PeerUpdater {
 	fn update(&self, peers: Vec<String>);
 }
 
-pub struct DirectRpcBroadcaster<ShieldingKeyRepository>
-where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
-{
-	peers: Mutex<HashMap<String, DirectRpcClient<ShieldingKeyRepository>>>,
-	shielding_key_repository: Arc<ShieldingKeyRepository>,
+pub struct DirectRpcBroadcaster {
+	peers: Mutex<HashMap<String, DirectRpcClient>>,
 }
 
-impl<ShieldingKeyRepository> DirectRpcBroadcaster<ShieldingKeyRepository>
-where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
-{
-	pub fn new(peers: &[&str], key_repository: Arc<ShieldingKeyRepository>) -> Self {
+impl DirectRpcBroadcaster {
+	pub fn new(peers: &[&str]) -> Self {
 		let mut peers_map = HashMap::new();
 		for peer in peers {
-			match DirectRpcClient::new(peer, key_repository.clone()) {
+			match DirectRpcClient::new(peer) {
 				Ok(client) => {
 					peers_map.insert(peer.to_string(), client);
 				},
@@ -76,10 +66,7 @@ where
 			}
 		}
 
-		DirectRpcBroadcaster {
-			peers: Mutex::new(peers_map),
-			shielding_key_repository: key_repository,
-		}
+		DirectRpcBroadcaster { peers: Mutex::new(peers_map) }
 	}
 
 	pub fn broadcast<Hash: ToHexPrefixed>(&self, hash: Hash, params: Vec<String>) {
@@ -128,23 +115,17 @@ where
 }
 
 #[allow(clippy::type_complexity)]
-pub fn init<ShieldingKeyRepository, Registry, ResponseChannelType>(
-	shielding_key_repository: Arc<ShieldingKeyRepository>,
+pub fn init<Registry, ResponseChannelType>(
 	rpc_responder: Arc<RpcResponder<Registry, Hash, ResponseChannelType>>,
-) -> (
-	std::sync::mpsc::SyncSender<(Hash, Vec<String>)>,
-	Arc<DirectRpcBroadcaster<ShieldingKeyRepository>>,
-)
+) -> (std::sync::mpsc::SyncSender<(Hash, Vec<String>)>, Arc<DirectRpcBroadcaster>)
 where
-	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
 	Registry: RpcConnectionRegistry<Hash = Hash> + 'static,
 	ResponseChannelType: ResponseChannel<Registry::Connection> + 'static,
 {
 	let (sender, receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
 
 	let peers = vec![];
-	let rpc_broadcaster = Arc::new(DirectRpcBroadcaster::new(&peers, shielding_key_repository));
+	let rpc_broadcaster = Arc::new(DirectRpcBroadcaster::new(&peers));
 	let cloned_rpc_broadcaster = rpc_broadcaster.clone();
 	let return_rpc_broadcaster = rpc_broadcaster.clone();
 
@@ -198,18 +179,14 @@ where
 	(sender, return_rpc_broadcaster)
 }
 
-impl<ShieldingKeyRepository> PeerUpdater for DirectRpcBroadcaster<ShieldingKeyRepository>
-where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
-{
+impl PeerUpdater for DirectRpcBroadcaster {
 	fn update(&self, peers: Vec<String>) {
-		log::info!("updating peers: {:?}", &peers);
+		log::debug!("Updating peers: {:?}", &peers);
 		for peer in peers {
 			if let Ok(mut peers) = self.peers.lock() {
 				if !peers.contains_key(&peer) {
-					log::info!("i'm about to add a peer: {}", peer.clone());
-					match DirectRpcClient::new(&peer, self.shielding_key_repository.clone()) {
+					log::info!("Adding a peer: {}", peer.clone());
+					match DirectRpcClient::new(&peer) {
 						Ok(client) => {
 							peers.insert(peer.to_string(), client);
 						},

@@ -165,7 +165,7 @@ pub(crate) fn init_enclave(
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
 
-	let (sender, broadcaster) = init(shielding_key_repository.clone(), rpc_responder);
+	let (sender, broadcaster) = init(rpc_responder);
 
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 

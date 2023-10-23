@@ -5,7 +5,6 @@ members = [
     "app-libs/sgx-runtime",
     "app-libs/stf",
     "cli",
-    "core/crypto-helper",
     "core/direct-rpc-client",
     "core/direct-rpc-server",
     "core/peer-top-broadcaster",

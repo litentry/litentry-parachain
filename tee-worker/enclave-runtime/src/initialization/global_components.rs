@@ -184,7 +184,7 @@ pub type EnclaveTopPoolAuthor = Author<
 	EnclaveShieldingKeyRepository,
 	EnclaveOCallApi,
 >;
-pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster<EnclaveShieldingKeyRepository>;
+pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster;
 pub type EnclaveSidechainBlockComposer =
 	BlockComposer<ParentchainBlock, SignedSidechainBlock, Pair, EnclaveStateKeyRepository>;
 pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<

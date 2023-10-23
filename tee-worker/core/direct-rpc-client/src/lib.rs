@@ -37,18 +37,17 @@ use crate::sgx_reexport_prelude::*;
 extern crate alloc;
 
 use alloc::format;
-use codec::Decode;
+
 use core::str::FromStr;
+use log::debug;
 
 use serde_json::from_str;
 
-use itc_crypto_helper::from_str_json;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
-use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_types::{DirectRequestStatus, Request};
+
+use itp_types::Request;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 
-use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{
 	boxed::Box,
 	error::Error,
@@ -63,9 +62,9 @@ use tungstenite::{client_tls_with_config, stream::MaybeTlsStream, Connector, Mes
 use url::Url;
 use webpki::{DNSName, DNSNameRef};
 
-pub struct NoCertVerifier {}
+pub struct IgnoreCertVerifier {}
 
-impl rustls::ServerCertVerifier for NoCertVerifier {
+impl rustls::ServerCertVerifier for IgnoreCertVerifier {
 	fn verify_server_cert(
 		&self,
 		_: &rustls::RootCertStore,
@@ -78,7 +77,7 @@ impl rustls::ServerCertVerifier for NoCertVerifier {
 	}
 }
 
-impl rustls::ClientCertVerifier for NoCertVerifier {
+impl rustls::ClientCertVerifier for IgnoreCertVerifier {
 	fn client_auth_root_subjects(
 		&self,
 		_sni: Option<&DNSName>,
@@ -95,29 +94,16 @@ impl rustls::ClientCertVerifier for NoCertVerifier {
 	}
 }
 
-pub struct DirectRpcClient<ShieldingKeyRepository>
-where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
-{
+pub struct DirectRpcClient {
 	ws: WebSocket<MaybeTlsStream<TcpStream>>,
-	shielding_key_repo: Arc<ShieldingKeyRepository>,
-	peer_shielding_key: Rsa3072PubKey,
 }
 
-impl<ShieldingKeyRepository> DirectRpcClient<ShieldingKeyRepository>
-where
-	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
-{
-	pub fn new(
-		url: &str,
-		encryption_key: Arc<ShieldingKeyRepository>,
-	) -> Result<Self, Box<dyn Error>> {
+impl DirectRpcClient {
+	pub fn new(url: &str) -> Result<Self, Box<dyn Error>> {
 		let ws_server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
-		config.dangerous().set_certificate_verifier(Arc::new(NoCertVerifier {}));
+		config.dangerous().set_certificate_verifier(Arc::new(IgnoreCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
 		let addrs = ws_server_url.socket_addrs(|| None).unwrap();
 		let stream = TcpStream::connect(&*addrs)
@@ -127,49 +113,11 @@ where
 			client_tls_with_config(ws_server_url, stream, None, Some(connector))
 				.map_err(|e| format!("Could not open websocket connection: {:?}", e))?;
 
-		let shielding_pubkey = Self::read_peer_shielding_key(&mut socket)?;
 		//it fails to perform handshake in non_blocking mode so we are setting it up after the handshake is performed
 		Self::switch_to_non_blocking(&mut socket);
-		Ok(Self {
-			ws: socket,
-			shielding_key_repo: encryption_key,
-			peer_shielding_key: shielding_pubkey,
-		})
-	}
 
-	fn read_peer_shielding_key(
-		socket: &mut WebSocket<MaybeTlsStream<TcpStream>>,
-	) -> Result<Rsa3072PubKey, Box<dyn Error>> {
-		let get_sheilding_key_req: String = RpcRequest::compose_jsonrpc_call(
-			Id::Text("1".to_string()),
-			"author_getShieldingKey".to_string(),
-			Default::default(),
-		)
-		.map_err(|e| format!("Could not compose rpc call, reason: {:?}", e))?;
-
-		socket
-			.write_message(Message::Text(get_sheilding_key_req))
-			.map_err(|e| format!("Could not send get shielding key request, reason: {:?}", e))?;
-		let response_str = socket
-			.read_message()
-			.map_err(|e| format!("Could not read get shielding key response, reason: {:?}", e))?
-			.to_string();
-		let rpc_response: RpcResponse = from_str(&response_str)
-			.map_err(|e| format!("Failed to deserialize response, reason: {:?}", e))?;
-		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result)
-			.map_err(|e| format!("Failed to deserialize RpcReturnValue, reason: {:?}", e))?;
-		match rpc_return_value.status {
-			DirectRequestStatus::Ok => {
-				let value =
-					String::decode(&mut rpc_return_value.value.as_slice()).map_err(|e| {
-						format!("Failed to deserialize RpcReturnValue.value, reason: {:?}", e)
-					})?;
-				let shielding_pubkey: Rsa3072PubKey = from_str_json(&value)
-					.map_err(|e| format!("Could not deserialize shielding key, reason: {:?}", e))?;
-				Ok(shielding_pubkey)
-			},
-			_ => Err("Could not get shielding key".into()),
-		}
+		debug!("Connected to peer: {}", url);
+		Ok(Self { ws: socket })
 	}
 
 	fn switch_to_non_blocking(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
@@ -205,21 +153,7 @@ where
 	) -> Result<String, Box<dyn Error>> {
 		let req = Request::from_hex(&parsed_params[0].clone())
 			.map_err(|e| format!("Could not create request, reason: {:?}", e))?;
-		// decrypt call
-		let shielding_key = self
-			.shielding_key_repo
-			.retrieve_key()
-			.map_err(|e| format!("Could not get shielding key, reason: {:?}", e))?;
-		let request_vec = shielding_key
-			.decrypt(req.cyphertext.as_slice())
-			.map_err(|e| format!("Could not decrypt request, reason: {:?}", e))?;
-		// encrypt with peer shielding key
-		let encrypted_request = self
-			.peer_shielding_key
-			.encrypt(&request_vec)
-			.map_err(|e| format!("Could not encrypt request, reason: {:?}", e))?;
-		// send request
-		let request = Request { shard: req.shard, cyphertext: encrypted_request };
+		let request = Request { shard: req.shard, cyphertext: req.cyphertext };
 		// if it's broadcasted it's not going to be broadcasted again
 		let request = RpcRequest::compose_jsonrpc_call(
 			Id::Text(request_id),
