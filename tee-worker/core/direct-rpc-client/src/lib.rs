@@ -94,6 +94,27 @@ impl rustls::ClientCertVerifier for IgnoreCertVerifier {
 	}
 }
 
+pub trait RpcClientFactory {
+	type RpcClient: RpcClient;
+	fn create(&self, url: &str) -> Result<Self::RpcClient, Box<dyn Error>>;
+}
+
+pub struct DirectRpcClientFactory {}
+
+impl RpcClientFactory for DirectRpcClientFactory {
+	type RpcClient = DirectRpcClient;
+
+	fn create(&self, url: &str) -> Result<Self::RpcClient, Box<dyn Error>> {
+		DirectRpcClient::new(url)
+	}
+}
+
+pub trait RpcClient {
+	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>>;
+	#[allow(clippy::type_complexity)]
+	fn read_response(&mut self) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>>;
+}
+
 pub struct DirectRpcClient {
 	ws: WebSocket<MaybeTlsStream<TcpStream>>,
 }
@@ -139,13 +160,6 @@ impl DirectRpcClient {
 		}
 	}
 
-	pub fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>> {
-		let request = self.prepare_request(request_id, params)?;
-		self.ws
-			.write_message(Message::Text(request))
-			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
-	}
-
 	fn prepare_request(
 		&mut self,
 		request_id: String,
@@ -165,31 +179,19 @@ impl DirectRpcClient {
 	}
 
 	#[allow(clippy::type_complexity)]
-	pub fn read_response<T: FromHexPrefixed>(
-		&mut self,
-	) -> Result<Option<(T::Output, RpcReturnValue)>, Box<dyn Error>> {
-		if let Ok(message) = self.ws.read_message() {
-			Self::handle_ws_message::<T>(message)
-		} else {
-			Ok(None)
-		}
-	}
-
-	fn handle_ws_message<T: FromHexPrefixed>(message: Message) -> Result<Option<(T::Output, RpcReturnValue)>, Box<dyn Error>> {
+	fn handle_ws_message(message: Message) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>> {
 		match message {
 			Message::Text(text) => {
-				let rpc_response: RpcResponse = from_str(&text).map_err(|e| {
-					format!("Could not deserialize RpcResponse, reason: {:?}", e)
-				})?;
+				let rpc_response: RpcResponse = from_str(&text)
+					.map_err(|e| format!("Could not deserialize RpcResponse, reason: {:?}", e))?;
 				let id = match rpc_response.id {
-					Id::Text(id) => T::from_hex(&id)
-						.map_err(|e| format!("Could parse Id, reason: {:?}", e))?,
+					Id::Text(id) =>
+						Id::from_hex(&id).map_err(|e| format!("Could parse Id, reason: {:?}", e))?,
 					Id::Number(_id) => panic!("Id in number format are not supported"),
 				};
 				let return_value: RpcReturnValue =
-					RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| {
-						format!("Could not deserialize value , reason: {:?}", e)
-					})?;
+					RpcReturnValue::from_hex(&rpc_response.result)
+						.map_err(|e| format!("Could not deserialize value , reason: {:?}", e))?;
 				Ok(Some((id, return_value)))
 			},
 			_ => {
@@ -200,31 +202,55 @@ impl DirectRpcClient {
 	}
 }
 
+impl RpcClient for DirectRpcClient {
+	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>> {
+		let request = self.prepare_request(request_id, params)?;
+		self.ws
+			.write_message(Message::Text(request))
+			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
+	}
+
+	#[allow(clippy::type_complexity)]
+	fn read_response(&mut self) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>> {
+		if let Ok(message) = self.ws.read_message() {
+			Self::handle_ws_message(message)
+		} else {
+			Ok(None)
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
-	use codec::Encode;
-	use tungstenite::Message;
-	use itp_rpc::{Id, RpcResponse, RpcReturnValue};
-	use itp_types::{DirectRequestStatus, H256, TrustedOperationStatus};
-	use itp_utils::ToHexPrefixed;
 	use crate::DirectRpcClient;
+	use codec::Encode;
+	use itp_rpc::{Id, RpcResponse, RpcReturnValue};
+	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
+	use itp_utils::ToHexPrefixed;
+	use tungstenite::Message;
 
 	#[test]
 	fn test_response_handling() {
 		let id = "0x0000000000000000000000000000000000000000000000000000000000000000".to_owned();
-		let return_value: RpcReturnValue = RpcReturnValue::new(vec![], false, DirectRequestStatus::TrustedOperationStatus(TrustedOperationStatus::TopExecuted(vec![]), H256::random()));
+		let return_value: RpcReturnValue = RpcReturnValue::new(
+			vec![],
+			false,
+			DirectRequestStatus::TrustedOperationStatus(
+				TrustedOperationStatus::TopExecuted(vec![]),
+				H256::random(),
+			),
+		);
 		let rpc_response: RpcResponse = RpcResponse {
 			jsonrpc: "2.0".to_owned(),
 			result: return_value.to_hex(),
-			id: Id::Text(id.clone())
+			id: Id::Text(id.clone()),
 		};
 		let serialized_rpc_response = serde_json::to_string(&rpc_response).unwrap();
 		let message = Message::text(serialized_rpc_response);
 
-		let (result_id, result) = DirectRpcClient::handle_ws_message::<Id>(message).unwrap().unwrap();
+		let (result_id, result) = DirectRpcClient::handle_ws_message(message).unwrap().unwrap();
 
 		assert_eq!("0", serde_json::to_string(&result_id).unwrap());
 		assert_eq!(return_value.encode(), result.encode());
 	}
-
 }

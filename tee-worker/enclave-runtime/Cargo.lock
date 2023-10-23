@@ -743,6 +743,7 @@ dependencies = [
  "ita-oracle",
  "ita-sgx-runtime",
  "ita-stf",
+ "itc-direct-rpc-client",
  "itc-direct-rpc-server",
  "itc-offchain-worker-executor",
  "itc-parentchain",
@@ -1820,6 +1821,7 @@ version = "0.1.0"
 dependencies = [
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
+ "itp-rpc",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "itp-types",

@@ -20,6 +20,7 @@
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 extern crate alloc;
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -30,14 +31,15 @@ use std::sync::SgxMutex as Mutex;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use itc_direct_rpc_client::DirectRpcClient;
+use itc_direct_rpc_client::{DirectRpcClientFactory, RpcClient, RpcClientFactory};
 use itc_direct_rpc_server::{
-	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry,
+	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry, RpcHash,
 	SendRpcResponse,
 };
+use itp_rpc::Id;
 use itp_stf_primitives::types::Hash;
 use itp_types::{DirectRequestStatus, TrustedOperationStatus};
-use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use itp_utils::ToHexPrefixed;
 use std::{
 	collections::HashMap,
 	string::{String, ToString},
@@ -50,15 +52,22 @@ pub trait PeerUpdater {
 	fn update(&self, peers: Vec<String>);
 }
 
-pub struct DirectRpcBroadcaster {
-	peers: Mutex<HashMap<String, DirectRpcClient>>,
+pub struct DirectRpcBroadcaster<ClientFactory>
+where
+	ClientFactory: RpcClientFactory,
+{
+	peers: Mutex<HashMap<String, ClientFactory::RpcClient>>,
+	factory: ClientFactory,
 }
 
-impl DirectRpcBroadcaster {
-	pub fn new(peers: &[&str]) -> Self {
+impl<ClientFactory> DirectRpcBroadcaster<ClientFactory>
+where
+	ClientFactory: RpcClientFactory,
+{
+	pub fn new(peers: &[&str], client_factory: ClientFactory) -> Self {
 		let mut peers_map = HashMap::new();
 		for peer in peers {
-			match DirectRpcClient::new(peer) {
+			match client_factory.create(peer) {
 				Ok(client) => {
 					peers_map.insert(peer.to_string(), client);
 				},
@@ -66,7 +75,7 @@ impl DirectRpcBroadcaster {
 			}
 		}
 
-		DirectRpcBroadcaster { peers: Mutex::new(peers_map) }
+		DirectRpcBroadcaster { peers: Mutex::new(peers_map), factory: client_factory }
 	}
 
 	pub fn broadcast<Hash: ToHexPrefixed>(&self, hash: Hash, params: Vec<String>) {
@@ -79,14 +88,12 @@ impl DirectRpcBroadcaster {
 		}
 	}
 
-	pub fn collect_responses<T: FromHexPrefixed>(
-		&self,
-	) -> Vec<(T::Output, TrustedOperationStatus, bool)> {
+	pub fn collect_responses(&self) -> Vec<(Id, TrustedOperationStatus, bool)> {
 		if let Ok(mut peers) = self.peers.lock() {
 			peers
 				.values_mut()
 				.flat_map(|peer| {
-					if let Ok(response) = peer.read_response::<T>() {
+					if let Ok(response) = peer.read_response() {
 						if let Some(response) = response {
 							match response.1.status {
 								DirectRequestStatus::TrustedOperationStatus(status, _) =>
@@ -117,7 +124,10 @@ impl DirectRpcBroadcaster {
 #[allow(clippy::type_complexity)]
 pub fn init<Registry, ResponseChannelType>(
 	rpc_responder: Arc<RpcResponder<Registry, Hash, ResponseChannelType>>,
-) -> (std::sync::mpsc::SyncSender<(Hash, Vec<String>)>, Arc<DirectRpcBroadcaster>)
+) -> (
+	std::sync::mpsc::SyncSender<(Hash, Vec<String>)>,
+	Arc<DirectRpcBroadcaster<DirectRpcClientFactory>>,
+)
 where
 	Registry: RpcConnectionRegistry<Hash = Hash> + 'static,
 	ResponseChannelType: ResponseChannel<Registry::Connection> + 'static,
@@ -125,7 +135,10 @@ where
 	let (sender, receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
 
 	let peers = vec![];
-	let rpc_broadcaster = Arc::new(DirectRpcBroadcaster::new(&peers));
+
+	let client_factory = DirectRpcClientFactory {};
+
+	let rpc_broadcaster = Arc::new(DirectRpcBroadcaster::new(&peers, client_factory));
 	let cloned_rpc_broadcaster = rpc_broadcaster.clone();
 	let return_rpc_broadcaster = rpc_broadcaster.clone();
 
@@ -137,39 +150,33 @@ where
 
 	std::thread::spawn(move || {
 		loop {
-			let responses = cloned_rpc_broadcaster.collect_responses::<Hash>();
+			let responses = cloned_rpc_broadcaster.collect_responses();
 			for response in responses {
+				//we need to map Id to hash in order to correlate it with connection
+				let hash = match response.0 {
+					Id::Text(id) => id.maybe_h256().unwrap(),
+					Id::Number(id) => id.maybe_h256().unwrap(),
+				};
 				match response.1 {
 					// this will come from every peer so do not flood the client
 					TrustedOperationStatus::Submitted => {},
 					// this needs to come before block is imported, otherwise it's going to be ignored because TOP will be removed from the pool after block import
 					TrustedOperationStatus::TopExecuted(ref value) => {
-						match rpc_responder.update_connection_state(
-							response.0,
-							value.clone(),
-							response.2,
-						) {
+						match rpc_responder.update_connection_state(hash, value.clone(), response.2)
+						{
 							Ok(_) => {},
-							Err(e) => log::error!(
-								"Could not set connection {}, reason: {:?}",
-								response.0,
-								e
-							),
+							Err(e) =>
+								log::error!("Could not set connection {}, reason: {:?}", hash, e),
 						};
-						if let Err(_e) = rpc_responder.update_status_event(response.0, response.1) {
-						};
+						if let Err(_e) = rpc_responder.update_status_event(hash, response.1) {};
 					},
 					_ => {
-						match rpc_responder.update_force_wait(response.0, response.2) {
+						match rpc_responder.update_force_wait(hash, response.2) {
 							Ok(_) => {},
-							Err(e) => log::error!(
-								"Could not set connection {}, reason: {:?}",
-								response.0,
-								e
-							),
+							Err(e) =>
+								log::error!("Could not set connection {}, reason: {:?}", hash, e),
 						};
-						if let Err(_e) = rpc_responder.update_status_event(response.0, response.1) {
-						};
+						if let Err(_e) = rpc_responder.update_status_event(hash, response.1) {};
 					},
 				}
 			}
@@ -179,14 +186,17 @@ where
 	(sender, return_rpc_broadcaster)
 }
 
-impl PeerUpdater for DirectRpcBroadcaster {
+impl<ClientFactory> PeerUpdater for DirectRpcBroadcaster<ClientFactory>
+where
+	ClientFactory: RpcClientFactory,
+{
 	fn update(&self, peers: Vec<String>) {
 		log::debug!("Updating peers: {:?}", &peers);
 		for peer in peers {
 			if let Ok(mut peers) = self.peers.lock() {
 				if !peers.contains_key(&peer) {
 					log::info!("Adding a peer: {}", peer.clone());
-					match DirectRpcClient::new(&peer) {
+					match self.factory.create(&peer) {
 						Ok(client) => {
 							peers.insert(peer.to_string(), client);
 						},
@@ -197,4 +207,243 @@ impl PeerUpdater for DirectRpcBroadcaster {
 			}
 		}
 	}
+}
+
+#[cfg(test)]
+pub mod tests {
+	use crate::{DirectRpcBroadcaster, PeerUpdater};
+	use codec::Encode;
+	use itc_direct_rpc_client::{RpcClient, RpcClientFactory};
+	use itp_rpc::{Id, RpcReturnValue};
+	use itp_stf_primitives::types::Hash;
+	use itp_types::{
+		DirectRequestStatus,
+		TrustedOperationStatus, H256,
+	};
+	use std::error::Error;
+
+	#[derive(Default)]
+	pub struct MockedRpcClient {
+		pub sent_requests: u64,
+		pub response: Option<(Id, RpcReturnValue)>,
+	}
+
+	impl RpcClient for MockedRpcClient {
+		fn send(&mut self, _request_id: String, _params: Vec<String>) -> Result<(), Box<dyn Error>> {
+			self.sent_requests = self.sent_requests + 1;
+			Ok(())
+		}
+
+		fn read_response(
+			&mut self,
+		) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>> {
+			Ok(self.response.take())
+		}
+	}
+
+	impl MockedRpcClient {
+		pub fn set_response(&mut self, response: (Id, RpcReturnValue)) {
+			self.response = Some(response)
+		}
+	}
+
+	pub struct MockedRpcClientFactory {}
+
+	impl RpcClientFactory for MockedRpcClientFactory {
+		type RpcClient = MockedRpcClient;
+
+		fn create(&self, _url: &str) -> Result<Self::RpcClient, Box<dyn Error>> {
+			Ok(MockedRpcClient::default())
+		}
+	}
+
+	#[test]
+	pub fn creates_initial_peers() {
+		//given
+		let factory = MockedRpcClientFactory {};
+
+		//when
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec!["localhost"], factory);
+
+		//then
+		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
+	}
+
+	#[test]
+	pub fn update_creates_new_peer_if_not_exists() {
+		//given
+		let factory = MockedRpcClientFactory {};
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec!["localhost"], factory);
+		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
+
+		//when
+		broadcaster.update(vec!["127.0.0.1".to_string()]);
+
+		//then
+		assert_eq!(broadcaster.peers.lock().unwrap().len(), 2);
+	}
+
+	#[test]
+	pub fn update_doesnt_create_new_peer_if_exists() {
+		//given
+		let factory = MockedRpcClientFactory {};
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec!["localhost"], factory);
+		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
+
+		//when
+		broadcaster.update(vec!["localhost".to_string()]);
+
+		//then
+		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
+	}
+
+	#[test]
+	pub fn broadcast_sends_to_all_peers() {
+		//given
+		let factory = MockedRpcClientFactory {};
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec!["localhost", "localhost2"], factory);
+
+		//when
+		broadcaster.broadcast(Hash::random(), vec![]);
+		broadcaster.broadcast(Hash::random(), vec![]);
+
+		//then
+		let peers = broadcaster.peers.lock().unwrap();
+		for peer in peers.iter() {
+			assert_eq!(peer.1.sent_requests, 2u64)
+		}
+	}
+
+	#[test]
+	pub fn collect_responses_from_all_peers() {
+		// given
+		let factory = MockedRpcClientFactory {};
+		let local_host = "localhost";
+		let another_host = "anotherhost";
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec![local_host, another_host], factory);
+		let resp_1_id = "0x0000000000000000000000000000000000000000000000000000000000000001";
+		let resp_2_id = "0x0000000000000000000000000000000000000000000000000000000000000002";
+		let block_hash = H256::random();
+		let resp_2_top_hash = H256::random();
+
+		//wrapped in the inner scope in order to release the lock before `collect_responses` is called
+		{
+			let mut peers = broadcaster.peers.lock().unwrap();
+
+			let peer_1 = peers.get_mut(local_host).unwrap();
+			peer_1.set_response((Id::Text(resp_1_id.to_owned()), prepare_top_executed_rpc_return_value()));
+
+			let peer_2 = peers.get_mut(another_host).unwrap();
+			peer_2.set_response((
+				Id::Text(resp_2_id.to_owned()),
+				prepare_in_sidechain_block_return_value(resp_2_top_hash, block_hash),
+			));
+
+		}
+		//when
+		let responses = broadcaster.collect_responses();
+
+		//then
+		assert_eq!(responses.len(), 2);
+
+		assert_eq!(
+			serde_json::to_string(&responses[0].0).unwrap(),
+			serde_json::to_string(&Id::Text(resp_1_id.to_owned())).unwrap()
+		);
+		assert_eq!(responses[0].1.encode(), TrustedOperationStatus::TopExecuted(vec![]).encode());
+		assert_eq!(responses[0].2, true);
+
+		assert_eq!(
+			serde_json::to_string(&responses[1].0).unwrap(),
+			serde_json::to_string(&Id::Text(resp_2_id.to_owned())).unwrap()
+		);
+		assert_eq!(
+			responses[1].1.encode(),
+			TrustedOperationStatus::InSidechainBlock(block_hash).encode()
+		);
+		assert_eq!(responses[1].2, false);
+	}
+
+	#[test]
+	pub fn collect_responses_ignores_ok_value() {
+		// given
+		let factory = MockedRpcClientFactory {};
+		let local_host = "localhost";
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec![local_host], factory);
+
+		//wrapped in the inner scope in order to release the lock before `collect_responses` is called
+		{
+			let mut peers = broadcaster.peers.lock().unwrap();
+			let peer = peers.get_mut(local_host).unwrap();
+			peer.set_response((Id::Text("1".to_string()), prepare_ok_rpc_return_value()));
+		}
+
+		//when
+		let responses = broadcaster.collect_responses();
+
+		//then
+		assert_eq!(responses.len(), 0);
+	}
+
+	#[test]
+	pub fn collect_ignores_error_status() {
+		// given
+		let factory = MockedRpcClientFactory {};
+		let local_host = "localhost";
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec![local_host], factory);
+
+		{
+			let mut peers = broadcaster.peers.lock().unwrap();
+			let peer = peers.get_mut(local_host).unwrap();
+			peer.set_response((Id::Text("1".to_string()), prepare_error_rpc_return_value()));
+		}
+
+		//when
+		let responses = broadcaster.collect_responses();
+
+		//then
+		assert_eq!(responses.len(), 0);
+	}
+
+	fn prepare_error_rpc_return_value() -> RpcReturnValue {
+		RpcReturnValue::new(
+			vec![],
+			true,
+			DirectRequestStatus::Error
+		)
+	}
+
+	fn prepare_top_executed_rpc_return_value() -> RpcReturnValue {
+		RpcReturnValue::new(
+			vec![],
+			true,
+			DirectRequestStatus::TrustedOperationStatus(
+				TrustedOperationStatus::TopExecuted(vec![]),
+				H256::random(),
+			),
+		)
+	}
+
+	fn prepare_in_sidechain_block_return_value(top_hash: H256, block_hash: H256) -> RpcReturnValue {
+		RpcReturnValue::new(
+			vec![],
+			false,
+			DirectRequestStatus::TrustedOperationStatus(
+				TrustedOperationStatus::InSidechainBlock(block_hash),
+				top_hash,
+			),
+		)
+	}
+
+	fn prepare_ok_rpc_return_value() -> RpcReturnValue {
+		RpcReturnValue::new(vec![], true, DirectRequestStatus::Ok)
+	}
+
 }

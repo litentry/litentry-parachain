@@ -30,6 +30,7 @@ use crate::{
 };
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, State as StfState, Stf, TrustedCallSigned};
+use itc_direct_rpc_client::DirectRpcClientFactory;
 use itc_direct_rpc_server::{
 	rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
 	rpc_watch_extractor::RpcWatchExtractor, rpc_ws_handler::RpcWsHandler,
@@ -184,7 +185,7 @@ pub type EnclaveTopPoolAuthor = Author<
 	EnclaveShieldingKeyRepository,
 	EnclaveOCallApi,
 >;
-pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster;
+pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster<DirectRpcClientFactory>;
 pub type EnclaveSidechainBlockComposer =
 	BlockComposer<ParentchainBlock, SignedSidechainBlock, Pair, EnclaveStateKeyRepository>;
 pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<

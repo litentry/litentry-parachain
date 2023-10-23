@@ -4608,11 +4608,14 @@ version = "0.1.0"
 dependencies = [
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
+ "itp-rpc",
  "itp-sgx-crypto",
  "itp-stf-primitives",
  "itp-types",
  "itp-utils",
  "log 0.4.19",
+ "parity-scale-codec",
+ "serde_json 1.0.103",
  "sgx_tstd",
 ]
 
