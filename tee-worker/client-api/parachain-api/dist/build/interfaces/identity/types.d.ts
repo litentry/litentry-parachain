@@ -1,4 +1,4 @@
-import type { Bytes, Enum, Struct, Text, U8aFixed, Vec, bool, u32 } from "@polkadot/types-codec";
+import type { Bytes, Enum, Option, Struct, Text, U8aFixed, Vec, bool, u32 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
 import type { AccountId, AccountId32, Balance, BlockNumber, H256, Index } from "@polkadot/types/interfaces/runtime";
@@ -257,6 +257,7 @@ export interface TrustedCall extends Enum {
         LitentryValidationData,
         Vec<Web3Network>,
         UserShieldingKeyNonceType,
+        Option<UserShieldingKeyType>,
         H256
     ]>;
     readonly isDeactivateIdentity: boolean;
@@ -274,7 +275,13 @@ export interface TrustedCall extends Enum {
         H256
     ]>;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, H256]>;
+    readonly asRequestVc: ITuple<[
+        LitentryIdentity,
+        LitentryIdentity,
+        Assertion,
+        Option<UserShieldingKeyType>,
+        H256
+    ]>;
     readonly isSetIdentityNetworks: boolean;
     readonly asSetIdentityNetworks: ITuple<[
         LitentryIdentity,
