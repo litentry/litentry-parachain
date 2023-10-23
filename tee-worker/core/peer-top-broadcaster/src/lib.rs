@@ -213,13 +213,10 @@ where
 pub mod tests {
 	use crate::{DirectRpcBroadcaster, PeerUpdater};
 	use codec::Encode;
-	use itc_direct_rpc_client::{RpcClient, RpcClientFactory};
+	use itc_direct_rpc_client::{MaybeResponse, RpcClient, RpcClientFactory};
 	use itp_rpc::{Id, RpcReturnValue};
 	use itp_stf_primitives::types::Hash;
-	use itp_types::{
-		DirectRequestStatus,
-		TrustedOperationStatus, H256,
-	};
+	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
 	use std::error::Error;
 
 	#[derive(Default)]
@@ -229,14 +226,16 @@ pub mod tests {
 	}
 
 	impl RpcClient for MockedRpcClient {
-		fn send(&mut self, _request_id: String, _params: Vec<String>) -> Result<(), Box<dyn Error>> {
+		fn send(
+			&mut self,
+			_request_id: String,
+			_params: Vec<String>,
+		) -> Result<(), Box<dyn Error>> {
 			self.sent_requests = self.sent_requests + 1;
 			Ok(())
 		}
 
-		fn read_response(
-			&mut self,
-		) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>> {
+		fn read_response(&mut self) -> Result<MaybeResponse, Box<dyn Error>> {
 			Ok(self.response.take())
 		}
 	}
@@ -336,14 +335,16 @@ pub mod tests {
 			let mut peers = broadcaster.peers.lock().unwrap();
 
 			let peer_1 = peers.get_mut(local_host).unwrap();
-			peer_1.set_response((Id::Text(resp_1_id.to_owned()), prepare_top_executed_rpc_return_value()));
+			peer_1.set_response((
+				Id::Text(resp_1_id.to_owned()),
+				prepare_top_executed_rpc_return_value(),
+			));
 
 			let peer_2 = peers.get_mut(another_host).unwrap();
 			peer_2.set_response((
 				Id::Text(resp_2_id.to_owned()),
 				prepare_in_sidechain_block_return_value(resp_2_top_hash, block_hash),
 			));
-
 		}
 		//when
 		let responses = broadcaster.collect_responses();
@@ -413,11 +414,7 @@ pub mod tests {
 	}
 
 	fn prepare_error_rpc_return_value() -> RpcReturnValue {
-		RpcReturnValue::new(
-			vec![],
-			true,
-			DirectRequestStatus::Error
-		)
+		RpcReturnValue::new(vec![], true, DirectRequestStatus::Error)
 	}
 
 	fn prepare_top_executed_rpc_return_value() -> RpcReturnValue {
@@ -445,5 +442,4 @@ pub mod tests {
 	fn prepare_ok_rpc_return_value() -> RpcReturnValue {
 		RpcReturnValue::new(vec![], true, DirectRequestStatus::Ok)
 	}
-
 }

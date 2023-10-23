@@ -62,6 +62,8 @@ use tungstenite::{client_tls_with_config, stream::MaybeTlsStream, Connector, Mes
 use url::Url;
 use webpki::{DNSName, DNSNameRef};
 
+pub type MaybeResponse = Option<(Id, RpcReturnValue)>;
+
 pub struct IgnoreCertVerifier {}
 
 impl rustls::ServerCertVerifier for IgnoreCertVerifier {
@@ -111,8 +113,7 @@ impl RpcClientFactory for DirectRpcClientFactory {
 
 pub trait RpcClient {
 	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>>;
-	#[allow(clippy::type_complexity)]
-	fn read_response(&mut self) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>>;
+	fn read_response(&mut self) -> Result<MaybeResponse, Box<dyn Error>>;
 }
 
 pub struct DirectRpcClient {
@@ -178,8 +179,7 @@ impl DirectRpcClient {
 		Ok(request)
 	}
 
-	#[allow(clippy::type_complexity)]
-	fn handle_ws_message(message: Message) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>> {
+	fn handle_ws_message(message: Message) -> Result<MaybeResponse, Box<dyn Error>> {
 		match message {
 			Message::Text(text) => {
 				let rpc_response: RpcResponse = from_str(&text)
@@ -211,7 +211,7 @@ impl RpcClient for DirectRpcClient {
 	}
 
 	#[allow(clippy::type_complexity)]
-	fn read_response(&mut self) -> Result<Option<(Id, RpcReturnValue)>, Box<dyn Error>> {
+	fn read_response(&mut self) -> Result<MaybeResponse, Box<dyn Error>> {
 		if let Ok(message) = self.ws.read_message() {
 			Self::handle_ws_message(message)
 		} else {
