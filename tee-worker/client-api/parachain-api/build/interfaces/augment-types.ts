@@ -1213,6 +1213,7 @@ import type {
     Address20,
     Address32,
     AesOutput,
+    AesRequest,
     Assertion,
     AssertionSupportedNetwork,
     BoundedWeb3Network,
@@ -1284,6 +1285,7 @@ declare module "@polkadot/types/types/registry" {
         Address20: Address20;
         Address32: Address32;
         AesOutput: AesOutput;
+        AesRequest: AesRequest;
         AliveContractInfo: AliveContractInfo;
         AllowedSlots: AllowedSlots;
         AnySignature: AnySignature;

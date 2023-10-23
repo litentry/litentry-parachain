@@ -177,10 +177,6 @@ export default {
 
         // teerex
         ShardIdentifier: "H256",
-        RsaRequest: {
-            shard: "ShardIdentifier",
-            payload: "Vec<u8>",
-        },
 
         // vc management
         VCRequested: {
@@ -274,6 +270,15 @@ export default {
             ciphertext: "Vec<u8>",
             aad: "Vec<u8>",
             nonce: "[u8; 12]",
+        },
+        RsaRequest: {
+            shard: "ShardIdentifier",
+            payload: "Vec<u8>",
+        },
+        AesRequest: {
+            shard: "ShardIdentifier",
+            key: "Vec<u8>",
+            payload: "AesOutput",
         },
     },
 };

@@ -166,10 +166,6 @@ export default {
         BoundedWeb3Network: "BoundedVec<Web3Network, ConstU32<128>>",
         // teerex
         ShardIdentifier: "H256",
-        RsaRequest: {
-            shard: "ShardIdentifier",
-            payload: "Vec<u8>",
-        },
         // vc management
         VCRequested: {
             account: "AccountId",
@@ -262,6 +258,15 @@ export default {
             ciphertext: "Vec<u8>",
             aad: "Vec<u8>",
             nonce: "[u8; 12]",
+        },
+        RsaRequest: {
+            shard: "ShardIdentifier",
+            payload: "Vec<u8>",
+        },
+        AesRequest: {
+            shard: "ShardIdentifier",
+            key: "Vec<u8>",
+            payload: "AesOutput",
         },
     },
 };

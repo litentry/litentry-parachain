@@ -14,6 +14,12 @@ export interface AesOutput extends Struct {
     readonly aad: Bytes;
     readonly nonce: U8aFixed;
 }
+/** @name AesRequest */
+export interface AesRequest extends Struct {
+    readonly shard: ShardIdentifier;
+    readonly key: Bytes;
+    readonly payload: AesOutput;
+}
 /** @name Assertion */
 export interface Assertion extends Enum {
     readonly isA1: boolean;
