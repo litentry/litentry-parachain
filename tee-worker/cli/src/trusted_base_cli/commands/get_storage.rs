@@ -1,5 +1,7 @@
 use crate::{
-	command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli, CliResult, CliResultOk,
+	command_utils::{get_worker_api_direct, mrenclave_to_base58},
+	trusted_cli::TrustedCli,
+	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
 use frame_metadata::{RuntimeMetadata, StorageEntryType, StorageHasher};
@@ -32,7 +34,14 @@ pub struct GetStorageCommand {
 impl GetStorageCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
 		let direct_api = get_worker_api_direct(cli);
-		let mrenclave = trusted_args.mrenclave.clone();
+		let mrenclave = if let Some(mrenclave) = trusted_args.mrenclave.clone() {
+			mrenclave
+		} else {
+			let mrenclave = direct_api
+				.get_state_mrenclave()
+				.expect("Unable to retrieve MRENCLAVE from endpoint");
+			mrenclave_to_base58(&mrenclave)
+		};
 		if let Some(v) = get_storage_value(
 			direct_api,
 			mrenclave,

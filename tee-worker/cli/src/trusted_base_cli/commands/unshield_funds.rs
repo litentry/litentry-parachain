@@ -44,7 +44,7 @@ pub struct UnshieldFundsCommand {
 
 impl UnshieldFundsCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
-		let from = get_pair_from_str(trusted_args, &self.from);
+		let from = get_pair_from_str(trusted_args, &self.from, cli);
 		let to = get_accountid_from_str(&self.to);
 		println!("from ss58 is {}", from.public().to_ss58check());
 		println!("to   ss58 is {}", to.to_ss58check());
@@ -56,7 +56,7 @@ impl UnshieldFundsCommand {
 			self.amount
 		);
 
-		let (mrenclave, shard) = get_identifiers(trusted_args);
+		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 		let nonce = get_layer_two_nonce!(from, cli, trusted_args);
 		let top: TrustedOperation =
 			TrustedCall::balance_unshield(from.public().into(), to, self.amount, shard)

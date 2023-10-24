@@ -25,10 +25,9 @@ CHAIN=$1
 POLKADOT_BIN="$2"
 PARACHAIN_BIN="$3"
 
-# Check if TMPDIR is already set
-TMPDIR=${TMPDIR:-"/tmp/parachain_dev"}
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 
-[ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
+[ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
 ROOTDIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOTDIR"
@@ -48,7 +47,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # polkadot could publish release which has no binary
   #
   url="https://github.com/paritytech/polkadot/releases/download/v0.9.39/polkadot"
-  POLKADOT_BIN="$TMPDIR/polkadot"
+  POLKADOT_BIN="$LITENTRY_PARACHAIN_DIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
 fi
@@ -77,7 +76,7 @@ if ! "$PARACHAIN_BIN" --version &> /dev/null; then
   exit 1
 fi
 
-cd "$TMPDIR"
+cd "$LITENTRY_PARACHAIN_DIR"
 
 echo "starting dev network with binaries ..."
 
@@ -118,7 +117,7 @@ else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
 corepack pnpm install
-corepack pnpm run register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
+corepack pnpm run register-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/register-parathread.log"
 print_divider
 
 echo "upgrade parathread to parachain now ..."
@@ -131,9 +130,9 @@ else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
 corepack pnpm install
-corepack pnpm run upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
+corepack pnpm run upgrade-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/upgrade-parathread.log"
 print_divider
 
-echo "done. please check $TMPDIR for generated files if need"
+echo "done. please check $LITENTRY_PARACHAIN_DIR for generated files if need"
 
 print_divider

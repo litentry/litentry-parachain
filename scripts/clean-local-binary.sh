@@ -2,9 +2,9 @@
 
 # no `set -e` here as we allow commands to fail in this script
 
-TMPDIR=${TMPDIR:-"/tmp/parachain_dev*"}
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 
-# for f in $(ls $TMPDIR/*.pid 2>/dev/null); do
+# for f in $(ls $LITENTRY_PARACHAIN_DIR/*.pid 2>/dev/null); do
 #   echo "Killing $f ..."
 #   kill -9 $(cat "$f")
 # done
@@ -14,6 +14,6 @@ TMPDIR=${TMPDIR:-"/tmp/parachain_dev*"}
 killall polkadot
 killall litentry-collator
 
-rm -rf "$TMPDIR"
+rm -rf "$LITENTRY_PARACHAIN_DIR"
 
 echo "cleaned up."

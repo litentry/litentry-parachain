@@ -21,6 +21,7 @@ use crate::{
 		get_storage::GetStorageCommand,
 		litentry::{
 			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
+			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 			set_user_shielding_key::SetUserShieldingKeyCommand,
 			user_shielding_key::UserShieldingKeyCommand,
@@ -88,13 +89,16 @@ pub enum TrustedBaseCommand {
 
 	/// The IDGraph for the given identity
 	IDGraph(IDGraphCommand),
+
+	/// Request VC
+	RequestVc(RequestVcCommand),
 }
 
 impl TrustedBaseCommand {
 	pub fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		match self {
-			TrustedBaseCommand::NewAccount => new_account(trusted_cli),
-			TrustedBaseCommand::ListAccounts => list_accounts(trusted_cli),
+			TrustedBaseCommand::NewAccount => new_account(trusted_cli, cli),
+			TrustedBaseCommand::ListAccounts => list_accounts(trusted_cli, cli),
 			TrustedBaseCommand::Transfer(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetBalance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Balance(cmd) => cmd.run(cli, trusted_cli),
@@ -108,12 +112,13 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }
 
-fn new_account(trusted_args: &TrustedCli) -> CliResult {
-	let store = LocalKeystore::open(get_keystore_path(trusted_args), None).unwrap();
+fn new_account(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
+	let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
 	let key: sr25519::AppPair = store.generate().unwrap();
 	drop(store);
 	info!("new account {}", key.public().to_ss58check());
@@ -123,8 +128,8 @@ fn new_account(trusted_args: &TrustedCli) -> CliResult {
 	Ok(CliResultOk::PubKeysBase58 { pubkeys_sr25519: Some(vec![key_str]), pubkeys_ed25519: None })
 }
 
-fn list_accounts(trusted_args: &TrustedCli) -> CliResult {
-	let store = LocalKeystore::open(get_keystore_path(trusted_args), None).unwrap();
+fn list_accounts(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
+	let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
 	info!("sr25519 keys:");
 	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
 		println!("{}", pubkey.to_ss58check());
