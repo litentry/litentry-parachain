@@ -230,9 +230,7 @@ export interface LitentryValidationData extends Enum {
 export interface PublicGetter extends Enum {
     readonly isSomeValue: boolean;
     readonly asSomeValue: u32;
-    readonly isNonce: boolean;
-    readonly asNonce: LitentryIdentity;
-    readonly type: "SomeValue" | "Nonce";
+    readonly type: "SomeValue";
 }
 
 /** @name Request */
@@ -377,6 +375,8 @@ export interface TrustedGetter extends Enum {
     readonly asFreeBalance: LitentryIdentity;
     readonly isReservedBalance: boolean;
     readonly asReservedBalance: LitentryIdentity;
+    readonly isNonce: boolean;
+    readonly asNonce: LitentryIdentity;
     readonly isUserShieldingKey: boolean;
     readonly asUserShieldingKey: LitentryIdentity;
     readonly isIdGraph: boolean;
@@ -386,6 +386,7 @@ export interface TrustedGetter extends Enum {
     readonly type:
         | "FreeBalance"
         | "ReservedBalance"
+        | "Nonce"
         | "UserShieldingKey"
         | "IdGraph"
         | "IdGraphStats";

@@ -119,11 +119,21 @@ declare module "@polkadot/api-base/types/events" {
              **/
             BalanceSet: AugmentedEvent<
                 ApiType,
-                [who: AccountId32, free: u128, reserved: u128],
+                [who: AccountId32, free: u128],
                 {
                     who: AccountId32;
                     free: u128;
-                    reserved: u128;
+                }
+            >;
+            /**
+             * Some amount was burned from an account.
+             **/
+            Burned: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
                 }
             >;
             /**
@@ -161,6 +171,59 @@ declare module "@polkadot/api-base/types/events" {
                 }
             >;
             /**
+             * Some balance was frozen.
+             **/
+            Frozen: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
+                }
+            >;
+            /**
+             * Total issuance was increased by `amount`, creating a credit to be balanced.
+             **/
+            Issued: AugmentedEvent<
+                ApiType,
+                [amount: u128],
+                {
+                    amount: u128;
+                }
+            >;
+            /**
+             * Some balance was locked.
+             **/
+            Locked: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
+                }
+            >;
+            /**
+             * Some amount was minted into an account.
+             **/
+            Minted: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
+                }
+            >;
+            /**
+             * Total issuance was decreased by `amount`, creating a debt to be balanced.
+             **/
+            Rescinded: AugmentedEvent<
+                ApiType,
+                [amount: u128],
+                {
+                    amount: u128;
+                }
+            >;
+            /**
              * Some balance was reserved (moved from free to reserved).
              **/
             Reserved: AugmentedEvent<
@@ -191,9 +254,42 @@ declare module "@polkadot/api-base/types/events" {
                 }
             >;
             /**
+             * Some amount was restored into an account.
+             **/
+            Restored: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
+                }
+            >;
+            /**
              * Some amount was removed from the account (e.g. for misbehavior).
              **/
             Slashed: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
+                }
+            >;
+            /**
+             * Some amount was suspended from an account (it can be restored later).
+             **/
+            Suspended: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
+                }
+            >;
+            /**
+             * Some balance was thawed.
+             **/
+            Thawed: AugmentedEvent<
                 ApiType,
                 [who: AccountId32, amount: u128],
                 {
@@ -214,6 +310,17 @@ declare module "@polkadot/api-base/types/events" {
                 }
             >;
             /**
+             * Some balance was unlocked.
+             **/
+            Unlocked: AugmentedEvent<
+                ApiType,
+                [who: AccountId32, amount: u128],
+                {
+                    who: AccountId32;
+                    amount: u128;
+                }
+            >;
+            /**
              * Some balance was unreserved (moved from reserved to free).
              **/
             Unreserved: AugmentedEvent<
@@ -222,6 +329,16 @@ declare module "@polkadot/api-base/types/events" {
                 {
                     who: AccountId32;
                     amount: u128;
+                }
+            >;
+            /**
+             * An account was upgraded.
+             **/
+            Upgraded: AugmentedEvent<
+                ApiType,
+                [who: AccountId32],
+                {
+                    who: AccountId32;
                 }
             >;
             /**
@@ -903,12 +1020,19 @@ declare module "@polkadot/api-base/types/events" {
              **/
             Executed: AugmentedEvent<
                 ApiType,
-                [from: H160, to: H160, transactionHash: H256, exitReason: EvmCoreErrorExitReason],
+                [
+                    from: H160,
+                    to: H160,
+                    transactionHash: H256,
+                    exitReason: EvmCoreErrorExitReason,
+                    extraData: Bytes
+                ],
                 {
                     from: H160;
                     to: H160;
                     transactionHash: H256;
                     exitReason: EvmCoreErrorExitReason;
+                    extraData: Bytes;
                 }
             >;
         };

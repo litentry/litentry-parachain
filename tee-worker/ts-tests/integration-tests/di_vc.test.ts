@@ -62,7 +62,7 @@ describe('Test Vc (direct invocation)', function () {
     step(`setting user shielding key (alice)`, async function () {
         const wallet = context.substrateWallet['alice'];
         const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
-        const nonce = await getSidechainNonce(context, teeShieldingKey, subject);
+        const nonce = await getSidechainNonce(context, new PolkadotSigner(context.substrateWallet.alice), teeShieldingKey, subject);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
@@ -92,7 +92,7 @@ describe('Test Vc (direct invocation)', function () {
 
     assertions.forEach((assertion) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
-            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+            let currentNonce = (await getSidechainNonce(context, new PolkadotSigner(context.substrateWallet.alice), teeShieldingKey, aliceSubject)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -128,7 +128,7 @@ describe('Test Vc (direct invocation)', function () {
 
     step('request vc without shielding key (bob)', async function () {
         const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
-        const nonce = await getSidechainNonce(context, teeShieldingKey, bobSubject);
+        const nonce = await getSidechainNonce(context, new PolkadotSigner(context.substrateWallet.alice), teeShieldingKey, bobSubject);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const requestVcCall = await createSignedTrustedCallRequestVc(
             context.api,
@@ -142,16 +142,6 @@ describe('Test Vc (direct invocation)', function () {
         const callValue = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
         assertWorkerError(
             context,
-            (v) => {
-                assert.isTrue(v.isRequestVCFailed, `expected RequestVCFailed, received ${v.type} instead`);
-                assert.isTrue(v.asRequestVCFailed[0].isA1);
-                assert.isTrue(v.asRequestVCFailed[1].isUserShieldingKeyNotFound);
-            },
-            callValue
-        );
-        assertWorkerError(
-            context,
-            requestIdentifier,
             (v) => {
                 assert.isTrue(v.isRequestVCFailed, `expected RequestVCFailed, received ${v.type} instead`);
                 assert.isTrue(v.asRequestVCFailed[0].isA1);

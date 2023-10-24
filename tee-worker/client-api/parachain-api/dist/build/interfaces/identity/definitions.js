@@ -27,7 +27,6 @@ export default {
 		PublicGetter: {
 			_enum: {
 				some_value: "u32",
-				nonce: "(LitentryIdentity)",
 			},
 		},
 		TrustedGetterSigned: {
@@ -39,6 +38,7 @@ export default {
 			_enum: {
 				free_balance: "(LitentryIdentity)",
 				reserved_balance: "(LitentryIdentity)",
+				nonce: "(LitentryIdentity)",
 				user_shielding_key: "(LitentryIdentity)",
 				id_graph: "(LitentryIdentity)",
 				id_graph_stats: "(LitentryIdentity)",

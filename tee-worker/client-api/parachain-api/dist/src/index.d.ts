@@ -34,7 +34,6 @@ export declare const definitions: {
         PublicGetter: {
             _enum: {
                 some_value: string;
-                nonce: string;
             };
         };
         TrustedGetterSigned: {
@@ -45,6 +44,7 @@ export declare const definitions: {
             _enum: {
                 free_balance: string;
                 reserved_balance: string;
+                nonce: string;
                 user_shielding_key: string;
                 id_graph: string;
                 id_graph_stats: string;
