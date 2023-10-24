@@ -72,7 +72,7 @@ pub(crate) fn execute_getter_from_cli_args(
 	trusted_args: &TrustedCli,
 	getter: &Getter,
 ) -> TrustedOpResult {
-	let shard = read_shard(trusted_args).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
 	Ok(get_worker_api_direct(cli).get_state(shard, getter))
 }
 
@@ -85,7 +85,7 @@ fn send_request(
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let call_encrypted = encryption_key.encrypt(&trusted_operation.encode()).unwrap();
 
-	let shard = read_shard(trusted_args).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
 
 	let arg_signer = &trusted_args.xt_signer;
 	let signer = get_pair_from_str(arg_signer);
@@ -161,15 +161,31 @@ fn check_if_received_event_exceeds_expected(
 	Ok(())
 }
 
-pub fn read_shard(trusted_args: &TrustedCli) -> StdResult<ShardIdentifier, codec::Error> {
+pub fn read_shard(
+	trusted_args: &TrustedCli,
+	cli: &Cli,
+) -> StdResult<ShardIdentifier, codec::Error> {
 	match &trusted_args.shard {
 		Some(s) => match s.from_base58() {
 			Ok(s) => ShardIdentifier::decode(&mut &s[..]),
 			_ => panic!("shard argument must be base58 encoded"),
 		},
-		None => match trusted_args.mrenclave.from_base58() {
-			Ok(s) => ShardIdentifier::decode(&mut &s[..]),
-			_ => panic!("mrenclave argument must be base58 encoded"),
+		None => match trusted_args.mrenclave.clone() {
+			Some(mrenclave) =>
+				if let Ok(s) = mrenclave.from_base58() {
+					ShardIdentifier::decode(&mut &s[..])
+				} else {
+					panic!("Mrenclave argument must be base58 encoded")
+				},
+			None => {
+				// Fetch mrenclave from worker
+				let direct_api = get_worker_api_direct(cli);
+				if let Ok(s) = direct_api.get_state_mrenclave() {
+					ShardIdentifier::decode(&mut &s[..])
+				} else {
+					panic!("Unable to fetch MRENCLAVE from worker endpoint");
+				}
+			},
 		},
 	}
 }
@@ -181,7 +197,7 @@ fn send_direct_request(
 	operation_call: &TrustedOperation,
 ) -> TrustedOpResult {
 	let encryption_key = get_shielding_key(cli).unwrap();
-	let shard = read_shard(trusted_args).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
 	let jsonrpc_call: String = get_json_request(shard, operation_call, encryption_key);
 
 	debug!("get direct api");

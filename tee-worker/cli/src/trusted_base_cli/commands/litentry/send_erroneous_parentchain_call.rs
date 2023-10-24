@@ -32,9 +32,9 @@ pub struct SendErroneousParentchainCallCommand {}
 
 impl SendErroneousParentchainCallCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let root = get_pair_from_str(trusted_cli, "//Alice");
+		let root = get_pair_from_str(trusted_cli, "//Alice", cli);
 
-		let (mrenclave, shard) = get_identifiers(trusted_cli);
+		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(root, cli, trusted_cli);
 
 		let top: TrustedOperation =

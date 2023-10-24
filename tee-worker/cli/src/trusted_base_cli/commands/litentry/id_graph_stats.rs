@@ -34,7 +34,7 @@ pub struct IDGraphStats {
 
 impl IDGraphStats {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let who = get_pair_from_str(trusted_cli, &self.account);
+		let who = get_pair_from_str(trusted_cli, &self.account, cli);
 		let top: TrustedOperation = TrustedGetter::id_graph_stats(who.public().into())
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
