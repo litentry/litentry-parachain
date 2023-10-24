@@ -44,7 +44,7 @@ pub struct EvmCallCommands {
 
 impl EvmCallCommands {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
-		let sender = get_pair_from_str(trusted_args, &self.from);
+		let sender = get_pair_from_str(trusted_args, &self.from, cli);
 		let sender_acc: AccountId = sender.public().into();
 
 		info!("senders ss58 is {}", sender.public().to_ss58check());
@@ -61,7 +61,7 @@ impl EvmCallCommands {
 
 		let function_hash = array_bytes::hex2bytes(&self.function).unwrap();
 
-		let (mrenclave, shard) = get_identifiers(trusted_args);
+		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 		let nonce = get_layer_two_nonce!(sender, cli, trusted_args);
 		let evm_nonce = get_layer_two_evm_nonce!(sender, cli, trusted_args);
 
