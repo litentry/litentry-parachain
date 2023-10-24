@@ -2,7 +2,7 @@
 
 # no `set -e` here as we allow commands to fail in this script
 
-LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:?}
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 
 # for f in $(ls $LITENTRY_PARACHAIN_DIR/*.pid 2>/dev/null); do
 #   echo "Killing $f ..."

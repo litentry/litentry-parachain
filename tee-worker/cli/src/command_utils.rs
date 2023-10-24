@@ -16,7 +16,7 @@
 */
 
 use crate::Cli;
-use base58::FromBase58;
+use base58::{FromBase58, ToBase58};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_node_api::api_client::{ParentchainApi, WsRpcClient};
 use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainSignature as Signature};
@@ -84,4 +84,8 @@ pub(crate) fn mrenclave_from_base58(src: &str) -> [u8; 32] {
 	let mut mrenclave = [0u8; 32];
 	mrenclave.copy_from_slice(&src.from_base58().expect("mrenclave has to be base58 encoded"));
 	mrenclave
+}
+
+pub(crate) fn mrenclave_to_base58(src: &[u8]) -> String {
+	src.to_base58()
 }
