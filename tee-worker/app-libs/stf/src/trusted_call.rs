@@ -113,7 +113,20 @@ pub enum TrustedCall {
 		Option<U256>,
 		Vec<(H160, Vec<H256>)>,
 	),
-	// litentry
+	/// litentry trusted calls
+	/// the calls that should deliver a result other than `Empty` will need to include the parameter: `Option<UserShieldingKeyType>`,
+	/// it's a 32-byte AES key defined by the client. This key will be used to encrypt the user-sensitive result in the DI response,
+	/// see `trusted_call_result.rs`.
+	///
+	/// It's an Option because for II call there's no need to define such a key.
+	///
+	/// Theoretically, this key **could** be different from what is used to encrypt the `AesRequest` payload, but in practice it's fine
+	/// to simply use the same key.
+	///
+	/// Please note this key needs to be embeded in the trusted call itself because:
+	/// - it needs to be passed around in async handling of trusted call
+	/// - for multi-worker setup, the worker that processes the request can be differnet from the worker that receives the request, so
+	///   we can't maintain something like a global mapping between trusted call and aes-key, which only resides in the memory of one worker.
 	set_user_shielding_key(Identity, Identity, UserShieldingKeyType, H256),
 	link_identity(
 		Identity,
