@@ -26,7 +26,7 @@ use itp_stf_executor::{traits::StateUpdateProposer, ExecutedOperation};
 use itp_stf_interface::system_pallet::SystemPalletEventInterface;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier, H256};
+use itp_types::{OpaqueCall, RsaRequest, ShardIdentifier, H256};
 use log::*;
 use sp_runtime::traits::Block;
 use std::{marker::PhantomData, sync::Arc, time::Duration, vec::Vec};
@@ -277,7 +277,7 @@ mod tests {
 	fn executing_tops_from_pool_works() {
 		let stf_executor = Arc::new(TestStfExecutor::new(State::default()));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
-		top_pool_author.submit_top(create_trusted_operation().encode(), shard());
+		top_pool_author.submit_top(RsaRequest::new(shard(), create_trusted_operation().encode()));
 
 		assert_eq!(1, top_pool_author.pending_tops(shard()).unwrap().len());
 

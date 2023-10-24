@@ -314,7 +314,7 @@ mod test {
 	use itp_stf_primitives::types::AccountId;
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn};
+	use itp_types::{Block, CallWorkerFn, RsaRequest, ShardIdentifier, ShieldFundsFn};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
