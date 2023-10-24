@@ -58,7 +58,7 @@ pub struct LinkIdentityCommand {
 
 impl LinkIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let alice = get_pair_from_str(trusted_cli, "//Alice");
+		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let src_id: Identity = Identity::from_did(self.src_did.as_str()).unwrap();
 		let dst_id: Identity = Identity::from_did(self.dst_did.as_str()).unwrap();
 		let networks: Vec<Web3Network> = self
@@ -67,7 +67,7 @@ impl LinkIdentityCommand {
 			.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
 			.collect();
 
-		let (mrenclave, shard) = get_identifiers(trusted_cli);
+		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
 		let top: TrustedOperation = TrustedCall::link_identity_callback(
