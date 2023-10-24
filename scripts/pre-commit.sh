@@ -61,7 +61,7 @@ clean_up
 cd "$root_dir/tee-worker"
 SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
-./litentry-worker test --unit
+./litentry-worker test --all
 
 end=$(date +%s)
 echo "Elapsed Time: $((end-start)) seconds"
