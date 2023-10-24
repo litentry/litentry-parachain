@@ -47,6 +47,7 @@ echo ""
 TIMEOUT=5000 # 5 seconds, smaller than 12s (the block duration)
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
+echo "CLIENT is: $CLIENT"
 
 echo "* Query on-chain enclave registry:"
 WORKERS=$($CLIENT list-workers)
