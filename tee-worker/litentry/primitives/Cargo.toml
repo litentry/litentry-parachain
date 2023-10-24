@@ -35,11 +35,14 @@ production = []
 sgx = [
     "sgx_tstd",
     "rand-sgx",
+    "itp-utils/sgx",
+    "itp-sgx-crypto/sgx",
 ]
 std = [
     "strum/std",
     "hex/std",
     "serde/std",
+    "itp-sgx-crypto/std",
     "itp-utils/std",
     "sp-core/std",
     "sp-std/std",

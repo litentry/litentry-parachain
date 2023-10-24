@@ -28,6 +28,7 @@ litentry-primitives = { path = "../../litentry/primitives", default-features = f
 default = ["std"]
 std = [
     "codec/std",
+    "itp-sgx-crypto/std",
     "itp-sgx-runtime-primitives/std",
     # substrate
     "frame-system/std",
