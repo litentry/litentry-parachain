@@ -184,15 +184,10 @@ impl DirectRpcClient {
 			Message::Text(text) => {
 				let rpc_response: RpcResponse = from_str(&text)
 					.map_err(|e| format!("Could not deserialize RpcResponse, reason: {:?}", e))?;
-				let id = match rpc_response.id {
-					Id::Text(id) =>
-						Id::from_hex(&id).map_err(|e| format!("Could parse Id, reason: {:?}", e))?,
-					Id::Number(_id) => panic!("Id in number format are not supported"),
-				};
 				let return_value: RpcReturnValue =
 					RpcReturnValue::from_hex(&rpc_response.result)
 						.map_err(|e| format!("Could not deserialize value , reason: {:?}", e))?;
-				Ok(Some((id, return_value)))
+				Ok(Some((rpc_response.id, return_value)))
 			},
 			_ => {
 				log::warn!("Only text messages are supported");
@@ -223,7 +218,6 @@ impl RpcClient for DirectRpcClient {
 #[cfg(test)]
 mod tests {
 	use crate::DirectRpcClient;
-	use codec::Encode;
 	use itp_rpc::{Id, RpcResponse, RpcReturnValue};
 	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
 	use itp_utils::ToHexPrefixed;
@@ -231,7 +225,9 @@ mod tests {
 
 	#[test]
 	fn test_response_handling() {
-		let id = "0x0000000000000000000000000000000000000000000000000000000000000000".to_owned();
+		let id = Id::Text(
+			"0x0000000000000000000000000000000000000000000000000000000000000000".to_owned(),
+		);
 		let return_value: RpcReturnValue = RpcReturnValue::new(
 			vec![],
 			false,
@@ -243,14 +239,14 @@ mod tests {
 		let rpc_response: RpcResponse = RpcResponse {
 			jsonrpc: "2.0".to_owned(),
 			result: return_value.to_hex(),
-			id: Id::Text(id.clone()),
+			id: id.clone(),
 		};
 		let serialized_rpc_response = serde_json::to_string(&rpc_response).unwrap();
 		let message = Message::text(serialized_rpc_response);
 
 		let (result_id, result) = DirectRpcClient::handle_ws_message(message).unwrap().unwrap();
 
-		assert_eq!("0", serde_json::to_string(&result_id).unwrap());
-		assert_eq!(return_value.encode(), result.encode());
+		assert_eq!(id, result_id);
+		assert_eq!(return_value, result);
 	}
 }

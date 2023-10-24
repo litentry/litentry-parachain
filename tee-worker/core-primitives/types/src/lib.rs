@@ -115,7 +115,7 @@ impl<AccountId> EnclaveGen<AccountId> {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq, Encode, Decode)]
+#[derive(Debug, Clone, PartialEq, Encode, Decode, Eq)]
 pub enum DirectRequestStatus {
 	/// Direct request was successfully executed
 	Ok,
@@ -126,7 +126,7 @@ pub enum DirectRequestStatus {
 	Error,
 }
 
-#[derive(Debug, Clone, PartialEq, Encode, Decode)]
+#[derive(Debug, Clone, PartialEq, Encode, Decode, Eq)]
 pub enum TrustedOperationStatus {
 	/// TrustedOperation is submitted to the top pool.
 	Submitted,

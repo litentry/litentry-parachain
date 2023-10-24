@@ -28,7 +28,7 @@ use itp_types::DirectRequestStatus;
 use serde::{Deserialize, Serialize};
 use std::{borrow::ToOwned, string::String, vec::Vec};
 
-#[derive(Encode, Decode, Debug)]
+#[derive(Encode, Decode, Debug, Eq, PartialEq)]
 pub struct RpcReturnValue {
 	pub value: Vec<u8>,
 	pub do_watch: bool,
@@ -48,7 +48,7 @@ impl RpcReturnValue {
 	}
 }
 
-#[derive(Clone, Encode, Decode, Debug, Serialize, Deserialize)]
+#[derive(Clone, Encode, Decode, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
 #[serde(untagged)]
 pub enum Id {
 	Number(u32),

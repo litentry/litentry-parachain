@@ -4610,8 +4610,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "log 0.4.19",
- "parity-scale-codec",
- "serde_json 1.0.103",
  "sgx_tstd",
 ]
 

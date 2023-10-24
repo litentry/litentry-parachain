@@ -20,11 +20,6 @@ itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 
 
-[dev-dependencies]
-serde_json = { version = "1.0", default-features = false }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-
-
 [features]
 default = ["std"]
 sgx = [

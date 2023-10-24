@@ -33,13 +33,13 @@ use std::sync::Mutex;
 
 use itc_direct_rpc_client::{DirectRpcClientFactory, RpcClient, RpcClientFactory};
 use itc_direct_rpc_server::{
-	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry, RpcHash,
+	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry,
 	SendRpcResponse,
 };
 use itp_rpc::Id;
 use itp_stf_primitives::types::Hash;
-use itp_types::{DirectRequestStatus, TrustedOperationStatus};
-use itp_utils::ToHexPrefixed;
+use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
+use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use std::{
 	collections::HashMap,
 	string::{String, ToString},
@@ -92,8 +92,8 @@ where
 		if let Ok(mut peers) = self.peers.lock() {
 			peers
 				.values_mut()
-				.flat_map(|peer| {
-					if let Ok(response) = peer.read_response() {
+				.flat_map(|peer| match peer.read_response() {
+					Ok(response) =>
 						if let Some(response) = response {
 							match response.1.status {
 								DirectRequestStatus::TrustedOperationStatus(status, _) =>
@@ -108,16 +108,26 @@ where
 							}
 						} else {
 							None
-						}
-					} else {
-						log::warn!("Could not reed response from peer");
+						},
+					Err(e) => {
+						log::warn!("Could not reed response from peer, reason: {:?}", e);
 						None
-					}
+					},
 				})
 				.collect()
 		} else {
 			vec![]
 		}
+	}
+}
+
+pub fn id_to_hash(id: &Id) -> Option<Hash> {
+	match id {
+		Id::Text(id) => H256::from_hex(id).ok(),
+		Id::Number(id) => {
+			log::error!("Got response with id {}", id);
+			None
+		},
 	}
 }
 
@@ -153,9 +163,9 @@ where
 			let responses = cloned_rpc_broadcaster.collect_responses();
 			for response in responses {
 				//we need to map Id to hash in order to correlate it with connection
-				let hash = match response.0 {
-					Id::Text(id) => id.maybe_h256().unwrap(),
-					Id::Number(id) => id.maybe_h256().unwrap(),
+				let hash = match id_to_hash(&response.0) {
+					Some(hash) => hash,
+					None => continue,
 				};
 				match response.1 {
 					// this will come from every peer so do not flood the client
@@ -212,12 +222,11 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::{DirectRpcBroadcaster, PeerUpdater};
-	use codec::Encode;
 	use itc_direct_rpc_client::{MaybeResponse, RpcClient, RpcClientFactory};
 	use itp_rpc::{Id, RpcReturnValue};
 	use itp_stf_primitives::types::Hash;
 	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
-	use std::error::Error;
+	use std::{collections::HashMap, error::Error};
 
 	#[derive(Default)]
 	pub struct MockedRpcClient {
@@ -325,49 +334,57 @@ pub mod tests {
 		let another_host = "anotherhost";
 		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
 			DirectRpcBroadcaster::new(&vec![local_host, another_host], factory);
-		let resp_1_id = "0x0000000000000000000000000000000000000000000000000000000000000001";
-		let resp_2_id = "0x0000000000000000000000000000000000000000000000000000000000000002";
+		let resp_1_id = Id::Text(
+			"0x0000000000000000000000000000000000000000000000000000000000000001".to_string(),
+		);
+		let resp_2_id = Id::Text(
+			"0x0000000000000000000000000000000000000000000000000000000000000002".to_string(),
+		);
 		let block_hash = H256::random();
 		let resp_2_top_hash = H256::random();
+
+		let mut expected_responses: HashMap<Id, (Id, TrustedOperationStatus, bool)> =
+			HashMap::new();
+		expected_responses.insert(
+			resp_1_id.clone(),
+			(resp_1_id.clone(), TrustedOperationStatus::TopExecuted(vec![]), true),
+		);
+		expected_responses.insert(
+			resp_2_id.clone(),
+			(resp_2_id.clone(), TrustedOperationStatus::InSidechainBlock(block_hash), false),
+		);
 
 		//wrapped in the inner scope in order to release the lock before `collect_responses` is called
 		{
 			let mut peers = broadcaster.peers.lock().unwrap();
 
 			let peer_1 = peers.get_mut(local_host).unwrap();
-			peer_1.set_response((
-				Id::Text(resp_1_id.to_owned()),
-				prepare_top_executed_rpc_return_value(),
-			));
+			peer_1.set_response((resp_1_id.clone(), prepare_top_executed_rpc_return_value()));
 
 			let peer_2 = peers.get_mut(another_host).unwrap();
 			peer_2.set_response((
-				Id::Text(resp_2_id.to_owned()),
+				resp_2_id.clone(),
 				prepare_in_sidechain_block_return_value(resp_2_top_hash, block_hash),
 			));
 		}
 		//when
-		let responses = broadcaster.collect_responses();
+		let collected_responses = broadcaster.collect_responses();
 
 		//then
-		assert_eq!(responses.len(), 2);
+		assert_eq!(collected_responses.len(), expected_responses.len());
 
-		assert_eq!(
-			serde_json::to_string(&responses[0].0).unwrap(),
-			serde_json::to_string(&Id::Text(resp_1_id.to_owned())).unwrap()
-		);
-		assert_eq!(responses[0].1.encode(), TrustedOperationStatus::TopExecuted(vec![]).encode());
-		assert_eq!(responses[0].2, true);
+		//the order of responses is not deterministic so we need to get expected value from map by id in order to make test result deterministic
+		let expected_response_1 = expected_responses.get(&collected_responses[0].0).unwrap();
 
-		assert_eq!(
-			serde_json::to_string(&responses[1].0).unwrap(),
-			serde_json::to_string(&Id::Text(resp_2_id.to_owned())).unwrap()
-		);
-		assert_eq!(
-			responses[1].1.encode(),
-			TrustedOperationStatus::InSidechainBlock(block_hash).encode()
-		);
-		assert_eq!(responses[1].2, false);
+		assert_eq!(collected_responses[0].0, expected_response_1.0);
+		assert_eq!(collected_responses[0].1, expected_response_1.1);
+		assert_eq!(collected_responses[0].2, expected_response_1.2);
+
+		let expected_response_2 = expected_responses.get(&collected_responses[1].0).unwrap();
+
+		assert_eq!(collected_responses[1].0, expected_response_2.0);
+		assert_eq!(collected_responses[1].1, expected_response_2.1);
+		assert_eq!(collected_responses[1].2, expected_response_2.2);
 	}
 
 	#[test]
