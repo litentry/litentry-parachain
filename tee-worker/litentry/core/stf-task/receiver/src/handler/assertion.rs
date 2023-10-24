@@ -60,7 +60,7 @@ where
 			Assertion::A1 => {
 				#[cfg(test)]
 				{
-					std::thread::sleep(core::time::Duration::from_secs(2));
+					std::thread::sleep(core::time::Duration::from_secs(5));
 				}
 				lc_assertion_build::a1::build(&self.req)
 			},

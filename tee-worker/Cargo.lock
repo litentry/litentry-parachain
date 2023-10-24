@@ -5313,6 +5313,7 @@ dependencies = [
  "itp-types",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
+ "lazy_static",
  "litentry-primitives",
  "log 0.4.19",
  "parity-scale-codec",
@@ -6144,6 +6145,7 @@ dependencies = [
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
+ "base58",
  "frame-support",
  "futures 0.3.28",
  "futures 0.3.8",
@@ -6156,8 +6158,12 @@ dependencies = [
  "itp-sgx-externalities",
  "itp-stf-executor",
  "itp-stf-state-handler",
+ "itp-test",
+ "itp-top-pool",
  "itp-top-pool-author",
  "itp-types",
+ "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static",
  "lc-assertion-build",
  "lc-credentials",
  "lc-data-providers",
@@ -6166,6 +6172,7 @@ dependencies = [
  "litentry-primitives",
  "log 0.4.19",
  "parity-scale-codec",
+ "sgx_crypto_helper",
  "sgx_tstd",
  "sp-core",
  "thiserror 1.0.44",
