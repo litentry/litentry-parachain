@@ -10,9 +10,14 @@ function usage() {
 }
 
 [ $# -ne 1 ] && (usage; exit 1)
+apt-get install sudo
+sudo apt-get install wget
+sudo wget -qO /usr/local/bin/websocat https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl
+sudo chmod a+x /usr/local/bin/websocat
+whereis websocat
+websocat --version
 
-ls /usr/local/bin
-/usr/local/bin/litentry-cli print-sgx-metadata-raw
+echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 wss://litentry-worker-1:2011
 
 cd /client-api
 pnpm install
@@ -24,7 +29,6 @@ echo "update parachain metadata"
 
 cd  /client-api/sidechain-api
 
-/usr/local/worker-bin/litentry-cli print-sgx-metadata-raw
 
 echo "update sidechain metadata"
 

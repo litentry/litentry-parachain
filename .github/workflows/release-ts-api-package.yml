@@ -160,12 +160,12 @@ jobs:
         timeout-minutes: 20
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-di-vc-test.yml up --no-build --exit-code-from lit-di-vc-test lit-di-vc-test
+          docker compose -f docker-compose.yml -f release-ts-api-package.yml up --no-build --exit-code-from release-ts-api-package release-ts-api-package
 
       - name: Stop docker containers
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-di-vc-test.yml stop
+          docker compose -f docker-compose.yml -f release-ts-api-package.yml stop
 
       - name: Collect Docker Logs
         continue-on-error: true
@@ -179,6 +179,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: logs-lit-di-vc-test
+          name: logs-release-ts-api-package
           path: logs
           if-no-files-found: ignore
