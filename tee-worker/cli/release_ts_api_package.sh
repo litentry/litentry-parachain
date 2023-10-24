@@ -17,7 +17,6 @@ sudo chmod a+x /usr/local/bin/websocat
 whereis websocat
 websocat --version
 
-echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 wss://litentry-worker-1:2011
 
 cd /client-api
 pnpm install
@@ -28,9 +27,12 @@ curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "m
 echo "update parachain metadata"
 
 cd  /client-api/sidechain-api
-
+echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 wss://litentry-worker-1:2011 > prepare-build/litentry-sidechain-metadata.json
 
 echo "update sidechain metadata"
+
+sudo apt install git
+git status
 
 # pnpm run build
 
