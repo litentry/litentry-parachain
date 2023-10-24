@@ -26,7 +26,7 @@ use itp_stf_executor::{traits::StateUpdateProposer, ExecutedOperation};
 use itp_stf_interface::system_pallet::SystemPalletEventInterface;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, RsaRequest, ShardIdentifier, H256};
+use itp_types::{OpaqueCall, ShardIdentifier, H256};
 use log::*;
 use sp_runtime::traits::Block;
 use std::{marker::PhantomData, sync::Arc, time::Duration, vec::Vec};
@@ -221,7 +221,7 @@ mod tests {
 	use itp_stf_primitives::types::KeyPair;
 	use itp_test::mock::handle_state_mock::HandleStateMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::Block as ParentchainBlock;
+	use itp_types::{Block as ParentchainBlock, RsaRequest};
 	use sp_core::{ed25519, Pair};
 	use std::boxed::Box;
 
