@@ -8,7 +8,7 @@ function usage() {
 
 [ $# -ne 1 ] && (usage; exit 1)
 
-LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:?}
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 CHAIN=$1
 
 ROOTDIR=$(git rev-parse --show-toplevel)
