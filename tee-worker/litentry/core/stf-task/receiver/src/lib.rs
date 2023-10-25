@@ -35,7 +35,7 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-mod handler;
+pub mod handler;
 
 use codec::Encode;
 use frame_support::sp_tracing::warn;
@@ -80,7 +80,7 @@ pub struct StfTaskContext<
 > {
 	shielding_key: K,
 	author_api: Arc<A>,
-	enclave_signer: Arc<S>,
+	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
 }

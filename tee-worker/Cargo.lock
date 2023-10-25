@@ -16135,6 +16135,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "830b7e5d4d90034032940e4ace0d9a9a057e7a45cd94e6c007832e39edb82f6d"
 
 [[package]]
+name = "vc-issuance"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "futures 0.3.28",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "ita-sgx-runtime",
+ "ita-stf",
+ "itp-enclave-metrics",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-stf-state-handler",
+ "itp-top-pool-author",
+ "itp-types",
+ "lc-assertion-build",
+ "lc-credentials",
+ "lc-data-providers",
+ "lc-identity-verification",
+ "lc-stf-task-receiver",
+ "lc-stf-task-sender",
+ "litentry-primitives",
+ "log 0.4.19",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-core",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+ "threadpool 1.8.0",
+ "threadpool 1.8.1",
+ "url 2.1.1",
+]
+
+[[package]]
 name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"

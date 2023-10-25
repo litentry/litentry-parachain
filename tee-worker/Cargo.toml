@@ -77,6 +77,7 @@ members = [
     "litentry/core/assertion-build",
     "litentry/core/data-providers",
     "litentry/core/mock-server",
+    "litentry/core/vc-issuance",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
