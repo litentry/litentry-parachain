@@ -140,7 +140,6 @@ where
 			Ok(k) => k,
 			Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),
 		};
-		// let request_vec = match shielding_key.decrypt(ext.as_slice()) {
 		let request_vec = match request.decrypt(Box::new(shielding_key)) {
 			Ok(req) => req,
 			Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),

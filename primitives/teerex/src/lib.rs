@@ -202,9 +202,8 @@ pub type Pcesvn = u16;
 pub type ShardIdentifier = H256;
 pub type SidechainBlockNumber = u64;
 
-// Litentry: use the name `RsaRequest` to differentiate from `AesRequest` in
-// `tee-worker/litentry/primitives/src/aes_request.rs` `Rsa` implies that the payload is
-// RSA-encrypted (using enclave's shielding key)
+// Litentry: use the name `RsaRequest` to differentiate from `AesRequest` (see aes_request.rs in
+// tee-worker) `Rsa` implies that the payload is RSA-encrypted (using enclave's shielding key)
 #[macro_export]
 macro_rules! decl_rsa_request {
 	($($t:meta),*) => {
