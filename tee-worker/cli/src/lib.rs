@@ -52,10 +52,10 @@ use thiserror::Error;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Parser)]
-#[clap(name = "integritee-cli")]
+#[clap(name = "litentry-cli")]
 #[clap(version = VERSION)]
-#[clap(author = "Integritee AG <hello@integritee.network>")]
-#[clap(about = "interact with integritee-node and workers", long_about = None)]
+#[clap(author = "Trust Computing GmbH <info@litentry.com>")]
+#[clap(about = "cli tool to interact with litentry-parachain and workers", long_about = None)]
 #[clap(after_help = "stf subcommands depend on the stf crate this has been built against")]
 pub struct Cli {
 	/// node url
