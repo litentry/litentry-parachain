@@ -649,6 +649,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	});
 
 	// ------------------------------------------------------------------------
+	// Start vc issuance handler thread
+	// let enclave_api_stf_task_handler = enclave.clone();
+	// let data_provider_config = data_provider_config.clone();
+	// thread::spawn(move || {
+	// 	enclave_api_stf_task_handler.run_stf_task_handler(data_provider_config).unwrap();
+	// });
+
+	// ------------------------------------------------------------------------
 	// initialize teeracle interval
 	#[cfg(feature = "teeracle")]
 	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {

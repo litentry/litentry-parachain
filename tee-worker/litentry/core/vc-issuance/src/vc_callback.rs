@@ -44,7 +44,7 @@ where
 	pub fn request_vc_callback(
 		self,
 		who: Identity,
-		vc_payload: Vec<u8>,
+		vc_payload: &[u8],
 		assertion: Assertion,
 		vc_index: u32,
 		vc_hash: H256,
@@ -56,17 +56,17 @@ where
 			.get_from_metadata(|m| m.vc_issued_call_indexes())
 			.unwrap()
 			.unwrap();
-		let result = aes_encrypt_default(&key, &vc_payload);
+		let result = aes_encrypt_default(&key, vc_payload);
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
 			who,
 			assertion,
 			vc_index,
 			vc_hash,
-			aes_encrypt_default(&key, &vc_payload),
+			aes_encrypt_default(&key, vc_payload),
 			hash,
 		));
-		let xt = self.extrinsic_factory.create_extrinsics(vec![call].as_ref(), None).unwrap();
+		let xt = self.extrinsic_factory.create_extrinsics(&[call], None).unwrap();
 		self.context.ocall_api.send_to_parentchain(xt).unwrap();
 	}
 }
