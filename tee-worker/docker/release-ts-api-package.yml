@@ -16,7 +16,9 @@ services:
                 condition: service_healthy
         networks:
             - litentry-test-network
-        entrypoint: "bash -c '/usr/local/worker-cli/release_ts_api_package.sh release_ts_api_package 2>&1' "
+        entrypoint:
+            "/usr/local/worker-cli/release_ts_api_package.sh -p 9912 -u ws://litentry-node
+            -V wss://litentry-worker-1 -A 2011 -W wss://litentry-worker-2 -B 2012 -C /usr/local/bin/litentry-cli 2>&1"
         restart: "no"
 networks:
     litentry-test-network:
