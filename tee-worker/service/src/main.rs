@@ -58,6 +58,7 @@ use itp_enclave_api::{
 	sidechain::Sidechain,
 	stf_task_handler::StfTaskHandler,
 	teeracle_api::TeeracleApi,
+	vc_issuance::VcIssuance,
 	Enclave,
 };
 use itp_node_api::{
@@ -381,6 +382,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		+ TlsRemoteAttestation
 		+ TeeracleApi
 		+ StfTaskHandler
+		+ VcIssuance
 		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
@@ -643,18 +645,18 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
-	let data_provider_config = data_provider_config.clone();
+	let data_provider = data_provider_config.clone();
 	thread::spawn(move || {
-		enclave_api_stf_task_handler.run_stf_task_handler(data_provider_config).unwrap();
+		enclave_api_stf_task_handler.run_stf_task_handler(data_provider).unwrap();
 	});
 
 	// ------------------------------------------------------------------------
 	// Start vc issuance handler thread
-	// let enclave_api_stf_task_handler = enclave.clone();
-	// let data_provider_config = data_provider_config.clone();
-	// thread::spawn(move || {
-	// 	enclave_api_stf_task_handler.run_stf_task_handler(data_provider_config).unwrap();
-	// });
+	let enclave_api_stf_task_handler = enclave.clone();
+	let data_provider = data_provider_config.clone();
+	thread::spawn(move || {
+		enclave_api_stf_task_handler.run_vc_issuance(data_provider).unwrap();
+	});
 
 	// ------------------------------------------------------------------------
 	// initialize teeracle interval

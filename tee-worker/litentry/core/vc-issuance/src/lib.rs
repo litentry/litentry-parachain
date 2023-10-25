@@ -24,5 +24,7 @@ mod vc_handling;
 
 pub fn run_vc_handler_runner() {
 	// Do whatever here lol
-	loop {}
+	loop {
+		log::error!("This is running lol");
+	}
 }
