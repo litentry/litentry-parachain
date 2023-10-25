@@ -117,7 +117,7 @@ impl TrustedBaseCommand {
 	}
 }
 
-fn new_account(trusted_args: &TrustedCli) -> CliResult {
+fn new_account(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
 	let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
 	let key = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
 	drop(store);
