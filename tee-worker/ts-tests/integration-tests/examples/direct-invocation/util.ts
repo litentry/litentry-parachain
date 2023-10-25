@@ -289,7 +289,6 @@ export const getSidechainNonce = async (
     teeShieldingKey: KeyObject,
     subject: LitentryPrimitivesIdentity
 ): Promise<Index> => {
-
     const getterSigned = await createSignedTrustedGetter(
         context.api,
         ['nonce', '(LitentryIdentity)'],

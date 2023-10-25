@@ -194,8 +194,10 @@ taplocheck:
 .PHONY: fmt ## cargo fmt all && taplo fmt all
 fmt:
 	cargo fmt --all && taplo fmt
+	cd ts-tests && pnpm run format
 	cd tee-worker && cargo fmt --all && taplo fmt
 	cd tee-worker/enclave-runtime && cargo fmt --all && taplo fmt
+	cd tee-worker/ts-tests && pnpm run format
 
 .PHONY: githooks ## install the githooks
 githooks:

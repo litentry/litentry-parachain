@@ -244,6 +244,7 @@ fmt:
 	@echo "Cargo format all ..."
 	@cargo fmt --all
 	@cd enclave-runtime && cargo fmt --all
+	@cd ts-tests && pnpm run format
 
 .PHONY: pin-sgx
 pin-sgx:
