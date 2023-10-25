@@ -1,6 +1,7 @@
 #![allow(clippy::result_large_err)]
 
 use ita_sgx_runtime::Hash;
+pub use ita_stf::{aes_encrypt_default, IdentityManagement};
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -151,6 +152,12 @@ where
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
 		// using enclave's shielding key is encrypted in chunks
 		let (vc_index, vc_hash, vc_payload) = result;
+		// first get user shielding key
+		let identity = self.req.who.clone();
+		let key = IdentityManagement::user_shielding_keys(&identity).unwrap();
+		let result = aes_encrypt_default(&key, &vc_payload);
+		// We need to construct the VC_Issued Extrinsic
+
 		// TODO: P-186
 		// if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 		// 	let c = TrustedCall::request_vc_callback(
