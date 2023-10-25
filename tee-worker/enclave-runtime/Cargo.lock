@@ -4963,6 +4963,7 @@ dependencies = [
  "itp-stf-state-handler",
  "itp-top-pool-author",
  "itp-types",
+ "lazy_static",
  "lc-assertion-build",
  "lc-credentials",
  "lc-data-providers",

@@ -13,18 +13,57 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-// #[cfg(all(not(feature = "std"), feature = "sgx"))]
-// use crate::sgx_reexport_prelude::*;
-
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 mod vc_callback;
 mod vc_handling;
+mod vc_sender;
 
-pub fn run_vc_handler_runner() {
-	// Do whatever here lol
+use crate::vc_handling::AssertionHandler;
+use ita_sgx_runtime::Hash;
+use ita_stf::{aes_encrypt_default, IdentityManagement, OpaqueCall, VCMPCallIndexes, H256};
+use itp_extrinsics_factory::CreateExtrinsics;
+use itp_node_api::metadata::{
+	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+};
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
+use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_stf_executor::traits::StfEnclaveSigning;
+use itp_stf_state_handler::handle_state::HandleState;
+use itp_top_pool_author::traits::AuthorApi;
+use lc_stf_task_receiver::{handler::TaskHandler, StfTaskContext};
+use lc_stf_task_sender::RequestType;
+use litentry_primitives::{Assertion, Identity};
+use std::sync::{mpsc::channel, Arc};
+
+pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
+	context: Arc<StfTaskContext<K, A, S, H, O>>,
+	extrinsic_factory: Arc<Z>,
+	node_metadata_repo: N,
+) where
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
+	S: StfEnclaveSigning + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
+	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
+	Z: CreateExtrinsics,
+	N: AccessNodeMetadata,
+	N::MetadataType: NodeMetadataTrait,
+{
+	let receiver = vc_sender::init_vc_task_sender_storage();
+	let (sender, receiver_z) = channel();
+
 	loop {
-		log::error!("This is running lol");
+		let req = receiver.recv().unwrap();
+
+		let context_pool = context.clone();
+		let sender_pool = sender.clone();
+
+		if let RequestType::AssertionVerification(req) = req {
+			AssertionHandler { req: req.clone(), context: context_pool.clone() }.start(sender_pool);
+		}
 	}
 }

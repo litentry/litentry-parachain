@@ -27,7 +27,8 @@ use vc_issuance::run_vc_handler_runner;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT,
+		EnclaveNodeMetadataRepository, EnclaveStfEnclaveSigner,
+		GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
@@ -98,7 +99,12 @@ fn run_vc_issuance_internal() -> Result<()> {
 		ocall_api,
 	);
 
-	run_vc_handler_runner();
+	if let Ok(solochain_handler) = GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		let node_metadata_repo = EnclaveNodeMetadataRepository::default();
+		let extrinsic_factory = solochain_handler.extrinsics_factory.clone();
+
+		run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+	}
 	Ok(())
 	// run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
 }
