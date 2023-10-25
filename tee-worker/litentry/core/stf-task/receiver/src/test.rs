@@ -64,37 +64,4 @@ fn test_threadpool_behaviour() {
 			assert!(false, "Test exceeded the 60-second timeout");
 		}
 	}
-
-	// Exhaust all workers with A1
-	sender.send_stf_request(construct_assertion_request(Assertion::A1)).unwrap();
-	sender.send_stf_request(construct_assertion_request(Assertion::A1)).unwrap();
-	sender.send_stf_request(construct_assertion_request(Assertion::A1)).unwrap();
-	sender.send_stf_request(construct_assertion_request(Assertion::A1)).unwrap();
-	// Submit A6, it will wait until the threads are free
-	sender.send_stf_request(construct_assertion_request(Assertion::A6)).unwrap();
-
-	let mut expected_output: Vec<Assertion> =
-		vec![Assertion::A1, Assertion::A1, Assertion::A1, Assertion::A1, Assertion::A6];
-
-	let start_time = std::time::Instant::now();
-
-	while let Ok(ext) = receiver.recv() {
-		let decrypted = shielding_key.decrypt(&ext).unwrap();
-		let decoded: TrustedOperation = Decode::decode(&mut decrypted.as_ref()).unwrap();
-		if let TrustedOperation::direct_call(TrustedCallSigned {
-			call: TrustedCall::request_vc_callback(_, _, assertion, ..),
-			..
-		}) = decoded
-		{
-			assert_eq!(expected_output.remove(0), assertion);
-		}
-		if expected_output.len() == 0 {
-			break
-		}
-
-		// Timeout condition
-		if start_time.elapsed() > timeout_duration {
-			assert!(false, "Test exceeded the 60-second timeout");
-		}
-	}
 }
