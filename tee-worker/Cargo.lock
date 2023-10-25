@@ -6789,6 +6789,7 @@ dependencies = [
  "sp-std 5.0.0",
  "strum 0.25.0",
  "strum_macros 0.25.3",
+ "teerex-primitives",
 ]
 
 [[package]]

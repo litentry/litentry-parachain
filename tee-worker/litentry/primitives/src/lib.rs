@@ -58,6 +58,7 @@ use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
 use std::string::ToString;
+pub use teerex_primitives::decl_rsa_request;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

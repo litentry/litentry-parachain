@@ -28,6 +28,7 @@ sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "m
 itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
+teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 
 [features]
 default = ["std"]
@@ -50,6 +51,7 @@ std = [
     "sp-runtime/std",
     "ring/std",
     "parentchain-primitives/std",
+    "teerex-primitives/std",
     "rand",
     "log/std",
 ]

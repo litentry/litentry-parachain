@@ -21,7 +21,7 @@
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use litentry_primitives::UserShieldingKeyNonceType;
+use litentry_primitives::{decl_rsa_request, UserShieldingKeyNonceType};
 use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 
 pub mod parentchain;
@@ -90,18 +90,9 @@ impl Encode for OpaqueCall {
 	}
 }
 
-// Litentry: re-defined due to orphan rule - it needs to be kept identical to that in teerex-primitives
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, Debug)]
-pub struct RsaRequest {
-	shard: ShardIdentifier,
-	payload: Vec<u8>,
-}
+// Litentry: re-declared due to orphan rule (that's why macro is used)
+decl_rsa_request!(Debug);
 
-impl RsaRequest {
-	pub fn new(shard: ShardIdentifier, payload: Vec<u8>) -> Self {
-		Self { shard, payload }
-	}
-}
 impl DecryptableRequest for RsaRequest {
 	type Error = ();
 
