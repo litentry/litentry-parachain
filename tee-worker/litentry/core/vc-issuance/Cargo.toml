@@ -26,9 +26,12 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 
 # internal dependencies
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
+# ita-sgx-runtime = { default-features = false, path = "../sgx-runtime" }
+itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 
 itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
+itp-node-api = { path = "../../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false }
@@ -69,6 +72,8 @@ sgx = [
     "lc-data-providers/sgx",
     "lc-stf-task-receiver/sgx",
     "lc-stf-task-sender/sgx",
+    "itp-extrinsics-factory/sgx",
+    "itp-node-api/sgx",
 ]
 std = [
     "threadpool",
@@ -89,4 +94,6 @@ std = [
     "lc-data-providers/std",
     "lc-stf-task-receiver/std",
     "lc-stf-task-sender/std",
+    "itp-extrinsics-factory/std",
+    "itp-node-api/std",
 ]

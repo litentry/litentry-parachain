@@ -16145,6 +16145,8 @@ dependencies = [
  "ita-sgx-runtime",
  "ita-stf",
  "itp-enclave-metrics",
+ "itp-extrinsics-factory",
+ "itp-node-api",
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
