@@ -3,7 +3,45 @@
 # Copyright 2020-2023 Trust Computing GmbH.
 
 set -euo pipefail
+while getopts ":m:p:P:t:u:V:C:" opt; do
+    case $opt in
+        t)
+            TEST=$OPTARG
+            ;;
+        m)
+            READMRENCLAVE=$OPTARG
+            ;;
+        p)
+            NPORT=$OPTARG
+            ;;
+        P)
+            WORKER1PORT=$OPTARG
+            ;;
+        u)
+            NODEURL=$OPTARG
+            ;;
+        V)
+            WORKER1URL=$OPTARG
+            ;;
+        C)
+            CLIENT_BIN=$OPTARG
+            ;;
+    esac
+done
 
+# Using default port if none given as arguments.
+NPORT=${NPORT:-9944}
+NODEURL=${NODEURL:-"ws://127.0.0.1"}
+
+WORKER1PORT=${WORKER1PORT:-2000}
+WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
+
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
+
+echo "Using client binary ${CLIENT_BIN}"
+echo "Using node uri ${NODEURL}:${NPORT}"
+echo "Using trusted-worker uri ${WORKER1URL}:${WORKER1PORT}"
+echo ""
 function usage() {
     echo "Usage: $0 <Options>"
     echo "updating metadata"
