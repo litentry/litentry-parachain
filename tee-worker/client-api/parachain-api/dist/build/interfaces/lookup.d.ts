@@ -4464,7 +4464,7 @@ declare const _default: {
                 vcPubkey: string;
             };
             unregister_enclave: string;
-            call_worker: {
+            invoke: {
                 request: string;
             };
             confirm_processed_parentchain_block: {

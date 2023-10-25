@@ -132,6 +132,7 @@ where
 				return None
 			},
 		};
+
 		let address = if let Some(signature) = xt.signature { Some(signature.0) } else { None };
 
 		let index = xt.call_index;
@@ -140,6 +141,7 @@ where
 			"[ShieldFundsAndInvokeFilter] attempting to execute indirect call with index {:?}",
 			index
 		);
+
 		if index == metadata.shield_funds_call_indexes().ok()? {
 			log::debug!("executing shield funds call");
 			let args = decode_and_log_error::<ShieldFundsArgs>(call_args)?;
@@ -151,32 +153,40 @@ where
 		}
 		// Litentry
 		else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
+			log::debug!("executing set_user_shielding_key call");
 			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::SetUserShieldingKey(args, address, hashed_extrinsic))
 		} else if index == metadata.link_identity_call_indexes().ok()? {
+			log::debug!("executing link_identity call");
 			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::LinkIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.deactivate_identity_call_indexes().ok()? {
+			log::debug!("executing deactivate_identity call");
 			let args = decode_and_log_error::<DeactivateIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::DeactivateIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.activate_identity_call_indexes().ok()? {
+			log::debug!("executing activate_identity call");
 			let args = decode_and_log_error::<ActivateIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::ActivateIdentity(args, address, hashed_extrinsic))
 		} else if index == metadata.request_vc_call_indexes().ok()? {
+			log::debug!("executing request_vc call");
 			let args = decode_and_log_error::<RequestVCArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::RequestVC(args, address, hashed_extrinsic))
 		} else if index == metadata.update_scheduled_enclave().ok()? {
+			log::debug!("executing update_scheduled_enclave call");
 			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::UpdateScheduledEnclave(args))
 		} else if index == metadata.remove_scheduled_enclave().ok()? {
+			log::debug!("executing remove_scheduled_enclave call");
 			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::RemoveScheduledEnclave(args))
 		} else {
+			log::debug!("executing no call");
 			None
 		}
 	}

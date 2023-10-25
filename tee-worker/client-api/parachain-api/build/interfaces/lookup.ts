@@ -4635,7 +4635,7 @@ export default {
                 vcPubkey: "Option<Bytes>",
             },
             unregister_enclave: "Null",
-            call_worker: {
+            invoke: {
                 request: "TeerexPrimitivesRequest",
             },
             confirm_processed_parentchain_block: {

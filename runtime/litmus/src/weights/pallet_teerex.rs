@@ -85,7 +85,7 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(5))
 	}
-	fn call_worker() -> Weight {
+	fn invoke() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`

@@ -445,7 +445,7 @@ fn call_worker_works() {
 		let req = Request { shard: ShardIdentifier::default(), cyphertext: vec![0u8, 1, 2, 3, 4] };
 		// don't care who signs
 		let signer = get_signer(TEST4_SIGNER_PUB);
-		assert!(Teerex::call_worker(RuntimeOrigin::signed(signer), req.clone()).is_ok());
+		assert!(Teerex::invoke(RuntimeOrigin::signed(signer), req.clone()).is_ok());
 		let expected_event = RuntimeEvent::Teerex(TeerexEvent::Forwarded(req.shard));
 		println!("events:{:?}", System::events());
 		assert!(System::events().iter().any(|a| a.event == expected_event));

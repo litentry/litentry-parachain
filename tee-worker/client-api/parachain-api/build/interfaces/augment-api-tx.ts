@@ -4114,16 +4114,6 @@ declare module "@polkadot/api-base/types/submittable" {
             >;
         };
         teerex: {
-            callWorker: AugmentedSubmittable<
-                (
-                    request:
-                        | TeerexPrimitivesRequest
-                        | { shard?: any; cyphertext?: any }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [TeerexPrimitivesRequest]
-            >;
             /**
              * The integritee worker calls this function for every processed parentchain_block to
              * confirm a state update.
@@ -4135,6 +4125,16 @@ declare module "@polkadot/api-base/types/submittable" {
                     trustedCallsMerkleRoot: H256 | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [H256, Compact<u32>, H256]
+            >;
+            invoke: AugmentedSubmittable<
+                (
+                    request:
+                        | TeerexPrimitivesRequest
+                        | { shard?: any; cyphertext?: any }
+                        | string
+                        | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [TeerexPrimitivesRequest]
             >;
             /**
              * Publish a hash as a result of an arbitrary enclave operation.

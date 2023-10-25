@@ -5630,8 +5630,8 @@ declare module "@polkadot/types/lookup" {
             readonly vcPubkey: Option<Bytes>;
         } & Struct;
         readonly isUnregisterEnclave: boolean;
-        readonly isCallWorker: boolean;
-        readonly asCallWorker: {
+        readonly isInvoke: boolean;
+        readonly asInvoke: {
             readonly request: TeerexPrimitivesRequest;
         } & Struct;
         readonly isConfirmProcessedParentchainBlock: boolean;
@@ -5700,7 +5700,7 @@ declare module "@polkadot/types/lookup" {
         readonly type:
             | "RegisterEnclave"
             | "UnregisterEnclave"
-            | "CallWorker"
+            | "Invoke"
             | "ConfirmProcessedParentchainBlock"
             | "ShieldFunds"
             | "UnshieldFunds"

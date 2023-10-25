@@ -65,8 +65,8 @@ impl SetUserShieldingKeyCommand {
 
 		let xt = compose_extrinsic!(chain_api, IMP, "set_user_shielding_key", shard, encrypted_key);
 
-		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
-		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+		chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
+		println!("[+] TrustedOperation got finalized: SetUserShieldingKeyCommand");
 
 		Ok(CliResultOk::None)
 	}

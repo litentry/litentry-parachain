@@ -296,10 +296,10 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight((<T as Config>::WeightInfo::call_worker(), DispatchClass::Normal, Pays::Yes))]
-		pub fn call_worker(origin: OriginFor<T>, request: Request) -> DispatchResult {
+		#[pallet::weight((<T as Config>::WeightInfo::invoke(), DispatchClass::Normal, Pays::Yes))]
+		pub fn invoke(origin: OriginFor<T>, request: Request) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
-			log::info!("call_worker with {:?}", request);
+			log::info!("invoke with {:?}", request);
 			Self::deposit_event(Event::Forwarded(request.shard));
 			Ok(())
 		}

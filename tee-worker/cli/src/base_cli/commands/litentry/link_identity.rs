@@ -79,8 +79,8 @@ impl LinkIdentityCommand {
 			vdata
 		);
 
-		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
-		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+		chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
+		println!("[+] TrustedOperation got finalized: LinkIdentityCommand");
 
 		Ok(CliResultOk::None)
 	}

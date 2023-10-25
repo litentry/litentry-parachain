@@ -121,9 +121,9 @@ benchmarks! {
 		assert_eq!(Teerex::<T>::enclave_count(), enclave_count as u64 - 1);
 	}
 
-	// Benchmark `call_worker`. There are no worst conditions. The benchmark showed that
+	// Benchmark `invoke`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of cyphertext size.
-	call_worker {
+	invoke {
 		let accounts: Vec<T::AccountId> = generate_accounts::<T>(1);
 		let req = Request { shard:H256::from_slice(&TEST4_SETUP.mrenclave), cyphertext: vec![1u8; 2000]};
 	}: _(RawOrigin::Signed(accounts[0].clone()), req)
