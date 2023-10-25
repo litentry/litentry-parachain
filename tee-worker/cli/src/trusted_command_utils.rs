@@ -65,7 +65,7 @@ const TRUSTED_KEYSTORE_PATH: &str = "my_trusted_keystore";
 
 pub(crate) fn get_balance(cli: &Cli, trusted_args: &TrustedCli, arg_who: &str) -> Option<u128> {
 	debug!("arg_who = {:?}", arg_who);
-	let who = get_pair_from_str(trusted_args, arg_who);
+	let who = get_pair_from_str(trusted_args, arg_who, cli);
 	let top: TrustedOperation = TrustedGetter::free_balance(who.public().into())
 		.sign(&KeyPair::Sr25519(Box::new(who)))
 		.into();
@@ -85,13 +85,20 @@ pub(crate) fn decode_balance(maybe_encoded_balance: Option<Vec<u8>>) -> Option<B
 	})
 }
 
-pub(crate) fn get_keystore_path(trusted_args: &TrustedCli) -> PathBuf {
-	let (_mrenclave, shard) = get_identifiers(trusted_args);
+pub(crate) fn get_keystore_path(trusted_args: &TrustedCli, cli: &Cli) -> PathBuf {
+	let (_mrenclave, shard) = get_identifiers(trusted_args, cli);
 	PathBuf::from(&format!("{}/{}", TRUSTED_KEYSTORE_PATH, shard.encode().to_base58()))
 }
 
-pub(crate) fn get_identifiers(trusted_args: &TrustedCli) -> ([u8; 32], ShardIdentifier) {
-	let mrenclave = mrenclave_from_base58(&trusted_args.mrenclave);
+pub(crate) fn get_identifiers(trusted_args: &TrustedCli, cli: &Cli) -> ([u8; 32], ShardIdentifier) {
+	let mrenclave = if let Some(mrenclave) = &trusted_args.mrenclave {
+		mrenclave_from_base58(mrenclave)
+	} else {
+		let direct_api = get_worker_api_direct(cli);
+		direct_api
+			.get_state_mrenclave()
+			.expect("Unable to retrieve MRENCLAVE from endpoint")
+	};
 	let shard = match &trusted_args.shard {
 		Some(val) =>
 			ShardIdentifier::from_slice(&val.from_base58().expect("shard has to be base58 encoded")),
@@ -114,14 +121,18 @@ pub(crate) fn get_accountid_from_str(account: &str) -> AccountId {
 
 // TODO this function is ALMOST redundant with client::main
 // get a pair either form keyring (well known keys) or from the store
-pub(crate) fn get_pair_from_str(trusted_args: &TrustedCli, account: &str) -> sr25519_core::Pair {
+pub(crate) fn get_pair_from_str(
+	trusted_args: &TrustedCli,
+	account: &str,
+	cli: &Cli,
+) -> sr25519_core::Pair {
 	info!("getting pair for {}", account);
 	match &account[..2] {
 		"//" => sr25519_core::Pair::from_string(account, None).unwrap(),
 		_ => {
 			info!("fetching from keystore at {}", &TRUSTED_KEYSTORE_PATH);
 			// open store without password protection
-			let store = LocalKeystore::open(get_keystore_path(trusted_args), None)
+			let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None)
 				.expect("store should exist");
 			info!("store opened");
 			let public_key = &sr25519::AppPublic::from_ss58check(account).unwrap();
@@ -140,7 +151,7 @@ pub(crate) fn get_pending_trusted_calls_for(
 	trusted_args: &TrustedCli,
 	who: &AccountId,
 ) -> Vec<TrustedOperation> {
-	let shard = read_shard(trusted_args).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
 	let direct_api = get_worker_api_direct(cli);
 	let rpc_method = "author_pendingTrustedCallsFor".to_owned();
 	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(

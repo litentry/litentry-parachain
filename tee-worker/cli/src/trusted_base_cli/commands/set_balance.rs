@@ -41,13 +41,13 @@ pub struct SetBalanceCommand {
 
 impl SetBalanceCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
-		let who = get_pair_from_str(trusted_args, &self.account);
-		let signer = get_pair_from_str(trusted_args, "//Alice");
+		let who = get_pair_from_str(trusted_args, &self.account, cli);
+		let signer = get_pair_from_str(trusted_args, "//Alice", cli);
 		info!("account ss58 is {}", who.public().to_ss58check());
 
 		println!("send trusted call set-balance({}, {})", who.public(), self.amount);
 
-		let (mrenclave, shard) = get_identifiers(trusted_args);
+		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 		let nonce = get_layer_two_nonce!(signer, cli, trusted_args);
 		let top: TrustedOperation = TrustedCall::balance_set_balance(
 			signer.public().into(),
