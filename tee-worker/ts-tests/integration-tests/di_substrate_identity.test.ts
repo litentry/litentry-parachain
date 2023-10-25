@@ -82,7 +82,12 @@ describe('Test Identity (direct invocation)', function () {
         );
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
-        const nonce = await getSidechainNonce(context, teeShieldingKey, charlieSubject);
+        const nonce = await getSidechainNonce(
+            context,
+            new PolkadotSigner(context.substrateWallet.alice),
+            teeShieldingKey,
+            charlieSubject
+        );
         const [bobValidationData] = await buildValidations(
             context,
             [charlieSubject],
@@ -147,7 +152,12 @@ describe('Test Identity (direct invocation)', function () {
         step(`setting user shielding key (${name})`, async function () {
             const wallet = context.substrateWallet[name];
             const subject = await buildIdentityFromKeypair(new PolkadotSigner(wallet), context);
-            const nonce = await getSidechainNonce(context, teeShieldingKey, subject);
+            const nonce = await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                subject
+            );
 
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
@@ -206,7 +216,14 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking identities (alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const twitterNonce = getNextNonce();
@@ -373,7 +390,14 @@ describe('Test Identity (direct invocation)', function () {
     step('linking invalid identity', async function () {
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
 
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
 
         const getNextNonce = () => currentNonce++;
 
@@ -427,7 +451,14 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking identity with wrong signature', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
         const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const evmNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum', 'Bsc']);
@@ -489,7 +520,14 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking already linked identity', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const twitterNonce = getNextNonce();
@@ -538,7 +576,14 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('deactivating identity', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const deactivateIdentityRequestParams: {
@@ -634,7 +679,14 @@ describe('Test Identity (direct invocation)', function () {
         }
     });
     step('activating identity', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const activateIdentityRequestParams: {
@@ -743,7 +795,14 @@ describe('Test Identity (direct invocation)', function () {
         assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString());
     });
     step('setting identity network(alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
         const eveSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.eve.addressRaw),
@@ -788,7 +847,14 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('setting incompatible identity network(alice)', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
         const eveSubstrateIdentity = await buildIdentityHelper(
             u8aToHex(context.substrateWallet.eve.addressRaw),
@@ -844,7 +910,14 @@ describe('Test Identity (direct invocation)', function () {
         );
     });
     step('deactivating prime identity is disallowed', async function () {
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+        let currentNonce = (
+            await getSidechainNonce(
+                context,
+                new PolkadotSigner(context.substrateWallet.alice),
+                teeShieldingKey,
+                aliceSubject
+            )
+        ).toNumber();
         const getNextNonce = () => currentNonce++;
 
         //  nonce should be plus 1 why?
