@@ -142,7 +142,7 @@ where
 		Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
 	}
 
-	// TODO: P-186
+	// TODO: P-187
 	fn on_success(
 		&self,
 		result: Self::Result,
@@ -158,7 +158,7 @@ where
 		let result = aes_encrypt_default(&key, &vc_payload);
 		// We need to construct the VC_Issued Extrinsic
 
-		// TODO: P-186
+		// TODO: P-187
 		// if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 		// 	let c = TrustedCall::request_vc_callback(
 		// 		enclave_signer.into(),
@@ -177,14 +177,14 @@ where
 		// }
 	}
 
-	// TODO: P-186
+	// TODO: P-187
 	fn on_failure(
 		&self,
 		error: Self::Error,
 		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		error!("Assertion build error: {error:?}");
-		// TODO: P-186
+		// TODO: P-187
 		// if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 		// 	let c = TrustedCall::handle_vcmp_error(
 		// 		enclave_signer.into(),

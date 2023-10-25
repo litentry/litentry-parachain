@@ -28,14 +28,7 @@ pub(crate) struct VCCallbackHandler<
 	pub(crate) node_metadata_repo: Arc<N>,
 }
 
-// 1. We need to fetch the user shielding key - Done
-// 2. We need to encrypt the VC Payload using the user shielding key - Done
-// 3. We need to get the call index for VC Issued Extrinsic - Done
-// 4. We need to construct the VC Issued Extrinsic - Done
-// 5. We need to signed this extrinsic with Enclave Signer, using extrinsic factory provided in the callback handler - Done
-// 6. We need to submit the VC Issued extrinsic using context
-// 7. We need to have some form of responder to the JSONRPC sender. (TODO: P-188)
-
+// We need to have some form of responder to the JSONRPC sender. (TODO: P-188)
 impl<K, A, S, H, O, Z, N> VCCallbackHandler<K, A, S, H, O, Z, N>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -74,5 +67,6 @@ where
 			hash,
 		));
 		let xt = self.extrinsic_factory.create_extrinsics(vec![call].as_ref(), None).unwrap();
+		self.context.ocall_api.send_to_parentchain(xt).unwrap();
 	}
 }
