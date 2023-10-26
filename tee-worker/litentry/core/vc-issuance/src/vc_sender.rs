@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 // use crate::error::{Error, Result};
+use crate::vc_primitives::VCRequest;
 use ita_sgx_runtime::Hash;
 use ita_stf::{aes_encrypt_default, IdentityManagement, OpaqueCall, VCMPCallIndexes, H256};
 use itp_extrinsics_factory::CreateExtrinsics;
@@ -43,7 +44,7 @@ use lc_stf_task_sender::RequestType;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-pub type VcSender = Sender<RequestType>;
+pub type VcSender = Sender<VCRequest>;
 
 // Global storage of the sender. Should not be accessed directly.
 lazy_static! {
@@ -53,7 +54,7 @@ lazy_static! {
 
 /// Trait to send an stf request to the stf request thread.
 pub trait SendVcRequest {
-	fn send_vc_request(&self, request: RequestType);
+	fn send_vc_request(&self, request: VCRequest);
 }
 
 pub struct VcRequestSender {}
@@ -70,7 +71,7 @@ impl Default for VcRequestSender {
 }
 
 impl SendVcRequest for VcRequestSender {
-	fn send_vc_request(&self, request: RequestType) {
+	fn send_vc_request(&self, request: VCRequest) {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
@@ -87,7 +88,7 @@ impl SendVcRequest for VcRequestSender {
 }
 
 /// Initialization of the extrinsic sender. Needs to be called before any sender access.
-pub fn init_vc_task_sender_storage() -> Receiver<RequestType> {
+pub fn init_vc_task_sender_storage() -> Receiver<VCRequest> {
 	let (sender, receiver) = channel();
 	let mut vc_task_storage = GLOBAL_VC_REQUEST_TASK.lock().unwrap();
 	*vc_task_storage = Some(VcTaskSender::new(sender));
@@ -105,7 +106,7 @@ impl VcTaskSender {
 		Self { sender }
 	}
 
-	fn send(&self, request: RequestType) {
+	fn send(&self, request: VCRequest) {
 		self.sender.send(request).unwrap();
 	}
 }

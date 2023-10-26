@@ -41,6 +41,14 @@ where
 	N: AccessNodeMetadata,
 	N::MetadataType: NodeMetadataTrait,
 {
+	pub fn new(
+		context: Arc<StfTaskContext<K, A, S, H, O>>,
+		extrinsic_factory: Arc<Z>,
+		node_metadata_repo: Arc<N>,
+	) -> Self {
+		Self { context, extrinsic_factory, node_metadata_repo }
+	}
+
 	pub fn request_vc_callback(
 		self,
 		who: Identity,
