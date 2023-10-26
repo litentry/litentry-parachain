@@ -40,7 +40,7 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 
 # litentry
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
-lc-vc-task-sender = { path = "../../litentry/core/vc-issuancee/lc-vc-task-sender", default-features = false }
+lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
 
