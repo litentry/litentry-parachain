@@ -256,4 +256,11 @@ extern "C" {
 		data_provider_config: *const u8,
 		data_provider_config_size: usize,
 	) -> sgx_status_t;
+
+	pub fn run_vc_issuance(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		data_provider_config: *const u8,
+		data_provider_config_size: usize,
+	) -> sgx_status_t;
 }
