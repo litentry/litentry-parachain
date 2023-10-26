@@ -19,10 +19,10 @@ use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::key_repository::AccessKey;
 use lc_data_providers::{DataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG};
 use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
+use lc_vc_task_receiver::run_vc_handler_runner;
 use log::*;
 use sgx_types::sgx_status_t;
 use std::sync::Arc;
-use vc_issuance::run_vc_handler_runner;
 
 use crate::{
 	error::{Error, Result},
@@ -31,6 +31,10 @@ use crate::{
 		GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
+	},
+	utils::{
+		get_extrinsic_factory_from_solo_or_parachain,
+		get_node_metadata_repository_from_solo_or_parachain,
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -62,6 +66,7 @@ pub unsafe extern "C" fn run_vc_issuance(dpc: *const u8, dpc_size: usize) -> sgx
 		},
 	}
 
+	println!("[+] Starting to Run VC Issuance Internal");
 	if let Err(e) = run_vc_issuance_internal() {
 		error!("Error while running stf task handler thread: {:?}", e);
 		return e.into()
@@ -99,12 +104,9 @@ fn run_vc_issuance_internal() -> Result<()> {
 		ocall_api,
 	);
 
-	if let Ok(solochain_handler) = GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT.get() {
-		let node_metadata_repo = EnclaveNodeMetadataRepository::default();
-		let extrinsic_factory = solochain_handler.extrinsics_factory.clone();
-
-		run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
-	}
+	// Note: The unwrap here cannot fail because these components are initialised, else worker will fail much earlier
+	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain().unwrap();
+	let node_metadata_repo = get_node_metadata_repository_from_solo_or_parachain().unwrap();
+	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
 	Ok(())
-	// run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
 }

@@ -18,7 +18,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 mod vc_callback;
 mod vc_handling;
-mod vc_primitives;
 
 use crate::vc_handling::VCRequestHandler;
 use ita_sgx_runtime::Hash;
@@ -34,7 +33,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_receiver::{handler::TaskHandler, StfTaskContext};
-use lc_stf_task_sender::{stf_task_sender::init_vc_task_sender_storage, RequestType, VCResponse};
+use lc_vc_task_sender::{init_vc_task_sender_storage, VCResponse};
 use litentry_primitives::{Assertion, Identity};
 use std::{
 	sync::{

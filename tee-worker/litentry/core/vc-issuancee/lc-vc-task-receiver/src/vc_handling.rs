@@ -1,6 +1,5 @@
 #![allow(clippy::result_large_err)]
 
-use crate::vc_primitives::VCResponse;
 use ita_sgx_runtime::Hash;
 pub use ita_stf::{aes_encrypt_default, IdentityManagement};
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
@@ -13,7 +12,8 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{ShardIdentifier, H256};
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_receiver::{handler::TaskHandler, StfTaskContext};
-use lc_stf_task_sender::{AssertionBuildRequest, VCRequest};
+use lc_stf_task_sender::AssertionBuildRequest;
+use lc_vc_task_sender::{VCRequest, VCResponse};
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
 	VCMPError,
@@ -46,13 +46,6 @@ where
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
 {
-	// pub fn start(&self, sender: Sender<(VCResponse, Sender<Vec<u8>>)>) {
-	// 	match self.on_process() {
-	// 		Ok(r) => self.on_success(r, sender),
-	// 		Err(e) => self.on_failure(e, sender),
-	// 	}
-	// }
-
 	pub fn process(self, sender: Sender<(VCResponse, Sender<Vec<u8>>)>) -> Result<(), VCMPError> {
 		// create the initial credential
 		// TODO: maybe we can further simplify this
@@ -165,67 +158,8 @@ where
 		log::error!("Finished processing request_vc in isolated thread");
 		sender.send((vc_response, self.req.sender.clone())).unwrap();
 
-		// Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
 		Ok(())
 	}
-
-	// TODO: P-187
-	// fn on_success(
-	// 	&self,
-	// 	result: (H256, H256, Vec<u8>),
-	// 	sender: std::sync::mpsc::Sender<(VCResponse, Sender<Vec<u8>>)>,
-	// ) {
-	// 	debug!("Assertion build OK");
-	// 	// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
-	// 	// using enclave's shielding key is encrypted in chunks
-	// 	let (vc_index, vc_hash, vc_payload) = result;
-	// 	// first get user shielding key
-	// 	let identity = self.req.assertion.who.clone();
-	// 	let key = IdentityManagement::user_shielding_keys(&identity).unwrap();
-	// 	let result = aes_encrypt_default(&key, &vc_payload);
-	// 	// We need to construct the VC_Issued Extrinsic
-
-	// 	// TODO: P-187
-	// 	// if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
-	// 	// 	let c = TrustedCall::request_vc_callback(
-	// 	// 		enclave_signer.into(),
-	// 	// 		self.req.who.clone(),
-	// 	// 		self.req.assertion.clone(),
-	// 	// 		vc_index,
-	// 	// 		vc_hash,
-	// 	// 		vc_payload,
-	// 	// 		self.req.req_ext_hash,
-	// 	// 	);
-	// 	// 	if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
-	// 	// 		error!("Unable to send message to the trusted_call_receiver: {:?}", e);
-	// 	// 	}
-	// 	// } else {
-	// 	// 	error!("can't get enclave signer");
-	// 	// }
-	// }
-
-	// TODO: P-187
-	// fn on_failure(
-	// 	&self,
-	// 	error: VCMPError,
-	// 	sender: std::sync::mpsc::Sender<(VCResponse, Sender<Vec<u8>>)>,
-	// ) {
-	// 	error!("Assertion build error: {error:?}");
-	// 	// TODO: P-187
-	// 	// if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
-	// 	// 	let c = TrustedCall::handle_vcmp_error(
-	// 	// 		enclave_signer.into(),
-	// 	// 		Some(self.req.who.clone()),
-	// 	// 		error,
-	// 	// 		self.req.req_ext_hash,
-	// 	// 	);
-	// 	// 	if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
-	// 	// 		error!("Unable to send message to the trusted_call_receiver: {:?}", e);
-	// 	// 	}
-	// 	// } else {
-	// 	// 	error!("can't get enclave signer");
-	// 	// }
-	// }
 }
 
 fn build_holding_time(

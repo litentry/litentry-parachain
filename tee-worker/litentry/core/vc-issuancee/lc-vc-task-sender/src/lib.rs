@@ -1,48 +1,51 @@
-// Copyright 2020-2023 Trust Computing GmbH.
-// This file is part of Litentry.
-//
-// Litentry is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Litentry is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
+#![feature(trait_alias)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
-// use crate::error::{Error, Result};
-use lc_stf_task_sender::VCRequest;
-use ita_sgx_runtime::Hash;
-use ita_stf::{aes_encrypt_default, IdentityManagement, OpaqueCall, VCMPCallIndexes, H256};
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
-};
-use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
-use itp_sgx_externalities::SgxExternalitiesTrait;
-use itp_stf_executor::traits::StfEnclaveSigning;
-use itp_stf_state_handler::handle_state::HandleState;
-use itp_top_pool_author::traits::AuthorApi;
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
+
+// re-export module to properly feature gate sgx and regular std environment
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub mod sgx_reexport_prelude {
+	pub use thiserror_sgx as thiserror;
+	pub use url_sgx as url;
+}
+
+use codec::{Decode, Encode};
+use itp_types::H256;
 use lazy_static::lazy_static;
-use lc_stf_task_receiver::StfTaskContext;
+use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Assertion, Identity};
 use log::*;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
-use std::sync::{
-	mpsc::{channel, Receiver, Sender},
-	Arc,
+use std::{
+	sync::{
+		mpsc::{channel, Receiver, Sender},
+		Arc,
+	},
+	vec::Vec,
 };
 
-// Note: Should I use RequestType or decouple it completely?
-use lc_stf_task_sender::RequestType;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
+
+#[derive(Debug, Clone)]
+pub struct VCRequest {
+	pub assertion: AssertionBuildRequest,
+	pub sender: Sender<Vec<u8>>,
+}
+
+#[derive(Encode, Decode)]
+pub struct VCResponse {
+	pub assertion_request: AssertionBuildRequest,
+	pub vc_hash: H256,
+	pub vc_payload: Vec<u8>,
+	pub vc_index: H256,
+}
 
 pub type VcSender = Sender<VCRequest>;
 

@@ -782,6 +782,7 @@ dependencies = [
  "lc-data-providers",
  "lc-scheduled-enclave",
  "lc-stf-task-receiver",
+ "lc-vc-task-receiver",
  "litentry-macros",
  "litentry-primitives",
  "log",
@@ -805,7 +806,6 @@ dependencies = [
  "sgx_types",
  "sp-core",
  "sp-runtime",
- "vc-issuance",
  "webpki",
 ]
 
@@ -1644,6 +1644,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
+ "lc-vc-task-sender",
  "litentry-primitives",
  "log",
  "pallet-balances",
@@ -2707,6 +2708,61 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "lazy_static",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-runtime",
+ "sp-std",
+ "thiserror",
+ "url",
+]
+
+[[package]]
+name = "lc-vc-task-receiver"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "futures 0.3.8",
+ "hex 0.4.0",
+ "ita-sgx-runtime",
+ "ita-stf",
+ "itp-enclave-metrics",
+ "itp-extrinsics-factory",
+ "itp-node-api",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
+ "itp-stf-executor",
+ "itp-stf-state-handler",
+ "itp-top-pool-author",
+ "itp-types",
+ "lazy_static",
+ "lc-assertion-build",
+ "lc-credentials",
+ "lc-data-providers",
+ "lc-identity-verification",
+ "lc-stf-task-receiver",
+ "lc-stf-task-sender",
+ "lc-vc-task-sender",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sp-core",
+ "thiserror",
+ "threadpool",
+ "url",
+]
+
+[[package]]
+name = "lc-vc-task-sender"
+version = "0.1.0"
+dependencies = [
+ "itp-stf-primitives",
+ "itp-types",
+ "lazy_static",
+ "lc-stf-task-sender",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -4942,42 +4998,6 @@ version = "0.7.4"
 source = "git+https://github.com/integritee-network/rust-utf8-sgx?branch=sgx-experimental#b026700da83a2f00f0e9f36f813ef28e447a719e"
 dependencies = [
  "sgx_tstd",
-]
-
-[[package]]
-name = "vc-issuance"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "futures 0.3.8",
- "hex 0.4.0",
- "ita-sgx-runtime",
- "ita-stf",
- "itp-enclave-metrics",
- "itp-extrinsics-factory",
- "itp-node-api",
- "itp-ocall-api",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
- "itp-stf-executor",
- "itp-stf-state-handler",
- "itp-top-pool-author",
- "itp-types",
- "lazy_static",
- "lc-assertion-build",
- "lc-credentials",
- "lc-data-providers",
- "lc-identity-verification",
- "lc-stf-task-receiver",
- "lc-stf-task-sender",
- "litentry-primitives",
- "log",
- "parity-scale-codec",
- "sgx_tstd",
- "sp-core",
- "thiserror",
- "threadpool",
- "url",
 ]
 
 [[package]]

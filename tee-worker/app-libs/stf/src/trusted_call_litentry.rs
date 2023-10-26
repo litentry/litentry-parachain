@@ -35,6 +35,7 @@ use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
+use lc_vc_task_sender::{SendVcRequest, VCRequest, VcRequestSender};
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, UserShieldingKeyType, ValidationData,
 	Web3Network,
@@ -267,7 +268,7 @@ impl TrustedCallSigned {
 				(item.0, networks)
 			})
 			.collect();
-		let request: RequestType = AssertionBuildRequest {
+		let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
 			shard: *shard,
 			signer,
 			enclave_account: enclave_signer_account(),
@@ -276,13 +277,21 @@ impl TrustedCallSigned {
 			identities,
 			top_hash,
 			req_ext_hash,
-		}
-		.into();
+		};
+		let request: RequestType = assertion_build.clone().into();
 		let sender = StfRequestSender::new();
 		sender.send_stf_request(request).map_err(|e| {
 			error!("[RequestVc] : {:?}", e);
 			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
-		})
+		});
+
+		let (sender, receiver) = std::sync::mpsc::channel();
+		let vc_request: VCRequest =
+			VCRequest { assertion: assertion_build.clone(), sender: sender.clone() };
+		let sender = VcRequestSender::new();
+		log::error!("Sending VC Request to isolated thread");
+		sender.send_vc_request(vc_request);
+		Ok(())
 	}
 
 	pub fn link_identity_callback_internal(
