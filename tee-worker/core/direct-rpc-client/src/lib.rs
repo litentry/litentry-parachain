@@ -125,6 +125,8 @@ impl DirectRpcClient {
 		let ws_server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
+		// we need to set this cert verifier or client will fail to connect with following error
+		// HandshakeError::Failure(Io(Custom { kind: InvalidData, error: WebPKIError(UnknownIssuer) }))
 		config.dangerous().set_certificate_verifier(Arc::new(IgnoreCertVerifier {}));
 		let connector = Connector::Rustls(Arc::new(config));
 		let addrs = ws_server_url.socket_addrs(|| None).unwrap();
