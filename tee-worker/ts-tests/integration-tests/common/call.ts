@@ -24,7 +24,6 @@ export async function sendRequest(
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
   const rawRes = await wsClient.sendRequest(request, { requestId: request.id, timeout: 6000 });
-    console.log("rawRes", rawRes);
   
     const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', rawRes.result);
     if (res.status.isError) {
@@ -55,7 +54,6 @@ export async function getSidechainMetadata(
     console.log("request", request);
   
     const resp = await sendRequest(wsClient, request, api);
-    console.log(resp.toHuman());
     
     const sidechainRegistry = new TypeRegistry();
     const sidechainMetaData = new Metadata(sidechainRegistry, resp.value);
