@@ -8,7 +8,7 @@ version = '0.9.16'
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 hex-literal = { version = '0.4.1' }
 log = { version = "0.4", default-features = false }
-scale-info = { version = "2.9.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 
 core-primitives = { path = "../../primitives/core", default-features = false }
 
