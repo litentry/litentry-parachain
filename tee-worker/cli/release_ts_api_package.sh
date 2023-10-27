@@ -54,6 +54,7 @@ echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/
 echo "update parachain metadata"
 
 cd  /client-api/sidechain-api
+${CLIENT} print-sgx-metadata-raw
 ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
 
