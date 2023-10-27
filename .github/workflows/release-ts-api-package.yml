@@ -40,43 +40,10 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  # parachain-build-tee-prod:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Free up disk space
-  #       if: startsWith(runner.name, 'GitHub Actions')
-  #       uses: jlumbroso/free-disk-space@main
-  #       with:
-  #         tool-cache: true
-  #         swap-storage: false
-  #         large-packages: false
-
-  #     - uses: actions/checkout@v4
-
-  #     - name: Pull docker image optionally
-  #       run: |
-  #         docker pull litentry/litentry-parachain:tee-prod
-
-  #     - name: Save docker image
-  #       run: |
-  #         docker save litentry/litentry-parachain:tee-prod | gzip > litentry-parachain-tee-prod.tar.gz
-
-  #     - name: Upload docker image
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: parachain-artifact-tee-prod
-  #         path: litentry-parachain-tee-prod.tar.gz
-  #         if-no-files-found: error
-
-  #     - name: Fail early
-  #       if: failure()
-  #       uses: andymckay/cancel-action@0.3
-
   tee-build:
     runs-on: ubuntu-latest
     needs:
       - parachain-build-dev
-      # - parachain-build-tee-prod
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
@@ -119,7 +86,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - parachain-build-dev
-      # - parachain-build-tee-prod
       - tee-build
 
     steps:
