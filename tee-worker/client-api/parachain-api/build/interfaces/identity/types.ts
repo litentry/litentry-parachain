@@ -1,7 +1,17 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Bytes, Enum, Struct, Text, U8aFixed, Vec, bool, u32 } from "@polkadot/types-codec";
+import type {
+    Bytes,
+    Enum,
+    Option,
+    Struct,
+    Text,
+    U8aFixed,
+    Vec,
+    bool,
+    u32,
+} from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { Signature } from "@polkadot/types/interfaces/extrinsics";
 import type {
@@ -24,6 +34,13 @@ export interface AesOutput extends Struct {
     readonly ciphertext: Bytes;
     readonly aad: Bytes;
     readonly nonce: U8aFixed;
+}
+
+/** @name AesRequest */
+export interface AesRequest extends Struct {
+    readonly shard: ShardIdentifier;
+    readonly key: Bytes;
+    readonly payload: AesOutput;
 }
 
 /** @name Assertion */
@@ -235,17 +252,17 @@ export interface PublicGetter extends Enum {
     readonly type: "SomeValue" | "Nonce";
 }
 
-/** @name Request */
-export interface Request extends Struct {
-    readonly shard: ShardIdentifier;
-    readonly cyphertext: Bytes;
-}
-
 /** @name RequestVCResult */
 export interface RequestVCResult extends Struct {
     readonly vc_index: H256;
     readonly vc_hash: H256;
     readonly vc_payload: AesOutput;
+}
+
+/** @name RsaRequest */
+export interface RsaRequest extends Struct {
+    readonly shard: ShardIdentifier;
+    readonly payload: Bytes;
 }
 
 /** @name SetUserShieldingKeyResult */
@@ -329,6 +346,7 @@ export interface TrustedCall extends Enum {
             LitentryValidationData,
             Vec<Web3Network>,
             UserShieldingKeyNonceType,
+            Option<UserShieldingKeyType>,
             H256
         ]
     >;
@@ -341,7 +359,9 @@ export interface TrustedCall extends Enum {
         [LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]
     >;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, H256]>;
+    readonly asRequestVc: ITuple<
+        [LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256]
+    >;
     readonly isSetIdentityNetworks: boolean;
     readonly asSetIdentityNetworks: ITuple<
         [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]

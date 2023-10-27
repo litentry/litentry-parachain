@@ -72,6 +72,7 @@ impl ArgsExecutor for RequestVCArgs {
 			enclave_account_id.into(),
 			account.into(),
 			self.assertion.clone(),
+			None,
 			hash,
 		))
 	}
