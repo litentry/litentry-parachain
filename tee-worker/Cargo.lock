@@ -5443,6 +5443,7 @@ dependencies = [
  "its-primitives",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
+ "lc-vc-task-sender",
  "log 0.4.19",
  "parity-scale-codec",
  "rust-base58 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",

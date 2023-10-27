@@ -15,7 +15,7 @@ pub mod sgx_reexport_prelude {
 }
 
 use codec::{Decode, Encode};
-use itp_types::H256;
+use itp_types::{ShardIdentifier, H256};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Assertion, Identity};
@@ -35,8 +35,9 @@ use std::sync::Mutex;
 
 #[derive(Debug, Clone)]
 pub struct VCRequest {
-	pub assertion: AssertionBuildRequest,
+	pub encrypted_trusted_call: Vec<u8>,
 	pub sender: Sender<Vec<u8>>,
+	pub shard: ShardIdentifier,
 }
 
 #[derive(Encode, Decode)]

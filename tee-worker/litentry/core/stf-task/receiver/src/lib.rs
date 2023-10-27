@@ -78,7 +78,7 @@ pub struct StfTaskContext<
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
-	shielding_key: K,
+	pub shielding_key: K,
 	author_api: Arc<A>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,

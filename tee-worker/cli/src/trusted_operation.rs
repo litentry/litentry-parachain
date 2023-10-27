@@ -266,11 +266,8 @@ pub(crate) fn get_json_request(
 
 	// compose jsonrpc call
 	let request = Request { shard, cyphertext: operation_call_encrypted };
-	RpcRequest::compose_jsonrpc_call(
-		"author_submitAndWatchExtrinsic".to_string(),
-		vec![request.to_hex()],
-	)
-	.unwrap()
+	RpcRequest::compose_jsonrpc_call("author_submitVCRequest".to_string(), vec![request.to_hex()])
+		.unwrap()
 }
 
 pub(crate) fn wait_until(

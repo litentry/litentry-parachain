@@ -284,13 +284,6 @@ impl TrustedCallSigned {
 			error!("[RequestVc] : {:?}", e);
 			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
 		});
-
-		let (sender, receiver) = std::sync::mpsc::channel();
-		let vc_request: VCRequest =
-			VCRequest { assertion: assertion_build.clone(), sender: sender.clone() };
-		let sender = VcRequestSender::new();
-		log::error!("Sending VC Request to isolated thread");
-		sender.send_vc_request(vc_request);
 		Ok(())
 	}
 
