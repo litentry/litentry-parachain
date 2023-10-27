@@ -19,6 +19,9 @@ itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-fe
 itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 
+[dev-dependencies]
+itc-direct-rpc-server = { path = "../direct-rpc-server", default-features = false, features = ["mocks"] }
+
 
 [features]
 default = ["std"]

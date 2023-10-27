@@ -36,9 +36,16 @@ use crate::sgx_reexport_prelude::*;
 
 extern crate alloc;
 
+#[cfg(feature = "sgx")]
+use std::sync::SgxMutex as Mutex;
+
+#[cfg(feature = "std")]
+use std::sync::Mutex;
+
 use alloc::format;
 
 use core::str::FromStr;
+
 use log::debug;
 
 use serde_json::from_str;
@@ -53,7 +60,7 @@ use std::{
 	error::Error,
 	net::TcpStream,
 	string::{String, ToString},
-	sync::Arc,
+	sync::{mpsc::SyncSender, Arc},
 	time::Duration,
 	vec,
 	vec::Vec,
@@ -62,7 +69,7 @@ use tungstenite::{client_tls_with_config, stream::MaybeTlsStream, Connector, Mes
 use url::Url;
 use webpki::{DNSName, DNSNameRef};
 
-pub type MaybeResponse = Option<(Id, RpcReturnValue)>;
+pub type Response = (Id, RpcReturnValue);
 
 pub struct IgnoreCertVerifier {}
 
@@ -98,7 +105,11 @@ impl rustls::ClientCertVerifier for IgnoreCertVerifier {
 
 pub trait RpcClientFactory {
 	type RpcClient: RpcClient;
-	fn create(&self, url: &str) -> Result<Self::RpcClient, Box<dyn Error>>;
+	fn create(
+		&self,
+		url: &str,
+		responses_sink: SyncSender<Response>,
+	) -> Result<Self::RpcClient, Box<dyn Error>>;
 }
 
 pub struct DirectRpcClientFactory {}
@@ -106,22 +117,25 @@ pub struct DirectRpcClientFactory {}
 impl RpcClientFactory for DirectRpcClientFactory {
 	type RpcClient = DirectRpcClient;
 
-	fn create(&self, url: &str) -> Result<Self::RpcClient, Box<dyn Error>> {
-		DirectRpcClient::new(url)
+	fn create(
+		&self,
+		url: &str,
+		responses_sink: SyncSender<Response>,
+	) -> Result<Self::RpcClient, Box<dyn Error>> {
+		DirectRpcClient::new(url, responses_sink)
 	}
 }
 
 pub trait RpcClient {
 	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>>;
-	fn read_response(&mut self) -> Result<MaybeResponse, Box<dyn Error>>;
 }
 
 pub struct DirectRpcClient {
-	ws: WebSocket<MaybeTlsStream<TcpStream>>,
+	ws: Arc<Mutex<WebSocket<MaybeTlsStream<TcpStream>>>>,
 }
 
 impl DirectRpcClient {
-	pub fn new(url: &str) -> Result<Self, Box<dyn Error>> {
+	pub fn new(url: &str, responses_sink: SyncSender<Response>) -> Result<Self, Box<dyn Error>> {
 		let ws_server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
@@ -139,6 +153,22 @@ impl DirectRpcClient {
 
 		//it fails to perform handshake in non_blocking mode so we are setting it up after the handshake is performed
 		Self::switch_to_non_blocking(&mut socket);
+
+		let socket = Arc::new(Mutex::new(socket));
+		let cloned_socket = socket.clone();
+
+		std::thread::spawn(move || loop {
+			if let Ok(mut socket) = cloned_socket.lock() {
+				if let Ok(message) = socket.read_message() {
+					if let Ok(Some(response)) = Self::handle_ws_message(message) {
+						if let Err(e) = responses_sink.send(response) {
+							log::error!("Could not forward response, reason: {:?}", e)
+						};
+					}
+				}
+			}
+			std::thread::sleep(Duration::from_millis(10))
+		});
 
 		debug!("Connected to peer: {}", url);
 		Ok(Self { ws: socket })
@@ -181,7 +211,7 @@ impl DirectRpcClient {
 		Ok(request)
 	}
 
-	fn handle_ws_message(message: Message) -> Result<MaybeResponse, Box<dyn Error>> {
+	fn handle_ws_message(message: Message) -> Result<Option<Response>, Box<dyn Error>> {
 		match message {
 			Message::Text(text) => {
 				let rpc_response: RpcResponse = from_str(&text)
@@ -202,17 +232,12 @@ impl DirectRpcClient {
 impl RpcClient for DirectRpcClient {
 	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>> {
 		let request = self.prepare_request(request_id, params)?;
-		self.ws
-			.write_message(Message::Text(request))
-			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
-	}
 
-	#[allow(clippy::type_complexity)]
-	fn read_response(&mut self) -> Result<MaybeResponse, Box<dyn Error>> {
-		if let Ok(message) = self.ws.read_message() {
-			Self::handle_ws_message(message)
+		if let Ok(mut ws) = self.ws.lock() {
+			ws.write_message(Message::Text(request))
+				.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
 		} else {
-			Ok(None)
+			Ok(())
 		}
 	}
 }
