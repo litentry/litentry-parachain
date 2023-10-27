@@ -93,7 +93,7 @@ pub trait RsaSealing {
 pub mod sgx {
 	use super::*;
 	use crate::key_repository::KeyRepository;
-	use itp_sgx_io::{seal, unseal, SealedIO, StaticSealedIO};
+	use itp_sgx_io::{seal, unseal, SealedIO};
 	use log::*;
 	use std::path::PathBuf;
 

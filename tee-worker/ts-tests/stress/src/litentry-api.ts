@@ -300,7 +300,7 @@ const sendRequestFromGetter = async (
 ): Promise<WorkerRpcReturnValue> => {
     // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
     //            this is what `state_executeGetter` expects in rust
-    const requestParam = await createRequest(
+    const requestParam = await createRsaRequest(
         teeWorker,
         parachainApi,
         mrenclave,
@@ -328,7 +328,7 @@ function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8
     );
 }
 
-const createRequest = async (
+const createRsaRequest = async (
     wsp: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrenclave: string,
@@ -336,16 +336,14 @@ const createRequest = async (
     isGetter: boolean,
     top: Uint8Array
 ) => {
-    let cyphertext;
+    let payload;
     if (isGetter) {
-        cyphertext = compactAddLength(top);
+        payload = compactAddLength(top);
     } else {
-        cyphertext = compactAddLength(
-            bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top))
-        );
+        payload = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
     }
 
-    return parachainApi.createType("Request", { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
+    return parachainApi.createType("RsaRequest", { shard: hexToU8a(mrenclave), payload }).toU8a();
 };
 
 function decodeNonce(nonceInHex: string) {
@@ -505,7 +503,7 @@ export const sendRequestFromTrustedCall = async (
     // construct trusted operation
     const trustedOperation = parachainApi.createType("TrustedOperation", { direct_call: call });
     // create the request parameter
-    const requestParam = await createRequest(
+    const requestParam = await createRsaRequest(
         wsp,
         parachainApi,
         mrenclave,
@@ -515,7 +513,7 @@ export const sendRequestFromTrustedCall = async (
     );
     const request = {
         jsonrpc: "2.0",
-        method: "author_submitAndWatchExtrinsic",
+        method: "author_submitAndWatchRsRequest",
         params: [u8aToHex(requestParam)],
         id: 1,
     };
@@ -556,13 +554,14 @@ export function createSignedTrustedCallLinkIdentity(
     validationData: string,
     web3networks: string,
     keyNonce: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
         [
             "link_identity",
-            "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
+            "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)",
         ],
         signer,
         mrenclave,
@@ -574,6 +573,7 @@ export function createSignedTrustedCallLinkIdentity(
             validationData,
             web3networks,
             keyNonce,
+            aesKey,
             hash,
         ]
     );
@@ -624,14 +624,18 @@ export function createSignedTrustedCallRequestVc(
     signer: Wallet,
     subject: LitentryPrimitivesIdentity,
     assertion: Assertion,
+    key: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ["request_vc", "(LitentryIdentity,LitentryIdentity,Assertion,H256)"],
+        [
+            "request_vc",
+            "(LitentryIdentity,LitentryIdentity,Assertion,Option<UserShieldingKeyType>,H256)",
+        ],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), assertion, hash]
+        [subject.toHuman(), subject.toHuman(), assertion, key, hash]
     );
 }

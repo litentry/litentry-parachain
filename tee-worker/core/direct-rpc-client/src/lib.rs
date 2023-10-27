@@ -52,7 +52,7 @@ use serde_json::from_str;
 
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 
-use itp_types::Request;
+use itp_types::RsaRequest;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 
 use std::{
@@ -198,9 +198,9 @@ impl DirectRpcClient {
 		request_id: String,
 		parsed_params: Vec<String>,
 	) -> Result<String, Box<dyn Error>> {
-		let req = Request::from_hex(&parsed_params[0].clone())
+		let req = RsaRequest::from_hex(&parsed_params[0].clone())
 			.map_err(|e| format!("Could not create request from hex, reason: {:?}", e))?;
-		let request = Request { shard: req.shard, cyphertext: req.cyphertext };
+		let request = RsaRequest { shard: req.shard, payload: req.payload };
 		// if it's broadcasted it's not going to be broadcasted again
 		let request = RpcRequest::compose_jsonrpc_call(
 			Id::Text(request_id),

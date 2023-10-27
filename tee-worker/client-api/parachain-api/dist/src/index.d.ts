@@ -160,10 +160,6 @@ export declare const definitions: {
         };
         BoundedWeb3Network: string;
         ShardIdentifier: string;
-        Request: {
-            shard: string;
-            cyphertext: string;
-        };
         VCRequested: {
             account: string;
             mrEnclave: string;
@@ -246,6 +242,15 @@ export declare const definitions: {
             ciphertext: string;
             aad: string;
             nonce: string;
+        };
+        RsaRequest: {
+            shard: string;
+            payload: string;
+        };
+        AesRequest: {
+            shard: string;
+            key: string;
+            payload: string;
         };
     };
 };

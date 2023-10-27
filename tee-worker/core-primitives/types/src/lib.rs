@@ -20,8 +20,9 @@
 
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
-use litentry_primitives::UserShieldingKeyNonceType;
-use sp_std::vec::Vec;
+use itp_sgx_crypto::ShieldingCryptoDecrypt;
+use litentry_primitives::{decl_rsa_request, UserShieldingKeyNonceType};
+use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 
 pub mod parentchain;
 pub mod storage;
@@ -35,11 +36,9 @@ pub type PalletString = Vec<u8>;
 #[cfg(feature = "std")]
 pub type PalletString = String;
 
-pub use sp_core::{crypto::AccountId32 as AccountId, H256};
-
-pub use litentry_primitives::Assertion;
-
 pub use itp_sgx_runtime_primitives::types::*;
+pub use litentry_primitives::{Assertion, DecryptableRequest};
+pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
 pub type IpfsHash = [u8; 46];
 pub type MrEnclave = [u8; 32];
@@ -49,7 +48,7 @@ pub type CallIndex = [u8; 2];
 // pallet teerex
 pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
 pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
-pub type CallWorkerFn = (CallIndex, Request);
+pub type CallWorkerFn = (CallIndex, RsaRequest);
 
 pub type UpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
 pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
@@ -91,11 +90,26 @@ impl Encode for OpaqueCall {
 	}
 }
 
-// Note in the pallet teerex this is a struct. But for the codec this does not matter.
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, Debug)]
-pub struct Request {
-	pub shard: ShardIdentifier,
-	pub cyphertext: Vec<u8>,
+// Litentry: re-declared due to orphan rule (that's why macro is used)
+decl_rsa_request!(Debug);
+
+impl DecryptableRequest for RsaRequest {
+	type Error = ();
+
+	fn shard(&self) -> ShardIdentifier {
+		self.shard
+	}
+
+	fn payload(&self) -> &[u8] {
+		self.payload.as_slice()
+	}
+
+	fn decrypt<T: Debug>(
+		&mut self,
+		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
+	) -> core::result::Result<Vec<u8>, ()> {
+		enclave_shielding_key.decrypt(self.payload.as_slice()).map_err(|_| ())
+	}
 }
 
 // Todo: move this improved enclave definition into a primitives crate in the pallet_teerex repo.

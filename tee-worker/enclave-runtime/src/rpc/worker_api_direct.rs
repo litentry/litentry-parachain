@@ -40,7 +40,7 @@ use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
-	DirectRequestStatus, Index, MrEnclave, Request, ShardIdentifier, SidechainBlockNumber, H256,
+	DirectRequestStatus, Index, MrEnclave, RsaRequest, ShardIdentifier, SidechainBlockNumber, H256,
 };
 use itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
@@ -49,6 +49,7 @@ use its_sidechain::rpc_handler::{
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_primitives::DecryptableRequest;
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::Pair;
@@ -447,6 +448,8 @@ where
 	io
 }
 
+// Litentry: TODO - we still use `RsaRequest` for trusted getter, as the result
+// in unencrypted, see P-183
 fn execute_getter_inner<G: ExecuteGetter>(
 	getter_executor: &G,
 	params: Params,
@@ -454,10 +457,10 @@ fn execute_getter_inner<G: ExecuteGetter>(
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
-	let request = Request::from_hex(param).map_err(|e| format!("{:?}", e))?;
+	let request = RsaRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
-	let shard: ShardIdentifier = request.shard;
-	let encoded_trusted_getter: Vec<u8> = request.cyphertext;
+	let shard: ShardIdentifier = request.shard();
+	let encoded_trusted_getter: Vec<u8> = request.payload().to_vec();
 
 	let getter_result = getter_executor
 		.execute_getter(&shard, encoded_trusted_getter)

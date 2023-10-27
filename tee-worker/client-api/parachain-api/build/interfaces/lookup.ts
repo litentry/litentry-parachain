@@ -4583,7 +4583,7 @@ export default {
             },
             unregister_enclave: "Null",
             call_worker: {
-                request: "TeerexPrimitivesRequest",
+                request: "TeerexPrimitivesRsaRequest",
             },
             confirm_processed_parentchain_block: {
                 blockHash: "H256",
@@ -4661,11 +4661,11 @@ export default {
         },
     },
     /**
-     * Lookup359: teerex_primitives::Request
+     * Lookup359: teerex_primitives::RsaRequest
      **/
-    TeerexPrimitivesRequest: {
+    TeerexPrimitivesRsaRequest: {
         shard: "H256",
-        cyphertext: "Bytes",
+        payload: "Bytes",
     },
     /**
      * Lookup360: pallet_sidechain::pallet::Call<T>

@@ -211,6 +211,7 @@ describe('Test Identity (evm direct invocation)', function () {
                 validation.toHex(),
                 networks.toHex(),
                 keyNonce,
+                context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
                 requestIdentifier
             );
 

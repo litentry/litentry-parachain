@@ -106,6 +106,7 @@ describe('Test Vc (direct invocation)', function () {
                 new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
                 context.api.createType('Assertion', assertion).toHex(),
+                context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
                 requestIdentifier
             );
 
@@ -137,6 +138,7 @@ describe('Test Vc (direct invocation)', function () {
             new PolkadotSigner(context.substrateWallet.bob),
             bobSubject,
             context.api.createType('Assertion', { A1: null }).toHex(),
+            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
             requestIdentifier
         );
         const callValue = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);

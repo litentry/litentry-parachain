@@ -1213,6 +1213,7 @@ import type {
     Address20,
     Address32,
     AesOutput,
+    AesRequest,
     Assertion,
     AssertionSupportedNetwork,
     BoundedWeb3Network,
@@ -1230,8 +1231,8 @@ import type {
     LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
-    Request,
     RequestVCResult,
+    RsaRequest,
     SetUserShieldingKeyResult,
     ShardIdentifier,
     StfError,
@@ -1284,6 +1285,7 @@ declare module "@polkadot/types/types/registry" {
         Address20: Address20;
         Address32: Address32;
         AesOutput: AesOutput;
+        AesRequest: AesRequest;
         AliveContractInfo: AliveContractInfo;
         AllowedSlots: AllowedSlots;
         AnySignature: AnySignature;
@@ -2073,7 +2075,6 @@ declare module "@polkadot/types/types/registry" {
         ReportedRoundStates: ReportedRoundStates;
         Reporter: Reporter;
         ReportIdOf: ReportIdOf;
-        Request: Request;
         RequestVCResult: RequestVCResult;
         ReserveData: ReserveData;
         ReserveIdentifier: ReserveIdentifier;
@@ -2089,6 +2090,7 @@ declare module "@polkadot/types/types/registry" {
         RoundSnapshot: RoundSnapshot;
         RoundState: RoundState;
         RpcMethods: RpcMethods;
+        RsaRequest: RsaRequest;
         RuntimeApiMetadataLatest: RuntimeApiMetadataLatest;
         RuntimeApiMetadataV15: RuntimeApiMetadataV15;
         RuntimeApiMethodMetadataV15: RuntimeApiMethodMetadataV15;

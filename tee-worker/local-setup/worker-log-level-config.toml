@@ -28,6 +28,7 @@ lc_stf_task_sender="debug"
 lc_data_providers="debug"
 itp_top_pool="debug"
 itc_parentchain_indirect_calls_executor="debug"
+itc_direct_rpc_client="debug"
 
 [litentry-cli]
 RUST_LOG="debug"

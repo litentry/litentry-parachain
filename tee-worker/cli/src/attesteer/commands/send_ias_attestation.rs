@@ -39,8 +39,6 @@ impl SendIasAttestationReportCmd {
 			Err(e) => panic!("Opening hex encoded IAS attestation report file failed: {:#?}", e),
 		};
 
-		//let request = Request { shard, cyphertext: hex_encoded_quote.to_vec() };
-
 		let rpc_method = "attesteer_forwardIasAttestationReport".to_owned();
 		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
 			Id::Text("1".to_string()),

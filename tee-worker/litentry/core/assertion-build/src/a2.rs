@@ -108,6 +108,7 @@ mod tests {
 			assertion: Assertion::A2(guild_id.clone()),
 			identities,
 			top_hash: Default::default(),
+			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
 
