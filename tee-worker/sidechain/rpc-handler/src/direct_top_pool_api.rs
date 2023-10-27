@@ -31,6 +31,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Request, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
+use lc_vc_task_sender::{SendVcRequest, VCRequest, VcRequestSender};
 use log::*;
 use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
@@ -79,6 +80,43 @@ where
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),
 		};
 		Ok(json!(json_value))
+	});
+
+	let author_submit_extrinsic_name: &str = "author_submitVCRequest";
+	let submit_author = top_pool_author.clone();
+	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
+		// First let's hex decode
+		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
+
+		// Now let's decode into Request Struct
+		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
+
+		let shard: ShardIdentifier = request.shard;
+		// So we have an encrypted trusted call, How do we decrypt it?
+		// Why don't we just send the encrypted trusted call?
+		let encrypted_trusted_call: Vec<u8> = request.cyphertext;
+		let request_sender = VcRequestSender::new();
+		// TODO: This should be a one-shot channel
+		let (sender, receiver) = std::sync::mpsc::channel();
+
+		let vc_request = VCRequest { encrypted_trusted_call, sender, shard };
+		request_sender.send_vc_request(vc_request);
+		// let key = top_pool_author.shielding_key_repo.retrieve_key().unwrap();
+
+		// let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params) {
+		// 	Ok(hash_value) => RpcReturnValue {
+		// 		do_watch: false,
+		// 		value: vec![],
+		// 		status: DirectRequestStatus::TrustedOperationStatus(
+		// 			TrustedOperationStatus::Submitted,
+		// 			hash_value,
+		// 		),
+		// 	}
+		// 	.to_hex(),
+		// 	Err(error) => compute_hex_encoded_return_error(error.as_str()),
+		// };
+		// log::error!("Received the following Params: {:?}", params);
+		Ok(json!("A"))
 	});
 
 	// author_pendingExtrinsics

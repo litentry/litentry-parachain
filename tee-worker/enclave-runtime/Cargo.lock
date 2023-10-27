@@ -2453,6 +2453,7 @@ dependencies = [
  "itp-utils",
  "its-primitives",
  "jsonrpc-core",
+ "lc-vc-task-sender",
  "log",
  "parity-scale-codec",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx?rev=sgx_1.1.3)",
