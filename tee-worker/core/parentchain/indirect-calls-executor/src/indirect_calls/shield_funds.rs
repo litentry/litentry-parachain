@@ -26,9 +26,9 @@ use std::vec::Vec;
 /// Arguments of the Integritee-Parachain's shield fund dispatchable.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub struct ShieldFundsArgs {
-	shard: ShardIdentifier,
 	account_encrypted: Vec<u8>,
 	amount: Balance,
+	shard: ShardIdentifier,
 }
 
 impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for ShieldFundsArgs {

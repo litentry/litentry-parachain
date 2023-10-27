@@ -180,7 +180,6 @@ where
 		} else if index == metadata.batch_all_call_indexes().ok()? {
 			parse_batch_all(call_args, metadata, address, xt.hashed_extrinsic)
 		} else {
-			log::debug!("executing no call");
 			None
 		}
 	}
