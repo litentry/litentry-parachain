@@ -1,10 +1,11 @@
-name: Release Ts API Package
-
 # Reference: ci.yml
-
+name: Release Ts API Package
 
 on:
   workflow_dispatch:
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
 jobs:
   parachain-build-dev:
@@ -39,40 +40,43 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  parachain-build-tee-prod:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
+  # parachain-build-tee-prod:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Free up disk space
+  #       if: startsWith(runner.name, 'GitHub Actions')
+  #       uses: jlumbroso/free-disk-space@main
+  #       with:
+  #         tool-cache: true
+  #         swap-storage: false
+  #         large-packages: false
 
-      - uses: actions/checkout@v4
+  #     - uses: actions/checkout@v4
 
-      - name: Pull docker image optionally
-        run: |
-          docker pull litentry/litentry-parachain:tee-prod
+  #     - name: Pull docker image optionally
+  #       run: |
+  #         docker pull litentry/litentry-parachain:tee-prod
 
-      - name: Save docker image
-        run: |
-          docker save litentry/litentry-parachain:tee-prod | gzip > litentry-parachain-tee-prod.tar.gz
+  #     - name: Save docker image
+  #       run: |
+  #         docker save litentry/litentry-parachain:tee-prod | gzip > litentry-parachain-tee-prod.tar.gz
 
-      - name: Upload docker image
-        uses: actions/upload-artifact@v3
-        with:
-          name: parachain-artifact-tee-prod
-          path: litentry-parachain-tee-prod.tar.gz
-          if-no-files-found: error
+  #     - name: Upload docker image
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: parachain-artifact-tee-prod
+  #         path: litentry-parachain-tee-prod.tar.gz
+  #         if-no-files-found: error
 
-      - name: Fail early
-        if: failure()
-        uses: andymckay/cancel-action@0.3
+  #     - name: Fail early
+  #       if: failure()
+  #       uses: andymckay/cancel-action@0.3
 
   tee-build:
     runs-on: ubuntu-latest
+    needs:
+      - parachain-build-dev
+      # - parachain-build-tee-prod
     steps:
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
@@ -87,9 +91,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          # use the docker driver to access the local image
-          # we don't need external caches or multi platforms here
-          # see https://docs.docker.com/build/drivers/
+
           driver: docker
 
       - name: Pull and tag worker and cli image optionally
@@ -117,7 +119,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - parachain-build-dev
-      - parachain-build-tee-prod
+      # - parachain-build-tee-prod
       - tee-build
 
     steps:
@@ -182,3 +184,44 @@ jobs:
           name: logs-release-ts-api-package
           path: logs
           if-no-files-found: ignore
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: update-metadata
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://npm.pkg.github.com/
+
+      - name: Setup npm config
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
+          npm config set @litentry:registry https://npm.pkg.github.com
+
+      - name: Install pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: |
+          cd tee-worker/client-api
+          pnpm install
+
+      - name: Build and publish parachain and sidechain API
+        if: github.ref_name == 'dev' || github.ref_name == 'staging'
+        run: |
+          cd tee-worker/client-api/parachain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
+
+          echo "------------------------parachain API published------------------------"
+
+          cd ../sidechain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
+
+          echo "------------------------sidechain API published------------------------"
