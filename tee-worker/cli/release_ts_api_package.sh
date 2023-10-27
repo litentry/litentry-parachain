@@ -46,7 +46,7 @@ sudo chmod a+x /usr/local/bin/websocat
 websocat --version
 
 cd /client-api/parachain-api
-echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 ws://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json
+echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 $NODEURL:$NPORT > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
 cd  /client-api/sidechain-api
