@@ -25,8 +25,10 @@ strum_macros = { version = "0.25.0", default-features = false }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
 # internal dependencies
+itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
+teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 
 [features]
 default = ["std"]
@@ -34,11 +36,14 @@ production = []
 sgx = [
     "sgx_tstd",
     "rand-sgx",
+    "itp-utils/sgx",
+    "itp-sgx-crypto/sgx",
 ]
 std = [
     "strum/std",
     "hex/std",
     "serde/std",
+    "itp-sgx-crypto/std",
     "itp-utils/std",
     "sp-core/std",
     "sp-std/std",
@@ -46,6 +51,7 @@ std = [
     "sp-runtime/std",
     "ring/std",
     "parentchain-primitives/std",
+    "teerex-primitives/std",
     "rand",
     "log/std",
 ]

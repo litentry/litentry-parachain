@@ -304,7 +304,7 @@ import type {
     TeerexPrimitivesEnclave,
     TeerexPrimitivesQeTcb,
     TeerexPrimitivesQuotingEnclave,
-    TeerexPrimitivesRequest,
+    TeerexPrimitivesRsaRequest,
     TeerexPrimitivesSgxBuildMode,
     TeerexPrimitivesSgxEnclaveMetadata,
     TeerexPrimitivesTcbInfoOnChain,
@@ -671,7 +671,7 @@ declare module "@polkadot/types/types/registry" {
         TeerexPrimitivesEnclave: TeerexPrimitivesEnclave;
         TeerexPrimitivesQeTcb: TeerexPrimitivesQeTcb;
         TeerexPrimitivesQuotingEnclave: TeerexPrimitivesQuotingEnclave;
-        TeerexPrimitivesRequest: TeerexPrimitivesRequest;
+        TeerexPrimitivesRsaRequest: TeerexPrimitivesRsaRequest;
         TeerexPrimitivesSgxBuildMode: TeerexPrimitivesSgxBuildMode;
         TeerexPrimitivesSgxEnclaveMetadata: TeerexPrimitivesSgxEnclaveMetadata;
         TeerexPrimitivesTcbInfoOnChain: TeerexPrimitivesTcbInfoOnChain;

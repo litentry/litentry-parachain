@@ -18,6 +18,8 @@ import crypto, { randomBytes } from "crypto";
 import { Index } from "@polkadot/types/interfaces";
 import { Measurement, Runner } from "./measurement";
 
+const aesKey = "0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12";
+
 export async function setShieldingKey(
     runner: Runner<string, boolean>,
     primary: Wallet,
@@ -105,6 +107,7 @@ export async function linkIdentity(
         secondaryValidation.toHex(),
         secondaryNetworks.toHex(),
         keyNonce,
+        parachainApi.createType("Option<UserShieldingKeyType>", aesKey).toHex(),
         requestIdentifier
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
@@ -146,6 +149,7 @@ export async function requestVc1(
         primary,
         subject,
         parachainApi.createType("Assertion", { A1: null }),
+        parachainApi.createType("Option<UserShieldingKeyType>", aesKey).toHex(),
         requestIdentifier
     );
 
@@ -189,6 +193,7 @@ export async function requestVc4(
         primary,
         subject,
         parachainApi.createType("Assertion", { A4: "10" }),
+        parachainApi.createType("Option<UserShieldingKeyType>", aesKey).toHex(),
         requestIdentifier
     );
 

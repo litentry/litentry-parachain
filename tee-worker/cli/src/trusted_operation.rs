@@ -29,7 +29,7 @@ use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::{BlockNumber, DirectRequestStatus, TrustedOperationStatus};
+use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::ParentchainHash as Hash;
 use log::*;
@@ -44,7 +44,6 @@ use std::{
 use substrate_api_client::{
 	ac_compose_macros::compose_extrinsic, GetChainInfo, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
-use teerex_primitives::Request;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -85,7 +84,7 @@ pub(crate) fn get_state(
 	getter: &Getter,
 ) -> TrustedOpResult {
 	// Compose jsonrpc call.
-	let data = Request { shard, cyphertext: getter.encode() };
+	let data = RsaRequest::new(shard, getter.encode());
 	let rpc_method = "state_executeGetter".to_owned();
 	let jsonrpc_call: String =
 		RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
@@ -138,7 +137,7 @@ fn send_indirect_request(
 	let signer = get_pair_from_str(arg_signer);
 	chain_api.set_signer(signer.into());
 
-	let request = Request { shard, cyphertext: call_encrypted };
+	let request = RsaRequest::new(shard, call_encrypted);
 	let xt = compose_extrinsic!(&chain_api, TEEREX, "invoke", request);
 
 	let block_hash = match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock) {
@@ -322,9 +321,9 @@ pub(crate) fn get_json_request(
 	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
 
 	// compose jsonrpc call
-	let request = Request { shard, cyphertext: operation_call_encrypted };
+	let request = RsaRequest::new(shard, operation_call_encrypted);
 	RpcRequest::compose_jsonrpc_call(
-		"author_submitAndWatchExtrinsic".to_string(),
+		"author_submitAndWatchRsaRequest".to_string(),
 		vec![request.to_hex()],
 	)
 	.unwrap()

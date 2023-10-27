@@ -5630,9 +5630,9 @@ declare module "@polkadot/types/lookup" {
             readonly vcPubkey: Option<Bytes>;
         } & Struct;
         readonly isUnregisterEnclave: boolean;
-        readonly isInvoke: boolean;
-        readonly asInvoke: {
-            readonly request: TeerexPrimitivesRequest;
+        readonly isCallWorker: boolean;
+        readonly asCallWorker: {
+            readonly request: TeerexPrimitivesRsaRequest;
         } & Struct;
         readonly isConfirmProcessedParentchainBlock: boolean;
         readonly asConfirmProcessedParentchainBlock: {
@@ -5715,10 +5715,10 @@ declare module "@polkadot/types/lookup" {
             | "SetMrenclave";
     }
 
-    /** @name TeerexPrimitivesRequest (358) */
-    interface TeerexPrimitivesRequest extends Struct {
+    /** @name TeerexPrimitivesRsaRequest (359) */
+    interface TeerexPrimitivesRsaRequest extends Struct {
         readonly shard: H256;
-        readonly cyphertext: Bytes;
+        readonly payload: Bytes;
     }
 
     /** @name PalletSidechainCall (359) */

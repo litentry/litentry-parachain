@@ -34,7 +34,7 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier, H256};
+use itp_types::{OpaqueCall, RsaRequest, ShardIdentifier, H256};
 use litentry_primitives::ParentchainBlockNumber;
 use log::*;
 use sp_core::blake2_256;
@@ -232,7 +232,7 @@ impl<
 {
 	fn submit_trusted_call(&self, shard: ShardIdentifier, encrypted_trusted_call: Vec<u8>) {
 		if let Err(e) = futures::executor::block_on(
-			self.top_pool_author.submit_top(encrypted_trusted_call, shard),
+			self.top_pool_author.submit_top(RsaRequest::new(shard, encrypted_trusted_call)),
 		) {
 			error!("Error adding indirect trusted call to TOP pool: {:?}", e);
 		}
@@ -324,7 +324,7 @@ mod test {
 	use itp_stf_primitives::types::AccountId;
 	use itp_test::mock::shielding_crypto_mock::ShieldingCryptoMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::{Block, CallWorkerFn, Request, ShardIdentifier, ShieldFundsFn};
+	use itp_types::{Block, CallWorkerFn, RsaRequest, ShardIdentifier, ShieldFundsFn};
 	use sp_core::{ed25519, Pair};
 	use sp_runtime::{MultiAddress, MultiSignature, OpaqueExtrinsic};
 	use std::assert_matches::assert_matches;
@@ -470,7 +470,7 @@ mod test {
 	}
 
 	fn invoke_unchecked_extrinsic() -> ParentchainUncheckedExtrinsic<CallWorkerFn> {
-		let request = Request { shard: shard_id(), cyphertext: vec![1u8, 2u8] };
+		let request = RsaRequest::new(shard_id(), vec![1u8, 2u8]);
 		let dummy_metadata = NodeMetadataMock::new();
 		let call_worker_indexes = dummy_metadata.invoke_call_indexes().unwrap();
 

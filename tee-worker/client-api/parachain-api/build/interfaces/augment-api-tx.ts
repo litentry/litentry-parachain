@@ -61,7 +61,7 @@ import type {
     RuntimeCommonXcmImplCurrencyId,
     SpWeightsWeightV2Weight,
     SubstrateFixedFixedU64,
-    TeerexPrimitivesRequest,
+    TeerexPrimitivesRsaRequest,
     XcmV3MultiLocation,
     XcmV3WeightLimit,
     XcmVersionedMultiAsset,
@@ -4114,6 +4114,16 @@ declare module "@polkadot/api-base/types/submittable" {
             >;
         };
         teerex: {
+            callWorker: AugmentedSubmittable<
+                (
+                    request:
+                        | TeerexPrimitivesRsaRequest
+                        | { shard?: any; payload?: any }
+                        | string
+                        | Uint8Array
+                ) => SubmittableExtrinsic<ApiType>,
+                [TeerexPrimitivesRsaRequest]
+            >;
             /**
              * The integritee worker calls this function for every processed parentchain_block to
              * confirm a state update.

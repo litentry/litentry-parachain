@@ -31,7 +31,7 @@ use itp_stf_executor::{getter_executor::GetterExecutor, mocks::GetStateMock};
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
-use itp_types::{AccountId, DirectRequestStatus, Request, ShardIdentifier};
+use itp_types::{AccountId, DirectRequestStatus, RsaRequest, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::{Address32, Identity, LitentryMultiSignature};
 use sp_core::ed25519::Signature;
@@ -65,7 +65,7 @@ pub fn get_state_request_works() {
 		LitentryMultiSignature::Ed25519(Signature::from_raw([0u8; 64])),
 	));
 
-	let request = Request { shard: ShardIdentifier::default(), cyphertext: getter.encode() };
+	let request = RsaRequest::new(ShardIdentifier::default(), getter.encode());
 
 	let request_string =
 		RpcRequest::compose_jsonrpc_call("state_executeGetter".to_string(), vec![request.to_hex()])

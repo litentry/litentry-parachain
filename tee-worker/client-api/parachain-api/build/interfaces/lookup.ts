@@ -4635,8 +4635,8 @@ export default {
                 vcPubkey: "Option<Bytes>",
             },
             unregister_enclave: "Null",
-            invoke: {
-                request: "TeerexPrimitivesRequest",
+            call_worker: {
+                request: "TeerexPrimitivesRsaRequest",
             },
             confirm_processed_parentchain_block: {
                 blockHash: "H256",
@@ -4714,11 +4714,11 @@ export default {
         },
     },
     /**
-     * Lookup358: teerex_primitives::Request
+     * Lookup359: teerex_primitives::RsaRequest
      **/
-    TeerexPrimitivesRequest: {
+    TeerexPrimitivesRsaRequest: {
         shard: "H256",
-        cyphertext: "Bytes",
+        payload: "Bytes",
     },
     /**
      * Lookup359: pallet_sidechain::pallet::Call<T>

@@ -172,6 +172,7 @@ where
 				vc_index,
 				vc_hash,
 				vc_payload,
+				self.req.maybe_key,
 				self.req.req_ext_hash,
 			);
 			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {
