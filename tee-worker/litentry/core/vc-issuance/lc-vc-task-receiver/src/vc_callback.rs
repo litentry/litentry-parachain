@@ -58,6 +58,8 @@ where
 		vc_hash: H256,
 		hash: H256,
 	) {
+		// let (mut state, hash) = self.context.state_handler.load_cloned(&req.shard).unwrap();
+		// state.execute_with(|| {
 		let key = IdentityManagement::user_shielding_keys(&who).unwrap();
 		let call_index = self
 			.node_metadata_repo
@@ -76,5 +78,6 @@ where
 		));
 		let xt = self.extrinsic_factory.create_extrinsics(&[call], None).unwrap();
 		self.context.ocall_api.send_to_parentchain(xt).unwrap();
+		// })
 	}
 }
