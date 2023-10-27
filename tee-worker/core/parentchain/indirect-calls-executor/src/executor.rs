@@ -194,18 +194,13 @@ impl<
 		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
 			meta_data.confirm_processed_parentchain_block_call_indexes()
 		})??;
-		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 
-		let fallback = ShardIdentifier::default();
-		let handled_shards = self.top_pool_author.list_handled_shards();
-		trace!("got handled shards: {:?}", handled_shards);
-		let shard = handled_shards.get(0).unwrap_or(&fallback);
-		trace!("prepared confirm_processed_parentchain_block() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);
+		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		let parentchain_block_number: ParentchainBlockNumber =
 			block_number.try_into().map_err(|_| Error::ConvertParentchainBlockNumber)?;
+
 		Ok(OpaqueCall::from_tuple(&(
 			call,
-			shard,
 			block_hash,
 			codec::Compact(parentchain_block_number),
 			root,
@@ -416,7 +411,6 @@ mod test {
 			dummy_metadata.confirm_processed_parentchain_block_call_indexes().unwrap();
 		let expected_call = (
 			confirm_processed_parentchain_block_indexes,
-			ShardIdentifier::default(),
 			block_hash,
 			codec::Compact(1u32),
 			H256::default(),
