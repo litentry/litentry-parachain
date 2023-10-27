@@ -45,10 +45,6 @@ sudo wget -qO /usr/local/bin/websocat https://github.com/vi/websocat/releases/la
 sudo chmod a+x /usr/local/bin/websocat
 websocat --version
 
-
-cd /client-api
-pnpm install
-
 cd /client-api/parachain-api
 echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 ws://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
@@ -57,6 +53,9 @@ cd  /client-api/sidechain-api
 ${CLIENT} print-sgx-metadata-raw
 ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
+
+cd /client-api
+pnpm install
 
 pnpm run build
 
