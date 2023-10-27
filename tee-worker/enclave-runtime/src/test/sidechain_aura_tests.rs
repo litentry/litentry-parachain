@@ -50,7 +50,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{handle_state_mock::HandleStateMock, metrics_ocall_mock::MetricsOCallMock};
 use itp_time_utils::duration_now;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
-use itp_types::{AccountId, Block as ParentchainBlock, ShardIdentifier};
+use itp_types::{AccountId, Block as ParentchainBlock, RsaRequest, ShardIdentifier};
 use its_block_verification::slot::slot_from_timestamp_and_duration;
 use its_primitives::{traits::Block, types::SignedBlock as SignedSidechainBlock};
 use its_sidechain::{aura::proposer_factory::ProposerFactory, slots::SlotInfo};
@@ -145,8 +145,12 @@ pub fn produce_sidechain_block_and_import_it() {
 		200000,
 	);
 	info!("Add trusted operations to TOP pool..");
-	executor::block_on(top_pool_author.submit_top(trusted_operation, shard_id)).unwrap();
-	executor::block_on(top_pool_author.submit_top(invalid_trusted_operation, shard_id)).unwrap();
+	executor::block_on(top_pool_author.submit_top(RsaRequest::new(shard_id, trusted_operation)))
+		.unwrap();
+	executor::block_on(
+		top_pool_author.submit_top(RsaRequest::new(shard_id, invalid_trusted_operation)),
+	)
+	.unwrap();
 
 	// Ensure we have exactly two trusted calls in our TOP pool, and no getters.
 	assert_eq!(2, top_pool_author.get_pending_trusted_calls(shard_id).len());

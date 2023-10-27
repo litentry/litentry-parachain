@@ -11,6 +11,7 @@ edition = "2021"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 
 # local dependencies
+itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
 itp-sgx-runtime-primitives = { path = "../../core-primitives/sgx-runtime-primitives", default-features = false }
 
 # substrate-deps
@@ -27,6 +28,7 @@ litentry-primitives = { path = "../../litentry/primitives", default-features = f
 default = ["std"]
 std = [
     "codec/std",
+    "itp-sgx-crypto/std",
     "itp-sgx-runtime-primitives/std",
     # substrate
     "frame-system/std",

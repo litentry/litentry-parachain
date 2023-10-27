@@ -6,8 +6,8 @@ import { HexString } from '@polkadot/util/types';
 import { Bytes } from '@polkadot/types-codec';
 import { IntegrationTestContext, JsonRpcRequest, PublicKeyJson } from '../../common/type-definitions';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
-import { encryptWithTeeShieldingKey, Signer } from '../../common/utils';
-import { decodeRpcBytesAsString } from '../../common/call';
+import { encryptWithTeeShieldingKey, Signer, encryptWithAes } from '../../common/utils';
+import { aesKey, decodeRpcBytesAsString, keyNonce } from '../../common/call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { u32, Option, u8, Vector } from 'scale-ts';
@@ -166,18 +166,19 @@ export async function createSignedTrustedCallLinkIdentity(
     validationData: string,
     web3networks: string,
     keyNonce: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
         [
             'link_identity',
-            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)',
         ],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, keyNonce, hash]
+        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, keyNonce, aesKey, hash]
     );
 }
 
@@ -208,15 +209,16 @@ export async function createSignedTrustedCallRequestVc(
     signer: Signer,
     subject: LitentryPrimitivesIdentity,
     assertion: string,
+    aesKey: string,
     hash: string
 ) {
     return await createSignedTrustedCall(
         parachainApi,
-        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, H256)'],
+        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256)'],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), assertion, hash]
+        [subject.toHuman(), subject.toHuman(), assertion, aesKey, hash]
     );
 }
 export async function createSignedTrustedCallDeactivateIdentity(
@@ -305,15 +307,15 @@ export const sendRequestFromTrustedCall = async (
     console.log('top: ', trustedOperation.toJSON());
     console.log('top hash', blake2AsHex(trustedOperation.toU8a()));
     // create the request parameter
-    const requestParam = await createRequest(
+    const requestParam = await createAesRequest(
         context.api,
         context.mrEnclave,
         teeShieldingKey,
-        false,
+        hexToU8a(aesKey),
         trustedOperation.toU8a()
     );
     const request = createJsonRpcRequest(
-        'author_submitAndWatchExtrinsic',
+        'author_submitAndWatchAesRequest',
         [u8aToHex(requestParam)],
         nextRequestId(context)
     );
@@ -327,7 +329,7 @@ export const sendRequestFromGetter = async (
 ): Promise<WorkerRpcReturnValue> => {
     // important: we don't create the `TrustedOperation` type here, but use `Getter` type directly
     //            this is what `state_executeGetter` expects in rust
-    const requestParam = await createRequest(context.api, context.mrEnclave, teeShieldingKey, true, getter.toU8a());
+    const requestParam = await createRsaRequest(context.api, context.mrEnclave, teeShieldingKey, true, getter.toU8a());
     const request = createJsonRpcRequest('state_executeGetter', [u8aToHex(requestParam)], nextRequestId(context));
     return sendRequest(context.tee, request, context.api);
 };
@@ -350,22 +352,48 @@ export const getTeeShieldingKey = async (context: IntegrationTestContext) => {
     });
 };
 
-// given an encoded trusted operation, construct a request bytes that are sent in RPC request parameters
-export const createRequest = async (
+// given an encoded trusted operation, construct a rsa request bytes that are sent in RPC request parameters
+export const createRsaRequest = async (
     parachainApi: ApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
     isGetter: boolean,
     top: Uint8Array
 ) => {
-    let cyphertext;
+    let payload;
     if (isGetter) {
-        cyphertext = compactAddLength(top);
+        payload = compactAddLength(top);
     } else {
-        cyphertext = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
+        payload = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
     }
 
-    return parachainApi.createType('Request', { shard: hexToU8a(mrenclave), cyphertext }).toU8a();
+    return parachainApi.createType('RsaRequest', { shard: hexToU8a(mrenclave), payload }).toU8a();
+};
+
+// given an encoded trusted operation, construct an aes request bytes that are sent in RPC request parameters
+export const createAesRequest = async (
+    parachainApi: ApiPromise,
+    mrenclave: string,
+    teeShieldingKey: KeyObject,
+    aesKey: Uint8Array,
+    top: Uint8Array
+) => {
+    const encryptedAesKey = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, aesKey)));
+    return parachainApi
+        .createType('AesRequest', {
+            shard: hexToU8a(mrenclave),
+            key: encryptedAesKey,
+            payload: parachainApi
+                .createType('AesOutput', {
+                    ciphertext: compactAddLength(
+                        hexToU8a(encryptWithAes(u8aToHex(aesKey), hexToU8a(keyNonce), Buffer.from(top)))
+                    ),
+                    add: hexToU8a('0x'),
+                    nonce: hexToU8a(keyNonce),
+                })
+                .toU8a(),
+        })
+        .toU8a();
 };
 
 export function decodeNonce(nonceInHex: string) {

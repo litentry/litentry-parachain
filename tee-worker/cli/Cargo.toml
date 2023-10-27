@@ -52,7 +52,6 @@ my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 scale-value = "0.6.0"
 sp-core-hashing = "6.0.0"
-teerex-primitives = { path = "../../primitives/teerex", default-features = false }
 
 [features]
 default = []
