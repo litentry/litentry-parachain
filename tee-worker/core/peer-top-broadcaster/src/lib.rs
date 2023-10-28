@@ -150,6 +150,10 @@ where
 		}
 	}
 
+	fn new_clear_peer_map(&self) -> HashMap<String, ClientFactory::RpcClient> {
+		HashMap::new()
+	}
+
 	pub fn broadcast<Hash: ToHexPrefixed>(&self, hash: Hash, params: Vec<String>) {
 		if let Ok(mut peers) = self.peers.lock() {
 			peers.values_mut().for_each(|peer| {
@@ -205,21 +209,31 @@ impl<ClientFactory> PeerUpdater for DirectRpcBroadcaster<ClientFactory>
 where
 	ClientFactory: RpcClientFactory,
 {
+	// created new map filled with rpc clients connected to peer from the provided list. Reuses existing
+	// connections
 	fn update(&self, peers: Vec<String>) {
 		log::debug!("Updating peers: {:?}", &peers);
+		let mut new_peers_list = self.new_clear_peer_map();
 		for peer in peers {
 			if let Ok(mut peers) = self.peers.lock() {
 				if !peers.contains_key(&peer) {
 					log::info!("Adding a peer: {}", peer.clone());
 					match self.factory.create(&peer, self.responses_sender.clone()) {
 						Ok(client) => {
-							peers.insert(peer.to_string(), client);
+							new_peers_list.insert(peer.to_string(), client);
 						},
 						Err(e) =>
 							log::error!("Could not connect to peer {}, reason: {:?}", peer, e),
 					}
+				} else {
+					//this is safe as we previously ensured that map contains such key
+					let peer_to_move = peers.remove(&peer).unwrap();
+					new_peers_list.insert(peer, peer_to_move);
 				}
 			}
+		}
+		if let Ok(mut peers) = self.peers.lock() {
+			*peers = new_peers_list;
 		}
 	}
 }
@@ -273,7 +287,7 @@ pub mod tests {
 		fn create(
 			&self,
 			_url: &str,
-			responses_sink: SyncSender<Response>,
+			_responses_sink: SyncSender<Response>,
 		) -> Result<Self::RpcClient, Box<dyn Error>> {
 			Ok(MockedRpcClient::default())
 		}
@@ -290,44 +304,6 @@ pub mod tests {
 		//when
 		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
 			DirectRpcBroadcaster::new(&vec!["localhost"], factory, rpc_responder);
-
-		//then
-		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
-	}
-
-	#[test]
-	pub fn update_creates_new_peer_if_not_exists() {
-		//given
-		let factory = MockedRpcClientFactory {};
-		let connection_registry = Arc::new(TestConnectionRegistry::new());
-		let websocket_responder = Arc::new(TestResponseChannel::default());
-		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
-
-		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec!["localhost"], factory, rpc_responder);
-		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
-
-		//when
-		broadcaster.update(vec!["127.0.0.1".to_string()]);
-
-		//then
-		assert_eq!(broadcaster.peers.lock().unwrap().len(), 2);
-	}
-
-	#[test]
-	pub fn update_doesnt_create_new_peer_if_exists() {
-		//given
-		let factory = MockedRpcClientFactory {};
-		let connection_registry = Arc::new(TestConnectionRegistry::new());
-		let websocket_responder = Arc::new(TestResponseChannel::default());
-		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
-
-		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
-			DirectRpcBroadcaster::new(&vec!["localhost"], factory, rpc_responder);
-		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
-
-		//when
-		broadcaster.update(vec!["localhost".to_string()]);
 
 		//then
 		assert_eq!(broadcaster.peers.lock().unwrap().len(), 1);
@@ -353,5 +329,30 @@ pub mod tests {
 		for peer in peers.iter() {
 			assert_eq!(peer.1.sent_requests, 2u64)
 		}
+	}
+
+	#[test]
+	pub fn updates_list_correctly() {
+		//given
+		let retained_peer = "localhost";
+		let added_peer = "localhost3";
+		let removed_peer = "localhost2";
+
+		let factory = MockedRpcClientFactory {};
+		let connection_registry = Arc::new(TestConnectionRegistry::new());
+		let websocket_responder = Arc::new(TestResponseChannel::default());
+		let rpc_responder = Arc::new(RpcResponder::new(connection_registry, websocket_responder));
+
+		let broadcaster: DirectRpcBroadcaster<MockedRpcClientFactory> =
+			DirectRpcBroadcaster::new(&vec![retained_peer, removed_peer], factory, rpc_responder);
+
+		//when
+		broadcaster.update(vec![retained_peer.to_string(), added_peer.to_string()]);
+
+		//then
+		let peers = broadcaster.peers.lock().unwrap();
+		assert!(peers.get(retained_peer).is_some());
+		assert!(peers.get(added_peer).is_some());
+		assert!(peers.get(removed_peer).is_none());
 	}
 }
