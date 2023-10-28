@@ -24,9 +24,12 @@ if [ ! -f "$SGX_COMMERCIAL_KEY" ]; then
 fi
 
 DESTDIR="$WORKERDIR/enclave_release"
+[ -d "$DESTDIR" ] && rm -rf "$DESTDIR"
 mkdir -p "$DESTDIR"
 
 cd "$WORKERDIR"
+
+make clean
 
 export SGX_PRODUCTION=1
 export SGX_COMMERCIAL_KEY="$SGX_COMMERCIAL_KEY"
