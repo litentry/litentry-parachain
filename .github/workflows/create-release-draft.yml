@@ -161,10 +161,11 @@ jobs:
   ## Build the enclave and package config files
   build-tee:
     if: ${{ github.event.inputs.release_worker == 'true' }} || ${{ github.event.inputs.release_enclave == 'true' }}
-    runs-on: prod-tee-1
+    runs-on: tee-prod-builder
     outputs:
       mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
-      rustc_version: ${{ steps.rustc.outputs.rustc_version }}
+      enclave_sha1sum: ${{ steps.shasum.outputs.enclave_sha1sum }}
+      worker_sha1sum: ${{ steps.shasum.outputs.worker_sha1sum }}
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -177,13 +178,6 @@ jobs:
           source /opt/intel/sgxsdk/environment 
           ./tee-worker/scripts/litentry/release/build.sh ${{ github.event.inputs.release_worker }} ${{ github.event.inputs.release_enclave }}
 
-      - name: Set RUSTC version
-        id: rustc
-        run: |
-          cd tee-worker
-          RUSTC_VERSION=$(rustc --version | cut -d' ' -f2)
-          echo "rustc_version=$RUSTC_VERSION" >> $GITHUB_OUTPUT
-
       - name: Set MRENCLAVE
         id: mrenclave
         run: |
@@ -191,6 +185,17 @@ jobs:
           f="tee-worker/enclave_release/mrenclave.txt"
           [ -f "$f" ] && MRENCLAVE=$(cat "$f")
           echo "mrenclave=$MRENCLAVE" >> $GITHUB_OUTPUT
+
+      - name: Set shasum
+        id: shasum
+        run: |
+          ENCLAVE_SHA1SUM=
+          WORKER_SHA1SUM=
+          cd tee-worker/enclave-release
+          [ -f "enclave.signed.so" ] && ENCLAVE_SHA1SUM=$(shasum enclave.signed.so | awk '{print $1}')
+          [ -f "litentry-worker" ] && WORKER_SHA1SUM=$(shasum litentry-worker | awk '{print $1}')
+          echo "enclave_sha1sum=$ENCLAVE_SHA1SUM" >> $GITHUB_OUTPUT
+          echo "worker_sha1sum=$WORKER_SHA1SUM" >> $GITHUB_OUTPUT
 
       - name: Upload artefacts
         uses: actions/upload-artifact@v3
@@ -330,9 +335,11 @@ jobs:
       - name: Generate release notes
         run: |
           export MRENCLAVE="${{ needs.build-tee.outputs.mrenclave }}"
+          export ENCLAVE_SHA1SUM="${{ needs.build-tee.outputs.enclave_sha1sum }}"
+          export WORKER_SHA1SUM="${{ needs.build-tee.outputs.worker_sha1sum }}"
           ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release draft
         id: create-release-draft

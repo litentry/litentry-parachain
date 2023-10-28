@@ -1,9 +1,9 @@
 [package]
-name = "litentry-worker"
-version = "0.0.1"
+name = 'litentry-worker'
+version = '0.0.1'
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
-build = "build.rs"
-edition = "2021"
+build = 'build.rs'
+edition = '2021'
 
 [dependencies]
 async-trait = "0.1.50"
