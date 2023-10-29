@@ -225,6 +225,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
       - name: Download and tag docker image
         run: |
           docker pull litentry/litentry-parachain:${{ env.RELEASE_TAG }}
