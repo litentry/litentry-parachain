@@ -191,7 +191,7 @@ jobs:
         run: |
           ENCLAVE_SHA1SUM=
           WORKER_SHA1SUM=
-          cd tee-worker/enclave-release
+          cd tee-worker/enclave_release
           [ -f "enclave.signed.so" ] && ENCLAVE_SHA1SUM=$(shasum enclave.signed.so | awk '{print $1}')
           [ -f "litentry-worker" ] && WORKER_SHA1SUM=$(shasum litentry-worker | awk '{print $1}')
           echo "enclave_sha1sum=$ENCLAVE_SHA1SUM" >> $GITHUB_OUTPUT
