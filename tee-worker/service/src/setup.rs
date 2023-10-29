@@ -17,7 +17,6 @@
 */
 
 use crate::error::{Error, ServiceResult};
-use base58::ToBase58;
 use codec::Encode;
 use itp_enclave_api::{enclave_base::EnclaveBase, Enclave};
 use itp_settings::files::{
