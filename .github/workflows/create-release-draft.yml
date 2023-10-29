@@ -54,10 +54,10 @@ jobs:
         run: |
           # use something similar to mask to store the release type
           t=0000
-          [ "${{ github.event.inputs.release_client }}" = "true" ] && t=$(echo $t | sed 's/0/1/1')
-          [ "${{ github.event.inputs.release_runtime }}" = "true" ] && t=$(echo $t | sed 's/0/1/2')
-          [ "${{ github.event.inputs.release_worker }}" = "true" ] && t=$(echo $t | sed 's/0/1/3')
-          [ "${{ github.event.inputs.release_enclave }}" = "true" ] && t=$(echo $t | sed 's/0/1/4')
+          [ "${{ github.event.inputs.release_client }}" = "true" ] && t="${t:0:0}1${t:1}")
+          [ "${{ github.event.inputs.release_runtime }}" = "true" ] && t="${t:0:1}1${t:2}")
+          [ "${{ github.event.inputs.release_worker }}" = "true" ] && t="${t:0:2}1${t:3}")
+          [ "${{ github.event.inputs.release_enclave }}" = "true" ] && t="${t:0:3}1${t:4}")
           if [ $t = "0000"]; then
             echo "::error::Please select at least one release type."
             exit 1
