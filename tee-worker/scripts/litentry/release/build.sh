@@ -12,6 +12,9 @@ function usage() {
 
 [ $# -ne 2 ] && (usage; exit 1)
 
+echo "build worker: $1"
+echo "build enclave: $2"
+
 ROOTDIR=$(git rev-parse --show-toplevel)
 WORKERDIR="$ROOTDIR/tee-worker"
 

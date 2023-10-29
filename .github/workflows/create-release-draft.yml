@@ -62,6 +62,9 @@ jobs:
             echo "::error::Please select at least one release type."
             exit 1
           fi
+          echo "::group::print release type"
+          echo "release_type: $t"
+          echo "::endgroup::"
           echo "release_type=$t" >> $GITHUB_OUTPUT
     outputs:
       release_type: ${{ steps.vars.outputs.release_type }}
