@@ -178,7 +178,7 @@ async function spawnWorkerJob(
             outputStream.on('line', (line: string) => {
                 console.log(name, line);
 
-                const match = line.match(/^Successfully initialized shard "(?<shard>[1-9A-HJ-NP-Za-km-z]{44})"/);
+                const match = line.match(/^Successfully initialized shard (?<shard>0x[\w\d]{64}).*/);
                 if (match !== null) {
                     /**
                      * Assertions needed because regex contents aren't reflected in function typing;

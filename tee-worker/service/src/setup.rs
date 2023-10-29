@@ -57,10 +57,10 @@ pub(crate) fn initialize_shard_and_keys(
 pub(crate) fn init_shard(enclave: &Enclave, shard_identifier: &ShardIdentifier) {
 	match enclave.init_shard(shard_identifier.encode()) {
 		Err(e) => {
-			println!("Failed to initialize shard {:?}: {:?}", shard_identifier.0.to_base58(), e);
+			println!("Failed to initialize shard {:?}: {:?}", shard_identifier, e);
 		},
 		Ok(_) => {
-			println!("Successfully initialized shard {:?}", shard_identifier.0.to_base58());
+			println!("Successfully initialized shard {:?}", shard_identifier);
 		},
 	}
 }
