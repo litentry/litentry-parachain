@@ -51,7 +51,7 @@ pub trait WeightInfo {
 	fn register_dcap_enclave() -> Weight;
 	fn register_quoting_enclave() -> Weight;
 	fn unregister_enclave() -> Weight;
-	fn invoke() -> Weight;
+	fn call_worker() -> Weight;
 	fn confirm_processed_parentchain_block() -> Weight;
 	fn publish_hash() -> Weight;
 }
@@ -85,7 +85,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(5 as u64))
 	}
-	fn invoke() -> Weight {
+	fn call_worker() -> Weight {
 		Weight::from_parts(20_529_000 as u64, 0)
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -126,7 +126,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(5 as u64))
 	}
-	fn invoke() -> Weight {
+	fn call_worker() -> Weight {
 		Weight::from_parts(20_529_000 as u64, 0)
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)

@@ -74,8 +74,9 @@ impl TeerexCallIndexes for NodeMetadata {
 		self.call_indexes(TEEREX, "register_tcb_info")
 	}
 
+	/* Keep parachain extrinsic name untouched. Keep alignment with upstream worker */
 	fn invoke_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(TEEREX, "invoke")
+		self.call_indexes(TEEREX, "call_worker")
 	}
 
 	fn confirm_processed_parentchain_block_call_indexes(&self) -> Result<[u8; 2]> {
