@@ -16,7 +16,7 @@
 */
 
 use crate::{
-	mock::*, Enclave, EnclaveRegistry, Error, Event as TeerexEvent, ExecutedCalls, Request,
+	mock::*, Enclave, EnclaveRegistry, Error, Event as TeerexEvent, ExecutedCalls, RsaRequest,
 	ShardIdentifier, DATA_LENGTH_LIMIT,
 };
 use frame_support::{assert_err, assert_ok};
@@ -443,7 +443,7 @@ fn ipfs_update_from_unregistered_enclave_fails() {
 #[test]
 fn call_worker_works() {
 	new_test_ext().execute_with(|| {
-		let req = Request { shard: ShardIdentifier::default(), cyphertext: vec![0u8, 1, 2, 3, 4] };
+		let req = RsaRequest::new(ShardIdentifier::default(), vec![0u8, 1, 2, 3, 4]);
 		// don't care who signs
 		let signer = get_signer(TEST4_SIGNER_PUB);
 		assert!(Teerex::call_worker(RuntimeOrigin::signed(signer), req.clone()).is_ok());

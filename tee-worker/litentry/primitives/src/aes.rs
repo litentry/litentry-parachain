@@ -20,7 +20,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
-use crate::{AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType, NONCE_LEN};
+use crate::{AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType, Vec, NONCE_LEN};
 
 use rand::Rng;
 
@@ -81,6 +81,24 @@ pub fn aes_encrypt_nonce(
 	}
 
 	AesOutput::default()
+}
+
+pub fn aes_decrypt(key: &UserShieldingKeyType, data: &mut AesOutput) -> Option<Vec<u8>> {
+	let in_out = data.ciphertext.as_mut();
+	if let Ok(unbound_key) = UnboundKey::new(&AES_256_GCM, key.as_slice()) {
+		let less_safe_key = LessSafeKey::new(unbound_key);
+		if (less_safe_key.open_in_place(
+			Nonce::assume_unique_for_key(data.nonce),
+			Aad::from(data.aad.clone()),
+			in_out,
+		))
+		.is_ok()
+		{
+			return Some((*in_out).to_vec())
+		}
+	}
+
+	None
 }
 
 #[derive(Clone)]

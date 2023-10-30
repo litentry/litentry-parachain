@@ -13,7 +13,6 @@ import type {
     CorePrimitivesAssertionAchainableDatePercent,
     CorePrimitivesAssertionAchainableParams,
     CorePrimitivesAssertionAchainableToken,
-    CorePrimitivesAssertionAmountHoldingTimeType,
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesErrorImpError,
     CorePrimitivesErrorVcmpError,
@@ -302,7 +301,7 @@ import type {
     TeerexPrimitivesEnclave,
     TeerexPrimitivesQeTcb,
     TeerexPrimitivesQuotingEnclave,
-    TeerexPrimitivesRequest,
+    TeerexPrimitivesRsaRequest,
     TeerexPrimitivesSgxBuildMode,
     TeerexPrimitivesSgxEnclaveMetadata,
     TeerexPrimitivesTcbInfoOnChain,
@@ -378,7 +377,6 @@ declare module "@polkadot/types/types/registry" {
         CorePrimitivesAssertionAchainableDatePercent: CorePrimitivesAssertionAchainableDatePercent;
         CorePrimitivesAssertionAchainableParams: CorePrimitivesAssertionAchainableParams;
         CorePrimitivesAssertionAchainableToken: CorePrimitivesAssertionAchainableToken;
-        CorePrimitivesAssertionAmountHoldingTimeType: CorePrimitivesAssertionAmountHoldingTimeType;
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;
         CorePrimitivesErrorImpError: CorePrimitivesErrorImpError;
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;
@@ -667,7 +665,7 @@ declare module "@polkadot/types/types/registry" {
         TeerexPrimitivesEnclave: TeerexPrimitivesEnclave;
         TeerexPrimitivesQeTcb: TeerexPrimitivesQeTcb;
         TeerexPrimitivesQuotingEnclave: TeerexPrimitivesQuotingEnclave;
-        TeerexPrimitivesRequest: TeerexPrimitivesRequest;
+        TeerexPrimitivesRsaRequest: TeerexPrimitivesRsaRequest;
         TeerexPrimitivesSgxBuildMode: TeerexPrimitivesSgxBuildMode;
         TeerexPrimitivesSgxEnclaveMetadata: TeerexPrimitivesSgxEnclaveMetadata;
         TeerexPrimitivesTcbInfoOnChain: TeerexPrimitivesTcbInfoOnChain;

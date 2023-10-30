@@ -48,7 +48,7 @@ use sgx_tcrypto::{rsgx_sha256_slice, SgxEccHandle};
 use sgx_tse::{rsgx_create_report, rsgx_verify_report};
 use sgx_types::{
 	c_int, sgx_epid_group_id_t, sgx_quote_nonce_t, sgx_quote_sign_type_t, sgx_report_data_t,
-	sgx_spid_t, sgx_status_t, sgx_status_t::SGX_ERROR_UNEXPECTED, sgx_target_info_t, SgxResult, *,
+	sgx_spid_t, sgx_status_t, sgx_target_info_t, SgxResult, *,
 };
 use sp_core::{ed25519, Pair};
 use std::{
