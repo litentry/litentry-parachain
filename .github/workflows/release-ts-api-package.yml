@@ -19,7 +19,7 @@ jobs:
 
       - name: Building client api
         run: |
-          cd client-api
+          cd ./tee-worker/client-api
           pnpm install
           pnpm build
           ls
