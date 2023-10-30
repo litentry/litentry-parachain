@@ -22,9 +22,8 @@ use crate::{
 			EnclaveExtrinsicsFactory, EnclaveNodeMetadataRepository, EnclaveOCallApi,
 			EnclaveStfExecutor, EnclaveValidatorAccessor,
 			IntegriteeParentchainBlockImportDispatcher,
-			GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
-			GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE, GLOBAL_OCALL_API_COMPONENT,
-			GLOBAL_STATE_HANDLER_COMPONENT,
+			GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE,
+			GLOBAL_OCALL_API_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
 		},
 		parentchain::common::{
 			create_extrinsics_factory, create_integritee_offchain_immediate_import_dispatcher,
@@ -62,13 +61,12 @@ impl IntegriteeParachainHandler {
 
 		let genesis_header = params.genesis_header.clone();
 
-		let light_client_seal = GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL.get()?;
-		let validator =
-			itc_parentchain::light_client::io::read_or_init_parachain_validator::<
-				ParachainBlock,
-				EnclaveOCallApi,
-				_,
-			>(params, ocall_api.clone(), &*light_client_seal, ParentchainId::Integritee)?;
+		let light_client_seal = GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL.get()?;
+		let validator = itc_parentchain::light_client::io::read_or_init_parachain_validator::<
+			ParachainBlock,
+			EnclaveOCallApi,
+			_,
+		>(params, ocall_api.clone(), &*light_client_seal, ParentchainId::Litentry)?;
 		let validator_accessor =
 			Arc::new(EnclaveValidatorAccessor::new(validator, light_client_seal));
 
@@ -76,7 +74,7 @@ impl IntegriteeParachainHandler {
 
 		let extrinsics_factory = create_extrinsics_factory(
 			genesis_hash,
-			GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE.clone(),
+			GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE.clone(),
 			node_metadata_repository.clone(),
 		)?;
 

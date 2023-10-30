@@ -18,13 +18,13 @@
 while getopts ":p:A:u:V:C:" opt; do
     case $opt in
         p)
-            INTEGRITEE_RPC_PORT=$OPTARG
+            LITENTRY_RPC_PORT=$OPTARG
             ;;
         A)
             WORKER_PORT=$OPTARG
             ;;
         u)
-            INTEGRITEE_RPC_URL=$OPTARG
+            LITENTRY_RPC_URL=$OPTARG
             ;;
         V)
             WORKER_URL=$OPTARG
@@ -46,8 +46,8 @@ ADDFUNCTION="1003e2d200000000000000000000000000000000000000000000000000000000000
 
 
 # using default port if none given as arguments
-INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
-INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
+LITENTRY_RPC_PORT=${LITENTRY_RPC_PORT:-9944}
+LITENTRY_RPC_URL=${LITENTRY_RPC_URL:-"ws://127.0.0.1"}
 
 WORKER_PORT=${WORKER_PORT:-2000}
 WORKER_URL=${WORKER_URL:-"wss://127.0.0.1"}
@@ -57,10 +57,10 @@ CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 ${CLIENT_BIN} --version
-echo "Using node uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
+echo "Using node uri ${LITENTRY_RPC_URL}:${LITENTRY_RPC_PORT}"
 echo "Using trusted-worker uri ${WORKER_URL}:${WORKER_PORT}"
 
-CLIENTWORKER="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_URL}"
+CLIENTWORKER="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_URL}"
 
 
 # this will always take the first MRENCLAVE found in the registry !!

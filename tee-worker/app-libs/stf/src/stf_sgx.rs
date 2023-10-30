@@ -119,7 +119,7 @@ where
 	fn storage_hashes_to_update_on_block(parentchain_id: &ParentchainId) -> Vec<Vec<u8>> {
 		// Get all shards that are currently registered.
 		match parentchain_id {
-			ParentchainId::Integritee => vec![shards_key_hash()],
+			ParentchainId::Litentry => vec![shards_key_hash()],
 			ParentchainId::TargetA => vec![],
 			ParentchainId::TargetB => vec![],
 		}

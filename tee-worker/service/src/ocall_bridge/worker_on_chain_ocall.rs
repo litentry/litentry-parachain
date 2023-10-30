@@ -56,7 +56,7 @@ impl<E, F> WorkerOnChainOCall<E, F> {
 impl<E: EnclaveBase, F: CreateNodeApi> WorkerOnChainOCall<E, F> {
 	pub fn create_api(&self, parentchain_id: ParentchainId) -> OCallBridgeResult<ParentchainApi> {
 		Ok(match parentchain_id {
-			ParentchainId::Integritee => self.integritee_api_factory.create_api()?,
+			ParentchainId::Litentry => self.integritee_api_factory.create_api()?,
 			ParentchainId::TargetA => self
 				.target_a_parentchain_api_factory
 				.as_ref()
@@ -191,8 +191,7 @@ where
 					match api.get_account_next_index(&enclave_account) {
 						Ok(nonce) => {
 							warn!("query on-chain nonce OK, reset nonce to: {}", nonce);
-							if let Err(e) =
-								enclave_cloned.set_nonce(nonce, ParentchainId::Integritee)
+							if let Err(e) = enclave_cloned.set_nonce(nonce, ParentchainId::Litentry)
 							{
 								warn!("failed to reset nonce due to: {:?}", e);
 							}
@@ -234,7 +233,7 @@ mod tests {
 			WorkerOnChainOCall::new(mock_enclave, mock_node_api_factory, None, None);
 
 		let response = on_chain_ocall
-			.worker_request(Vec::<u8>::new().encode(), ParentchainId::Integritee.encode())
+			.worker_request(Vec::<u8>::new().encode(), ParentchainId::Litentry.encode())
 			.unwrap();
 
 		assert!(!response.is_empty()); // the encoded empty vector is not empty

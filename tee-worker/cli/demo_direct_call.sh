@@ -30,13 +30,13 @@ while getopts ":m:p:P:t:u:V:C:" opt; do
             READ_MRENCLAVE=$OPTARG
             ;;
         p)
-            INTEGRITEE_RPC_PORT=$OPTARG
+            LITENTRY_RPC_PORT=$OPTARG
             ;;
         P)
             WORKER_1_PORT=$OPTARG
             ;;
         u)
-            INTEGRITEE_RPC_URL=$OPTARG
+            LITENTRY_RPC_URL=$OPTARG
             ;;
         V)
             WORKER_1_URL=$OPTARG
@@ -51,8 +51,8 @@ while getopts ":m:p:P:t:u:V:C:" opt; do
 done
 
 # Using default port if none given as arguments.
-INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
-INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
+LITENTRY_RPC_PORT=${LITENTRY_RPC_PORT:-9944}
+LITENTRY_RPC_URL=${LITENTRY_RPC_URL:-"ws://127.0.0.1"}
 
 WORKER_1_PORT=${WORKER_1_PORT:-2000}
 WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
@@ -61,7 +61,7 @@ CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 ${CLIENT_BIN} --version
-echo "Using node uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
+echo "Using node uri ${LITENTRY_RPC_URL}:${LITENTRY_RPC_PORT}"
 echo "Using trusted-worker uri ${WORKER_1_URL}:${WORKER_1_PORT}"
 echo ""
 
@@ -69,7 +69,7 @@ echo ""
 AMOUNTSHIELD=50000000000
 AMOUNTTRANSFER=40000000000
 
-CLIENT="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_1_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_1_URL}"
+CLIENT="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_1_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_1_URL}"
 read -r MRENCLAVE <<< "$($CLIENT list-workers | awk '/  MRENCLAVE: / { print $2; exit }')"
 
 echo ""

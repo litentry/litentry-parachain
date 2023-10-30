@@ -28,7 +28,7 @@ use crate::{
 		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
 		EnclaveStateInitializer, EnclaveStateObserver, EnclaveStateSnapshotRepository,
 		EnclaveStfEnclaveSigner, EnclaveTopPool, EnclaveTopPoolAuthor,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT, GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
@@ -64,7 +64,7 @@ use itp_attestation_handler::{AttestationHandler, IntelAttestationHandler};
 use itp_component_container::{ComponentGetter, ComponentInitializer};
 use itp_primitives_cache::GLOBAL_PRIMITIVES_CACHE;
 use itp_settings::files::{
-	INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
+	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, STATE_SNAPSHOTS_CACHE_SIZE,
 	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use itp_sgx_crypto::{
@@ -107,10 +107,10 @@ pub(crate) fn init_enclave(
 	GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.initialize(state_key_repository.clone());
 
 	let integritee_light_client_seal = Arc::new(EnclaveLightClientSeal::new(
-		base_dir.join(INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_DB_PATH),
-		ParentchainId::Integritee,
+		base_dir.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH),
+		ParentchainId::Litentry,
 	)?);
-	GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL.initialize(integritee_light_client_seal);
+	GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL.initialize(integritee_light_client_seal);
 
 	let target_a_light_client_seal = Arc::new(EnclaveLightClientSeal::new(
 		base_dir.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH),

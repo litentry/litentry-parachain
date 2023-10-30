@@ -44,8 +44,8 @@ extern crate sgx_tstd as std;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE,
-		GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT, GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE,
+		GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TARGET_A_PARACHAIN_HANDLER_COMPONENT,
 		GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE, GLOBAL_TARGET_A_SOLOCHAIN_HANDLER_COMPONENT,
@@ -266,7 +266,7 @@ pub unsafe extern "C" fn set_nonce(
 	info!("Setting the nonce of the enclave to: {} for parentchain: {:?}", *nonce, id);
 
 	let nonce_lock = match id {
-		ParentchainId::Integritee => GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
+		ParentchainId::Litentry => GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
 		ParentchainId::TargetA => GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
 		ParentchainId::TargetB => GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
 	};
@@ -308,8 +308,7 @@ pub unsafe extern "C" fn set_node_metadata(
 	info!("Setting node meta data for parentchain: {:?}", id);
 
 	let node_metadata_repository = match id {
-		ParentchainId::Integritee =>
-			get_node_metadata_repository_from_integritee_solo_or_parachain(),
+		ParentchainId::Litentry => get_node_metadata_repository_from_integritee_solo_or_parachain(),
 		ParentchainId::TargetA => get_node_metadata_repository_from_target_a_solo_or_parachain(),
 		ParentchainId::TargetB => get_node_metadata_repository_from_target_b_solo_or_parachain(),
 	};
@@ -605,10 +604,10 @@ fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>
 	}
 
 	match id {
-		ParentchainId::Integritee => {
-			if let Ok(handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		ParentchainId::Litentry => {
+			if let Ok(handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
 				handler.import_dispatcher.dispatch_import(blocks_to_sync, events_to_sync)?;
-			} else if let Ok(handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
+			} else if let Ok(handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
 				handler.import_dispatcher.dispatch_import(blocks_to_sync, events_to_sync)?;
 			} else {
 				return Err(Error::NoIntegriteeParentchainAssigned)
@@ -704,14 +703,14 @@ pub unsafe extern "C" fn trigger_parentchain_block_import(
 
 fn internal_trigger_parentchain_block_import(id: &ParentchainId) -> Result<()> {
 	let _maybe_latest_block = match id {
-		ParentchainId::Integritee => {
-			if let Ok(handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		ParentchainId::Litentry => {
+			if let Ok(handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
 				handler
 					.import_dispatcher
 					.triggered_dispatcher()
 					.ok_or(Error::ExpectedTriggeredImportDispatcher)?
 					.import_all()?
-			} else if let Ok(handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
+			} else if let Ok(handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
 				handler
 					.import_dispatcher
 					.triggered_dispatcher()

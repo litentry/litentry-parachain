@@ -127,7 +127,7 @@ impl EnclaveOnChainOCallApi for OcallApi {
 		let requests = vec![WorkerRequest::ChainStorageKeys(key_prefix, None)];
 
 		let responses: Vec<Vec<Vec<u8>>> = self
-			.worker_request::<Vec<u8>>(requests, &ParentchainId::Integritee)?
+			.worker_request::<Vec<u8>>(requests, &ParentchainId::Litentry)?
 			.iter()
 			.filter_map(|r| match r {
 				WorkerResponse::ChainStorageKeys(k) => Some(k.clone()),

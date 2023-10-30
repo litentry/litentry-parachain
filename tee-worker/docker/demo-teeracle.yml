@@ -39,7 +39,7 @@ services:
         run --dev ${ADDITIONAL_RUNTIME_FLAGS} --teeracle-interval ${TEERACLE_INTERVAL_SECONDS}s"
     restart: always
   demo-teeracle:
-    image: integritee-cli:${VERSION:-dev}
+    image: litentry-cli:${VERSION:-dev}
     devices:
       - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
       - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
@@ -64,7 +64,7 @@ services:
       -u ws://integritee-node -p 9912
       -V wss://integritee-teeracle-worker -P 2011
       -d 7 -i ${TEERACLE_INTERVAL_SECONDS}
-      -C /usr/local/bin/integritee-cli 2>&1"
+      -C /usr/local/bin/litentry-cli 2>&1"
     restart: "no"
 networks:
   integritee-test-network:

@@ -28,7 +28,7 @@ trap "echo The demo is terminated (SIGTERM); exit 1" SIGTERM
 while getopts ":p:P:d:i:u:V:C:" opt; do
     case $opt in
         p)
-            INTEGRITEE_RPC_PORT=$OPTARG
+            LITENTRY_RPC_PORT=$OPTARG
             ;;
         P)
             WORKER_1_PORT=$OPTARG
@@ -40,7 +40,7 @@ while getopts ":p:P:d:i:u:V:C:" opt; do
             INTERVAL=$OPTARG
             ;;
         u)
-            INTEGRITEE_RPC_URL=$OPTARG
+            LITENTRY_RPC_URL=$OPTARG
             ;;
         V)
             WORKER_1_URL=$OPTARG
@@ -55,13 +55,13 @@ while getopts ":p:P:d:i:u:V:C:" opt; do
 done
 
 # using default port if none given as arguments
-INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
-INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
+LITENTRY_RPC_PORT=${LITENTRY_RPC_PORT:-9944}
+LITENTRY_RPC_URL=${LITENTRY_RPC_URL:-"ws://127.0.0.1"}
 
 WORKER_1_PORT=${WORKER_1_PORT:-2000}
 WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 DURATION=${DURATION:-48}
 INTERVAL=${INTERVAL:-86400}
@@ -71,7 +71,7 @@ ADD_TO_WHITELIST_CMD="oracle add-to-whitelist"
 
 echo "Using client binary ${CLIENT_BIN}"
 ${CLIENT_BIN} --version
-echo "Using node uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
+echo "Using node uri ${LITENTRY_RPC_URL}:${LITENTRY_RPC_PORT}"
 echo "Using trusted-worker uri ${WORKER_1_URL}:${WORKER_1_PORT}"
 echo "Using worker data update interval ${INTERVAL}"
 echo "Count the update events for ${DURATION}"
@@ -84,7 +84,7 @@ echo "Minimum expected number of events with a single oracle source: ${MIN_EXPEC
 # let "MIN_EXPECTED_NUM_OF_EVENTS_2 = 2*$MIN_EXPECTED_NUM_OF_EVENTS"
 # echo "Minimum expected number of events with two oracle sources: ${MIN_EXPECTED_NUM_OF_EVENTS_2}"
 
-CLIENT="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_1_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_1_URL}"
+CLIENT="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_1_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_1_URL}"
 
 echo "* Query on-chain enclave registry:"
 ${CLIENT} list-workers

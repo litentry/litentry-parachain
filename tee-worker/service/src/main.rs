@@ -533,12 +533,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Init parentchain specific stuff. Needed for parentchain communication.
 	let (parentchain_handler, last_synced_header) =
-		init_parentchain(&enclave, &integritee_rpc_api, &tee_accountid, ParentchainId::Integritee);
+		init_parentchain(&enclave, &integritee_rpc_api, &tee_accountid, ParentchainId::Litentry);
 	info!("Last synced parachain block = {:?}", &last_synced_header.number);
 	let nonce = integritee_rpc_api.get_account_next_index(&tee_accountid).unwrap();
 	info!("Enclave nonce = {:?}", nonce);
 	enclave
-		.set_nonce(nonce, ParentchainId::Integritee)
+		.set_nonce(nonce, ParentchainId::Litentry)
 		.expect("Could not set nonce of enclave. Returning here...");
 
 	#[cfg(feature = "dcap")]
@@ -635,7 +635,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 							// After calling the perform_ra function, the nonce will be incremented by 1,
 							// so enclave is already registered, we should reset the nonce_cache
 							enclave
-								.set_nonce(nonce, ParentchainId::Integritee)
+								.set_nonce(nonce, ParentchainId::Litentry)
 								.expect("Could not set nonce of enclave. Returning here...");
 							found = true;
 							info!("fond enclave: {:?}", value);
@@ -803,9 +803,9 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 	// ------------------------------------------------------------------------
 	// Subscribe to events and print them.
-	println!("*** [{:?}] Subscribing to events", ParentchainId::Integritee);
+	println!("*** [{:?}] Subscribing to events", ParentchainId::Litentry);
 	let mut subscription = integritee_rpc_api.subscribe_events().unwrap();
-	println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Integritee);
+	println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Litentry);
 	loop {
 		if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
 			print_events(events)

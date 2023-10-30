@@ -31,7 +31,7 @@ while getopts ":m:p:A:B:t:u:W:V:C:" opt; do
             READ_MRENCLAVE=$OPTARG
             ;;
         p)
-            INTEGRITEE_RPC_PORT=$OPTARG
+            LITENTRY_RPC_PORT=$OPTARG
             ;;
         A)
             WORKER_1_PORT=$OPTARG
@@ -40,7 +40,7 @@ while getopts ":m:p:A:B:t:u:W:V:C:" opt; do
             WORKER_2_PORT=$OPTARG
             ;;
         u)
-            INTEGRITEE_RPC_URL=$OPTARG
+            LITENTRY_RPC_URL=$OPTARG
             ;;
         V)
             WORKER_1_URL=$OPTARG
@@ -58,8 +58,8 @@ while getopts ":m:p:A:B:t:u:W:V:C:" opt; do
 done
 
 # Using default port if none given as arguments.
-INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
-INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
+LITENTRY_RPC_PORT=${LITENTRY_RPC_PORT:-9944}
+LITENTRY_RPC_URL=${LITENTRY_RPC_URL:-"ws://127.0.0.1"}
 
 WORKER_1_PORT=${WORKER_1_PORT:-2000}
 WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
@@ -71,15 +71,15 @@ CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 ${CLIENT_BIN} --version
-echo "Using node uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
+echo "Using node uri ${LITENTRY_RPC_URL}:${LITENTRY_RPC_PORT}"
 echo "Using trusted-worker 1 uri ${WORKER_1_URL}:${WORKER_1_PORT}"
 echo "Using trusted-worker 2 uri ${WORKER_2_URL}:${WORKER_2_PORT}"
 
 INITIALFUNDS=50000000000
 AMOUNTTRANSFER=20000000000
 
-CLIENTWORKER1="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_1_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_1_URL}"
-CLIENTWORKER2="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_2_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_2_URL}"
+CLIENTWORKER1="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_1_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_1_URL}"
+CLIENTWORKER2="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_2_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_2_URL}"
 
 if [ "$READ_MRENCLAVE" = "file" ]
 then

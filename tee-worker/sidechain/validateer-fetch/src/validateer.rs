@@ -46,7 +46,7 @@ impl<OnchainStorage: EnclaveOnChainOCallApi> ValidateerFetch for OnchainStorage 
 		}
 
 		let enclaves: Vec<Enclave> = self
-			.get_multiple_storages_verified(hashes, header, &ParentchainId::Integritee)?
+			.get_multiple_storages_verified(hashes, header, &ParentchainId::Litentry)?
 			.into_iter()
 			.filter_map(|e| e.into_tuple().1)
 			.collect();
@@ -58,14 +58,10 @@ impl<OnchainStorage: EnclaveOnChainOCallApi> ValidateerFetch for OnchainStorage 
 	}
 
 	fn validateer_count<Header: HeaderT<Hash = H256>>(&self, header: &Header) -> Result<u64> {
-		self.get_storage_verified(
-			TeeRexStorage::enclave_count(),
-			header,
-			&ParentchainId::Integritee,
-		)?
-		.into_tuple()
-		.1
-		.ok_or_else(|| Error::Other("Could not get validateer count from chain"))
+		self.get_storage_verified(TeeRexStorage::enclave_count(), header, &ParentchainId::Litentry)?
+			.into_tuple()
+			.1
+			.ok_or_else(|| Error::Other("Could not get validateer count from chain"))
 	}
 }
 

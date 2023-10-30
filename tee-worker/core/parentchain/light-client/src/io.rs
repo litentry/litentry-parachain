@@ -347,13 +347,13 @@ pub mod sgx_tests {
 	pub fn init_parachain_light_client_works() {
 		let parachain_params = default_simple_params();
 		let temp_dir = TempDir::with_prefix("init_parachain_light_client_works").unwrap();
-		let seal = TestSeal::new(temp_dir.path().to_path_buf(), ParentchainId::Integritee).unwrap();
+		let seal = TestSeal::new(temp_dir.path().to_path_buf(), ParentchainId::Litentry).unwrap();
 
 		let validator = read_or_init_parachain_validator::<TestBlock, OnchainMock, _>(
 			parachain_params.clone(),
 			Arc::new(OnchainMock::default()),
 			&seal,
-			ParentchainId::Integritee,
+			ParentchainId::Litentry,
 		)
 		.unwrap();
 
@@ -369,7 +369,7 @@ pub mod sgx_tests {
 	pub fn sealing_creates_backup() {
 		let params = default_simple_params();
 		let temp_dir = TempDir::with_prefix("sealing_creates_backup").unwrap();
-		let seal = TestSeal::new(temp_dir.path().to_path_buf(), ParentchainId::Integritee).unwrap();
+		let seal = TestSeal::new(temp_dir.path().to_path_buf(), ParentchainId::Litentry).unwrap();
 		let state = RelayState::new(params.genesis_header, Default::default()).into();
 
 		seal.seal(&state).unwrap();

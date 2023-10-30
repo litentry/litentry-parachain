@@ -9,13 +9,13 @@ set -euo pipefail
 while getopts ":m:p:A:u:V:w:x:y:z:C:" opt; do
     case $opt in
         p)
-            INTEGRITEE_RPC_PORT=$OPTARG
+            LITENTRY_RPC_PORT=$OPTARG
             ;;
         A)
             WORKER_1_PORT=$OPTARG
             ;;
         u)
-            INTEGRITEE_RPC_URL=$OPTARG
+            LITENTRY_RPC_URL=$OPTARG
             ;;
         V)
             WORKER_1_URL=$OPTARG
@@ -42,8 +42,8 @@ while getopts ":m:p:A:u:V:w:x:y:z:C:" opt; do
 done
 
 # Using default port if none given as arguments.
-INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
-INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
+LITENTRY_RPC_PORT=${LITENTRY_RPC_PORT:-9944}
+LITENTRY_RPC_URL=${LITENTRY_RPC_URL:-"ws://127.0.0.1"}
 TARGET_A_PARENTCHAIN_RPC_PORT=${TARGET_A_PARENTCHAIN_RPC_PORT:-9966}
 TARGET_A_PARENTCHAIN_RPC_URL=${TARGET_A_PARENTCHAIN_RPC_URL:-"ws://127.0.0.1"}
 TARGET_B_PARENTCHAIN_RPC_PORT=${TARGET_B_PARENTCHAIN_RPC_PORT:-9988}
@@ -52,11 +52,11 @@ TARGET_B_PARENTCHAIN_RPC_URL=${TARGET_B_PARENTCHAIN_RPC_URL:-"ws://127.0.0.1"}
 WORKER_1_PORT=${WORKER_1_PORT:-2000}
 WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 ${CLIENT_BIN} --version
-echo "Using Integritee RPC uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
+echo "Using Integritee RPC uri ${LITENTRY_RPC_URL}:${LITENTRY_RPC_PORT}"
 echo "Using Target A RPC uri ${TARGET_A_PARENTCHAIN_RPC_URL}:${TARGET_A_PARENTCHAIN_RPC_PORT}"
 echo "Using Target B RPC uri ${TARGET_B_PARENTCHAIN_RPC_URL}:${TARGET_B_PARENTCHAIN_RPC_PORT}"
 echo "Using trusted-worker 1 uri ${WORKER_1_URL}:${WORKER_1_PORT}"
@@ -68,7 +68,7 @@ UNIT=$(( 10 ** 12 ))
 # make these amounts greater than ED
 AMOUNT_SHIELD=$(( 6 * UNIT ))
 
-CLIENT="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_1_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_1_URL}"
+CLIENT="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_1_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_1_URL}"
 CLIENT2="${CLIENT_BIN} -p ${TARGET_A_PARENTCHAIN_RPC_PORT} -P ${WORKER_1_PORT} -u ${TARGET_A_PARENTCHAIN_RPC_URL} -U ${WORKER_1_URL}"
 CLIENT3="${CLIENT_BIN} -p ${TARGET_B_PARENTCHAIN_RPC_PORT} -P ${WORKER_1_PORT} -u ${TARGET_B_PARENTCHAIN_RPC_URL} -U ${WORKER_1_URL}"
 
