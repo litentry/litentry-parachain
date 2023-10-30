@@ -21,8 +21,7 @@ jobs:
         run: |
           cd ./tee-worker/client-api
           pnpm install
-          pnpm run update-metadata
-          pnpm build
+          pnpm run update-build
           ls
 
   # parachain-build-dev:
