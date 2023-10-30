@@ -41,9 +41,6 @@ pub mod pallet_utility;
 pub mod pallet_vcmp;
 pub mod runtime_call;
 
-#[cfg(feature = "std")]
-pub mod event;
-
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
 
