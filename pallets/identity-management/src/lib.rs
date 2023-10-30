@@ -21,10 +21,10 @@
 //! However, there are so many error cases in TEE that I'm not even sure
 //! if it's a good idea to have a matching extrinsic for error propagation.
 //!
-//! The reasons that we don't use pallet_teerex::invoke directly are:
-//! - call teerex::invoke inside IMP won't trigger the handler, because it's not called as
+//! The reasons that we don't use pallet_teerex::call_worker directly are:
+//! - call teerex::call_worker inside IMP won't trigger the handler, because it's not called as
 //!   extrinsics so won't be scraped
-//! - the origin is discarded in invoke but we need it
+//! - the origin is discarded in call_worker but we need it
 //! - to simplify the F/E usage, we only need to encrypt the needed parameters (see e.g.
 //!   shield_funds)
 
