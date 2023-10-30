@@ -40,7 +40,6 @@ clean_up
 
 cd "$root_dir"
 make fmt
-# make shellcheck # _shellcheck is not enforced in CI though
 
 echo "[Step 1], Parachain clippy"
 cd "$root_dir" && parachain_check
