@@ -287,17 +287,11 @@ export async function createSignedTrustedGetterIdGraph(
 
 export const getSidechainNonce = async (
     context: IntegrationTestContext,
-    signer: Signer,
     teeShieldingKey: KeyObject,
     subject: LitentryPrimitivesIdentity
 ): Promise<Index> => {
-    const getterSigned = await createSignedTrustedGetter(
-        context.api,
-        ['nonce', '(LitentryIdentity)'],
-        signer,
-        subject.toHuman()
-    );
-    const getter = context.api.createType('Getter', { trusted: getterSigned }) as unknown as Getter; // @fixme 1878
+    const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], subject.toHuman());
+    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
     const nonce = await sendRequestFromGetter(context, teeShieldingKey, getter);
     const nonceValue = decodeNonce(nonce.value.toHex());
     return context.api.createType('Index', nonceValue) as Index;

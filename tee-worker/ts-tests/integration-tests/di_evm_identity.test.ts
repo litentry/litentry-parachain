@@ -11,7 +11,6 @@ import {
     assertSetUserShieldingKeyResult,
     assertIdentityLinkedResult,
     assertWorkerError,
-    PolkadotSigner,
 } from './common/utils';
 import {
     assertFailedEvent,
@@ -70,12 +69,7 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step(`setting user shielding key (alice evm account)`, async function () {
-        const nonce = await getSidechainNonce(
-            context,
-            new PolkadotSigner(context.substrateWallet.alice),
-            teeShieldingKey,
-            aliceEvmIdentity
-        );
+        const nonce = await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity);
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
@@ -144,14 +138,7 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('linking identities (alice evm account)', async function () {
-        let currentNonce = (
-            await getSidechainNonce(
-                context,
-                new PolkadotSigner(context.substrateWallet.alice),
-                teeShieldingKey,
-                aliceEvmIdentity
-            )
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const bobEvmNonce = getNextNonce();
@@ -294,14 +281,7 @@ describe('Test Identity (evm direct invocation)', function () {
         }
     });
     step('deactivating identity(alice evm account)', async function () {
-        let currentNonce = (
-            await getSidechainNonce(
-                context,
-                new PolkadotSigner(context.substrateWallet.alice),
-                teeShieldingKey,
-                aliceEvmIdentity
-            )
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const deactivateIdentityRequestParams: {
@@ -389,14 +369,7 @@ describe('Test Identity (evm direct invocation)', function () {
         }
     });
     step('activating identity(alice evm account)', async function () {
-        let currentNonce = (
-            await getSidechainNonce(
-                context,
-                new PolkadotSigner(context.substrateWallet.alice),
-                teeShieldingKey,
-                aliceEvmIdentity
-            )
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const activateIdentityRequestParams: {
@@ -485,14 +458,7 @@ describe('Test Identity (evm direct invocation)', function () {
     });
 
     step('deactivating prime identity is disallowed', async function () {
-        let currentNonce = (
-            await getSidechainNonce(
-                context,
-                new PolkadotSigner(context.substrateWallet.alice),
-                teeShieldingKey,
-                aliceEvmIdentity
-            )
-        ).toNumber();
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
 

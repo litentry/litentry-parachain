@@ -22,12 +22,12 @@ use crate::{
 	trusted_command_utils::{
 		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
 	},
-	trusted_operation::{get_json_request, perform_trusted_operation, wait_until},
+	trusted_operation::{get_json_request, wait_until},
 	Cli, CliResult, CliResultOk, SR25519_KEY_TYPE,
 };
 use codec::Decode;
 use hdrhistogram::Histogram;
-use ita_stf::{Getter, Index, TrustedCall, TrustedGetter, TrustedOperation};
+use ita_stf::{Getter, Index, PublicGetter, TrustedCall, TrustedGetter, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_stf_primitives::types::KeyPair;
 use itp_types::{
@@ -279,10 +279,7 @@ fn get_nonce(
 	shard: ShardIdentifier,
 	direct_client: &DirectClient,
 ) -> Index {
-	let getter = Getter::trusted(
-		TrustedGetter::nonce(account.public().into())
-			.sign(&KeyPair::Sr25519(Box::new(account.clone()))),
-	);
+	let getter = Getter::public(PublicGetter::nonce(account.public().into()));
 
 	let getter_start_timer = Instant::now();
 	let getter_result = direct_client.get_state(shard, &getter);

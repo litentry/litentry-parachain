@@ -40,18 +40,23 @@ use substrate_client_keystore::LocalKeystore;
 #[macro_export]
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
-		use ita_stf::TrustedGetter;
-		use $crate::trusted_command_utils::get_pending_trusted_calls_for;
+		use ita_stf::{Getter, PublicGetter};
+		use litentry_primitives::Identity;
 
-		let top: TrustedOperation = TrustedGetter::nonce($signer_pair.public().into())
-			.sign(&KeyPair::Sr25519(Box::new($signer_pair.clone())))
-			.into();
-		// final nonce = current system nonce + pending tx count, panic early
-		let res = perform_trusted_operation($cli, $trusted_args, &top).unwrap_or_default();
-		let nonce = match res {
-			Some(n) => Index::decode(&mut n.as_slice()).unwrap_or(0),
-			None => 0,
+		use $crate::{
+			trusted_command_utils::get_pending_trusted_calls_for,
+			trusted_operation::execute_getter_from_cli_args,
 		};
+
+		let getter =
+			Getter::public(PublicGetter::nonce(Identity::Substrate($signer_pair.public().into())));
+		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
+		let nonce = match getter_result {
+			Ok(Some(encoded_nonce)) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
+			Ok(None) => Default::default(),
+			Err(_) => todo!(),
+		};
+
 		debug!("got system nonce: {:?}", nonce);
 		let pending_tx_count =
 			get_pending_trusted_calls_for($cli, $trusted_args, &$signer_pair.public().into()).len();
@@ -135,9 +140,12 @@ pub(crate) fn get_pair_from_str(
 			let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None)
 				.expect("store should exist");
 			info!("store opened");
-			let public_key = &sr25519::AppPublic::from_ss58check(account).unwrap();
-			info!("public_key: {:#?}", &public_key);
-			let _pair = store.key_pair::<sr25519::AppPair>(public_key).unwrap().unwrap();
+			let _pair = store
+				.key_pair::<sr25519::AppPair>(
+					&sr25519::Public::from_ss58check(account).unwrap().into(),
+				)
+				.unwrap()
+				.unwrap();
 			info!("key pair fetched");
 			drop(store);
 			_pair.into()

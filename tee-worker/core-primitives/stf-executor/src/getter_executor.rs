@@ -77,7 +77,7 @@ mod tests {
 	use ita_stf::{PublicGetter, TrustedGetter, TrustedGetterSigned};
 	use itp_stf_primitives::types::AccountId;
 	use itp_stf_state_observer::mock::ObserveStateMock;
-	use litentry_primitives::LitentryMultiSignature;
+	use litentry_primitives::{Address32, Identity, LitentryMultiSignature};
 	use sp_core::ed25519::Signature;
 
 	type TestState = u64;
@@ -124,7 +124,7 @@ mod tests {
 
 	fn dummy_trusted_getter() -> TrustedGetterSigned {
 		TrustedGetterSigned::new(
-			TrustedGetter::nonce(AccountId::new([0u8; 32]).into()),
+			TrustedGetter::free_balance(Identity::Substrate(Address32::from([0u8; 32]))),
 			LitentryMultiSignature::Ed25519(Signature::from_raw([0u8; 64])),
 		)
 	}

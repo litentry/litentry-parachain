@@ -60,6 +60,7 @@ impl From<TrustedGetterSigned> for Getter {
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
 	some_value,
+	nonce(Identity),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -67,7 +68,6 @@ pub enum PublicGetter {
 pub enum TrustedGetter {
 	free_balance(Identity),
 	reserved_balance(Identity),
-	nonce(Identity),
 	#[cfg(feature = "evm")]
 	evm_nonce(Identity),
 	#[cfg(feature = "evm")]
@@ -85,7 +85,6 @@ impl TrustedGetter {
 		match self {
 			TrustedGetter::free_balance(sender_identity) => sender_identity,
 			TrustedGetter::reserved_balance(sender_identity) => sender_identity,
-			TrustedGetter::nonce(sender_identity) => sender_identity,
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_nonce(sender_identity) => sender_identity,
 			#[cfg(feature = "evm")]
@@ -173,15 +172,6 @@ impl ExecuteGetter for TrustedGetterSigned {
 				} else {
 					None
 				},
-			TrustedGetter::nonce(identity) =>
-				if let Some(account_id) = identity.to_account_id() {
-					let nonce = System::account_nonce(&account_id);
-					debug!("PublicGetter nonce");
-					debug!("Account nonce is {}", nonce);
-					Some(nonce.encode())
-				} else {
-					None
-				},
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_nonce(who) =>
 				if let Some(account_id) = who.to_account_id() {
@@ -239,6 +229,15 @@ impl ExecuteGetter for PublicGetter {
 	fn execute(self) -> Option<Vec<u8>> {
 		match self {
 			PublicGetter::some_value => Some(42u32.encode()),
+			PublicGetter::nonce(identity) =>
+				if let Some(account_id) = identity.to_account_id() {
+					let nonce = System::account_nonce(&account_id);
+					debug!("PublicGetter nonce");
+					debug!("Account nonce is {}", nonce);
+					Some(nonce.encode())
+				} else {
+					None
+				},
 		}
 	}
 
