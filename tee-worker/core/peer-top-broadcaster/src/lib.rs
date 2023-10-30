@@ -163,6 +163,15 @@ where
 			});
 		}
 	}
+
+	fn connect_to(&self, url: &str, peer_list: &mut HashMap<String, ClientFactory::RpcClient>) {
+		match self.factory.create(url, self.responses_sender.clone()) {
+			Ok(client) => {
+				peer_list.insert(url.to_string(), client);
+			},
+			Err(e) => log::error!("Could not connect to peer {}, reason: {:?}", url, e),
+		}
+	}
 }
 
 pub fn id_to_hash(id: &Id) -> Option<Hash> {
@@ -218,17 +227,16 @@ where
 			if let Ok(mut peers) = self.peers.lock() {
 				if !peers.contains_key(&peer) {
 					log::info!("Adding a peer: {}", peer.clone());
-					match self.factory.create(&peer, self.responses_sender.clone()) {
-						Ok(client) => {
-							new_peers_list.insert(peer.to_string(), client);
-						},
-						Err(e) =>
-							log::error!("Could not connect to peer {}, reason: {:?}", peer, e),
-					}
+					self.connect_to(&peer, &mut new_peers_list)
 				} else {
 					//this is safe as we previously ensured that map contains such key
 					let peer_to_move = peers.remove(&peer).unwrap();
-					new_peers_list.insert(peer, peer_to_move);
+
+					if peer_to_move.is_alive() {
+						new_peers_list.insert(peer, peer_to_move);
+					} else {
+						self.connect_to(&peer, &mut new_peers_list);
+					}
 				}
 			}
 		}
@@ -270,6 +278,10 @@ pub mod tests {
 		) -> Result<(), Box<dyn Error>> {
 			self.sent_requests = self.sent_requests + 1;
 			Ok(())
+		}
+
+		fn is_alive(&self) -> bool {
+			true
 		}
 	}
 

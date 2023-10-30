@@ -128,6 +128,7 @@ impl RpcClientFactory for DirectRpcClientFactory {
 
 pub trait RpcClient {
 	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>>;
+	fn is_alive(&self) -> bool;
 }
 
 pub struct DirectRpcClient {
@@ -238,6 +239,14 @@ impl RpcClient for DirectRpcClient {
 				.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
 		} else {
 			Ok(())
+		}
+	}
+
+	fn is_alive(&self) -> bool {
+		if let Ok(ws) = self.ws.lock() {
+			ws.can_write()
+		} else {
+			false
 		}
 	}
 }
