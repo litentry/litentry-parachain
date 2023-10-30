@@ -20,6 +20,8 @@ jobs:
       - name: Building client api
         run: |
           cd ./tee-worker/client-api
+          ls parachain-api
+          curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' http://litentry-node:9912
           pnpm install
           pnpm run update-build
           ls
