@@ -45,6 +45,8 @@ pub fn build(
 					)
 				})?;
 
+			debug!("Litentry & Sora Quiz has role response: {:?}", resp);
+
 			if resp.data {
 				has_role_value = true;
 				break
