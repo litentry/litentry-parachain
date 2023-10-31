@@ -21,17 +21,48 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_credentials::Credential;
+use lc_credentials::{sora::SoraQuizAssertionUpdate, Credential};
+use lc_data_providers::discord_litentry::DiscordLitentryClient;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::ParameterString;
+use litentry_primitives::{ParameterString, SoraQuizType};
 
 pub fn build(
 	req: &AssertionBuildRequest,
+	qtype: SoraQuizType,
 	guild_id: ParameterString,
-	channel_id: ParameterString,
 	role_id: ParameterString,
 ) -> Result<Credential> {
-	debug!("Assertion A3 build, who: {:?}", account_id_to_string(&req.who),);
+	let mut has_role_value = false;
+	let mut client = DiscordLitentryClient::new();
+	for identity in &req.identities {
+		if let Identity::Discord(address) = &identity.0 {
+			let resp = client
+				.has_role(guild_id.to_vec(), role_id.to_vec(), address.inner_ref().to_vec())
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::SoraQuiz(qtype.clone(), guild_id.clone(), role_id.clone()),
+						e.into_error_detail(),
+					)
+				})?;
 
-	todo!()
+			if resp.data {
+				has_role_value = true;
+				break
+			}
+		}
+	}
+
+	match Credential::new(&req.who, &req.shard) {
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_sora_quiz_assertion(qtype, has_role_value);
+			Ok(credential_unsigned)
+		},
+		Err(e) => {
+			error!("Generate unsigned credential SoraQuiz failed {:?}", e);
+			Err(Error::RequestVCFailed(
+				Assertion::SoraQuiz(qtype, guild_id, role_id),
+				e.into_error_detail(),
+			))
+		},
+	}
 }

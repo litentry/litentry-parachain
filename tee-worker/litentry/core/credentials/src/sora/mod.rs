@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use litentry_primitives::SoraQuizType;
+
 use crate::{
 	assertion_logic::{AssertionLogic, Op},
 	Credential,
@@ -32,18 +34,12 @@ const VC_LITENTRY_SORA_QUIZ_INFOS: [(&str, &str); 2] = [
     ),
 ];
 
-#[derive(Debug)]
-pub enum SoraQuizType {
-	Attendee,
-	Master,
-}
-
 pub trait SoraQuizAssertionUpdate {
-	fn update_sora_assertion(&mut self, qtype: SoraQuizType, value: bool);
+	fn update_sora_quiz_assertion(&mut self, qtype: SoraQuizType, value: bool);
 }
 
 impl SoraQuizAssertionUpdate for Credential {
-	fn update_sora_assertion(&mut self, qtype: SoraQuizType, value: bool) {
+	fn update_sora_quiz_assertion(&mut self, qtype: SoraQuizType, value: bool) {
 		let assertion_content = get_sora_assertion_content(&qtype);
 		let assertion = AssertionLogic::new_item(assertion_content, Op::Equal, "true");
 		self.credential_subject.assertions.push(assertion);

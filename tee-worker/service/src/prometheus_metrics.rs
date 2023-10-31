@@ -250,7 +250,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A20 => "A20",
 			Assertion::Achainable(..) => "Achainable",
 			Assertion::Oneblock(..) => "Oneblock",
-			Assertion::Sora(..) => "Sora",
+			Assertion::SoraQuiz(..) => "SoraQuiz",
 		},
 	};
 	inc_stf_calls(category, label);

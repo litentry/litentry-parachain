@@ -39,6 +39,8 @@ pub use vc::*;
 mod oneblock;
 pub use oneblock::*;
 
+mod soraquiz;
+pub use soraquiz::*;
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{
