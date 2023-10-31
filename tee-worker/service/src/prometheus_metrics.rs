@@ -182,7 +182,103 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 	}
 }
 
-// Data structure that matches with REST API JSON
+// Function to increment STF calls with labels
+fn inc_stf_calls(category: &str, label: &str) {
+	ENCLAVE_STF_TASKS.with_label_values(&[category, label]).inc();
+}
+
+// Function to observe STF call execution time with labels
+fn observe_execution_time(category: &str, label: &str, time: f64) {
+	ENCLAVE_STF_TASKS_EXECUTION.with_label_values(&[category, label]).observe(time);
+}
+
+// Handle STF call request and increment metrics
+fn handle_stf_call_request(req: RequestType, time: f64) {
+	// Determine the category based on the request type
+	let category = match req {
+		RequestType::IdentityVerification(_) => "link_identity",
+		RequestType::AssertionVerification(_) => "request_vc",
+	};
+
+	let label = match req {
+		RequestType::IdentityVerification(request) => match request.identity {
+			Identity::Twitter(_) => "Twitter",
+			Identity::Discord(_) => "Discord",
+			Identity::Github(_) => "Github",
+			Identity::Substrate(_) => "Substrate",
+			Identity::Evm(_) => "Evm",
+		},
+		RequestType::AssertionVerification(request) => match request.assertion {
+			Assertion::A1 => "A1",
+			Assertion::A2(_) => "A2",
+			Assertion::A3(..) => "A3",
+			Assertion::A4(_) => "A4",
+			Assertion::A6 => "A6",
+			Assertion::A7(_) => "A7",
+			Assertion::A8(_) => "A8",
+			Assertion::A10(_) => "A10",
+			Assertion::A11(_) => "A11",
+			Assertion::A13(_) => "A13",
+			Assertion::A14 => "A14",
+			Assertion::A20 => "A20",
+			Assertion::Achainable(..) => "Achainable",
+			Assertion::Oneblock(..) => "Oneblock",
+			Assertion::SoraQuiz(..) => "SoraQuiz",
+		},
+	};
+	inc_stf_calls(category, label);
+	observe_execution_time(category, label, time)
+}
+
+// This function will increment the metric with provided label values.
+fn inc_successful_trusted_operation_counter(operation: &str) {
+	ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
+}
+
+fn inc_failed_trusted_operation_counter(operation: &str) {
+	ENCLAVE_FAILED_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
+}
+
+fn handle_trusted_operation<F>(call: TrustedCall, record_metric_fn: F)
+where
+	F: Fn(&str),
+{
+	match call {
+		TrustedCall::link_identity(..) => {
+			record_metric_fn("link_identity");
+		},
+		TrustedCall::request_vc(..) => {
+			record_metric_fn("request_vc");
+		},
+		TrustedCall::set_user_shielding_key(..) => {
+			record_metric_fn("set_user_shielding_key");
+		},
+		TrustedCall::set_user_shielding_key_with_networks(..) => {
+			record_metric_fn("set_user_shielding_key_with_networks");
+		},
+		TrustedCall::link_identity_callback(..) => {
+			record_metric_fn("link_identity_callback");
+		},
+		TrustedCall::request_vc_callback(..) => {
+			record_metric_fn("request_vc_callback");
+		},
+		TrustedCall::handle_vcmp_error(..) => {
+			record_metric_fn("handle_vcmp_error");
+		},
+		TrustedCall::handle_imp_error(..) => {
+			record_metric_fn("handle_icmp_error");
+		},
+		TrustedCall::deactivate_identity(..) => {
+			record_metric_fn("deactivate_identity");
+		},
+		TrustedCall::activate_identity(..) => {
+			record_metric_fn("activate_identity");
+		},
+		_ => {
+			record_metric_fn("unsupported_trusted_operation");
+		},
+	}
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct PrometheusMarblerunEvents(pub Vec<PrometheusMarblerunEvent>);

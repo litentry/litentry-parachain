@@ -92,6 +92,8 @@ pub struct DataProviderConfig {
 	pub credential_endpoint: String,
 	pub oneblock_notion_key: String,
 	pub oneblock_notion_url: String,
+	pub sora_quiz_master_id: String,
+	pub sora_quiz_attendee_id: String,
 }
 
 impl Default for DataProviderConfig {
@@ -114,6 +116,8 @@ impl DataProviderConfig {
 			credential_endpoint: "".to_string(),
 			oneblock_notion_key: "".to_string(),
 			oneblock_notion_url: "".to_string(),
+			sora_quiz_master_id: "".to_string(),
+			sora_quiz_attendee_id: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -159,6 +163,14 @@ impl DataProviderConfig {
 	pub fn set_oneblock_notion_url(&mut self, v: String) {
 		debug!("set_oneblock_notion_url: {:?}", v);
 		self.oneblock_notion_url = v;
+	}
+	pub fn set_sora_quiz_master_id(&mut self, v: String) {
+		debug!("set_sora_quiz_master_id: {:?}", v);
+		self.sora_quiz_master_id = v;
+	}
+	pub fn set_sora_quiz_attendee_id(&mut self, v: String) {
+		debug!("set_sora_quiz_attendee_id: {:?}", v);
+		self.sora_quiz_attendee_id = v;
 	}
 }
 
