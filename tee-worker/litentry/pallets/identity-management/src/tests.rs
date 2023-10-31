@@ -36,6 +36,7 @@ fn set_user_shielding_key_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			vec![],
 		));
 		assert_eq!(IMT::user_shielding_keys(who.clone()), Some(shielding_key));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
@@ -193,6 +194,7 @@ fn remove_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			vec![],
 		));
 		assert_noop!(
 			IMT::remove_identity(
@@ -254,6 +256,7 @@ fn set_identity_networks_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			vec![],
 		));
 		assert_noop!(
 			IMT::remove_identity(
@@ -302,6 +305,7 @@ fn set_identity_networks_with_wrong_network_fails() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
+			vec![],
 		));
 		assert_noop!(
 			IMT::remove_identity(

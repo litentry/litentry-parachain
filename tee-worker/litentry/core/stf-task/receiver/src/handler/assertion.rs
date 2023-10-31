@@ -90,6 +90,8 @@ where
 
 			Assertion::SoraQuiz(quiz_type, guild_id) =>
 				lc_assertion_build::sora::quiz::build(&self.req, quiz_type, guild_id),
+
+			_ => unimplemented!(),
 		}?;
 
 		// post-process the credential

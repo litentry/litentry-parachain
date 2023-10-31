@@ -2676,6 +2676,7 @@ dependencies = [
  "lazy_static",
  "lc-data-providers",
  "lc-mock-server",
+ "lc-stf-task-sender",
  "litentry-primitives",
  "log 0.4.19",
  "mockall",

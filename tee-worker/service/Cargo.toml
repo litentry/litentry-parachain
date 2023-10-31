@@ -55,6 +55,7 @@ its-peer-fetch = { path = "../sidechain/peer-fetch" }
 its-primitives = { path = "../sidechain/primitives" }
 its-rpc-handler = { path = "../sidechain/rpc-handler" }
 its-storage = { path = "../sidechain/storage" }
+lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false }
 
 # scs / integritee
 

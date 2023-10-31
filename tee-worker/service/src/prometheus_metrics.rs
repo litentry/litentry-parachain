@@ -29,6 +29,7 @@ use codec::{Decode, Encode};
 #[cfg(feature = "dcap")]
 use core::time::Duration;
 use frame_support::scale_info::TypeInfo;
+use ita_stf::TrustedCall;
 #[cfg(feature = "dcap")]
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
@@ -37,6 +38,8 @@ use itc_rest_client::{
 };
 use itp_enclave_metrics::EnclaveMetric;
 use lazy_static::lazy_static;
+use lc_stf_task_sender::RequestType;
+use litentry_primitives::{Assertion, Identity};
 use log::*;
 use prometheus::{proto::MetricFamily, register_int_gauge, IntGauge};
 use serde::{Deserialize, Serialize};
@@ -182,25 +185,9 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 	}
 }
 
-// Function to increment STF calls with labels
-fn inc_stf_calls(category: &str, label: &str) {
-	ENCLAVE_STF_TASKS.with_label_values(&[category, label]).inc();
-}
-
-// Function to observe STF call execution time with labels
-fn observe_execution_time(category: &str, label: &str, time: f64) {
-	ENCLAVE_STF_TASKS_EXECUTION.with_label_values(&[category, label]).observe(time);
-}
-
 // Handle STF call request and increment metrics
-fn handle_stf_call_request(req: RequestType, time: f64) {
-	// Determine the category based on the request type
-	let category = match req {
-		RequestType::IdentityVerification(_) => "link_identity",
-		RequestType::AssertionVerification(_) => "request_vc",
-	};
-
-	let label = match req {
+fn handle_stf_call_request(req: RequestType, _time: f64) {
+	let _label = match req {
 		RequestType::IdentityVerification(request) => match request.identity {
 			Identity::Twitter(_) => "Twitter",
 			Identity::Discord(_) => "Discord",
@@ -216,6 +203,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A6 => "A6",
 			Assertion::A7(_) => "A7",
 			Assertion::A8(_) => "A8",
+			Assertion::A9 => "A9",
 			Assertion::A10(_) => "A10",
 			Assertion::A11(_) => "A11",
 			Assertion::A13(_) => "A13",
@@ -226,17 +214,6 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::SoraQuiz(..) => "SoraQuiz",
 		},
 	};
-	inc_stf_calls(category, label);
-	observe_execution_time(category, label, time)
-}
-
-// This function will increment the metric with provided label values.
-fn inc_successful_trusted_operation_counter(operation: &str) {
-	ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
-}
-
-fn inc_failed_trusted_operation_counter(operation: &str) {
-	ENCLAVE_FAILED_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
 }
 
 fn handle_trusted_operation<F>(call: TrustedCall, record_metric_fn: F)
@@ -267,12 +244,6 @@ where
 		},
 		TrustedCall::handle_imp_error(..) => {
 			record_metric_fn("handle_icmp_error");
-		},
-		TrustedCall::deactivate_identity(..) => {
-			record_metric_fn("deactivate_identity");
-		},
-		TrustedCall::activate_identity(..) => {
-			record_metric_fn("activate_identity");
 		},
 		_ => {
 			record_metric_fn("unsupported_trusted_operation");

@@ -22,9 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_credentials::{sora::SoraQuizAssertionUpdate, Credential};
-use lc_data_providers::{
-	discord_litentry::DiscordLitentryClient, DataProviderConfigReader, ReadDataProviderConfig,
-};
+use lc_data_providers::{discord_litentry::DiscordLitentryClient, GLOBAL_DATA_PROVIDER_CONFIG};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{ParameterString, SoraQuizType};
 
@@ -33,16 +31,14 @@ pub fn build(
 	qtype: SoraQuizType,
 	guild_id: ParameterString,
 ) -> Result<Credential> {
-	let role_id = get_sora_quiz_role_id(&qtype).map_err(|error_detail| {
-		Error::RequestVCFailed(Assertion::SoraQuiz(qtype.clone(), guild_id.clone()), error_detail)
-	})?;
+	let role_id = get_sora_quiz_role_id(&qtype);
 
 	let mut has_role_value = false;
 	let mut client = DiscordLitentryClient::new();
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp = client
-				.has_role(guild_id.to_vec(), role_id.clone(), address.inner_ref().to_vec())
+				.has_role(guild_id.to_vec(), role_id.clone(), address.to_vec())
 				.map_err(|e| {
 					Error::RequestVCFailed(
 						Assertion::SoraQuiz(qtype.clone(), guild_id.clone()),
@@ -71,10 +67,11 @@ pub fn build(
 	}
 }
 
-fn get_sora_quiz_role_id(qtype: &SoraQuizType) -> core::result::Result<String, ErrorDetail> {
-	let data_provider_config = DataProviderConfigReader::read()?;
+fn get_sora_quiz_role_id(qtype: &SoraQuizType) -> String {
 	match qtype {
-		SoraQuizType::Attendee => Ok(data_provider_config.sora_quiz_attendee_id),
-		SoraQuizType::Master => Ok(data_provider_config.sora_quiz_master_id),
+		SoraQuizType::Attendee =>
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().sora_quiz_attendee_id.clone(),
+		SoraQuizType::Master =>
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().sora_quiz_master_id.clone(),
 	}
 }
