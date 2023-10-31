@@ -138,7 +138,7 @@ fn send_indirect_request(
 	chain_api.set_signer(signer.into());
 
 	let request = RsaRequest::new(shard, call_encrypted);
-	let xt = compose_extrinsic!(&chain_api, TEEREX, "invoke", request);
+	let xt = compose_extrinsic!(&chain_api, TEEREX, "call_worker", request);
 
 	let block_hash = match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock) {
 		Ok(xt_report) => {
