@@ -14,12 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use litentry_primitives::SoraQuizType;
-
 use crate::{
 	assertion_logic::{AssertionLogic, Op},
 	Credential,
 };
+use litentry_primitives::SoraQuizType;
 
 // Attendee / Master
 // (type, description)
