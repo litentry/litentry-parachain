@@ -131,11 +131,10 @@ impl DiscordLitentryClient {
 	pub fn has_role(
 		&mut self,
 		guild_id: Vec<u8>,
-		role_id: Vec<u8>,
+		role_id_s: String,
 		handler: Vec<u8>,
 	) -> Result<DiscordResponse, Error> {
 		let guild_id_s = vec_to_string(guild_id)?;
-		let role_id_s = vec_to_string(role_id)?;
 		let handler_s = vec_to_string(handler)?;
 		debug!(
 			"discord check id_hubber, guild_id: {}, role_id: {}, handler: {}",

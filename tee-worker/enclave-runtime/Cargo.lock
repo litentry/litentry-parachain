@@ -536,6 +536,7 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
+ "litentry-macros 0.9.12",
  "parity-scale-codec",
  "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
  "scale-info",
@@ -782,7 +783,7 @@ dependencies = [
  "lc-data-providers",
  "lc-scheduled-enclave",
  "lc-stf-task-receiver",
- "litentry-macros",
+ "litentry-macros 0.1.0",
  "litentry-primitives",
  "log",
  "multibase",
@@ -2783,6 +2784,15 @@ version = "0.1.0"
 dependencies = [
  "cargo_toml",
  "quote 1.0.33",
+]
+
+[[package]]
+name = "litentry-macros"
+version = "0.9.12"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 2.0.27",
 ]
 
 [[package]]

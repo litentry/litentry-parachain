@@ -184,7 +184,7 @@ pub enum Assertion {
 	Oneblock(OneBlockCourseType),
 
 	// Sora Quiz
-	SoraQuiz(SoraQuizType, ParameterString, ParameterString),  // (sora_quiz_type, guild_id, role_id)
+	SoraQuiz(SoraQuizType, ParameterString),  // (sora_quiz_type, guild_id)
 }
 
 impl Assertion {

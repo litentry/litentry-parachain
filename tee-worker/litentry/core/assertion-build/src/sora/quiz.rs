@@ -22,7 +22,9 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_credentials::{sora::SoraQuizAssertionUpdate, Credential};
-use lc_data_providers::discord_litentry::DiscordLitentryClient;
+use lc_data_providers::{
+	discord_litentry::DiscordLitentryClient, DataProviderConfigReader, ReadDataProviderConfig,
+};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{ParameterString, SoraQuizType};
 
@@ -30,17 +32,20 @@ pub fn build(
 	req: &AssertionBuildRequest,
 	qtype: SoraQuizType,
 	guild_id: ParameterString,
-	role_id: ParameterString,
 ) -> Result<Credential> {
+	let role_id = get_sora_quiz_role_id(&qtype).map_err(|error_detail| {
+		Error::RequestVCFailed(Assertion::SoraQuiz(qtype.clone(), guild_id.clone()), error_detail)
+	})?;
+
 	let mut has_role_value = false;
 	let mut client = DiscordLitentryClient::new();
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp = client
-				.has_role(guild_id.to_vec(), role_id.to_vec(), address.inner_ref().to_vec())
+				.has_role(guild_id.to_vec(), role_id.clone(), address.inner_ref().to_vec())
 				.map_err(|e| {
 					Error::RequestVCFailed(
-						Assertion::SoraQuiz(qtype.clone(), guild_id.clone(), role_id.clone()),
+						Assertion::SoraQuiz(qtype.clone(), guild_id.clone()),
 						e.into_error_detail(),
 					)
 				})?;
@@ -61,10 +66,15 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential SoraQuiz failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::SoraQuiz(qtype, guild_id, role_id),
-				e.into_error_detail(),
-			))
+			Err(Error::RequestVCFailed(Assertion::SoraQuiz(qtype, guild_id), e.into_error_detail()))
 		},
+	}
+}
+
+fn get_sora_quiz_role_id(qtype: &SoraQuizType) -> core::result::Result<String, ErrorDetail> {
+	let data_provider_config = DataProviderConfigReader::read()?;
+	match qtype {
+		SoraQuizType::Attendee => Ok(data_provider_config.sora_quiz_attendee_id),
+		SoraQuizType::Master => Ok(data_provider_config.sora_quiz_master_id),
 	}
 }
