@@ -51,9 +51,9 @@ cd /client-api/parachain-api
 curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' $NODEURL:$NPORT > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
-# cd  /client-api/sidechain-api
-# ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
-# echo "update sidechain metadata"
+cd  /client-api/sidechain-api
+${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
+echo "update sidechain metadata"
 
 cd /client-api
 pnpm install
