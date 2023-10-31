@@ -38,17 +38,11 @@ echo "Using node uri $NODEURL:$NPORT"
 echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
-apt-get install sudo
-sudo apt-get install wget
-sudo wget -qO /usr/local/bin/websocat https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl
-sudo chmod a+x /usr/local/bin/websocat
-websocat --version
 
 cd /client-api/parachain-api
-echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 $NODEURL:$NPORT > prepare-build/litentry-parachain-metadata.json
+curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' $NODEURL:$NPORT > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
-# Why the metadata fetched by cli cannot be built now. :(
 cd  /client-api/sidechain-api
 ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
