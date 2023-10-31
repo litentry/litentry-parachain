@@ -1,6 +1,6 @@
 [package]
 name = "litentry-cli"
-version = "0.12.0"
+version = "0.0.1"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 edition = "2021"
 
