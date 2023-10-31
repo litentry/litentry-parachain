@@ -562,6 +562,7 @@ export default {
             set_user_shielding_key: {
                 who: "LitentryPrimitivesIdentity",
                 key: "[u8;32]",
+                networks: "Vec<CorePrimitivesNetworkWeb3Network>",
             },
             link_identity: {
                 who: "LitentryPrimitivesIdentity",
@@ -596,8 +597,7 @@ export default {
             "Khala",
             "SubstrateTestnet",
             "Ethereum",
-            "Polygon",
-            "BSC",
+            "Bsc",
         ],
     },
     /**

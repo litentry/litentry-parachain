@@ -533,6 +533,7 @@ declare const _default: {
             set_user_shielding_key: {
                 who: string;
                 key: string;
+                networks: string;
             };
             link_identity: {
                 who: string;
