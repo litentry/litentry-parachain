@@ -4136,16 +4136,6 @@ declare module "@polkadot/api-base/types/submittable" {
                 ) => SubmittableExtrinsic<ApiType>,
                 [H256, Compact<u32>, H256]
             >;
-            invoke: AugmentedSubmittable<
-                (
-                    request:
-                        | TeerexPrimitivesRequest
-                        | { shard?: any; cyphertext?: any }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [TeerexPrimitivesRequest]
-            >;
             /**
              * Publish a hash as a result of an arbitrary enclave operation.
              *
@@ -4884,6 +4874,7 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { Achainable: any }
                         | { A20: any }
                         | { Oneblock: any }
+                        | { SoraQuiz: any }
                         | string
                         | Uint8Array,
                     hash: H256 | string | Uint8Array
@@ -4932,6 +4923,7 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { Achainable: any }
                         | { A20: any }
                         | { Oneblock: any }
+                        | { SoraQuiz: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -4989,6 +4981,7 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { Achainable: any }
                         | { A20: any }
                         | { Oneblock: any }
+                        | { SoraQuiz: any }
                         | string
                         | Uint8Array,
                     index: H256 | string | Uint8Array,
