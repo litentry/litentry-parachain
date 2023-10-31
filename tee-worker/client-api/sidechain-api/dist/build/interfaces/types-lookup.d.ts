@@ -596,6 +596,7 @@ declare module "@polkadot/types/lookup" {
         readonly asSetUserShieldingKey: {
             readonly who: LitentryPrimitivesIdentity;
             readonly key: U8aFixed;
+            readonly networks: Vec<CorePrimitivesNetworkWeb3Network>;
         } & Struct;
         readonly isLinkIdentity: boolean;
         readonly asLinkIdentity: {
@@ -636,7 +637,6 @@ declare module "@polkadot/types/lookup" {
         readonly isKhala: boolean;
         readonly isSubstrateTestnet: boolean;
         readonly isEthereum: boolean;
-        readonly isPolygon: boolean;
         readonly isBsc: boolean;
         readonly type:
             | "Polkadot"
@@ -647,7 +647,6 @@ declare module "@polkadot/types/lookup" {
             | "Khala"
             | "SubstrateTestnet"
             | "Ethereum"
-            | "Polygon"
             | "Bsc";
     }
     /** @name PalletSudoError (91) */
