@@ -1294,6 +1294,12 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("ONEBLOCK_NOTION_URL") {
 		data_provider_config.set_oneblock_notion_url(v);
 	}
+	if let Ok(v) = env::var("SORA_QUIZ_MASTER_ID") {
+		data_provider_config.set_sora_quiz_master_id(v);
+	}
+	if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
+		data_provider_config.set_sora_quiz_attendee_id(v);
+	}
 
 	data_provider_config
 }
