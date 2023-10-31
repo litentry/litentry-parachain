@@ -1,6 +1,4 @@
-# Reference: ci.yml
-name: Test client build
-
+name: Release Ts API package
 on:
   workflow_dispatch:
 
@@ -8,163 +6,42 @@ env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
 jobs:
-
-
-  build-client-api:
+  publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Building client api
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://npm.pkg.github.com/
+
+      - name: Setup npm config
         run: |
-          cd ./tee-worker/client-api
-          ls parachain-api
-          curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' http://litentry-node:9912
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
+          npm config set @litentry:registry https://npm.pkg.github.com
+
+      - name: Install pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: |
+          cd tee-worker/client-api
           pnpm install
-          pnpm run update-build
-          ls
 
-  # parachain-build-dev:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Free up disk space
-  #       if: startsWith(runner.name, 'GitHub Actions')
-  #       uses: jlumbroso/free-disk-space@main
-  #       with:
-  #         tool-cache: true
-  #         swap-storage: false
-  #         large-packages: false
+      - name: Build and publish parachain and sidechain API
+        if: github.ref_name == 'dev' || github.ref_name == 'staging'
+        run: |
+          cd tee-worker/client-api/parachain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
 
-  #     - uses: actions/checkout@v4
+          echo "------------------------parachain API published------------------------"
 
-  #     - name: Pull docker image optinally
-  #       run: |
-  #         docker pull litentry/litentry-parachain:latest
+          cd ../sidechain-api
+          pnpm build
+          npm publish --tag ${{ github.ref_name }}
 
-  #     - name: Save docker image
-  #       run: |
-  #         docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
-
-  #     - name: Upload docker image
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: litentry-parachain-dev
-  #         path: litentry-parachain-dev.tar.gz
-  #         if-no-files-found: error
-
-  #     - name: Fail early
-  #       if: failure()
-  #       uses: andymckay/cancel-action@0.3
-
-  # tee-build:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - parachain-build-dev
-  #   steps:
-  #     - name: Free up disk space
-  #       if: startsWith(runner.name, 'GitHub Actions')
-  #       uses: jlumbroso/free-disk-space@main
-  #       with:
-  #         tool-cache: true
-  #         swap-storage: false
-  #         large-packages: false
-
-  #     - uses: actions/checkout@v4
-
-  #     - name: Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v3
-  #       with:
-
-  #         driver: docker
-
-  #     - name: Pull and tag worker and cli image optionally
-  #       run: |
-  #         docker pull litentry/litentry-worker:latest
-  #         docker pull litentry/litentry-cli:latest
-
-  #     - run: docker images --all
-
-  #     - name: Save docker images
-  #       run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
-
-  #     - name: Upload docker images
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: litentry-tee
-  #         path: litentry-tee.tar.gz
-  #         if-no-files-found: error
-
-  #     - name: Fail early
-  #       if: failure()
-  #       uses: andymckay/cancel-action@0.3 
-        
-  # update-metadata:
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - parachain-build-dev
-  #     - tee-build
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-
-  #     - name: Pull polkadot image
-  #       run: |
-  #         docker pull parity/polkadot
-
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: litentry-parachain-dev
-
-  #     - uses: actions/download-artifact@v3
-  #       with:
-  #         name: litentry-tee
-
-  #     - name: Load docker image
-  #       run: |
-  #         docker load < litentry-parachain-dev.tar.gz
-  #         docker load < litentry-tee.tar.gz
-  #         docker images
-
-  #     - name: Enable corepack and pnpm
-  #       run: corepack enable && corepack enable pnpm
-
-  #     - name: Generate parachain artefacts
-  #       run: |
-  #         ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-  #         ls -l docker/generated-rococo/
-  #         ls -l tee-worker/docker/litentry/
-  #         shasum tee-worker/docker/litentry/*.json
-
-  #     - name: Build litentry parachain docker images
-  #       run: |
-  #         cd tee-worker/docker
-  #         docker compose -f litentry-parachain.build.yml build
-
-  #     - name: Fetch metadata
-  #       timeout-minutes: 20
-  #       run: |
-  #         cd tee-worker/docker
-  #         docker compose -f docker-compose.yml -f release-ts-api-package.yml up --no-build --exit-code-from release-ts-api-package release-ts-api-package
-
-  #     - name: Stop docker containers
-  #       run: |
-  #         cd tee-worker/docker
-  #         docker compose -f docker-compose.yml -f release-ts-api-package.yml stop
-
-  #     - name: Collect Docker Logs
-  #       continue-on-error: true
-  #       if: always()
-  #       uses: jwalton/gh-docker-logs@v2
-  #       with:
-  #         tail: all
-  #         dest: logs
-
-  #     - name: Upload logs
-  #       if: always()
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: logs-release-ts-api-package
-  #         path: logs
-  #         if-no-files-found: ignore
+          echo "------------------------sidechain API published------------------------"
