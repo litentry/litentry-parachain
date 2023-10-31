@@ -26,6 +26,7 @@ declare const _default: {
         PublicGetter: {
             _enum: {
                 some_value: string;
+                nonce: string;
             };
         };
         TrustedGetterSigned: {
@@ -36,7 +37,6 @@ declare const _default: {
             _enum: {
                 free_balance: string;
                 reserved_balance: string;
-                nonce: string;
                 user_shielding_key: string;
                 id_graph: string;
                 id_graph_stats: string;
