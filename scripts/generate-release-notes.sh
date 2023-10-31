@@ -18,7 +18,26 @@ cd "$ROOTDIR"
 
 REPO=https://github.com/litentry/litentry-parachain
 
-if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
+type=$2
+
+# helper functions to parse the type mask
+is_client_release() {
+  [ "${type:0:1}" = "1" ]
+}
+
+is_runtime_release() {
+  [ "${type:1:1}" = "1" ]
+}
+
+is_worker_release() {
+  [ "${type:2:1}" = "1" ]
+}
+
+is_enclave_release() {
+  [ "${type:3:1}" = "1" ]
+}
+
+if is_client_release; then
   # base image used to build the node binary
   NODE_BUILD_BASE_IMAGE=$(grep FROM docker/Dockerfile | head -n1 | sed 's/^FROM //;s/ as.*//')
 
@@ -42,29 +61,45 @@ CUMULUS_DEP=$(grep -F 'https://github.com/paritytech/cumulus' node/Cargo.toml | 
 
 echo > "$1"
 echo "## This is a release for:" >> "$1"
-if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
-  echo "- [x] Client" >> "$1"
+if is_client_release; then
+  echo "- [x] Parachain client" >> "$1"
 else
-  echo "- [ ] Client" >> "$1"
+  echo "- [ ] Parachain client" >> "$1"
 fi
-if [ "$2" != "client" ] && [ "$2" != "enclave" ]; then
-  echo "- [x] Runtime" >> "$1"
+if is_runtime_release; then
+  echo "- [x] Parachain runtime" >> "$1"
 else
-  echo "- [ ] Runtime" >> "$1"
+  echo "- [ ] Parachain runtime" >> "$1"
 fi
-if [ "$2" = "enclave" ] || [ "$2" == "all" ]; then 
-  echo "- [x] Enclave" >> "$1"
-else 
-  echo "- [ ] Enclave" >> "$1"
+if is_worker_release; then
+  echo "- [x] TEE worker" >> "$1"
+else
+  echo "- [ ] TEE worker" >> "$1"
+fi
+if is_enclave_release; then
+  echo "- [x] TEE enclave" >> "$1"
+else
+  echo "- [ ] TEE enclave" >> "$1"
 fi
 echo >> "$1"
 
 # use <CODE> to decorate around the stuff and then replace it with `
 # so that it's not executed as commands inside heredoc
 
-if [ "$2" != "runtime" ] && [ "$2" != "enclave" ]; then
+cat << EOF >> "$1"
+## Dependencies
+
+<CODEBLOCK>
+Substrate                    : $SUBSTRATE_DEP
+Polkadot                     : $POLKADOT_DEP
+Cumulus                      : $CUMULUS_DEP
+<CODEBLOCK>
+
+EOF
+
+if is_client_release; then
   cat << EOF >> "$1"
-## Client
+## Parachain client
 
 <CODEBLOCK>
 version                      : $NODE_VERSION
@@ -77,8 +112,8 @@ docker image                 : litentry/litentry-parachain:$RELEASE_TAG
 EOF
 fi
 
-if [ "$2" != "client" ] && [ "$2" != "enclave" ]; then
-  echo "## Runtime" >> "$1"
+if is_runtime_release; then
+  echo "## Parachain runtime" >> "$1"
   for CHAIN in litmus rococo litentry; do
     SRTOOL_DIGEST_FILE=$CHAIN-parachain-runtime/$CHAIN-parachain-srtool-digest.json
     RUNTIME_VERSION=$(grep spec_version runtime/$CHAIN/src/lib.rs | sed 's/.*version: //;s/,//')
@@ -105,17 +140,6 @@ EOF
   done
 fi
 
-cat << EOF >> "$1"
-## Dependencies
-
-<CODEBLOCK>
-Substrate                    : $SUBSTRATE_DEP
-Polkadot                     : $POLKADOT_DEP
-Cumulus                      : $CUMULUS_DEP
-<CODEBLOCK>
-
-EOF
-
 if [ "$GENESIS_RELEASE" != "none" ]; then
   if [ "$2" = "runtime" ]; then
     echo "genesis release requires to build client"
@@ -138,7 +162,7 @@ if [ "$GENESIS_RELEASE" != "none" ]; then
     exit 1
   fi
   cat << EOF >> "$1"
-## Genesis artefacts
+## Parachain genesis artefacts
 
 <CODEBLOCK>
 sha1sum of genesis state  : $GENESIS_STATE_HASH
@@ -148,28 +172,35 @@ sha1sum of genesis wasm   : $GENESIS_WASM_HASH
 EOF
 fi
 
-# release notes for enclave binary 
-if [ "$2" = "enclave" ] || [ "$2" = "all" ]; then 
-   echo "Generating Release Notes for Enclave"
-   MRENCLAVE=$(echo "$MRENCLAVE_OUTPUT" | awk '{print $2}')
-   RUSTC_VERSION=$(grep -o 'channel = "[^"]*"' tee-worker/rust-toolchain.toml | cut -d '"' -f 2)
-   # get Sha256 hash of the code 
-   TEMP_DIR=$(mktemp -d)
-   tar -xzf "$FILENAME" -C "$TEMP_DIR" || { echo "Error extracting '$FILENAME'."; exit 1; }
-   FILE=$(cd $TEMP_DIR && ls) 
-   HASH_VALUE_ENCLAVE=$(find "$TEMP_DIR/$FILE/enclave.signed.so" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
-   HASH_VALUE_WORKER=$(find "$TEMP_DIR/$FILE/litentry-worker" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f 1)
-   rm -rf "$TEMP_DIR"
-
-   cat << EOF >> "$1" 
-## TEE Worker Release 
+if is_worker_release; then
+  WORKER_VERSION=$(grep version tee-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_BIN=$(grep name tee-worker/service/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
+  WORKER_RUSTC_VERSION=$(cd tee-worker && rustc --version)
+  UPSTREAM_COMMIT=$(cat tee-worker/upstream_commit)
+cat << EOF >> "$1"
+## TEE worker
 
 <CODEBLOCK>
-rustc                        : $RUSTC_VERSION
+version                      : $WORKER_VERSION
+name                         : $WORKER_BIN
+rustc                        : $WORKER_RUSTC_VERSION
+sha1sum                      : $WORKER_SHA1SUM
+upstream commit:             : $UPSTREAM_COMMIT
+<CODEBLOCK>
+
+EOF
+fi
+
+if is_enclave_release; then
+  ENCLAVE_VERSION=$(grep spec_version tee-worker/app-libs/sgx-runtime/src/lib.rs | sed 's/.*version: //;s/,//')
+cat << EOF >> "$1"
+## TEE enclave
+
+<CODEBLOCK>
+version                      : $ENCLAVE_VERSION
+sha1sum                      : $ENCLAVE_SHA1SUM
 mrenclave                    : $MRENCLAVE
-sha256(enclave)              : $HASH_VALUE_ENCLAVE
-sha256(worker)               : $HASH_VALUE_WORKER
-<CODEBLOCK> 
+<CODEBLOCK>
 
 EOF
 fi

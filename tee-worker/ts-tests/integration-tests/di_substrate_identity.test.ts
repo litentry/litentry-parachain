@@ -103,6 +103,7 @@ describe('Test Identity (direct invocation)', function () {
             context.api.createType('LitentryValidationData', bobValidationData).toHex(),
             context.api.createType('Vec<Web3Network>', ['Litentry', 'Polkadot']).toHex(),
             keyNonce,
+            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
             requestIdentifier
         );
 
@@ -304,6 +305,7 @@ describe('Test Identity (direct invocation)', function () {
                 validation.toHex(),
                 networks.toHex(),
                 keyNonce,
+                context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
                 requestIdentifier
             );
 
@@ -404,6 +406,7 @@ describe('Test Identity (direct invocation)', function () {
             evmValidation.toHex(),
             evmNetworks.toHex(),
             keyNonce,
+            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
             requestIdentifier
         );
 
@@ -466,6 +469,7 @@ describe('Test Identity (direct invocation)', function () {
             encodedVerifyIdentityValidation.toHex(),
             evmNetworks.toHex(),
             keyNonce,
+            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
             requestIdentifier
         );
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
@@ -515,6 +519,7 @@ describe('Test Identity (direct invocation)', function () {
             twitterValidation.toHex(),
             twitterNetworks.toHex(),
             keyNonce,
+            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
             requestIdentifier
         );
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);

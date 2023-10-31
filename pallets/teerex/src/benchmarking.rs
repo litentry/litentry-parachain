@@ -125,7 +125,7 @@ benchmarks! {
 	// execution time is constant irrespective of cyphertext size.
 	call_worker {
 		let accounts: Vec<T::AccountId> = generate_accounts::<T>(1);
-		let req = Request { shard:H256::from_slice(&TEST4_SETUP.mrenclave), cyphertext: vec![1u8; 2000]};
+		let req = RsaRequest::new(H256::from_slice(&TEST4_SETUP.mrenclave), vec![1u8; 2000]);
 	}: _(RawOrigin::Signed(accounts[0].clone()), req)
 
 	// Benchmark `confirm_processed_parentchain_block` with the worst possible conditions:

@@ -221,7 +221,7 @@ mod tests {
 	use itp_stf_primitives::types::KeyPair;
 	use itp_test::mock::handle_state_mock::HandleStateMock;
 	use itp_top_pool_author::mocks::AuthorApiMock;
-	use itp_types::Block as ParentchainBlock;
+	use itp_types::{Block as ParentchainBlock, RsaRequest};
 	use sp_core::{ed25519, Pair};
 	use std::boxed::Box;
 
@@ -277,7 +277,7 @@ mod tests {
 	fn executing_tops_from_pool_works() {
 		let stf_executor = Arc::new(TestStfExecutor::new(State::default()));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
-		top_pool_author.submit_top(create_trusted_operation().encode(), shard());
+		top_pool_author.submit_top(RsaRequest::new(shard(), create_trusted_operation().encode()));
 
 		assert_eq!(1, top_pool_author.pending_tops(shard()).unwrap().len());
 
