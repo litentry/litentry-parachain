@@ -53,6 +53,8 @@ pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -
 			dpc.set_credential_endpoint(data_provider_config.credential_endpoint);
 			dpc.set_oneblock_notion_key(data_provider_config.oneblock_notion_key);
 			dpc.set_oneblock_notion_url(data_provider_config.oneblock_notion_url);
+			dpc.set_sora_quiz_master_id(data_provider_config.sora_quiz_master_id);
+			dpc.set_sora_quiz_attendee_id(data_provider_config.sora_quiz_attendee_id);
 		},
 		Err(e) => {
 			error!("Error while setting data provider config: {:?}", e);
