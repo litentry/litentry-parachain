@@ -1328,6 +1328,7 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
+ "litentry-macros 0.9.12",
  "parity-scale-codec",
  "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
  "scale-info",
@@ -5231,6 +5232,7 @@ name = "itp-types"
 version = "0.9.0"
 dependencies = [
  "frame-system",
+ "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "litentry-primitives",
  "pallet-balances",
@@ -5442,6 +5444,7 @@ dependencies = [
  "its-primitives",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
+ "litentry-primitives",
  "log 0.4.19",
  "parity-scale-codec",
  "rust-base58 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -6714,7 +6717,7 @@ checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
 
 [[package]]
 name = "litentry-cli"
-version = "0.9.0"
+version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
  "base58",
@@ -6753,7 +6756,6 @@ dependencies = [
  "sp-runtime",
  "substrate-api-client",
  "substrate-client-keystore",
- "teerex-primitives",
  "thiserror 1.0.44",
 ]
 
@@ -6766,11 +6768,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "litentry-macros"
+version = "0.9.12"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.27",
+]
+
+[[package]]
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
  "core-primitives",
  "hex 0.4.3",
+ "itp-sgx-crypto",
  "itp-utils",
  "log 0.4.19",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=polkadot-v0.9.39)",
@@ -6787,11 +6799,12 @@ dependencies = [
  "sp-std 5.0.0",
  "strum 0.25.0",
  "strum_macros 0.25.3",
+ "teerex-primitives",
 ]
 
 [[package]]
 name = "litentry-worker"
-version = "0.9.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -13226,9 +13239,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35c0a159d0c45c12b20c5a844feb1fe4bea86e28f17b92a5f0c42193634d3782"
+checksum = "7f7d66a1128282b7ef025a8ead62a4a9fcf017382ec53b8ffbf4d7bf77bd3c60"
 dependencies = [
  "bitvec",
  "cfg-if 1.0.0",
@@ -13240,9 +13253,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "912e55f6d20e0e80d63733872b40e1227c0bce1e1ab81ba67d696339bfd7fd29"
+checksum = "abf2c68b89cafb3b8d918dd07b42be0da66ff202cf1155c5739a4e0c1ea0dc19"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",

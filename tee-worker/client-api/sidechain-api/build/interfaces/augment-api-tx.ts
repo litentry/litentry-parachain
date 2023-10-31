@@ -281,8 +281,7 @@ declare module "@polkadot/api-base/types/submittable" {
                               | "Khala"
                               | "SubstrateTestnet"
                               | "Ethereum"
-                              | "Polygon"
-                              | "BSC"
+                              | "Bsc"
                               | number
                               | Uint8Array
                           )[]
@@ -325,8 +324,7 @@ declare module "@polkadot/api-base/types/submittable" {
                               | "Khala"
                               | "SubstrateTestnet"
                               | "Ethereum"
-                              | "Polygon"
-                              | "BSC"
+                              | "Bsc"
                               | number
                               | Uint8Array
                           )[]
@@ -348,9 +346,25 @@ declare module "@polkadot/api-base/types/submittable" {
                         | { Evm: any }
                         | string
                         | Uint8Array,
-                    key: U8aFixed | string | Uint8Array
+                    key: U8aFixed | string | Uint8Array,
+                    networks:
+                        | Vec<CorePrimitivesNetworkWeb3Network>
+                        | (
+                              | CorePrimitivesNetworkWeb3Network
+                              | "Polkadot"
+                              | "Kusama"
+                              | "Litentry"
+                              | "Litmus"
+                              | "LitentryRococo"
+                              | "Khala"
+                              | "SubstrateTestnet"
+                              | "Ethereum"
+                              | "Bsc"
+                              | number
+                              | Uint8Array
+                          )[]
                 ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentity, U8aFixed]
+                [LitentryPrimitivesIdentity, U8aFixed, Vec<CorePrimitivesNetworkWeb3Network>]
             >;
         };
         parentchain: {

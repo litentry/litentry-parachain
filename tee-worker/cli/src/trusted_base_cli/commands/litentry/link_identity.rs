@@ -75,6 +75,7 @@ impl LinkIdentityCommand {
 			src_id,
 			dst_id,
 			networks,
+			None,
 			Default::default(),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)

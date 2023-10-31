@@ -16,6 +16,7 @@ members = [
     'pallets/group',
     'primitives/common',
     'primitives/core',
+    'primitives/core/macros',
     'primitives/sidechain',
     'primitives/teeracle',
     'primitives/teerex',
