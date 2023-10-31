@@ -44,7 +44,7 @@ impl SetHeartbeatTimeoutCommand {
 		);
 		chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
 
-		println!("[+] TrustedOperation got finalized: SetHeartbeatTimeoutCommand");
+		println!("[+] SetHeartbeatTimeoutCommand TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
 
 		Ok(CliResultOk::None)
 	}
