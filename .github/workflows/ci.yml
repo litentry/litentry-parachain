@@ -662,7 +662,7 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-
+  
   tee-test:
     runs-on: ubuntu-latest
     needs:
@@ -724,6 +724,12 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
+
+      - name: Update metadata and generate types
+        timeout-minutes: 2
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
 
       - name: Integration Test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'

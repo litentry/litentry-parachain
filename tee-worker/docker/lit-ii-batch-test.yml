@@ -4,7 +4,6 @@ services:
         container_name: litentry-ii-batch-test
         volumes:
             - ../ts-tests:/ts-tests
-            - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
         build:
             context: ..
@@ -17,9 +16,7 @@ services:
                 condition: service_healthy
         networks:
             - litentry-test-network
-        entrypoint:
-            "/usr/local/worker-cli/lit_ts_test.sh -p 9912 -u ws://litentry-node
-            -V wss://litentry-worker-1 -A 2011 -C /usr/local/bin/litentry-cli -T test-ii-batch 2>&1"
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_test.sh test-ii-batch 2>&1' "
         restart: "no"
 networks:
     litentry-test-network:
