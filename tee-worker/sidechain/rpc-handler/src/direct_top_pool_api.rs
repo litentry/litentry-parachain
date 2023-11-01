@@ -25,12 +25,14 @@ use rust_base58::base58::FromBase58;
 use base58::FromBase58;
 
 use codec::{Decode, Encode};
+use futures::channel::oneshot;
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, Request, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
+use lc_vc_task_sender::{SendVcRequest, VCRequest, VcRequestSender};
 use log::*;
 use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
@@ -79,6 +81,35 @@ where
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),
 		};
 		Ok(json!(json_value))
+	});
+
+	let author_submit_extrinsic_name: &str = "author_submitVCRequest";
+	let submit_author = top_pool_author.clone();
+	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
+		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
+		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
+
+		let shard: ShardIdentifier = request.shard;
+		let encrypted_trusted_call: Vec<u8> = request.cyphertext;
+		let request_sender = VcRequestSender::new();
+		// TODO: This should be a one-shot channel
+		let (sender, mut receiver) = oneshot::channel::<Vec<u8>>();
+
+		let vc_request = VCRequest { encrypted_trusted_call, sender, shard };
+		request_sender.send_vc_request(vc_request);
+
+		while let Ok(response) = receiver.try_recv() {
+			if let Some(response) = response {
+				log::error!("Received response in jsonrpc handler: {:?}", response);
+				let json_value = RpcReturnValue {
+					do_watch: false,
+					value: response.encode(),
+					status: DirectRequestStatus::Ok,
+				};
+				return Ok(json!(json_value.to_hex()))
+			}
+		}
+		Ok(json!("A"))
 	});
 
 	// author_pendingExtrinsics

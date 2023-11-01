@@ -10,16 +10,19 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use futures_sgx as futures;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
 
 use codec::{Decode, Encode};
-use itp_types::H256;
+use itp_types::{ShardIdentifier, H256};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{Assertion, Identity};
 use log::*;
+#[cfg(feature = "std")]
+use std::sync::Mutex;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 use std::{
@@ -31,15 +34,19 @@ use std::{
 };
 
 #[cfg(feature = "std")]
-use std::sync::Mutex;
+use futures::channel::oneshot;
 
-#[derive(Debug, Clone)]
+#[cfg(feature = "sgx")]
+use futures_sgx::channel::oneshot;
+
+#[derive(Debug)]
 pub struct VCRequest {
-	pub assertion: AssertionBuildRequest,
-	pub sender: Sender<Vec<u8>>,
+	pub encrypted_trusted_call: Vec<u8>,
+	pub sender: oneshot::Sender<Vec<u8>>,
+	pub shard: ShardIdentifier,
 }
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Clone)]
 pub struct VCResponse {
 	pub assertion_request: AssertionBuildRequest,
 	pub vc_hash: H256,
@@ -78,6 +85,7 @@ impl SendVcRequest for VcRequestSender {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
+		// TODO: Can we optimise using RwLock
 		let mutex_guard = GLOBAL_VC_REQUEST_TASK.lock().unwrap();
 
 		let vc_task_sender = mutex_guard.clone().unwrap();

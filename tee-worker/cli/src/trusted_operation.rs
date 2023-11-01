@@ -67,6 +67,18 @@ pub(crate) fn perform_trusted_operation(
 	}
 }
 
+pub(crate) fn perform_direct_operation(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	top: &TrustedOperation,
+) -> TrustedOpResult {
+	match top {
+		TrustedOperation::indirect_call(_) => send_request(cli, trusted_args, top),
+		TrustedOperation::direct_call(_) => send_direct_vc_request(cli, trusted_args, top),
+		TrustedOperation::get(getter) => execute_getter_from_cli_args(cli, trusted_args, getter),
+	}
+}
+
 pub(crate) fn execute_getter_from_cli_args(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
@@ -257,6 +269,86 @@ fn send_direct_request(
 	}
 }
 
+//
+fn send_direct_vc_request(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	operation_call: &TrustedOperation,
+) -> TrustedOpResult {
+	let encryption_key = get_shielding_key(cli).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
+	let jsonrpc_call: String = get_vc_json_request(shard, operation_call, encryption_key);
+
+	debug!("get direct api");
+	let direct_api = get_worker_api_direct(cli);
+
+	debug!("setup sender and receiver");
+	let (sender, receiver) = channel();
+	direct_api.watch(jsonrpc_call, sender);
+
+	debug!("waiting for rpc response");
+	loop {
+		match receiver.recv() {
+			Ok(response) => {
+				debug!("received response");
+				let response: RpcResponse = serde_json::from_str(&response).unwrap();
+				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
+					debug!("successfully decoded rpc response: {:?}", return_value);
+					match return_value.status {
+						DirectRequestStatus::Error => {
+							debug!("request status is error");
+							if let Ok(value) = String::decode(&mut return_value.value.as_slice()) {
+								println!("[Error] {}", value);
+							}
+							direct_api.close().unwrap();
+							return Err(TrustedOperationError::Default {
+								msg: "[Error] DirectRequestStatus::Error".to_string(),
+							})
+						},
+						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+							if connection_can_be_closed(status) {
+								direct_api.close().unwrap();
+								return Ok(None)
+							}
+						},
+						DirectRequestStatus::Ok => {
+							debug!("request status is ignored");
+							direct_api.close().unwrap();
+							return Ok(None)
+						},
+					}
+					if !return_value.do_watch {
+						debug!("do watch is false, closing connection");
+						direct_api.close().unwrap();
+						return Ok(None)
+					}
+				};
+			},
+			Err(e) => {
+				error!("failed to receive rpc response: {:?}", e);
+				direct_api.close().unwrap();
+				return Err(TrustedOperationError::Default {
+					msg: "failed to receive rpc response".to_string(),
+				})
+			},
+		};
+	}
+}
+
+pub(crate) fn get_vc_json_request(
+	shard: ShardIdentifier,
+	operation_call: &TrustedOperation,
+	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
+) -> String {
+	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
+
+	// compose jsonrpc call
+	let request = Request { shard, cyphertext: operation_call_encrypted };
+	RpcRequest::compose_jsonrpc_call("author_submitVCRequest".to_string(), vec![request.to_hex()])
+		.unwrap()
+}
+
 pub(crate) fn get_json_request(
 	shard: ShardIdentifier,
 	operation_call: &TrustedOperation,
@@ -266,11 +358,8 @@ pub(crate) fn get_json_request(
 
 	// compose jsonrpc call
 	let request = Request { shard, cyphertext: operation_call_encrypted };
-	RpcRequest::compose_jsonrpc_call(
-		"author_submitAndWatchExtrinsic".to_string(),
-		vec![request.to_hex()],
-	)
-	.unwrap()
+	RpcRequest::compose_jsonrpc_call("author_submitExtrinsic".to_string(), vec![request.to_hex()])
+		.unwrap()
 }
 
 pub(crate) fn wait_until(
