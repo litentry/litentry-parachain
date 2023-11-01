@@ -77,6 +77,7 @@ pub mod error;
 pub use error::Error;
 pub mod achainable;
 pub mod assertion_logic;
+pub mod litentry_profile;
 pub mod oneblock;
 pub mod schema;
 use assertion_logic::{AssertionLogic, Op};

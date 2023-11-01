@@ -106,6 +106,13 @@ pub struct AchainableToken {
 	pub token: ParameterString,
 }
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableMirror {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub post_quantity: Option<ParameterString>,
+}
+
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AchainableParams {
@@ -120,6 +127,7 @@ pub enum AchainableParams {
 	DatePercent(AchainableDatePercent),
 	Date(AchainableDate),
 	Token(AchainableToken),
+	Mirror(AchainableMirror),
 }
 
 impl AchainableParams {
@@ -136,6 +144,7 @@ impl AchainableParams {
 			AchainableParams::DatePercent(p) => p.name.clone(),
 			AchainableParams::Date(p) => p.name.clone(),
 			AchainableParams::Token(p) => p.name.clone(),
+			AchainableParams::Mirror(p) => p.name.clone(),
 		}
 	}
 
@@ -152,6 +161,7 @@ impl AchainableParams {
 			AchainableParams::DatePercent(p) => p.chain,
 			AchainableParams::Date(p) => p.chain,
 			AchainableParams::Token(p) => p.chain,
+			AchainableParams::Mirror(p) => p.chain,
 		}
 	}
 }

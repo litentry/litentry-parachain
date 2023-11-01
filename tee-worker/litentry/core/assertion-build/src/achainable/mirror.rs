@@ -20,29 +20,50 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::request_achainable_balance, *};
-use lc_credentials::litentry_profile::token_balance::TokenBalanceInfo;
-use lc_data_providers::{ETokenAddress, TokenFromString};
+use super::request_achainable;
+use crate::*;
+use lc_credentials::{litentry_profile::mirror::MirrorInfo, Credential};
+use lc_data_providers::achainable_names::AchainableNameMirror;
+use litentry_primitives::AchainableMirror;
 
-pub fn build_amount_holding(
-	req: &AssertionBuildRequest,
-	param: AchainableAmountHolding,
-) -> Result<Credential> {
-	debug!("Assertion Achainable build_amount_holding, who: {:?}", account_id_to_string(&req.who));
+// Request Inputs
+// {
+//     "name": "Has written over quantity posts on Mirror",
+//     "address": "0xCdd39B6D1cC4D0a7243b389Ed9356E23Df6240eb",
+//     "params": {
+//         "chain": "ethereum",
+//         "postQuantity": "0"
+//     },
+//     "includeMetadata": true
+// }
 
+// {
+//     "name": "Is a publication on Mirror",
+//     "address": "0xCdd39B6D1cC4D0a7243b389Ed9356E23Df6240eb",
+//     "params": {
+//         "chain": "ethereum"
+//     },
+//     "includeMetadata": true
+// }
+
+pub fn build_on_mirror(req: &AssertionBuildRequest, param: AchainableMirror) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let token = ETokenAddress::from_vec(param.clone().token.unwrap_or_default());
-	let achainable_param = AchainableParams::AmountHolding(param);
-	let balance = request_achainable_balance(addresses, achainable_param.clone())?;
-
+	let achainable_param = AchainableParams::Mirror(param);
+	let mtype = AchainableNameMirror::from(achainable_param.name()).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+	let value = request_achainable(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_token_balance(token, &balance);
+			credential_unsigned.update_mirror(mtype, value);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

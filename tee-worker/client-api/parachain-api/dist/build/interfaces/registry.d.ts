@@ -11,6 +11,7 @@ import type {
     CorePrimitivesAssertionAchainableDate,
     CorePrimitivesAssertionAchainableDateInterval,
     CorePrimitivesAssertionAchainableDatePercent,
+    CorePrimitivesAssertionAchainableMirror,
     CorePrimitivesAssertionAchainableParams,
     CorePrimitivesAssertionAchainableToken,
     CorePrimitivesErrorErrorDetail,
@@ -375,6 +376,7 @@ declare module "@polkadot/types/types/registry" {
         CorePrimitivesAssertionAchainableDate: CorePrimitivesAssertionAchainableDate;
         CorePrimitivesAssertionAchainableDateInterval: CorePrimitivesAssertionAchainableDateInterval;
         CorePrimitivesAssertionAchainableDatePercent: CorePrimitivesAssertionAchainableDatePercent;
+        CorePrimitivesAssertionAchainableMirror: CorePrimitivesAssertionAchainableMirror;
         CorePrimitivesAssertionAchainableParams: CorePrimitivesAssertionAchainableParams;
         CorePrimitivesAssertionAchainableToken: CorePrimitivesAssertionAchainableToken;
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;

@@ -24,11 +24,11 @@ use self::{
 	amount::build_amount, amount_holding::build_amount_holding, amount_token::build_amount_token,
 	amounts::build_amounts, basic::build_basic, between_percents::build_between_percents,
 	class_of_year::build_class_of_year, date::build_date, date_interval::build_date_interval,
-	date_percent::build_date_percent, token::build_token,
+	date_percent::build_date_percent, mirror::build_on_mirror, token::build_token,
 };
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagDeFi, Params},
+	achainable::{AchainableClient, AchainableTagDeFi, HoldingAmount, Params},
 	DataProviderConfigReader, ReadDataProviderConfig,
 };
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -44,6 +44,7 @@ pub mod class_of_year;
 pub mod date;
 pub mod date_interval;
 pub mod date_percent;
+pub mod mirror;
 pub mod token;
 
 pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Credential> {
@@ -59,6 +60,7 @@ pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Cre
 		AchainableParams::DatePercent(param) => build_date_percent(req, param),
 		AchainableParams::Date(param) => build_date(req, param),
 		AchainableParams::Token(param) => build_token(req, param),
+		AchainableParams::Mirror(param) => build_on_mirror(req, param),
 	}
 }
 
@@ -137,4 +139,20 @@ pub fn request_achainable_classofyear(
 	}
 
 	Ok((longest_created_year.parse::<u32>().is_ok(), longest_created_year))
+}
+
+pub fn request_achainable_balance(
+	addresses: Vec<String>,
+	param: AchainableParams,
+) -> Result<String> {
+	let request_param = Params::try_from(param.clone())?;
+
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
+	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
+	let balance = client.holding_amount(addresses, request_param).map_err(|e| {
+		Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+	})?;
+
+	Ok(balance)
 }

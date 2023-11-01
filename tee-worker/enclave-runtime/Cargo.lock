@@ -2603,6 +2603,7 @@ dependencies = [
  "itp-time-utils",
  "itp-types",
  "itp-utils",
+ "lc-data-providers",
  "litentry-primitives",
  "log",
  "parity-scale-codec",

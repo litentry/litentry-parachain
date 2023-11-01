@@ -20,8 +20,39 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::request_achainable, *};
+use crate::{achainable::request_achainable_balance, *};
+use lc_credentials::litentry_profile::token_balance::TokenBalanceInfo;
+use lc_data_providers::{ETokenAddress, TokenFromString};
 
+// Input params:
+// {
+//     "name": "ERC20 balance over {amount}",
+//     "address": "0xb59490ab09a0f526cc7305822ac65f2ab12f9723",
+//     "params": {
+//         "chain": "ethereum",
+//         "amount": "0",
+//         "token": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+//     }
+// }
+
+/// LIT / USDC / USDT Holder
+/// assertions:[
+/// {
+///    and:[
+///        {
+///            src:$lit_holding_amount,
+///            op: >=,
+///            dst:100
+///        },
+///        {
+///            src:$lit_holding_amount,
+///            op: <,
+///            dst:200
+///        },
+///    ]
+/// }
+///
+///
 pub fn build_amount_token(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountToken,
@@ -34,10 +65,14 @@ pub fn build_amount_token(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
+	let token = ETokenAddress::from_vec(param.clone().token.unwrap_or_default());
 	let achainable_param = AchainableParams::AmountToken(param);
-	let _flag = request_achainable(addresses, achainable_param.clone())?;
+	let balance = request_achainable_balance(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
-		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
+		Ok(mut credential_unsigned) => {
+			credential_unsigned.update_token_balance(token, &balance);
+			Ok(credential_unsigned)
+		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
 			Err(Error::RequestVCFailed(
