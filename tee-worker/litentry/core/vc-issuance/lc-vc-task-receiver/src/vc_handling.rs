@@ -1,5 +1,7 @@
 #![allow(clippy::result_large_err)]
 
+#[cfg(feature = "std")]
+use futures::channel::oneshot;
 use ita_sgx_runtime::Hash;
 pub use ita_stf::{aes_encrypt_default, IdentityManagement};
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
@@ -26,6 +28,9 @@ use std::{
 	vec::Vec,
 };
 
+#[cfg(feature = "sgx")]
+use futures_sgx::channel::oneshot;
+
 pub(crate) struct VCRequestHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
@@ -35,7 +40,7 @@ pub(crate) struct VCRequestHandler<
 > {
 	pub(crate) req: AssertionBuildRequest,
 	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
-	pub(crate) sender: Sender<Vec<u8>>,
+	pub(crate) sender: oneshot::Sender<Vec<u8>>,
 }
 
 impl<K, A, S, H, O> VCRequestHandler<K, A, S, H, O>
@@ -47,9 +52,10 @@ where
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
 {
-	pub fn process(self, sender: Sender<(VCResponse, Sender<Vec<u8>>)>) -> Result<(), VCMPError> {
-		// create the initial credential
-		// TODO: maybe we can further simplify this
+	pub fn process(
+		self,
+		sender: Sender<(VCResponse, oneshot::Sender<Vec<u8>>)>,
+	) -> Result<(), VCMPError> {
 		let mut credential = match self.req.assertion.clone() {
 			Assertion::A1 => lc_assertion_build::a1::build(&self.req),
 
@@ -117,7 +123,6 @@ where
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 			)
 		})?;
-		debug!("Credential Payload signature: {:?}", sig);
 
 		credential.add_proof(&sig, &enclave_account);
 		credential.validate().map_err(|e| {
@@ -139,9 +144,7 @@ where
 		let credential_str = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
-		log::error!("Credential: {}, length: {}", credential_str, credential_str.len());
 		let vc_hash: H256 = blake2_256(credential_str.as_bytes()).into();
-		log::error!("VC hash: {:?}", vc_hash);
 
 		let vc_response = VCResponse {
 			assertion_request: self.req.clone(),
@@ -149,8 +152,7 @@ where
 			vc_payload: credential_str.as_bytes().to_vec(),
 			vc_index,
 		};
-		log::error!("Finished processing request_vc in isolated thread");
-		sender.send((vc_response, self.sender.clone())).unwrap();
+		sender.send((vc_response, self.sender)).unwrap();
 
 		Ok(())
 	}

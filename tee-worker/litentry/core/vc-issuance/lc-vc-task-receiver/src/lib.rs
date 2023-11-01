@@ -19,13 +19,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 mod vc_callback;
 mod vc_handling;
 
-// use crate::vc_handling::VCRequestHandler;
-use crate::vc_handling::VCRequestHandler;
+use crate::{vc_callback::VCCallbackHandler, vc_handling::VCRequestHandler};
 use codec::Decode;
-use ita_sgx_runtime::Hash;
+#[cfg(feature = "std")]
+use futures::channel::oneshot;
+use ita_sgx_runtime::{ConvertAccountId, Hash};
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, IdentityManagement, OpaqueCall, Runtime,
-	TrustedCall, TrustedOperation, UserShieldingKeys, VCMPCallIndexes, H256, IMT,
+	SgxParentchainTypeConverter, TrustedCall, TrustedOperation, UserShieldingKeys, VCMPCallIndexes,
+	H256, IMT,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -49,6 +51,9 @@ use std::{
 	vec::Vec,
 };
 
+#[cfg(feature = "sgx")]
+use futures_sgx::channel::oneshot;
+
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
@@ -60,100 +65,76 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
-	Z: CreateExtrinsics,
-	N: AccessNodeMetadata,
+	Z: CreateExtrinsics + Send + Sync + 'static,
+	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
-	log::error!("Initialised Global VC Mutex");
 	let receiver = init_vc_task_sender_storage();
-	let (sender, receiver_z) = channel::<(VCResponse, Sender<Vec<u8>>)>();
+	let (sender, response_receiver) = channel::<(VCResponse, oneshot::Sender<Vec<u8>>)>();
 
-	// Create VC Callback struct here
-	// One shot channel sender for JSONRPC
+	let vc_callback_handler = VCCallbackHandler::new(
+		context.clone(),
+		extrinsic_factory.clone(),
+		node_metadata_repo.clone(),
+	);
+	let vc_callback_handler = Arc::new(vc_callback_handler);
 
 	std::thread::spawn(move || loop {
-		let res = receiver_z.recv().unwrap();
-		log::error!("Received VC Request and we succesfully compiled it")
+		let vc_handler = vc_callback_handler.clone();
+		let (vc_response, sender) = response_receiver.recv().unwrap();
+		log::error!("Received VC Request and we succesfully compiled it");
+		vc_handler.request_vc_callback(vc_response.clone());
+		sender.send(vc_response.vc_payload).unwrap();
 	});
 
 	loop {
 		let req = receiver.recv().unwrap();
-		log::error!("Received VC Request in isolated thread");
-		log::error!("Decrypting received VC Request");
 
 		let decrypted_trusted_operation =
 			context.shielding_key.decrypt(&req.encrypted_trusted_call).unwrap();
 		let trusted_operation =
 			TrustedOperation::decode(&mut decrypted_trusted_operation.as_slice()).unwrap();
 
-		log::error!("Received the following trusted Operation: {:?}", trusted_operation);
 		let trusted_call = trusted_operation.to_call().unwrap();
-		let who = trusted_call.call.sender_identity();
-		let mut signer_x: Option<Identity> = None;
-		// TrustedCall::request_vc(signer, who, assertion, hash)
-		let assertion: Option<Assertion> = if let TrustedCall::request_vc(
-			signer,
-			who,
-			assertion,
-			hash,
-		) = trusted_call.call.clone()
-		{
-			signer_x = Some(signer);
-			Some(assertion)
-		} else {
-			None
-		};
 
-		let (mut state, hash) = context.state_handler.load_cloned(&req.shard).unwrap();
-		// Access any sidechain storage here, state has to be mutable to use `execute_with`
-		state.execute_with(|| {
-			// Do smething here
-			let signer = signer_x.clone();
-			let key = UserShieldingKeys::<Runtime>::contains_key(&who);
-			log::error!("Result of fetching user shielding key bool :{:?}", key);
-			let id_graph = IMT::get_id_graph(&who, usize::MAX);
-			log::error!("Result of IMT Get Id Graph: {:?}", id_graph);
-			let assertion_networks = assertion.clone().unwrap().get_supported_web3networks();
-			let identities: Vec<IdentityNetworkTuple> = id_graph
-				.into_iter()
-				.filter(|item| item.1.is_active())
-				.map(|item| {
-					let mut networks = item.1.web3networks.to_vec();
-					// filter out the web3networks which are not supported by this specific `assertion`.
-					// We do it here before every request sending because:
-					// - it's a common step for all assertion buildings, for those assertions which only
-					//   care about web2 identities, this step will empty `IdentityContext.web3networks`
-					// - it helps to reduce the request size a bit
-					networks.retain(|n| assertion_networks.contains(n));
-					(item.0, networks)
-				})
-				.collect();
-			// let account = SgxParentchainTypeConverter::convert(
-			// 	who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-			// );
+		if let TrustedCall::request_vc(signer, who, assertion, hash) = trusted_call.call.clone() {
+			let (mut state, hash) = context.state_handler.load_cloned(&req.shard).unwrap();
+			state.execute_with(|| {
+				let key = UserShieldingKeys::<Runtime>::contains_key(&who);
+				log::error!("This is the result of key: {:?}", key);
+				let id_graph = IMT::get_id_graph(&who, usize::MAX);
+				log::error!("Result of IMT Get Id Graph: {:?}", id_graph);
+				let assertion_networks = assertion.clone().get_supported_web3networks();
+				let identities: Vec<IdentityNetworkTuple> = id_graph
+					.into_iter()
+					.filter(|item| item.1.is_active())
+					.map(|item| {
+						let mut networks = item.1.web3networks.to_vec();
+						networks.retain(|n| assertion_networks.contains(n));
+						(item.0, networks)
+					})
+					.collect();
 
-			let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
-				shard: req.shard.clone(),
-				signer: signer.clone().unwrap().to_account_id().unwrap(),
-				enclave_account: enclave_signer_account(),
-				who: signer.clone().unwrap().into(),
-				assertion: assertion.unwrap().clone(),
-				identities,
-				top_hash: H256::zero(),
-				req_ext_hash: H256::zero(),
-			};
-			let context_pool = context.clone();
-			let sender_pool = sender.clone();
-			VCRequestHandler {
-				req: assertion_build.clone(),
-				context: context_pool.clone(),
-				sender: req.sender.clone(),
-			}
-			.process(sender.clone());
-		});
+				let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
+					shard: req.shard.clone(),
+					signer: signer.clone().to_account_id().unwrap(),
+					enclave_account: enclave_signer_account(),
+					who: who.clone().into(),
+					assertion: assertion.clone(),
+					identities,
+					top_hash: H256::zero(),
+					req_ext_hash: H256::zero(),
+				};
 
-		let context_pool = context.clone();
-		let sender_pool = sender.clone();
-		// VCRequestHandler { req: req.clone(), context: context_pool.clone() }.process(sender_pool);
+				let context_pool = context.clone();
+				let sender_pool = sender.clone();
+				VCRequestHandler {
+					req: assertion_build.clone(),
+					context: context_pool.clone(),
+					sender: req.sender,
+				}
+				.process(sender.clone());
+			});
+		}
 	}
 }
