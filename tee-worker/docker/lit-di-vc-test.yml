@@ -6,7 +6,6 @@ services:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
             - ../cli:/usr/local/worker-cli
-            - ../client-api:/client-api
         build:
             context: ..
             dockerfile: build.Dockerfile

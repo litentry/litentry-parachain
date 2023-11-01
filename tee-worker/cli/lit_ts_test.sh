@@ -39,16 +39,17 @@ CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1UR
 echo "Using client binary $CLIENT_BIN"
 echo "Using node uri $NODEURL:$NPORT"
 echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
+echo "Start testing $INTEGRATION_TEST"
 echo ""
 
-# apt-get install sudo
-# sudo apt-get install wget
-# sudo wget -qO /usr/local/bin/websocat https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl
-# sudo chmod a+x /usr/local/bin/websocat
-# websocat --version
+apt-get install sudo
+sudo apt-get install wget
+sudo wget -qO /usr/local/bin/websocat https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl
+sudo chmod a+x /usr/local/bin/websocat
+websocat --version
 
 cd /client-api/parachain-api
-curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' $NODEURL:$NPORT > prepare-build/litentry-parachain-metadata.json
+echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 $NODEURL:$NPORT > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
 cd  /client-api/sidechain-api
@@ -60,9 +61,9 @@ pnpm install
 pnpm run build
 
 
-TEST=$T
 
 cd /ts-tests
 
+echo "Testing $INTEGRATION_TEST"
 pnpm install
-pnpm --filter integration-tests run $TEST:staging
+pnpm --filter integration-tests run $INTEGRATION_TEST:staging
