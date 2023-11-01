@@ -662,7 +662,7 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-  
+        
   tee-test:
     runs-on: ubuntu-latest
     needs:
@@ -726,7 +726,7 @@ jobs:
           docker compose -f litentry-parachain.build.yml build
 
       - name: Update metadata and generate types
-        timeout-minutes: 2
+        timeout-minutes: 10
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
