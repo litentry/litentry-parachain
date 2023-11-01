@@ -39,6 +39,7 @@ use crate::{
 use alloc::string::String;
 use chrono::DateTime;
 use codec::{Decode, Encode, Input};
+use core::time::Duration;
 use der::asn1::ObjectIdentifier;
 use frame_support::{ensure, traits::Len};
 use ring::signature::{self};
@@ -52,7 +53,6 @@ use teerex_primitives::{
 	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, SgxEnclaveMetadata,
 	TcbVersionStatus,
 };
-use webpki::SignatureAlgorithm;
 use x509_cert::Certificate;
 
 pub mod collateral;
@@ -350,21 +350,17 @@ pub struct SgxReport {
 	pub metadata: SgxEnclaveMetadata, // for vc verification
 }
 
-type SignatureAlgorithms = &'static [&'static webpki::SignatureAlgorithm];
+type SignatureAlgorithms = &'static [&'static dyn webpki::types::SignatureVerificationAlgorithm];
 static SUPPORTED_SIG_ALGS: SignatureAlgorithms = &[
-	//&webpki::ECDSA_P256_SHA256,
-	//&webpki::ECDSA_P256_SHA384,
-	//&webpki::ECDSA_P384_SHA256,
-	//&webpki::ECDSA_P384_SHA384,
-	&webpki::RSA_PKCS1_2048_8192_SHA256,
-	&webpki::RSA_PKCS1_2048_8192_SHA384,
-	&webpki::RSA_PKCS1_2048_8192_SHA512,
-	&webpki::RSA_PKCS1_3072_8192_SHA384,
+	webpki::RSA_PKCS1_2048_8192_SHA256,
+	webpki::RSA_PKCS1_2048_8192_SHA384,
+	webpki::RSA_PKCS1_2048_8192_SHA512,
+	webpki::RSA_PKCS1_3072_8192_SHA384,
 ];
 
 //pub const IAS_REPORT_CA: &[u8] = include_bytes!("../AttestationReportSigningCACert.pem");
 
-pub static IAS_SERVER_ROOTS: webpki::TLSServerTrustAnchors = webpki::TLSServerTrustAnchors(&[
+pub static IAS_SERVER_ROOTS: &[webpki::types::TrustAnchor<'static>; 1] = &[
 	/*
 	 * -----BEGIN CERTIFICATE-----
 	 * MIIFSzCCA7OgAwIBAgIJANEHdl0yo7CUMA0GCSqGSIb3DQEBCwUAMH4xCzAJBgNV
@@ -398,35 +394,35 @@ pub static IAS_SERVER_ROOTS: webpki::TLSServerTrustAnchors = webpki::TLSServerTr
 	 * DaVzWh5aiEx+idkSGMnX
 	 * -----END CERTIFICATE-----
 	 */
-	webpki::TrustAnchor {
-		subject: b"1\x0b0\t\x06\x03U\x04\x06\x13\x02US1\x0b0\t\x06\x03U\x04\x08\x0c\x02CA1\x140\x12\x06\x03U\x04\x07\x0c\x0bSanta Clara1\x1a0\x18\x06\x03U\x04\n\x0c\x11Intel Corporation100.\x06\x03U\x04\x03\x0c\'Intel SGX Attestation Report Signing CA",
-		spki: b"0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01\x05\x00\x03\x82\x01\x8f\x000\x82\x01\x8a\x02\x82\x01\x81\x00\x9f<d~\xb5w<\xbbQ-\'2\xc0\xd7A^\xbbU\xa0\xfa\x9e\xde.d\x91\x99\xe6\x82\x1d\xb9\x10\xd51w7\twFjj^G\x86\xcc\xd2\xdd\xeb\xd4\x14\x9dj/c%R\x9d\xd1\x0c\xc9\x877\xb0w\x9c\x1a\x07\xe2\x9cG\xa1\xae\x00IHGlH\x9fE\xa5\xa1]z\xc8\xec\xc6\xac\xc6E\xad\xb4=\x87g\x9d\xf5\x9c\t;\xc5\xa2\xe9ilTxT\x1b\x97\x9euKW9\x14\xbeU\xd3/\xf4\xc0\x9d\xdf\'!\x994\xcd\x99\x05\'\xb3\xf9.\xd7\x8f\xbf)$j\xbe\xcbq$\x0e\xf3\x9c-q\x07\xb4GTZ\x7f\xfb\x10\xeb\x06\nh\xa9\x85\x80!\x9e6\x91\tRh8\x92\xd6\xa5\xe2\xa8\x08\x03\x19>@u1@N6\xb3\x15b7\x99\xaa\x82Pt@\x97T\xa2\xdf\xe8\xf5\xaf\xd5\xfec\x1e\x1f\xc2\xaf8\x08\x90o(\xa7\x90\xd9\xdd\x9f\xe0`\x93\x9b\x12W\x90\xc5\x80]\x03}\xf5j\x99S\x1b\x96\xdei\xde3\xed\"l\xc1 }\x10B\xb5\xc9\xab\x7f@O\xc7\x11\xc0\xfeGi\xfb\x95x\xb1\xdc\x0e\xc4i\xea\x1a%\xe0\xff\x99\x14\x88n\xf2i\x9b#[\xb4\x84}\xd6\xff@\xb6\x06\xe6\x17\x07\x93\xc2\xfb\x98\xb3\x14X\x7f\x9c\xfd%sb\xdf\xea\xb1\x0b;\xd2\xd9vs\xa1\xa4\xbdD\xc4S\xaa\xf4\x7f\xc1\xf2\xd3\xd0\xf3\x84\xf7J\x06\xf8\x9c\x08\x9f\r\xa6\xcd\xb7\xfc\xee\xe8\xc9\x82\x1a\x8eT\xf2\\\x04\x16\xd1\x8cF\x83\x9a_\x80\x12\xfb\xdd=\xc7M%by\xad\xc2\xc0\xd5Z\xffo\x06\"B]\x1b\x02\x03\x01\x00\x01",
+	webpki::types::TrustAnchor {
+		subject: webpki::types::Der::from_slice(b"1\x0b0\t\x06\x03U\x04\x06\x13\x02US1\x0b0\t\x06\x03U\x04\x08\x0c\x02CA1\x140\x12\x06\x03U\x04\x07\x0c\x0bSanta Clara1\x1a0\x18\x06\x03U\x04\n\x0c\x11Intel Corporation100.\x06\x03U\x04\x03\x0c\'Intel SGX Attestation Report Signing CA"),
+		subject_public_key_info: webpki::types::Der::from_slice(b"0\r\x06\t*\x86H\x86\xf7\r\x01\x01\x01\x05\x00\x03\x82\x01\x8f\x000\x82\x01\x8a\x02\x82\x01\x81\x00\x9f<d~\xb5w<\xbbQ-\'2\xc0\xd7A^\xbbU\xa0\xfa\x9e\xde.d\x91\x99\xe6\x82\x1d\xb9\x10\xd51w7\twFjj^G\x86\xcc\xd2\xdd\xeb\xd4\x14\x9dj/c%R\x9d\xd1\x0c\xc9\x877\xb0w\x9c\x1a\x07\xe2\x9cG\xa1\xae\x00IHGlH\x9fE\xa5\xa1]z\xc8\xec\xc6\xac\xc6E\xad\xb4=\x87g\x9d\xf5\x9c\t;\xc5\xa2\xe9ilTxT\x1b\x97\x9euKW9\x14\xbeU\xd3/\xf4\xc0\x9d\xdf\'!\x994\xcd\x99\x05\'\xb3\xf9.\xd7\x8f\xbf)$j\xbe\xcbq$\x0e\xf3\x9c-q\x07\xb4GTZ\x7f\xfb\x10\xeb\x06\nh\xa9\x85\x80!\x9e6\x91\tRh8\x92\xd6\xa5\xe2\xa8\x08\x03\x19>@u1@N6\xb3\x15b7\x99\xaa\x82Pt@\x97T\xa2\xdf\xe8\xf5\xaf\xd5\xfec\x1e\x1f\xc2\xaf8\x08\x90o(\xa7\x90\xd9\xdd\x9f\xe0`\x93\x9b\x12W\x90\xc5\x80]\x03}\xf5j\x99S\x1b\x96\xdei\xde3\xed\"l\xc1 }\x10B\xb5\xc9\xab\x7f@O\xc7\x11\xc0\xfeGi\xfb\x95x\xb1\xdc\x0e\xc4i\xea\x1a%\xe0\xff\x99\x14\x88n\xf2i\x9b#[\xb4\x84}\xd6\xff@\xb6\x06\xe6\x17\x07\x93\xc2\xfb\x98\xb3\x14X\x7f\x9c\xfd%sb\xdf\xea\xb1\x0b;\xd2\xd9vs\xa1\xa4\xbdD\xc4S\xaa\xf4\x7f\xc1\xf2\xd3\xd0\xf3\x84\xf7J\x06\xf8\x9c\x08\x9f\r\xa6\xcd\xb7\xfc\xee\xe8\xc9\x82\x1a\x8eT\xf2\\\x04\x16\xd1\x8cF\x83\x9a_\x80\x12\xfb\xdd=\xc7M%by\xad\xc2\xc0\xd5Z\xffo\x06\"B]\x1b\x02\x03\x01\x00\x01"),
 		name_constraints: None
 	},
-]);
+];
 
 /// The needed code for a trust anchor can be extracted using `webpki` with something like this:
 /// println!("{:?}", webpki::TrustAnchor::try_from_cert_der(&root_cert));
 #[allow(clippy::zero_prefixed_literal)]
-pub static DCAP_SERVER_ROOTS: webpki::TLSServerTrustAnchors =
-	webpki::TLSServerTrustAnchors(&[webpki::TrustAnchor {
-		subject: &[
+pub static DCAP_SERVER_ROOTS: &[webpki::types::TrustAnchor<'static>; 1] =
+	&[webpki::types::TrustAnchor {
+		subject: webpki::types::Der::from_slice(&[
 			49, 26, 48, 24, 06, 03, 85, 04, 03, 12, 17, 73, 110, 116, 101, 108, 32, 83, 71, 88, 32,
 			82, 111, 111, 116, 32, 67, 65, 49, 26, 48, 24, 06, 03, 85, 04, 10, 12, 17, 73, 110,
 			116, 101, 108, 32, 67, 111, 114, 112, 111, 114, 97, 116, 105, 111, 110, 49, 20, 48, 18,
 			06, 03, 85, 04, 07, 12, 11, 83, 97, 110, 116, 97, 32, 67, 108, 97, 114, 97, 49, 11, 48,
 			09, 06, 03, 85, 04, 08, 12, 02, 67, 65, 49, 11, 48, 09, 06, 03, 85, 04, 06, 19, 02, 85,
 			83,
-		],
-		spki: &[
+		]),
+		subject_public_key_info: webpki::types::Der::from_slice(&[
 			48, 19, 06, 07, 42, 134, 72, 206, 61, 02, 01, 06, 08, 42, 134, 72, 206, 61, 03, 01, 07,
 			03, 66, 00, 04, 11, 169, 196, 192, 192, 200, 97, 147, 163, 254, 35, 214, 176, 44, 218,
 			16, 168, 187, 212, 232, 142, 72, 180, 69, 133, 97, 163, 110, 112, 85, 37, 245, 103,
 			145, 142, 46, 220, 136, 228, 13, 134, 11, 208, 204, 78, 226, 106, 172, 201, 136, 229,
 			05, 169, 83, 85, 140, 69, 63, 107, 09, 04, 174, 115, 148,
-		],
+		]),
 		name_constraints: None,
-	}]);
+	}];
 
 /// Contains an unvalidated ias remote attestation certificate.
 ///
@@ -462,7 +458,7 @@ pub fn deserialize_enclave_identity(
 	certificate: &webpki::EndEntityCert,
 ) -> Result<EnclaveIdentity, &'static str> {
 	let signature = encode_as_der(signature)?;
-	verify_signature(certificate, data, &signature, &webpki::ECDSA_P256_SHA256)?;
+	verify_signature(certificate, data, &signature, webpki::ECDSA_P256_SHA256)?;
 	serde_json::from_slice(data).map_err(|_| "Deserialization failed")
 }
 
@@ -475,7 +471,7 @@ pub fn deserialize_tcb_info(
 	certificate: &webpki::EndEntityCert,
 ) -> Result<TcbInfo, &'static str> {
 	let signature = encode_as_der(signature)?;
-	verify_signature(certificate, data, &signature, &webpki::ECDSA_P256_SHA256)?;
+	verify_signature(certificate, data, &signature, webpki::ECDSA_P256_SHA256)?;
 	serde_json::from_slice(data).map_err(|_| "Deserialization failed")
 }
 
@@ -496,18 +492,24 @@ pub fn extract_certs(cert_chain: &[u8]) -> Vec<Vec<u8>> {
 /// a valid certificate chain that is rooted in one of the trust anchors that was compiled into to
 /// the pallet
 pub fn verify_certificate_chain<'a>(
-	leaf_cert: &'a [u8],
-	intermediate_certs: &[&[u8]],
+	leaf_cert: &webpki::EndEntityCert<'a>,
+	intermediate_certs: &[webpki::types::CertificateDer<'a>],
 	verification_time: u64,
-) -> Result<webpki::EndEntityCert<'a>, &'static str> {
-	let leaf_cert: webpki::EndEntityCert =
-		webpki::EndEntityCert::from(leaf_cert).map_err(|_| "Failed to parse leaf certificate")?;
-	let time = webpki::Time::from_seconds_since_unix_epoch(verification_time / 1000);
-	let sig_algs = &[&webpki::ECDSA_P256_SHA256];
+) -> Result<(), &'static str> {
+	let time =
+		webpki::types::UnixTime::since_unix_epoch(Duration::from_secs(verification_time / 1000));
+	let sig_algs = &[webpki::ECDSA_P256_SHA256];
 	leaf_cert
-		.verify_is_valid_tls_server_cert(sig_algs, &DCAP_SERVER_ROOTS, intermediate_certs, time)
+		.verify_for_usage(
+			sig_algs,
+			DCAP_SERVER_ROOTS,
+			intermediate_certs,
+			time,
+			webpki::KeyUsage::client_auth(),
+			None,
+		)
 		.map_err(|_| "Invalid certificate chain")?;
-	Ok(leaf_cert)
+	Ok(())
 }
 
 pub fn extract_tcb_info_from_raw_dcap_quote(
@@ -555,10 +557,13 @@ pub fn verify_dcap_quote(
 
 	let certs = extract_certs(&quote.quote_signature_data.qe_certification_data.certification_data);
 	ensure!(certs.len() >= 2, "Certificate chain must have at least two certificates");
-	let intermediate_certificate_slices: Vec<&[u8]> =
-		certs[1..].iter().map(Vec::as_slice).collect();
-	let leaf_cert =
-		verify_certificate_chain(&certs[0], &intermediate_certificate_slices, verification_time)?;
+	let intermediate_certificate_slices: Vec<webpki::types::CertificateDer> =
+		certs[1..].iter().map(|c| c.as_slice().into()).collect();
+	let leaf_cert_der = webpki::types::CertificateDer::from(certs[0].as_slice());
+	let leaf_cert = webpki::EndEntityCert::try_from(&leaf_cert_der)
+		.map_err(|_| "Failed to parse leaf certificate")?;
+	let _ =
+		verify_certificate_chain(&leaf_cert, &intermediate_certificate_slices, verification_time)?;
 
 	let (fmspc, tcb_info) = extract_tcb_info(&certs[0])?;
 
@@ -614,7 +619,7 @@ pub fn verify_dcap_quote(
 
 	// Verify that the QE report was signed by Intel. This establishes trust into the QE report.
 	let asn1_signature = encode_as_der(&quote.quote_signature_data.qe_report_signature)?;
-	verify_signature(&leaf_cert, qe_report_slice, &asn1_signature, &webpki::ECDSA_P256_SHA256)?;
+	verify_signature(&leaf_cert, qe_report_slice, &asn1_signature, webpki::ECDSA_P256_SHA256)?;
 
 	ensure!(dcap_quote_clone.is_empty(), "There should be no bytes left over after decoding");
 	let report = SgxReport {
@@ -638,18 +643,19 @@ pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 
 	let cert = CertDer(cert_der);
 	let netscape = NetscapeComment::try_from(cert)?;
-	let sig_cert = webpki::EndEntityCert::from(&netscape.sig_cert).map_err(|_| "Bad der")?;
+	let sig_cert_der = webpki::types::CertificateDer::from(netscape.sig_cert.as_slice());
+	let sig_cert = webpki::EndEntityCert::try_from(&sig_cert_der).map_err(|_| "Bad der")?;
 
 	verify_signature(
 		&sig_cert,
 		netscape.attestation_raw,
 		&netscape.sig,
-		&webpki::RSA_PKCS1_2048_8192_SHA256,
+		webpki::RSA_PKCS1_2048_8192_SHA256,
 	)?;
 
 	// FIXME: now hardcoded. but certificate renewal would have to be done manually anyway...
 	// chain wasm update or by some sudo call
-	let valid_until = webpki::Time::from_seconds_since_unix_epoch(1573419050);
+	let valid_until = webpki::types::UnixTime::since_unix_epoch(Duration::from_secs(1573419050));
 	verify_server_cert(&sig_cert, valid_until)?;
 
 	parse_report(&netscape)
@@ -744,7 +750,7 @@ pub fn verify_signature(
 	entity_cert: &webpki::EndEntityCert,
 	data: &[u8],
 	signature: &[u8],
-	signature_algorithm: &SignatureAlgorithm,
+	signature_algorithm: &dyn webpki::types::SignatureVerificationAlgorithm,
 ) -> Result<(), &'static str> {
 	match entity_cert.verify_signature(signature_algorithm, data, signature) {
 		Ok(()) => {
@@ -762,14 +768,16 @@ pub fn verify_signature(
 
 pub fn verify_server_cert(
 	sig_cert: &webpki::EndEntityCert,
-	timestamp_valid_until: webpki::Time,
+	timestamp_valid_until: webpki::types::UnixTime,
 ) -> Result<(), &'static str> {
-	let chain: Vec<&[u8]> = Vec::new();
-	match sig_cert.verify_is_valid_tls_server_cert(
+	let chain: Vec<webpki::types::CertificateDer> = Vec::new();
+	match sig_cert.verify_for_usage(
 		SUPPORTED_SIG_ALGS,
-		&IAS_SERVER_ROOTS,
+		IAS_SERVER_ROOTS,
 		&chain,
 		timestamp_valid_until,
+		webpki::KeyUsage::server_auth(),
+		None,
 	) {
 		Ok(()) => {
 			#[cfg(test)]

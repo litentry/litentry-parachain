@@ -12,6 +12,7 @@ edition = "2021"
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 log = { version = "0.4", default-features = false }
 scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
+webpki = { git = "https://github.com/rustls/webpki", version = "=0.102.0-alpha.3", rev = "2ed9a4324f48c2c46ffdd7dc9d3eb315af25fce2", package = "rustls-webpki", default-features = false, features = ["alloc", "ring"] }
 
 # local
 sgx-verify = { path = "./sgx-verify", default-features = false }

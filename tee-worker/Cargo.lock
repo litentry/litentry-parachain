@@ -4668,8 +4668,8 @@ dependencies = [
  "tungstenite 0.14.0",
  "tungstenite 0.15.0",
  "url 2.4.0",
- "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
+ "webpki 0.22.0",
  "yasna 0.3.1",
  "yasna 0.4.0",
 ]
@@ -4763,8 +4763,8 @@ dependencies = [
  "sp-core",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
- "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
+ "webpki 0.22.0",
  "webpki-roots 0.21.0 (git+https://github.com/mesalock-linux/webpki-roots?branch=mesalock_sgx)",
  "yasna 0.3.1",
 ]
@@ -9200,6 +9200,7 @@ dependencies = [
  "log 0.4.19",
  "pallet-timestamp",
  "parity-scale-codec",
+ "rustls-webpki",
  "scale-info",
  "sgx-verify",
  "sp-core",
@@ -12126,6 +12127,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustls-pki-types"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a47003264dea418db67060fa420ad16d0d2f8f0a0360d825c00e177ac52cb5d8"
+
+[[package]]
+name = "rustls-webpki"
+version = "0.102.0-alpha.3"
+source = "git+https://github.com/rustls/webpki?rev=2ed9a4324f48c2c46ffdd7dc9d3eb315af25fce2#2ed9a4324f48c2c46ffdd7dc9d3eb315af25fce2"
+dependencies = [
+ "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustls-pki-types",
+ "untrusted",
+]
+
+[[package]]
 name = "rustversion"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13599,13 +13616,13 @@ dependencies = [
  "hex 0.4.3",
  "parity-scale-codec",
  "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
+ "rustls-webpki",
  "scale-info",
  "serde 1.0.175",
  "serde_json 1.0.103",
  "sp-core",
  "sp-std 5.0.0",
  "teerex-primitives",
- "webpki 0.21.0",
  "x509-cert",
 ]
 
@@ -16663,16 +16680,6 @@ checksum = "9b85cbef8c220a6abc02aefd892dfc0fc23afb1c6a426316ec33253a3877249b"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "webpki"
-version = "0.21.0"
-source = "git+https://github.com/scs/webpki-nostd.git?branch=master#22d1772c39ed9081c2815aadb30e7973f3c4e93f"
-dependencies = [
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
- "untrusted",
 ]
 
 [[package]]
