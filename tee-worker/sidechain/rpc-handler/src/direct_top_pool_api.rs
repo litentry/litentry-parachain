@@ -25,6 +25,7 @@ use rust_base58::base58::FromBase58;
 use base58::FromBase58;
 
 use codec::{Decode, Encode};
+use futures::channel::oneshot;
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
@@ -85,37 +86,29 @@ where
 	let author_submit_extrinsic_name: &str = "author_submitVCRequest";
 	let submit_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
-		// First let's hex decode
 		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
-
-		// Now let's decode into Request Struct
 		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
 
 		let shard: ShardIdentifier = request.shard;
-		// So we have an encrypted trusted call, How do we decrypt it?
-		// Why don't we just send the encrypted trusted call?
 		let encrypted_trusted_call: Vec<u8> = request.cyphertext;
 		let request_sender = VcRequestSender::new();
 		// TODO: This should be a one-shot channel
-		let (sender, receiver) = std::sync::mpsc::channel();
+		let (sender, mut receiver) = oneshot::channel::<Vec<u8>>();
 
 		let vc_request = VCRequest { encrypted_trusted_call, sender, shard };
 		request_sender.send_vc_request(vc_request);
-		// let key = top_pool_author.shielding_key_repo.retrieve_key().unwrap();
 
-		// let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params) {
-		// 	Ok(hash_value) => RpcReturnValue {
-		// 		do_watch: false,
-		// 		value: vec![],
-		// 		status: DirectRequestStatus::TrustedOperationStatus(
-		// 			TrustedOperationStatus::Submitted,
-		// 			hash_value,
-		// 		),
-		// 	}
-		// 	.to_hex(),
-		// 	Err(error) => compute_hex_encoded_return_error(error.as_str()),
-		// };
-		// log::error!("Received the following Params: {:?}", params);
+		while let Ok(response) = receiver.try_recv() {
+			if let Some(response) = response {
+				log::error!("Received response in jsonrpc handler: {:?}", response);
+				let json_value = RpcReturnValue {
+					do_watch: false,
+					value: response.encode(),
+					status: DirectRequestStatus::Ok,
+				};
+				return Ok(json!(json_value.to_hex()))
+			}
+		}
 		Ok(json!("A"))
 	});
 
