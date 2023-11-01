@@ -20,7 +20,7 @@ jobs:
           large-packages: false
 
       - uses: actions/checkout@v4
-
+        
       - name: Pull docker image optinally
         run: |
           docker pull litentry/litentry-parachain:latest
@@ -82,12 +82,11 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3 
         
-  update-metadata:
+  update-publish:
     runs-on: ubuntu-latest
     needs:
       - parachain-build-dev
       - tee-build
-
     steps:
       - uses: actions/checkout@v4
 
@@ -123,17 +122,41 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-
-      - name: Fetch metadata
-        timeout-minutes: 20
+      
+      - name: Update metadata and generate types
+        timeout-minutes: 10
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f release-ts-api-package.yml up --no-build --exit-code-from release-ts-api-package release-ts-api-package
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://npm.pkg.github.com/
+
+      - name: Setup npm config
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
+          npm config set @litentry:registry https://npm.pkg.github.com
+
+      - name: Build and publish parachain and sidechain API
+        if: github.ref_name == 'dev' || github.ref_name == 'staging'
+        run: |
+          cd tee-worker/client-api/parachain-api
+          npm publish --tag ${{ github.ref_name }}
+
+          echo "------------------------parachain API published------------------------"
+
+          cd ../sidechain-api
+          npm publish --tag ${{ github.ref_name }}
+
+          echo "------------------------sidechain API published------------------------"
 
       - name: Stop docker containers
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f release-ts-api-package.yml stop
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
 
       - name: Collect Docker Logs
         continue-on-error: true
@@ -147,47 +170,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: logs-release-ts-api-package
+          name: logs-lit-ts-api-package-build
           path: logs
           if-no-files-found: ignore
-
-  publish:
-    runs-on: ubuntu-latest
-    needs: update-metadata
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: https://npm.pkg.github.com/
-
-      - name: Setup npm config
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
-          npm config set @litentry:registry https://npm.pkg.github.com
-
-      - name: Install pnpm
-        run: corepack enable pnpm
-
-      - name: Install dependencies
-        run: |
-          cd tee-worker/client-api
-          pnpm install
-
-      - name: Build and publish parachain and sidechain API
-        if: github.ref_name == 'dev' || github.ref_name == 'staging'
-        run: |
-          cd tee-worker/client-api/parachain-api
-          pnpm build
-          npm publish --tag ${{ github.ref_name }}
-
-          echo "------------------------parachain API published------------------------"
-
-          cd ../sidechain-api
-          pnpm build
-          npm publish --tag ${{ github.ref_name }}
-
-          echo "------------------------sidechain API published------------------------"

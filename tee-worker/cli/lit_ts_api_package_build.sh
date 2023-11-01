@@ -48,7 +48,6 @@ cd /client-api/parachain-api
 echo '{"id":1,"jsonrpc":"2.0","method":"state_getMetadata","params":[]}' | /usr/local/bin/websocat -n1 -k -B 99999999 $NODEURL:$NPORT > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
-# Why the metadata fetched by cli cannot be built now. :(
 cd  /client-api/sidechain-api
 ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
