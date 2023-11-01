@@ -313,9 +313,12 @@ enum ServerSignal {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::test::{
-		fixtures::{no_cert_verifier::NoCertVerifier, test_server::create_server},
-		mocks::web_socket_handler_mock::WebSocketHandlerMock,
+	use crate::{
+		encrypt::ThreadRng,
+		test::{
+			fixtures::{no_cert_verifier::NoCertVerifier, test_server::create_server},
+			mocks::web_socket_handler_mock::WebSocketHandlerMock,
+		},
 	};
 	use rustls::ClientConfig;
 	use std::{net::TcpStream, thread, time::Duration};
@@ -445,14 +448,23 @@ mod tests {
 		let update_message = "Message update".to_string();
 		let update_message_clone = update_message.clone();
 
+		let (pubkey, decrypt) = init_encrypt();
 		let client_join_handle = thread::spawn(move || {
 			let mut socket = connect_tls_client(get_server_addr(port).as_str());
+
+			socket
+				.write_message(Message::Binary(pubkey))
+				.expect("client write key to be successful");
+
 			socket
 				.write_message(Message::Text("First request".into()))
 				.expect("client write message to be successful");
 
-			assert_eq!(Message::Text(expected_answer), socket.read_message().unwrap());
-			assert_eq!(Message::Text(update_message_clone), socket.read_message().unwrap());
+			assert_eq!(Message::Text(expected_answer), decrypt(socket.read_message().unwrap()));
+			assert_eq!(
+				Message::Text(update_message_clone),
+				decrypt(socket.read_message().unwrap())
+			);
 		});
 
 		let connection_token = poll_handler_for_first_connection(handler.as_ref());
@@ -514,5 +526,18 @@ mod tests {
 				.expect("Can't connect");
 
 		socket
+	}
+
+	fn init_encrypt() -> (Vec<u8>, impl Fn(Message) -> Message + Clone + Send + Sync) {
+		let mut rng = ThreadRng::new();
+		let privkey = rsa::RsaPrivateKey::new(&mut rng, 2048).unwrap();
+		let pubkey = privkey.to_public_key();
+		let pubkey = rsa::pkcs1::EncodeRsaPublicKey::to_pkcs1_der(&pubkey).unwrap().to_vec();
+		(pubkey, move |msg| match msg {
+			Message::Binary(msg) => Message::Text(
+				String::from_utf8(privkey.decrypt(rsa::Pkcs1v15Encrypt, &msg).unwrap()).unwrap(),
+			),
+			_ => msg,
+		})
 	}
 }

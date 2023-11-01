@@ -44,6 +44,8 @@ pub enum WebSocketError {
 	ConnectionNotYetEstablished,
 	#[error("Web-socket write: {0}")]
 	SocketWriteError(String),
+	#[error("Encryption error: {0}")]
+	EncryptionError(rsa::Error),
 	#[error("Lock poisoning")]
 	LockPoisoning,
 	#[error("Failed to receive server signal message: {0}")]

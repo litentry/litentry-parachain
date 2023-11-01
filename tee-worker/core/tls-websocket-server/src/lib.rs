@@ -54,6 +54,7 @@ pub mod certificate_generation;
 pub mod config_provider;
 mod connection;
 pub mod connection_id_generator;
+mod encrypt;
 pub mod error;
 mod stream_state;
 mod tls_common;

@@ -15,6 +15,7 @@ sgx_tstd = { optional = true, features = ["net", "thread"], git = "https://githu
 # sgx enabled external libraries
 mio-extras = { optional = true, default-features = false, git = "https://github.com/integritee-network/mio-extras-sgx", rev = "963234b" }
 mio_sgx = { package = "mio", optional = true, git = "https://github.com/mesalock-linux/mio-sgx", tag = "sgx_1.1.3" }
+rand_sgx = { package = "rand", optional = true, git = "https://github.com/mesalock-linux/rand-sgx", tag = "v0.7.3_sgx1.1.3" }
 rustls_sgx = { package = "rustls", optional = true, git = "https://github.com/mesalock-linux/rustls", branch = "mesalock_sgx" }
 thiserror_sgx = { package = "thiserror", optional = true, git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3" }
 tungstenite_sgx = { package = "tungstenite", optional = true, features = ["rustls-tls-webpki-roots"], git = "https://github.com/integritee-network/tungstenite-rs-sgx", branch = "sgx-experimental" }
@@ -23,6 +24,7 @@ yasna_sgx = { package = "yasna", optional = true, default-features = false, feat
 
 # std compatible external libraries (make sure these versions match with the sgx-enabled ones above)
 mio = { version = "0.6.14", optional = true }
+rand = { version = "0.7.3", optional = true }
 rustls = { version = "0.19", optional = true }
 thiserror = { version = "1.0", optional = true }
 tungstenite = { version = "0.15.0", optional = true, features = ["rustls-tls-webpki-roots"] }
@@ -34,6 +36,7 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 
 # no-std compatible libraries
 log = { version = "0.4", default-features = false }
+rsa = { version = "0.9.3", default-features = false }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -46,6 +49,7 @@ default = ["std"]
 sgx = [
     "mio-extras/sgx",
     "mio_sgx",
+    "rand_sgx",
     "rcgen/sgx",
     "rcgen/pem_sgx",
     "rustls_sgx",
@@ -58,6 +62,7 @@ sgx = [
 std = [
     "mio",
     "mio-extras/std",
+    "rand",
     "rcgen/std",
     "rcgen/pem",
     "rustls",

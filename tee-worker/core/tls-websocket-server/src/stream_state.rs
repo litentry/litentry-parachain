@@ -15,6 +15,7 @@
 
 */
 
+use crate::encrypt::Encryptor;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
@@ -39,6 +40,7 @@ pub(crate) enum StreamState {
 	TlsStream(Box<RustlsStream>),
 	WebSocketHandshake(RustlsMidHandshake),
 	EstablishedWebsocket(Box<RustlsWebSocket>),
+	AllReady(Box<RustlsWebSocket>, Option<Encryptor>),
 }
 
 impl Default for StreamState {
@@ -61,6 +63,7 @@ impl StreamState {
 			StreamState::TlsStream(s) => Some(s),
 			StreamState::WebSocketHandshake(h) => Some(h.get_ref().get_ref()),
 			StreamState::EstablishedWebsocket(ws) => Some(ws.get_ref()),
+			StreamState::AllReady(ws, ..) => Some(ws.get_ref()),
 			StreamState::Invalid => None,
 		}
 	}
@@ -70,6 +73,7 @@ impl StreamState {
 			StreamState::TlsStream(s) => Some(s),
 			StreamState::WebSocketHandshake(h) => Some(h.get_mut().get_mut()),
 			StreamState::EstablishedWebsocket(ws) => Some(ws.get_mut()),
+			StreamState::AllReady(ws, ..) => Some(ws.get_mut()),
 			StreamState::Invalid => None,
 		}
 	}

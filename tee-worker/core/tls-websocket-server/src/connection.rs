@@ -19,8 +19,8 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	error::WebSocketError, stream_state::StreamState, WebSocketConnection, WebSocketMessageHandler,
-	WebSocketResult,
+	encrypt::Encryptor, error::WebSocketError, stream_state::StreamState, WebSocketConnection,
+	WebSocketMessageHandler, WebSocketResult,
 };
 use log::*;
 use mio::{event::Event, net::TcpStream, Poll, Ready, Token};
@@ -127,20 +127,49 @@ where
 	///
 	/// Returns a boolean 'connection should be closed'.
 	fn read_or_initialize_websocket(&mut self) -> WebSocketResult<bool> {
-		if let StreamState::EstablishedWebsocket(web_socket) = &mut self.stream_state {
+		if let (StreamState::EstablishedWebsocket(web_socket), _, is_inited)
+		| (StreamState::AllReady(web_socket, ..), is_inited, _) = (&mut self.stream_state, true, false)
+		{
 			trace!(
 				"Read is possible for connection {}: {}",
 				self.connection_token.0,
 				web_socket.can_read()
 			);
 			match web_socket.read_message() {
-				Ok(m) =>
+				Ok(Message::Binary(key)) if !is_inited => {
+					debug!("server reads binary message as after established, encryption enabled");
+					let mut state = StreamState::Invalid;
+					std::mem::swap(&mut self.stream_state, &mut state);
+					if let StreamState::EstablishedWebsocket(ws) = state {
+						if key.is_empty() {
+							self.stream_state = StreamState::AllReady(ws, None);
+							return Ok(false)
+						}
+
+						if let Some(encryptor) = Encryptor::new(&key) {
+							self.stream_state = StreamState::AllReady(ws, Some(encryptor));
+							return Ok(false)
+						}
+					}
+
+					return Ok(true)
+				},
+				Ok(m) => {
+					if !is_inited {
+						debug!("server reads text message before key is set, encryption disabled");
+						let mut state = StreamState::Invalid;
+						std::mem::swap(&mut self.stream_state, &mut state);
+						if let StreamState::EstablishedWebsocket(ws) = state {
+							self.stream_state = StreamState::AllReady(ws, None)
+						}
+					}
 					if let Err(e) = self.handle_message(m) {
 						error!(
 							"Failed to handle web-socket message (connection {}): {:?}",
 							self.connection_token.0, e
 						);
-					},
+					}
+				},
 				Err(e) => match e {
 					tungstenite::Error::ConnectionClosed => return Ok(true),
 					tungstenite::Error::AlreadyClosed => return Ok(true),
@@ -196,7 +225,9 @@ where
 					"Received close frame, driving web-socket connection {} to close",
 					self.connection_token.0
 				);
-				if let StreamState::EstablishedWebsocket(web_socket) = &mut self.stream_state {
+				if let StreamState::EstablishedWebsocket(web_socket)
+				| StreamState::AllReady(web_socket, ..) = &mut self.stream_state
+				{
 					// Send a close frame back and then flush the send queue.
 					if let Err(e) = web_socket.close(None) {
 						match e {
@@ -226,13 +257,30 @@ where
 
 	pub(crate) fn write_message(&mut self, message: String) -> WebSocketResult<()> {
 		match &mut self.stream_state {
-			StreamState::EstablishedWebsocket(web_socket) => {
+			StreamState::EstablishedWebsocket(_) => {
+				debug!("server write before key is set, encryption disabled");
+				let mut state = StreamState::Invalid;
+				std::mem::swap(&mut self.stream_state, &mut state);
+				if let StreamState::EstablishedWebsocket(ws) = state {
+					self.stream_state = StreamState::AllReady(ws, None);
+				}
+				self.write_message(message)
+			},
+			StreamState::AllReady(web_socket, encryptor) => {
 				if !web_socket.can_write() {
 					return Err(WebSocketError::ConnectionClosed)
 				}
+
+				debug!("encryptor existance: {}", encryptor.is_some());
+				let message = if let Some(encryptor) = encryptor {
+					Message::Binary(encryptor.encrypt(message.as_bytes())?)
+				} else {
+					Message::Text(message)
+				};
+
 				debug!("Write message to connection {}: {}", self.connection_token.0, message);
 				web_socket
-					.write_message(Message::Text(message))
+					.write_message(message)
 					.map_err(|e| WebSocketError::SocketWriteError(format!("{:?}", e)))
 			},
 			_ =>
@@ -290,7 +338,9 @@ where
 			let connection_state = self.do_tls_write();
 
 			if connection_state.is_alive() {
-				if let StreamState::EstablishedWebsocket(web_socket) = &mut self.stream_state {
+				if let StreamState::EstablishedWebsocket(web_socket)
+				| StreamState::AllReady(web_socket, ..) = &mut self.stream_state
+				{
 					trace!("Web-socket, write pending messages");
 					if let Err(e) = web_socket.write_pending() {
 						match e {
