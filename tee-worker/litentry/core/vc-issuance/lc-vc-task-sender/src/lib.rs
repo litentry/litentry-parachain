@@ -19,7 +19,6 @@ use codec::{Decode, Encode};
 use itp_types::{ShardIdentifier, H256};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{Assertion, Identity};
 use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;

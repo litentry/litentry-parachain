@@ -24,6 +24,9 @@ use futures_sgx::channel::oneshot;
 #[cfg(feature = "sgx")]
 use sgx_tstd::format;
 
+#[cfg(feature = "std")]
+use futures::channel::oneshot;
+
 pub struct VCCallbackHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
 	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,

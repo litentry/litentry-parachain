@@ -41,7 +41,6 @@ use litentry_primitives::{
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
-use std::sync::mpsc::Sender;
 
 /// Here a few Request structs are defined for asynchronously stf-tasks handling.
 /// A `callback` exists for some request types to submit a callback TrustedCall to top pool.
