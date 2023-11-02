@@ -4668,8 +4668,8 @@ dependencies = [
  "tungstenite 0.14.0",
  "tungstenite 0.15.0",
  "url 2.4.0",
+ "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
- "webpki 0.22.0",
  "yasna 0.3.1",
  "yasna 0.4.0",
 ]
@@ -4763,8 +4763,8 @@ dependencies = [
  "sp-core",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
+ "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "webpki 0.21.4 (git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx)",
- "webpki 0.22.0",
  "webpki-roots 0.21.0 (git+https://github.com/mesalock-linux/webpki-roots?branch=mesalock_sgx)",
  "yasna 0.3.1",
 ]
