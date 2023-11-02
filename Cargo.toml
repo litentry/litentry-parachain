@@ -11,6 +11,7 @@ members = [
     'pallets/sidechain',
     'pallets/teeracle',
     'pallets/teerex',
+    'pallets/teerex/sgx-verify',
     'pallets/parentchain',
     'pallets/test-utils',
     'pallets/group',
