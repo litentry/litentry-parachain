@@ -2,6 +2,10 @@
 
 Client-api of tee-worker
 
+## Purpose
+
+In order to enable the use of our parachain and sidechain types in client and other projects.
+
 ## Environment setup
 
 -   Install [nvm](https://github.com/nvm-sh/nvm)
@@ -29,11 +33,17 @@ Generate sidechain type: `pnpm --filter sidechain-api run build`
 
 Alternatively, you can run `pnpm --run update-build` to do all things above in one go.
 
+## Test
+
+Once update the `client-api/parachain-api` or `client-api/sidechain-api`, all you need to do in the tee-worker/ts-tests is to re-install(run `pnpm install` in tee-worker/ts-tests) and then you can test directly.
+
 ## Publish
 
 1. Modify the `version` in the `package.json` files of both the parachain-api and sidechain-api, like:
 
-`"version": "1.0.0-{tag}"`
+```
+"version": "1.0.0-{tag}"
+```
 
 Please refer to the [version rules](https://docs.npmjs.com/about-semantic-versioning) and ensure that it is unique and hasn't been published on the GitHub package registry before.
 
