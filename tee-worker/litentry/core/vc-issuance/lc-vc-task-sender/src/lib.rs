@@ -39,10 +39,16 @@ use futures::channel::oneshot;
 #[cfg(feature = "sgx")]
 use futures_sgx::channel::oneshot;
 
+#[cfg(feature = "sgx")]
+pub use jsonrpc_core_sgx::Error as RpcError;
+
+#[cfg(feature = "std")]
+pub use jsonrpc_core::Error as RpcError;
+
 #[derive(Debug)]
 pub struct VCRequest {
 	pub encrypted_trusted_call: Vec<u8>,
-	pub sender: oneshot::Sender<Vec<u8>>,
+	pub sender: oneshot::Sender<Result<Vec<u8>, RpcError>>,
 	pub shard: ShardIdentifier,
 }
 

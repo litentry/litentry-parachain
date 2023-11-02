@@ -16,7 +16,7 @@ use lc_vc_task_sender::VCResponse;
 use litentry_primitives::{Assertion, Identity};
 use std::sync::Arc;
 
-pub(crate) struct VCCallbackHandler<
+pub struct VCCallbackHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
 	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
 	S: StfEnclaveSigning + Send + Sync + 'static,
@@ -25,9 +25,9 @@ pub(crate) struct VCCallbackHandler<
 	Z: CreateExtrinsics + Send + Sync + 'static,
 	N: AccessNodeMetadata + Send + Sync + 'static,
 > {
-	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
-	pub(crate) extrinsic_factory: Arc<Z>,
-	pub(crate) node_metadata_repo: Arc<N>,
+	pub context: Arc<StfTaskContext<K, A, S, H, O>>,
+	pub extrinsic_factory: Arc<Z>,
+	pub node_metadata_repo: Arc<N>,
 }
 
 // We need to have some form of responder to the JSONRPC sender. (TODO: P-188)

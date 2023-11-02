@@ -15,7 +15,7 @@ use itp_types::{ShardIdentifier, H256};
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_receiver::{handler::TaskHandler, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::{VCRequest, VCResponse};
+use lc_vc_task_sender::{RpcError, VCRequest, VCResponse};
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
 	VCMPError,
@@ -40,7 +40,6 @@ pub(crate) struct VCRequestHandler<
 > {
 	pub(crate) req: AssertionBuildRequest,
 	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
-	pub(crate) sender: oneshot::Sender<Vec<u8>>,
 }
 
 impl<K, A, S, H, O> VCRequestHandler<K, A, S, H, O>
@@ -52,10 +51,7 @@ where
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
 {
-	pub fn process(
-		self,
-		sender: Sender<(VCResponse, oneshot::Sender<Vec<u8>>)>,
-	) -> Result<(), VCMPError> {
+	pub fn process(self) -> Result<VCResponse, VCMPError> {
 		let mut credential = match self.req.assertion.clone() {
 			Assertion::A1 => lc_assertion_build::a1::build(&self.req),
 
@@ -152,9 +148,8 @@ where
 			vc_payload: credential_str.as_bytes().to_vec(),
 			vc_index,
 		};
-		sender.send((vc_response, self.sender)).unwrap();
 
-		Ok(())
+		Ok(vc_response)
 	}
 }
 
