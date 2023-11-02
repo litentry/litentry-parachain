@@ -41,9 +41,10 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_receiver::{handler::TaskHandler, StfTaskContext};
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::{init_vc_task_sender_storage, RpcError, VCResponse};
+use lc_vc_task_sender::{init_vc_task_sender_storage, RpcError, VCRequest, VCResponse};
 use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, VCMPError};
 use std::{
+	string::String,
 	sync::{
 		mpsc::{channel, Receiver, Sender},
 		Arc,
@@ -87,58 +88,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 
 	loop {
 		let req = receiver.recv().unwrap();
-
-		// TODO: Error handling
-		let decrypted_trusted_operation =
-			context.shielding_key.decrypt(&req.encrypted_trusted_call).unwrap();
-		// TODO: Error handling
-		let trusted_operation =
-			TrustedOperation::decode(&mut decrypted_trusted_operation.as_slice()).unwrap();
-
-		// TODO: Error handling
-		let trusted_call = trusted_operation.to_call().unwrap();
-
-		// TODO: Move this to a function that returns Result or gives an error
-		if let TrustedCall::request_vc(signer, who, assertion, hash) = trusted_call.call.clone() {
-			let (mut state, hash) = context.state_handler.load_cloned(&req.shard).unwrap();
-			state.execute_with(|| {
-				let key = UserShieldingKeys::<Runtime>::contains_key(&who);
-				log::error!("This is the result of key: {:?}", key);
-				let id_graph = IMT::get_id_graph(&who, usize::MAX);
-				log::error!("Result of IMT Get Id Graph: {:?}", id_graph);
-				let assertion_networks = assertion.clone().get_supported_web3networks();
-				let identities: Vec<IdentityNetworkTuple> = id_graph
-					.into_iter()
-					.filter(|item| item.1.is_active())
-					.map(|item| {
-						let mut networks = item.1.web3networks.to_vec();
-						networks.retain(|n| assertion_networks.contains(n));
-						(item.0, networks)
-					})
-					.collect();
-
-				// TODO: Understand this parameters properly and avoid the unwrap here
-				let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
-					shard: req.shard.clone(),
-					signer: signer.clone().to_account_id().unwrap(),
-					enclave_account: enclave_signer_account(),
-					who: who.clone().into(),
-					assertion: assertion.clone(),
-					identities,
-					top_hash: H256::zero(),
-					req_ext_hash: H256::zero(),
-				};
-
-				let context_pool = context.clone();
-				let sender_pool = sender.clone();
-				let vc_request_handler = VCRequestHandler {
-					req: assertion_build.clone(),
-					context: context_pool.clone(),
-				};
-				let result = vc_request_handler.process();
-				sender_pool.send((result, req.sender));
-			});
-		}
+		handle_jsonrpc_request(context.clone(), req, sender.clone());
 	}
 }
 // TODO: Create a function that sends the error to via the one-shot channel
@@ -169,10 +119,105 @@ pub fn start_response_handler<K, A, S, H, O, Z, N>(
 			}
 		} else {
 			log::error!("Received VC Request and we succesfully compiled it");
-			vc_handler.request_vc_callback(vc_response.clone().unwrap());
-			if let Err(err) = sender.send(Ok(vc_response.unwrap().vc_payload)) {
-				log::warn!("Unable to send message to the RPC Handler: {:?}", err);
-			}
+			vc_handler.request_vc_callback(vc_response.clone().unwrap(), sender);
+			// if let Err(err) = sender.send(Ok(vc_response.unwrap().vc_payload)) {
+			// 	log::warn!("Unable to send message to the RPC Handler: {:?}", err);
+			// }
 		}
 	});
+}
+
+pub fn handle_jsonrpc_request<K, A, S, H, O>(
+	context: Arc<StfTaskContext<K, A, S, H, O>>,
+	req: VCRequest,
+	sender: Sender<(Result<VCResponse, VCMPError>, oneshot::Sender<Result<Vec<u8>, RpcError>>)>,
+) where
+	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
+	S: StfEnclaveSigning + Send + Sync + 'static,
+	H: HandleState + Send + Sync + 'static,
+	H::StateT: SgxExternalitiesTrait,
+	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
+{
+	let decrypted_trusted_operation =
+		match context.shielding_key.decrypt(&req.encrypted_trusted_call) {
+			Ok(s) => s,
+			Err(e) => {
+				send_rpc_error(String::from("Failed to decrypt trusted operation"), req.sender);
+				return
+			},
+		};
+
+	let trusted_operation =
+		match TrustedOperation::decode(&mut decrypted_trusted_operation.as_slice()) {
+			Ok(s) => s,
+			Err(e) => {
+				send_rpc_error(String::from("Failed to decode trusted operation"), req.sender);
+				return
+			},
+		};
+
+	let trusted_call = match trusted_operation.to_call() {
+		Some(s) => s,
+		None => {
+			send_rpc_error(
+				String::from("Failed to convert trusted operation to trusted call"),
+				req.sender,
+			);
+			return
+		},
+	};
+
+	if let TrustedCall::request_vc(signer, who, assertion, hash) = trusted_call.call.clone() {
+		let (mut state, hash) = context.state_handler.load_cloned(&req.shard).unwrap();
+		state.execute_with(|| {
+			let key = UserShieldingKeys::<Runtime>::contains_key(&who);
+			if key == false {
+				send_rpc_error(
+					String::from("UserShieldingKey has not been set by User"),
+					req.sender,
+				);
+				return
+			}
+			let id_graph = IMT::get_id_graph(&who, usize::MAX);
+			log::error!("Result of IMT Get Id Graph: {:?}", id_graph);
+			let assertion_networks = assertion.clone().get_supported_web3networks();
+			let identities: Vec<IdentityNetworkTuple> = id_graph
+				.into_iter()
+				.filter(|item| item.1.is_active())
+				.map(|item| {
+					let mut networks = item.1.web3networks.to_vec();
+					networks.retain(|n| assertion_networks.contains(n));
+					(item.0, networks)
+				})
+				.collect();
+
+			// TODO: Understand this parameters properly and avoid the unwrap here
+			let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
+				shard: req.shard.clone(),
+				signer: signer.to_account_id().unwrap(),
+				enclave_account: enclave_signer_account(),
+				who: who.clone().into(),
+				assertion: assertion.clone(),
+				identities,
+				top_hash: H256::zero(),
+				req_ext_hash: H256::zero(),
+			};
+
+			let context_pool = context.clone();
+			let sender_pool = sender.clone();
+			let vc_request_handler =
+				VCRequestHandler { req: assertion_build.clone(), context: context_pool.clone() };
+			let result = vc_request_handler.process();
+			sender_pool.send((result, req.sender));
+		});
+	} else {
+		// Anything other request_vc should be rejected
+	}
+}
+
+pub fn send_rpc_error(message: String, sender: oneshot::Sender<Result<Vec<u8>, RpcError>>) {
+	if let Err(e) = sender.send(Err(RpcError::invalid_params(message))) {
+		log::warn!("Failed to send messasge to channel: {:?}", e);
+	}
 }

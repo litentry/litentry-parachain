@@ -34,7 +34,14 @@ use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use lc_vc_task_sender::{SendVcRequest, VCRequest, VcRequestSender};
 use log::*;
-use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
+use std::{
+	borrow::ToOwned,
+	format,
+	string::{String, ToString},
+	sync::Arc,
+	vec,
+	vec::Vec,
+};
 
 type Hash = sp_core::H256;
 
@@ -98,13 +105,15 @@ where
 
 		while let Ok(response) = receiver.try_recv() {
 			if let Some(Ok(response)) = response {
-				log::error!("Received response in jsonrpc handler: {:?}", response);
 				let json_value = RpcReturnValue {
 					do_watch: false,
 					value: response.encode(),
 					status: DirectRequestStatus::Ok,
 				};
 				return Ok(json!(json_value.to_hex()))
+			} else if let Some(Err(e)) = response {
+				log::error!("Received error in jsonresponse: {:?} ", e);
+				return Ok(json!(compute_hex_encoded_return_error(&e.to_string())))
 			}
 		}
 		// Note: This case will only happen if the sender has been dropped
