@@ -40,7 +40,7 @@ std = [
     "codec/std",
     "der/std",
     "hex/std",
-    # "ring/std",
+    "ring/std",
     "scale-info/std",
     "serde/std",
     "serde_json/std",
