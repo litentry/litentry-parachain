@@ -91,7 +91,6 @@ where
 	});
 
 	let author_submit_extrinsic_name: &str = "author_submitVCRequest";
-	let submit_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
 		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
 		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
