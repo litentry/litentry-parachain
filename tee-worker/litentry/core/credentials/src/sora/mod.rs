@@ -24,11 +24,11 @@ use litentry_primitives::SoraQuizType;
 // (type, description)
 const VC_LITENTRY_SORA_QUIZ_INFOS: [(&str, &str); 2] = [
 	(
-        "Litentry & Sora Quiz Attendee", 
+        "Litentry & SORA Quiz Attendee",
         "Congratulations on your participation in our first quiz in collaboration with our partner, Sora. You have embarked on an exciting educational journey, exploring the world of DeFi & Web3 Identity, we truly appreciate your curiosity and dedication."
     ),
     (
-        "Litentry & Sora Quiz Master",
+        "Litentry & SORA Quiz Master",
         "Congratulations on winning our first quiz in collaboration with Sora! By emerging as the winner, you have shown your excellent understanding of DeFi along with Web3 identity security and privacy. You are truly a champion in this field!"
     ),
 ];
