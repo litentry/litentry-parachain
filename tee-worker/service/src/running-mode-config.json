@@ -10,7 +10,9 @@
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "http://localhost:9933",
         "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "oneblock_notion_url": "https://abc.com"
+        "oneblock_notion_url": "https://abc.com",
+        "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
+        "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID"
     },
     "mock": {
         "twitter_official_url": "http://localhost:19527",
@@ -23,7 +25,9 @@
         "achainable_auth_key": "",
         "credential_endpoint": "http://localhost:9933",
         "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "oneblock_notion_url": "https://abc.com"
+        "oneblock_notion_url": "https://abc.com",
+        "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
+        "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID"
     },
     "prod": {
         "twitter_official_url": "https://api.twitter.com",
@@ -36,7 +40,9 @@
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "",
         "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "oneblock_notion_url": "https://abc.com"
+        "oneblock_notion_url": "https://abc.com",
+        "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
+        "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID"
     },
     "staging": {
         "twitter_official_url": "https://api.twitter.com",
@@ -49,6 +55,8 @@
         "achainable_auth_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "credential_endpoint": "wss://tee-staging.litentry.io",
         "oneblock_notion_key": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "oneblock_notion_url": "https://abc.com"
+        "oneblock_notion_url": "https://abc.com",
+        "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
+        "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID"
     }
 }
