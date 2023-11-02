@@ -2764,6 +2764,7 @@ dependencies = [
  "futures 0.3.8",
  "itp-stf-primitives",
  "itp-types",
+ "jsonrpc-core",
  "lazy_static",
  "lc-stf-task-sender",
  "litentry-primitives",

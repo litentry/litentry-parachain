@@ -88,18 +88,16 @@ where
 	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
 		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
 		let request = Request::from_hex(&hex_encoded_params[0].clone()).unwrap();
-
 		let shard: ShardIdentifier = request.shard;
 		let encrypted_trusted_call: Vec<u8> = request.cyphertext;
 		let request_sender = VcRequestSender::new();
-		// TODO: This should be a one-shot channel
-		let (sender, mut receiver) = oneshot::channel::<Vec<u8>>();
+		let (sender, mut receiver) = oneshot::channel::<Result<Vec<u8>, RpcError>>();
 
 		let vc_request = VCRequest { encrypted_trusted_call, sender, shard };
 		request_sender.send_vc_request(vc_request);
 
 		while let Ok(response) = receiver.try_recv() {
-			if let Some(response) = response {
+			if let Some(Ok(response)) = response {
 				log::error!("Received response in jsonrpc handler: {:?}", response);
 				let json_value = RpcReturnValue {
 					do_watch: false,
@@ -109,7 +107,8 @@ where
 				return Ok(json!(json_value.to_hex()))
 			}
 		}
-		Ok(json!("A"))
+		// Note: This case will only happen if the sender has been dropped
+		Ok(json!(compute_hex_encoded_return_error("The sender has been dropped")))
 	});
 
 	// author_pendingExtrinsics
