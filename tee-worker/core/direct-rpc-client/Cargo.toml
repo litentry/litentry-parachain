@@ -27,6 +27,7 @@ webpki = { version = "0.21", optional = true }
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 [features]
 default = ["std"]
@@ -38,6 +39,7 @@ sgx = [
     "sgx_tstd",
     "itp-rpc/sgx",
     "itp-utils/sgx",
+    "litentry-primitives/sgx",
 ]
 std = [
     "rustls",
@@ -48,4 +50,5 @@ std = [
     "itp-types/std",
     "itp-utils/std",
     "log/std",
+    "litentry-primitives/std",
 ]

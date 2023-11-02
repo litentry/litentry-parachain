@@ -55,6 +55,7 @@ use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::RsaRequest;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 
+use litentry_primitives::AesRequest;
 use std::{
 	boxed::Box,
 	error::Error,
@@ -127,7 +128,7 @@ impl RpcClientFactory for DirectRpcClientFactory {
 }
 
 pub trait RpcClient {
-	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>>;
+	fn send(&mut self, request_id: String, params: RequestParams) -> Result<(), Box<dyn Error>>;
 	fn is_alive(&self) -> bool;
 }
 
@@ -194,7 +195,7 @@ impl DirectRpcClient {
 		}
 	}
 
-	fn prepare_request(
+	fn prepare_rsa_request(
 		&mut self,
 		request_id: String,
 		parsed_params: Vec<String>,
@@ -205,10 +206,28 @@ impl DirectRpcClient {
 		// if it's broadcasted it's not going to be broadcasted again
 		let request = RpcRequest::compose_jsonrpc_call(
 			Id::Text(request_id),
-			"author_submitAndWatchBroadcastedExtrinsic".to_string(),
+			"author_submitAndWatchBroadcastedRsaRequest".to_string(),
 			vec![request.to_hex()],
 		)
-		.map_err(|e| format!("Could not compose RpcRequest, reason: {:?}", e))?;
+		.map_err(|e| format!("Could not compose RsaRequest, reason: {:?}", e))?;
+		Ok(request)
+	}
+
+	fn prepare_aes_request(
+		&mut self,
+		request_id: String,
+		parsed_params: Vec<String>,
+	) -> Result<String, Box<dyn Error>> {
+		let req = AesRequest::from_hex(&parsed_params[0].clone())
+			.map_err(|e| format!("Could not create request from hex, reason: {:?}", e))?;
+		let request = AesRequest { shard: req.shard, payload: req.payload, key: req.key };
+		// if it's broadcasted it's not going to be broadcasted again
+		let request = RpcRequest::compose_jsonrpc_call(
+			Id::Text(request_id),
+			"author_submitAndWatchBroadcastedAesRequest".to_string(),
+			vec![request.to_hex()],
+		)
+		.map_err(|e| format!("Could not compose Aes, reason: {:?}", e))?;
 		Ok(request)
 	}
 
@@ -230,9 +249,18 @@ impl DirectRpcClient {
 	}
 }
 
+#[derive(Clone)]
+pub enum RequestParams {
+	Rsa(Vec<String>),
+	Aes(Vec<String>),
+}
+
 impl RpcClient for DirectRpcClient {
-	fn send(&mut self, request_id: String, params: Vec<String>) -> Result<(), Box<dyn Error>> {
-		let request = self.prepare_request(request_id, params)?;
+	fn send(&mut self, request_id: String, params: RequestParams) -> Result<(), Box<dyn Error>> {
+		let request = match params {
+			RequestParams::Rsa(params) => self.prepare_rsa_request(request_id, params)?,
+			RequestParams::Aes(params) => self.prepare_aes_request(request_id, params)?,
+		};
 
 		if let Ok(mut ws) = self.ws.lock() {
 			ws.write_message(Message::Text(request))

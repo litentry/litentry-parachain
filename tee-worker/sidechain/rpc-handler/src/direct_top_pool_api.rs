@@ -44,14 +44,17 @@ use std::{
 
 type Hash = sp_core::H256;
 
+pub type MaybeRequestIdWithParams = Option<(Hash, Vec<String>)>;
+
 pub fn add_top_pool_direct_rpc_methods<R>(
 	top_pool_author: Arc<R>,
 	mut io_handler: IoHandler,
-	sender: SyncSender<(Hash, Vec<String>)>,
+	sender: SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>,
 ) -> IoHandler
 where
 	R: AuthorApi<Hash, Hash> + Send + Sync + 'static,
 {
+	let cloned_sender = sender.clone();
 	// author_submitAndWatchRsaRequest
 	let author_submit_and_watch_rsa_request_name: &str = "author_submitAndWatchRsaRequest";
 	let watch_author = top_pool_author.clone();
@@ -59,7 +62,7 @@ where
 		let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params.clone()) {
 			Ok(hash_value) => {
 				if let Ok(parsed_params) = params.parse::<Vec<String>>() {
-					sender.send((hash_value, parsed_params)).unwrap();
+					sender.send((Some((hash_value, parsed_params)), None)).unwrap();
 				}
 
 				RpcReturnValue {
@@ -77,7 +80,7 @@ where
 		Ok(json!(json_value))
 	});
 
-	// author_submitAndWatchBroadcastedExtrinsic
+	// author_submitAndWatchBroadcastedRsaRequest
 	let author_submit_and_watch_broadcasted_rsa_request: &str =
 		"author_submitAndWatchBroadcastedRsaRequest";
 	let watch_author = top_pool_author.clone();
@@ -126,20 +129,49 @@ where
 	let author_submit_and_watch_aes_request_name: &str = "author_submitAndWatchAesRequest";
 	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_and_watch_aes_request_name, move |params: Params| {
-		let json_value = match author_submit_aes_request_inner(watch_author.clone(), params) {
-			Ok(hash_value) => RpcReturnValue {
-				do_watch: true,
-				value: vec![],
-				status: DirectRequestStatus::TrustedOperationStatus(
-					TrustedOperationStatus::Submitted,
-					hash_value,
-				),
-			}
-			.to_hex(),
+		let json_value = match author_submit_aes_request_inner(watch_author.clone(), params.clone())
+		{
+			Ok(hash_value) => {
+				if let Ok(parsed_params) = params.parse::<Vec<String>>() {
+					cloned_sender.send((None, Some((hash_value, parsed_params)))).unwrap();
+				}
+
+				RpcReturnValue {
+					do_watch: true,
+					value: vec![],
+					status: DirectRequestStatus::TrustedOperationStatus(
+						TrustedOperationStatus::Submitted,
+						hash_value,
+					),
+				}
+				.to_hex()
+			},
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),
 		};
 		Ok(json!(json_value))
 	});
+
+	let author_submit_and_watch_broadcasted_aes_request_name: &str =
+		"author_submitAndWatchBroadcastedAesRequest";
+	let watch_author = top_pool_author.clone();
+	io_handler.add_sync_method(
+		author_submit_and_watch_broadcasted_aes_request_name,
+		move |params: Params| {
+			let json_value = match author_submit_aes_request_inner(watch_author.clone(), params) {
+				Ok(hash_value) => RpcReturnValue {
+					do_watch: true,
+					value: vec![],
+					status: DirectRequestStatus::TrustedOperationStatus(
+						TrustedOperationStatus::Submitted,
+						hash_value,
+					),
+				}
+				.to_hex(),
+				Err(error) => compute_hex_encoded_return_error(error.as_str()),
+			};
+			Ok(json!(json_value))
+		},
+	);
 
 	// author_pendingExtrinsics
 	let author_pending_extrinsic_name: &str = "author_pendingExtrinsics";

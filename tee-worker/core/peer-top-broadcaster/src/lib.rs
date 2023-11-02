@@ -31,7 +31,9 @@ use std::sync::SgxMutex as Mutex;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClient, RpcClientFactory};
+use itc_direct_rpc_client::{
+	DirectRpcClientFactory, RequestParams, Response, RpcClient, RpcClientFactory,
+};
 use itc_direct_rpc_server::{
 	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry,
 	SendRpcResponse,
@@ -49,6 +51,8 @@ use std::{
 	},
 	vec::Vec,
 };
+
+pub type MaybeRequestIdWithParams = Option<(Hash, Vec<String>)>;
 
 pub trait PeerUpdater {
 	fn update(&self, peers: Vec<String>);
@@ -154,7 +158,7 @@ where
 		HashMap::new()
 	}
 
-	pub fn broadcast<Hash: ToHexPrefixed>(&self, hash: Hash, params: Vec<String>) {
+	pub fn broadcast<Hash: ToHexPrefixed>(&self, hash: Hash, params: RequestParams) {
 		if let Ok(mut peers) = self.peers.lock() {
 			peers.values_mut().for_each(|peer| {
 				if let Err(e) = peer.send(hash.to_hex(), params.clone()) {
@@ -184,18 +188,18 @@ pub fn id_to_hash(id: &Id) -> Option<Hash> {
 	}
 }
 
-#[allow(clippy::type_complexity)]
 pub fn init<Registry, ResponseChannelType>(
 	rpc_responder: Arc<RpcResponder<Registry, Hash, ResponseChannelType>>,
 ) -> (
-	std::sync::mpsc::SyncSender<(Hash, Vec<String>)>,
+	std::sync::mpsc::SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>,
 	Arc<DirectRpcBroadcaster<DirectRpcClientFactory>>,
 )
 where
 	Registry: RpcConnectionRegistry<Hash = Hash> + 'static,
 	ResponseChannelType: ResponseChannel<Registry::Connection> + 'static,
 {
-	let (sender, receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
+	let (sender, receiver) =
+		std::sync::mpsc::sync_channel::<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>(1000);
 
 	let peers = vec![];
 
@@ -207,7 +211,13 @@ where
 
 	std::thread::spawn(move || {
 		for received in receiver {
-			rpc_broadcaster.broadcast(received.0, received.1);
+			if let Some(received) = received.0 {
+				rpc_broadcaster.broadcast(received.0, RequestParams::Rsa(received.1))
+			}
+
+			if let Some(received) = received.1 {
+				rpc_broadcaster.broadcast(received.0, RequestParams::Aes(received.1))
+			}
 		}
 	});
 
@@ -250,7 +260,7 @@ where
 pub mod tests {
 	use crate::{DirectRpcBroadcaster, PeerUpdater};
 	use alloc::sync::Arc;
-	use itc_direct_rpc_client::{Response, RpcClient, RpcClientFactory};
+	use itc_direct_rpc_client::{RequestParams, Response, RpcClient, RpcClientFactory};
 	use itc_direct_rpc_server::{
 		mocks::response_channel_mock::ResponseChannelMock,
 		rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
@@ -274,7 +284,7 @@ pub mod tests {
 		fn send(
 			&mut self,
 			_request_id: String,
-			_params: Vec<String>,
+			_params: RequestParams,
 		) -> Result<(), Box<dyn Error>> {
 			self.sent_requests = self.sent_requests + 1;
 			Ok(())
@@ -333,8 +343,8 @@ pub mod tests {
 			DirectRpcBroadcaster::new(&vec!["localhost", "localhost2"], factory, rpc_responder);
 
 		//when
-		broadcaster.broadcast(Hash::random(), vec![]);
-		broadcaster.broadcast(Hash::random(), vec![]);
+		broadcaster.broadcast(Hash::random(), RequestParams::Aes(vec![]));
+		broadcaster.broadcast(Hash::random(), RequestParams::Aes(vec![]));
 
 		//then
 		let peers = broadcaster.peers.lock().unwrap();

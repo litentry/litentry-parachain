@@ -23,6 +23,7 @@ use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
 };
+use itc_peer_top_broadcaster::MaybeRequestIdWithParams;
 use itc_tls_websocket_server::{ConnectionToken, WebSocketMessageHandler};
 use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 use itp_sgx_crypto::get_rsa3072_repository;
@@ -33,6 +34,9 @@ use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use its_sidechain::rpc_handler::{
+	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
+};
 use litentry_primitives::{Address32, Identity};
 use std::{
 	string::{String, ToString},
@@ -54,7 +58,8 @@ pub fn get_state_request_works() {
 	let getter_executor =
 		Arc::new(GetterExecutor::<_, GetStateMock<TestState>>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
-	let (sender, _receiver) = std::sync::mpsc::sync_channel::<(Hash, Vec<String>)>(1000);
+	let (sender, _receiver) =
+		std::sync::mpsc::sync_channel::<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>(1000);
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
