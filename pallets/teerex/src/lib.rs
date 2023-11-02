@@ -807,7 +807,7 @@ impl<T: Config> Pallet<T> {
 		let leaf_cert_der = webpki::types::CertificateDer::from(certs[0].as_slice());
 		let leaf_cert = webpki::EndEntityCert::try_from(&leaf_cert_der)
 			.map_err(|_| "Failed to parse leaf certificate")?;
-		let _ = verify_certificate_chain(&leaf_cert, &intermediate_slices, verification_time)?;
+		verify_certificate_chain(&leaf_cert, &intermediate_slices, verification_time)?;
 		let enclave_identity =
 			deserialize_enclave_identity(&enclave_identity, &signature, &leaf_cert)?;
 
@@ -831,7 +831,7 @@ impl<T: Config> Pallet<T> {
 		let leaf_cert_der = webpki::types::CertificateDer::from(certs[0].as_slice());
 		let leaf_cert = webpki::EndEntityCert::try_from(&leaf_cert_der)
 			.map_err(|_| "Failed to parse leaf certificate")?;
-		let _ = verify_certificate_chain(&leaf_cert, &intermediate_slices, verification_time)?;
+		verify_certificate_chain(&leaf_cert, &intermediate_slices, verification_time)?;
 		let tcb_info = deserialize_tcb_info(&tcb_info, &signature, &leaf_cert)?;
 		if tcb_info.is_valid(verification_time.try_into().unwrap()) {
 			Ok(tcb_info.to_chain_tcb_info())

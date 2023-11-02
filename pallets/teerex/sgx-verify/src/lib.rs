@@ -352,10 +352,10 @@ pub struct SgxReport {
 
 type SignatureAlgorithms = &'static [&'static dyn webpki::types::SignatureVerificationAlgorithm];
 static SUPPORTED_SIG_ALGS: SignatureAlgorithms = &[
-	webpki::RSA_PKCS1_2048_8192_SHA256,
-	webpki::RSA_PKCS1_2048_8192_SHA384,
-	webpki::RSA_PKCS1_2048_8192_SHA512,
-	webpki::RSA_PKCS1_3072_8192_SHA384,
+	webpki::ring::RSA_PKCS1_2048_8192_SHA256,
+	webpki::ring::RSA_PKCS1_2048_8192_SHA384,
+	webpki::ring::RSA_PKCS1_2048_8192_SHA512,
+	webpki::ring::RSA_PKCS1_3072_8192_SHA384,
 ];
 
 //pub const IAS_REPORT_CA: &[u8] = include_bytes!("../AttestationReportSigningCACert.pem");
@@ -458,7 +458,7 @@ pub fn deserialize_enclave_identity(
 	certificate: &webpki::EndEntityCert,
 ) -> Result<EnclaveIdentity, &'static str> {
 	let signature = encode_as_der(signature)?;
-	verify_signature(certificate, data, &signature, webpki::ECDSA_P256_SHA256)?;
+	verify_signature(certificate, data, &signature, webpki::ring::ECDSA_P256_SHA256)?;
 	serde_json::from_slice(data).map_err(|_| "Deserialization failed")
 }
 
@@ -471,7 +471,7 @@ pub fn deserialize_tcb_info(
 	certificate: &webpki::EndEntityCert,
 ) -> Result<TcbInfo, &'static str> {
 	let signature = encode_as_der(signature)?;
-	verify_signature(certificate, data, &signature, webpki::ECDSA_P256_SHA256)?;
+	verify_signature(certificate, data, &signature, webpki::ring::ECDSA_P256_SHA256)?;
 	serde_json::from_slice(data).map_err(|_| "Deserialization failed")
 }
 
@@ -498,7 +498,7 @@ pub fn verify_certificate_chain<'a>(
 ) -> Result<(), &'static str> {
 	let time =
 		webpki::types::UnixTime::since_unix_epoch(Duration::from_secs(verification_time / 1000));
-	let sig_algs = &[webpki::ECDSA_P256_SHA256];
+	let sig_algs = &[webpki::ring::ECDSA_P256_SHA256];
 	leaf_cert
 		.verify_for_usage(
 			sig_algs,
@@ -562,8 +562,7 @@ pub fn verify_dcap_quote(
 	let leaf_cert_der = webpki::types::CertificateDer::from(certs[0].as_slice());
 	let leaf_cert = webpki::EndEntityCert::try_from(&leaf_cert_der)
 		.map_err(|_| "Failed to parse leaf certificate")?;
-	let _ =
-		verify_certificate_chain(&leaf_cert, &intermediate_certificate_slices, verification_time)?;
+	verify_certificate_chain(&leaf_cert, &intermediate_certificate_slices, verification_time)?;
 
 	let (fmspc, tcb_info) = extract_tcb_info(&certs[0])?;
 
@@ -619,7 +618,12 @@ pub fn verify_dcap_quote(
 
 	// Verify that the QE report was signed by Intel. This establishes trust into the QE report.
 	let asn1_signature = encode_as_der(&quote.quote_signature_data.qe_report_signature)?;
-	verify_signature(&leaf_cert, qe_report_slice, &asn1_signature, webpki::ECDSA_P256_SHA256)?;
+	verify_signature(
+		&leaf_cert,
+		qe_report_slice,
+		&asn1_signature,
+		webpki::ring::ECDSA_P256_SHA256,
+	)?;
 
 	ensure!(dcap_quote_clone.is_empty(), "There should be no bytes left over after decoding");
 	let report = SgxReport {
@@ -650,7 +654,7 @@ pub fn verify_ias_report(cert_der: &[u8]) -> Result<SgxReport, &'static str> {
 		&sig_cert,
 		netscape.attestation_raw,
 		&netscape.sig,
-		webpki::RSA_PKCS1_2048_8192_SHA256,
+		webpki::ring::RSA_PKCS1_2048_8192_SHA256,
 	)?;
 
 	// FIXME: now hardcoded. but certificate renewal would have to be done manually anyway...
