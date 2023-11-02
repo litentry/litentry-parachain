@@ -48,6 +48,7 @@ std = [
     "codec/std",
     "log/std",
     "scale-info/std",
+    "webpki/std",
     # local
     "sgx-verify/std",
     "teerex-primitives/std",
