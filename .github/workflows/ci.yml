@@ -167,25 +167,6 @@ jobs:
         run: |
           cargo fmt --all -- --check
 
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
-
-      - name: Tee-worker client-api install npm deps
-        working-directory: ./tee-worker/client-api
-        run: pnpm install
-
-      - name: Tee-worker client-api build
-        working-directory: ./tee-worker/client-api
-        run: pnpm run build
-
-      - name: Tee-worker ts-tests install npm deps
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm install
-
-      - name: Tee-worker check ts code format
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm run check-format
-
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
@@ -710,6 +691,15 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
+
+      # Types are only generated in the previous step, so the format of ts-tests can only be checked here.
+      - name: Tee-worker ts-tests install npm deps
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm install
+
+      - name: Tee-worker check ts code format
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm run check-format
       
       - name: Zip client-api
         working-directory: ./tee-worker
