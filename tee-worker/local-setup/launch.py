@@ -139,8 +139,8 @@ def generate_env_local():
 
     with open(env_local_example_file, "r") as f:
         data = f.read()
-        data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
-        data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
+        data = data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
+        data = data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
 
     with open(env_local_file, "w") as f:
         f.write(data)
