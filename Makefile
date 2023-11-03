@@ -194,9 +194,9 @@ fmt-cargo:
 
 .PHONY: fmt-taplo ## taplo fmt
 fmt-taplo:
-	@taplo fmt
-	@cd tee-worker && taplo fmt
-	@cd tee-worker/enclave-runtime && taplo fmt
+	@RUST_LOG=error taplo fmt
+	@cd tee-worker && RUST_LOG=error taplo fmt
+	@cd tee-worker/enclave-runtime && RUST_LOG=error taplo fmt
 
 .PHONY: fmt-ts ## ts fmt
 fmt-ts:
