@@ -5,10 +5,26 @@ set -e
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
-files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.rs$|Cargo.toml$") || true)
+files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.rs$") || true)
 if [ ! -z "$files" ]; then
   echo "[cargo fmt] and [git add] the following files:"
   echo "$files"
-  make fmt
+  make fmt-cargo
+  git add $(echo "$files" | paste -s -d " " -)
+fi
+
+files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "Cargo.toml$") || true)
+if [ ! -z "$files" ]; then
+  echo "[taplo fmt] and [git add] the following files:"
+  echo "$files"
+  make fmt-taplo
+  git add $(echo "$files" | paste -s -d " " -)
+fi
+
+files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.ts$") || true)
+if [ ! -z "$files" ]; then
+  echo "[ts fmt] and [git add] the following files:"
+  echo "$files"
+  make fmt-ts
   git add $(echo "$files" | paste -s -d " " -)
 fi
