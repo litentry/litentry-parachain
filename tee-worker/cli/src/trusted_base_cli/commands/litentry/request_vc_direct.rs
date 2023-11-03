@@ -38,15 +38,15 @@ use sp_core::Pair;
 // usage example (you can always use --help on subcommands to see more details)
 //
 // a8:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
 // oneblock VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
 //
 // achainable VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
 
 // fn to_para_str(s: &str) -> ParameterString {

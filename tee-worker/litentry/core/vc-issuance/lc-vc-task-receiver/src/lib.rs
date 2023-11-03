@@ -38,7 +38,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::{init_vc_task_sender_storage, RpcError, VCRequest, VCResponse};
+use lc_vc_task_sender::{init_vc_task_sender_storage, ErrorCode, RpcError, VCRequest, VCResponse};
 use litentry_primitives::{IdentityNetworkTuple, VCMPError};
 use std::{
 	string::{String, ToString},
@@ -109,9 +109,7 @@ pub fn start_response_handler<K, A, S, H, O, Z, N>(
 		let vc_handler = vc_callback_handler.clone();
 		let (vc_response, sender) = response_receiver.recv().unwrap();
 		if let Err(e) = vc_response.clone() {
-			if let Err(err) = sender.send(Err(RpcError::invalid_params(format!("{:?}", e)))) {
-				log::warn!("Unable to send message to the RPC Handler: {:?}", err);
-			}
+			send_rpc_error(format!("Failed to generate credential: {:?}", e), sender);
 		} else {
 			vc_handler.request_vc_callback(vc_response.clone().unwrap(), sender);
 		}
@@ -221,7 +219,9 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 }
 
 pub fn send_rpc_error(message: String, sender: oneshot::Sender<Result<Vec<u8>, RpcError>>) {
-	if let Err(e) = sender.send(Err(RpcError::invalid_params(message))) {
+	let mut error = RpcError::new(ErrorCode::InternalError);
+	error.message = message;
+	if let Err(e) = sender.send(Err(error)) {
 		log::warn!("Failed to send messasge to channel: {:?}", e);
 	}
 }

@@ -39,8 +39,12 @@ use futures::channel::oneshot;
 use futures_sgx::channel::oneshot;
 
 #[cfg(feature = "sgx")]
+pub use jsonrpc_core_sgx::types::error::ErrorCode;
+#[cfg(feature = "sgx")]
 pub use jsonrpc_core_sgx::Error as RpcError;
 
+#[cfg(feature = "std")]
+pub use jsonrpc_core::types::error::ErrorCode;
 #[cfg(feature = "std")]
 pub use jsonrpc_core::Error as RpcError;
 
