@@ -3,7 +3,11 @@ name: Release Ts API Package
 
 on:
   workflow_dispatch:
-
+      inputs:
+        tag:
+          description: 'Publish tag'
+          required: true
+          default: 'latest'
 env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
@@ -14,12 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set env variables
+        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.tag }}" >> "$GITHUB_ENV"
+
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
-          docker pull litentry/litentry-worker:latest
-          docker pull litentry/litentry-cli:latest
-          docker pull litentry/litentry-parachain:latest
+          docker pull litentry/litentry-worker:${{ inputs.tag }}
+          docker pull litentry/litentry-cli:${{ inputs.tag }}
+          docker pull litentry/litentry-parachain:${{ inputs.tag }}
 
       - run: docker images --all
 
@@ -56,7 +63,6 @@ jobs:
           npm config set @litentry:registry https://npm.pkg.github.com
 
       - name: Build and publish parachain and sidechain API
-        if: github.ref_name == 'dev' || github.ref_name == 'staging'
         run: |
           cd tee-worker/client-api/parachain-api
 
