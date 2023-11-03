@@ -189,10 +189,21 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 				})
 				.collect();
 
+			let signer = match signer.to_account_id() {
+				Some(s) => s,
+				None => {
+					send_rpc_error(
+						"Invalid signer account, failed to convert".to_string(),
+						req.sender,
+					);
+					return
+				},
+			};
+
 			// TODO: Understand this parameters properly and avoid the unwrap here
 			let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
 				shard: req.shard,
-				signer: signer.to_account_id().unwrap(),
+				signer,
 				enclave_account: enclave_signer_account(),
 				who: who.clone(),
 				assertion: assertion.clone(),

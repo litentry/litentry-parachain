@@ -1,7 +1,10 @@
 use crate::send_rpc_error;
 use codec::Encode;
 use ita_sgx_runtime::Hash;
-use ita_stf::{aes_encrypt_default, IdentityManagement, OpaqueCall, VCMPCallIndexes, H256};
+use ita_stf::{
+	aes_encrypt_default, ConvertAccountId, IdentityManagement, OpaqueCall,
+	SgxParentchainTypeConverter, VCMPCallIndexes, H256,
+};
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::EnclaveOnChainOCallApi;
@@ -86,9 +89,18 @@ where
 				.unwrap()
 				.unwrap();
 			let result = aes_encrypt_default(&key, &response.vc_payload);
+			let account = SgxParentchainTypeConverter::convert(
+				match response.assertion_request.who.to_account_id() {
+					Some(s) => s,
+					None => {
+						send_rpc_error("Failed to convert account".to_string(), sender);
+						return
+					},
+				},
+			);
 			let call = OpaqueCall::from_tuple(&(
 				call_index,
-				response.assertion_request.who.to_account_id().unwrap(),
+				account,
 				response.assertion_request.assertion,
 				response.vc_index,
 				response.vc_hash,
