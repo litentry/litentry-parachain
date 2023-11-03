@@ -41,7 +41,7 @@ use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::{init_vc_task_sender_storage, RpcError, VCRequest, VCResponse};
 use litentry_primitives::{IdentityNetworkTuple, VCMPError};
 use std::{
-	string::String,
+	string::{String, ToString},
 	sync::{
 		mpsc::{channel, Receiver, Sender},
 		Arc,
@@ -107,18 +107,13 @@ pub fn start_response_handler<K, A, S, H, O, Z, N>(
 {
 	std::thread::spawn(move || loop {
 		let vc_handler = vc_callback_handler.clone();
-		// TODO: Error handling here
 		let (vc_response, sender) = response_receiver.recv().unwrap();
 		if let Err(e) = vc_response.clone() {
 			if let Err(err) = sender.send(Err(RpcError::invalid_params(format!("{:?}", e)))) {
 				log::warn!("Unable to send message to the RPC Handler: {:?}", err);
 			}
 		} else {
-			log::error!("Received VC Request and we succesfully compiled it");
 			vc_handler.request_vc_callback(vc_response.clone().unwrap(), sender);
-			// if let Err(err) = sender.send(Ok(vc_response.unwrap().vc_payload)) {
-			// 	log::warn!("Unable to send message to the RPC Handler: {:?}", err);
-			// }
 		}
 	});
 }
@@ -165,7 +160,16 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 	};
 
 	if let TrustedCall::request_vc(signer, who, assertion, _hash) = trusted_call.call.clone() {
-		let (mut state, _) = context.state_handler.load_cloned(&req.shard).unwrap();
+		let (mut state, _) = match context.state_handler.load_cloned(&req.shard) {
+			Ok(s) => s,
+			Err(e) => {
+				send_rpc_error(
+					format!("Received error while trying to obtain sidechain state: {:?}", e),
+					req.sender,
+				);
+				return
+			},
+		};
 		state.execute_with(|| {
 			let key = UserShieldingKeys::<Runtime>::contains_key(&who);
 			if !key {
@@ -176,7 +180,6 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 				return
 			}
 			let id_graph = IMT::get_id_graph(&who, usize::MAX);
-			log::error!("Result of IMT Get Id Graph: {:?}", id_graph);
 			let assertion_networks = assertion.clone().get_supported_web3networks();
 			let identities: Vec<IdentityNetworkTuple> = id_graph
 				.into_iter()
@@ -210,7 +213,10 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 			}
 		});
 	} else {
-		// Anything other request_vc should be rejected
+		send_rpc_error(
+			"Invalid Trusted Operation send to VC Request handler".to_string(),
+			req.sender,
+		);
 	}
 }
 
