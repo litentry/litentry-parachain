@@ -662,14 +662,67 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-        
+    
+  update-client-api:
+    runs-on: ubuntu-latest
+    needs:
+      - set-condition
+      - parachain-build-dev
+      - tee-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull polkadot image
+        run: |
+          docker pull parity/polkadot
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: litentry-parachain-dev
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: litentry-tee
+
+      - name: Load docker image
+        run: |
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-tee.tar.gz
+          docker images
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Generate parachain artefacts
+        run: |
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+          ls -l docker/generated-rococo/
+          ls -l tee-worker/docker/litentry/
+          shasum tee-worker/docker/litentry/*.json
+
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
+          
+      - name: Update metadata and generate types
+        timeout-minutes: 10
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
+
+      - name: Stop docker containers
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
+      
   tee-test:
     runs-on: ubuntu-latest
     needs:
       - set-condition
       - parachain-build-dev
       - tee-build
-
+      - update-client-api
     strategy:
       fail-fast: false
       matrix:
@@ -724,12 +777,6 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-
-      - name: Update metadata and generate types
-        timeout-minutes: 10
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
 
       - name: Integration Test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
