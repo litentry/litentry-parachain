@@ -30,7 +30,7 @@ use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
 	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	Identity, OneBlockCourseType, ParameterString, Web3Network,
+	Identity, OneBlockCourseType, Web3Network,
 };
 use log::*;
 use sp_core::Pair;

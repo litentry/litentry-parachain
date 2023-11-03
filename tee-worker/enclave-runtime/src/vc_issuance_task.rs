@@ -18,7 +18,7 @@ use crate::utils::DecodeRaw;
 use itp_component_container::ComponentGetter;
 use itp_sgx_crypto::key_repository::AccessKey;
 use lc_data_providers::{DataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG};
-use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
+use lc_stf_task_receiver::StfTaskContext;
 use lc_vc_task_receiver::run_vc_handler_runner;
 use log::*;
 use sgx_types::sgx_status_t;
@@ -27,8 +27,7 @@ use std::sync::Arc;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		EnclaveNodeMetadataRepository, EnclaveStfEnclaveSigner,
-		GLOBAL_FULL_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
+		EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},

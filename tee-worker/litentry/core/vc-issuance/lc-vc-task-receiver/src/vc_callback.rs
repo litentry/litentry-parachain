@@ -1,4 +1,4 @@
-use crate::{send_rpc_error, std::string::ToString};
+use crate::send_rpc_error;
 use codec::Encode;
 use ita_sgx_runtime::Hash;
 use ita_stf::{aes_encrypt_default, IdentityManagement, OpaqueCall, VCMPCallIndexes, H256};
@@ -12,7 +12,7 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_vc_task_sender::{RpcError, VCResponse};
-use std::{sync::Arc, vec::Vec};
+use std::{string::ToString, sync::Arc, vec::Vec};
 
 #[cfg(feature = "sgx")]
 use futures_sgx::channel::oneshot;

@@ -55,6 +55,11 @@ use futures_sgx::channel::oneshot;
 #[cfg(feature = "sgx")]
 use sgx_tstd::format;
 
+pub type VCMPResponseSender =
+	Sender<(Result<VCResponse, VCMPError>, oneshot::Sender<Result<Vec<u8>, RpcError>>)>;
+pub type VCMPResponseReceiver =
+	Receiver<(Result<VCResponse, VCMPError>, oneshot::Sender<Result<Vec<u8>, RpcError>>)>;
+
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
@@ -88,10 +93,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 // TODO: Create a function that sends the error to via the one-shot channel
 pub fn start_response_handler<K, A, S, H, O, Z, N>(
 	vc_callback_handler: Arc<VCCallbackHandler<K, A, S, H, O, Z, N>>,
-	response_receiver: Receiver<(
-		Result<VCResponse, VCMPError>,
-		oneshot::Sender<Result<Vec<u8>, RpcError>>,
-	)>,
+	response_receiver: VCMPResponseReceiver,
 ) where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
 	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
@@ -124,7 +126,7 @@ pub fn start_response_handler<K, A, S, H, O, Z, N>(
 pub fn handle_jsonrpc_request<K, A, S, H, O>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 	req: VCRequest,
-	sender: Sender<(Result<VCResponse, VCMPError>, oneshot::Sender<Result<Vec<u8>, RpcError>>)>,
+	sender: VCMPResponseSender,
 ) where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
 	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,

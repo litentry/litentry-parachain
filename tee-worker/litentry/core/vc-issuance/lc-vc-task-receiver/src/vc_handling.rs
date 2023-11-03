@@ -20,9 +20,6 @@ use litentry_primitives::{
 use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc};
 
-#[cfg(feature = "sgx")]
-use futures_sgx::channel::oneshot;
-
 pub(crate) struct VCRequestHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash>,
