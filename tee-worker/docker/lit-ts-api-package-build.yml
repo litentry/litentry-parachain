@@ -17,8 +17,7 @@ services:
         networks:
             - litentry-test-network
         entrypoint:
-            "/usr/local/worker-cli/lit_ts_api_package_build.sh -p 9912 -u ws://litentry-node
-            -V wss://litentry-worker-1 -A 2011 -C /usr/local/bin/litentry-cli 2>&1"
+            "/usr/local/worker-cli/lit_ts_api_package_build.sh"
         restart: "no"
 networks:
     litentry-test-network:
