@@ -710,7 +710,20 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
+      
+      - name: Zip client-api
+        working-directory: ./tee-worker
+        run: |
+         sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
+         tar -zcvf client-api.tar.gz client-api
 
+      - name: Upload client-api as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: client-api
+          path: tee-worker/client-api.tar.gz
+          if-no-files-found: error
+          
       - name: Stop docker containers
         run: |
           cd tee-worker/docker
@@ -756,6 +769,14 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: litentry-tee
+          
+      - uses: actions/download-artifact@v3
+        with:
+          name: client-api
+      
+      - name: Unzip client-api
+        run: |
+          tar -zxf client-api.tar.gz -C tee-worker/
 
       - name: Load docker image
         run: |
@@ -777,7 +798,7 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-
+      
       - name: Integration Test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40
