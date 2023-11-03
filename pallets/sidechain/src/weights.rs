@@ -79,7 +79,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: Sidechain WorkerForShard (r:0 w:1)
 	// Storage: Sidechain LatestSidechainBlockConfirmation (r:0 w:1)
 	fn confirm_imported_sidechain_block() -> Weight {
-		Weight::from_ref_time(34_686_000 as u64)
+		Weight::from_parts(34_686_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -93,7 +93,7 @@ impl WeightInfo for () {
 	// Storage: Sidechain WorkerForShard (r:0 w:1)
 	// Storage: Sidechain LatestSidechainBlockConfirmation (r:0 w:1)
 	fn confirm_imported_sidechain_block() -> Weight {
-		Weight::from_ref_time(34_686_000 as u64)
+		Weight::from_parts(34_686_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}

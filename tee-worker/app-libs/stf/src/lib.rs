@@ -38,15 +38,16 @@ pub use litentry_primitives::{
 
 use codec::{Decode, Encode};
 use derive_more::Display;
-pub use getter::*;
 pub use ita_sgx_runtime::{
 	pallet_imt::UserShieldingKeys, IDGraph, IdentityManagement, Runtime, System,
 };
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use litentry_primitives::{Assertion, ErrorDetail, ErrorString, IMPError, VCMPError};
+use litentry_primitives::ErrorString;
 use std::{format, string::String};
+
+pub use getter::*;
 pub use stf_sgx_primitives::{types::*, Stf};
 pub use trusted_call::*;
 

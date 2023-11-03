@@ -25,18 +25,20 @@ use std::sync::Arc;
 use core_primitives::{AccountId, Balance, Block, Hash, Index as Nonce};
 use fc_rpc::{
 	Eth, EthApiServer, EthBlockDataCacheTask, EthFilter, EthFilterApiServer, EthPubSub,
-	EthPubSubApiServer, Net, NetApiServer, OverrideHandle, Web3, Web3ApiServer,
+	EthPubSubApiServer, Net, NetApiServer, OverrideHandle, TxPool, TxPoolApiServer, Web3,
+	Web3ApiServer,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use moonbeam_rpc_debug::{Debug, DebugServer};
 use moonbeam_rpc_trace::{Trace, TraceServer};
-use moonbeam_rpc_txpool::{TxPool, TxPoolServer};
+use moonbeam_rpc_txpool::{TxPool as MoonbeamTxPool, TxPoolServer};
 use sc_client_api::{AuxStore, Backend, BlockchainEvents, StateBackend, StorageProvider};
 use sc_network::NetworkService;
+use sc_network_sync::SyncingService;
 pub use sc_rpc::{DenyUnsafe, SubscriptionTaskExecutor};
 use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::TransactionPool;
-use sp_api::ProvideRuntimeApi;
+use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{
 	Backend as BlockchainBackend, Error as BlockChainError, HeaderBackend, HeaderMetadata,
@@ -66,7 +68,7 @@ pub mod __ {
 	pub fn open_frontier_backend<C>(
 		client: Arc<C>,
 		config: &sc_service::Configuration,
-	) -> Result<Arc<fc_db::Backend<Block>>, String>
+	) -> Result<Arc<fc_db::kv::Backend<Block>>, String>
 	where
 		C: sp_blockchain::HeaderBackend<Block>,
 	{
@@ -75,14 +77,14 @@ pub mod __ {
 			.as_ref()
 			.map(|base_path| base_path.config_dir(config.chain_spec.id()))
 			.unwrap_or_else(|| {
-				sc_service::BasePath::from_project("", "", "astar")
+				sc_service::BasePath::from_project("", "", "litentry")
 					.config_dir(config.chain_spec.id())
 			});
 		let path = config_dir.join("frontier").join("db");
 
-		Ok(Arc::new(fc_db::Backend::<Block>::new(
+		Ok(Arc::new(fc_db::kv::Backend::<Block>::new(
 			client,
-			&fc_db::DatabaseSettings {
+			&fc_db::kv::DatabaseSettings {
 				source: fc_db::DatabaseSource::RocksDb { path, cache_size: 0 },
 			},
 		)?))
@@ -110,12 +112,14 @@ pub mod __ {
 		pub graph: Arc<Pool<A>>,
 		/// Network service
 		pub network: Arc<NetworkService<Block, Hash>>,
+		/// Chain syncing service
+		pub sync: Arc<SyncingService<Block>>,
 		/// Whether to deny unsafe calls
 		pub deny_unsafe: DenyUnsafe,
 		/// The Node authority flag
 		pub is_authority: bool,
 		/// Frontier Backend.
-		pub frontier_backend: Arc<fc_db::Backend<Block>>,
+		pub frontier_backend: Arc<dyn fc_db::BackendReader<Block> + Send + Sync>,
 		/// EthFilterApi pool.
 		pub filter_pool: FilterPool,
 		/// Maximum fee history cache size.
@@ -156,11 +160,17 @@ pub mod __ {
 	pub fn create_full<C, P, BE, A>(
 		deps: FullDeps<C, P, A>,
 		subscription_task_executor: SubscriptionTaskExecutor,
+		pubsub_notification_sinks: Arc<
+			fc_mapping_sync::EthereumBlockNotificationSinks<
+				fc_mapping_sync::EthereumBlockNotification<Block>,
+			>,
+		>,
 		tracing_config: EvmTracingConfig,
 	) -> Result<RpcExtension, Box<dyn std::error::Error + Send + Sync>>
 	where
 		C: ProvideRuntimeApi<Block>
 			+ HeaderBackend<Block>
+			+ CallApiAt<Block>
 			+ AuxStore
 			+ StorageProvider<Block, BE>
 			+ HeaderMetadata<Block, Error = BlockChainError>
@@ -194,6 +204,7 @@ pub mod __ {
 			pool,
 			graph,
 			network,
+			sync,
 			deny_unsafe,
 			is_authority,
 			frontier_backend,
@@ -225,7 +236,7 @@ pub mod __ {
 					pool.clone(),
 					graph.clone(),
 					no_tx_converter,
-					network.clone(),
+					sync.clone(),
 					Default::default(),
 					overrides.clone(),
 					frontier_backend.clone(),
@@ -235,16 +246,19 @@ pub mod __ {
 					fee_history_limit,
 					// Allow 10x max allowed weight for non-transactional calls
 					10,
+					None,
 				)
 				.into_rpc(),
 			)?;
 
 			let max_past_logs: u32 = 10_000;
 			let max_stored_filters: usize = 500;
+			let tx_pool = TxPool::new(client.clone(), graph.clone());
 			module.merge(
 				EthFilter::new(
 					client.clone(),
 					frontier_backend,
+					tx_pool.clone(),
 					filter_pool,
 					max_stored_filters,
 					max_past_logs,
@@ -253,7 +267,7 @@ pub mod __ {
 				.into_rpc(),
 			)?;
 
-			module.merge(Net::new(client.clone(), network.clone(), true).into_rpc())?;
+			module.merge(Net::new(client.clone(), network, true).into_rpc())?;
 
 			module.merge(Web3::new(client.clone()).into_rpc())?;
 
@@ -261,15 +275,18 @@ pub mod __ {
 				EthPubSub::new(
 					pool,
 					client.clone(),
-					network,
+					sync,
 					subscription_task_executor,
 					overrides,
+					pubsub_notification_sinks,
 				)
 				.into_rpc(),
 			)?;
 
+			module.merge(tx_pool.into_rpc())?;
+
 			if tracing_config.enable_txpool {
-				module.merge(TxPool::new(Arc::clone(&client), graph).into_rpc())?;
+				module.merge(MoonbeamTxPool::new(Arc::clone(&client), graph).into_rpc())?;
 			}
 
 			if let Some(trace_filter_requester) = tracing_config.tracing_requesters.trace {

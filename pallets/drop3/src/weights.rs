@@ -61,14 +61,14 @@ pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: Drop3 Admin (r:1 w:1)
 	fn set_admin() -> Weight {
-		Weight::from_ref_time(25_000_000 as u64)
+		Weight::from_parts(25_000_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	fn approve_reward_pool() -> Weight {
-		Weight::from_ref_time(38_000_000 as u64)
+		Weight::from_parts(38_000_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -77,21 +77,21 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn reject_reward_pool() -> Weight {
-		Weight::from_ref_time(112_000_000 as u64)
+		Weight::from_parts(112_000_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn start_reward_pool() -> Weight {
-		Weight::from_ref_time(40_000_000 as u64)
+		Weight::from_parts(40_000_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn stop_reward_pool() -> Weight {
-		Weight::from_ref_time(41_000_000 as u64)
+		Weight::from_parts(41_000_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -100,7 +100,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn close_reward_pool() -> Weight {
-		Weight::from_ref_time(68_000_000 as u64)
+		Weight::from_parts(68_000_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -109,16 +109,16 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	// Storage: Drop3 RewardPools (r:0 w:1)
 	fn propose_reward_pool(n: u32, ) -> Weight {
-		Weight::from_ref_time(61_962_000 as u64)
+		Weight::from_parts(61_962_000 as u64, 0)
 			// Standard Error: 36_000
-			.saturating_add(Weight::from_ref_time(1_135_000 as u64).saturating_mul(n as u64))
+			.saturating_add(Weight::from_parts(1_135_000 as u64, 0).saturating_mul(n as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(4 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn send_reward() -> Weight {
-		Weight::from_ref_time(84_000_000 as u64)
+		Weight::from_parts(84_000_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(3 as u64))
 	}
@@ -128,14 +128,14 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 impl WeightInfo for () {
 	// Storage: Drop3 Admin (r:1 w:1)
 	fn set_admin() -> Weight {
-		Weight::from_ref_time(25_000_000 as u64)
+		Weight::from_parts(25_000_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 Admin (r:1 w:0)
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	fn approve_reward_pool() -> Weight {
-		Weight::from_ref_time(38_000_000 as u64)
+		Weight::from_parts(38_000_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -144,21 +144,21 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn reject_reward_pool() -> Weight {
-		Weight::from_ref_time(112_000_000 as u64)
+		Weight::from_parts(112_000_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn start_reward_pool() -> Weight {
-		Weight::from_ref_time(40_000_000 as u64)
+		Weight::from_parts(40_000_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: Drop3 Admin (r:1 w:0)
 	fn stop_reward_pool() -> Weight {
-		Weight::from_ref_time(41_000_000 as u64)
+		Weight::from_parts(41_000_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -167,7 +167,7 @@ impl WeightInfo for () {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	fn close_reward_pool() -> Weight {
-		Weight::from_ref_time(68_000_000 as u64)
+		Weight::from_parts(68_000_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}
@@ -176,16 +176,16 @@ impl WeightInfo for () {
 	// Storage: Drop3 RewardPoolOwners (r:0 w:1)
 	// Storage: Drop3 RewardPools (r:0 w:1)
 	fn propose_reward_pool(n: u32, ) -> Weight {
-		Weight::from_ref_time(61_962_000 as u64)
+		Weight::from_parts(61_962_000 as u64, 0)
 			// Standard Error: 36_000
-			.saturating_add(Weight::from_ref_time(1_135_000 as u64).saturating_mul(n as u64))
+			.saturating_add(Weight::from_parts(1_135_000 as u64, 0).saturating_mul(n as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(4 as u64))
 	}
 	// Storage: Drop3 RewardPools (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn send_reward() -> Weight {
-		Weight::from_ref_time(84_000_000 as u64)
+		Weight::from_parts(84_000_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(3 as u64))
 	}

@@ -43,8 +43,8 @@ impl SystemSs58Prefix for NodeMetadata {
 		match &self.node_metadata {
 			None => Err(Error::MetadataNotSet),
 			Some(meta_data) => {
-				let pallet = meta_data.pallets.get(SYSTEM).ok_or(Error::MetadataNotSet)?;
-				let mut raw = pallet.constants.get("SS58Prefix").unwrap().value.as_slice();
+				let pallet = meta_data.pallet_by_name(SYSTEM).ok_or(Error::MetadataNotSet)?;
+				let mut raw = pallet.constant_by_name("SS58Prefix").unwrap().value.as_slice();
 				u16::decode(&mut raw).map_err(|_| Error::InvalidMetadata)
 			},
 		}

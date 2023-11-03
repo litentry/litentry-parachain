@@ -16,9 +16,9 @@ use sp_application_crypto::scale_info::TypeDef;
 use std::format;
 
 /// Usage:
-///    Plain Storage: ./integritee-cli trusted --mrenclave $mrenclave get-storage Parentchain Number
+///    Plain Storage: ./litentry-cli trusted --mrenclave $mrenclave get-storage Parentchain Number
 ///        Output: 123
-///    Map Storage: ./integritee-cli trusted --mrenclave $mrenclave get-storage System Account 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
+///    Map Storage: ./litentry-cli trusted --mrenclave $mrenclave get-storage System Account 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
 ///        Output: { "nonce": 0, "consumers": 0, "providers": 1, "sufficients": 0, "data": { "free": 1000000000000000, "reserved": 1000000000000000, "misc_frozen": 0, "fee_frozen": 0 } }
 #[derive(Parser)]
 pub struct GetStorageCommand {

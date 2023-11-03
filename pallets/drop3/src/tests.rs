@@ -47,7 +47,7 @@ fn set_admin_fails_with_unprivileged_origin() {
 #[test]
 fn propose_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -184,7 +184,7 @@ fn propose_reward_pool_fails_with_insufficient_balance() {
 #[test]
 fn approve_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -201,7 +201,7 @@ fn approve_reward_pool_works() {
 #[test]
 fn approve_reward_pool_fails_with_non_admin() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -220,7 +220,7 @@ fn approve_reward_pool_fails_with_non_admin() {
 #[test]
 fn approve_reward_pool_fails_with_non_existent_pool() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -239,7 +239,7 @@ fn approve_reward_pool_fails_with_non_existent_pool() {
 #[test]
 fn reject_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -249,7 +249,7 @@ fn reject_reward_pool_works() {
 		));
 		assert_ok!(Drop3::reject_reward_pool(RuntimeOrigin::signed(1), 1));
 		assert_eq!(Balances::reserved_balance(3), 0);
-		assert_eq!(Balances::free_balance(3), 80);
+		assert_eq!(Balances::free_balance(3), 10080);
 		assert!(!crate::RewardPools::<Test>::contains_key(1));
 		System::assert_has_event(RuntimeEvent::Drop3(crate::Event::RewardPoolRejected { id: 1 }));
 		System::assert_has_event(RuntimeEvent::Drop3(crate::Event::BalanceSlashed {
@@ -271,7 +271,7 @@ fn reject_reward_pool_works() {
 #[test]
 fn reject_reward_pool_works_with_unexpected_unreserve() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -284,7 +284,7 @@ fn reject_reward_pool_works_with_unexpected_unreserve() {
 		// should be handled gracefully and no error happens
 		assert_ok!(Drop3::reject_reward_pool(RuntimeOrigin::signed(1), 1));
 		assert_eq!(Balances::reserved_balance(3), 0);
-		assert_eq!(Balances::free_balance(3), 90);
+		assert_eq!(Balances::free_balance(3), 10090);
 		assert!(!crate::RewardPools::<Test>::contains_key(1));
 		System::assert_has_event(RuntimeEvent::Drop3(crate::Event::RewardPoolRejected { id: 1 }));
 		// only 10 was slashed
@@ -303,7 +303,7 @@ fn reject_reward_pool_works_with_unexpected_unreserve() {
 #[test]
 fn reject_reward_pool_fails_with_already_approved() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -330,7 +330,7 @@ fn reject_reward_pool_fails_with_already_approved() {
 #[test]
 fn start_stop_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -367,7 +367,7 @@ fn start_stop_reward_pool_works() {
 #[test]
 fn close_reward_pool_works() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
 			b"test".to_vec(),
@@ -379,7 +379,7 @@ fn close_reward_pool_works() {
 		assert_ok!(Drop3::close_reward_pool(RuntimeOrigin::signed(3), 1));
 		assert!(!crate::RewardPools::<Test>::contains_key(1));
 		assert_eq!(Balances::reserved_balance(3), 0);
-		assert_eq!(Balances::free_balance(3), 100);
+		assert_eq!(Balances::free_balance(3), 10100);
 		System::assert_has_event(RuntimeEvent::Drop3(crate::Event::RewardPoolRemoved {
 			id: 1,
 			name: b"test".to_vec(),
@@ -397,7 +397,7 @@ fn close_reward_pool_works() {
 #[test]
 fn send_reward_works() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		let _ = Balances::deposit_creating(&4, 5);
 		let _ = Balances::deposit_creating(&5, 10);
 
@@ -437,7 +437,7 @@ fn send_reward_works() {
 #[test]
 fn send_reward_fails_with_unapproved_pool() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		let _ = Balances::deposit_creating(&4, 5);
 		let _ = Balances::deposit_creating(&5, 10);
 
@@ -458,7 +458,7 @@ fn send_reward_fails_with_unapproved_pool() {
 #[test]
 fn send_reward_fails_with_stopped_pool() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		let _ = Balances::deposit_creating(&4, 5);
 		let _ = Balances::deposit_creating(&5, 10);
 
@@ -480,7 +480,7 @@ fn send_reward_fails_with_stopped_pool() {
 #[test]
 fn send_reward_fails_with_too_early() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		System::set_block_number(1);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
@@ -502,7 +502,7 @@ fn send_reward_fails_with_too_early() {
 #[test]
 fn send_reward_fails_with_too_late() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		System::set_block_number(4);
 		assert_ok!(Drop3::propose_reward_pool(
 			RuntimeOrigin::signed(3),
@@ -524,7 +524,7 @@ fn send_reward_fails_with_too_late() {
 #[test]
 fn send_reward_fails_with_insufficient_reserved_balance() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		let _ = Balances::deposit_creating(&4, 5);
 		let _ = Balances::deposit_creating(&5, 10);
 
@@ -550,7 +550,7 @@ fn send_reward_fails_with_insufficient_reserved_balance() {
 #[test]
 fn send_reward_fails_with_insufficient_remain() {
 	new_test_ext().execute_with(|| {
-		let _ = Balances::deposit_creating(&3, 100);
+		let _ = Balances::deposit_creating(&3, 10100);
 		let _ = Balances::deposit_creating(&4, 5);
 		let _ = Balances::deposit_creating(&5, 10);
 

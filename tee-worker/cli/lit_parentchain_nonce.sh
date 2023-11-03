@@ -37,7 +37,7 @@ echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
 echo ""
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-echo "CLIENT is $CLIENT"
+echo "CLIENT is: $CLIENT"
 
 echo "* Query on-chain enclave registry:"
 WORKERS=$($CLIENT list-workers)

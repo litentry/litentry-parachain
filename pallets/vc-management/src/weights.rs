@@ -70,20 +70,20 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement Delegatee (r:0 w:1)
 	// Proof: VCManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn add_delegatee() -> Weight {
-		Weight::from_ref_time(12_840_000 as u64)
+		Weight::from_parts(12_840_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: VCManagement Delegatee (r:1 w:1)
 	// Proof: VCManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn remove_delegatee() -> Weight {
-		Weight::from_ref_time(20_988_000 as u64)
+		Weight::from_parts(20_988_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: VCMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn request_vc() -> Weight {
-		Weight::from_ref_time(35_640_000 as u64)
+		Weight::from_parts(35_640_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
@@ -91,7 +91,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn disable_vc() -> Weight {
-		Weight::from_ref_time(24_542_000 as u64)
+		Weight::from_parts(24_542_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -100,7 +100,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn revoke_vc() -> Weight {
-		Weight::from_ref_time(53_908_000 as u64)
+		Weight::from_parts(53_908_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -109,20 +109,20 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn vc_issued() -> Weight {
-		Weight::from_ref_time(26_888_000 as u64)
+		Weight::from_parts(26_888_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn some_error() -> Weight {
-		Weight::from_ref_time(20_441_000 as u64)
+		Weight::from_parts(20_441_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: VCManagement Admin (r:1 w:1)
 	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
 	fn set_admin() -> Weight {
-		Weight::from_ref_time(18_220_000 as u64)
+		Weight::from_parts(18_220_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -133,7 +133,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement SchemaRegistry (r:0 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn add_schema() -> Weight {
-		Weight::from_ref_time(50_676_000 as u64)
+		Weight::from_parts(50_676_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
@@ -142,7 +142,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn disable_schema() -> Weight {
-		Weight::from_ref_time(23_276_000 as u64)
+		Weight::from_parts(23_276_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -151,7 +151,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn activate_schema() -> Weight {
-		Weight::from_ref_time(23_211_000 as u64)
+		Weight::from_parts(23_211_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -160,7 +160,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn revoke_schema() -> Weight {
-		Weight::from_ref_time(23_754_000 as u64)
+		Weight::from_parts(23_754_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -169,7 +169,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn add_vc_registry_item() -> Weight {
-		Weight::from_ref_time(22_937_000 as u64)
+		Weight::from_parts(22_937_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -178,7 +178,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn remove_vc_registry_item() -> Weight {
-		Weight::from_ref_time(23_555_000 as u64)
+		Weight::from_parts(23_555_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -187,9 +187,9 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: VCManagement VCRegistry (r:100 w:100)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn clear_vc_registry(x: u32, ) -> Weight {
-		Weight::from_ref_time(22_760_592 as u64)
+		Weight::from_parts(22_760_592 as u64, 0)
 			// Standard Error: 3_714
-			.saturating_add(Weight::from_ref_time(856_025 as u64).saturating_mul(x as u64))
+			.saturating_add(Weight::from_parts(856_025 as u64, 0).saturating_mul(x as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
 			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(x as u64)))
@@ -201,20 +201,20 @@ impl WeightInfo for () {
 	// Storage: VCManagement Delegatee (r:0 w:1)
 	// Proof: VCManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn add_delegatee() -> Weight {
-		Weight::from_ref_time(12_840_000 as u64)
+		Weight::from_parts(12_840_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: VCManagement Delegatee (r:1 w:1)
 	// Proof: VCManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn remove_delegatee() -> Weight {
-		Weight::from_ref_time(20_988_000 as u64)
+		Weight::from_parts(20_988_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: VCMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn request_vc() -> Weight {
-		Weight::from_ref_time(35_640_000 as u64)
+		Weight::from_parts(35_640_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
@@ -222,7 +222,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn disable_vc() -> Weight {
-		Weight::from_ref_time(24_542_000 as u64)
+		Weight::from_parts(24_542_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -231,7 +231,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn revoke_vc() -> Weight {
-		Weight::from_ref_time(53_908_000 as u64)
+		Weight::from_parts(53_908_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -240,20 +240,20 @@ impl WeightInfo for () {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn vc_issued() -> Weight {
-		Weight::from_ref_time(26_888_000 as u64)
+		Weight::from_parts(26_888_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn some_error() -> Weight {
-		Weight::from_ref_time(20_441_000 as u64)
+		Weight::from_parts(20_441_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: VCManagement Admin (r:1 w:1)
 	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
 	fn set_admin() -> Weight {
-		Weight::from_ref_time(18_220_000 as u64)
+		Weight::from_parts(18_220_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -264,7 +264,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement SchemaRegistry (r:0 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn add_schema() -> Weight {
-		Weight::from_ref_time(50_676_000 as u64)
+		Weight::from_parts(50_676_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
@@ -273,7 +273,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn disable_schema() -> Weight {
-		Weight::from_ref_time(23_276_000 as u64)
+		Weight::from_parts(23_276_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -282,7 +282,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn activate_schema() -> Weight {
-		Weight::from_ref_time(23_211_000 as u64)
+		Weight::from_parts(23_211_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -291,7 +291,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement SchemaRegistry (r:1 w:1)
 	// Proof: VCManagement SchemaRegistry (max_values: None, max_size: Some(2621), added: 5096, mode: MaxEncodedLen)
 	fn revoke_schema() -> Weight {
-		Weight::from_ref_time(23_754_000 as u64)
+		Weight::from_parts(23_754_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -300,7 +300,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn add_vc_registry_item() -> Weight {
-		Weight::from_ref_time(22_937_000 as u64)
+		Weight::from_parts(22_937_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -309,7 +309,7 @@ impl WeightInfo for () {
 	// Storage: VCManagement VCRegistry (r:1 w:1)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn remove_vc_registry_item() -> Weight {
-		Weight::from_ref_time(23_555_000 as u64)
+		Weight::from_parts(23_555_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -318,9 +318,9 @@ impl WeightInfo for () {
 	// Storage: VCManagement VCRegistry (r:100 w:100)
 	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
 	fn clear_vc_registry(x: u32, ) -> Weight {
-		Weight::from_ref_time(22_760_592 as u64)
+		Weight::from_parts(22_760_592 as u64, 0)
 			// Standard Error: 3_714
-			.saturating_add(Weight::from_ref_time(856_025 as u64).saturating_mul(x as u64))
+			.saturating_add(Weight::from_parts(856_025 as u64, 0).saturating_mul(x as u64))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
 			.saturating_add(RocksDbWeight::get().writes((1 as u64).saturating_mul(x as u64)))

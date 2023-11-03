@@ -33,6 +33,7 @@ import type {
     PalletBalancesCall,
     PalletBalancesError,
     PalletBalancesEvent,
+    PalletBalancesIdAmount,
     PalletBalancesReasons,
     PalletBalancesReserveData,
     PalletIdentityManagementTeeCall,
@@ -100,6 +101,7 @@ declare module "@polkadot/types/types/registry" {
         PalletBalancesCall: PalletBalancesCall;
         PalletBalancesError: PalletBalancesError;
         PalletBalancesEvent: PalletBalancesEvent;
+        PalletBalancesIdAmount: PalletBalancesIdAmount;
         PalletBalancesReasons: PalletBalancesReasons;
         PalletBalancesReserveData: PalletBalancesReserveData;
         PalletIdentityManagementTeeCall: PalletIdentityManagementTeeCall;
