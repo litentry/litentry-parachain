@@ -183,20 +183,24 @@ update-ts-dep:
 
 # format
 
-.PHONY: fmtcheck ## cargo fmt check
-fmtcheck:
-	cargo fmt --all -- --check
+.PHONY: fmt ## (cargo, taplo, ts) fmt
+fmt: fmt-cargo fmt-taplo fmt-ts
 
-.PHONY: taplocheck ## taplo fmt check
-taplocheck:
-	taplo fmt --check
+.PHONY: fmt-cargo ## cargo fmt
+fmt-cargo:
+	cargo fmt --all
+	cd tee-worker && cargo fmt --all
+	cd tee-worker/enclave-runtime && cargo fmt --all
 
-.PHONY: fmt ## cargo fmt all && taplo fmt all
-fmt:
-	cargo fmt --all && taplo fmt
+.PHONY: fmt-taplo ## taplo fmt
+fmt-taplo:
+	taplo fmt
+	cd tee-worker && taplo fmt
+	cd tee-worker/enclave-runtime && taplo fmt
+
+.PHONY: fmt-ts ## ts fmt
+fmt-ts:
 	cd ts-tests && pnpm run format
-	cd tee-worker && cargo fmt --all && taplo fmt
-	cd tee-worker/enclave-runtime && cargo fmt --all && taplo fmt
 	cd tee-worker/ts-tests && pnpm run format
 
 .PHONY: githooks ## install the githooks
