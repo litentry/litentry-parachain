@@ -62,7 +62,7 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
           npm config set @litentry:registry https://npm.pkg.github.com
 
-      - name: Build and publish parachain and sidechain API
+      - name: Publish parachain API and sidechain API
         run: |
           cd tee-worker/client-api/parachain-api
 
@@ -74,7 +74,7 @@ jobs:
             exit 1
           fi
 
-          npm publish --tag ${{ github.ref_name }}
+          npm publish --tag ${{ inputs.tag }}
 
           echo "------------------------parachain API published------------------------"
 
@@ -88,7 +88,7 @@ jobs:
             exit 1
           fi
 
-          npm publish --tag ${{ github.ref_name }}
+          npm publish --tag ${{ inputs.tag }}
 
           echo "------------------------sidechain API published------------------------"
 
