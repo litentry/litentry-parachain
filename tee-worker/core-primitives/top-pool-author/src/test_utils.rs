@@ -23,6 +23,7 @@ use codec::Encode;
 use ita_stf::TrustedOperation;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
+use itp_types::RsaRequest;
 use jsonrpc_core::futures::executor;
 use sp_core::H256;
 use std::fmt::Debug;
@@ -40,6 +41,6 @@ where
 	S::Error: Debug,
 {
 	let top_encrypted = shielding_key.encrypt(&top.encode()).unwrap();
-	let submit_future = async { author.watch_top(top_encrypted, shard).await };
+	let submit_future = async { author.watch_top(RsaRequest::new(shard, top_encrypted)).await };
 	executor::block_on(submit_future)
 }

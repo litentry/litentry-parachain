@@ -16,6 +16,8 @@ itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 its-primitives = { path = "../primitives", default-features = false }
 
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+
 # sgx enabled external libraries
 futures_sgx = { package = "futures", git = "https://github.com/mesalock-linux/futures-rs-sgx", optional = true }
 jsonrpc-core_sgx = { package = "jsonrpc-core", git = "https://github.com/scs/jsonrpc", branch = "no_std_v18", default-features = false, optional = true }
@@ -30,7 +32,7 @@ rust-base58 = { package = "rust-base58", version = "0.0.4", optional = true }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
 log = { version = "0.4", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 [features]
 default = ["std"]
@@ -41,6 +43,7 @@ std = [
     "itp-types/std",
     "itp-utils/std",
     "its-primitives/std",
+    "litentry-primitives/std",
     "jsonrpc-core",
     "log/std",
     "rust-base58",

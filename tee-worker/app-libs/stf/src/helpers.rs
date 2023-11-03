@@ -97,7 +97,7 @@ pub fn enclave_signer_account<AccountId: Decode>() -> AccountId {
 }
 
 /// Ensures an account is a registered enclave account.
-pub fn ensure_enclave_signer<AccountId: Encode + Decode + PartialEq>(
+pub fn ensure_enclave_signer_account<AccountId: Encode + Decode + PartialEq>(
 	account: &AccountId,
 ) -> StfResult<()> {
 	let expected_enclave_account: AccountId = enclave_signer_account();

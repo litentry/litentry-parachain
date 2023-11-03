@@ -48,6 +48,7 @@ pub mod a8;
 pub mod achainable;
 pub mod holding_time;
 pub mod oneblock;
+pub mod sora;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;

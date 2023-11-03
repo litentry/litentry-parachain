@@ -21,34 +21,35 @@ use crate::{
 	trusted_cli::TrustedCli,
 	Cli,
 };
-use base58::FromBase58;
+use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
 use ita_stf::{Getter, TrustedOperation};
-use itc_rpc_client::direct_client::DirectApi;
-use itp_node_api::api_client::{ParentchainApi, ParentchainExtrinsicSigner, TEEREX};
+use itc_rpc_client::direct_client::{DirectApi, DirectClient};
+use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
-use itp_types::{BlockNumber, DirectRequestStatus, TrustedOperationStatus};
+use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::ParentchainHash as Hash;
 use log::*;
 use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;
-use sp_core::{sr25519 as sr25519_core, H256};
+use sp_core::H256;
 use std::{
 	result::Result as StdResult,
 	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
 use substrate_api_client::{
-	compose_extrinsic, GetHeader, SubmitAndWatch, SubscribeEvents, XtStatus,
+	ac_compose_macros::compose_extrinsic, GetChainInfo, SubmitAndWatch, SubscribeEvents, XtStatus,
 };
-use teerex_primitives::Request;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub(crate) enum TrustedOperationError {
+	#[error("extrinsic L1 error: {msg:?}")]
+	Extrinsic { msg: String },
 	#[error("default error: {msg:?}")]
 	Default { msg: String },
 }
@@ -61,7 +62,7 @@ pub(crate) fn perform_trusted_operation(
 	top: &TrustedOperation,
 ) -> TrustedOpResult {
 	match top {
-		TrustedOperation::indirect_call(_) => send_request(cli, trusted_args, top),
+		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
 		TrustedOperation::direct_call(_) => send_direct_request(cli, trusted_args, top),
 		TrustedOperation::get(getter) => execute_getter_from_cli_args(cli, trusted_args, getter),
 	}
@@ -85,10 +86,51 @@ pub(crate) fn execute_getter_from_cli_args(
 	getter: &Getter,
 ) -> TrustedOpResult {
 	let shard = read_shard(trusted_args, cli).unwrap();
-	Ok(get_worker_api_direct(cli).get_state(shard, getter))
+	let direct_api = get_worker_api_direct(cli);
+	get_state(&direct_api, shard, getter)
 }
 
-fn send_request(
+pub(crate) fn get_state(
+	direct_api: &DirectClient,
+	shard: ShardIdentifier,
+	getter: &Getter,
+) -> TrustedOpResult {
+	// Compose jsonrpc call.
+	let data = RsaRequest::new(shard, getter.encode());
+	let rpc_method = "state_executeGetter".to_owned();
+	let jsonrpc_call: String =
+		RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
+
+	let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
+
+	// Decode RPC response.
+	let rpc_response: RpcResponse = serde_json::from_str(&rpc_response_str)
+		.map_err(|err| TrustedOperationError::Default { msg: err.to_string() })?;
+	let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result)
+		// Replace with `inspect_err` once it's stable.
+		.map_err(|err| {
+			error!("Failed to decode RpcReturnValue: {:?}", err);
+			TrustedOperationError::Default { msg: "RpcReturnValue::from_hex".to_string() }
+		})?;
+
+	if rpc_return_value.status == DirectRequestStatus::Error {
+		println!("[Error] {}", String::decode(&mut rpc_return_value.value.as_slice()).unwrap());
+		return Err(TrustedOperationError::Default {
+			msg: "[Error] DirectRequestStatus::Error".to_string(),
+		})
+	}
+
+	let maybe_state = Option::decode(&mut rpc_return_value.value.as_slice())
+		// Replace with `inspect_err` once it's stable.
+		.map_err(|err| {
+			error!("Failed to decode return value: {:?}", err);
+			TrustedOperationError::Default { msg: "Option::decode".to_string() }
+		})?;
+
+	Ok(maybe_state)
+}
+
+fn send_indirect_request(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	trusted_operation: &TrustedOperation,
@@ -98,20 +140,31 @@ fn send_request(
 	let call_encrypted = encryption_key.encrypt(&trusted_operation.encode()).unwrap();
 
 	let shard = read_shard(trusted_args, cli).unwrap();
-
+	debug!(
+		"invoke indirect send_request: trusted operation: {:?},  shard: {}",
+		trusted_operation,
+		shard.encode().to_base58()
+	);
 	let arg_signer = &trusted_args.xt_signer;
 	let signer = get_pair_from_str(arg_signer);
-	chain_api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(signer)));
+	chain_api.set_signer(signer.into());
 
-	let request = Request { shard, cyphertext: call_encrypted };
+	let request = RsaRequest::new(shard, call_encrypted);
 	let xt = compose_extrinsic!(&chain_api, TEEREX, "call_worker", request);
 
-	// send and watch extrinsic until block is executed
-	let block_hash = chain_api
-		.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock)
-		.unwrap()
-		.block_hash
-		.unwrap();
+	let block_hash = match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::InBlock) {
+		Ok(xt_report) => {
+			println!(
+				"[+] invoke TrustedOperation extrinsic success. extrinsic hash: {:?} / status: {:?} / block hash: {:?}",
+				xt_report.extrinsic_hash, xt_report.status, xt_report.block_hash.unwrap()
+			);
+			xt_report.block_hash.unwrap()
+		},
+		Err(e) => {
+			error!("invoke TrustedOperation extrinsic failed {:?}", e);
+			return Err(TrustedOperationError::Extrinsic { msg: format!("{:?}", e) })
+		},
+	};
 
 	info!(
 		"Trusted call extrinsic sent and successfully included in parentchain block with hash {:?}.",
@@ -120,7 +173,7 @@ fn send_request(
 	info!("Waiting for execution confirmation from enclave...");
 	let mut subscription = chain_api.subscribe_events().unwrap();
 	loop {
-		let event_records = subscription.next_event::<RuntimeEvent, Hash>().unwrap().unwrap();
+		let event_records = subscription.next_events::<RuntimeEvent, Hash>().unwrap().unwrap();
 		for event_record in event_records {
 			if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
 				_signer,
@@ -240,6 +293,9 @@ fn send_direct_request(
 						},
 						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+							if let Ok(value) = Hash::decode(&mut return_value.value.as_slice()) {
+								println!("Trusted call {:?} is {:?}", value, status);
+							}
 							if connection_can_be_closed(status) {
 								direct_api.close().unwrap();
 								return Ok(None)
@@ -357,9 +413,12 @@ pub(crate) fn get_json_request(
 	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
 
 	// compose jsonrpc call
-	let request = Request { shard, cyphertext: operation_call_encrypted };
-	RpcRequest::compose_jsonrpc_call("author_submitExtrinsic".to_string(), vec![request.to_hex()])
-		.unwrap()
+	let request = RsaRequest::new(shard, operation_call_encrypted);
+	RpcRequest::compose_jsonrpc_call(
+		"author_submitAndWatchRsaRequest".to_string(),
+		vec![request.to_hex()],
+	)
+	.unwrap()
 }
 
 pub(crate) fn wait_until(
@@ -387,11 +446,15 @@ pub(crate) fn wait_until(
 							},
 							DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
 								debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
-								if until(status.clone()) {
-									return Some((top_hash, Instant::now()))
-								} else if status == TrustedOperationStatus::Invalid {
-									error!("Invalid request");
-									return None
+								if let Ok(value) = Hash::decode(&mut return_value.value.as_slice())
+								{
+									println!("Trusted call {:?} is {:?}", value, status);
+									if until(status.clone()) {
+										return Some((top_hash, Instant::now()))
+									} else if status == TrustedOperationStatus::Invalid {
+										error!("Invalid request");
+										return None
+									}
 								}
 							},
 							DirectRequestStatus::Ok => {

@@ -18,7 +18,7 @@
 //! Contains all logic of the state provisioning mechanism
 //! including the remote attestation and tls / tcp connection part.
 
-use std::convert::TryFrom;
+use codec::{Decode, Encode, MaxEncodedLen};
 
 mod authentication;
 pub mod seal_handler;
@@ -31,9 +31,9 @@ pub mod tests;
 #[cfg(feature = "test")]
 pub mod mocks;
 
-/// Header of an accompanied payloard. Indicates the
+/// Header of an accompanied payload. Indicates the
 /// length an the type (opcode) of the following payload.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Decode, Encode, MaxEncodedLen)]
 pub struct TcpHeader {
 	pub opcode: Opcode,
 	pub payload_length: u64,
@@ -46,22 +46,22 @@ impl TcpHeader {
 }
 
 /// Indicates the payload content type.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Decode, Encode, MaxEncodedLen)]
 pub enum Opcode {
-	ShieldingKey = 0,
-	StateKey = 1,
-	State = 2,
+	ShieldingKey,
+	StateKey,
+	State,
+	LightClient,
 }
 
-impl TryFrom<u8> for Opcode {
-	type Error = ();
-
-	fn try_from(value: u8) -> Result<Self, Self::Error> {
-		match value {
-			0 => Ok(Opcode::ShieldingKey),
-			1 => Ok(Opcode::StateKey),
-			2 => Ok(Opcode::State),
-			_ => Err(()),
+impl From<u8> for Opcode {
+	fn from(item: u8) -> Self {
+		match item {
+			0 => Opcode::ShieldingKey,
+			1 => Opcode::StateKey,
+			2 => Opcode::State,
+			3 => Opcode::LightClient,
+			_ => unimplemented!("Unsupported/unknown Opcode for MU-RA exchange"),
 		}
 	}
 }

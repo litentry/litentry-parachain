@@ -20,7 +20,7 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self,
+		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_self,
 		get_expected_raw_message, verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, SetUserShieldingKeyResult, TrustedCallResult},
@@ -125,6 +125,7 @@ impl TrustedCallSigned {
 
 	#[allow(clippy::too_many_arguments)]
 	pub fn link_identity_internal(
+		shard: &ShardIdentifier,
 		signer: AccountId,
 		who: Identity,
 		identity: Identity,
@@ -132,8 +133,8 @@ impl TrustedCallSigned {
 		web3networks: Vec<Web3Network>,
 		nonce: UserShieldingKeyNonceType,
 		top_hash: H256,
+		maybe_key: Option<UserShieldingKeyType>,
 		req_ext_hash: H256,
-		shard: &ShardIdentifier,
 	) -> StfResult<bool> {
 		ensure!(
 			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
@@ -165,6 +166,7 @@ impl TrustedCallSigned {
 					validation_data: data,
 					web3networks,
 					top_hash,
+					maybe_key,
 					req_ext_hash,
 				}
 				.into();
@@ -228,6 +230,7 @@ impl TrustedCallSigned {
 		assertion: Assertion,
 		top_hash: H256,
 		req_ext_hash: H256,
+		maybe_key: Option<UserShieldingKeyType>,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		match assertion {
@@ -275,6 +278,7 @@ impl TrustedCallSigned {
 			assertion: assertion.clone(),
 			identities,
 			top_hash,
+			maybe_key,
 			req_ext_hash,
 		}
 		.into();
@@ -294,7 +298,7 @@ impl TrustedCallSigned {
 		if_production_or!(
 			{
 				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-				ensure_enclave_signer(&signer)
+				ensure_enclave_signer_account(&signer)
 					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 			},
 			{
@@ -321,7 +325,7 @@ impl TrustedCallSigned {
 		assertion: Assertion,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer(&signer).map_err(|_| {
+		ensure_enclave_signer_account(&signer).map_err(|_| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
 		})?;
 
@@ -340,6 +344,7 @@ impl TrustedCallSigned {
 		who: Identity,
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
+		_maybe_key: Option<UserShieldingKeyType>, // TODO: will be used when user shielding key is removed (P-174)
 		hash: H256,
 	) -> StfResult<TrustedCallResult>
 	where

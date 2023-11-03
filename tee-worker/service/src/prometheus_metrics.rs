@@ -26,7 +26,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use codec::{Decode, Encode};
-#[cfg(feature = "dcap")]
+#[cfg(feature = "attesteer")]
 use core::time::Duration;
 use frame_support::scale_info::TypeInfo;
 use ita_stf::TrustedCall;
@@ -250,6 +250,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A20 => "A20",
 			Assertion::Achainable(..) => "Achainable",
 			Assertion::Oneblock(..) => "Oneblock",
+			Assertion::SoraQuiz(..) => "SoraQuiz",
 		},
 	};
 	inc_stf_calls(category, label);
@@ -309,7 +310,7 @@ where
 #[derive(Serialize, Deserialize, Debug)]
 struct PrometheusMarblerunEvents(pub Vec<PrometheusMarblerunEvent>);
 
-#[cfg(feature = "dcap")]
+#[cfg(feature = "attesteer")]
 impl RestPath<&str> for PrometheusMarblerunEvents {
 	fn get_path(path: &str) -> Result<String, itc_rest_client::error::Error> {
 		Ok(format!("{}", path))

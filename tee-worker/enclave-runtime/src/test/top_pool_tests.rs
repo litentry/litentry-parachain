@@ -31,10 +31,10 @@ use crate::test::{
 use codec::Encode;
 use ita_stf::{
 	test_genesis::{endowed_account, unendowed_account},
-	TrustedCall, TrustedOperation,
+	TeerexCallIndexes, TrustedCall, TrustedOperation,
 };
 use itc_parentchain::indirect_calls_executor::{
-	filter_metadata::{ShieldFundsAndCallWorkerFilter, TestEventCreator},
+	filter_metadata::{ShieldFundsAndInvokeFilter, TestEventCreator},
 	parentchain_parser::ParentchainExtrinsicParser,
 	ExecuteIndirectCalls, IndirectCallsExecutor,
 };
@@ -47,10 +47,7 @@ use itp_node_api::{
 		ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
 		ParentchainUncheckedExtrinsic,
 	},
-	metadata::{
-		metadata_mocks::NodeMetadataMock, pallet_teerex::TeerexCallIndexes,
-		provider::NodeMetadataRepository,
-	},
+	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 };
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
@@ -58,7 +55,9 @@ use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
-use itp_types::{parentchain::Address, AccountId, Block, ShardIdentifier, ShieldFundsFn, H256};
+use itp_types::{
+	parentchain::Address, AccountId, Block, RsaRequest, ShardIdentifier, ShieldFundsFn, H256,
+};
 use jsonrpc_core::futures::executor;
 use litentry_primitives::Identity;
 use log::*;
@@ -94,7 +93,10 @@ pub fn process_indirect_call_in_top_pool() {
 	let encrypted_indirect_call =
 		encrypted_indirect_call(ocall_api.as_ref(), &shard_id, &shielding_key);
 
-	executor::block_on(top_pool_author.submit_top(encrypted_indirect_call, shard_id)).unwrap();
+	executor::block_on(
+		top_pool_author.submit_top(RsaRequest::new(shard_id, encrypted_indirect_call)),
+	)
+	.unwrap();
 
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
 }
@@ -138,7 +140,7 @@ pub fn submit_shielding_call_to_top_pool() {
 			_,
 			_,
 			_,
-			ShieldFundsAndCallWorkerFilter<ParentchainExtrinsicParser>,
+			ShieldFundsAndInvokeFilter<ParentchainExtrinsicParser>,
 			TestEventCreator,
 		>::new(
 			shielding_key_repo, enclave_signer, top_pool_author.clone(), node_meta_data_repository

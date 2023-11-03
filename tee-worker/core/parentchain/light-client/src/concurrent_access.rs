@@ -30,8 +30,9 @@ use crate::{
 	LightValidationState, Validator as ValidatorTrait,
 };
 use finality_grandpa::BlockNumberOps;
+use itp_types::parentchain::{IdentifyParentchain, ParentchainId};
 use sp_runtime::traits::{Block as ParentchainBlockTrait, NumberFor};
-use std::marker::PhantomData;
+use std::{marker::PhantomData, sync::Arc};
 
 /// Retrieve an exclusive lock on a validator for either read or write access.
 ///
@@ -62,7 +63,7 @@ where
 /// Implementation of a validator access based on a global lock and corresponding file.
 #[derive(Debug)]
 pub struct ValidatorAccessor<Validator, ParentchainBlock, LightClientSeal> {
-	seal: LightClientSeal,
+	seal: Arc<LightClientSeal>,
 	light_validation: RwLock<Validator>,
 	_phantom: PhantomData<(LightClientSeal, Validator, ParentchainBlock)>,
 }
@@ -70,12 +71,20 @@ pub struct ValidatorAccessor<Validator, ParentchainBlock, LightClientSeal> {
 impl<Validator, ParentchainBlock, LightClientSeal>
 	ValidatorAccessor<Validator, ParentchainBlock, LightClientSeal>
 {
-	pub fn new(validator: Validator, seal: LightClientSeal) -> Self {
+	pub fn new(validator: Validator, seal: Arc<LightClientSeal>) -> Self {
 		ValidatorAccessor {
 			light_validation: RwLock::new(validator),
 			seal,
 			_phantom: Default::default(),
 		}
+	}
+}
+
+impl<Validator, ParentchainBlock, LightClientSeal: IdentifyParentchain> IdentifyParentchain
+	for ValidatorAccessor<Validator, ParentchainBlock, LightClientSeal>
+{
+	fn parentchain_id(&self) -> ParentchainId {
+		(*self.seal).parentchain_id()
 	}
 }
 
@@ -85,7 +94,7 @@ where
 	Validator: ValidatorTrait<ParentchainBlock>
 		+ LightClientState<ParentchainBlock>
 		+ ExtrinsicSenderTrait,
-	Seal: LightClientSealing<LightValidationState<ParentchainBlock>>,
+	Seal: LightClientSealing<LightClientState = LightValidationState<ParentchainBlock>>,
 	ParentchainBlock: ParentchainBlockTrait,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 {
@@ -126,7 +135,7 @@ mod tests {
 	fn execute_with_and_without_mut_in_single_thread_works() {
 		let validator_mock = ValidatorMock::default();
 		let seal = LightValidationStateSealMock::new();
-		let accessor = TestAccessor::new(validator_mock, seal);
+		let accessor = TestAccessor::new(validator_mock, seal.into());
 
 		let _read_result = accessor.execute_on_validator(|_v| Ok(())).unwrap();
 		let _write_result = accessor.execute_mut_on_validator(|_v| Ok(())).unwrap();

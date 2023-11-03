@@ -38,7 +38,7 @@ use itp_top_pool::{
 		TxHash,
 	},
 };
-use itp_types::{BlockHash as SidechainBlockHash, ShardIdentifier};
+use itp_types::{BlockHash as SidechainBlockHash, DecryptableRequest, ShardIdentifier};
 use jsonrpc_core::{
 	futures::future::{ready, TryFutureExt},
 	Error as RpcError,
@@ -74,7 +74,7 @@ where
 	TopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 {
 	top_pool: Arc<TopPool>,
 	top_filter: TopFilter,
@@ -90,7 +90,7 @@ where
 	TopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 {
 	/// Create new instance of Authoring API.
@@ -117,15 +117,15 @@ where
 	TopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 {
-	fn process_top(
+	fn process_top<R: DecryptableRequest>(
 		&self,
-		ext: Vec<u8>,
-		shard: ShardIdentifier,
+		mut request: R,
 		submission_mode: TopSubmissionMode,
 	) -> PoolFuture<TxHash<TopPool>, RpcError> {
+		let shard = request.shard();
 		// check if shard exists
 		match self.state_facade.shard_exists(&shard) {
 			Err(_) => return Box::pin(ready(Err(ClientError::InvalidShard.into()))),
@@ -140,7 +140,7 @@ where
 			Ok(k) => k,
 			Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),
 		};
-		let request_vec = match shielding_key.decrypt(ext.as_slice()) {
+		let request_vec = match request.decrypt(Box::new(shielding_key)) {
 			Ok(req) => req,
 			Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),
 		};
@@ -263,15 +263,11 @@ where
 	TopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 {
-	fn submit_top(
-		&self,
-		ext: Vec<u8>,
-		shard: ShardIdentifier,
-	) -> PoolFuture<TxHash<TopPool>, RpcError> {
-		self.process_top(ext, shard, TopSubmissionMode::Submit)
+	fn submit_top<R: DecryptableRequest>(&self, req: R) -> PoolFuture<TxHash<TopPool>, RpcError> {
+		self.process_top(req, TopSubmissionMode::Submit)
 	}
 
 	/// Get hash of TrustedOperation
@@ -319,6 +315,10 @@ where
 		self.top_pool.shards()
 	}
 
+	fn list_handled_shards(&self) -> Vec<ShardIdentifier> {
+		self.state_facade.list_shards().unwrap_or_default()
+	}
+
 	fn remove_calls_from_pool(
 		&self,
 		shard: ShardIdentifier,
@@ -336,12 +336,11 @@ where
 		failed_to_remove
 	}
 
-	fn watch_top(
+	fn watch_top<R: DecryptableRequest>(
 		&self,
-		ext: Vec<u8>,
-		shard: ShardIdentifier,
+		request: R,
 	) -> PoolFuture<TxHash<TopPool>, RpcError> {
-		self.process_top(ext, shard, TopSubmissionMode::SubmitWatch)
+		self.process_top(request, TopSubmissionMode::SubmitWatch)
 	}
 
 	fn update_connection_state(&self, updates: Vec<(TxHash<TopPool>, (Vec<u8>, bool))>) {
@@ -360,7 +359,7 @@ where
 	TopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
-	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 {
 	type Hash = <TopPool as TrustedOperationPool>::Hash;

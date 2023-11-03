@@ -62,8 +62,12 @@ fn run_to_block<T: Config>(n: T::BlockNumber) {
 // return the caller account
 fn create_default_caller<T: Config>() -> T::AccountId {
 	let caller: T::AccountId = account("caller", 0, SEED);
-	let default_balance =
-		T::Currency::minimum_balance().saturating_mul(DEFAULT_ED_MULTIPLIER.into());
+	// endowed with a bit more balance
+	// since polkadot v0.9.42, ED will be required in addition to any amount to be reserved
+	// see https://forum.polkadot.network/t/polkadot-release-analysis-v0-9-41-v0-9-42/2828
+	let default_balance = T::Currency::minimum_balance()
+		.saturating_mul(DEFAULT_ED_MULTIPLIER.into())
+		.saturating_mul(2u32.into());
 	let _ = T::Currency::deposit_creating(&caller, default_balance);
 	caller
 }

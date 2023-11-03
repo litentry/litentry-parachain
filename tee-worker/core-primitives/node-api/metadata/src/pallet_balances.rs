@@ -15,20 +15,23 @@
 
 */
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
-use codec::{Decode, Encode};
-use itp_types::Request;
+use crate::{error::Result, NodeMetadata};
 
-#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct CallWorkerArgs {
-	request: Request,
+/// Pallet name:
+const BALANCES: &str = "Balances";
+
+pub trait BalancesCallIndexes {
+	fn transfer_call_index(&self) -> Result<[u8; 2]>;
+
+	fn transfer_allow_death_call_index(&self) -> Result<[u8; 2]>;
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for CallWorkerArgs {
-	type Args = ();
-	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
-		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
-		executor.submit_trusted_call(self.request.shard, self.request.cyphertext.clone());
-		Ok(())
+impl BalancesCallIndexes for NodeMetadata {
+	fn transfer_call_index(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BALANCES, "transfer")
+	}
+
+	fn transfer_allow_death_call_index(&self) -> Result<[u8; 2]> {
+		self.call_indexes(BALANCES, "transfer_allow_death")
 	}
 }

@@ -1,6 +1,6 @@
 declare const _default: {
     /**
-     * Lookup3: frame_system::AccountInfo<Index, pallet_balances::AccountData<Balance>>
+     * Lookup3: frame_system::AccountInfo<Index, pallet_balances::types::AccountData<Balance>>
      **/
     FrameSystemAccountInfo: {
         nonce: string;
@@ -10,16 +10,16 @@ declare const _default: {
         data: string;
     };
     /**
-     * Lookup5: pallet_balances::AccountData<Balance>
+     * Lookup5: pallet_balances::types::AccountData<Balance>
      **/
     PalletBalancesAccountData: {
         free: string;
         reserved: string;
-        miscFrozen: string;
-        feeFrozen: string;
+        frozen: string;
+        flags: string;
     };
     /**
-     * Lookup7: frame_support::dispatch::PerDispatchClass<sp_weights::weight_v2::Weight>
+     * Lookup8: frame_support::dispatch::PerDispatchClass<sp_weights::weight_v2::Weight>
      **/
     FrameSupportDispatchPerDispatchClassWeight: {
         normal: string;
@@ -27,20 +27,20 @@ declare const _default: {
         mandatory: string;
     };
     /**
-     * Lookup8: sp_weights::weight_v2::Weight
+     * Lookup9: sp_weights::weight_v2::Weight
      **/
     SpWeightsWeightV2Weight: {
         refTime: string;
         proofSize: string;
     };
     /**
-     * Lookup13: sp_runtime::generic::digest::Digest
+     * Lookup14: sp_runtime::generic::digest::Digest
      **/
     SpRuntimeDigest: {
         logs: string;
     };
     /**
-     * Lookup15: sp_runtime::generic::digest::DigestItem
+     * Lookup16: sp_runtime::generic::digest::DigestItem
      **/
     SpRuntimeDigestDigestItem: {
         _enum: {
@@ -56,7 +56,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup18: frame_system::EventRecord<ita_sgx_runtime::RuntimeEvent, primitive_types::H256>
+     * Lookup19: frame_system::EventRecord<ita_sgx_runtime::RuntimeEvent, primitive_types::H256>
      **/
     FrameSystemEventRecord: {
         phase: string;
@@ -64,7 +64,7 @@ declare const _default: {
         topics: string;
     };
     /**
-     * Lookup20: frame_system::pallet::Event<T>
+     * Lookup21: frame_system::pallet::Event<T>
      **/
     FrameSystemEvent: {
         _enum: {
@@ -92,7 +92,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup21: frame_support::dispatch::DispatchInfo
+     * Lookup22: frame_support::dispatch::DispatchInfo
      **/
     FrameSupportDispatchDispatchInfo: {
         weight: string;
@@ -100,19 +100,19 @@ declare const _default: {
         paysFee: string;
     };
     /**
-     * Lookup22: frame_support::dispatch::DispatchClass
+     * Lookup23: frame_support::dispatch::DispatchClass
      **/
     FrameSupportDispatchDispatchClass: {
         _enum: string[];
     };
     /**
-     * Lookup23: frame_support::dispatch::Pays
+     * Lookup24: frame_support::dispatch::Pays
      **/
     FrameSupportDispatchPays: {
         _enum: string[];
     };
     /**
-     * Lookup24: sp_runtime::DispatchError
+     * Lookup25: sp_runtime::DispatchError
      **/
     SpRuntimeDispatchError: {
         _enum: {
@@ -132,32 +132,32 @@ declare const _default: {
         };
     };
     /**
-     * Lookup25: sp_runtime::ModuleError
+     * Lookup26: sp_runtime::ModuleError
      **/
     SpRuntimeModuleError: {
         index: string;
         error: string;
     };
     /**
-     * Lookup26: sp_runtime::TokenError
+     * Lookup27: sp_runtime::TokenError
      **/
     SpRuntimeTokenError: {
         _enum: string[];
     };
     /**
-     * Lookup27: sp_arithmetic::ArithmeticError
+     * Lookup28: sp_arithmetic::ArithmeticError
      **/
     SpArithmeticArithmeticError: {
         _enum: string[];
     };
     /**
-     * Lookup28: sp_runtime::TransactionalError
+     * Lookup29: sp_runtime::TransactionalError
      **/
     SpRuntimeTransactionalError: {
         _enum: string[];
     };
     /**
-     * Lookup29: pallet_balances::pallet::Event<T, I>
+     * Lookup30: pallet_balances::pallet::Event<T, I>
      **/
     PalletBalancesEvent: {
         _enum: {
@@ -177,7 +177,6 @@ declare const _default: {
             BalanceSet: {
                 who: string;
                 free: string;
-                reserved: string;
             };
             Reserved: {
                 who: string;
@@ -205,16 +204,57 @@ declare const _default: {
                 who: string;
                 amount: string;
             };
+            Minted: {
+                who: string;
+                amount: string;
+            };
+            Burned: {
+                who: string;
+                amount: string;
+            };
+            Suspended: {
+                who: string;
+                amount: string;
+            };
+            Restored: {
+                who: string;
+                amount: string;
+            };
+            Upgraded: {
+                who: string;
+            };
+            Issued: {
+                amount: string;
+            };
+            Rescinded: {
+                amount: string;
+            };
+            Locked: {
+                who: string;
+                amount: string;
+            };
+            Unlocked: {
+                who: string;
+                amount: string;
+            };
+            Frozen: {
+                who: string;
+                amount: string;
+            };
+            Thawed: {
+                who: string;
+                amount: string;
+            };
         };
     };
     /**
-     * Lookup30: frame_support::traits::tokens::misc::BalanceStatus
+     * Lookup31: frame_support::traits::tokens::misc::BalanceStatus
      **/
     FrameSupportTokensMiscBalanceStatus: {
         _enum: string[];
     };
     /**
-     * Lookup31: pallet_transaction_payment::pallet::Event<T>
+     * Lookup32: pallet_transaction_payment::pallet::Event<T>
      **/
     PalletTransactionPaymentEvent: {
         _enum: {
@@ -226,7 +266,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup32: pallet_sudo::pallet::Event<T>
+     * Lookup33: pallet_sudo::pallet::Event<T>
      **/
     PalletSudoEvent: {
         _enum: {
@@ -242,7 +282,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup36: pallet_identity_management_tee::pallet::Event<T>
+     * Lookup37: pallet_identity_management_tee::pallet::Event<T>
      **/
     PalletIdentityManagementTeeEvent: {
         _enum: {
@@ -265,7 +305,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup37: litentry_primitives::identity::Identity
+     * Lookup38: litentry_primitives::identity::Identity
      **/
     LitentryPrimitivesIdentity: {
         _enum: {
@@ -277,15 +317,15 @@ declare const _default: {
         };
     };
     /**
-     * Lookup39: litentry_primitives::identity::Address32
+     * Lookup40: litentry_primitives::identity::Address32
      **/
     LitentryPrimitivesIdentityAddress32: string;
     /**
-     * Lookup40: litentry_primitives::identity::Address20
+     * Lookup41: litentry_primitives::identity::Address20
      **/
     LitentryPrimitivesIdentityAddress20: string;
     /**
-     * Lookup42: frame_system::Phase
+     * Lookup43: frame_system::Phase
      **/
     FrameSystemPhase: {
         _enum: {
@@ -295,14 +335,14 @@ declare const _default: {
         };
     };
     /**
-     * Lookup46: frame_system::LastRuntimeUpgradeInfo
+     * Lookup47: frame_system::LastRuntimeUpgradeInfo
      **/
     FrameSystemLastRuntimeUpgradeInfo: {
         specVersion: string;
         specName: string;
     };
     /**
-     * Lookup50: frame_system::pallet::Call<T>
+     * Lookup51: frame_system::pallet::Call<T>
      **/
     FrameSystemCall: {
         _enum: {
@@ -337,7 +377,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup54: frame_system::limits::BlockWeights
+     * Lookup55: frame_system::limits::BlockWeights
      **/
     FrameSystemLimitsBlockWeights: {
         baseBlock: string;
@@ -345,7 +385,7 @@ declare const _default: {
         perClass: string;
     };
     /**
-     * Lookup55: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
+     * Lookup56: frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
      **/
     FrameSupportDispatchPerDispatchClassWeightsPerClass: {
         normal: string;
@@ -353,7 +393,7 @@ declare const _default: {
         mandatory: string;
     };
     /**
-     * Lookup56: frame_system::limits::WeightsPerClass
+     * Lookup57: frame_system::limits::WeightsPerClass
      **/
     FrameSystemLimitsWeightsPerClass: {
         baseExtrinsic: string;
@@ -362,13 +402,13 @@ declare const _default: {
         reserved: string;
     };
     /**
-     * Lookup58: frame_system::limits::BlockLength
+     * Lookup59: frame_system::limits::BlockLength
      **/
     FrameSystemLimitsBlockLength: {
         max: string;
     };
     /**
-     * Lookup59: frame_support::dispatch::PerDispatchClass<T>
+     * Lookup60: frame_support::dispatch::PerDispatchClass<T>
      **/
     FrameSupportDispatchPerDispatchClassU32: {
         normal: string;
@@ -376,14 +416,14 @@ declare const _default: {
         mandatory: string;
     };
     /**
-     * Lookup60: sp_weights::RuntimeDbWeight
+     * Lookup61: sp_weights::RuntimeDbWeight
      **/
     SpWeightsRuntimeDbWeight: {
         read: string;
         write: string;
     };
     /**
-     * Lookup61: sp_version::RuntimeVersion
+     * Lookup62: sp_version::RuntimeVersion
      **/
     SpVersionRuntimeVersion: {
         specName: string;
@@ -396,13 +436,13 @@ declare const _default: {
         stateVersion: string;
     };
     /**
-     * Lookup67: frame_system::pallet::Error<T>
+     * Lookup68: frame_system::pallet::Error<T>
      **/
     FrameSystemError: {
         _enum: string[];
     };
     /**
-     * Lookup68: pallet_timestamp::pallet::Call<T>
+     * Lookup69: pallet_timestamp::pallet::Call<T>
      **/
     PalletTimestampCall: {
         _enum: {
@@ -412,7 +452,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup70: pallet_balances::BalanceLock<Balance>
+     * Lookup71: pallet_balances::types::BalanceLock<Balance>
      **/
     PalletBalancesBalanceLock: {
         id: string;
@@ -420,31 +460,38 @@ declare const _default: {
         reasons: string;
     };
     /**
-     * Lookup71: pallet_balances::Reasons
+     * Lookup72: pallet_balances::types::Reasons
      **/
     PalletBalancesReasons: {
         _enum: string[];
     };
     /**
-     * Lookup74: pallet_balances::ReserveData<ReserveIdentifier, Balance>
+     * Lookup75: pallet_balances::types::ReserveData<ReserveIdentifier, Balance>
      **/
     PalletBalancesReserveData: {
         id: string;
         amount: string;
     };
     /**
-     * Lookup76: pallet_balances::pallet::Call<T, I>
+     * Lookup78: pallet_balances::types::IdAmount<Id, Balance>
+     **/
+    PalletBalancesIdAmount: {
+        id: string;
+        amount: string;
+    };
+    /**
+     * Lookup80: pallet_balances::pallet::Call<T, I>
      **/
     PalletBalancesCall: {
         _enum: {
-            transfer: {
+            transfer_allow_death: {
                 dest: string;
                 value: string;
             };
-            set_balance: {
+            set_balance_deprecated: {
                 who: string;
                 newFree: string;
-                newReserved: string;
+                oldReserved: string;
             };
             force_transfer: {
                 source: string;
@@ -463,22 +510,33 @@ declare const _default: {
                 who: string;
                 amount: string;
             };
+            upgrade_accounts: {
+                who: string;
+            };
+            transfer: {
+                dest: string;
+                value: string;
+            };
+            force_set_balance: {
+                who: string;
+                newFree: string;
+            };
         };
     };
     /**
-     * Lookup80: pallet_balances::pallet::Error<T, I>
+     * Lookup85: pallet_balances::pallet::Error<T, I>
      **/
     PalletBalancesError: {
         _enum: string[];
     };
     /**
-     * Lookup82: pallet_transaction_payment::Releases
+     * Lookup87: pallet_transaction_payment::Releases
      **/
     PalletTransactionPaymentReleases: {
         _enum: string[];
     };
     /**
-     * Lookup83: pallet_sudo::pallet::Call<T>
+     * Lookup88: pallet_sudo::pallet::Call<T>
      **/
     PalletSudoCall: {
         _enum: {
@@ -502,7 +560,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup85: pallet_parentchain::pallet::Call<T>
+     * Lookup90: pallet_parentchain::pallet::Call<T>
      **/
     PalletParentchainCall: {
         _enum: {
@@ -512,7 +570,7 @@ declare const _default: {
         };
     };
     /**
-     * Lookup86: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
+     * Lookup91: sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>
      **/
     SpRuntimeHeader: {
         parentHash: string;
@@ -522,17 +580,18 @@ declare const _default: {
         digest: string;
     };
     /**
-     * Lookup87: sp_runtime::traits::BlakeTwo256
+     * Lookup92: sp_runtime::traits::BlakeTwo256
      **/
     SpRuntimeBlakeTwo256: string;
     /**
-     * Lookup88: pallet_identity_management_tee::pallet::Call<T>
+     * Lookup93: pallet_identity_management_tee::pallet::Call<T>
      **/
     PalletIdentityManagementTeeCall: {
         _enum: {
             set_user_shielding_key: {
                 who: string;
                 key: string;
+                networks: string;
             };
             link_identity: {
                 who: string;
@@ -555,19 +614,19 @@ declare const _default: {
         };
     };
     /**
-     * Lookup90: core_primitives::network::Web3Network
+     * Lookup95: core_primitives::network::Web3Network
      **/
     CorePrimitivesNetworkWeb3Network: {
         _enum: string[];
     };
     /**
-     * Lookup91: pallet_sudo::pallet::Error<T>
+     * Lookup96: pallet_sudo::pallet::Error<T>
      **/
     PalletSudoError: {
         _enum: string[];
     };
     /**
-     * Lookup93: pallet_identity_management_tee::identity_context::IdentityContext<T>
+     * Lookup98: pallet_identity_management_tee::identity_context::IdentityContext<T>
      **/
     PalletIdentityManagementTeeIdentityContext: {
         linkBlock: string;
@@ -575,19 +634,19 @@ declare const _default: {
         status: string;
     };
     /**
-     * Lookup94: pallet_identity_management_tee::identity_context::IdentityStatus
+     * Lookup99: pallet_identity_management_tee::identity_context::IdentityStatus
      **/
     PalletIdentityManagementTeeIdentityContextIdentityStatus: {
         _enum: string[];
     };
     /**
-     * Lookup95: pallet_identity_management_tee::pallet::Error<T>
+     * Lookup100: pallet_identity_management_tee::pallet::Error<T>
      **/
     PalletIdentityManagementTeeError: {
         _enum: string[];
     };
     /**
-     * Lookup97: sp_runtime::MultiSignature
+     * Lookup102: sp_runtime::MultiSignature
      **/
     SpRuntimeMultiSignature: {
         _enum: {
@@ -597,47 +656,47 @@ declare const _default: {
         };
     };
     /**
-     * Lookup98: sp_core::ed25519::Signature
+     * Lookup103: sp_core::ed25519::Signature
      **/
     SpCoreEd25519Signature: string;
     /**
-     * Lookup100: sp_core::sr25519::Signature
+     * Lookup105: sp_core::sr25519::Signature
      **/
     SpCoreSr25519Signature: string;
     /**
-     * Lookup101: sp_core::ecdsa::Signature
+     * Lookup106: sp_core::ecdsa::Signature
      **/
     SpCoreEcdsaSignature: string;
     /**
-     * Lookup104: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
+     * Lookup109: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T>
      **/
     FrameSystemExtensionsCheckNonZeroSender: string;
     /**
-     * Lookup105: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
+     * Lookup110: frame_system::extensions::check_spec_version::CheckSpecVersion<T>
      **/
     FrameSystemExtensionsCheckSpecVersion: string;
     /**
-     * Lookup106: frame_system::extensions::check_tx_version::CheckTxVersion<T>
+     * Lookup111: frame_system::extensions::check_tx_version::CheckTxVersion<T>
      **/
     FrameSystemExtensionsCheckTxVersion: string;
     /**
-     * Lookup107: frame_system::extensions::check_genesis::CheckGenesis<T>
+     * Lookup112: frame_system::extensions::check_genesis::CheckGenesis<T>
      **/
     FrameSystemExtensionsCheckGenesis: string;
     /**
-     * Lookup110: frame_system::extensions::check_nonce::CheckNonce<T>
+     * Lookup115: frame_system::extensions::check_nonce::CheckNonce<T>
      **/
     FrameSystemExtensionsCheckNonce: string;
     /**
-     * Lookup111: frame_system::extensions::check_weight::CheckWeight<T>
+     * Lookup116: frame_system::extensions::check_weight::CheckWeight<T>
      **/
     FrameSystemExtensionsCheckWeight: string;
     /**
-     * Lookup112: pallet_transaction_payment::ChargeTransactionPayment<T>
+     * Lookup117: pallet_transaction_payment::ChargeTransactionPayment<T>
      **/
     PalletTransactionPaymentChargeTransactionPayment: string;
     /**
-     * Lookup113: ita_sgx_runtime::Runtime
+     * Lookup118: ita_sgx_runtime::Runtime
      **/
     ItaSgxRuntimeRuntime: string;
 };

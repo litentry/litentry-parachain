@@ -63,7 +63,6 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
@@ -298,7 +297,7 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight((<T as Config>::WeightInfo::call_worker(), DispatchClass::Normal, Pays::Yes))]
-		pub fn call_worker(origin: OriginFor<T>, request: Request) -> DispatchResult {
+		pub fn call_worker(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
 			log::info!("call_worker with {:?}", request);
 			Self::deposit_event(Event::Forwarded(request.shard));

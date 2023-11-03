@@ -62,7 +62,7 @@ fn transfer() {
 		assert_eq!(Balances::free_balance(RELAYER_A), ENDOWED_BALANCE + 10);
 
 		assert_events(vec![
-			RuntimeEvent::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
 			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
 				to: RELAYER_A,
 				amount: 10,
@@ -271,7 +271,7 @@ fn create_successful_transfer_proposal() {
 			RuntimeEvent::Bridge(bridge::Event::VoteAgainst(src_id, prop_id, RELAYER_B)),
 			RuntimeEvent::Bridge(bridge::Event::VoteFor(src_id, prop_id, RELAYER_C)),
 			RuntimeEvent::Bridge(bridge::Event::ProposalApproved(src_id, prop_id)),
-			RuntimeEvent::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
 			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
 				to: RELAYER_A,
 				amount: 10,
@@ -316,7 +316,7 @@ fn test_external_balances_adjusted() {
 		assert_eq!(ExternalBalances::<Test>::get(), MaximumIssuance::<Test>::get() / 2 - 10);
 
 		assert_events(vec![
-			RuntimeEvent::Balances(balances::Event::Deposit { who: RELAYER_A, amount: 10 }),
+			RuntimeEvent::Balances(balances::Event::Minted { who: RELAYER_A, amount: 10 }),
 			RuntimeEvent::BridgeTransfer(crate::Event::NativeTokenMinted {
 				to: RELAYER_A,
 				amount: 10,

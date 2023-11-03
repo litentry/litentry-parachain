@@ -29,10 +29,11 @@ use futures::channel::oneshot;
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{DirectRequestStatus, Request, ShardIdentifier, TrustedOperationStatus};
+use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use lc_vc_task_sender::{SendVcRequest, VCRequest, VcRequestSender};
+use litentry_primitives::AesRequest;
 use log::*;
 use std::{
 	borrow::ToOwned,
@@ -52,10 +53,10 @@ pub fn add_top_pool_direct_rpc_methods<R>(
 where
 	R: AuthorApi<Hash, Hash> + Send + Sync + 'static,
 {
-	// author_submitAndWatchExtrinsic
-	let author_submit_and_watch_extrinsic_name: &str = "author_submitAndWatchExtrinsic";
+	// author_submitAndWatchRsaRequest
+	let author_submit_and_watch_rsa_request_name: &str = "author_submitAndWatchRsaRequest";
 	let watch_author = top_pool_author.clone();
-	io_handler.add_sync_method(author_submit_and_watch_extrinsic_name, move |params: Params| {
+	io_handler.add_sync_method(author_submit_and_watch_rsa_request_name, move |params: Params| {
 		let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: true,
@@ -71,8 +72,8 @@ where
 		Ok(json!(json_value))
 	});
 
-	// author_submitExtrinsic
-	let author_submit_extrinsic_name: &str = "author_submitExtrinsic";
+	// author_submitRsaRequest
+	let author_submit_extrinsic_name: &str = "author_submitRsaRequest";
 	let submit_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
 		let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params) {
@@ -117,6 +118,25 @@ where
 		}
 		// Note: This case will only happen if the sender has been dropped
 		Ok(json!(compute_hex_encoded_return_error("The sender has been dropped")))
+	});
+	// Litentry: a morphling of `author_submitAndWatchRsaRequest`
+	// a different name is used to highlight the request type
+	let author_submit_and_watch_aes_request_name: &str = "author_submitAndWatchAesRequest";
+	let watch_author = top_pool_author.clone();
+	io_handler.add_sync_method(author_submit_and_watch_aes_request_name, move |params: Params| {
+		let json_value = match author_submit_aes_request_inner(watch_author.clone(), params) {
+			Ok(hash_value) => RpcReturnValue {
+				do_watch: true,
+				value: vec![],
+				status: DirectRequestStatus::TrustedOperationStatus(
+					TrustedOperationStatus::Submitted,
+					hash_value,
+				),
+			}
+			.to_hex(),
+			Err(error) => compute_hex_encoded_return_error(error.as_str()),
+		};
+		Ok(json!(json_value))
 	});
 
 	// author_pendingExtrinsics
@@ -220,16 +240,36 @@ fn author_submit_extrinsic_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'stati
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
 	let request =
-		Request::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+		RsaRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
 
-	let shard: ShardIdentifier = request.shard;
-	let encrypted_trusted_call: Vec<u8> = request.cyphertext;
-	let result = async { author.watch_top(encrypted_trusted_call, shard).await };
+	let result = async { author.watch_top(request).await };
 	let response: Result<Hash, RpcError> = executor::block_on(result);
 
 	match &response {
 		Ok(h) => debug!("Trusted operation submitted successfully ({:?})", h),
 		Err(e) => warn!("Submitting trusted operation failed: {:?}", e),
+	}
+
+	response.map_err(|e| format!("{:?}", e))
+}
+
+fn author_submit_aes_request_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'static>(
+	author: Arc<R>,
+	params: Params,
+) -> Result<Hash, String> {
+	debug!("Author submit and watch AesRequest..");
+
+	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+
+	let request =
+		AesRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+
+	let result = async { author.watch_top(request).await };
+	let response: Result<Hash, RpcError> = executor::block_on(result);
+
+	match &response {
+		Ok(h) => debug!("AesRequest submitted successfully ({:?})", h),
+		Err(e) => warn!("Submitting AesRequest failed: {:?}", e),
 	}
 
 	response.map_err(|e| format!("{:?}", e))
