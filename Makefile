@@ -188,20 +188,20 @@ fmt: fmt-cargo fmt-taplo fmt-ts
 
 .PHONY: fmt-cargo ## cargo fmt
 fmt-cargo:
-	cargo fmt --all
-	cd tee-worker && cargo fmt --all
-	cd tee-worker/enclave-runtime && cargo fmt --all
+	@cargo fmt --all
+	@cd tee-worker && cargo fmt --all
+	@cd tee-worker/enclave-runtime && cargo fmt --all
 
 .PHONY: fmt-taplo ## taplo fmt
 fmt-taplo:
-	taplo fmt
-	cd tee-worker && taplo fmt
-	cd tee-worker/enclave-runtime && taplo fmt
+	@taplo fmt
+	@cd tee-worker && taplo fmt
+	@cd tee-worker/enclave-runtime && taplo fmt
 
 .PHONY: fmt-ts ## ts fmt
 fmt-ts:
-	cd ts-tests && pnpm run format
-	cd tee-worker/ts-tests && pnpm run format
+	@cd ts-tests && pnpm run format
+	@cd tee-worker/ts-tests && pnpm run format
 
 .PHONY: githooks ## install the githooks
 githooks:

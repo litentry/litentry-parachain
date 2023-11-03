@@ -2,6 +2,10 @@
 
 set -e
 
+function print_divider() {
+  echo "------------------------------------------------------------"
+}
+
 ROOTDIR=$(git rev-parse --show-toplevel)
 cd "$ROOTDIR"
 
@@ -11,6 +15,7 @@ if [ ! -z "$files" ]; then
   echo "$files"
   make fmt-cargo
   git add $(echo "$files" | paste -s -d " " -)
+  print_divider
 fi
 
 files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "Cargo.toml$") || true)
@@ -19,6 +24,7 @@ if [ ! -z "$files" ]; then
   echo "$files"
   make fmt-taplo
   git add $(echo "$files" | paste -s -d " " -)
+  print_divider
 fi
 
 files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.ts$") || true)
@@ -27,4 +33,5 @@ if [ ! -z "$files" ]; then
   echo "$files"
   make fmt-ts
   git add $(echo "$files" | paste -s -d " " -)
+  print_divider
 fi
