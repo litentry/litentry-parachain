@@ -28,8 +28,6 @@ pub fn build_amount_holding(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountHolding,
 ) -> Result<Credential> {
-	debug!("Assertion Achainable build_amount_holding, who: {:?}", account_id_to_string(&req.who));
-
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()

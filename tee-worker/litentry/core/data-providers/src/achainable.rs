@@ -832,7 +832,6 @@ impl HoldingAmount for AchainableClient {
 		let mut total_balance = 0_f64;
 		addresses.iter().for_each(|address| {
 			let body = ReqBody::new(address.into(), param.clone());
-			debug!("Holding amount body: {:?}", body);
 			let balance =
 				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance);
 			total_balance += balance.unwrap_or_default();
