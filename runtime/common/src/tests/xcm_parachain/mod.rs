@@ -312,7 +312,7 @@ where
 		// This is the error of mimic XcmRouter: decl_test_network
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get(),
+				R::UnitWeightCost::get() * 2,
 				XcmError::Unroutable,
 			))
 			.into(),
@@ -349,7 +349,7 @@ where
 		);
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::<R::ParaRuntime>::Attempted(Outcome::Complete(
-				R::UnitWeightCost::get(),
+				R::UnitWeightCost::get() * 2,
 			))
 			.into(),
 		);
@@ -590,7 +590,7 @@ where
 		// Unlike orml_xtoken, pallet_xcm fails with event when DustLost issue happens
 		System::<R::ParaRuntime>::assert_last_event(
 			pallet_xcm::Event::Attempted(Outcome::Incomplete(
-				R::UnitWeightCost::get(),
+				R::UnitWeightCost::get() * 2,
 				XcmError::FailedToTransactAsset(""),
 			))
 			.into(),
@@ -617,7 +617,7 @@ where
 			0
 		));
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get())).into(),
+			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get() * 2)).into(),
 		);
 
 		assert_eq!(
@@ -648,7 +648,7 @@ where
 			WeightLimit::Limited(R::UnitWeightCost::get().saturating_mul(4))
 		));
 		System::<R::ParaRuntime>::assert_last_event(
-			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get())).into(),
+			pallet_xcm::Event::Attempted(Outcome::Complete(R::UnitWeightCost::get() * 2)).into(),
 		);
 		assert_eq!(
 			Balances::<R::ParaRuntime>::free_balance(&alice()),
@@ -1010,8 +1010,9 @@ pub fn test_pallet_xcm_send_capacity_without_transact<R: TestXCMRequirements>() 
 					id: XCMAssetId::Concrete((Parent, Here).into()),
 					fun: Fungibility::Fungible(10 * 4),
 				},
-				weight_limit: WeightLimit::Limited(Weight::from_ref_time(
+				weight_limit: WeightLimit::Limited(Weight::from_parts(
 					200_000_000u64 * 4u64 * <u128 as TryInto<u64>>::try_into(RELAY_UNIT).unwrap(),
+					0,
 				)),
 			},
 			Instruction::DepositAsset {
@@ -1142,7 +1143,7 @@ where
 				weight_limit: WeightLimit::Limited(
 					R::UnitWeightCost::get()
 						.saturating_mul(5)
-						.saturating_add(Weight::from_ref_time(1_000_000_000u64)),
+						.saturating_add(Weight::from_parts(1_000_000_000u64, 0)),
 				),
 			},
 			Instruction::Transact {

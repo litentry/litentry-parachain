@@ -20,7 +20,7 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer, ensure_enclave_signer_or_self,
+		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_self,
 		get_expected_raw_message, verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, SetUserShieldingKeyResult, TrustedCallResult},
@@ -298,7 +298,7 @@ impl TrustedCallSigned {
 		if_production_or!(
 			{
 				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-				ensure_enclave_signer(&signer)
+				ensure_enclave_signer_account(&signer)
 					.map_err(|_| StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner))?;
 			},
 			{
@@ -325,7 +325,7 @@ impl TrustedCallSigned {
 		assertion: Assertion,
 	) -> StfResult<UserShieldingKeyType> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer(&signer).map_err(|_| {
+		ensure_enclave_signer_account(&signer).map_err(|_| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
 		})?;
 

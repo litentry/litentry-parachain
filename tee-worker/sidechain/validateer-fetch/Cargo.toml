@@ -9,15 +9,17 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 derive_more = "0.99.16"
 
 # substrate deps
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # local deps
+itp-enclave-bridge-storage = { path = "../../core-primitives/enclave-bridge-storage", default-features = false }
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
 itp-teerex-storage = { path = "../../core-primitives/teerex-storage", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
+its-primitives = { path = "../primitives", default-features = false }
 
 [features]
 default = ["std"]
@@ -28,6 +30,8 @@ std = [
     "sp-std/std",
     "itp-types/std",
     "itp-ocall-api/std",
+    "its-primitives/std",
+    "itp-enclave-bridge-storage/std",
 ]
 
 [dev-dependencies]

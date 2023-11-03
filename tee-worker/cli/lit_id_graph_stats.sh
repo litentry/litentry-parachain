@@ -46,7 +46,7 @@ ACC=//Bob
 KEY="22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12"
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-echo "CLIENT is $CLIENT"
+echo "CLIENT is: $CLIENT"
 
 echo "* Query on-chain enclave registry:"
 WORKERS=$($CLIENT list-workers)

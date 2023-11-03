@@ -123,6 +123,10 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
+	type HoldIdentifier = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type MaxFreezes = ();
 }
 parameter_types! {
 	pub const MinimumPeriod: u64 = 6000 / 2;
@@ -171,10 +175,12 @@ where
 }
 
 parameter_types! {
-	pub WeightPerGas: Weight = Weight::from_ref_time(20_000);
+	pub WeightPerGas: Weight = Weight::from_parts(20_000, 0);
 	// It will be the best if we can implement this in a more professional way
 	pub ChainId: u64 = 2106u64;
 	pub BlockGasLimit: U256 = U256::max_value();
+	// // BlockGasLimit / MAX_POV_SIZE
+	pub const GasLimitPovSizeRatio: u64 = 150_000_000 / (5 * 1024 * 1024);
 }
 use pallet_evm::AddressMapping;
 pub struct EVMAddressMapping<T>(sp_std::marker::PhantomData<T>);
@@ -238,8 +244,11 @@ impl pallet_evm::Config for Test {
 	type ChainId = ChainId;
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
+	type Timestamp = Timestamp;
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated;
+	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
+	type WeightInfo = ();
 }
 
 use pallet_ethereum::PostLogContent;
@@ -251,6 +260,8 @@ impl pallet_ethereum::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
+	// Maximum length (in bytes) of revert message to include in Executed event
+	type ExtraDataLength = ConstU32<30>;
 }
 
 impl pallet_evm_address::Config for Test {

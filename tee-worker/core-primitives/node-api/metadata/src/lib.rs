@@ -31,6 +31,7 @@ pub use crate::error::Error;
 pub use itp_api_client_types::{Metadata, MetadataError};
 
 pub mod error;
+pub mod pallet_balances;
 pub mod pallet_imp;
 pub mod pallet_sidechain;
 pub mod pallet_system;
@@ -39,9 +40,6 @@ pub mod pallet_teerex;
 pub mod pallet_utility;
 pub mod pallet_vcmp;
 pub mod runtime_call;
-
-#[cfg(feature = "std")]
-pub mod event;
 
 #[cfg(feature = "mocks")]
 pub mod metadata_mocks;
@@ -112,13 +110,12 @@ impl NodeMetadata {
 	) -> Result<[u8; 2]> {
 		let pallet = match &self.node_metadata {
 			None => return Err(Error::MetadataNotSet),
-			Some(m) => m.pallet(pallet_name).map_err(Error::NodeMetadata)?,
+			Some(m) => m.pallet_by_name_err(pallet_name)?,
 		};
 		let call_index = pallet
-			.call_indexes
-			.get(call_name)
-			.ok_or_else(|| Error::NodeMetadata(MetadataError::CallNotFound(call_name)))?;
-		Ok([pallet.index, *call_index])
+			.call_variant_by_name(call_name)
+			.ok_or(Error::NodeMetadata(MetadataError::CallNotFound(call_name)))?;
+		Ok([pallet.index(), call_index.index])
 	}
 
 	/// Generic storages:

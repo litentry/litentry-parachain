@@ -259,10 +259,8 @@ jobs:
           cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
+          cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy evm"
-          cargo clippy --release --features evm -- -D warnings
           echo "::endgroup::"
 
       - name: Clean up disk
@@ -286,10 +284,8 @@ jobs:
           cargo clippy --release --features sidechain -- -D warnings
           echo "::endgroup::"
           echo "::group::cargo clippy offchain-worker"
+          cargo clean --profile release
           cargo clippy --release --features offchain-worker -- -D warnings
-          echo "::endgroup::"
-          echo "::group::cargo clippy evm"
-          cargo clippy --release --features evm -- -D warnings
           echo "::endgroup::"
 
       - name: Fail early
@@ -435,7 +431,7 @@ jobs:
         run: |
           for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
             [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
-            echo "hello" > worker-cache/$i/nix 
+            echo "hello" > worker-cache/$i/nix
           done
           echo "::group::List worker-cache size"
           du -sh worker-cache/*

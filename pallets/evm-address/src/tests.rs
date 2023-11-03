@@ -53,11 +53,10 @@ fn evm_ethereum_pallet_call_test() {
 			"fe65717dad0447d715f660a0a58411de509b42e6000000000000000000000000"
 		]);
 
-		assert_ok!(Balances::set_balance(
+		assert_ok!(Balances::force_set_balance(
 			RuntimeOrigin::root(),
 			BOB.into(),
-			100_000_000_000_000,
-			0
+			100_000_000_000_000
 		));
 		assert_eq!(Balances::free_balance(ALICE), 8_000_000_000_000_000_000);
 		assert_ok!(EVM::call(
@@ -93,7 +92,7 @@ fn evm_ethereum_pallet_create_test() {
 			"fe65717dad0447d715f660a0a58411de509b42e6000000000000000000000000"
 		]);
 
-		assert_ok!(Balances::set_balance(RuntimeOrigin::root(), BOB.into(), 100_000_000_000_000, 0));
+		assert_ok!(Balances::force_set_balance(RuntimeOrigin::root(), BOB.into(), 100_000_000_000_000));
 		assert_eq!(Balances::free_balance(ALICE), 8_000_000_000_000_000_000);
 
 		assert_ok!(EVM::create(

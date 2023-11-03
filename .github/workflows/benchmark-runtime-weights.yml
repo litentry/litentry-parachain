@@ -41,6 +41,14 @@ jobs:
     if: ${{ github.event.inputs.rebuild-docker == 'true' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Free up disk space
+        if: startsWith(runner.name, 'GitHub Actions')
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          swap-storage: false
+          large-packages: false
+
       - name: Checkout codes on ${{ github.ref }}
         uses: actions/checkout@v4
         with:
@@ -74,7 +82,7 @@ jobs:
     # see https://github.com/actions/runner/issues/491
     if: |
       always() &&
-      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped') 
+      (needs.build-docker.result == 'success' || needs.build-docker.result == 'skipped')
     steps:
       - name: Set env
         run: |
@@ -95,7 +103,7 @@ jobs:
           echo "CHAIN=$chain" >> $GITHUB_ENV
 
       - name: Checkout codes on ${{ github.ref }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 

@@ -37,7 +37,7 @@ itp-stf-primitives = { default-features = false, path = "../../../core-primitive
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
 # litentry
 lc-credentials = { path = "../credentials", default-features = false }

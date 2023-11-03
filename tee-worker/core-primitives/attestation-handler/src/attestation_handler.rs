@@ -678,7 +678,7 @@ where
 			.map_err(|e| EnclaveError::Other(e.into()))
 	}
 
-	/// Returns Ok if the verification of the quote by the quote verification enclave (QVE) was successful  
+	/// Returns Ok if the verification of the quote by the quote verification enclave (QVE) was successful
 	pub fn ecdsa_quote_verification(&self, quote: Vec<u8>) -> SgxResult<()> {
 		let mut app_enclave_target_info: sgx_target_info_t = unsafe { std::mem::zeroed() };
 		let quote_collateral: sgx_ql_qve_collateral_t = unsafe { std::mem::zeroed() };

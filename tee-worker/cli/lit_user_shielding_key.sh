@@ -47,7 +47,7 @@ ACC_DID="did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c91290
 KEY="22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12"
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-echo "CLIENT is $CLIENT"
+echo "CLIENT is: $CLIENT"
 
 echo "* Query on-chain enclave registry:"
 WORKERS=$($CLIENT list-workers)
