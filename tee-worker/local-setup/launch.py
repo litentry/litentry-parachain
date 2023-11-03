@@ -124,6 +124,13 @@ def generate_config_local_json(parachain_dir):
 
     print("Successfully written ", config_file)
 
+def run_node(config, i: int):
+    node_log = open(f'{log_dir}/node{i}.log', 'w+')
+    node_cmd = [config["bin"]] + config["flags"]
+    print(f'Run node {i} with command: {node_cmd}')
+    return Popen(node_cmd, stdout=node_log, stderr=STDOUT, bufsize=1)
+
+
 
 # Generate `.env.local` used by local enclave ts-tests
 def generate_env_local():
@@ -185,9 +192,9 @@ def setup_worker_log_level(log_config_path):
                     log_level_string += k+"="+v+","
 
                 indx += 1
-                
+
             log_level_dic[section] = log_level_string
-    
+
     return log_level_dic
 
 
@@ -214,6 +221,17 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
 
     print("Litentry parachain is running")
     print("------------------------------------------------------------")
+
+    # n = 1
+    # for n_conf in config["nodes"]:
+    #     processes.append(run_node(n_conf, n))
+    #     n += 1
+    #     # let the first node begin before we start the second one, it is
+    #     # easier to track the logs if they don't start at the same time.
+    #     sleep(18)
+
+    # # sleep to give the node some time to startup
+    # sleep(5)
 
     c = pycurl.Curl()
     worker_i = 0
@@ -289,12 +307,12 @@ if __name__ == "__main__":
         "-o", "--offset", nargs="?", default="0", type=int, help="offset for port"
     )
     args = parser.parse_args()
-    
+
     today = datetime.datetime.now()
     formatted_date = today.strftime('%d_%m_%Y_%H%M')
     directory_name = f"parachain_dev_{formatted_date}"
     temp_directory_path = os.path.join('/tmp', directory_name)
-    parachain_dir = temp_directory_path 
+    parachain_dir = temp_directory_path
     print("Directory has been assigned to:", temp_directory_path)
 
     process_list = []

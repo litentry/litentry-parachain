@@ -17,7 +17,7 @@
 */
 
 use codec::{Decode, Encode};
-use sp_finality_grandpa::AuthorityList;
+use sp_consensus_grandpa::AuthorityList;
 use std::vec::Vec;
 
 #[derive(Encode, Decode, Clone)]
@@ -26,7 +26,24 @@ pub struct GrandpaParams<Header> {
 	pub authorities: AuthorityList,
 	pub authority_proof: Vec<Vec<u8>>,
 }
+
+impl<Header> GrandpaParams<Header> {
+	pub fn new(
+		genesis_header: Header,
+		authorities: AuthorityList,
+		authority_proof: Vec<Vec<u8>>,
+	) -> Self {
+		Self { genesis_header, authorities, authority_proof }
+	}
+}
+
 #[derive(Encode, Decode, Clone)]
 pub struct SimpleParams<Header> {
 	pub genesis_header: Header,
+}
+
+impl<Header> SimpleParams<Header> {
+	pub fn new(genesis_header: Header) -> Self {
+		Self { genesis_header }
+	}
 }

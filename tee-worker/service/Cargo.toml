@@ -43,6 +43,7 @@ itc-parentchain = { path = "../core/parentchain/parentchain-crate" }
 itc-rest-client = { path = "../core/rest-client" }
 itc-rpc-client = { path = "../core/rpc-client" }
 itc-rpc-server = { path = "../core/rpc-server" }
+itp-api-client-types = { path = "../core-primitives/node-api/api-client-types" }
 itp-enclave-api = { path = "../core-primitives/enclave-api" }
 itp-enclave-metrics = { path = "../core-primitives/enclave-metrics" }
 itp-node-api = { path = "../core-primitives/node-api" }
@@ -57,15 +58,15 @@ its-rpc-handler = { path = "../sidechain/rpc-handler" }
 its-storage = { path = "../sidechain/storage" }
 
 # `default-features = false` to remove the jsonrpsee dependency.
-substrate-api-client = { default-features = false, features = ["std", "ws-client"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39" }
+substrate-api-client = { default-features = false, features = ["std", "sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # Substrate dependencies
-frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39", features = ["full_crypto"] }
-sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", features = ["full_crypto"] }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
 config = "0.13.3"

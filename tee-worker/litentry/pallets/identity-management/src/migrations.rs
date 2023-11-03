@@ -33,7 +33,7 @@ pub fn migrate_to_v2<T: crate::Config, P: GetStorageVersion + PalletInfoAccess>(
 		// set Charlie's shielding key to [2u8; 32]
 		// verifiable via:
 		// ```
-		// ./bin/integritee-cli trusted --mrenclave $mrenclave get-storage IdentityManagement UserShieldingKeys 90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22
+		// ./bin/litentry-cli trusted --mrenclave $mrenclave get-storage IdentityManagement UserShieldingKeys 90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22
 		// ```
 		migration::put_storage_value::<UserShieldingKeyType>(
 			"IdentityManagement".as_bytes(),

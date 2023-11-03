@@ -27,6 +27,7 @@ import type { AccountId32, Call, H160, H256, Perbill } from "@polkadot/types/int
 import type {
     CumulusPalletDmpQueueConfigData,
     CumulusPalletDmpQueuePageIndexData,
+    CumulusPalletParachainSystemCodeUpgradeAuthorization,
     CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot,
     CumulusPalletXcmpQueueInboundChannelDetails,
     CumulusPalletXcmpQueueOutboundChannelDetails,
@@ -47,6 +48,7 @@ import type {
     PalletAssetManagerAssetMetadata,
     PalletBalancesAccountData,
     PalletBalancesBalanceLock,
+    PalletBalancesIdAmount,
     PalletBalancesReserveData,
     PalletBountiesBounty,
     PalletBridgeBridgeEvent,
@@ -57,6 +59,7 @@ import type {
     PalletDemocracyVoteThreshold,
     PalletDemocracyVoteVoting,
     PalletDrop3RewardPool,
+    PalletEvmCodeMetadata,
     PalletExtrinsicFilterOperationalMode,
     PalletIdentityRegistrarInfo,
     PalletIdentityRegistration,
@@ -88,9 +91,9 @@ import type {
     PalletXcmRemoteLockedFungibleRecord,
     PalletXcmVersionMigrationStage,
     PolkadotCorePrimitivesOutboundHrmpMessage,
-    PolkadotPrimitivesV2AbridgedHostConfiguration,
-    PolkadotPrimitivesV2PersistedValidationData,
-    PolkadotPrimitivesV2UpgradeRestriction,
+    PolkadotPrimitivesV4AbridgedHostConfiguration,
+    PolkadotPrimitivesV4PersistedValidationData,
+    PolkadotPrimitivesV4UpgradeRestriction,
     RococoParachainRuntimeSessionKeys,
     RuntimeCommonXcmImplCurrencyId,
     SidechainPrimitivesSidechainBlockConfirmation,
@@ -236,6 +239,22 @@ declare module "@polkadot/api-base/types/storage" {
             account: AugmentedQuery<
                 ApiType,
                 (arg: AccountId32 | string | Uint8Array) => Observable<PalletBalancesAccountData>,
+                [AccountId32]
+            >;
+            /**
+             * Freeze locks on account balances.
+             **/
+            freezes: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>,
+                [AccountId32]
+            >;
+            /**
+             * Holds on account balances.
+             **/
+            holds: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>,
                 [AccountId32]
             >;
             /**
@@ -619,6 +638,11 @@ declare module "@polkadot/api-base/types/storage" {
                 (arg: H160 | string | Uint8Array) => Observable<Bytes>,
                 [H160]
             >;
+            accountCodesMetadata: AugmentedQuery<
+                ApiType,
+                (arg: H160 | string | Uint8Array) => Observable<Option<PalletEvmCodeMetadata>>,
+                [H160]
+            >;
             accountStorages: AugmentedQuery<
                 ApiType,
                 (
@@ -914,7 +938,11 @@ declare module "@polkadot/api-base/types/storage" {
             /**
              * The next authorized upgrade, if there is one.
              **/
-            authorizedUpgrade: AugmentedQuery<ApiType, () => Observable<Option<H256>>, []>;
+            authorizedUpgrade: AugmentedQuery<
+                ApiType,
+                () => Observable<Option<CumulusPalletParachainSystemCodeUpgradeAuthorization>>,
+                []
+            >;
             /**
              * A custom head data that should be returned as result of `validate_block`.
              *
@@ -935,7 +963,7 @@ declare module "@polkadot/api-base/types/storage" {
              **/
             hostConfiguration: AugmentedQuery<
                 ApiType,
-                () => Observable<Option<PolkadotPrimitivesV2AbridgedHostConfiguration>>,
+                () => Observable<Option<PolkadotPrimitivesV4AbridgedHostConfiguration>>,
                 []
             >;
             /**
@@ -1057,7 +1085,7 @@ declare module "@polkadot/api-base/types/storage" {
              **/
             upgradeRestrictionSignal: AugmentedQuery<
                 ApiType,
-                () => Observable<Option<PolkadotPrimitivesV2UpgradeRestriction>>,
+                () => Observable<Option<PolkadotPrimitivesV4UpgradeRestriction>>,
                 []
             >;
             /**
@@ -1073,7 +1101,7 @@ declare module "@polkadot/api-base/types/storage" {
              **/
             validationData: AugmentedQuery<
                 ApiType,
-                () => Observable<Option<PolkadotPrimitivesV2PersistedValidationData>>,
+                () => Observable<Option<PolkadotPrimitivesV4PersistedValidationData>>,
                 []
             >;
         };
@@ -1195,6 +1223,10 @@ declare module "@polkadot/api-base/types/storage" {
                 ) => Observable<Option<ITuple<[u64, SpWeightsWeightV2Weight, u32]>>>,
                 [u32, XcmVersionedMultiLocation]
             >;
+            /**
+             * Global suspension state of the XCM executor.
+             **/
+            xcmExecutionSuspended: AugmentedQuery<ApiType, () => Observable<bool>, []>;
         };
         preimage: {
             preimageFor: AugmentedQuery<

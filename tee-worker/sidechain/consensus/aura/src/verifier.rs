@@ -15,7 +15,7 @@
 
 */
 
-use crate::{authorities, EnclaveOnChainOCallApi};
+use crate::{authorities, EnclaveOnChainOCallApi, ShardIdentifierFor};
 use core::marker::PhantomData;
 use its_block_verification::verify_sidechain_block;
 use its_consensus_common::{Error as ConsensusError, Verifier};
@@ -72,6 +72,7 @@ where
 		&self,
 		signed_block: SignedSidechainBlock,
 		parentchain_header: &ParentchainBlock::Header,
+		_shard: ShardIdentifierFor<SignedSidechainBlock>,
 		ctx: &Self::Context,
 	) -> Result<Self::BlockImportParams, ConsensusError> {
 		let authorities =

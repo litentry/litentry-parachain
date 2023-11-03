@@ -32,6 +32,8 @@ pub fn enclaves() -> Vec<Enclave> {
 }
 
 impl PalletTeerexApi for TestNodeApi {
+	type Hash = Hash;
+
 	fn enclave(&self, index: u64, _at_block: Option<Hash>) -> ApiResult<Option<Enclave>> {
 		Ok(Some(enclaves().remove(index as usize)))
 	}

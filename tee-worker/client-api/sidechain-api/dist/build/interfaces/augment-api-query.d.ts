@@ -22,6 +22,7 @@ import type {
     LitentryPrimitivesIdentity,
     PalletBalancesAccountData,
     PalletBalancesBalanceLock,
+    PalletBalancesIdAmount,
     PalletBalancesReserveData,
     PalletIdentityManagementTeeIdentityContext,
     PalletTransactionPaymentReleases,
@@ -62,6 +63,22 @@ declare module "@polkadot/api-base/types/storage" {
             account: AugmentedQuery<
                 ApiType,
                 (arg: AccountId32 | string | Uint8Array) => Observable<PalletBalancesAccountData>,
+                [AccountId32]
+            >;
+            /**
+             * Freeze locks on account balances.
+             **/
+            freezes: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>,
+                [AccountId32]
+            >;
+            /**
+             * Holds on account balances.
+             **/
+            holds: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>,
                 [AccountId32]
             >;
             /**

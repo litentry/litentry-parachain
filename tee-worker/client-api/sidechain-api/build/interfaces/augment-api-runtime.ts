@@ -6,7 +6,8 @@
 import "@polkadot/api-base/types/calls";
 
 import type { ApiTypes, AugmentedCall, DecoratedCallBase } from "@polkadot/api-base/types";
-import type { Null } from "@polkadot/types-codec";
+import type { Null, Option, Vec, u32 } from "@polkadot/types-codec";
+import type { AnyNumber } from "@polkadot/types-codec/types";
 import type { OpaqueMetadata } from "@polkadot/types/interfaces/metadata";
 import type { Block, Header } from "@polkadot/types/interfaces/runtime";
 import type { RuntimeVersion } from "@polkadot/types/interfaces/state";
@@ -52,12 +53,23 @@ declare module "@polkadot/api-base/types/calls" {
              **/
             version: AugmentedCall<ApiType, () => Observable<RuntimeVersion>>;
         };
-        /** 0x37e397fc7c91f5e4/1 */
+        /** 0x37e397fc7c91f5e4/2 */
         metadata: {
             /**
              * Returns the metadata of a runtime
              **/
             metadata: AugmentedCall<ApiType, () => Observable<OpaqueMetadata>>;
+            /**
+             * Returns the metadata at a given version.
+             **/
+            metadataAtVersion: AugmentedCall<
+                ApiType,
+                (version: u32 | AnyNumber | Uint8Array) => Observable<Option<OpaqueMetadata>>
+            >;
+            /**
+             * Returns the supported metadata versions.
+             **/
+            metadataVersions: AugmentedCall<ApiType, () => Observable<Vec<u32>>>;
         };
     } // AugmentedCalls
 } // declare module
