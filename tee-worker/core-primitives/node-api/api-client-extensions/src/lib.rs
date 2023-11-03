@@ -17,13 +17,12 @@
 
 //! Some substrate-api-client extension traits.
 
-pub use substrate_api_client::{api::Error as ApiClientError, rpc::WsRpcClient, Api};
+pub use substrate_api_client::{api::Error as ApiClientError, rpc::TungsteniteRpcClient, Api};
 
 pub mod account;
 pub mod chain;
 pub mod pallet_teeracle;
 pub mod pallet_teerex;
-pub mod pallet_teerex_api_mock;
 
 pub use account::*;
 pub use chain::*;

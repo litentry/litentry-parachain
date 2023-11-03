@@ -60,7 +60,7 @@ if [ -z "$PALLETS" ]; then
 fi
 
 for p in $PALLETS; do
-  echo "benchmarking $p ..."
+  echo "Start benchmarking pallet: $p for $1 ..."
 
   if [[ $p == *"parachain_staking"* ]]; then
       echo "will run $p benchmark code"
@@ -88,4 +88,6 @@ for p in $PALLETS; do
         --header=./LICENSE_HEADER \
         --output=./runtime/$1/src/weights/"$p".rs
 
+  echo "================================================================"
+  echo ""
 done

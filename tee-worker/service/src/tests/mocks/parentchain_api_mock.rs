@@ -14,25 +14,29 @@
 	limitations under the License.
 
 */
+
 use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
-use itp_node_api::api_client::{ApiResult, ChainApi, SignedBlock};
+use itp_node_api::api_client::{ApiResult, Block, ChainApi, SignedBlock};
 use itp_types::{
 	parentchain::{Hash, Header, StorageProof},
 	H256,
 };
-use sp_finality_grandpa::AuthorityList;
-use substrate_api_client::{Error::Metadata, Events, MetadataError::PalletNotFound};
+use sp_consensus_grandpa::AuthorityList;
 
 pub struct ParentchainApiMock {
 	parentchain: Vec<SignedBlock>,
 }
 
 impl ParentchainApiMock {
+	// Todo: Remove when #1451 is resolved
+	#[allow(unused)]
 	pub(crate) fn new() -> Self {
 		ParentchainApiMock { parentchain: Vec::new() }
 	}
 
 	/// Initializes parentchain with a default block chain of a given length.
+	// Todo: Remove when #1451 is resolved
+	#[allow(unused)]
 	pub fn with_default_blocks(mut self, number_of_blocks: u32) -> Self {
 		self.parentchain = (1..=number_of_blocks)
 			.map(|n| {
@@ -45,6 +49,11 @@ impl ParentchainApiMock {
 }
 
 impl ChainApi for ParentchainApiMock {
+	type Hash = Hash;
+	type Block = Block;
+	type Header = Header;
+	type BlockNumber = u32;
+
 	fn last_finalized_block(&self) -> ApiResult<Option<SignedBlock>> {
 		Ok(self.parentchain.last().cloned())
 	}
@@ -92,10 +101,4 @@ impl ChainApi for ParentchainApiMock {
 	fn get_events_for_block(&self, _block_hash: Option<H256>) -> ApiResult<Vec<u8>> {
 		Ok(Default::default())
 	}
-
-	// fn events(&self, _hash: Option<H256>) -> ApiResult<Events<H256>> {
-	// 	// let metadata = metadata::<Event>();
-	// 	// Ok(Events::new(metadata, H256::default(), vec![].into()))
-	// 	Err(Metadata(PalletNotFound("abc".to_string())))
-	// }
 }

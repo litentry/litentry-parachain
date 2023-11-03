@@ -35,7 +35,7 @@ NODEURL=${NODEURL:-"ws://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./bin/litentry-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"../bin/litentry-cli"}
 
 LOG_FOLDER="./../log"
 
@@ -47,6 +47,7 @@ echo ""
 TIMEOUT=5000 # 5 seconds, smaller than 12s (the block duration)
 
 CLIENT="$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
+echo "CLIENT is: $CLIENT"
 
 echo "* Query on-chain enclave registry:"
 WORKERS=$($CLIENT list-workers)
