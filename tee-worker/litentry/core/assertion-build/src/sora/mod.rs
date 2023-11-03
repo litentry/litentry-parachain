@@ -14,17 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![warn(unused_extern_crates)]
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-mod chain_specs;
-mod cli;
-mod command;
-mod evm_tracing_types;
-mod rpc;
-mod service;
-mod standalone_block_import;
-mod tracing;
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+extern crate sgx_tstd as std;
 
-fn main() -> sc_cli::Result<()> {
-	command::run()
-}
+pub mod quiz;

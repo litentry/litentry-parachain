@@ -5708,6 +5708,9 @@ declare module "@polkadot/api-base/types/submittable" {
                         | {
                               Oneblock: any;
                           }
+                        | {
+                              SoraQuiz: any;
+                          }
                         | string
                         | Uint8Array,
                     hash: H256 | string | Uint8Array
@@ -5783,6 +5786,9 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               Oneblock: any;
+                          }
+                        | {
+                              SoraQuiz: any;
                           }
                         | string
                         | Uint8Array
@@ -5872,6 +5878,9 @@ declare module "@polkadot/api-base/types/submittable" {
                           }
                         | {
                               Oneblock: any;
+                          }
+                        | {
+                              SoraQuiz: any;
                           }
                         | string
                         | Uint8Array,

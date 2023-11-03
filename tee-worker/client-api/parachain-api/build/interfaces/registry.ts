@@ -25,6 +25,7 @@ import type {
     CorePrimitivesKeyAesOutput,
     CorePrimitivesNetworkWeb3Network,
     CorePrimitivesOneblockOneBlockCourseType,
+    CorePrimitivesSoraquizSoraQuizType,
     CumulusPalletDmpQueueCall,
     CumulusPalletDmpQueueConfigData,
     CumulusPalletDmpQueueError,
@@ -390,6 +391,7 @@ declare module "@polkadot/types/types/registry" {
         CorePrimitivesKeyAesOutput: CorePrimitivesKeyAesOutput;
         CorePrimitivesNetworkWeb3Network: CorePrimitivesNetworkWeb3Network;
         CorePrimitivesOneblockOneBlockCourseType: CorePrimitivesOneblockOneBlockCourseType;
+        CorePrimitivesSoraquizSoraQuizType: CorePrimitivesSoraquizSoraQuizType;
         CumulusPalletDmpQueueCall: CumulusPalletDmpQueueCall;
         CumulusPalletDmpQueueConfigData: CumulusPalletDmpQueueConfigData;
         CumulusPalletDmpQueueError: CumulusPalletDmpQueueError;

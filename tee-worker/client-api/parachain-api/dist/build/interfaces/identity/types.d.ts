@@ -406,8 +406,6 @@ export interface TrustedOperationStatus extends Enum {
     readonly isUsurped: boolean;
     readonly isDropped: boolean;
     readonly isInvalid: boolean;
-    readonly isTopExecuted: boolean;
-    readonly asTopExecuted: Bytes;
     readonly type:
         | "Submitted"
         | "Future"
@@ -419,8 +417,7 @@ export interface TrustedOperationStatus extends Enum {
         | "Finalized"
         | "Usurped"
         | "Dropped"
-        | "Invalid"
-        | "TopExecuted";
+        | "Invalid";
 }
 /** @name TwitterValidationData */
 export interface TwitterValidationData extends Struct {
