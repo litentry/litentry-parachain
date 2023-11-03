@@ -23,26 +23,23 @@ use crate::{vc_callback::VCCallbackHandler, vc_handling::VCRequestHandler};
 use codec::Decode;
 #[cfg(feature = "std")]
 use futures::channel::oneshot;
-use ita_sgx_runtime::{ConvertAccountId, Hash};
+use ita_sgx_runtime::Hash;
 use ita_stf::{
-	aes_encrypt_default, helpers::enclave_signer_account, IdentityManagement, OpaqueCall, Runtime,
-	SgxParentchainTypeConverter, TrustedCall, TrustedOperation, UserShieldingKeys, VCMPCallIndexes,
+	helpers::enclave_signer_account, Runtime, TrustedCall, TrustedOperation, UserShieldingKeys,
 	H256, IMT,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
-};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use lc_stf_task_receiver::{handler::TaskHandler, StfTaskContext};
+use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::{init_vc_task_sender_storage, RpcError, VCRequest, VCResponse};
-use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, VCMPError};
+use litentry_primitives::{IdentityNetworkTuple, VCMPError};
 use std::{
 	string::String,
 	sync::{
@@ -78,11 +75,8 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 		channel::<(Result<VCResponse, VCMPError>, oneshot::Sender<Result<Vec<u8>, RpcError>>)>();
 
 	// TODO: Use a builder pattern here
-	let vc_callback_handler = VCCallbackHandler::new(
-		context.clone(),
-		extrinsic_factory.clone(),
-		node_metadata_repo.clone(),
-	);
+	let vc_callback_handler =
+		VCCallbackHandler::new(context.clone(), extrinsic_factory, node_metadata_repo);
 	let vc_callback_handler = Arc::new(vc_callback_handler);
 	start_response_handler(vc_callback_handler, response_receiver);
 
@@ -143,7 +137,7 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 		match context.shielding_key.decrypt(&req.encrypted_trusted_call) {
 			Ok(s) => s,
 			Err(e) => {
-				send_rpc_error(String::from("Failed to decrypt trusted operation"), req.sender);
+				send_rpc_error(format!("Failed to decrypt trusted operation: {:?}", e), req.sender);
 				return
 			},
 		};
@@ -152,7 +146,7 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 		match TrustedOperation::decode(&mut decrypted_trusted_operation.as_slice()) {
 			Ok(s) => s,
 			Err(e) => {
-				send_rpc_error(String::from("Failed to decode trusted operation"), req.sender);
+				send_rpc_error(format!("Failed to decode trusted operation, {:?}", e), req.sender);
 				return
 			},
 		};
@@ -168,11 +162,11 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 		},
 	};
 
-	if let TrustedCall::request_vc(signer, who, assertion, hash) = trusted_call.call.clone() {
-		let (mut state, hash) = context.state_handler.load_cloned(&req.shard).unwrap();
+	if let TrustedCall::request_vc(signer, who, assertion, _hash) = trusted_call.call.clone() {
+		let (mut state, _) = context.state_handler.load_cloned(&req.shard).unwrap();
 		state.execute_with(|| {
 			let key = UserShieldingKeys::<Runtime>::contains_key(&who);
-			if key == false {
+			if !key {
 				send_rpc_error(
 					String::from("UserShieldingKey has not been set by User"),
 					req.sender,
@@ -194,10 +188,10 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 
 			// TODO: Understand this parameters properly and avoid the unwrap here
 			let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
-				shard: req.shard.clone(),
+				shard: req.shard,
 				signer: signer.to_account_id().unwrap(),
 				enclave_account: enclave_signer_account(),
-				who: who.clone().into(),
+				who: who.clone(),
 				assertion: assertion.clone(),
 				identities,
 				top_hash: H256::zero(),
@@ -207,9 +201,11 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 			let context_pool = context.clone();
 			let sender_pool = sender.clone();
 			let vc_request_handler =
-				VCRequestHandler { req: assertion_build.clone(), context: context_pool.clone() };
+				VCRequestHandler { req: assertion_build, context: context_pool };
 			let result = vc_request_handler.process();
-			sender_pool.send((result, req.sender));
+			if let Err(e) = sender_pool.send((result, req.sender)) {
+				log::warn!("Failed to send processed result to sequencer: {:?}", e);
+			}
 		});
 	} else {
 		// Anything other request_vc should be rejected

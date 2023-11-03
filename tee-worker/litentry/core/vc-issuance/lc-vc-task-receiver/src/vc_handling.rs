@@ -1,32 +1,24 @@
 #![allow(clippy::result_large_err)]
 
-#[cfg(feature = "std")]
-use futures::channel::oneshot;
 use ita_sgx_runtime::Hash;
 pub use ita_stf::{aes_encrypt_default, IdentityManagement};
-use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
-use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{ShardIdentifier, H256};
+use itp_types::H256;
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
-use lc_stf_task_receiver::{handler::TaskHandler, StfTaskContext};
+use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::{RpcError, VCRequest, VCResponse};
+use lc_vc_task_sender::VCResponse;
 use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
 	VCMPError,
 };
-use log::*;
 use sp_core::hashing::blake2_256;
-use std::{
-	format,
-	sync::{mpsc::Sender, Arc},
-	vec::Vec,
-};
+use std::{format, sync::Arc};
 
 #[cfg(feature = "sgx")]
 use futures_sgx::channel::oneshot;

@@ -35,7 +35,6 @@ use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
-use lc_vc_task_sender::{SendVcRequest, VCRequest, VcRequestSender};
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, UserShieldingKeyType, ValidationData,
 	Web3Network,
@@ -268,7 +267,7 @@ impl TrustedCallSigned {
 				(item.0, networks)
 			})
 			.collect();
-		let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
+		let assertion_build: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			signer,
 			enclave_account: enclave_signer_account(),
@@ -277,14 +276,13 @@ impl TrustedCallSigned {
 			identities,
 			top_hash,
 			req_ext_hash,
-		};
-		let request: RequestType = assertion_build.clone().into();
+		}
+		.into();
 		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|e| {
+		sender.send_stf_request(assertion_build).map_err(|e| {
 			error!("[RequestVc] : {:?}", e);
 			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
-		});
-		Ok(())
+		})
 	}
 
 	pub fn link_identity_callback_internal(

@@ -1,21 +1,17 @@
-use crate::send_rpc_error;
+use crate::{send_rpc_error, std::string::ToString};
 use codec::Encode;
 use ita_sgx_runtime::Hash;
 use ita_stf::{aes_encrypt_default, IdentityManagement, OpaqueCall, VCMPCallIndexes, H256};
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{
-	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
-};
-use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
+use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_vc_task_sender::{RpcError, VCResponse};
-use litentry_primitives::{Assertion, Identity};
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(feature = "sgx")]
@@ -80,7 +76,7 @@ where
 			{
 				Some(s) => s,
 				None => {
-					send_rpc_error(format!("User Shielding key not found for user"), sender);
+					send_rpc_error("User Shielding key not found for user".to_string(), sender);
 					return
 				},
 			};
@@ -110,10 +106,10 @@ where
 				},
 			};
 			match self.context.ocall_api.send_to_parentchain(xt) {
-				Ok(s) => {
-					if let Err(e) = sender.send(Ok(result.encode())) {}
-					log::warn!("Unable to send response jsonrpc handler");
-				},
+				Ok(_) =>
+					if let Err(e) = sender.send(Ok(result.encode())) {
+						log::warn!("Unable to send response jsonrpc handler: {:?}", e);
+					},
 				Err(e) => {
 					send_rpc_error(
 						format!("Unable to send extrinsic to parentchain: {:?}", e),
