@@ -23,8 +23,8 @@ use crate::{
 		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_self,
 		get_expected_raw_message, verify_web3_identity,
 	},
-	trusted_call_result::{LinkIdentityResult, SetUserShieldingKeyResult, TrustedCallResult},
-	AccountId, IdentityManagement, Runtime, StfError, StfResult, UserShieldingKeys,
+	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
+	AccountId, StfError, StfResult,
 };
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
 use ita_sgx_runtime::RuntimeOrigin;
@@ -46,83 +46,6 @@ use std::{sync::Arc, vec::Vec};
 use crate::helpers::{ensure_alice, ensure_enclave_signer_or_alice};
 
 impl TrustedCallSigned {
-	pub fn set_user_shielding_key_internal(
-		signer: AccountId,
-		who: Identity,
-		key: UserShieldingKeyType,
-		networks: Vec<Web3Network>,
-	) -> StfResult<UserShieldingKeyType> {
-		if_production_or!(
-			ensure!(
-				ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-				StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
-			),
-			ensure!(
-				ensure_enclave_signer_or_self(&signer, who.to_account_id())
-					|| ensure_alice(&signer),
-				StfError::SetUserShieldingKeyFailed(ErrorDetail::UnauthorizedSigner)
-			)
-		);
-
-		IMTCall::set_user_shielding_key { who, key, networks }
-			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_or_else(|e| Err(StfError::SetUserShieldingKeyFailed(e.error.into())), |_| Ok(key))
-	}
-
-	#[allow(clippy::too_many_arguments)]
-	pub fn handle_set_user_shielding_key<NodeMetadataRepository>(
-		calls: &mut Vec<OpaqueCall>,
-		node_metadata_repo: Arc<NodeMetadataRepository>,
-		signer: Identity,
-		who: Identity,
-		key: UserShieldingKeyType,
-		web3networks: Vec<Web3Network>,
-		hash: H256,
-	) -> StfResult<TrustedCallResult>
-	where
-		NodeMetadataRepository: AccessNodeMetadata,
-		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-	{
-		debug!("set_user_shielding_key, who: {}", account_id_to_string(&who));
-		let account = SgxParentchainTypeConverter::convert(
-			who.to_account_id().ok_or(StfError::InvalidAccount)?,
-		);
-		let call_index =
-			node_metadata_repo.get_from_metadata(|m| m.user_shielding_key_set_call_indexes())??;
-
-		let key = Self::set_user_shielding_key_internal(
-			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
-			who.clone(),
-			key,
-			web3networks,
-		)
-		.map_err(|e| {
-			debug!("pushing error event ... error: {}", e);
-			add_call_from_imp_error(
-				calls,
-				node_metadata_repo,
-				Some(account.clone()),
-				e.to_imp_error(),
-				hash,
-			);
-			e
-		})?;
-
-		debug!("pushing user_shielding_key_set event ...");
-		let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-		let encrypted_id_graph = aes_encrypt_default(&key, &id_graph.encode());
-		calls.push(OpaqueCall::from_tuple(&(
-			call_index,
-			account,
-			encrypted_id_graph.clone(),
-			hash,
-		)));
-
-		debug!("populating user_shielding_key_set rpc reponse ...");
-		let res = SetUserShieldingKeyResult { id_graph: encrypted_id_graph };
-		Ok(TrustedCallResult::SetUserShieldingKey(res))
-	}
-
 	#[allow(clippy::too_many_arguments)]
 	pub fn link_identity_internal(
 		shard: &ShardIdentifier,
@@ -140,9 +63,6 @@ impl TrustedCallSigned {
 			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::LinkIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
-
-		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
 		// note it's the signer's nonce, not `who`
 		// we intentionally use `System::account_nonce - 1` to make up for the increment at the
@@ -190,38 +110,34 @@ impl TrustedCallSigned {
 		signer: AccountId,
 		who: Identity,
 		identity: Identity,
-	) -> StfResult<UserShieldingKeyType> {
+	) -> StfResult<()> {
 		ensure!(
 			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::DeactivateIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
-		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::DeactivateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
 		IMTCall::deactivate_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::DeactivateIdentityFailed(e.into()))?;
 
-		Ok(key)
+		Ok(())
 	}
 
 	pub fn activate_identity_internal(
 		signer: AccountId,
 		who: Identity,
 		identity: Identity,
-	) -> StfResult<UserShieldingKeyType> {
+	) -> StfResult<()> {
 		ensure!(
 			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
 			StfError::ActivateIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
-		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::ActivateIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
 
 		IMTCall::activate_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::ActivateIdentityFailed(e.into()))?;
 
-		Ok(key)
+		Ok(())
 	}
 
 	pub fn request_vc_internal(
@@ -248,11 +164,6 @@ impl TrustedCallSigned {
 				)
 			),
 		}
-
-		ensure!(
-			UserShieldingKeys::<Runtime>::contains_key(&who),
-			StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound)
-		);
 
 		let id_graph = IMT::get_id_graph(&who, usize::MAX);
 		let assertion_networks = assertion.get_supported_web3networks();
@@ -294,7 +205,7 @@ impl TrustedCallSigned {
 		who: Identity,
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
-	) -> StfResult<UserShieldingKeyType> {
+	) -> StfResult<()> {
 		if_production_or!(
 			{
 				// In prod: the signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
@@ -309,30 +220,24 @@ impl TrustedCallSigned {
 				);
 			}
 		);
-		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::LinkIdentityFailed(ErrorDetail::UserShieldingKeyNotFound))?;
-
 		IMTCall::link_identity { who, identity, web3networks }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::LinkIdentityFailed(e.into()))?;
 
-		Ok(key)
+		Ok(())
 	}
 
 	pub fn request_vc_callback_internal(
 		signer: AccountId,
 		who: Identity,
 		assertion: Assertion,
-	) -> StfResult<UserShieldingKeyType> {
+	) -> StfResult<()> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer).map_err(|_| {
 			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
 		})?;
 
-		let key = IdentityManagement::user_shielding_keys(&who)
-			.ok_or(StfError::RequestVCFailed(assertion, ErrorDetail::UserShieldingKeyNotFound))?;
-
-		Ok(key)
+		Ok(())
 	}
 
 	// common handler for both web2 and web3 identity verification
@@ -344,7 +249,7 @@ impl TrustedCallSigned {
 		who: Identity,
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
-		_maybe_key: Option<UserShieldingKeyType>, // TODO: will be used when user shielding key is removed (P-174)
+		maybe_key: Option<UserShieldingKeyType>,
 		hash: H256,
 	) -> StfResult<TrustedCallResult>
 	where
@@ -355,10 +260,8 @@ impl TrustedCallSigned {
 		let account = SgxParentchainTypeConverter::convert(
 			who.to_account_id().ok_or(StfError::InvalidAccount)?,
 		);
-		let call_index =
-			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 
-		let key = Self::link_identity_callback_internal(
+		Self::link_identity_callback_internal(
 			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
 			identity.clone(),
@@ -375,17 +278,24 @@ impl TrustedCallSigned {
 			);
 			e
 		})?;
-		let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-		debug!("pushing identity_linked event ...");
-		calls.push(OpaqueCall::from_tuple(&(
-			call_index,
-			account,
-			aes_encrypt_default(&key, &identity.encode()),
-			aes_encrypt_default(&key, &id_graph.encode()),
-			hash,
-		)));
-		Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
-			id_graph: aes_encrypt_default(&key, &id_graph.encode()),
-		}))
+
+		if let Some(key) = maybe_key {
+			debug!("pushing identity_linked event ...");
+			let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+			let call_index =
+				node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
+			calls.push(OpaqueCall::from_tuple(&(
+				call_index,
+				account,
+				aes_encrypt_default(&key, &identity.encode()),
+				aes_encrypt_default(&key, &id_graph.encode()),
+				hash,
+			)));
+			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
+				id_graph: aes_encrypt_default(&key, &id_graph.encode()),
+			}))
+		} else {
+			Ok(TrustedCallResult::Empty)
+		}
 	}
 }

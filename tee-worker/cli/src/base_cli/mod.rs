@@ -22,7 +22,6 @@ use crate::{
 		listen::ListenCommand,
 		litentry::{
 			link_identity::LinkIdentityCommand, set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
-			set_user_shielding_key::SetUserShieldingKeyCommand,
 		},
 		register_tcb_info::RegisterTcbInfoCommand,
 		shield_funds::ShieldFundsCommand,
@@ -87,9 +86,6 @@ pub enum BaseCommand {
 	/// we want to keep our changes isolated
 	PrintSgxMetadataRaw,
 
-	/// set the user's shielding key
-	SetUserShieldingKey(SetUserShieldingKeyCommand),
-
 	/// create idenity graph
 	LinkIdentity(LinkIdentityCommand),
 
@@ -113,7 +109,6 @@ impl BaseCommand {
 			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
-			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 		}

@@ -54,9 +54,6 @@ pub type UpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave)
 pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 
 // pallet IMP
-pub type SetUserShieldingKeyParams = (ShardIdentifier, Vec<u8>);
-pub type SetUserShieldingKeyFn = (CallIndex, SetUserShieldingKeyParams);
-
 pub type LinkIdentityParams =
 	(ShardIdentifier, AccountId, Vec<u8>, Vec<u8>, UserShieldingKeyNonceType);
 pub type LinkIdentityFn = (CallIndex, LinkIdentityParams);

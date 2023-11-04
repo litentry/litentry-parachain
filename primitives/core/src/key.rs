@@ -30,7 +30,6 @@ pub type ShardIdentifier = sp_core::H256;
 pub type MrenclaveType = [u8; 32];
 
 // we use 256-bit AES-GCM as user shielding key
-// TODO: use constants from `ring` crate, e.g. ring::aead::NONCE_LEN
 pub const USER_SHIELDING_KEY_LEN: usize = 32;
 pub use ring::aead::{MAX_TAG_LEN, NONCE_LEN};
 

@@ -88,17 +88,7 @@ pub mod pallet {
 		ActivateIdentityRequested {
 			shard: ShardIdentifier,
 		},
-		SetUserShieldingKeyRequested {
-			shard: ShardIdentifier,
-		},
 		// event that should be triggered by TEECallOrigin
-		// these events keep the `account` as public to be consistent with VCMP and better
-		// indexing see https://github.com/litentry/litentry-parachain/issues/1313
-		UserShieldingKeySet {
-			account: T::AccountId,
-			id_graph: AesOutput,
-			req_ext_hash: H256,
-		},
 		// we return the request-extrinsic-hash for better tracking
 		// TODO: what if the event is triggered by an extrinsic that is included in a batch call?
 		//       Can we retrieve that extrinsic hash in F/E?
@@ -110,12 +100,10 @@ pub mod pallet {
 		},
 		IdentityDeactivated {
 			account: T::AccountId,
-			identity: AesOutput,
 			req_ext_hash: H256,
 		},
 		IdentityActivated {
 			account: T::AccountId,
-			identity: AesOutput,
 			req_ext_hash: H256,
 		},
 		// event errors caused by processing in TEE
@@ -124,11 +112,6 @@ pub mod pallet {
 		//
 		// why is the `account` in the error event an Option?
 		// because in some erroneous cases we can't get the extrinsic sender (e.g. decode error)
-		SetUserShieldingKeyFailed {
-			account: Option<T::AccountId>,
-			detail: ErrorDetail,
-			req_ext_hash: H256,
-		},
 		LinkIdentityFailed {
 			account: Option<T::AccountId>,
 			detail: ErrorDetail,
@@ -187,19 +170,6 @@ pub mod pallet {
 			Delegatee::<T>::remove(account.clone());
 			Self::deposit_event(Event::DelegateeRemoved { account });
 			Ok(())
-		}
-
-		/// Set or update user's shielding key
-		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::WeightInfo::set_user_shielding_key())]
-		pub fn set_user_shielding_key(
-			origin: OriginFor<T>,
-			shard: ShardIdentifier,
-			encrypted_key: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
-			let _ = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::SetUserShieldingKeyRequested { shard });
-			Ok(().into())
 		}
 
 		/// Link an identity with given network types and validation data.
@@ -273,19 +243,6 @@ pub mod pallet {
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
-		#[pallet::call_index(30)]
-		#[pallet::weight(<T as Config>::WeightInfo::user_shielding_key_set())]
-		pub fn user_shielding_key_set(
-			origin: OriginFor<T>,
-			account: T::AccountId,
-			id_graph: AesOutput,
-			req_ext_hash: H256,
-		) -> DispatchResultWithPostInfo {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::UserShieldingKeySet { account, id_graph, req_ext_hash });
-			Ok(Pays::No.into())
-		}
-
 		#[pallet::call_index(31)]
 		#[pallet::weight(<T as Config>::WeightInfo::identity_linked())]
 		pub fn identity_linked(
@@ -310,11 +267,10 @@ pub mod pallet {
 		pub fn identity_deactivated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
-			identity: AesOutput,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityDeactivated { account, identity, req_ext_hash });
+			Self::deposit_event(Event::IdentityDeactivated { account, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -323,11 +279,10 @@ pub mod pallet {
 		pub fn identity_activated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
-			identity: AesOutput,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityActivated { account, identity, req_ext_hash });
+			Self::deposit_event(Event::IdentityActivated { account, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -341,12 +296,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
-				IMPError::SetUserShieldingKeyFailed(detail) =>
-					Self::deposit_event(Event::SetUserShieldingKeyFailed {
-						account,
-						detail,
-						req_ext_hash,
-					}),
 				IMPError::LinkIdentityFailed(detail) =>
 					Self::deposit_event(Event::LinkIdentityFailed { account, detail, req_ext_hash }),
 				IMPError::DeactivateIdentityFailed(detail) =>

@@ -29,22 +29,6 @@ const BOB_PUBKEY: &[u8; 32] = &[2u8; 32];
 const EDDIE_PUBKEY: &[u8; 32] = &[5u8; 32];
 
 #[test]
-fn set_user_shielding_key_works() {
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
-		assert_ok!(IdentityManagement::set_user_shielding_key(
-			RuntimeOrigin::signed(alice),
-			shard,
-			vec![1u8; 2048]
-		));
-		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::SetUserShieldingKeyRequested { shard },
-		));
-	});
-}
-
-#[test]
 fn link_identity_without_delegatee_works() {
 	new_test_ext().execute_with(|| {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
@@ -194,23 +178,31 @@ fn extrinsic_whitelist_origin_works() {
 		assert_ok!(IMPExtrinsicWhitelist::switch_group_control_on(RuntimeOrigin::root()));
 		let shard: ShardIdentifier = H256::from_slice(&TEST8_MRENCLAVE);
 		assert_noop!(
-			IdentityManagement::set_user_shielding_key(
+			IdentityManagement::link_identity(
 				RuntimeOrigin::signed(alice.clone()),
 				shard,
-				vec![1u8; 2048]
+				alice.clone(),
+				vec![1u8; 2048],
+				vec![1u8; 2048],
+				vec![1u8; 2048],
+				UserShieldingKeyNonceType::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
 
 		// add `alice` to whitelist group
 		assert_ok!(IMPExtrinsicWhitelist::add_group_member(RuntimeOrigin::root(), alice.clone()));
-		assert_ok!(IdentityManagement::set_user_shielding_key(
-			RuntimeOrigin::signed(alice),
+		assert_ok!(IdentityManagement::link_identity(
+			RuntimeOrigin::signed(alice.clone()),
 			shard,
-			vec![1u8; 2048]
+			alice,
+			vec![1u8; 2048],
+			vec![1u8; 2048],
+			vec![1u8; 2048],
+			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
-			crate::Event::SetUserShieldingKeyRequested { shard },
+			crate::Event::LinkIdentityRequested { shard },
 		));
 	});
 }

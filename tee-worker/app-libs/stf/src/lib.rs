@@ -38,9 +38,7 @@ pub use litentry_primitives::{
 
 use codec::{Decode, Encode};
 use derive_more::Display;
-pub use ita_sgx_runtime::{
-	pallet_imt::UserShieldingKeys, IDGraph, IdentityManagement, Runtime, System,
-};
+pub use ita_sgx_runtime::{IDGraph, IdentityManagement, Runtime, System};
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
@@ -86,8 +84,6 @@ pub enum StfError {
 	InvalidStorageDiff,
 	InvalidMetadata,
 	// litentry
-	#[display(fmt = "SetUserShieldingKeyFailed: {:?}", _0)]
-	SetUserShieldingKeyFailed(ErrorDetail),
 	#[display(fmt = "LinkIdentityFailed: {:?}", _0)]
 	LinkIdentityFailed(ErrorDetail),
 	#[display(fmt = "DeactivateIdentityFailed: {:?}", _0)]
@@ -118,7 +114,6 @@ impl From<MetadataProviderError> for StfError {
 impl From<IMPError> for StfError {
 	fn from(e: IMPError) -> Self {
 		match e {
-			IMPError::SetUserShieldingKeyFailed(d) => StfError::SetIdentityNetworksFailed(d),
 			IMPError::LinkIdentityFailed(d) => StfError::LinkIdentityFailed(d),
 			IMPError::DeactivateIdentityFailed(d) => StfError::DeactivateIdentityFailed(d),
 			IMPError::ActivateIdentityFailed(d) => StfError::ActivateIdentityFailed(d),
@@ -140,8 +135,6 @@ impl StfError {
 	// Convert StfError to IMPError that would be sent to parentchain
 	pub fn to_imp_error(&self) -> IMPError {
 		match self {
-			StfError::SetUserShieldingKeyFailed(d) =>
-				IMPError::SetUserShieldingKeyFailed(d.clone()),
 			StfError::LinkIdentityFailed(d) => IMPError::LinkIdentityFailed(d.clone()),
 			StfError::DeactivateIdentityFailed(d) => IMPError::DeactivateIdentityFailed(d.clone()),
 			StfError::ActivateIdentityFailed(d) => IMPError::ActivateIdentityFailed(d.clone()),
