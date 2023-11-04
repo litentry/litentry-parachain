@@ -265,12 +265,12 @@ impl TwitterOfficialClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use lc_mock_server::{default_getter, run};
+	use lc_mock_server::run;
 	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(default_getter), 0).unwrap();
+		let url = run(0).unwrap();
 		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_twitter_official_url(url);
 	}
 

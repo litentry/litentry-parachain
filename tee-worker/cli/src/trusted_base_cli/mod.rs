@@ -23,7 +23,6 @@ use crate::{
 			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
 			request_vc::RequestVcCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
-			user_shielding_key::UserShieldingKeyCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,

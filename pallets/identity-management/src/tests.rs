@@ -40,7 +40,6 @@ fn link_identity_without_delegatee_works() {
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
-			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::LinkIdentityRequested { shard },
@@ -61,7 +60,6 @@ fn link_identity_with_authorized_delegatee_works() {
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
-			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::LinkIdentityRequested { shard },
@@ -83,7 +81,6 @@ fn link_identity_with_unauthorized_delegatee_fails() {
 				vec![1u8; 2048],
 				vec![1u8; 2048],
 				vec![1u8; 2048],
-				UserShieldingKeyNonceType::default(),
 			),
 			Error::<Test>::UnauthorizedUser
 		);
@@ -185,7 +182,6 @@ fn extrinsic_whitelist_origin_works() {
 				vec![1u8; 2048],
 				vec![1u8; 2048],
 				vec![1u8; 2048],
-				UserShieldingKeyNonceType::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
@@ -199,7 +195,6 @@ fn extrinsic_whitelist_origin_works() {
 			vec![1u8; 2048],
 			vec![1u8; 2048],
 			vec![1u8; 2048],
-			UserShieldingKeyNonceType::default(),
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::LinkIdentityRequested { shard },

@@ -133,7 +133,6 @@ pub enum TrustedCall {
 		Identity,
 		ValidationData,
 		Vec<Web3Network>,
-		UserShieldingKeyNonceType,
 		Option<UserShieldingKeyType>,
 		H256,
 	),
@@ -522,7 +521,6 @@ where
 				identity,
 				validation_data,
 				web3networks,
-				nonce,
 				maybe_key,
 				hash,
 			) => {
@@ -537,7 +535,6 @@ where
 					identity.clone(),
 					validation_data,
 					web3networks.clone(),
-					nonce,
 					top_hash,
 					maybe_key,
 					hash,
@@ -696,14 +693,13 @@ where
 
 				Self::request_vc_callback_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who,
 					assertion.clone(),
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
 					add_call_from_vcmp_error(
 						calls,
-						node_metadata_repo,
+						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_vcmp_error(),
 						hash,

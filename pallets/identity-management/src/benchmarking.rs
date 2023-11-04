@@ -20,7 +20,7 @@ use super::*;
 
 use crate::Pallet as IdentityManagement;
 #[allow(unused)]
-use core_primitives::{AesOutput, ErrorDetail, IMPError, UserShieldingKeyNonceType};
+use core_primitives::{AesOutput, ErrorDetail, IMPError};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, BenchmarkError};
 use frame_support::traits::EnsureOrigin;
 use frame_system::RawOrigin;
@@ -60,8 +60,7 @@ benchmarks! {
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
 		let encrypted_web3networks = vec![1u8; 2048];
-		let nonce = UserShieldingKeyNonceType::default();
-	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, encrypted_web3networks, nonce)
+	}: _(RawOrigin::Signed(caller.clone()), shard, caller.clone(), encrypted_did, encrypted_validation_data, encrypted_web3networks)
 	verify {
 		assert_last_event::<T>(Event::LinkIdentityRequested{ shard }.into());
 	}
@@ -74,8 +73,7 @@ benchmarks! {
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
 		let encrypted_web3networks = vec![1u8; 2048];
-		let nonce = UserShieldingKeyNonceType::default();
-		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks, nonce)?;
+		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks)?;
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
 	verify {
 		assert_last_event::<T>(Event::DeactivateIdentityRequested{ shard }.into());
@@ -89,8 +87,7 @@ benchmarks! {
 		let encrypted_did = vec![1u8; 2048];
 		let encrypted_validation_data = vec![1u8; 2048];
 		let encrypted_web3networks = vec![1u8; 2048];
-		let nonce = UserShieldingKeyNonceType::default();
-		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks, nonce)?;
+		IdentityManagement::<T>::link_identity(RawOrigin::Signed(caller.clone()).into(), shard, caller.clone(), encrypted_did.clone(), encrypted_validation_data, encrypted_web3networks)?;
 	}: _(RawOrigin::Signed(caller), shard, encrypted_did)
 	verify {
 		assert_last_event::<T>(Event::ActivateIdentityRequested{ shard }.into());

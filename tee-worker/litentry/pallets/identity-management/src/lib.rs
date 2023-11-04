@@ -44,7 +44,7 @@ use frame_system::pallet_prelude::*;
 pub use litentry_primitives::{
 	all_evm_web3networks, all_substrate_web3networks, Identity, ParentchainBlockNumber, Web3Network,
 };
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;

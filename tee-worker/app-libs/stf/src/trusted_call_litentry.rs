@@ -54,7 +54,6 @@ impl TrustedCallSigned {
 		identity: Identity,
 		validation_data: ValidationData,
 		web3networks: Vec<Web3Network>,
-		nonce: UserShieldingKeyNonceType,
 		top_hash: H256,
 		maybe_key: Option<UserShieldingKeyType>,
 		req_ext_hash: H256,
@@ -70,7 +69,7 @@ impl TrustedCallSigned {
 		// (current nonce + 1) when verifying the validation data.
 		let sidechain_nonce = System::account_nonce(&signer) - 1;
 
-		let raw_msg = get_expected_raw_message(&who, &identity, sidechain_nonce, key, nonce);
+		let raw_msg = get_expected_raw_message(&who, &identity, sidechain_nonce);
 
 		match validation_data {
 			ValidationData::Web2(data) => {
@@ -227,15 +226,10 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn request_vc_callback_internal(
-		signer: AccountId,
-		who: Identity,
-		assertion: Assertion,
-	) -> StfResult<()> {
+	pub fn request_vc_callback_internal(signer: AccountId, assertion: Assertion) -> StfResult<()> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer_account(&signer).map_err(|_| {
-			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
-		})?;
+		ensure_enclave_signer_account(&signer)
+			.map_err(|_| StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner))?;
 
 		Ok(())
 	}
@@ -271,7 +265,7 @@ impl TrustedCallSigned {
 			debug!("pushing error event ... error: {}", e);
 			add_call_from_imp_error(
 				calls,
-				node_metadata_repo,
+				node_metadata_repo.clone(),
 				Some(account.clone()),
 				e.to_imp_error(),
 				hash,

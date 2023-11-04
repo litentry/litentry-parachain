@@ -75,7 +75,6 @@ pub enum TrustedGetter {
 	#[cfg(feature = "evm")]
 	evm_account_storages(Identity, H160, H256),
 	// litentry
-	user_shielding_key(Identity),
 	id_graph(Identity),
 	id_graph_stats(Identity),
 }
@@ -92,7 +91,6 @@ impl TrustedGetter {
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_account_storages(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedGetter::user_shielding_key(sender_identity, ..) => sender_identity,
 			TrustedGetter::id_graph(sender_identity) => sender_identity,
 			TrustedGetter::id_graph_stats(sender_identity) => sender_identity,
 		}
@@ -205,8 +203,6 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::user_shielding_key(who) =>
-				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
 			TrustedGetter::id_graph(who) =>
 				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
 
