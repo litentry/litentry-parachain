@@ -113,24 +113,22 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	identity_deactivated {
 		let req_ext_hash = H256::default();
-		let identity = AesOutput::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityDeactivated { account, identity, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityDeactivated { account, req_ext_hash }.into());
 	}
 
 	// Benchmark `identity_activated`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	identity_activated {
 		let req_ext_hash = H256::default();
-		let identity = AesOutput::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityActivated { account, identity, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityActivated { account, req_ext_hash }.into());
 	}
 
 	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that

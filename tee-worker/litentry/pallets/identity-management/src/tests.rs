@@ -14,80 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	all_substrate_web3networks, mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus,
-	UserShieldingKeyType, Web3Network,
-};
+use crate::{mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, Web3Network};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::{IdentityString, USER_SHIELDING_KEY_LEN};
+use litentry_primitives::IdentityString;
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
-
-#[test]
-fn set_user_shielding_key_works() {
-	new_test_ext(false).execute_with(|| {
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-		let who: Identity = BOB.into();
-
-		assert_eq!(IMT::user_shielding_keys(who.clone()), None);
-
-		assert_ok!(IMT::set_user_shielding_key(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			shielding_key,
-			all_substrate_web3networks(),
-		));
-		assert_eq!(IMT::user_shielding_keys(who.clone()), Some(shielding_key));
-		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
-			who: who.clone(),
-			key: shielding_key,
-		}));
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 1);
-	});
-}
-
-#[test]
-fn set_user_shielding_key_fails_for_linked_identity() {
-	new_test_ext(true).execute_with(|| {
-		let web3networks: Vec<Web3Network> = vec![Web3Network::Litentry];
-		let who: Identity = BOB.into();
-		let alice_prime_identity: Identity = ALICE.into();
-		assert_ok!(IMT::link_identity(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			alice_prime_identity.clone(),
-			web3networks.clone(),
-		));
-		assert_eq!(
-			IMT::id_graphs(who.clone(), alice_prime_identity).unwrap(),
-			IdentityContext { link_block: 1, web3networks, status: IdentityStatus::Active }
-		);
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
-
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-		let who: Identity = ALICE.into();
-
-		assert_eq!(IMT::user_shielding_keys(who.clone()), None);
-
-		assert_err!(
-			IMT::set_user_shielding_key(
-				RuntimeOrigin::signed(ALICE),
-				who.clone(),
-				shielding_key,
-				all_substrate_web3networks(),
-			),
-			Error::<Test>::IdentityAlreadyLinked
-		);
-
-		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 0);
-	});
-}
+pub const CHARLIE: AccountId32 = AccountId32::new([3u8; 32]);
 
 #[test]
 fn link_twitter_identity_works() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let who: Identity = BOB.into();
 
 		assert_ok!(IMT::link_identity(
@@ -106,7 +44,7 @@ fn link_twitter_identity_works() {
 
 #[test]
 fn link_substrate_identity_works() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let web3networks: Vec<Web3Network> = vec![Web3Network::Litentry];
 		let who: Identity = BOB.into();
 		assert_ok!(IMT::link_identity(
@@ -125,7 +63,7 @@ fn link_substrate_identity_works() {
 
 #[test]
 fn link_evm_identity_works() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let web3networks: Vec<Web3Network> = vec![Web3Network::Ethereum, Web3Network::Bsc];
 		let who: Identity = BOB.into();
 		assert_ok!(IMT::link_identity(
@@ -144,7 +82,7 @@ fn link_evm_identity_works() {
 
 #[test]
 fn link_identity_with_wrong_network_fails() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let web3networks: Vec<Web3Network> = vec![Web3Network::Bsc];
 		let who: Identity = BOB.into();
 		assert_noop!(
@@ -160,8 +98,60 @@ fn link_identity_with_wrong_network_fails() {
 }
 
 #[test]
+fn link_identity_fails_for_linked_identity() {
+	new_test_ext().execute_with(|| {
+		// bob -> alice OK
+		let web3networks: Vec<Web3Network> = vec![Web3Network::Litentry];
+		let alice: Identity = ALICE.into();
+		let bob: Identity = BOB.into();
+		let charlie: Identity = CHARLIE.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			bob.clone(),
+			alice.clone(),
+			web3networks.clone(),
+		));
+		assert_eq!(
+			IMT::id_graphs(bob.clone(), alice.clone()).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: web3networks.clone(),
+				status: IdentityStatus::Active
+			}
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&bob), 2);
+
+		// charlie -> alice NOK, as alice is already in bob's IDGraph
+		assert_err!(
+			IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				charlie.clone(),
+				alice.clone(),
+				web3networks.clone(),
+			),
+			Error::<Test>::IdentityAlreadyLinked
+		);
+
+		assert_eq!(crate::IDGraphLens::<Test>::get(&charlie), 0);
+
+		// alice -> charlie NOK, as alice is already in bob's IDGraph
+		assert_err!(
+			IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				alice.clone(),
+				charlie.clone(),
+				web3networks,
+			),
+			Error::<Test>::IdentityAlreadyLinked
+		);
+
+		assert_eq!(crate::IDGraphLens::<Test>::get(&alice), 0);
+	});
+}
+
+#[test]
 fn cannot_link_identity_again() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let web3networks: Vec<Web3Network> = vec![Web3Network::Polkadot];
 		let who_bob: Identity = BOB.into();
 		assert_ok!(IMT::link_identity(
@@ -198,7 +188,7 @@ fn cannot_link_identity_again() {
 
 #[test]
 fn cannot_create_more_identities_for_account_than_limit() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let max_id_graph_len = <<Test as crate::Config>::MaxIDGraphLength as Get<u32>>::get();
 		let who: Identity = BOB.into();
 
@@ -224,16 +214,9 @@ fn cannot_create_more_identities_for_account_than_limit() {
 
 #[test]
 fn deactivate_identity_works() {
-	new_test_ext(false).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let who: Identity = BOB.into();
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
-		assert_ok!(IMT::set_user_shielding_key(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			shielding_key,
-			all_substrate_web3networks(),
-		));
 		assert_noop!(
 			IMT::deactivate_identity(
 				RuntimeOrigin::signed(ALICE),
@@ -279,7 +262,7 @@ fn deactivate_identity_works() {
 			.into_iter()
 			.filter(|(_, c)| c.is_active())
 			.collect::<IDGraph<Test>>();
-		// "1": because of the main id is added by default when first calling set_user_shielding_key.
+		// "1": because of the main id is added by default when first calling link_identity.
 		assert_eq!(id_graph.len(), 1);
 		assert_eq!(IMT::get_id_graph(&who.clone(), usize::MAX).len(), 2);
 		// identity is only deactivated, so it still exists
@@ -298,16 +281,9 @@ fn deactivate_identity_works() {
 
 #[test]
 fn activate_identity_works() {
-	new_test_ext(false).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let who: Identity = BOB.into();
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
-		assert_ok!(IMT::set_user_shielding_key(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			shielding_key,
-			all_substrate_web3networks(),
-		));
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
@@ -343,7 +319,7 @@ fn activate_identity_works() {
 			.into_iter()
 			.filter(|(_, c)| c.is_active())
 			.collect::<IDGraph<Test>>();
-		// "1": because of the main id is added by default when first calling set_user_shielding_key.
+		// "1": because of the main id is added by default when first calling link_identity.
 		assert_eq!(id_graph.len(), 1);
 		// identity is only deactivated, so it still exists
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
@@ -355,7 +331,6 @@ fn activate_identity_works() {
 		));
 
 		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
-		// "1": because of the main id is added by default when first calling set_user_shielding_key.
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 	});
@@ -363,24 +338,9 @@ fn activate_identity_works() {
 
 #[test]
 fn set_identity_networks_works() {
-	new_test_ext(false).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let who: Identity = BOB.into();
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
-		assert_ok!(IMT::set_user_shielding_key(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			shielding_key,
-			all_substrate_web3networks(),
-		));
-		assert_noop!(
-			IMT::deactivate_identity(
-				RuntimeOrigin::signed(ALICE),
-				who.clone(),
-				alice_substrate_identity(),
-			),
-			Error::<Test>::IdentityNotExist
-		);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
@@ -412,24 +372,9 @@ fn set_identity_networks_works() {
 
 #[test]
 fn set_identity_networks_with_wrong_network_fails() {
-	new_test_ext(false).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let who: Identity = BOB.into();
-		let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
 
-		assert_ok!(IMT::set_user_shielding_key(
-			RuntimeOrigin::signed(ALICE),
-			who.clone(),
-			shielding_key,
-			all_substrate_web3networks(),
-		));
-		assert_noop!(
-			IMT::deactivate_identity(
-				RuntimeOrigin::signed(ALICE),
-				who.clone(),
-				alice_substrate_identity(),
-			),
-			Error::<Test>::IdentityNotExist
-		);
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
@@ -460,7 +405,7 @@ fn set_identity_networks_with_wrong_network_fails() {
 
 #[test]
 fn get_id_graph_works() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let who: Identity = BOB.into();
 
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
@@ -498,20 +443,17 @@ fn get_id_graph_works() {
 			id_graph.get(0).unwrap().0,
 			Identity::Twitter(IdentityString::new("alice21".as_bytes().to_vec()))
 		);
-		assert_eq!(id_graph.get(21).unwrap().0, [2u8; 32].into());
 	});
 }
 
 #[test]
 fn id_graph_stats_works() {
-	new_test_ext(true).execute_with(|| {
+	new_test_ext().execute_with(|| {
 		let alice: Identity = ALICE.into();
-		let bob: Identity = BOB.into();
-
 		assert_ok!(IMT::link_identity(
 			RuntimeOrigin::signed(ALICE),
 			alice.clone(),
-			alice_substrate_identity(),
+			bob_substrate_identity(),
 			vec![Web3Network::Litentry].try_into().unwrap(),
 		));
 		assert_ok!(IMT::link_identity(
@@ -522,9 +464,9 @@ fn id_graph_stats_works() {
 		));
 
 		let stats = IMT::id_graph_stats().unwrap();
-		assert_eq!(stats.len(), 2);
-		assert!(stats.contains(&(alice.clone(), 2)));
-		// bob's identity is created when setting shielding key
-		assert!(stats.contains(&(bob.clone(), 1)));
+		// alice's IDGraph should have 3 entries:
+		// alice's identity itself, bob_substrate_identity, alice_twitter_identity
+		assert_eq!(stats.len(), 1);
+		assert!(stats.contains(&(alice.clone(), 3)));
 	});
 }

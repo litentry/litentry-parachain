@@ -775,7 +775,7 @@ where
 				// intentionally send wrong parameters, only used in testing
 				calls.push(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-					"set_user_shielding_key".as_bytes(),
+					"wrong_param".as_bytes(),
 					account.encode(),
 				)));
 				Ok(TrustedCallResult::Empty)
