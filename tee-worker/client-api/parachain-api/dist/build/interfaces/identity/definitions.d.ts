@@ -37,7 +37,6 @@ declare const _default: {
             _enum: {
                 free_balance: string;
                 reserved_balance: string;
-                user_shielding_key: string;
                 id_graph: string;
                 id_graph_stats: string;
             };
@@ -48,17 +47,14 @@ declare const _default: {
                 balance_transfer: string;
                 balance_unshield: string;
                 balance_shield: string;
-                set_user_shielding_key: string;
                 link_identity: string;
                 deactivate_identity: string;
                 activate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
-                set_user_shielding_key_with_networks: string;
             };
         };
         UserShieldingKeyType: string;
-        UserShieldingKeyNonceType: string;
         DirectRequestStatus: {
             _enum: {
                 Ok: null;
@@ -178,9 +174,6 @@ declare const _default: {
         GenericEventWithAccount: {
             account: string;
         };
-        SetUserShieldingKeyResult: {
-            id_graph: string;
-        };
         LinkIdentityResult: {
             id_graph: string;
         };
@@ -195,7 +188,6 @@ declare const _default: {
                 UnauthorizedSigner: string;
                 StfError: string;
                 SendStfRequestFailed: string;
-                UserShieldingKeyNotFound: string;
                 ParseError: string;
                 DataProviderError: string;
                 InvalidIdentity: string;
@@ -218,7 +210,6 @@ declare const _default: {
                 StorageHashMismatch: string;
                 InvalidStorageDiff: string;
                 InvalidMetadata: string;
-                SetUserShieldingKeyFailed: string;
                 LinkIdentityFailed: string;
                 DeactivateIdentityFailed: string;
                 ActivateIdentityFailed: string;

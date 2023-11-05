@@ -1,8 +1,8 @@
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
 import { AesOutput } from '../type-definitions';
-import { decryptWithAes, encryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
+import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
@@ -10,9 +10,8 @@ import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import { aesKey, keyNonce } from '../call';
 
-// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary AccountId> + <identity-to-be-linked>).ciphertext)
+// blake2_256(<sidechain nonce> + <primary AccountId> + <identity-to-be-linked>)
 export function generateVerificationMessage(
     context: IntegrationTestContext,
     signer: LitentryPrimitivesIdentity,
@@ -21,10 +20,8 @@ export function generateVerificationMessage(
 ): HexString {
     const encodedIdentity = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
     const encodedWho = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', signer).toU8a();
-    const payload = Buffer.concat([encodedWho, encodedIdentity]);
-    const encryptedPayload = hexToU8a(encryptWithAes(aesKey, hexToU8a(keyNonce), payload));
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
-    const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encryptedPayload]);
+    const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encodedWho, encodedIdentity]);
     return blake2AsHex(msg, 256);
 }
 
@@ -80,7 +77,7 @@ export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
     identities: LitentryPrimitivesIdentity[],
-    method: 'setUserShieldingKey' | 'linkIdentity' | 'deactivateIdentity' | 'activateIdentity',
+    method: 'linkIdentity' | 'deactivateIdentity' | 'activateIdentity',
     validations?: LitentryValidationData[],
     web3networks?: Web3Network[][]
 ): Promise<any[]> {
@@ -98,14 +95,6 @@ export async function buildIdentityTxs(
         const nonce = (await api.rpc.system.accountNextIndex(signer.address)).toNumber();
 
         switch (method) {
-            case 'setUserShieldingKey': {
-                const ciphertext = encryptWithTeeShieldingKey(
-                    context.teeShieldingKey,
-                    hexToU8a('0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12')
-                ).toString('hex');
-                tx = context.api.tx.identityManagement.setUserShieldingKey(context.mrEnclave, `0x${ciphertext}`);
-                break;
-            }
             case 'linkIdentity': {
                 const validation = api.createType('LitentryValidationData', validations![k]).toU8a();
                 const networks = api.createType('Vec<Web3Network>', web3networks![k]).toU8a();
@@ -117,8 +106,7 @@ export async function buildIdentityTxs(
                     signer.address,
                     `0x${ciphertextIdentity}`,
                     `0x${ciphertextValidation}`,
-                    `0x${ciphertextNetworks}`,
-                    keyNonce
+                    `0x${ciphertextNetworks}`
                 );
                 break;
             }

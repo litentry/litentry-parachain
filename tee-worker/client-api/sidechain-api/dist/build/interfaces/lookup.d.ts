@@ -286,10 +286,6 @@ declare const _default: {
      **/
     PalletIdentityManagementTeeEvent: {
         _enum: {
-            UserShieldingKeySet: {
-                who: string;
-                key: string;
-            };
             IdentityLinked: {
                 who: string;
                 identity: string;
@@ -588,11 +584,7 @@ declare const _default: {
      **/
     PalletIdentityManagementTeeCall: {
         _enum: {
-            set_user_shielding_key: {
-                who: string;
-                key: string;
-                networks: string;
-            };
+            __Unused0: string;
             link_identity: {
                 who: string;
                 identity: string;

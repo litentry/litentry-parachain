@@ -299,10 +299,6 @@ export default {
 	 **/
 	PalletIdentityManagementTeeEvent: {
 		_enum: {
-			UserShieldingKeySet: {
-				who: "LitentryPrimitivesIdentity",
-				key: "[u8;32]",
-			},
 			IdentityLinked: {
 				who: "LitentryPrimitivesIdentity",
 				identity: "LitentryPrimitivesIdentity",
@@ -619,11 +615,7 @@ export default {
 	 **/
 	PalletIdentityManagementTeeCall: {
 		_enum: {
-			set_user_shielding_key: {
-				who: "LitentryPrimitivesIdentity",
-				key: "[u8;32]",
-				networks: "Vec<CorePrimitivesNetworkWeb3Network>",
-			},
+			__Unused0: "Null",
 			link_identity: {
 				who: "LitentryPrimitivesIdentity",
 				identity: "LitentryPrimitivesIdentity",

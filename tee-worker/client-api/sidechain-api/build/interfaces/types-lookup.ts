@@ -386,11 +386,6 @@ declare module "@polkadot/types/lookup" {
 
     /** @name PalletIdentityManagementTeeEvent (37) */
     interface PalletIdentityManagementTeeEvent extends Enum {
-        readonly isUserShieldingKeySet: boolean;
-        readonly asUserShieldingKeySet: {
-            readonly who: LitentryPrimitivesIdentity;
-            readonly key: U8aFixed;
-        } & Struct;
         readonly isIdentityLinked: boolean;
         readonly asIdentityLinked: {
             readonly who: LitentryPrimitivesIdentity;
@@ -406,11 +401,7 @@ declare module "@polkadot/types/lookup" {
             readonly who: LitentryPrimitivesIdentity;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
-        readonly type:
-            | "UserShieldingKeySet"
-            | "IdentityLinked"
-            | "IdentityDeactivated"
-            | "IdentityActivated";
+        readonly type: "IdentityLinked" | "IdentityDeactivated" | "IdentityActivated";
     }
 
     /** @name LitentryPrimitivesIdentity (38) */
@@ -738,12 +729,6 @@ declare module "@polkadot/types/lookup" {
 
     /** @name PalletIdentityManagementTeeCall (93) */
     interface PalletIdentityManagementTeeCall extends Enum {
-        readonly isSetUserShieldingKey: boolean;
-        readonly asSetUserShieldingKey: {
-            readonly who: LitentryPrimitivesIdentity;
-            readonly key: U8aFixed;
-            readonly networks: Vec<CorePrimitivesNetworkWeb3Network>;
-        } & Struct;
         readonly isLinkIdentity: boolean;
         readonly asLinkIdentity: {
             readonly who: LitentryPrimitivesIdentity;
@@ -767,7 +752,6 @@ declare module "@polkadot/types/lookup" {
             readonly web3networks: Vec<CorePrimitivesNetworkWeb3Network>;
         } & Struct;
         readonly type:
-            | "SetUserShieldingKey"
             | "LinkIdentity"
             | "DeactivateIdentity"
             | "ActivateIdentity"

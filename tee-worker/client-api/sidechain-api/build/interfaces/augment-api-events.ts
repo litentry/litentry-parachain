@@ -6,7 +6,7 @@
 import "@polkadot/api-base/types/events";
 
 import type { ApiTypes, AugmentedEvent } from "@polkadot/api-base/types";
-import type { Null, Option, Result, U8aFixed, u128 } from "@polkadot/types-codec";
+import type { Null, Option, Result, u128 } from "@polkadot/types-codec";
 import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
 import type {
     FrameSupportDispatchDispatchInfo,
@@ -213,14 +213,6 @@ declare module "@polkadot/api-base/types/events" {
                 ApiType,
                 [who: LitentryPrimitivesIdentity, identity: LitentryPrimitivesIdentity],
                 { who: LitentryPrimitivesIdentity; identity: LitentryPrimitivesIdentity }
-            >;
-            /**
-             * user shielding key was set
-             **/
-            UserShieldingKeySet: AugmentedEvent<
-                ApiType,
-                [who: LitentryPrimitivesIdentity, key: U8aFixed],
-                { who: LitentryPrimitivesIdentity; key: U8aFixed }
             >;
         };
         sudo: {

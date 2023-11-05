@@ -40,7 +40,6 @@ export default {
             _enum: {
                 free_balance: "(LitentryIdentity)",
                 reserved_balance: "(LitentryIdentity)",
-                user_shielding_key: "(LitentryIdentity)",
                 id_graph: "(LitentryIdentity)",
                 id_graph_stats: "(LitentryIdentity)",
             },
@@ -52,22 +51,17 @@ export default {
                 balance_transfer: "(LitentryIdentity, LitentryIdentity, Balance)",
                 balance_unshield: "(LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier)",
                 balance_shield: "(LitentryIdentity, LitentryIdentity, Balance)",
-                set_user_shielding_key:
-                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
                 link_identity:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)",
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<UserShieldingKeyType>, H256)",
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc:
                     "(LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256)",
                 set_identity_networks:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
-                set_user_shielding_key_with_networks:
-                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
-        UserShieldingKeyNonceType: "[u8; 12]",
         DirectRequestStatus: {
             _enum: {
                 Ok: null,
@@ -216,9 +210,6 @@ export default {
         GenericEventWithAccount: {
             account: "AccountId",
         },
-        SetUserShieldingKeyResult: {
-            id_graph: "AesOutput",
-        },
         LinkIdentityResult: {
             id_graph: "AesOutput",
         },
@@ -233,7 +224,6 @@ export default {
                 UnauthorizedSigner: "Null",
                 StfError: "(Bytes)",
                 SendStfRequestFailed: "Null",
-                UserShieldingKeyNotFound: "Null",
                 ParseError: "Null",
                 DataProviderError: "(Bytes)",
                 InvalidIdentity: "Null",
@@ -256,7 +246,6 @@ export default {
                 StorageHashMismatch: "Null",
                 InvalidStorageDiff: "Null",
                 InvalidMetadata: "Null",
-                SetUserShieldingKeyFailed: "(ErrorDetail)",
                 LinkIdentityFailed: "(ErrorDetail)",
                 DeactivateIdentityFailed: "(ErrorDetail)",
                 ActivateIdentityFailed: "(ErrorDetail)",

@@ -1,14 +1,13 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { hexToU8a, u8aToHex, u8aToString } from '@polkadot/util';
+import { u8aToHex, u8aToString } from '@polkadot/util';
 import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
     buildValidations,
     initIntegrationTestContext,
     EthersSigner,
-    assertSetUserShieldingKeyResult,
     assertIdentityLinkedResult,
     assertWorkerError,
 } from './common/utils';
@@ -16,14 +15,11 @@ import {
     assertFailedEvent,
     assertIsInSidechainBlock,
     assertLinkedEvent,
-    assertInitialIdGraphCreated,
     assertIdentity,
 } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
-    createSignedTrustedCallSetUserShieldingKey,
     createSignedTrustedGetterIdGraph,
-    createSignedTrustedGetterUserShieldingKey,
     createSignedTrustedCallDeactivateIdentity,
     createSignedTrustedCallActivateIdentity,
     decodeIdGraph,
@@ -33,7 +29,7 @@ import {
     sendRequestFromTrustedCall,
 } from './examples/direct-invocation/util'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
-import { aesKey, keyNonce } from './common/call';
+import { aesKey } from './common/call';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
@@ -68,55 +64,6 @@ describe('Test Identity (evm direct invocation)', function () {
         bobEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.bob), context);
     });
 
-    step(`setting user shielding key (alice evm account)`, async function () {
-        const nonce = await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity);
-
-        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-
-        const setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
-            context.api,
-            context.mrEnclave,
-            nonce,
-            new EthersSigner(context.ethersWallet.alice),
-            aliceEvmIdentity,
-            aesKey,
-            requestIdentifier
-        );
-
-        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
-        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setUserShieldingKeyCall);
-
-        assertSetUserShieldingKeyResult(context, res, aliceEvmIdentity);
-        await assertIsInSidechainBlock('setUserShieldingKeyCall', res);
-
-        const events = await eventsPromise;
-
-        const userShieldingKeySetEvents = events
-            .map(({ event }) => event)
-            .filter(({ section, method }) => section === 'identityManagement' && method === 'UserShieldingKeySet');
-
-        // check event length
-        assert.equal(userShieldingKeySetEvents.length, 1, 'userShieldingKeySetEvents.length should be 1');
-        await assertInitialIdGraphCreated(
-            context,
-            new EthersSigner(context.ethersWallet.alice),
-            userShieldingKeySetEvents
-        );
-    });
-
-    step('check user shielding key from sidechain storage after user shielding key setting(alice)', async function () {
-        const shieldingKeyGetter = await createSignedTrustedGetterUserShieldingKey(
-            context.api,
-            new EthersSigner(context.ethersWallet.alice),
-            aliceEvmIdentity
-        );
-
-        const shieldingKeyGetResult = await sendRequestFromGetter(context, teeShieldingKey, shieldingKeyGetter);
-        console.log('shieldingKeyGetResult.value.toHex()', shieldingKeyGetResult.value.toHex());
-        const k = context.api.createType('Option<Bytes>', hexToU8a(shieldingKeyGetResult.value.toHex()));
-        assert.equal(k.value.toString(), aesKey, 'respShieldingKey should be equal aesKey after set');
-    });
-
     step('check idgraph from sidechain storage before linking', async function () {
         const idgraphGetter = await createSignedTrustedGetterIdGraph(
             context.api,
@@ -127,14 +74,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        assert.lengthOf(idGraph, 1);
-        const [idGraphNodeIdentity, idGraphNodeContext] = idGraph[0];
-        assert.deepEqual(
-            idGraphNodeIdentity.toHuman(),
-            aliceEvmIdentity.toHuman(),
-            'idGraph should include main address'
-        );
-        assert.equal(idGraphNodeContext.status.toString(), 'Active', 'status should be active for main address');
+        assert.lengthOf(idGraph, 0);
     });
 
     step('linking identities (alice evm account)', async function () {
@@ -210,7 +150,6 @@ describe('Test Identity (evm direct invocation)', function () {
                 identity.toHex(),
                 validation.toHex(),
                 networks.toHex(),
-                keyNonce,
                 context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
                 requestIdentifier
             );
@@ -237,10 +176,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
         // check event data
         assert.equal(linkedIdentityEvents.length, 2);
-        await assertLinkedEvent(context, new EthersSigner(context.ethersWallet.alice), linkedIdentityEvents, [
-            bobEvmIdentity,
-            eveSubstrateIdentity,
-        ]);
+        await assertLinkedEvent(new EthersSigner(context.ethersWallet.alice), linkedIdentityEvents);
     });
 
     step('check user sidechain storage after linking', async function () {

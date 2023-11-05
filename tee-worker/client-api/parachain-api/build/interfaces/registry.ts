@@ -22,7 +22,6 @@ import type {
     CorePrimitivesErrorErrorDetail,
     CorePrimitivesErrorImpError,
     CorePrimitivesErrorVcmpError,
-    CorePrimitivesKeyAesOutput,
     CorePrimitivesNetworkWeb3Network,
     CorePrimitivesOneblockOneBlockCourseType,
     CorePrimitivesSoraquizSoraQuizType,
@@ -391,7 +390,6 @@ declare module "@polkadot/types/types/registry" {
         CorePrimitivesErrorErrorDetail: CorePrimitivesErrorErrorDetail;
         CorePrimitivesErrorImpError: CorePrimitivesErrorImpError;
         CorePrimitivesErrorVcmpError: CorePrimitivesErrorVcmpError;
-        CorePrimitivesKeyAesOutput: CorePrimitivesKeyAesOutput;
         CorePrimitivesNetworkWeb3Network: CorePrimitivesNetworkWeb3Network;
         CorePrimitivesOneblockOneBlockCourseType: CorePrimitivesOneblockOneBlockCourseType;
         CorePrimitivesSoraquizSoraQuizType: CorePrimitivesSoraquizSoraQuizType;

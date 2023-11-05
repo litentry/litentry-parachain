@@ -11,7 +11,7 @@ import type {
     SubmittableExtrinsic,
     SubmittableExtrinsicFunction,
 } from "@polkadot/api-base/types";
-import type { Bytes, Compact, U8aFixed, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
+import type { Bytes, Compact, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
 import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, Call, MultiAddress } from "@polkadot/types/interfaces/runtime";
 import type {
@@ -369,37 +369,6 @@ declare module "@polkadot/api-base/types/submittable" {
                     LitentryPrimitivesIdentity,
                     Vec<CorePrimitivesNetworkWeb3Network>
                 ]
-            >;
-            setUserShieldingKey: AugmentedSubmittable<
-                (
-                    who:
-                        | LitentryPrimitivesIdentity
-                        | { Twitter: any }
-                        | { Discord: any }
-                        | { Github: any }
-                        | { Substrate: any }
-                        | { Evm: any }
-                        | string
-                        | Uint8Array,
-                    key: U8aFixed | string | Uint8Array,
-                    networks:
-                        | Vec<CorePrimitivesNetworkWeb3Network>
-                        | (
-                              | CorePrimitivesNetworkWeb3Network
-                              | "Polkadot"
-                              | "Kusama"
-                              | "Litentry"
-                              | "Litmus"
-                              | "LitentryRococo"
-                              | "Khala"
-                              | "SubstrateTestnet"
-                              | "Ethereum"
-                              | "Bsc"
-                              | number
-                              | Uint8Array
-                          )[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentity, U8aFixed, Vec<CorePrimitivesNetworkWeb3Network>]
             >;
         };
         parentchain: {

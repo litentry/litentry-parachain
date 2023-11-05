@@ -1233,7 +1233,6 @@ import type {
     PublicGetter,
     RequestVCResult,
     RsaRequest,
-    SetUserShieldingKeyResult,
     ShardIdentifier,
     StfError,
     TrustedCall,
@@ -1243,7 +1242,6 @@ import type {
     TrustedOperation,
     TrustedOperationStatus,
     TwitterValidationData,
-    UserShieldingKeyNonceType,
     UserShieldingKeyType,
     VCRequested,
     Web2ValidationData,
@@ -2142,7 +2140,6 @@ declare module "@polkadot/types/types/registry" {
         SessionKeys9B: SessionKeys9B;
         SetId: SetId;
         SetIndex: SetIndex;
-        SetUserShieldingKeyResult: SetUserShieldingKeyResult;
         ShardIdentifier: ShardIdentifier;
         Si0Field: Si0Field;
         Si0LookupTypeId: Si0LookupTypeId;
@@ -2332,7 +2329,6 @@ declare module "@polkadot/types/types/registry" {
         UpgradeGoAhead: UpgradeGoAhead;
         UpgradeRestriction: UpgradeRestriction;
         UpwardMessage: UpwardMessage;
-        UserShieldingKeyNonceType: UserShieldingKeyNonceType;
         UserShieldingKeyType: UserShieldingKeyType;
         usize: usize;
         USize: USize;

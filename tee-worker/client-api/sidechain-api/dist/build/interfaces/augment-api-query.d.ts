@@ -1,16 +1,6 @@
 import "@polkadot/api-base/types/storage";
 import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from "@polkadot/api-base/types";
-import type {
-    Bytes,
-    Null,
-    Option,
-    U8aFixed,
-    Vec,
-    bool,
-    u128,
-    u32,
-    u64,
-} from "@polkadot/types-codec";
+import type { Bytes, Null, Option, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
 import type { AnyNumber, ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
 import type {
@@ -204,31 +194,6 @@ declare module "@polkadot/api-base/types/storage" {
                         | string
                         | Uint8Array
                 ) => Observable<Option<Null>>,
-                [LitentryPrimitivesIdentity]
-            >;
-            userShieldingKeys: AugmentedQuery<
-                ApiType,
-                (
-                    arg:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => Observable<Option<U8aFixed>>,
                 [LitentryPrimitivesIdentity]
             >;
         };

@@ -128,7 +128,6 @@ export interface ErrorDetail extends Enum {
     readonly isStfError: boolean;
     readonly asStfError: Bytes;
     readonly isSendStfRequestFailed: boolean;
-    readonly isUserShieldingKeyNotFound: boolean;
     readonly isParseError: boolean;
     readonly isDataProviderError: boolean;
     readonly asDataProviderError: Bytes;
@@ -145,7 +144,6 @@ export interface ErrorDetail extends Enum {
         | "UnauthorizedSigner"
         | "StfError"
         | "SendStfRequestFailed"
-        | "UserShieldingKeyNotFound"
         | "ParseError"
         | "DataProviderError"
         | "InvalidIdentity"
@@ -265,11 +263,6 @@ export interface RsaRequest extends Struct {
     readonly payload: Bytes;
 }
 
-/** @name SetUserShieldingKeyResult */
-export interface SetUserShieldingKeyResult extends Struct {
-    readonly id_graph: AesOutput;
-}
-
 /** @name ShardIdentifier */
 export interface ShardIdentifier extends H256 {}
 
@@ -286,8 +279,6 @@ export interface StfError extends Enum {
     readonly isStorageHashMismatch: boolean;
     readonly isInvalidStorageDiff: boolean;
     readonly isInvalidMetadata: boolean;
-    readonly isSetUserShieldingKeyFailed: boolean;
-    readonly asSetUserShieldingKeyFailed: ErrorDetail;
     readonly isLinkIdentityFailed: boolean;
     readonly asLinkIdentityFailed: ErrorDetail;
     readonly isDeactivateIdentityFailed: boolean;
@@ -310,7 +301,6 @@ export interface StfError extends Enum {
         | "StorageHashMismatch"
         | "InvalidStorageDiff"
         | "InvalidMetadata"
-        | "SetUserShieldingKeyFailed"
         | "LinkIdentityFailed"
         | "DeactivateIdentityFailed"
         | "ActivateIdentityFailed"
@@ -333,10 +323,6 @@ export interface TrustedCall extends Enum {
     >;
     readonly isBalanceShield: boolean;
     readonly asBalanceShield: ITuple<[LitentryIdentity, LitentryIdentity, Balance]>;
-    readonly isSetUserShieldingKey: boolean;
-    readonly asSetUserShieldingKey: ITuple<
-        [LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256]
-    >;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<
         [
@@ -345,7 +331,6 @@ export interface TrustedCall extends Enum {
             LitentryIdentity,
             LitentryValidationData,
             Vec<Web3Network>,
-            UserShieldingKeyNonceType,
             Option<UserShieldingKeyType>,
             H256
         ]
@@ -366,22 +351,16 @@ export interface TrustedCall extends Enum {
     readonly asSetIdentityNetworks: ITuple<
         [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]
     >;
-    readonly isSetUserShieldingKeyWithNetworks: boolean;
-    readonly asSetUserShieldingKeyWithNetworks: ITuple<
-        [LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256]
-    >;
     readonly type:
         | "BalanceSetBalance"
         | "BalanceTransfer"
         | "BalanceUnshield"
         | "BalanceShield"
-        | "SetUserShieldingKey"
         | "LinkIdentity"
         | "DeactivateIdentity"
         | "ActivateIdentity"
         | "RequestVc"
-        | "SetIdentityNetworks"
-        | "SetUserShieldingKeyWithNetworks";
+        | "SetIdentityNetworks";
 }
 
 /** @name TrustedCallSigned */
@@ -397,18 +376,11 @@ export interface TrustedGetter extends Enum {
     readonly asFreeBalance: LitentryIdentity;
     readonly isReservedBalance: boolean;
     readonly asReservedBalance: LitentryIdentity;
-    readonly isUserShieldingKey: boolean;
-    readonly asUserShieldingKey: LitentryIdentity;
     readonly isIdGraph: boolean;
     readonly asIdGraph: LitentryIdentity;
     readonly isIdGraphStats: boolean;
     readonly asIdGraphStats: LitentryIdentity;
-    readonly type:
-        | "FreeBalance"
-        | "ReservedBalance"
-        | "UserShieldingKey"
-        | "IdGraph"
-        | "IdGraphStats";
+    readonly type: "FreeBalance" | "ReservedBalance" | "IdGraph" | "IdGraphStats";
 }
 
 /** @name TrustedGetterSigned */
@@ -460,9 +432,6 @@ export interface TrustedOperationStatus extends Enum {
 export interface TwitterValidationData extends Struct {
     readonly tweet_id: Bytes;
 }
-
-/** @name UserShieldingKeyNonceType */
-export interface UserShieldingKeyNonceType extends U8aFixed {}
 
 /** @name UserShieldingKeyType */
 export interface UserShieldingKeyType extends U8aFixed {}

@@ -45,7 +45,6 @@ export declare const definitions: {
             _enum: {
                 free_balance: string;
                 reserved_balance: string;
-                user_shielding_key: string;
                 id_graph: string;
                 id_graph_stats: string;
             };
@@ -56,17 +55,14 @@ export declare const definitions: {
                 balance_transfer: string;
                 balance_unshield: string;
                 balance_shield: string;
-                set_user_shielding_key: string;
                 link_identity: string;
                 deactivate_identity: string;
                 activate_identity: string;
                 request_vc: string;
                 set_identity_networks: string;
-                set_user_shielding_key_with_networks: string;
             };
         };
         UserShieldingKeyType: string;
-        UserShieldingKeyNonceType: string;
         DirectRequestStatus: {
             _enum: {
                 Ok: null;
@@ -186,9 +182,6 @@ export declare const definitions: {
         GenericEventWithAccount: {
             account: string;
         };
-        SetUserShieldingKeyResult: {
-            id_graph: string;
-        };
         LinkIdentityResult: {
             id_graph: string;
         };
@@ -203,7 +196,6 @@ export declare const definitions: {
                 UnauthorizedSigner: string;
                 StfError: string;
                 SendStfRequestFailed: string;
-                UserShieldingKeyNotFound: string;
                 ParseError: string;
                 DataProviderError: string;
                 InvalidIdentity: string;
@@ -226,7 +218,6 @@ export declare const definitions: {
                 StorageHashMismatch: string;
                 InvalidStorageDiff: string;
                 InvalidMetadata: string;
-                SetUserShieldingKeyFailed: string;
                 LinkIdentityFailed: string;
                 DeactivateIdentityFailed: string;
                 ActivateIdentityFailed: string;
