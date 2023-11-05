@@ -576,7 +576,7 @@ where
 				Self::deactivate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who,
-					identity.clone(),
+					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
@@ -605,7 +605,7 @@ where
 				Self::activate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who,
-					identity.clone(),
+					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);

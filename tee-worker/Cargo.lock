@@ -4790,7 +4790,6 @@ version = "0.9.0"
 dependencies = [
  "itp-types",
  "rococo-parachain-runtime",
- "sp-core",
  "sp-runtime",
  "substrate-api-client",
 ]
@@ -4875,16 +4874,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itp-enclave-bridge-storage"
-version = "0.9.0"
-dependencies = [
- "itp-storage",
- "itp-types",
- "parity-scale-codec",
- "sp-std 5.0.0",
-]
-
-[[package]]
 name = "itp-enclave-metrics"
 version = "0.9.0"
 dependencies = [
@@ -4961,19 +4950,10 @@ dependencies = [
 name = "itp-node-api-metadata"
 version = "0.9.0"
 dependencies = [
- "base58",
  "derive_more",
- "hex 0.4.3",
  "itp-api-client-types",
- "itp-sgx-runtime-primitives",
- "itp-types",
- "litentry-primitives",
- "log 0.4.20",
  "parity-scale-codec",
- "primitive-types",
  "sp-core",
- "substrate-api-client",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
 ]
 
 [[package]]
@@ -4990,7 +4970,6 @@ dependencies = [
 name = "itp-nonce-cache"
 version = "0.8.0"
 dependencies = [
- "lazy_static",
  "sgx_tstd",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -5210,7 +5189,6 @@ name = "itp-teerex-storage"
 version = "0.9.0"
 dependencies = [
  "itp-storage",
- "itp-types",
  "sp-std 5.0.0",
 ]
 
@@ -5316,7 +5294,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "teerex-primitives",
 ]
 
 [[package]]
@@ -5600,12 +5577,10 @@ dependencies = [
  "derive_more",
  "frame-support",
  "itc-parentchain-test",
- "itp-enclave-bridge-storage",
  "itp-ocall-api",
  "itp-teerex-storage",
  "itp-test",
  "itp-types",
- "its-primitives",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -6914,7 +6889,6 @@ dependencies = [
  "itp-enclave-metrics",
  "itp-node-api",
  "itp-settings",
- "itp-stf-primitives",
  "itp-storage",
  "itp-types",
  "itp-utils",

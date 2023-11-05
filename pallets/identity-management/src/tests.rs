@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #[allow(unused)]
 use crate::{mock::*, Error, ShardIdentifier};
-use core_primitives::{ErrorDetail, IMPError, UserShieldingKeyNonceType};
+use core_primitives::{ErrorDetail, IMPError};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
