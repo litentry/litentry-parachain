@@ -171,7 +171,9 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 		},
 	};
 
-	if let TrustedCall::request_vc(signer, who, assertion, _hash) = trusted_call.call.clone() {
+	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, _hash) =
+		trusted_call.call.clone()
+	{
 		let (mut state, _) = match context.state_handler.load_cloned(&req.shard) {
 			Ok(s) => s,
 			Err(e) => {
@@ -222,6 +224,7 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 				who: who.clone(),
 				assertion: assertion.clone(),
 				identities,
+				maybe_key,
 				top_hash: H256::zero(),
 				req_ext_hash: H256::zero(),
 			};

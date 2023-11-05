@@ -13,6 +13,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
+use itp_types::parentchain::ParentchainId;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_vc_task_sender::{RpcError, VCResponse};
 use std::{string::ToString, sync::Arc, vec::Vec};
@@ -117,7 +118,7 @@ where
 					return
 				},
 			};
-			match self.context.ocall_api.send_to_parentchain(xt) {
+			match self.context.ocall_api.send_to_parentchain(xt, &ParentchainId::Litentry) {
 				Ok(_) =>
 					if let Err(e) = sender.send(Ok(result.encode())) {
 						log::warn!("Unable to send response jsonrpc handler: {:?}", e);
