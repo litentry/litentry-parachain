@@ -128,6 +128,20 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
 {
+	// let shielding_key = match self.shielding_key_repo.retrieve_key() {
+	// 	Ok(k) => k,
+	// 	Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),
+	// };
+	// let request_vec = match request.decrypt(Box::new(shielding_key)) {
+	// 	Ok(req) => req,
+	// 	Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),
+	// };
+	// // decode call
+	// let trusted_operation = match TrustedOperation::decode(&mut request_vec.as_slice()) {
+	// 	Ok(op) => op,
+	// 	Err(_) => return Box::pin(ready(Err(ClientError::BadFormat.into()))),
+	// };
+	// TODO: Refactor based on AES Request
 	let decrypted_trusted_operation =
 		match context.shielding_key.decrypt(&req.encrypted_trusted_call) {
 			Ok(s) => s,

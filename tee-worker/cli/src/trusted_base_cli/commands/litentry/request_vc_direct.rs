@@ -228,7 +228,7 @@ impl RequestVcDirectCommand {
 		};
 
 		let top: TrustedOperation =
-			TrustedCall::request_vc(alice.public().into(), id, assertion, Default::default())
+			TrustedCall::request_vc(alice.public().into(), id, assertion, None, Default::default())
 				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
 

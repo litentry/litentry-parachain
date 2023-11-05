@@ -74,7 +74,7 @@ pub(crate) fn perform_direct_operation(
 	top: &TrustedOperation,
 ) -> TrustedOpResult {
 	match top {
-		TrustedOperation::indirect_call(_) => send_request(cli, trusted_args, top),
+		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
 		TrustedOperation::direct_call(_) => send_direct_vc_request(cli, trusted_args, top),
 		TrustedOperation::get(getter) => execute_getter_from_cli_args(cli, trusted_args, getter),
 	}
@@ -400,7 +400,7 @@ pub(crate) fn get_vc_json_request(
 	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
 
 	// compose jsonrpc call
-	let request = Request { shard, cyphertext: operation_call_encrypted };
+	let request = RsaRequest { shard, payload: operation_call_encrypted };
 	RpcRequest::compose_jsonrpc_call("author_submitVCRequest".to_string(), vec![request.to_hex()])
 		.unwrap()
 }
