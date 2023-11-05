@@ -33,7 +33,7 @@ use crate::{
 	},
 	utils::{
 		get_extrinsic_factory_from_solo_or_parachain,
-		get_node_metadata_repository_from_target_a_solo_or_parachain,
+		get_node_metadata_repository_from_integritee_solo_or_parachain,
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -58,6 +58,8 @@ pub unsafe extern "C" fn run_vc_issuance(dpc: *const u8, dpc_size: usize) -> sgx
 			dpc.set_credential_endpoint(data_provider_config.credential_endpoint);
 			dpc.set_oneblock_notion_key(data_provider_config.oneblock_notion_key);
 			dpc.set_oneblock_notion_url(data_provider_config.oneblock_notion_url);
+			dpc.set_sora_quiz_master_id(data_provider_config.sora_quiz_master_id);
+			dpc.set_sora_quiz_attendee_id(data_provider_config.sora_quiz_attendee_id);
 		},
 		Err(e) => {
 			error!("Error while setting data provider config: {:?}", e);
@@ -106,7 +108,7 @@ fn run_vc_issuance_internal() -> Result<()> {
 	// Note: The unwrap here cannot fail because these components are initialised, else worker will fail much earlier
 	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain().unwrap();
 	let node_metadata_repo =
-		get_node_metadata_repository_from_target_a_solo_or_parachain().unwrap();
+		get_node_metadata_repository_from_integritee_solo_or_parachain().unwrap();
 	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
 	Ok(())
 }

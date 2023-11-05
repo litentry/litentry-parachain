@@ -694,11 +694,11 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	println!("[+] We are starting the VC Isolated thread");
 	// ------------------------------------------------------------------------
 	// Start vc issuance handler thread
-	let enclave_api_stf_task_handler = enclave.clone();
+	let enclave_api_vc_task_handler = enclave.clone();
 	let data_provider = data_provider_config.clone();
 	thread::spawn(move || {
 		println!("[+] We have been moved to a different thread");
-		enclave_api_stf_task_handler.run_vc_issuance(data_provider).unwrap();
+		enclave_api_vc_task_handler.run_vc_issuance(data_provider).unwrap();
 	});
 
 	// ------------------------------------------------------------------------
