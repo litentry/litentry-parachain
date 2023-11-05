@@ -43,13 +43,13 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
-pub use core_primitives::{AesOutput, ShardIdentifier};
+pub use core_primitives::ShardIdentifier;
 use sp_core::H256;
 use sp_std::vec::Vec;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{AesOutput, ShardIdentifier, Vec, WeightInfo, H256};
+	use super::{ShardIdentifier, Vec, WeightInfo, H256};
 	use core_primitives::{ErrorDetail, IMPError};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
@@ -94,8 +94,6 @@ pub mod pallet {
 		//       Can we retrieve that extrinsic hash in F/E?
 		IdentityLinked {
 			account: T::AccountId,
-			identity: AesOutput,
-			id_graph: AesOutput,
 			req_ext_hash: H256,
 		},
 		IdentityDeactivated {
@@ -242,17 +240,10 @@ pub mod pallet {
 		pub fn identity_linked(
 			origin: OriginFor<T>,
 			account: T::AccountId,
-			identity: AesOutput,
-			id_graph: AesOutput,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked {
-				account,
-				identity,
-				id_graph,
-				req_ext_hash,
-			});
+			Self::deposit_event(Event::IdentityLinked { account, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 

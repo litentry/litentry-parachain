@@ -20,7 +20,7 @@ use super::*;
 
 use crate::Pallet as IdentityManagement;
 #[allow(unused)]
-use core_primitives::{AesOutput, ErrorDetail, IMPError};
+use core_primitives::{ErrorDetail, IMPError};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, BenchmarkError};
 use frame_support::traits::EnsureOrigin;
 use frame_system::RawOrigin;
@@ -97,13 +97,11 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	identity_linked {
 		let req_ext_hash = H256::default();
-		let identity = AesOutput::default();
-		let id_graph = AesOutput::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-	}: _<T::RuntimeOrigin>(call_origin, account.clone(), identity.clone(), id_graph.clone(), req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, account.clone(), req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityLinked { account, identity, id_graph, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityLinked { account, req_ext_hash }.into());
 	}
 
 	// Benchmark `identity_deactivated`. There are no worst conditions. The benchmark showed that

@@ -273,18 +273,13 @@ impl TrustedCallSigned {
 			e
 		})?;
 
+		debug!("pushing identity_linked event ...");
+		let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+		let call_index =
+			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
+		calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));
+
 		if let Some(key) = maybe_key {
-			debug!("pushing identity_linked event ...");
-			let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
-			let call_index =
-				node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
-			calls.push(OpaqueCall::from_tuple(&(
-				call_index,
-				account,
-				aes_encrypt_default(&key, &identity.encode()),
-				aes_encrypt_default(&key, &id_graph.encode()),
-				hash,
-			)));
 			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
 				id_graph: aes_encrypt_default(&key, &id_graph.encode()),
 			}))

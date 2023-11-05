@@ -707,26 +707,20 @@ where
 					e
 				})?;
 
-				if let Some(key) = maybe_key {
-					debug!("pushing vc_issued event ...");
-					let call_index =
-						node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
+				debug!("pushing vc_issued event ...");
+				let call_index =
+					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
-					calls.push(OpaqueCall::from_tuple(&(
-						call_index,
-						account,
-						assertion,
-						vc_index,
-						vc_hash,
-						aes_encrypt_default(&key, &vc_payload),
-						hash,
-					)));
-					let res = RequestVCResult {
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index, account, assertion, vc_index, vc_hash, hash,
+				)));
+
+				if let Some(key) = maybe_key {
+					Ok(TrustedCallResult::RequestVC(RequestVCResult {
 						vc_index,
 						vc_hash,
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
-					};
-					Ok(TrustedCallResult::RequestVC(res))
+					}))
 				} else {
 					Ok(TrustedCallResult::Empty)
 				}

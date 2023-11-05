@@ -34,9 +34,7 @@ pub mod weights;
 
 pub use crate::weights::WeightInfo;
 
-use core_primitives::{
-	AesOutput, Assertion, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
-};
+use core_primitives::{Assertion, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
 pub use pallet::*;
 use sp_core::H256;
 use sp_std::vec::Vec;
@@ -132,7 +130,6 @@ pub mod pallet {
 			account: T::AccountId,
 			assertion: Assertion,
 			index: VCIndex,
-			vc: AesOutput,
 			req_ext_hash: H256,
 		},
 		// Admin account was changed
@@ -449,7 +446,6 @@ pub mod pallet {
 			assertion: Assertion,
 			index: H256,
 			hash: H256,
-			vc: AesOutput,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
@@ -458,7 +454,7 @@ pub mod pallet {
 				index,
 				VCContext::<T>::new(account.clone(), assertion.clone(), hash),
 			);
-			Self::deposit_event(Event::VCIssued { account, assertion, index, vc, req_ext_hash });
+			Self::deposit_event(Event::VCIssued { account, assertion, index, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
