@@ -56,10 +56,6 @@ use itp_node_api::metadata::NodeMetadataTrait;
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 
-// max number of identities in an id_graph that will be returned as the extrinsic parameter
-// this has no effect on the stored id_graph, but only the returned id_graph
-pub const RETURNED_IDGRAPH_MAX_LEN: usize = 20;
-
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
 

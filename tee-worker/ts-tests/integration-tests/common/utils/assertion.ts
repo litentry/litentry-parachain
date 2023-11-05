@@ -298,7 +298,6 @@ export function assertWorkerError(
 
 export function assertIdentityLinkedResult(
     context: IntegrationTestContext,
-    expectedIdentity: LitentryPrimitivesIdentity,
     returnValue: WorkerRpcReturnValue,
     expectedIdGraphIdentities: [LitentryPrimitivesIdentity, boolean][]
 ) {

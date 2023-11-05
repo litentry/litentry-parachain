@@ -164,7 +164,7 @@ impl TrustedCallSigned {
 			),
 		}
 
-		let id_graph = IMT::get_id_graph(&who, usize::MAX);
+		let id_graph = IMT::get_id_graph(&who);
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
@@ -258,7 +258,7 @@ impl TrustedCallSigned {
 		Self::link_identity_callback_internal(
 			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
-			identity.clone(),
+			identity,
 			web3networks,
 		)
 		.map_err(|e| {
@@ -274,7 +274,7 @@ impl TrustedCallSigned {
 		})?;
 
 		debug!("pushing identity_linked event ...");
-		let id_graph = IMT::get_id_graph(&who, RETURNED_IDGRAPH_MAX_LEN);
+		let id_graph = IMT::get_id_graph(&who);
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 		calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));

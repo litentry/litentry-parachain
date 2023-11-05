@@ -16,7 +16,6 @@
 
 use crate::{mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, Web3Network};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::IdentityString;
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
@@ -240,7 +239,7 @@ fn deactivate_identity_works() {
 			}
 		);
 
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph(&who.clone());
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
@@ -258,13 +257,13 @@ fn deactivate_identity_works() {
 			}
 		);
 
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX)
+		let id_graph = IMT::get_id_graph(&who.clone())
 			.into_iter()
 			.filter(|(_, c)| c.is_active())
 			.collect::<IDGraph<Test>>();
 		// "1": because of the main id is added by default when first calling link_identity.
 		assert_eq!(id_graph.len(), 1);
-		assert_eq!(IMT::get_id_graph(&who.clone(), usize::MAX).len(), 2);
+		assert_eq!(IMT::get_id_graph(&who.clone()).len(), 2);
 		// identity is only deactivated, so it still exists
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
@@ -298,7 +297,7 @@ fn activate_identity_works() {
 				status: IdentityStatus::Active
 			}
 		);
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph(&who.clone());
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
@@ -315,7 +314,7 @@ fn activate_identity_works() {
 				status: IdentityStatus::Inactive
 			}
 		);
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX)
+		let id_graph = IMT::get_id_graph(&who.clone())
 			.into_iter()
 			.filter(|(_, c)| c.is_active())
 			.collect::<IDGraph<Test>>();
@@ -330,7 +329,7 @@ fn activate_identity_works() {
 			alice_substrate_identity(),
 		));
 
-		let id_graph = IMT::get_id_graph(&who.clone(), usize::MAX);
+		let id_graph = IMT::get_id_graph(&who.clone());
 		assert_eq!(id_graph.len(), 2);
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 	});
@@ -420,29 +419,14 @@ fn get_id_graph_works() {
 			));
 		}
 		// the full id_graph should have 22 elements, including the prime_id
-		assert_eq!(IMT::get_id_graph(&who, usize::MAX).len(), 22);
-
-		// only get the recent 15 identities
-		let id_graph = IMT::get_id_graph(&who, 15);
-		assert_eq!(id_graph.len(), 15);
-		// index 0 has the most recent identity
-		assert_eq!(
-			id_graph.get(0).unwrap().0,
-			Identity::Twitter(IdentityString::new("alice21".as_bytes().to_vec()))
-		);
-		// index 14 has the least recent identity
-		assert_eq!(
-			id_graph.get(14).unwrap().0,
-			Identity::Twitter(IdentityString::new("alice7".as_bytes().to_vec()))
-		);
-
-		// try to get more than id_graph length
-		let id_graph = IMT::get_id_graph(&who, 30);
+		let id_graph = IMT::get_id_graph(&who);
 		assert_eq!(id_graph.len(), 22);
-		assert_eq!(
-			id_graph.get(0).unwrap().0,
-			Identity::Twitter(IdentityString::new("alice21".as_bytes().to_vec()))
-		);
+
+		// index 0 has the oldest identity
+		assert_eq!(id_graph.get(0).unwrap().0, who);
+
+		// index 21 has the newest identity
+		assert_eq!(id_graph.get(21).unwrap().0, alice_twitter_identity(21));
 	});
 }
 

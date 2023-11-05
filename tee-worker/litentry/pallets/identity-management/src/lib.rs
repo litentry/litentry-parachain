@@ -38,7 +38,7 @@ pub use pallet::*;
 pub mod identity_context;
 pub use identity_context::*;
 
-use frame_support::{pallet_prelude::*, traits::StorageVersion};
+use frame_support::{pallet_prelude::*, sp_runtime::traits::One, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
@@ -157,7 +157,7 @@ pub mod pallet {
 					_ => vec![],
 				};
 				let context = <IdentityContext<T>>::new(
-					<frame_system::Pallet<T>>::block_number(),
+					<T as frame_system::Config>::BlockNumber::one(),
 					prime_identity_web3networks,
 				);
 				Self::insert_identity_with_limit(&who, &who, context)?;
@@ -252,11 +252,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// get the most recent `max_len` elements in IDGraph
-		pub fn get_id_graph(who: &Identity, max_len: usize) -> IDGraph<T> {
+		// get the whole IDGraph, sorted by `link_block` (earliest -> latest)
+		pub fn get_id_graph(who: &Identity) -> IDGraph<T> {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
-			id_graph.sort_by(|a, b| Ord::cmp(&b.1.link_block, &a.1.link_block));
-			id_graph.truncate(max_len);
+			id_graph.sort_by(|a, b| Ord::cmp(&a.1.link_block, &b.1.link_block));
 			id_graph
 		}
 

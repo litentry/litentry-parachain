@@ -11,12 +11,7 @@ import {
     initIntegrationTestContext,
     PolkadotSigner,
 } from './common/utils';
-import {
-    assertFailedEvent,
-    assertIdentity,
-    assertIsInSidechainBlock,
-    assertLinkedEvent,
-} from './common/utils/assertion';
+import { assertFailedEvent, assertIsInSidechainBlock, assertLinkedEvent } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -149,19 +144,19 @@ describe('Test Identity (direct invocation)', function () {
         const linkedIdentityEvents: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [
-                [twitterIdentity, true],
                 [aliceSubject, true],
+                [twitterIdentity, true],
             ],
             [
+                [aliceSubject, true],
+                [twitterIdentity, true],
                 [evmIdentity, true],
-                [twitterIdentity, true],
-                [aliceSubject, true],
             ],
             [
+                [aliceSubject, true],
+                [twitterIdentity, true],
+                [evmIdentity, true],
                 [eveSubstrateIdentity, true],
-                [evmIdentity, true],
-                [twitterIdentity, true],
-                [aliceSubject, true],
             ],
         ];
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
@@ -182,7 +177,7 @@ describe('Test Identity (direct invocation)', function () {
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
 
-            assertIdentityLinkedResult(context, identity, res, expectedIdGraphs[0]);
+            assertIdentityLinkedResult(context, res, expectedIdGraphs[0]);
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
 
@@ -474,8 +469,6 @@ describe('Test Identity (direct invocation)', function () {
             assert.isTrue(isIdentityDeactivated);
         }
         assert.equal(deactivatedIdentityEvents.length, 3);
-
-        await assertIdentity(context, deactivatedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -570,7 +563,6 @@ describe('Test Identity (direct invocation)', function () {
             assert.isTrue(isIdentityActivated);
         }
         assert.equal(activatedIdentityEvents.length, 3);
-        await assertIdentity(context, activatedIdentityEvents, [twitterIdentity, evmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
@@ -648,9 +640,8 @@ describe('Test Identity (direct invocation)', function () {
         const res = await sendRequestFromGetter(context, teeShieldingKey, idgraphGetter);
         const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        // we have 3 identities and the first one should be changed to expectedWeb3Networks
         assert.equal(
-            idgraph[0][1].web3networks.toHuman()?.toString(),
+            idgraph[3][1].web3networks.toHuman()?.toString(),
             expectedWeb3Networks.toString(),
             'idgraph should be changed after setting network'
         );
@@ -705,9 +696,8 @@ describe('Test Identity (direct invocation)', function () {
         const res = await sendRequestFromGetter(context, teeShieldingKey, idgraphGetter);
         const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        // we have 3 identities and the first one should be changed to expectedWeb3Networks
         assert.equal(
-            idgraph[0][1].web3networks.toHuman()?.toString(),
+            idgraph[3][1].web3networks.toHuman()?.toString(),
             expectedWeb3Networks.toString(),
             'idgraph should not be changed after setting incompatible network'
         );

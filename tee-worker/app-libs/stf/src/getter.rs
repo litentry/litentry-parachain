@@ -203,8 +203,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::id_graph(who) =>
-				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
+			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
 
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.

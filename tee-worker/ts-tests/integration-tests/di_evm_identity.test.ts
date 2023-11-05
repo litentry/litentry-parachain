@@ -11,12 +11,7 @@ import {
     assertIdentityLinkedResult,
     assertWorkerError,
 } from './common/utils';
-import {
-    assertFailedEvent,
-    assertIsInSidechainBlock,
-    assertLinkedEvent,
-    assertIdentity,
-} from './common/utils/assertion';
+import { assertFailedEvent, assertIsInSidechainBlock, assertLinkedEvent } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -156,7 +151,7 @@ describe('Test Identity (evm direct invocation)', function () {
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
 
-            assertIdentityLinkedResult(context, identity, res, expectedIdGraphs[0]);
+            assertIdentityLinkedResult(context, res, expectedIdGraphs[0]);
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
 
@@ -276,8 +271,6 @@ describe('Test Identity (evm direct invocation)', function () {
         }
 
         assert.equal(deactivatedIdentityEvents.length, 2);
-
-        await assertIdentity(context, deactivatedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -364,8 +357,6 @@ describe('Test Identity (evm direct invocation)', function () {
         }
 
         assert.equal(activatedIdentityEvents.length, 2);
-
-        await assertIdentity(context, activatedIdentityEvents, [bobEvmIdentity, eveSubstrateIdentity]);
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
