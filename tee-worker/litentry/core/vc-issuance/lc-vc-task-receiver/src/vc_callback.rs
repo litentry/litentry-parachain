@@ -2,8 +2,8 @@ use crate::send_rpc_error;
 use codec::Encode;
 use ita_sgx_runtime::Hash;
 use ita_stf::{
-	aes_encrypt_default, ConvertAccountId, IdentityManagement, OpaqueCall,
-	SgxParentchainTypeConverter, VCMPCallIndexes, H256,
+	aes_encrypt_default, trusted_call_result::RequestVCResult, ConvertAccountId,
+	IdentityManagement, OpaqueCall, SgxParentchainTypeConverter, VCMPCallIndexes, H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
@@ -108,6 +108,11 @@ where
 				aes_encrypt_default(&key, &response.vc_payload),
 				H256::zero(),
 			));
+			let res = RequestVCResult {
+				vc_index: response.vc_index,
+				vc_hash: response.vc_hash,
+				vc_payload: result,
+			};
 			let xt = match self.extrinsic_factory.create_extrinsics(&[call], None) {
 				Ok(s) => s,
 				Err(e) => {
@@ -120,7 +125,7 @@ where
 			};
 			match self.context.ocall_api.send_to_parentchain(xt, &ParentchainId::Litentry) {
 				Ok(_) =>
-					if let Err(e) = sender.send(Ok(result.encode())) {
+					if let Err(e) = sender.send(Ok(res.encode())) {
 						log::warn!("Unable to send response jsonrpc handler: {:?}", e);
 					},
 				Err(e) => {
