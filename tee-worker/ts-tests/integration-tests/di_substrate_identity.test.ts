@@ -600,9 +600,10 @@ describe('Test Identity (direct invocation)', function () {
         const res = await sendRequestFromGetter(context, teeShieldingKey, idgraphGetter);
         const idgraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        // we have 3 identities and the first one is the eveSubstrateIdentity and network is ['Polkadot', 'Litentry']
-        assert.equal(idgraph[0][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString());
+        // the third (last) identity in the IDGraph is eveSubstrateIdentity
+        assert.equal(idgraph[3][1].web3networks.toHuman()?.toString(), expectedWeb3Networks.toString());
     });
+
     step('setting identity network(alice)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
         const getNextNonce = () => currentNonce++;
