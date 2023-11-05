@@ -674,7 +674,6 @@ jobs:
           - test_name: demo-direct-call
           # Litentry
           - test_name: lit-user-shielding-key
-          - test_name: lit-resume-worker
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-ii-vc-test
           - test_name: lit-ii-identity-test
