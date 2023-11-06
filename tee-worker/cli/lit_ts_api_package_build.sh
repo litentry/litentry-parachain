@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-while getopts ":p:A:u:V:C:" opt; do
+while getopts ":p:A:u:W:V:C:" opt; do
     case $opt in
         p)
             NPORT=$OPTARG
@@ -14,6 +14,9 @@ while getopts ":p:A:u:V:C:" opt; do
             ;;
         u)
             NODEURL=$OPTARG
+            ;;
+        W)
+            NODEHTTPURL=$OPTARG
             ;;
         V)
             WORKER1URL=$OPTARG
@@ -27,7 +30,7 @@ done
 # Using default port if none given as arguments.
 NPORT=${NPORT:-9944}
 NODEURL=${NODEURL:-"ws://127.0.0.1"}
-
+NODEHTTPURL=${NODEHTTPURL:-"http://127.0.0.1"}
 WORKER1PORT=${WORKER1PORT:-2000}
 WORKER1URL=${WORKER1URL:-"wss://127.0.0.1"}
 
@@ -38,10 +41,11 @@ CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1UR
 echo "Using client binary $CLIENT_BIN"
 echo "Using node uri $NODEURL:$NPORT"
 echo "Using trusted-worker uri $WORKER1URL:$WORKER1PORT"
+echo "Using node http uri $NODEHTTPURL:$NPORT"
 echo ""
 
 cd /client-api/parachain-api
-curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' http://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json
+curl -s -H "Content-Type: application/json" -d '{"id": "1", "jsonrpc": "2.0", "method": "state_getMetadata", "params": []}' $NODEHTTPURL:$NPORT > prepare-build/litentry-parachain-metadata.json
 echo "update parachain metadata"
 
 cd  /client-api/sidechain-api
