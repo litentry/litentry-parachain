@@ -104,11 +104,8 @@ fn run_vc_issuance_internal() -> Result<()> {
 		state_handler,
 		ocall_api,
 	);
-
-	// Note: The unwrap here cannot fail because these components are initialised, else worker will fail much earlier
-	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain().unwrap();
-	let node_metadata_repo =
-		get_node_metadata_repository_from_integritee_solo_or_parachain().unwrap();
+	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
 	Ok(())
 }
