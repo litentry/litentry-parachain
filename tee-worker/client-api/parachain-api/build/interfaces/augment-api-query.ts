@@ -136,16 +136,7 @@ declare module "@polkadot/api-base/types/storage" {
             assetTypeId: AugmentedQuery<
                 ApiType,
                 (
-                    arg:
-                        | RuntimeCommonXcmImplCurrencyId
-                        | {
-                              SelfReserve: any;
-                          }
-                        | {
-                              ParachainReserve: any;
-                          }
-                        | string
-                        | Uint8Array
+                    arg: RuntimeCommonXcmImplCurrencyId | { SelfReserve: any } | { ParachainReserve: any } | string | Uint8Array
                 ) => Observable<Option<u128>>,
                 [RuntimeCommonXcmImplCurrencyId]
             >;
@@ -382,19 +373,7 @@ declare module "@polkadot/api-base/types/storage" {
             metadataOf: AugmentedQuery<
                 ApiType,
                 (
-                    arg:
-                        | PalletDemocracyMetadataOwner
-                        | {
-                              External: any;
-                          }
-                        | {
-                              Proposal: any;
-                          }
-                        | {
-                              Referendum: any;
-                          }
-                        | string
-                        | Uint8Array
+                    arg: PalletDemocracyMetadataOwner | { External: any } | { Proposal: any } | { Referendum: any } | string | Uint8Array
                 ) => Observable<Option<H256>>,
                 [PalletDemocracyMetadataOwner]
             >;
@@ -906,13 +885,7 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg1: u32 | AnyNumber | Uint8Array,
                     arg2: AccountId32 | string | Uint8Array,
-                    arg3:
-                        | XcmVersionedAssetId
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array
+                    arg3: XcmVersionedAssetId | { V3: any } | string | Uint8Array
                 ) => Observable<Option<PalletXcmRemoteLockedFungibleRecord>>,
                 [u32, AccountId32, XcmVersionedAssetId]
             >;
@@ -928,16 +901,7 @@ declare module "@polkadot/api-base/types/storage" {
                 ApiType,
                 (
                     arg1: u32 | AnyNumber | Uint8Array,
-                    arg2:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array
+                    arg2: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array
                 ) => Observable<Option<u32>>,
                 [u32, XcmVersionedMultiLocation]
             >;
@@ -954,16 +918,7 @@ declare module "@polkadot/api-base/types/storage" {
                 ApiType,
                 (
                     arg1: u32 | AnyNumber | Uint8Array,
-                    arg2:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array
+                    arg2: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array
                 ) => Observable<Option<u64>>,
                 [u32, XcmVersionedMultiLocation]
             >;
@@ -975,16 +930,7 @@ declare module "@polkadot/api-base/types/storage" {
                 ApiType,
                 (
                     arg1: u32 | AnyNumber | Uint8Array,
-                    arg2:
-                        | XcmVersionedMultiLocation
-                        | {
-                              V2: any;
-                          }
-                        | {
-                              V3: any;
-                          }
-                        | string
-                        | Uint8Array
+                    arg2: XcmVersionedMultiLocation | { V2: any } | { V3: any } | string | Uint8Array
                 ) => Observable<Option<ITuple<[u64, SpWeightsWeightV2Weight, u32]>>>,
                 [u32, XcmVersionedMultiLocation]
             >;

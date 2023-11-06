@@ -32,21 +32,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     newFree: Compact<u128> | AnyNumber | Uint8Array
@@ -61,40 +51,20 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     source:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     dest:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     value: Compact<u128> | AnyNumber | Uint8Array
@@ -110,21 +80,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     amount: u128 | AnyNumber | Uint8Array
@@ -143,21 +103,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     newFree: Compact<u128> | AnyNumber | Uint8Array,
@@ -174,21 +124,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     dest:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     value: Compact<u128> | AnyNumber | Uint8Array
@@ -216,21 +156,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     dest:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     keepAlive: bool | boolean | Uint8Array
@@ -250,21 +180,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     dest:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     value: Compact<u128> | AnyNumber | Uint8Array
@@ -283,21 +203,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     dest:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     value: Compact<u128> | AnyNumber | Uint8Array
@@ -324,40 +234,20 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -367,40 +257,20 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -410,40 +280,20 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     web3networks:
@@ -469,40 +319,20 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     identity:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     web3networks:
@@ -528,21 +358,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     key: U8aFixed | string | Uint8Array,
@@ -571,13 +391,7 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     header:
                         | SpRuntimeHeader
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -598,21 +412,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     updated:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
@@ -640,21 +444,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 (
                     who:
                         | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
+                        | { Id: any }
+                        | { Index: any }
+                        | { Raw: any }
+                        | { Address32: any }
+                        | { Address20: any }
                         | string
                         | Uint8Array,
                     call: Call | IMethod | string | Uint8Array
@@ -674,14 +468,7 @@ declare module "@polkadot/api-base/types/submittable" {
             sudoUncheckedWeight: AugmentedSubmittable<
                 (
                     call: Call | IMethod | string | Uint8Array,
-                    weight:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
+                    weight: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array
                 ) => SubmittableExtrinsic<ApiType>,
                 [Call, SpWeightsWeightV2Weight]
             >;

@@ -111,21 +111,11 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array
                 ) => Observable<u32>,
@@ -136,40 +126,20 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg1:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array,
                     arg2:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array
                 ) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>,
@@ -180,21 +150,11 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array
                 ) => Observable<Option<Null>>,
@@ -205,21 +165,11 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg:
                         | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
+                        | { Twitter: any }
+                        | { Discord: any }
+                        | { Github: any }
+                        | { Substrate: any }
+                        | { Evm: any }
                         | string
                         | Uint8Array
                 ) => Observable<Option<U8aFixed>>,

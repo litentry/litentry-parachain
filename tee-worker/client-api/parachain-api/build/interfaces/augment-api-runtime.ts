@@ -60,21 +60,8 @@ declare module "@polkadot/api-base/types/calls" {
             checkInherents: AugmentedCall<
                 ApiType,
                 (
-                    block:
-                        | Block
-                        | {
-                              header?: any;
-                              extrinsics?: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    data:
-                        | InherentData
-                        | {
-                              data?: any;
-                          }
-                        | string
-                        | Uint8Array
+                    block: Block | { header?: any; extrinsics?: any } | string | Uint8Array,
+                    data: InherentData | { data?: any } | string | Uint8Array
                 ) => Observable<CheckInherentsResult>
             >;
             /**
@@ -86,15 +73,7 @@ declare module "@polkadot/api-base/types/calls" {
              **/
             inherentExtrinsics: AugmentedCall<
                 ApiType,
-                (
-                    inherent:
-                        | InherentData
-                        | {
-                              data?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => Observable<Vec<Extrinsic>>
+                (inherent: InherentData | { data?: any } | string | Uint8Array) => Observable<Vec<Extrinsic>>
             >;
         };
         /** 0xea93e3f16f3d6962/2 */
@@ -107,13 +86,7 @@ declare module "@polkadot/api-base/types/calls" {
                 (
                     header:
                         | Header
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => Observable<CollationInfo>
@@ -127,19 +100,7 @@ declare module "@polkadot/api-base/types/calls" {
             convertTransaction: AugmentedCall<
                 ApiType,
                 (
-                    transaction:
-                        | TransactionV2
-                        | {
-                              Legacy: any;
-                          }
-                        | {
-                              EIP2930: any;
-                          }
-                        | {
-                              EIP1559: any;
-                          }
-                        | string
-                        | Uint8Array
+                    transaction: TransactionV2 | { Legacy: any } | { EIP2930: any } | { EIP1559: any } | string | Uint8Array
                 ) => Observable<Extrinsic>
             >;
         };
@@ -150,16 +111,7 @@ declare module "@polkadot/api-base/types/calls" {
              **/
             executeBlock: AugmentedCall<
                 ApiType,
-                (
-                    block:
-                        | Block
-                        | {
-                              header?: any;
-                              extrinsics?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => Observable<Null>
+                (block: Block | { header?: any; extrinsics?: any } | string | Uint8Array) => Observable<Null>
             >;
             /**
              * Initialize a block with the given header.
@@ -169,13 +121,7 @@ declare module "@polkadot/api-base/types/calls" {
                 (
                     header:
                         | Header
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
@@ -261,13 +207,7 @@ declare module "@polkadot/api-base/types/calls" {
                 (
                     header:
                         | Header
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
@@ -326,16 +266,7 @@ declare module "@polkadot/api-base/types/calls" {
              **/
             queryWeightToFee: AugmentedCall<
                 ApiType,
-                (
-                    weight:
-                        | Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => Observable<Balance>
+                (weight: Weight | { refTime?: any; proofSize?: any } | string | Uint8Array) => Observable<Balance>
             >;
         };
     } // AugmentedCalls
