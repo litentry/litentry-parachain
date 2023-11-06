@@ -33,23 +33,6 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         });
     });
 
-    step('set user shielding key', async function () {
-        const [aliceTxs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
-        const events = await multiAccountTxSender(
-            context,
-            [aliceTxs],
-            [context.substrateWallet.alice],
-            'identityManagement',
-            ['UserShieldingKeySet']
-        );
-        const [alice] = await handleIdentityEvents(context, aesKey, events, 'UserShieldingKeySet');
-        assert.equal(
-            alice.who,
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            'alice shielding key should be set'
-        );
-    });
-
     step('batch test: link identities', async function () {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
