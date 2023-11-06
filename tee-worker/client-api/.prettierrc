@@ -1,4 +1,6 @@
 {
 	"printWidth": 140,
-    "bracketSpacing": true
+  "bracketSpacing": true,
+  "tabWidth": 4,
+  "trailingComma":"es5"
 }
