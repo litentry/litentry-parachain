@@ -659,8 +659,8 @@ pub struct ParamsBasicTypeWithMirror {
 
 impl ParamsBasicTypeWithMirror {
 	pub fn new(name: String, network: &Web3Network, post_quantity: Option<String>) -> Self {
-		let chain = web3_network_to_chain(network);
-		Self { name, chain, post_quantity }
+		let chain: &'static str = network.into();
+		Self { name, chain: chain.to_string(), post_quantity }
 	}
 }
 
@@ -741,7 +741,9 @@ impl AchainableTotalTransactionsParser for AchainableClient {
 			// pop the last char: ")"
 			value_text.pop();
 
-			let value: u64 = value_text.parse::<u64>().unwrap_or_default();
+			let value = value_text
+				.parse::<u64>()
+				.map_err(|e| Error::AchainableError(format!("Parse txn count error: {:?}", e)))?;
 
 			return Ok(value)
 		}
@@ -765,15 +767,15 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 		addresses: &[String],
 	) -> Result<u64, Error> {
 		let mut txs = 0_u64;
-		addresses.iter().for_each(|address| {
+		for address in addresses.iter() {
 			let name = "Account total transactions under {amount}".to_string();
 			let amount = "1".to_string();
 
 			let param = ParamsBasicTypeWithAmount::new(name, network, amount);
 			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
-			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs);
-			txs += tx.unwrap_or_default();
-		});
+			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs)?;
+			txs += tx;
+		}
 
 		Ok(txs)
 	}
@@ -815,7 +817,9 @@ impl AchainableUtils for AchainableClient {
 			// pop the last char: ")"
 			value_text.pop();
 
-			let value: f64 = value_text.parse::<f64>().unwrap_or_default();
+			let value = value_text
+				.parse::<f64>()
+				.map_err(|e| Error::AchainableError(format!("Parse balance error: {:?}", e)))?;
 
 			return Ok(value)
 		}
@@ -830,12 +834,12 @@ pub trait HoldingAmount {
 impl HoldingAmount for AchainableClient {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
 		let mut total_balance = 0_f64;
-		addresses.iter().for_each(|address| {
+		for address in addresses.iter() {
 			let body = ReqBody::new(address.into(), param.clone());
 			let balance =
-				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance);
-			total_balance += balance.unwrap_or_default();
-		});
+				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance)?;
+			total_balance += balance;
+		}
 
 		Ok(total_balance.to_string())
 	}
@@ -1231,10 +1235,8 @@ impl AchainableTagDeFi for AchainableClient {
 		let name_provider = "Uniswap V3 liquidity provider";
 		let chain: Web3Network = Web3Network::Ethereum;
 
-		if request_basic_type_with_token(self, address, name_trader, &chain, None)
-			.unwrap_or_default()
-			|| request_basic_type_with_token(self, address, name_provider, &chain, None)
-				.unwrap_or_default()
+		if request_basic_type_with_token(self, address, name_trader, &chain, None)?
+			|| request_basic_type_with_token(self, address, name_provider, &chain, None)?
 		{
 			return Ok(true)
 		}
@@ -1283,9 +1285,7 @@ impl AchainableTagDeFi for AchainableClient {
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 {token} liquidity provider
 		// Uniswap V3 {token} liquidity provider
-		if self.usdt_uniswap_v2_lp(address).unwrap_or_default()
-			|| self.usdt_uniswap_v3_lp(address).unwrap_or_default()
-		{
+		if self.usdt_uniswap_v2_lp(address)? || self.usdt_uniswap_v3_lp(address)? {
 			return Ok(true)
 		}
 

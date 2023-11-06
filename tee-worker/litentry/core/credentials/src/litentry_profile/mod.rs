@@ -14,26 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::vec::Vec;
 pub mod holding_amount;
 pub mod mirror;
 pub mod token_balance;
 
-fn match_balance(range: Vec<(&str, &str)>, balance: &str) -> usize {
-	let balance = balance.parse::<f64>().unwrap_or_default();
-	let mut r_index = range.len();
-	for (index, item) in range.iter().enumerate() {
-		let low = item.0.parse::<f64>().unwrap();
-		let high = item.1.parse::<f64>().unwrap();
+#[derive(Debug)]
+pub struct BalanceRange;
+pub trait BalanceRangeIndex {
+	fn index<T>(source: &[T], balance: T) -> Option<usize>
+	where
+		T: Into<f64> + std::fmt::Debug + std::cmp::PartialOrd<T>;
+}
 
-		if balance >= low && balance < high {
-			r_index = index;
-
-			break
+impl BalanceRangeIndex for BalanceRange {
+	fn index<T>(source: &[T], balance: T) -> Option<usize>
+	where
+		T: Into<f64> + std::fmt::Debug + std::cmp::PartialOrd<T>,
+	{
+		for (index, item) in source.iter().enumerate() {
+			if balance < *item {
+				return Some(index - 1)
+			}
 		}
-	}
 
-	r_index
+		None
+	}
 }
 
 #[cfg(test)]
@@ -42,23 +47,23 @@ mod tests {
 	use crate::litentry_profile::holding_amount::ETH_HOLDING_AMOUNT_RANGE;
 
 	#[test]
-	fn match_balance_eth_holding_false_works() {
-		let balance = "0";
-		let index = match_balance(ETH_HOLDING_AMOUNT_RANGE.to_vec(), balance);
-		assert_eq!(index, 0);
+	fn balance_index_eth_holding_false_works() {
+		let balance = 0.0;
+		let index = BalanceRange::index(&ETH_HOLDING_AMOUNT_RANGE, balance);
+		assert_eq!(index.unwrap(), 0);
 	}
 
 	#[test]
-	fn match_balance_eth_holding_true_works() {
-		let balance = "10";
-		let index = match_balance(ETH_HOLDING_AMOUNT_RANGE.to_vec(), balance);
-		assert_eq!(index, 5);
+	fn balance_index_eth_holding_true_works() {
+		let balance = 10.0;
+		let index = BalanceRange::index(&ETH_HOLDING_AMOUNT_RANGE, balance);
+		assert_eq!(index.unwrap(), 5);
 	}
 
 	#[test]
-	fn match_balance_eth_holding_max_works() {
-		let balance = "1000000";
-		let index = match_balance(ETH_HOLDING_AMOUNT_RANGE.to_vec(), balance);
-		assert_eq!(index, ETH_HOLDING_AMOUNT_RANGE.len());
+	fn balance_index_eth_holding_max_works() {
+		let balance = 1000000.0;
+		let index = BalanceRange::index(&ETH_HOLDING_AMOUNT_RANGE, balance);
+		assert_eq!(index, None);
 	}
 }

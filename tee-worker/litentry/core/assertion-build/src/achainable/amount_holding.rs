@@ -36,11 +36,18 @@ pub fn build_amount_holding(
 
 	let token = ETokenAddress::from_vec(param.clone().token.unwrap_or_default());
 	let achainable_param = AchainableParams::AmountHolding(param);
-	let balance = request_achainable_balance(addresses, achainable_param.clone())?;
+	let balance = request_achainable_balance(addresses, achainable_param.clone())?
+		.parse::<f64>()
+		.map_err(|_| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(achainable_param.clone()),
+				ErrorDetail::ParseError,
+			)
+		})?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_token_balance(token, &balance);
+			credential_unsigned.update_token_balance(token, balance);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

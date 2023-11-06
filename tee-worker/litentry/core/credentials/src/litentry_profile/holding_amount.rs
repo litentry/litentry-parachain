@@ -14,61 +14,63 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::{BalanceRange, BalanceRangeIndex};
 use crate::{
 	assertion_logic::{AssertionLogic, Op},
 	Credential,
 };
 
-use super::match_balance;
-
 // (type, description)
 const VC_HOLDING_AMOUNT_INFOS: [(&str, &str); 1] =
-	[("REPLACE_ME_ETH_HOLDING_AMOUNT_TYPE", "REPLACE_ME_ETH_HOLDING_AMOUNT_DESC")];
+	[("Token holding amount", "The amount of a particular token you are holding")];
 
-// ETH Holding Amount Range [0.01-0.5)
-pub const ETH_HOLDING_AMOUNT_RANGE: [(&str, &str); 9] = [
-	("0.0", "0.01"), // False
-	("0.01", "0.5"),
-	("0.5", "1.0"),
-	("1.0", "5.0"),
-	("5.0", "10.0"),
-	("10.0", "50.0"),
-	("50.0", "100.0"),
-	("100.0", "500.0"),
-	("500.0", "1000.0"),
-];
+pub const ETH_HOLDING_AMOUNT_RANGE: [f64; 10] =
+	[0.0, 0.01, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0, 500.0, 1000.0];
 
 pub trait LitentryProfileHoldingAmount {
-	fn update_eth_holding_amount(&mut self, balance: &str);
+	fn update_eth_holding_amount(&mut self, balance: f64);
 }
 
 impl LitentryProfileHoldingAmount for Credential {
-	fn update_eth_holding_amount(&mut self, balance: &str) {
-		let mut assertion = AssertionLogic::new_and();
-
-		let index = match_balance(ETH_HOLDING_AMOUNT_RANGE.to_vec(), balance);
-		match ETH_HOLDING_AMOUNT_RANGE.get(index) {
-			Some((min, max)) => {
-				let min_item = AssertionLogic::new_item("$eth_holding_amount", Op::GreaterEq, min);
-				let max_item = AssertionLogic::new_item("$eth_holding_amount", Op::LessThan, max);
-
-				assertion = assertion.add_item(min_item);
-				assertion = assertion.add_item(max_item);
-			},
-			// >= 1000.0
-			None => {
-				let min_item = AssertionLogic::new_item(
-					"$eth_holding_amount",
-					Op::GreaterEq,
-					&format!("{}", 1000.0),
-				);
-				assertion = assertion.add_item(min_item);
-			},
-		}
-
-		self.credential_subject.assertions.push(assertion);
-		self.credential_subject.values.push(index != 0);
-
+	fn update_eth_holding_amount(&mut self, balance: f64) {
 		self.add_subject_info(VC_HOLDING_AMOUNT_INFOS[0].1, VC_HOLDING_AMOUNT_INFOS[0].0);
+
+		update_assertion(balance, self);
 	}
+}
+
+fn update_assertion(balance: f64, credential: &mut Credential) {
+	let mut assertion = AssertionLogic::new_and();
+
+	let assertion_content = get_assertion_content();
+	let index = BalanceRange::index(&ETH_HOLDING_AMOUNT_RANGE, balance);
+	match index {
+		Some(index) => {
+			let min = format!("{}", ETH_HOLDING_AMOUNT_RANGE[index]);
+			let max = format!("{}", ETH_HOLDING_AMOUNT_RANGE[index + 1]);
+			let min_item = AssertionLogic::new_item(assertion_content, Op::GreaterEq, &min);
+			let max_item = AssertionLogic::new_item(assertion_content, Op::LessThan, &max);
+
+			assertion = assertion.add_item(min_item);
+			assertion = assertion.add_item(max_item);
+
+			credential.credential_subject.values.push(index != 0);
+		},
+		None => {
+			let min_item = AssertionLogic::new_item(
+				assertion_content,
+				Op::GreaterEq,
+				&format!("{}", ETH_HOLDING_AMOUNT_RANGE.last().unwrap_or(&1000.0)),
+			);
+			assertion = assertion.add_item(min_item);
+
+			credential.credential_subject.values.push(true);
+		},
+	}
+
+	credential.credential_subject.assertions.push(assertion);
+}
+
+fn get_assertion_content() -> &'static str {
+	"$eth_holding_amount"
 }

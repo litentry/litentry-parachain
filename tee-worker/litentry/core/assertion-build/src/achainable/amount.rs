@@ -26,7 +26,6 @@ use crate::{
 };
 use lc_credentials::litentry_profile::holding_amount::LitentryProfileHoldingAmount;
 use lc_data_providers::{achainable_names::AchainableNameBalance, ConvertParameterString};
-use std::string::ToString;
 
 const CREATED_OVER_AMOUNT_CONTRACTS: &str = "Created over {amount} contracts";
 const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
@@ -114,10 +113,17 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 			e.into_error_detail(),
 		)
 	})?;
-	let mut balance = "".to_string();
+	let mut balance = 0.0;
 	let mut flag = false;
 	if bname == AchainableNameBalance::BalanceUnderAmount {
-		balance = request_achainable_balance(addresses, achainable_param.clone())?;
+		balance = request_achainable_balance(addresses, achainable_param.clone())?
+			.parse::<f64>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(achainable_param.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
 	} else {
 		flag = request_achainable(addresses, achainable_param.clone())?;
 	}
@@ -125,7 +131,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			if bname == AchainableNameBalance::BalanceUnderAmount {
-				credential_unsigned.update_eth_holding_amount(&balance);
+				credential_unsigned.update_eth_holding_amount(balance);
 			} else {
 				let (desc, subtype, content) =
 					get_assertion_content(&achainable_param.to_string(&param.name)?, &param.chain);
