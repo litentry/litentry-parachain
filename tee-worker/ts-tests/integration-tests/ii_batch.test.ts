@@ -1,18 +1,14 @@
 import {
     describeLitentry,
     buildIdentityTxs,
-    handleIdentityEvents,
     buildIdentityHelper,
     buildValidations,
     checkErrorDetail,
     buildIdentityFromKeypair,
     PolkadotSigner,
 } from './common/utils';
-import { aesKey } from './common/call';
-import { u8aToHex } from '@polkadot/util';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
-import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
+import { sendTxsWithUtility } from './common/transactions';
 import { generateWeb3Wallets, assertIdentityLinked, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
@@ -49,7 +45,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             context,
             signerIdentities,
             identities,
-            1,
+            0,
             'ethereum',
             undefined,
             ethereumSigners
