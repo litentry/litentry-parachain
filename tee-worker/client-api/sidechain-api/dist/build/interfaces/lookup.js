@@ -648,17 +648,7 @@ export default {
 	 * Lookup95: core_primitives::network::Web3Network
 	 **/
 	CorePrimitivesNetworkWeb3Network: {
-		_enum: [
-			"Polkadot",
-			"Kusama",
-			"Litentry",
-			"Litmus",
-			"LitentryRococo",
-			"Khala",
-			"SubstrateTestnet",
-			"Ethereum",
-			"Bsc",
-		],
+		_enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
 	},
 	/**
 	 * Lookup96: pallet_sudo::pallet::Error<T>

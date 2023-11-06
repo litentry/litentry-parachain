@@ -6,17 +6,7 @@
 import "@polkadot/api-base/types/storage";
 
 import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from "@polkadot/api-base/types";
-import type {
-    Bytes,
-    Null,
-    Option,
-    U8aFixed,
-    Vec,
-    bool,
-    u128,
-    u32,
-    u64,
-} from "@polkadot/types-codec";
+import type { Bytes, Null, Option, U8aFixed, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
 import type { AnyNumber, ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
 import type {
@@ -99,9 +89,7 @@ declare module "@polkadot/api-base/types/storage" {
              **/
             locks: AugmentedQuery<
                 ApiType,
-                (
-                    arg: AccountId32 | string | Uint8Array
-                ) => Observable<Vec<PalletBalancesBalanceLock>>,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesBalanceLock>>,
                 [AccountId32]
             >;
             /**
@@ -109,9 +97,7 @@ declare module "@polkadot/api-base/types/storage" {
              **/
             reserves: AugmentedQuery<
                 ApiType,
-                (
-                    arg: AccountId32 | string | Uint8Array
-                ) => Observable<Vec<PalletBalancesReserveData>>,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesReserveData>>,
                 [AccountId32]
             >;
             /**
@@ -125,11 +111,21 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg:
                         | LitentryPrimitivesIdentity
-                        | { Twitter: any }
-                        | { Discord: any }
-                        | { Github: any }
-                        | { Substrate: any }
-                        | { Evm: any }
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<u32>,
@@ -140,20 +136,40 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg1:
                         | LitentryPrimitivesIdentity
-                        | { Twitter: any }
-                        | { Discord: any }
-                        | { Github: any }
-                        | { Substrate: any }
-                        | { Evm: any }
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
                         | string
                         | Uint8Array,
                     arg2:
                         | LitentryPrimitivesIdentity
-                        | { Twitter: any }
-                        | { Discord: any }
-                        | { Github: any }
-                        | { Substrate: any }
-                        | { Evm: any }
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>,
@@ -164,11 +180,21 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg:
                         | LitentryPrimitivesIdentity
-                        | { Twitter: any }
-                        | { Discord: any }
-                        | { Github: any }
-                        | { Substrate: any }
-                        | { Evm: any }
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<Option<Null>>,
@@ -179,11 +205,21 @@ declare module "@polkadot/api-base/types/storage" {
                 (
                     arg:
                         | LitentryPrimitivesIdentity
-                        | { Twitter: any }
-                        | { Discord: any }
-                        | { Github: any }
-                        | { Substrate: any }
-                        | { Evm: any }
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
                         | string
                         | Uint8Array
                 ) => Observable<Option<U8aFixed>>,
@@ -214,11 +250,7 @@ declare module "@polkadot/api-base/types/storage" {
             /**
              * The full account information for a particular account ID.
              **/
-            account: AugmentedQuery<
-                ApiType,
-                (arg: AccountId32 | string | Uint8Array) => Observable<FrameSystemAccountInfo>,
-                [AccountId32]
-            >;
+            account: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<FrameSystemAccountInfo>, [AccountId32]>;
             /**
              * Total length (in bytes) for all extrinsics put together, for the current block.
              **/
@@ -226,19 +258,11 @@ declare module "@polkadot/api-base/types/storage" {
             /**
              * Map of block numbers to block hashes.
              **/
-            blockHash: AugmentedQuery<
-                ApiType,
-                (arg: u32 | AnyNumber | Uint8Array) => Observable<H256>,
-                [u32]
-            >;
+            blockHash: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<H256>, [u32]>;
             /**
              * The current weight for the block.
              **/
-            blockWeight: AugmentedQuery<
-                ApiType,
-                () => Observable<FrameSupportDispatchPerDispatchClassWeight>,
-                []
-            >;
+            blockWeight: AugmentedQuery<ApiType, () => Observable<FrameSupportDispatchPerDispatchClassWeight>, []>;
             /**
              * Digest of the current block, also part of the block header.
              **/
@@ -269,11 +293,7 @@ declare module "@polkadot/api-base/types/storage" {
              * the `EventIndex` then in case if the topic has the same contents on the next block
              * no notification will be triggered thus the event might be lost.
              **/
-            eventTopics: AugmentedQuery<
-                ApiType,
-                (arg: H256 | string | Uint8Array) => Observable<Vec<ITuple<[u32, u32]>>>,
-                [H256]
-            >;
+            eventTopics: AugmentedQuery<ApiType, (arg: H256 | string | Uint8Array) => Observable<Vec<ITuple<[u32, u32]>>>, [H256]>;
             /**
              * The execution phase of the block.
              **/
@@ -285,19 +305,11 @@ declare module "@polkadot/api-base/types/storage" {
             /**
              * Extrinsics data for the current block (maps an extrinsic's index to its data).
              **/
-            extrinsicData: AugmentedQuery<
-                ApiType,
-                (arg: u32 | AnyNumber | Uint8Array) => Observable<Bytes>,
-                [u32]
-            >;
+            extrinsicData: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Bytes>, [u32]>;
             /**
              * Stores the `spec_version` and `spec_name` of when the last runtime upgrade happened.
              **/
-            lastRuntimeUpgrade: AugmentedQuery<
-                ApiType,
-                () => Observable<Option<FrameSystemLastRuntimeUpgradeInfo>>,
-                []
-            >;
+            lastRuntimeUpgrade: AugmentedQuery<ApiType, () => Observable<Option<FrameSystemLastRuntimeUpgradeInfo>>, []>;
             /**
              * The current block number being processed. Set by `execute_block`.
              **/
@@ -328,11 +340,7 @@ declare module "@polkadot/api-base/types/storage" {
         };
         transactionPayment: {
             nextFeeMultiplier: AugmentedQuery<ApiType, () => Observable<u128>, []>;
-            storageVersion: AugmentedQuery<
-                ApiType,
-                () => Observable<PalletTransactionPaymentReleases>,
-                []
-            >;
+            storageVersion: AugmentedQuery<ApiType, () => Observable<PalletTransactionPaymentReleases>, []>;
         };
     } // AugmentedQueries
 } // declare module

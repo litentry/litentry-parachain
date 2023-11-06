@@ -26,7 +26,14 @@ declare module "@polkadot/api-base/types/calls" {
             executeBlock: AugmentedCall<
                 ApiType,
                 (
-                    block: Block | { header?: any; extrinsics?: any } | string | Uint8Array
+                    block:
+                        | Block
+                        | {
+                              header?: any;
+                              extrinsics?: any;
+                          }
+                        | string
+                        | Uint8Array
                 ) => Observable<Null>
             >;
             /**
@@ -62,10 +69,7 @@ declare module "@polkadot/api-base/types/calls" {
             /**
              * Returns the metadata at a given version.
              **/
-            metadataAtVersion: AugmentedCall<
-                ApiType,
-                (version: u32 | AnyNumber | Uint8Array) => Observable<Option<OpaqueMetadata>>
-            >;
+            metadataAtVersion: AugmentedCall<ApiType, (version: u32 | AnyNumber | Uint8Array) => Observable<Option<OpaqueMetadata>>>;
             /**
              * Returns the supported metadata versions.
              **/
