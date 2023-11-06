@@ -1,20 +1,19 @@
 {
-	"name": "@litentry/sidechain-api",
+	"name": "parachain-api",
 	"type": "module",
 	"license": "ISC",
 	"main": "dist/src/index.js",
-	"version": "0.0.1",
 	"scripts": {
 		"clean": "rm -rf dist build node_modules",
-		"update-metadata": "../../bin/litentry-cli print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json",
-		"update-metadata:ci": "/usr/local/bin/litentry-cli print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json",
+		"update-metadata": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9944 > prepare-build/litentry-parachain-metadata.json",
+		"update-metadata:ci": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://litentry-node:9912 > prepare-build/litentry-parachain-metadata.json",
 		"prepare-dir": "mkdir -p build && cp -rf prepare-build/* build",
-		"generate-from-defs": "pnpm exec node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/@polkadot/typegen/scripts/polkadot-types-from-defs.mjs --package sidechain-api/interfaces --input build/interfaces --endpoint build/litentry-sidechain-metadata.json",
-		"generate-from-chain": "pnpm exec node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/@polkadot/typegen/scripts/polkadot-types-from-chain.mjs --package sidechain-api/interfaces --output build/interfaces --endpoint build/litentry-sidechain-metadata.json --strict",
+		"generate-from-defs": "pnpm exec node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/@polkadot/typegen/scripts/polkadot-types-from-defs.mjs --package parachain-api/interfaces --input build/interfaces --endpoint build/litentry-parachain-metadata.json",
+		"generate-from-chain": "pnpm exec node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/@polkadot/typegen/scripts/polkadot-types-from-chain.mjs --package parachain-api/interfaces --output build/interfaces --endpoint build/litentry-parachain-metadata.json --strict",
 		"format": "pnpm exec prettier --write .",
 		"check-format": "pnpm exec prettier --check .",
 		"compile": "tsc",
-		"build": "pnpm run prepare-dir && pnpm run generate-from-defs && pnpm run generate-from-chain && pnpm run format && pnpm run compile",
+		"build": "pnpm run prepare-dir && pnpm run generate-from-defs && pnpm run generate-from-chain && pnpm run compile",
 		"lint": "tsc --noEmit --pretty"
 	},
 	"dependencies": {
