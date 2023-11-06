@@ -75,10 +75,12 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, S>(
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<S>>,
-	sender: std::sync::mpsc::SyncSender<(
-		direct_top_pool_api::MaybeRequestIdWithParams,
-		direct_top_pool_api::MaybeRequestIdWithParams,
-	)>,
+	sender: Arc<
+		std::sync::mpsc::SyncSender<(
+			direct_top_pool_api::MaybeRequestIdWithParams,
+			direct_top_pool_api::MaybeRequestIdWithParams,
+		)>,
+	>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256> + Send + Sync + 'static,

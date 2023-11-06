@@ -701,7 +701,10 @@ where
 				encoded_value.clone(),
 				force_wait,
 			);
-			self.listener.write().unwrap().top_executed(&top_hash, &encoded_value);
+			self.listener
+				.write()
+				.unwrap()
+				.top_executed(&top_hash, &encoded_value, force_wait);
 		}
 	}
 

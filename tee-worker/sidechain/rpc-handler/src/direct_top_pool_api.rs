@@ -49,7 +49,7 @@ pub type MaybeRequestIdWithParams = Option<(Hash, Vec<String>)>;
 pub fn add_top_pool_direct_rpc_methods<R>(
 	top_pool_author: Arc<R>,
 	mut io_handler: IoHandler,
-	sender: SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>,
+	sender: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
 ) -> IoHandler
 where
 	R: AuthorApi<Hash, Hash> + Send + Sync + 'static,

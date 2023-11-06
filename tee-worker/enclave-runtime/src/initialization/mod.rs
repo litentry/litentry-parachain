@@ -27,15 +27,15 @@ use crate::{
 		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, GLOBAL_ATTESTATION_HANDLER_COMPONENT,
-		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
-		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
-		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
+		EnclaveTopPoolAuthor, DIRECT_RPC_REQUESTS_SINK_COMPONENT,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT,
+		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
+		GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT, GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+		GLOBAL_TOP_POOL_AUTHOR_COMPONENT, GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
@@ -165,9 +165,11 @@ pub(crate) fn init_enclave(
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
 
-	let (sender, broadcaster) = init(rpc_responder);
+	let (requests_sink, broadcaster) = init(rpc_responder);
+	let requests_sink_cloned = requests_sink.clone();
 
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
+	DIRECT_RPC_REQUESTS_SINK_COMPONENT.initialize(requests_sink);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
@@ -175,7 +177,7 @@ pub(crate) fn init_enclave(
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
-		sender,
+		requests_sink_cloned,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);

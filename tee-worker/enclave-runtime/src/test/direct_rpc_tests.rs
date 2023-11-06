@@ -34,15 +34,8 @@ use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use its_sidechain::rpc_handler::{
-	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
-};
 use litentry_primitives::{Address32, Identity};
-use std::{
-	string::{String, ToString},
-	sync::Arc,
-	vec::Vec,
-};
+use std::{string::ToString, sync::Arc, vec::Vec};
 
 pub fn get_state_request_works() {
 	type TestState = u64;
@@ -66,7 +59,7 @@ pub fn get_state_request_works() {
 		getter_executor,
 		Arc::new(rsa_repository),
 		None::<Arc<HandleStateMock>>,
-		sender,
+		Arc::new(sender),
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 

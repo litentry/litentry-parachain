@@ -25,6 +25,7 @@ extern crate core;
 extern crate sgx_tstd as std;
 
 use alloc::vec;
+use log::error;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 
@@ -95,8 +96,6 @@ where
 			while let Ok((id, rpc_return_value)) = responses_receiver.recv() {
 				match rpc_return_value.status {
 					DirectRequestStatus::TrustedOperationStatus(status, _) => {
-						// Some((response.0, status, response.1.do_watch))
-
 						//we need to map Id to hash in order to correlate it with connection
 						let hash = match id_to_hash(&id) {
 							Some(hash) => hash,
@@ -106,11 +105,11 @@ where
 							// this will come from every peer so do not flood the client
 							TrustedOperationStatus::Submitted => {},
 							// this needs to come before block is imported, otherwise it's going to be ignored because TOP will be removed from the pool after block import
-							TrustedOperationStatus::TopExecuted(ref value) => {
+							TrustedOperationStatus::TopExecuted(ref value, force_wait) => {
 								match rpc_responder.update_connection_state(
 									hash,
 									value.clone(),
-									rpc_return_value.do_watch,
+									force_wait,
 								) {
 									Ok(_) => {},
 									Err(e) => log::error!(
@@ -119,20 +118,17 @@ where
 										e
 									),
 								};
-								if let Err(_e) = rpc_responder.update_status_event(hash, status) {};
+								if let Err(_e) = rpc_responder.update_status_event(hash, status) {
+									error!("Could not update status for {}", &hash)
+								};
 							},
 							_ => {
-								match rpc_responder
-									.update_force_wait(hash, rpc_return_value.do_watch)
-								{
-									Ok(_) => {},
-									Err(e) => log::error!(
-										"Could not set connection {}, reason: {:?}",
-										hash,
-										e
-									),
-								};
-								if let Err(_e) = rpc_responder.update_status_event(hash, status) {};
+								//as long as we are waiting let's ignore all status events.
+								if !rpc_responder.is_force_wait(hash) {
+									if let Err(_e) = rpc_responder.update_status_event(hash, status)
+									{
+									};
+								}
 							},
 						}
 					},
@@ -188,10 +184,11 @@ pub fn id_to_hash(id: &Id) -> Option<Hash> {
 	}
 }
 
+#[allow(clippy::type_complexity)]
 pub fn init<Registry, ResponseChannelType>(
 	rpc_responder: Arc<RpcResponder<Registry, Hash, ResponseChannelType>>,
 ) -> (
-	std::sync::mpsc::SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>,
+	Arc<std::sync::mpsc::SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
 	Arc<DirectRpcBroadcaster<DirectRpcClientFactory>>,
 )
 where
@@ -221,7 +218,7 @@ where
 		}
 	});
 
-	(sender, return_rpc_broadcaster)
+	(Arc::new(sender), return_rpc_broadcaster)
 }
 
 impl<ClientFactory> PeerUpdater for DirectRpcBroadcaster<ClientFactory>

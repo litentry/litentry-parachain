@@ -87,9 +87,9 @@ where
 	}
 
 	/// Notify listeners about top execution.
-	pub fn top_executed(&mut self, hash: &H, response: &[u8]) {
+	pub fn top_executed(&mut self, hash: &H, response: &[u8], force_wait: bool) {
 		trace!(target: "txpool", "[{:?}] Top Executed", hash);
-		self.fire(hash, |watcher| watcher.top_executed(response));
+		self.fire(hash, |watcher| watcher.top_executed(response, force_wait));
 	}
 
 	/// New operation was added to the ready pool or promoted from the future pool.
@@ -168,6 +168,7 @@ where
 
 	/// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&mut self, old_hash: H, new_hash: H) {
+		log::debug!("Swapping connection {:?} to {:?}", &old_hash, &new_hash);
 		// It's possible that the old top (hash) is already removed from the pool when we
 		// request to swap hashes, in this case we just create one to facilitate the swap
 		if let Some(w) = self.watchers.get(&old_hash) {

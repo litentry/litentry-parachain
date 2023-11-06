@@ -80,33 +80,6 @@
         "--dev",
         "--request-state"
       ]
-    },
-    {
-      "id": "4",
-      "source": "bin",
-      "flags": [
-        "--clean-reset",
-        "-T",
-        "wss://localhost",
-        "-P",
-        "2030",
-        "-w",
-        "2031",
-        "-r",
-        "3473",
-        "-h",
-        "4575",
-        "--running-mode",
-        "mock",
-        "--enable-mock-server",
-        "--parentchain-start-block",
-        "0"
-      ],
-      "subcommand_flags": [
-        "--skip-ra",
-        "--dev",
-        "--request-state"
-      ]
     }
   ]
 }

@@ -203,7 +203,6 @@ impl DirectRpcClient {
 		let req = RsaRequest::from_hex(&parsed_params[0].clone())
 			.map_err(|e| format!("Could not create request from hex, reason: {:?}", e))?;
 		let request = RsaRequest { shard: req.shard, payload: req.payload };
-		// if it's broadcasted it's not going to be broadcasted again
 		let request = RpcRequest::compose_jsonrpc_call(
 			Id::Text(request_id),
 			"author_submitAndWatchBroadcastedRsaRequest".to_string(),
@@ -221,13 +220,12 @@ impl DirectRpcClient {
 		let req = AesRequest::from_hex(&parsed_params[0].clone())
 			.map_err(|e| format!("Could not create request from hex, reason: {:?}", e))?;
 		let request = AesRequest { shard: req.shard, payload: req.payload, key: req.key };
-		// if it's broadcasted it's not going to be broadcasted again
 		let request = RpcRequest::compose_jsonrpc_call(
 			Id::Text(request_id),
 			"author_submitAndWatchBroadcastedAesRequest".to_string(),
 			vec![request.to_hex()],
 		)
-		.map_err(|e| format!("Could not compose Aes, reason: {:?}", e))?;
+		.map_err(|e| format!("Could not compose AesRequest, reason: {:?}", e))?;
 		Ok(request)
 	}
 
@@ -296,7 +294,7 @@ mod tests {
 			vec![],
 			false,
 			DirectRequestStatus::TrustedOperationStatus(
-				TrustedOperationStatus::TopExecuted(vec![]),
+				TrustedOperationStatus::TopExecuted(vec![], true),
 				H256::random(),
 			),
 		);

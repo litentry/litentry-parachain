@@ -147,6 +147,10 @@ where
 		Ok(())
 	}
 
+	fn is_force_wait(&self, hash: Self::Hash) -> bool {
+		self.connection_registry.is_force_wait(&hash)
+	}
+
 	fn update_connection_state(
 		&self,
 		hash: Self::Hash,

@@ -92,7 +92,7 @@ use its_sidechain::{
 	slots::FailSlotOnDemand,
 };
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
-use sgx_tstd::vec::Vec;
+use sgx_tstd::{string::String, vec::Vec};
 use sp_core::{ed25519, ed25519::Pair};
 
 pub type EnclaveParentchainSigner =
@@ -269,9 +269,15 @@ pub static GLOBAL_STATE_OBSERVER_COMPONENT: ComponentContainer<EnclaveStateObser
 pub static GLOBAL_TOP_POOL_AUTHOR_COMPONENT: ComponentContainer<EnclaveTopPoolAuthor> =
 	ComponentContainer::new("top_pool_author");
 
+/// Direct RPC broadcaster
 pub static GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT: ComponentContainer<
 	EnclaveDirectRpcBroadcaster,
 > = ComponentContainer::new("direct_rpc_broadcaster");
+
+#[allow(clippy::type_complexity)]
+pub static DIRECT_RPC_REQUESTS_SINK_COMPONENT: ComponentContainer<
+	sgx_tstd::sync::mpsc::SyncSender<(Option<(Hash, Vec<String>)>, Option<(Hash, Vec<String>)>)>,
+> = ComponentContainer::new("direct_rpc_requests_sink");
 
 /// attestation handler
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =

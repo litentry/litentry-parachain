@@ -107,6 +107,8 @@ pub trait RpcConnectionRegistry: Send + Sync {
 	);
 
 	fn withdraw(&self, hash: &Self::Hash) -> Option<(Self::Connection, RpcResponse, ForceWait)>;
+
+	fn is_force_wait(&self, hash: &Self::Hash) -> bool;
 }
 
 /// Sends an RPC response back to the client.
@@ -133,6 +135,8 @@ pub trait SendRpcResponse: Send + Sync {
 
 	// Litentry: swap the old hash with the new one in rpc connection registry
 	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()>;
+
+	fn is_force_wait(&self, hash: Self::Hash) -> bool;
 }
 
 /// Determines if a given connection must be watched (i.e. kept alive),
