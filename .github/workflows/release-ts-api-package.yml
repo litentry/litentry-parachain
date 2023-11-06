@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
       inputs:
         tag:
-          description: 'Publish tag'
+          description: 'Release docker image tag'
           required: true
           default: 'latest'
 env:
@@ -36,9 +36,6 @@ jobs:
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-          ls -l docker/generated-rococo/
-          ls -l tee-worker/docker/litentry/
-          shasum tee-worker/docker/litentry/*.json
 
       - name: Build litentry parachain docker images
         run: |
@@ -63,34 +60,25 @@ jobs:
           npm config set @litentry:registry https://npm.pkg.github.com
 
       - name: Publish parachain API and sidechain API
+        working-directory: ./tee-worker/client-api
         run: |
-          cd tee-worker/client-api/parachain-api
+          apis=("parachain-api" "sidechain-api")
+          for api in "${apis[@]}"; do
+            cd "$api"
 
-          # Check if dist and build files exist
-          if [ -d "dist" ] && [ -d "build" ]; then
-            echo "Parachain API dist and build files exist."
-          else
-            echo "Parachain API dist and build files do not exist. Publishing failed."
-            exit 1
-          fi
+            # Check if dist and build files exist
+            if [ -d "dist" ] && [ -d "build" ]; then
+              echo "$api dist and build files exist."
+            else
+              echo "$api dist and build files do not exist. Publishing failed."
+              exit 1
+            fi
 
-          npm publish --tag ${{ inputs.tag }}
+            npm publish --tag ${{ inputs.tag }}
 
-          echo "------------------------parachain API published------------------------"
-
-          cd ../sidechain-api
-
-          # Check if dist and build files exist
-          if [ -d "dist" ] && [ -d "build" ]; then
-            echo "Parachain API dist and build files exist."
-          else
-            echo "Parachain API dist and build files do not exist. Publishing failed."
-            exit 1
-          fi
-
-          npm publish --tag ${{ inputs.tag }}
-
-          echo "------------------------sidechain API published------------------------"
+            echo "------------------------$api published------------------------"
+            cd ..
+          done
 
       - name: Stop docker containers
         run: |
