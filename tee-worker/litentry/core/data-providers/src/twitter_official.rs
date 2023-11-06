@@ -286,7 +286,7 @@ mod tests {
 
 		assert_eq!(tweet.id, tweet_id);
 		assert_eq!(tweet.author_id, "mock_user_id");
-		assert_eq!(tweet.text, "b5e184f6f42d91ca8072e3841270d0d747cdf40610cb2d59fc31faa27c26d367")
+		assert_eq!(tweet.text, "74983bb19b0e9f7cc8446b0fc16d50855521add6c9574cdf7559830de4054e75")
 	}
 
 	#[test]
