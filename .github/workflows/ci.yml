@@ -153,8 +153,8 @@ jobs:
 
       - name: Parachain fmt check
         run: |
-          make fmtcheck
-          make taplocheck
+          cargo fmt --all -- --check
+          taplo fmt --check
 
       - name: Tee-worker fmt check
         working-directory: ./tee-worker
