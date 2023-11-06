@@ -124,13 +124,13 @@ describe('Test Identity (evm direct invocation)', function () {
         const linkedIdentityEvents: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [
-                [bobEvmIdentity, true],
                 [aliceEvmIdentity, true],
+                [bobEvmIdentity, true],
             ],
             [
-                [eveSubstrateIdentity, true],
-                [bobEvmIdentity, true],
                 [aliceEvmIdentity, true],
+                [bobEvmIdentity, true],
+                [eveSubstrateIdentity, true],
             ],
         ];
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
