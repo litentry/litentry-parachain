@@ -17,8 +17,13 @@ function usage() {
 
 [ $# -ne 1 ] && (usage; exit 1)
 TEST=$1
-
+ls
 cd /ts-tests
 
 pnpm install
+ls integration-tests/node_modules
+ls integration-tests/node_modules/parachain-api
+ls integration-tests/node_modules/sidechain-api
+
+
 pnpm --filter integration-tests run $TEST:staging
