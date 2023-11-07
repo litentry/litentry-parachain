@@ -52,5 +52,6 @@ cd  /client-api/sidechain-api
 ${CLIENT} print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json
 echo "update sidechain metadata"
 
+cd /client-api
 pnpm install
 pnpm run build
