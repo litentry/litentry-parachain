@@ -25,6 +25,7 @@ use std::sync::Mutex;
 #[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 use std::{
+	format,
 	sync::{
 		mpsc::{channel, Receiver, Sender},
 		Arc,
@@ -73,7 +74,7 @@ lazy_static! {
 
 /// Trait to send an stf request to the stf request thread.
 pub trait SendVcRequest {
-	fn send_vc_request(&self, request: VCRequest);
+	fn send_vc_request(&self, request: VCRequest) -> Result<(), RpcError>;
 }
 
 pub struct VcRequestSender {}
@@ -90,7 +91,7 @@ impl Default for VcRequestSender {
 }
 
 impl SendVcRequest for VcRequestSender {
-	fn send_vc_request(&self, request: VCRequest) {
+	fn send_vc_request(&self, request: VCRequest) -> Result<(), RpcError> {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
@@ -103,13 +104,17 @@ impl SendVcRequest for VcRequestSender {
 		drop(mutex_guard);
 
 		// Send the request to the receiver loop.
-		vc_task_sender.send(request);
+		vc_task_sender.send(request)?;
+
+		Ok(())
 	}
 }
 
 /// Initialization of the extrinsic sender. Needs to be called before any sender access.
 pub fn init_vc_task_sender_storage() -> Receiver<VCRequest> {
 	let (sender, receiver) = channel();
+	// It makes no sense to handle the unwrap, as this statement fails only if the lock has been poisoned
+	// I believe at that point it is an unrecoverable error
 	let mut vc_task_storage = GLOBAL_VC_REQUEST_TASK.lock().unwrap();
 	*vc_task_storage = Some(VcTaskSender::new(sender));
 	receiver
@@ -126,7 +131,12 @@ impl VcTaskSender {
 		Self { sender }
 	}
 
-	fn send(&self, request: VCRequest) {
-		self.sender.send(request).unwrap();
+	fn send(&self, request: VCRequest) -> Result<(), RpcError> {
+		if let Err(e) = self.sender.send(request) {
+			let mut error = RpcError::new(ErrorCode::InternalError);
+			error.message = format!("Failed to send message to VC Task receive: {:?}", e);
+			return Err(error)
+		}
+		Ok(())
 	}
 }

@@ -101,7 +101,9 @@ where
 		let (sender, mut receiver) = oneshot::channel::<Result<Vec<u8>, RpcError>>();
 
 		let vc_request = VCRequest { encrypted_trusted_call, sender, shard };
-		request_sender.send_vc_request(vc_request);
+		if let Err(e) = request_sender.send_vc_request(vc_request) {
+			return Ok(json!(compute_hex_encoded_return_error(&e.to_string())))
+		}
 
 		while let Ok(response) = receiver.try_recv() {
 			if let Some(Ok(response)) = response {
