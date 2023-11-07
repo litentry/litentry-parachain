@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { readFileSync } from "fs";
+import { z } from 'zod';
+import { readFileSync } from 'fs';
 
 export const Config = z.object({
     connections: z.number().int().positive(),
@@ -11,5 +11,5 @@ export const Config = z.object({
 export type Config = z.infer<typeof Config>;
 
 export function loadConfig(path: string): Config {
-    return Config.parse(JSON.parse(readFileSync(path, { encoding: "utf8" })));
+    return Config.parse(JSON.parse(readFileSync(path, { encoding: 'utf8' })));
 }
