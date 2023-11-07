@@ -226,7 +226,8 @@ where
 	ClientFactory: RpcClientFactory,
 {
 	// created new map filled with rpc clients connected to peer from the provided list. Reuses existing
-	// connections
+	// connections. The list will not containt peers that are unreachable, so following logic will automatically
+	// remove all dead connections
 	fn update(&self, peers: Vec<String>) {
 		log::debug!("Updating peers: {:?}", &peers);
 		let mut new_peers_list = self.new_clear_peer_map();
@@ -236,14 +237,10 @@ where
 					log::info!("Adding a peer: {}", peer.clone());
 					self.connect_to(&peer, &mut new_peers_list)
 				} else {
+					log::info!("Reusing existing peer: {}", peer.clone());
 					//this is safe as we previously ensured that map contains such key
 					let peer_to_move = peers.remove(&peer).unwrap();
-
-					if peer_to_move.is_alive() {
-						new_peers_list.insert(peer, peer_to_move);
-					} else {
-						self.connect_to(&peer, &mut new_peers_list);
-					}
+					new_peers_list.insert(peer, peer_to_move);
 				}
 			}
 		}
@@ -285,10 +282,6 @@ pub mod tests {
 		) -> Result<(), Box<dyn Error>> {
 			self.sent_requests = self.sent_requests + 1;
 			Ok(())
-		}
-
-		fn is_alive(&self) -> bool {
-			true
 		}
 	}
 

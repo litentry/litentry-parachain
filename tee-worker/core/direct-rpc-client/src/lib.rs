@@ -36,12 +36,6 @@ use crate::sgx_reexport_prelude::*;
 
 extern crate alloc;
 
-#[cfg(feature = "sgx")]
-use std::sync::SgxMutex as Mutex;
-
-#[cfg(feature = "std")]
-use std::sync::Mutex;
-
 use alloc::format;
 
 use core::str::FromStr;
@@ -61,7 +55,10 @@ use std::{
 	error::Error,
 	net::TcpStream,
 	string::{String, ToString},
-	sync::{mpsc::SyncSender, Arc},
+	sync::{
+		mpsc::{channel, Sender, SyncSender},
+		Arc,
+	},
 	time::Duration,
 	vec,
 	vec::Vec,
@@ -129,11 +126,10 @@ impl RpcClientFactory for DirectRpcClientFactory {
 
 pub trait RpcClient {
 	fn send(&mut self, request_id: String, params: RequestParams) -> Result<(), Box<dyn Error>>;
-	fn is_alive(&self) -> bool;
 }
 
 pub struct DirectRpcClient {
-	ws: Arc<Mutex<WebSocket<MaybeTlsStream<TcpStream>>>>,
+	requests_sink: Sender<String>,
 }
 
 impl DirectRpcClient {
@@ -153,27 +149,30 @@ impl DirectRpcClient {
 			client_tls_with_config(ws_server_url, stream, None, Some(connector))
 				.map_err(|e| format!("Could not open websocket connection: {:?}", e))?;
 
+		let (request_sender, requests_receiver) = channel();
+
 		//it fails to perform handshake in non_blocking mode so we are setting it up after the handshake is performed
 		Self::switch_to_non_blocking(&mut socket);
 
-		let socket = Arc::new(Mutex::new(socket));
-		let cloned_socket = socket.clone();
-
 		std::thread::spawn(move || loop {
-			if let Ok(mut socket) = cloned_socket.lock() {
-				if let Ok(message) = socket.read_message() {
-					if let Ok(Some(response)) = Self::handle_ws_message(message) {
-						if let Err(e) = responses_sink.send(response) {
-							log::error!("Could not forward response, reason: {:?}", e)
-						};
-					}
+			// let's flush all pending requests first
+			while let Ok(request) = requests_receiver.try_recv() {
+				socket.write_message(Message::Text(request)).unwrap()
+			}
+
+			if let Ok(message) = socket.read_message() {
+				if let Ok(Some(response)) = Self::handle_ws_message(message) {
+					if let Err(e) = responses_sink.send(response) {
+						log::error!("Could not forward response, reason: {:?}", e)
+					};
 				}
 			}
 			std::thread::sleep(Duration::from_millis(10))
 		});
 
 		debug!("Connected to peer: {}", url);
-		Ok(Self { ws: socket })
+
+		Ok(Self { requests_sink: request_sender })
 	}
 
 	fn switch_to_non_blocking(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
@@ -259,21 +258,9 @@ impl RpcClient for DirectRpcClient {
 			RequestParams::Rsa(params) => self.prepare_rsa_request(request_id, params)?,
 			RequestParams::Aes(params) => self.prepare_aes_request(request_id, params)?,
 		};
-
-		if let Ok(mut ws) = self.ws.lock() {
-			ws.write_message(Message::Text(request))
-				.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
-		} else {
-			Ok(())
-		}
-	}
-
-	fn is_alive(&self) -> bool {
-		if let Ok(ws) = self.ws.lock() {
-			ws.can_write()
-		} else {
-			false
-		}
+		self.requests_sink
+			.send(request)
+			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
 	}
 }
 
