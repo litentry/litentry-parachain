@@ -1,4 +1,4 @@
-import { LitentryPrimitivesIdentity, TypeRegistry as SidechainTypeRegistry } from "sidechain-api";
+import { LitentryPrimitivesIdentity, TypeRegistry as SidechainTypeRegistry } from 'sidechain-api';
 import {
     Wallet,
     buildIdentityFromWallet,
@@ -11,14 +11,14 @@ import {
     keyNonce,
     sendRequestFromTrustedCall,
     subscribeToEventsWithExtHash,
-} from "./litentry-api";
-import WebSocketAsPromised from "websocket-as-promised";
-import { ApiPromise as ParachainApiPromise } from "parachain-api";
-import crypto, { randomBytes } from "crypto";
-import { Index } from "@polkadot/types/interfaces";
-import { Measurement, Runner } from "./measurement";
+} from './litentry-api';
+import WebSocketAsPromised from 'websocket-as-promised';
+import { ApiPromise as ParachainApiPromise } from 'parachain-api';
+import crypto, { randomBytes } from 'crypto';
+import { Index } from '@polkadot/types/interfaces';
+import { Measurement, Runner } from './measurement';
 
-const aesKey = "0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12";
+const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
 
 export async function setShieldingKey(
     runner: Runner<string, boolean>,
@@ -33,7 +33,7 @@ export async function setShieldingKey(
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
+    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
 
     const setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
         parachainApi,
@@ -47,7 +47,7 @@ export async function setShieldingKey(
 
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    await runner("setShieldingKey", async () => {
+    await runner('setShieldingKey', async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,
@@ -79,12 +79,12 @@ export async function linkIdentity(
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
+    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
     const primarySubject = await buildIdentityFromWallet(primary, sidechainRegistry);
     const secondaryIdentity = await buildIdentityFromWallet(secondary, sidechainRegistry);
     const secondaryNetworks = parachainApi.createType(
-        "Vec<Web3Network>",
-        secondary.type === "evm" ? ["Ethereum", "Bsc"] : ["Litentry", "Polkadot"]
+        'Vec<Web3Network>',
+        secondary.type === 'evm' ? ['Ethereum', 'Bsc'] : ['Litentry', 'Polkadot']
     );
 
     const secondaryValidation = await buildValidation(
@@ -100,27 +100,20 @@ export async function linkIdentity(
     const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
         parachainApi,
         mrEnclave,
-        parachainApi.createType("Index", nonce),
+        parachainApi.createType('Index', nonce),
         primary,
         primarySubject,
         secondaryIdentity.toHex(),
         secondaryValidation.toHex(),
         secondaryNetworks.toHex(),
         keyNonce,
-        parachainApi.createType("Option<UserShieldingKeyType>", aesKey).toHex(),
+        parachainApi.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
         requestIdentifier
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    await runner("linkIdentity", async () => {
-        await sendRequestFromTrustedCall(
-            teeWorker,
-            parachainApi,
-            mrEnclave,
-            teeShieldingKey,
-            linkIdentityCall,
-            log
-        );
+    await runner('linkIdentity', async () => {
+        await sendRequestFromTrustedCall(teeWorker, parachainApi, mrEnclave, teeShieldingKey, linkIdentityCall, log);
 
         const events = await eventsPromise;
         return events
@@ -141,35 +134,26 @@ export async function requestVc1(
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
+    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
     const requestVcCall = await createSignedTrustedCallRequestVc(
         parachainApi,
         mrEnclave,
         nonce,
         primary,
         subject,
-        parachainApi.createType("Assertion", { A1: null }),
-        parachainApi.createType("Option<UserShieldingKeyType>", aesKey).toHex(),
+        parachainApi.createType('Assertion', { A1: null }),
+        parachainApi.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
         requestIdentifier
     );
 
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    await runner("requestVc1", async () => {
-        await sendRequestFromTrustedCall(
-            teeWorker,
-            parachainApi,
-            mrEnclave,
-            teeShieldingKey,
-            requestVcCall,
-            log
-        );
+    await runner('requestVc1', async () => {
+        await sendRequestFromTrustedCall(teeWorker, parachainApi, mrEnclave, teeShieldingKey, requestVcCall, log);
 
         const events = await eventsPromise;
 
-        return events
-            .map(({ event }) => event)
-            .some((event) => parachainApi.events.vcManagement.VCIssued.is(event));
+        return events.map(({ event }) => event).some((event) => parachainApi.events.vcManagement.VCIssued.is(event));
     });
 }
 
@@ -185,35 +169,26 @@ export async function requestVc4(
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
+    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
     const requestVcCall = await createSignedTrustedCallRequestVc(
         parachainApi,
         mrEnclave,
         nonce,
         primary,
         subject,
-        parachainApi.createType("Assertion", { A4: "10" }),
-        parachainApi.createType("Option<UserShieldingKeyType>", aesKey).toHex(),
+        parachainApi.createType('Assertion', { A4: '10' }),
+        parachainApi.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
         requestIdentifier
     );
 
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
-    await runner("requestVc4", async () => {
-        await sendRequestFromTrustedCall(
-            teeWorker,
-            parachainApi,
-            mrEnclave,
-            teeShieldingKey,
-            requestVcCall,
-            log
-        );
+    await runner('requestVc4', async () => {
+        await sendRequestFromTrustedCall(teeWorker, parachainApi, mrEnclave, teeShieldingKey, requestVcCall, log);
 
         const events = await eventsPromise;
 
-        return events
-            .map(({ event }) => event)
-            .some((event) => parachainApi.events.vcManagement.VCIssued.is(event));
+        return events.map(({ event }) => event).some((event) => parachainApi.events.vcManagement.VCIssued.is(event));
     });
 }
 
@@ -231,20 +206,20 @@ export async function deactivateIdentity(
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
+    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
     const secondaryIdentity = await buildIdentityFromWallet(secondary, sidechainRegistry);
 
     const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
         parachainApi,
         mrEnclave,
-        parachainApi.createType("Index", nonce),
+        parachainApi.createType('Index', nonce),
         primary,
         subject,
         secondaryIdentity,
         requestIdentifier
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
-    await runner("deactivateIdentity", async () => {
+    await runner('deactivateIdentity', async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,
@@ -274,20 +249,20 @@ export async function activateIdentity(
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString("hex")}`;
+    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
     const secondaryIdentity = await buildIdentityFromWallet(secondary, sidechainRegistry);
 
     const activateIdentityCall = await createSignedTrustedCallActivateIdentity(
         parachainApi,
         mrEnclave,
-        parachainApi.createType("Index", nonce),
+        parachainApi.createType('Index', nonce),
         primary,
         subject,
         secondaryIdentity,
         requestIdentifier
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
-    await runner("activateIdentity", async () => {
+    await runner('activateIdentity', async () => {
         await sendRequestFromTrustedCall(
             teeWorker,
             parachainApi,

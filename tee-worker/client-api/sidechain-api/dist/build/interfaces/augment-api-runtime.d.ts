@@ -61,10 +61,7 @@ declare module "@polkadot/api-base/types/calls" {
             /**
              * Returns the metadata at a given version.
              **/
-            metadataAtVersion: AugmentedCall<
-                ApiType,
-                (version: u32 | AnyNumber | Uint8Array) => Observable<Option<OpaqueMetadata>>
-            >;
+            metadataAtVersion: AugmentedCall<ApiType, (version: u32 | AnyNumber | Uint8Array) => Observable<Option<OpaqueMetadata>>>;
             /**
              * Returns the supported metadata versions.
              **/

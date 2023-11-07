@@ -1,8 +1,8 @@
-import { LitentryPrimitivesIdentity } from "sidechain-api";
-import { Index } from "@polkadot/types/interfaces";
-import { buildIdentityFromWallet, getSidechainNonce, Wallet, Api } from "./litentry-api";
-import { Runner } from "./measurement";
-import { setShieldingKey } from "./steps";
+import { LitentryPrimitivesIdentity } from 'sidechain-api';
+import { Index } from '@polkadot/types/interfaces';
+import { buildIdentityFromWallet, getSidechainNonce, Wallet, Api } from './litentry-api';
+import { Runner } from './measurement';
+import { setShieldingKey } from './steps';
 
 export type UserSession = {
     primary: Wallet;
@@ -27,7 +27,7 @@ export async function newUserSession(
         log
     );
     let currentNonce = initialNonce.toNumber();
-    const nextNonce = () => api.parachainApi.createType("Index", currentNonce++);
+    const nextNonce = () => api.parachainApi.createType('Index', currentNonce++);
 
     await setShieldingKey(
         runner,

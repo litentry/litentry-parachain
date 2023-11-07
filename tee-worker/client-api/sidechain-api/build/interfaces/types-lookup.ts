@@ -108,13 +108,7 @@ declare module "@polkadot/types/lookup" {
             readonly sender: AccountId32;
             readonly hash_: H256;
         } & Struct;
-        readonly type:
-            | "ExtrinsicSuccess"
-            | "ExtrinsicFailed"
-            | "CodeUpdated"
-            | "NewAccount"
-            | "KilledAccount"
-            | "Remarked";
+        readonly type: "ExtrinsicSuccess" | "ExtrinsicFailed" | "CodeUpdated" | "NewAccount" | "KilledAccount" | "Remarked";
     }
 
     /** @name FrameSupportDispatchDispatchInfo (22) */
@@ -406,11 +400,7 @@ declare module "@polkadot/types/lookup" {
             readonly who: LitentryPrimitivesIdentity;
             readonly identity: LitentryPrimitivesIdentity;
         } & Struct;
-        readonly type:
-            | "UserShieldingKeySet"
-            | "IdentityLinked"
-            | "IdentityDeactivated"
-            | "IdentityActivated";
+        readonly type: "UserShieldingKeySet" | "IdentityLinked" | "IdentityDeactivated" | "IdentityActivated";
     }
 
     /** @name LitentryPrimitivesIdentity (38) */
@@ -766,12 +756,7 @@ declare module "@polkadot/types/lookup" {
             readonly identity: LitentryPrimitivesIdentity;
             readonly web3networks: Vec<CorePrimitivesNetworkWeb3Network>;
         } & Struct;
-        readonly type:
-            | "SetUserShieldingKey"
-            | "LinkIdentity"
-            | "DeactivateIdentity"
-            | "ActivateIdentity"
-            | "SetIdentityNetworks";
+        readonly type: "SetUserShieldingKey" | "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "SetIdentityNetworks";
     }
 
     /** @name CorePrimitivesNetworkWeb3Network (95) */
@@ -785,16 +770,7 @@ declare module "@polkadot/types/lookup" {
         readonly isSubstrateTestnet: boolean;
         readonly isEthereum: boolean;
         readonly isBsc: boolean;
-        readonly type:
-            | "Polkadot"
-            | "Kusama"
-            | "Litentry"
-            | "Litmus"
-            | "LitentryRococo"
-            | "Khala"
-            | "SubstrateTestnet"
-            | "Ethereum"
-            | "Bsc";
+        readonly type: "Polkadot" | "Kusama" | "Litentry" | "Litmus" | "LitentryRococo" | "Khala" | "SubstrateTestnet" | "Ethereum" | "Bsc";
     }
 
     /** @name PalletSudoError (96) */
