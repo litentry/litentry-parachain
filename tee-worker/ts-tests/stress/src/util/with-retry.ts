@@ -1,4 +1,4 @@
-import { sleep } from "./sleep";
+import { sleep } from './sleep';
 
 export async function withRetry<T>(maxAttempts: number, task: () => Promise<T>): Promise<T> {
     if (maxAttempts < 1) {
@@ -14,10 +14,8 @@ export async function withRetry<T>(maxAttempts: number, task: () => Promise<T>):
             errors.push(error);
         }
         if (--attemptsLeft < 1) {
-            const messages = errors.map((error) =>
-                error instanceof Error ? error.message : JSON.stringify(error)
-            );
-            throw new Error(`Failed after ${maxAttempts} attempts:\n${messages.join("\n")}`);
+            const messages = errors.map((error) => (error instanceof Error ? error.message : JSON.stringify(error)));
+            throw new Error(`Failed after ${maxAttempts} attempts:\n${messages.join('\n')}`);
         }
         waitMilliseconds *= 1 + Math.random(); // randomize backoff to avoid herd effect
         await sleep(waitMilliseconds);
