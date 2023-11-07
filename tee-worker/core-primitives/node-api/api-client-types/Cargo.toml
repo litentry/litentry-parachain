@@ -6,11 +6,11 @@ edition = "2021"
 
 [dependencies]
 # scs
-substrate-api-client = { default-features = false, git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.39" }
+substrate-api-client = { default-features = false, features = ["sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
 
 # substrate
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # local
 itp-types = { default-features = false, path = "../../types" }
@@ -23,7 +23,7 @@ default = ["std"]
 std = [
     "itp-types/std",
     "substrate-api-client/std",
-    "substrate-api-client/ws-client",
+    "substrate-api-client/tungstenite-client",
     "sp-core/std",
     "sp-runtime/std",
     "my-node-runtime/std",

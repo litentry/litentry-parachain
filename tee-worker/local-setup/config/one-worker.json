@@ -1,0 +1,52 @@
+{
+  "nodes": [
+    {
+      "bin": "../integritee-node/target/release/integritee-node",
+      "flags": [
+        "--tmp",
+        "--dev",
+        "-lruntime=info",
+        "-lteerex=debug",
+        "--ws-port",
+        "9944",
+        "--port",
+        "30390",
+        "--rpc-port",
+        "9933",
+        "--ws-external",
+        "--rpc-external"
+      ]
+    }
+  ],
+  "workers": [
+    {
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "-P",
+        "2000",
+        "-p",
+        "9944",
+        "-r",
+        "3443",
+        "-w",
+        "2001",
+        "-h",
+        "4545",
+        "--ws-external",
+        "--running-mode",
+        "mock",
+        "--enable-mock-server",
+        "--parentchain-start-block",
+        "0",
+        "--data-dir",
+        "/tmp/data-dir",
+        "--enable-metrics"
+      ],
+      "subcommand_flags": [
+        "--skip-ra",
+        "--dev"
+      ]
+    }
+  ]
+}

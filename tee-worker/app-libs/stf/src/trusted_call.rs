@@ -22,7 +22,7 @@ use sp_core::{H160, U256};
 use std::vec::Vec;
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_self},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
 	trusted_call_result::*,
 	Runtime, StfError, System, TrustedOperation,
 };
@@ -325,10 +325,9 @@ where
 					free_balance,
 					reserved_balance
 				);
-				ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+				ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 					who: MultiAddress::Id(who),
 					new_free: free_balance,
-					new_reserved: reserved_balance,
 				}
 				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 				.map_err(|e| {
@@ -387,7 +386,7 @@ where
 			TrustedCall::balance_shield(enclave_account, who, value) => {
 				let account_id: AccountId32 =
 					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
-				ensure_enclave_signer(&account_id)?;
+				ensure_enclave_signer_account(&account_id)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
@@ -865,10 +864,9 @@ fn unshield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 		return Err(StfError::MissingFunds)
 	}
 
-	ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 		who: MultiAddress::Id(account),
 		new_free: account_info.data.free - amount,
-		new_reserved: account_info.data.reserved,
 	}
 	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Unshield funds error: {:?}", e.error)))?;
@@ -877,10 +875,9 @@ fn unshield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 
 fn shield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 	let account_info = System::account(&account);
-	ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 		who: MultiAddress::Id(account),
 		new_free: account_info.data.free + amount,
-		new_reserved: account_info.data.reserved,
 	}
 	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Shield funds error: {:?}", e.error)))?;

@@ -49,10 +49,9 @@ where
 	async fn import_block(
 		&mut self,
 		mut block_import_params: sc_consensus::BlockImportParams<Block, Self::Transaction>,
-		cache: std::collections::HashMap<sp_consensus::CacheKeyId, Vec<u8>>,
 	) -> Result<sc_consensus::ImportResult, Self::Error> {
 		// immediately finalize the block
 		block_import_params.finalized = true;
-		self.inner.import_block(block_import_params, cache).await
+		self.inner.import_block(block_import_params).await
 	}
 }

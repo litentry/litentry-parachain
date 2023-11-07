@@ -191,22 +191,15 @@ where
 		let mut peer_urls = HashSet::<PeerUrls>::new();
 		for enclave in enclaves {
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
-			let worker_trusted_url = enclave.url.clone();
-			let worker_api_direct = DirectWorkerApi::new(worker_trusted_url.clone());
+			let enclave_url = enclave.url.clone();
+			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
-					let is_me = worker_trusted_url == worker_url_external;
-					peer_urls.insert(PeerUrls::new(
-						worker_trusted_url,
-						untrusted_worker_url,
-						is_me,
-					));
+					let is_me = enclave_url == worker_url_external;
+					peer_urls.insert(PeerUrls::new(enclave_url, untrusted_worker_url, is_me));
 				},
 				Err(e) => {
-					warn!(
-						"Failed to get untrusted worker url (enclave: {}): {:?}",
-						worker_trusted_url, e
-					);
+					warn!("Failed to get untrusted worker url (enclave: {}): {:?}", enclave_url, e);
 				},
 			}
 		}

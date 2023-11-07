@@ -18,13 +18,13 @@
 //!
 //! lifecycles of a reward pool:
 //!  1. any user can propose a reward pool with needed parameters.
-//!  2. the admin can approve or reject the proposal, a proportion of `total`
-//!     amount will be slashed upon rejection.
-//!  3. once approved, either the pool owner or admin can start/stop the
-//!     pool multiple times, or close the pool to remove it from the map storage,
-//!     where the remaining amount will be unreserved.
-//!  4. when the pool is actively running, the owner can send the reward to any other user,
-//!     the amount will be deducted directly from reserved balance.
+//!  2. the admin can approve or reject the proposal, a proportion of `total` amount will be slashed
+//!     upon rejection.
+//!  3. once approved, either the pool owner or admin can start/stop the pool multiple times, or
+//!     close the pool to remove it from the map storage, where the remaining amount will be
+//!     unreserved.
+//!  4. when the pool is actively running, the owner can send the reward to any other user, the
+//!     amount will be deducted directly from reserved balance.
 //!
 //! Some notes:
 //!  - the admin account can only be set by SetAdminOrigin, which will be bound at runtime.
@@ -101,7 +101,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);

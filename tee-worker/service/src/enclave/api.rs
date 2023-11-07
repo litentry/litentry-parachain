@@ -111,6 +111,5 @@ pub fn enclave_init(config: &Config) -> EnclaveResult<Enclave> {
 		&config.data_dir().display().to_string(),
 	)?;
 
-	info!("enclave_api init succeed");
 	Ok(enclave_api)
 }

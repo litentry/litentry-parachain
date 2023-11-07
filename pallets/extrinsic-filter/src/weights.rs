@@ -55,19 +55,19 @@ pub struct LitentryWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn block_extrinsics(_p: u32, f: u32, ) -> Weight {
-		Weight::from_ref_time(30_218_000 as u64)
+		Weight::from_parts(30_218_000 as u64, 0)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(1_000 as u64).saturating_mul(f as u64))
+			.saturating_add(Weight::from_parts(1_000 as u64, 0).saturating_mul(f as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn unblock_extrinsics(p: u32, f: u32, ) -> Weight {
-		Weight::from_ref_time(29_586_000 as u64)
+		Weight::from_parts(29_586_000 as u64, 0)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(4_000 as u64).saturating_mul(p as u64))
+			.saturating_add(Weight::from_parts(4_000 as u64, 0).saturating_mul(p as u64))
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(3_000 as u64).saturating_mul(f as u64))
+			.saturating_add(Weight::from_parts(3_000 as u64, 0).saturating_mul(f as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -77,19 +77,19 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 impl WeightInfo for () {
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn block_extrinsics(_p: u32, f: u32, ) -> Weight {
-		Weight::from_ref_time(30_218_000 as u64)
+		Weight::from_parts(30_218_000 as u64, 0)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(1_000 as u64).saturating_mul(f as u64))
+			.saturating_add(Weight::from_parts(1_000 as u64, 0).saturating_mul(f as u64))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: ExtrinsicFilter BlockedExtrinsics (r:1 w:1)
 	fn unblock_extrinsics(p: u32, f: u32, ) -> Weight {
-		Weight::from_ref_time(29_586_000 as u64)
+		Weight::from_parts(29_586_000 as u64, 0)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(4_000 as u64).saturating_mul(p as u64))
+			.saturating_add(Weight::from_parts(4_000 as u64, 0).saturating_mul(p as u64))
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(3_000 as u64).saturating_mul(f as u64))
+			.saturating_add(Weight::from_parts(3_000 as u64, 0).saturating_mul(f as u64))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

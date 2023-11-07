@@ -25,8 +25,8 @@ use itp_ocall_api::{
 use itp_storage::Error::StorageValueUnavailable;
 use itp_teerex_storage::{TeeRexStorage, TeerexStorageKeys};
 use itp_types::{
-	storage::StorageEntryVerified, BlockHash, Enclave, ShardIdentifier, WorkerRequest,
-	WorkerResponse,
+	parentchain::ParentchainId, storage::StorageEntryVerified, BlockHash, Enclave, ShardIdentifier,
+	WorkerRequest, WorkerResponse,
 };
 use sgx_types::*;
 use sp_core::H256;
@@ -171,13 +171,18 @@ impl EnclaveMetricsOCallApi for OnchainMock {
 }
 
 impl EnclaveOnChainOCallApi for OnchainMock {
-	fn send_to_parentchain(&self, _extrinsics: Vec<OpaqueExtrinsic>) -> SgxResult<()> {
+	fn send_to_parentchain(
+		&self,
+		_extrinsics: Vec<OpaqueExtrinsic>,
+		_: &ParentchainId,
+	) -> SgxResult<()> {
 		Ok(())
 	}
 
 	fn worker_request<V: Encode + Decode>(
 		&self,
 		_req: Vec<WorkerRequest>,
+		_: &ParentchainId,
 	) -> SgxResult<Vec<WorkerResponse<V>>> {
 		Ok(Vec::new())
 	}
@@ -186,8 +191,9 @@ impl EnclaveOnChainOCallApi for OnchainMock {
 		&self,
 		storage_hash: Vec<u8>,
 		header: &Header,
+		parentchain_id: &ParentchainId,
 	) -> Result<StorageEntryVerified<V>, itp_ocall_api::Error> {
-		self.get_multiple_storages_verified(vec![storage_hash], header)?
+		self.get_multiple_storages_verified(vec![storage_hash], header, parentchain_id)?
 			.into_iter()
 			.next()
 			.ok_or_else(|| itp_ocall_api::Error::Storage(StorageValueUnavailable))
@@ -197,6 +203,7 @@ impl EnclaveOnChainOCallApi for OnchainMock {
 		&self,
 		storage_hashes: Vec<Vec<u8>>,
 		header: &Header,
+		_: &ParentchainId,
 	) -> Result<Vec<StorageEntryVerified<V>>, itp_ocall_api::Error> {
 		let mut entries = Vec::with_capacity(storage_hashes.len());
 		for hash in storage_hashes.into_iter() {

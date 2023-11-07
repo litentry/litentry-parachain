@@ -71,6 +71,8 @@ extern "C" {
 		ret_val: *mut sgx_status_t,
 		request: *const u8,
 		req_size: u32,
+		parentchain_id: *const u8,
+		parentchain_id_size: u32,
 		response: *mut u8,
 		resp_size: u32,
 	) -> sgx_status_t;
@@ -115,6 +117,8 @@ extern "C" {
 		ret_val: *mut sgx_status_t,
 		extrinsics: *const u8,
 		extrinsics_size: u32,
+		parentchain_id: *const u8,
+		parentchain_id_size: u32,
 	) -> sgx_status_t;
 
 	pub fn ocall_read_ipfs(

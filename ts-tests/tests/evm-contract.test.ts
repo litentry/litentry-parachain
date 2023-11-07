@@ -4,9 +4,9 @@ import { step } from 'mocha-steps';
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
 import { hexToU8a } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
-import Web3 from "web3";
+import Web3 from 'web3';
 
-import { compiled } from "./compile";
+import { compiled } from './compile';
 
 describeLitentry('Test EVM Module Contract', ``, (context) => {
     console.log(`Test EVM Module Contract`);
@@ -28,30 +28,41 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000'
+            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress
         );
-    
+
         let eveMappedAccount = context.eve.publicKey.slice(0, 20);
         let value = 20000000000000; // 20 000 000 000 000
         // 25000 is min_gas_price setup
-        const tx = context.api.tx.evm.call(eveMappedAccount, evmAccountRaw.address, '0x', value, 1000000, 25000, null, null, []);
+        const tx = context.api.tx.evm.call(
+            eveMappedAccount,
+            evmAccountRaw.address,
+            '0x',
+            value,
+            1000000,
+            25000,
+            null,
+            null,
+            []
+        );
         await signAndSend(tx, context.eve);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
             context.eve.address
         );
-        const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } = await context.api.query.system.account(
-            evmAccountRaw.mappedAddress
-        );
+        const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } =
+            await context.api.query.system.account(evmAccountRaw.mappedAddress);
 
         // If a substrate account using pallet_evm to trigger evm transaction,
-        // it will bump 2 for nonce (one for substrate extrinsic, one for evm). 
+        // it will bump 2 for nonce (one for substrate extrinsic, one for evm).
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 2);
-        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(evmAccountInitBalance.free.toBigInt() + BigInt(value));
-        
+        expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(
+            evmAccountInitBalance.free.toBigInt() + BigInt(value)
+        );
+
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
@@ -69,10 +80,10 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000'
+            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
-          evmAccountRaw.mappedAddress
+            evmAccountRaw.mappedAddress
         );
 
         // Get the bytecode and API
@@ -90,8 +101,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
 
             // Create constructor tx
             const helloTx = hello.deploy({
-              data: bytecode,
-              arguments: [],
+                data: bytecode,
+                arguments: [],
             });
 
             // Sign transacation and send
@@ -117,50 +128,48 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
 
         // Test get message contract method
         const sayMessage = async (contractAddress: string) => {
-          // 4. Create contract instance
-          const hello = new web3.eth.Contract(abi, contractAddress);
-          console.log(`Making a call to contract at address: ${contractAddress}`);
-    
-          // 6. Call contract
-          const data = await hello.methods.sayMessage().call();
-    
-          console.log(`The current message is: ${data}`);
-    
-          return data;
+            // 4. Create contract instance
+            const hello = new web3.eth.Contract(abi, contractAddress);
+            console.log(`Making a call to contract at address: ${contractAddress}`);
+
+            // 6. Call contract
+            const data = await hello.methods.sayMessage().call();
+
+            console.log(`The current message is: ${data}`);
+
+            return data;
         };
 
         const message = await sayMessage(deployed.contractAddress!);
-        const initialResult = (message === 'Hello World') ? 1 : 0;
+        const initialResult = message === 'Hello World' ? 1 : 0;
         assert.equal(1, initialResult, 'Contract initial storage query mismatch');
 
         // Test set message contract method
         const setMessage = async (contractAddress: string, accountFrom: any, message: string) => {
-          console.log(
-              `Calling the setMessage function in contract at address: ${contractAddress}`
-          );
-    
-          // Create contract instance
-          const hello = new web3.eth.Contract(abi, contractAddress);
-          // Build tx
-          const helloTx = hello.methods.setMessage(message);
-    
-          // Sign Tx with PK
-          const createTransaction = await web3.eth.accounts.signTransaction(
-              {
-                  to: contractAddress,
-                  data: helloTx.encodeABI(),
-                  gas: await helloTx.estimateGas(),
-              },
-              accountFrom.privateKey
-          );
-    
-          // Send Tx and Wait for Receipt
-          const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
-          console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
+            console.log(`Calling the setMessage function in contract at address: ${contractAddress}`);
+
+            // Create contract instance
+            const hello = new web3.eth.Contract(abi, contractAddress);
+            // Build tx
+            const helloTx = hello.methods.setMessage(message);
+
+            // Sign Tx with PK
+            const createTransaction = await web3.eth.accounts.signTransaction(
+                {
+                    to: contractAddress,
+                    data: helloTx.encodeABI(),
+                    gas: await helloTx.estimateGas(),
+                },
+                accountFrom.privateKey
+            );
+
+            // Send Tx and Wait for Receipt
+            const createReceipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
+            console.log(`Tx successful with hash: ${createReceipt.transactionHash}`);
         };
         const setMsg = await setMessage(deployed.contractAddress!, evmAccountRaw, 'Goodbye World');
         const sayMsg = await sayMessage(deployed.contractAddress!);
-        const setResult = (sayMsg === 'Goodbye World') ? 1 : 0;
+        const setResult = sayMsg === 'Goodbye World' ? 1 : 0;
         assert.equal(1, setResult, 'Contract modified storage query mismatch');
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.

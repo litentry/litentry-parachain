@@ -54,15 +54,17 @@ use polkadot_service::CollatorPair;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::{ImportQueue, LongestChain};
 use sc_consensus_aura::StartAuraParams;
-use sc_executor::{NativeElseWasmExecutor, WasmExecutor};
-use sc_network::NetworkService;
-use sc_network_common::service::NetworkBlock;
+use sc_executor::{
+	HeapAllocStrategy, NativeElseWasmExecutor, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY,
+};
+use sc_network::NetworkBlock;
+use sc_network_sync::SyncingService;
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ConstructRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
-use sp_keystore::SyncCryptoStorePtr;
+use sp_keystore::KeystorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use std::{collections::BTreeMap, sync::Arc, time::Duration};
 use substrate_prometheus_endpoint::Registry;
@@ -236,7 +238,7 @@ pub mod __ {
 				ParachainBlockImport<RuntimeApi, Executor>,
 				Option<Telemetry>,
 				Option<TelemetryWorkerHandle>,
-				Arc<fc_db::Backend<Block>>,
+				Arc<fc_db::kv::Backend<Block>>,
 			),
 		>,
 		sc_service::Error,
@@ -280,22 +282,24 @@ pub mod __ {
 			})
 			.transpose()?;
 
-		#[no_evm]
-		let executor = sc_executor::WasmExecutor::<HostFunctions>::new(
-			config.wasm_method,
-			config.default_heap_pages,
-			config.max_runtime_instances,
-			None,
-			config.runtime_cache_size,
-		);
+		let executor = WasmExecutor::builder()
+			.with_execution_method(config.wasm_method)
+			.with_onchain_heap_alloc_strategy(
+				config.default_heap_pages.map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| {
+					HeapAllocStrategy::Static { extra_pages: h as _ }
+				}),
+			)
+			.with_offchain_heap_alloc_strategy(
+				config.default_heap_pages.map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| {
+					HeapAllocStrategy::Static { extra_pages: h as _ }
+				}),
+			)
+			.with_max_runtime_instances(config.max_runtime_instances)
+			.with_runtime_cache_size(config.runtime_cache_size)
+			.build();
 
 		#[evm]
-		let executor = sc_executor::NativeElseWasmExecutor::<Executor>::new(
-			config.wasm_method,
-			config.default_heap_pages,
-			config.max_runtime_instances,
-			config.runtime_cache_size,
-		);
+		let executor = sc_executor::NativeElseWasmExecutor::<Executor>::new_with_wasm_executor(executor);
 
 		let (client, backend, keystore_container, task_manager) =
 			sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -326,8 +330,7 @@ pub mod __ {
 		#[evm]
 		let frontier_backend = rpc_evm::open_frontier_backend(client.clone(), config)?;
 		#[evm]
-		let frontier_block_import =
-			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+		let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
 
 		#[evm]
 		let block_import = ParachainBlockImport::new(frontier_block_import, backend.clone());
@@ -431,8 +434,8 @@ pub mod __ {
 			&TaskManager,
 			Arc<dyn RelayChainInterface>,
 			Arc<sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi>>>,
-			Arc<NetworkService<Block, Hash>>,
-			SyncCryptoStorePtr,
+			Arc<SyncingService<Block>>,
+			KeystorePtr,
 			bool,
 		) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 	{
@@ -501,8 +504,8 @@ pub mod __ {
 			&TaskManager,
 			Arc<dyn RelayChainInterface>,
 			Arc<sc_transaction_pool::FullPool<Block, ParachainClient<RuntimeApi, Executor>>>,
-			Arc<NetworkService<Block, Hash>>,
-			SyncCryptoStorePtr,
+			Arc<SyncingService<Block>>,
+			KeystorePtr,
 			bool,
 		) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 	{
@@ -533,7 +536,7 @@ pub mod __ {
 		)
 		.await
 		.map_err(|e| match e {
-			RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
+			RelayChainError::Application(x) => sc_service::Error::Application(x),
 			s => s.to_string().into(),
 		})?;
 
@@ -545,7 +548,7 @@ pub mod __ {
 		let prometheus_registry = parachain_config.prometheus_registry().cloned();
 		let transaction_pool = params.transaction_pool.clone();
 		let import_queue_service = params.import_queue.service();
-		let (network, system_rpc_tx, tx_handler_controller, start_network) =
+		let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 			sc_service::build_network(sc_service::BuildNetworkParams {
 				config: &parachain_config,
 				client: client.clone(),
@@ -557,6 +560,19 @@ pub mod __ {
 				})),
 				warp_sync_params: None,
 			})?;
+
+		// Sinks for pubsub notifications.
+		// Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
+		// The MappingSyncWorker sends through the channel on block import and the subscription
+		// emits a notification to the subscriber on receiving a message through this channel. This
+		// way we avoid race conditions when using native substrate block import notification
+		// stream.
+		#[evm]
+		let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+			fc_mapping_sync::EthereumBlockNotification<Block>,
+		> = Default::default();
+		#[evm]
+		let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
 		#[evm]
 		let (
@@ -574,6 +590,8 @@ pub mod __ {
 			&mut task_manager,
 			&parachain_config,
 			additional_config.evm_tracing_config.clone(),
+			sync_service.clone(),
+			pubsub_notification_sinks.clone(),
 		);
 
 		let rpc_builder = {
@@ -588,6 +606,10 @@ pub mod __ {
 				trace_filter_max_count: additional_config.evm_tracing_config.ethapi_trace_max_count,
 				enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
 			};
+			#[evm]
+			let sync = sync_service.clone();
+			#[evm]
+			let pubsub_notification_sinks = pubsub_notification_sinks.clone();
 
 			#[no_evm]
 			let result = move |deny_unsafe, _| {
@@ -606,6 +628,7 @@ pub mod __ {
 					pool: transaction_pool.clone(),
 					graph: transaction_pool.pool().clone(),
 					network: network.clone(),
+					sync: sync.clone(),
 					is_authority: validator,
 					deny_unsafe,
 					frontier_backend: frontier_backend.clone(),
@@ -617,7 +640,13 @@ pub mod __ {
 					enable_evm_rpc: additional_config.enable_evm_rpc,
 				};
 
-				rpc_evm::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)
+				crate::rpc::evm::create_full(
+					deps,
+					subscription,
+					pubsub_notification_sinks.clone(),
+					rpc_config.clone(),
+				)
+				.map_err(Into::into)
 			};
 			Box::new(result)
 		};
@@ -628,11 +657,12 @@ pub mod __ {
 			transaction_pool: transaction_pool.clone(),
 			task_manager: &mut task_manager,
 			config: parachain_config,
-			keystore: params.keystore_container.sync_keystore(),
+			keystore: params.keystore_container.keystore(),
 			backend: backend.clone(),
 			network: network.clone(),
 			system_rpc_tx,
 			tx_handler_controller,
+			sync_service: sync_service.clone(),
 			telemetry: telemetry.as_mut(),
 		})?;
 
@@ -650,8 +680,8 @@ pub mod __ {
 		}
 
 		let announce_block = {
-			let network = network.clone();
-			Arc::new(move |hash, data| network.announce_block(hash, data))
+			let sync_service = sync_service.clone();
+			Arc::new(move |hash, data| sync_service.announce_block(hash, data))
 		};
 
 		let relay_chain_slot_duration = Duration::from_secs(6);
@@ -669,8 +699,8 @@ pub mod __ {
 				&task_manager,
 				relay_chain_interface.clone(),
 				transaction_pool,
-				network,
-				params.keystore_container.sync_keystore(),
+				sync_service.clone(),
+				params.keystore_container.keystore(),
 				force_authoring,
 			)?;
 
@@ -689,6 +719,7 @@ pub mod __ {
 				collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 				relay_chain_slot_duration,
 				recovery_handle: Box::new(overseer_handle),
+				sync_service,
 			};
 
 			start_collator(params).await?;
@@ -702,6 +733,7 @@ pub mod __ {
 				relay_chain_slot_duration,
 				import_queue: import_queue_service,
 				recovery_handle: Box::new(overseer_handle),
+				sync_service,
 			};
 
 			start_full_node(params)?;
@@ -1138,7 +1170,18 @@ pub mod __ {
 			build_import_queue::<RuntimeApi, Executor>,
 		)?;
 
-		let (network, system_rpc_tx, tx_handler_controller, start_network) =
+		// Sinks for pubsub notifications.
+		// Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
+		// The MappingSyncWorker sends through the channel on block import and the subscription
+		// emits a notification to the subscriber on receiving a message through this channel. This
+		// way we avoid race conditions when using native substrate block import notification
+		// stream.
+		let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+			fc_mapping_sync::EthereumBlockNotification<Block>,
+		> = Default::default();
+		let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
+
+		let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 			sc_service::build_network(sc_service::BuildNetworkParams {
 				config: &config,
 				client: client.clone(),
@@ -1168,6 +1211,8 @@ pub mod __ {
 			&mut task_manager,
 			&config,
 			evm_tracing_config.clone(),
+			sync_service.clone(),
+			pubsub_notification_sinks.clone(),
 		);
 
 		let select_chain = maybe_select_chain
@@ -1239,9 +1284,9 @@ pub mod __ {
 				},
 				force_authoring,
 				backoff_authoring_blocks,
-				keystore: keystore_container.sync_keystore(),
-				sync_oracle: network.clone(),
-				justification_sync_link: network.clone(),
+				keystore: keystore_container.keystore(),
+				sync_oracle: sync_service.clone(),
+				justification_sync_link: sync_service.clone(),
 				// We got around 500ms for proposing
 				block_proposal_slot_portion: SlotProportion::new(1f32 / 24f32),
 				// And a maximum of 750ms if slots are skipped
@@ -1268,6 +1313,8 @@ pub mod __ {
 				trace_filter_max_count: evm_tracing_config.ethapi_trace_max_count,
 				enable_txpool: ethapi_cmd.contains(&EthApiCmd::TxPool),
 			};
+			let sync = sync_service.clone();
+			let pubsub_notification_sinks = pubsub_notification_sinks;
 
 			Box::new(move |deny_unsafe, subscription| {
 				let deps = rpc_evm::FullDeps {
@@ -1275,6 +1322,7 @@ pub mod __ {
 					pool: transaction_pool.clone(),
 					graph: transaction_pool.pool().clone(),
 					network: network.clone(),
+					sync: sync.clone(),
 					is_authority: role.is_authority(),
 					deny_unsafe,
 					frontier_backend: frontier_backend.clone(),
@@ -1287,7 +1335,13 @@ pub mod __ {
 					enable_evm_rpc: true,
 				};
 
-				rpc_evm::create_full(deps, subscription, rpc_config.clone()).map_err(Into::into)
+				crate::rpc::evm::create_full(
+					deps,
+					subscription,
+					pubsub_notification_sinks.clone(),
+					rpc_config.clone(),
+				)
+				.map_err(Into::into)
 			})
 		};
 
@@ -1297,10 +1351,11 @@ pub mod __ {
 			transaction_pool,
 			task_manager: &mut task_manager,
 			config,
-			keystore: keystore_container.sync_keystore(),
+			keystore: keystore_container.keystore(),
 			backend,
 			network,
 			system_rpc_tx,
+			sync_service,
 			tx_handler_controller,
 			telemetry: None,
 		})?;
@@ -1313,10 +1368,16 @@ pub mod __ {
 	pub fn start_node_evm_impl<RuntimeApi, Executor>(
 		client: Arc<ParachainClient<RuntimeApi, Executor>>,
 		backend: Arc<ParachainBackend>,
-		frontier_backend: Arc<fc_db::Backend<Block>>,
+		frontier_backend: Arc<fc_db::kv::Backend<Block>>,
 		task_manager: &mut TaskManager,
 		config: &Configuration,
 		evm_tracing_config: crate::evm_tracing_types::EvmTracingConfig,
+		sync_service: Arc<SyncingService<Block>>,
+		pubsub_notification_sinks: Arc<
+			fc_mapping_sync::EthereumBlockNotificationSinks<
+				fc_mapping_sync::EthereumBlockNotification<Block>,
+			>,
+		>,
 	) -> (
 		FilterPool,
 		u64,
@@ -1353,17 +1414,6 @@ pub mod __ {
 		let fee_history_cache: FeeHistoryCache = Arc::new(std::sync::Mutex::new(BTreeMap::new()));
 		let overrides = fc_storage::overrides_handle(client.clone());
 
-		// TODO: Not for 0.9.39
-		// // Sinks for pubsub notifications.
-		// // Everytime a new subscription is created, a new mpsc channel is added to the sink pool.
-		// // The MappingSyncWorker sends through the channel on block import and the subscription
-		// emits a notification to the subscriber on receiving a message through this channel. //
-		// This way we avoid race conditions when using native substrate block import notification
-		// stream. let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-		//     fc_mapping_sync::EthereumBlockNotification<Block>,
-		// > = Default::default();
-		// let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
-
 		let ethapi_cmd = evm_tracing_config.ethapi.clone();
 		let tracing_requesters =
 			if ethapi_cmd.contains(&EthApiCmd::Debug) || ethapi_cmd.contains(&EthApiCmd::Trace) {
@@ -1387,7 +1437,7 @@ pub mod __ {
 		task_manager.spawn_essential_handle().spawn(
 			"frontier-mapping-sync-worker",
 			Some("frontier"),
-			fc_mapping_sync::MappingSyncWorker::new(
+			fc_mapping_sync::kv::MappingSyncWorker::new(
 				client.import_notification_stream(),
 				Duration::new(6, 0),
 				client.clone(),
@@ -1397,6 +1447,8 @@ pub mod __ {
 				3,
 				0,
 				fc_mapping_sync::SyncStrategy::Parachain,
+				sync_service,
+				pubsub_notification_sinks,
 			)
 			.for_each(|()| futures::future::ready(())),
 		);

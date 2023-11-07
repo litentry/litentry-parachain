@@ -32,6 +32,7 @@ import type {
     CumulusPalletDmpQueueEvent,
     CumulusPalletDmpQueuePageIndexData,
     CumulusPalletParachainSystemCall,
+    CumulusPalletParachainSystemCodeUpgradeAuthorization,
     CumulusPalletParachainSystemError,
     CumulusPalletParachainSystemEvent,
     CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot,
@@ -112,6 +113,7 @@ import type {
     PalletBalancesCall,
     PalletBalancesError,
     PalletBalancesEvent,
+    PalletBalancesIdAmount,
     PalletBalancesReasons,
     PalletBalancesReserveData,
     PalletBountiesBounty,
@@ -157,6 +159,7 @@ import type {
     PalletEvmAddressError,
     PalletEvmAddressEvent,
     PalletEvmCall,
+    PalletEvmCodeMetadata,
     PalletEvmError,
     PalletEvmEvent,
     PalletExtrinsicFilterCall,
@@ -275,10 +278,10 @@ import type {
     PolkadotCorePrimitivesInboundHrmpMessage,
     PolkadotCorePrimitivesOutboundHrmpMessage,
     PolkadotParachainPrimitivesXcmpMessageFormat,
-    PolkadotPrimitivesV2AbridgedHostConfiguration,
-    PolkadotPrimitivesV2AbridgedHrmpChannel,
-    PolkadotPrimitivesV2PersistedValidationData,
-    PolkadotPrimitivesV2UpgradeRestriction,
+    PolkadotPrimitivesV4AbridgedHostConfiguration,
+    PolkadotPrimitivesV4AbridgedHrmpChannel,
+    PolkadotPrimitivesV4PersistedValidationData,
+    PolkadotPrimitivesV4UpgradeRestriction,
     RococoParachainRuntimeOriginCaller,
     RococoParachainRuntimeProxyType,
     RococoParachainRuntimeRuntime,
@@ -398,6 +401,7 @@ declare module "@polkadot/types/types/registry" {
         CumulusPalletDmpQueueEvent: CumulusPalletDmpQueueEvent;
         CumulusPalletDmpQueuePageIndexData: CumulusPalletDmpQueuePageIndexData;
         CumulusPalletParachainSystemCall: CumulusPalletParachainSystemCall;
+        CumulusPalletParachainSystemCodeUpgradeAuthorization: CumulusPalletParachainSystemCodeUpgradeAuthorization;
         CumulusPalletParachainSystemError: CumulusPalletParachainSystemError;
         CumulusPalletParachainSystemEvent: CumulusPalletParachainSystemEvent;
         CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot;
@@ -478,6 +482,7 @@ declare module "@polkadot/types/types/registry" {
         PalletBalancesCall: PalletBalancesCall;
         PalletBalancesError: PalletBalancesError;
         PalletBalancesEvent: PalletBalancesEvent;
+        PalletBalancesIdAmount: PalletBalancesIdAmount;
         PalletBalancesReasons: PalletBalancesReasons;
         PalletBalancesReserveData: PalletBalancesReserveData;
         PalletBountiesBounty: PalletBountiesBounty;
@@ -523,6 +528,7 @@ declare module "@polkadot/types/types/registry" {
         PalletEvmAddressError: PalletEvmAddressError;
         PalletEvmAddressEvent: PalletEvmAddressEvent;
         PalletEvmCall: PalletEvmCall;
+        PalletEvmCodeMetadata: PalletEvmCodeMetadata;
         PalletEvmError: PalletEvmError;
         PalletEvmEvent: PalletEvmEvent;
         PalletExtrinsicFilterCall: PalletExtrinsicFilterCall;
@@ -641,10 +647,10 @@ declare module "@polkadot/types/types/registry" {
         PolkadotCorePrimitivesInboundHrmpMessage: PolkadotCorePrimitivesInboundHrmpMessage;
         PolkadotCorePrimitivesOutboundHrmpMessage: PolkadotCorePrimitivesOutboundHrmpMessage;
         PolkadotParachainPrimitivesXcmpMessageFormat: PolkadotParachainPrimitivesXcmpMessageFormat;
-        PolkadotPrimitivesV2AbridgedHostConfiguration: PolkadotPrimitivesV2AbridgedHostConfiguration;
-        PolkadotPrimitivesV2AbridgedHrmpChannel: PolkadotPrimitivesV2AbridgedHrmpChannel;
-        PolkadotPrimitivesV2PersistedValidationData: PolkadotPrimitivesV2PersistedValidationData;
-        PolkadotPrimitivesV2UpgradeRestriction: PolkadotPrimitivesV2UpgradeRestriction;
+        PolkadotPrimitivesV4AbridgedHostConfiguration: PolkadotPrimitivesV4AbridgedHostConfiguration;
+        PolkadotPrimitivesV4AbridgedHrmpChannel: PolkadotPrimitivesV4AbridgedHrmpChannel;
+        PolkadotPrimitivesV4PersistedValidationData: PolkadotPrimitivesV4PersistedValidationData;
+        PolkadotPrimitivesV4UpgradeRestriction: PolkadotPrimitivesV4UpgradeRestriction;
         RococoParachainRuntimeOriginCaller: RococoParachainRuntimeOriginCaller;
         RococoParachainRuntimeProxyType: RococoParachainRuntimeProxyType;
         RococoParachainRuntimeRuntime: RococoParachainRuntimeRuntime;
