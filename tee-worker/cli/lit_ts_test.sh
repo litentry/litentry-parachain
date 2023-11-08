@@ -6,7 +6,7 @@ set -euo pipefail
 
 function usage() {
     echo ""
-    echo "This is a script for tee-worker ts-test.Preparing to test: $0"
+    echo "This is a script for tee-worker ts-test. Preparing to test: $1"
     echo ""
 
 }
