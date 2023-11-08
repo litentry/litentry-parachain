@@ -45,20 +45,19 @@ pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableParams, AchainableToken, AesOutput, AmountHoldingTimeType, Assertion,
+	AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
 	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BoundedWeb3Network,
 	ErrorDetail, ErrorString, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
 	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	SchemaContentString, SchemaIdString, ShardIdentifier, Signature as ParentchainSignature,
-	SoraQuizType, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, Web3Network,
-	ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
+	SchemaContentString, SchemaIdString, Signature as ParentchainSignature, SoraQuizType,
+	VCMPError, Web3Network, ASSERTION_FROM_DATE, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
 use std::string::ToString;
-pub use teerex_primitives::decl_rsa_request;
+pub use teerex_primitives::{decl_rsa_request, ShardIdentifier};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

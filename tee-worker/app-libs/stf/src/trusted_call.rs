@@ -40,8 +40,8 @@ use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainAccountId,
-	ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError,
-	ValidationData, Web3Network,
+	ParentchainBlockNumber, RequestAesKey, RequestAesKeyNonce, VCMPError, ValidationData,
+	Web3Network,
 };
 use log::*;
 use sp_core::crypto::AccountId32;
@@ -110,7 +110,7 @@ pub enum TrustedCall {
 		Vec<(H160, Vec<H256>)>,
 	),
 	/// litentry trusted calls
-	/// the calls that should deliver a result other than `Empty` will need to include the parameter: `Option<UserShieldingKeyType>`,
+	/// the calls that should deliver a result other than `Empty` will need to include the parameter: `Option<RequestAesKey>`,
 	/// it's a 32-byte AES key defined by the client. This key will be used to encrypt the user-sensitive result in the DI response,
 	/// see `trusted_call_result.rs`.
 	///
@@ -129,12 +129,12 @@ pub enum TrustedCall {
 		Identity,
 		ValidationData,
 		Vec<Web3Network>,
-		Option<UserShieldingKeyType>,
+		Option<RequestAesKey>,
 		H256,
 	),
 	deactivate_identity(Identity, Identity, Identity, H256),
 	activate_identity(Identity, Identity, Identity, H256),
-	request_vc(Identity, Identity, Assertion, Option<UserShieldingKeyType>, H256),
+	request_vc(Identity, Identity, Assertion, Option<RequestAesKey>, H256),
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
 
 	// the following trusted calls should not be requested directly from external
@@ -144,7 +144,7 @@ pub enum TrustedCall {
 		Identity,
 		Identity,
 		Vec<Web3Network>,
-		Option<UserShieldingKeyType>,
+		Option<RequestAesKey>,
 		H256,
 	),
 	request_vc_callback(
@@ -154,7 +154,7 @@ pub enum TrustedCall {
 		H256,
 		H256,
 		Vec<u8>,
-		Option<UserShieldingKeyType>,
+		Option<RequestAesKey>,
 		H256,
 	),
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),

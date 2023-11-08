@@ -36,7 +36,7 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, UserShieldingKeyType, ValidationData,
+	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, RequestAesKey, ValidationData,
 	Web3Network,
 };
 use log::*;
@@ -55,7 +55,7 @@ impl TrustedCallSigned {
 		validation_data: ValidationData,
 		web3networks: Vec<Web3Network>,
 		top_hash: H256,
-		maybe_key: Option<UserShieldingKeyType>,
+		maybe_key: Option<RequestAesKey>,
 		req_ext_hash: H256,
 	) -> StfResult<bool> {
 		ensure!(
@@ -145,7 +145,7 @@ impl TrustedCallSigned {
 		assertion: Assertion,
 		top_hash: H256,
 		req_ext_hash: H256,
-		maybe_key: Option<UserShieldingKeyType>,
+		maybe_key: Option<RequestAesKey>,
 		shard: &ShardIdentifier,
 	) -> StfResult<()> {
 		match assertion {
@@ -243,7 +243,7 @@ impl TrustedCallSigned {
 		who: Identity,
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
-		maybe_key: Option<UserShieldingKeyType>,
+		maybe_key: Option<RequestAesKey>,
 		hash: H256,
 	) -> StfResult<TrustedCallResult>
 	where

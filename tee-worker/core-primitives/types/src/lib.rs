@@ -21,7 +21,7 @@
 use crate::storage::StorageEntry;
 use codec::{Decode, Encode};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use litentry_primitives::{decl_rsa_request, UserShieldingKeyNonceType};
+use litentry_primitives::{decl_rsa_request, RequestAesKeyNonce};
 use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 
 pub mod parentchain;
@@ -54,8 +54,7 @@ pub type UpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave)
 pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 
 // pallet IMP
-pub type LinkIdentityParams =
-	(ShardIdentifier, AccountId, Vec<u8>, Vec<u8>, UserShieldingKeyNonceType);
+pub type LinkIdentityParams = (ShardIdentifier, AccountId, Vec<u8>, Vec<u8>, RequestAesKeyNonce);
 pub type LinkIdentityFn = (CallIndex, LinkIdentityParams);
 
 pub type DeactivateIdentityParams = (ShardIdentifier, Vec<u8>);

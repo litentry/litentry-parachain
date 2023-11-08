@@ -52,7 +52,7 @@ pub fn migrate_to_v2<T: crate::Config, P: GetStorageVersion + PalletInfoAccess>(
 		// ```
 		// ./bin/litentry-cli trusted --mrenclave $mrenclave get-storage IdentityManagement UserShieldingKeys 90b5ab205c6974c9ea841be688864633dc9ca8a357843eeacf2314649965fe22
 		// ```
-		// migration::put_storage_value::<UserShieldingKeyType>(
+		// migration::put_storage_value::<RequestAesKey>(
 		// 	"IdentityManagement".as_bytes(),
 		// 	"UserShieldingKeys".as_bytes(),
 		// 	&charlie.blake2_128_concat(),

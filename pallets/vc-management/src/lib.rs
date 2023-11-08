@@ -34,10 +34,11 @@ pub mod weights;
 
 pub use crate::weights::WeightInfo;
 
-use core_primitives::{Assertion, SchemaIndex, ShardIdentifier, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
+use core_primitives::{Assertion, SchemaIndex, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
 pub use pallet::*;
 use sp_core::H256;
 use sp_std::vec::Vec;
+use teerex_primitives::ShardIdentifier;
 
 mod vc_context;
 pub use vc_context::*;
