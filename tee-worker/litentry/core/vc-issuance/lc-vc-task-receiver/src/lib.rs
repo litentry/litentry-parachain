@@ -24,6 +24,7 @@ mod vc_handling;
 
 use crate::{vc_callback::VCCallbackHandler, vc_handling::VCRequestHandler};
 use codec::Decode;
+pub use futures;
 use futures::channel::oneshot;
 use ita_sgx_runtime::Hash;
 use ita_stf::{
