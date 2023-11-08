@@ -1,4 +1,4 @@
-import { Consumer } from "./util/consumer";
+import { Consumer } from './util/consumer';
 
 type ContextFactory<Context> = () => Promise<{
     context: Context;
@@ -24,9 +24,7 @@ export class ContextManager<Context extends {}> {
         return new ContextManager(async () => ({ context: {}, exit: async () => {} }));
     }
 
-    map<NewContext extends {}>(
-        mapping: (context: Context) => Promise<NewContext>
-    ): ContextManager<NewContext> {
+    map<NewContext extends {}>(mapping: (context: Context) => Promise<NewContext>): ContextManager<NewContext> {
         return new ContextManager(async () => {
             const { context, exit } = await this.enter();
             return { context: await mapping(context), exit };

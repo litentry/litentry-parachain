@@ -1,4 +1,4 @@
-import { KeyringPair } from "@polkadot/keyring/types";
+import { KeyringPair } from '@polkadot/keyring/types';
 import {
     hexToU8a,
     compactStripLength,
@@ -8,14 +8,14 @@ import {
     u8aToHex,
     u8aConcat,
     stringToU8a,
-} from "@polkadot/util";
-import { blake2AsHex } from "@polkadot/util-crypto";
-import crypto, { KeyObject, createPublicKey } from "crypto";
+} from '@polkadot/util';
+import { blake2AsHex } from '@polkadot/util-crypto';
+import crypto, { KeyObject, createPublicKey } from 'crypto';
 import {
     LitentryPrimitivesIdentity,
     TypeRegistry as SidechainTypeRegistry,
     Metadata as SidechainMetadata,
-} from "sidechain-api";
+} from 'sidechain-api';
 import {
     Bytes,
     Codec,
@@ -25,15 +25,15 @@ import {
     WorkerRpcReturnValue,
     LitentryValidationData,
     Assertion,
-} from "parachain-api";
-import WebSocketAsPromised from "websocket-as-promised";
-import { Index } from "@polkadot/types/interfaces";
-import { Option, u32, u8, Vector } from "scale-ts";
-import { TrustedCallSigned } from "parachain-api";
-import WsWebSocket from "ws";
-import type { HexString } from "@polkadot/util/types";
-import { ethers } from "ethers";
-import { PublicGetter } from "parachain-api";
+} from 'parachain-api';
+import WebSocketAsPromised from 'websocket-as-promised';
+import { Index } from '@polkadot/types/interfaces';
+import { Option, u32, u8, Vector } from 'scale-ts';
+import { TrustedCallSigned } from 'parachain-api';
+import WsWebSocket from 'ws';
+import type { HexString } from '@polkadot/util/types';
+import { ethers } from 'ethers';
+import { PublicGetter } from 'parachain-api';
 
 async function logLine(log: WritableStream<string>, message: string): Promise<void> {
     const writer = log.getWriter();
@@ -43,10 +43,10 @@ async function logLine(log: WritableStream<string>, message: string): Promise<vo
 
 export type Wallet =
     | {
-          type: "substrate";
+          type: 'substrate';
           keyringPair: KeyringPair;
       }
-    | { type: "evm"; wallet: ethers.Wallet };
+    | { type: 'evm'; wallet: ethers.Wallet };
 
 export type Api = {
     parachainApi: ParachainApiPromise;
@@ -58,17 +58,17 @@ export type Api = {
 
 function encryptWithAes(key: string, nonce: Uint8Array, cleartext: Buffer): HexString {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
-    const cipher = crypto.createCipheriv("aes-256-gcm", secretKey, nonce, {
+    const cipher = crypto.createCipheriv('aes-256-gcm', secretKey, nonce, {
         authTagLength: 16,
     });
-    let encrypted = cipher.update(cleartext.toString("hex"), "hex", "hex");
-    encrypted += cipher.final("hex");
-    encrypted += cipher.getAuthTag().toString("hex");
+    let encrypted = cipher.update(cleartext.toString('hex'), 'hex', 'hex');
+    encrypted += cipher.final('hex');
+    encrypted += cipher.getAuthTag().toString('hex');
     return `0x${encrypted}`;
 }
 
 // MOCK_VERIFICATION_NONCE: UserShieldingKeyNonceType = [1u8; 12];
-export const keyNonce = "0x010101010101010101010101";
+export const keyNonce = '0x010101010101010101010101';
 
 function generateVerificationMessage(
     parachainApi: ParachainApiPromise,
@@ -78,15 +78,11 @@ function generateVerificationMessage(
     sidechainNonce: number,
     userShieldingKey: string
 ): HexString {
-    const encodedIdentity = sidechainRegistry
-        .createType("LitentryPrimitivesIdentity", identity)
-        .toU8a();
-    const encodedWho = sidechainRegistry.createType("LitentryPrimitivesIdentity", signer).toU8a();
+    const encodedIdentity = sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
+    const encodedWho = sidechainRegistry.createType('LitentryPrimitivesIdentity', signer).toU8a();
     const payload = Buffer.concat([encodedWho, encodedIdentity]);
-    const encryptedPayload = hexToU8a(
-        encryptWithAes(userShieldingKey, hexToU8a(keyNonce), payload)
-    );
-    const encodedSidechainNonce = parachainApi.createType("Index", sidechainNonce);
+    const encryptedPayload = hexToU8a(encryptWithAes(userShieldingKey, hexToU8a(keyNonce), payload));
+    const encodedSidechainNonce = parachainApi.createType('Index', sidechainNonce);
     const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encryptedPayload]);
     return blake2AsHex(msg, 256);
 }
@@ -109,9 +105,9 @@ export async function buildValidation(
         userShieldingKey
     );
 
-    return parachainApi.createType("LitentryValidationData", {
+    return parachainApi.createType('LitentryValidationData', {
         Web3Validation:
-            signer.type === "substrate"
+            signer.type === 'substrate'
                 ? {
                       Substrate: {
                           message,
@@ -124,9 +120,7 @@ export async function buildValidation(
                       Evm: {
                           message,
                           signature: {
-                              Ethereum: await signer.wallet.signMessage(
-                                  ethers.utils.arrayify(message)
-                              ),
+                              Ethereum: await signer.wallet.signMessage(ethers.utils.arrayify(message)),
                           },
                       },
                   },
@@ -137,13 +131,13 @@ export async function buildIdentityFromWallet(
     wallet: Wallet,
     sidechainRegistry: SidechainTypeRegistry
 ): Promise<LitentryPrimitivesIdentity> {
-    if (wallet.type === "evm") {
+    if (wallet.type === 'evm') {
         const identity = {
             Evm: wallet.wallet.address,
         };
 
         return sidechainRegistry.createType(
-            "LitentryPrimitivesIdentity",
+            'LitentryPrimitivesIdentity',
             identity
         ) as unknown as LitentryPrimitivesIdentity;
     }
@@ -152,16 +146,16 @@ export async function buildIdentityFromWallet(
 
     const type: string = (() => {
         switch (keyringPair.type) {
-            case "ethereum":
-                return "Evm";
-            case "sr25519":
-                return "Substrate";
-            case "ed25519":
-                return "Substrate";
-            case "ecdsa":
-                return "Substrate";
+            case 'ethereum':
+                return 'Evm';
+            case 'sr25519':
+                return 'Substrate';
+            case 'ed25519':
+                return 'Substrate';
+            case 'ecdsa':
+                return 'Substrate';
             default:
-                return "Substrate";
+                return 'Substrate';
         }
     })();
     const address = keyringPair.addressRaw;
@@ -170,7 +164,7 @@ export async function buildIdentityFromWallet(
     };
 
     return sidechainRegistry.createType(
-        "LitentryPrimitivesIdentity",
+        'LitentryPrimitivesIdentity',
         identity
     ) as unknown as LitentryPrimitivesIdentity;
 }
@@ -192,9 +186,9 @@ export async function sendRequest(
     log: WritableStream<string>
 ): Promise<WorkerRpcReturnValue> {
     const rawRes = await wsClient.sendRequest(request, { requestId: 1, timeout: 6000 });
-    const res: WorkerRpcReturnValue = api.createType("WorkerRpcReturnValue", rawRes.result);
+    const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', rawRes.result);
     if (res.status.isError) {
-        logLine(log, "Rpc response error: " + decodeRpcBytesAsString(res.value));
+        logLine(log, 'Rpc response error: ' + decodeRpcBytesAsString(res.value));
     }
 
     // unfortunately, the res.value only contains the hash of top
@@ -210,7 +204,7 @@ export async function getSidechainMetadata(
     parachainApi: ParachainApiPromise,
     log: WritableStream<string>
 ): Promise<{ sidechainMetaData: SidechainMetadata; sidechainRegistry: SidechainTypeRegistry }> {
-    const request = { jsonrpc: "2.0", method: "state_getMetadata", params: [], id: 1 };
+    const request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
     const resp = await sendRequest(wsClient, request, parachainApi, log);
 
     const sidechainRegistry = new SidechainTypeRegistry();
@@ -227,7 +221,7 @@ export async function initWorkerConnection(
     const wsp = new WebSocketAsPromised(endpoint, {
         createWebSocket: (url: string) => {
             const socket = new WsWebSocket(url);
-            socket.on("error", (error) => {
+            socket.on('error', (error) => {
                 logLine(log, `Socket to ${url} caught error ${JSON.stringify(error)})}`);
             });
             return socket as unknown as WebSocket;
@@ -235,8 +229,7 @@ export async function initWorkerConnection(
         extractMessageData: (event: any) => event,
         packMessage: (data: any) => JSON.stringify(data),
         unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
-        attachRequestId: (data: any, requestId: string | number) =>
-            Object.assign({ id: requestId }, data),
+        attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
     });
     await wsp.open();
@@ -249,7 +242,7 @@ const createPublicGetter = (
     params: any
 ): PublicGetter => {
     const [variant, argType] = publicGetter;
-    const getter = parachainApi.createType("PublicGetter", {
+    const getter = parachainApi.createType('PublicGetter', {
         [variant]: parachainApi.createType(argType, params),
     }) as unknown as PublicGetter;
 
@@ -263,14 +256,14 @@ export const createSignedTrustedGetter = (
     params: any
 ) => {
     const [variant, argType] = trustedGetter;
-    const getter = parachainApi.createType("TrustedGetter", {
+    const getter = parachainApi.createType('TrustedGetter', {
         [variant]: parachainApi.createType(argType, params),
     });
     const payload = getter.toU8a();
-    const signature = parachainApi.createType("LitentryMultiSignature", {
+    const signature = parachainApi.createType('LitentryMultiSignature', {
         [signer.type]: signer.sign(payload),
     });
-    return parachainApi.createType("TrustedGetterSigned", {
+    return parachainApi.createType('TrustedGetterSigned', {
         getter: getter,
         signature: signature,
     });
@@ -283,11 +276,11 @@ export function createSignedTrustedGetterUserShieldingKey(
 ) {
     const getterSigned = createSignedTrustedGetter(
         parachainApi,
-        ["user_shielding_key", "(LitentryIdentity)"],
+        ['user_shielding_key', '(LitentryIdentity)'],
         signer,
         subject.toHuman()
     );
-    return parachainApi.createType("Getter", { trusted: getterSigned }) as unknown as Getter;
+    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
 
 const sendRequestFromGetter = async (
@@ -309,8 +302,8 @@ const sendRequestFromGetter = async (
         getter.toU8a()
     );
     const request = {
-        jsonrpc: "2.0",
-        method: "state_executeGetter",
+        jsonrpc: '2.0',
+        method: 'state_executeGetter',
         params: [u8aToHex(requestParam)],
         id: 1,
     };
@@ -322,7 +315,7 @@ function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8
         {
             key: teeShieldingKey,
             padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-            oaepHash: "sha256",
+            oaepHash: 'sha256',
         },
         plaintext
     );
@@ -343,7 +336,7 @@ const createRsaRequest = async (
         payload = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, top)));
     }
 
-    return parachainApi.createType("RsaRequest", { shard: hexToU8a(mrenclave), payload }).toU8a();
+    return parachainApi.createType('RsaRequest', { shard: hexToU8a(mrenclave), payload }).toU8a();
 };
 
 function decodeNonce(nonceInHex: string) {
@@ -361,22 +354,11 @@ export const getSidechainNonce = async (
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<Index> => {
-    const getterPublic = createPublicGetter(
-        parachainApi,
-        ["nonce", "(LitentryIdentity)"],
-        subject.toHuman()
-    );
-    const getter = parachainApi.createType("Getter", { public: getterPublic }) as unknown as Getter;
-    const nonce = await sendRequestFromGetter(
-        teeWorker,
-        parachainApi,
-        mrenclave,
-        teeShieldingKey,
-        getter,
-        log
-    );
+    const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject.toHuman());
+    const getter = parachainApi.createType('Getter', { public: getterPublic }) as unknown as Getter;
+    const nonce = await sendRequestFromGetter(teeWorker, parachainApi, mrenclave, teeShieldingKey, getter, log);
     const nonceValue = decodeNonce(nonce.value.toHex());
-    return parachainApi.createType("Index", nonceValue) as Index;
+    return parachainApi.createType('Index', nonceValue) as Index;
 };
 
 export async function getEnclave(api: ParachainApiPromise): Promise<{
@@ -394,13 +376,13 @@ export async function getEnclave(api: ParachainApiPromise): Promise<{
 
     const teeShieldingKey = crypto.createPublicKey({
         key: {
-            alg: "RSA-OAEP-256",
-            kty: "RSA",
-            use: "enc",
-            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString("base64url"),
-            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString("base64url"),
+            alg: 'RSA-OAEP-256',
+            kty: 'RSA',
+            use: 'enc',
+            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString('base64url'),
+            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString('base64url'),
         },
-        format: "jwk",
+        format: 'jwk',
     });
     //@TODO mrEnclave should verify from storage
     const mrEnclave = res.mrEnclave;
@@ -422,7 +404,7 @@ const createSignedTrustedCall = async (
     withWrappedBytes = false
 ): Promise<TrustedCallSigned> => {
     const [variant, argType] = trustedCall;
-    const call = parachainApi.createType("TrustedCall", {
+    const call = parachainApi.createType('TrustedCall', {
         [variant]: parachainApi.createType(argType, params),
     });
     let payload = Uint8Array.from([
@@ -432,17 +414,17 @@ const createSignedTrustedCall = async (
         ...hexToU8a(mrenclave), // should be shard, but it's the same as MRENCLAVE in our case
     ]);
     if (withWrappedBytes) {
-        payload = u8aConcat(stringToU8a("<Bytes>"), payload, stringToU8a("</Bytes>"));
+        payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
     const signature =
-        signer.type === "substrate"
-            ? parachainApi.createType("LitentryMultiSignature", {
+        signer.type === 'substrate'
+            ? parachainApi.createType('LitentryMultiSignature', {
                   [signer.keyringPair.type]: u8aToHex(signer.keyringPair.sign(payload)),
               })
-            : parachainApi.createType("LitentryMultiSignature", {
-                  ["ethereum"]: await signer.wallet.signMessage(payload),
+            : parachainApi.createType('LitentryMultiSignature', {
+                  ['ethereum']: await signer.wallet.signMessage(payload),
               });
-    return parachainApi.createType("TrustedCallSigned", {
+    return parachainApi.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
         signature: signature,
@@ -471,8 +453,8 @@ export const subscribeToEventsWithExtHash = async (
                 const eventData = eventRecord.event.data.toHuman();
                 return (
                     eventData != undefined &&
-                    typeof eventData === "object" &&
-                    "reqExtHash" in eventData &&
+                    typeof eventData === 'object' &&
+                    'reqExtHash' in eventData &&
                     eventData.reqExtHash === requestIdentifier
                 );
             });
@@ -501,7 +483,7 @@ export const sendRequestFromTrustedCall = async (
     log: WritableStream<string>
 ) => {
     // construct trusted operation
-    const trustedOperation = parachainApi.createType("TrustedOperation", { direct_call: call });
+    const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
     // create the request parameter
     const requestParam = await createRsaRequest(
         wsp,
@@ -512,8 +494,8 @@ export const sendRequestFromTrustedCall = async (
         trustedOperation.toU8a()
     );
     const request = {
-        jsonrpc: "2.0",
-        method: "author_submitAndWatchRsRequest",
+        jsonrpc: '2.0',
+        method: 'author_submitAndWatchRsRequest',
         params: [u8aToHex(requestParam)],
         id: 1,
     };
@@ -532,10 +514,7 @@ export function createSignedTrustedCallSetUserShieldingKey(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        [
-            "set_user_shielding_key",
-            "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
-        ],
+        ['set_user_shielding_key', '(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)'],
         signer,
         mrenclave,
         nonce,
@@ -560,22 +539,13 @@ export function createSignedTrustedCallLinkIdentity(
     return createSignedTrustedCall(
         parachainApi,
         [
-            "link_identity",
-            "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)",
+            'link_identity',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)',
         ],
         signer,
         mrenclave,
         nonce,
-        [
-            subject.toHuman(),
-            subject.toHuman(),
-            identity,
-            validationData,
-            web3networks,
-            keyNonce,
-            aesKey,
-            hash,
-        ]
+        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, keyNonce, aesKey, hash]
     );
 }
 
@@ -590,7 +560,7 @@ export function createSignedTrustedCallDeactivateIdentity(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ["deactivate_identity", "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)"],
+        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
         signer,
         mrenclave,
         nonce,
@@ -609,7 +579,7 @@ export function createSignedTrustedCallActivateIdentity(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ["activate_identity", "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)"],
+        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
         signer,
         mrenclave,
         nonce,
@@ -629,10 +599,7 @@ export function createSignedTrustedCallRequestVc(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        [
-            "request_vc",
-            "(LitentryIdentity,LitentryIdentity,Assertion,Option<UserShieldingKeyType>,H256)",
-        ],
+        ['request_vc', '(LitentryIdentity,LitentryIdentity,Assertion,Option<UserShieldingKeyType>,H256)'],
         signer,
         mrenclave,
         nonce,
