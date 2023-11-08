@@ -1,8 +1,9 @@
 {
-	"name": "sidechain-api",
+	"name": "@litentry/sidechain-api",
 	"type": "module",
 	"license": "ISC",
 	"main": "dist/src/index.js",
+	"version": "0.0.1",
 	"scripts": {
 		"clean": "rm -rf dist build node_modules",
 		"update-metadata": "../../bin/litentry-cli print-sgx-metadata-raw > prepare-build/litentry-sidechain-metadata.json",

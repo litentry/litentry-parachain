@@ -60,11 +60,7 @@ import type {
     TAssetBalance,
     TAssetDepositBalance,
 } from "@polkadot/types/interfaces/assets";
-import type {
-    BlockAttestations,
-    IncludedBlocks,
-    MoreAttestations,
-} from "@polkadot/types/interfaces/attestations";
+import type { BlockAttestations, IncludedBlocks, MoreAttestations } from "@polkadot/types/interfaces/attestations";
 import type { RawAuraPreDigest } from "@polkadot/types/interfaces/aura";
 import type { ExtrinsicOrHash, ExtrinsicStatus } from "@polkadot/types/interfaces/author";
 import type { UncleEntryItem } from "@polkadot/types/interfaces/authorship";
@@ -131,11 +127,7 @@ import type {
     BenchmarkParameter,
     BenchmarkResult,
 } from "@polkadot/types/interfaces/benchmark";
-import type {
-    CheckInherentsResult,
-    InherentData,
-    InherentIdentifier,
-} from "@polkadot/types/interfaces/blockbuilder";
+import type { CheckInherentsResult, InherentData, InherentIdentifier } from "@polkadot/types/interfaces/blockbuilder";
 import type {
     BridgeMessageId,
     BridgedBlockHash,
@@ -166,13 +158,7 @@ import type {
 import type { BlockHash } from "@polkadot/types/interfaces/chain";
 import type { PrefixedStorageKey } from "@polkadot/types/interfaces/childstate";
 import type { StatementKind } from "@polkadot/types/interfaces/claims";
-import type {
-    CollectiveOrigin,
-    MemberCount,
-    ProposalIndex,
-    Votes,
-    VotesTo230,
-} from "@polkadot/types/interfaces/collective";
+import type { CollectiveOrigin, MemberCount, ProposalIndex, Votes, VotesTo230 } from "@polkadot/types/interfaces/collective";
 import type { AuthorityId, RawVRFOutput } from "@polkadot/types/interfaces/consensus";
 import type {
     AliveContractInfo,
@@ -279,12 +265,7 @@ import type {
     ContractStorageLayout,
     ContractTypeSpec,
 } from "@polkadot/types/interfaces/contractsAbi";
-import type {
-    FundIndex,
-    FundInfo,
-    LastContribution,
-    TrieIndex,
-} from "@polkadot/types/interfaces/crowdloan";
+import type { FundIndex, FundInfo, LastContribution, TrieIndex } from "@polkadot/types/interfaces/crowdloan";
 import type {
     CollationInfo,
     CollationInfoV1,
@@ -412,19 +393,8 @@ import type {
     Sr25519Signature,
 } from "@polkadot/types/interfaces/extrinsics";
 import type { FungiblesAccessError } from "@polkadot/types/interfaces/fungibles";
-import type {
-    AssetOptions,
-    Owner,
-    PermissionLatest,
-    PermissionVersions,
-    PermissionsV1,
-} from "@polkadot/types/interfaces/genericAsset";
-import type {
-    ActiveGilt,
-    ActiveGiltsTotal,
-    ActiveIndex,
-    GiltBid,
-} from "@polkadot/types/interfaces/gilt";
+import type { AssetOptions, Owner, PermissionLatest, PermissionVersions, PermissionsV1 } from "@polkadot/types/interfaces/genericAsset";
+import type { ActiveGilt, ActiveGiltsTotal, ActiveIndex, GiltBid } from "@polkadot/types/interfaces/gilt";
 import type {
     AuthorityIndex,
     AuthorityList,
@@ -739,11 +709,7 @@ import type {
     RuntimeDispatchInfoV2,
 } from "@polkadot/types/interfaces/payment";
 import type { Approvals } from "@polkadot/types/interfaces/poll";
-import type {
-    ProxyAnnouncement,
-    ProxyDefinition,
-    ProxyType,
-} from "@polkadot/types/interfaces/proxy";
+import type { ProxyAnnouncement, ProxyDefinition, ProxyType } from "@polkadot/types/interfaces/proxy";
 import type { AccountStatus, AccountValidity } from "@polkadot/types/interfaces/purchase";
 import type { ActiveRecovery, RecoveryConfig } from "@polkadot/types/interfaces/recovery";
 import type { RpcMethods } from "@polkadot/types/interfaces/rpc";
@@ -930,14 +896,7 @@ import type {
     SessionKeys9B,
     ValidatorCount,
 } from "@polkadot/types/interfaces/session";
-import type {
-    Bid,
-    BidKind,
-    SocietyJudgement,
-    SocietyVote,
-    StrikeCount,
-    VouchingStatus,
-} from "@polkadot/types/interfaces/society";
+import type { Bid, BidKind, SocietyJudgement, SocietyVote, StrikeCount, VouchingStatus } from "@polkadot/types/interfaces/society";
 import type {
     ActiveEraInfo,
     CompactAssignments,
@@ -1108,11 +1067,7 @@ import type {
     TreasuryProposal,
 } from "@polkadot/types/interfaces/treasury";
 import type { Multiplier } from "@polkadot/types/interfaces/txpayment";
-import type {
-    TransactionSource,
-    TransactionValidity,
-    ValidTransaction,
-} from "@polkadot/types/interfaces/txqueue";
+import type { TransactionSource, TransactionValidity, ValidTransaction } from "@polkadot/types/interfaces/txqueue";
 import type {
     ClassDetails,
     ClassId,

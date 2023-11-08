@@ -94,13 +94,7 @@ declare module "@polkadot/types/lookup" {
             readonly sender: AccountId32;
             readonly hash_: H256;
         } & Struct;
-        readonly type:
-            | "ExtrinsicSuccess"
-            | "ExtrinsicFailed"
-            | "CodeUpdated"
-            | "NewAccount"
-            | "KilledAccount"
-            | "Remarked";
+        readonly type: "ExtrinsicSuccess" | "ExtrinsicFailed" | "CodeUpdated" | "NewAccount" | "KilledAccount" | "Remarked";
     }
     /** @name FrameSupportDispatchDispatchInfo (22) */
     interface FrameSupportDispatchDispatchInfo extends Struct {
@@ -714,16 +708,7 @@ declare module "@polkadot/types/lookup" {
         readonly isSubstrateTestnet: boolean;
         readonly isEthereum: boolean;
         readonly isBsc: boolean;
-        readonly type:
-            | "Polkadot"
-            | "Kusama"
-            | "Litentry"
-            | "Litmus"
-            | "LitentryRococo"
-            | "Khala"
-            | "SubstrateTestnet"
-            | "Ethereum"
-            | "Bsc";
+        readonly type: "Polkadot" | "Kusama" | "Litentry" | "Litmus" | "LitentryRococo" | "Khala" | "SubstrateTestnet" | "Ethereum" | "Bsc";
     }
     /** @name PalletSudoError (96) */
     interface PalletSudoError extends Enum {

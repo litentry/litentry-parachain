@@ -640,14 +640,7 @@ export default {
      * Lookup54: pallet_membership::pallet::Event<T, I>
      **/
     PalletMembershipEvent: {
-        _enum: [
-            "MemberAdded",
-            "MemberRemoved",
-            "MembersSwapped",
-            "MembersReset",
-            "KeyChanged",
-            "Dummy",
-        ],
+        _enum: ["MemberAdded", "MemberRemoved", "MembersSwapped", "MembersReset", "KeyChanged", "Dummy"],
     },
     /**
      * Lookup57: pallet_bounties::pallet::Event<T, I>
@@ -898,8 +891,7 @@ export default {
             },
             CancelledDelegationRequest: {
                 delegator: "AccountId32",
-                cancelledRequest:
-                    "PalletParachainStakingDelegationRequestsCancelledScheduledRequest",
+                cancelledRequest: "PalletParachainStakingDelegationRequestsCancelledScheduledRequest",
                 collator: "AccountId32",
             },
             Delegation: {
@@ -1125,8 +1117,7 @@ export default {
             NotifyTargetSendFail: "(XcmV3MultiLocation,u64,XcmV3TraitsError)",
             NotifyTargetMigrationFail: "(XcmVersionedMultiLocation,u64)",
             InvalidQuerierVersion: "(XcmV3MultiLocation,u64)",
-            InvalidQuerier:
-                "(XcmV3MultiLocation,u64,XcmV3MultiLocation,Option<XcmV3MultiLocation>)",
+            InvalidQuerier: "(XcmV3MultiLocation,u64,XcmV3MultiLocation,Option<XcmV3MultiLocation>)",
             VersionNotifyStarted: "(XcmV3MultiLocation,XcmV3MultiassetMultiAssets)",
             VersionNotifyRequested: "(XcmV3MultiLocation,XcmV3MultiassetMultiAssets)",
             VersionNotifyUnrequested: "(XcmV3MultiLocation,XcmV3MultiassetMultiAssets)",
@@ -2186,17 +2177,7 @@ export default {
      * Lookup148: core_primitives::network::Web3Network
      **/
     CorePrimitivesNetworkWeb3Network: {
-        _enum: [
-            "Polkadot",
-            "Kusama",
-            "Litentry",
-            "Litmus",
-            "LitentryRococo",
-            "Khala",
-            "SubstrateTestnet",
-            "Ethereum",
-            "Bsc",
-        ],
+        _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
     },
     /**
      * Lookup150: core_primitives::assertion::AchainableParams
@@ -4884,13 +4865,7 @@ export default {
      * Lookup381: pallet_scheduler::pallet::Error<T>
      **/
     PalletSchedulerError: {
-        _enum: [
-            "FailedToSchedule",
-            "NotFound",
-            "TargetBlockNumberInPast",
-            "RescheduleNoChange",
-            "Named",
-        ],
+        _enum: ["FailedToSchedule", "NotFound", "TargetBlockNumberInPast", "RescheduleNoChange", "Named"],
     },
     /**
      * Lookup382: pallet_utility::pallet::Error<T>
@@ -4948,16 +4923,7 @@ export default {
      * Lookup395: pallet_proxy::pallet::Error<T>
      **/
     PalletProxyError: {
-        _enum: [
-            "TooMany",
-            "NotFound",
-            "NotProxy",
-            "Unproxyable",
-            "Duplicate",
-            "NoPermission",
-            "Unannounced",
-            "NoSelfProxy",
-        ],
+        _enum: ["TooMany", "NotFound", "NotProxy", "Unproxyable", "Duplicate", "NoPermission", "Unannounced", "NoSelfProxy"],
     },
     /**
      * Lookup396: pallet_preimage::RequestStatus<sp_core::crypto::AccountId32, Balance>
@@ -5036,13 +5002,7 @@ export default {
      * Lookup416: pallet_vesting::pallet::Error<T>
      **/
     PalletVestingError: {
-        _enum: [
-            "NotVesting",
-            "AtMaxVestingSchedules",
-            "AmountLow",
-            "ScheduleIndexOutOfBounds",
-            "InvalidScheduleParams",
-        ],
+        _enum: ["NotVesting", "AtMaxVestingSchedules", "AmountLow", "ScheduleIndexOutOfBounds", "InvalidScheduleParams"],
     },
     /**
      * Lookup418: pallet_transaction_payment::Releases
@@ -5067,13 +5027,7 @@ export default {
      * Lookup425: pallet_treasury::pallet::Error<T, I>
      **/
     PalletTreasuryError: {
-        _enum: [
-            "InsufficientProposersBalance",
-            "InvalidIndex",
-            "TooManyApprovals",
-            "InsufficientPermission",
-            "ProposalNotApproved",
-        ],
+        _enum: ["InsufficientProposersBalance", "InvalidIndex", "TooManyApprovals", "InsufficientPermission", "ProposalNotApproved"],
     },
     /**
      * Lookup430: pallet_democracy::types::ReferendumInfo<BlockNumber, frame_support::traits::preimages::Bounded<rococo_parachain_runtime::RuntimeCall>, Balance>
@@ -5266,14 +5220,7 @@ export default {
      * Lookup455: pallet_tips::pallet::Error<T, I>
      **/
     PalletTipsError: {
-        _enum: [
-            "ReasonTooBig",
-            "AlreadyKnown",
-            "UnknownTip",
-            "NotFinder",
-            "StillOpen",
-            "Premature",
-        ],
+        _enum: ["ReasonTooBig", "AlreadyKnown", "UnknownTip", "NotFinder", "StillOpen", "Premature"],
     },
     /**
      * Lookup456: pallet_identity::types::Registration<Balance, MaxJudgements, MaxAdditionalFields>
@@ -5915,12 +5862,7 @@ export default {
      * Lookup572: pallet_extrinsic_filter::pallet::Error<T>
      **/
     PalletExtrinsicFilterError: {
-        _enum: [
-            "CannotBlock",
-            "CannotConvertToString",
-            "ExtrinsicAlreadyBlocked",
-            "ExtrinsicNotBlocked",
-        ],
+        _enum: ["CannotBlock", "CannotConvertToString", "ExtrinsicAlreadyBlocked", "ExtrinsicNotBlocked"],
     },
     /**
      * Lookup573: pallet_identity_management::pallet::Error<T>
@@ -5932,13 +5874,7 @@ export default {
      * Lookup574: pallet_asset_manager::pallet::Error<T>
      **/
     PalletAssetManagerError: {
-        _enum: [
-            "AssetAlreadyExists",
-            "AssetTypeDoesNotExist",
-            "AssetIdDoesNotExist",
-            "DefaultAssetTypeRemoved",
-            "AssetIdLimitReached",
-        ],
+        _enum: ["AssetAlreadyExists", "AssetTypeDoesNotExist", "AssetIdDoesNotExist", "DefaultAssetTypeRemoved", "AssetIdLimitReached"],
     },
     /**
      * Lookup575: pallet_vc_management::vc_context::VCContext<T>

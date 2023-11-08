@@ -138,12 +138,7 @@ declare module "@polkadot/api-base/types/events" {
              **/
             ReserveRepatriated: AugmentedEvent<
                 ApiType,
-                [
-                    from: AccountId32,
-                    to: AccountId32,
-                    amount: u128,
-                    destinationStatus: FrameSupportTokensMiscBalanceStatus
-                ],
+                [from: AccountId32, to: AccountId32, amount: u128, destinationStatus: FrameSupportTokensMiscBalanceStatus],
                 {
                     from: AccountId32;
                     to: AccountId32;
@@ -328,10 +323,7 @@ declare module "@polkadot/api-base/types/events" {
              **/
             ExtrinsicFailed: AugmentedEvent<
                 ApiType,
-                [
-                    dispatchError: SpRuntimeDispatchError,
-                    dispatchInfo: FrameSupportDispatchDispatchInfo
-                ],
+                [dispatchError: SpRuntimeDispatchError, dispatchInfo: FrameSupportDispatchDispatchInfo],
                 {
                     dispatchError: SpRuntimeDispatchError;
                     dispatchInfo: FrameSupportDispatchDispatchInfo;

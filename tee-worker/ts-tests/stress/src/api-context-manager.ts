@@ -2,10 +2,10 @@ import {
     ApiPromise as ParachainApiPromise,
     WsProvider as ParachainWsProvider,
     definitions as teeTypes,
-} from "parachain-api";
-import { initWorkerConnection, getSidechainMetadata, getEnclave, Api } from "./litentry-api";
-import { ContextManager } from "./context-manager";
-import { withRetry } from "./util/with-retry";
+} from 'parachain-api';
+import { initWorkerConnection, getSidechainMetadata, getEnclave, Api } from './litentry-api';
+import { ContextManager } from './context-manager';
+import { withRetry } from './util/with-retry';
 
 export const apiContextManager = (
     config: {
@@ -36,9 +36,7 @@ export const apiContextManager = (
         )
         .extend(
             async () => ({
-                teeWorker: await withRetry(5, () =>
-                    initWorkerConnection(config.workerEndpoint, log)
-                ),
+                teeWorker: await withRetry(5, () => initWorkerConnection(config.workerEndpoint, log)),
             }),
             async ({ teeWorker }) => {
                 await teeWorker.close();
@@ -47,11 +45,7 @@ export const apiContextManager = (
         .extend(
             async ({ parachainApi, teeWorker }) => {
                 const { mrEnclave, teeShieldingKey } = await getEnclave(parachainApi);
-                const { sidechainRegistry } = await getSidechainMetadata(
-                    teeWorker,
-                    parachainApi,
-                    log
-                );
+                const { sidechainRegistry } = await getSidechainMetadata(teeWorker, parachainApi, log);
                 return { mrEnclave, teeShieldingKey, sidechainRegistry };
             },
             async () => {}
