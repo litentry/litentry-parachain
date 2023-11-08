@@ -2,7 +2,7 @@
 authors = ["Trust Computing GmbH <info@litentry.com>"]
 edition = '2021'
 name = 'litentry-parachain-runtime'
-version = '0.9.16'
+version = '0.9.17'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len", "full"] }
