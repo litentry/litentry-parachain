@@ -234,21 +234,11 @@ export interface TrustedCall extends Enum {
     readonly isBalanceTransfer: boolean;
     readonly asBalanceTransfer: ITuple<[LitentryIdentity, LitentryIdentity, Balance]>;
     readonly isBalanceUnshield: boolean;
-    readonly asBalanceUnshield: ITuple<[
-        LitentryIdentity,
-        LitentryIdentity,
-        Balance,
-        ShardIdentifier
-    ]>;
+    readonly asBalanceUnshield: ITuple<[LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier]>;
     readonly isBalanceShield: boolean;
     readonly asBalanceShield: ITuple<[LitentryIdentity, LitentryIdentity, Balance]>;
     readonly isSetUserShieldingKey: boolean;
-    readonly asSetUserShieldingKey: ITuple<[
-        LitentryIdentity,
-        LitentryIdentity,
-        UserShieldingKeyType,
-        H256
-    ]>;
+    readonly asSetUserShieldingKey: ITuple<[LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256]>;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<[
         LitentryIdentity,
@@ -261,43 +251,15 @@ export interface TrustedCall extends Enum {
         H256
     ]>;
     readonly isDeactivateIdentity: boolean;
-    readonly asDeactivateIdentity: ITuple<[
-        LitentryIdentity,
-        LitentryIdentity,
-        LitentryIdentity,
-        H256
-    ]>;
+    readonly asDeactivateIdentity: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]>;
     readonly isActivateIdentity: boolean;
-    readonly asActivateIdentity: ITuple<[
-        LitentryIdentity,
-        LitentryIdentity,
-        LitentryIdentity,
-        H256
-    ]>;
+    readonly asActivateIdentity: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]>;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[
-        LitentryIdentity,
-        LitentryIdentity,
-        Assertion,
-        Option<UserShieldingKeyType>,
-        H256
-    ]>;
+    readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256]>;
     readonly isSetIdentityNetworks: boolean;
-    readonly asSetIdentityNetworks: ITuple<[
-        LitentryIdentity,
-        LitentryIdentity,
-        LitentryIdentity,
-        Vec<Web3Network>,
-        H256
-    ]>;
+    readonly asSetIdentityNetworks: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]>;
     readonly isSetUserShieldingKeyWithNetworks: boolean;
-    readonly asSetUserShieldingKeyWithNetworks: ITuple<[
-        LitentryIdentity,
-        LitentryIdentity,
-        UserShieldingKeyType,
-        Vec<Web3Network>,
-        H256
-    ]>;
+    readonly asSetUserShieldingKeyWithNetworks: ITuple<[LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256]>;
     readonly type: "BalanceSetBalance" | "BalanceTransfer" | "BalanceUnshield" | "BalanceShield" | "SetUserShieldingKey" | "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "RequestVc" | "SetIdentityNetworks" | "SetUserShieldingKeyWithNetworks";
 }
 /** @name TrustedCallSigned */

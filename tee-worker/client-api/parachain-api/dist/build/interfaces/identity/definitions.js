@@ -99,17 +99,7 @@ export default {
         Address20: "[u8;20]",
         IdentityString: "Vec<u8>",
         Web3Network: {
-            _enum: [
-                "Polkadot",
-                "Kusama",
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Khala",
-                "SubstrateTestnet",
-                "Ethereum",
-                "Bsc",
-            ],
+            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
         },
         LitentryValidationData: {
             _enum: {
@@ -190,16 +180,7 @@ export default {
             },
         },
         AssertionSupportedNetwork: {
-            _enum: [
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Polkadot",
-                "Kusama",
-                "Khala",
-                "Ethereum",
-                "TestNet",
-            ],
+            _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
         GenericEventWithAccount: {
             account: "AccountId",

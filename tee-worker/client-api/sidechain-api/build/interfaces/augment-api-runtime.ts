@@ -25,9 +25,7 @@ declare module "@polkadot/api-base/types/calls" {
              **/
             executeBlock: AugmentedCall<
                 ApiType,
-                (
-                    block: Block | { header?: any; extrinsics?: any } | string | Uint8Array
-                ) => Observable<Null>
+                (block: Block | { header?: any; extrinsics?: any } | string | Uint8Array) => Observable<Null>
             >;
             /**
              * Initialize a block with the given header.
@@ -37,13 +35,7 @@ declare module "@polkadot/api-base/types/calls" {
                 (
                     header:
                         | Header
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
+                        | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
                         | string
                         | Uint8Array
                 ) => Observable<Null>
@@ -62,10 +54,7 @@ declare module "@polkadot/api-base/types/calls" {
             /**
              * Returns the metadata at a given version.
              **/
-            metadataAtVersion: AugmentedCall<
-                ApiType,
-                (version: u32 | AnyNumber | Uint8Array) => Observable<Option<OpaqueMetadata>>
-            >;
+            metadataAtVersion: AugmentedCall<ApiType, (version: u32 | AnyNumber | Uint8Array) => Observable<Option<OpaqueMetadata>>>;
             /**
              * Returns the supported metadata versions.
              **/

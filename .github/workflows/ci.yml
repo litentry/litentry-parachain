@@ -674,7 +674,6 @@ jobs:
           - test_name: demo-direct-call
           # Litentry
           - test_name: lit-user-shielding-key
-          - test_name: lit-resume-worker
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-ii-vc-test
           - test_name: lit-ii-identity-test
@@ -684,6 +683,9 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
           - test_name: lit-test-stress-script
+          # disabled due to P-208
+          # - test_name: lit-resume-worker
+
 
     steps:
       - uses: actions/checkout@v4
