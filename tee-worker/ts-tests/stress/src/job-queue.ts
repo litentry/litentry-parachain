@@ -1,12 +1,9 @@
-import { Consumer } from "./util/consumer";
-import { ContextManager } from "./context-manager";
+import { Consumer } from './util/consumer';
+import { ContextManager } from './context-manager';
 
 export type JobQueue<Context, QueueResult> = Iterator<Consumer<Context>, QueueResult, never>;
 
-export function* repeat<Context>(
-    iterations: number,
-    job: Consumer<Context>
-): JobQueue<Context, void> {
+export function* repeat<Context>(iterations: number, job: Consumer<Context>): JobQueue<Context, void> {
     for (let i = iterations; i > 0; --i) {
         yield job;
     }

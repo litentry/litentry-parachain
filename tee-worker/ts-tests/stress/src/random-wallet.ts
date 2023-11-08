@@ -1,11 +1,11 @@
-import { Keyring } from "@polkadot/api";
-import { KeyringPair } from "@polkadot/keyring/types";
-import { randomBytes } from "crypto";
-import { ethers } from "ethers";
-import { Wallet } from "./litentry-api";
+import { Keyring } from '@polkadot/api';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { randomBytes } from 'crypto';
+import { ethers } from 'ethers';
+import { Wallet } from './litentry-api';
 
 function randomSubstrateWallet(): KeyringPair {
-    const keyring = new Keyring({ type: "sr25519" });
+    const keyring = new Keyring({ type: 'sr25519' });
     return keyring.addFromSeed(randomBytes(32));
 }
 function randomEvmWallet(): ethers.Wallet {
@@ -13,6 +13,6 @@ function randomEvmWallet(): ethers.Wallet {
 }
 export function randomWallet(): Wallet {
     return Math.random() > 0.5
-        ? { type: "substrate", keyringPair: randomSubstrateWallet() }
-        : { type: "evm", wallet: randomEvmWallet() };
+        ? { type: 'substrate', keyringPair: randomSubstrateWallet() }
+        : { type: 'evm', wallet: randomEvmWallet() };
 }

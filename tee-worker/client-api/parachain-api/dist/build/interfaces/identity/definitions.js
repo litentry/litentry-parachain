@@ -52,7 +52,8 @@ export default {
                 balance_unshield: "(LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier)",
                 balance_shield: "(LitentryIdentity, LitentryIdentity, Balance)",
                 set_user_shielding_key: "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
-                link_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)",
+                link_identity:
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)",
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256)",
@@ -98,17 +99,7 @@ export default {
         Address20: "[u8;20]",
         IdentityString: "Vec<u8>",
         Web3Network: {
-            _enum: [
-                "Polkadot",
-                "Kusama",
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Khala",
-                "SubstrateTestnet",
-                "Ethereum",
-                "Bsc",
-            ],
+            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
         },
         LitentryValidationData: {
             _enum: {
@@ -189,16 +180,7 @@ export default {
             },
         },
         AssertionSupportedNetwork: {
-            _enum: [
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Polkadot",
-                "Kusama",
-                "Khala",
-                "Ethereum",
-                "TestNet",
-            ],
+            _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
         GenericEventWithAccount: {
             account: "AccountId",
