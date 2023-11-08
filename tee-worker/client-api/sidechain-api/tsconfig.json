@@ -22,7 +22,6 @@
         "resolveJsonModule": true,
         "baseUrl": "."
     },
-    "include": ["**/*.ts", "**/*.json"],
     "exclude": ["./dist", "./prepare-build"],
     "ts-node": {
         "esm": true,
