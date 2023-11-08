@@ -10698,7 +10698,7 @@ dependencies = [
 
 [[package]]
 name = "rococo-parachain-runtime"
-version = "0.9.16"
+version = "0.9.17"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-aura-ext",
@@ -10860,7 +10860,7 @@ dependencies = [
 
 [[package]]
 name = "runtime-common"
-version = "0.9.16"
+version = "0.9.17"
 dependencies = [
  "core-primitives",
  "cumulus-pallet-parachain-system",
