@@ -16,12 +16,14 @@ pub mod sgx_reexport_prelude {
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub use crate::sgx_reexport_prelude::*;
+
 mod vc_callback;
 mod vc_handling;
 
 use crate::{vc_callback::VCCallbackHandler, vc_handling::VCRequestHandler};
 use codec::Decode;
-#[cfg(feature = "std")]
 use futures::channel::oneshot;
 use ita_sgx_runtime::Hash;
 use ita_stf::{
@@ -41,6 +43,7 @@ use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::{init_vc_task_sender_storage, ErrorCode, RpcError, VCRequest, VCResponse};
 use litentry_primitives::{IdentityNetworkTuple, VCMPError};
 use std::{
+	format,
 	string::{String, ToString},
 	sync::{
 		mpsc::{channel, Receiver, Sender},
@@ -48,12 +51,6 @@ use std::{
 	},
 	vec::Vec,
 };
-
-#[cfg(feature = "sgx")]
-use futures_sgx::channel::oneshot;
-
-#[cfg(feature = "sgx")]
-use sgx_tstd::format;
 
 pub type VCMPResponseSender =
 	Sender<(Result<VCResponse, VCMPError>, oneshot::Sender<Result<Vec<u8>, RpcError>>)>;
@@ -128,20 +125,6 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
 {
-	// let shielding_key = match self.shielding_key_repo.retrieve_key() {
-	// 	Ok(k) => k,
-	// 	Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),
-	// };
-	// let request_vec = match request.decrypt(Box::new(shielding_key)) {
-	// 	Ok(req) => req,
-	// 	Err(_) => return Box::pin(ready(Err(ClientError::BadFormatDecipher.into()))),
-	// };
-	// // decode call
-	// let trusted_operation = match TrustedOperation::decode(&mut request_vec.as_slice()) {
-	// 	Ok(op) => op,
-	// 	Err(_) => return Box::pin(ready(Err(ClientError::BadFormat.into()))),
-	// };
-	// TODO: Refactor based on AES Request
 	let decrypted_trusted_operation =
 		match context.shielding_key.decrypt(&req.encrypted_trusted_call) {
 			Ok(s) => s,
@@ -216,7 +199,6 @@ pub fn handle_jsonrpc_request<K, A, S, H, O>(
 				},
 			};
 
-			// TODO: Understand this parameters properly and avoid the unwrap here
 			let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
 				shard: req.shard,
 				signer,

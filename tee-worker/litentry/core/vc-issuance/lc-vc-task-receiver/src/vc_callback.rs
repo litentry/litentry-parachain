@@ -16,16 +16,9 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::parentchain::ParentchainId;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_vc_task_sender::{RpcError, VCResponse};
-use std::{string::ToString, sync::Arc, vec::Vec};
+use std::{format, string::ToString, sync::Arc, vec::Vec};
 
-#[cfg(feature = "sgx")]
-use futures_sgx::channel::oneshot;
-
-#[cfg(feature = "sgx")]
-use sgx_tstd::format;
-
-#[cfg(feature = "std")]
-use futures::channel::oneshot;
+use crate::futures::channel::oneshot;
 
 pub struct VCCallbackHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,

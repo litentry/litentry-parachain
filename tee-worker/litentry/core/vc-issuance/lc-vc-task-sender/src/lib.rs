@@ -11,12 +11,18 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
+	pub use jsonrpc_core_sgx as jsonrpc_core;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+pub use crate::sgx_reexport_prelude::*;
+
 use codec::{Decode, Encode};
+use futures::channel::oneshot;
 use itp_types::{ShardIdentifier, H256};
+pub use jsonrpc_core::{types::error::ErrorCode, Error as RpcError};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
 use log::*;
@@ -32,22 +38,6 @@ use std::{
 	},
 	vec::Vec,
 };
-
-#[cfg(feature = "std")]
-use futures::channel::oneshot;
-
-#[cfg(feature = "sgx")]
-use futures_sgx::channel::oneshot;
-
-#[cfg(feature = "sgx")]
-pub use jsonrpc_core_sgx::types::error::ErrorCode;
-#[cfg(feature = "sgx")]
-pub use jsonrpc_core_sgx::Error as RpcError;
-
-#[cfg(feature = "std")]
-pub use jsonrpc_core::types::error::ErrorCode;
-#[cfg(feature = "std")]
-pub use jsonrpc_core::Error as RpcError;
 
 #[derive(Debug)]
 pub struct VCRequest {
