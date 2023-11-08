@@ -691,11 +691,7 @@ declare module "@polkadot/types/lookup" {
             readonly identity: LitentryPrimitivesIdentity;
             readonly web3networks: Vec<CorePrimitivesNetworkWeb3Network>;
         } & Struct;
-        readonly type:
-            | "LinkIdentity"
-            | "DeactivateIdentity"
-            | "ActivateIdentity"
-            | "SetIdentityNetworks";
+        readonly type: "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "SetIdentityNetworks";
     }
     /** @name CorePrimitivesNetworkWeb3Network (95) */
     interface CorePrimitivesNetworkWeb3Network extends Enum {

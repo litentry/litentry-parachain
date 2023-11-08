@@ -286,15 +286,7 @@ export interface TrustedCall extends Enum {
     readonly asBalanceShield: ITuple<[LitentryIdentity, LitentryIdentity, Balance]>;
     readonly isLinkIdentity: boolean;
     readonly asLinkIdentity: ITuple<
-        [
-            LitentryIdentity,
-            LitentryIdentity,
-            LitentryIdentity,
-            LitentryValidationData,
-            Vec<Web3Network>,
-            Option<UserShieldingKeyType>,
-            H256
-        ]
+        [LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<UserShieldingKeyType>, H256]
     >;
     readonly isDeactivateIdentity: boolean;
     readonly asDeactivateIdentity: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]>;
@@ -303,9 +295,7 @@ export interface TrustedCall extends Enum {
     readonly isRequestVc: boolean;
     readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256]>;
     readonly isSetIdentityNetworks: boolean;
-    readonly asSetIdentityNetworks: ITuple<
-        [LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]
-    >;
+    readonly asSetIdentityNetworks: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]>;
     readonly type:
         | "BalanceSetBalance"
         | "BalanceTransfer"

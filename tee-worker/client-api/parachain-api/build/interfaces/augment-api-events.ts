@@ -650,11 +650,7 @@ declare module "@polkadot/api-base/types/events" {
                 [account: AccountId32, reqExtHash: H256],
                 { account: AccountId32; reqExtHash: H256 }
             >;
-            IdentityLinked: AugmentedEvent<
-                ApiType,
-                [account: AccountId32, reqExtHash: H256],
-                { account: AccountId32; reqExtHash: H256 }
-            >;
+            IdentityLinked: AugmentedEvent<ApiType, [account: AccountId32, reqExtHash: H256], { account: AccountId32; reqExtHash: H256 }>;
             ImportScheduledEnclaveFailed: AugmentedEvent<ApiType, []>;
             LinkIdentityFailed: AugmentedEvent<
                 ApiType,
@@ -1835,18 +1831,8 @@ declare module "@polkadot/api-base/types/events" {
             VCDisabled: AugmentedEvent<ApiType, [account: AccountId32, index: H256], { account: AccountId32; index: H256 }>;
             VCIssued: AugmentedEvent<
                 ApiType,
-                [
-                    account: AccountId32,
-                    assertion: CorePrimitivesAssertion,
-                    index: H256,
-                    reqExtHash: H256
-                ],
-                {
-                    account: AccountId32;
-                    assertion: CorePrimitivesAssertion;
-                    index: H256;
-                    reqExtHash: H256;
-                }
+                [account: AccountId32, assertion: CorePrimitivesAssertion, index: H256, reqExtHash: H256],
+                { account: AccountId32; assertion: CorePrimitivesAssertion; index: H256; reqExtHash: H256 }
             >;
             VCRegistryCleared: AugmentedEvent<ApiType, []>;
             VCRegistryItemAdded: AugmentedEvent<

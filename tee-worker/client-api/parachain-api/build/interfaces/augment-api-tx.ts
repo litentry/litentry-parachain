@@ -1506,17 +1506,11 @@ declare module "@polkadot/api-base/types/submittable" {
                 [H256, Bytes]
             >;
             identityActivated: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
+                (account: AccountId32 | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, H256]
             >;
             identityDeactivated: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
+                (account: AccountId32 | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, H256]
             >;
             /**
@@ -1525,10 +1519,7 @@ declare module "@polkadot/api-base/types/submittable" {
              * ---------------------------------------------------
              **/
             identityLinked: AugmentedSubmittable<
-                (
-                    account: AccountId32 | string | Uint8Array,
-                    reqExtHash: H256 | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
+                (account: AccountId32 | string | Uint8Array, reqExtHash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
                 [AccountId32, H256]
             >;
             /**

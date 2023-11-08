@@ -1,19 +1,9 @@
 import "@polkadot/api-base/types/submittable";
-import type {
-    ApiTypes,
-    AugmentedSubmittable,
-    SubmittableExtrinsic,
-    SubmittableExtrinsicFunction,
-} from "@polkadot/api-base/types";
+import type { ApiTypes, AugmentedSubmittable, SubmittableExtrinsic, SubmittableExtrinsicFunction } from "@polkadot/api-base/types";
 import type { Bytes, Compact, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
 import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, Call, MultiAddress } from "@polkadot/types/interfaces/runtime";
-import type {
-    CorePrimitivesNetworkWeb3Network,
-    LitentryPrimitivesIdentity,
-    SpRuntimeHeader,
-    SpWeightsWeightV2Weight,
-} from "@polkadot/types/lookup";
+import type { CorePrimitivesNetworkWeb3Network, LitentryPrimitivesIdentity, SpRuntimeHeader, SpWeightsWeightV2Weight } from "@polkadot/types/lookup";
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
 export type __SubmittableExtrinsic<ApiType extends ApiTypes> = SubmittableExtrinsic<ApiType>;
 export type __SubmittableExtrinsicFunction<ApiType extends ApiTypes> = SubmittableExtrinsicFunction<ApiType>;
@@ -25,109 +15,68 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * The dispatch origin for this call is `root`.
              **/
-            forceSetBalance: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    newFree: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>]
-            >;
+            forceSetBalance: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, newFree: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Exactly as `transfer_allow_death`, except the origin must be root and the source account
              * may be specified.
              **/
-            forceTransfer: AugmentedSubmittable<
-                (
-                    source:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, MultiAddress, Compact<u128>]
-            >;
+            forceTransfer: AugmentedSubmittable<(source: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Unreserve some balance from a user by force.
              *
              * Can only be called by ROOT.
              **/
-            forceUnreserve: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    amount: u128 | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, u128]
-            >;
+            forceUnreserve: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                u128
+            ]>;
             /**
              * Set the regular balance of a given account; it also takes a reserved balance but this
              * must be the same as the account's current reserved balance.
@@ -136,62 +85,40 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * WARNING: This call is DEPRECATED! Use `force_set_balance` instead.
              **/
-            setBalanceDeprecated: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    newFree: Compact<u128> | AnyNumber | Uint8Array,
-                    oldReserved: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>, Compact<u128>]
-            >;
+            setBalanceDeprecated: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, newFree: Compact<u128> | AnyNumber | Uint8Array, oldReserved: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>,
+                Compact<u128>
+            ]>;
             /**
              * Alias for `transfer_allow_death`, provided only for name-wise compatibility.
              *
              * WARNING: DEPRECATED! Will be released in approximately 3 months.
              **/
-            transfer: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>]
-            >;
+            transfer: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Transfer the entire transferable balance from the caller account.
              *
@@ -209,31 +136,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * transfer everything except at least the existential deposit, which will guarantee to
              * keep the sender account alive (true).
              **/
-            transferAll: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    keepAlive: bool | boolean | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, bool]
-            >;
+            transferAll: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                bool
+            ]>;
             /**
              * Transfer some liquid free balance to another account.
              *
@@ -243,31 +159,20 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * The dispatch origin for this call must be `Signed` by the transactor.
              **/
-            transferAllowDeath: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>]
-            >;
+            transferAllowDeath: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Same as the [`transfer_allow_death`] call, but with a check that the transfer will not
              * kill the origin account.
@@ -276,31 +181,20 @@ declare module "@polkadot/api-base/types/submittable" {
              *
              * [`transfer_allow_death`]: struct.Pallet.html#method.transfer
              **/
-            transferKeepAlive: AugmentedSubmittable<
-                (
-                    dest:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    value: Compact<u128> | AnyNumber | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Compact<u128>]
-            >;
+            transferKeepAlive: AugmentedSubmittable<(dest: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, value: Compact<u128> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Compact<u128>
+            ]>;
             /**
              * Upgrade a specified account.
              *
@@ -311,234 +205,120 @@ declare module "@polkadot/api-base/types/submittable" {
              * be upgraded. (We let some not have to be upgraded just in order to allow for the
              * possibililty of churn).
              **/
-            upgradeAccounts: AugmentedSubmittable<
-                (who: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
-                [Vec<AccountId32>]
-            >;
+            upgradeAccounts: AugmentedSubmittable<(who: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<AccountId32>
+            ]>;
         };
         identityManagement: {
-            activateIdentity: AugmentedSubmittable<
-                (
-                    who:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    identity:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity]
-            >;
-            deactivateIdentity: AugmentedSubmittable<
-                (
-                    who:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    identity:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity]
-            >;
-            linkIdentity: AugmentedSubmittable<
-                (
-                    who:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    identity:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    web3networks:
-                        | Vec<CorePrimitivesNetworkWeb3Network>
-                        | (
-                              | CorePrimitivesNetworkWeb3Network
-                              | "Polkadot"
-                              | "Kusama"
-                              | "Litentry"
-                              | "Litmus"
-                              | "LitentryRococo"
-                              | "Khala"
-                              | "SubstrateTestnet"
-                              | "Ethereum"
-                              | "Bsc"
-                              | number
-                              | Uint8Array
-                          )[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity, Vec<CorePrimitivesNetworkWeb3Network>]
-            >;
-            setIdentityNetworks: AugmentedSubmittable<
-                (
-                    who:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    identity:
-                        | LitentryPrimitivesIdentity
-                        | {
-                              Twitter: any;
-                          }
-                        | {
-                              Discord: any;
-                          }
-                        | {
-                              Github: any;
-                          }
-                        | {
-                              Substrate: any;
-                          }
-                        | {
-                              Evm: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    web3networks:
-                        | Vec<CorePrimitivesNetworkWeb3Network>
-                        | (
-                              | CorePrimitivesNetworkWeb3Network
-                              | "Polkadot"
-                              | "Kusama"
-                              | "Litentry"
-                              | "Litmus"
-                              | "LitentryRococo"
-                              | "Khala"
-                              | "SubstrateTestnet"
-                              | "Ethereum"
-                              | "Bsc"
-                              | number
-                              | Uint8Array
-                          )[]
-                ) => SubmittableExtrinsic<ApiType>,
-                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity, Vec<CorePrimitivesNetworkWeb3Network>]
-            >;
+            activateIdentity: AugmentedSubmittable<(who: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array, identity: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                LitentryPrimitivesIdentity,
+                LitentryPrimitivesIdentity
+            ]>;
+            deactivateIdentity: AugmentedSubmittable<(who: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array, identity: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                LitentryPrimitivesIdentity,
+                LitentryPrimitivesIdentity
+            ]>;
+            linkIdentity: AugmentedSubmittable<(who: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array, identity: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array, web3networks: Vec<CorePrimitivesNetworkWeb3Network> | (CorePrimitivesNetworkWeb3Network | "Polkadot" | "Kusama" | "Litentry" | "Litmus" | "LitentryRococo" | "Khala" | "SubstrateTestnet" | "Ethereum" | "Bsc" | number | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                LitentryPrimitivesIdentity,
+                LitentryPrimitivesIdentity,
+                Vec<CorePrimitivesNetworkWeb3Network>
+            ]>;
+            setIdentityNetworks: AugmentedSubmittable<(who: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array, identity: LitentryPrimitivesIdentity | {
+                Twitter: any;
+            } | {
+                Discord: any;
+            } | {
+                Github: any;
+            } | {
+                Substrate: any;
+            } | {
+                Evm: any;
+            } | string | Uint8Array, web3networks: Vec<CorePrimitivesNetworkWeb3Network> | (CorePrimitivesNetworkWeb3Network | "Polkadot" | "Kusama" | "Litentry" | "Litmus" | "LitentryRococo" | "Khala" | "SubstrateTestnet" | "Ethereum" | "Bsc" | number | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                LitentryPrimitivesIdentity,
+                LitentryPrimitivesIdentity,
+                Vec<CorePrimitivesNetworkWeb3Network>
+            ]>;
         };
         parentchain: {
-            setBlock: AugmentedSubmittable<
-                (
-                    header:
-                        | SpRuntimeHeader
-                        | {
-                              parentHash?: any;
-                              number?: any;
-                              stateRoot?: any;
-                              extrinsicsRoot?: any;
-                              digest?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [SpRuntimeHeader]
-            >;
+            setBlock: AugmentedSubmittable<(header: SpRuntimeHeader | {
+                parentHash?: any;
+                number?: any;
+                stateRoot?: any;
+                extrinsicsRoot?: any;
+                digest?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                SpRuntimeHeader
+            ]>;
         };
         sudo: {
             /**
@@ -550,30 +330,19 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            setKey: AugmentedSubmittable<
-                (
-                    updated:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress]
-            >;
+            setKey: AugmentedSubmittable<(updated: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress
+            ]>;
             /**
              * Authenticates the sudo key and dispatches a function call with `Root` origin.
              *
@@ -592,31 +361,20 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            sudoAs: AugmentedSubmittable<
-                (
-                    who:
-                        | MultiAddress
-                        | {
-                              Id: any;
-                          }
-                        | {
-                              Index: any;
-                          }
-                        | {
-                              Raw: any;
-                          }
-                        | {
-                              Address32: any;
-                          }
-                        | {
-                              Address20: any;
-                          }
-                        | string
-                        | Uint8Array,
-                    call: Call | IMethod | string | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [MultiAddress, Call]
-            >;
+            sudoAs: AugmentedSubmittable<(who: MultiAddress | {
+                Id: any;
+            } | {
+                Index: any;
+            } | {
+                Raw: any;
+            } | {
+                Address32: any;
+            } | {
+                Address20: any;
+            } | string | Uint8Array, call: Call | IMethod | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                MultiAddress,
+                Call
+            ]>;
             /**
              * Authenticates the sudo key and dispatches a function call with `Root` origin.
              * This function does not check the weight of the call, and instead allows the
@@ -627,20 +385,13 @@ declare module "@polkadot/api-base/types/submittable" {
              * ## Complexity
              * - O(1).
              **/
-            sudoUncheckedWeight: AugmentedSubmittable<
-                (
-                    call: Call | IMethod | string | Uint8Array,
-                    weight:
-                        | SpWeightsWeightV2Weight
-                        | {
-                              refTime?: any;
-                              proofSize?: any;
-                          }
-                        | string
-                        | Uint8Array
-                ) => SubmittableExtrinsic<ApiType>,
-                [Call, SpWeightsWeightV2Weight]
-            >;
+            sudoUncheckedWeight: AugmentedSubmittable<(call: Call | IMethod | string | Uint8Array, weight: SpWeightsWeightV2Weight | {
+                refTime?: any;
+                proofSize?: any;
+            } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Call,
+                SpWeightsWeightV2Weight
+            ]>;
         };
         system: {
             /**
@@ -649,17 +400,16 @@ declare module "@polkadot/api-base/types/submittable" {
              * **NOTE:** We rely on the Root origin to provide us the number of subkeys under
              * the prefix we are removing to accurately calculate the weight of this function.
              **/
-            killPrefix: AugmentedSubmittable<
-                (prefix: Bytes | string | Uint8Array, subkeys: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
-                [Bytes, u32]
-            >;
+            killPrefix: AugmentedSubmittable<(prefix: Bytes | string | Uint8Array, subkeys: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [
+                Bytes,
+                u32
+            ]>;
             /**
              * Kill some items from storage.
              **/
-            killStorage: AugmentedSubmittable<
-                (keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>,
-                [Vec<Bytes>]
-            >;
+            killStorage: AugmentedSubmittable<(keys: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [
+                Vec<Bytes>
+            ]>;
             /**
              * Make some on-chain remark.
              *
@@ -692,12 +442,9 @@ declare module "@polkadot/api-base/types/submittable" {
             /**
              * Set some items of storage.
              **/
-            setStorage: AugmentedSubmittable<
-                (
-                    items: Vec<ITuple<[Bytes, Bytes]>> | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]
-                ) => SubmittableExtrinsic<ApiType>,
-                [Vec<ITuple<[Bytes, Bytes]>>]
-            >;
+            setStorage: AugmentedSubmittable<(items: Vec<ITuple<[Bytes, Bytes]>> | [Bytes | string | Uint8Array, Bytes | string | Uint8Array][]) => SubmittableExtrinsic<ApiType>, [
+                Vec<ITuple<[Bytes, Bytes]>>
+            ]>;
         };
         timestamp: {
             /**
