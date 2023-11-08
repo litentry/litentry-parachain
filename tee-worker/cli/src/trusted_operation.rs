@@ -23,7 +23,7 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
-use ita_stf::{Getter, TrustedOperation};
+use ita_stf::{Getter, TrustedCall, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
@@ -74,9 +74,12 @@ pub(crate) fn perform_direct_operation(
 	top: &TrustedOperation,
 ) -> TrustedOpResult {
 	match top {
-		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
-		TrustedOperation::direct_call(_) => send_direct_vc_request(cli, trusted_args, top),
-		TrustedOperation::get(getter) => execute_getter_from_cli_args(cli, trusted_args, getter),
+		TrustedOperation::direct_call(call) => match call.call {
+			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top),
+			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
+		},
+		_ =>
+			Err(TrustedOperationError::Default { msg: "Only Direct Operation allowed".to_string() }),
 	}
 }
 
@@ -325,7 +328,6 @@ fn send_direct_request(
 	}
 }
 
-//
 fn send_direct_vc_request(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
