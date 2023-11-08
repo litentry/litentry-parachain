@@ -1263,7 +1263,7 @@ dependencies = [
  "frame-support",
  "litentry-macros 0.9.12",
  "parity-scale-codec",
- "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
+ "ring 0.16.20",
  "scale-info",
  "sp-core",
  "sp-runtime",
@@ -6577,7 +6577,7 @@ dependencies = [
  "libp2p-core 0.39.2",
  "libp2p-identity",
  "rcgen 0.10.0",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "rustls 0.20.8",
  "thiserror 1.0.44",
  "webpki 0.22.0",
@@ -6875,7 +6875,7 @@ dependencies = [
  "parity-scale-codec",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.7.3 (git+https://github.com/mesalock-linux/rand-sgx?tag=sgx_1.1.3)",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "scale-info",
  "serde 1.0.175",
  "sgx_tstd",
@@ -8946,6 +8946,7 @@ dependencies = [
  "log 0.4.20",
  "pallet-timestamp",
  "parity-scale-codec",
+ "rustls-webpki",
  "scale-info",
  "sgx-verify",
  "sp-core",
@@ -10168,7 +10169,7 @@ checksum = "67c10f662eee9c94ddd7135043e544f3c82fa839a1e7b865911331961b53186c"
 dependencies = [
  "bytes 1.4.0",
  "rand 0.8.5",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "rustc-hash",
  "rustls 0.20.8",
  "slab 0.4.8",
@@ -10356,7 +10357,7 @@ dependencies = [
  "pem 0.8.2",
  "pem 1.1.1",
  "ring 0.16.19",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "sgx_tstd",
  "yasna 0.3.1",
  "yasna 0.4.0",
@@ -10369,7 +10370,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6413f3de1edee53342e6138e75b56d32e7bc6e332b3bd62d497b1929d4cfbcdd"
 dependencies = [
  "pem 1.1.1",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "time 0.3.22",
  "x509-parser 0.13.2",
  "yasna 0.5.2",
@@ -10382,7 +10383,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffbe84efe2f38dea12e9bfc1f65377fdf03e53a18cb3b995faedf7934c7e785b"
 dependencies = [
  "pem 1.1.1",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "time 0.3.22",
  "yasna 0.5.2",
 ]
@@ -10606,28 +10607,13 @@ dependencies = [
  "cc",
  "sgx_tstd",
  "spin 0.5.2",
- "untrusted",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
 name = "ring"
 version = "0.16.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3053cf52e236a3ed746dfc745aa9cacf1b791d846bdaf412f60a8d7d6e17c8fc"
-dependencies = [
- "cc",
- "libc",
- "once_cell 1.18.0",
- "spin 0.5.2",
- "untrusted",
- "web-sys",
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "ring"
-version = "0.16.20"
-source = "git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup#8b2f60a7d4a063e2170cd47bc5591c39f49ca825"
+source = "git+https://github.com/betrusted-io/ring-xous?branch=0.16.20-cleanup#4296c2e7904898766cf7d8d589759a129794783b"
 dependencies = [
  "cc",
  "libc",
@@ -10635,7 +10621,7 @@ dependencies = [
  "once_cell 1.18.0",
  "rkyv",
  "spin 0.5.2",
- "untrusted",
+ "untrusted 0.7.1",
  "winapi 0.3.9",
  "xous",
  "xous-api-names",
@@ -11063,7 +11049,7 @@ checksum = "35edb675feee39aec9c99fa5ff985081995a06d594114ae14cbe797ad7b7a6d7"
 dependencies = [
  "base64 0.13.1",
  "log 0.4.20",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "sct 0.6.1",
  "webpki 0.21.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -11075,7 +11061,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fff78fc74d175294f4e83b28343315ffcfb114b156f0185e9741cb5570f50e2f"
 dependencies = [
  "log 0.4.20",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "sct 0.7.0",
  "webpki 0.22.0",
 ]
@@ -11111,6 +11097,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d3987094b1d07b653b7dfdc3f70ce9a1da9c51ac18c1b06b662e4f9a0e9f4b2"
 dependencies = [
  "base64 0.21.2",
+]
+
+[[package]]
+name = "rustls-pki-types"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a47003264dea418db67060fa420ad16d0d2f8f0a0360d825c00e177ac52cb5d8"
+
+[[package]]
+name = "rustls-webpki"
+version = "0.102.0-alpha.3"
+source = "git+https://github.com/rustls/webpki?rev=da923ed#da923edaab56f599971e58773617fb574cd019dc"
+dependencies = [
+ "ring 0.16.20",
+ "rustls-pki-types",
+ "untrusted 0.9.0",
 ]
 
 [[package]]
@@ -12186,7 +12188,7 @@ source = "git+https://github.com/mesalock-linux/sct.rs?branch=mesalock_sgx#c4d85
 dependencies = [
  "ring 0.16.19",
  "sgx_tstd",
- "untrusted",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -12195,8 +12197,8 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b362b83898e0e69f38515b82ee15aa80636befe47c3b6d3d89a911e78fc228ce"
 dependencies = [
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "untrusted",
+ "ring 0.16.20",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -12205,8 +12207,8 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d53dcdb7c9f8158937a7981b48accfd39a43af418591a5d008c7b22b5e1b7ca4"
 dependencies = [
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "untrusted",
+ "ring 0.16.20",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -12455,14 +12457,14 @@ dependencies = [
  "frame-support",
  "hex 0.4.3",
  "parity-scale-codec",
- "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
+ "ring 0.16.20",
+ "rustls-webpki",
  "scale-info",
  "serde 1.0.175",
  "serde_json 1.0.103",
  "sp-core",
  "sp-std 5.0.0",
  "teerex-primitives",
- "webpki 0.21.0",
  "x509-cert",
 ]
 
@@ -12840,7 +12842,7 @@ dependencies = [
  "chacha20poly1305",
  "curve25519-dalek 4.0.0-rc.1",
  "rand_core 0.6.4",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "rustc_version",
  "sha2 0.10.7",
  "subtle",
@@ -13748,7 +13750,7 @@ dependencies = [
  "lazy_static",
  "md-5",
  "rand 0.8.5",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "subtle",
  "thiserror 1.0.44",
  "tokio",
@@ -14697,7 +14699,7 @@ dependencies = [
  "log 0.4.20",
  "md-5",
  "rand 0.8.5",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "stun",
  "thiserror 1.0.44",
  "tokio",
@@ -14871,6 +14873,12 @@ name = "untrusted"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
+
+[[package]]
+name = "untrusted"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "url"
@@ -15402,22 +15410,12 @@ dependencies = [
 
 [[package]]
 name = "webpki"
-version = "0.21.0"
-source = "git+https://github.com/scs/webpki-nostd.git?branch=master#22d1772c39ed9081c2815aadb30e7973f3c4e93f"
-dependencies = [
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "ring 0.16.20 (git+https://github.com/Niederb/ring-xous.git?branch=0.16.20-cleanup)",
- "untrusted",
-]
-
-[[package]]
-name = "webpki"
 version = "0.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8e38c0608262c46d4a56202ebabdeb094cef7e560ca7a226c6bf055188aa4ea"
 dependencies = [
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "untrusted",
+ "ring 0.16.20",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -15427,7 +15425,7 @@ source = "git+https://github.com/mesalock-linux/webpki?branch=mesalock_sgx#8dbe6
 dependencies = [
  "ring 0.16.19",
  "sgx_tstd",
- "untrusted",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -15436,8 +15434,8 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f095d78192e208183081cc07bc5515ef55216397af48b873e5edcd72637fa1bd"
 dependencies = [
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "untrusted",
+ "ring 0.16.20",
+ "untrusted 0.7.1",
 ]
 
 [[package]]
@@ -15492,7 +15490,7 @@ dependencies = [
  "rand 0.8.5",
  "rcgen 0.9.3",
  "regex 1.9.5",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "rtcp",
  "rtp",
  "rustls 0.19.1",
@@ -15557,7 +15555,7 @@ dependencies = [
  "rand 0.8.5",
  "rand_core 0.6.4",
  "rcgen 0.9.3",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "rustls 0.19.1",
  "sec1 0.3.0",
  "serde 1.0.175",
@@ -16058,7 +16056,7 @@ dependencies = [
  "lazy_static",
  "nom",
  "oid-registry 0.4.0",
- "ring 0.16.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ring 0.16.20",
  "rusticata-macros",
  "thiserror 1.0.44",
  "time 0.3.22",
@@ -16151,18 +16149,18 @@ dependencies = [
 
 [[package]]
 name = "xous"
-version = "0.9.48"
+version = "0.9.54"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c291e0efc56bc20b4c434ac239b8d6d49bf2ec3bf9cac991fdc0d702e2ff4b2d"
+checksum = "a8a9f0a696320940ab2652fa1d20c98dc59eb7ba4591eeb91a3b8e40bc9255a1"
 dependencies = [
  "lazy_static",
 ]
 
 [[package]]
 name = "xous-api-log"
-version = "0.1.44"
+version = "0.1.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "797ff15cb41c855dfc21311da441e35cc583baa9ef238627ef33f05912d9367c"
+checksum = "03e07c190c743d6d9e076f715333e94c48de41b99078343d174c707803df28c7"
 dependencies = [
  "log 0.4.20",
  "num-derive",
@@ -16173,9 +16171,9 @@ dependencies = [
 
 [[package]]
 name = "xous-api-names"
-version = "0.9.46"
+version = "0.9.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf13daca16910140fe4067135dfb56ca406e6f8951f93b1f087281a21fc055b6"
+checksum = "32d8361077e67966d25922056284d17d042cbb1c96a7ebc2584eb8181427cbb0"
 dependencies = [
  "log 0.4.20",
  "num-derive",
@@ -16188,9 +16186,9 @@ dependencies = [
 
 [[package]]
 name = "xous-ipc"
-version = "0.9.48"
+version = "0.9.54"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bc1dd2cd7306d496d9606796905d472ca51f7889423363c96c2296506963234"
+checksum = "5ee1d318dacbd6242e4e2291dee7c4532249e5a0845de05d264c20fc871a0a1a"
 dependencies = [
  "bitflags 1.3.2",
  "rkyv",
