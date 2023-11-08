@@ -145,7 +145,7 @@ describe('Test Identity (evm direct invocation)', function () {
                 identity.toHex(),
                 validation.toHex(),
                 networks.toHex(),
-                context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier
             );
 

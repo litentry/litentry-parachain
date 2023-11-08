@@ -68,7 +68,7 @@ describe('Test Vc (direct invocation)', function () {
                 new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
                 context.api.createType('Assertion', assertion).toHex(),
-                context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier
             );
 

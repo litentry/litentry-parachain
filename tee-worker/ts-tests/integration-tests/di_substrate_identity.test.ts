@@ -171,7 +171,7 @@ describe('Test Identity (direct invocation)', function () {
                 identity.toHex(),
                 validation.toHex(),
                 networks.toHex(),
-                context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier
             );
 
@@ -267,7 +267,7 @@ describe('Test Identity (direct invocation)', function () {
             twitterIdentity.toHex(),
             evmValidation.toHex(),
             evmNetworks.toHex(),
-            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
             requestIdentifier
         );
 
@@ -329,7 +329,7 @@ describe('Test Identity (direct invocation)', function () {
             evmIdentity.toHex(),
             encodedVerifyIdentityValidation.toHex(),
             evmNetworks.toHex(),
-            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
             requestIdentifier
         );
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
@@ -378,7 +378,7 @@ describe('Test Identity (direct invocation)', function () {
             twitterIdentity.toHex(),
             twitterValidation.toHex(),
             twitterNetworks.toHex(),
-            context.api.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
             requestIdentifier
         );
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);

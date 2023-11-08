@@ -54,7 +54,7 @@ declare const _default: {
                 set_identity_networks: string;
             };
         };
-        UserShieldingKeyType: string;
+        RequestAesKey: string;
         DirectRequestStatus: {
             _enum: {
                 Ok: null;

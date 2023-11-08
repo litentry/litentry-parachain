@@ -150,7 +150,7 @@ export async function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<UserShieldingKeyType>, H256)',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)',
         ],
         signer,
         mrenclave,
@@ -191,7 +191,7 @@ export async function createSignedTrustedCallRequestVc(
 ) {
     return await createSignedTrustedCall(
         parachainApi,
-        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256)'],
+        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)'],
         signer,
         mrenclave,
         nonce,

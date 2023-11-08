@@ -1186,6 +1186,7 @@ import type {
     LitentryMultiSignature,
     LitentryValidationData,
     PublicGetter,
+    RequestAesKey,
     RequestVCResult,
     RsaRequest,
     ShardIdentifier,
@@ -1197,7 +1198,6 @@ import type {
     TrustedOperation,
     TrustedOperationStatus,
     TwitterValidationData,
-    UserShieldingKeyType,
     VCRequested,
     Web2ValidationData,
     Web3CommonValidationData,
@@ -2028,6 +2028,7 @@ declare module "@polkadot/types/types/registry" {
         ReportedRoundStates: ReportedRoundStates;
         Reporter: Reporter;
         ReportIdOf: ReportIdOf;
+        RequestAesKey: RequestAesKey;
         RequestVCResult: RequestVCResult;
         ReserveData: ReserveData;
         ReserveIdentifier: ReserveIdentifier;
@@ -2284,7 +2285,6 @@ declare module "@polkadot/types/types/registry" {
         UpgradeGoAhead: UpgradeGoAhead;
         UpgradeRestriction: UpgradeRestriction;
         UpwardMessage: UpwardMessage;
-        UserShieldingKeyType: UserShieldingKeyType;
         usize: usize;
         USize: USize;
         ValidationCode: ValidationCode;

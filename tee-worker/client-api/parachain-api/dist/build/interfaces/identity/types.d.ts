@@ -178,6 +178,9 @@ export interface PublicGetter extends Enum {
     readonly asNonce: LitentryIdentity;
     readonly type: "SomeValue" | "Nonce";
 }
+/** @name RequestAesKey */
+export interface RequestAesKey extends U8aFixed {
+}
 /** @name RequestVCResult */
 export interface RequestVCResult extends Struct {
     readonly vc_index: H256;
@@ -237,7 +240,7 @@ export interface TrustedCall extends Enum {
         LitentryIdentity,
         LitentryValidationData,
         Vec<Web3Network>,
-        Option<UserShieldingKeyType>,
+        Option<RequestAesKey>,
         H256
     ]>;
     readonly isDeactivateIdentity: boolean;
@@ -245,7 +248,7 @@ export interface TrustedCall extends Enum {
     readonly isActivateIdentity: boolean;
     readonly asActivateIdentity: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, H256]>;
     readonly isRequestVc: boolean;
-    readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256]>;
+    readonly asRequestVc: ITuple<[LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256]>;
     readonly isSetIdentityNetworks: boolean;
     readonly asSetIdentityNetworks: ITuple<[LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256]>;
     readonly type: "BalanceSetBalance" | "BalanceTransfer" | "BalanceUnshield" | "BalanceShield" | "LinkIdentity" | "DeactivateIdentity" | "ActivateIdentity" | "RequestVc" | "SetIdentityNetworks";
@@ -302,9 +305,6 @@ export interface TrustedOperationStatus extends Enum {
 /** @name TwitterValidationData */
 export interface TwitterValidationData extends Struct {
     readonly tweet_id: Bytes;
-}
-/** @name UserShieldingKeyType */
-export interface UserShieldingKeyType extends U8aFixed {
 }
 /** @name VCRequested */
 export interface VCRequested extends Struct {

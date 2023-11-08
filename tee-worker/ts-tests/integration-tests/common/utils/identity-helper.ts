@@ -127,52 +127,6 @@ export async function buildIdentityTxs(
     return txs;
 }
 
-export async function handleIdentityEvents(
-    context: IntegrationTestContext,
-    aesKey: HexString,
-    events: any[],
-    type: 'UserShieldingKeySet' | 'IdentityLinked' | 'IdentityDeactivated' | 'Failed'
-): Promise<IdentityGenericEvent[]> {
-    const results: IdentityGenericEvent[] = [];
-
-    for (let index = 0; index < events.length; index++) {
-        switch (type) {
-            case 'UserShieldingKeySet':
-                results.push(
-                    createIdentityEvent(
-                        context.sidechainRegistry,
-                        events[index].data.account.toHex(),
-                        undefined,
-                        decryptWithAes(aesKey, events[index].data.idGraph, 'hex')
-                    )
-                );
-                break;
-            case 'IdentityLinked':
-                results.push(
-                    createIdentityEvent(
-                        context.sidechainRegistry,
-                        events[index].data.account.toHex(),
-                        decryptWithAes(aesKey, events[index].data.identity, 'hex'),
-                        decryptWithAes(aesKey, events[index].data.idGraph, 'hex')
-                    )
-                );
-                break;
-            case 'IdentityDeactivated':
-                results.push(
-                    createIdentityEvent(
-                        context.sidechainRegistry,
-                        events[index].data.account.toHex(),
-                        decryptWithAes(aesKey, events[index].data.identity, 'hex')
-                    )
-                );
-                break;
-        }
-    }
-    console.log(`${type} event data:`, results);
-
-    return [...results];
-}
-
 export function parseIdGraph(
     sidechainRegistry: TypeRegistry,
     idGraphOutput: AesOutput,

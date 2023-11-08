@@ -62,7 +62,7 @@ export declare const definitions: {
                 set_identity_networks: string;
             };
         };
-        UserShieldingKeyType: string;
+        RequestAesKey: string;
         DirectRequestStatus: {
             _enum: {
                 Ok: null;

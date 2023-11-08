@@ -3,7 +3,21 @@ import type { ApiTypes, AugmentedQuery, QueryableStorageEntry } from "@polkadot/
 import type { Bytes, Null, Option, Vec, bool, u128, u32, u64 } from "@polkadot/types-codec";
 import type { AnyNumber, ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, H256 } from "@polkadot/types/interfaces/runtime";
-import type { FrameSupportDispatchPerDispatchClassWeight, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, LitentryPrimitivesIdentity, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesIdAmount, PalletBalancesReserveData, PalletIdentityManagementTeeIdentityContext, PalletTransactionPaymentReleases, SpRuntimeDigest } from "@polkadot/types/lookup";
+import type {
+    FrameSupportDispatchPerDispatchClassWeight,
+    FrameSystemAccountInfo,
+    FrameSystemEventRecord,
+    FrameSystemLastRuntimeUpgradeInfo,
+    FrameSystemPhase,
+    LitentryPrimitivesIdentity,
+    PalletBalancesAccountData,
+    PalletBalancesBalanceLock,
+    PalletBalancesIdAmount,
+    PalletBalancesReserveData,
+    PalletIdentityManagementTeeIdentityContext,
+    PalletTransactionPaymentReleases,
+    SpRuntimeDigest,
+} from "@polkadot/types/lookup";
 import type { Observable } from "@polkadot/types/types";
 export type __AugmentedQuery<ApiType extends ApiTypes> = AugmentedQuery<ApiType, () => unknown>;
 export type __QueryableStorageEntry<ApiType extends ApiTypes> = QueryableStorageEntry<ApiType>;
@@ -36,21 +50,27 @@ declare module "@polkadot/api-base/types/storage" {
              * `Balances` pallet, which uses a `StorageMap` to store balances data only.
              * NOTE: This is only used in the case that this pallet is used to store balances.
              **/
-            account: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<PalletBalancesAccountData>, [
-                AccountId32
-            ]>;
+            account: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<PalletBalancesAccountData>,
+                [AccountId32]
+            >;
             /**
              * Freeze locks on account balances.
              **/
-            freezes: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>, [
-                AccountId32
-            ]>;
+            freezes: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>,
+                [AccountId32]
+            >;
             /**
              * Holds on account balances.
              **/
-            holds: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>, [
-                AccountId32
-            ]>;
+            holds: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesIdAmount>>,
+                [AccountId32]
+            >;
             /**
              * The total units of outstanding deactivated balance in the system.
              **/
@@ -59,71 +79,119 @@ declare module "@polkadot/api-base/types/storage" {
              * Any liquidity locks on some account balances.
              * NOTE: Should only be accessed when setting, changing and freeing a lock.
              **/
-            locks: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesBalanceLock>>, [
-                AccountId32
-            ]>;
+            locks: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesBalanceLock>>,
+                [AccountId32]
+            >;
             /**
              * Named reserves on some account balances.
              **/
-            reserves: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesReserveData>>, [
-                AccountId32
-            ]>;
+            reserves: AugmentedQuery<
+                ApiType,
+                (arg: AccountId32 | string | Uint8Array) => Observable<Vec<PalletBalancesReserveData>>,
+                [AccountId32]
+            >;
             /**
              * The total units issued in the system.
              **/
             totalIssuance: AugmentedQuery<ApiType, () => Observable<u128>, []>;
         };
         identityManagement: {
-            idGraphLens: AugmentedQuery<ApiType, (arg: LitentryPrimitivesIdentity | {
-                Twitter: any;
-            } | {
-                Discord: any;
-            } | {
-                Github: any;
-            } | {
-                Substrate: any;
-            } | {
-                Evm: any;
-            } | string | Uint8Array) => Observable<u32>, [
-                LitentryPrimitivesIdentity
-            ]>;
-            idGraphs: AugmentedQuery<ApiType, (arg1: LitentryPrimitivesIdentity | {
-                Twitter: any;
-            } | {
-                Discord: any;
-            } | {
-                Github: any;
-            } | {
-                Substrate: any;
-            } | {
-                Evm: any;
-            } | string | Uint8Array, arg2: LitentryPrimitivesIdentity | {
-                Twitter: any;
-            } | {
-                Discord: any;
-            } | {
-                Github: any;
-            } | {
-                Substrate: any;
-            } | {
-                Evm: any;
-            } | string | Uint8Array) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>, [
-                LitentryPrimitivesIdentity,
-                LitentryPrimitivesIdentity
-            ]>;
-            linkedIdentities: AugmentedQuery<ApiType, (arg: LitentryPrimitivesIdentity | {
-                Twitter: any;
-            } | {
-                Discord: any;
-            } | {
-                Github: any;
-            } | {
-                Substrate: any;
-            } | {
-                Evm: any;
-            } | string | Uint8Array) => Observable<Option<Null>>, [
-                LitentryPrimitivesIdentity
-            ]>;
+            idGraphLens: AugmentedQuery<
+                ApiType,
+                (
+                    arg:
+                        | LitentryPrimitivesIdentity
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
+                        | string
+                        | Uint8Array
+                ) => Observable<u32>,
+                [LitentryPrimitivesIdentity]
+            >;
+            idGraphs: AugmentedQuery<
+                ApiType,
+                (
+                    arg1:
+                        | LitentryPrimitivesIdentity
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
+                        | string
+                        | Uint8Array,
+                    arg2:
+                        | LitentryPrimitivesIdentity
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
+                        | string
+                        | Uint8Array
+                ) => Observable<Option<PalletIdentityManagementTeeIdentityContext>>,
+                [LitentryPrimitivesIdentity, LitentryPrimitivesIdentity]
+            >;
+            linkedIdentities: AugmentedQuery<
+                ApiType,
+                (
+                    arg:
+                        | LitentryPrimitivesIdentity
+                        | {
+                              Twitter: any;
+                          }
+                        | {
+                              Discord: any;
+                          }
+                        | {
+                              Github: any;
+                          }
+                        | {
+                              Substrate: any;
+                          }
+                        | {
+                              Evm: any;
+                          }
+                        | string
+                        | Uint8Array
+                ) => Observable<Option<Null>>,
+                [LitentryPrimitivesIdentity]
+            >;
         };
         parentchain: {
             /**
