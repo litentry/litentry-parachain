@@ -19,8 +19,7 @@
 use super::*;
 
 use crate::Pallet as VCManagement;
-#[allow(unused)]
-use core_primitives::{AesOutput, ErrorDetail, VCMPError};
+use core_primitives::{ErrorDetail, VCMPError};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, BenchmarkError};
 use frame_support::traits::EnsureOrigin;
 use frame_system::RawOrigin;
