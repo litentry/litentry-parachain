@@ -3168,7 +3168,7 @@ packages:
 
   file:../client-api/parachain-api:
     resolution: {directory: ../client-api/parachain-api, type: directory}
-    name: parachain-api
+    name: '@litentry/parachain-api'
     dependencies:
       '@polkadot/api': 10.9.1
       '@polkadot/api-augment': 10.9.1
@@ -3192,7 +3192,7 @@ packages:
 
   file:../client-api/sidechain-api:
     resolution: {directory: ../client-api/sidechain-api, type: directory}
-    name: sidechain-api
+    name: '@litentry/sidechain-api'
     dependencies:
       '@polkadot/api': 10.9.1
       '@polkadot/api-augment': 10.9.1
