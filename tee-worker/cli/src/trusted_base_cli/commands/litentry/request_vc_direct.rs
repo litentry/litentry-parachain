@@ -49,10 +49,6 @@ use sp_core::Pair;
 // ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
 
-// fn to_para_str(s: &str) -> ParameterString {
-// 	ParameterString::truncate_from(s.as_bytes().to_vec())
-// }
-
 #[derive(Parser)]
 pub struct RequestVcDirectCommand {
 	/// did account to whom the vc will be issued

@@ -356,7 +356,7 @@ fn send_direct_vc_request(
 						DirectRequestStatus::Error => {
 							debug!("request status is error");
 							if let Ok(value) = String::decode(&mut return_value.value.as_slice()) {
-								println!("[Error] {}", value);
+								error!("{}", value);
 							}
 							direct_api.close().unwrap();
 							return Err(TrustedOperationError::Default {

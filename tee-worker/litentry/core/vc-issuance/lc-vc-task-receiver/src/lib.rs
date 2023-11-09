@@ -67,8 +67,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 {
 	let receiver = init_vc_task_sender_storage();
 
-	loop {
-		let req = receiver.recv().unwrap();
+	while let Ok(req) = receiver.recv() {
 		if let Err(e) = req.sender.send(handle_request(
 			req.encrypted_trusted_call,
 			req.shard,
