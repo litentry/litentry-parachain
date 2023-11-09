@@ -8,9 +8,13 @@ ts-tests of tee-worker
 -   Inside the repository, run `nvm use` to set the correct Node version.
     -   If the version is not installed, run `nvm install`.
 
-## Installation
+## Prerequisite
 
-###### ts-tests:
+Before running the ts-tests, the client-api types generation needs to be completed.
+
+See client-api [README.md](https://github.com/litentry/litentry-parachain/blob/dev/tee-worker/client-api/README.md)
+
+## Installation
 
 ```
 cd tee-worker/ts-tests
@@ -18,29 +22,6 @@ nvm use
 corepack enable pnpm
 pnpm install
 ```
-
-###### client-api:
-
-```cd tee-worker/ts-tests
-cd tee-worker/client-api
-nvm use
-corepack enable pnpm
-pnpm install
-```
-
-## Type Generated(client-api folder)
-
-Update parachain metadata: `pnpm --filter parachain-api run update-metadata` (requires the parachain is running)
-
-Update sidechain metadata: `pnpm --filter sidechain-api run update-metadata` (requires the worker is running)
-
-Generate parachain type: `pnpm --filter parachain-api run build`
-
-Generate sidechain type: `pnpm --filter sidechain-api run build`
-
-Alternatively, you can run `pnpm --run update-build` to do all things above in one go.
-
-##### Note: After updating the client-api, it is necessary to reinstall the `parachain-api` and `sidechain-api` dependencies within the ts-tests, or else the ts-tests won't work. In summary, you will need to execute the command `pnpm install` once more.
 
 ## Local
 

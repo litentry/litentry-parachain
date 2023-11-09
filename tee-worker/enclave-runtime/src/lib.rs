@@ -323,18 +323,6 @@ pub unsafe extern "C" fn set_node_metadata(
 
 	info!("Successfully set the node meta data");
 
-	// update the supported_batch_call_map now
-	// TODO: Fix this later
-	/* if let Ok(executor) = GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT.get() {
-		if executor.update_supported_batch_call_map().is_ok() {
-			info!("Successfully update supported batch call map");
-		} else {
-			warn!("Failed to update supported batch call map");
-		}
-	} else {
-		warn!("Failed to get GLOBAL_INDIRECT_CALLS_EXECUTOR_COMPONENT");
-	} */
-
 	sgx_status_t::SGX_SUCCESS
 }
 
