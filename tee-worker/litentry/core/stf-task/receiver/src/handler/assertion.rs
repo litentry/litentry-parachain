@@ -99,6 +99,9 @@ where
 
 			Assertion::SoraQuiz(quiz_type, guild_id) =>
 				lc_assertion_build::sora::quiz::build(&self.req, quiz_type, guild_id),
+
+			Assertion::SPACEIDBnbDomainHolding =>
+				lc_assertion_build::nodereal::spaceid::bnb_domain_holding_amount::build(&self.req),
 		}?;
 
 		// post-process the credential

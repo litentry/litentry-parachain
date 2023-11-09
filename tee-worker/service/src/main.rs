@@ -1300,6 +1300,12 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
 		data_provider_config.set_sora_quiz_attendee_id(v);
 	}
+	if let Ok(v) = env::var("NODEREAL_API_KEY") {
+		data_provider_config.set_nodereal_api_key(v);
+	}
+	if let Ok(v) = env::var("NODEREAL_API_URL") {
+		data_provider_config.set_nodereal_api_url(v);
+	}
 
 	data_provider_config
 }

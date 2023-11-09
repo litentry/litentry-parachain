@@ -47,6 +47,7 @@ pub mod a6;
 pub mod a8;
 pub mod achainable;
 pub mod holding_time;
+pub mod nodereal;
 pub mod oneblock;
 pub mod sora;
 
