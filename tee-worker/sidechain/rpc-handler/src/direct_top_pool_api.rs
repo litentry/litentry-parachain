@@ -35,14 +35,7 @@ use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHan
 use lc_vc_task_sender::{SendVcRequest, VCRequest, VcRequestSender};
 use litentry_primitives::AesRequest;
 use log::*;
-use std::{
-	borrow::ToOwned,
-	format,
-	string::{String, ToString},
-	sync::Arc,
-	vec,
-	vec::Vec,
-};
+use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
 type Hash = sp_core::H256;
 
@@ -98,11 +91,11 @@ where
 		let shard: ShardIdentifier = request.shard;
 		let encrypted_trusted_call: Vec<u8> = request.payload;
 		let request_sender = VcRequestSender::new();
-		let (sender, mut receiver) = oneshot::channel::<Result<Vec<u8>, RpcError>>();
+		let (sender, mut receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
 
 		let vc_request = VCRequest { encrypted_trusted_call, sender, shard };
 		if let Err(e) = request_sender.send_vc_request(vc_request) {
-			return Ok(json!(compute_hex_encoded_return_error(&e.to_string())))
+			return Ok(json!(compute_hex_encoded_return_error(&e)))
 		}
 
 		while let Ok(response) = receiver.try_recv() {
@@ -115,7 +108,7 @@ where
 				return Ok(json!(json_value.to_hex()))
 			} else if let Some(Err(e)) = response {
 				log::error!("Received error in jsonresponse: {:?} ", e);
-				return Ok(json!(compute_hex_encoded_return_error(&e.to_string())))
+				return Ok(json!(compute_hex_encoded_return_error(&e)))
 			}
 		}
 		// Note: This case will only happen if the sender has been dropped

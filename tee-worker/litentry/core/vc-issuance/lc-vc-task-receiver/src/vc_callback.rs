@@ -1,4 +1,4 @@
-use crate::send_rpc_error;
+use crate::send_error;
 use codec::Encode;
 use ita_sgx_runtime::Hash;
 use ita_stf::{
@@ -15,8 +15,13 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::parentchain::ParentchainId;
 use lc_stf_task_receiver::StfTaskContext;
-use lc_vc_task_sender::{RpcError, VCResponse};
-use std::{format, string::ToString, sync::Arc, vec::Vec};
+use lc_vc_task_sender::VCResponse;
+use std::{
+	format,
+	string::{String, ToString},
+	sync::Arc,
+	vec::Vec,
+};
 
 use crate::futures::channel::oneshot;
 
@@ -55,26 +60,18 @@ where
 		Self { context, extrinsic_factory, node_metadata_repo }
 	}
 
-	pub fn request_vc_callback(
-		&self,
-		response: VCResponse,
-		sender: oneshot::Sender<Result<Vec<u8>, RpcError>>,
-	) {
-		let (mut state, _) =
-			match self.context.state_handler.load_cloned(&response.assertion_request.shard) {
-				Ok(s) => s,
-				Err(e) => {
-					send_rpc_error(format!("Failed to get sidechain state: {:?}", e), sender);
-					return
-				},
-			};
+	pub fn request_vc_callback(&self, response: VCResponse) -> Result<Vec<u8>, String> {
+		let (mut state, _) = self
+			.context
+			.state_handler
+			.load_cloned(&response.assertion_request.shard)
+			.map_err(|e| format!("Failed to get sidechain state: {:?}", e))?;
 		state.execute_with(|| {
 			let key = match IdentityManagement::user_shielding_keys(&response.assertion_request.who)
 			{
 				Some(s) => s,
 				None => {
-					send_rpc_error("User Shielding key not found for user".to_string(), sender);
-					return
+					return Err("User Shielding key not found for user".to_string())
 				},
 			};
 			let call_index = self
@@ -86,10 +83,7 @@ where
 			let account = SgxParentchainTypeConverter::convert(
 				match response.assertion_request.who.to_account_id() {
 					Some(s) => s,
-					None => {
-						send_rpc_error("Failed to convert account".to_string(), sender);
-						return
-					},
+					None => return Err("Failed to convert account".to_string()),
 				},
 			);
 			let call = OpaqueCall::from_tuple(&(
@@ -106,28 +100,16 @@ where
 				vc_hash: response.vc_hash,
 				vc_payload: result,
 			};
-			let xt = match self.extrinsic_factory.create_extrinsics(&[call], None) {
-				Ok(s) => s,
-				Err(e) => {
-					send_rpc_error(
-						format!("Failed to construct extrinsic for parentchain: {:?}", e),
-						sender,
-					);
-					return
-				},
-			};
-			match self.context.ocall_api.send_to_parentchain(xt, &ParentchainId::Litentry) {
-				Ok(_) =>
-					if let Err(e) = sender.send(Ok(res.encode())) {
-						log::warn!("Unable to send response jsonrpc handler: {:?}", e);
-					},
-				Err(e) => {
-					send_rpc_error(
-						format!("Unable to send extrinsic to parentchain: {:?}", e),
-						sender,
-					);
-				},
-			}
-		});
+			// This internally fetches nonce from a Mutex and then updates it
+			let xt = self
+				.extrinsic_factory
+				.create_extrinsics(&[call], None)
+				.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
+			self.context
+				.ocall_api
+				.send_to_parentchain(xt, &ParentchainId::Litentry)
+				.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
+			Ok(res.encode())
+		})
 	}
 }

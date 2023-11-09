@@ -11,7 +11,6 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
 	pub use futures_sgx as futures;
-	pub use jsonrpc_core_sgx as jsonrpc_core;
 	pub use thiserror_sgx as thiserror;
 	pub use url_sgx as url;
 }
@@ -22,7 +21,6 @@ pub use crate::sgx_reexport_prelude::*;
 use codec::{Decode, Encode};
 use futures::channel::oneshot;
 use itp_types::{ShardIdentifier, H256};
-pub use jsonrpc_core::{types::error::ErrorCode, Error as RpcError};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
 use log::*;
@@ -32,6 +30,7 @@ use std::sync::Mutex;
 use std::sync::SgxMutex as Mutex;
 use std::{
 	format,
+	string::String,
 	sync::{
 		mpsc::{channel, Receiver, Sender},
 		Arc,
@@ -42,7 +41,7 @@ use std::{
 #[derive(Debug)]
 pub struct VCRequest {
 	pub encrypted_trusted_call: Vec<u8>,
-	pub sender: oneshot::Sender<Result<Vec<u8>, RpcError>>,
+	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
 	pub shard: ShardIdentifier,
 }
 
@@ -64,7 +63,7 @@ lazy_static! {
 
 /// Trait to send an stf request to the stf request thread.
 pub trait SendVcRequest {
-	fn send_vc_request(&self, request: VCRequest) -> Result<(), RpcError>;
+	fn send_vc_request(&self, request: VCRequest) -> Result<(), String>;
 }
 
 pub struct VcRequestSender {}
@@ -81,7 +80,7 @@ impl Default for VcRequestSender {
 }
 
 impl SendVcRequest for VcRequestSender {
-	fn send_vc_request(&self, request: VCRequest) -> Result<(), RpcError> {
+	fn send_vc_request(&self, request: VCRequest) -> Result<(), String> {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
@@ -121,12 +120,9 @@ impl VcTaskSender {
 		Self { sender }
 	}
 
-	fn send(&self, request: VCRequest) -> Result<(), RpcError> {
-		if let Err(e) = self.sender.send(request) {
-			let mut error = RpcError::new(ErrorCode::InternalError);
-			error.message = format!("Failed to send message to VC Task receive: {:?}", e);
-			return Err(error)
-		}
-		Ok(())
+	fn send(&self, request: VCRequest) -> Result<(), String> {
+		self.sender
+			.send(request)
+			.map_err(|e| format!("Failed to send message to VC Handler: {:?}", e))
 	}
 }
