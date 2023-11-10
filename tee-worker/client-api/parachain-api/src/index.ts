@@ -12,6 +12,7 @@ export * from "@polkadot/types/lookup";
 export * from "../build/interfaces";
 export * from "@polkadot/api";
 export * from "@polkadot/api/types";
-import { identity } from "../build/interfaces/definitions";
-
-export const definitions = identity;
+import { default as identity } from "../build/interfaces/identity/definitions";
+import { default as vc } from "../build/interfaces/vc/definitions";
+import { default as trustedCalls } from "../build/interfaces/trustedCalls/definitions";
+export { identity, vc, trustedCalls };
