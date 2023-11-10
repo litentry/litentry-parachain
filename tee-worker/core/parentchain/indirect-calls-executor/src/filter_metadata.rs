@@ -235,17 +235,28 @@ where
 /// can implemeent their own indirect call there.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
+	#[codec(index = 0)]
 	ShieldFunds(ShieldFundsArgs),
+	#[codec(index = 1)]
 	Invoke(InvokeArgs),
+	#[codec(index = 2)]
 	TransferToAliceShieldsFunds(TransferToAliceShieldsFundsArgs),
 	// Litentry
+	#[codec(index = 3)]
 	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	#[codec(index = 4)]
 	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	#[codec(index = 5)]
 	DeactivateIdentity(DeactivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	#[codec(index = 6)]
 	ActivateIdentity(ActivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	#[codec(index = 7)]
 	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
+	#[codec(index = 8)]
 	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
+	#[codec(index = 9)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
+	#[codec(index = 10)]
 	BatchAll(Vec<IndirectCall>),
 }
 

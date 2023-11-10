@@ -97,7 +97,9 @@ pub struct AssertionBuildRequest {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
+	#[codec(index = 0)]
 	IdentityVerification(Web2IdentityVerificationRequest),
+	#[codec(index = 1)]
 	AssertionVerification(AssertionBuildRequest),
 }
 

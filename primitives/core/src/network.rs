@@ -49,16 +49,25 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 )]
 pub enum Web3Network {
 	// substrate
+	#[codec(index = 0)]
 	Polkadot,
+	#[codec(index = 1)]
 	Kusama,
+	#[codec(index = 2)]
 	Litentry,
+	#[codec(index = 3)]
 	Litmus,
+	#[codec(index = 4)]
 	LitentryRococo,
+	#[codec(index = 5)]
 	Khala,
+	#[codec(index = 6)]
 	SubstrateTestnet, // when launched it with standalone (integritee-)node
 
 	// evm
+	#[codec(index = 7)]
 	Ethereum,
+	#[codec(index = 8)]
 	Bsc,
 }
 

@@ -26,7 +26,9 @@ use scale_info::TypeInfo;
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub enum Status {
+	#[codec(index = 0)]
 	Active,
+	#[codec(index = 1)]
 	Disabled,
 }
 

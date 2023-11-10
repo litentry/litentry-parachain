@@ -333,10 +333,15 @@ pub struct SgxQuote {
 #[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo, Default)]
 pub enum SgxStatus {
 	#[default]
+	#[codec(index = 0)]
 	Invalid,
+	#[codec(index = 1)]
 	Ok,
+	#[codec(index = 2)]
 	GroupOutOfDate,
+	#[codec(index = 3)]
 	GroupRevoked,
+	#[codec(index = 4)]
 	ConfigurationNeeded,
 }
 

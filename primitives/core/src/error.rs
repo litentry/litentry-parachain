@@ -29,25 +29,39 @@ pub type ErrorString = BoundedVec<u8, MaxStringLength>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum ErrorDetail {
 	// error when importing the parentchain blocks and executing indirect calls
+	#[codec(index = 0)]
 	ImportError,
 	// the direct or indirect request comes from an unauthorized signer
+	#[codec(index = 1)]
 	UnauthorizedSigner,
 	// generic error when executing STF, the `ErrorString` should indicate the actual reason
+	#[codec(index = 2)]
 	StfError(ErrorString),
 	// error when sending stf request to the receiver fails
+	#[codec(index = 3)]
 	SendStfRequestFailed,
 	// error when the user shielding key can not be found
+	#[codec(index = 4)]
 	UserShieldingKeyNotFound,
 	// generic parse error, can be caused by UTF8/JSON serde..
+	#[codec(index = 5)]
 	ParseError,
 	// errors when communicating with data provider, e.g. HTTP error
+	#[codec(index = 6)]
 	DataProviderError(ErrorString),
+	#[codec(index = 7)]
 	InvalidIdentity,
+	#[codec(index = 8)]
 	WrongWeb2Handle,
+	#[codec(index = 9)]
 	UnexpectedMessage,
+	#[codec(index = 10)]
 	WrongSignatureType,
+	#[codec(index = 11)]
 	VerifyWeb3SignatureFailed,
+	#[codec(index = 12)]
 	RecoverEvmAddressFailed,
+	#[codec(index = 13)]
 	Web3NetworkOutOfBounds,
 }
 
@@ -81,15 +95,21 @@ where
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum IMPError {
 	// errors when executing individual error
+	#[codec(index = 0)]
 	SetUserShieldingKeyFailed(ErrorDetail),
+	#[codec(index = 1)]
 	LinkIdentityFailed(ErrorDetail),
+	#[codec(index = 2)]
 	DeactivateIdentityFailed(ErrorDetail),
+	#[codec(index = 3)]
 	ActivateIdentityFailed(ErrorDetail),
 	// scheduled encalve import error
+	#[codec(index = 4)]
 	ImportScheduledEnclaveFailed,
 
 	// should be unreached, but just to be on the safe side
 	// we should classify the error if we ever get this
+	#[codec(index = 5)]
 	UnclassifiedError(ErrorDetail),
 }
 
@@ -101,8 +121,10 @@ impl frame_support::traits::PalletError for IMPError {
 // Verified Credential(VC) Management Pallet Error
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum VCMPError {
+	#[codec(index = 0)]
 	RequestVCFailed(Assertion, ErrorDetail),
 	// should be unreached, but just to be on the safe side
 	// we should classify the error if we ever get this
+	#[codec(index = 1)]
 	UnclassifiedError(ErrorDetail),
 }

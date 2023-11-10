@@ -51,7 +51,9 @@ impl RpcReturnValue {
 #[derive(Clone, Encode, Decode, Debug, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Id {
+	#[codec(index = 0)]
 	Number(u32),
+	#[codec(index = 1)]
 	Text(String),
 }
 

@@ -494,9 +494,13 @@ pub mod tests {
 
 	#[derive(Clone, PartialEq, Eq, Encode, Decode, core::fmt::Debug, Serialize, MallocSizeOf)]
 	pub enum Extrinsic {
+		#[codec(index = 0)]
 		IncludeData(Vec<u8>),
+		#[codec(index = 1)]
 		StorageChange(Vec<u8>, Option<Vec<u8>>),
+		#[codec(index = 2)]
 		OffchainIndexSet(Vec<u8>, Vec<u8>),
+		#[codec(index = 3)]
 		OffchainIndexClear(Vec<u8>),
 	}
 
