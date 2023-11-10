@@ -10,7 +10,7 @@ import { getSidechainMetadata } from '../call';
 import { getEvmSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
 
-import {identity as identityTypes , vc as vcTypes, trustedCalls as trustedCallsTypes} from 'parachain-api';
+import { identity, vc, trustedCalls } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
 
@@ -48,7 +48,8 @@ export async function initIntegrationTestContext(
 
     const substrateWallet = getSubstrateSigner();
 
-    const { types } = {...identityTypes, ...vcTypes, ...trustedCallsTypes};
+    const types = { ...identity.types, ...vc.types, ...trustedCalls.types };
+
     const api = await ApiPromise.create({
         provider,
         types,

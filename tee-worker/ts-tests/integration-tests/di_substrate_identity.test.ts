@@ -452,10 +452,7 @@ describe('Test Identity (direct invocation)', function () {
                 },
             },
         };
-        const encodedVerifyIdentityValidation = context.api.createType(
-            'LitentryValidationData',
-            evmValidationData
-        );
+        const encodedVerifyIdentityValidation = context.api.createType('LitentryValidationData', evmValidationData);
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
