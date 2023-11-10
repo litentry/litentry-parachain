@@ -113,10 +113,7 @@ impl Domains {
 			for info in domain.domain_infos.iter() {
 				// Filter out expired domain sizing
 				let expired = info.is_expired().map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::BnbDomainHolding,
-						e.into_error_detail(),
-					)
+					Error::RequestVCFailed(Assertion::BnbDomainHolding, e.into_error_detail())
 				})?;
 				if !expired {
 					ts.push(info);
