@@ -32,7 +32,7 @@ import {
     sendRequestFromGetter,
     sendRequestFromTrustedCall,
     createSignedTrustedCallSetIdentityNetworks,
-} from './examples/direct-invocation/util'; // @fixme move to a better place
+} from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey, keyNonce } from './common/call';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
