@@ -42,13 +42,18 @@ pub enum ErrorDetail {
 	ParseError,
 	// errors when communicating with data provider, e.g. HTTP error
 	DataProviderError(ErrorString),
-	InvalidIdentity,
+	// error when tee-worker detects that identity verification data is linked to different web2
+	// account than expected
 	WrongWeb2Handle,
+	// error when during web3 identity verification process tee-worker detects that signed message
+	// is different from expected
 	UnexpectedMessage,
-	WrongSignatureType,
+	// error when during web3 identity verification process tee-worker fails to verify signature
+	// of verification data
 	VerifyWeb3SignatureFailed,
-	RecoverEvmAddressFailed,
-	Web3NetworkOutOfBounds,
+	// error when tee-worker detects that verification data is associated with web2 identity but
+	// web3 identity linking is requested and opposite
+	InvalidIdentity,
 }
 
 // We could have used Into<ErrorDetail>, but we want it to be more explicit, similar to `into_iter`
