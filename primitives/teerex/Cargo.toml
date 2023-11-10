@@ -12,8 +12,8 @@ codec = { version = "3.0.0", default-features = false, features = ["derive"], pa
 scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 
 # substrate dependencies
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 [dev-dependencies]
 hex-literal = "0.4.1"

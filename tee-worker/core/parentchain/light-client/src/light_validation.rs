@@ -26,6 +26,7 @@ use codec::Encode;
 use core::iter::Iterator;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_storage::{Error as StorageError, StorageProof, StorageProofChecker};
+use itp_types::parentchain::{IdentifyParentchain, ParentchainId};
 use log::*;
 use sp_runtime::{
 	generic::SignedBlock,
@@ -35,11 +36,20 @@ use sp_runtime::{
 use std::{boxed::Box, fmt, sync::Arc, vec::Vec};
 
 #[derive(Clone)]
-pub struct LightValidation<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi> {
+pub struct LightValidation<Block: ParentchainBlockTrait, OcallApi> {
 	light_validation_state: LightValidationState<Block>,
 	ocall_api: Arc<OcallApi>,
+	parentchain_id: ParentchainId,
 	finality: Arc<Box<dyn Finality<Block> + Sync + Send + 'static>>,
 	ignore_validation_until: NumberFor<Block>,
+}
+
+impl<Block: ParentchainBlockTrait, OcallApi> IdentifyParentchain
+	for LightValidation<Block, OcallApi>
+{
+	fn parentchain_id(&self) -> ParentchainId {
+		self.parentchain_id
+	}
 }
 
 impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
@@ -49,8 +59,15 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 		ocall_api: Arc<OcallApi>,
 		finality: Arc<Box<dyn Finality<Block> + Sync + Send + 'static>>,
 		light_validation_state: LightValidationState<Block>,
+		parentchain_id: ParentchainId,
 	) -> Self {
-		Self { light_validation_state, ocall_api, finality, ignore_validation_until: 0u32.into() }
+		Self {
+			light_validation_state,
+			ocall_api,
+			parentchain_id,
+			finality,
+			ignore_validation_until: 0u32.into(),
+		}
 	}
 
 	fn check_validator_set_proof(
@@ -144,25 +161,20 @@ impl<Block: ParentchainBlockTrait, OcallApi: EnclaveOnChainOCallApi>
 		Ok(())
 	}
 
-	fn submit_xt_to_be_included(
-		&mut self,
-		_relay_id: RelayId,
-		_extrinsic: OpaqueExtrinsic,
-	) -> Result<(), Error> {
-		/*
+	fn submit_xt_to_be_included(&mut self, extrinsic: OpaqueExtrinsic) {
 		// TODO(Litentry):
 		// commented out, see https://github.com/litentry/litentry-parachain/issues/1617
 		//
-		let relay = self.light_validation_state.get_tracked_relay_mut(relay_id)?;
+		/*
+		let relay = self.light_validation_state.get_relay_mut();
 		relay.verify_tx_inclusion.push(extrinsic);
 
 		debug!(
-			"{} extrinsics in cache, waiting for inclusion verification",
+			"[{:?}] {} extrinsics in cache, waiting for inclusion verification",
+			self.parentchain_id,
 			relay.verify_tx_inclusion.len()
 		);
 		*/
-
-		Ok(())
 	}
 }
 
@@ -210,10 +222,15 @@ where
 			found_xts.into_iter().map(|i| relay.verify_tx_inclusion.remove(i)).collect();
 
 		if !rm.is_empty() {
-			info!("Verified inclusion proof of {} extrinsics.", rm.len());
+			info!(
+				"[{:?}] Verified inclusion proof of {} extrinsics.",
+				self.parentchain_id,
+				rm.len()
+			);
 		}
 		debug!(
-			"{} extrinsics remaining in cache, waiting for inclusion verification",
+			"[{:?}] {} extrinsics remaining in cache, waiting for inclusion verification",
+			self.parentchain_id,
 			relay.verify_tx_inclusion.len()
 		);
 
@@ -239,12 +256,16 @@ where
 {
 	fn send_extrinsics(&mut self, extrinsics: Vec<OpaqueExtrinsic>) -> Result<(), Error> {
 		for xt in extrinsics.iter() {
-			self.submit_xt_to_be_included(0u64, xt.clone());
+			self.submit_xt_to_be_included(xt.clone());
 		}
 
 		self.ocall_api
-			.send_to_parentchain(extrinsics)
-			.map_err(|e| Error::Other(format!("Failed to send extrinsics: {}", e).into()))
+			.send_to_parentchain(extrinsics, &self.parentchain_id)
+			.map_err(|e| {
+				Error::Other(
+					format!("[{:?}] Failed to send extrinsics: {}", self.parentchain_id, e).into(),
+				)
+			})
 	}
 }
 
@@ -271,17 +292,12 @@ where
 	}
 }
 
-impl<Block, OCallApi> fmt::Debug for LightValidation<Block, OCallApi>
-where
-	NumberFor<Block>: finality_grandpa::BlockNumberOps,
-	Block: ParentchainBlockTrait,
-	OCallApi: EnclaveOnChainOCallApi,
-{
+impl<Block: ParentchainBlockTrait, OCallApi> fmt::Debug for LightValidation<Block, OCallApi> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(
 			f,
-			"LightValidation {{ relay_state: {:?} }}",
-			self.light_validation_state.relay_state
+			"LightValidation {{ parentchain_id: {:?}, relay_state: {:?} }}",
+			self.parentchain_id, self.light_validation_state.relay_state
 		)
 	}
 }

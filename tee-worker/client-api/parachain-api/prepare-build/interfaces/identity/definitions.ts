@@ -52,18 +52,14 @@ export default {
                 balance_transfer: "(LitentryIdentity, LitentryIdentity, Balance)",
                 balance_unshield: "(LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier)",
                 balance_shield: "(LitentryIdentity, LitentryIdentity, Balance)",
-                set_user_shielding_key:
-                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
+                set_user_shielding_key: "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
                 link_identity:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)",
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
-                request_vc:
-                    "(LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256)",
-                set_identity_networks:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
-                set_user_shielding_key_with_networks:
-                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256)",
+                request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256)",
+                set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
+                set_user_shielding_key_with_networks: "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256)",
             },
         },
         UserShieldingKeyType: "[u8; 32]",
@@ -105,17 +101,7 @@ export default {
         Address20: "[u8;20]",
         IdentityString: "Vec<u8>",
         Web3Network: {
-            _enum: [
-                "Polkadot",
-                "Kusama",
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Khala",
-                "SubstrateTestnet",
-                "Ethereum",
-                "Bsc",
-            ],
+            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
         },
         LitentryValidationData: {
             _enum: {
@@ -202,16 +188,7 @@ export default {
             },
         },
         AssertionSupportedNetwork: {
-            _enum: [
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Polkadot",
-                "Kusama",
-                "Khala",
-                "Ethereum",
-                "TestNet",
-            ],
+            _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
         GenericEventWithAccount: {
             account: "AccountId",

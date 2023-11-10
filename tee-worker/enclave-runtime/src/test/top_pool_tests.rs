@@ -31,10 +31,10 @@ use crate::test::{
 use codec::Encode;
 use ita_stf::{
 	test_genesis::{endowed_account, unendowed_account},
-	TrustedCall, TrustedOperation,
+	TeerexCallIndexes, TrustedCall, TrustedOperation,
 };
 use itc_parentchain::indirect_calls_executor::{
-	filter_metadata::{ShieldFundsAndCallWorkerFilter, TestEventCreator},
+	filter_metadata::{ShieldFundsAndInvokeFilter, TestEventCreator},
 	parentchain_parser::ParentchainExtrinsicParser,
 	ExecuteIndirectCalls, IndirectCallsExecutor,
 };
@@ -47,10 +47,7 @@ use itp_node_api::{
 		ExtrinsicParams, ParentchainAdditionalParams, ParentchainExtrinsicParams,
 		ParentchainUncheckedExtrinsic,
 	},
-	metadata::{
-		metadata_mocks::NodeMetadataMock, pallet_teerex::TeerexCallIndexes,
-		provider::NodeMetadataRepository,
-	},
+	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 };
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
@@ -143,7 +140,7 @@ pub fn submit_shielding_call_to_top_pool() {
 			_,
 			_,
 			_,
-			ShieldFundsAndCallWorkerFilter<ParentchainExtrinsicParser>,
+			ShieldFundsAndInvokeFilter<ParentchainExtrinsicParser>,
 			TestEventCreator,
 		>::new(
 			shielding_key_repo, enclave_signer, top_pool_author.clone(), node_meta_data_repository

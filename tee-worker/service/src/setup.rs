@@ -20,8 +20,9 @@ use crate::error::{Error, ServiceResult};
 use codec::Encode;
 use itp_enclave_api::{enclave_base::EnclaveBase, Enclave};
 use itp_settings::files::{
-	LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH, SHIELDING_KEY_FILE,
-	SIDECHAIN_STORAGE_PATH, SIGNING_KEY_FILE,
+	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH,
+	SHIELDING_KEY_FILE, SIDECHAIN_STORAGE_PATH, SIGNING_KEY_FILE,
+	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
 use itp_types::ShardIdentifier;
 use log::*;
@@ -114,7 +115,9 @@ fn purge_files(root_directory: &Path) -> ServiceResult<()> {
 	remove_dir_if_it_exists(root_directory, SHARDS_PATH)?;
 	remove_dir_if_it_exists(root_directory, SIDECHAIN_STORAGE_PATH)?;
 
-	remove_dir_if_it_exists(root_directory, LIGHT_CLIENT_DB_PATH)?;
+	remove_dir_if_it_exists(root_directory, LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
+	remove_dir_if_it_exists(root_directory, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
+	remove_dir_if_it_exists(root_directory, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH)?;
 
 	remove_file_if_it_exists(root_directory, SCHEDULED_ENCLAVE_FILE)?;
 	Ok(())
@@ -135,10 +138,11 @@ fn remove_file_if_it_exists(root_directory: &Path, file_name: &str) -> ServiceRe
 	}
 	Ok(())
 }
+
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use itp_settings::files::SHARDS_PATH;
+	use itp_settings::files::{SHARDS_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH};
 	use std::{fs, path::PathBuf};
 
 	#[test]
@@ -158,13 +162,20 @@ mod tests {
 		fs::File::create(&sidechain_db_path.join("sidechain_db_2.bin")).unwrap();
 		fs::File::create(&sidechain_db_path.join("sidechain_db_3.bin")).unwrap();
 
-		fs::create_dir_all(&root_directory.join(LIGHT_CLIENT_DB_PATH)).unwrap();
+		fs::create_dir_all(&root_directory.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
+			.unwrap();
+		fs::create_dir_all(&root_directory.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
+			.unwrap();
+		fs::create_dir_all(&root_directory.join(TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH))
+			.unwrap();
 
 		purge_files(&root_directory).unwrap();
 
 		assert!(!shards_path.exists());
 		assert!(!sidechain_db_path.exists());
-		assert!(!root_directory.join(LIGHT_CLIENT_DB_PATH).exists());
+		assert!(!root_directory.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
+		assert!(!root_directory.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
+		assert!(!root_directory.join(TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH).exists());
 	}
 
 	#[test]

@@ -56,7 +56,8 @@ fn create_funded_user<T: Config>(
 	// If we have InsufficientBalance Issue
 	// Then we should care about ED of pallet_balances here
 	let min_candidate_stk = min_candidate_stk::<T>();
-	let total = min_candidate_stk * 100u32.into() + extra;
+	// Extra plus as ED
+	let total = min_candidate_stk * 100u32.into() + extra + T::Currency::minimum_balance();
 	T::Currency::make_free_balance_be(&user, total);
 	T::Currency::issue(total);
 	(user, total)
@@ -71,7 +72,8 @@ fn create_funded_delegator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond { min_delegator_stk::<T>() } else { total };
+	let bond =
+		if min_bond { min_delegator_stk::<T>() } else { total - T::Currency::minimum_balance() };
 	Pallet::<T>::delegate(RawOrigin::Signed(user.clone()).into(), collator, bond)?;
 	Ok(user)
 }
@@ -84,7 +86,8 @@ fn create_funded_collator<T: Config>(
 	min_bond: bool,
 ) -> Result<T::AccountId, &'static str> {
 	let (user, total) = create_funded_user::<T>(string, n, extra);
-	let bond = if min_bond { min_candidate_stk::<T>() } else { total };
+	let bond =
+		if min_bond { min_candidate_stk::<T>() } else { total - T::Currency::minimum_balance() };
 	//Due to the CandidateUnauthorized error, I had to add this line of code
 	Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(), user.clone())?;
 	Pallet::<T>::join_candidates(RawOrigin::Signed(user.clone()).into(), bond)?;
@@ -254,6 +257,7 @@ benchmarks! {
 	// USER DISPATCHABLES
 
 	join_candidates {
+		let min_candidate_stk = min_candidate_stk::<T>();
 		let x in 3..1_000;
 		// Worst Case Complexity is insertion into an ordered list so \exists full list before call
 		let mut candidate_count = 1u32;
@@ -267,7 +271,7 @@ benchmarks! {
 			)?;
 			candidate_count += 1u32;
 		}
-		let (caller, min_candidate_stk) = create_funded_user::<T>("caller", USER_SEED, 0u32.into());
+		let (caller, total) = create_funded_user::<T>("caller", USER_SEED, 0u32.into());
 		//Due to the CandidateUnauthorized error, I had to add this line of code
 		Pallet::<T>::add_candidates_whitelist(RawOrigin::Root.into(),caller.clone())?;
 	}: _(RawOrigin::Signed(caller.clone()), min_candidate_stk)
@@ -627,7 +631,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total,
+			total - T::Currency::minimum_balance(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 	}: _(RawOrigin::Signed(caller.clone()), collator.clone(), bond_less)
@@ -690,7 +694,8 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total,
+			// Leaving an ED for account
+			total - T::Currency::minimum_balance(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::schedule_delegator_bond_less(
@@ -708,7 +713,7 @@ benchmarks! {
 			collator.clone()
 		)?;
 	} verify {
-		let expected = total - bond_less;
+		let expected = total - T::Currency::minimum_balance() - bond_less;
 		assert_eq!(T::Currency::reserved_balance(&caller), expected);
 	}
 
@@ -755,7 +760,7 @@ benchmarks! {
 		Pallet::<T>::delegate(RawOrigin::Signed(
 			caller.clone()).into(),
 			collator.clone(),
-			total,
+			total - T::Currency::minimum_balance(),
 		)?;
 		let bond_less = <<T as Config>::MinDelegatorStk as Get<BalanceOf<T>>>::get();
 		Pallet::<T>::schedule_delegator_bond_less(

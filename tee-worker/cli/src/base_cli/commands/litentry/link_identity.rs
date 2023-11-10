@@ -21,14 +21,13 @@ use crate::{
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use itp_node_api::api_client::ParentchainExtrinsicSigner;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::Identity;
 use log::*;
 use sp_application_crypto::Pair;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, SubmitAndWatch, XtStatus};
+use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 
 #[derive(Parser)]
 pub struct LinkIdentityCommand {
@@ -55,12 +54,12 @@ impl LinkIdentityCommand {
 		};
 
 		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
-		chain_api.set_signer(ParentchainExtrinsicSigner::new(who.clone()));
+		chain_api.set_signer(who.clone().into());
 
 		let identity: Result<Identity, _> = serde_json::from_str(self.identity.as_str());
 		if let Err(e) = identity {
 			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return Err(CliError::BaseOp {
+			return Err(CliError::Extrinsic {
 				msg: format!("Deserialize Identity error: {:?}", e.to_string()),
 			})
 		}
@@ -81,7 +80,7 @@ impl LinkIdentityCommand {
 		);
 
 		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
-		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
+		println!("[+] LinkIdentityCommand TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
 
 		Ok(CliResultOk::None)
 	}

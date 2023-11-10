@@ -1,0 +1,25 @@
+services:
+    lit-ts-api-package-build:
+        image: litentry/litentry-cli:${RELEASE_IMAGE_VERSION:-latest}
+        container_name: litentry-lit-ts-api-package-build
+        volumes:
+            - ../client-api:/client-api
+            - ../cli:/usr/local/worker-cli
+        build:
+            context: ..
+            dockerfile: build.Dockerfile
+            target: deployed-client
+        depends_on:
+            litentry-node:
+                condition: service_healthy
+            litentry-worker-1:
+                condition: service_healthy
+        networks:
+            - litentry-test-network
+        entrypoint:
+            "/usr/local/worker-cli/lit_ts_api_package_build.sh -p 9912 -u ws://litentry-node
+            -W http://litentry-node -V wss://litentry-worker-1 -A 2011 -C /usr/local/bin/litentry-cli 2>&1"
+        restart: "no"
+networks:
+    litentry-test-network:
+        driver: bridge

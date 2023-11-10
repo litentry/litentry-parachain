@@ -269,7 +269,7 @@ fn cannot_set_blocks_per_round_to_current_blocks_per_round() {
 #[test]
 fn round_immediately_jumps_if_current_duration_exceeds_new_blocks_per_round() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -572,7 +572,7 @@ fn cannot_set_same_parachain_bond_reserve_percent() {
 
 #[test]
 fn join_candidates_event_emits_correctly() {
-	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+	ExtBuilder::default().with_balances(vec![(1, 110)]).build().execute_with(|| {
 		// This should be safe to delete after collator restrcition removed
 		assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
 		assert_ok!(ParachainStaking::join_candidates(RuntimeOrigin::signed(1), 10u128));
@@ -586,20 +586,20 @@ fn join_candidates_event_emits_correctly() {
 
 #[test]
 fn join_candidates_reserves_balance() {
-	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+	ExtBuilder::default().with_balances(vec![(1, 110)]).build().execute_with(|| {
 		// This should be safe to delete after collator restrcition removed
 		assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
 		assert_eq!(Balances::reserved_balance(&1), 0);
-		assert_eq!(Balances::free_balance(&1), 10);
+		assert_eq!(Balances::free_balance(&1), 110);
 		assert_ok!(ParachainStaking::join_candidates(RuntimeOrigin::signed(1), 10u128));
 		assert_eq!(Balances::reserved_balance(&1), 10);
-		assert_eq!(Balances::free_balance(&1), 0);
+		assert_eq!(Balances::free_balance(&1), 100);
 	});
 }
 
 #[test]
 fn join_candidates_increases_total_staked() {
-	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+	ExtBuilder::default().with_balances(vec![(1, 110)]).build().execute_with(|| {
 		// This should be safe to delete after collator restrcition removed
 		assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
 		assert_eq!(ParachainStaking::total(), 0);
@@ -610,7 +610,7 @@ fn join_candidates_increases_total_staked() {
 
 #[test]
 fn join_candidates_creates_candidate_state() {
-	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+	ExtBuilder::default().with_balances(vec![(1, 110)]).build().execute_with(|| {
 		// This should be safe to delete after collator restrcition removed
 		assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
 		assert!(ParachainStaking::candidate_info(1).is_none());
@@ -622,7 +622,7 @@ fn join_candidates_creates_candidate_state() {
 
 #[test]
 fn join_candidates_adds_to_candidate_pool() {
-	ExtBuilder::default().with_balances(vec![(1, 10)]).build().execute_with(|| {
+	ExtBuilder::default().with_balances(vec![(1, 110)]).build().execute_with(|| {
 		// This should be safe to delete after collator restrcition removed
 		assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
 		assert!(ParachainStaking::candidate_pool().0.is_empty());
@@ -636,7 +636,7 @@ fn join_candidates_adds_to_candidate_pool() {
 #[test]
 fn cannot_join_candidates_if_candidate() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 1000)])
+		.with_balances(vec![(1, 11000)])
 		.with_candidates(vec![(1, 500)])
 		.build()
 		.execute_with(|| {
@@ -650,7 +650,7 @@ fn cannot_join_candidates_if_candidate() {
 #[test]
 fn cannot_join_candidates_if_delegator() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 50), (2, 20)])
+		.with_balances(vec![(1, 150), (2, 120)])
 		.with_candidates(vec![(1, 50)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -666,7 +666,7 @@ fn cannot_join_candidates_if_delegator() {
 
 #[test]
 fn cannot_join_candidates_without_min_bond() {
-	ExtBuilder::default().with_balances(vec![(1, 1000)]).build().execute_with(|| {
+	ExtBuilder::default().with_balances(vec![(1, 11000)]).build().execute_with(|| {
 		// This should be safe to delete after collator restrcition removed
 		assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
 		assert_noop!(
@@ -708,15 +708,15 @@ fn insufficient_join_candidates_weight_hint_fails() {
 fn sufficient_join_candidates_weight_hint_succeeds() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(2, 20),
-			(3, 20),
-			(4, 20),
-			(5, 20),
-			(6, 20),
-			(7, 20),
-			(8, 20),
-			(9, 20),
+			(1, 120),
+			(2, 120),
+			(3, 120),
+			(4, 120),
+			(5, 120),
+			(6, 120),
+			(7, 120),
+			(8, 120),
+			(9, 120),
 		])
 		.with_candidates(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20)])
 		.build()
@@ -734,7 +734,7 @@ fn sufficient_join_candidates_weight_hint_succeeds() {
 #[test]
 fn leave_candidates_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -750,7 +750,7 @@ fn leave_candidates_event_emits_correctly() {
 #[test]
 fn leave_candidates_removes_candidate_from_candidate_pool() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -773,7 +773,7 @@ fn cannot_leave_candidates_if_not_candidate() {
 #[test]
 fn cannot_leave_candidates_if_already_leaving_candidates() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -788,7 +788,7 @@ fn cannot_leave_candidates_if_already_leaving_candidates() {
 #[test]
 fn sufficient_leave_candidates_weight_hint_succeeds() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20)])
+		.with_balances(vec![(1, 120), (2, 120), (3, 120), (4, 120), (5, 120)])
 		.with_candidates(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20)])
 		.build()
 		.execute_with(|| {
@@ -803,7 +803,7 @@ fn sufficient_leave_candidates_weight_hint_succeeds() {
 #[test]
 fn execute_leave_candidates_emits_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -821,7 +821,7 @@ fn execute_leave_candidates_emits_event() {
 #[test]
 fn execute_leave_candidates_callable_by_any_signed() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -834,7 +834,7 @@ fn execute_leave_candidates_callable_by_any_signed() {
 #[test]
 fn execute_leave_candidates_requires_correct_weight_hint() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10), (2, 10), (3, 10), (4, 10)])
+		.with_balances(vec![(1, 110), (2, 110), (3, 110), (4, 110)])
 		.with_candidates(vec![(1, 10)])
 		.with_delegations(vec![(2, 1, 10), (3, 1, 10), (4, 1, 10)])
 		.build()
@@ -848,24 +848,24 @@ fn execute_leave_candidates_requires_correct_weight_hint() {
 #[test]
 fn execute_leave_candidates_unreserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&1), 10);
-			assert_eq!(Balances::free_balance(&1), 0);
+			assert_eq!(Balances::free_balance(&1), 100);
 			assert_ok!(ParachainStaking::schedule_leave_candidates(RuntimeOrigin::signed(1)));
 			roll_to(10);
 			assert_ok!(ParachainStaking::execute_leave_candidates(RuntimeOrigin::signed(1), 1));
 			assert_eq!(Balances::reserved_balance(&1), 0);
-			assert_eq!(Balances::free_balance(&1), 10);
+			assert_eq!(Balances::free_balance(&1), 110);
 		});
 }
 
 #[test]
 fn execute_leave_candidates_decreases_total_staked() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -880,7 +880,7 @@ fn execute_leave_candidates_decreases_total_staked() {
 #[test]
 fn execute_leave_candidates_removes_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -898,7 +898,7 @@ fn execute_leave_candidates_removes_candidate_state() {
 #[test]
 fn execute_leave_candidates_removes_pending_delegation_requests() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10), (2, 15)])
+		.with_balances(vec![(1, 110), (2, 115)])
 		.with_candidates(vec![(1, 10)])
 		.with_delegations(vec![(2, 1, 15)])
 		.build()
@@ -941,7 +941,7 @@ fn execute_leave_candidates_removes_pending_delegation_requests() {
 #[test]
 fn cannot_execute_leave_candidates_before_delay() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -965,7 +965,7 @@ fn cannot_execute_leave_candidates_before_delay() {
 #[test]
 fn cancel_leave_candidates_emits_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -980,7 +980,7 @@ fn cancel_leave_candidates_emits_event() {
 #[test]
 fn cancel_leave_candidates_updates_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -995,7 +995,7 @@ fn cancel_leave_candidates_updates_candidate_state() {
 #[test]
 fn cancel_leave_candidates_adds_to_candidate_pool() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10)])
+		.with_balances(vec![(1, 110)])
 		.with_candidates(vec![(1, 10)])
 		.build()
 		.execute_with(|| {
@@ -1011,7 +1011,7 @@ fn cancel_leave_candidates_adds_to_candidate_pool() {
 #[test]
 fn go_offline_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1025,7 +1025,7 @@ fn go_offline_event_emits_correctly() {
 #[test]
 fn go_offline_removes_candidate_from_candidate_pool() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1038,7 +1038,7 @@ fn go_offline_removes_candidate_from_candidate_pool() {
 #[test]
 fn go_offline_updates_candidate_state_to_idle() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1064,7 +1064,7 @@ fn cannot_go_offline_if_not_candidate() {
 #[test]
 fn cannot_go_offline_if_already_offline() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1081,7 +1081,7 @@ fn cannot_go_offline_if_already_offline() {
 #[test]
 fn go_online_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1096,7 +1096,7 @@ fn go_online_event_emits_correctly() {
 #[test]
 fn go_online_adds_to_candidate_pool() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1111,7 +1111,7 @@ fn go_online_adds_to_candidate_pool() {
 #[test]
 fn go_online_storage_updates_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1138,7 +1138,7 @@ fn cannot_go_online_if_not_candidate() {
 #[test]
 fn cannot_go_online_if_already_online() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1152,7 +1152,7 @@ fn cannot_go_online_if_already_online() {
 #[test]
 fn cannot_go_online_if_leaving() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20)])
+		.with_balances(vec![(1, 120)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1169,7 +1169,7 @@ fn cannot_go_online_if_leaving() {
 #[test]
 fn candidate_bond_more_emits_correct_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 50)])
+		.with_balances(vec![(1, 150)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1185,22 +1185,22 @@ fn candidate_bond_more_emits_correct_event() {
 #[test]
 fn candidate_bond_more_reserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 50)])
+		.with_balances(vec![(1, 150)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&1), 20);
-			assert_eq!(Balances::free_balance(&1), 30);
+			assert_eq!(Balances::free_balance(&1), 130);
 			assert_ok!(ParachainStaking::candidate_bond_more(RuntimeOrigin::signed(1), 30));
 			assert_eq!(Balances::reserved_balance(&1), 50);
-			assert_eq!(Balances::free_balance(&1), 0);
+			assert_eq!(Balances::free_balance(&1), 100);
 		});
 }
 
 #[test]
 fn candidate_bond_more_increases_total() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 50)])
+		.with_balances(vec![(1, 150)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1214,7 +1214,7 @@ fn candidate_bond_more_increases_total() {
 #[test]
 fn candidate_bond_more_updates_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 50)])
+		.with_balances(vec![(1, 150)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1229,7 +1229,7 @@ fn candidate_bond_more_updates_candidate_state() {
 #[test]
 fn candidate_bond_more_updates_candidate_pool() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 50)])
+		.with_balances(vec![(1, 150)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -1246,7 +1246,7 @@ fn candidate_bond_more_updates_candidate_pool() {
 #[test]
 fn schedule_candidate_bond_less_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1265,7 +1265,7 @@ fn schedule_candidate_bond_less_event_emits_correctly() {
 #[test]
 fn cannot_schedule_candidate_bond_less_if_request_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1290,7 +1290,7 @@ fn cannot_schedule_candidate_bond_less_if_not_candidate() {
 #[test]
 fn cannot_schedule_candidate_bond_less_if_new_total_below_min_candidate_stk() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1304,7 +1304,7 @@ fn cannot_schedule_candidate_bond_less_if_new_total_below_min_candidate_stk() {
 #[test]
 fn can_schedule_candidate_bond_less_if_leaving_candidates() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1319,7 +1319,7 @@ fn can_schedule_candidate_bond_less_if_leaving_candidates() {
 #[test]
 fn cannot_schedule_candidate_bond_less_if_exited_candidates() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 150)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1338,7 +1338,7 @@ fn cannot_schedule_candidate_bond_less_if_exited_candidates() {
 #[test]
 fn execute_candidate_bond_less_emits_correct_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 50)])
+		.with_balances(vec![(1, 150)])
 		.with_candidates(vec![(1, 50)])
 		.build()
 		.execute_with(|| {
@@ -1359,12 +1359,12 @@ fn execute_candidate_bond_less_emits_correct_event() {
 #[test]
 fn execute_candidate_bond_less_unreserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&1), 30);
-			assert_eq!(Balances::free_balance(&1), 0);
+			assert_eq!(Balances::free_balance(&1), 100);
 			assert_ok!(ParachainStaking::schedule_candidate_bond_less(
 				RuntimeOrigin::signed(1),
 				10
@@ -1372,14 +1372,14 @@ fn execute_candidate_bond_less_unreserves_balance() {
 			roll_to(10);
 			assert_ok!(ParachainStaking::execute_candidate_bond_less(RuntimeOrigin::signed(1), 1));
 			assert_eq!(Balances::reserved_balance(&1), 20);
-			assert_eq!(Balances::free_balance(&1), 10);
+			assert_eq!(Balances::free_balance(&1), 110);
 		});
 }
 
 #[test]
 fn execute_candidate_bond_less_decreases_total() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1398,7 +1398,7 @@ fn execute_candidate_bond_less_decreases_total() {
 #[test]
 fn execute_candidate_bond_less_updates_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1418,7 +1418,7 @@ fn execute_candidate_bond_less_updates_candidate_state() {
 #[test]
 fn execute_candidate_bond_less_updates_candidate_pool() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1440,7 +1440,7 @@ fn execute_candidate_bond_less_updates_candidate_pool() {
 #[test]
 fn cancel_candidate_bond_less_emits_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1460,7 +1460,7 @@ fn cancel_candidate_bond_less_emits_event() {
 #[test]
 fn cancel_candidate_bond_less_updates_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1476,7 +1476,7 @@ fn cancel_candidate_bond_less_updates_candidate_state() {
 #[test]
 fn only_candidate_can_cancel_candidate_bond_less_request() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30)])
+		.with_balances(vec![(1, 130)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1496,7 +1496,7 @@ fn only_candidate_can_cancel_candidate_bond_less_request() {
 #[test]
 fn delegate_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1514,22 +1514,22 @@ fn delegate_event_emits_correctly() {
 #[test]
 fn delegate_reserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&2), 0);
-			assert_eq!(Balances::free_balance(&2), 10);
+			assert_eq!(Balances::free_balance(&2), 110);
 			assert_ok!(ParachainStaking::delegate(RuntimeOrigin::signed(2), 1, 10));
 			assert_eq!(Balances::reserved_balance(&2), 10);
-			assert_eq!(Balances::free_balance(&2), 0);
+			assert_eq!(Balances::free_balance(&2), 100);
 		});
 }
 
 #[test]
 fn delegate_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1546,7 +1546,7 @@ fn delegate_updates_delegator_state() {
 #[test]
 fn delegate_updates_collator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1572,7 +1572,7 @@ fn delegate_updates_collator_state() {
 #[test]
 fn can_delegate_immediately_after_other_join_candidates() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20)])
+		.with_balances(vec![(1, 120), (2, 120)])
 		.build()
 		.execute_with(|| {
 			// This should be safe to delete after collator restrcition removed
@@ -1585,7 +1585,7 @@ fn can_delegate_immediately_after_other_join_candidates() {
 #[test]
 fn can_delegate_if_revoking() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 30), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 130), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -1599,17 +1599,17 @@ fn can_delegate_if_revoking() {
 fn cannot_delegate_if_full_and_new_delegation_less_than_or_equal_lowest_bottom() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(2, 10),
-			(3, 10),
-			(4, 10),
-			(5, 10),
-			(6, 10),
-			(7, 10),
-			(8, 10),
-			(9, 10),
-			(10, 10),
-			(11, 10),
+			(1, 120),
+			(2, 110),
+			(3, 110),
+			(4, 110),
+			(5, 110),
+			(6, 110),
+			(7, 110),
+			(8, 110),
+			(9, 110),
+			(10, 110),
+			(11, 110),
 		])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![
@@ -1635,17 +1635,17 @@ fn cannot_delegate_if_full_and_new_delegation_less_than_or_equal_lowest_bottom()
 fn can_delegate_if_full_and_new_delegation_greater_than_lowest_bottom() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(2, 10),
-			(3, 10),
-			(4, 10),
-			(5, 10),
-			(6, 10),
-			(7, 10),
-			(8, 10),
-			(9, 10),
-			(10, 10),
-			(11, 11),
+			(1, 120),
+			(2, 110),
+			(3, 110),
+			(4, 110),
+			(5, 110),
+			(6, 110),
+			(7, 110),
+			(8, 110),
+			(9, 110),
+			(10, 110),
+			(11, 111),
 		])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![
@@ -1673,7 +1673,7 @@ fn can_delegate_if_full_and_new_delegation_greater_than_lowest_bottom() {
 #[test]
 fn can_still_delegate_if_leaving() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 120), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 20), (3, 20)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -1686,7 +1686,7 @@ fn can_still_delegate_if_leaving() {
 #[test]
 fn cannot_delegate_if_candidate() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 30)])
+		.with_balances(vec![(1, 120), (2, 130)])
 		.with_candidates(vec![(1, 20), (2, 20)])
 		.build()
 		.execute_with(|| {
@@ -1700,7 +1700,7 @@ fn cannot_delegate_if_candidate() {
 #[test]
 fn cannot_delegate_if_already_delegated() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 30)])
+		.with_balances(vec![(1, 120), (2, 130)])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![(2, 1, 20)])
 		.build()
@@ -1715,7 +1715,7 @@ fn cannot_delegate_if_already_delegated() {
 #[test]
 fn cannot_delegate_more_than_max_delegations() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 50), (3, 20), (4, 20), (5, 20), (6, 20)])
+		.with_balances(vec![(1, 120), (2, 150), (3, 120), (4, 120), (5, 120), (6, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10), (2, 4, 10), (2, 5, 10)])
 		.build()
@@ -1731,16 +1731,16 @@ fn cannot_delegate_more_than_max_delegations() {
 fn sufficient_delegate_weight_hint_succeeds() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(2, 20),
-			(3, 20),
-			(4, 20),
-			(5, 20),
-			(6, 20),
-			(7, 20),
-			(8, 20),
-			(9, 20),
-			(10, 20),
+			(1, 120),
+			(2, 120),
+			(3, 120),
+			(4, 120),
+			(5, 120),
+			(6, 120),
+			(7, 120),
+			(8, 120),
+			(9, 120),
+			(10, 120),
 		])
 		.with_candidates(vec![(1, 20), (2, 20)])
 		.with_delegations(vec![(3, 1, 10), (4, 1, 10), (5, 1, 10), (6, 1, 10)])
@@ -1759,8 +1759,8 @@ fn sufficient_delegate_weight_hint_succeeds() {
 fn insufficient_delegate_weight_hint_fails() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(2, 20),
+			(1, 120),
+			(2, 120),
 			(3, 20),
 			(4, 20),
 			(5, 20),
@@ -1786,7 +1786,7 @@ fn insufficient_delegate_weight_hint_fails() {
 #[test]
 fn schedule_leave_delegators_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -1803,7 +1803,7 @@ fn schedule_leave_delegators_event_emits_correctly() {
 #[test]
 fn cannot_schedule_leave_delegators_if_already_leaving() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -1819,7 +1819,7 @@ fn cannot_schedule_leave_delegators_if_already_leaving() {
 #[test]
 fn cannot_schedule_leave_delegators_if_not_delegator() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -1835,7 +1835,7 @@ fn cannot_schedule_leave_delegators_if_not_delegator() {
 #[test]
 fn execute_leave_delegators_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -1850,25 +1850,25 @@ fn execute_leave_delegators_event_emits_correctly() {
 #[test]
 fn execute_leave_delegators_unreserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&2), 10);
-			assert_eq!(Balances::free_balance(&2), 0);
+			assert_eq!(Balances::free_balance(&2), 100);
 			assert_ok!(ParachainStaking::schedule_leave_delegators(RuntimeOrigin::signed(2)));
 			roll_to(10);
 			assert_ok!(ParachainStaking::execute_leave_delegators(RuntimeOrigin::signed(2), 2));
 			assert_eq!(Balances::reserved_balance(&2), 0);
-			assert_eq!(Balances::free_balance(&2), 10);
+			assert_eq!(Balances::free_balance(&2), 110);
 		});
 }
 
 #[test]
 fn execute_leave_delegators_decreases_total_staked() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -1884,7 +1884,7 @@ fn execute_leave_delegators_decreases_total_staked() {
 #[test]
 fn execute_leave_delegators_removes_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -1900,7 +1900,7 @@ fn execute_leave_delegators_removes_delegator_state() {
 #[test]
 fn execute_leave_delegators_removes_pending_delegation_requests() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 10), (2, 15)])
+		.with_balances(vec![(1, 110), (2, 115)])
 		.with_candidates(vec![(1, 10)])
 		.with_delegations(vec![(2, 1, 15)])
 		.build()
@@ -1935,7 +1935,7 @@ fn execute_leave_delegators_removes_pending_delegation_requests() {
 #[test]
 fn execute_leave_delegators_removes_delegations_from_collator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 100), (2, 20), (3, 20), (4, 20), (5, 20)])
+		.with_balances(vec![(1, 100), (2, 120), (3, 120), (4, 120), (5, 120)])
 		.with_candidates(vec![(2, 20), (3, 20), (4, 20), (5, 20)])
 		.with_delegations(vec![(1, 2, 10), (1, 3, 10), (1, 4, 10), (1, 5, 10)])
 		.build()
@@ -1968,7 +1968,7 @@ fn execute_leave_delegators_removes_delegations_from_collator_state() {
 #[test]
 fn cannot_execute_leave_delegators_before_delay() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -1987,7 +1987,7 @@ fn cannot_execute_leave_delegators_before_delay() {
 #[test]
 fn cannot_execute_leave_delegators_if_single_delegation_revoke_manually_cancelled() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2010,7 +2010,7 @@ fn cannot_execute_leave_delegators_if_single_delegation_revoke_manually_cancelle
 #[test]
 fn insufficient_execute_leave_delegators_weight_hint_fails() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
+		.with_balances(vec![(1, 120), (2, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![(3, 1, 10), (4, 1, 10), (5, 1, 10), (6, 1, 10)])
 		.build()
@@ -2025,7 +2025,7 @@ fn insufficient_execute_leave_delegators_weight_hint_fails() {
 #[test]
 fn sufficient_execute_leave_delegators_weight_hint_succeeds() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
+		.with_balances(vec![(1, 120), (2, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![(3, 1, 10), (4, 1, 10), (5, 1, 10), (6, 1, 10)])
 		.build()
@@ -2045,7 +2045,7 @@ fn sufficient_execute_leave_delegators_weight_hint_succeeds() {
 #[test]
 fn cancel_leave_delegators_emits_correct_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2061,7 +2061,7 @@ fn cancel_leave_delegators_emits_correct_event() {
 #[test]
 fn cancel_leave_delegators_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2077,7 +2077,7 @@ fn cancel_leave_delegators_updates_delegator_state() {
 #[test]
 fn cannot_cancel_leave_delegators_if_single_delegation_revoke_manually_cancelled() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2101,7 +2101,7 @@ fn cannot_cancel_leave_delegators_if_single_delegation_revoke_manually_cancelled
 #[test]
 fn revoke_delegation_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2131,7 +2131,7 @@ fn revoke_delegation_event_emits_correctly() {
 #[test]
 fn can_revoke_delegation_if_revoking_another_delegation() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2145,7 +2145,7 @@ fn can_revoke_delegation_if_revoking_another_delegation() {
 #[test]
 fn delegator_not_allowed_revoke_if_already_leaving() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2171,7 +2171,7 @@ fn cannot_revoke_delegation_if_not_delegator() {
 #[test]
 fn cannot_revoke_delegation_that_dne() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2188,7 +2188,7 @@ fn cannot_revoke_delegation_that_dne() {
 // MinDelegatorStk" rule is now enforced.
 fn can_schedule_revoke_delegation_below_min_delegator_stake() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 8), (3, 20)])
+		.with_balances(vec![(1, 120), (2, 108), (3, 120)])
 		.with_candidates(vec![(1, 20), (3, 20)])
 		.with_delegations(vec![(2, 1, 5), (2, 3, 3)])
 		.build()
@@ -2202,23 +2202,23 @@ fn can_schedule_revoke_delegation_below_min_delegator_stake() {
 #[test]
 fn delegator_bond_more_reserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&2), 10);
-			assert_eq!(Balances::free_balance(&2), 5);
+			assert_eq!(Balances::free_balance(&2), 105);
 			assert_ok!(ParachainStaking::delegator_bond_more(RuntimeOrigin::signed(2), 1, 5));
 			assert_eq!(Balances::reserved_balance(&2), 15);
-			assert_eq!(Balances::free_balance(&2), 0);
+			assert_eq!(Balances::free_balance(&2), 100);
 		});
 }
 
 #[test]
 fn delegator_bond_more_increases_total_staked() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2232,7 +2232,7 @@ fn delegator_bond_more_increases_total_staked() {
 #[test]
 fn delegator_bond_more_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2246,7 +2246,7 @@ fn delegator_bond_more_updates_delegator_state() {
 #[test]
 fn delegator_bond_more_updates_candidate_state_top_delegations() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2264,7 +2264,7 @@ fn delegator_bond_more_updates_candidate_state_top_delegations() {
 #[test]
 fn delegator_bond_more_updates_candidate_state_bottom_delegations() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 120), (4, 120), (5, 120), (6, 120)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10), (3, 1, 20), (4, 1, 20), (5, 1, 20), (6, 1, 20)])
 		.build()
@@ -2300,7 +2300,7 @@ fn delegator_bond_more_updates_candidate_state_bottom_delegations() {
 #[test]
 fn delegator_bond_more_increases_total() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2314,7 +2314,7 @@ fn delegator_bond_more_increases_total() {
 #[test]
 fn can_delegator_bond_more_for_leaving_candidate() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2327,7 +2327,7 @@ fn can_delegator_bond_more_for_leaving_candidate() {
 #[test]
 fn delegator_bond_more_disallowed_when_revoke_scheduled() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2343,7 +2343,7 @@ fn delegator_bond_more_disallowed_when_revoke_scheduled() {
 #[test]
 fn delegator_bond_more_allowed_when_bond_decrease_scheduled() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 15)])
 		.build()
@@ -2362,7 +2362,7 @@ fn delegator_bond_more_allowed_when_bond_decrease_scheduled() {
 #[test]
 fn delegator_bond_less_event_emits_correctly() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2384,7 +2384,7 @@ fn delegator_bond_less_event_emits_correctly() {
 #[test]
 fn delegator_bond_less_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2409,7 +2409,7 @@ fn delegator_bond_less_updates_delegator_state() {
 #[test]
 fn delegator_not_allowed_bond_less_if_leaving() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2425,7 +2425,7 @@ fn delegator_not_allowed_bond_less_if_leaving() {
 #[test]
 fn cannot_delegator_bond_less_if_revoking() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 25), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2451,7 +2451,7 @@ fn cannot_delegator_bond_less_if_not_delegator() {
 #[test]
 fn cannot_delegator_bond_less_if_candidate_dne() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2466,7 +2466,7 @@ fn cannot_delegator_bond_less_if_candidate_dne() {
 #[test]
 fn cannot_delegator_bond_less_if_delegation_dne() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 110), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2481,7 +2481,7 @@ fn cannot_delegator_bond_less_if_delegation_dne() {
 #[test]
 fn cannot_delegator_bond_less_below_min_collator_stk() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2496,7 +2496,7 @@ fn cannot_delegator_bond_less_below_min_collator_stk() {
 #[test]
 fn cannot_delegator_bond_less_more_than_total_delegation() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2511,7 +2511,7 @@ fn cannot_delegator_bond_less_more_than_total_delegation() {
 #[test]
 fn cannot_delegator_bond_less_below_min_delegation() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2531,7 +2531,7 @@ fn cannot_delegator_bond_less_below_min_delegation() {
 fn execute_revoke_delegation_emits_exit_event_if_exit_happens() {
 	// last delegation is revocation
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2556,7 +2556,7 @@ fn execute_revoke_delegation_emits_exit_event_if_exit_happens() {
 #[test]
 fn cannot_execute_revoke_delegation_below_min_delegator_stake() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 8), (3, 20)])
+		.with_balances(vec![(1, 120), (2, 108), (3, 120)])
 		.with_candidates(vec![(1, 20), (3, 20)])
 		.with_delegations(vec![(2, 1, 5), (2, 3, 3)])
 		.build()
@@ -2579,7 +2579,7 @@ fn cannot_execute_revoke_delegation_below_min_delegator_stake() {
 fn revoke_delegation_executes_exit_if_last_delegation() {
 	// last delegation is revocation
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2604,7 +2604,7 @@ fn revoke_delegation_executes_exit_if_last_delegation() {
 #[test]
 fn execute_revoke_delegation_emits_correct_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2628,13 +2628,13 @@ fn execute_revoke_delegation_emits_correct_event() {
 #[test]
 fn execute_revoke_delegation_unreserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&2), 10);
-			assert_eq!(Balances::free_balance(&2), 0);
+			assert_eq!(Balances::free_balance(&2), 100);
 			assert_ok!(ParachainStaking::schedule_revoke_delegation(RuntimeOrigin::signed(2), 1));
 			roll_to(10);
 			assert_ok!(ParachainStaking::execute_delegation_request(
@@ -2643,14 +2643,14 @@ fn execute_revoke_delegation_unreserves_balance() {
 				1
 			));
 			assert_eq!(Balances::reserved_balance(&2), 0);
-			assert_eq!(Balances::free_balance(&2), 10);
+			assert_eq!(Balances::free_balance(&2), 110);
 		});
 }
 
 #[test]
 fn execute_revoke_delegation_adds_revocation_to_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2668,7 +2668,7 @@ fn execute_revoke_delegation_adds_revocation_to_delegator_state() {
 #[test]
 fn execute_revoke_delegation_removes_revocation_from_delegator_state_upon_execution() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2689,7 +2689,7 @@ fn execute_revoke_delegation_removes_revocation_from_delegator_state_upon_execut
 #[test]
 fn execute_revoke_delegation_removes_revocation_from_state_for_single_delegation_leave() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 20), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2713,7 +2713,7 @@ fn execute_revoke_delegation_removes_revocation_from_state_for_single_delegation
 #[test]
 fn execute_revoke_delegation_decreases_total_staked() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2733,7 +2733,7 @@ fn execute_revoke_delegation_decreases_total_staked() {
 #[test]
 fn execute_revoke_delegation_for_last_delegation_removes_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2755,7 +2755,7 @@ fn execute_revoke_delegation_for_last_delegation_removes_delegator_state() {
 #[test]
 fn execute_revoke_delegation_removes_delegation_from_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2778,7 +2778,7 @@ fn execute_revoke_delegation_removes_delegation_from_candidate_state() {
 #[test]
 fn can_execute_revoke_delegation_for_leaving_candidate() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2798,7 +2798,7 @@ fn can_execute_revoke_delegation_for_leaving_candidate() {
 #[test]
 fn can_execute_leave_candidates_if_revoking_candidate() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2810,14 +2810,14 @@ fn can_execute_leave_candidates_if_revoking_candidate() {
 			assert_ok!(ParachainStaking::execute_leave_candidates(RuntimeOrigin::signed(1), 1));
 			assert!(!ParachainStaking::is_delegator(&2));
 			assert_eq!(Balances::reserved_balance(&2), 0);
-			assert_eq!(Balances::free_balance(&2), 10);
+			assert_eq!(Balances::free_balance(&2), 110);
 		});
 }
 
 #[test]
 fn delegator_bond_more_after_revoke_delegation_does_not_effect_exit() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 30), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 130), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2832,14 +2832,14 @@ fn delegator_bond_more_after_revoke_delegation_does_not_effect_exit() {
 			));
 			assert!(ParachainStaking::is_delegator(&2));
 			assert_eq!(Balances::reserved_balance(&2), 20);
-			assert_eq!(Balances::free_balance(&2), 10);
+			assert_eq!(Balances::free_balance(&2), 110);
 		});
 }
 
 #[test]
 fn delegator_bond_less_after_revoke_delegation_does_not_effect_exit() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 30), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 30), (3, 130)])
 		.with_candidates(vec![(1, 30), (3, 30)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -2888,13 +2888,13 @@ fn delegator_bond_less_after_revoke_delegation_does_not_effect_exit() {
 #[test]
 fn execute_delegator_bond_less_unreserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
 		.execute_with(|| {
 			assert_eq!(Balances::reserved_balance(&2), 10);
-			assert_eq!(Balances::free_balance(&2), 0);
+			assert_eq!(Balances::free_balance(&2), 100);
 			assert_ok!(ParachainStaking::schedule_delegator_bond_less(
 				RuntimeOrigin::signed(2),
 				1,
@@ -2907,14 +2907,14 @@ fn execute_delegator_bond_less_unreserves_balance() {
 				1
 			));
 			assert_eq!(Balances::reserved_balance(&2), 5);
-			assert_eq!(Balances::free_balance(&2), 5);
+			assert_eq!(Balances::free_balance(&2), 105);
 		});
 }
 
 #[test]
 fn execute_delegator_bond_less_decreases_total_staked() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2938,7 +2938,7 @@ fn execute_delegator_bond_less_decreases_total_staked() {
 #[test]
 fn execute_delegator_bond_less_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2962,7 +2962,7 @@ fn execute_delegator_bond_less_updates_delegator_state() {
 #[test]
 fn execute_delegator_bond_less_updates_candidate_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -2988,7 +2988,7 @@ fn execute_delegator_bond_less_updates_candidate_state() {
 #[test]
 fn execute_delegator_bond_less_decreases_total() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -3012,7 +3012,7 @@ fn execute_delegator_bond_less_decreases_total() {
 #[test]
 fn execute_delegator_bond_less_updates_just_bottom_delegations() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 10), (3, 11), (4, 12), (5, 14), (6, 15)])
+		.with_balances(vec![(1, 120), (2, 110), (3, 111), (4, 112), (5, 114), (6, 115)])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![(2, 1, 10), (3, 1, 11), (4, 1, 12), (5, 1, 14), (6, 1, 15)])
 		.build()
@@ -3074,7 +3074,7 @@ fn execute_delegator_bond_less_updates_just_bottom_delegations() {
 #[test]
 fn execute_delegator_bond_less_does_not_delete_bottom_delegations() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 10), (3, 11), (4, 12), (5, 14), (6, 15)])
+		.with_balances(vec![(1, 120), (2, 110), (3, 111), (4, 112), (5, 114), (6, 115)])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![(2, 1, 10), (3, 1, 11), (4, 1, 12), (5, 1, 14), (6, 1, 15)])
 		.build()
@@ -3136,7 +3136,7 @@ fn execute_delegator_bond_less_does_not_delete_bottom_delegations() {
 #[test]
 fn can_execute_delegator_bond_less_for_leaving_candidate() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 15)])
 		.build()
@@ -3163,7 +3163,7 @@ fn can_execute_delegator_bond_less_for_leaving_candidate() {
 #[test]
 fn cancel_revoke_delegation_emits_correct_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -3184,7 +3184,7 @@ fn cancel_revoke_delegation_emits_correct_event() {
 #[test]
 fn cancel_revoke_delegation_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -3223,7 +3223,7 @@ fn cancel_revoke_delegation_updates_delegator_state() {
 #[test]
 fn cancel_delegator_bond_less_correct_event() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 15)])
 		.build()
@@ -3248,7 +3248,7 @@ fn cancel_delegator_bond_less_correct_event() {
 #[test]
 fn cancel_delegator_bond_less_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 15)])
+		.with_balances(vec![(1, 130), (2, 115)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 15)])
 		.build()
@@ -3291,7 +3291,7 @@ fn cancel_delegator_bond_less_updates_delegator_state() {
 #[test]
 fn delegator_schedule_revocation_total() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 40), (3, 20), (4, 20), (5, 20)])
+		.with_balances(vec![(1, 120), (2, 140), (3, 120), (4, 120), (5, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20), (5, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10), (2, 4, 10)])
 		.build()
@@ -3739,10 +3739,10 @@ fn collator_exit_executes_after_delay() {
 		.with_balances(vec![
 			(1, 1000),
 			(2, 300),
-			(3, 100),
-			(4, 100),
-			(5, 100),
-			(6, 100),
+			(3, 1100),
+			(4, 1100),
+			(5, 1100),
+			(6, 1100),
 			(7, 100),
 			(8, 9),
 			(9, 4),
@@ -4550,7 +4550,7 @@ fn payouts_follow_delegation_changes() {
 #[test]
 fn bottom_delegations_are_empty_when_top_delegations_not_full() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 10), (3, 10), (4, 10), (5, 10)])
+		.with_balances(vec![(1, 120), (2, 110), (3, 110), (4, 110), (5, 110)])
 		.with_candidates(vec![(1, 20)])
 		.build()
 		.execute_with(|| {
@@ -4590,15 +4590,15 @@ fn bottom_delegations_are_empty_when_top_delegations_not_full() {
 fn candidate_pool_updates_when_total_counted_changes() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(3, 19),
-			(4, 20),
-			(5, 21),
-			(6, 22),
-			(7, 15),
-			(8, 16),
-			(9, 17),
-			(10, 18),
+			(1, 120),
+			(3, 119),
+			(4, 120),
+			(5, 121),
+			(6, 122),
+			(7, 115),
+			(8, 116),
+			(9, 117),
+			(10, 118),
 		])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![
@@ -4669,15 +4669,15 @@ fn candidate_pool_updates_when_total_counted_changes() {
 fn only_top_collators_are_counted() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(3, 19),
-			(4, 20),
-			(5, 21),
-			(6, 22),
-			(7, 15),
-			(8, 16),
-			(9, 17),
-			(10, 18),
+			(1, 120),
+			(3, 119),
+			(4, 120),
+			(5, 121),
+			(6, 122),
+			(7, 115),
+			(8, 116),
+			(9, 117),
+			(10, 118),
 		])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![
@@ -4874,7 +4874,7 @@ fn delegation_events_convey_correct_position() {
 #[test]
 fn no_rewards_paid_until_after_reward_payment_delay() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 120), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (2, 20), (3, 20), (4, 20)])
 		.build()
 		.execute_with(|| {
@@ -4912,22 +4912,22 @@ fn no_rewards_paid_until_after_reward_payment_delay() {
 					total_balance: 80,
 				},
 				// rewards will begin immediately following a NewRound
-				Event::Rewarded { account: 3, rewards: 1 },
+				Event::Rewarded { account: 3, rewards: 5 },
 			]);
 			assert_eq_events!(expected);
 
 			// roll to the next block where we start round 3; we should have round change and first
 			// payout made.
 			roll_one_block();
-			expected.push(Event::Rewarded { account: 4, rewards: 2 });
+			expected.push(Event::Rewarded { account: 4, rewards: 10 });
 			assert_eq_events!(expected);
 
 			roll_one_block();
-			expected.push(Event::Rewarded { account: 1, rewards: 1 });
+			expected.push(Event::Rewarded { account: 1, rewards: 5 });
 			assert_eq_events!(expected);
 
 			roll_one_block();
-			expected.push(Event::Rewarded { account: 2, rewards: 1 });
+			expected.push(Event::Rewarded { account: 2, rewards: 5 });
 			assert_eq_events!(expected);
 
 			// there should be no more payments in this round...
@@ -4945,7 +4945,7 @@ fn deferred_payment_storage_items_are_cleaned_up() {
 	// storage over the next several blocks to show that it is properly cleaned up
 
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20)])
+		.with_balances(vec![(1, 120), (2, 120)])
 		.with_candidates(vec![(1, 20), (2, 20)])
 		.build()
 		.execute_with(|| {
@@ -5012,7 +5012,7 @@ fn deferred_payment_storage_items_are_cleaned_up() {
 					selected_collators_number: 2,
 					total_balance: 40,
 				},
-				Event::Rewarded { account: 1, rewards: 1 },
+				Event::Rewarded { account: 1, rewards: 6 },
 			]);
 			assert_eq_events!(expected);
 
@@ -5051,7 +5051,7 @@ fn deferred_payment_storage_items_are_cleaned_up() {
 			round = 4;
 			roll_to_round_begin(round.into());
 			expected.append(&mut vec![
-				Event::Rewarded { account: 2, rewards: 1 }, // from previous round
+				Event::Rewarded { account: 2, rewards: 6 }, // from previous round
 				Event::CollatorChosen { round, collator_account: 1, total_exposed_amount: 20 },
 				Event::CollatorChosen { round, collator_account: 2, total_exposed_amount: 20 },
 				Event::NewRound {
@@ -5088,17 +5088,17 @@ fn deferred_payment_steady_state_event_flow() {
 	ExtBuilder::default()
 		.with_balances(vec![
 			// collators
-			(1, 200),
-			(2, 200),
-			(3, 200),
-			(4, 200),
+			(1, 1200),
+			(2, 1200),
+			(3, 1200),
+			(4, 1200),
 			// delegators
-			(11, 200),
-			(22, 200),
-			(33, 200),
-			(44, 200),
+			(11, 1200),
+			(22, 1200),
+			(33, 1200),
+			(44, 1200),
 			// burn account, see `reset_issuance()`
-			(111, 1000),
+			(111, 11000),
 		])
 		.with_candidates(vec![(1, 200), (2, 200), (3, 200), (4, 200)])
 		.with_delegations(vec![
@@ -5189,9 +5189,9 @@ fn deferred_payment_steady_state_event_flow() {
 						total_balance: 1600,
 					},
 					// first payout should occur on round change
-					Event::Rewarded { account: 3, rewards: 19 },
-					Event::Rewarded { account: 22, rewards: 6 },
-					Event::Rewarded { account: 33, rewards: 6 },
+					Event::Rewarded { account: 3, rewards: 154 },
+					Event::Rewarded { account: 22, rewards: 51 },
+					Event::Rewarded { account: 33, rewards: 51 },
 				];
 				assert_eq_last_events!(expected);
 
@@ -5199,32 +5199,32 @@ fn deferred_payment_steady_state_event_flow() {
 
 				roll_one_block();
 				let expected = vec![
-					Event::Rewarded { account: 4, rewards: 19 },
-					Event::Rewarded { account: 33, rewards: 6 },
-					Event::Rewarded { account: 44, rewards: 6 },
+					Event::Rewarded { account: 4, rewards: 154 },
+					Event::Rewarded { account: 33, rewards: 51 },
+					Event::Rewarded { account: 44, rewards: 51 },
 				];
 				assert_eq_last_events!(expected);
 
 				roll_one_block();
 				let expected = vec![
-					Event::Rewarded { account: 1, rewards: 19 },
-					Event::Rewarded { account: 11, rewards: 6 },
-					Event::Rewarded { account: 44, rewards: 6 },
+					Event::Rewarded { account: 1, rewards: 154 },
+					Event::Rewarded { account: 11, rewards: 51 },
+					Event::Rewarded { account: 44, rewards: 51 },
 				];
 				assert_eq_last_events!(expected);
 
 				roll_one_block();
 				let expected = vec![
-					Event::Rewarded { account: 2, rewards: 19 },
-					Event::Rewarded { account: 11, rewards: 6 },
-					Event::Rewarded { account: 22, rewards: 6 },
+					Event::Rewarded { account: 2, rewards: 154 },
+					Event::Rewarded { account: 11, rewards: 51 },
+					Event::Rewarded { account: 22, rewards: 51 },
 				];
 				assert_eq_last_events!(expected);
 
 				roll_one_block();
 				let expected = vec![
 					// we paid everyone out by now, should repeat last event
-					Event::Rewarded { account: 22, rewards: 6 },
+					Event::Rewarded { account: 22, rewards: 51 },
 				];
 				assert_eq_last_events!(expected);
 
@@ -5248,17 +5248,17 @@ fn deferred_payment_steady_state_event_flow() {
 fn delegation_kicked_from_bottom_removes_pending_request() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 30),
-			(2, 29),
-			(3, 20),
-			(4, 20),
-			(5, 20),
-			(6, 20),
-			(7, 20),
-			(8, 20),
-			(9, 20),
-			(10, 20),
-			(11, 30),
+			(1, 130),
+			(2, 129),
+			(3, 120),
+			(4, 120),
+			(5, 120),
+			(6, 120),
+			(7, 120),
+			(8, 120),
+			(9, 120),
+			(10, 120),
+			(11, 130),
 		])
 		.with_candidates(vec![(1, 30), (11, 30)])
 		.with_delegations(vec![
@@ -5293,7 +5293,7 @@ fn delegation_kicked_from_bottom_removes_pending_request() {
 #[test]
 fn no_selected_candidates_defaults_to_last_round_collators() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 30), (3, 30), (4, 30), (5, 30)])
+		.with_balances(vec![(1, 130), (2, 130), (3, 130), (4, 130), (5, 130)])
 		.with_candidates(vec![(1, 30), (2, 30), (3, 30), (4, 30), (5, 30)])
 		.build()
 		.execute_with(|| {
@@ -5330,7 +5330,7 @@ fn no_selected_candidates_defaults_to_last_round_collators() {
 #[test]
 fn test_delegator_scheduled_for_revoke_is_rewarded_for_previous_rounds_but_not_for_future() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 40), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 40), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -5355,15 +5355,15 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_for_previous_rounds_but_not_f
 			roll_to_round_begin(3);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 4 },
-					Event::<Test>::Rewarded { account: 2, rewards: 1 },
+					Event::<Test>::Rewarded { account: 1, rewards: 15 },
+					Event::<Test>::Rewarded { account: 2, rewards: 5 },
 				],
 				"delegator was not rewarded as intended"
 			);
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 }],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 21 }],
 				"delegator was rewarded unexpectedly"
 			);
 			let collator_snapshot =
@@ -5383,7 +5383,7 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_for_previous_rounds_but_not_f
 #[test]
 fn test_delegator_scheduled_for_revoke_is_rewarded_when_request_cancelled() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 40), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 40), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -5410,7 +5410,7 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_when_request_cancelled() {
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 }],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 20 }],
 				"delegator was rewarded unexpectedly",
 			);
 			let collator_snapshot =
@@ -5428,8 +5428,8 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_when_request_cancelled() {
 			roll_to_round_begin(5);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 4 },
-					Event::<Test>::Rewarded { account: 2, rewards: 1 },
+					Event::<Test>::Rewarded { account: 1, rewards: 15 },
+					Event::<Test>::Rewarded { account: 2, rewards: 6 },
 				],
 				"delegator was not rewarded as intended",
 			);
@@ -5440,7 +5440,7 @@ fn test_delegator_scheduled_for_revoke_is_rewarded_when_request_cancelled() {
 fn test_delegator_scheduled_for_bond_decrease_is_rewarded_for_previous_rounds_but_less_for_future()
 {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 40), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 40), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 20), (2, 3, 10)])
 		.build()
@@ -5469,8 +5469,8 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_for_previous_rounds_bu
 			roll_to_round_begin(3);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 3 },
-					Event::<Test>::Rewarded { account: 2, rewards: 2 },
+					Event::<Test>::Rewarded { account: 1, rewards: 12 },
+					Event::<Test>::Rewarded { account: 2, rewards: 8 },
 				],
 				"delegator was not rewarded as intended"
 			);
@@ -5478,8 +5478,8 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_for_previous_rounds_bu
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 4 },
-					Event::<Test>::Rewarded { account: 2, rewards: 1 },
+					Event::<Test>::Rewarded { account: 1, rewards: 15 },
+					Event::<Test>::Rewarded { account: 2, rewards: 6 },
 				],
 				"delegator was rewarded unexpectedly"
 			);
@@ -5500,7 +5500,7 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_for_previous_rounds_bu
 #[test]
 fn test_delegator_scheduled_for_bond_decrease_is_rewarded_when_request_cancelled() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 40), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 140), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 20), (2, 3, 10)])
 		.build()
@@ -5532,8 +5532,8 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_when_request_cancelled
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 4 },
-					Event::<Test>::Rewarded { account: 2, rewards: 1 },
+					Event::<Test>::Rewarded { account: 1, rewards: 18 },
+					Event::<Test>::Rewarded { account: 2, rewards: 7 },
 				],
 				"delegator was rewarded unexpectedly",
 			);
@@ -5552,8 +5552,8 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_when_request_cancelled
 			roll_to_round_begin(5);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 3 },
-					Event::<Test>::Rewarded { account: 2, rewards: 2 },
+					Event::<Test>::Rewarded { account: 1, rewards: 15 },
+					Event::<Test>::Rewarded { account: 2, rewards: 10 },
 				],
 				"delegator was not rewarded as intended",
 			);
@@ -5563,7 +5563,7 @@ fn test_delegator_scheduled_for_bond_decrease_is_rewarded_when_request_cancelled
 #[test]
 fn test_delegator_scheduled_for_leave_is_rewarded_for_previous_rounds_but_not_for_future() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 40), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 40), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -5587,15 +5587,15 @@ fn test_delegator_scheduled_for_leave_is_rewarded_for_previous_rounds_but_not_fo
 			roll_to_round_begin(3);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 4 },
-					Event::<Test>::Rewarded { account: 2, rewards: 1 },
+					Event::<Test>::Rewarded { account: 1, rewards: 15 },
+					Event::<Test>::Rewarded { account: 2, rewards: 5 },
 				],
 				"delegator was not rewarded as intended"
 			);
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 },],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 21 },],
 				"delegator was rewarded unexpectedly"
 			);
 			let collator_snapshot =
@@ -5615,7 +5615,7 @@ fn test_delegator_scheduled_for_leave_is_rewarded_for_previous_rounds_but_not_fo
 #[test]
 fn test_delegator_scheduled_for_leave_is_rewarded_when_request_cancelled() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 40), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 40), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -5641,7 +5641,7 @@ fn test_delegator_scheduled_for_leave_is_rewarded_when_request_cancelled() {
 
 			roll_to_round_begin(4);
 			assert_eq_last_events!(
-				vec![Event::<Test>::Rewarded { account: 1, rewards: 5 },],
+				vec![Event::<Test>::Rewarded { account: 1, rewards: 20 },],
 				"delegator was rewarded unexpectedly",
 			);
 			let collator_snapshot =
@@ -5659,8 +5659,8 @@ fn test_delegator_scheduled_for_leave_is_rewarded_when_request_cancelled() {
 			roll_to_round_begin(5);
 			assert_eq_last_events!(
 				vec![
-					Event::<Test>::Rewarded { account: 1, rewards: 4 },
-					Event::<Test>::Rewarded { account: 2, rewards: 1 },
+					Event::<Test>::Rewarded { account: 1, rewards: 15 },
+					Event::<Test>::Rewarded { account: 2, rewards: 6 },
 				],
 				"delegator was not rewarded as intended",
 			);
@@ -5670,7 +5670,7 @@ fn test_delegator_scheduled_for_leave_is_rewarded_when_request_cancelled() {
 #[test]
 fn test_delegation_request_exists_returns_false_when_nothing_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5682,7 +5682,7 @@ fn test_delegation_request_exists_returns_false_when_nothing_exists() {
 #[test]
 fn test_delegation_request_exists_returns_true_when_decrease_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5702,7 +5702,7 @@ fn test_delegation_request_exists_returns_true_when_decrease_exists() {
 #[test]
 fn test_delegation_request_exists_returns_true_when_revoke_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5722,7 +5722,7 @@ fn test_delegation_request_exists_returns_true_when_revoke_exists() {
 #[test]
 fn test_delegation_request_revoke_exists_returns_false_when_nothing_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5734,7 +5734,7 @@ fn test_delegation_request_revoke_exists_returns_false_when_nothing_exists() {
 #[test]
 fn test_delegation_request_revoke_exists_returns_false_when_decrease_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5754,7 +5754,7 @@ fn test_delegation_request_revoke_exists_returns_false_when_decrease_exists() {
 #[test]
 fn test_delegation_request_revoke_exists_returns_true_when_revoke_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5914,7 +5914,7 @@ fn staked_capacity() {
 #[test]
 fn test_set_auto_compound_inserts_if_not_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5939,7 +5939,7 @@ fn test_set_auto_compound_inserts_if_not_exists() {
 #[test]
 fn test_set_auto_compound_updates_if_existing() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5970,7 +5970,7 @@ fn test_set_auto_compound_updates_if_existing() {
 #[test]
 fn test_set_auto_compound_removes_if_auto_compound_zero_percent() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -5998,7 +5998,7 @@ fn test_set_auto_compound_removes_if_auto_compound_zero_percent() {
 #[test]
 fn test_execute_revoke_delegation_removes_auto_compounding_from_state_for_delegation_revoke() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 30), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 30), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -6038,7 +6038,7 @@ fn test_execute_revoke_delegation_removes_auto_compounding_from_state_for_delega
 #[test]
 fn test_execute_leave_delegators_removes_auto_compounding_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -6127,7 +6127,7 @@ fn test_execute_leave_delegators_removes_auto_compounding_state() {
 #[test]
 fn test_execute_leave_candidates_removes_auto_compounding_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 130), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 30), (3, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -6166,17 +6166,17 @@ fn test_execute_leave_candidates_removes_auto_compounding_state() {
 fn test_delegation_kicked_from_bottom_delegation_removes_auto_compounding_state() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 30),
-			(2, 29),
-			(3, 20),
-			(4, 20),
-			(5, 20),
-			(6, 20),
-			(7, 20),
-			(8, 20),
-			(9, 20),
-			(10, 20),
-			(11, 30),
+			(1, 130),
+			(2, 129),
+			(3, 120),
+			(4, 120),
+			(5, 120),
+			(6, 120),
+			(7, 120),
+			(8, 120),
+			(9, 120),
+			(10, 120),
+			(11, 130),
 		])
 		.with_candidates(vec![(1, 30), (11, 30)])
 		.with_delegations(vec![
@@ -6213,7 +6213,7 @@ fn test_delegation_kicked_from_bottom_delegation_removes_auto_compounding_state(
 #[test]
 fn test_rewards_do_not_auto_compound_on_payment_if_delegation_scheduled_revoke_exists() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 100), (2, 200), (3, 200)])
+		.with_balances(vec![(1, 1100), (2, 1200), (3, 1200)])
 		.with_candidates(vec![(1, 100)])
 		.with_delegations(vec![(2, 1, 200), (3, 1, 200)])
 		.build()
@@ -6237,10 +6237,10 @@ fn test_rewards_do_not_auto_compound_on_payment_if_delegation_scheduled_revoke_e
 
 			assert_eq_last_events!(vec![
 				// no compound since revoke request exists
-				Event::<Test>::Rewarded { account: 2, rewards: 8 },
+				Event::<Test>::Rewarded { account: 2, rewards: 56 },
 				// 50%
-				Event::<Test>::Rewarded { account: 3, rewards: 8 },
-				Event::<Test>::Compounded { candidate: 1, delegator: 3, amount: 4 },
+				Event::<Test>::Rewarded { account: 3, rewards: 56 },
+				Event::<Test>::Compounded { candidate: 1, delegator: 3, amount: 28 },
 			]);
 		});
 }
@@ -6248,7 +6248,7 @@ fn test_rewards_do_not_auto_compound_on_payment_if_delegation_scheduled_revoke_e
 #[test]
 fn test_rewards_auto_compound_on_payment_as_per_auto_compound_config() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 100), (2, 200), (3, 200), (4, 200), (5, 200)])
+		.with_balances(vec![(1, 1100), (2, 1200), (3, 1200), (4, 1200), (5, 1200)])
 		.with_candidates(vec![(1, 100)])
 		.with_delegations(vec![(2, 1, 200), (3, 1, 200), (4, 1, 200), (5, 1, 200)])
 		.build()
@@ -6273,15 +6273,15 @@ fn test_rewards_auto_compound_on_payment_as_per_auto_compound_config() {
 
 			assert_eq_last_events!(vec![
 				// 0%
-				Event::<Test>::Rewarded { account: 2, rewards: 8 },
+				Event::<Test>::Rewarded { account: 2, rewards: 52 },
 				// 50%
-				Event::<Test>::Rewarded { account: 3, rewards: 8 },
-				Event::<Test>::Compounded { candidate: 1, delegator: 3, amount: 4 },
+				Event::<Test>::Rewarded { account: 3, rewards: 52 },
+				Event::<Test>::Compounded { candidate: 1, delegator: 3, amount: 26 },
 				// 100%
-				Event::<Test>::Rewarded { account: 4, rewards: 8 },
-				Event::<Test>::Compounded { candidate: 1, delegator: 4, amount: 8 },
+				Event::<Test>::Rewarded { account: 4, rewards: 52 },
+				Event::<Test>::Compounded { candidate: 1, delegator: 4, amount: 52 },
 				// no-config
-				Event::<Test>::Rewarded { account: 5, rewards: 8 },
+				Event::<Test>::Rewarded { account: 5, rewards: 52 },
 			]);
 		});
 }
@@ -6293,7 +6293,7 @@ fn test_rewards_auto_compound_on_payment_as_per_auto_compound_config() {
 // 	use crate::mock::{AccountId, Balance};
 
 // 	ExtBuilder::default()
-// 		.with_balances(vec![(1, 100), (2, 100)])
+// 		.with_balances(vec![(1, 1100), (2, 1100)])
 // 		.with_candidates(vec![(1, 100)])
 // 		.with_delegations(vec![(2, 1, 100)])
 // 		.build()
@@ -6384,7 +6384,7 @@ fn test_rewards_auto_compound_on_payment_as_per_auto_compound_config() {
 #[test]
 fn test_delegate_with_auto_compound_sets_auto_compound_config() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 25)])
+		.with_balances(vec![(1, 130), (2, 125)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -6411,7 +6411,7 @@ fn test_delegate_with_auto_compound_sets_auto_compound_config() {
 #[test]
 fn test_delegate_with_auto_compound_skips_storage_but_emits_event_for_zero_auto_compound() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -6435,25 +6435,25 @@ fn test_delegate_with_auto_compound_skips_storage_but_emits_event_for_zero_auto_
 #[test]
 fn test_delegate_with_auto_compound_reserves_balance() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
-			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&2), 10);
+			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&2), 110);
 			assert_ok!(ParachainStaking::delegate_with_auto_compound(
 				RuntimeOrigin::signed(2),
 				1,
 				10,
 				Percent::from_percent(50),
 			));
-			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&2), 0);
+			assert_eq!(ParachainStaking::get_delegator_stakable_free_balance(&2), 100);
 		});
 }
 
 #[test]
 fn test_delegate_with_auto_compound_updates_delegator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -6475,7 +6475,7 @@ fn test_delegate_with_auto_compound_updates_delegator_state() {
 #[test]
 fn test_delegate_with_auto_compound_updates_collator_state() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 10)])
+		.with_balances(vec![(1, 130), (2, 110)])
 		.with_candidates(vec![(1, 30)])
 		.build()
 		.execute_with(|| {
@@ -6506,7 +6506,7 @@ fn test_delegate_with_auto_compound_updates_collator_state() {
 #[test]
 fn test_delegate_with_auto_compound_can_delegate_immediately_after_other_join_candidates() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20)])
+		.with_balances(vec![(1, 120), (2, 120)])
 		.build()
 		.execute_with(|| {
 			assert_ok!(ParachainStaking::add_candidates_whitelist(RuntimeOrigin::root(), 1));
@@ -6523,7 +6523,7 @@ fn test_delegate_with_auto_compound_can_delegate_immediately_after_other_join_ca
 #[test]
 fn test_delegate_with_auto_compound_can_delegate_to_other_if_revoking() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 30), (3, 20), (4, 20)])
+		.with_balances(vec![(1, 120), (2, 130), (3, 120), (4, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10)])
 		.build()
@@ -6542,17 +6542,17 @@ fn test_delegate_with_auto_compound_can_delegate_to_other_if_revoking() {
 fn test_delegate_with_auto_compound_cannot_delegate_if_less_than_or_equal_lowest_bottom() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(2, 10),
-			(3, 10),
-			(4, 10),
-			(5, 10),
-			(6, 10),
+			(1, 120),
+			(2, 110),
+			(3, 110),
+			(4, 110),
+			(5, 110),
+			(6, 110),
 			(7, 10),
-			(8, 10),
-			(9, 10),
-			(10, 10),
-			(11, 10),
+			(8, 110),
+			(9, 110),
+			(10, 110),
+			(11, 110),
 		])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![
@@ -6583,17 +6583,17 @@ fn test_delegate_with_auto_compound_cannot_delegate_if_less_than_or_equal_lowest
 fn test_delegate_with_auto_compound_can_delegate_if_greater_than_lowest_bottom() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1, 20),
-			(2, 10),
-			(3, 10),
-			(4, 10),
-			(5, 10),
-			(6, 10),
-			(7, 10),
-			(8, 10),
-			(9, 10),
-			(10, 10),
-			(11, 11),
+			(1, 120),
+			(2, 110),
+			(3, 110),
+			(4, 110),
+			(5, 110),
+			(6, 110),
+			(7, 110),
+			(8, 110),
+			(9, 110),
+			(10, 110),
+			(11, 111),
 		])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![
@@ -6626,7 +6626,7 @@ fn test_delegate_with_auto_compound_can_delegate_if_greater_than_lowest_bottom()
 #[test]
 fn test_delegate_with_auto_compound_can_still_delegate_to_other_if_leaving() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 20), (3, 20)])
+		.with_balances(vec![(1, 120), (2, 120), (3, 120)])
 		.with_candidates(vec![(1, 20), (3, 20)])
 		.with_delegations(vec![(2, 1, 10)])
 		.build()
@@ -6644,7 +6644,7 @@ fn test_delegate_with_auto_compound_can_still_delegate_to_other_if_leaving() {
 #[test]
 fn test_delegate_with_auto_compound_cannot_delegate_if_candidate() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 30)])
+		.with_balances(vec![(1, 120), (2, 130)])
 		.with_candidates(vec![(1, 20), (2, 20)])
 		.build()
 		.execute_with(|| {
@@ -6663,7 +6663,7 @@ fn test_delegate_with_auto_compound_cannot_delegate_if_candidate() {
 #[test]
 fn test_delegate_with_auto_compound_cannot_delegate_if_already_delegated() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 30)])
+		.with_balances(vec![(1, 120), (2, 130)])
 		.with_candidates(vec![(1, 20)])
 		.with_delegations(vec![(2, 1, 20)])
 		.build()
@@ -6683,7 +6683,7 @@ fn test_delegate_with_auto_compound_cannot_delegate_if_already_delegated() {
 #[test]
 fn test_delegate_with_auto_compound_cannot_delegate_more_than_max_delegations() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 20), (2, 50), (3, 20), (4, 20), (5, 20), (6, 20)])
+		.with_balances(vec![(1, 120), (2, 50), (3, 120), (4, 120), (5, 120), (6, 120)])
 		.with_candidates(vec![(1, 20), (3, 20), (4, 20), (5, 20), (6, 20)])
 		.with_delegations(vec![(2, 1, 10), (2, 3, 10), (2, 4, 10), (2, 5, 10)])
 		.build()
@@ -6703,7 +6703,7 @@ fn test_delegate_with_auto_compound_cannot_delegate_more_than_max_delegations() 
 #[test]
 fn test_delegate_skips_auto_compound_storage_but_emits_event_for_zero_auto_compound() {
 	ExtBuilder::default()
-		.with_balances(vec![(1, 30), (2, 20), (3, 30)])
+		.with_balances(vec![(1, 130), (2, 20), (3, 30)])
 		.with_candidates(vec![(1, 30)])
 		.with_auto_compounding_delegations(vec![(3, 1, 10, Percent::from_percent(50))])
 		.build()

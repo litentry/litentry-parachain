@@ -95,5 +95,6 @@ async fn get_enclave_url_of_first_registered<NodeApi: PalletTeerexApi, EnclaveAp
 		.find(|e| e.mr_enclave == self_mr_enclave)
 		.ok_or(Error::NoPeerWorkerFound)?;
 	let worker_api_direct = DirectWorkerApi::new(first_enclave.url);
+
 	Ok(worker_api_direct.get_mu_ra_url()?)
 }

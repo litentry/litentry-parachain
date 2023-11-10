@@ -33,12 +33,12 @@ use crate::{
 	},
 	trusted_cli::TrustedCli,
 	trusted_command_utils::get_keystore_path,
-	Cli, CliResult, CliResultOk,
+	Cli, CliResult, CliResultOk, ED25519_KEY_TYPE, SR25519_KEY_TYPE,
 };
 use log::*;
-use sp_application_crypto::{ed25519, sr25519};
-use sp_core::{crypto::Ss58Codec, Pair};
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+use sp_core::crypto::Ss58Codec;
+use sp_keystore::Keystore;
+use substrate_client_keystore::LocalKeystore;
 
 use self::commands::litentry::id_graph::IDGraphCommand;
 
@@ -119,10 +119,10 @@ impl TrustedBaseCommand {
 
 fn new_account(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
 	let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
-	let key: sr25519::AppPair = store.generate().unwrap();
+	let key = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
 	drop(store);
-	info!("new account {}", key.public().to_ss58check());
-	let key_str = key.public().to_ss58check();
+	info!("new account {}", key.to_ss58check());
+	let key_str = key.to_ss58check();
 	println!("{}", key_str);
 
 	Ok(CliResultOk::PubKeysBase58 { pubkeys_sr25519: Some(vec![key_str]), pubkeys_ed25519: None })
@@ -131,13 +131,12 @@ fn new_account(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
 fn list_accounts(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
 	let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
 	info!("sr25519 keys:");
-	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
+	for pubkey in store.sr25519_public_keys(SR25519_KEY_TYPE).into_iter() {
 		println!("{}", pubkey.to_ss58check());
 	}
 	info!("ed25519 keys:");
 	let pubkeys: Vec<String> = store
-		.public_keys::<ed25519::AppPublic>()
-		.unwrap()
+		.ed25519_public_keys(ED25519_KEY_TYPE)
 		.into_iter()
 		.map(|pubkey| pubkey.to_ss58check())
 		.collect();
