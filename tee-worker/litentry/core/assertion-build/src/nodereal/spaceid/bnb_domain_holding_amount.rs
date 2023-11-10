@@ -41,7 +41,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::SPACEIDBnbDomainHolding, e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::BnbDomainHolding, e.into_error_detail()))
 		},
 	}
 }

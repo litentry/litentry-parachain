@@ -187,7 +187,7 @@ pub enum Assertion {
 	SoraQuiz(SoraQuizType, ParameterString),  // (sora_quiz_type, guild_id)
 
 	// ----- begin SPACEID -----
-	SPACEIDBnbDomainHolding,
+	BnbDomainHolding,
 	// ----- end SPACEID -----
 }
 
@@ -217,8 +217,8 @@ impl Assertion {
 			Self::Achainable(a) => vec![a.chain()],
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
-			// SPACEID Assertions
-			Self::SPACEIDBnbDomainHolding => vec![Web3Network::Bsc],
+			// BnbDomainHolding Assertion
+			Self::BnbDomainHolding => vec![Web3Network::Bsc],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

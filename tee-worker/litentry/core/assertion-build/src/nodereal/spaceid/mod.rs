@@ -38,10 +38,10 @@ pub trait SPACEIDLogicInterface {
 impl SPACEIDLogicInterface for SPACEIDLogic {
 	fn get_bnb_domain_holding_amount(owners: &[String]) -> Result<usize> {
 		let config = DataProviderConfigReader::read()
-			.map_err(|e| Error::RequestVCFailed(Assertion::SPACEIDBnbDomainHolding, e))?;
+			.map_err(|e| Error::RequestVCFailed(Assertion::BnbDomainHolding, e))?;
 		let mut client = NoderealClient::new(&config);
 		let response = client.by_owners(owners).map_err(|e| {
-			Error::RequestVCFailed(Assertion::SPACEIDBnbDomainHolding, e.into_error_detail())
+			Error::RequestVCFailed(Assertion::BnbDomainHolding, e.into_error_detail())
 		})?;
 
 		let owned_domains: Domains = Domains::from_value(&response)
@@ -114,7 +114,7 @@ impl Domains {
 				// Filter out expired domain sizing
 				let expired = info.is_expired().map_err(|e| {
 					Error::RequestVCFailed(
-						Assertion::SPACEIDBnbDomainHolding,
+						Assertion::BnbDomainHolding,
 						e.into_error_detail(),
 					)
 				})?;
