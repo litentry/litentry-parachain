@@ -314,7 +314,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('link invalid identities', async function () {
         const twitterIdentity = eveIdentities[2];
-        const ethereumValidation = eveValidations[0];
+        const evmValidation = eveValidations[0];
 
         // link twitter identity with ethereum validation data
         // the `InvalidIdentity` error should be emitted prior to `AlreadyLinked` error
@@ -323,7 +323,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.alice,
             [twitterIdentity],
             'linkIdentity',
-            [ethereumValidation],
+            [evmValidation],
             []
         );
         const aliceRespEvents = await sendTxsWithUtility(
@@ -340,7 +340,7 @@ describeLitentry('Test Identity', 0, (context) => {
         const evmIdentity = eveIdentities[0];
 
         // link evm identity with wrong validation data(raw message)
-        const ethereumSignature = (await context.ethersWallet.alice.signMessage(
+        const evmSignature = (await context.ethersWallet.alice.signMessage(
             ethers.utils.arrayify(wrongMsg)
         )) as HexString;
 
@@ -349,12 +349,12 @@ describeLitentry('Test Identity', 0, (context) => {
                 Evm: {
                     message: wrongMsg as HexString,
                     signature: {
-                        Ethereum: ethereumSignature as HexString,
+                        Ethereum: evmSignature as HexString,
                     },
                 },
             },
         };
-        const ethereumValidationData: LitentryValidationData = context.api.createType(
+        const evmValidationData: LitentryValidationData = context.api.createType(
             'LitentryValidationData',
             validation
         ) as unknown as LitentryValidationData;
@@ -363,7 +363,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.alice,
             [evmIdentity],
             'linkIdentity',
-            [ethereumValidationData],
+            [evmValidationData],
             []
         );
         const aliceRespEvents = await sendTxsWithUtility(

@@ -245,9 +245,9 @@ export async function buildValidations(
     startingSidechainNonce: number,
     network: 'ethereum' | 'substrate' | 'twitter',
     substrateSigners?: KeyringPair[] | KeyringPair,
-    ethereumSigners?: ethers.Wallet[]
+    evmSigners?: ethers.Wallet[]
 ): Promise<LitentryValidationData[]> {
-    let ethereumSignature: HexString;
+    let evmSignature: HexString;
     let substrateSignature: Uint8Array;
     const validations: LitentryValidationData[] = [];
 
@@ -256,7 +256,7 @@ export async function buildValidations(
 
         const msg = generateVerificationMessage(context, signerIdentities[index], identities[index], validationNonce);
         if (network === 'ethereum') {
-            const ethereumValidationData = {
+            const evmValidationData = {
                 Web3Validation: {
                     Evm: {
                         message: '' as HexString,
@@ -267,17 +267,17 @@ export async function buildValidations(
                 },
             };
             console.log('post verification msg to ethereum: ', msg);
-            ethereumValidationData.Web3Validation.Evm.message = msg;
+            evmValidationData.Web3Validation.Evm.message = msg;
             const msgHash = ethers.utils.arrayify(msg);
-            const ethereumSigner = ethereumSigners![index];
-            ethereumSignature = (await ethereumSigner.signMessage(msgHash)) as HexString;
-            console.log('ethereumSignature', ethereumSigner.address, ethereumSignature);
+            const evmSigner = evmSigners![index];
+            evmSignature = (await evmSigner.signMessage(msgHash)) as HexString;
+            console.log('evmSignature', evmSigner.address, evmSignature);
 
-            ethereumValidationData!.Web3Validation.Evm.signature.Ethereum = ethereumSignature;
-            console.log('ethereumValidationData', ethereumValidationData);
+            evmValidationData!.Web3Validation.Evm.signature.Ethereum = evmSignature;
+            console.log('evmValidationData', evmValidationData);
             const encodedVerifyIdentityValidation = context.api.createType(
                 'LitentryValidationData',
-                ethereumValidationData
+                evmValidationData
             ) as unknown as LitentryValidationData;
 
             validations.push(encodedVerifyIdentityValidation);

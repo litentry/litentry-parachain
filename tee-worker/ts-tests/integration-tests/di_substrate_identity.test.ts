@@ -438,23 +438,23 @@ describe('Test Identity (direct invocation)', function () {
         const evmNonce = getNextNonce();
         // random wrong msg
         const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
-        const ethereumSignature = (await context.ethersWallet.alice.signMessage(
+        const evmSignature = (await context.ethersWallet.alice.signMessage(
             ethers.utils.arrayify(wrongMsg)
         )) as HexString;
 
-        const ethereumValidationData = {
+        const evmValidationData = {
             Web3Validation: {
                 Evm: {
                     message: wrongMsg as HexString,
                     signature: {
-                        Ethereum: ethereumSignature as HexString,
+                        Ethereum: evmSignature as HexString,
                     },
                 },
             },
         };
         const encodedVerifyIdentityValidation = context.api.createType(
             'LitentryValidationData',
-            ethereumValidationData
+            evmValidationData
         );
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);

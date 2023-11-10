@@ -47,7 +47,7 @@ export class AesOutput {
 
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
-    ethereumWallet: Wallet;
+    evmWallet: Wallet;
 };
 
 export type IdentityGenericEvent = {

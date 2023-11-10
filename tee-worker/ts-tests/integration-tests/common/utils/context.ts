@@ -7,7 +7,7 @@ import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
 import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
-import { getEthereumSigner, getSubstrateSigner } from '../helpers';
+import { getEvmSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
 
 import {identity as identityTypes , vc as vcTypes, trustedCalls as trustedCallsTypes} from 'parachain-api';
@@ -39,11 +39,11 @@ export async function initIntegrationTestContext(
     await cryptoWaitReady();
 
     const ethersWallet = {
-        alice: new ethers.Wallet(getEthereumSigner().alice),
-        bob: new ethers.Wallet(getEthereumSigner().bob),
-        charlie: new ethers.Wallet(getEthereumSigner().charlie),
-        dave: new ethers.Wallet(getEthereumSigner().dave),
-        eve: new ethers.Wallet(getEthereumSigner().eve),
+        alice: new ethers.Wallet(getEvmSigner().alice),
+        bob: new ethers.Wallet(getEvmSigner().bob),
+        charlie: new ethers.Wallet(getEvmSigner().charlie),
+        dave: new ethers.Wallet(getEvmSigner().dave),
+        eve: new ethers.Wallet(getEvmSigner().eve),
     };
 
     const substrateWallet = getSubstrateSigner();
@@ -110,10 +110,10 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
 
     for (let i = 0; i < count; i++) {
         const substratePair = keyring.addFromUri(`${seed}//${i}`);
-        const ethereumWallet = ethers.Wallet.createRandom();
+        const evmWallet = ethers.Wallet.createRandom();
         addresses.push({
             substrateWallet: substratePair,
-            ethereumWallet: ethereumWallet,
+            evmWallet: evmWallet,
         });
     }
     return addresses;
