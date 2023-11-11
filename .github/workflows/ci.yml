@@ -178,7 +178,7 @@ jobs:
     steps:
       - name: Wait for previous run
         if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-        uses: mktcode/consecutive-workflow-action@main
+        uses: litentry/consecutive-workflow-action@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 300
