@@ -90,23 +90,6 @@ export async function buildStorageHelper(
     return u8aToHex(storageKey);
 }
 
-export async function checkUserShieldingKeys(
-    context: IntegrationTestContext,
-    pallet: string,
-    method: string,
-    subject: LitentryPrimitivesIdentity
-): Promise<string> {
-    await sleep(6000);
-
-    const storageKey = await buildStorageHelper(context.sidechainMetaData, pallet, method, subject);
-
-    const base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
-
-    const request = createJsonRpcRequest('state_getStorage', [base58mrEnclave, storageKey], nextRequestId(context));
-    const resp = await sendRequest(context.tee, request, context.api);
-    return resp.value.toHex();
-}
-
 export async function checkIdGraph(
     context: IntegrationTestContext,
     pallet: string,

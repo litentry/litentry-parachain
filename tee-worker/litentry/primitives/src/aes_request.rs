@@ -32,8 +32,8 @@ extern crate sgx_tstd as std;
 ///
 /// 2. we want to efface the shielding key setup completely to achieve a better UE.
 use crate::{
-	aes_decrypt, AesOutput, Box, Debug, DecryptableRequest, ShardIdentifier,
-	ShieldingCryptoDecrypt, UserShieldingKeyType, Vec,
+	aes_decrypt, AesOutput, Box, Debug, DecryptableRequest, RequestAesKey, ShardIdentifier,
+	ShieldingCryptoDecrypt, Vec,
 };
 use codec::{Decode, Encode};
 
@@ -59,7 +59,7 @@ impl DecryptableRequest for AesRequest {
 		&mut self,
 		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
 	) -> core::result::Result<Vec<u8>, ()> {
-		let aes_key: UserShieldingKeyType = enclave_shielding_key
+		let aes_key: RequestAesKey = enclave_shielding_key
 			.decrypt(&self.key)
 			.map_err(|_| ())?
 			.try_into()

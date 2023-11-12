@@ -1,28 +1,24 @@
 import {
     describeLitentry,
-    encryptWithTeeShieldingKey,
     generateVerificationMessage,
     checkErrorDetail,
     checkIdGraph,
     buildIdentityHelper,
     buildIdentityTxs,
     buildValidations,
-    checkUserShieldingKeys,
     assertIdentityDeactivated,
-    assertInitialIdGraphCreated,
     buildIdentityFromKeypair,
     assertIdentityActivated,
     assertLinkedEvent,
     PolkadotSigner,
 } from './common/utils';
-import { aesKey } from './common/call';
-import { hexToU8a, u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
+import { u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
+import { sendTxsWithUtility } from './common/transactions';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { IntegrationTestContext, TransactionSubmit } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
@@ -56,7 +52,6 @@ async function getNonce(base58mrEnclave: string, workerAddr: string, context: In
 }
 
 describeLitentry('Test Identity', 0, (context) => {
-    const errorAesKey = '0xError';
     // random wrong msg
     const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
     let signatureSubstrate;
@@ -71,88 +66,6 @@ describeLitentry('Test Identity', 0, (context) => {
     step('init', async () => {
         base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
         workerAddress = await getEnclaveSignerPublicKey(context);
-    });
-
-    step('check user sidechain storage before create', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
-        const respShieldingKey = await checkUserShieldingKeys(
-            context,
-            'IdentityManagement',
-            'UserShieldingKeys',
-            aliceSubject
-        );
-        assert.equal(respShieldingKey, '0x', 'shielding key should be empty before set');
-    });
-    step('Invalid user shielding key', async function () {
-        const identity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
-        // use empty `eveValidations`, the `UserShieldingKeyNotFound` error should be emitted before verification
-        const txs = await buildIdentityTxs(
-            context,
-            context.substrateWallet.alice,
-            [identity],
-            'linkIdentity',
-            eveValidations,
-            web3networks
-        );
-
-        const respEvents = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
-            'LinkIdentityFailed',
-        ]);
-        await checkErrorDetail(respEvents, 'UserShieldingKeyNotFound');
-    });
-
-    step('set user shielding key', async function () {
-        const [aliceTxs] = (await buildIdentityTxs(
-            context,
-            [context.substrateWallet.alice],
-            [],
-            'setUserShieldingKey'
-        )) as TransactionSubmit[];
-        const [bobTxs] = (await buildIdentityTxs(
-            context,
-            [context.substrateWallet.bob],
-            [],
-            'setUserShieldingKey'
-        )) as TransactionSubmit[];
-        const respEvents = await multiAccountTxSender(
-            context,
-            [aliceTxs, bobTxs],
-            [context.substrateWallet.alice, context.substrateWallet.bob],
-            'identityManagement',
-            ['UserShieldingKeySet']
-        );
-
-        // check alice
-        await assertInitialIdGraphCreated(context, new PolkadotSigner(context.substrateWallet.alice), [respEvents[0]]);
-        // check bob
-        await assertInitialIdGraphCreated(context, new PolkadotSigner(context.substrateWallet.bob), [respEvents[1]]);
-    });
-
-    step('check user shielding key from sidechain storage after setUserShieldingKey', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
-        const respShieldingKey = await checkUserShieldingKeys(
-            context,
-            'IdentityManagement',
-            'UserShieldingKeys',
-            aliceSubject
-        );
-        assert.equal(respShieldingKey, aesKey, 'respShieldingKey should be equal aesKey after set');
-    });
-
-    step('check idgraph from sidechain storage before linking', async function () {
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
-
-        // the main address should be already inside the IDGraph
-        const mainIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            'Substrate',
-            context
-        );
-        const identityHex = mainIdentity.toHex();
-        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
-        assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0 for main address');
-        assert.isTrue(respIdGraph.status.isActive, 'status should be active for main address');
-        // TODO: check IDGraph.length == 1 in the sidechain storage
     });
 
     step('link identities', async function () {
@@ -237,12 +150,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityLinked']
         );
 
-        await assertLinkedEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.alice),
-            aliceRespEvents,
-            eveIdentities
-        );
+        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), aliceRespEvents);
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
@@ -294,12 +202,7 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        await assertLinkedEvent(
-            context,
-            new PolkadotSigner(context.substrateWallet.bob),
-            bobRespEvents,
-            charlieIdentities
-        );
+        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.bob), bobRespEvents);
     });
 
     step('check IDGraph after LinkIdentity', async function () {
@@ -541,27 +444,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['DeactivateIdentityFailed']
         );
 
-        await checkErrorDetail(charlieDeactivateEvents, 'UserShieldingKeyNotFound');
-    });
-
-    step('set error user shielding key', async function () {
-        const errorCiphertext = encryptWithTeeShieldingKey(context.teeShieldingKey, hexToU8a(errorAesKey)).toString(
-            'hex'
-        );
-        const errorTx = context.api.tx.identityManagement.setUserShieldingKey(
-            context.mrEnclave,
-            `0x${errorCiphertext}`
-        );
-
-        const respErrorEvents = await sendTxsWithUtility(
-            context,
-            context.substrateWallet.alice,
-            [{ tx: errorTx }] as any,
-            'identityManagement',
-            ['SetUserShieldingKeyFailed']
-        );
-
-        await checkErrorDetail(respErrorEvents, 'ImportError');
+        await checkErrorDetail(charlieDeactivateEvents, 'IdentityNotExist');
     });
 
     step('exceeding IDGraph limit not allowed', async function () {
