@@ -166,10 +166,11 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
-          
+
       - name: Tee-worker ts-tests install npm deps
         working-directory: ./tee-worker/ts-tests
-        run: pnpm install
+        # We can't update the lockfile here because the client-api hasn't been generated yet.
+        run: pnpm install --frozen-lockfile
 
       - name: Tee-worker check ts code format
         working-directory: ./tee-worker/ts-tests
