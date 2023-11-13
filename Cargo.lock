@@ -12098,7 +12098,7 @@ dependencies = [
  "der 0.6.1",
  "frame-support",
  "hex",
- "hex-literal 0.3.4",
+ "hex-literal 0.4.1",
  "parity-scale-codec",
  "ring",
  "rustls-webpki",
