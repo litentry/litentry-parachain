@@ -134,28 +134,6 @@ export const createPublicGetter = (parachainApi: ApiPromise, publicGetter: [stri
     return getter;
 };
 
-// TODO: maybe use HexString?
-export async function createSignedTrustedCallSetUserShieldingKey(
-    parachainApi: ApiPromise,
-    mrenclave: string,
-    nonce: Codec,
-    signer: Signer,
-    subject: LitentryPrimitivesIdentity,
-    key: string,
-    hash: string,
-    withWrappedBytes = false
-) {
-    return createSignedTrustedCall(
-        parachainApi,
-        ['set_user_shielding_key', '(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)'],
-        signer,
-        mrenclave,
-        nonce,
-        [subject.toHuman(), subject.toHuman(), key, hash],
-        withWrappedBytes
-    );
-}
-
 export async function createSignedTrustedCallLinkIdentity(
     parachainApi: ApiPromise,
     mrenclave: string,
@@ -165,7 +143,6 @@ export async function createSignedTrustedCallLinkIdentity(
     identity: string,
     validationData: string,
     web3networks: string,
-    keyNonce: string,
     aesKey: string,
     hash: string
 ) {
@@ -173,12 +150,12 @@ export async function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)',
         ],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, keyNonce, aesKey, hash]
+        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, aesKey, hash]
     );
 }
 
@@ -214,7 +191,7 @@ export async function createSignedTrustedCallRequestVc(
 ) {
     return await createSignedTrustedCall(
         parachainApi,
-        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<UserShieldingKeyType>, H256)'],
+        ['request_vc', '(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)'],
         signer,
         mrenclave,
         nonce,
@@ -256,19 +233,6 @@ export async function createSignedTrustedCallActivateIdentity(
         nonce,
         [subject.toHuman(), subject.toHuman(), identity, hash]
     );
-}
-export async function createSignedTrustedGetterUserShieldingKey(
-    parachainApi: ApiPromise,
-    signer: Signer,
-    subject: LitentryPrimitivesIdentity
-) {
-    const getterSigned = await createSignedTrustedGetter(
-        parachainApi,
-        ['user_shielding_key', '(LitentryIdentity)'],
-        signer,
-        subject.toHuman()
-    );
-    return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter;
 }
 
 export async function createSignedTrustedGetterIdGraph(

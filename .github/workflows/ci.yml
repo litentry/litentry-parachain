@@ -167,25 +167,6 @@ jobs:
         run: |
           cargo fmt --all -- --check
 
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
-
-      - name: Tee-worker client-api install npm deps
-        working-directory: ./tee-worker/client-api
-        run: pnpm install
-
-      - name: Tee-worker client-api build
-        working-directory: ./tee-worker/client-api
-        run: pnpm run build
-
-      - name: Tee-worker ts-tests install npm deps
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm install
-
-      - name: Tee-worker check ts code format
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm run check-format
-
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
@@ -197,7 +178,7 @@ jobs:
     steps:
       - name: Wait for previous run
         if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-        uses: mktcode/consecutive-workflow-action@main
+        uses: litentry/consecutive-workflow-action@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 300
@@ -658,35 +639,13 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-
-  tee-test:
+    
+  update-client-api:
     runs-on: ubuntu-latest
     needs:
       - set-condition
       - parachain-build-dev
       - tee-build
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - test_name: demo-indirect-invocation
-          - test_name: demo-direct-call
-          # Litentry
-          - test_name: lit-user-shielding-key
-          - test_name: lit-set-heartbeat-timeout
-          - test_name: lit-ii-vc-test
-          - test_name: lit-ii-identity-test
-          - test_name: lit-di-substrate-identity-test
-          - test_name: lit-di-evm-identity-test
-          - test_name: lit-di-vc-test
-          - test_name: lit-parentchain-nonce
-          - test_name: lit-ii-batch-test
-          - test_name: lit-test-stress-script
-          # disabled due to P-208
-          # - test_name: lit-resume-worker
-
-
     steps:
       - uses: actions/checkout@v4
 
@@ -714,6 +673,109 @@ jobs:
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
+          
+      - name: Update metadata and generate types
+        timeout-minutes: 10
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
+
+      # Types are only generated in the previous step, so the format of ts-tests can only be checked here.
+      - name: Tee-worker ts-tests install npm deps
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm install
+
+      - name: Tee-worker check ts code format
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm run check-format
+      
+      - name: Zip client-api
+        working-directory: ./tee-worker
+        run: |
+         sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
+         tar -zcvf client-api.tar.gz client-api
+
+      - name: Upload client-api as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: client-api
+          path: tee-worker/client-api.tar.gz
+          if-no-files-found: error
+          
+      - name: Stop docker containers
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
+      
+  tee-test:
+    runs-on: ubuntu-latest
+    needs:
+      - set-condition
+      - parachain-build-dev
+      - tee-build
+      - update-client-api
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test_name: demo-indirect-invocation
+          - test_name: demo-direct-call
+          # Litentry
+          - test_name: lit-set-heartbeat-timeout
+          - test_name: lit-ii-vc-test
+          - test_name: lit-ii-identity-test
+          - test_name: lit-di-substrate-identity-test
+          - test_name: lit-di-evm-identity-test
+          - test_name: lit-di-vc-test
+          - test_name: lit-parentchain-nonce
+          - test_name: lit-ii-batch-test
+          - test_name: lit-test-stress-script
+          # disabled due to P-208
+          # - test_name: lit-resume-worker
+
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull polkadot image
+        run: |
+          docker pull parity/polkadot
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: litentry-parachain-dev
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: litentry-tee
+          
+      - uses: actions/download-artifact@v3
+        with:
+          name: client-api
+      
+      - name: Unzip client-api
+        run: |
+          tar -zxf client-api.tar.gz -C tee-worker/
+          ls tee-worker/client-api/parachain-api
+          ls tee-worker/client-api/sidechain-api
+
+      - name: Load docker image
+        run: |
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-tee.tar.gz
+          docker images
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Generate parachain artefacts
+        run: |
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
           ls -l docker/generated-rococo/
           ls -l tee-worker/docker/litentry/
           shasum tee-worker/docker/litentry/*.json
@@ -722,7 +784,7 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-
+      
       - name: Integration Test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40

@@ -53,11 +53,9 @@ pub struct NodeMetadataMock {
 	remove_scheduled_enclave: u8,
 	// IMP
 	imp_module: u8,
-	imp_set_user_shielding_key: u8,
 	imp_link_identity: u8,
 	imp_deactivate_identity: u8,
 	imp_activate_identity: u8,
-	imp_user_shielding_key_set: u8,
 	imp_identity_linked: u8,
 	imp_identity_deactivated: u8,
 	imp_identity_activated: u8,
@@ -102,11 +100,9 @@ impl NodeMetadataMock {
 			remove_scheduled_enclave: 11u8,
 
 			imp_module: 64u8,
-			imp_set_user_shielding_key: 0u8,
 			imp_link_identity: 1u8,
 			imp_deactivate_identity: 2u8,
 			imp_activate_identity: 3u8,
-			imp_user_shielding_key_set: 4u8,
 			imp_identity_linked: 6u8,
 			imp_identity_deactivated: 7u8,
 			imp_identity_activated: 7u8,
@@ -192,10 +188,6 @@ impl SidechainCallIndexes for NodeMetadataMock {
 }
 
 impl IMPCallIndexes for NodeMetadataMock {
-	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_set_user_shielding_key])
-	}
-
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_link_identity])
 	}
@@ -206,10 +198,6 @@ impl IMPCallIndexes for NodeMetadataMock {
 
 	fn activate_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_activate_identity])
-	}
-
-	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
-		Ok([self.imp_module, self.imp_user_shielding_key_set])
 	}
 
 	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {
