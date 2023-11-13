@@ -17,7 +17,10 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{AccountId, BoundedWeb3Network, OneBlockCourseType, SoraQuizType, Web3Network};
+use crate::{
+	AccountId, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType, SoraQuizType,
+	Web3Network,
+};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -210,6 +213,10 @@ pub enum Assertion {
 	// Sora Quiz
 	#[codec(index = 14)]
 	SoraQuiz(SoraQuizType, ParameterString),  // (sora_quiz_type, guild_id)
+
+	// GenericDiscordRole
+	#[codec(index = 15)]
+	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
 }
 
 impl Assertion {

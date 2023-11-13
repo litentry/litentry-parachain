@@ -55,6 +55,9 @@ pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -
 			dpc.set_oneblock_notion_url(data_provider_config.oneblock_notion_url);
 			dpc.set_sora_quiz_master_id(data_provider_config.sora_quiz_master_id);
 			dpc.set_sora_quiz_attendee_id(data_provider_config.sora_quiz_attendee_id);
+			dpc.set_contest_legend_discord_role_id(data_provider_config.contest_legend_discord_role_id);
+			dpc.set_contest_popularity_discord_role_id(data_provider_config.contest_popularity_discord_role_id);
+			dpc.set_contest_participant_discord_role_id(data_provider_config.contest_participant_discord_role_id);
 		},
 		Err(e) => {
 			error!("Error while setting data provider config: {:?}", e);
