@@ -45,10 +45,13 @@ pub type Signature = MultiSignature;
 #[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ParentchainId {
 	/// The Litentry Parentchain, the trust root of the enclave and serving finality to sidechains.
+	#[codec(index = 0)]
 	Litentry,
 	/// A target chain containing custom business logic.
+	#[codec(index = 1)]
 	TargetA,
 	/// Another target chain containing custom business logic.
+	#[codec(index = 2)]
 	TargetB,
 }
 
