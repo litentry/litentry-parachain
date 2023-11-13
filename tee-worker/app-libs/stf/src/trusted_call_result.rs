@@ -26,9 +26,13 @@ use std::vec::Vec;
 
 #[derive(Encode, Decode)]
 pub enum TrustedCallResult {
+	#[codec(index = 0)]
 	Empty,
+	#[codec(index = 1)]
 	Streamed,
+	#[codec(index = 2)]
 	LinkIdentity(LinkIdentityResult),
+	#[codec(index = 3)]
 	RequestVC(RequestVCResult),
 }
 

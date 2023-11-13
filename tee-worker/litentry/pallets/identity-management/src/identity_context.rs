@@ -22,7 +22,9 @@ use sp_std::vec::Vec;
 #[derive(Clone, Eq, PartialEq, Default, Debug, Encode, Decode, TypeInfo)]
 pub enum IdentityStatus {
 	#[default]
+	#[codec(index = 0)]
 	Active,
+	#[codec(index = 1)]
 	Inactive,
 }
 
