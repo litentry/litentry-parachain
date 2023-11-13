@@ -166,6 +166,14 @@ jobs:
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
+          
+      - name: Tee-worker ts-tests install npm deps
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm install
+
+      - name: Tee-worker check ts code format
+        working-directory: ./tee-worker/ts-tests
+        run: pnpm run check-format
 
       - name: Fail early
         if: failure()
@@ -684,15 +692,6 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
-
-      # Types are only generated in the previous step, so the format of ts-tests can only be checked here.
-      - name: Tee-worker ts-tests install npm deps
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm install
-
-      - name: Tee-worker check ts code format
-        working-directory: ./tee-worker/ts-tests
-        run: pnpm run check-format
       
       - name: Zip client-api
         working-directory: ./tee-worker
