@@ -22,17 +22,18 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{Index, TrustedCall, TrustedOperation, TrustedGetter};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
 use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
 	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	Identity, OneBlockCourseType, ParameterString, Web3Network,
+	Identity, OneBlockCourseType, ParameterString, Web3Network, UserShieldingKeyType, AesOutput, aes_decrypt
 };
 use log::*;
 use sp_core::Pair;
+use ita_stf::trusted_call_result::RequestVCResult;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
@@ -382,13 +383,31 @@ impl RequestVcCommand {
 			},
 		};
 
+		let top_getter: TrustedOperation = TrustedGetter::user_shielding_key(id.clone())
+			.sign(&KeyPair::Sr25519(Box::new(alice.clone())))
+			.into();
+		let key = perform_trusted_operation::<Option<UserShieldingKeyType>>(cli, trusted_cli, &top_getter);
+
+		let real_key = key.unwrap().unwrap();
+		println!("Got real key: {:?}", real_key);
+
+
 		let top: TrustedOperation =
 			TrustedCall::request_vc(alice.public().into(), id, assertion, None, Default::default())
-				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+				.sign(&KeyPair::Sr25519(Box::new(alice)), 2, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
 
-		// TODO: P-177, print actual VC content to stdout
-		let _vc = perform_trusted_operation(cli, trusted_cli, &top).unwrap();
+
+		match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
+			Ok(mut vc) => {
+
+				let vc_content = aes_decrypt(&real_key, &mut vc.vc_payload);
+				println!("Got vc result: {:?} with vc_content: {:?}", vc, vc_content);
+			},
+			Err(e) => {
+				println!("{:?}", e);
+			}
+		}
 		Ok(CliResultOk::None)
 	}
 }

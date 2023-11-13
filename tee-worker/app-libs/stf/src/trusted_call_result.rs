@@ -24,7 +24,7 @@ use itp_types::H256;
 use litentry_primitives::AesOutput;
 use std::vec::Vec;
 
-#[derive(Encode, Decode)]
+#[derive(Encode, Decode, Debug)]
 pub enum TrustedCallResult {
 	Empty,
 	Streamed,

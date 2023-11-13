@@ -38,8 +38,7 @@ impl UserShieldingKeyCommand {
 		let top: TrustedOperation = TrustedGetter::user_shielding_key(id)
 			.sign(&KeyPair::Sr25519(Box::new(alice)))
 			.into();
-		let key = perform_trusted_operation(cli, trusted_cli, &top)
-			.map(|v| UserShieldingKeyType::decode(&mut v.unwrap().as_slice()).ok());
+		let key = perform_trusted_operation::<Option<UserShieldingKeyType>>(cli, trusted_cli, &top);
 		println!("{}", hex::encode(key.unwrap().unwrap()));
 
 		Ok(CliResultOk::None)

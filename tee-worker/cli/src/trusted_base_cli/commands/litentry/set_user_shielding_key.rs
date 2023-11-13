@@ -27,6 +27,7 @@ use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::{Identity, UserShieldingKeyType};
 use log::*;
 use sp_core::Pair;
+use ita_stf::trusted_call_result::SetUserShieldingKeyResult;
 
 #[derive(Parser)]
 pub struct SetUserShieldingKeyCommand {
@@ -50,8 +51,8 @@ impl SetUserShieldingKeyCommand {
 
 		let top: TrustedOperation =
 			TrustedCall::set_user_shielding_key(alice.public().into(), id, key, Default::default())
-				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+				.sign(&KeyPair::Sr25519(Box::new(alice)), 0, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
-		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
+		Ok(perform_trusted_operation::<SetUserShieldingKeyResult>(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }

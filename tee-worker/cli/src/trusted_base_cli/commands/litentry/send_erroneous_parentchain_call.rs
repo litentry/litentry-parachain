@@ -26,6 +26,7 @@ use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use log::*;
 use sp_core::Pair;
+use ita_stf::trusted_call_result::TrustedCallResult;
 
 #[derive(Parser)]
 pub struct SendErroneousParentchainCallCommand {}
@@ -41,6 +42,6 @@ impl SendErroneousParentchainCallCommand {
 			TrustedCall::send_erroneous_parentchain_call(root.public().into())
 				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
-		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
+		Ok(perform_trusted_operation::<TrustedCallResult>(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }

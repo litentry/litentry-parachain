@@ -29,6 +29,7 @@ use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
 use std::boxed::Box;
+use ita_stf::trusted_call_result::TrustedCallResult;
 
 #[derive(Parser)]
 pub struct UnshieldFundsCommand {
@@ -62,6 +63,6 @@ impl UnshieldFundsCommand {
 			TrustedCall::balance_unshield(from.public().into(), to, self.amount, shard)
 				.sign(&KeyPair::Sr25519(Box::new(from)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
-		Ok(perform_trusted_operation(cli, trusted_args, &top).map(|_| CliResultOk::None)?)
+		Ok(perform_trusted_operation::<TrustedCallResult>(cli, trusted_args, &top).map(|_| CliResultOk::None)?)
 	}
 }

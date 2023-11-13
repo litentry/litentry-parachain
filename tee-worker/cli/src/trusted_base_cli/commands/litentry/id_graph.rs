@@ -45,8 +45,7 @@ impl IDGraphCommand {
 
 		let top: TrustedOperation =
 			TrustedGetter::id_graph(id).sign(&KeyPair::Sr25519(Box::new(alice))).into();
-		let idgraph = perform_trusted_operation(cli, trusted_cli, &top)
-			.map(|v| IDGraph::<Runtime>::decode(&mut v.unwrap().as_slice()).ok());
+		let idgraph = perform_trusted_operation::<Option<IDGraph::<Runtime>>>(cli, trusted_cli, &top);
 		println!("{:?}", idgraph.unwrap().unwrap());
 
 		Ok(CliResultOk::None)

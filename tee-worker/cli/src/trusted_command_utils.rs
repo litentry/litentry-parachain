@@ -50,9 +50,9 @@ macro_rules! get_layer_two_nonce {
 
 		let getter =
 			Getter::public(PublicGetter::nonce(Identity::Substrate($signer_pair.public().into())));
-		let getter_result = execute_getter_from_cli_args($cli, $trusted_args, &getter);
+		let getter_result = execute_getter_from_cli_args::<Option<Index>>($cli, $trusted_args, &getter);
 		let nonce = match getter_result {
-			Ok(Some(encoded_nonce)) => Index::decode(&mut encoded_nonce.as_slice()).unwrap(),
+			Ok(Some(nonce)) => nonce,
 			Ok(None) => Default::default(),
 			Err(_) => todo!(),
 		};

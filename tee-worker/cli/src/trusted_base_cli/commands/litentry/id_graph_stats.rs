@@ -38,9 +38,7 @@ impl IDGraphStats {
 		let top: TrustedOperation = TrustedGetter::id_graph_stats(who.public().into())
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
-		let id_graph_stats = perform_trusted_operation(cli, trusted_cli, &top)
-			.map(|v| IDGraphStatsVec::decode(&mut v.unwrap().as_slice()).ok());
-
+		let id_graph_stats = perform_trusted_operation::<Option<IDGraphStatsVec>>(cli, trusted_cli, &top);
 		println!("IDGraph stats:");
 		match id_graph_stats {
 			Ok(id_graph_stats) => {
