@@ -36,8 +36,6 @@ pub enum ErrorDetail {
 	StfError(ErrorString),
 	// error when sending stf request to the receiver fails
 	SendStfRequestFailed,
-	// error when the user shielding key can not be found
-	UserShieldingKeyNotFound,
 	// generic parse error, can be caused by UTF8/JSON serde..
 	ParseError,
 	// errors when communicating with data provider, e.g. HTTP error
@@ -81,7 +79,6 @@ where
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum IMPError {
 	// errors when executing individual error
-	SetUserShieldingKeyFailed(ErrorDetail),
 	LinkIdentityFailed(ErrorDetail),
 	DeactivateIdentityFailed(ErrorDetail),
 	ActivateIdentityFailed(ErrorDetail),

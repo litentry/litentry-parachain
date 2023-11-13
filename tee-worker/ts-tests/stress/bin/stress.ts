@@ -27,7 +27,6 @@ const newStepGenerator = (
                 api.parachainApi,
                 api.mrEnclave,
                 api.teeShieldingKey,
-                session.userShieldingKey,
                 session.nextNonce(),
                 session.subject,
                 log
