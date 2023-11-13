@@ -20,4 +20,3 @@ pub mod deactivate_identity;
 pub mod link_identity;
 pub mod request_vc;
 pub mod scheduled_enclave;
-pub mod set_user_shielding_key;

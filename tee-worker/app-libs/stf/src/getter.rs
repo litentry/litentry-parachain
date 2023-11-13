@@ -85,10 +85,8 @@ pub enum TrustedGetter {
 	evm_account_storages(Identity, H160, H256),
 	// litentry
 	#[codec(index = 5)]
-	user_shielding_key(Identity),
-	#[codec(index = 6)]
 	id_graph(Identity),
-	#[codec(index = 7)]
+	#[codec(index = 6)]
 	id_graph_stats(Identity),
 }
 
@@ -104,7 +102,6 @@ impl TrustedGetter {
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_account_storages(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedGetter::user_shielding_key(sender_identity, ..) => sender_identity,
 			TrustedGetter::id_graph(sender_identity) => sender_identity,
 			TrustedGetter::id_graph_stats(sender_identity) => sender_identity,
 		}
@@ -217,10 +214,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::user_shielding_key(who) =>
-				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
-			TrustedGetter::id_graph(who) =>
-				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
+			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
 
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.

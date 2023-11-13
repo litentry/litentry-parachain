@@ -31,10 +31,8 @@ pub enum TrustedCallResult {
 	#[codec(index = 1)]
 	Streamed,
 	#[codec(index = 2)]
-	SetUserShieldingKey(SetUserShieldingKeyResult),
-	#[codec(index = 3)]
 	LinkIdentity(LinkIdentityResult),
-	#[codec(index = 4)]
+	#[codec(index = 3)]
 	RequestVC(RequestVCResult),
 }
 
@@ -43,7 +41,6 @@ impl StfExecutionResult for TrustedCallResult {
 		match self {
 			Self::Empty => Vec::default(),
 			Self::Streamed => Vec::default(),
-			Self::SetUserShieldingKey(result) => result.encode(),
 			Self::LinkIdentity(result) => result.encode(),
 			Self::RequestVC(result) => result.encode(),
 		}
@@ -52,11 +49,6 @@ impl StfExecutionResult for TrustedCallResult {
 	fn force_connection_wait(&self) -> bool {
 		matches!(self, Self::Streamed)
 	}
-}
-
-#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
-pub struct SetUserShieldingKeyResult {
-	pub id_graph: AesOutput,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]

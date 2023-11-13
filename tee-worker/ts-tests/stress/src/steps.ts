@@ -8,7 +8,6 @@ import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallRequestVc,
     createSignedTrustedCallSetUserShieldingKey,
-    keyNonce,
     sendRequestFromTrustedCall,
     subscribeToEventsWithExtHash,
 } from './litentry-api';
@@ -74,7 +73,6 @@ export async function linkIdentity(
     parachainApi: ParachainApiPromise,
     mrEnclave: string,
     teeShieldingKey: crypto.KeyObject,
-    userShieldingKey: string,
     nonce: Index,
     subject: LitentryPrimitivesIdentity,
     log: WritableStream<string>
@@ -93,7 +91,6 @@ export async function linkIdentity(
         subject,
         secondaryIdentity,
         nonce.toNumber(),
-        userShieldingKey,
         secondary
     );
 
@@ -106,8 +103,7 @@ export async function linkIdentity(
         secondaryIdentity.toHex(),
         secondaryValidation.toHex(),
         secondaryNetworks.toHex(),
-        keyNonce,
-        parachainApi.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+        parachainApi.createType('Option<RequestAesKey>', aesKey).toHex(),
         requestIdentifier
     );
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
@@ -142,7 +138,7 @@ export async function requestVc1(
         primary,
         subject,
         parachainApi.createType('Assertion', { A1: null }),
-        parachainApi.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+        parachainApi.createType('Option<RequestAesKey>', aesKey).toHex(),
         requestIdentifier
     );
 
@@ -177,7 +173,7 @@ export async function requestVc4(
         primary,
         subject,
         parachainApi.createType('Assertion', { A4: '10' }),
-        parachainApi.createType('Option<UserShieldingKeyType>', aesKey).toHex(),
+        parachainApi.createType('Option<RequestAesKey>', aesKey).toHex(),
         requestIdentifier
     );
 

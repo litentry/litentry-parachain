@@ -10,7 +10,7 @@
         "prepare-dir": "mkdir -p build && cp -rf prepare-build/* build",
         "generate-from-defs": "pnpm exec node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/@polkadot/typegen/scripts/polkadot-types-from-defs.mjs --package sidechain-api/interfaces --input build/interfaces --endpoint build/litentry-sidechain-metadata.json",
         "generate-from-chain": "pnpm exec node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/@polkadot/typegen/scripts/polkadot-types-from-chain.mjs --package sidechain-api/interfaces --output build/interfaces --endpoint build/litentry-sidechain-metadata.json --strict",
-        "format": "pnpm exec prettier --write . ",
+        "format": "pnpm exec prettier --write .",
         "check-format": "pnpm exec prettier --check .",
         "compile": "tsc",
         "build": "pnpm run prepare-dir && pnpm run generate-from-defs && pnpm run generate-from-chain && pnpm run format && pnpm run compile",

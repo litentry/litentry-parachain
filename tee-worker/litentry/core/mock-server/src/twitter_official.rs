@@ -15,20 +15,15 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
-use crate::{UserShieldingKeyType, MOCK_VERIFICATION_NONCE};
 use ita_stf::helpers::get_expected_raw_message;
 use lc_data_providers::twitter_official::*;
 use litentry_primitives::{Identity, IdentityString};
 use sp_core::{sr25519::Pair as Sr25519Pair, Pair};
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 use warp::{http::Response, Filter};
 
-pub(crate) fn query_tweet<F>(
-	func: Arc<F>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
-where
-	F: Fn(&Sr25519Pair) -> UserShieldingKeyType + Send + Sync + 'static,
-{
+pub(crate) fn query_tweet(
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
 		.and(warp::path!("2" / "tweets" / u32))
 		.and(warp::query::<HashMap<String, String>>())
@@ -47,7 +42,6 @@ where
 				let alice = Sr25519Pair::from_string("//Alice", None).unwrap();
 				let twitter_identity =
 					Identity::Twitter(IdentityString::new(tweet_author_name.as_bytes().to_vec()));
-				let key = func(&alice);
 				let payload = hex::encode(get_expected_raw_message(
 					&alice.public().into(),
 					&twitter_identity,
@@ -56,8 +50,6 @@ where
 					// the enclave signer account when launching the mock-server thread
 					// the enclaveApi doesn't provide such interface
 					tweet_id,
-					key,
-					MOCK_VERIFICATION_NONCE,
 				));
 
 				println!("query_tweet, payload: {}", payload);

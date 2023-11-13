@@ -40,28 +40,25 @@ pub enum ErrorDetail {
 	// error when sending stf request to the receiver fails
 	#[codec(index = 3)]
 	SendStfRequestFailed,
-	// error when the user shielding key can not be found
-	#[codec(index = 4)]
-	UserShieldingKeyNotFound,
 	// generic parse error, can be caused by UTF8/JSON serde..
-	#[codec(index = 5)]
+	#[codec(index = 4)]
 	ParseError,
 	// errors when communicating with data provider, e.g. HTTP error
-	#[codec(index = 6)]
+	#[codec(index = 5)]
 	DataProviderError(ErrorString),
-	#[codec(index = 7)]
+	#[codec(index = 6)]
 	InvalidIdentity,
-	#[codec(index = 8)]
+	#[codec(index = 7)]
 	WrongWeb2Handle,
-	#[codec(index = 9)]
+	#[codec(index = 8)]
 	UnexpectedMessage,
-	#[codec(index = 10)]
+	#[codec(index = 9)]
 	WrongSignatureType,
-	#[codec(index = 11)]
+	#[codec(index = 10)]
 	VerifyWeb3SignatureFailed,
-	#[codec(index = 12)]
+	#[codec(index = 11)]
 	RecoverEvmAddressFailed,
-	#[codec(index = 13)]
+	#[codec(index = 12)]
 	Web3NetworkOutOfBounds,
 }
 
@@ -96,20 +93,18 @@ where
 pub enum IMPError {
 	// errors when executing individual error
 	#[codec(index = 0)]
-	SetUserShieldingKeyFailed(ErrorDetail),
-	#[codec(index = 1)]
 	LinkIdentityFailed(ErrorDetail),
-	#[codec(index = 2)]
+	#[codec(index = 1)]
 	DeactivateIdentityFailed(ErrorDetail),
-	#[codec(index = 3)]
+	#[codec(index = 2)]
 	ActivateIdentityFailed(ErrorDetail),
 	// scheduled encalve import error
-	#[codec(index = 4)]
+	#[codec(index = 3)]
 	ImportScheduledEnclaveFailed,
 
 	// should be unreached, but just to be on the safe side
 	// we should classify the error if we ever get this
-	#[codec(index = 5)]
+	#[codec(index = 4)]
 	UnclassifiedError(ErrorDetail),
 }
 

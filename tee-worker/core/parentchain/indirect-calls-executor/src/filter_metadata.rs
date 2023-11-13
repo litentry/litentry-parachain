@@ -20,7 +20,7 @@ use crate::{
 	event_filter::{FilterEvents, MockEvents},
 	indirect_calls::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
-		RemoveScheduledEnclaveArgs, RequestVCArgs, SetUserShieldingKeyArgs, ShieldFundsArgs,
+		RemoveScheduledEnclaveArgs, RequestVCArgs, ShieldFundsArgs,
 		TransferToAliceShieldsFundsArgs, UpdateScheduledEnclaveArgs, ALICE_ACCOUNT_ID,
 	},
 	parentchain_parser::ParseExtrinsic,
@@ -151,11 +151,7 @@ where
 			Some(IndirectCall::Invoke(args))
 		}
 		// Litentry
-		else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
-			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
-			let hashed_extrinsic = xt.hashed_extrinsic;
-			Some(IndirectCall::SetUserShieldingKey(args, address, hashed_extrinsic))
-		} else if index == metadata.link_identity_call_indexes().ok()? {
+		else if index == metadata.link_identity_call_indexes().ok()? {
 			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
 			let hashed_extrinsic = xt.hashed_extrinsic;
 			Some(IndirectCall::LinkIdentity(args, address, hashed_extrinsic))
@@ -243,20 +239,18 @@ pub enum IndirectCall {
 	TransferToAliceShieldsFunds(TransferToAliceShieldsFundsArgs),
 	// Litentry
 	#[codec(index = 3)]
-	SetUserShieldingKey(SetUserShieldingKeyArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 4)]
 	LinkIdentity(LinkIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 5)]
+	#[codec(index = 4)]
 	DeactivateIdentity(DeactivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 6)]
+	#[codec(index = 5)]
 	ActivateIdentity(ActivateIdentityArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 7)]
+	#[codec(index = 6)]
 	RequestVC(RequestVCArgs, Option<MultiAddress<AccountId32, ()>>, H256),
-	#[codec(index = 8)]
+	#[codec(index = 7)]
 	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
-	#[codec(index = 9)]
+	#[codec(index = 8)]
 	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
-	#[codec(index = 10)]
+	#[codec(index = 9)]
 	BatchAll(Vec<IndirectCall>),
 }
 
@@ -270,8 +264,6 @@ impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for IndirectCall {
 			IndirectCall::TransferToAliceShieldsFunds(trans_args) =>
 				trans_args.dispatch(executor, ()),
 			// Litentry
-			IndirectCall::SetUserShieldingKey(set_shied, address, hash) =>
-				set_shied.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::LinkIdentity(verify_id, address, hash) =>
 				verify_id.dispatch(executor, (address.clone(), *hash)),
 			IndirectCall::DeactivateIdentity(deactivate_identity, address, hash) =>
@@ -356,10 +348,6 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 		} else if index == metadata.invoke_call_indexes().ok()? {
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			calls.push(IndirectCall::Invoke(args))
-		} else if index == metadata.set_user_shielding_key_call_indexes().ok()? {
-			let args = decode_and_log_error::<SetUserShieldingKeyArgs>(call_args)?;
-			let hashed_extrinsic = hash;
-			calls.push(IndirectCall::SetUserShieldingKey(args, address.clone(), hashed_extrinsic))
 		} else if index == metadata.link_identity_call_indexes().ok()? {
 			let args = decode_and_log_error::<LinkIdentityArgs>(call_args)?;
 			let hashed_extrinsic = hash;
