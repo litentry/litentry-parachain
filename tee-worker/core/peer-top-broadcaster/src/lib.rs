@@ -63,7 +63,7 @@ pub struct DirectRpcBroadcaster<ClientFactory>
 where
 	ClientFactory: RpcClientFactory,
 {
-	peers: Mutex<HashMap<String, ClientFactory::RpcClient>>,
+	peers: Mutex<HashMap<String, ClientFactory::Client>>,
 	responses_sender: SyncSender<Response>,
 	factory: ClientFactory,
 }
@@ -150,7 +150,7 @@ where
 		}
 	}
 
-	fn new_clear_peer_map(&self) -> HashMap<String, ClientFactory::RpcClient> {
+	fn new_clear_peer_map(&self) -> HashMap<String, ClientFactory::Client> {
 		HashMap::new()
 	}
 
@@ -164,7 +164,7 @@ where
 		}
 	}
 
-	fn connect_to(&self, url: &str, peer_list: &mut HashMap<String, ClientFactory::RpcClient>) {
+	fn connect_to(&self, url: &str, peer_list: &mut HashMap<String, ClientFactory::Client>) {
 		match self.factory.create(url, self.responses_sender.clone()) {
 			Ok(client) => {
 				peer_list.insert(url.to_string(), client);
@@ -294,13 +294,13 @@ pub mod tests {
 	pub struct MockedRpcClientFactory {}
 
 	impl RpcClientFactory for MockedRpcClientFactory {
-		type RpcClient = MockedRpcClient;
+		type Client = MockedRpcClient;
 
 		fn create(
 			&self,
 			_url: &str,
-			_responses_sink: SyncSender<Response>,
-		) -> Result<Self::RpcClient, Box<dyn Error>> {
+			_response_sink: SyncSender<Response>,
+		) -> Result<Self::Client, Box<dyn Error>> {
 			Ok(MockedRpcClient::default())
 		}
 	}

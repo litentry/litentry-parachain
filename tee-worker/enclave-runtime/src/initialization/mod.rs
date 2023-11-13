@@ -27,7 +27,7 @@ use crate::{
 		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
-		EnclaveTopPoolAuthor, DIRECT_RPC_REQUESTS_SINK_COMPONENT,
+		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT,
 		GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
@@ -188,11 +188,11 @@ pub(crate) fn init_enclave(
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
 
-	let (requests_sink, broadcaster) = init(rpc_responder);
-	let requests_sink_cloned = requests_sink.clone();
+	let (request_sink, broadcaster) = init(rpc_responder);
+	let request_sink_cloned = request_sink.clone();
 
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
-	DIRECT_RPC_REQUESTS_SINK_COMPONENT.initialize(requests_sink);
+	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
@@ -200,7 +200,7 @@ pub(crate) fn init_enclave(
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
-		requests_sink_cloned,
+		request_sink_cloned,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);

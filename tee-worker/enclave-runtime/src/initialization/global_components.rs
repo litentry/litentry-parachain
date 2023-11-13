@@ -384,9 +384,9 @@ pub static GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT: ComponentContainer<
 > = ComponentContainer::new("direct_rpc_broadcaster");
 
 #[allow(clippy::type_complexity)]
-pub static DIRECT_RPC_REQUESTS_SINK_COMPONENT: ComponentContainer<
+pub static DIRECT_RPC_REQUEST_SINK_COMPONENT: ComponentContainer<
 	sgx_tstd::sync::mpsc::SyncSender<(Option<(Hash, Vec<String>)>, Option<(Hash, Vec<String>)>)>,
-> = ComponentContainer::new("direct_rpc_requests_sink");
+> = ComponentContainer::new("direct_rpc_request_sink");
 
 /// attestation handler
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =

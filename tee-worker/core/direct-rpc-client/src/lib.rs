@@ -102,25 +102,25 @@ impl rustls::ClientCertVerifier for IgnoreCertVerifier {
 }
 
 pub trait RpcClientFactory {
-	type RpcClient: RpcClient;
+	type Client: RpcClient;
 	fn create(
 		&self,
 		url: &str,
-		responses_sink: SyncSender<Response>,
-	) -> Result<Self::RpcClient, Box<dyn Error>>;
+		response_sink: SyncSender<Response>,
+	) -> Result<Self::Client, Box<dyn Error>>;
 }
 
 pub struct DirectRpcClientFactory {}
 
 impl RpcClientFactory for DirectRpcClientFactory {
-	type RpcClient = DirectRpcClient;
+	type Client = DirectRpcClient;
 
 	fn create(
 		&self,
 		url: &str,
-		responses_sink: SyncSender<Response>,
-	) -> Result<Self::RpcClient, Box<dyn Error>> {
-		DirectRpcClient::new(url, responses_sink)
+		response_sink: SyncSender<Response>,
+	) -> Result<Self::Client, Box<dyn Error>> {
+		DirectRpcClient::new(url, response_sink)
 	}
 }
 
@@ -129,11 +129,11 @@ pub trait RpcClient {
 }
 
 pub struct DirectRpcClient {
-	requests_sink: Sender<String>,
+	request_sink: Sender<String>,
 }
 
 impl DirectRpcClient {
-	pub fn new(url: &str, responses_sink: SyncSender<Response>) -> Result<Self, Box<dyn Error>> {
+	pub fn new(url: &str, response_sink: SyncSender<Response>) -> Result<Self, Box<dyn Error>> {
 		let ws_server_url =
 			Url::from_str(url).map_err(|e| format!("Could not connect, reason: {:?}", e))?;
 		let mut config = rustls::ClientConfig::new();
@@ -149,20 +149,20 @@ impl DirectRpcClient {
 			client_tls_with_config(ws_server_url, stream, None, Some(connector))
 				.map_err(|e| format!("Could not open websocket connection: {:?}", e))?;
 
-		let (request_sender, requests_receiver) = channel();
+		let (request_sender, request_receiver) = channel();
 
 		//it fails to perform handshake in non_blocking mode so we are setting it up after the handshake is performed
 		Self::switch_to_non_blocking(&mut socket);
 
 		std::thread::spawn(move || loop {
 			// let's flush all pending requests first
-			while let Ok(request) = requests_receiver.try_recv() {
+			while let Ok(request) = request_receiver.try_recv() {
 				socket.write_message(Message::Text(request)).unwrap()
 			}
 
 			if let Ok(message) = socket.read_message() {
 				if let Ok(Some(response)) = Self::handle_ws_message(message) {
-					if let Err(e) = responses_sink.send(response) {
+					if let Err(e) = response_sink.send(response) {
 						log::error!("Could not forward response, reason: {:?}", e)
 					};
 				}
@@ -172,7 +172,7 @@ impl DirectRpcClient {
 
 		debug!("Connected to peer: {}", url);
 
-		Ok(Self { requests_sink: request_sender })
+		Ok(Self { request_sink: request_sender })
 	}
 
 	fn switch_to_non_blocking(socket: &mut WebSocket<MaybeTlsStream<TcpStream>>) {
@@ -258,7 +258,7 @@ impl RpcClient for DirectRpcClient {
 			RequestParams::Rsa(params) => self.prepare_rsa_request(request_id, params)?,
 			RequestParams::Aes(params) => self.prepare_aes_request(request_id, params)?,
 		};
-		self.requests_sink
+		self.request_sink
 			.send(request)
 			.map_err(|e| format!("Could not write message, reason: {:?}", e).into())
 	}

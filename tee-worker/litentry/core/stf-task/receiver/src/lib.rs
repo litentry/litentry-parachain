@@ -91,7 +91,7 @@ pub struct StfTaskContext<
 	enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
-	requests_sink: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
+	request_sink: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
 }
 
 impl<
@@ -110,9 +110,9 @@ where
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
-		requests_sink: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
+		request_sink: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api, requests_sink }
+		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api, request_sink }
 	}
 
 	fn submit_trusted_call(
@@ -172,7 +172,7 @@ where
 			Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e))
 		})?;
 		let params = vec![hex_encoded_request];
-		self.requests_sink.send((Some((top.hash(), params)), None)).unwrap();
+		self.request_sink.send((Some((top.hash(), params)), None)).unwrap();
 
 		Ok(())
 	}
