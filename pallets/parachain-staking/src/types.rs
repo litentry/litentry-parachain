@@ -85,10 +85,13 @@ impl<AccountId: Ord, Balance> PartialEq for Bond<AccountId, Balance> {
 pub enum CollatorStatus {
 	/// Committed to be online and producing valid blocks (not equivocating)
 	#[default]
+	#[codec(index = 0)]
 	Active,
 	/// Temporarily inactive and excused for inactivity
+	#[codec(index = 1)]
 	Idle,
 	/// Bonded until the inner round
+	#[codec(index = 2)]
 	Leaving(RoundIndex),
 }
 
@@ -252,10 +255,13 @@ impl<AccountId, Balance: Copy + Ord + sp_std::ops::AddAssign + Zero + Saturating
 /// Capacity status for top or bottom delegations
 pub enum CapacityStatus {
 	/// Reached capacity
+	#[codec(index = 0)]
 	Full,
 	/// Empty aka contains no delegations
+	#[codec(index = 1)]
 	Empty,
 	/// Partially full (nonempty and not full)
+	#[codec(index = 2)]
 	Partial,
 }
 
@@ -1020,13 +1026,16 @@ impl<
 /// Delegations added to the top yield a new total
 #[derive(Clone, Copy, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum DelegatorAdded<B> {
+	#[codec(index = 0)]
 	AddedToTop { new_total: B },
+	#[codec(index = 1)]
 	AddedToBottom,
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum DelegatorStatus {
 	/// Active with no scheduled exit
+	#[codec(index = 0)]
 	Active,
 }
 
