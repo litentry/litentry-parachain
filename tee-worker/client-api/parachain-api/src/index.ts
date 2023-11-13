@@ -15,4 +15,5 @@ export * from "@polkadot/api/types";
 import { default as identity } from "../build/interfaces/identity/definitions";
 import { default as vc } from "../build/interfaces/vc/definitions";
 import { default as trustedCalls } from "../build/interfaces/trustedCalls/definitions";
-export { identity, vc, trustedCalls };
+import { default as sidechain } from "../build/interfaces/sidechain/definitions";
+export { identity, vc, trustedCalls, sidechain };

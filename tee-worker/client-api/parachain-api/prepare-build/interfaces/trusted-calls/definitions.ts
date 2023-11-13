@@ -17,18 +17,6 @@ export default {
             index: "u32",
             signature: "LitentryMultiSignature",
         },
-        Getter: {
-            _enum: {
-                public: "(PublicGetter)",
-                trusted: "(TrustedGetterSigned)",
-            },
-        },
-        PublicGetter: {
-            _enum: {
-                some_value: "u32",
-                nonce: "(LitentryIdentity)",
-            },
-        },
         TrustedGetterSigned: {
             getter: "TrustedGetter",
             signature: "LitentryMultiSignature",
