@@ -24,8 +24,10 @@ use sp_std::prelude::*;
 
 #[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum SgxBuildMode {
+	#[codec(index = 0)]
 	Debug,
 	#[default]
+	#[codec(index = 1)]
 	Production,
 }
 

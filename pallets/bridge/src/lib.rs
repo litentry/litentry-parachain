@@ -77,8 +77,11 @@ pub mod pallet {
 
 	#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub enum ProposalStatus {
+		#[codec(index = 0)]
 		Initiated,
+		#[codec(index = 1)]
 		Approved,
+		#[codec(index = 2)]
 		Rejected,
 	}
 
@@ -92,8 +95,11 @@ pub mod pallet {
 
 	#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
 	pub enum BridgeEvent {
+		#[codec(index = 0)]
 		FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, u128, Vec<u8>),
+		#[codec(index = 1)]
 		NonFungibleTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>, Vec<u8>, Vec<u8>),
+		#[codec(index = 2)]
 		GenericTransfer(BridgeChainId, DepositNonce, ResourceId, Vec<u8>),
 	}
 
