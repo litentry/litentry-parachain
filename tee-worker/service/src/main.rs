@@ -1281,6 +1281,15 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
 		data_provider_config.set_sora_quiz_attendee_id(v);
 	}
+	if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_legend_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("CONTEST_POPULARITY_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_popularity_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_participant_discord_role_id(v);
+	}
 
 	data_provider_config
 }
