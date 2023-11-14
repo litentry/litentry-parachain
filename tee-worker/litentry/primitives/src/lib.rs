@@ -66,14 +66,19 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum LitentryMultiSignature {
 	/// An Ed25519 signature.
+	#[codec(index = 0)]
 	Ed25519(ed25519::Signature),
 	/// An Sr25519 signature.
+	#[codec(index = 1)]
 	Sr25519(sr25519::Signature),
 	/// An ECDSA/SECP256k1 signature.
+	#[codec(index = 2)]
 	Ecdsa(ecdsa::Signature),
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
+	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
 	/// Same as the above, but the payload bytes are hex-encoded and prepended with a readable prefix
+	#[codec(index = 4)]
 	EthereumPrettified(EthereumSignature),
 }
 

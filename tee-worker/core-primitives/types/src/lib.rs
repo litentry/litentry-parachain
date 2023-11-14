@@ -128,52 +128,70 @@ impl<AccountId> EnclaveGen<AccountId> {
 #[derive(Debug, Clone, PartialEq, Encode, Decode)]
 pub enum DirectRequestStatus {
 	/// Direct request was successfully executed
+	#[codec(index = 0)]
 	Ok,
 	/// Trusted Call Status
 	/// Litentry: embed the top hash here - TODO - use generic type?
+	#[codec(index = 1)]
 	TrustedOperationStatus(TrustedOperationStatus, H256),
 	/// Direct request could not be executed
+	#[codec(index = 2)]
 	Error,
 }
 
 #[derive(Debug, Clone, PartialEq, Encode, Decode)]
 pub enum TrustedOperationStatus {
 	/// TrustedOperation is submitted to the top pool.
+	#[codec(index = 0)]
 	Submitted,
 	/// TrustedOperation is part of the future queue.
+	#[codec(index = 1)]
 	Future,
 	/// TrustedOperation is part of the ready queue.
+	#[codec(index = 2)]
 	Ready,
 	/// The operation has been broadcast to the given peers.
+	#[codec(index = 3)]
 	Broadcast,
 	/// TrustedOperation has been included in block with given hash.
+	#[codec(index = 4)]
 	InSidechainBlock(BlockHash),
 	/// The block this operation was included in has been retracted.
+	#[codec(index = 5)]
 	Retracted,
 	/// Maximum number of finality watchers has been reached,
 	/// old watchers are being removed.
+	#[codec(index = 6)]
 	FinalityTimeout,
 	/// TrustedOperation has been finalized by a finality-gadget, e.g GRANDPA
+	#[codec(index = 7)]
 	Finalized,
 	/// TrustedOperation has been replaced in the pool, by another operation
 	/// that provides the same tags. (e.g. same (sender, nonce)).
+	#[codec(index = 8)]
 	Usurped,
 	/// TrustedOperation has been dropped from the pool because of the limit.
+	#[codec(index = 9)]
 	Dropped,
 	/// TrustedOperation is no longer valid in the current state.
+	#[codec(index = 10)]
 	Invalid,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum WorkerRequest {
+	#[codec(index = 0)]
 	ChainStorage(Vec<u8>, Option<BlockHash>), // (storage_key, at_block)
+	#[codec(index = 1)]
 	ChainStorageKeys(Vec<u8>, Option<BlockHash>), // (storage_key_prefix, at_block)
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
 pub enum WorkerResponse<V: Encode + Decode> {
+	#[codec(index = 0)]
 	ChainStorage(Vec<u8>, Option<V>, Option<Vec<Vec<u8>>>), // (storage_key, storage_value, storage_proof)
-	ChainStorageKeys(Vec<Vec<u8>>),                         // (storage_keys)
+	#[codec(index = 1)]
+	ChainStorageKeys(Vec<Vec<u8>>), // (storage_keys)
 }
 
 impl From<WorkerResponse<Vec<u8>>> for StorageEntry<Vec<u8>> {

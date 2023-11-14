@@ -40,7 +40,9 @@ use crate::helpers::ALICE_ACCOUNTID32;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum Getter {
+	#[codec(index = 0)]
 	public(PublicGetter),
+	#[codec(index = 1)]
 	trusted(TrustedGetterSigned),
 }
 
@@ -59,23 +61,32 @@ impl From<TrustedGetterSigned> for Getter {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
+	#[codec(index = 0)]
 	some_value,
+	#[codec(index = 1)]
 	nonce(Identity),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedGetter {
+	#[codec(index = 0)]
 	free_balance(Identity),
+	#[codec(index = 1)]
 	reserved_balance(Identity),
 	#[cfg(feature = "evm")]
+	#[codec(index = 2)]
 	evm_nonce(Identity),
 	#[cfg(feature = "evm")]
+	#[codec(index = 3)]
 	evm_account_codes(Identity, H160),
 	#[cfg(feature = "evm")]
+	#[codec(index = 4)]
 	evm_account_storages(Identity, H160, H256),
 	// litentry
+	#[codec(index = 5)]
 	id_graph(Identity),
+	#[codec(index = 6)]
 	id_graph_stats(Identity),
 }
 
