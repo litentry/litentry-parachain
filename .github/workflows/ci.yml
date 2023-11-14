@@ -679,6 +679,9 @@ jobs:
           docker load < litentry-tee.tar.gz
           docker images
 
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+        
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
@@ -687,9 +690,6 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
         
       - name: Update metadata and generate types
         timeout-minutes: 10
