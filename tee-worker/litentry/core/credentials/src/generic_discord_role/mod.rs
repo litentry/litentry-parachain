@@ -20,7 +20,7 @@ use crate::{
 };
 use litentry_primitives::GenericDiscordRoleType;
 
-// ContestLegend / ContestPopularity / ContestParticipant
+// Legend / Popularity / Participant
 // (type, description)
 const VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS: [(&str, &str); 3] = [
 	("Litentry & Contest Legend", "You got the Top Award of community contest."),
@@ -53,9 +53,9 @@ impl GenericDiscordRoleAssertionUpdate for Credential {
 
 fn get_generic_discord_role_assertion_content(ctype: &GenericDiscordRoleType) -> &'static str {
 	match ctype {
-		GenericDiscordRoleType::ContestLegend => "$is_contest_legend",
-		GenericDiscordRoleType::ContestPopularity => "$is_contest_popularity",
-		GenericDiscordRoleType::ContestParticipant => "$is_contest_participant",
+		GenericDiscordRoleType::Legend => "$is_contest_legend",
+		GenericDiscordRoleType::Popularity => "$is_contest_popularity",
+		GenericDiscordRoleType::Participant => "$is_contest_participant",
 	}
 }
 
@@ -63,8 +63,8 @@ fn get_generic_discord_role_assertion_info(
 	ctype: &GenericDiscordRoleType,
 ) -> (&'static str, &'static str) {
 	match ctype {
-		GenericDiscordRoleType::ContestLegend => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[0],
-		GenericDiscordRoleType::ContestPopularity => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[1],
-		GenericDiscordRoleType::ContestParticipant => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[2],
+		GenericDiscordRoleType::Legend => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[0],
+		GenericDiscordRoleType::Popularity => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[1],
+		GenericDiscordRoleType::Participant => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[2],
 	}
 }

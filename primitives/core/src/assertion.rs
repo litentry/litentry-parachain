@@ -212,7 +212,7 @@ pub enum Assertion {
 
 	// Sora Quiz
 	#[codec(index = 14)]
-	SoraQuiz(SoraQuizType, ParameterString),  // (sora_quiz_type, guild_id)
+	SoraQuiz(SoraQuizType),  // (sora_quiz_type)
 
 	// GenericDiscordRole
 	#[codec(index = 15)]

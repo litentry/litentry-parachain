@@ -19,7 +19,7 @@ use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum GenericDiscordRoleType {
-	ContestLegend,
-	ContestPopularity,
-	ContestParticipant,
+	Legend,
+	Popularity,
+	Participant,
 }

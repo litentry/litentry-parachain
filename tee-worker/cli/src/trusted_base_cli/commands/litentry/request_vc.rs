@@ -146,9 +146,9 @@ pub enum SoraQuizCommand {
 
 #[derive(Subcommand)]
 pub enum GenericDiscordRoleCommand {
-	ContestLegend,
-	ContestPopularity,
-	ContestParticipant,
+	Legend,
+	Popularity,
+	Participant,
 }
 
 // I haven't found a good way to use common args for subcommands
@@ -403,12 +403,12 @@ impl RequestVcCommand {
 				SoraQuizCommand::Master => Assertion::SoraQuiz(SoraQuizType::Master),
 			},
 			Command::GenericDiscordRole(c) => match c {
-				GenericDiscordRoleCommand::ContestLegend =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::ContestLegend),
-				GenericDiscordRoleCommand::ContestPopularity =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::ContestPopularity),
-				GenericDiscordRoleCommand::ContestParticipant =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::ContestParticipant),
+				GenericDiscordRoleCommand::Legend =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Legend),
+				GenericDiscordRoleCommand::Popularity =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Popularity),
+				GenericDiscordRoleCommand::Participant =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Participant),
 			},
 		};
 

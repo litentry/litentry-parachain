@@ -71,11 +71,10 @@ fn get_generic_discord_role_id(
 ) -> core::result::Result<String, ErrorDetail> {
 	let data_provider_config = DataProviderConfigReader::read()?;
 	match rtype {
-		GenericDiscordRoleType::ContestLegend =>
-			Ok(data_provider_config.contest_legend_discord_role_id),
-		GenericDiscordRoleType::ContestPopularity =>
+		GenericDiscordRoleType::Legend => Ok(data_provider_config.contest_legend_discord_role_id),
+		GenericDiscordRoleType::Popularity =>
 			Ok(data_provider_config.contest_popularity_discord_role_id),
-		GenericDiscordRoleType::ContestParticipant =>
+		GenericDiscordRoleType::Participant =>
 			Ok(data_provider_config.contest_participant_discord_role_id),
 	}
 }
@@ -112,14 +111,14 @@ mod tests {
 			signer: AccountId::from([0; 32]),
 			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
-			assertion: Assertion::GenericDiscordRole(GenericDiscordRoleType::ContestLegend),
+			assertion: Assertion::GenericDiscordRole(GenericDiscordRoleType::Legend),
 			identities,
 			top_hash: Default::default(),
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
 
-		let _ = build(&req, GenericDiscordRoleType::ContestLegend);
+		let _ = build(&req, GenericDiscordRoleType::Legend);
 		log::info!("build GenericDiscordRole done");
 	}
 }
