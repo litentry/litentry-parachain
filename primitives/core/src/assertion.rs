@@ -17,7 +17,10 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{AccountId, BoundedWeb3Network, OneBlockCourseType, SoraQuizType, Web3Network};
+use crate::{
+	AccountId, BnbDigitDomainType, BoundedWeb3Network, OneBlockCourseType, SoraQuizType,
+	Web3Network,
+};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -188,6 +191,7 @@ pub enum Assertion {
 
 	// ----- begin SPACEID -----
 	BnbDomainHolding,
+	BnbDigitDomainClub(BnbDigitDomainType),
 	// ----- end SPACEID -----
 }
 
@@ -217,8 +221,8 @@ impl Assertion {
 			Self::Achainable(a) => vec![a.chain()],
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
-			// BnbDomainHolding Assertion
-			Self::BnbDomainHolding => vec![Web3Network::Bsc],
+			// SPACEID Assertions
+			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

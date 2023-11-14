@@ -20,12 +20,16 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use super::{SPACEIDLogic, SPACEIDLogicInterface};
+use super::{BnbDomainInfo, BnbDomainInfoInterface};
 use crate::*;
-use lc_credentials::spaceid::bnb_domain_holding_amount::SpaceIDBnbDomainHoldingAmount;
+use lc_credentials::bnb_domain::bnb_digit_domain_club_amount::UpdateDigitDomainClubAmountCredential;
+use litentry_primitives::BnbDigitDomainType;
 
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	debug!("SPACEID bnb domain holding amount");
+pub fn build(
+	req: &AssertionBuildRequest,
+	digit_domain_type: BnbDigitDomainType,
+) -> Result<Credential> {
+	debug!("building digit_domain credential: {:?}", digit_domain_type);
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -33,15 +37,18 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let amount = SPACEIDLogic::get_bnb_domain_holding_amount(&addresses)?;
+	let amount = BnbDomainInfo.get_bnb_digit_domain_club_amount(&addresses, &digit_domain_type)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_spaceid_bnb_holding_amount(amount);
+			credential_unsigned.update_digit_domain_club_amount(&digit_domain_type, amount);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
 			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::BnbDomainHolding, e.into_error_detail()))
+			Err(Error::RequestVCFailed(
+				Assertion::BnbDigitDomainClub(digit_domain_type),
+				e.into_error_detail(),
+			))
 		},
 	}
 }

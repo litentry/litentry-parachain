@@ -107,7 +107,7 @@ impl NoderealClient {
 	}
 }
 
-pub trait NoderealHttpMethos {
+pub trait NoderealHttpMethods {
 	fn post(
 		&mut self,
 		path: NoderealServiceReqPath,
@@ -115,7 +115,7 @@ pub trait NoderealHttpMethos {
 	) -> Result<serde_json::Value, Error>;
 }
 
-impl NoderealHttpMethos for NoderealClient {
+impl NoderealHttpMethods for NoderealClient {
 	fn post(
 		&mut self,
 		path: NoderealServiceReqPath,
@@ -149,7 +149,7 @@ impl DomainInfo {
 		// "expires": "2032-08-24T00:15:56Z"
 		let expired =
 			NaiveDateTime::parse_from_str(&self.expires, "%Y-%m-%dT%H:%M:%SZ").map_err(|e| {
-				Error::AchainableError(format!("Nodereal parse domain expires date error: {:?}", e))
+				Error::Utf8Error(format!("Nodereal parse domain expires date error: {:?}", e))
 			})?;
 		let expired: DateTime<TzUtc> = DateTime::from_utc(expired, TzUtc);
 
@@ -157,13 +157,13 @@ impl DomainInfo {
 	}
 }
 
-pub trait SpaceIDApiList {
+pub trait BnbDomainApiList {
 	fn by_owners(&mut self, owners: &[String]) -> Result<serde_json::Value, Error>;
 	fn by_binds(&mut self, owners: &[String]) -> Result<serde_json::Value, Error>;
 	fn by_names(&mut self, names: &[String]) -> Result<serde_json::Value, Error>;
 }
 
-impl SpaceIDApiList for NoderealClient {
+impl BnbDomainApiList for NoderealClient {
 	fn by_owners(&mut self, owners: &[String]) -> Result<serde_json::Value, Error> {
 		let req_body = SpaceIDReqBody(owners.to_vec());
 		let path = NoderealServiceReqPath::new(&self.api_key, "byOwners");
