@@ -228,12 +228,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c7f02d4ea65f2c1853089ffd8d2787bdbc63de2f0d29dedbcf8ccdfa0ccd4cf"
 
 [[package]]
-name = "base58"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6107fe1be6682a68940da878d9e9f5e90ca5745b3dec9fd1bb393c8777d4f581"
-
-[[package]]
 name = "base64"
 version = "0.13.0"
 source = "git+https://github.com/mesalock-linux/rust-base64-sgx?tag=sgx_1.1.3#dc7389e10817b078f289386b3b6a852ab6c4c021"
@@ -1975,7 +1969,6 @@ name = "itp-api-client-types"
 version = "0.9.0"
 dependencies = [
  "itp-types",
- "sp-core",
  "sp-runtime",
  "substrate-api-client",
 ]
@@ -2019,16 +2012,6 @@ version = "0.8.0"
 dependencies = [
  "sgx_tstd",
  "thiserror",
-]
-
-[[package]]
-name = "itp-enclave-bridge-storage"
-version = "0.9.0"
-dependencies = [
- "itp-storage",
- "itp-types",
- "parity-scale-codec",
- "sp-std",
 ]
 
 [[package]]
@@ -2088,18 +2071,10 @@ dependencies = [
 name = "itp-node-api-metadata"
 version = "0.9.0"
 dependencies = [
- "base58",
  "derive_more",
- "hex 0.4.3",
  "itp-api-client-types",
- "itp-sgx-runtime-primitives",
- "itp-types",
- "litentry-primitives",
- "log",
  "parity-scale-codec",
- "primitive-types",
  "sp-core",
- "substrate-api-client",
 ]
 
 [[package]]
@@ -2115,7 +2090,6 @@ dependencies = [
 name = "itp-nonce-cache"
 version = "0.8.0"
 dependencies = [
- "lazy_static",
  "sgx_tstd",
  "thiserror",
 ]
@@ -2325,7 +2299,6 @@ name = "itp-teerex-storage"
 version = "0.9.0"
 dependencies = [
  "itp-storage",
- "itp-types",
  "sp-std",
 ]
 
@@ -2419,7 +2392,6 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "teerex-primitives 0.1.0",
 ]
 
 [[package]]
@@ -2620,11 +2592,9 @@ version = "0.9.0"
 dependencies = [
  "derive_more",
  "frame-support",
- "itp-enclave-bridge-storage",
  "itp-ocall-api",
  "itp-teerex-storage",
  "itp-types",
- "its-primitives",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",

@@ -205,12 +205,17 @@ impl Debug for Address32 {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Identity {
 	// web2
+	#[codec(index = 0)]
 	Twitter(IdentityString),
+	#[codec(index = 1)]
 	Discord(IdentityString),
+	#[codec(index = 2)]
 	Github(IdentityString),
 
 	// web3
+	#[codec(index = 3)]
 	Substrate(Address32),
+	#[codec(index = 4)]
 	Evm(Address20),
 }
 

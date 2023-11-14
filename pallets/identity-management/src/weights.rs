@@ -52,8 +52,6 @@ pub trait WeightInfo {
 	fn link_identity() -> Weight;
 	fn deactivate_identity() -> Weight;
 	fn activate_identity() -> Weight;
-	fn set_user_shielding_key() -> Weight;
-	fn user_shielding_key_set() -> Weight;
 	fn identity_linked() -> Weight;
 	fn identity_deactivated() -> Weight;
 	fn identity_activated() -> Weight;
@@ -92,18 +90,6 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn activate_identity() -> Weight {
 		Weight::from_parts(8_129_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-	}
-	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	fn set_user_shielding_key() -> Weight {
-		Weight::from_parts(8_250_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-	}
-	// Storage: Teerex EnclaveIndex (r:1 w:0)
-	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	fn user_shielding_key_set() -> Weight {
-		Weight::from_parts(10_319_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -163,18 +149,6 @@ impl WeightInfo for () {
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn activate_identity() -> Weight {
 		Weight::from_parts(8_129_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-	}
-	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	fn set_user_shielding_key() -> Weight {
-		Weight::from_parts(8_250_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-	}
-	// Storage: Teerex EnclaveIndex (r:1 w:0)
-	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	fn user_shielding_key_set() -> Weight {
-		Weight::from_parts(10_319_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)

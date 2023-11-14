@@ -1,18 +1,14 @@
 import {
     describeLitentry,
     buildIdentityTxs,
-    handleIdentityEvents,
     buildIdentityHelper,
     buildValidations,
     checkErrorDetail,
     buildIdentityFromKeypair,
     PolkadotSigner,
 } from './common/utils';
-import { aesKey } from './common/call';
-import { u8aToHex } from '@polkadot/util';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
-import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
+import { sendTxsWithUtility } from './common/transactions';
 import { generateWeb3Wallets, assertIdentityLinked, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
@@ -33,23 +29,6 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         });
     });
 
-    step('set user shielding key', async function () {
-        const [aliceTxs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
-        const events = await multiAccountTxSender(
-            context,
-            [aliceTxs],
-            [context.substrateWallet.alice],
-            'identityManagement',
-            ['UserShieldingKeySet']
-        );
-        const [alice] = await handleIdentityEvents(context, aesKey, events, 'UserShieldingKeySet');
-        assert.equal(
-            alice.who,
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            'alice shielding key should be set'
-        );
-    });
-
     step('batch test: link identities', async function () {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
@@ -66,7 +45,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             context,
             signerIdentities,
             identities,
-            1,
+            0,
             'ethereum',
             undefined,
             ethereumSigners

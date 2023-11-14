@@ -32,9 +32,6 @@ pub use assertion::*;
 mod error;
 pub use error::*;
 
-mod key;
-pub use key::*;
-
 mod vc;
 pub use vc::*;
 

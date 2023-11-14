@@ -178,7 +178,7 @@ jobs:
     steps:
       - name: Wait for previous run
         if: ${{ !failure() && (github.event_name == 'push') && (github.ref == 'refs/heads/dev') }}
-        uses: mktcode/consecutive-workflow-action@main
+        uses: litentry/consecutive-workflow-action@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           interval: 300
@@ -726,7 +726,6 @@ jobs:
           - test_name: demo-indirect-invocation
           - test_name: demo-direct-call
           # Litentry
-          - test_name: lit-user-shielding-key
           - test_name: lit-set-heartbeat-timeout
           - test_name: lit-ii-vc-test
           - test_name: lit-ii-identity-test

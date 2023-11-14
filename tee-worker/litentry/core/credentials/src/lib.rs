@@ -92,11 +92,13 @@ pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 /// https://w3c-ccg.github.io/ld-cryptosuite-registry
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum ProofType {
+	#[codec(index = 0)]
 	Ed25519Signature2020,
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum CredentialType {
+	#[codec(index = 0)]
 	VerifiableCredential,
 }
 

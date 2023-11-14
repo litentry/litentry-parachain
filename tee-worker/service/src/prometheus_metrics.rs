@@ -279,12 +279,6 @@ where
 		TrustedCall::request_vc(..) => {
 			record_metric_fn("request_vc");
 		},
-		TrustedCall::set_user_shielding_key(..) => {
-			record_metric_fn("set_user_shielding_key");
-		},
-		TrustedCall::set_user_shielding_key_with_networks(..) => {
-			record_metric_fn("set_user_shielding_key_with_networks");
-		},
 		TrustedCall::link_identity_callback(..) => {
 			record_metric_fn("link_identity_callback");
 		},

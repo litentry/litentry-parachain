@@ -105,28 +105,6 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 			.saturating_add(Weight::from_parts(0, 1561))
 			.saturating_add(T::DbWeight::get().reads(1))
 	}
-	/// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	/// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	fn set_user_shielding_key() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `76`
-		//  Estimated: `1561`
-		// Minimum execution time: 15_879_000 picoseconds.
-		Weight::from_parts(16_346_000, 0)
-			.saturating_add(Weight::from_parts(0, 1561))
-			.saturating_add(T::DbWeight::get().reads(1))
-	}
-	/// Storage: Teerex EnclaveIndex (r:1 w:0)
-	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	fn user_shielding_key_set() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `242`
-		//  Estimated: `3707`
-		// Minimum execution time: 19_573_000 picoseconds.
-		Weight::from_parts(19_992_000, 0)
-			.saturating_add(Weight::from_parts(0, 3707))
-			.saturating_add(T::DbWeight::get().reads(1))
-	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn identity_linked() -> Weight {
