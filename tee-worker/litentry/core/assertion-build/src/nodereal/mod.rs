@@ -62,7 +62,7 @@ impl BnbDomainInfoInterface for BnbDomainInfo {
 		let owned_domains: Domains = Domains::from_value(&response)
 			.map_err(|e| Error::RequestVCFailed(Assertion::BnbDomainHolding, e))?;
 
-		Ok(owned_domains.non_expired_domains()?.len())
+		Ok(owned_domains.non_expired_domain_infos()?.len())
 	}
 
 	fn get_bnb_digit_domain_club_amount(
@@ -74,8 +74,9 @@ impl BnbDomainInfoInterface for BnbDomainInfo {
 			Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)
 		})?;
 
-		let owned_domains: Domains = Domains::from_value(&response)
-			.map_err(|e| Error::RequestVCFailed(Assertion::BnbDomainHolding, e))?;
+		let owned_domains: Domains = Domains::from_value(&response).map_err(|e| {
+			Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)
+		})?;
 
 		Ok(owned_domains.digit_club_domains(digit_domain_type)?.len())
 	}
@@ -134,12 +135,12 @@ impl Domains {
 		self.domains.len()
 	}
 
-	pub fn non_expired_domains(&self) -> Result<Vec<&DomainInfo>> {
+	pub fn non_expired_domain_infos(&self) -> Result<Vec<&DomainInfo>> {
 		let mut ts: Vec<&DomainInfo> = vec![];
 
 		for domain in self.domains.iter() {
 			for info in domain.domain_infos.iter() {
-				// Filter out expired domain sizing
+				// Filter out expired domain
 				let expired = info.is_expired().map_err(|e| {
 					Error::RequestVCFailed(Assertion::BnbDomainHolding, e.into_error_detail())
 				})?;
@@ -156,26 +157,22 @@ impl Domains {
 		&self,
 		digit_domain_type: &BnbDigitDomainType,
 	) -> Result<Vec<&DomainInfo>> {
-		let domains = self.non_expired_domains()?;
+		let domains = self.non_expired_domain_infos()?;
+		let infos: Vec<&DomainInfo> = domains
+			.into_iter()
+			.filter(|info| digit_domain_type.is_member(&info.name))
+			.collect();
 
-		let mut ts: Vec<&DomainInfo> = vec![];
-		for domain in domains.iter() {
-			if digit_domain_type.is_member(&domain.name) {
-				ts.push(domain);
-			}
-		}
-
-		Ok(ts)
+		Ok(infos)
 	}
 }
 
 #[cfg(test)]
 mod tests {
+	use litentry_primitives::BnbDigitDomainType;
 	use super::Domains;
 
-	#[test]
-	fn domain_from_value_works() {
-		let value = r#"
+	const RESPONSE: &'static str = r#"
 		{
 			"0xr4b0bf28adfcee93c5069982a895785c9231c1fe1": [
 				{
@@ -251,20 +248,42 @@ mod tests {
 				{
 					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
 					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "333r",
+					"name": "000",
 					"expires": "2024-10-30T18:40:51Z"
 				},
 				{
 					"nodeHash": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
 					"bind": "0xr4b0bf28adfcee93c5069982a895785c9231c1fe",
-					"name": "tttx",
+					"name": "999",
 					"expires": "2024-03-19T18:16:59Z"
 				}
 			]
 		}
 		"#;
-		let value: serde_json::Value = serde_json::from_str(value).unwrap();
-		let domains = Domains::from_value(&value).unwrap();
+
+	fn new_domains() -> Domains {
+		let value: serde_json::Value = serde_json::from_str(RESPONSE).unwrap();
+		Domains::from_value(&value).unwrap()
+	}
+
+	#[test]
+	fn domain_from_value_works() {
+		let domains = new_domains();
 		assert_eq!(domains.size(), 6);
+	}
+
+	#[test]
+	fn non_expired_domain_infos_works() {
+		let domains = new_domains();
+		let non_expired_infos = domains.non_expired_domain_infos().unwrap();
+		assert_eq!(non_expired_infos.len(), 7);
+	}
+
+	#[test]
+	fn digit_999_club_domains_works() {
+		let domains = new_domains();
+		let digit_domain_type = BnbDigitDomainType::Bnb999ClubMember;
+		let digit_999_amount = domains.digit_club_domains(&digit_domain_type).unwrap();
+		assert_eq!(digit_999_amount.len(), 2);
 	}
 }
