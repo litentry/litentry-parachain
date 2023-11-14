@@ -30,10 +30,13 @@ use std::{boxed::Box, vec::Vec};
 #[allow(clippy::large_enum_variant)]
 pub enum TrustedOperationOrHash<Hash> {
 	/// The hash of the call.
+	#[codec(index = 0)]
 	Hash(Hash),
 	/// Raw extrinsic bytes.
+	#[codec(index = 1)]
 	OperationEncoded(Vec<u8>),
 	/// Raw extrinsic
+	#[codec(index = 2)]
 	Operation(Box<TrustedOperation>),
 }
 

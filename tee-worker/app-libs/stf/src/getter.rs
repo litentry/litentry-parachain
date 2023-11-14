@@ -40,7 +40,9 @@ use crate::helpers::ALICE_ACCOUNTID32;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum Getter {
+	#[codec(index = 0)]
 	public(PublicGetter),
+	#[codec(index = 1)]
 	trusted(TrustedGetterSigned),
 }
 
@@ -59,24 +61,32 @@ impl From<TrustedGetterSigned> for Getter {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
+	#[codec(index = 0)]
 	some_value,
+	#[codec(index = 1)]
 	nonce(Identity),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedGetter {
+	#[codec(index = 0)]
 	free_balance(Identity),
+	#[codec(index = 1)]
 	reserved_balance(Identity),
 	#[cfg(feature = "evm")]
+	#[codec(index = 2)]
 	evm_nonce(Identity),
 	#[cfg(feature = "evm")]
+	#[codec(index = 3)]
 	evm_account_codes(Identity, H160),
 	#[cfg(feature = "evm")]
+	#[codec(index = 4)]
 	evm_account_storages(Identity, H160, H256),
 	// litentry
-	user_shielding_key(Identity),
+	#[codec(index = 5)]
 	id_graph(Identity),
+	#[codec(index = 6)]
 	id_graph_stats(Identity),
 }
 
@@ -92,7 +102,6 @@ impl TrustedGetter {
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_account_storages(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedGetter::user_shielding_key(sender_identity, ..) => sender_identity,
 			TrustedGetter::id_graph(sender_identity) => sender_identity,
 			TrustedGetter::id_graph_stats(sender_identity) => sender_identity,
 		}
@@ -205,10 +214,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::user_shielding_key(who) =>
-				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
-			TrustedGetter::id_graph(who) =>
-				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
+			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
 
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.

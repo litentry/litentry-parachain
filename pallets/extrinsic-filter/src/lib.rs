@@ -87,10 +87,13 @@ pub use weights::WeightInfo;
 pub enum OperationalMode {
 	/// when parachain runs normally
 	#[default]
+	#[codec(index = 0)]
 	Normal,
 	/// when parachain traps in contigency situation
+	#[codec(index = 1)]
 	Safe,
 	/// when parachain is used for testing purpose
+	#[codec(index = 2)]
 	Test,
 }
 

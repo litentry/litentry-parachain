@@ -45,20 +45,19 @@ pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableParams, AchainableToken, AesOutput, AmountHoldingTimeType, Assertion,
+	AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
 	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BoundedWeb3Network,
 	ErrorDetail, ErrorString, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
 	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	SchemaContentString, SchemaIdString, ShardIdentifier, Signature as ParentchainSignature,
-	SoraQuizType, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, Web3Network,
-	ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
+	SchemaContentString, SchemaIdString, Signature as ParentchainSignature, SoraQuizType,
+	VCMPError, Web3Network, ASSERTION_FROM_DATE, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
 use std::string::ToString;
-pub use teerex_primitives::decl_rsa_request;
+pub use teerex_primitives::{decl_rsa_request, ShardIdentifier};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -67,14 +66,19 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum LitentryMultiSignature {
 	/// An Ed25519 signature.
+	#[codec(index = 0)]
 	Ed25519(ed25519::Signature),
 	/// An Sr25519 signature.
+	#[codec(index = 1)]
 	Sr25519(sr25519::Signature),
 	/// An ECDSA/SECP256k1 signature.
+	#[codec(index = 2)]
 	Ecdsa(ecdsa::Signature),
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
+	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
 	/// Same as the above, but the payload bytes are hex-encoded and prepended with a readable prefix
+	#[codec(index = 4)]
 	EthereumPrettified(EthereumSignature),
 }
 

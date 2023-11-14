@@ -98,7 +98,6 @@ describe('load test runner', function () {
                         api.parachainApi,
                         api.mrEnclave,
                         api.teeShieldingKey,
-                        session.userShieldingKey,
                         session.nextNonce(),
                         session.subject,
                         log
