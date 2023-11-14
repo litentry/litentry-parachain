@@ -18,8 +18,8 @@
 // when requesting VCs.
 
 use crate::{
-	AccountId, BnbDigitDomainType, BoundedWeb3Network, OneBlockCourseType, SoraQuizType,
-	Web3Network,
+	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
+	SoraQuizType, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -212,10 +212,17 @@ pub enum Assertion {
 
 	// Sora Quiz
 	#[codec(index = 14)]
-	SoraQuiz(SoraQuizType, ParameterString),  // (sora_quiz_type, guild_id)
+	SoraQuiz(SoraQuizType),  // (sora_quiz_type)
+
+	// GenericDiscordRole
+	#[codec(index = 15)]
+	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
 
 	// ----- begin SPACEID -----
+	#[codec(index = 16)]
 	BnbDomainHolding,
+
+	#[codec(index = 17)]
 	BnbDigitDomainClub(BnbDigitDomainType),
 	// ----- end SPACEID -----
 }

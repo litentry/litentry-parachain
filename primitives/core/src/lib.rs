@@ -44,6 +44,8 @@ pub use soraquiz::*;
 mod bnb_domain;
 pub use bnb_domain::*;
 
+mod generic_discord_role;
+pub use generic_discord_role::*;
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{

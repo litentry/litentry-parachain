@@ -169,8 +169,8 @@ impl Domains {
 
 #[cfg(test)]
 mod tests {
-	use litentry_primitives::BnbDigitDomainType;
 	use super::Domains;
+	use litentry_primitives::BnbDigitDomainType;
 
 	const RESPONSE: &'static str = r#"
 		{
