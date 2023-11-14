@@ -24,27 +24,18 @@ use crate::*;
 use lc_credentials::{sora::SoraQuizAssertionUpdate, Credential};
 use lc_data_providers::{discord_litentry::DiscordLitentryClient, GLOBAL_DATA_PROVIDER_CONFIG};
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{ParameterString, SoraQuizType};
+use litentry_primitives::SoraQuizType;
 
-pub fn build(
-	req: &AssertionBuildRequest,
-	qtype: SoraQuizType,
-	guild_id: ParameterString,
-) -> Result<Credential> {
+pub fn build(req: &AssertionBuildRequest, qtype: SoraQuizType) -> Result<Credential> {
 	let role_id = get_sora_quiz_role_id(&qtype);
 
 	let mut has_role_value = false;
 	let mut client = DiscordLitentryClient::new();
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
-			let resp = client
-				.has_role(guild_id.to_vec(), role_id.clone(), address.to_vec())
-				.map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::SoraQuiz(qtype.clone(), guild_id.clone()),
-						e.into_error_detail(),
-					)
-				})?;
+			let resp = client.has_role(role_id.clone(), address.to_vec()).map_err(|e| {
+				Error::RequestVCFailed(Assertion::SoraQuiz(qtype.clone()), e.into_error_detail())
+			})?;
 
 			debug!("Litentry & SORA Quiz has role response: {:?}", resp);
 
@@ -62,7 +53,7 @@ pub fn build(
 		},
 		Err(e) => {
 			error!("Generate unsigned credential SoraQuiz failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::SoraQuiz(qtype, guild_id), e.into_error_detail()))
+			Err(Error::RequestVCFailed(Assertion::SoraQuiz(qtype), e.into_error_detail()))
 		},
 	}
 }

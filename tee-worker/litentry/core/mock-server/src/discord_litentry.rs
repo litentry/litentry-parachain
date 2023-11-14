@@ -80,3 +80,30 @@ pub(crate) fn check_id_hubber(
 			}
 		})
 }
+
+pub(crate) fn has_role() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone
+{
+	warp::get()
+		.and(warp::path!("discord" / "user" / "has" / "role"))
+		.and(warp::query::<HashMap<String, String>>())
+		.map(move |p: HashMap<String, String>| {
+			let default = String::default();
+			let role_id = p.get("roleid").unwrap_or(&default);
+			let handler = p.get("handler").unwrap_or(&default);
+			let expected_role_id = "1034083718425493544";
+			let expected_handler = "ericzhang.eth";
+
+			if expected_handler == handler.as_str() && expected_role_id == role_id.as_str() {
+				let body = DiscordResponse {
+					data: true,
+					message: "success".into(),
+					has_errors: false,
+					msg_code: 200,
+					success: true,
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
+			} else {
+				Response::builder().status(400).body(String::from("Error query"))
+			}
+		})
+}

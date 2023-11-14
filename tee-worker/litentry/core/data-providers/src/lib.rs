@@ -94,6 +94,9 @@ pub struct DataProviderConfig {
 	pub oneblock_notion_url: String,
 	pub sora_quiz_master_id: String,
 	pub sora_quiz_attendee_id: String,
+	pub contest_legend_discord_role_id: String,
+	pub contest_popularity_discord_role_id: String,
+	pub contest_participant_discord_role_id: String,
 }
 
 impl Default for DataProviderConfig {
@@ -118,6 +121,9 @@ impl DataProviderConfig {
 			oneblock_notion_url: "".to_string(),
 			sora_quiz_master_id: "".to_string(),
 			sora_quiz_attendee_id: "".to_string(),
+			contest_legend_discord_role_id: "".to_string(),
+			contest_popularity_discord_role_id: "".to_string(),
+			contest_participant_discord_role_id: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -171,6 +177,18 @@ impl DataProviderConfig {
 	pub fn set_sora_quiz_attendee_id(&mut self, v: String) {
 		debug!("set_sora_quiz_attendee_id: {:?}", v);
 		self.sora_quiz_attendee_id = v;
+	}
+	pub fn set_contest_legend_discord_role_id(&mut self, v: String) {
+		debug!("set_contest_legend_discord_role_id: {:?}", v);
+		self.contest_legend_discord_role_id = v;
+	}
+	pub fn set_contest_popularity_discord_role_id(&mut self, v: String) {
+		debug!("set_contest_popularity_discord_role_id: {:?}", v);
+		self.contest_popularity_discord_role_id = v;
+	}
+	pub fn set_contest_participant_discord_role_id(&mut self, v: String) {
+		debug!("set_contest_participant_discord_role_id: {:?}", v);
+		self.contest_participant_discord_role_id = v;
 	}
 }
 

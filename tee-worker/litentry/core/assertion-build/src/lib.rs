@@ -50,6 +50,7 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 pub mod achainable;
+pub mod generic_discord_role;
 pub mod oneblock;
 pub mod sora;
 

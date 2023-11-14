@@ -130,23 +130,14 @@ impl DiscordLitentryClient {
 	// user has role in channel
 	pub fn has_role(
 		&mut self,
-		guild_id: Vec<u8>,
 		role_id_s: String,
 		handler: Vec<u8>,
 	) -> Result<DiscordResponse, Error> {
-		let guild_id_s = vec_to_string(guild_id)?;
 		let handler_s = vec_to_string(handler)?;
-		debug!(
-			"discord check id_hubber, guild_id: {}, role_id: {}, handler: {}",
-			guild_id_s, role_id_s, handler_s
-		);
+		debug!("discord check id_hubber, role_id: {}, handler: {}", role_id_s, handler_s);
 
 		let path = "/discord/user/has/role".to_string();
-		let query = vec![
-			("guildid", guild_id_s.as_str()),
-			("roleid", role_id_s.as_str()),
-			("handler", handler_s.as_str()),
-		];
+		let query = vec![("roleid", role_id_s.as_str()), ("handler", handler_s.as_str())];
 
 		let res = self
 			.client

@@ -212,6 +212,7 @@ fn handle_stf_call_request(req: RequestType, _time: f64) {
 			Assertion::Achainable(..) => "Achainable",
 			Assertion::Oneblock(..) => "Oneblock",
 			Assertion::SoraQuiz(..) => "SoraQuiz",
+			Assertion::GenericDiscordRole(..) => "GenericDiscordRole",
 		},
 	};
 }
