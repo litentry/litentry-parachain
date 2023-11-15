@@ -17,7 +17,10 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{AccountId, BoundedWeb3Network, OneBlockCourseType, SoraQuizType, Web3Network};
+use crate::{
+	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
+	SoraQuizType, Web3Network,
+};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -209,7 +212,19 @@ pub enum Assertion {
 
 	// Sora Quiz
 	#[codec(index = 14)]
-	SoraQuiz(SoraQuizType, ParameterString),  // (sora_quiz_type, guild_id)
+	SoraQuiz(SoraQuizType),  // (sora_quiz_type)
+
+	// GenericDiscordRole
+	#[codec(index = 15)]
+	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
+
+	// ----- begin SPACEID -----
+	#[codec(index = 16)]
+	BnbDomainHolding,
+
+	#[codec(index = 17)]
+	BnbDigitDomainClub(BnbDigitDomainType),
+	// ----- end SPACEID -----
 }
 
 impl Assertion {
@@ -238,6 +253,8 @@ impl Assertion {
 			Self::Achainable(a) => vec![a.chain()],
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
+			// SPACEID Assertions
+			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
