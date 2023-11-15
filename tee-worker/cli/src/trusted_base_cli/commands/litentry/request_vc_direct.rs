@@ -246,7 +246,7 @@ impl RequestVcDirectCommand {
 			alice.public().into(),
 			id,
 			assertion,
-			Some(key.clone()),
+			Some(key),
 			Default::default(),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
