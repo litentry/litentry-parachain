@@ -52,6 +52,7 @@ pub enum Error {
 	Attestation(itp_attestation_handler::error::Error),
 	Metadata(itp_node_api_metadata::error::Error),
 	BufferError(itp_utils::buffer::BufferError),
+	WebSocket(itc_tls_websocket_server::error::WebSocketError),
 	Other(Box<dyn std::error::Error>),
 }
 

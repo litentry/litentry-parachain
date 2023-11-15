@@ -272,7 +272,7 @@ mod tests {
 		let responses = vec![END_MESSAGE.to_string()];
 
 		let port = get_available_port_in_range(21000..21500).unwrap();
-		let (server, handler) = create_server(responses, port);
+		let (server, handler, ..) = create_server(responses, port);
 
 		let server_clone = server.clone();
 		let server_join_handle = thread::spawn(move || {
@@ -325,7 +325,7 @@ mod tests {
 		let responses = vec![server_response.clone()];
 
 		let port = get_available_port_in_range(21501..22000).unwrap();
-		let (server, handler) = create_server(responses, port);
+		let (server, handler, ..) = create_server(responses, port);
 
 		let server_clone = server.clone();
 		let server_join_handle = thread::spawn(move || {

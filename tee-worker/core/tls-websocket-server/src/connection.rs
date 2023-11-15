@@ -19,8 +19,10 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	encrypt::Encryptor, error::WebSocketError, stream_state::StreamState, WebSocketConnection,
-	WebSocketMessageHandler, WebSocketResult,
+	encrypt::{Encryptor, RsaPrivateKey},
+	error::WebSocketError,
+	stream_state::StreamState,
+	WebSocketConnection, WebSocketMessageHandler, WebSocketResult,
 };
 use log::*;
 use mio::{event::Event, net::TcpStream, Poll, Ready, Token};
@@ -38,6 +40,7 @@ pub struct TungsteniteWsConnection<Handler> {
 	stream_state: StreamState,
 	connection_token: Token,
 	connection_handler: Arc<Handler>,
+	priv_key: Arc<RsaPrivateKey>,
 	is_closed: bool,
 }
 
@@ -50,6 +53,7 @@ where
 		server_session: ServerSession,
 		connection_token: Token,
 		handler: Arc<Handler>,
+		priv_key: Arc<RsaPrivateKey>,
 	) -> WebSocketResult<Self> {
 		Ok(TungsteniteWsConnection {
 			stream_state: StreamState::from_stream(rustls::StreamOwned::new(
@@ -58,6 +62,7 @@ where
 			)),
 			connection_token,
 			connection_handler: handler,
+			priv_key,
 			is_closed: false,
 		})
 	}
@@ -146,9 +151,14 @@ where
 							return Ok(false)
 						}
 
-						if let Some(encryptor) = Encryptor::new(&key) {
-							self.stream_state = StreamState::AllReady(ws, Some(encryptor));
-							return Ok(false)
+						match Encryptor::import(&key, &self.priv_key) {
+							Ok(encryptor) => {
+								self.stream_state = StreamState::AllReady(ws, Some(encryptor));
+								return Ok(false)
+							},
+							Err(e) => {
+								warn!("Parsing aes key failed: {e:?}");
+							},
 						}
 					}
 

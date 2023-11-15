@@ -288,6 +288,7 @@ pub(crate) fn init_enclave_sidechain_components(
 pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResult<()> {
 	let rpc_handler = GLOBAL_RPC_WS_HANDLER_COMPONENT.get()?;
 	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
+	let shielding_key = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
 	let cert =
 		ed25519_self_signed_certificate(signer, "Enclave").map_err(|e| Error::Other(e.into()))?;
@@ -297,8 +298,13 @@ pub(crate) fn init_direct_invocation_server(server_addr: String) -> EnclaveResul
 	let pem_serialized = cert.serialize_pem().map_err(|e| Error::Other(e.into()))?;
 	let private_key = cert.serialize_private_key_pem();
 
-	let web_socket_server =
-		create_ws_server(server_addr.as_str(), &private_key, &pem_serialized, rpc_handler);
+	let web_socket_server = create_ws_server(
+		server_addr.as_str(),
+		&private_key,
+		&pem_serialized,
+		&shielding_key,
+		rpc_handler,
+	)?;
 
 	GLOBAL_WEB_SOCKET_SERVER_COMPONENT.initialize(web_socket_server.clone());
 

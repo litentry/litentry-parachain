@@ -28,6 +28,7 @@ use crate::{
 	config_provider::ProvideServerConfig,
 	connection::TungsteniteWsConnection,
 	connection_id_generator::GenerateConnectionId,
+	encrypt::RsaPrivateKey,
 	error::{WebSocketError, WebSocketResult},
 	ConnectionIdGenerator, ConnectionToken, WebSocketConnection, WebSocketMessageHandler,
 	WebSocketResponder, WebSocketServer,
@@ -56,6 +57,7 @@ pub struct TungsteniteWsServer<Handler, ConfigProvider> {
 	connections: RwLock<HashMap<mio::Token, TungsteniteWsConnection<Handler>>>,
 	is_running: RwLock<bool>,
 	signal_sender: Mutex<Option<Sender<ServerSignal>>>,
+	shielding_key: Arc<RsaPrivateKey>,
 }
 
 impl<Handler, ConfigProvider> TungsteniteWsServer<Handler, ConfigProvider>
@@ -67,6 +69,7 @@ where
 		ws_address: String,
 		config_provider: Arc<ConfigProvider>,
 		connection_handler: Arc<Handler>,
+		shielding_key: Arc<RsaPrivateKey>,
 	) -> Self {
 		TungsteniteWsServer {
 			ws_address,
@@ -76,6 +79,7 @@ where
 			connections: Default::default(),
 			is_running: Default::default(),
 			signal_sender: Default::default(),
+			shielding_key,
 		}
 	}
 
@@ -99,6 +103,7 @@ where
 			tls_session,
 			token,
 			self.connection_handler.clone(),
+			self.shielding_key.clone(),
 		)?;
 
 		trace!("Web-socket connection created");
@@ -313,12 +318,9 @@ enum ServerSignal {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::{
-		encrypt::ThreadRng,
-		test::{
-			fixtures::{no_cert_verifier::NoCertVerifier, test_server::create_server},
-			mocks::web_socket_handler_mock::WebSocketHandlerMock,
-		},
+	use crate::test::{
+		fixtures::{no_cert_verifier::NoCertVerifier, test_server::create_server},
+		mocks::web_socket_handler_mock::WebSocketHandlerMock,
 	};
 	use rustls::ClientConfig;
 	use std::{net::TcpStream, thread, time::Duration};
@@ -335,7 +337,7 @@ mod tests {
 		let port: u16 = 21777;
 		const NUMBER_OF_CONNECTIONS: usize = 100;
 
-		let (server, handler) = create_server(vec![expected_answer.clone()], port);
+		let (server, handler, ..) = create_server(vec![expected_answer.clone()], port);
 
 		let server_clone = server.clone();
 		let server_join_handle = thread::spawn(move || server_clone.run());
@@ -400,7 +402,7 @@ mod tests {
 		let expected_answer = "websocket server response".to_string();
 		let port: u16 = 21778;
 
-		let (server, handler) = create_server(vec![expected_answer.clone()], port);
+		let (server, handler, ..) = create_server(vec![expected_answer], port);
 
 		let server_clone = server.clone();
 		let server_join_handle = thread::spawn(move || server_clone.run());
@@ -435,7 +437,7 @@ mod tests {
 
 		let expected_answer = "first response".to_string();
 		let port: u16 = 21779;
-		let (server, handler) = create_server(vec![expected_answer.clone()], port);
+		let (server, handler, decrypt, key) = create_server(vec![expected_answer.clone()], port);
 
 		let server_clone = server.clone();
 		let server_join_handle = thread::spawn(move || server_clone.run());
@@ -448,12 +450,11 @@ mod tests {
 		let update_message = "Message update".to_string();
 		let update_message_clone = update_message.clone();
 
-		let (pubkey, decrypt) = init_encrypt();
 		let client_join_handle = thread::spawn(move || {
 			let mut socket = connect_tls_client(get_server_addr(port).as_str());
 
 			socket
-				.write_message(Message::Binary(pubkey))
+				.write_message(Message::Binary(key))
 				.expect("client write key to be successful");
 
 			socket
@@ -526,18 +527,5 @@ mod tests {
 				.expect("Can't connect");
 
 		socket
-	}
-
-	fn init_encrypt() -> (Vec<u8>, impl Fn(Message) -> Message + Clone + Send + Sync) {
-		let mut rng = ThreadRng::new();
-		let privkey = rsa::RsaPrivateKey::new(&mut rng, 2048).unwrap();
-		let pubkey = privkey.to_public_key();
-		let pubkey = rsa::pkcs1::EncodeRsaPublicKey::to_pkcs1_der(&pubkey).unwrap().to_vec();
-		(pubkey, move |msg| match msg {
-			Message::Binary(msg) => Message::Text(
-				String::from_utf8(privkey.decrypt(rsa::Pkcs1v15Encrypt, &msg).unwrap()).unwrap(),
-			),
-			_ => msg,
-		})
 	}
 }

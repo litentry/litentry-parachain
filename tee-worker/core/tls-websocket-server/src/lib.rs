@@ -44,6 +44,7 @@ use crate::{
 	ws_server::TungsteniteWsServer,
 };
 use mio::{event::Evented, Token};
+use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use std::{
 	fmt::Debug,
 	string::{String, ToString},
@@ -54,7 +55,7 @@ pub mod certificate_generation;
 pub mod config_provider;
 mod connection;
 pub mod connection_id_generator;
-mod encrypt;
+pub mod encrypt;
 pub mod error;
 mod stream_state;
 mod tls_common;
@@ -166,13 +167,21 @@ pub fn create_ws_server<Handler>(
 	addr_plain: &str,
 	private_key: &str,
 	certificate: &str,
+	shielding_key: &Rsa3072KeyPair,
 	handler: Arc<Handler>,
-) -> Arc<TungsteniteWsServer<Handler, FromFileConfigProvider>>
+) -> WebSocketResult<Arc<TungsteniteWsServer<Handler, FromFileConfigProvider>>>
 where
 	Handler: WebSocketMessageHandler,
 {
 	let config_provider =
 		Arc::new(FromFileConfigProvider::new(private_key.to_string(), certificate.to_string()));
 
-	Arc::new(TungsteniteWsServer::new(addr_plain.to_string(), config_provider, handler))
+	let shielding_key = Arc::new(shielding_key.try_into()?);
+
+	Ok(Arc::new(TungsteniteWsServer::new(
+		addr_plain.to_string(),
+		config_provider,
+		handler,
+		shielding_key,
+	)))
 }

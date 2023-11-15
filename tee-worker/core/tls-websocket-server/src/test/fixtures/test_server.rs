@@ -15,7 +15,10 @@
 
 */
 
+use tungstenite::Message;
+
 use crate::{
+	encrypt::{Encryptor, RsaPrivateKey},
 	test::{
 		fixtures::test_server_config_provider::TestServerConfigProvider,
 		mocks::web_socket_handler_mock::WebSocketHandlerMock,
@@ -29,13 +32,37 @@ pub type TestServer = TungsteniteWsServer<WebSocketHandlerMock, TestServerConfig
 pub fn create_server(
 	handler_responses: Vec<String>,
 	port: u16,
-) -> (Arc<TestServer>, Arc<WebSocketHandlerMock>) {
+) -> (
+	Arc<TestServer>,
+	Arc<WebSocketHandlerMock>,
+	impl Fn(Message) -> Message + Clone + Send + Sync,
+	Vec<u8>,
+) {
 	let config_provider = Arc::new(TestServerConfigProvider {});
 	let handler = Arc::new(WebSocketHandlerMock::from_response_sequence(handler_responses));
 
 	let server_addr_string = format!("127.0.0.1:{}", port);
 
-	let server =
-		Arc::new(TungsteniteWsServer::new(server_addr_string, config_provider, handler.clone()));
-	(server, handler)
+	static PRIV_KEY: once_cell::sync::Lazy<Arc<RsaPrivateKey>> =
+		once_cell::sync::Lazy::new(|| Arc::new(RsaPrivateKey::new().unwrap()));
+	let pubkey = PRIV_KEY.to_public_key();
+	let (decryptor, key) = Encryptor::export(&pubkey).unwrap();
+	let decryptor = Arc::new(decryptor);
+
+	let server = Arc::new(TungsteniteWsServer::new(
+		server_addr_string,
+		config_provider,
+		handler.clone(),
+		PRIV_KEY.clone(),
+	));
+	(
+		server,
+		handler,
+		move |msg| match msg {
+			Message::Binary(msg) =>
+				Message::Text(String::from_utf8(decryptor.decrypt(&msg).unwrap()).unwrap()),
+			_ => msg,
+		},
+		key,
+	)
 }

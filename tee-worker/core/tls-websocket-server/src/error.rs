@@ -22,9 +22,13 @@ use crate::ConnectionId;
 use std::{boxed::Box, io::Error as IoError, net::AddrParseError, string::String};
 
 pub type WebSocketResult<T> = Result<T, WebSocketError>;
+#[cfg(feature = "std")]
+use thiserror::Error;
+#[cfg(feature = "sgx")]
+use thiserror_sgx::Error;
 
 /// General web-socket error type
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Error)]
 pub enum WebSocketError {
 	#[error("Invalid certificate: {0}")]
 	InvalidCertificate(String),
@@ -44,8 +48,21 @@ pub enum WebSocketError {
 	ConnectionNotYetEstablished,
 	#[error("Web-socket write: {0}")]
 	SocketWriteError(String),
-	#[error("Encryption error: {0}")]
-	EncryptionError(rsa::Error),
+	#[error("Invalid user key length")]
+	InvalidUserKeyLength(usize),
+	#[error("Invalid user key length")]
+	InvalidCipherLength(usize),
+	#[cfg(feature = "std")]
+	#[error(transparent)]
+	RsaEncryptionError(#[from] rsa::Error),
+	#[error("Aes encryption failed")]
+	AesEncryptionError,
+	#[cfg(feature = "sgx")]
+	#[error(transparent)]
+	SgxError(#[from] sgx_types::sgx_status_t),
+	#[cfg(feature = "std")]
+	#[error(transparent)]
+	SerdeJsonError(#[from] serde_json::Error),
 	#[error("Lock poisoning")]
 	LockPoisoning,
 	#[error("Failed to receive server signal message: {0}")]
