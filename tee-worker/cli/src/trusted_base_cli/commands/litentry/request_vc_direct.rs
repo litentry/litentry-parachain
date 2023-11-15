@@ -30,7 +30,7 @@ use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
 	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, SoraQuizType, Web3Network,
+	GenericDiscordRoleType, Identity, OneBlockCourseType, RequestAesKey, SoraQuizType, Web3Network,
 };
 use log::*;
 use sp_core::Pair;
@@ -235,13 +235,25 @@ impl RequestVcDirectCommand {
 			},
 		};
 
-		let top: TrustedOperation =
-			TrustedCall::request_vc(alice.public().into(), id, assertion, None, Default::default())
-				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let mut key: RequestAesKey = RequestAesKey::default();
+		hex::decode_to_slice(
+			"22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12",
+			&mut key,
+		)
+		.expect("decoding shielding_key failed");
 
-		// TODO: P-177, print actual VC content to stdout
-		let _vc = perform_direct_operation(cli, trusted_cli, &top).unwrap();
+		let top: TrustedOperation = TrustedCall::request_vc(
+			alice.public().into(),
+			id,
+			assertion,
+			Some(key.clone()),
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
+
+		// This should contain the AES Key for AESRequest
+		let _vc = perform_direct_operation(cli, trusted_cli, &top, key).unwrap();
 		Ok(CliResultOk::None)
 	}
 }

@@ -31,7 +31,9 @@ use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::ParentchainHash as Hash;
+use litentry_primitives::{
+	aes_encrypt_default, AesRequest, ParentchainHash as Hash, RequestAesKey,
+};
 use log::*;
 use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;
@@ -72,10 +74,11 @@ pub(crate) fn perform_direct_operation(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	top: &TrustedOperation,
+	key: RequestAesKey,
 ) -> TrustedOpResult {
 	match top {
 		TrustedOperation::direct_call(call) => match call.call {
-			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top),
+			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
 			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
 		},
 		_ =>
@@ -332,10 +335,11 @@ fn send_direct_vc_request(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	operation_call: &TrustedOperation,
+	key: RequestAesKey,
 ) -> TrustedOpResult {
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args, cli).unwrap();
-	let jsonrpc_call: String = get_vc_json_request(shard, operation_call, encryption_key);
+	let jsonrpc_call: String = get_vc_json_request(shard, operation_call, encryption_key, key);
 
 	debug!("get direct api");
 	let direct_api = get_worker_api_direct(cli);
@@ -398,11 +402,13 @@ pub(crate) fn get_vc_json_request(
 	shard: ShardIdentifier,
 	operation_call: &TrustedOperation,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
+	key: RequestAesKey,
 ) -> String {
-	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
+	let encrypted_key = shielding_pubkey.encrypt(&key).unwrap();
+	let operation_call_encrypted = aes_encrypt_default(&key, &operation_call.encode());
 
 	// compose jsonrpc call
-	let request = RsaRequest { shard, payload: operation_call_encrypted };
+	let request = AesRequest { shard, payload: operation_call_encrypted, key: encrypted_key };
 	RpcRequest::compose_jsonrpc_call("author_submitVCRequest".to_string(), vec![request.to_hex()])
 		.unwrap()
 }
