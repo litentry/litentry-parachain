@@ -59,6 +59,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
+					.or(discord_litentry::has_role())
 					.or(achainable::query())
 					.boxed(),
 			)
