@@ -53,8 +53,6 @@ export default {
                 set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
             },
         },
-        UserShieldingKeyType: "[u8; 32]",
-        UserShieldingKeyNonceType: "[u8; 12]",
         DirectRequestStatus: {
             _enum: {
                 Ok: null,

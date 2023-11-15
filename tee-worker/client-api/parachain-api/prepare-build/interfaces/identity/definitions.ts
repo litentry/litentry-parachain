@@ -3,9 +3,6 @@ export default {
         GenericEventWithAccount: {
             account: "AccountId",
         },
-        SetUserShieldingKeyResult: {
-            id_graph: "AesOutput",
-        },
         LinkIdentityResult: {
             id_graph: "AesOutput",
         },
