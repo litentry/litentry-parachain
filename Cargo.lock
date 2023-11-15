@@ -12094,7 +12094,7 @@ version = "0.1.4"
 dependencies = [
  "base64 0.13.1",
  "chrono",
- "der 0.6.1",
+ "der 0.7.8",
  "frame-support",
  "hex",
  "hex-literal 0.4.1",

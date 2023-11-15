@@ -12,7 +12,7 @@ edition = "2021"
 base64 = { version = "0.13", default-features = false, features = ["alloc"] }
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
-der = { default-features = false, version = "0.6.0" }
+der = { default-features = false, version = "0.7.8" }
 hex = { default-features = false, version = "0.4.3", features = ["alloc"] }
 ring = { version = "0.16.20", default-features = false, features = ["alloc"] }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
