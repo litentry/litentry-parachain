@@ -79,8 +79,5 @@ export default {
             status: "IdentityStatus",
         },
         BoundedWeb3Network: "BoundedVec<Web3Network, ConstU32<128>>",
-
-        // teerex
-        ShardIdentifier: "H256",
     },
 };

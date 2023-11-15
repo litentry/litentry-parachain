@@ -78,5 +78,7 @@ export default {
                 Web3NetworkOutOfBounds: "Null",
             },
         },
+        // teerex
+        ShardIdentifier: "H256",
     },
 };
