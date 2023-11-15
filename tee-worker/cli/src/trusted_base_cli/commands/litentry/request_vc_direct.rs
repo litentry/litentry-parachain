@@ -30,7 +30,7 @@ use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
 	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	Identity, OneBlockCourseType, Web3Network,
+	GenericDiscordRoleType, Identity, OneBlockCourseType, SoraQuizType, Web3Network,
 };
 use log::*;
 use sp_core::Pair;
@@ -220,6 +220,18 @@ impl RequestVcDirectCommand {
 							.expect("cannot convert to Web3Network"),
 						token: to_para_str(&arg.token),
 					})),
+			},
+			Command::SoraQuiz(c) => match c {
+				SoraQuizCommand::Attendee => Assertion::SoraQuiz(SoraQuizType::Attendee),
+				SoraQuizCommand::Master => Assertion::SoraQuiz(SoraQuizType::Master),
+			},
+			Command::GenericDiscordRole(c) => match c {
+				GenericDiscordRoleCommand::Legend =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Legend),
+				GenericDiscordRoleCommand::Popularity =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Popularity),
+				GenericDiscordRoleCommand::Participant =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Participant),
 			},
 		};
 

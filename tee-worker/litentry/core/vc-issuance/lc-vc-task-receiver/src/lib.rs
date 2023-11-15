@@ -28,7 +28,7 @@ use ita_sgx_runtime::Hash;
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
 	ConvertAccountId, IdentityManagement, OpaqueCall, Runtime, SgxParentchainTypeConverter,
-	TrustedCall, TrustedOperation, UserShieldingKeys, VCMPCallIndexes, H256, IMT,
+	TrustedCall, TrustedOperation, VCMPCallIndexes, H256, IMT,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
@@ -119,11 +119,12 @@ where
 		})?;
 
 		state.execute_with(|| {
-			let key = UserShieldingKeys::<Runtime>::contains_key(&who);
-			if !key {
-				return Err("UserShieldingKey has not been set by User".to_string())
-			}
-			let id_graph = IMT::get_id_graph(&who, usize::MAX);
+			// TODO: This piece of logic has been removed from dev branch
+			// let key = UserShieldingKeys::<Runtime>::contains_key(&who);
+			// if !key {
+			// 	return Err("UserShieldingKey has not been set by User".to_string())
+			// }
+			let id_graph = IMT::get_id_graph(&who);
 			let assertion_networks = assertion.clone().get_supported_web3networks();
 			let identities: Vec<IdentityNetworkTuple> = id_graph
 				.into_iter()
@@ -158,16 +159,17 @@ where
 				.process()
 				.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
 
-			let key = match IdentityManagement::user_shielding_keys(&response.assertion_request.who)
-			{
-				Some(s) => s,
-				None => return Err("User Shielding key not found for user".to_string()),
-			};
+			// TODO: this piece of logic has been removed from dev branch
+			// let key = match IdentityManagement::user_shielding_keys(&response.assertion_request.who)
+			// {
+			// 	Some(s) => s,
+			// 	None => return Err("User Shielding key not found for user".to_string()),
+			// };
 			let call_index = node_metadata_repo
 				.get_from_metadata(|m| m.vc_issued_call_indexes())
 				.unwrap()
 				.unwrap();
-			let result = aes_encrypt_default(&key, &response.vc_payload);
+			// let result = aes_encrypt_default(&key, &response.vc_payload);
 			let account = SgxParentchainTypeConverter::convert(
 				match response.assertion_request.who.to_account_id() {
 					Some(s) => s,
@@ -180,14 +182,13 @@ where
 				response.assertion_request.assertion,
 				response.vc_index,
 				response.vc_hash,
-				aes_encrypt_default(&key, &response.vc_payload),
 				H256::zero(),
 			));
-			let res = RequestVCResult {
-				vc_index: response.vc_index,
-				vc_hash: response.vc_hash,
-				vc_payload: result,
-			};
+			// let res = RequestVCResult {
+			// 	vc_index: response.vc_index,
+			// 	vc_hash: response.vc_hash,
+			// 	vc_payload: result,
+			// };
 			// This internally fetches nonce from a Mutex and then updates it thereby ensuring ordering
 			let xt = extrinsic_factory
 				.create_extrinsics(&[call], None)
@@ -197,7 +198,7 @@ where
 				.send_to_parentchain(xt, &ParentchainId::Litentry)
 				.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
 
-			Ok(res.encode())
+			Ok(response.vc_payload.encode())
 		})
 	} else {
 		Err("Invalid Trusted Operation send to VC Request handler".to_string())
