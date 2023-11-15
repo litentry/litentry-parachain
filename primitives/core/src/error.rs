@@ -46,14 +46,22 @@ pub enum ErrorDetail {
 	// errors when communicating with data provider, e.g. HTTP error
 	#[codec(index = 5)]
 	DataProviderError(ErrorString),
+	// error when tee-worker detects that verification data is associated with web2 identity but
+	// web3 identity linking is requested and opposite
 	#[codec(index = 6)]
 	InvalidIdentity,
+	// error when tee-worker detects that identity verification data is related to other web2
+	// account than expected, for example wrong tweet id was provided
 	#[codec(index = 7)]
 	WrongWeb2Handle,
+	// error when during web3 identity verification process tee-worker detects that signed message
+	// is different from expected
 	#[codec(index = 8)]
 	UnexpectedMessage,
 	#[codec(index = 9)]
 	WrongSignatureType,
+	// error when during web3 identity verification process tee-worker fails to verify signature
+	// of verification data
 	#[codec(index = 10)]
 	VerifyWeb3SignatureFailed,
 	#[codec(index = 11)]
