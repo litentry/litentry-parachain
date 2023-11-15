@@ -14,9 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use litentry_primitives::{UserShieldingKeyNonceType, UserShieldingKeyType};
-use sp_core::sr25519::Pair as Sr25519Pair;
-use std::{sync::Arc, thread};
+use std::thread;
 use tokio::{
 	sync::oneshot::{channel, error::RecvError},
 	task::LocalSet,
@@ -28,10 +26,6 @@ pub mod discord_litentry;
 pub mod discord_official;
 pub mod twitter_litentry;
 pub mod twitter_official;
-
-// the nonce that is used to generate the verification message for the mock server
-// it should have come from the client/user side, but here a mock number is used
-pub const MOCK_VERIFICATION_NONCE: UserShieldingKeyNonceType = [1u8; 12];
 
 // It should only works on UNIX.
 async fn shutdown_signal() {
@@ -51,20 +45,13 @@ async fn shutdown_signal() {
 	}
 }
 
-pub fn default_getter(_who: &Sr25519Pair) -> UserShieldingKeyType {
-	UserShieldingKeyType::default()
-}
-
-pub fn run<F>(getter: Arc<F>, port: u16) -> Result<String, RecvError>
-where
-	F: Fn(&Sr25519Pair) -> UserShieldingKeyType + Send + Sync + 'static,
-{
+pub fn run(port: u16) -> Result<String, RecvError> {
 	let (result_in, result_out) = channel();
 	thread::spawn(move || {
 		let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
 		LocalSet::new().block_on(&runtime, async {
 			let (addr, srv) = warp::serve(
-				twitter_official::query_tweet(getter.clone())
+				twitter_official::query_tweet()
 					.or(twitter_official::query_retweeted_by())
 					.or(twitter_official::query_user_by_name())
 					.or(twitter_official::query_user_by_id())
@@ -72,6 +59,7 @@ where
 					.or(discord_official::query_message())
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
+					.or(discord_litentry::has_role())
 					.or(achainable::query())
 					.boxed(),
 			)

@@ -22,14 +22,19 @@ extern "C" {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum SgxWasmAction {
+	#[codec(index = 0)]
 	Call { module: Option<Vec<u8>>, function: String },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum BoundaryValue {
+	#[codec(index = 0)]
 	I32(i32),
+	#[codec(index = 1)]
 	I64(i64),
+	#[codec(index = 2)]
 	F32(u32),
+	#[codec(index = 3)]
 	F64(u64),
 }
 

@@ -21,11 +21,9 @@ use crate::{error::Result, NodeMetadata};
 const IMP: &str = "IdentityManagement";
 
 pub trait IMPCallIndexes {
-	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]>;
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]>;
 	fn deactivate_identity_call_indexes(&self) -> Result<[u8; 2]>;
 	fn activate_identity_call_indexes(&self) -> Result<[u8; 2]>;
-	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_deactivated_call_indexes(&self) -> Result<[u8; 2]>;
 	fn identity_activated_call_indexes(&self) -> Result<[u8; 2]>;
@@ -33,10 +31,6 @@ pub trait IMPCallIndexes {
 }
 
 impl IMPCallIndexes for NodeMetadata {
-	fn set_user_shielding_key_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMP, "set_user_shielding_key")
-	}
-
 	fn link_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMP, "link_identity")
 	}
@@ -47,10 +41,6 @@ impl IMPCallIndexes for NodeMetadata {
 
 	fn activate_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		self.call_indexes(IMP, "activate_identity")
-	}
-
-	fn user_shielding_key_set_call_indexes(&self) -> Result<[u8; 2]> {
-		self.call_indexes(IMP, "user_shielding_key_set")
 	}
 
 	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {

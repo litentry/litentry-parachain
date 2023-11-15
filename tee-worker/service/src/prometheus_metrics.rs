@@ -251,6 +251,9 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::Achainable(..) => "Achainable",
 			Assertion::Oneblock(..) => "Oneblock",
 			Assertion::SoraQuiz(..) => "SoraQuiz",
+			Assertion::BnbDomainHolding => "BnbDomainHolding",
+			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
+			Assertion::GenericDiscordRole(..) => "GenericDiscordRole",
 		},
 	};
 	inc_stf_calls(category, label);
@@ -276,12 +279,6 @@ where
 		},
 		TrustedCall::request_vc(..) => {
 			record_metric_fn("request_vc");
-		},
-		TrustedCall::set_user_shielding_key(..) => {
-			record_metric_fn("set_user_shielding_key");
-		},
-		TrustedCall::set_user_shielding_key_with_networks(..) => {
-			record_metric_fn("set_user_shielding_key_with_networks");
 		},
 		TrustedCall::link_identity_callback(..) => {
 			record_metric_fn("link_identity_callback");

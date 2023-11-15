@@ -209,8 +209,11 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
         setup_environment(offset, config, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
+    elif parachain_type == "local-binary-standalone":
+        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
+        setup_environment(offset, config, parachain_dir)
+        run(["../scripts/launch-standalone.sh"], check=True)
     elif parachain_type == "local-binary":
-        # Export Parachain Directory as Global Variable
         os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
@@ -221,17 +224,6 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
 
     print("Litentry parachain is running")
     print("------------------------------------------------------------")
-
-    # n = 1
-    # for n_conf in config["nodes"]:
-    #     processes.append(run_node(n_conf, n))
-    #     n += 1
-    #     # let the first node begin before we start the second one, it is
-    #     # easier to track the logs if they don't start at the same time.
-    #     sleep(18)
-
-    # # sleep to give the node some time to startup
-    # sleep(5)
 
     c = pycurl.Curl()
     worker_i = 0

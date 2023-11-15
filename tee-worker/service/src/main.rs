@@ -49,8 +49,6 @@ use enclave::{
 	api::enclave_init,
 	tls_ra::{enclave_request_state_provisioning, enclave_run_state_provisioning_server},
 };
-use ita_stf::{Getter, TrustedGetter};
-use itc_rpc_client::direct_client::DirectClient;
 use itp_enclave_api::{
 	direct_request::DirectRequest,
 	enclave_base::EnclaveBase,
@@ -66,7 +64,6 @@ use itp_node_api::{
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
-use itp_stf_primitives::types::KeyPair;
 
 #[cfg(feature = "dcap")]
 use itp_utils::hex::hex_encode;
@@ -77,7 +74,7 @@ use its_peer_fetch::{
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
-use litentry_primitives::{Identity, ParentchainHeader as Header, UserShieldingKeyType};
+use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use my_node_runtime::{Hash, RuntimeEvent};
 use serde_json::Value;
@@ -89,11 +86,7 @@ use substrate_api_client::{
 	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
 
-use sp_core::{
-	crypto::{AccountId32, Ss58Codec},
-	sr25519::Pair as Sr25519Pair,
-	Pair,
-};
+use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
 
@@ -228,24 +221,12 @@ fn main() {
 
 		// litentry: start the mock-server if enabled
 		if config.enable_mock_server {
-			let trusted_server_url = format!("wss://localhost:{}", config.trusted_worker_port);
 			let mock_server_port = config
 				.try_parse_mock_server_port()
 				.expect("mock server port to be a valid port number");
 			thread::spawn(move || {
 				info!("*** Starting mock server");
-				let getter = Arc::new(move |who: &Sr25519Pair| {
-					let client = DirectClient::new(trusted_server_url.clone());
-					let key_getter = Getter::from(
-						TrustedGetter::user_shielding_key(Identity::Substrate(who.public().into()))
-							.sign(&KeyPair::Sr25519(Box::new(who.clone()))),
-					);
-					client
-						.get_state(shard, &key_getter)
-						.and_then(|n| UserShieldingKeyType::decode(&mut n.as_slice()).ok())
-						.unwrap_or_default()
-				});
-				let _ = lc_mock_server::run(getter, mock_server_port);
+				let _ = lc_mock_server::run(mock_server_port);
 			});
 		}
 
@@ -1299,6 +1280,21 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	}
 	if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
 		data_provider_config.set_sora_quiz_attendee_id(v);
+	}
+	if let Ok(v) = env::var("NODEREAL_API_KEY") {
+		data_provider_config.set_nodereal_api_key(v);
+	}
+	if let Ok(v) = env::var("NODEREAL_API_URL") {
+		data_provider_config.set_nodereal_api_url(v);
+	}
+	if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_legend_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("CONTEST_POPULARITY_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_popularity_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_participant_discord_role_id(v);
 	}
 
 	data_provider_config

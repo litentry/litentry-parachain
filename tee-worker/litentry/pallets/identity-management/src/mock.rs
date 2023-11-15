@@ -15,14 +15,13 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate as pallet_tee_identity_management;
-use crate::{all_substrate_web3networks, UserShieldingKeyType};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU128, ConstU16, ConstU32},
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use litentry_primitives::{Identity, IdentityString, USER_SHIELDING_KEY_LEN};
+use litentry_primitives::{Identity, IdentityString};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -106,9 +105,6 @@ impl pallet_tee_identity_management::Config for Test {
 
 const ALICE_KEY: &str = "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
 
-pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
-pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
-
 pub fn alice_twitter_identity(suffix: u32) -> Identity {
 	Identity::Twitter(IdentityString::new(format!("alice{}", suffix).as_bytes().to_vec()))
 }
@@ -128,23 +124,12 @@ pub fn bob_substrate_identity() -> Identity {
 	bob_key_hex.into()
 }
 
-pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
+pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
-
-		if set_shielding_key {
-			let shielding_key: UserShieldingKeyType = [0u8; USER_SHIELDING_KEY_LEN];
-			let who = BOB.into();
-			let _ = IMT::set_user_shielding_key(
-				RuntimeOrigin::signed(ALICE),
-				who,
-				shielding_key.clone(),
-				all_substrate_web3networks(),
-			);
-		}
 	});
 	ext
 }
