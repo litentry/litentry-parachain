@@ -84,8 +84,8 @@ where
 		Ok(json!(json_value))
 	});
 
-	let author_submit_extrinsic_name: &str = "author_submitVCRequest";
-	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
+	let author_submit_vc_request_name: &str = "author_submitVCRequest";
+	io_handler.add_sync_method(author_submit_vc_request_name, move |params: Params| {
 		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
 		let request = RsaRequest::from_hex(&hex_encoded_params[0].clone()).unwrap();
 		let shard: ShardIdentifier = request.shard;
