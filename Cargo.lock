@@ -12092,7 +12092,7 @@ dependencies = [
 name = "sgx-verify"
 version = "0.1.4"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.21.2",
  "chrono",
  "der 0.6.1",
  "frame-support",

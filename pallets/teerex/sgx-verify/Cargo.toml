@@ -9,7 +9,7 @@ license = "GPL-3.0"
 edition = "2021"
 
 [dependencies]
-base64 = { version = "0.13", default-features = false, features = ["alloc"] }
+base64 = { version = "0.21", default-features = false, features = ["alloc"] }
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 der = { default-features = false, version = "0.6.0" }
