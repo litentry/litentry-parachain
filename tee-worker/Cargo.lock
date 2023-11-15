@@ -6234,8 +6234,6 @@ dependencies = [
  "futures 0.3.8",
  "itp-stf-primitives",
  "itp-types",
- "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
  "lazy_static",
  "lc-stf-task-sender",
  "litentry-primitives",
