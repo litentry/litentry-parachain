@@ -1,10 +1,5 @@
 export default {
     types: {
-        WorkerRpcReturnValue: {
-            value: "Vec<u8>",
-            do_watch: "bool",
-            status: "DirectRequestStatus",
-        },
         TrustedOperation: {
             _enum: {
                 indirect_call: "(TrustedCallSigned)",
@@ -53,13 +48,6 @@ export default {
                 set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
             },
         },
-        DirectRequestStatus: {
-            _enum: {
-                Ok: null,
-                TrustedOperationStatus: "(TrustedOperationStatus, H256)",
-                Error: null,
-            },
-        },
         TrustedOperationStatus: {
             _enum: {
                 Submitted: null,
@@ -75,20 +63,5 @@ export default {
                 Invalid: null,
             },
         },
-        AesOutput: {
-            ciphertext: "Vec<u8>",
-            aad: "Vec<u8>",
-            nonce: "[u8; 12]",
-        },
-        RsaRequest: {
-            shard: "ShardIdentifier",
-            payload: "Vec<u8>",
-        },
-        AesRequest: {
-            shard: "ShardIdentifier",
-            key: "Vec<u8>",
-            payload: "AesOutput",
-        },
-        RequestAesKey: "[u8; 32]",
     },
 };

@@ -1,5 +1,32 @@
 export default {
     types: {
+        WorkerRpcReturnValue: {
+            value: "Vec<u8>",
+            do_watch: "bool",
+            status: "DirectRequestStatus",
+        },
+        DirectRequestStatus: {
+            _enum: {
+                Ok: null,
+                TrustedOperationStatus: "(TrustedOperationStatus, H256)",
+                Error: null,
+            },
+        },
+        AesOutput: {
+            ciphertext: "Vec<u8>",
+            aad: "Vec<u8>",
+            nonce: "[u8; 12]",
+        },
+        RsaRequest: {
+            shard: "ShardIdentifier",
+            payload: "Vec<u8>",
+        },
+        AesRequest: {
+            shard: "ShardIdentifier",
+            key: "Vec<u8>",
+            payload: "AesOutput",
+        },
+        RequestAesKey: "[u8; 32]",
         Getter: {
             _enum: {
                 public: "(PublicGetter)",
