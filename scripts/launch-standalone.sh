@@ -4,6 +4,9 @@
 
 set -eo pipefail
 
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
+[ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
+
 ROOTDIR=$(git rev-parse --show-toplevel)
 PARACHAIN_BIN="$ROOTDIR/target/release/litentry-collator"
 
@@ -21,4 +24,4 @@ fi
 
 echo "Starting litentry-collator in standalone mode ..."
 
-$PARACHAIN_BIN --dev --unsafe-ws-external --unsafe-rpc-external
+$PARACHAIN_BIN --dev --unsafe-ws-external --unsafe-rpc-external &> "$LITENTRY_PARACHAIN_DIR/para.alice.log" &
