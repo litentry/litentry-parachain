@@ -2738,6 +2738,7 @@ dependencies = [
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
+ "chrono 0.4.11",
  "hex 0.4.0",
  "http",
  "http_req",
