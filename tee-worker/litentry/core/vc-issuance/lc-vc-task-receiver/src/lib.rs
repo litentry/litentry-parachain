@@ -42,7 +42,9 @@ use itp_types::parentchain::ParentchainId;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
-use litentry_primitives::{IdentityNetworkTuple, ShardIdentifier};
+use litentry_primitives::{
+	aes_decrypt, AesOutput, IdentityNetworkTuple, RequestAesKey, ShardIdentifier,
+};
 use std::{
 	format,
 	string::{String, ToString},
@@ -69,6 +71,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 
 	while let Ok(req) = receiver.recv() {
 		if let Err(e) = req.sender.send(handle_request(
+			req.key,
 			req.encrypted_trusted_call,
 			req.shard,
 			context.clone(),
@@ -81,7 +84,8 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 }
 
 pub fn handle_request<K, A, S, H, O, Z, N>(
-	encrypted_trusted_call: Vec<u8>,
+	key: Vec<u8>,
+	mut encrypted_trusted_call: AesOutput,
 	shard: ShardIdentifier,
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
@@ -98,10 +102,17 @@ where
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
-	let decrypted_trusted_operation = context
+	let aes_key: RequestAesKey = context
 		.shielding_key
-		.decrypt(&encrypted_trusted_call)
-		.map_err(|e| format!("Failed to decrypted trusted Operation: {:?}", e))?;
+		.decrypt(&key)
+		.map_err(|e| format!("Failed to decrypted AES Key: {:?}", e))?
+		.try_into()
+		.map_err(|e| format!("Failed to convert to UserShieldingKeyType: {:?}", e))?;
+
+	let decrypted_trusted_operation = match aes_decrypt(&aes_key, &mut encrypted_trusted_call) {
+		Some(s) => s,
+		None => return Err("Failed to decrypted trusted operation".to_string()),
+	};
 
 	let trusted_operation = TrustedOperation::decode(&mut decrypted_trusted_operation.as_slice())
 		.map_err(|e| format!("Failed to decode trusted operation, {:?}", e))?;

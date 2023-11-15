@@ -33,7 +33,7 @@ use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperati
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
-use litentry_primitives::AesRequest;
+use litentry_primitives::{AesOutput, AesRequest};
 use log::*;
 use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
@@ -87,13 +87,14 @@ where
 	let author_submit_vc_request_name: &str = "author_submitVCRequest";
 	io_handler.add_sync_method(author_submit_vc_request_name, move |params: Params| {
 		let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
-		let request = RsaRequest::from_hex(&hex_encoded_params[0].clone()).unwrap();
+		let request = AesRequest::from_hex(&hex_encoded_params[0].clone()).unwrap();
 		let shard: ShardIdentifier = request.shard;
-		let encrypted_trusted_call: Vec<u8> = request.payload;
+		let key = request.key;
+		let encrypted_trusted_call: AesOutput = request.payload;
 		let request_sender = VcRequestSender::new();
 		let (sender, mut receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
 
-		let vc_request = VCRequest { encrypted_trusted_call, sender, shard };
+		let vc_request = VCRequest { encrypted_trusted_call, sender, shard, key };
 		if let Err(e) = request_sender.send_vc_request(vc_request) {
 			return Ok(json!(compute_hex_encoded_return_error(&e)))
 		}

@@ -23,6 +23,7 @@ use futures::channel::oneshot;
 use itp_types::{ShardIdentifier, H256};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
+use litentry_primitives::AesOutput;
 use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -40,9 +41,10 @@ use std::{
 
 #[derive(Debug)]
 pub struct VCRequest {
-	pub encrypted_trusted_call: Vec<u8>,
+	pub encrypted_trusted_call: AesOutput,
 	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
 	pub shard: ShardIdentifier,
+	pub key: Vec<u8>,
 }
 
 #[derive(Encode, Decode, Clone)]
