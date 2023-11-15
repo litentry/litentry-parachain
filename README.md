@@ -170,9 +170,9 @@ pip install python-dotenv pycurl docker toml
 
 In order to create a local docker setup, you can run the following command
 ```
-./local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json
+./local-setup/launch.py --config ./local-setup/development-worker.json
 ```
-This will create three docker containers, 2 Relay Chain Validators, and 1 Parachain Collator. However, it will use the default ports as present in .env.dev. If you want to run the system by offsetting the default ports, you can run this command instead:
+This will create three docker containers, 2 relay chain validators and 1 parachain Collator. However, it will use the default ports as present in .env.dev. If you want to run the system by offsetting the default ports, you can run this command instead:
 
 ```
 ./local-setup/launch.py --config local-setup/development-worker.json --offset 100
@@ -183,19 +183,31 @@ This will run the same containers and use the offset value of 100.
 
 In order to create a local binary setup, using default ports, you can run the following command:
 ```
-/local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json --parachain local-binary
+./local-setup/launch.py --config ./local-setup/development-worker.json --parachain local-binary
 ```
 
 If you want to launch the same system by offsetting the port values, you can use this command: 
 ```
-/local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json --parachain local-binary --offset 100
+./local-setup/launch.py --config ./local-setup/development-worker.json --parachain local-binary --offset 100
 ```
+
 In case you receive the following error:
 ```ModuleNotFoundError: No module named 'pycurl'```
 
 Fix it manually by installing pycurl using pip3. 
 
-### 3. Remote <> Integritee Node
+### 3. Start a local binary (standalone) step - recommended for development
+
+Similar to 2, but it launches a standalone parachain node:
+```
+./local-setup/launch.py --config ./local-setup/development-worker.json --parachain local-binary-standalone
+```
+
+It means no relay chain will be launched, parachain will author blocks by itself with instant block finalisation, please refer to [this PR](https://github.com/litentry/litentry-parachain/pull/1059).
+
+It will dramatically reduce the waiting time and the tee-worker should be ready to use very soon.
+
+### 4. Remote <> Integritee Node
 
 If you are running the integritee node manually, then be mindful of the port that is being set while launching the integritee node, for example:
 ```
