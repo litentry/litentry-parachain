@@ -200,7 +200,7 @@ Fix it manually by installing pycurl using pip3.
 
 ### 3. Start a local binary (standalone) setup - recommended for development
 
-Similar to 2, but it launches a standalone parachain node, see [Launch a standalone parachain node](#launch a standalone parachain node):
+Similar to 2, but it launches a standalone parachain node, see [Launch a standalone parachain node](#launch-a-standalone-parachain-node):
 ```
 ./local-setup/launch.py --config ./local-setup/development-worker.json --parachain local-binary-standalone
 ```
