@@ -215,11 +215,8 @@ export default {
                 InvalidIdentity: "Null",
                 WrongWeb2Handle: "Null",
                 UnexpectedMessage: "Null",
-                WrongSignatureType: "Null",
-                VerifySubstrateSignatureFailed: "Null",
-                VerifyEvmSignatureFailed: "Null",
-                RecoverEvmAddressFailed: "Null",
-                Web3NetworkOutOfBounds: "Null",
+                __Unused_WrongSignatureType: "Null",
+                VerifyWeb3SignatureFailed: "Null",
             },
         },
         StfError: {
