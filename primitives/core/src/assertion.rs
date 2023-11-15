@@ -17,7 +17,10 @@
 // This file includes the predefined rulesets and the corresponding parameters
 // when requesting VCs.
 
-use crate::{AccountId, BoundedWeb3Network, OneBlockCourseType, SoraQuizType, Web3Network};
+use crate::{
+	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
+	SoraQuizType, Web3Network,
+};
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
@@ -109,16 +112,27 @@ pub struct AchainableToken {
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AchainableParams {
+	#[codec(index = 0)]
 	AmountHolding(AchainableAmountHolding),
+	#[codec(index = 1)]
 	AmountToken(AchainableAmountToken),
+	#[codec(index = 2)]
 	Amount(AchainableAmount),
+	#[codec(index = 3)]
 	Amounts(AchainableAmounts),
+	#[codec(index = 4)]
 	Basic(AchainableBasic),
+	#[codec(index = 5)]
 	BetweenPercents(AchainableBetweenPercents),
+	#[codec(index = 6)]
 	ClassOfYear(AchainableClassOfYear),
+	#[codec(index = 7)]
 	DateInterval(AchainableDateInterval),
+	#[codec(index = 8)]
 	DatePercent(AchainableDatePercent),
+	#[codec(index = 9)]
 	Date(AchainableDate),
+	#[codec(index = 10)]
 	Token(AchainableToken),
 }
 
@@ -159,32 +173,58 @@ impl AchainableParams {
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum Assertion {
+	#[codec(index = 0)]
 	A1,
+	#[codec(index = 1)]
 	A2(ParameterString),                                    // (guild_id)
+	#[codec(index = 2)]
 	A3(ParameterString, ParameterString, ParameterString),  // (guild_id, channel_id, role_id)
+	#[codec(index = 3)]
 	A4(ParameterString),                                    // (minimum_amount)
+	#[codec(index = 4)]
 	A6,
+	#[codec(index = 5)]
 	A7(ParameterString),                                    // (minimum_amount)
+	#[codec(index = 6)]
 	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
+	#[codec(index = 7)]
 	A10(ParameterString),                                   // (minimum_amount)
+	#[codec(index = 8)]
 	A11(ParameterString),                                   // (minimum_amount)
 
 	// ----- begin polkadot decoded 2023 -----
+	#[codec(index = 9)]
 	A13(AccountId),                                         // (participant_account), can only be requested by delegatee
+	#[codec(index = 10)]
 	A14,
 	// for Holder assertions we'll reuse A4/A7
 	// ----- end polkadot decoded 2023 -----
-
+	#[codec(index = 11)]
 	Achainable(AchainableParams),
 
 	// For EVM Version Early Bird
+	#[codec(index = 12)]
 	A20,
 
 	// For Oneblock
+	#[codec(index = 13)]
 	Oneblock(OneBlockCourseType),
 
 	// Sora Quiz
-	SoraQuiz(SoraQuizType, ParameterString),  // (sora_quiz_type, guild_id)
+	#[codec(index = 14)]
+	SoraQuiz(SoraQuizType),  // (sora_quiz_type)
+
+	// GenericDiscordRole
+	#[codec(index = 15)]
+	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
+
+	// ----- begin SPACEID -----
+	#[codec(index = 16)]
+	BnbDomainHolding,
+
+	#[codec(index = 17)]
+	BnbDigitDomainClub(BnbDigitDomainType),
+	// ----- end SPACEID -----
 }
 
 impl Assertion {
@@ -213,6 +253,8 @@ impl Assertion {
 			Self::Achainable(a) => vec![a.chain()],
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
+			// SPACEID Assertions
+			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
@@ -238,8 +280,12 @@ pub const ASSERTION_FROM_DATE: [&str; 14] = [
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AmountHoldingTimeType {
+	#[codec(index = 0)]
 	LIT,
+	#[codec(index = 1)]
 	DOT,
+	#[codec(index = 2)]
 	WBTC,
+	#[codec(index = 3)]
 	ETH,
 }

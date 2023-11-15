@@ -16,7 +16,6 @@
 
 pub mod link_identity;
 pub mod set_heartbeat_timeout;
-pub mod set_user_shielding_key;
 
 // TODO: maybe move it to use itp_node_api::api_client
 pub const IMP: &str = "IdentityManagement";

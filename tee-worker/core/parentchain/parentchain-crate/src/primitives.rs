@@ -33,7 +33,9 @@ pub type ParachainParams = SimpleParams<ParachainHeader>;
 /// Allows to use a single E-call for the initialization of different parentchain types.
 #[derive(Encode, Decode, Clone)]
 pub enum ParentchainInitParams {
+	#[codec(index = 0)]
 	Solochain { id: ParentchainId, params: SolochainParams },
+	#[codec(index = 1)]
 	Parachain { id: ParentchainId, params: ParachainParams },
 }
 

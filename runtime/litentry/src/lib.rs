@@ -142,7 +142,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litentry-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9168,
+	spec_version: 9170,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -244,14 +244,19 @@ impl pallet_multisig::Config for Runtime {
 )]
 pub enum ProxyType {
 	/// Fully permissioned proxy. Can execute any call on behalf of _proxied_.
+	#[codec(index = 0)]
 	Any,
 	/// Can execute any call that does not transfer funds, including asset transfers.
+	#[codec(index = 1)]
 	NonTransfer,
 	/// Proxy with the ability to reject time-delay proxy announcements.
+	#[codec(index = 2)]
 	CancelProxy,
 	/// Collator selection proxy. Can execute calls related to collator selection mechanism.
+	#[codec(index = 3)]
 	Collator,
 	/// Governance
+	#[codec(index = 4)]
 	Governance,
 }
 

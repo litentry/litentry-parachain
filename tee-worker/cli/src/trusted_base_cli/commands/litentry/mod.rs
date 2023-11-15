@@ -20,5 +20,3 @@ pub mod link_identity;
 pub mod request_vc;
 pub mod request_vc_direct;
 pub mod send_erroneous_parentchain_call;
-pub mod set_user_shielding_key;
-pub mod user_shielding_key;

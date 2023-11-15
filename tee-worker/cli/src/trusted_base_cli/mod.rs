@@ -23,8 +23,6 @@ use crate::{
 			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
 			request_vc::RequestVcCommand, request_vc_direct::RequestVcDirectCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
-			set_user_shielding_key::SetUserShieldingKeyCommand,
-			user_shielding_key::UserShieldingKeyCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
@@ -69,12 +67,6 @@ pub enum TrustedBaseCommand {
 	Nonce(NonceCommand),
 
 	// Litentry's commands below
-	/// query a given user's shielding key
-	UserShieldingKey(UserShieldingKeyCommand),
-
-	/// set a given user's shielding key
-	SetUserShieldingKey(SetUserShieldingKeyCommand),
-
 	/// retrieve the sidechain's raw storage - should only work for non-prod
 	GetStorage(GetStorageCommand),
 
@@ -108,8 +100,6 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::UnshieldFunds(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			// Litentry's commands below
-			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),

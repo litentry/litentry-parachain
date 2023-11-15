@@ -19,6 +19,8 @@ use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum SoraQuizType {
+	#[codec(index = 0)]
 	Attendee,
+	#[codec(index = 1)]
 	Master,
 }

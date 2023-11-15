@@ -22,7 +22,9 @@ use crate::{Assertion, Config};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub enum Status {
+	#[codec(index = 0)]
 	Active,
+	#[codec(index = 1)]
 	Disabled,
 	// Revoked, // commented out for now, we can delete the VC entry when revoked
 }

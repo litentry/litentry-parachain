@@ -67,23 +67,17 @@ function encryptWithAes(key: string, nonce: Uint8Array, cleartext: Buffer): HexS
     return `0x${encrypted}`;
 }
 
-// MOCK_VERIFICATION_NONCE: UserShieldingKeyNonceType = [1u8; 12];
-export const keyNonce = '0x010101010101010101010101';
-
 function generateVerificationMessage(
     parachainApi: ParachainApiPromise,
     sidechainRegistry: SidechainTypeRegistry,
     signer: LitentryPrimitivesIdentity,
     identity: LitentryPrimitivesIdentity,
-    sidechainNonce: number,
-    userShieldingKey: string
+    sidechainNonce: number
 ): HexString {
     const encodedIdentity = sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
     const encodedWho = sidechainRegistry.createType('LitentryPrimitivesIdentity', signer).toU8a();
-    const payload = Buffer.concat([encodedWho, encodedIdentity]);
-    const encryptedPayload = hexToU8a(encryptWithAes(userShieldingKey, hexToU8a(keyNonce), payload));
     const encodedSidechainNonce = parachainApi.createType('Index', sidechainNonce);
-    const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encryptedPayload]);
+    const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encodedWho, encodedIdentity]);
     return blake2AsHex(msg, 256);
 }
 
@@ -93,7 +87,6 @@ export async function buildValidation(
     signerIdentity: LitentryPrimitivesIdentity,
     identity: LitentryPrimitivesIdentity,
     startingSidechainNonce: number,
-    userShieldingKey: string,
     signer: Wallet
 ): Promise<LitentryValidationData> {
     const message = generateVerificationMessage(
@@ -101,8 +94,7 @@ export async function buildValidation(
         sidechainRegistry,
         signerIdentity,
         identity,
-        startingSidechainNonce,
-        userShieldingKey
+        startingSidechainNonce
     );
 
     return parachainApi.createType('LitentryValidationData', {
@@ -514,7 +506,7 @@ export function createSignedTrustedCallSetUserShieldingKey(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_user_shielding_key', '(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)'],
+        ['set_user_shielding_key', '(LitentryIdentity, LitentryIdentity, RequestAesKey, H256)'],
         signer,
         mrenclave,
         nonce,
@@ -532,7 +524,6 @@ export function createSignedTrustedCallLinkIdentity(
     identity: string,
     validationData: string,
     web3networks: string,
-    keyNonce: string,
     aesKey: string,
     hash: string
 ) {
@@ -540,12 +531,12 @@ export function createSignedTrustedCallLinkIdentity(
         parachainApi,
         [
             'link_identity',
-            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, Option<UserShieldingKeyType>, H256)',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)',
         ],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, keyNonce, aesKey, hash]
+        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, aesKey, hash]
     );
 }
 
@@ -599,7 +590,7 @@ export function createSignedTrustedCallRequestVc(
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['request_vc', '(LitentryIdentity,LitentryIdentity,Assertion,Option<UserShieldingKeyType>,H256)'],
+        ['request_vc', '(LitentryIdentity,LitentryIdentity,Assertion,Option<RequestAesKey>,H256)'],
         signer,
         mrenclave,
         nonce,

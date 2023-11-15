@@ -23,10 +23,7 @@ use hex_literal::hex;
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	aes_encrypt_nonce, ErrorDetail, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
-	Web3ValidationData,
-};
+use litentry_primitives::{ErrorDetail, Identity, Web3ValidationData};
 use log::*;
 use sp_core::blake2_256;
 use sp_runtime::AccountId32;
@@ -146,21 +143,20 @@ pub fn ensure_enclave_signer_or_alice(signer: &AccountId32) -> bool {
 }
 
 // verification message format:
-// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
+// ```
+// blake2_256(<sidechain nonce> + <primary account> + <identity-to-be-linked>)
+// ```
 // where <> means SCALE-encoded
-// see https://github.com/litentry/litentry-parachain/issues/1739
+// see https://github.com/litentry/litentry-parachain/issues/1739 and P-174
 pub fn get_expected_raw_message(
 	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
-	key: UserShieldingKeyType,
-	nonce: UserShieldingKeyNonceType,
 ) -> Vec<u8> {
-	let mut data = who.encode();
-	data.append(&mut identity.encode());
-	let mut encrypted_data = aes_encrypt_nonce(&key, &data, nonce).ciphertext;
-	let mut payload = sidechain_nonce.encode();
-	payload.append(&mut encrypted_data);
+	let mut payload = Vec::new();
+	payload.append(&mut sidechain_nonce.encode());
+	payload.append(&mut who.encode());
+	payload.append(&mut identity.encode());
 	blake2_256(payload.as_slice()).to_vec()
 }
 

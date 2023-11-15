@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, AesOutput, Assertion, Error, ShardIdentifier, Status};
+use crate::{mock::*, Assertion, Error, ShardIdentifier, Status};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
@@ -92,7 +92,6 @@ fn vc_issued_works() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default(),
 			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
@@ -115,7 +114,6 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 				Assertion::A1,
 				H256::default(),
 				H256::default(),
-				AesOutput::default(),
 				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
@@ -134,7 +132,6 @@ fn vc_issued_with_duplicated_index_fails() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default(),
 			H256::default(),
 		));
 		assert_noop!(
@@ -144,7 +141,6 @@ fn vc_issued_with_duplicated_index_fails() {
 				Assertion::A1,
 				VC_INDEX,
 				VC_HASH,
-				AesOutput::default(),
 				H256::default(),
 			),
 			Error::<Test>::VCAlreadyExists
@@ -163,7 +159,6 @@ fn disable_vc_works() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default(),
 			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
@@ -198,7 +193,6 @@ fn disable_vc_with_other_subject_fails() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default(),
 			H256::default(),
 		));
 		assert_noop!(
@@ -221,7 +215,6 @@ fn revoke_vc_works() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default(),
 			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
@@ -254,7 +247,6 @@ fn revoke_vc_with_other_subject_fails() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
-			AesOutput::default(),
 			H256::default(),
 		));
 		assert_noop!(

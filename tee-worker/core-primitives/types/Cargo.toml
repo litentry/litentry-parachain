@@ -23,7 +23,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
-teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 
 [features]
 default = ["std"]
@@ -31,7 +30,6 @@ std = [
     "codec/std",
     "itp-sgx-crypto/std",
     "itp-sgx-runtime-primitives/std",
-    "teerex-primitives/std",
     # substrate
     "frame-system/std",
     "pallet-balances/std",
