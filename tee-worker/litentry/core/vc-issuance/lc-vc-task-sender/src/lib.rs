@@ -61,11 +61,6 @@ lazy_static! {
 		Arc::new(Mutex::new(Default::default()));
 }
 
-/// Trait to send an stf request to the stf request thread.
-pub trait SendVcRequest {
-	fn send_vc_request(&self, request: VCRequest) -> Result<(), String>;
-}
-
 pub struct VcRequestSender {}
 impl VcRequestSender {
 	pub fn new() -> Self {
@@ -79,8 +74,8 @@ impl Default for VcRequestSender {
 	}
 }
 
-impl SendVcRequest for VcRequestSender {
-	fn send_vc_request(&self, request: VCRequest) -> Result<(), String> {
+impl VcRequestSender {
+	pub fn send_vc_request(&self, request: VCRequest) -> Result<(), String> {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
