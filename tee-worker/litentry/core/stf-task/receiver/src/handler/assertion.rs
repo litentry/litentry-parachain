@@ -97,8 +97,20 @@ where
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
 
-			Assertion::SoraQuiz(quiz_type, guild_id) =>
-				lc_assertion_build::sora::quiz::build(&self.req, quiz_type, guild_id),
+			Assertion::SoraQuiz(quiz_type) =>
+				lc_assertion_build::sora::quiz::build(&self.req, quiz_type),
+
+			Assertion::GenericDiscordRole(role_type) =>
+				lc_assertion_build::generic_discord_role::build(&self.req, role_type),
+
+			Assertion::BnbDomainHolding =>
+				lc_assertion_build::nodereal::bnb_domain_holding_amount::build(&self.req),
+
+			Assertion::BnbDigitDomainClub(digit_domain_type) =>
+				lc_assertion_build::nodereal::bnb_digit_domain_club_amount::build(
+					&self.req,
+					digit_domain_type,
+				),
 		}?;
 
 		// post-process the credential

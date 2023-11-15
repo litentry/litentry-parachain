@@ -46,11 +46,12 @@ pub use parentchain_primitives::{
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
 	AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BoundedWeb3Network,
-	ErrorDetail, ErrorString, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
-	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	SchemaContentString, SchemaIdString, Signature as ParentchainSignature, SoraQuizType,
-	VCMPError, Web3Network, ASSERTION_FROM_DATE, MINUTES,
+	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
+	BoundedWeb3Network, ErrorDetail, ErrorString, GenericDiscordRoleType, Hash as ParentchainHash,
+	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
+	OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
+	Signature as ParentchainSignature, SoraQuizType, VCMPError, Web3Network, ASSERTION_FROM_DATE,
+	MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};

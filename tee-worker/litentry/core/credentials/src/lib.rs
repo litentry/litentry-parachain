@@ -80,6 +80,8 @@ pub mod assertion_logic;
 pub mod oneblock;
 pub mod schema;
 use assertion_logic::{AssertionLogic, Op};
+pub mod bnb_domain;
+pub mod generic_discord_role;
 pub mod sora;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
