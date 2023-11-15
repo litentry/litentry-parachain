@@ -21,19 +21,18 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
-use ita_stf::{Index, TrustedCall, TrustedOperation, TrustedGetter};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
+use lc_credentials::Credential;
 use litentry_primitives::{
-	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
-	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
-	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	Identity, OneBlockCourseType, ParameterString, Web3Network, UserShieldingKeyType, AesOutput, aes_decrypt
+	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
+	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
+	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
+	AchainableToken, Assertion, Identity, OneBlockCourseType, ParameterString, RequestAesKey,
+	Web3Network, REQUEST_AES_KEY_LEN,
 };
-use log::*;
 use sp_core::Pair;
-use ita_stf::trusted_call_result::RequestVCResult;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
@@ -383,31 +382,34 @@ impl RequestVcCommand {
 			},
 		};
 
-		let top_getter: TrustedOperation = TrustedGetter::user_shielding_key(id.clone())
-			.sign(&KeyPair::Sr25519(Box::new(alice.clone())))
-			.into();
-		let key = perform_trusted_operation::<Option<UserShieldingKeyType>>(cli, trusted_cli, &top_getter);
+		let key = Self::random_aes_key();
 
-		let real_key = key.unwrap().unwrap();
-		println!("Got real key: {:?}", real_key);
-
-
-		let top: TrustedOperation =
-			TrustedCall::request_vc(alice.public().into(), id, assertion, None, Default::default())
-				.sign(&KeyPair::Sr25519(Box::new(alice)), 2, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
-
+		let top: TrustedOperation = TrustedCall::request_vc(
+			alice.public().into(),
+			id,
+			assertion,
+			Some(key),
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
 
 		match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
 			Ok(mut vc) => {
-
-				let vc_content = aes_decrypt(&real_key, &mut vc.vc_payload);
-				println!("Got vc result: {:?} with vc_content: {:?}", vc, vc_content);
+				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+				let credential: Credential = serde_json::from_slice(&decrypted).unwrap();
+				println!("----Generated VC-----");
+				println!("{:?}", credential);
 			},
 			Err(e) => {
 				println!("{:?}", e);
-			}
+			},
 		}
 		Ok(CliResultOk::None)
+	}
+
+	fn random_aes_key() -> RequestAesKey {
+		let random: Vec<u8> = (0..REQUEST_AES_KEY_LEN).map(|_| rand::random::<u8>()).collect();
+		random[0..REQUEST_AES_KEY_LEN].try_into().unwrap()
 	}
 }

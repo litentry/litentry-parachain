@@ -18,7 +18,6 @@ use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
 	trusted_operation::perform_trusted_operation, Cli, CliError, CliResult, CliResultOk,
 };
-use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::ParentchainAccountId;
@@ -38,7 +37,8 @@ impl IDGraphStats {
 		let top: TrustedOperation = TrustedGetter::id_graph_stats(who.public().into())
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
-		let id_graph_stats = perform_trusted_operation::<Option<IDGraphStatsVec>>(cli, trusted_cli, &top);
+		let id_graph_stats =
+			perform_trusted_operation::<Option<IDGraphStatsVec>>(cli, trusted_cli, &top);
 		println!("IDGraph stats:");
 		match id_graph_stats {
 			Ok(id_graph_stats) => {

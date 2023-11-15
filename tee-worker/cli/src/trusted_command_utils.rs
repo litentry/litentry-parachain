@@ -50,18 +50,15 @@ macro_rules! get_layer_two_nonce {
 
 		let getter =
 			Getter::public(PublicGetter::nonce(Identity::Substrate($signer_pair.public().into())));
-		let getter_result = execute_getter_from_cli_args::<Option<Index>>($cli, $trusted_args, &getter);
+		let getter_result = execute_getter_from_cli_args::<Index>($cli, $trusted_args, &getter);
 		let nonce = match getter_result {
-			Ok(Some(nonce)) => nonce,
-			Ok(None) => Default::default(),
+			Ok(nonce) => nonce,
 			Err(_) => todo!(),
 		};
 
-		debug!("got system nonce: {:?}", nonce);
 		let pending_tx_count =
 			get_pending_trusted_calls_for($cli, $trusted_args, &$signer_pair.public().into()).len();
 		let pending_tx_count = Index::try_from(pending_tx_count).unwrap();
-		debug!("got pending tx count: {:?}", pending_tx_count);
 		nonce + pending_tx_count
 	}};
 }

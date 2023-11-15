@@ -22,11 +22,9 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use clap::Parser;
-use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::{Identity, Web3Network};
-use log::*;
 use sp_core::Pair;
 
 // usage exmaple:
@@ -80,6 +78,7 @@ impl LinkIdentityCommand {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 		//todo proper generic type
-		Ok(perform_trusted_operation::<Vec<u8>>(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
+		Ok(perform_trusted_operation::<Vec<u8>>(cli, trusted_cli, &top)
+			.map(|_| CliResultOk::None)?)
 	}
 }
