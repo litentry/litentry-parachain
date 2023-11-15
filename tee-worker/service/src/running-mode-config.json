@@ -13,6 +13,8 @@
         "oneblock_notion_url": "https://abc.com",
         "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
         "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID",
+        "nodereal_api_key": "NODEREAL_API_KEY",
+        "nodereal_api_url": "https://open-platform.nodereal.io/",
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID"
@@ -31,6 +33,8 @@
         "oneblock_notion_url": "https://abc.com",
         "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
         "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID",
+        "nodereal_api_key": "NODEREAL_API_KEY",
+        "nodereal_api_url": "https://open-platform.nodereal.io/",
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID"
@@ -49,6 +53,8 @@
         "oneblock_notion_url": "https://abc.com",
         "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
         "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID",
+        "nodereal_api_key": "NODEREAL_API_KEY",
+        "nodereal_api_url": "https://open-platform.nodereal.io/",
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID"
@@ -67,6 +73,8 @@
         "oneblock_notion_url": "https://abc.com",
         "sora_quiz_master_id": "SORA_QUIZ_MASTER_ID",
         "sora_quiz_attendee_id": "SORA_QUIZ_ATTENDEE_ID",
+        "nodereal_api_key": "NODEREAL_API_KEY",
+        "nodereal_api_url": "https://open-platform.nodereal.io/",
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID"
