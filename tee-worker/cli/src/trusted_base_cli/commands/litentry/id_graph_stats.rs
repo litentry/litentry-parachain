@@ -37,24 +37,17 @@ impl IDGraphStats {
 		let top: TrustedOperation = TrustedGetter::id_graph_stats(who.public().into())
 			.sign(&KeyPair::Sr25519(Box::new(who)))
 			.into();
-		let id_graph_stats =
-			perform_trusted_operation::<Option<IDGraphStatsVec>>(cli, trusted_cli, &top);
+		let id_graph_stats = perform_trusted_operation::<IDGraphStatsVec>(cli, trusted_cli, &top);
 		println!("IDGraph stats:");
 		match id_graph_stats {
 			Ok(id_graph_stats) => {
-				let total_number = id_graph_stats
-					.map(|stats| {
-						let mut total_number = 0_u32;
+				let mut total_number = 0_u32;
 
-						stats.iter().for_each(|item| {
-							total_number += item.1;
+				id_graph_stats.iter().for_each(|item| {
+					total_number += item.1;
 
-							println!("{:?} -> {}", item.0, item.1);
-						});
-
-						total_number
-					})
-					.unwrap();
+					println!("{:?} -> {}", item.0, item.1);
+				});
 
 				println!("Total number: {}", total_number);
 				Ok(CliResultOk::None)

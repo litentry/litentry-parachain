@@ -71,20 +71,7 @@ pub(crate) fn get_balance(cli: &Cli, trusted_args: &TrustedCli, arg_who: &str) -
 	let top: TrustedOperation = TrustedGetter::free_balance(who.public().into())
 		.sign(&KeyPair::Sr25519(Box::new(who)))
 		.into();
-	let res = perform_trusted_operation(cli, trusted_args, &top).unwrap_or(None);
-	debug!("received result for balance");
-	decode_balance(res)
-}
-
-pub(crate) fn decode_balance(maybe_encoded_balance: Option<Vec<u8>>) -> Option<Balance> {
-	maybe_encoded_balance.and_then(|encoded_balance| {
-		if let Ok(vd) = Balance::decode(&mut encoded_balance.as_slice()) {
-			Some(vd)
-		} else {
-			warn!("Could not decode balance. maybe hasn't been set? {:x?}", encoded_balance);
-			None
-		}
-	})
+	perform_trusted_operation::<Balance>(cli, trusted_args, &top).ok()
 }
 
 pub(crate) fn get_keystore_path(trusted_args: &TrustedCli, cli: &Cli) -> PathBuf {
