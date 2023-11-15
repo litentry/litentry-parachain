@@ -81,7 +81,6 @@ impl VcRequestSender {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
-		// TODO: Can we optimise using RwLock
 		let mutex_guard = GLOBAL_VC_REQUEST_TASK.lock().unwrap();
 
 		let vc_task_sender = mutex_guard.clone().unwrap();
