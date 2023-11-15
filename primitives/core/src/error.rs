@@ -50,8 +50,8 @@ pub enum ErrorDetail {
 	// web3 identity linking is requested and opposite
 	#[codec(index = 6)]
 	InvalidIdentity,
-	// error when tee-worker detects that identity verification data is linked to different web2
-	// account than expected
+	// error when tee-worker detects that identity verification data is related to other web2
+	// account than expected, for example wrong tweet id was provided
 	#[codec(index = 7)]
 	WrongWeb2Handle,
 	// error when during web3 identity verification process tee-worker detects that signed message
