@@ -102,6 +102,15 @@ where
 
 			Assertion::GenericDiscordRole(role_type) =>
 				lc_assertion_build::generic_discord_role::build(&self.req, role_type),
+
+			Assertion::BnbDomainHolding =>
+				lc_assertion_build::nodereal::bnb_domain_holding_amount::build(&self.req),
+
+			Assertion::BnbDigitDomainClub(digit_domain_type) =>
+				lc_assertion_build::nodereal::bnb_digit_domain_club_amount::build(
+					&self.req,
+					digit_domain_type,
+				),
 		}?;
 
 		// post-process the credential

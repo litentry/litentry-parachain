@@ -55,6 +55,8 @@ pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -
 			dpc.set_oneblock_notion_url(data_provider_config.oneblock_notion_url);
 			dpc.set_sora_quiz_master_id(data_provider_config.sora_quiz_master_id);
 			dpc.set_sora_quiz_attendee_id(data_provider_config.sora_quiz_attendee_id);
+			dpc.set_nodereal_api_key(data_provider_config.nodereal_api_key);
+			dpc.set_nodereal_api_url(data_provider_config.nodereal_api_url);
 			dpc.set_contest_legend_discord_role_id(
 				data_provider_config.contest_legend_discord_role_id,
 			);
