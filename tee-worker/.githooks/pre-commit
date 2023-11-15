@@ -1,15 +1,17 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-set -e
+# This pre-commit hook uses cargo fmt to check the code style
+# Install it either with `make githooks` or copy the file to .git/hooks
 
-ROOTDIR=$(git rev-parse --show-toplevel)
-cd "$ROOTDIR"
+echo '+cargo fmt -- --check'
+cargo fmt -- --check
+result=$?
 
-files=$((git diff --cached --name-only --diff-filter=ACMR | grep -Ei "\.rs$|Cargo.toml$") || true)
-if [ ! -z "$files" ]; then
-  echo "[cargo fmt] and [git add] the following files:"
-  echo "$files"
-  taplo fmt
-  make fmt
-  git add $(echo "$files" | paste -s -d " " -)
+if [[ ${result} -ne 0 ]] ; then
+    cat <<\EOF
+There are some code style issues, run `cargo fmt` first.
+EOF
+    exit 1
 fi
+
+exit 0

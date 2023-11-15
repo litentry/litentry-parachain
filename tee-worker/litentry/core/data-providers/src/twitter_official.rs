@@ -265,12 +265,12 @@ impl TwitterOfficialClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use lc_mock_server::{default_getter, run};
+	use lc_mock_server::run;
 	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(default_getter), 0).unwrap();
+		let url = run(0).unwrap();
 		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_twitter_official_url(url);
 	}
 
@@ -286,7 +286,7 @@ mod tests {
 
 		assert_eq!(tweet.id, tweet_id);
 		assert_eq!(tweet.author_id, "mock_user_id");
-		assert_eq!(tweet.text, "b5e184f6f42d91ca8072e3841270d0d747cdf40610cb2d59fc31faa27c26d367")
+		assert_eq!(tweet.text, "74983bb19b0e9f7cc8446b0fc16d50855521add6c9574cdf7559830de4054e75")
 	}
 
 	#[test]

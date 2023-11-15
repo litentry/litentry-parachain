@@ -38,15 +38,14 @@ pub use litentry_primitives::{
 
 use codec::{Decode, Encode};
 use derive_more::Display;
-pub use getter::*;
-pub use ita_sgx_runtime::{
-	pallet_imt::UserShieldingKeys, IDGraph, IdentityManagement, Runtime, System,
-};
+pub use ita_sgx_runtime::{IDGraph, IdentityManagement, Runtime, System};
 use itp_node_api_metadata::Error as MetadataError;
 use itp_node_api_metadata_provider::Error as MetadataProviderError;
 use itp_stf_primitives::types::AccountId;
-use litentry_primitives::{Assertion, ErrorDetail, ErrorString, IMPError, VCMPError};
+use litentry_primitives::ErrorString;
 use std::{format, string::String};
+
+pub use getter::*;
 pub use stf_sgx_primitives::{types::*, Stf};
 pub use trusted_call::*;
 
@@ -71,34 +70,48 @@ pub type StfResult<T> = Result<T, StfError>;
 
 #[derive(Debug, Display, PartialEq, Eq, Encode, Decode, Clone)]
 pub enum StfError {
+	#[codec(index = 0)]
 	#[display(fmt = "Insufficient privileges {:?}, are you sure you are root?", _0)]
 	MissingPrivileges(Identity),
+	#[codec(index = 1)]
 	#[display(fmt = "Valid enclave signer account is required")]
 	RequireEnclaveSignerAccount,
+	#[codec(index = 2)]
 	#[display(fmt = "Error dispatching runtime call. {:?}", _0)]
 	Dispatch(String),
+	#[codec(index = 3)]
 	#[display(fmt = "Not enough funds to perform operation")]
 	MissingFunds,
+	#[codec(index = 4)]
 	#[display(fmt = "Invalid Nonce {:?} != {:?}", _0, _1)]
 	InvalidNonce(Index, Index),
+	#[codec(index = 5)]
 	StorageHashMismatch,
+	#[codec(index = 6)]
 	InvalidStorageDiff,
+	#[codec(index = 7)]
 	InvalidMetadata,
 	// litentry
-	#[display(fmt = "SetUserShieldingKeyFailed: {:?}", _0)]
-	SetUserShieldingKeyFailed(ErrorDetail),
+	#[codec(index = 8)]
 	#[display(fmt = "LinkIdentityFailed: {:?}", _0)]
 	LinkIdentityFailed(ErrorDetail),
+	#[codec(index = 9)]
 	#[display(fmt = "DeactivateIdentityFailed: {:?}", _0)]
 	DeactivateIdentityFailed(ErrorDetail),
+	#[codec(index = 10)]
 	#[display(fmt = "ActivateIdentityFailed: {:?}", _0)]
 	ActivateIdentityFailed(ErrorDetail),
+	#[codec(index = 11)]
 	#[display(fmt = "RequestVCFailed: {:?} {:?}", _0, _1)]
 	RequestVCFailed(Assertion, ErrorDetail),
+	#[codec(index = 12)]
 	SetScheduledMrEnclaveFailed,
+	#[codec(index = 13)]
 	#[display(fmt = "SetIdentityNetworksFailed: {:?}", _0)]
 	SetIdentityNetworksFailed(ErrorDetail),
+	#[codec(index = 14)]
 	InvalidAccount,
+	#[codec(index = 15)]
 	UnclassifiedError,
 }
 
@@ -117,7 +130,6 @@ impl From<MetadataProviderError> for StfError {
 impl From<IMPError> for StfError {
 	fn from(e: IMPError) -> Self {
 		match e {
-			IMPError::SetUserShieldingKeyFailed(d) => StfError::SetIdentityNetworksFailed(d),
 			IMPError::LinkIdentityFailed(d) => StfError::LinkIdentityFailed(d),
 			IMPError::DeactivateIdentityFailed(d) => StfError::DeactivateIdentityFailed(d),
 			IMPError::ActivateIdentityFailed(d) => StfError::ActivateIdentityFailed(d),
@@ -139,8 +151,6 @@ impl StfError {
 	// Convert StfError to IMPError that would be sent to parentchain
 	pub fn to_imp_error(&self) -> IMPError {
 		match self {
-			StfError::SetUserShieldingKeyFailed(d) =>
-				IMPError::SetUserShieldingKeyFailed(d.clone()),
 			StfError::LinkIdentityFailed(d) => IMPError::LinkIdentityFailed(d.clone()),
 			StfError::DeactivateIdentityFailed(d) => IMPError::DeactivateIdentityFailed(d.clone()),
 			StfError::ActivateIdentityFailed(d) => IMPError::ActivateIdentityFailed(d.clone()),
@@ -163,8 +173,11 @@ impl StfError {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedOperation {
+	#[codec(index = 0)]
 	indirect_call(TrustedCallSigned),
+	#[codec(index = 1)]
 	direct_call(TrustedCallSigned),
+	#[codec(index = 2)]
 	get(Getter),
 }
 

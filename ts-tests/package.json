@@ -15,7 +15,8 @@
         "test-evm-transfer": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/evm-transfer.test.ts'",
         "test-evm-contract": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/evm-contract.test.ts'",
         "test-runtime-upgrade": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
-        "test-all": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'"
+        "test-all": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'",
+        "format": "pnpm exec prettier --write 'tests/**/*.test.ts'"
     },
     "author": "Han Zhao",
     "license": "ISC",

@@ -52,8 +52,6 @@ pub trait WeightInfo {
 	fn link_identity() -> Weight;
 	fn deactivate_identity() -> Weight;
 	fn activate_identity() -> Weight;
-	fn set_user_shielding_key() -> Weight;
-	fn user_shielding_key_set() -> Weight;
 	fn identity_linked() -> Weight;
 	fn identity_deactivated() -> Weight;
 	fn identity_activated() -> Weight;
@@ -66,68 +64,56 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: IdentityManagement Delegatee (r:0 w:1)
 	// Proof: IdentityManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn add_delegatee() -> Weight {
-		Weight::from_ref_time(6_324_000 as u64)
+		Weight::from_parts(6_324_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: IdentityManagement Delegatee (r:1 w:1)
 	// Proof: IdentityManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn remove_delegatee() -> Weight {
-		Weight::from_ref_time(10_160_000 as u64)
+		Weight::from_parts(10_160_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn link_identity() -> Weight {
-		Weight::from_ref_time(11_618_000 as u64)
+		Weight::from_parts(11_618_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn deactivate_identity() -> Weight {
-		Weight::from_ref_time(8_114_000 as u64)
+		Weight::from_parts(8_114_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn activate_identity() -> Weight {
-		Weight::from_ref_time(8_129_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-	}
-	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	fn set_user_shielding_key() -> Weight {
-		Weight::from_ref_time(8_250_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-	}
-	// Storage: Teerex EnclaveIndex (r:1 w:0)
-	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	fn user_shielding_key_set() -> Weight {
-		Weight::from_ref_time(10_319_000 as u64)
+		Weight::from_parts(8_129_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn identity_linked() -> Weight {
-		Weight::from_ref_time(10_280_000 as u64)
+		Weight::from_parts(10_280_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn identity_deactivated() -> Weight {
-		Weight::from_ref_time(10_213_000 as u64)
+		Weight::from_parts(10_213_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn identity_activated() -> Weight {
-		Weight::from_ref_time(10_294_000 as u64)
+		Weight::from_parts(10_294_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn some_error() -> Weight {
-		Weight::from_ref_time(10_322_000 as u64)
+		Weight::from_parts(10_322_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 }
@@ -137,68 +123,56 @@ impl WeightInfo for () {
 	// Storage: IdentityManagement Delegatee (r:0 w:1)
 	// Proof: IdentityManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn add_delegatee() -> Weight {
-		Weight::from_ref_time(6_324_000 as u64)
+		Weight::from_parts(6_324_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: IdentityManagement Delegatee (r:1 w:1)
 	// Proof: IdentityManagement Delegatee (max_values: None, max_size: Some(48), added: 2523, mode: MaxEncodedLen)
 	fn remove_delegatee() -> Weight {
-		Weight::from_ref_time(10_160_000 as u64)
+		Weight::from_parts(10_160_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn link_identity() -> Weight {
-		Weight::from_ref_time(11_618_000 as u64)
+		Weight::from_parts(11_618_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn deactivate_identity() -> Weight {
-		Weight::from_ref_time(8_114_000 as u64)
+		Weight::from_parts(8_114_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
 	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
 	fn activate_identity() -> Weight {
-		Weight::from_ref_time(8_129_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-	}
-	// Storage: IMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: IMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	fn set_user_shielding_key() -> Weight {
-		Weight::from_ref_time(8_250_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-	}
-	// Storage: Teerex EnclaveIndex (r:1 w:0)
-	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	fn user_shielding_key_set() -> Weight {
-		Weight::from_ref_time(10_319_000 as u64)
+		Weight::from_parts(8_129_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn identity_linked() -> Weight {
-		Weight::from_ref_time(10_280_000 as u64)
+		Weight::from_parts(10_280_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn identity_deactivated() -> Weight {
-		Weight::from_ref_time(10_213_000 as u64)
+		Weight::from_parts(10_213_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn identity_activated() -> Weight {
-		Weight::from_ref_time(10_294_000 as u64)
+		Weight::from_parts(10_294_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn some_error() -> Weight {
-		Weight::from_ref_time(10_322_000 as u64)
+		Weight::from_parts(10_322_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 }

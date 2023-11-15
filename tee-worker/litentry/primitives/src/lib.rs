@@ -24,17 +24,20 @@ extern crate sgx_tstd as std;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 mod aes;
+mod aes_request;
 mod ethereum_signature;
 mod identity;
 mod validation_data;
 
 pub use aes::*;
+pub use aes_request::*;
 pub use ethereum_signature::*;
 pub use identity::*;
-use sp_std::vec::Vec;
+use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 pub use validation_data::*;
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use itp_utils::hex::hex_encode;
 use log::error;
 pub use parentchain_primitives::{
@@ -42,19 +45,20 @@ pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableParams, AchainableToken, AesOutput, AmountHoldingTimeType, Assertion,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BoundedWeb3Network,
-	ErrorDetail, ErrorString, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
-	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	SchemaContentString, SchemaIdString, Signature as ParentchainSignature,
-	UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, Web3Network, ASSERTION_FROM_DATE,
-	MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
+	AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
+	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
+	BoundedWeb3Network, ErrorDetail, ErrorString, GenericDiscordRoleType, Hash as ParentchainHash,
+	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
+	OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
+	Signature as ParentchainSignature, SoraQuizType, VCMPError, Web3Network, ASSERTION_FROM_DATE,
+	MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
 use std::string::ToString;
+pub use teerex_primitives::{decl_rsa_request, ShardIdentifier};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -63,14 +67,19 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum LitentryMultiSignature {
 	/// An Ed25519 signature.
+	#[codec(index = 0)]
 	Ed25519(ed25519::Signature),
 	/// An Sr25519 signature.
+	#[codec(index = 1)]
 	Sr25519(sr25519::Signature),
 	/// An ECDSA/SECP256k1 signature.
+	#[codec(index = 2)]
 	Ecdsa(ecdsa::Signature),
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
+	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
 	/// Same as the above, but the payload bytes are hex-encoded and prepended with a readable prefix
+	#[codec(index = 4)]
 	EthereumPrettified(EthereumSignature),
 }
 
@@ -179,3 +188,18 @@ fn evm_eip191_wrap(msg: &[u8]) -> Vec<u8> {
 }
 
 pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);
+
+// Represent a request that can be decrypted by the enclave
+// Both itp_types::Request and AesRequest should impelement this
+pub trait DecryptableRequest {
+	type Error;
+	// the shard getter
+	fn shard(&self) -> ShardIdentifier;
+	// the raw payload - AFAICT only used in mock
+	fn payload(&self) -> &[u8];
+	// how to decrypt the payload
+	fn decrypt<T: Debug>(
+		&mut self,
+		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
+	) -> core::result::Result<Vec<u8>, Self::Error>;
+}

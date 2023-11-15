@@ -40,7 +40,9 @@ export default {
             _enum: {
                 free_balance: "(LitentryIdentity)",
                 reserved_balance: "(LitentryIdentity)",
-                user_shielding_key: "(LitentryIdentity)",
+                __Unused_evm_nonce: "Null",
+                __Unused_evm_account_codes: "Null",
+                __Unused_evm_account_storages: "Null",
                 id_graph: "(LitentryIdentity)",
                 id_graph_stats: "(LitentryIdentity)",
             },
@@ -52,21 +54,19 @@ export default {
                 balance_transfer: "(LitentryIdentity, LitentryIdentity, Balance)",
                 balance_unshield: "(LitentryIdentity, LitentryIdentity, Balance, ShardIdentifier)",
                 balance_shield: "(LitentryIdentity, LitentryIdentity, Balance)",
-                set_user_shielding_key:
-                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, H256)",
+                __Unused_evm_withdraw: "Null",
+                __Unused_evm_call: "Null",
+                __Unused_evm_create: "Null",
+                __Unused_evm_create2: "Null",
                 link_identity:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)",
                 deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
-                request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
-                set_identity_networks:
-                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
-                set_user_shielding_key_with_networks:
-                    "(LitentryIdentity, LitentryIdentity, UserShieldingKeyType, Vec<Web3Network>, H256)",
+                request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)",
+                set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
             },
         },
-        UserShieldingKeyType: "[u8; 32]",
-        UserShieldingKeyNonceType: "[u8; 12]",
+        RequestAesKey: "[u8; 32]",
         DirectRequestStatus: {
             _enum: {
                 Ok: null,
@@ -104,17 +104,7 @@ export default {
         Address20: "[u8;20]",
         IdentityString: "Vec<u8>",
         Web3Network: {
-            _enum: [
-                "Polkadot",
-                "Kusama",
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Khala",
-                "SubstrateTestnet",
-                "Ethereum",
-                "Bsc",
-            ],
+            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
         },
         LitentryValidationData: {
             _enum: {
@@ -177,10 +167,6 @@ export default {
 
         // teerex
         ShardIdentifier: "H256",
-        Request: {
-            shard: "ShardIdentifier",
-            cyphertext: "Vec<u8>",
-        },
 
         // vc management
         VCRequested: {
@@ -205,22 +191,10 @@ export default {
             },
         },
         AssertionSupportedNetwork: {
-            _enum: [
-                "Litentry",
-                "Litmus",
-                "LitentryRococo",
-                "Polkadot",
-                "Kusama",
-                "Khala",
-                "Ethereum",
-                "TestNet",
-            ],
+            _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
         GenericEventWithAccount: {
             account: "AccountId",
-        },
-        SetUserShieldingKeyResult: {
-            id_graph: "AesOutput",
         },
         LinkIdentityResult: {
             id_graph: "AesOutput",
@@ -236,7 +210,6 @@ export default {
                 UnauthorizedSigner: "Null",
                 StfError: "(Bytes)",
                 SendStfRequestFailed: "Null",
-                UserShieldingKeyNotFound: "Null",
                 ParseError: "Null",
                 DataProviderError: "(Bytes)",
                 InvalidIdentity: "Null",
@@ -259,7 +232,6 @@ export default {
                 StorageHashMismatch: "Null",
                 InvalidStorageDiff: "Null",
                 InvalidMetadata: "Null",
-                SetUserShieldingKeyFailed: "(ErrorDetail)",
                 LinkIdentityFailed: "(ErrorDetail)",
                 DeactivateIdentityFailed: "(ErrorDetail)",
                 ActivateIdentityFailed: "(ErrorDetail)",
@@ -274,6 +246,15 @@ export default {
             ciphertext: "Vec<u8>",
             aad: "Vec<u8>",
             nonce: "[u8; 12]",
+        },
+        RsaRequest: {
+            shard: "ShardIdentifier",
+            payload: "Vec<u8>",
+        },
+        AesRequest: {
+            shard: "ShardIdentifier",
+            key: "Vec<u8>",
+            payload: "AesOutput",
         },
     },
 };

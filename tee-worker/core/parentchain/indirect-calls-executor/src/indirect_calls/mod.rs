@@ -15,17 +15,18 @@
 
 */
 
-mod call_worker;
+mod invoke;
 mod litentry;
 mod shield_funds;
+mod transfer_to_alice_shields_funds;
 
-pub use call_worker::CallWorkerArgs;
+pub use invoke::InvokeArgs;
 pub use litentry::{
 	activate_identity::ActivateIdentityArgs,
 	deactivate_identity::DeactivateIdentityArgs,
 	link_identity::LinkIdentityArgs,
 	request_vc::RequestVCArgs,
 	scheduled_enclave::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
-	set_user_shielding_key::SetUserShieldingKeyArgs,
 };
-pub use shield_funds::ShiedFundsArgs;
+pub use shield_funds::ShieldFundsArgs;
+pub use transfer_to_alice_shields_funds::{TransferToAliceShieldsFundsArgs, ALICE_ACCOUNT_ID};

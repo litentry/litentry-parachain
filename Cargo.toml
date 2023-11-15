@@ -11,11 +11,13 @@ members = [
     'pallets/sidechain',
     'pallets/teeracle',
     'pallets/teerex',
+    'pallets/teerex/sgx-verify',
     'pallets/parentchain',
     'pallets/test-utils',
     'pallets/group',
     'primitives/common',
     'primitives/core',
+    'primitives/core/macros',
     'primitives/sidechain',
     'primitives/teeracle',
     'primitives/teerex',
@@ -42,3 +44,6 @@ inherits = "release"
 lto = "thin"
 strip = "symbols"
 incremental = false
+
+[patch.crates-io]
+ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }

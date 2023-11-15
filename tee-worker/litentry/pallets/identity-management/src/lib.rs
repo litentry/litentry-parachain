@@ -38,13 +38,13 @@ pub use pallet::*;
 pub mod identity_context;
 pub use identity_context::*;
 
-use frame_support::{pallet_prelude::*, traits::StorageVersion};
+use frame_support::{pallet_prelude::*, sp_runtime::traits::One, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	all_substrate_web3networks, Identity, ParentchainBlockNumber, UserShieldingKeyType, Web3Network,
+	all_evm_web3networks, all_substrate_web3networks, Identity, ParentchainBlockNumber, Web3Network,
 };
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type IDGraph<T> = Vec<(Identity, IdentityContext<T>)>;
@@ -75,8 +75,6 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// user shielding key was set
-		UserShieldingKeySet { who: Identity, key: UserShieldingKeyType },
 		/// an identity was linked
 		IdentityLinked { who: Identity, identity: Identity },
 		/// an identity was deactivated
@@ -104,11 +102,6 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn user_shielding_keys)]
-	pub type UserShieldingKeys<T: Config> =
-		StorageMap<_, Blake2_128Concat, Identity, UserShieldingKeyType, OptionQuery>;
-
-	#[pallet::storage]
 	pub type LinkedIdentities<T: Config> =
 		StorageMap<_, Blake2_128Concat, Identity, (), OptionQuery>;
 
@@ -129,39 +122,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::call_index(0)]
-		#[pallet::weight(15_000_000)]
-		pub fn set_user_shielding_key(
-			origin: OriginFor<T>,
-			who: Identity,
-			key: UserShieldingKeyType,
-			networks: Vec<Web3Network>,
-		) -> DispatchResult {
-			T::ManageOrigin::ensure_origin(origin)?;
-
-			ensure!(!who.is_web2(), Error::<T>::NotSupportedIdentity);
-			if IDGraphs::<T>::get(&who, &who).is_none() {
-				ensure!(
-					!LinkedIdentities::<T>::contains_key(&who),
-					Error::<T>::IdentityAlreadyLinked
-				);
-				ensure!(
-					who.matches_web3networks(networks.as_ref()),
-					Error::<T>::WrongWeb3NetworkTypes
-				);
-				let context =
-					<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), networks);
-				Self::insert_identity_with_limit(&who, &who, context)?;
-			}
-			// we don't care about the current key
-			UserShieldingKeys::<T>::insert(&who, key);
-
-			Self::deposit_event(Event::UserShieldingKeySet { who, key });
-			Ok(())
-		}
-
 		#[pallet::call_index(1)]
-		#[pallet::weight(15_000_000)]
+		#[pallet::weight({15_000_000})]
 		pub fn link_identity(
 			origin: OriginFor<T>,
 			who: Identity,
@@ -181,6 +143,26 @@ pub mod pallet {
 				Error::<T>::WrongWeb3NetworkTypes
 			);
 
+			// if there's no IDGraph, create one - `who` will be the prime identity
+			// please note the web3networks for the prime identity will be all avaiable networks
+			if IDGraphs::<T>::get(&who, &who).is_none() {
+				ensure!(
+					!LinkedIdentities::<T>::contains_key(&who),
+					Error::<T>::IdentityAlreadyLinked
+				);
+
+				let prime_identity_web3networks = match who {
+					Identity::Substrate(_) => all_substrate_web3networks(),
+					Identity::Evm(_) => all_evm_web3networks(),
+					_ => vec![],
+				};
+				let context = <IdentityContext<T>>::new(
+					<T as frame_system::Config>::BlockNumber::one(),
+					prime_identity_web3networks,
+				);
+				Self::insert_identity_with_limit(&who, &who, context)?;
+			}
+
 			let context =
 				<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), web3networks);
 			Self::insert_identity_with_limit(&who, &identity, context)?;
@@ -189,7 +171,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(15_000_000)]
+		#[pallet::weight({15_000_000})]
 		pub fn deactivate_identity(
 			origin: OriginFor<T>,
 			who: Identity,
@@ -210,7 +192,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(15_000_000)]
+		#[pallet::weight({15_000_000})]
 		pub fn activate_identity(
 			origin: OriginFor<T>,
 			who: Identity,
@@ -229,7 +211,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(15_000_000)]
+		#[pallet::weight({15_000_000})]
 		pub fn set_identity_networks(
 			origin: OriginFor<T>,
 			who: Identity,
@@ -270,11 +252,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// get the most recent `max_len` elements in IDGraph
-		pub fn get_id_graph(who: &Identity, max_len: usize) -> IDGraph<T> {
+		// get the whole IDGraph, sorted by `link_block` (earliest -> latest)
+		pub fn get_id_graph(who: &Identity) -> IDGraph<T> {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
-			id_graph.sort_by(|a, b| Ord::cmp(&b.1.link_block, &a.1.link_block));
-			id_graph.truncate(max_len);
+			id_graph.sort_by(|a, b| Ord::cmp(&a.1.link_block, &b.1.link_block));
 			id_graph
 		}
 

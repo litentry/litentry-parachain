@@ -1,0 +1,28 @@
+{
+  "workers": [
+    {
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "-P",
+        "2000",
+        "-w",
+        "2001",
+        "-r",
+        "3443",
+        "-h",
+        "4545",
+        "-u",
+        "wss://rpc.rococo-parachain-sg.litentry.io",
+        "-p",
+        "443",
+        "--running-mode",
+        "/home/yang/configs/mode_config.json",
+        "--parentchain-start-block",
+        "2742435"
+      ],
+      "subcommand_flags": [
+      ]
+    }
+  ]
+}

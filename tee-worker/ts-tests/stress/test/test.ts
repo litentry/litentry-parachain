@@ -1,21 +1,15 @@
-import crypto from "crypto";
-import dotenv from "dotenv";
-import { u8aToHex } from "@polkadot/util";
-import { cryptoWaitReady } from "@polkadot/util-crypto";
-import { apiContextManager } from "../src/api-context-manager";
-import { Config } from "../src/config";
-import { processQueue, repeat } from "../src/job-queue";
-import { Measurement, newTimedRunner } from "../src/measurement";
-import { randomWallet } from "../src/random-wallet";
-import {
-    activateIdentity,
-    deactivateIdentity,
-    linkIdentity,
-    requestVc1,
-    requestVc4,
-} from "../src/steps";
-import { newUserSession } from "../src/user-session";
-import { assert } from "chai";
+import crypto from 'crypto';
+import dotenv from 'dotenv';
+import { u8aToHex } from '@polkadot/util';
+import { cryptoWaitReady } from '@polkadot/util-crypto';
+import { apiContextManager } from '../src/api-context-manager';
+import { Config } from '../src/config';
+import { processQueue, repeat } from '../src/job-queue';
+import { Measurement, newTimedRunner } from '../src/measurement';
+import { randomWallet } from '../src/random-wallet';
+import { activateIdentity, deactivateIdentity, linkIdentity, requestVc1, requestVc4 } from '../src/steps';
+import { newUserSession } from '../src/user-session';
+import { assert } from 'chai';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
@@ -29,10 +23,10 @@ function getConfig(): Config {
     };
 }
 
-describe("load test runner", function () {
+describe('load test runner', function () {
     this.timeout(6000000);
 
-    it("starts threads, runs tests, and collects results", async function () {
+    it('starts threads, runs tests, and collects results', async function () {
         /**
          * The test will start some threads and count the measurements here;
          * we check at the end that the expected number of requests was counted for each type.
@@ -55,7 +49,7 @@ describe("load test runner", function () {
                     process.stderr.write(`Measurement failed for ${measurement.label}\n`);
                     return;
                 }
-                process.stderr.write(".");
+                process.stderr.write('.');
                 const current = measurementCounts.get(measurement.label) ?? 0;
                 measurementCounts.set(measurement.label, current + 1);
             },
@@ -72,13 +66,13 @@ describe("load test runner", function () {
             const primary = randomWallet();
             const cryptoKey = await crypto.subtle.generateKey(
                 {
-                    name: "AES-GCM",
+                    name: 'AES-GCM',
                     length: 256,
                 },
                 true,
-                ["encrypt", "decrypt"]
+                ['encrypt', 'decrypt']
             );
-            const exportedKey = await crypto.subtle.exportKey("raw", cryptoKey);
+            const exportedKey = await crypto.subtle.exportKey('raw', cryptoKey);
             const userShieldingKey = u8aToHex(new Uint8Array(exportedKey));
             const contextManager = apiContextManager(config, log).map(async (api) => {
                 return {
@@ -104,7 +98,6 @@ describe("load test runner", function () {
                         api.parachainApi,
                         api.mrEnclave,
                         api.teeShieldingKey,
-                        session.userShieldingKey,
                         session.nextNonce(),
                         session.subject,
                         log
@@ -168,9 +161,7 @@ describe("load test runner", function () {
                 async (error) => {
                     // Log the error, but continue to the next iteration
                     const writer = log.getWriter();
-                    await writer.write(
-                        `${error instanceof Error ? error.message : JSON.stringify(error)}\n`
-                    );
+                    await writer.write(`${error instanceof Error ? error.message : JSON.stringify(error)}\n`);
                     writer.releaseLock();
                 }
             );
@@ -189,14 +180,8 @@ describe("load test runner", function () {
          * Check for successful execution.
          */
         assert.equal(measurementCounts.size, 6);
-        assert.equal(measurementCounts.get("setShieldingKey"), 3);
-        [
-            "linkIdentity",
-            "requestVc1",
-            "requestVc4",
-            "deactivateIdentity",
-            "activateIdentity",
-        ].forEach((label) => {
+        assert.equal(measurementCounts.get('setShieldingKey'), 3);
+        ['linkIdentity', 'requestVc1', 'requestVc4', 'deactivateIdentity', 'activateIdentity'].forEach((label) => {
             assert.equal(measurementCounts.get(label), 6);
         });
     });

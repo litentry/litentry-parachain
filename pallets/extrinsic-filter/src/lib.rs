@@ -87,10 +87,13 @@ pub use weights::WeightInfo;
 pub enum OperationalMode {
 	/// when parachain runs normally
 	#[default]
+	#[codec(index = 0)]
 	Normal,
 	/// when parachain traps in contigency situation
+	#[codec(index = 1)]
 	Safe,
 	/// when parachain is used for testing purpose
+	#[codec(index = 2)]
 	Test,
 }
 
@@ -102,7 +105,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
@@ -188,7 +190,7 @@ pub mod pallet {
 		/// (pallet_name_bytes, function_name_bytes) can uniquely identify an extrinsic
 		/// if function_name_bytes is None, all extrinsics in `pallet_name_bytes` will be blocked
 		#[pallet::call_index(1)]
-		#[pallet::weight(10_000)]
+		#[pallet::weight({10_000})]
 		#[transactional]
 		pub fn block_extrinsics(
 			origin: OriginFor<T>,
@@ -226,7 +228,7 @@ pub mod pallet {
 		/// (pallet_name_bytes, function_name_bytes) can uniquely identify an extrinsic
 		/// if function_name_bytes is None, all extrinsics in `pallet_name_bytes` will be unblocked
 		#[pallet::call_index(2)]
-		#[pallet::weight(10_000)]
+		#[pallet::weight({10_000})]
 		#[transactional]
 		pub fn unblock_extrinsics(
 			origin: OriginFor<T>,

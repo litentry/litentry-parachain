@@ -5,17 +5,22 @@ on:
     inputs:
       release_client:
         type: boolean
-        description: client
+        description: parachain-client
         required: true
         default: true
       release_runtime:
         type: boolean
-        description: runtime
+        description: parachain-runtime
+        required: true
+        default: true
+      release_worker:
+        type: boolean
+        description: tee-worker
         required: true
         default: true
       release_enclave:
         type: boolean
-        description: enclave
+        description: tee-enclave
         required: true
         default: true
       release_tag:
@@ -47,26 +52,24 @@ jobs:
       - name: set release_type
         id: vars
         run: |
-          release_type=""
-          if [ "${{ github.event.inputs.release_enclave }}" = "true" ] && [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
-            release_type="all"
-          elif [ "${{ github.event.inputs.release_client }}" = "true" ] && [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
-            release_type="both"
-          elif [ "${{ github.event.inputs.release_client }}" = "true" ]; then
-            release_type="client"
-          elif [ "${{ github.event.inputs.release_runtime }}" = "true" ]; then
-            release_type="runtime"
-          elif [ "${{ github.event.inputs.release_enclave }}" = "true" ]; then
-            release_type="enclave"
-          else
+          # use something similar to mask to store the release type
+          t=0000
+          [ "${{ github.event.inputs.release_client }}" = "true" ] && t="${t:0:0}1${t:1}"
+          [ "${{ github.event.inputs.release_runtime }}" = "true" ] && t="${t:0:1}1${t:2}"
+          [ "${{ github.event.inputs.release_worker }}" = "true" ] && t="${t:0:2}1${t:3}"
+          [ "${{ github.event.inputs.release_enclave }}" = "true" ] && t="${t:0:3}1${t:4}"
+          if [ $t = "0000"]; then
             echo "::error::Please select at least one release type."
             exit 1
           fi
-          echo "release_type=${release_type}" >> $GITHUB_OUTPUT
+          echo "::group::print release type"
+          echo "release_type: $t"
+          echo "::endgroup::"
+          echo "release_type=$t" >> $GITHUB_OUTPUT
     outputs:
       release_type: ${{ steps.vars.outputs.release_type }}
 
-  ## build runtime wasm ##
+  ## build parachain runtime wasm ##
   build-wasm:
     if: ${{ github.event.inputs.release_runtime == 'true' }}
     runs-on: ubuntu-latest
@@ -85,7 +88,7 @@ jobs:
 
       - name: Build with srtool
         id: srtool_build
-        uses: chevdor/srtool-actions@v0.7.0
+        uses: chevdor/srtool-actions@v0.8.0
         env:
           # optional: will override the parachain pallet ID and authorize_upgrade call ID,
           #           which will result in a different parachain_authorize_upgrade_hash
@@ -111,7 +114,7 @@ jobs:
             ${{ matrix.chain }}-parachain-srtool-digest.json
             ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
-  ## build docker image of client binary ##
+  ## build docker image of parachain binary ##
   build-docker:
     if: ${{ github.event.inputs.release_client == 'true' }}
     runs-on: ubuntu-latest
@@ -129,7 +132,7 @@ jobs:
           docker images
 
       - name: Dockerhub login
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -159,42 +162,53 @@ jobs:
             ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
   ## Build the enclave and package config files
-  build-enclave:
-    if: ${{ github.event.inputs.release_enclave == 'true' }}
-    runs-on: prod-tee-1
-
+  build-tee:
+    if: ${{ github.event.inputs.release_worker == 'true' }} || ${{ github.event.inputs.release_enclave == 'true' }}
+    runs-on: tee-prod-builder
+    outputs:
+      mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
+      enclave_sha1sum: ${{ steps.shasum.outputs.enclave_sha1sum }}
+      worker_sha1sum: ${{ steps.shasum.outputs.worker_sha1sum }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+        uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.manual_trigger }}
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
 
-      - name: Generate Package
+      - name: Build release artefacts 
         run: | 
           source /opt/intel/sgxsdk/environment 
-          ./tee-worker/scripts/litentry/release/generate_release_pkg.sh
-          
-      - name: Archive Package
-        uses: actions/upload-artifact@v2
-        with:
-          name: tee-worker-${{ env.RELEASE_TAG }}.tar.gz
-          path: ./tee-worker/target/*.tar.gz
+          ./tee-worker/scripts/litentry/release/build.sh ${{ github.event.inputs.release_worker }} ${{ github.event.inputs.release_enclave }}
 
       - name: Set MRENCLAVE
         id: mrenclave
         run: |
-          cd tee-worker 
-          echo "mrenclave=$(make mrenclave)" >> $GITHUB_OUTPUT
+          MRENCLAVE=
+          f="tee-worker/enclave_release/mrenclave.txt"
+          [ -f "$f" ] && MRENCLAVE=$(cat "$f")
+          echo "mrenclave=$MRENCLAVE" >> $GITHUB_OUTPUT
 
-      - name: Set RUSTC version
-        id: rustc
+      - name: Set shasum
+        id: shasum
         run: |
-          RUSTC_VERSION=$(rustc --version | cut -d' ' -f2)
-          echo "rustc_version=$RUSTC_VERSION" >> $GITHUB_OUTPUT
+          ENCLAVE_SHA1SUM=
+          WORKER_SHA1SUM=
+          cd tee-worker/enclave_release
+          [ -f "enclave.signed.so" ] && ENCLAVE_SHA1SUM=$(shasum enclave.signed.so | awk '{print $1}')
+          [ -f "litentry-worker" ] && WORKER_SHA1SUM=$(shasum litentry-worker | awk '{print $1}')
+          echo "enclave_sha1sum=$ENCLAVE_SHA1SUM" >> $GITHUB_OUTPUT
+          echo "worker_sha1sum=$WORKER_SHA1SUM" >> $GITHUB_OUTPUT
 
-    outputs:
-      mrenclave: ${{ steps.mrenclave.outputs.mrenclave }}
-      rustc_version: ${{ steps.rustc.outputs.rustc_version }}
+      - name: Upload artefacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: litentry-tee
+          path: ./tee-worker/enclave_release/*
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
   
   ## test again the built docker image ##
   run-ts-tests:
@@ -210,6 +224,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
 
       - name: Download and tag docker image
         run: |
@@ -253,6 +270,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_TAG }}
+
       - name: Prepare output and compare the metadata
         timeout-minutes: 3
         run: |
@@ -308,12 +326,12 @@ jobs:
     # seems to be the only way to achieve this
     needs:
       - set-release-type
-      - build-enclave
+      - build-tee
       - run-ts-tests
       - build-wasm 
     if: |
       !failure()  &&
-      (success('build-wasm') || success('run-ts-tests') || success('build-enclave'))
+      (success('build-wasm') || success('run-ts-tests') || success('build-tee'))
     steps:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
@@ -326,11 +344,12 @@ jobs:
       
       - name: Generate release notes
         run: |
-          export FILENAME=$(find "tee-worker-${{ env.RELEASE_TAG }}.tar.gz/" -type f -name "release-*.tar.gz" -print -quit)
-          export MRENCLAVE_OUTPUT="${{ needs.build-enclave.outputs.mrenclave }}"
+          export MRENCLAVE="${{ needs.build-tee.outputs.mrenclave }}"
+          export ENCLAVE_SHA1SUM="${{ needs.build-tee.outputs.enclave_sha1sum }}"
+          export WORKER_SHA1SUM="${{ needs.build-tee.outputs.worker_sha1sum }}"
           ./scripts/generate-release-notes.sh ${{ github.workspace }}/.github/release_notes.md ${{ needs.set-release-type.outputs.release_type }} ${{ env.DIFF_TAG }}
         env:
-          GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release draft
         id: create-release-draft
@@ -344,4 +363,4 @@ jobs:
             *-parachain-runtime/*-parachain-srtool-digest.json
             *-parachain-runtime/*-parachain-runtime.compact.compressed.wasm
             litentry-collator/*
-            tee-worker-${{ env.RELEASE_TAG }}.tar.gz/*
+            litentry-tee/*

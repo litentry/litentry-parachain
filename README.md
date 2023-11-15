@@ -2,9 +2,8 @@
 ![](https://res.cloudinary.com/brandpad/image/upload/c_scale,dpr_auto,f_auto,w_768/v1673016042/19618/parachain-logo-color-black-t)
 
 [![general ci](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/litentry/litentry-parachain/actions/workflows/ci.yml)
-[![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
-[![runtime upgrade](https://github.com/litentry/litentry-parachain/actions/workflows/runtime-upgrade-simulation.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/runtime-upgrade-simulation.yml)
-
+[![release](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml/badge.svg?event=release)](https://github.com/litentry/litentry-parachain/actions/workflows/create-release-draft.yml)
+[![runtime upgrade](https://github.com/litentry/litentry-parachain/actions/workflows/simulate-runtime-upgrade.yml/badge.svg)](https://github.com/litentry/litentry-parachain/actions/workflows/simulate-runtime-upgrade.yml)
 
 A parachain is an application-specific data structure that is globally coherent and validatable by the validators of the relaychain. They take their name from the concept of parallelized chains that run parallel to the relaychain. Most commonly, a parachain will take the form of a blockchain, but there is no specific need for them to be actual blockchains.
 
@@ -32,7 +31,7 @@ make help
 
 to see the full lists of market targets and their short descriptions.
 
-## Manual builds
+## Build parachain
 
 To build the litentry-parachain raw binary manually:
 
@@ -60,8 +59,8 @@ The wasms should be located under `target/release/wbuild/litentry-parachain-runt
 
 Similarly, use `make build-runtime-litmus` and `make build-runtime-rococo` to build the litmus-parachain-runtime and rococo-parachain-runtime, respectively.
 
-
-## Launch a local network with relaychain + parachain
+## Launch parachain
+### Launch a full parachain network with relay chains
 
 Take rococo-parachain for example, but generally speaking, launching a local network works with either of the three chain-settings.
 
@@ -112,7 +111,18 @@ make clean-binary
 to stop the processes and tidy things up.
 Note this command should work for all parachain types (you don't have to differentiate them).
 
-## Run ts Tests Locally
+### Launch a standalone parachain node
+
+The standalone mode is only possible with the binary mode for now.
+
+No relay chain will be launched, parachain will author blocks by itself with instant block finalisation, please refer to [this PR](https://github.com/litentry/litentry-parachain/pull/1059).
+
+```
+make launch-standalone
+```
+
+
+## Run parachain ts-test
 
 To run the ts tests locally, similar to launching the networks, it's possible to run them in either docker or binary mode.
 
@@ -137,11 +147,6 @@ make test-ts-binary-rococo
 
 Remember to run the clean-up afterward.
 
-## License
-
-GPLv3
-
-
 ## How to Build and Run Parachain and Tee-worker
 
 ## Preparation
@@ -150,24 +155,26 @@ GPLv3
 
 ## Build
 
-The `Litentry-worker` needs to be built before the launch of the entire system
-
 ```
-git clone https://github.com/litentry/litentry-parachain
-cd ./litentry-parachain/tee-worker
+cd /tee-worker
 source /opt/intel/sgxsdk/environment
 SGX_MODE=SW make
 ```
 
 ## Launch
 
+Before executing `launch.py`, the following Python libraries need to be installed
+```
+pip install python-dotenv pycurl docker toml
+```
+
 ### 1. Start a local docker setup
 
 In order to create a local docker setup, you can run the following command
 ```
-./local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json
+./local-setup/launch.py --config ./local-setup/development-worker.json
 ```
-This will create three docker containers, 2 Relay Chain Validators, and 1 Parachain Collator. However, it will use the default ports as present in .env.dev. If you want to run the system by offsetting the default ports, you can run this command instead:
+This will create three docker containers, 2 relay chain validators and 1 parachain Collator. However, it will use the default ports as present in .env.dev. If you want to run the system by offsetting the default ports, you can run this command instead:
 
 ```
 ./local-setup/launch.py --config local-setup/development-worker.json --offset 100
@@ -178,29 +185,27 @@ This will run the same containers and use the offset value of 100.
 
 In order to create a local binary setup, using default ports, you can run the following command:
 ```
-/local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json --parachain local-binary
+./local-setup/launch.py --config ./local-setup/development-worker.json --parachain local-binary
 ```
 
 If you want to launch the same system by offsetting the port values, you can use this command: 
 ```
-/local-setup/launch.py --config ./local-setup/github-action-config-one-worker.json --parachain local-binary --offset 100
+./local-setup/launch.py --config ./local-setup/development-worker.json --parachain local-binary --offset 100
 ```
+
 In case you receive the following error:
 ```ModuleNotFoundError: No module named 'pycurl'```
 
 Fix it manually by installing pycurl using pip3. 
 
-### 3. Remote <> Integritee Node
+### 3. Start a local binary (standalone) setup - recommended for development
 
-If you are running the integritee node manually, then be mindful of the port that is being set while launching the integritee node, for example:
+Similar to 2, but it launches a standalone parachain node, see [Launch a standalone parachain node](#launch-a-standalone-parachain-node):
 ```
-cargo build --release --features "skip-extrinsic-filtering skip-ias-check skip-scheduled-enclave-check"
-./target/release/integritee-node --rpc-cors=all --ws-external --tmp --dev  --state-pruning archive  --blocks-pruning archive --rpc-port 9933 --ws-port 9944
+./local-setup/launch.py --config ./local-setup/development-worker.json --parachain local-binary-standalone
 ```
 
-`--rpc-port` is used to set the rpc port and `--ws-port` is used to set the ws port for the node. You then have to update the `config.json` with the port that is being used and then run the command 
-
-**Note: The `Integritee-Node` is not maintained by Parachain Team actively, Please check the [repository]([url](https://github.com/litentry/integritee-node/tree/litentry-runtime)) if it has all the latest updates from `Litentry-Parachain` .**
+It will dramatically reduce the waiting time and the tee-worker should be ready to use very soon.
 
 ### TEE Worker Tests 
 
@@ -251,5 +256,6 @@ In logs, you’ll see the sidechain starts to produce blocks
 2. Check existing ts-tests: `litentry-parachain/tee-worker/ts-tests/package.json`
 3. JSON config parameters: `litentry-parachain/tee-worker/service/src/cli.yml`
 
+## License
 
-
+GPLv3

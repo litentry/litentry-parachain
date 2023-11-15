@@ -50,7 +50,9 @@ pub struct Web3CommonValidationData {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum Web2ValidationData {
+	#[codec(index = 0)]
 	Twitter(TwitterValidationData),
+	#[codec(index = 1)]
 	Discord(DiscordValidationData),
 }
 
@@ -58,7 +60,9 @@ pub enum Web2ValidationData {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum Web3ValidationData {
+	#[codec(index = 0)]
 	Substrate(Web3CommonValidationData),
+	#[codec(index = 1)]
 	Evm(Web3CommonValidationData),
 }
 
@@ -81,6 +85,8 @@ impl Web3ValidationData {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum ValidationData {
+	#[codec(index = 0)]
 	Web2(Web2ValidationData),
+	#[codec(index = 1)]
 	Web3(Web3ValidationData),
 }

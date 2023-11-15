@@ -62,6 +62,7 @@ macro_rules! decl_test_relay_chain_runtime {
             traits::{ConstU128, ConstU32, ConstU64, Everything, Nothing},
             weights::IdentityFee,
         };
+
         use cumulus_primitives_core::ParaId;
 		use core_primitives::{Balance, AccountId};
         use runtime_common::BlockHashCount;
@@ -80,7 +81,6 @@ macro_rules! decl_test_relay_chain_runtime {
             SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
         };
         use runtime_common::tests::setup::relay::{SovereignAccountOf,LocalAssetTransactor,KsmLocation,KusamaNetwork};
-
         //created by decl_test_network(macro)
 		type XcmRouter = RelayChainXcmRouter;
 		type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<RelayChainRuntime>;
@@ -123,6 +123,10 @@ macro_rules! decl_test_relay_chain_runtime {
 			type WeightInfo = ();
 			type MaxReserves = ConstU32<50>;
 			type ReserveIdentifier = [u8; 8];
+			type HoldIdentifier = ();
+			type FreezeIdentifier = ();
+			type MaxHolds = ();
+			type MaxFreezes = ();
 		}
 
 		impl shared::Config for RelayChainRuntime {}
@@ -148,7 +152,7 @@ macro_rules! decl_test_relay_chain_runtime {
 		parameter_types! {
 			pub const MaxAssetsIntoHolding: u32 = 64;
 			/// The amount of weight an XCM operation takes. This is a safe overestimate.
-			pub const BaseXcmWeight: Weight = Weight::from_ref_time(10);
+			pub const BaseXcmWeight: Weight = Weight::from_parts(10, 0);
 			/// Maximum number of instructions in a single XCM fragment. A sanity check against weight
 			/// calculations getting too crazy.
 			pub const MaxInstructions: u32 = 100;
@@ -213,6 +217,7 @@ macro_rules! decl_test_relay_chain_runtime {
 			type WeightInfo = pallet_xcm::TestWeightInfo;
 			#[cfg(feature = "runtime-benchmarks")]
 			type ReachableDest = ReachableDest;
+			type AdminOrigin = EnsureRoot<AccountId>;
 		}
 
 		impl ump::Config for RelayChainRuntime {

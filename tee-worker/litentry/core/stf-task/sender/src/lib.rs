@@ -37,7 +37,7 @@ use codec::{Decode, Encode};
 pub use error::Result;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, Identity, IdentityNetworkTuple, Web2ValidationData, Web3Network,
+	Assertion, Identity, IdentityNetworkTuple, RequestAesKey, Web2ValidationData, Web3Network,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -75,6 +75,7 @@ pub struct Web2IdentityVerificationRequest {
 	pub validation_data: Web2ValidationData,
 	pub web3networks: Vec<Web3Network>,
 	pub top_hash: H256,
+	pub maybe_key: Option<RequestAesKey>,
 	pub req_ext_hash: H256,
 }
 
@@ -89,12 +90,15 @@ pub struct AssertionBuildRequest {
 	pub assertion: Assertion,
 	pub identities: Vec<IdentityNetworkTuple>,
 	pub top_hash: H256,
+	pub maybe_key: Option<RequestAesKey>,
 	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub enum RequestType {
+	#[codec(index = 0)]
 	IdentityVerification(Web2IdentityVerificationRequest),
+	#[codec(index = 1)]
 	AssertionVerification(AssertionBuildRequest),
 }
 

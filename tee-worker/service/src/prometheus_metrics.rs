@@ -26,7 +26,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use codec::{Decode, Encode};
-#[cfg(feature = "dcap")]
+#[cfg(feature = "attesteer")]
 use core::time::Duration;
 use frame_support::scale_info::TypeInfo;
 use ita_stf::TrustedCall;
@@ -250,6 +250,10 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::A20 => "A20",
 			Assertion::Achainable(..) => "Achainable",
 			Assertion::Oneblock(..) => "Oneblock",
+			Assertion::SoraQuiz(..) => "SoraQuiz",
+			Assertion::BnbDomainHolding => "BnbDomainHolding",
+			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
+			Assertion::GenericDiscordRole(..) => "GenericDiscordRole",
 		},
 	};
 	inc_stf_calls(category, label);
@@ -275,12 +279,6 @@ where
 		},
 		TrustedCall::request_vc(..) => {
 			record_metric_fn("request_vc");
-		},
-		TrustedCall::set_user_shielding_key(..) => {
-			record_metric_fn("set_user_shielding_key");
-		},
-		TrustedCall::set_user_shielding_key_with_networks(..) => {
-			record_metric_fn("set_user_shielding_key_with_networks");
 		},
 		TrustedCall::link_identity_callback(..) => {
 			record_metric_fn("link_identity_callback");
@@ -309,7 +307,7 @@ where
 #[derive(Serialize, Deserialize, Debug)]
 struct PrometheusMarblerunEvents(pub Vec<PrometheusMarblerunEvent>);
 
-#[cfg(feature = "dcap")]
+#[cfg(feature = "attesteer")]
 impl RestPath<&str> for PrometheusMarblerunEvents {
 	fn get_path(path: &str) -> Result<String, itc_rest_client::error::Error> {
 		Ok(format!("{}", path))

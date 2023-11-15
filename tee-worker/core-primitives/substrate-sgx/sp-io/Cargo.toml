@@ -14,7 +14,7 @@ itp-sgx-externalities = { default-features = false, path = "../externalities" }
 sgx_tstd = { optional = true, features = ["untrusted_fs", "net", "backtrace"], git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master" }
 
 # Substrate dependencies
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # local
 

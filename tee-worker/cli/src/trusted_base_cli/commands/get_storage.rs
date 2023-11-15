@@ -1,5 +1,7 @@
 use crate::{
-	command_utils::get_worker_api_direct, trusted_cli::TrustedCli, Cli, CliResult, CliResultOk,
+	command_utils::{get_worker_api_direct, mrenclave_to_base58},
+	trusted_cli::TrustedCli,
+	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
 use frame_metadata::{RuntimeMetadata, StorageEntryType, StorageHasher};
@@ -14,9 +16,9 @@ use sp_application_crypto::scale_info::TypeDef;
 use std::format;
 
 /// Usage:
-///    Plain Storage: ./integritee-cli trusted --mrenclave $mrenclave get-storage Parentchain Number
+///    Plain Storage: ./litentry-cli trusted --mrenclave $mrenclave get-storage Parentchain Number
 ///        Output: 123
-///    Map Storage: ./integritee-cli trusted --mrenclave $mrenclave get-storage System Account 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
+///    Map Storage: ./litentry-cli trusted --mrenclave $mrenclave get-storage System Account 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d
 ///        Output: { "nonce": 0, "consumers": 0, "providers": 1, "sufficients": 0, "data": { "free": 1000000000000000, "reserved": 1000000000000000, "misc_frozen": 0, "fee_frozen": 0 } }
 #[derive(Parser)]
 pub struct GetStorageCommand {
@@ -32,7 +34,14 @@ pub struct GetStorageCommand {
 impl GetStorageCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
 		let direct_api = get_worker_api_direct(cli);
-		let mrenclave = trusted_args.mrenclave.clone();
+		let mrenclave = if let Some(mrenclave) = trusted_args.mrenclave.clone() {
+			mrenclave
+		} else {
+			let mrenclave = direct_api
+				.get_state_mrenclave()
+				.expect("Unable to retrieve MRENCLAVE from endpoint");
+			mrenclave_to_base58(&mrenclave)
+		};
 		if let Some(v) = get_storage_value(
 			direct_api,
 			mrenclave,

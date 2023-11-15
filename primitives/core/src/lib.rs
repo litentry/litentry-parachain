@@ -17,6 +17,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
 
+pub use litentry_macros::*;
+
 pub use constants::*;
 pub use opaque::*;
 pub use types::*;
@@ -30,15 +32,20 @@ pub use assertion::*;
 mod error;
 pub use error::*;
 
-mod key;
-pub use key::*;
-
 mod vc;
 pub use vc::*;
 
 mod oneblock;
 pub use oneblock::*;
 
+mod soraquiz;
+pub use soraquiz::*;
+
+mod bnb_domain;
+pub use bnb_domain::*;
+
+mod generic_discord_role;
+pub use generic_discord_role::*;
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{

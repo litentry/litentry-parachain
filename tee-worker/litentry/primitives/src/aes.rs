@@ -20,7 +20,7 @@ extern crate sgx_tstd as std;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate rand_sgx as rand;
 
-use crate::{AesOutput, UserShieldingKeyNonceType, UserShieldingKeyType, NONCE_LEN};
+use crate::{Decode, Encode, Vec};
 
 use rand::Rng;
 
@@ -29,12 +29,30 @@ use ring::{
 	error::Unspecified,
 };
 
+// we use 256-bit AES-GCM as request enc/dec key
+pub const REQUEST_AES_KEY_LEN: usize = 32;
+pub use ring::aead::{MAX_TAG_LEN, NONCE_LEN};
+
+pub type RequestAesKey = [u8; REQUEST_AES_KEY_LEN];
+pub type RequestAesKeyNonce = [u8; NONCE_LEN];
+
+// all-in-one struct containing the encrypted ciphertext with other
+// metadata that is required for decryption
+//
+// by default a postfix tag is used => last 16 bytes of ciphertext is MAC tag
+#[derive(Debug, Default, Clone, Eq, PartialEq, Encode, Decode)]
+pub struct AesOutput {
+	pub ciphertext: Vec<u8>,
+	pub aad: Vec<u8>,
+	pub nonce: RequestAesKeyNonce, // IV
+}
+
 // Returns the default if any error happens
 // We don't propagate the error to upper level as this function is used in too many places,
 // it's too verbose to handle them all and pass back to the parentchain as events.
 // We rely on the parentchain event consumers to handle them correctly (and they kind of
 // have to, because they'll find all fields are 0)
-pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput {
+pub fn aes_encrypt_default(key: &RequestAesKey, data: &[u8]) -> AesOutput {
 	let mut in_out = data.to_vec();
 
 	let mut nonce = RingAeadNonceSequence::new();
@@ -59,11 +77,7 @@ pub fn aes_encrypt_default(key: &UserShieldingKeyType, data: &[u8]) -> AesOutput
 // don't be scared by the name, it's similar to `SealingKey::seal_in_place_append_tag`,
 // except that it accepts an arbitrary nonce.
 // It's only used by the one-off verification message calculation.
-pub fn aes_encrypt_nonce(
-	key: &UserShieldingKeyType,
-	data: &[u8],
-	nonce: UserShieldingKeyNonceType,
-) -> AesOutput {
+pub fn aes_encrypt_nonce(key: &RequestAesKey, data: &[u8], nonce: RequestAesKeyNonce) -> AesOutput {
 	let mut in_out = data.to_vec();
 	let aad = b"";
 	if let Ok(unbound_key) = UnboundKey::new(&AES_256_GCM, key.as_slice()) {
@@ -83,9 +97,27 @@ pub fn aes_encrypt_nonce(
 	AesOutput::default()
 }
 
+pub fn aes_decrypt(key: &RequestAesKey, data: &mut AesOutput) -> Option<Vec<u8>> {
+	let in_out = data.ciphertext.as_mut();
+	if let Ok(unbound_key) = UnboundKey::new(&AES_256_GCM, key.as_slice()) {
+		let less_safe_key = LessSafeKey::new(unbound_key);
+		if (less_safe_key.open_in_place(
+			Nonce::assume_unique_for_key(data.nonce),
+			Aad::from(data.aad.clone()),
+			in_out,
+		))
+		.is_ok()
+		{
+			return Some((*in_out).to_vec())
+		}
+	}
+
+	None
+}
+
 #[derive(Clone)]
 pub struct RingAeadNonceSequence {
-	pub nonce: UserShieldingKeyNonceType,
+	pub nonce: RequestAesKeyNonce,
 }
 
 impl RingAeadNonceSequence {
@@ -97,7 +129,7 @@ impl RingAeadNonceSequence {
 impl NonceSequence for RingAeadNonceSequence {
 	fn advance(&mut self) -> Result<Nonce, Unspecified> {
 		let nonce = Nonce::assume_unique_for_key(self.nonce);
-		let nonce_vec = rand::thread_rng().gen::<UserShieldingKeyNonceType>();
+		let nonce_vec = rand::thread_rng().gen::<RequestAesKeyNonce>();
 		self.nonce.copy_from_slice(&nonce_vec[0..NONCE_LEN]);
 		Ok(nonce)
 	}

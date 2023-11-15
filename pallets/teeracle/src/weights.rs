@@ -61,7 +61,7 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: Teeracle Whitelists (r:1 w:0)
 	// Storage: Teeracle ExchangeRates (r:1 w:1)
 	fn update_exchange_rate() -> Weight {
-		Weight::from_ref_time(44_063_000 as u64)
+		Weight::from_parts(44_063_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(4 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -70,19 +70,19 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	// Storage: Teeracle Whitelists (r:1 w:0)
 	// Storage: Teeracle OracleData (r:0 w:1)
 	fn update_oracle() -> Weight {
-		Weight::from_ref_time(39_144_000 as u64)
+		Weight::from_parts(39_144_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(3 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teeracle Whitelists (r:1 w:1)
 	fn add_to_whitelist() -> Weight {
-		Weight::from_ref_time(22_062_000 as u64)
+		Weight::from_parts(22_062_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teeracle Whitelists (r:1 w:1)
 	fn remove_from_whitelist() -> Weight {
-		Weight::from_ref_time(24_196_000 as u64)
+		Weight::from_parts(24_196_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -95,7 +95,7 @@ impl WeightInfo for () {
 	// Storage: Teeracle Whitelists (r:1 w:0)
 	// Storage: Teeracle ExchangeRates (r:1 w:1)
 	fn update_exchange_rate() -> Weight {
-		Weight::from_ref_time(44_063_000 as u64)
+		Weight::from_parts(44_063_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(4 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -104,19 +104,19 @@ impl WeightInfo for () {
 	// Storage: Teeracle Whitelists (r:1 w:0)
 	// Storage: Teeracle OracleData (r:0 w:1)
 	fn update_oracle() -> Weight {
-		Weight::from_ref_time(39_144_000 as u64)
+		Weight::from_parts(39_144_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(3 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teeracle Whitelists (r:1 w:1)
 	fn add_to_whitelist() -> Weight {
-		Weight::from_ref_time(22_062_000 as u64)
+		Weight::from_parts(22_062_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teeracle Whitelists (r:1 w:1)
 	fn remove_from_whitelist() -> Weight {
-		Weight::from_ref_time(24_196_000 as u64)
+		Weight::from_parts(24_196_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

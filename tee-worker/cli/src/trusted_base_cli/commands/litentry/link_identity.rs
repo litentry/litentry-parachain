@@ -21,14 +21,13 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
+use clap::Parser;
 use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::{Identity, Web3Network};
 use log::*;
 use sp_core::Pair;
-
-use clap::Parser;
 
 // usage exmaple:
 //
@@ -58,13 +57,16 @@ pub struct LinkIdentityCommand {
 
 impl LinkIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
-		let alice = get_pair_from_str(trusted_cli, "//Alice");
+		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let src_id: Identity = Identity::from_did(self.src_did.as_str()).unwrap();
 		let dst_id: Identity = Identity::from_did(self.dst_did.as_str()).unwrap();
-		let networks: Vec<Web3Network> =
-			self.networks.iter().map(|n| n.as_str().try_into().unwrap()).collect();
+		let networks: Vec<Web3Network> = self
+			.networks
+			.iter()
+			.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
+			.collect();
 
-		let (mrenclave, shard) = get_identifiers(trusted_cli);
+		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
 		let top: TrustedOperation = TrustedCall::link_identity_callback(
@@ -72,6 +74,7 @@ impl LinkIdentityCommand {
 			src_id,
 			dst_id,
 			networks,
+			None,
 			Default::default(),
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
