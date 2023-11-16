@@ -16,9 +16,10 @@
 
 use crate::{
 	get_layer_two_nonce,
+	trusted_base_cli::commands::litentry::request_vc::*,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::perform_trusted_operation,
+	trusted_operation::perform_direct_operation,
 	Cli, CliResult, CliResultOk,
 };
 use codec::Decode;
@@ -29,8 +30,7 @@ use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
 	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, SoraQuizType,
-	Web3Network,
+	GenericDiscordRoleType, Identity, OneBlockCourseType, RequestAesKey, SoraQuizType, Web3Network,
 };
 use log::*;
 use sp_core::Pair;
@@ -38,23 +38,19 @@ use sp_core::Pair;
 // usage example (you can always use --help on subcommands to see more details)
 //
 // a8:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
 // oneblock VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
 //
 // achainable VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
 
-pub fn to_para_str(s: &str) -> ParameterString {
-	ParameterString::truncate_from(s.as_bytes().to_vec())
-}
-
 #[derive(Parser)]
-pub struct RequestVcCommand {
+pub struct RequestVcDirectCommand {
 	/// did account to whom the vc will be issued
 	did: String,
 	/// subcommand to define the vc type requested
@@ -62,180 +58,7 @@ pub struct RequestVcCommand {
 	command: Command,
 }
 
-// see `assertion.rs`
-#[derive(Subcommand)]
-pub enum Command {
-	A1,
-	A2(A2Arg),
-	A3(A3Arg),
-	A4(HolderArg),
-	A6,
-	A7(HolderArg),
-	A8(A8Arg),
-	A10(HolderArg),
-	A11(HolderArg),
-	A13(A13Arg),
-	A14,
-	A20,
-	#[clap(subcommand)]
-	Oneblock(OneblockCommand),
-	#[clap(subcommand)]
-	Achainable(AchainableCommand),
-	#[clap(subcommand)]
-	SoraQuiz(SoraQuizCommand),
-	#[clap(subcommand)]
-	GenericDiscordRole(GenericDiscordRoleCommand),
-}
-
-#[derive(Args)]
-pub struct A2Arg {
-	pub guild_id: String,
-}
-
-#[derive(Args)]
-pub struct A3Arg {
-	pub guild_id: String,
-	pub channel_id: String,
-	pub role_id: String,
-}
-
-// used in A4/A7/A10/A11
-#[derive(Args)]
-pub struct HolderArg {
-	pub minimum_amount: String,
-}
-
-#[derive(Args)]
-pub struct A8Arg {
-	#[clap(num_args = 0.., value_delimiter = ',')]
-	pub networks: Vec<String>,
-}
-
-#[derive(Args)]
-pub struct A13Arg {
-	pub account: String,
-}
-
-#[derive(Subcommand)]
-pub enum OneblockCommand {
-	Completion,
-	Outstanding,
-	Participation,
-}
-
-#[derive(Subcommand)]
-pub enum AchainableCommand {
-	AmountHolding(AmountHoldingArg),
-	AmountToken(AmountTokenArg),
-	Amount(AmountArg),
-	Amounts(AmountsArg),
-	Basic(BasicArg),
-	BetweenPercents(BetweenPercentsArg),
-	ClassOfYear(ClassOfYearArg),
-	DateInterval(DateIntervalArg),
-	DatePercent(DatePercentArg),
-	Date(DateArg),
-	Token(TokenArg),
-}
-
-#[derive(Subcommand)]
-pub enum SoraQuizCommand {
-	Attendee,
-	Master,
-}
-
-#[derive(Subcommand)]
-pub enum GenericDiscordRoleCommand {
-	Legend,
-	Popularity,
-	Participant,
-}
-
-// I haven't found a good way to use common args for subcommands
-#[derive(Args)]
-pub struct AmountHoldingArg {
-	pub name: String,
-	pub chain: String,
-	pub amount: String,
-	pub date: String,
-	pub token: Option<String>,
-}
-
-#[derive(Args)]
-pub struct AmountTokenArg {
-	pub name: String,
-	pub chain: String,
-	pub amount: String,
-	pub token: Option<String>,
-}
-
-#[derive(Args)]
-pub struct AmountArg {
-	pub name: String,
-	pub chain: String,
-	pub amount: String,
-}
-
-#[derive(Args)]
-pub struct AmountsArg {
-	pub name: String,
-	pub chain: String,
-	pub amount1: String,
-	pub amount2: String,
-}
-
-#[derive(Args)]
-pub struct BasicArg {
-	pub name: String,
-	pub chain: String,
-}
-
-#[derive(Args)]
-pub struct BetweenPercentsArg {
-	pub name: String,
-	pub chain: String,
-	pub greater_than_or_equal_to: String,
-	pub less_than_or_equal_to: String,
-}
-
-#[derive(Args)]
-pub struct ClassOfYearArg {
-	pub name: String,
-	pub chain: String,
-}
-
-#[derive(Args)]
-pub struct DateIntervalArg {
-	pub name: String,
-	pub chain: String,
-	pub start_date: String,
-	pub end_date: String,
-}
-
-#[derive(Args)]
-pub struct DatePercentArg {
-	pub name: String,
-	pub chain: String,
-	pub token: String,
-	pub date: String,
-	pub percent: String,
-}
-
-#[derive(Args)]
-pub struct DateArg {
-	pub name: String,
-	pub chain: String,
-	pub date: String,
-}
-
-#[derive(Args)]
-pub struct TokenArg {
-	pub name: String,
-	pub chain: String,
-	pub token: String,
-}
-
-impl RequestVcCommand {
+impl RequestVcDirectCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
@@ -412,13 +235,25 @@ impl RequestVcCommand {
 			},
 		};
 
-		let top: TrustedOperation =
-			TrustedCall::request_vc(alice.public().into(), id, assertion, None, Default::default())
-				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let mut key: RequestAesKey = RequestAesKey::default();
+		hex::decode_to_slice(
+			"22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12",
+			&mut key,
+		)
+		.expect("decoding shielding_key failed");
 
-		// TODO: P-177, print actual VC content to stdout
-		let _vc = perform_trusted_operation(cli, trusted_cli, &top).unwrap();
+		let top: TrustedOperation = TrustedCall::request_vc(
+			alice.public().into(),
+			id,
+			assertion,
+			Some(key),
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
+
+		// This should contain the AES Key for AESRequest
+		let _vc = perform_direct_operation(cli, trusted_cli, &top, key).unwrap();
 		Ok(CliResultOk::None)
 	}
 }

@@ -21,7 +21,7 @@ use crate::{
 		get_storage::GetStorageCommand,
 		litentry::{
 			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
-			request_vc::RequestVcCommand,
+			request_vc::RequestVcCommand, request_vc_direct::RequestVcDirectCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 		},
 		nonce::NonceCommand,
@@ -84,6 +84,9 @@ pub enum TrustedBaseCommand {
 
 	/// Request VC
 	RequestVc(RequestVcCommand),
+
+	/// Request VC isolated from Block Production
+	RequestVcDirect(RequestVcDirectCommand),
 }
 
 impl TrustedBaseCommand {
@@ -103,6 +106,7 @@ impl TrustedBaseCommand {
 			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestVcDirect(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }
