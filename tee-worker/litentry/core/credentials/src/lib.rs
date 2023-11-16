@@ -81,6 +81,8 @@ pub mod litentry_profile;
 pub mod oneblock;
 pub mod schema;
 use assertion_logic::{AssertionLogic, Op};
+pub mod bnb_domain;
+pub mod generic_discord_role;
 pub mod sora;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
@@ -92,11 +94,13 @@ pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 /// https://w3c-ccg.github.io/ld-cryptosuite-registry
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum ProofType {
+	#[codec(index = 0)]
 	Ed25519Signature2020,
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum CredentialType {
+	#[codec(index = 0)]
 	VerifiableCredential,
 }
 

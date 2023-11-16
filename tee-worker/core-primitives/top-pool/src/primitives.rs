@@ -282,6 +282,7 @@ pub enum TrustedOperationSource {
 	/// since it's already in the received block. Note that the custom validation logic
 	/// using either `Local` or `External` should most likely just allow `InBlock`
 	/// transactions as well.
+	#[codec(index = 0)]
 	InBlock,
 
 	/// Transaction is coming from a local source.
@@ -289,12 +290,14 @@ pub enum TrustedOperationSource {
 	/// This means that the transaction was produced internally by the node
 	/// (for instance an Off-Chain Worker, or an Off-Chain Call), as opposed
 	/// to being received over the network.
+	#[codec(index = 1)]
 	Local,
 
 	/// Transaction has been received externally.
 	///
 	/// This means the transaction has been received from (usually) "untrusted" source,
 	/// for instance received over the network or RPC.
+	#[codec(index = 2)]
 	External,
 }
 
