@@ -17,12 +17,31 @@ import type { HexString } from '@polkadot/util/types';
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 15;
 
-export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
+function decryptAes256Gcm(buffer: Buffer, key: Buffer): Buffer {
+    console.debug(buffer.toString());
+    const nonce = buffer.subarray(0, 12);
+    const payload = buffer.subarray(12);
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, nonce);
+    const r0 = decipher.update(payload);
+    const r1 = decipher.final();
+    return Buffer.concat([r0, r1]);
+}
+
+export async function initWorkerConnection(endpoint: string, shieldingKey: KeyObject): Promise<WebSocketAsPromised> {
+    const aesKey = crypto.randomBytes(32);
+    const aesKeyEncrypted = crypto.publicEncrypt(shieldingKey, aesKey);
     const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
-        createWebSocket: (url: any) => new WebSocket(url),
+        createWebSocket: (url: any) => {
+            const ws = new WebSocket(url);
+            ws.binaryType = "arraybuffer";
+            ws.on("open", () => wsp.send(aesKeyEncrypted));
+            return ws;
+        },
         extractMessageData: (event: any) => event,
         packMessage: (data: any) => JSON.stringify(data),
-        unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
+        unpackMessage: (data: string | ArrayBuffer) => typeof data === "string"
+            ? JSON.parse(data)
+            : JSON.parse(decryptAes256Gcm(Buffer.from(data), aesKey).toString()),
         attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
     }));
@@ -56,12 +75,12 @@ export async function initIntegrationTestContext(
 
     const chainIdentifier = api.registry.chainSS58 as number;
 
-    const wsp = await initWorkerConnection(workerEndpoint);
+    const { mrEnclave, teeShieldingKey } = await getEnclave(api);
+    const wsp = await initWorkerConnection(workerEndpoint, teeShieldingKey);
     const requestId = 1;
 
     const { sidechainMetaData, sidechainRegistry } = await getSidechainMetadata(wsp, api, requestId);
     const web3Signers = await generateWeb3Wallets(walletsNumber);
-    const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return {
         tee: wsp,
         api,
