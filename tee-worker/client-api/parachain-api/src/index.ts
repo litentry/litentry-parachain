@@ -12,6 +12,8 @@ export * from "@polkadot/types/lookup";
 export * from "../build/interfaces";
 export * from "@polkadot/api";
 export * from "@polkadot/api/types";
-import { identity } from "../build/interfaces/definitions";
-
-export const definitions = identity;
+import { default as identity } from "../build/interfaces/identity/definitions";
+import { default as vc } from "../build/interfaces/vc/definitions";
+import { default as trusted_operations } from "../build/interfaces/trusted_operations/definitions";
+import { default as sidechain } from "../build/interfaces/sidechain/definitions";
+export { identity, vc, trusted_operations, sidechain };
