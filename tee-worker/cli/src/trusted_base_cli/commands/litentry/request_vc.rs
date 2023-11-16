@@ -29,7 +29,8 @@ use litentry_primitives::{
 	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
 	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
 	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	Identity, OneBlockCourseType, ParameterString, Web3Network,
+	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, SoraQuizType,
+	Web3Network,
 };
 use log::*;
 use sp_core::Pair;
@@ -48,7 +49,7 @@ use sp_core::Pair;
 // ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
 
-fn to_para_str(s: &str) -> ParameterString {
+pub fn to_para_str(s: &str) -> ParameterString {
 	ParameterString::truncate_from(s.as_bytes().to_vec())
 }
 
@@ -80,6 +81,10 @@ pub enum Command {
 	Oneblock(OneblockCommand),
 	#[clap(subcommand)]
 	Achainable(AchainableCommand),
+	#[clap(subcommand)]
+	SoraQuiz(SoraQuizCommand),
+	#[clap(subcommand)]
+	GenericDiscordRole(GenericDiscordRoleCommand),
 }
 
 #[derive(Args)]
@@ -131,6 +136,19 @@ pub enum AchainableCommand {
 	DatePercent(DatePercentArg),
 	Date(DateArg),
 	Token(TokenArg),
+}
+
+#[derive(Subcommand)]
+pub enum SoraQuizCommand {
+	Attendee,
+	Master,
+}
+
+#[derive(Subcommand)]
+pub enum GenericDiscordRoleCommand {
+	Legend,
+	Popularity,
+	Participant,
 }
 
 // I haven't found a good way to use common args for subcommands
@@ -379,6 +397,18 @@ impl RequestVcCommand {
 							.expect("cannot convert to Web3Network"),
 						token: to_para_str(&arg.token),
 					})),
+			},
+			Command::SoraQuiz(c) => match c {
+				SoraQuizCommand::Attendee => Assertion::SoraQuiz(SoraQuizType::Attendee),
+				SoraQuizCommand::Master => Assertion::SoraQuiz(SoraQuizType::Master),
+			},
+			Command::GenericDiscordRole(c) => match c {
+				GenericDiscordRoleCommand::Legend =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Legend),
+				GenericDiscordRoleCommand::Popularity =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Popularity),
+				GenericDiscordRoleCommand::Participant =>
+					Assertion::GenericDiscordRole(GenericDiscordRoleType::Participant),
 			},
 		};
 

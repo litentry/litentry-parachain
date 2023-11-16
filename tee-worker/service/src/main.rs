@@ -56,6 +56,7 @@ use itp_enclave_api::{
 	sidechain::Sidechain,
 	stf_task_handler::StfTaskHandler,
 	teeracle_api::TeeracleApi,
+	vc_issuance::VcIssuance,
 	Enclave,
 };
 use itp_node_api::{
@@ -374,6 +375,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		+ TlsRemoteAttestation
 		+ TeeracleApi
 		+ StfTaskHandler
+		+ VcIssuance
 		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
@@ -665,9 +667,18 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	// ------------------------------------------------------------------------
 	// Start stf task handler thread
 	let enclave_api_stf_task_handler = enclave.clone();
-	let data_provider_config = data_provider_config.clone();
+	let data_provider = data_provider_config.clone();
 	thread::spawn(move || {
-		enclave_api_stf_task_handler.run_stf_task_handler(data_provider_config).unwrap();
+		enclave_api_stf_task_handler.run_stf_task_handler(data_provider).unwrap();
+	});
+
+	println!("[+] We are starting the VC Isolated thread");
+	// ------------------------------------------------------------------------
+	// Start vc issuance handler thread
+	let enclave_api_vc_task_handler = enclave.clone();
+	let data_provider = data_provider_config.clone();
+	thread::spawn(move || {
+		enclave_api_vc_task_handler.run_vc_issuance(data_provider).unwrap();
 	});
 
 	// ------------------------------------------------------------------------
@@ -1280,6 +1291,21 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	}
 	if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
 		data_provider_config.set_sora_quiz_attendee_id(v);
+	}
+	if let Ok(v) = env::var("NODEREAL_API_KEY") {
+		data_provider_config.set_nodereal_api_key(v);
+	}
+	if let Ok(v) = env::var("NODEREAL_API_URL") {
+		data_provider_config.set_nodereal_api_url(v);
+	}
+	if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_legend_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("CONTEST_POPULARITY_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_popularity_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
+		data_provider_config.set_contest_participant_discord_role_id(v);
 	}
 
 	data_provider_config

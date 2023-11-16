@@ -25,6 +25,7 @@ extern crate sgx_tstd as std;
 // re-export module to properly feature gate sgx and regular std environment
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub mod sgx_reexport_prelude {
+	pub use chrono_sgx as chrono;
 	pub use hex_sgx as hex;
 	pub use http_req_sgx as http_req;
 	pub use http_sgx as http;
@@ -69,6 +70,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
+pub mod nodereal;
 pub mod twitter_official;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
@@ -94,6 +96,11 @@ pub struct DataProviderConfig {
 	pub oneblock_notion_url: String,
 	pub sora_quiz_master_id: String,
 	pub sora_quiz_attendee_id: String,
+	pub nodereal_api_key: String,
+	pub nodereal_api_url: String,
+	pub contest_legend_discord_role_id: String,
+	pub contest_popularity_discord_role_id: String,
+	pub contest_participant_discord_role_id: String,
 }
 
 impl Default for DataProviderConfig {
@@ -118,6 +125,11 @@ impl DataProviderConfig {
 			oneblock_notion_url: "".to_string(),
 			sora_quiz_master_id: "".to_string(),
 			sora_quiz_attendee_id: "".to_string(),
+			nodereal_api_key: "".to_string(),
+			nodereal_api_url: "".to_string(),
+			contest_legend_discord_role_id: "".to_string(),
+			contest_popularity_discord_role_id: "".to_string(),
+			contest_participant_discord_role_id: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -171,6 +183,26 @@ impl DataProviderConfig {
 	pub fn set_sora_quiz_attendee_id(&mut self, v: String) {
 		debug!("set_sora_quiz_attendee_id: {:?}", v);
 		self.sora_quiz_attendee_id = v;
+	}
+	pub fn set_nodereal_api_key(&mut self, v: String) {
+		debug!("set_nodereal_api_key: {:?}", v);
+		self.nodereal_api_key = v;
+	}
+	pub fn set_nodereal_api_url(&mut self, v: String) {
+		debug!("set_nodereal_api_url: {:?}", v);
+		self.nodereal_api_url = v;
+	}
+	pub fn set_contest_legend_discord_role_id(&mut self, v: String) {
+		debug!("set_contest_legend_discord_role_id: {:?}", v);
+		self.contest_legend_discord_role_id = v;
+	}
+	pub fn set_contest_popularity_discord_role_id(&mut self, v: String) {
+		debug!("set_contest_popularity_discord_role_id: {:?}", v);
+		self.contest_popularity_discord_role_id = v;
+	}
+	pub fn set_contest_participant_discord_role_id(&mut self, v: String) {
+		debug!("set_contest_participant_discord_role_id: {:?}", v);
+		self.contest_participant_discord_role_id = v;
 	}
 }
 

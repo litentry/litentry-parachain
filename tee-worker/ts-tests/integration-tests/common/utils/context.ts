@@ -7,10 +7,10 @@ import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
 import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
-import { getEthereumSigner, getSubstrateSigner } from '../helpers';
+import { getEvmSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
 
-import { default as teeTypes } from '../../../../client-api/parachain-api/prepare-build/interfaces/identity/definitions';
+import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
 
@@ -21,7 +21,7 @@ function decryptAes256Gcm(buffer: Buffer, key: Buffer): Buffer {
     console.debug(buffer.toString());
     const nonce = buffer.subarray(0, 12);
     const payload = buffer.subarray(12);
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, nonce);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, nonce);
     const r0 = decipher.update(payload);
     const r1 = decipher.final();
     return Buffer.concat([r0, r1]);
@@ -33,15 +33,16 @@ export async function initWorkerConnection(endpoint: string, shieldingKey: KeyOb
     const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
         createWebSocket: (url: any) => {
             const ws = new WebSocket(url);
-            ws.binaryType = "arraybuffer";
-            ws.on("open", () => wsp.send(aesKeyEncrypted));
+            ws.binaryType = 'arraybuffer';
+            ws.on('open', () => wsp.send(aesKeyEncrypted));
             return ws;
         },
         extractMessageData: (event: any) => event,
         packMessage: (data: any) => JSON.stringify(data),
-        unpackMessage: (data: string | ArrayBuffer) => typeof data === "string"
-            ? JSON.parse(data)
-            : JSON.parse(decryptAes256Gcm(Buffer.from(data), aesKey).toString()),
+        unpackMessage: (data: string | ArrayBuffer) =>
+            typeof data === 'string'
+                ? JSON.parse(data)
+                : JSON.parse(decryptAes256Gcm(Buffer.from(data), aesKey).toString()),
         attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
         extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
     }));
@@ -58,16 +59,17 @@ export async function initIntegrationTestContext(
     await cryptoWaitReady();
 
     const ethersWallet = {
-        alice: new ethers.Wallet(getEthereumSigner().alice),
-        bob: new ethers.Wallet(getEthereumSigner().bob),
-        charlie: new ethers.Wallet(getEthereumSigner().charlie),
-        dave: new ethers.Wallet(getEthereumSigner().dave),
-        eve: new ethers.Wallet(getEthereumSigner().eve),
+        alice: new ethers.Wallet(getEvmSigner().alice),
+        bob: new ethers.Wallet(getEvmSigner().bob),
+        charlie: new ethers.Wallet(getEvmSigner().charlie),
+        dave: new ethers.Wallet(getEvmSigner().dave),
+        eve: new ethers.Wallet(getEvmSigner().eve),
     };
 
     const substrateWallet = getSubstrateSigner();
 
-    const { types } = teeTypes;
+    const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
+
     const api = await ApiPromise.create({
         provider,
         types,
@@ -129,10 +131,10 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
 
     for (let i = 0; i < count; i++) {
         const substratePair = keyring.addFromUri(`${seed}//${i}`);
-        const ethereumWallet = ethers.Wallet.createRandom();
+        const evmWallet = ethers.Wallet.createRandom();
         addresses.push({
             substrateWallet: substratePair,
-            ethereumWallet: ethereumWallet,
+            evmWallet: evmWallet,
         });
     }
     return addresses;
