@@ -32,7 +32,7 @@ function print_divider() {
 print_divider
 
 if [ ! -z "$GH_TOKEN" ]; then
-  auth_header="authorization: Bearer $GH_TOKEN"
+  auth_header="Authorization: token $GH_TOKEN"
 fi
 
 # 1. download runtime wasm
