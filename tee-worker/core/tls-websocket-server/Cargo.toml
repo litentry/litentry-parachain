@@ -19,6 +19,10 @@ mio-extras = { optional = true, default-features = false, git = "https://github.
 mio_sgx = { package = "mio", optional = true, git = "https://github.com/mesalock-linux/mio-sgx", tag = "sgx_1.1.3" }
 rand_sgx = { package = "rand", optional = true, git = "https://github.com/mesalock-linux/rand-sgx", tag = "v0.7.3_sgx1.1.3" }
 rustls_sgx = { package = "rustls", optional = true, git = "https://github.com/mesalock-linux/rustls", branch = "mesalock_sgx" }
+serde-big-array-sgx = { package = "serde-big-array", git = "https://github.com/mesalock-linux/serde-big-array-sgx", optional = true }
+serde-sgx = { package = "serde", git = "https://github.com/mesalock-linux/serde-sgx", optional = true }
+serde_derive-sgx = { package = "serde_derive", git = "https://github.com/mesalock-linux/serde-sgx", optional = true }
+serde_json-sgx = { package = "serde_json", git = "https://github.com/mesalock-linux/serde-json-sgx", optional = true }
 thiserror_sgx = { package = "thiserror", optional = true, git = "https://github.com/mesalock-linux/thiserror-sgx", tag = "sgx_1.1.3" }
 tungstenite_sgx = { package = "tungstenite", optional = true, features = ["rustls-tls-webpki-roots"], git = "https://github.com/integritee-network/tungstenite-rs-sgx", branch = "sgx-experimental" }
 webpki_sgx = { package = "webpki", optional = true, git = "https://github.com/mesalock-linux/webpki", branch = "mesalock_sgx" }
@@ -29,8 +33,9 @@ mio = { version = "0.6.14", optional = true }
 once_cell = { version = "1.18", optional = true }
 rand = { version = "0.7.3", optional = true }
 rustls = { version = "0.19", optional = true }
-serde = { version = "1.0", features = ["derive"], optional = true }
+serde = { version = "1.0", optional = true }
 serde-big-array = { version = "0.3", optional = true }
+serde_derive = { version = "1.0", optional = true }
 serde_json = { version = "1.0", optional = true }
 thiserror = { version = "1.0", optional = true }
 tungstenite = { version = "0.15.0", optional = true, features = ["rustls-tls-webpki-roots"] }
@@ -44,7 +49,7 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 aes-gcm = "0.10"
 log = { version = "0.4", default-features = false }
 rand_core = "0.6.4"
-rsa = { version = "0.9.3", optional = true }
+rsa = { version = "0.9.3", default-features = false, optional = true }
 
 [dev-dependencies]
 env_logger = "0.9.0"
@@ -54,14 +59,19 @@ url = { version = "2.0.0" }
 
 
 [features]
-default = ["std"]
+default = ["std", "rsa"]
 sgx = [
     "mio-extras/sgx",
     "mio_sgx",
     "rand_sgx",
     "rcgen/sgx",
     "rcgen/pem_sgx",
+    "rsa",
     "rustls_sgx",
+    "serde-sgx",
+    "serde_derive-sgx",
+    "serde-big-array-sgx",
+    "serde_json-sgx",
     "sgx_crypto_helper/mesalock_sgx",
     "sgx_tstd",
     "sgx_types",
@@ -77,8 +87,10 @@ std = [
     "rcgen/std",
     "rcgen/pem",
     "rsa",
+    "rsa/default",
     "rustls",
     "serde",
+    "serde_derive",
     "serde-big-array",
     "serde_json",
     "sgx_crypto_helper/ucrypto_help",
@@ -87,5 +99,8 @@ std = [
     "webpki",
     "yasna",
     "log/std",
+]
+rsa = [
+    "dep:rsa",
 ]
 mocks = ["once_cell"]

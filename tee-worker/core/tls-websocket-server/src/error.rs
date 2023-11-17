@@ -23,9 +23,9 @@ use std::{boxed::Box, io::Error as IoError, net::AddrParseError, string::String}
 
 pub type WebSocketResult<T> = Result<T, WebSocketError>;
 #[cfg(feature = "std")]
-use thiserror::Error;
+use ::{serde_json::Error as SerdeJsonError, thiserror::Error};
 #[cfg(feature = "sgx")]
-use thiserror_sgx::Error;
+use ::{serde_json_sgx::Error as SerdeJsonError, thiserror_sgx::Error};
 
 /// General web-socket error type
 #[derive(Debug, Error)]
@@ -52,17 +52,17 @@ pub enum WebSocketError {
 	InvalidUserKeyLength(usize),
 	#[error("Invalid user key length")]
 	InvalidCipherLength(usize),
-	#[cfg(feature = "std")]
-	#[error(transparent)]
-	RsaEncryptionError(#[from] rsa::Error),
+	#[cfg(feature = "rsa")]
+	#[error("{0}")]
+	RsaEncryptionError(rsa::Error),
 	#[error("Aes encryption failed")]
 	AesEncryptionError,
-	#[cfg(feature = "sgx")]
+	#[cfg(not(feature = "rsa"))]
 	#[error(transparent)]
 	SgxError(#[from] sgx_types::sgx_status_t),
-	#[cfg(feature = "std")]
-	#[error(transparent)]
-	SerdeJsonError(#[from] serde_json::Error),
+	#[cfg(feature = "rsa")]
+	#[error("{0}")]
+	SerdeJsonError(SerdeJsonError),
 	#[error("Lock poisoning")]
 	LockPoisoning,
 	#[error("Failed to receive server signal message: {0}")]
@@ -71,4 +71,16 @@ pub enum WebSocketError {
 	IoError(#[from] std::io::Error),
 	#[error("{0}")]
 	Other(Box<dyn std::error::Error + Sync + Send + 'static>),
+}
+
+impl From<rsa::Error> for WebSocketError {
+	fn from(value: rsa::Error) -> Self {
+		Self::RsaEncryptionError(value)
+	}
+}
+
+impl From<SerdeJsonError> for WebSocketError {
+	fn from(value: SerdeJsonError) -> Self {
+		Self::SerdeJsonError(value)
+	}
 }
