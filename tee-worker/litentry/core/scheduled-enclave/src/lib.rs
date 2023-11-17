@@ -25,6 +25,7 @@ extern crate sgx_tstd as std;
 // TODO: maybe use parachain primitives for single source of truth
 use itp_types::{MrEnclave, SidechainBlockNumber};
 use sp_std::collections::btree_map::BTreeMap;
+use std::path::PathBuf;
 
 pub mod error;
 use error::Result;
@@ -50,6 +51,7 @@ pub struct ScheduledEnclave {
 	pub block_production_paused: RwLock<bool>,
 	pub current_mrenclave: RwLock<MrEnclave>,
 	pub registry: RwLock<ScheduledEnclaveMap>,
+	pub seal_path: PathBuf,
 }
 
 pub trait ScheduledEnclaveUpdater {
