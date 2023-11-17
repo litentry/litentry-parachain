@@ -180,7 +180,7 @@ impl TrustedCallSigned {
 				(item.0, networks)
 			})
 			.collect();
-		let request: RequestType = AssertionBuildRequest {
+		let assertion_build: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			signer,
 			enclave_account: enclave_signer_account(),
@@ -193,7 +193,7 @@ impl TrustedCallSigned {
 		}
 		.into();
 		let sender = StfRequestSender::new();
-		sender.send_stf_request(request).map_err(|e| {
+		sender.send_stf_request(assertion_build).map_err(|e| {
 			error!("[RequestVc] : {:?}", e);
 			StfError::RequestVCFailed(assertion, ErrorDetail::SendStfRequestFailed)
 		})
