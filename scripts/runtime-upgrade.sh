@@ -32,14 +32,14 @@ function print_divider() {
 print_divider
 
 if [ ! -z "$GH_TOKEN" ]; then
-  headers="authorization: Bearer $GH_TOKEN"
+  auth_header="authorization: Bearer $GH_TOKEN"
 fi
 
 # 1. download runtime wasm
 echo "Download runtime wasm from $1 ..."
 case "$1" in
   https*)
-    wget --header="$headers" -q "$1" -O "$output_wasm" ;;
+    wget --header="$auth_header" --header="Accept: application/octet-stream" -d "$1" -O "$output_wasm" ;;
   *)
     cp -f "$1" "$output_wasm" ;;
 esac
