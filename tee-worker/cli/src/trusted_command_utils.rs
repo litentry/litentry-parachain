@@ -95,7 +95,7 @@ pub(crate) fn get_keystore_path(trusted_args: &TrustedCli, cli: &Cli) -> PathBuf
 	PathBuf::from(&format!("{}/{}", TRUSTED_KEYSTORE_PATH, shard.encode().to_base58()))
 }
 
-pub(crate) fn get_identifiers(trusted_args: &TrustedCli, cli: &Cli) -> ([u8; 32], ShardIdentifier) {
+pub fn get_identifiers(trusted_args: &TrustedCli, cli: &Cli) -> ([u8; 32], ShardIdentifier) {
 	let mrenclave = if let Some(mrenclave) = &trusted_args.mrenclave {
 		mrenclave_from_base58(mrenclave)
 	} else {
@@ -154,7 +154,7 @@ pub(crate) fn get_pair_from_str(
 }
 
 // helper method to get the pending trusted calls for a given account via direct RPC
-pub(crate) fn get_pending_trusted_calls_for(
+pub fn get_pending_trusted_calls_for(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	who: &AccountId,

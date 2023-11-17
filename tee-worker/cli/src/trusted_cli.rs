@@ -25,22 +25,22 @@ use crate::trusted_base_cli::TrustedBaseCommand;
 pub struct TrustedCli {
 	/// targeted worker MRENCLAVE
 	#[clap(short, long)]
-	pub(crate) mrenclave: Option<String>,
+	pub mrenclave: Option<String>,
 
 	/// shard identifier
 	#[clap(short, long)]
-	pub(crate) shard: Option<String>,
+	pub shard: Option<String>,
 
 	/// signer for publicly observable extrinsic
 	#[clap(short='a', long, default_value_t = String::from("//Alice"))]
-	pub(crate) xt_signer: String,
+	pub xt_signer: String,
 
 	/// insert if direct invocation call is desired
 	#[clap(short, long)]
-	pub(crate) direct: bool,
+	pub direct: bool,
 
 	#[clap(subcommand)]
-	pub(crate) command: TrustedCommand,
+	pub command: TrustedCommand,
 }
 
 #[derive(Subcommand)]

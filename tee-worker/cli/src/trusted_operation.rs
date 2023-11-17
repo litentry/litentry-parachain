@@ -49,16 +49,16 @@ use substrate_api_client::{
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub(crate) enum TrustedOperationError {
+pub enum TrustedOperationError {
 	#[error("extrinsic L1 error: {msg:?}")]
 	Extrinsic { msg: String },
 	#[error("default error: {msg:?}")]
 	Default { msg: String },
 }
 
-pub(crate) type TrustedOpResult = StdResult<Option<Vec<u8>>, TrustedOperationError>;
+pub type TrustedOpResult = StdResult<Option<Vec<u8>>, TrustedOperationError>;
 
-pub(crate) fn perform_trusted_operation(
+pub fn perform_trusted_operation(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	top: &TrustedOperation,
@@ -70,7 +70,7 @@ pub(crate) fn perform_trusted_operation(
 	}
 }
 
-pub(crate) fn perform_direct_operation(
+pub fn perform_direct_operation(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	top: &TrustedOperation,
@@ -86,7 +86,7 @@ pub(crate) fn perform_direct_operation(
 	}
 }
 
-pub(crate) fn execute_getter_from_cli_args(
+pub fn execute_getter_from_cli_args(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	getter: &Getter,
