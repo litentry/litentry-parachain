@@ -23,18 +23,18 @@ use std::sync::RwLock;
 
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
-use itp_ocall_api::EnclaveSidechainOCallApi;
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_types::{BlockHash, ShardIdentifier};
 use sgx_types::{sgx_status_t, SgxResult};
 use std::vec::Vec;
 
-pub struct SidechainOCallApiMock<SignedSidechainBlockType> {
+pub struct OCallApiMock<SignedSidechainBlockType> {
 	fetch_from_peer_blocks: Option<Vec<SignedSidechainBlockType>>,
 	number_of_fetch_calls: RwLock<usize>,
 	_phantom: PhantomData<SignedSidechainBlockType>,
 }
 
-impl<SignedSidechainBlockType> SidechainOCallApiMock<SignedSidechainBlockType>
+impl<SignedSidechainBlockType> OCallApiMock<SignedSidechainBlockType>
 where
 	SignedSidechainBlockType: Clone + Encode + Decode + Send + Sync,
 {
@@ -48,9 +48,9 @@ where
 	}
 }
 
-impl<SignedSidechainBlockType> Default for SidechainOCallApiMock<SignedSidechainBlockType> {
+impl<SignedSidechainBlockType> Default for OCallApiMock<SignedSidechainBlockType> {
 	fn default() -> Self {
-		SidechainOCallApiMock {
+		OCallApiMock {
 			fetch_from_peer_blocks: None,
 			number_of_fetch_calls: RwLock::new(0),
 			_phantom: Default::default(),
@@ -58,12 +58,12 @@ impl<SignedSidechainBlockType> Default for SidechainOCallApiMock<SignedSidechain
 	}
 }
 
-impl<SignedSidechainBlockType> Clone for SidechainOCallApiMock<SignedSidechainBlockType>
+impl<SignedSidechainBlockType> Clone for OCallApiMock<SignedSidechainBlockType>
 where
 	SignedSidechainBlockType: Clone + Encode + Decode + Send + Sync,
 {
 	fn clone(&self) -> Self {
-		SidechainOCallApiMock {
+		OCallApiMock {
 			fetch_from_peer_blocks: self.fetch_from_peer_blocks.clone(),
 			number_of_fetch_calls: RwLock::new(*self.number_of_fetch_calls.read().unwrap()),
 			_phantom: self._phantom,
@@ -71,8 +71,16 @@ where
 	}
 }
 
-impl<SignedSidechainBlockType> EnclaveSidechainOCallApi
-	for SidechainOCallApiMock<SignedSidechainBlockType>
+impl<SignedSidechainBlockType> EnclaveMetricsOCallApi for OCallApiMock<SignedSidechainBlockType>
+where
+	SignedSidechainBlockType: Clone + Encode + Decode + Send + Sync,
+{
+	fn update_metric<Metric: Encode>(&self, _metric: Metric) -> SgxResult<()> {
+		Ok(())
+	}
+}
+
+impl<SignedSidechainBlockType> EnclaveSidechainOCallApi for OCallApiMock<SignedSidechainBlockType>
 where
 	SignedSidechainBlockType: Clone + Encode + Decode + Send + Sync,
 {

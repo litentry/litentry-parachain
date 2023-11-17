@@ -180,6 +180,7 @@ pub type IntegriteeParentchainBlockImporter = ParentchainBlockImporter<
 	EnclaveStfExecutor,
 	EnclaveExtrinsicsFactory,
 	IntegriteeParentchainIndirectExecutor,
+	EnclaveOCallApi,
 >;
 
 pub type IntegriteeParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
@@ -213,6 +214,7 @@ pub type TargetAParentchainBlockImporter = ParentchainBlockImporter<
 	EnclaveStfExecutor,
 	EnclaveExtrinsicsFactory,
 	TargetAParentchainIndirectExecutor,
+	EnclaveOCallApi,
 >;
 
 pub type TargetAParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
@@ -246,6 +248,7 @@ pub type TargetBParentchainBlockImporter = ParentchainBlockImporter<
 	EnclaveStfExecutor,
 	EnclaveExtrinsicsFactory,
 	TargetBParentchainIndirectExecutor,
+	EnclaveOCallApi,
 >;
 
 pub type TargetBParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<

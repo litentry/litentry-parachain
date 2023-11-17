@@ -1828,7 +1828,9 @@ dependencies = [
  "ita-stf",
  "itc-parentchain-indirect-calls-executor",
  "itc-parentchain-light-client",
+ "itp-enclave-metrics",
  "itp-extrinsics-factory",
+ "itp-ocall-api",
  "itp-stf-executor",
  "itp-types",
  "log",
@@ -2482,6 +2484,7 @@ name = "its-consensus-common"
 version = "0.9.0"
 dependencies = [
  "itc-parentchain-light-client",
+ "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-import-queue",
  "itp-node-api-metadata",

@@ -11,6 +11,7 @@ thiserror = { version = "1.0.26", optional = true }
 
 # local deps
 itc-parentchain-light-client = { path = "../../../core/parentchain/light-client", default-features = false }
+itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
 itp-import-queue = { path = "../../../core-primitives/import-queue", default-features = false }
 itp-node-api-metadata = { path = "../../../core-primitives/node-api/metadata", default-features = false }
@@ -51,6 +52,7 @@ std = [
     # local
     "itc-parentchain-light-client/std",
     "itp-import-queue/std",
+    "itp-enclave-metrics/std",
     "itp-extrinsics-factory/std",
     "itp-node-api-metadata/std",
     "itp-node-api-metadata-provider/std",
@@ -73,6 +75,7 @@ sgx = [
     # local
     "itc-parentchain-light-client/sgx",
     "itp-import-queue/sgx",
+    "itp-enclave-metrics/sgx",
     "itp-extrinsics-factory/sgx",
     "itp-node-api-metadata-provider/sgx",
     "itp-sgx-crypto/sgx",
