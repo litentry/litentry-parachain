@@ -35,7 +35,7 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
-mod handler;
+pub mod handler;
 
 use codec::Encode;
 use frame_support::sp_tracing::warn;
@@ -52,7 +52,7 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{ShardIdentifier, H256};
+use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error, info};
 use std::{boxed::Box, format, string::String, sync::Arc};
@@ -84,9 +84,9 @@ pub struct StfTaskContext<
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
-	shielding_key: K,
+	pub shielding_key: K,
 	author_api: Arc<A>,
-	enclave_signer: Arc<S>,
+	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
 }
@@ -160,9 +160,12 @@ where
 			encrypted_trusted_call.len(),
 			top.encode().len()
 		);
-		executor::block_on(self.author_api.watch_top(encrypted_trusted_call, *shard)).map_err(
-			|e| Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e)),
-		)?;
+		executor::block_on(
+			self.author_api.watch_top(RsaRequest::new(*shard, encrypted_trusted_call)),
+		)
+		.map_err(|e| {
+			Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e))
+		})?;
 
 		Ok(())
 	}

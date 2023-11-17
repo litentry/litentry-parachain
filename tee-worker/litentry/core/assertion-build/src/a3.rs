@@ -141,6 +141,7 @@ mod tests {
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			identities,
 			top_hash: Default::default(),
+			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
 

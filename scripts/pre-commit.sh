@@ -5,7 +5,6 @@
 set -eo pipefail
 
 function worker_clippy() {
-    taplo fmt
     cargo clippy --release -- -D warnings
     cargo clippy --release --features evm -- -D warnings
     cargo clippy --release --features sidechain -- -D warnings
@@ -41,7 +40,6 @@ clean_up
 
 cd "$root_dir"
 make fmt
-make shellcheck # _shellcheck is not enforced in CI though
 
 echo "[Step 1], Parachain clippy"
 cd "$root_dir" && parachain_check

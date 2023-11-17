@@ -24,6 +24,7 @@ use frame_support::{
 	weights::IdentityFee,
 	PalletId,
 };
+use frame_system::EnsureRoot;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
@@ -151,7 +152,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000_000 weight - almost certainly a conservative estimate.
 	// How much we charge for XCM from remote chain per XCM command.
-	pub UnitWeightCost: Weight = Weight::from_ref_time(200_000_000u64);
+	pub UnitWeightCost: Weight = Weight::from_parts(200_000_000u64, 0);
 	pub const MaxInstructions: u32 = 100;
 }
 
@@ -286,7 +287,7 @@ parameter_types! {
 			Parachain(ParachainInfo::parachain_id().into())
 		)
 	};
-	pub const BaseXcmWeight: Weight = Weight::from_ref_time(100_000_000u64);
+	pub const BaseXcmWeight: Weight = Weight::from_parts(100_000_000u64, 0);
 	pub const MaxAssetsForTransfer: usize = 3;
 }
 
@@ -329,6 +330,7 @@ impl pallet_xcm::Config for Runtime {
 	type WeightInfo = pallet_xcm::TestWeightInfo;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {

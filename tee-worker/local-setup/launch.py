@@ -124,6 +124,13 @@ def generate_config_local_json(parachain_dir):
 
     print("Successfully written ", config_file)
 
+def run_node(config, i: int):
+    node_log = open(f'{log_dir}/node{i}.log', 'w+')
+    node_cmd = [config["bin"]] + config["flags"]
+    print(f'Run node {i} with command: {node_cmd}')
+    return Popen(node_cmd, stdout=node_log, stderr=STDOUT, bufsize=1)
+
+
 
 # Generate `.env.local` used by local enclave ts-tests
 def generate_env_local():
@@ -132,8 +139,8 @@ def generate_env_local():
 
     with open(env_local_example_file, "r") as f:
         data = f.read()
-        data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
-        data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
+        data = data.replace(":2000", ":" + os.environ.get("TrustedWorkerPort", "2000"))
+        data = data.replace(":9944", ":" + os.environ.get("CollatorWSPort", "9944"))
 
     with open(env_local_file, "w") as f:
         f.write(data)
@@ -185,9 +192,9 @@ def setup_worker_log_level(log_config_path):
                     log_level_string += k+"="+v+","
 
                 indx += 1
-                
+
             log_level_dic[section] = log_level_string
-    
+
     return log_level_dic
 
 
@@ -198,13 +205,16 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
     # Litentry
     print("Starting litentry parachain in background ...")
     if parachain_type == "local-docker":
-        os.environ['TMPDIR'] = parachain_dir
+        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         # TODO: use Popen and copy the stdout also to node.log
         run(["./scripts/litentry/start_parachain.sh"], check=True)
+    elif parachain_type == "local-binary-standalone":
+        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
+        setup_environment(offset, config, parachain_dir)
+        run(["../scripts/launch-standalone.sh"], check=True)
     elif parachain_type == "local-binary":
-        # Export Parachain Directory as Global Variable
-        os.environ['TMPDIR'] = parachain_dir
+        os.environ['LITENTRY_PARACHAIN_DIR'] = parachain_dir
         setup_environment(offset, config, parachain_dir)
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
     elif parachain_type == "remote":
@@ -289,12 +299,12 @@ if __name__ == "__main__":
         "-o", "--offset", nargs="?", default="0", type=int, help="offset for port"
     )
     args = parser.parse_args()
-    
+
     today = datetime.datetime.now()
     formatted_date = today.strftime('%d_%m_%Y_%H%M')
     directory_name = f"parachain_dev_{formatted_date}"
     temp_directory_path = os.path.join('/tmp', directory_name)
-    parachain_dir = temp_directory_path 
+    parachain_dir = temp_directory_path
     print("Directory has been assigned to:", temp_directory_path)
 
     process_list = []

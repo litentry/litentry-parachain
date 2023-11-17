@@ -23,7 +23,7 @@ use codec::{Decode, Encode};
 use ita_stf::TrustedCall;
 use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, UserShieldingKeyNonceType, ValidationData, Web3Network};
+use litentry_primitives::{Identity, ValidationData, Web3Network};
 use log::debug;
 use sp_core::crypto::AccountId32;
 use sp_runtime::MultiAddress;
@@ -36,7 +36,6 @@ pub struct LinkIdentityArgs {
 	encrypted_identity: Vec<u8>,
 	encrypted_validation_data: Vec<u8>,
 	encrypted_web3networks: Vec<u8>,
-	nonce: UserShieldingKeyNonceType,
 }
 
 impl ArgsExecutor for LinkIdentityArgs {
@@ -67,12 +66,11 @@ impl ArgsExecutor for LinkIdentityArgs {
 			Decode::decode(&mut executor.decrypt(&self.encrypted_web3networks)?.as_slice())?;
 
 		debug!(
-				"indirect call LinkIdentity, who:{:?}, keyNonce: {:?}, identity: {:?}, validation_data: {:?}",
-				account_id_to_string(&self.account),
-				self.nonce,
-				identity,
-				validation_data
-			);
+			"indirect call LinkIdentity, who:{:?}, identity: {:?}, validation_data: {:?}",
+			account_id_to_string(&self.account),
+			identity,
+			validation_data
+		);
 
 		let enclave_account_id = executor.get_enclave_account().unwrap();
 		Ok(TrustedCall::link_identity(
@@ -81,7 +79,7 @@ impl ArgsExecutor for LinkIdentityArgs {
 			identity,
 			validation_data,
 			web3networks,
-			self.nonce,
+			None,
 			hash,
 		))
 	}

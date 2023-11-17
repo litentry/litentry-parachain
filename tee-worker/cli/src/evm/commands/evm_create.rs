@@ -45,7 +45,7 @@ pub struct EvmCreateCommands {
 
 impl EvmCreateCommands {
 	pub(crate) fn run(&self, cli: &Cli, trusted_args: &TrustedCli) -> CliResult {
-		let from = get_pair_from_str(trusted_args, &self.from);
+		let from = get_pair_from_str(trusted_args, &self.from, cli);
 		let from_acc: AccountId = from.public().into();
 		println!("from ss58 is {}", from.public().to_ss58check());
 
@@ -54,7 +54,7 @@ impl EvmCreateCommands {
 			.copy_from_slice((<[u8; 32]>::from(from_acc.clone())).get(0..20).unwrap());
 		let sender_evm_acc: H160 = sender_evm_acc_slice.into();
 
-		let (mrenclave, shard) = get_identifiers(trusted_args);
+		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 
 		let sender_evm_substrate_addr =
 			HashedAddressMapping::<BlakeTwo256>::into_account_id(sender_evm_acc);

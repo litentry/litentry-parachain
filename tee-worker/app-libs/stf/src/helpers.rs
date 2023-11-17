@@ -19,16 +19,18 @@ use crate::{StfError, StfResult, ENCLAVE_ACCOUNT_KEY};
 
 use codec::{Decode, Encode};
 use frame_support::ensure;
+use hex_literal::hex;
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_types::Index;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{
-	aes_encrypt_nonce, ErrorDetail, Identity, UserShieldingKeyNonceType, UserShieldingKeyType,
-	Web3ValidationData,
-};
+use litentry_primitives::{ErrorDetail, Identity, Web3ValidationData};
 use log::*;
 use sp_core::blake2_256;
+use sp_runtime::AccountId32;
 use std::prelude::v1::*;
+
+pub const ALICE_ACCOUNTID32: AccountId32 =
+	AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
 
 pub fn get_storage_value<V: Decode>(
 	storage_prefix: &'static str,
@@ -92,7 +94,7 @@ pub fn enclave_signer_account<AccountId: Decode>() -> AccountId {
 }
 
 /// Ensures an account is a registered enclave account.
-pub fn ensure_enclave_signer<AccountId: Encode + Decode + PartialEq>(
+pub fn ensure_enclave_signer_account<AccountId: Encode + Decode + PartialEq>(
 	account: &AccountId,
 ) -> StfResult<()> {
 	let expected_enclave_account: AccountId = enclave_signer_account();
@@ -112,6 +114,13 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
+pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
+	signer: &AccountId,
+	who: &AccountId,
+) -> bool {
+	signer == who
+}
+
 pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	signer: &AccountId,
 	who: Option<AccountId>,
@@ -123,29 +132,31 @@ pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 	}
 }
 
-pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
-	signer: &AccountId,
-	who: &AccountId,
-) -> bool {
-	signer == who
+#[cfg(not(feature = "production"))]
+pub fn ensure_alice(signer: &AccountId32) -> bool {
+	signer == &ALICE_ACCOUNTID32
+}
+
+#[cfg(not(feature = "production"))]
+pub fn ensure_enclave_signer_or_alice(signer: &AccountId32) -> bool {
+	signer == &enclave_signer_account::<AccountId32>() || ensure_alice(signer)
 }
 
 // verification message format:
-// blake2_256(<sidechain nonce> + shieldingKey.encrypt(<primary account> + <identity-to-be-linked>).ciphertext)
+// ```
+// blake2_256(<sidechain nonce> + <primary account> + <identity-to-be-linked>)
+// ```
 // where <> means SCALE-encoded
-// see https://github.com/litentry/litentry-parachain/issues/1739
+// see https://github.com/litentry/litentry-parachain/issues/1739 and P-174
 pub fn get_expected_raw_message(
 	who: &Identity,
 	identity: &Identity,
 	sidechain_nonce: Index,
-	key: UserShieldingKeyType,
-	nonce: UserShieldingKeyNonceType,
 ) -> Vec<u8> {
-	let mut data = who.encode();
-	data.append(&mut identity.encode());
-	let mut encrypted_data = aes_encrypt_nonce(&key, &data, nonce).ciphertext;
-	let mut payload = sidechain_nonce.encode();
-	payload.append(&mut encrypted_data);
+	let mut payload = Vec::new();
+	payload.append(&mut sidechain_nonce.encode());
+	payload.append(&mut who.encode());
+	payload.append(&mut identity.encode());
 	blake2_256(payload.as_slice()).to_vec()
 }
 

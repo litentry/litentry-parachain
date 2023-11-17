@@ -17,17 +17,17 @@
 
 use crate::{
 	command_utils::{get_accountid_from_str, get_chain_api, *},
-	Cli, CliResult, CliResultOk,
+	Cli, CliError, CliResult, CliResultOk,
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
-use itp_node_api::api_client::{ParentchainExtrinsicSigner, TEEREX};
+use itp_node_api::api_client::TEEREX;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::sr25519 as sr25519_core;
-use substrate_api_client::{compose_extrinsic, SubmitAndWatch, XtStatus};
+use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch, XtStatus};
 
 #[derive(Parser)]
 pub struct ShieldFundsCommand {
@@ -57,7 +57,7 @@ impl ShieldFundsCommand {
 
 		// Get the sender.
 		let from = get_pair_from_str(&self.from);
-		chain_api.set_signer(ParentchainExtrinsicSigner::new(sr25519_core::Pair::from(from)));
+		chain_api.set_signer(sr25519_core::Pair::from(from).into());
 
 		// Get the recipient.
 		let to = get_accountid_from_str(&self.to);
@@ -75,9 +75,18 @@ impl ShieldFundsCommand {
 			shard
 		);
 
-		let tx_hash = chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized).unwrap();
-		println!("[+] TrustedOperation got finalized. Hash: {:?}\n", tx_hash);
-
-		Ok(CliResultOk::None)
+		match chain_api.submit_and_watch_extrinsic_until(xt, XtStatus::Finalized) {
+			Ok(xt_report) => {
+				println!(
+					"[+] shield funds success. extrinsic hash: {:?} / status: {:?} / block hash: {:?}",
+					xt_report.extrinsic_hash, xt_report.status, xt_report.block_hash.unwrap()
+				);
+				Ok(CliResultOk::H256 { hash: xt_report.block_hash.unwrap() })
+			},
+			Err(e) => {
+				error!("shield_funds extrinsic failed {:?}", e);
+				Err(CliError::Extrinsic { msg: format!("{:?}", e) })
+			},
+		}
 	}
 }

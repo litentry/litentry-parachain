@@ -10,11 +10,10 @@ import { createJsonRpcRequest } from './helpers';
 // - better place to put these constants?
 // - maybe randomise it in test initialisation
 //
-// the user shielding key
+// the aes key to encrypt an AES request
 export const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
-// the key nonce to calculate the verification message
-// copied from hardcoded mock-server
-// MOCK_VERIFICATION_NONCE: UserShieldingKeyNonceType = [1u8; 12];
+
+// nonce to encrypt an AES request together with `aesKey`
 export const keyNonce = '0x010101010101010101010101';
 
 // send RPC request
@@ -24,6 +23,7 @@ export async function sendRequest(
     api: ApiPromise
 ): Promise<WorkerRpcReturnValue> {
     const rawRes = await wsClient.sendRequest(request, { requestId: request.id, timeout: 6000 });
+
     const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', rawRes.result);
     if (res.status.isError) {
         console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
@@ -50,6 +50,7 @@ export async function getSidechainMetadata(
     requestId: number
 ): Promise<{ sidechainMetaData: Metadata; sidechainRegistry: TypeRegistry }> {
     const request = createJsonRpcRequest('state_getMetadata', Uint8Array.from([]), requestId);
+
     const resp = await sendRequest(wsClient, request, api);
 
     const sidechainRegistry = new TypeRegistry();

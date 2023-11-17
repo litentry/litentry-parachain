@@ -3,7 +3,7 @@ use base58::FromBase58;
 use codec::Decode;
 use itp_top_pool_author::{error::Result, mocks::GLOBAL_MOCK_AUTHOR_API};
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::Assertion;
+use litentry_primitives::{Assertion, RequestAesKey};
 use sp_core::{blake2_256, sr25519, Pair};
 use std::{sync::mpsc::Receiver, vec::Vec};
 
@@ -27,6 +27,13 @@ pub fn construct_assertion_request(assertion: Assertion) -> RequestType {
 		.expect("Failed to create a key pair from the provided seed");
 	let public_id = pair.public();
 
+	let mut key = RequestAesKey::default();
+	hex::decode_to_slice(
+		"22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12",
+		&mut key,
+	)
+	.expect("decoding shielding_key failed");
+
 	let request: RequestType = AssertionBuildRequest {
 		shard,
 		signer: public_id.into(),
@@ -34,6 +41,7 @@ pub fn construct_assertion_request(assertion: Assertion) -> RequestType {
 		who: public_id.into(),
 		assertion,
 		identities: vec![],
+		maybe_key: Some(key),
 		top_hash: H256::zero(),
 		req_ext_hash: H256::zero(),
 	}

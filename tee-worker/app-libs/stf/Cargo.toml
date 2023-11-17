@@ -8,6 +8,7 @@ edition = "2021"
 # crates.io
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 derive_more = { version = "0.99.5" }
+hex-literal = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 rlp = { version = "0.5", default-features = false }
 sha3 = { version = "0.10", default-features = false }
@@ -30,20 +31,21 @@ itp-utils = { default-features = false, path = "../../core-primitives/utils" }
 sp-io = { default-features = false, features = ["disable_oom", "disable_panic_handler", "disable_allocator"], path = "../../core-primitives/substrate-sgx/sp-io" }
 
 # Substrate dependencies
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
+lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
 
 [dev-dependencies]
-sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 [features]
 default = ["std"]
@@ -59,6 +61,7 @@ sgx = [
     # litentry
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
+    "lc-vc-task-sender/sgx",
 ]
 std = [
     # crates.io
@@ -91,5 +94,6 @@ std = [
     "itp-node-api/std",
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
+    "lc-vc-task-sender/std",
 ]
 test = []

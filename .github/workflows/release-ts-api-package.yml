@@ -1,0 +1,102 @@
+# Reference: ci.yml
+name: Release Ts API Package
+
+on:
+  workflow_dispatch:
+      inputs:
+        tag:
+          description: 'Release docker image tag'
+          required: true
+          default: 'latest'
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
+
+jobs:
+        
+  update-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set env variables
+        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.tag }}" >> "$GITHUB_ENV"
+
+      - name: Pull litentry image optionally
+        run: |
+          docker pull parity/polkadot
+          docker pull litentry/litentry-worker:${{ inputs.tag }}
+          docker pull litentry/litentry-cli:${{ inputs.tag }}
+          docker pull litentry/litentry-parachain:${{ inputs.tag }}
+
+      - run: docker images --all
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Generate parachain artefacts
+        run: |
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
+      
+      - name: Update metadata and generate types
+        timeout-minutes: 10
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://npm.pkg.github.com/
+
+      - name: Setup npm config
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
+          npm config set @litentry:registry https://npm.pkg.github.com
+
+      - name: Publish parachain API and sidechain API
+        working-directory: ./tee-worker/client-api
+        run: |
+          apis=("parachain-api" "sidechain-api")
+          for api in "${apis[@]}"; do
+            cd "$api"
+
+            # Check if dist and build files exist
+            if [ -d "dist" ] && [ -d "build" ]; then
+              echo "$api dist and build files exist."
+            else
+              echo "$api dist and build files do not exist. Publishing failed."
+              exit 1
+            fi
+
+            npm publish --tag ${{ inputs.tag }}
+
+            echo "------------------------$api published------------------------"
+            cd ..
+          done
+
+      - name: Stop docker containers
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
+
+      - name: Collect Docker Logs
+        continue-on-error: true
+        if: always()
+        uses: jwalton/gh-docker-logs@v2
+        with:
+          tail: all
+          dest: logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: logs-lit-ts-api-package-build
+          path: logs
+          if-no-files-found: ignore

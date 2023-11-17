@@ -42,7 +42,9 @@ use sp_std::{vec, vec::Vec};
 /// An action that can be performed upon a delegation
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo, PartialOrd, Ord)]
 pub enum DelegationAction<Balance> {
+	#[codec(index = 0)]
 	Revoke(Balance),
+	#[codec(index = 1)]
 	Decrease(Balance),
 }
 

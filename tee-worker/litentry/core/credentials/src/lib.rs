@@ -36,12 +36,11 @@ pub mod sgx_reexport_prelude {
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 use codec::{Decode, Encode};
-use core::str::from_utf8;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::{from_iso8601, now_as_iso8601};
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Address20, Address32, Identity, Web3Network};
+use litentry_primitives::{Identity, Web3Network};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -76,12 +75,14 @@ use rust_base58::ToBase58;
 
 pub mod error;
 pub use error::Error;
+pub mod achainable;
+pub mod assertion_logic;
 pub mod oneblock;
 pub mod schema;
-
-pub mod assertion_logic;
 use assertion_logic::{AssertionLogic, Op};
-use itp_utils::hex::hex_encode;
+pub mod bnb_domain;
+pub mod generic_discord_role;
+pub mod sora;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";
@@ -92,11 +93,13 @@ pub const MAX_CREDENTIAL_SIZE: usize = 2048;
 /// https://w3c-ccg.github.io/ld-cryptosuite-registry
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum ProofType {
+	#[codec(index = 0)]
 	Ed25519Signature2020,
 }
 
 #[derive(Serialize, Deserialize, Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum CredentialType {
+	#[codec(index = 0)]
 	VerifiableCredential,
 }
 
@@ -245,7 +248,8 @@ impl Credential {
 			serde_json::from_str(s).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
-		vc.credential_subject.id = DID::try_from(subject)?.format();
+		vc.credential_subject.id =
+			subject.to_did().map_err(|err| Error::ParseError(format!("{}", err)))?;
 		vc.issuance_date = now_as_iso8601();
 		vc.credential_schema = None;
 		vc.proof = None;
@@ -532,58 +536,6 @@ impl Credential {
 	}
 }
 
-pub enum DID {
-	Evm(Address20),
-	Substrate(Address32),
-	Twitter(String),
-	Discord(String),
-	Github(String),
-}
-
-impl DID {
-	pub fn format(self) -> String {
-		format!(
-			"did:litentry:{}",
-			&match self {
-				Self::Evm(address) => format!("evm:{}", &hex_encode(address.as_ref())),
-				Self::Substrate(address) => format!("substrate:{}", &hex_encode(address.as_ref())),
-				Self::Twitter(handle) => format!("twitter:{}", handle),
-				Self::Discord(handle) => format!("discord:{}", handle),
-				Self::Github(handle) => format!("github:{}", handle),
-			}
-		)
-	}
-}
-
-impl TryFrom<&Identity> for DID {
-	type Error = Error;
-
-	fn try_from(value: &Identity) -> Result<Self, Self::Error> {
-		match value {
-			Identity::Substrate(address) => Ok(DID::Substrate(*address)),
-			Identity::Evm(address) => Ok(DID::Evm(*address)),
-			Identity::Twitter(handle) => {
-				let handle = from_utf8(handle.inner_ref())
-					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
-					.to_string();
-				Ok(DID::Twitter(handle))
-			},
-			Identity::Discord(handle) => {
-				let handle = from_utf8(handle.inner_ref())
-					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
-					.to_string();
-				Ok(DID::Discord(handle))
-			},
-			Identity::Github(handle) => {
-				let handle = from_utf8(handle.inner_ref())
-					.map_err(|e| Error::ParseError(format!("Conversion error: {}", e)))?
-					.to_string();
-				Ok(DID::Github(handle))
-			},
-		}
-	}
-}
-
 /// Assertion To-Date
 pub fn format_assertion_to_date() -> String {
 	#[cfg(feature = "std")]
@@ -737,42 +689,5 @@ mod tests {
 			assert_eq!(credential_unsigned.credential_subject.values[0], true);
 			assert_eq!(credential_unsigned.credential_subject.assertions[0], assertion)
 		}
-	}
-
-	#[test]
-	fn test_substrate_did_format() {
-		assert_eq!(DID::Substrate([0; 32].into()).format(), "did:litentry:substrate:0x0000000000000000000000000000000000000000000000000000000000000000")
-	}
-
-	#[test]
-	fn test_evm_did_format() {
-		assert_eq!(
-			DID::Evm([0; 20].into()).format(),
-			"did:litentry:evm:0x0000000000000000000000000000000000000000"
-		)
-	}
-
-	#[test]
-	fn test_discord_format() {
-		assert_eq!(
-			DID::Discord("discord_handle".to_string()).format(),
-			"did:litentry:discord:discord_handle"
-		)
-	}
-
-	#[test]
-	fn test_twitter_format() {
-		assert_eq!(
-			DID::Twitter("twitter_handle".to_string()).format(),
-			"did:litentry:twitter:twitter_handle"
-		)
-	}
-
-	#[test]
-	fn test_github_format() {
-		assert_eq!(
-			DID::Github("github_handle".to_string()).format(),
-			"did:litentry:github:github_handle"
-		)
 	}
 }

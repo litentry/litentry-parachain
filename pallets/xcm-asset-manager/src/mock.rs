@@ -91,12 +91,18 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type HoldIdentifier = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type MaxFreezes = ();
 }
 
 pub type AssetId = u32;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub enum MockAssetType {
+	#[codec(index = 0)]
 	MockAsset(AssetId),
+	#[codec(index = 1)]
 	Xcm(Box<MultiLocation>),
 }
 

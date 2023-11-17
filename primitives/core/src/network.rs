@@ -19,7 +19,7 @@ use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::{hash::Hash, vec::Vec};
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use strum_macros::{EnumIter, IntoStaticStr};
 
 pub const MAX_WEB3NETWORK_LEN: u32 = 128;
 pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_LEN>>;
@@ -45,20 +45,40 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 	TypeInfo,
 	MaxEncodedLen,
 	EnumIter,
+	IntoStaticStr,
 )]
 pub enum Web3Network {
 	// substrate
+	#[codec(index = 0)]
 	Polkadot,
+	#[codec(index = 1)]
 	Kusama,
+	#[codec(index = 2)]
 	Litentry,
+	#[codec(index = 3)]
 	Litmus,
+	#[codec(index = 4)]
 	LitentryRococo,
+	#[codec(index = 5)]
 	Khala,
+	#[codec(index = 6)]
 	SubstrateTestnet, // when launched it with standalone (integritee-)node
 
 	// evm
+	#[codec(index = 7)]
 	Ethereum,
+	#[codec(index = 8)]
 	Bsc,
+}
+
+// mainly used in CLI
+impl TryFrom<&str> for Web3Network {
+	type Error = ();
+	fn try_from(value: &str) -> Result<Self, Self::Error> {
+		Web3Network::iter()
+			.find(|n| <Self as Into<&'static str>>::into(*n).to_lowercase() == value.to_lowercase())
+			.ok_or(())
+	}
 }
 
 impl Web3Network {
@@ -137,5 +157,15 @@ mod tests {
 				}
 			)
 		})
+	}
+
+	#[test]
+	fn try_from_str_works() {
+		let mut n: Result<Web3Network, ()> = "polkadot".try_into();
+		assert_eq!(n.unwrap(), Web3Network::Polkadot);
+		n = "poLkAdOt".try_into();
+		assert_eq!(n.unwrap(), Web3Network::Polkadot);
+		n = "NonExist".try_into();
+		assert_eq!(n, Err(()))
 	}
 }

@@ -19,17 +19,19 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use sp_core::H256;
+use sp_core::{RuntimeDebug, H256};
 use sp_std::prelude::*;
 
-#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum SgxBuildMode {
+	#[codec(index = 0)]
 	Debug,
 	#[default]
+	#[codec(index = 1)]
 	Production,
 }
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct Enclave<PubKey, Url> {
 	pub pubkey: PubKey, // FIXME: this is redundant information
 	pub mr_enclave: MrEnclave,
@@ -67,7 +69,7 @@ impl<PubKey, Url> Enclave<PubKey, Url> {
 	}
 }
 
-#[derive(Encode, Decode, Clone, TypeInfo, PartialEq, Eq, Default, sp_core::RuntimeDebug)]
+#[derive(Encode, Decode, Clone, TypeInfo, PartialEq, Eq, Default, RuntimeDebug)]
 pub struct SgxEnclaveMetadata {
 	pub quote: Vec<u8>,
 	pub quote_sig: Vec<u8>,
@@ -81,7 +83,7 @@ impl SgxEnclaveMetadata {
 }
 
 /// The list of valid TCBs for an enclave.
-#[derive(Encode, Decode, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct QeTcb {
 	pub isvsvn: u16,
 }
@@ -94,7 +96,7 @@ impl QeTcb {
 
 /// This represents all the collateral data that we need to store on chain in order to verify
 /// the quoting enclave validity of another enclave that wants to register itself on chain
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct QuotingEnclave {
 	// Todo: make timestamp: Moment
 	pub issue_date: u64, // unix epoch in milliseconds
@@ -147,7 +149,7 @@ impl QuotingEnclave {
 	}
 }
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct TcbVersionStatus {
 	pub cpusvn: Cpusvn,
 	pub pcesvn: Pcesvn,
@@ -170,7 +172,7 @@ impl TcbVersionStatus {
 
 /// This represents all the collateral data that we need to store on chain in order to verify
 /// the quoting enclave validity of another enclave that wants to register itself on chain
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct TcbInfoOnChain {
 	// Todo: make timestamp: Moment
 	pub issue_date: u64, // unix epoch in milliseconds
@@ -202,11 +204,25 @@ pub type Pcesvn = u16;
 pub type ShardIdentifier = H256;
 pub type SidechainBlockNumber = u64;
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, sp_core::RuntimeDebug, TypeInfo)]
-pub struct Request {
-	pub shard: ShardIdentifier,
-	pub cyphertext: Vec<u8>,
+// Litentry: use the name `RsaRequest` to differentiate from `AesRequest` (see aes_request.rs in
+// tee-worker) `Rsa` implies that the payload is RSA-encrypted (using enclave's shielding key)
+#[macro_export]
+macro_rules! decl_rsa_request {
+	($($t:meta),*) => {
+		#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, $($t),*)]
+		pub struct RsaRequest {
+			pub shard: ShardIdentifier,
+			pub payload: Vec<u8>,
+		}
+		impl RsaRequest {
+			pub fn new(shard: ShardIdentifier, payload: Vec<u8>) -> Self {
+				Self { shard, payload }
+			}
+		}
+	};
 }
+
+decl_rsa_request!(TypeInfo, RuntimeDebug);
 
 #[cfg(test)]
 mod tests {

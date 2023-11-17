@@ -22,7 +22,7 @@ use sp_core::{H160, U256};
 use std::vec::Vec;
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer, ensure_self},
+	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
 	trusted_call_result::*,
 	Runtime, StfError, System, TrustedOperation,
 };
@@ -40,14 +40,14 @@ use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainAccountId,
-	ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError,
-	ValidationData, Web3Network,
+	ParentchainBlockNumber, RequestAesKey, RequestAesKeyNonce, VCMPError, ValidationData,
+	Web3Network,
 };
 use log::*;
 use sp_core::crypto::AccountId32;
 use sp_io::hashing::blake2_256;
 use sp_runtime::MultiAddress;
-use std::{format, prelude::v1::*, sync::Arc, vec};
+use std::{format, prelude::v1::*, sync::Arc};
 
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
@@ -56,24 +56,26 @@ use itp_node_api::metadata::NodeMetadataTrait;
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 
-// max number of identities in an id_graph that will be returned as the extrinsic parameter
-// this has no effect on the stored id_graph, but only the returned id_graph
-pub const RETURNED_IDGRAPH_MAX_LEN: usize = 20;
-
 pub type IMTCall = ita_sgx_runtime::IdentityManagementCall<Runtime>;
 pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
+	#[codec(index = 0)]
 	balance_set_balance(Identity, AccountId, Balance, Balance),
+	#[codec(index = 1)]
 	balance_transfer(Identity, AccountId, Balance),
+	#[codec(index = 2)]
 	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
-	balance_shield(Identity, AccountId, Balance),                    // (Root, AccountIncognito, Amount)
+	#[codec(index = 3)]
+	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	#[cfg(feature = "evm")]
-	evm_withdraw(Identity, H160, Balance),  // (Origin, Address EVM Account, Value)
+	#[codec(index = 4)]
+	evm_withdraw(Identity, H160, Balance), // (Origin, Address EVM Account, Value)
 	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
+	#[codec(index = 5)]
 	evm_call(
 		Identity,
 		H160,
@@ -88,6 +90,7 @@ pub enum TrustedCall {
 	),
 	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
+	#[codec(index = 6)]
 	evm_create(
 		Identity,
 		H160,
@@ -101,6 +104,7 @@ pub enum TrustedCall {
 	),
 	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
+	#[codec(index = 7)]
 	evm_create2(
 		Identity,
 		H160,
@@ -113,35 +117,66 @@ pub enum TrustedCall {
 		Option<U256>,
 		Vec<(H160, Vec<H256>)>,
 	),
-	// litentry
-	set_user_shielding_key(Identity, Identity, UserShieldingKeyType, H256),
+	/// litentry trusted calls
+	/// the calls that should deliver a result other than `Empty` will need to include the parameter: `Option<RequestAesKey>`,
+	/// it's a 32-byte AES key defined by the client. This key will be used to encrypt the user-sensitive result in the DI response,
+	/// see `trusted_call_result.rs`.
+	///
+	/// It's an Option because for II call there's no need to define such a key.
+	///
+	/// Theoretically, this key **could** be different from what is used to encrypt the `AesRequest` payload, but in practice it's fine
+	/// to simply use the same key.
+	///
+	/// Please note this key needs to be embeded in the trusted call itself because:
+	/// - it needs to be passed around in async handling of trusted call
+	/// - for multi-worker setup, the worker that processes the request can be differnet from the worker that receives the request, so
+	///   we can't maintain something like a global mapping between trusted call and aes-key, which only resides in the memory of one worker.
+	#[codec(index = 8)]
 	link_identity(
 		Identity,
 		Identity,
 		Identity,
 		ValidationData,
 		Vec<Web3Network>,
-		UserShieldingKeyNonceType,
+		Option<RequestAesKey>,
 		H256,
 	),
+	#[codec(index = 9)]
 	deactivate_identity(Identity, Identity, Identity, H256),
+	#[codec(index = 10)]
 	activate_identity(Identity, Identity, Identity, H256),
-	request_vc(Identity, Identity, Assertion, H256),
+	#[codec(index = 11)]
+	request_vc(Identity, Identity, Assertion, Option<RequestAesKey>, H256),
+	#[codec(index = 12)]
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
-	set_user_shielding_key_with_networks(
-		Identity,
-		Identity,
-		UserShieldingKeyType,
-		Vec<Web3Network>,
-		H256,
-	),
 
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	link_identity_callback(Identity, Identity, Identity, Vec<Web3Network>, H256),
-	request_vc_callback(Identity, Identity, Assertion, H256, H256, Vec<u8>, H256),
+	#[codec(index = 13)]
+	link_identity_callback(
+		Identity,
+		Identity,
+		Identity,
+		Vec<Web3Network>,
+		Option<RequestAesKey>,
+		H256,
+	),
+	#[codec(index = 14)]
+	request_vc_callback(
+		Identity,
+		Identity,
+		Assertion,
+		H256,
+		H256,
+		Vec<u8>,
+		Option<RequestAesKey>,
+		H256,
+	),
+	#[codec(index = 15)]
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
+	#[codec(index = 16)]
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
+	#[codec(index = 17)]
 	send_erroneous_parentchain_call(Identity),
 }
 
@@ -161,14 +196,11 @@ impl TrustedCall {
 			#[cfg(feature = "evm")]
 			TrustedCall::evm_create2(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedCall::set_user_shielding_key(sender_identity, ..) => sender_identity,
 			TrustedCall::link_identity(sender_identity, ..) => sender_identity,
 			TrustedCall::deactivate_identity(sender_identity, ..) => sender_identity,
 			TrustedCall::activate_identity(sender_identity, ..) => sender_identity,
 			TrustedCall::request_vc(sender_identity, ..) => sender_identity,
 			TrustedCall::set_identity_networks(sender_identity, ..) => sender_identity,
-			TrustedCall::set_user_shielding_key_with_networks(sender_identity, ..) =>
-				sender_identity,
 			TrustedCall::link_identity_callback(sender_identity, ..) => sender_identity,
 			TrustedCall::request_vc_callback(sender_identity, ..) => sender_identity,
 			TrustedCall::handle_imp_error(sender_identity, ..) => sender_identity,
@@ -221,16 +253,6 @@ impl TrustedCallSigned {
 		}
 	}
 }
-
-// TODO: #91 signed return value
-/*
-pub struct TrustedReturnValue<T> {
-	pub value: T,
-	pub signer: AccountId
-}
-
-impl TrustedReturnValue
-*/
 
 impl<NodeMetadataRepository> ExecuteCall<NodeMetadataRepository> for TrustedCallSigned
 where
@@ -305,10 +327,9 @@ where
 					free_balance,
 					reserved_balance
 				);
-				ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+				ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 					who: MultiAddress::Id(who),
 					new_free: free_balance,
-					new_reserved: reserved_balance,
 				}
 				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 				.map_err(|e| {
@@ -367,7 +388,7 @@ where
 			TrustedCall::balance_shield(enclave_account, who, value) => {
 				let account_id: AccountId32 =
 					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
-				ensure_enclave_signer(&account_id)?;
+				ensure_enclave_signer_account(&account_id)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
 
@@ -508,44 +529,13 @@ where
 			// Litentry trusted calls
 			// the reason that most calls have an internal handling fn is that we want to capture the error and
 			// handle it here to be able to send error events to the parachain
-			TrustedCall::set_user_shielding_key(signer, who, key, hash) => {
-				let web3networks = match who {
-					Identity::Substrate(..) => all_substrate_web3networks(),
-					Identity::Evm(..) => all_evm_web3networks(),
-					_ => vec![],
-				};
-				Self::handle_set_user_shielding_key(
-					calls,
-					node_metadata_repo,
-					signer,
-					who,
-					key,
-					web3networks,
-					hash,
-				)
-			},
-			TrustedCall::set_user_shielding_key_with_networks(
-				signer,
-				who,
-				key,
-				web3networks,
-				hash,
-			) => Self::handle_set_user_shielding_key(
-				calls,
-				node_metadata_repo,
-				signer,
-				who,
-				key,
-				web3networks,
-				hash,
-			),
 			TrustedCall::link_identity(
 				signer,
 				who,
 				identity,
 				validation_data,
 				web3networks,
-				nonce,
+				maybe_key,
 				hash,
 			) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
@@ -553,15 +543,15 @@ where
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 				);
 				let verification_done = Self::link_identity_internal(
+					shard,
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
 					identity.clone(),
 					validation_data,
 					web3networks.clone(),
-					nonce,
 					top_hash,
+					maybe_key,
 					hash,
-					shard,
 				)
 				.map_err(|e| {
 					add_call_from_imp_error(
@@ -582,6 +572,7 @@ where
 						who,
 						identity,
 						web3networks,
+						maybe_key,
 						hash,
 					)
 				} else {
@@ -596,10 +587,10 @@ where
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_deactivated_call_indexes())??;
 
-				let key = Self::deactivate_identity_internal(
+				Self::deactivate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who,
-					identity.clone(),
+					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
@@ -614,12 +605,7 @@ where
 				})?;
 
 				debug!("pushing identity_deactivated event ...");
-				calls.push(OpaqueCall::from_tuple(&(
-					call_index,
-					account,
-					aes_encrypt_default(&key, &identity.encode()),
-					hash,
-				)));
+				calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::activate_identity(signer, who, identity, hash) => {
@@ -630,10 +616,10 @@ where
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_activated_call_indexes())??;
 
-				let key = Self::activate_identity_internal(
+				Self::activate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who,
-					identity.clone(),
+					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
@@ -648,25 +634,27 @@ where
 				})?;
 
 				debug!("pushing identity_activated event ...");
-				calls.push(OpaqueCall::from_tuple(&(
-					call_index,
-					account,
-					aes_encrypt_default(&key, &identity.encode()),
-					hash,
-				)));
+				calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::link_identity_callback(signer, who, identity, web3networks, hash) =>
-				Self::handle_link_identity_callback(
-					calls,
-					node_metadata_repo,
-					signer,
-					who,
-					identity,
-					web3networks,
-					hash,
-				),
-			TrustedCall::request_vc(signer, who, assertion, hash) => {
+			TrustedCall::link_identity_callback(
+				signer,
+				who,
+				identity,
+				web3networks,
+				maybe_key,
+				hash,
+			) => Self::handle_link_identity_callback(
+				calls,
+				node_metadata_repo,
+				signer,
+				who,
+				identity,
+				web3networks,
+				maybe_key,
+				hash,
+			),
+			TrustedCall::request_vc(signer, who, assertion, maybe_key, hash) => {
 				debug!(
 					"request_vc, who: {}, assertion: {:?}",
 					account_id_to_string(&who),
@@ -682,6 +670,7 @@ where
 					assertion,
 					top_hash,
 					hash,
+					maybe_key,
 					shard,
 				)
 				.map_err(|e| {
@@ -704,6 +693,7 @@ where
 				vc_index,
 				vc_hash,
 				vc_payload,
+				maybe_key,
 				hash,
 			) => {
 				debug!(
@@ -714,19 +704,16 @@ where
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 				);
-				let call_index =
-					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
-				let key = Self::request_vc_callback_internal(
+				Self::request_vc_callback_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who,
 					assertion.clone(),
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
 					add_call_from_vcmp_error(
 						calls,
-						node_metadata_repo,
+						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_vcmp_error(),
 						hash,
@@ -734,21 +721,23 @@ where
 					e
 				})?;
 
+				debug!("pushing vc_issued event ...");
+				let call_index =
+					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
+
 				calls.push(OpaqueCall::from_tuple(&(
-					call_index,
-					account,
-					assertion,
-					vc_index,
-					vc_hash,
-					aes_encrypt_default(&key, &vc_payload),
-					hash,
+					call_index, account, assertion, vc_index, vc_hash, hash,
 				)));
-				let res = RequestVCResult {
-					vc_index,
-					vc_hash,
-					vc_payload: aes_encrypt_default(&key, &vc_payload),
-				};
-				Ok(TrustedCallResult::RequestVC(res))
+
+				if let Some(key) = maybe_key {
+					Ok(TrustedCallResult::RequestVC(RequestVCResult {
+						vc_index,
+						vc_hash,
+						vc_payload: aes_encrypt_default(&key, &vc_payload),
+					}))
+				} else {
+					Ok(TrustedCallResult::Empty)
+				}
 			},
 			TrustedCall::set_identity_networks(signer, who, identity, web3networks, _) => {
 				debug!("set_identity_networks, networks: {:?}", web3networks);
@@ -790,7 +779,7 @@ where
 				// intentionally send wrong parameters, only used in testing
 				calls.push(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
-					"set_user_shielding_key".as_bytes(),
+					"wrong_param".as_bytes(),
 					account.encode(),
 				)));
 				Ok(TrustedCallResult::Empty)
@@ -806,7 +795,6 @@ where
 			TrustedCall::balance_unshield(..) => debug!("No storage updates needed..."),
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
-			TrustedCall::set_user_shielding_key(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
@@ -814,8 +802,6 @@ where
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_user_shielding_key_with_networks(..) =>
-				debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
 			TrustedCall::send_erroneous_parentchain_call(..) =>
@@ -833,10 +819,9 @@ fn unshield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 		return Err(StfError::MissingFunds)
 	}
 
-	ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 		who: MultiAddress::Id(account),
 		new_free: account_info.data.free - amount,
-		new_reserved: account_info.data.reserved,
 	}
 	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Unshield funds error: {:?}", e.error)))?;
@@ -845,10 +830,9 @@ fn unshield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 
 fn shield_funds(account: AccountId, amount: u128) -> Result<(), StfError> {
 	let account_info = System::account(&account);
-	ita_sgx_runtime::BalancesCall::<Runtime>::set_balance {
+	ita_sgx_runtime::BalancesCall::<Runtime>::force_set_balance {
 		who: MultiAddress::Id(account),
 		new_free: account_info.data.free + amount,
-		new_reserved: account_info.data.reserved,
 	}
 	.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 	.map_err(|e| StfError::Dispatch(format!("Shield funds error: {:?}", e.error)))?;

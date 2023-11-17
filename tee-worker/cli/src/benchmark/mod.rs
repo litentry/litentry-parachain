@@ -23,7 +23,7 @@ use crate::{
 		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
 	},
 	trusted_operation::{get_json_request, wait_until},
-	Cli, CliResult, CliResultOk,
+	Cli, CliResult, CliResultOk, SR25519_KEY_TYPE,
 };
 use codec::Decode;
 use hdrhistogram::Histogram;
@@ -40,6 +40,7 @@ use rayon::prelude::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_application_crypto::sr25519;
 use sp_core::{sr25519 as sr25519_core, Pair};
+use sp_keystore::Keystore;
 use std::{
 	boxed::Box,
 	string::ToString,
@@ -48,7 +49,7 @@ use std::{
 	time::Instant,
 	vec::Vec,
 };
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+use substrate_client_keystore::LocalKeystore;
 
 // Needs to be above the existential deposit minimum, otherwise an account will not
 // be created and the state is not increased.
@@ -118,10 +119,10 @@ impl BenchmarkCommand {
 			self.random_wait_before_transaction_min_ms,
 			self.random_wait_before_transaction_max_ms,
 		);
-		let store = LocalKeystore::open(get_keystore_path(trusted_args), None).unwrap();
-		let funding_account_keys = get_pair_from_str(trusted_args, &self.funding_account);
+		let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
+		let funding_account_keys = get_pair_from_str(trusted_args, &self.funding_account, cli);
 
-		let (mrenclave, shard) = get_identifiers(trusted_args);
+		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 
 		// Get shielding pubkey.
 		let worker_api_direct = get_worker_api_direct(cli);
@@ -141,15 +142,13 @@ impl BenchmarkCommand {
 			println!("Initializing account {}", i);
 
 			// Create new account to use.
-			let a: sr25519::AppPair = store.generate().unwrap();
-			let account = get_pair_from_str(trusted_args, a.public().to_string().as_str());
+			let a = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
+			let account = get_pair_from_str(trusted_args, a.to_string().as_str(), cli);
 			let initial_balance = 10000000;
-
-			let funding_identity = funding_account_keys.public().into();
 
 			// Transfer amount from Alice to new account.
 			let top: TrustedOperation = TrustedCall::balance_transfer(
-				funding_identity,
+				funding_account_keys.public().into(),
 				account.public().into(),
 				initial_balance,
 			)
@@ -192,10 +191,10 @@ impl BenchmarkCommand {
 					}
 
 					// Create new account.
-					let account_keys: sr25519::AppPair = store.generate().unwrap();
-					let new_account =
-						get_pair_from_str(trusted_args, account_keys.public().to_string().as_str());
+					let account_keys = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
 
+					let new_account =
+						get_pair_from_str(trusted_args, account_keys.to_string().as_str(), cli);
 
 					println!("  Transfer amount: {}", EXISTENTIAL_DEPOSIT);
 					println!("  From: {:?}", client.account.public());
@@ -204,11 +203,9 @@ impl BenchmarkCommand {
 					// Get nonce of account.
 					let nonce = get_nonce(client.account.clone(), shard, &client.client_api);
 
-					let client_identity = client.account.public().into();
-
 					// Transfer money from client account to new account.
 					let top: TrustedOperation = TrustedCall::balance_transfer(
-						client_identity,
+						client.account.public().into(),
 						new_account.public().into(),
 						EXISTENTIAL_DEPOSIT,
 					)

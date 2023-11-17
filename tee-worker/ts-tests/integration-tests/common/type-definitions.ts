@@ -47,7 +47,7 @@ export class AesOutput {
 
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
-    ethereumWallet: Wallet;
+    evmWallet: Wallet;
 };
 
 export type IdentityGenericEvent = {
@@ -75,7 +75,6 @@ export type VcRequested = {
 
 export enum RequestEvent {
     LinkIdentityRequested = 'LinkIdentityRequested',
-    SetUserShieldingKeyRequested = 'SetUserShieldingKeyRequested',
     DeactivateIdentityRequested = 'DeactivateIdentityRequested',
     ActivateIdentityRequested = 'ActivateIdentityRequested',
     VCRequested = 'VCRequested',

@@ -53,7 +53,7 @@ impl ListenCommand {
 				}
 			};
 
-			let event_results = subscription.next_event::<RuntimeEvent, Hash>().unwrap();
+			let event_results = subscription.next_events::<RuntimeEvent, Hash>().unwrap();
 			blocks += 1;
 			match event_results {
 				Ok(evts) =>
@@ -74,7 +74,7 @@ impl ListenCommand {
 								}
 							},
 							RuntimeEvent::Teerex(ee) => {
-								println!(">>>>>>>>>> integritee event: {:?}", ee);
+								println!(">>>>>>>>>> integritee teerex event: {:?}", ee);
 								count += 1;
 								match &ee {
 									my_node_runtime::pallet_teerex::Event::AddedEnclave(
@@ -124,6 +124,7 @@ impl ListenCommand {
 								}
 							},
 							RuntimeEvent::Sidechain(ee) => {
+								println!(">>>>>>>>>> integritee sidechain event: {:?}", ee);
 								count += 1;
 								match &ee {
 									my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(

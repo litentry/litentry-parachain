@@ -20,10 +20,9 @@ use crate::{
 		balance::BalanceCommand,
 		get_storage::GetStorageCommand,
 		litentry::{
-			id_graph_stats::IDGraphStats,
+			id_graph_stats::IDGraphStats, link_identity::LinkIdentityCommand,
+			request_vc::RequestVcCommand, request_vc_direct::RequestVcDirectCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
-			set_user_shielding_key::SetUserShieldingKeyCommand,
-			user_shielding_key::UserShieldingKeyCommand,
 		},
 		nonce::NonceCommand,
 		set_balance::SetBalanceCommand,
@@ -32,12 +31,14 @@ use crate::{
 	},
 	trusted_cli::TrustedCli,
 	trusted_command_utils::get_keystore_path,
-	Cli, CliResult, CliResultOk,
+	Cli, CliResult, CliResultOk, ED25519_KEY_TYPE, SR25519_KEY_TYPE,
 };
 use log::*;
-use sp_application_crypto::{ed25519, sr25519};
-use sp_core::{crypto::Ss58Codec, Pair};
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+use sp_core::crypto::Ss58Codec;
+use sp_keystore::Keystore;
+use substrate_client_keystore::LocalKeystore;
+
+use self::commands::litentry::id_graph::IDGraphCommand;
 
 mod commands;
 
@@ -66,61 +67,70 @@ pub enum TrustedBaseCommand {
 	Nonce(NonceCommand),
 
 	// Litentry's commands below
-	// for commands that should trigger parentchain extrins, check non-trusted commands
-	/// query a user's shielding key, the setter is non-trusted command
-	UserShieldingKey(UserShieldingKeyCommand),
-
-	SetUserShieldingKey(SetUserShieldingKeyCommand),
-
+	/// retrieve the sidechain's raw storage - should only work for non-prod
 	GetStorage(GetStorageCommand),
 
+	/// send an erroneous parentchain call intentionally, only used in tests
 	SendErroneousParentchainCall(SendErroneousParentchainCallCommand),
 
-	/// get count of all keys account + identity in the IDGraphs
+	/// Disabled for now: get count of all keys account + identity in the IDGraphs
 	IDGraphStats(IDGraphStats),
+
+	/// Link the given identity to the prime identity, with specified networks
+	LinkIdentity(LinkIdentityCommand),
+
+	/// The IDGraph for the given identity
+	IDGraph(IDGraphCommand),
+
+	/// Request VC
+	RequestVc(RequestVcCommand),
+
+	/// Request VC isolated from Block Production
+	RequestVcDirect(RequestVcDirectCommand),
 }
 
 impl TrustedBaseCommand {
 	pub fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		match self {
-			TrustedBaseCommand::NewAccount => new_account(trusted_cli),
-			TrustedBaseCommand::ListAccounts => list_accounts(trusted_cli),
+			TrustedBaseCommand::NewAccount => new_account(trusted_cli, cli),
+			TrustedBaseCommand::ListAccounts => list_accounts(trusted_cli, cli),
 			TrustedBaseCommand::Transfer(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SetBalance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Balance(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::UnshieldFunds(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::Nonce(cmd) => cmd.run(cli, trusted_cli),
 			// Litentry's commands below
-			TrustedBaseCommand::UserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
-			TrustedBaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::GetStorage(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::SendErroneousParentchainCall(cmd) => cmd.run(cli, trusted_cli),
 			TrustedBaseCommand::IDGraphStats(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::LinkIdentity(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::IDGraph(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestVc(cmd) => cmd.run(cli, trusted_cli),
+			TrustedBaseCommand::RequestVcDirect(cmd) => cmd.run(cli, trusted_cli),
 		}
 	}
 }
 
-fn new_account(trusted_args: &TrustedCli) -> CliResult {
-	let store = LocalKeystore::open(get_keystore_path(trusted_args), None).unwrap();
-	let key: sr25519::AppPair = store.generate().unwrap();
+fn new_account(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
+	let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
+	let key = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
 	drop(store);
-	info!("new account {}", key.public().to_ss58check());
-	let key_str = key.public().to_ss58check();
+	info!("new account {}", key.to_ss58check());
+	let key_str = key.to_ss58check();
 	println!("{}", key_str);
 
 	Ok(CliResultOk::PubKeysBase58 { pubkeys_sr25519: Some(vec![key_str]), pubkeys_ed25519: None })
 }
 
-fn list_accounts(trusted_args: &TrustedCli) -> CliResult {
-	let store = LocalKeystore::open(get_keystore_path(trusted_args), None).unwrap();
+fn list_accounts(trusted_args: &TrustedCli, cli: &Cli) -> CliResult {
+	let store = LocalKeystore::open(get_keystore_path(trusted_args, cli), None).unwrap();
 	info!("sr25519 keys:");
-	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
+	for pubkey in store.sr25519_public_keys(SR25519_KEY_TYPE).into_iter() {
 		println!("{}", pubkey.to_ss58check());
 	}
 	info!("ed25519 keys:");
 	let pubkeys: Vec<String> = store
-		.public_keys::<ed25519::AppPublic>()
-		.unwrap()
+		.ed25519_public_keys(ED25519_KEY_TYPE)
 		.into_iter()
 		.map(|pubkey| pubkey.to_ss58check())
 		.collect();

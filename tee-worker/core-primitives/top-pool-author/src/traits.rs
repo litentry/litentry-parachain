@@ -22,7 +22,7 @@ use crate::error::Result;
 use ita_stf::{hash, TrustedOperation};
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool::primitives::PoolFuture;
-use itp_types::{BlockHash as SidechainBlockHash, ShardIdentifier, H256};
+use itp_types::{BlockHash as SidechainBlockHash, DecryptableRequest, ShardIdentifier, H256};
 use jsonrpc_core::Error as RpcError;
 use std::vec::Vec;
 
@@ -32,7 +32,7 @@ pub trait FullAuthor = AuthorApi<H256, H256> + OnBlockImported<Hash = H256> + Se
 /// Authoring RPC API
 pub trait AuthorApi<Hash, BlockHash> {
 	/// Submit encoded extrinsic for inclusion in block.
-	fn submit_top(&self, extrinsic: Vec<u8>, shard: ShardIdentifier) -> PoolFuture<Hash, RpcError>;
+	fn submit_top<R: DecryptableRequest>(&self, req: R) -> PoolFuture<Hash, RpcError>;
 
 	/// Return hash of Trusted Operation
 	fn hash_of(&self, xt: &TrustedOperation) -> Hash;
@@ -53,7 +53,11 @@ pub trait AuthorApi<Hash, BlockHash> {
 		account: &AccountId,
 	) -> Vec<TrustedOperation>;
 
+	/// returns all shards which are currently present in the tops in the pool
 	fn get_shards(&self) -> Vec<ShardIdentifier>;
+
+	/// returns all shards which are handled by our worker
+	fn list_handled_shards(&self) -> Vec<ShardIdentifier>;
 
 	/// Remove a collection of trusted operations from the pool.
 	/// Return operations that were not successfully removed.
@@ -63,11 +67,11 @@ pub trait AuthorApi<Hash, BlockHash> {
 		executed_calls: Vec<(hash::TrustedOperationOrHash<Hash>, bool)>,
 	) -> Vec<hash::TrustedOperationOrHash<Hash>>;
 
-	/// Submit an extrinsic to watch.
+	/// Submit a request to watch.
 	///
 	/// See [`TrustedOperationStatus`](sp_transaction_pool::TrustedOperationStatus) for details on transaction
 	/// life cycle.
-	fn watch_top(&self, ext: Vec<u8>, shard: ShardIdentifier) -> PoolFuture<Hash, RpcError>;
+	fn watch_top<R: DecryptableRequest>(&self, request: R) -> PoolFuture<Hash, RpcError>;
 
 	/// Litentry: set the rpc response value
 	fn update_connection_state(&self, updates: Vec<(Hash, (Vec<u8>, bool))>);

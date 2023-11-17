@@ -127,6 +127,26 @@ impl DiscordLitentryClient {
 		res
 	}
 
+	// user has role in channel
+	pub fn has_role(
+		&mut self,
+		role_id_s: String,
+		handler: Vec<u8>,
+	) -> Result<DiscordResponse, Error> {
+		let handler_s = vec_to_string(handler)?;
+		debug!("discord check id_hubber, role_id: {}, handler: {}", role_id_s, handler_s);
+
+		let path = "/discord/user/has/role".to_string();
+		let query = vec![("roleid", role_id_s.as_str()), ("handler", handler_s.as_str())];
+
+		let res = self
+			.client
+			.get_with::<String, DiscordResponse>(path, query.as_slice())
+			.map_err(|e| Error::RequestError(format!("{:?}", e)));
+
+		res
+	}
+
 	// assign ID-Hubber Role to User
 	pub fn assign_id_hubber(
 		&mut self,
@@ -151,12 +171,12 @@ impl DiscordLitentryClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use lc_mock_server::{default_getter, run};
+	use lc_mock_server::run;
 	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(Arc::new(default_getter), 0).unwrap();
+		let url = run(0).unwrap();
 		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_discord_litentry_url(url);
 	}
 

@@ -13,8 +13,6 @@ services:
         condition: service_healthy
       litentry-worker-1:
         condition: service_healthy
-      litentry-worker-2:
-        condition: service_healthy
     networks:
       - litentry-test-network
     entrypoint:

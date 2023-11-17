@@ -224,7 +224,9 @@ impl ContainsPair<MultiAsset, MultiLocation> for MultiNativeAsset {
 
 #[derive(Clone, Eq, Debug, PartialEq, Ord, PartialOrd, Encode, Decode, TypeInfo)]
 pub enum CurrencyId4Compare {
+	#[codec(index = 0)]
 	SelfReserve,
+	#[codec(index = 1)]
 	ParachainReserve(Box<MultiLocation>),
 }
 

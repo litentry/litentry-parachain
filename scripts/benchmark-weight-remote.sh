@@ -17,13 +17,19 @@ function usage() {
 
 [ $# -ne 3 ] && (usage; exit 1)
 
+# setup TMPDIR
+export TMPDIR=$(mktemp -d)
+cleanup() {
+  echo "removing $1 ..."
+  rm -rf "$1"
+}
+trap 'cleanup $TMPDIR' INT TERM EXIT
+
 # pull docker image
 docker pull litentry/litentry-parachain:runtime-benchmarks
 
 # clone the repo
-TMPDIR=/tmp
 cd "$TMPDIR"
-[ -d litentry-parachain ] && rm -rf litentry-parachain
 git clone https://github.com/litentry/litentry-parachain
 cd litentry-parachain
 git checkout "$2"
@@ -54,7 +60,7 @@ if [ -z "$PALLETS" ]; then
 fi
 
 for p in $PALLETS; do
-  echo "benchmarking $p ..."
+  echo "Start benchmarking pallet: $p for $1 ..."
 
   if [[ $p == *"parachain_staking"* ]]; then
       echo "will run $p benchmark code"
@@ -82,4 +88,6 @@ for p in $PALLETS; do
         --header=./LICENSE_HEADER \
         --output=./runtime/$1/src/weights/"$p".rs
 
+  echo "================================================================"
+  echo ""
 done

@@ -8,14 +8,13 @@ set -eo pipefail
 # - use this chain spec to launch a local parachain network
 
 ROOTDIR=$(git rev-parse --show-toplevel)
-TMPDIR=$(mktemp -d /tmp/XXXXXX)
 
+# setup TMPDIR
+export TMPDIR=$(mktemp -d)
 cleanup() {
   echo "removing $1 ..."
   rm -rf "$1"
-  exit
 }
-
 trap 'cleanup $TMPDIR' INT TERM EXIT
 
 FORK_OFF_SUBSTRATE_REPO="https://github.com/litentry/fork-off-substrate.git"
@@ -66,7 +65,6 @@ case "$ORIG_CHAIN" in
     exit 1 ;;
 esac
 
-echo "TMPDIR is $TMPDIR"
 cd "$TMPDIR"
 git clone "$FORK_OFF_SUBSTRATE_REPO"
 cd fork-off-substrate

@@ -22,27 +22,26 @@ use crate::{
 		listen::ListenCommand,
 		litentry::{
 			link_identity::LinkIdentityCommand, set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
-			set_user_shielding_key::SetUserShieldingKeyCommand,
 		},
+		register_tcb_info::RegisterTcbInfoCommand,
 		shield_funds::ShieldFundsCommand,
 		transfer::TransferCommand,
 	},
 	command_utils::*,
-	Cli, CliResult, CliResultOk,
+	Cli, CliResult, CliResultOk, ED25519_KEY_TYPE, SR25519_KEY_TYPE,
 };
 use base58::ToBase58;
 use chrono::{DateTime, Utc};
 use clap::Subcommand;
 use itc_rpc_client::direct_client::DirectApi;
 use itp_node_api::api_client::PalletTeerexApi;
-use sp_application_crypto::{ed25519, sr25519};
-use sp_core::{crypto::Ss58Codec, Pair};
+use sp_core::crypto::Ss58Codec;
+use sp_keystore::Keystore;
 use std::{
 	path::PathBuf,
 	time::{Duration, UNIX_EPOCH},
 };
-use substrate_api_client::Metadata;
-use substrate_client_keystore::{KeystoreExt, LocalKeystore};
+use substrate_client_keystore::LocalKeystore;
 
 mod commands;
 
@@ -63,11 +62,6 @@ pub enum BaseCommand {
 	/// query sgx-runtime metadata and print it as json to stdout
 	PrintSgxMetadata,
 
-	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
-	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
-	/// we want to keep our changes isolated
-	PrintSgxMetadataRaw,
-
 	/// send some bootstrapping funds to supplied account(s)
 	Faucet(FaucetCommand),
 
@@ -80,12 +74,17 @@ pub enum BaseCommand {
 	/// listen to parentchain events
 	Listen(ListenCommand),
 
+	/// Register TCB info for FMSPC
+	RegisterTcbInfo(RegisterTcbInfoCommand),
+
 	/// Transfer funds from an parentchain account to an incognito account
 	ShieldFunds(ShieldFundsCommand),
 
 	// Litentry's commands below
-	/// set the user's shielding key
-	SetUserShieldingKey(SetUserShieldingKeyCommand),
+	/// query sgx-runtime metadata and print the raw (hex-encoded) metadata to stdout
+	/// we could have added a parameter like `--raw` to `PrintSgxMetadata`, but
+	/// we want to keep our changes isolated
+	PrintSgxMetadataRaw,
 
 	/// create idenity graph
 	LinkIdentity(LinkIdentityCommand),
@@ -102,14 +101,14 @@ impl BaseCommand {
 			BaseCommand::ListAccounts => list_accounts(),
 			BaseCommand::PrintMetadata => print_metadata(cli),
 			BaseCommand::PrintSgxMetadata => print_sgx_metadata(cli),
-			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::Faucet(cmd) => cmd.run(cli),
 			BaseCommand::Transfer(cmd) => cmd.run(cli),
 			BaseCommand::ListWorkers => list_workers(cli),
 			BaseCommand::Listen(cmd) => cmd.run(cli),
+			BaseCommand::RegisterTcbInfo(cmd) => cmd.run(cli),
 			BaseCommand::ShieldFunds(cmd) => cmd.run(cli),
 			// Litentry's commands below
-			BaseCommand::SetUserShieldingKey(cmd) => cmd.run(cli),
+			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
 		}
@@ -118,8 +117,8 @@ impl BaseCommand {
 
 fn new_account() -> CliResult {
 	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
-	let key: sr25519::AppPair = store.generate().unwrap();
-	let key_base58 = key.public().to_ss58check();
+	let key = LocalKeystore::sr25519_generate_new(&store, SR25519_KEY_TYPE, None).unwrap();
+	let key_base58 = key.to_ss58check();
 	drop(store);
 	println!("{}", key_base58);
 	Ok(CliResultOk::PubKeysBase58 {
@@ -132,14 +131,14 @@ fn list_accounts() -> CliResult {
 	let store = LocalKeystore::open(PathBuf::from(&KEYSTORE_PATH), None).unwrap();
 	println!("sr25519 keys:");
 	let mut keys_sr25519 = vec![];
-	for pubkey in store.public_keys::<sr25519::AppPublic>().unwrap().into_iter() {
+	for pubkey in store.sr25519_public_keys(SR25519_KEY_TYPE).into_iter() {
 		let key_ss58 = pubkey.to_ss58check();
 		println!("{}", key_ss58);
 		keys_sr25519.push(key_ss58);
 	}
 	println!("ed25519 keys:");
 	let mut keys_ed25519 = vec![];
-	for pubkey in store.public_keys::<ed25519::AppPublic>().unwrap().into_iter() {
+	for pubkey in store.ed25519_public_keys(ED25519_KEY_TYPE).into_iter() {
 		let key_ss58 = pubkey.to_ss58check();
 		println!("{}", key_ss58);
 		keys_ed25519.push(key_ss58);
@@ -155,14 +154,13 @@ fn list_accounts() -> CliResult {
 fn print_metadata(cli: &Cli) -> CliResult {
 	let api = get_chain_api(cli);
 	let meta = api.metadata();
-	println!("Metadata:\n {}", Metadata::pretty_format(&meta.runtime_metadata()).unwrap());
+	println!("Metadata:\n {}", &meta.pretty_format().unwrap());
 	Ok(CliResultOk::Metadata { metadata: meta.clone() })
 }
-
 fn print_sgx_metadata(cli: &Cli) -> CliResult {
 	let worker_api_direct = get_worker_api_direct(cli);
 	let metadata = worker_api_direct.get_state_metadata().unwrap();
-	println!("Metadata:\n {}", Metadata::pretty_format(metadata.runtime_metadata()).unwrap());
+	println!("Metadata:\n {}", metadata.pretty_format().unwrap());
 	Ok(CliResultOk::Metadata { metadata })
 }
 

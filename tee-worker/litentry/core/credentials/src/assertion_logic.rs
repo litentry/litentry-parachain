@@ -31,16 +31,22 @@ use std::{
 #[derive(Serialize, Deserialize, Encode, Decode, Debug, PartialEq, Eq, TypeInfo, Copy, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum Op {
+	#[codec(index = 0)]
 	#[serde(rename = ">")]
 	GreaterThan,
+	#[codec(index = 1)]
 	#[serde(rename = "<")]
 	LessThan,
+	#[codec(index = 2)]
 	#[serde(rename = ">=")]
 	GreaterEq,
+	#[codec(index = 3)]
 	#[serde(rename = "<=")]
 	LessEq,
+	#[codec(index = 4)]
 	#[serde(rename = "==")]
 	Equal,
+	#[codec(index = 5)]
 	#[serde(rename = "!=")]
 	NotEq,
 }
@@ -48,15 +54,14 @@ pub enum Op {
 #[derive(Serialize, Deserialize, Encode, Decode, PartialEq, Eq, TypeInfo, Debug, Clone)]
 #[serde(untagged)]
 pub enum AssertionLogic {
-	Item {
-		src: String,
-		op: Op,
-		dst: String,
-	},
+	#[codec(index = 0)]
+	Item { src: String, op: Op, dst: String },
+	#[codec(index = 1)]
 	And {
 		#[serde(rename = "and")]
 		items: Vec<Box<AssertionLogic>>,
 	},
+	#[codec(index = 2)]
 	Or {
 		#[serde(rename = "or")]
 		items: Vec<Box<AssertionLogic>>,

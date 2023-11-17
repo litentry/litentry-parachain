@@ -67,6 +67,7 @@ where
 				self.req.who.clone(),
 				self.req.identity.clone(),
 				self.req.web3networks.clone(),
+				self.req.maybe_key,
 				self.req.req_ext_hash,
 			);
 			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {

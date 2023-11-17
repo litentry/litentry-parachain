@@ -1,18 +1,14 @@
 import {
     describeLitentry,
     buildIdentityTxs,
-    handleIdentityEvents,
     buildIdentityHelper,
     buildValidations,
     checkErrorDetail,
     buildIdentityFromKeypair,
     PolkadotSigner,
 } from './common/utils';
-import { aesKey } from './common/call';
-import { u8aToHex } from '@polkadot/util';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
-import { multiAccountTxSender, sendTxsWithUtility } from './common/transactions';
+import { sendTxsWithUtility } from './common/transactions';
 import { generateWeb3Wallets, assertIdentityLinked, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
@@ -22,56 +18,39 @@ import { Vec } from '@polkadot/types';
 describeLitentry('Test Batch Utility', 0, (context) => {
     let identities: LitentryPrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
-    let ethereumSigners: ethers.Wallet[] = [];
+    let evmSigners: ethers.Wallet[] = [];
     const we3networks: Web3Network[][] = [];
     const signerIdentities: LitentryPrimitivesIdentity[] = [];
 
     step('generate web3 wallets', async function () {
         const web3Wallets = await generateWeb3Wallets(10);
-        ethereumSigners = web3Wallets.map((web3Signer) => {
-            return web3Signer.ethereumWallet;
+        evmSigners = web3Wallets.map((web3Signer) => {
+            return web3Signer.evmWallet;
         });
-    });
-
-    step('set user shielding key', async function () {
-        const [aliceTxs] = await buildIdentityTxs(context, [context.substrateWallet.alice], [], 'setUserShieldingKey');
-        const events = await multiAccountTxSender(
-            context,
-            [aliceTxs],
-            [context.substrateWallet.alice],
-            'identityManagement',
-            ['UserShieldingKeySet']
-        );
-        const [alice] = await handleIdentityEvents(context, aesKey, events, 'UserShieldingKeySet');
-        assert.equal(
-            alice.who,
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            'alice shielding key should be set'
-        );
     });
 
     step('batch test: link identities', async function () {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
         const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
 
-        for (let index = 0; index < ethereumSigners.length; index++) {
-            const signer = ethereumSigners[index];
-            const ethereumIdentity = await buildIdentityHelper(signer.address, 'Evm', context);
-            identities.push(ethereumIdentity);
+        for (let index = 0; index < evmSigners.length; index++) {
+            const signer = evmSigners[index];
+            const evmIdentity = await buildIdentityHelper(signer.address, 'Evm', context);
+            identities.push(evmIdentity);
             we3networks.push(defaultNetworks as unknown as Vec<Web3Network>); // @fixme #1878
             signerIdentities.push(aliceSubject);
         }
 
-        const ethereumValidations = await buildValidations(
+        const evmValidations = await buildValidations(
             context,
             signerIdentities,
             identities,
-            1,
+            0,
             'ethereum',
             undefined,
-            ethereumSigners
+            evmSigners
         );
-        validations = [...ethereumValidations];
+        validations = [...evmValidations];
 
         const txs = await buildIdentityTxs(
             context,
@@ -103,9 +82,9 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     step('batch test: deactivate error identities', async function () {
         identities = [];
         // prepare new identities that were not linked - so they do not exist
-        for (let index = 0; index < ethereumSigners.length; index++) {
-            const ethereumIdentity = await buildIdentityHelper('twitter_user_' + index, 'Twitter', context);
-            identities.push(ethereumIdentity);
+        for (let index = 0; index < evmSigners.length; index++) {
+            const evmIdentity = await buildIdentityHelper('twitter_user_' + index, 'Twitter', context);
+            identities.push(evmIdentity);
         }
 
         const txs = await buildIdentityTxs(context, context.substrateWallet.alice, identities, 'deactivateIdentity');

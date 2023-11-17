@@ -20,7 +20,7 @@ use codec::{Decode, Encode};
 use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::types::KeyPair;
-use itp_utils::stringify::account_id_to_string;
+use itp_utils::{if_production_or, stringify::account_id_to_string};
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use std::prelude::v1::*;
@@ -34,10 +34,15 @@ use crate::evm_helpers::{get_evm_account, get_evm_account_codes, get_evm_account
 #[cfg(feature = "evm")]
 use sp_core::{H160, H256};
 
+#[cfg(not(feature = "production"))]
+use crate::helpers::ALICE_ACCOUNTID32;
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum Getter {
+	#[codec(index = 0)]
 	public(PublicGetter),
+	#[codec(index = 1)]
 	trusted(TrustedGetterSigned),
 }
 
@@ -56,24 +61,32 @@ impl From<TrustedGetterSigned> for Getter {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum PublicGetter {
+	#[codec(index = 0)]
 	some_value,
+	#[codec(index = 1)]
 	nonce(Identity),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedGetter {
+	#[codec(index = 0)]
 	free_balance(Identity),
+	#[codec(index = 1)]
 	reserved_balance(Identity),
 	#[cfg(feature = "evm")]
+	#[codec(index = 2)]
 	evm_nonce(Identity),
 	#[cfg(feature = "evm")]
+	#[codec(index = 3)]
 	evm_account_codes(Identity, H160),
 	#[cfg(feature = "evm")]
+	#[codec(index = 4)]
 	evm_account_storages(Identity, H160, H256),
 	// litentry
-	user_shielding_key(Identity),
+	#[codec(index = 5)]
 	id_graph(Identity),
+	#[codec(index = 6)]
 	id_graph_stats(Identity),
 }
 
@@ -89,7 +102,6 @@ impl TrustedGetter {
 			#[cfg(feature = "evm")]
 			TrustedGetter::evm_account_storages(sender_identity, ..) => sender_identity,
 			// litentry
-			TrustedGetter::user_shielding_key(sender_identity, ..) => sender_identity,
 			TrustedGetter::id_graph(sender_identity) => sender_identity,
 			TrustedGetter::id_graph_stats(sender_identity) => sender_identity,
 		}
@@ -113,8 +125,20 @@ impl TrustedGetterSigned {
 	}
 
 	pub fn verify_signature(&self) -> bool {
-		self.signature
-			.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
+		// in non-prod, we accept signature from Alice too
+		if_production_or!(
+			{
+				self.signature
+					.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
+			},
+			{
+				self.signature
+					.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
+					|| self
+						.signature
+						.verify(self.getter.encode().as_slice(), &ALICE_ACCOUNTID32.into())
+			}
+		)
 	}
 }
 
@@ -190,10 +214,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::user_shielding_key(who) =>
-				IdentityManagement::user_shielding_keys(&who).map(|key| key.encode()),
-			TrustedGetter::id_graph(who) =>
-				Some(IdentityManagement::get_id_graph(&who, usize::MAX).encode()),
+			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
 
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
