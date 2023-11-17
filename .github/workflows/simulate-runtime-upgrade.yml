@@ -30,6 +30,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
       - name: Fork ${{ matrix.chain }} and launch parachain
         timeout-minutes: 10
         run: |
