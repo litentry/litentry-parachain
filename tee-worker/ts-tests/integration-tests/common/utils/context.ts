@@ -7,10 +7,10 @@ import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
 import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
-import { getEthereumSigner, getSubstrateSigner } from '../helpers';
+import { getEvmSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
 
-import { default as teeTypes } from '../../../../client-api/parachain-api/prepare-build/interfaces/identity/definitions';
+import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
 
@@ -39,16 +39,17 @@ export async function initIntegrationTestContext(
     await cryptoWaitReady();
 
     const ethersWallet = {
-        alice: new ethers.Wallet(getEthereumSigner().alice),
-        bob: new ethers.Wallet(getEthereumSigner().bob),
-        charlie: new ethers.Wallet(getEthereumSigner().charlie),
-        dave: new ethers.Wallet(getEthereumSigner().dave),
-        eve: new ethers.Wallet(getEthereumSigner().eve),
+        alice: new ethers.Wallet(getEvmSigner().alice),
+        bob: new ethers.Wallet(getEvmSigner().bob),
+        charlie: new ethers.Wallet(getEvmSigner().charlie),
+        dave: new ethers.Wallet(getEvmSigner().dave),
+        eve: new ethers.Wallet(getEvmSigner().eve),
     };
 
     const substrateWallet = getSubstrateSigner();
 
-    const { types } = teeTypes;
+    const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
+
     const api = await ApiPromise.create({
         provider,
         types,
@@ -110,10 +111,10 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
 
     for (let i = 0; i < count; i++) {
         const substratePair = keyring.addFromUri(`${seed}//${i}`);
-        const ethereumWallet = ethers.Wallet.createRandom();
+        const evmWallet = ethers.Wallet.createRandom();
         addresses.push({
             substrateWallet: substratePair,
-            ethereumWallet: ethereumWallet,
+            evmWallet: evmWallet,
         });
     }
     return addresses;

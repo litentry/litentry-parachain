@@ -23,7 +23,7 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
-use ita_stf::{Getter, StfError, TrustedOperation};
+use ita_stf::{Getter, StfError, TrustedCall, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
@@ -31,7 +31,9 @@ use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::ParentchainHash as Hash;
+use litentry_primitives::{
+	aes_encrypt_default, AesRequest, ParentchainHash as Hash, RequestAesKey,
+};
 use log::*;
 use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;
@@ -66,6 +68,22 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
 		TrustedOperation::direct_call(_) => send_direct_request(cli, trusted_args, top),
 		TrustedOperation::get(getter) => execute_getter_from_cli_args(cli, trusted_args, getter),
+	}
+}
+
+pub(crate) fn perform_direct_operation<T: Decode + Debug>(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	top: &TrustedOperation,
+	key: RequestAesKey,
+) -> TrustedOpResult<T> {
+	match top {
+		TrustedOperation::direct_call(call) => match call.call {
+			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
+			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
+		},
+		_ =>
+			Err(TrustedOperationError::Default { msg: "Only Direct Operation allowed".to_string() }),
 	}
 }
 
@@ -176,11 +194,11 @@ fn send_indirect_request<T: Decode + Debug>(
 		let event_records = subscription.next_events::<RuntimeEvent, Hash>().unwrap().unwrap();
 		for event_record in event_records {
 			if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
-				_signer,
-				confirmed_block_hash,
-				_merkle_root,
-				confirmed_block_number,
-			)) = event_record.event
+											_signer,
+											confirmed_block_hash,
+											_merkle_root,
+											confirmed_block_number,
+										)) = event_record.event
 			{
 				info!("Confirmation of ProcessedParentchainBlock received");
 				debug!("Expected block Hash: {:?}", block_hash);
@@ -344,6 +362,85 @@ fn send_direct_request<T: Decode + Debug>(
 	}
 }
 
+fn send_direct_vc_request<T: Decode + Debug>(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	operation_call: &TrustedOperation,
+	key: RequestAesKey,
+) -> TrustedOpResult<T> {
+	let encryption_key = get_shielding_key(cli).unwrap();
+	let shard = read_shard(trusted_args, cli).unwrap();
+	let jsonrpc_call: String = get_vc_json_request(shard, operation_call, encryption_key, key);
+
+	debug!("get direct api");
+	let direct_api = get_worker_api_direct(cli);
+
+	debug!("setup sender and receiver");
+	let (sender, receiver) = channel();
+	direct_api.watch(jsonrpc_call, sender);
+
+	debug!("waiting for rpc response");
+	loop {
+		match receiver.recv() {
+			Ok(response) => {
+				debug!("received response");
+				let response: RpcResponse = serde_json::from_str(&response).unwrap();
+				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
+					debug!("successfully decoded rpc response: {:?}", return_value);
+					match return_value.status {
+						DirectRequestStatus::Error => {
+							debug!("request status is error");
+							if let Ok(value) = String::decode(&mut return_value.value.as_slice()) {
+								error!("{}", value);
+							}
+							direct_api.close().unwrap();
+							return Err(TrustedOperationError::Default {
+								msg: "[Error] DirectRequestStatus::Error".to_string(),
+							})
+						},
+						DirectRequestStatus::TrustedOperationStatus(status, top_hash) => {
+							debug!("request status is: {:?}, top_hash: {:?}", status, top_hash);
+						},
+						DirectRequestStatus::Ok => {
+							debug!("request status is ignored");
+							direct_api.close().unwrap();
+							let value =
+								T::decode(&mut return_value.value.as_slice()).map_err(|e| {
+									TrustedOperationError::Default {
+										msg: format!("Could not decode result value: {:?}", e),
+									}
+								})?;
+							return Ok(value)
+						},
+					}
+				};
+			},
+			Err(e) => {
+				error!("failed to receive rpc response: {:?}", e);
+				direct_api.close().unwrap();
+				return Err(TrustedOperationError::Default {
+					msg: "failed to receive rpc response".to_string(),
+				})
+			},
+		};
+	}
+}
+
+pub(crate) fn get_vc_json_request(
+	shard: ShardIdentifier,
+	operation_call: &TrustedOperation,
+	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
+	key: RequestAesKey,
+) -> String {
+	let encrypted_key = shielding_pubkey.encrypt(&key).unwrap();
+	let operation_call_encrypted = aes_encrypt_default(&key, &operation_call.encode());
+
+	// compose jsonrpc call
+	let request = AesRequest { shard, payload: operation_call_encrypted, key: encrypted_key };
+	RpcRequest::compose_jsonrpc_call("author_submitVCRequest".to_string(), vec![request.to_hex()])
+		.unwrap()
+}
+
 pub(crate) fn get_json_request(
 	shard: ShardIdentifier,
 	operation_call: &TrustedOperation,
@@ -357,7 +454,7 @@ pub(crate) fn get_json_request(
 		"author_submitAndWatchRsaRequest".to_string(),
 		vec![request.to_hex()],
 	)
-	.unwrap()
+		.unwrap()
 }
 
 pub(crate) fn wait_until(

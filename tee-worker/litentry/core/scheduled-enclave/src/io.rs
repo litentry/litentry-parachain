@@ -31,24 +31,36 @@ mod sgx {
 	};
 	pub use codec::{Decode, Encode};
 	pub use itp_settings::files::SCHEDULED_ENCLAVE_FILE;
-	pub use itp_sgx_io::{seal, unseal, StaticSealedIO};
+	pub use itp_sgx_io::{seal, unseal, SealedIO};
 	pub use log::*;
-	pub use std::{boxed::Box, fs, sgxfs::SgxFile, sync::Arc};
+	pub use std::{boxed::Box, fs, path::PathBuf, sgxfs::SgxFile, sync::Arc};
 
-	#[derive(Copy, Clone, Debug)]
-	pub struct ScheduledEnclaveSeal;
+	#[derive(Clone, Debug)]
+	pub struct ScheduledEnclaveSeal {
+		base_path: PathBuf,
+	}
 
-	impl StaticSealedIO for ScheduledEnclaveSeal {
+	impl ScheduledEnclaveSeal {
+		pub fn new(base_path: PathBuf) -> Self {
+			Self { base_path }
+		}
+
+		pub fn path(&self) -> PathBuf {
+			self.base_path.join(SCHEDULED_ENCLAVE_FILE)
+		}
+	}
+
+	impl SealedIO for ScheduledEnclaveSeal {
 		type Error = Error;
 		type Unsealed = ScheduledEnclaveMap;
 
-		fn unseal_from_static_file() -> Result<Self::Unsealed> {
-			Ok(unseal(SCHEDULED_ENCLAVE_FILE).map(|b| Decode::decode(&mut b.as_slice()))??)
+		fn unseal(&self) -> Result<Self::Unsealed> {
+			Ok(unseal(self.path()).map(|b| Decode::decode(&mut b.as_slice()))??)
 		}
 
-		fn seal_to_static_file(unsealed: &Self::Unsealed) -> Result<()> {
+		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {
 			info!("Seal scheduled enclave to file: {:?}", unsealed);
-			Ok(unsealed.using_encoded(|bytes| seal(bytes, SCHEDULED_ENCLAVE_FILE))?)
+			Ok(unsealed.using_encoded(|bytes| seal(bytes, self.path()))?)
 		}
 	}
 }
@@ -79,6 +91,7 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 	fn init(&self, mrenclave: MrEnclave) -> Result<()> {
 		let _ = self.set_current_mrenclave(mrenclave)?;
 		let _ = self.set_block_production_paused(false)?;
+		let enclave_seal = ScheduledEnclaveSeal::new(self.seal_path.clone());
 		if SgxFile::open(SCHEDULED_ENCLAVE_FILE).is_err() {
 			info!(
 				"[Enclave] ScheduledEnclave file not found, creating new! {}",
@@ -88,9 +101,9 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 				GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
 			registry.clear();
 			registry.insert(0, mrenclave);
-			ScheduledEnclaveSeal::seal_to_static_file(&*registry)
+			enclave_seal.seal(&*registry)
 		} else {
-			let m = ScheduledEnclaveSeal::unseal_from_static_file()?;
+			let m = enclave_seal.unseal()?;
 			info!("[Enclave] ScheduledEnclave unsealed from file: {:?}", m);
 			let mut registry =
 				GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
@@ -104,7 +117,7 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 		let mut registry =
 			GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
 		registry.insert(sbn, mrenclave);
-		ScheduledEnclaveSeal::seal_to_static_file(&*registry)
+		ScheduledEnclaveSeal::new(self.seal_path.clone()).seal(&*registry)
 	}
 
 	#[cfg(feature = "sgx")]
@@ -113,7 +126,7 @@ impl ScheduledEnclaveUpdater for ScheduledEnclave {
 			GLOBAL_SCHEDULED_ENCLAVE.registry.write().map_err(|_| Error::PoisonLock)?;
 		let old_value = registry.remove(&sbn);
 		if old_value.is_some() {
-			return ScheduledEnclaveSeal::seal_to_static_file(&*registry)
+			return ScheduledEnclaveSeal::new(self.seal_path.clone()).seal(&*registry)
 		}
 		Ok(())
 	}

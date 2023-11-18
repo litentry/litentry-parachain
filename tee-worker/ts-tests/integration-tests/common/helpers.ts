@@ -26,7 +26,7 @@ export function getSubstrateSigner(): {
     };
     return signers;
 }
-export function getEthereumSigner(): {
+export function getEvmSigner(): {
     alice: string;
     bob: string;
     charlie: string;
