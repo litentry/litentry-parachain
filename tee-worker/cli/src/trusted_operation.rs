@@ -194,11 +194,11 @@ fn send_indirect_request<T: Decode + Debug>(
 		let event_records = subscription.next_events::<RuntimeEvent, Hash>().unwrap().unwrap();
 		for event_record in event_records {
 			if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
-											_signer,
-											confirmed_block_hash,
-											_merkle_root,
-											confirmed_block_number,
-										)) = event_record.event
+				_signer,
+				confirmed_block_hash,
+				_merkle_root,
+				confirmed_block_number,
+			)) = event_record.event
 			{
 				info!("Confirmation of ProcessedParentchainBlock received");
 				debug!("Expected block Hash: {:?}", block_hash);
@@ -454,7 +454,7 @@ pub(crate) fn get_json_request(
 		"author_submitAndWatchRsaRequest".to_string(),
 		vec![request.to_hex()],
 	)
-		.unwrap()
+	.unwrap()
 }
 
 pub(crate) fn wait_until(
