@@ -18,7 +18,7 @@
         "test-all": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'",
         "format": "pnpm exec prettier --write 'tests/**/*.test.ts'"
     },
-    "author": "Han Zhao",
+    "author": "Litentry Dev",
     "license": "ISC",
     "devDependencies": {
         "@types/chai": "^4.3.1",
