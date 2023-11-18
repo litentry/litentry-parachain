@@ -32,7 +32,7 @@ print_divider
 
 # 1. download or copy runtime wasm
 if [ -z "$2" ]; then
-  cho "Copy local wasm $1 ..."
+  echo "Copy local wasm $1 ..."
   cp -f "$1" "$output_wasm"
 else
   echo "Download $1 from release tag $2 ..."
