@@ -77,7 +77,6 @@ impl LinkIdentityCommand {
 		)
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
-		//todo proper generic type
 		Ok(perform_trusted_operation::<()>(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }
