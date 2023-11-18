@@ -19,11 +19,10 @@ output_wasm=/tmp/runtime.wasm
 
 function usage() {
   echo
-  echo "Usage: $0 wasm-path"
-  echo "       wasm-path can be either local file path or https URL"
+  echo "Usage: $0 tag wasm-name"
 }
 
-[ $# -ne 1 ] && (usage; exit 1)
+[ $# -ne 2 ] && (usage; exit 1)
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -36,13 +35,17 @@ if [ ! -z "$GH_TOKEN" ]; then
 fi
 
 # 1. download runtime wasm
-echo "Download runtime wasm from $1 ..."
-case "$1" in
-  https*)
-    wget --header="$auth_header" --header="Accept: application/octet-stream" -d "$1" -O "$output_wasm" ;;
-  *)
-    cp -f "$1" "$output_wasm" ;;
-esac
+echo "Download runtime wasm from $1 $2..."
+# case "$1" in
+#   https*)
+#     wget --header="$auth_header" --header="Accept: application/octet-stream" -d "$1" -O "$output_wasm" ;;
+#     gh release download 
+#   *)
+#     cp -f "$1" "$output_wasm" ;;
+# esac
+
+gh release download $1 -p $2
+cp -f $2 $output_wasm
 
 echo "Done"
 

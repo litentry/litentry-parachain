@@ -46,4 +46,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 10
         run: |
-          ./scripts/runtime-upgrade.sh https://github.com/litentry/litentry-parachain/releases/download/${{ env.RELEASE_TAG }}/${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
+          ./scripts/runtime-upgrade.sh ${{ env.RELEASE_TAG }} ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
