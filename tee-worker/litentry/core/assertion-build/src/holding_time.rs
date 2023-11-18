@@ -236,7 +236,6 @@ mod tests {
 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use lc_mock_server::run;
 	use litentry_primitives::{AmountHoldingTimeType, Web3Network};
-	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
