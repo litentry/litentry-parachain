@@ -19,7 +19,7 @@ output_wasm=/tmp/runtime.wasm
 
 function usage() {
   echo
-  echo "Usage: $0 tag wasm-name"
+  echo "Usage: $0 release-tag wasm-name"
 }
 
 [ $# -ne 2 ] && (usage; exit 1)
@@ -30,24 +30,9 @@ function print_divider() {
 
 print_divider
 
-if [ ! -z "$GH_TOKEN" ]; then
-  auth_header="Authorization: token $GH_TOKEN"
-fi
-
 # 1. download runtime wasm
-echo "Download runtime wasm from $1 $2..."
-# case "$1" in
-#   https*)
-#     wget --header="$auth_header" --header="Accept: application/octet-stream" -d "$1" -O "$output_wasm" ;;
-#     gh release download 
-#   *)
-#     cp -f "$1" "$output_wasm" ;;
-# esac
-
-gh release download $1 -p $2
-cp -f $2 $output_wasm
-
-echo "Done"
+echo "Download $2 from release tag $1..."
+gh release download "$1" -p "$2" -O "$output_wasm"
 
 if [ -f "$output_wasm" ] && [ -s "$output_wasm" ]; then
   ls -l "$output_wasm"
@@ -60,28 +45,28 @@ print_divider
 
 # 2. check if the released runtime version is greater than the on-chain runtime version,
 #    which should be now accessible via localhost:9933
-# onchain_version=$(curl -s -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "state_getRuntimeVersion", "params": [] }' http://localhost:9933 | jq .result.specVersion)
-# release_version=$(subwasm --json info "$output_wasm" | jq .core_version.specVersion)
+onchain_version=$(curl -s -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "state_getRuntimeVersion", "params": [] }' http://localhost:9933 | jq .result.specVersion)
+release_version=$(subwasm --json info "$output_wasm" | jq .core_version.specVersion)
 
-# echo "Check runtime version ..."
-# echo "On-chain: $onchain_version"
-# echo "Release:  $release_version"
+echo "Check runtime version ..."
+echo "On-chain: $onchain_version"
+echo "Release:  $release_version"
 
-# if [ -n "$release_version" ] && \
-#    [ -n "$onchain_version" ] && \
-#    [ "$onchain_version" -ge "$release_version" ]; then
-#   echo "Runtime version not increased, quit"
-#   exit 0
-# fi
+if [ -n "$release_version" ] && \
+   [ -n "$onchain_version" ] && \
+   [ "$onchain_version" -ge "$release_version" ]; then
+  echo "Runtime version not increased, quit"
+  exit 0
+fi
 
-# print_divider
+print_divider
 
-# # 3. do runtime upgrade and verify
-# echo "Do runtime upgrade and verify ..."
-# cd "$ROOTDIR/ts-tests"
-# echo "NODE_ENV=ci" > .env
-# pnpm install && pnpm run test-runtime-upgrade 2>&1
+# 3. do runtime upgrade and verify
+echo "Do runtime upgrade and verify ..."
+cd "$ROOTDIR/ts-tests"
+echo "NODE_ENV=ci" > .env
+pnpm install && pnpm run test-runtime-upgrade 2>&1
 
-# print_divider
+print_divider
 
-# echo "Done"
+echo "Done"
