@@ -113,6 +113,9 @@ pub enum StfError {
 	InvalidAccount,
 	#[codec(index = 15)]
 	UnclassifiedError,
+	#[codec(index = 16)]
+	#[display(fmt = "RemoveIdentityFailed: {:?}", _0)]
+	RemoveIdentityFailed(ErrorDetail),
 }
 
 impl From<MetadataError> for StfError {

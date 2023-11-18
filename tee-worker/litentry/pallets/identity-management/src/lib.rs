@@ -81,6 +81,8 @@ pub mod pallet {
 		IdentityDeactivated { who: Identity, identity: Identity },
 		/// an identity was activated
 		IdentityActivated { who: Identity, identity: Identity },
+		/// an identity was removed
+		IdentityRemoved { who: Identity, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -91,6 +93,8 @@ pub mod pallet {
 		IdentityNotExist,
 		/// creating the prime identity manually is disallowed
 		LinkPrimeIdentityDisallowed,
+		/// removing the prime identity manually is disallowed
+		RemovePrimeIdentityDisallowed,
 		/// deactivate prime identity should be disallowed
 		DeactivatePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
@@ -230,6 +234,26 @@ pub mod pallet {
 				*context = Some(c);
 				Ok(())
 			})
+		}
+
+		#[cfg(not(feature = "production"))]
+		#[pallet::call_index(5)]
+		#[pallet::weight({15_000_000})]
+		pub fn remove_identity(
+			origin: OriginFor<T>,
+			who: Identity,
+			identity: Identity,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+
+			ensure!(LinkedIdentities::<T>::contains_key(&identity), Error::<T>::IdentityNotExist);
+			ensure!(identity != who, Error::<T>::RemovePrimeIdentityDisallowed);
+
+			LinkedIdentities::<T>::remove(&identity);
+			IDGraphs::<T>::remove(&who, &identity);
+
+			Self::deposit_event(Event::IdentityRemoved { who, identity });
+			Ok(())
 		}
 	}
 

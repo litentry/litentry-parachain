@@ -226,6 +226,15 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
+	#[cfg(not(feature = "production"))]
+	pub fn remove_identity_internal(who: Identity, identity: Identity) -> StfResult<()> {
+		IMTCall::remove_identity { who, identity }
+			.dispatch_bypass_filter(RuntimeOrigin::root())
+			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
+
+		Ok(())
+	}
+
 	pub fn request_vc_callback_internal(signer: AccountId, assertion: Assertion) -> StfResult<()> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
 		ensure_enclave_signer_account(&signer)

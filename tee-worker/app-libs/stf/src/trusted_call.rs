@@ -178,6 +178,9 @@ pub enum TrustedCall {
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
 	#[codec(index = 17)]
 	send_erroneous_parentchain_call(Identity),
+	#[cfg(not(feature = "production"))]
+	#[codec(index = 18)]
+	remove_identity(Identity, Identity),
 }
 
 impl TrustedCall {
@@ -206,6 +209,8 @@ impl TrustedCall {
 			TrustedCall::handle_imp_error(sender_identity, ..) => sender_identity,
 			TrustedCall::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			TrustedCall::send_erroneous_parentchain_call(sender_identity) => sender_identity,
+			#[cfg(not(feature = "production"))]
+			TrustedCall::remove_identity(sender_identity, ..) => sender_identity,
 		}
 	}
 
@@ -579,6 +584,16 @@ where
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
+
+			TrustedCall::remove_identity(who, identity) => {
+				debug!("remove_identity, who: {}", account_id_to_string(&who));
+
+				Self::remove_identity_internal(who.clone(), identity.clone()).map_err(|e| {
+					debug!("removing identity failed error: {}", e);
+					e
+				})?;
+				Ok(TrustedCallResult::Empty)
+			},
 			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
 				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
@@ -796,6 +811,7 @@ where
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
+			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
