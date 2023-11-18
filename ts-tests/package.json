@@ -37,7 +37,7 @@
         "@polkadot/keyring": "12.4.2",
         "@polkadot/types": "10.9.1",
         "@polkadot/util": "12.4.2",
-        "@polkadot/util-crypto": "^12.5.1",
+        "@polkadot/util-crypto": "12.4.2",
         "add": "^2.0.6",
         "dotenv": "^16.0.3",
         "ethers": "^5.7.2",
