@@ -101,17 +101,15 @@ pub fn aes_decrypt(key: &RequestAesKey, data: &mut AesOutput) -> Option<Vec<u8>>
 	let in_out = data.ciphertext.as_mut();
 	if let Ok(unbound_key) = UnboundKey::new(&AES_256_GCM, key.as_slice()) {
 		let less_safe_key = LessSafeKey::new(unbound_key);
-		if (less_safe_key.open_in_place(
-			Nonce::assume_unique_for_key(data.nonce),
-			Aad::from(data.aad.clone()),
-			in_out,
-		))
-		.is_ok()
-		{
-			return Some((*in_out).to_vec())
-		}
+		return less_safe_key
+			.open_in_place(
+				Nonce::assume_unique_for_key(data.nonce),
+				Aad::from(data.aad.clone()),
+				in_out,
+			)
+			.ok()
+			.map(|data| data.to_vec())
 	}
-
 	None
 }
 

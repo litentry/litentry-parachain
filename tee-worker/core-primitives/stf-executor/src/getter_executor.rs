@@ -75,7 +75,6 @@ mod tests {
 	use super::*;
 	use codec::{Decode, Encode};
 	use ita_stf::{PublicGetter, TrustedGetter, TrustedGetterSigned};
-	use itp_stf_primitives::types::AccountId;
 	use itp_stf_state_observer::mock::ObserveStateMock;
 	use litentry_primitives::{Address32, Identity, LitentryMultiSignature};
 	use sp_core::ed25519::Signature;

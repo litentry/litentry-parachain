@@ -245,7 +245,7 @@ echo "✔ ok"
 echo ""
 
 echo "* Send a 2 UNIT balance Transfer Bob -> Charlie (that will fail)"
-$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} ${AMOUNT_TRANSFER}
+$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} ${AMOUNT_TRANSFER} || true
 echo ""
 
 echo "* Assert Bob's incognito nonce..."

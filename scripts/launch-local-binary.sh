@@ -116,8 +116,8 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-pnpm install
-pnpm run register-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/register-parathread.log"
+corepack pnpm install
+corepack pnpm run register-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/register-parathread.log"
 print_divider
 
 echo "upgrade parathread to parachain now ..."
@@ -129,8 +129,8 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-pnpm install
-pnpm run upgrade-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/upgrade-parathread.log"
+corepack pnpm install
+corepack pnpm run upgrade-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/upgrade-parathread.log"
 print_divider
 
 echo "done. please check $LITENTRY_PARACHAIN_DIR for generated files if need"
