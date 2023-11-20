@@ -21,6 +21,8 @@ use crate::{ContestType, SoraQuizType};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum GenericDiscordRoleType {
+	#[codec(index = 0)]
 	Contest(ContestType),
+	#[codec(index = 1)]
 	SoraQuiz(SoraQuizType),
 }

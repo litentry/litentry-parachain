@@ -19,7 +19,10 @@ use scale_info::TypeInfo;
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum ContestType {
+	#[codec(index = 0)]
 	Legend,
+	#[codec(index = 1)]
 	Popularity,
+	#[codec(index = 2)]
 	Participant,
 }
