@@ -215,10 +215,10 @@ pub enum Assertion {
 	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
 
 	// ----- begin SPACEID -----
-	#[codec(index = 16)]
+	#[codec(index = 15)]
 	BnbDomainHolding,
 
-	#[codec(index = 17)]
+	#[codec(index = 16)]
 	BnbDigitDomainClub(BnbDigitDomainType),
 	// ----- end SPACEID -----
 }

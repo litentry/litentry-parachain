@@ -30,7 +30,7 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, GenericDiscordRoleType, Identity, OneBlockCourseType,
+	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
 	RequestAesKey, SoraQuizType, Web3Network,
 };
 use sp_core::Pair;
@@ -221,17 +221,26 @@ impl RequestVcDirectCommand {
 						token: to_para_str(&arg.token),
 					})),
 			},
-			Command::SoraQuiz(c) => match c {
-				SoraQuizCommand::Attendee => Assertion::SoraQuiz(SoraQuizType::Attendee),
-				SoraQuizCommand::Master => Assertion::SoraQuiz(SoraQuizType::Master),
-			},
 			Command::GenericDiscordRole(c) => match c {
-				GenericDiscordRoleCommand::Legend =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Legend),
-				GenericDiscordRoleCommand::Popularity =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Popularity),
-				GenericDiscordRoleCommand::Participant =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Participant),
+				GenericDiscordRoleCommand::Contest(s) => match s {
+					ContestCommand::Legend => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Legend),
+					),
+					ContestCommand::Popularity => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Popularity),
+					),
+					ContestCommand::Participant => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Participant),
+					),
+				},
+				GenericDiscordRoleCommand::SoraQuiz(s) => match s {
+					SoraQuizCommand::Attendee => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::SoraQuiz(SoraQuizType::Attendee),
+					),
+					SoraQuizCommand::Master => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::SoraQuiz(SoraQuizType::Master),
+					),
+				},
 			},
 		};
 
