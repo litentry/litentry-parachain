@@ -18,6 +18,7 @@ jobs:
   simulate-runtime-upgrade:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         chain:
           # litmus is not supported, as sudo was removed
