@@ -3,7 +3,7 @@
     "type": "module",
     "license": "ISC",
     "main": "dist/src/index.js",
-    "version": "0.0.2",
+    "version": "0.9.16-1",
     "scripts": {
         "clean": "rm -rf dist build node_modules",
         "update-metadata": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9944 > prepare-build/litentry-parachain-metadata.json",
