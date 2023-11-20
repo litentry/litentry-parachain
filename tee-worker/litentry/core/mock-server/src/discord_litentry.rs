@@ -89,10 +89,11 @@ pub(crate) fn has_role() -> impl Filter<Extract = impl warp::Reply, Error = warp
 			let role_id = p.get("roleid").unwrap_or(&default);
 			let handler = p.get("handler").unwrap_or(&default);
 			let expected_role_id = "1034083718425493544";
-			let expected_handler1 = "againstwar";
-			let expected_handler2 = "ericzhang.eth";
+			let expected_handler_has_role = "againstwar";
+			let expected_handler_not_has_role = "ericzhang.eth";
 
-			if expected_handler1 == handler.as_str() && expected_role_id == role_id.as_str() {
+			if expected_handler_has_role == handler.as_str() && expected_role_id == role_id.as_str()
+			{
 				let body = DiscordResponse {
 					data: true,
 					message: "success".into(),
@@ -100,7 +101,8 @@ pub(crate) fn has_role() -> impl Filter<Extract = impl warp::Reply, Error = warp
 					msg_code: 200,
 				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
-			} else if expected_handler2 == handler.as_str() && expected_role_id == role_id.as_str()
+			} else if expected_handler_not_has_role == handler.as_str()
+				&& expected_role_id == role_id.as_str()
 			{
 				let body = DiscordResponse {
 					data: false,
