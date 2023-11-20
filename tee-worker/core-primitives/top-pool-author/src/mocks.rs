@@ -39,7 +39,7 @@ use itp_types::{DecryptableRequest, ShardIdentifier};
 use jsonrpc_core::{futures::future::ready, Error as RpcError};
 use lazy_static::lazy_static;
 use sp_core::{blake2_256, H256};
-#[cfg(not(feature = "std"))]
+#[cfg(feature = "sgx")]
 use std::sync::SgxMutex as Mutex;
 use std::{
 	boxed::Box,
