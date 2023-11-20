@@ -2373,6 +2373,7 @@ dependencies = [
  "itp-top-pool",
  "itp-types",
  "jsonrpc-core",
+ "lazy_static",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
