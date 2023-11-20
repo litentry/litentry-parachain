@@ -16,9 +16,6 @@
 
 use itp_node_api::api_client::ApiClientError;
 use itp_types::parentchain::{BlockHash, BlockNumber};
-use std::result::Result as StdResult;
-
-pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

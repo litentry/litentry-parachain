@@ -37,8 +37,29 @@ use itp_stf_primitives::types::AccountId;
 use itp_top_pool::primitives::PoolFuture;
 use itp_types::{DecryptableRequest, ShardIdentifier};
 use jsonrpc_core::{futures::future::ready, Error as RpcError};
+use lazy_static::lazy_static;
 use sp_core::{blake2_256, H256};
-use std::{boxed::Box, collections::HashMap, marker::PhantomData, vec, vec::Vec};
+#[cfg(feature = "sgx")]
+use std::sync::SgxMutex as Mutex;
+use std::{
+	boxed::Box,
+	collections::HashMap,
+	marker::PhantomData,
+	sync::{mpsc::Sender, Arc},
+	vec,
+	vec::Vec,
+};
+
+#[cfg(all(feature = "std", feature = "sgx"))]
+compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+
+#[cfg(feature = "std")]
+use std::sync::Mutex;
+
+lazy_static! {
+	pub static ref GLOBAL_MOCK_AUTHOR_API: Arc<Mutex<Option<Sender<Vec<u8>>>>> =
+		Arc::new(Mutex::new(None));
+}
 
 #[derive(Default)]
 pub struct AuthorApiMock<Hash, BlockHash> {
@@ -190,8 +211,16 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 		failed_to_remove
 	}
 
-	fn watch_top<R: DecryptableRequest>(&self, _request: R) -> PoolFuture<H256, RpcError> {
-		todo!()
+	fn watch_top<R: DecryptableRequest>(&self, request: R) -> PoolFuture<H256, RpcError> {
+		// Note: The below implementation is specific for litentry/core/stf-task/receiver/test.rs
+		let sender_guard = GLOBAL_MOCK_AUTHOR_API.lock().unwrap();
+		let sender = &*sender_guard;
+		sender
+			.as_ref()
+			.expect("Not yet initialized")
+			.send(request.payload().to_vec())
+			.unwrap();
+		Box::pin(ready(Ok([0u8; 32].into())))
 	}
 
 	fn update_connection_state(&self, _updates: Vec<(H256, (Vec<u8>, bool))>) {}

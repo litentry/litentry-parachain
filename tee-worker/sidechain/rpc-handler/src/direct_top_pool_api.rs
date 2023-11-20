@@ -101,9 +101,10 @@ where
 
 		while let Ok(response) = receiver.try_recv() {
 			if let Some(Ok(response)) = response {
+				// response is already encoded
 				let json_value = RpcReturnValue {
 					do_watch: false,
-					value: response.encode(),
+					value: response,
 					status: DirectRequestStatus::Ok,
 				};
 				return Ok(json!(json_value.to_hex()))

@@ -22,7 +22,6 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::ParentchainBalance as Balance;
@@ -57,6 +56,6 @@ impl SetBalanceCommand {
 		)
 		.sign(&KeyPair::Sr25519(Box::new(signer)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_args.direct);
-		Ok(perform_trusted_operation(cli, trusted_args, &top).map(|_| CliResultOk::None)?)
+		Ok(perform_trusted_operation::<()>(cli, trusted_args, &top).map(|_| CliResultOk::None)?)
 	}
 }

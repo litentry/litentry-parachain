@@ -58,6 +58,12 @@ use log::{debug, error, info};
 use std::{boxed::Box, format, string::String, sync::Arc};
 use threadpool::ThreadPool;
 
+#[cfg(test)]
+mod mock;
+
+#[cfg(test)]
+mod test;
+
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
 	#[error("Request error: {0}")]

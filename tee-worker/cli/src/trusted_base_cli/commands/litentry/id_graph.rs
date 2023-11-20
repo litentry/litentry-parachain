@@ -18,7 +18,6 @@ use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
 	trusted_operation::perform_trusted_operation, Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
 use ita_stf::{IDGraph, Runtime, TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::Identity;
@@ -45,9 +44,8 @@ impl IDGraphCommand {
 
 		let top: TrustedOperation =
 			TrustedGetter::id_graph(id).sign(&KeyPair::Sr25519(Box::new(alice))).into();
-		let idgraph = perform_trusted_operation(cli, trusted_cli, &top)
-			.map(|v| IDGraph::<Runtime>::decode(&mut v.unwrap().as_slice()).ok());
-		println!("{:?}", idgraph.unwrap().unwrap());
+		let idgraph = perform_trusted_operation::<IDGraph<Runtime>>(cli, trusted_cli, &top);
+		println!("{:?}", idgraph.unwrap());
 
 		Ok(CliResultOk::None)
 	}

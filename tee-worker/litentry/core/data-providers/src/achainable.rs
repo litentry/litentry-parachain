@@ -1310,7 +1310,6 @@ mod tests {
 	};
 	use lc_mock_server::run;
 	use litentry_primitives::Web3Network;
-	use std::sync::Arc;
 
 	fn new_achainable_client() -> AchainableClient {
 		let _ = env_logger::builder().is_test(true).try_init();
