@@ -12,6 +12,7 @@ use litentry_cli::{
 	Cli,
 };
 use log::debug;
+use std::time::Instant;
 
 use ita_stf::{
 	Identity, Index, LitentryMultiSignature, RequestAesKey, TrustedCall, TrustedCallSigned,
@@ -136,9 +137,14 @@ impl User {
 		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_cli.direct);
 
+		let start = Instant::now();
+
 		// TODO: P-177, print actual VC content to stdout
 		perform_direct_operation(cli, trusted_cli, &top, key)
 			.map_err(|e| format!("Failed to perform direct operation: {:?}", e))?;
+
+		let duration = start.elapsed();
+		println!("The time taken is: {:?}", duration);
 
 		Ok(())
 	}
@@ -151,7 +157,7 @@ impl User {
 pub fn generate_dummy_cli() -> Cli {
 	Cli {
 		node_url: "ws://127.0.0.1".to_string(),
-		node_port: "10144".to_string(),
+		node_port: "10044".to_string(),
 		worker_url: "wss://127.0.0.1".to_string(),
 		trusted_worker_port: "2100".to_string(),
 		command: Commands::Base(BaseCommand::PrintMetadata),
@@ -175,13 +181,12 @@ async fn main() -> Result<(), String> {
 	let trusted_cli = generate_dummy_trusted_cli();
 	let cli = Arc::new(cli);
 	let trusted_cli = Arc::new(trusted_cli);
-	for x in 0..1000 {
+	for x in 0..50 {
 		let copied_cli = cli.clone();
 		let copied_trusted_cli = trusted_cli.clone();
 		// We are not awaiting, just to bombard it with requests
-		tokio::spawn(async move {
+		std::thread::spawn(move || {
 			let user = User::generate_user_with_prime_junction(x);
-			println!("Requesting VC for user: {:?}", x);
 			user.request_vc(&copied_cli, &copied_trusted_cli);
 		});
 	}
