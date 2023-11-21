@@ -125,9 +125,13 @@ jobs:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
 
+      - name: Set env
+        run: |
+          DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+
       - name: Build docker image
         run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           ./scripts/build-docker.sh production $DOCKER_TAG
           echo "============================="
           docker images
