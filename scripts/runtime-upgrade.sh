@@ -19,11 +19,10 @@ output_wasm=/tmp/runtime.wasm
 
 function usage() {
   echo
-  echo "Usage: $0 wasm-path"
-  echo "       wasm-path can be either local file path or https URL"
+  echo "Usage: $0 wasm-name [release-tag]"
 }
 
-[ $# -ne 1 ] && (usage; exit 1)
+[ $# -gt 2 ] && (usage; exit 1)
 
 function print_divider() {
   echo "------------------------------------------------------------"
@@ -31,16 +30,14 @@ function print_divider() {
 
 print_divider
 
-# 1. download runtime wasm
-echo "Download runtime wasm from $1 ..."
-case "$1" in
-  https*)
-    wget -q "$1" -O "$output_wasm" ;;
-  *)
-    cp -f "$1" "$output_wasm" ;;
-esac
-
-echo "Done"
+# 1. download or copy runtime wasm
+if [ -z "$2" ]; then
+  echo "Copy local wasm $1 ..."
+  cp -f "$1" "$output_wasm"
+else
+  echo "Download $1 from release tag $2 ..."
+  gh release download "$2" -p "$1" -O "$output_wasm"
+fi
 
 if [ -f "$output_wasm" ] && [ -s "$output_wasm" ]; then
   ls -l "$output_wasm"

@@ -58,13 +58,6 @@ export async function initApiPromise(config: any): Promise<ParachainConfig> {
     const eve = keyring.addFromUri('//Eve');
     const ferdie = keyring.addFromUri('//Ferdie');
 
-    // Insert ocw session key
-    const resInsertKey = api.rpc.author.insertKey(
-        'ocw!',
-        'loop high amazing chat tennis auto denial attend type quit liquid tonight',
-        '0x8c35b97c56099cf3b5c631d1f296abbb11289857e74a8f60936290080d56da6d'
-    );
-
     const { nonce: nonceAlice, data: balanceAlice } = await api.query.system.account(alice.address);
     const { nonce: nonceBob, data: balanceBob } = await api.query.system.account(bob.address);
     const { nonce: nonceEve, data: balanceEve } = await api.query.system.account(eve.address);
@@ -101,10 +94,11 @@ export function signAndSend(tx: SubmittableExtrinsic<ApiTypes>, account: Address
     });
 }
 
-/// After removing the sudo module, we use `EnsureRootOrHalfCouncil` instead of `Sudo`,
-//  and there are only two council members in litmus-dev/rococo-dev/litentry-dev.
-//  So only `propose` is required, no vote.
-// TODO support to send the `vote extrinsic`, if the number of council members is greater than 2.
+// After removing the sudo module, we use `EnsureRootOrHalfCouncil` instead of `Sudo`,
+// and there are only two council members in litmus-dev/rococo-dev/litentry-dev.
+// So only `propose` is required, no vote.
+//
+// TODO: support to send the `vote extrinsic`, if the number of council members is greater than 2.
 export async function sudoWrapper(api: ApiPromise, tx: SubmittableExtrinsic<ApiTypes>) {
     const chain = (await api.rpc.system.chain()).toString().toLowerCase();
     if (chain == 'litmus-dev') {
