@@ -19,6 +19,7 @@ export default {
                 A12: "Bytes",
                 A13: "AccountId32",
                 A14: "Null",
+                GenericDiscordRole: "GenericDiscordRoleType",
             },
         },
         AssertionSupportedNetwork: {
@@ -28,6 +29,18 @@ export default {
             vc_index: "H256",
             vc_hash: "H256",
             vc_payload: "AesOutput",
+        },
+        GenericDiscordRoleType: {
+            _enum: {
+                Contest: "GenericDiscordRoleContestType",
+                SoraQuiz: "GenericDiscordRoleSoraQuizType",
+            },
+        },
+        GenericDiscordRoleContestType: {
+            _enum: ["Legend", "Popularity", "Participant"],
+        },
+        GenericDiscordRoleSoraQuizType: {
+            _enum: ["Attendee", "Master"],
         },
     },
 };
