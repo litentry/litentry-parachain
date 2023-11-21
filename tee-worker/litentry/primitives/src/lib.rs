@@ -47,9 +47,9 @@ pub use parentchain_primitives::{
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
 	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
 	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
-	BoundedWeb3Network, ErrorDetail, ErrorString, GenericDiscordRoleType, Hash as ParentchainHash,
-	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
-	OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
+	BoundedWeb3Network, ContestType, ErrorDetail, ErrorString, GenericDiscordRoleType,
+	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
+	IntoErrorDetail, OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
 	Signature as ParentchainSignature, SoraQuizType, VCMPError, Web3Network, ASSERTION_FROM_DATE,
 	MINUTES,
 };

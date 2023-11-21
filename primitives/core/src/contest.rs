@@ -14,10 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-pub mod quiz;
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum ContestType {
+	#[codec(index = 0)]
+	Legend,
+	#[codec(index = 1)]
+	Popularity,
+	#[codec(index = 2)]
+	Participant,
+}
