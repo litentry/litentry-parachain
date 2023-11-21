@@ -62,6 +62,20 @@ pub enum Web3Network {
 }
 
 impl Web3Network {
+	pub fn get_name(self) -> &'static str {
+		match self {
+			Web3Network::Polkadot => "Polkadot",
+			Web3Network::Kusama => "Kusama",
+			Web3Network::Litentry => "Litentry",
+			Web3Network::Litmus => "Litmus",
+			Web3Network::LitentryRococo => "LitentryRococo",
+			Web3Network::Khala => "Khala",
+			Web3Network::SubstrateTestnet => "SubstrateTestnet",
+			Web3Network::Ethereum => "Ethereum",
+			Web3Network::Bsc => "Bsc",
+		}
+	}
+
 	pub fn is_substrate(&self) -> bool {
 		matches!(
 			self,

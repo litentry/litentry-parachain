@@ -80,6 +80,7 @@ pub mod schema;
 pub mod assertion_logic;
 use assertion_logic::{AssertionLogic, Op};
 pub mod generic_discord_role;
+pub mod litentry_profile;
 pub mod nodereal;
 pub mod vip3;
 

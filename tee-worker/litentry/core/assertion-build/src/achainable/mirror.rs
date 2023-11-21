@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Litentry Technologies GmbH.
+// Copyright 2020-2023 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -20,64 +20,50 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::request_achainable_balance, *};
-use lc_credentials::litentry_profile::token_balance::TokenBalanceInfo;
-use lc_data_providers::{ETokenAddress, TokenFromString};
+use super::request_achainable;
+use crate::*;
+use lc_credentials::{litentry_profile::mirror::MirrorInfo, Credential};
+use lc_data_providers::achainable_names::AchainableNameMirror;
+use litentry_primitives::AchainableMirror;
 
-// Input params:
+// Request Inputs
 // {
-//     "name": "ERC20 balance over {amount}",
-//     "address": "0xb59490ab09a0f526cc7305822ac65f2ab12f9723",
+//     "name": "Has written over quantity posts on Mirror",
+//     "address": "0xCdd39B6D1cC4D0a7243b389Ed9356E23Df6240eb",
 //     "params": {
 //         "chain": "ethereum",
-//         "amount": "0",
-//         "token": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-//     }
+//         "postQuantity": "0"
+//     },
+//     "includeMetadata": true
 // }
 
-/// LIT / USDC / USDT Holder
-/// assertions:[
-/// {
-///    and:[
-///        {
-///            src:$lit_holding_amount,
-///            op: >=,
-///            dst:100
-///        },
-///        {
-///            src:$lit_holding_amount,
-///            op: <,
-///            dst:200
-///        },
-///    ]
-/// }
-///
-///
-pub fn build_amount_token(
-	req: &AssertionBuildRequest,
-	param: AchainableAmountToken,
-) -> Result<Credential> {
-	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
+// {
+//     "name": "Is a publication on Mirror",
+//     "address": "0xCdd39B6D1cC4D0a7243b389Ed9356E23Df6240eb",
+//     "params": {
+//         "chain": "ethereum"
+//     },
+//     "includeMetadata": true
+// }
 
+pub fn build_on_mirror(req: &AssertionBuildRequest, param: AchainableMirror) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let token = ETokenAddress::from_vec(param.clone().token.unwrap_or_default());
-	let achainable_param = AchainableParams::AmountToken(param);
-	let balance = request_achainable_balance(addresses, achainable_param.clone())?
-		.parse::<f64>()
-		.map_err(|_| {
-			Error::RequestVCFailed(
-				Assertion::Achainable(achainable_param.clone()),
-				ErrorDetail::ParseError,
-			)
-		})?;
+	let achainable_param = AchainableParams::Mirror(param);
+	let mtype = AchainableNameMirror::from(achainable_param.name()).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+	let value = request_achainable(addresses, achainable_param.clone())?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_token_balance(token, balance);
+			credential_unsigned.update_mirror(mtype, value);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {

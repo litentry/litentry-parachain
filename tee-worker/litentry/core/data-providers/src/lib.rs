@@ -68,6 +68,7 @@ use url::Url;
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
 pub mod achainable;
+pub mod achainable_names;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod nodereal;
@@ -77,11 +78,40 @@ pub mod vip3;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
-pub const LIT_TOKEN_ADDRESS: &str = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723";
 pub const WBTC_TOKEN_ADDRESS: &str = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 pub const WETH_TOKEN_ADDRESS: &str = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-pub const UNISWAP_TOKEN_ADDRESS: &str = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 pub const USDT_TOKEN_ADDRESS: &str = "0xdac17f958d2ee523a2206206994597c13d831ec7";
+pub const USDC_TOKEN_ADDRESS: &str = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+pub const LIT_TOKEN_ADDRESS: &str = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723";
+
+#[derive(Debug, PartialEq, PartialOrd)]
+pub enum ETokenAddress {
+	Wbtc,
+	Lit,
+	Usdc,
+	Usdt,
+	Unknown,
+}
+
+pub trait TokenFromString {
+	fn from_vec(vec: ParameterString) -> ETokenAddress;
+}
+impl TokenFromString for ETokenAddress {
+	fn from_vec(vec: ParameterString) -> ETokenAddress {
+		let address = vec_to_string(vec.to_vec()).unwrap_or_default();
+		if address == WBTC_TOKEN_ADDRESS {
+			ETokenAddress::Wbtc
+		} else if address == LIT_TOKEN_ADDRESS {
+			ETokenAddress::Lit
+		} else if address == USDT_TOKEN_ADDRESS {
+			ETokenAddress::Usdt
+		} else if address == USDC_TOKEN_ADDRESS {
+			ETokenAddress::Usdc
+		} else {
+			ETokenAddress::Unknown
+		}
+	}
+}
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
 pub struct DataProviderConfig {
