@@ -16,10 +16,14 @@ export default {
                 A8: "Vec<AssertionSupportedNetwork>",
                 A10: "Bytes",
                 A11: "Bytes",
-                A12: "Bytes",
                 A13: "AccountId32",
                 A14: "Null",
+                Achainable: "AchainableParams",
+                A20: "Null",
+                Oneblock: "OneBlockCourseType",
                 GenericDiscordRole: "GenericDiscordRoleType",
+                BnbDomainHolding: "Null",
+                BnbDigitDomainClub: "BnbDigitDomainType",
             },
         },
         AssertionSupportedNetwork: {
@@ -30,6 +34,92 @@ export default {
             vc_hash: "H256",
             vc_payload: "AesOutput",
         },
+        // Achainable
+        AchainableParams: {
+            _enum: {
+                AmountHolding: "AchainableAmountHolding",
+                AmountToken: "AchainableAmountToken",
+                Amount: "AchainableAmount",
+                Amounts: "AchainableAmounts",
+                Basic: "AchainableBasic",
+                BetweenPercents: "AchainableBetweenPercents",
+                ClassOfYear: "AchainableClassOfYear",
+                DateInterval: "AchainableDateInterval",
+                DatePercent: "AchainableDatePercent",
+                Date: "AchainableDate",
+                Token: "AchainableToken",
+            },
+        },
+        AchainableAmountHolding: {
+            name: "Bytes",
+            chain: "Web3Network",
+            amount: "Bytes",
+            date: "Bytes",
+            token: "Option<Bytes>",
+        },
+        AchainableAmountToken: {
+            name: "Bytes",
+            chain: "Web3Network",
+            amount: "Bytes",
+            token: "Option<Bytes>",
+        },
+        AchainableAmount: {
+            name: "Bytes",
+            chain: "Web3Network",
+            amount: "Bytes",
+        },
+        AchainableAmounts: {
+            name: "Bytes",
+            chain: "Web3Network",
+            amount1: "Bytes",
+            amount2: "Bytes",
+        },
+        AchainableBasic: {
+            name: "Bytes",
+            chain: "Web3Network",
+        },
+        AchainableBetweenPercents: {
+            name: "Bytes",
+            chain: "Web3Network",
+            greaterThanOrEqualTo: "Bytes",
+            lessThanOrEqualTo: "Bytes",
+        },
+        AchainableClassOfYear: {
+            name: "Bytes",
+            chain: "Web3Network",
+        },
+        AchainableDateInterval: {
+            name: "Bytes",
+            chain: "Web3Network",
+            startDate: "Bytes",
+            endDate: "Bytes",
+        },
+        AchainableDatePercent: {
+            name: "Bytes",
+            chain: "Web3Network",
+            token: "Bytes",
+            date: "Bytes",
+            percent: "Bytes",
+        },
+        AchainableDate: {
+            name: "Bytes",
+            chain: "Web3Network",
+            date: "Bytes",
+        },
+        AchainableToken: {
+            name: "Bytes",
+            chain: "Web3Network",
+            token: "Bytes",
+        },
+        // Oneblock
+        OneBlockCourseType: {
+            _enum: ["CourseCompletion", "CourseOutstanding", "CourseParticipation"],
+        },
+        // Bnb
+        BnbDigitDomainType: {
+            _enum: ["Bnb999ClubMember", "Bnb10kClubMember"],
+        },
+        // GenericDiscordRole
         GenericDiscordRoleType: {
             _enum: {
                 Contest: "GenericDiscordRoleContestType",
