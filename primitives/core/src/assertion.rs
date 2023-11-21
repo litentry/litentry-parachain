@@ -141,6 +141,7 @@ pub enum AchainableParams {
 	Date(AchainableDate),
 	#[codec(index = 10)]
 	Token(AchainableToken),
+	#[codec(index = 11)]
 	Mirror(AchainableMirror),
 }
 
