@@ -127,7 +127,8 @@ jobs:
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh production ${{ env.RELEASE_TAG }}
+          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          ./scripts/build-docker.sh production $DOCKER_TAG
           echo "============================="
           docker images
 
@@ -139,17 +140,17 @@ jobs:
 
       - name: Push docker image
         run: |
-          docker push litentry/litentry-parachain:${{ env.RELEASE_TAG }}
+          docker push litentry/litentry-parachain:$DOCKER_TAG
 
       - name: Generate genesis artefacts if need
         if: github.event.inputs.genesis_release != 'none'
         run: |
-          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
-          docker run --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }} export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
+          docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
+          docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
       - name: Copy client binary to disk
         run: |
-          docker cp $(docker create --rm litentry/litentry-parachain:${{ env.RELEASE_TAG }}):/usr/local/bin/litentry-collator .
+          docker cp $(docker create --rm litentry/litentry-parachain:$DOCKER_TAG):/usr/local/bin/litentry-collator .
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v3
@@ -230,8 +231,9 @@ jobs:
 
       - name: Download and tag docker image
         run: |
-          docker pull litentry/litentry-parachain:${{ env.RELEASE_TAG }}
-          docker tag litentry/litentry-parachain:${{ env.RELEASE_TAG }} litentry/litentry-parachain:latest
+          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          docker pull litentry/litentry-parachain:$DOCKER_TAG
+          docker tag litentry/litentry-parachain:$DOCKER_TAG litentry/litentry-parachain:latest
 
       - name: Run ts tests for ${{ matrix.chain }}
         timeout-minutes: 20
@@ -274,7 +276,7 @@ jobs:
       - name: Prepare output and compare the metadata
         timeout-minutes: 3
         run: |
-          RELEASE_TAG=${{ env.RELEASE_TAG }}
+          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           PARACHAIN_NAME=local-parachain
           BASE_URL=ws://127.0.0.1:9944
           chain=${{ matrix.chain }}
@@ -283,11 +285,11 @@ jobs:
           echo "Date: $(date)" >> output-$chain.txt
           echo "Base: $BASE_URL" >> output-$chain.txt
           echo "Reference: $REF_URL" >> output-$chain.txt
-          echo "Target Tag: $RELEASE_TAG" >> output-$chain.txt
+          echo "Target Tag: ${{ env.RELEASE_TAG }}" >> output-$chain.txt
           echo "Chain: $chain" >> output-$chain.txt
           echo "----------------------------------------------------------------------" >> output-$chain.txt
           echo "Running parachain: $chain"
-          docker run --pull always --rm --name=$PARACHAIN_NAME -d -p 9944:9944 litentry/litentry-parachain:$RELEASE_TAG --chain=$chain-dev --rpc-cors=all --ws-external --tmp -- --dev
+          docker run --pull always --rm --name=$PARACHAIN_NAME -d -p 9944:9944 litentry/litentry-parachain:$DOCKER_TAG --chain=$chain-dev --rpc-cors=all --ws-external --tmp -- --dev
           sleep 3
           CMD="docker run --pull always --network host jacogr/polkadot-js-tools metadata $REF_URL $BASE_URL"
           echo -e "Running:\n$CMD"
