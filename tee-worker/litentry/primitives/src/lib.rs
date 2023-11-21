@@ -45,7 +45,7 @@ pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
+	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
 	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
 	BoundedWeb3Network, ContestType, ErrorDetail, ErrorString, GenericDiscordRoleType,
 	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
