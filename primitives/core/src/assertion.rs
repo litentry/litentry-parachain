@@ -19,7 +19,7 @@
 
 use crate::{
 	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
-	SoraQuizType, Web3Network,
+	Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -186,9 +186,6 @@ pub enum Assertion {
 
 	// For Oneblock
 	Oneblock(OneBlockCourseType),
-
-	// Sora Quiz
-	SoraQuiz(SoraQuizType),  // (sora_quiz_type)
 
 	// GenericDiscordRole
 	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)

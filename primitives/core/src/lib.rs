@@ -39,6 +39,9 @@ pub use vc::*;
 mod oneblock;
 pub use oneblock::*;
 
+mod contest;
+pub use contest::*;
+
 mod soraquiz;
 pub use soraquiz::*;
 
