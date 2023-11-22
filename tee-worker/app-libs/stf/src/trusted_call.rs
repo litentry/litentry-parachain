@@ -180,7 +180,7 @@ pub enum TrustedCall {
 	send_erroneous_parentchain_call(Identity),
 	#[cfg(not(feature = "production"))]
 	#[codec(index = 18)]
-	remove_identity(Identity, Identity),
+	remove_identity(Identity, Identity, Identity),
 }
 
 impl TrustedCall {
@@ -585,10 +585,15 @@ where
 				}
 			},
 
-			TrustedCall::remove_identity(who, identity) => {
+			TrustedCall::remove_identity(signer, who, identity) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
 
-				Self::remove_identity_internal(who.clone(), identity.clone()).map_err(|e| {
+				Self::remove_identity_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who.clone(),
+					identity.clone(),
+				)
+				.map_err(|e| {
 					debug!("removing identity failed error: {}", e);
 					e
 				})?;

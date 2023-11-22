@@ -60,9 +60,10 @@ impl RemoveIdentityCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
-		let top: TrustedOperation = TrustedCall::remove_identity(src_id, dst_id)
-			.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
-			.into_trusted_operation(trusted_cli.direct);
+		let top: TrustedOperation =
+			TrustedCall::remove_identity(alice.public().into(), src_id, dst_id)
+				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+				.into_trusted_operation(trusted_cli.direct);
 		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }

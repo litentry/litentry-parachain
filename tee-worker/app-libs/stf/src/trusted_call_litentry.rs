@@ -227,7 +227,16 @@ impl TrustedCallSigned {
 	}
 
 	#[cfg(not(feature = "production"))]
-	pub fn remove_identity_internal(who: Identity, identity: Identity) -> StfResult<()> {
+	pub fn remove_identity_internal(
+		signer: AccountId,
+		who: Identity,
+		identity: Identity,
+	) -> StfResult<()> {
+		ensure!(
+			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
+		);
+
 		IMTCall::remove_identity { who, identity }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
 			.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
