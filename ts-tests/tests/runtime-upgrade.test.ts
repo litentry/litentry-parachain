@@ -1,7 +1,7 @@
-import { blake2AsHex, cryptoWaitReady } from '@polkadot/util-crypto';
+import { blake2AsHex } from '@polkadot/util-crypto';
 import * as fs from 'fs';
 import { Keyring, ApiPromise, WsProvider } from '@polkadot/api';
-import { loadConfig, describeLitentry } from './utils';
+import { describeLitentry } from './utils';
 import '@polkadot/wasm-crypto/initOnlyAsm';
 import * as path from 'path';
 import { expect } from 'chai';
@@ -20,7 +20,6 @@ async function runtimeUpgrade(api: ApiPromise, wasm: string) {
     console.log(`Start doing runtime upgrade, current block = ${currentBlock}`);
 
     // authorize and enact the upgrade
-    let nonce = (await api.rpc.system.accountNextIndex(alice.address)).toNumber();
     await api.tx.sudo
         .sudo(api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm)))
         .signAndSend(alice, { nonce: -1 });

@@ -21,18 +21,17 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
+use lc_credentials::Credential;
 use litentry_primitives::{
-	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
-	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
-	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, SoraQuizType,
-	Web3Network,
+	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
+	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
+	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
+	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
+	ParameterString, RequestAesKey, SoraQuizType, Web3Network, REQUEST_AES_KEY_LEN,
 };
-use log::*;
 use sp_core::Pair;
 
 // usage example (you can always use --help on subcommands to see more details)
@@ -81,8 +80,6 @@ pub enum Command {
 	Oneblock(OneblockCommand),
 	#[clap(subcommand)]
 	Achainable(AchainableCommand),
-	#[clap(subcommand)]
-	SoraQuiz(SoraQuizCommand),
 	#[clap(subcommand)]
 	GenericDiscordRole(GenericDiscordRoleCommand),
 }
@@ -139,16 +136,24 @@ pub enum AchainableCommand {
 }
 
 #[derive(Subcommand)]
-pub enum SoraQuizCommand {
-	Attendee,
-	Master,
+pub enum GenericDiscordRoleCommand {
+	#[clap(subcommand)]
+	Contest(ContestCommand),
+	#[clap(subcommand)]
+	SoraQuiz(SoraQuizCommand),
 }
 
 #[derive(Subcommand)]
-pub enum GenericDiscordRoleCommand {
+pub enum ContestCommand {
 	Legend,
 	Popularity,
 	Participant,
+}
+
+#[derive(Subcommand)]
+pub enum SoraQuizCommand {
+	Attendee,
+	Master,
 }
 
 // I haven't found a good way to use common args for subcommands
@@ -398,27 +403,57 @@ impl RequestVcCommand {
 						token: to_para_str(&arg.token),
 					})),
 			},
-			Command::SoraQuiz(c) => match c {
-				SoraQuizCommand::Attendee => Assertion::SoraQuiz(SoraQuizType::Attendee),
-				SoraQuizCommand::Master => Assertion::SoraQuiz(SoraQuizType::Master),
-			},
 			Command::GenericDiscordRole(c) => match c {
-				GenericDiscordRoleCommand::Legend =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Legend),
-				GenericDiscordRoleCommand::Popularity =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Popularity),
-				GenericDiscordRoleCommand::Participant =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Participant),
+				GenericDiscordRoleCommand::Contest(s) => match s {
+					ContestCommand::Legend => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Legend),
+					),
+					ContestCommand::Popularity => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Popularity),
+					),
+					ContestCommand::Participant => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Participant),
+					),
+				},
+				GenericDiscordRoleCommand::SoraQuiz(s) => match s {
+					SoraQuizCommand::Attendee => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::SoraQuiz(SoraQuizType::Attendee),
+					),
+					SoraQuizCommand::Master => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::SoraQuiz(SoraQuizType::Master),
+					),
+				},
 			},
 		};
 
-		let top: TrustedOperation =
-			TrustedCall::request_vc(alice.public().into(), id, assertion, None, Default::default())
-				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let key = Self::random_aes_key();
 
-		// TODO: P-177, print actual VC content to stdout
-		let _vc = perform_trusted_operation(cli, trusted_cli, &top).unwrap();
+		let top: TrustedOperation = TrustedCall::request_vc(
+			alice.public().into(),
+			id,
+			assertion,
+			Some(key),
+			Default::default(),
+		)
+		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+		.into_trusted_operation(trusted_cli.direct);
+
+		match perform_trusted_operation::<RequestVCResult>(cli, trusted_cli, &top) {
+			Ok(mut vc) => {
+				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+				let credential: Credential = serde_json::from_slice(&decrypted).unwrap();
+				println!("----Generated VC-----");
+				println!("{:?}", credential);
+			},
+			Err(e) => {
+				println!("{:?}", e);
+			},
+		}
 		Ok(CliResultOk::None)
+	}
+
+	fn random_aes_key() -> RequestAesKey {
+		let random: Vec<u8> = (0..REQUEST_AES_KEY_LEN).map(|_| rand::random::<u8>()).collect();
+		random[0..REQUEST_AES_KEY_LEN].try_into().unwrap()
 	}
 }
