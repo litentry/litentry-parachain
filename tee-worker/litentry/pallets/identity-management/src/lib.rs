@@ -251,8 +251,8 @@ pub mod pallet {
 
 			LinkedIdentities::<T>::remove(&identity);
 			IDGraphs::<T>::remove(&who, &identity);
-
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
+
 			Ok(())
 		}
 	}

@@ -233,7 +233,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 	) -> StfResult<()> {
 		ensure!(
-			ensure_enclave_signer_or_self(&signer, who.to_account_id()),
+			ensure_enclave_signer_or_alice(&signer),
 			StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
 		);
 
