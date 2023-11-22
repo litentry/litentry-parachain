@@ -45,7 +45,6 @@ use cumulus_primitives_parachain_inherent::{
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
-use fc_consensus::FrontierBlockImport;
 use fc_rpc::{EthBlockDataCacheTask, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use futures::StreamExt;
@@ -164,11 +163,7 @@ pub mod __ {
 	#[evm]
 	type ParachainBlockImport<RuntimeApi, Executor> = TParachainBlockImport<
 		Block,
-		FrontierBlockImport<
-			Block,
-			Arc<ParachainClient<RuntimeApi, Executor>>,
-			ParachainClient<RuntimeApi, Executor>,
-		>,
+		Arc<ParachainClient<RuntimeApi, Executor>>,
 		ParachainBackend,
 	>;
 
@@ -329,11 +324,9 @@ pub mod __ {
 
 		#[evm]
 		let frontier_backend = rpc_evm::open_frontier_backend(client.clone(), config)?;
-		#[evm]
-		let frontier_block_import = FrontierBlockImport::new(client.clone(), client.clone());
 
 		#[evm]
-		let block_import = ParachainBlockImport::new(frontier_block_import, backend.clone());
+		let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
 
 		#[no_evm]
 		let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
