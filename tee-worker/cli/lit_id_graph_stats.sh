@@ -65,33 +65,23 @@ else
 fi
 [[ -z $MRENCLAVE ]] && { echo "MRENCLAVE is empty. cannot continue" ; exit 1; }
 
+
 ALICE=//Alice
-ALICE_KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6c"
 
-ALICE_IDENTITY='{"Substrate": {"network": "Polkadot", "address": [58, 215, 18, 154, 11, 223, 105, 185, 64, 123, 200, 233, 215, 156, 158, 88, 152, 249, 7, 217, 84, 219, 188, 4, 18, 50, 246, 243, 96, 91, 215, 11]}}'
+ALICE_DID='did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48'
+ALICE_IDENTITY='did:litentry:twitter:my_twitter'
 
-BOB=//Bob
-BOB_KEY="8378193a4ce64180814bd60591d1054a04dbc4da02afde453799cd6888ee0c6d"
-
-BOB_IDENTITY='{"Substrate": {"network": "Polkadot", "address": [58, 215, 18, 154, 11, 223, 105, 185, 64, 123, 200, 233, 215, 156, 158, 88, 152, 249, 7, 217, 84, 219, 188, 4, 18, 50, 246, 243, 96, 91, 215, 11]}}'
-
-sleep 10
-echo "* Set $ALICE 's shielding key to $ALICE_KEY"
-${CLIENT} set-user-shielding-key "$ALICE" "$ALICE_KEY" ${MRENCLAVE}
-echo ""
+BOB_DID='did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48'
+BOB_IDENTITY='did:litentry:evm:0x0D9bFD1f18f5f4FD08247DC54aD3528909c4b3E9'
+BOB_IDENTITY_NETWORKS='bsc,ethereum'
 
 sleep 10
-echo "* Create $ALICE 's Identity"
-${CLIENT} create-identity "$ALICE" "$ALICE_IDENTITY" ${MRENCLAVE}
+echo "* Create $ALICE_DID Identity"
+${CLIENT} trusted link-identity "$ALICE_DID" "$ALICE_IDENTITY"
 
 sleep 10
-echo "* Set $BOB 's shielding key to $BOB_KEY"
-${CLIENT} set-user-shielding-key "$BOB" "$BOB_KEY" ${MRENCLAVE}
-echo ""
-
-sleep 10
-echo "* Create $BOB 's Identity"
-${CLIENT} create-identity "$BOB" "$BOB_IDENTITY" ${MRENCLAVE}
+echo "* Create $BOB_DID Identity"
+${CLIENT} trusted link-identity "$BOB_DID" "$BOB_IDENTITY" "$BOB_IDENTITY_NETWORKS"
 
 sleep 20
 echo "* Get IDGraph stats"
