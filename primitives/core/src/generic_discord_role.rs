@@ -17,9 +17,12 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
+use crate::{ContestType, SoraQuizType};
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum GenericDiscordRoleType {
-	Legend,
-	Popularity,
-	Participant,
+	#[codec(index = 0)]
+	Contest(ContestType),
+	#[codec(index = 1)]
+	SoraQuiz(SoraQuizType),
 }

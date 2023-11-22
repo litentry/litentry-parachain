@@ -48,6 +48,17 @@ lc-identity-verification = { path = "../../identity-verification", default-featu
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
+[dev-dependencies]
+sgx_crypto_helper = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
+itp-test = { path = "../../../../core-primitives/test" }
+itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", features = ["mocks"] }
+itp-top-pool = { path = "../../../../core-primitives/top-pool", features = ["mocks"] }
+itp-stf-executor = { path = "../../../../core-primitives/stf-executor", features = ["mocks"] }
+base58 = "0.2"
+jsonrpc-core = { version = "18" }
+lazy_static = { version = "1.1.0" }
+hex = "0.4.2"
+
 [features]
 default = ["std"]
 sgx = [

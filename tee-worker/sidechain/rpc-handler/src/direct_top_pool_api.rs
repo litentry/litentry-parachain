@@ -25,13 +25,15 @@ use rust_base58::base58::FromBase58;
 use base58::FromBase58;
 
 use codec::{Decode, Encode};
+use futures::{channel::oneshot, FutureExt};
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
-use litentry_primitives::AesRequest;
+use lc_vc_task_sender::{VCRequest, VcRequestSender};
+use litentry_primitives::{AesOutput, AesRequest};
 use log::*;
 use std::{
 	borrow::ToOwned,
@@ -124,6 +126,41 @@ where
 		Ok(json!(json_value))
 	});
 
+	let author_submit_vc_request_name: &str = "author_submitVCRequest";
+	io_handler.add_method(author_submit_vc_request_name, move |params: Params| {
+		async move {
+			let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
+			let request = AesRequest::from_hex(&hex_encoded_params[0].clone()).unwrap();
+			let shard: ShardIdentifier = request.shard;
+			let key = request.key;
+			let encrypted_trusted_call: AesOutput = request.payload;
+			let request_sender = VcRequestSender::new();
+			let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
+			let vc_request = VCRequest { encrypted_trusted_call, sender, shard, key };
+			if let Err(e) = request_sender.send_vc_request(vc_request) {
+				return Ok(json!(compute_hex_encoded_return_error(&e)))
+			}
+			match receiver.await {
+				Ok(Ok(response)) => {
+					let json_value = RpcReturnValue {
+						do_watch: false,
+						value: response.encode(),
+						status: DirectRequestStatus::Ok,
+					};
+					Ok(json!(json_value.to_hex()))
+				},
+				Ok(Err(e)) => {
+					log::error!("Received error in jsonresponse: {:?} ", e);
+					Ok(json!(compute_hex_encoded_return_error(&e)))
+				},
+				Err(_) => {
+					// This case will only happen if the sender has been dropped
+					Ok(json!(compute_hex_encoded_return_error("The sender has been dropped")))
+				},
+			}
+		}
+		.boxed()
+	});
 	// Litentry: a morphling of `author_submitAndWatchRsaRequest`
 	// a different name is used to highlight the request type
 	let author_submit_and_watch_aes_request_name: &str = "author_submitAndWatchAesRequest";

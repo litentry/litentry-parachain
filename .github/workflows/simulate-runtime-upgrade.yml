@@ -17,7 +17,9 @@ env:
 jobs:
   simulate-runtime-upgrade:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
+      fail-fast: false
       matrix:
         chain:
           # litmus is not supported, as sudo was removed
@@ -29,6 +31,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
 
       - name: Fork ${{ matrix.chain }} and launch parachain
         timeout-minutes: 10
@@ -42,6 +47,8 @@ jobs:
           subwasm --version
 
       - name: Test runtime upgrade
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         timeout-minutes: 10
         run: |
-          ./scripts/runtime-upgrade.sh https://github.com/litentry/litentry-parachain/releases/download/${{ env.RELEASE_TAG }}/${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
+          ./scripts/runtime-upgrade.sh ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}

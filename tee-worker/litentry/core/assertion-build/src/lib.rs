@@ -50,7 +50,6 @@ pub mod generic_discord_role;
 pub mod holding_time;
 pub mod nodereal;
 pub mod oneblock;
-pub mod sora;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;

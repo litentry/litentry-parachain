@@ -20,7 +20,9 @@
         "--enable-mock-server",
         "--parentchain-start-block",
         "0",
-        "--enable-metrics"
+        "--enable-metrics",
+        "--data-dir",
+        "/tmp/data-dir"
       ],
       "subcommand_flags": [
         "--skip-ra",
