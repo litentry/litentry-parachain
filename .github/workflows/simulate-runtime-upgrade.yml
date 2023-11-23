@@ -52,3 +52,20 @@ jobs:
         timeout-minutes: 10
         run: |
           ./scripts/runtime-upgrade.sh ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm ${{ env.RELEASE_TAG }}
+
+      - name: Collect docker logs if test fails
+        continue-on-error: true
+        uses: jwalton/gh-docker-logs@v2
+        if: failure()
+        with:
+          tail: all
+          dest: docker-logs
+
+      - name: Upload docker logs if test fails
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: ${{ matrix.test_name }}-docker-logs
+          path: docker-logs
+          if-no-files-found: ignore
+          retention-days: 3

@@ -325,10 +325,6 @@ pub mod __ {
 		#[evm]
 		let frontier_backend = rpc_evm::open_frontier_backend(client.clone(), config)?;
 
-		#[evm]
-		let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
-
-		#[no_evm]
 		let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
 
 		let import_queue = build_import_queue(
