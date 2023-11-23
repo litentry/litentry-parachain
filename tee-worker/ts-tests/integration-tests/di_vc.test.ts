@@ -32,7 +32,7 @@ describe('Test Vc (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
     });
 
-    assertions.forEach(({ description,assertion }) => {
+    assertions.forEach(({ description, assertion }) => {
         step(`request vc ${description} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
             const getNextNonce = () => currentNonce++;
