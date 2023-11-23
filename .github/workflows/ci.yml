@@ -87,6 +87,7 @@ jobs:
       push_docker: ${{ steps.env.outputs.push_docker }}
       run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
       run_tee_test: ${{ steps.env.outputs.run_tee_test }}
+      run_update_client_api: ${{ steps.env.outputs.run_update_client_api }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -108,6 +109,7 @@ jobs:
           push_docker=false
           run_parachain_test=false
           run_tee_test=false
+          run_update_client_api=false
           if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
             rebuild_parachain=true
           fi
@@ -125,11 +127,15 @@ jobs:
           if [ "${{ steps.filter.outputs.tee_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
             run_tee_test=true
           fi
+          if [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
+            run_update_client_api=true
+          fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
           echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
+          echo "run_update_client_api=$run_update_client_api" | tee -a $GITHUB_OUTPUT
 
   fmt:
     runs-on: ubuntu-latest
@@ -602,6 +608,8 @@ jobs:
     needs:
       - parachain-build-dev
       - tee-build
+      - set-condition
+    if: needs.set-condition.outputs.run_update_client_api
     steps:
       - uses: actions/checkout@v4
 
