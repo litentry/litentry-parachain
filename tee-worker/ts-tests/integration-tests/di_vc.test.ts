@@ -30,7 +30,6 @@ describe('Test Vc (direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubject = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
-        
     });
 
     assertions.forEach(({ assertion }) => {
