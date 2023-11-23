@@ -161,11 +161,8 @@ pub mod __ {
 		TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi>>, ParachainBackend>;
 
 	#[evm]
-	type ParachainBlockImport<RuntimeApi, Executor> = TParachainBlockImport<
-		Block,
-		Arc<ParachainClient<RuntimeApi, Executor>>,
-		ParachainBackend,
-	>;
+	type ParachainBlockImport<RuntimeApi, Executor> =
+		TParachainBlockImport<Block, Arc<ParachainClient<RuntimeApi, Executor>>, ParachainBackend>;
 
 	#[no_evm]
 	/// Starts a `ServiceBuilder` for a full service.
