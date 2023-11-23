@@ -26,7 +26,6 @@ use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::Identity;
-use log::*;
 use sp_core::Pair;
 
 // usage exmaple:
@@ -64,6 +63,6 @@ impl RemoveIdentityCommand {
 			TrustedCall::remove_identity(alice.public().into(), src_id, dst_id)
 				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_cli.direct);
-		Ok(perform_trusted_operation(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
+		Ok(perform_trusted_operation::<()>(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }
