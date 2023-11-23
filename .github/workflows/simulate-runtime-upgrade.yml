@@ -65,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: failure()
         with:
-          name: ${{ matrix.test_name }}-docker-logs
+          name: ${{ matrix.chain }}-docker-logs
           path: docker-logs
           if-no-files-found: ignore
           retention-days: 3
