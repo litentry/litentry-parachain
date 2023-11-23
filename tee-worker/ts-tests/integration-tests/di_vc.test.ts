@@ -32,13 +32,13 @@ describe('Test Vc (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
     });
 
-    assertions.forEach(({ assertion }) => {
-        step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
+    assertions.forEach(({ description,assertion }) => {
+        step(`request vc ${description} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            console.log(`request vc ${Object.keys(assertion)[0]} for alice ...`);
+            console.log(`request vc ${Object.keys(assertion)[0]}  for Alice ... Assertion description: ${description}`);
             const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
 
             const requestVcCall = await createSignedTrustedCallRequestVc(

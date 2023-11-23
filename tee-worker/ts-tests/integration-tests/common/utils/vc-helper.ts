@@ -30,7 +30,7 @@ export async function handleVcEvents(
 // https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
 export const assertions = [
     {
-        description: 'You’ve identified at least one account/address in both Web2 and Web3.',
+        description: 'Have identified at least one account/address in both Web2 and Web3.',
         assertion: {
             A1: 'A1',
         },
@@ -44,7 +44,7 @@ export const assertions = [
 
     // {
     //     description:
-    //         'You have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882',
+    //         'Have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882',
     //     assertion: {
     //         A3: ['A3', 'A3', 'A3'],
     //     },
@@ -86,7 +86,7 @@ export const assertions = [
     // // Achainable
     // // https://www.notion.so/web3builders/Assertion-interface-9126ba85a925417a922f2c6ae5d62e87
     // {
-    //     description: `You are a trader or liquidity provider of Uniswap V2 or V3
+    //     description: `A trader or liquidity provider of Uniswap V2 or V3
     //                   Uniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f
     //                   Uniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984`,
     //     assertion: {
@@ -99,7 +99,7 @@ export const assertions = [
     //     },
     // },
     // {
-    //     description: 'The number of ETH tokens you hold > 0',
+    //     description: 'The number of ETH tokens hold > 0',
     //     assertion: {
     //         Achainable: {
     //             Amount: {
@@ -112,7 +112,7 @@ export const assertions = [
     //     },
     // },
     // {
-    //     description: 'The class of year that your Ethereum account was created (must have on-chain records)',
+    //     description: 'The class of year that Ethereum account was created (must have on-chain records)',
     //     assertion: {
     //         Achainable: {
     //             ClassOfYear: {
@@ -123,7 +123,7 @@ export const assertions = [
     //     },
     // },
     // {
-    //     description: 'You are a deployer of a smart contract on Ethereum',
+    //     description: 'A deployer of a smart contract on Ethereum',
     //     assertion: {
     //         Amount: {
     //             name: 'Created over {amount} contracts',
@@ -135,7 +135,7 @@ export const assertions = [
 
     // // Oneblock
     // {
-    //     description: 'You were a participant to the course co-created by OneBlock+ and Parity',
+    //     description: 'A participant to the course co-created by OneBlock+ and Parity',
     //     assertion: {
     //         oneblock: 'CourseParticipation',
     //     },
@@ -154,13 +154,13 @@ export const assertions = [
     // },
 
     {
-        description: 'You are holding a certain amount of bnb domain names',
+        description: 'Holding a certain amount of bnb domain names',
         assertion: {
             BnbDomainHolding: 'BnbDomainHolding',
         },
     },
     {
-        description: 'You are holding a certain amount of 000-999.bnb domain names',
+        description: 'Holding a certain amount of 000-999.bnb domain names',
         assertion: {
             BnbDigitDomainClub: 'Bnb999ClubMember',
         },
