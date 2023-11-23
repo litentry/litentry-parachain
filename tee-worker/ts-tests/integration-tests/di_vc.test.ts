@@ -13,33 +13,12 @@ import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey } from './common/call';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
+import { assertions } from './common/utils/vc-helper';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceSubject: LitentryPrimitivesIdentity = undefined as any;
 
-    // https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
-    const assertions = [
-        {
-            A1: null,
-        },
-        {
-            A2: 'A2',
-        },
-        {
-            A3: ['A3', 'A3', 'A3'],
-        },
-        {
-            A4: '10',
-        },
-        { A6: null },
-        { A7: '10.01' },
-        { A8: ['Litentry'] },
-        { A10: '10' },
-        { A11: '10' },
-
-        //TODO add Achainable https://github.com/litentry/litentry-parachain/issues/2080
-    ];
     this.timeout(6000000);
 
     before(async () => {
@@ -52,7 +31,7 @@ describe('Test Vc (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
-    assertions.forEach((assertion) => {
+    assertions.forEach(({ assertion }) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
             const getNextNonce = () => currentNonce++;
