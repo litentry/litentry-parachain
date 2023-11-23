@@ -148,7 +148,7 @@ export const assertions = [
     //     assertion: {
     //             GenericDiscordRole: {
     //         soraquiz: 'attendee'
-                    
+
     //             }
     //     },
     // },
@@ -156,7 +156,7 @@ export const assertions = [
     {
         description: 'You are holding a certain amount of bnb domain names',
         assertion: {
-            BnbDomainHolding: "BnbDomainHolding",
+            BnbDomainHolding: 'BnbDomainHolding',
         },
     },
     {
