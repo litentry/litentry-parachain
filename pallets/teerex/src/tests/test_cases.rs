@@ -1025,3 +1025,119 @@ fn publish_hash_with_too_much_data_fails() {
 		);
 	})
 }
+
+#[test]
+fn cannot_register_enclave_when_limit_reached() {
+	new_test_ext().execute_with(|| {
+		crate::RegisteredEnclaveLimit::<Test>::put(1u64);
+
+		let signer5 = get_signer(TEST5_SIGNER_PUB);
+		let signer6 = get_signer(TEST6_SIGNER_PUB);
+
+		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer5),
+			TEST5_CERT.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
+		Timestamp::set_timestamp(TEST6_TIMESTAMP);
+		assert_err!(
+			Teerex::register_enclave(
+				RuntimeOrigin::signed(signer6),
+				TEST6_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+			),
+			Error::<Test>::RegisteredEnclaveLimitReached
+		);
+	})
+}
+
+#[test]
+fn can_register_enclave_while_limit_not_reached() {
+	new_test_ext().execute_with(|| {
+		crate::RegisteredEnclaveLimit::<Test>::put(1u64);
+		assert_eq!(Teerex::registered_enclave_limit(), 1);
+		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		let signer5 = get_signer(TEST5_SIGNER_PUB);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer5),
+			TEST5_CERT.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
+	})
+}
+
+#[test]
+fn can_set_registered_enclave_limit_to_higher_than_actual_registered_enclaves_count() {
+	new_test_ext().execute_with(|| {
+		let new_litmit = 1;
+		let signer5 = get_signer(TEST5_SIGNER_PUB);
+		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer5.clone()),
+			TEST5_CERT.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
+		assert_ok!(Teerex::set_registered_enclave_limit(
+			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			new_litmit
+		));
+		System::assert_last_event(TeerexEvent::RegisteredEnclaveLimitSet(new_litmit).into());
+	});
+}
+
+#[test]
+fn only_admin_can_set_registered_enclave_limit() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			Teerex::set_registered_enclave_limit(
+				RuntimeOrigin::signed(AccountKeyring::Bob.to_account_id()),
+				4
+			),
+			Error::<Test>::RequireAdmin
+		);
+	})
+}
+
+#[test]
+fn can_set_registered_enclave_limit_to_equal_actual_registered_enclaves_count() {
+	new_test_ext().execute_with(|| {
+		let new_limit = 4;
+		assert_ok!(Teerex::set_registered_enclave_limit(
+			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			new_limit
+		));
+		System::assert_last_event(TeerexEvent::RegisteredEnclaveLimitSet(new_limit).into());
+		assert_eq!(System::events().len(), 1)
+	});
+}
+
+#[test]
+fn cannot_set_registered_enclave_limit_to_lower_than_actual_registered_enclaves_count() {
+	new_test_ext().execute_with(|| {
+		let signer5 = get_signer(TEST5_SIGNER_PUB);
+		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		assert_ok!(Teerex::register_enclave(
+			RuntimeOrigin::signed(signer5.clone()),
+			TEST5_CERT.to_vec(),
+			URL.to_vec(),
+			None,
+			None,
+		));
+		assert_err!(
+			Teerex::set_registered_enclave_limit(
+				RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+				0
+			),
+			Error::<Test>::CannotLowerRegisteredEnclaveLimit
+		);
+	});
+}

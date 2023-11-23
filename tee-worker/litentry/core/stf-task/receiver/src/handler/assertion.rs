@@ -61,8 +61,13 @@ where
 		// create the initial credential
 		// TODO: maybe we can further simplify this
 		let mut credential = match self.req.assertion.clone() {
-			Assertion::A1 => lc_assertion_build::a1::build(&self.req),
-
+			Assertion::A1 => {
+				#[cfg(test)]
+				{
+					std::thread::sleep(core::time::Duration::from_secs(5));
+				}
+				lc_assertion_build::a1::build(&self.req)
+			},
 			Assertion::A2(guild_id) => lc_assertion_build::a2::build(&self.req, guild_id),
 
 			Assertion::A3(guild_id, channel_id, role_id) =>
@@ -96,9 +101,6 @@ where
 
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
-
-			Assertion::SoraQuiz(quiz_type) =>
-				lc_assertion_build::sora::quiz::build(&self.req, quiz_type),
 
 			Assertion::GenericDiscordRole(role_type) =>
 				lc_assertion_build::generic_discord_role::build(&self.req, role_type),

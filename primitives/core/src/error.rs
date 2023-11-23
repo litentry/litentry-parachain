@@ -58,16 +58,10 @@ pub enum ErrorDetail {
 	// is different from expected
 	#[codec(index = 8)]
 	UnexpectedMessage,
-	#[codec(index = 9)]
-	WrongSignatureType,
 	// error when during web3 identity verification process tee-worker fails to verify signature
 	// of verification data
 	#[codec(index = 10)]
 	VerifyWeb3SignatureFailed,
-	#[codec(index = 11)]
-	RecoverEvmAddressFailed,
-	#[codec(index = 12)]
-	Web3NetworkOutOfBounds,
 }
 
 // We could have used Into<ErrorDetail>, but we want it to be more explicit, similar to `into_iter`

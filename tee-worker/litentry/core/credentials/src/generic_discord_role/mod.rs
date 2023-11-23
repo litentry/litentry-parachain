@@ -18,17 +18,30 @@ use crate::{
 	assertion_logic::{AssertionLogic, Op},
 	Credential,
 };
-use litentry_primitives::GenericDiscordRoleType;
+use litentry_primitives::{ContestType, GenericDiscordRoleType, SoraQuizType};
 
 // Legend / Popularity / Participant
 // (type, description)
-const VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS: [(&str, &str); 3] = [
+const VC_LITENTRY_CONTEST_INFOS: [(&str, &str); 3] = [
 	("Litentry & Contest Legend", "You got the Top Award of community contest."),
 	(
 		"Litentry & Popularity Award of Score Contest",
 		"You got the Popularity Award of community contest.",
 	),
 	("Litentry & Contest Participant", "You participated in the community contest."),
+];
+
+// Attendee / Master
+// (type, description)
+const VC_LITENTRY_SORA_QUIZ_INFOS: [(&str, &str); 2] = [
+	(
+        "Litentry & SORA Quiz Attendee",
+        "Congratulations on your participation in our first quiz in collaboration with our partner, Sora. You have embarked on an exciting educational journey, exploring the world of DeFi & Web3 Identity, we truly appreciate your curiosity and dedication."
+    ),
+    (
+        "Litentry & SORA Quiz Master",
+        "Congratulations on winning our first quiz in collaboration with Sora! By emerging as the winner, you have shown your excellent understanding of DeFi along with Web3 identity security and privacy. You are truly a champion in this field!"
+    ),
 ];
 
 pub trait GenericDiscordRoleAssertionUpdate {
@@ -51,20 +64,32 @@ impl GenericDiscordRoleAssertionUpdate for Credential {
 	}
 }
 
-fn get_generic_discord_role_assertion_content(ctype: &GenericDiscordRoleType) -> &'static str {
-	match ctype {
-		GenericDiscordRoleType::Legend => "$is_contest_legend",
-		GenericDiscordRoleType::Popularity => "$is_contest_popularity",
-		GenericDiscordRoleType::Participant => "$is_contest_participant",
+fn get_generic_discord_role_assertion_content(rtype: &GenericDiscordRoleType) -> &'static str {
+	match rtype {
+		GenericDiscordRoleType::Contest(ctype) => match ctype {
+			ContestType::Legend => "$is_contest_legend",
+			ContestType::Popularity => "$is_contest_popularity",
+			ContestType::Participant => "$is_contest_participant",
+		},
+		GenericDiscordRoleType::SoraQuiz(qtype) => match qtype {
+			SoraQuizType::Attendee => "$is_attendee",
+			SoraQuizType::Master => "$is_master",
+		},
 	}
 }
 
 fn get_generic_discord_role_assertion_info(
-	ctype: &GenericDiscordRoleType,
+	rtype: &GenericDiscordRoleType,
 ) -> (&'static str, &'static str) {
-	match ctype {
-		GenericDiscordRoleType::Legend => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[0],
-		GenericDiscordRoleType::Popularity => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[1],
-		GenericDiscordRoleType::Participant => VC_LITENTRY_GENERIC_DISCORD_ROLE_INFOS[2],
+	match rtype {
+		GenericDiscordRoleType::Contest(ctype) => match ctype {
+			ContestType::Legend => VC_LITENTRY_CONTEST_INFOS[0],
+			ContestType::Popularity => VC_LITENTRY_CONTEST_INFOS[1],
+			ContestType::Participant => VC_LITENTRY_CONTEST_INFOS[2],
+		},
+		GenericDiscordRoleType::SoraQuiz(ctype) => match ctype {
+			SoraQuizType::Attendee => VC_LITENTRY_SORA_QUIZ_INFOS[0],
+			SoraQuizType::Master => VC_LITENTRY_SORA_QUIZ_INFOS[1],
+		},
 	}
 }

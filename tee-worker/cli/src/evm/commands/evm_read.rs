@@ -17,9 +17,8 @@
 
 use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
-	trusted_operation::perform_trusted_operation, Cli, CliError, CliResult, CliResultOk,
+	trusted_operation::perform_trusted_operation, Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use itp_types::AccountId;
@@ -56,20 +55,7 @@ impl EvmReadCommands {
 			TrustedGetter::evm_account_storages(sender_acc.into(), execution_address, H256::zero())
 				.sign(&KeyPair::Sr25519(Box::new(sender)))
 				.into();
-		let res = perform_trusted_operation(cli, trusted_args, &top)?;
-
-		debug!("received result for balance");
-		if let Some(v) = res {
-			if let Ok(vd) = H256::decode(&mut v.as_slice()) {
-				println!("{:?}", vd);
-				Ok(CliResultOk::H256 { hash: vd })
-			} else {
-				error!("could not decode value. {:x?}", v);
-				Err(CliError::EvmRead { msg: format!("could not decode value. {:x?}", v) })
-			}
-		} else {
-			error!("Nothing in state!");
-			Err(CliError::EvmRead { msg: "Nothing in state!".to_string() })
-		}
+		let hash = perform_trusted_operation::<H256>(cli, trusted_args, &top)?;
+		Ok(CliResultOk::H256 { hash })
 	}
 }
