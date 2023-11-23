@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
+import { buildIdentityFromKeypair, EthersSigner, initIntegrationTestContext } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -14,6 +14,7 @@ import { aesKey } from './common/call';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { assertions } from './common/utils/vc-helper';
+
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -28,7 +29,8 @@ describe('Test Vc (direct invocation)', function () {
             0
         );
         teeShieldingKey = await getTeeShieldingKey(context);
-        aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        aliceSubject = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
+        
     });
 
     assertions.forEach(({ assertion }) => {
@@ -44,7 +46,7 @@ describe('Test Vc (direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
+                new EthersSigner(context.ethersWallet.alice),
                 aliceSubject,
                 context.api.createType('Assertion', assertion).toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
@@ -52,7 +54,6 @@ describe('Test Vc (direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-
             await assertIsInSidechainBlock(`${Object.keys(assertion)[0]} requestVcCall`, res);
             const events = await eventsPromise;
             const vcIssuedEvents = events

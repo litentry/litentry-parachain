@@ -29,12 +29,12 @@ export async function handleVcEvents(
 
 // https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
 export const assertions = [
-    // {
-    //     description: 'You’ve identified at least one account/address in both Web2 and Web3.',
-    //     assertion: {
-    //         A1: 'A1',
-    //     },
-    // },
+    {
+        description: 'You’ve identified at least one account/address in both Web2 and Web3.',
+        assertion: {
+            A1: 'A1',
+        },
+    },
     // {
     //     description: 'The user is a member of Litentry Discord.',
     //     assertion: {
@@ -87,8 +87,8 @@ export const assertions = [
     // // https://www.notion.so/web3builders/Assertion-interface-9126ba85a925417a922f2c6ae5d62e87
     // {
     //     description: `You are a trader or liquidity provider of Uniswap V2 or V3
-    //                 Uniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f
-    //                 Uniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984`,
+    //                   Uniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f
+    //                   Uniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984`,
     //     assertion: {
     //         Achainable: {
     //             Basic: {
