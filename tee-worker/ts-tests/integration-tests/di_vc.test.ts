@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { buildIdentityFromKeypair, EthersSigner, initIntegrationTestContext } from './common/utils';
+import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { assertIsInSidechainBlock, assertVc, assertWorkerError } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -29,7 +29,7 @@ describe('Test Vc (direct invocation)', function () {
             0
         );
         teeShieldingKey = await getTeeShieldingKey(context);
-        aliceSubject = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
+        aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
     basicAssertions.forEach(({ description, assertion }) => {
@@ -45,7 +45,7 @@ describe('Test Vc (direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                new EthersSigner(context.ethersWallet.alice),
+                new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
                 context.api.createType('Assertion', assertion).toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
@@ -80,7 +80,7 @@ describe('Test Vc (direct invocation)', function () {
                 context.api,
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
-                new EthersSigner(context.ethersWallet.alice),
+                new PolkadotSigner(context.substrateWallet.alice),
                 aliceSubject,
                 context.api.createType('Assertion', assertion).toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
