@@ -609,7 +609,7 @@ jobs:
       - parachain-build-dev
       - tee-build
       - set-condition
-    if: needs.set-condition.outputs.run_update_client_api
+    if: needs.set-condition.outputs.run_update_client_api = "true"
     steps:
       - uses: actions/checkout@v4
 
