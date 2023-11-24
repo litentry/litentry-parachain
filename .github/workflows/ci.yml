@@ -661,6 +661,11 @@ jobs:
           sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
           tar -zcvf client-api.tar.gz client-api
 
+      - name: Set Git identity
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+
       - name: Track the bundle file in LFS
         run: git lfs track "tee-worker/client-api.tar.gz"
 
