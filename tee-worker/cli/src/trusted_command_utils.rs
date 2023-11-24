@@ -25,7 +25,7 @@ use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
 use ita_stf::{TrustedGetter, TrustedOperation};
 use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier};
 use itp_types::DirectRequestStatus;
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
@@ -147,6 +147,7 @@ pub(crate) fn get_pending_trusted_calls_for(
 	let direct_api = get_worker_api_direct(cli);
 	let rpc_method = "author_pendingTrustedCallsFor".to_owned();
 	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
 		rpc_method,
 		vec![shard.encode().to_base58(), who.to_hex()],
 	)

@@ -114,6 +114,11 @@ where
 		self.send(TrustedOperationStatus::Broadcast)
 	}
 
+	/// The extrinsic has been executed.
+	pub fn top_executed(&mut self, response: &[u8], force_wait: bool) {
+		self.send(TrustedOperationStatus::TopExecuted(response.to_vec(), force_wait))
+	}
+
 	/// Returns true if the are no more listeners for this extrinsic or it was finalized.
 	pub fn is_done(&self) -> bool {
 		self.is_in_block // || self.receivers.is_empty()

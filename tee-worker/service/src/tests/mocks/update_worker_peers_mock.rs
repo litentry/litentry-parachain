@@ -15,12 +15,19 @@
 
 */
 
-use crate::{worker::WorkerResult, worker_peers_updater::UpdateWorkerPeers};
+use crate::{
+	worker::{Url, WorkerResult},
+	worker_peers_registry::PeersRegistry,
+};
 
-pub struct UpdateWorkerPeersMock;
+pub struct WorkerPeersRegistryMock;
 
-impl UpdateWorkerPeers for UpdateWorkerPeersMock {
+impl PeersRegistry for WorkerPeersRegistryMock {
 	fn update_peers(&self) -> WorkerResult<()> {
 		Ok(())
+	}
+
+	fn read_trusted_peers(&self) -> WorkerResult<Vec<Url>> {
+		Ok(Vec::new())
 	}
 }
