@@ -109,7 +109,6 @@ jobs:
           push_docker=false
           run_parachain_test=false
           run_tee_test=false
-          run_update_client_api=false
           if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
             rebuild_parachain=true
           fi
@@ -127,19 +126,11 @@ jobs:
           if [ "${{ steps.filter.outputs.tee_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
             run_tee_test=true
           fi
-          if [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ] || [! git lfs ls-files | grep -q 'tee-worker/client-api.tar.gz']; then
-            run_update_client_api=true
-          fi
-           if git lfs ls-files | grep -q 'tee-worker/client-api.tar.gz'; then
-            echo "Bundle already exists in LFS. Skipping upload."
-            exit 0
-          fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
           echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
-          echo "run_update_client_api=$run_update_client_api" | tee -a $GITHUB_OUTPUT
 
   fmt:
     runs-on: ubuntu-latest
@@ -606,18 +597,27 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-    
+
   update-client-api:
     runs-on: ubuntu-latest
     needs:
       - parachain-build-dev
       - tee-build
       - set-condition
-f    if: needs.set-condition.outputs.run_update_client_api == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: true
+
+      - name: Check if bundle exists in LFS and if rebuild is required
+        run: |
+          # Check if either rebuild_parachain or rebuild_tee is true
+          if [[ "${{ needs.set-condition.outputs.rebuild_parachain }}" = "false" && "${{ needs.set-condition.outputs.rebuild_tee }}" = "false" && $(git lfs ls-files | grep -q 'tee-worker/client-api.tar.gz') ]]; then
+            echo "Bundle already exists in LFS and build is not required."
+            exit 0
+          else
+            echo "Rebuild is required. Proceeding with upload."
+          fi
 
       - name: Pull polkadot image
         run: |
@@ -639,7 +639,7 @@ f    if: needs.set-condition.outputs.run_update_client_api == 'true'
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
-        
+
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
@@ -648,18 +648,18 @@ f    if: needs.set-condition.outputs.run_update_client_api == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-        
+
       - name: Update metadata and generate types
         timeout-minutes: 10
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
-      
+
       - name: Zip client-api
         working-directory: ./tee-worker
         run: |
-         sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
-         tar -zcvf client-api.tar.gz client-api
+          sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
+          tar -zcvf client-api.tar.gz client-api
 
       - name: Track the bundle file in LFS
         run: git lfs track "tee-worker/client-api.tar.gz"
@@ -681,7 +681,7 @@ f    if: needs.set-condition.outputs.run_update_client_api == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
-      
+
   tee-test:
     runs-on: ubuntu-latest
     needs:
@@ -721,11 +721,11 @@ f    if: needs.set-condition.outputs.run_update_client_api == 'true'
       - uses: actions/download-artifact@v3
         with:
           name: litentry-tee
-          
+
 #      - uses: actions/download-artifact@v3
 #        with:
 #          name: client-api
-      
+
       - name: Unzip client-api
         run: |
           git lsf pull
@@ -752,7 +752,7 @@ f    if: needs.set-condition.outputs.run_update_client_api == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-      
+
       - name: Integration Test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40
