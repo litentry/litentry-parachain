@@ -22,7 +22,7 @@ export default {
                 A20: "Null",
                 Oneblock: "OneBlockCourseType",
                 GenericDiscordRole: "GenericDiscordRoleType",
-                __Unused15: 'Null',
+                __Unused15: "Null",
                 BnbDomainHolding: "Null",
                 BnbDigitDomainClub: "BnbDigitDomainType",
             },
