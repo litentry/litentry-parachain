@@ -74,6 +74,7 @@ pub trait AuthorApi<Hash, BlockHash> {
 	/// life cycle.
 	fn watch_top<R: DecryptableRequest + Encode>(&self, request: R) -> PoolFuture<Hash, RpcError>;
 
+	/// Submit a request to watch and broadcasts it to known peers.
 	fn watch_and_broadcast_top<R: DecryptableRequest + Encode>(
 		&self,
 		request: R,
