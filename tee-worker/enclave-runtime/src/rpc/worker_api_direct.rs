@@ -75,12 +75,6 @@ pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, S>(
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
 	state: Option<Arc<S>>,
-	sender: Arc<
-		std::sync::mpsc::SyncSender<(
-			direct_top_pool_api::MaybeRequestIdWithParams,
-			direct_top_pool_api::MaybeRequestIdWithParams,
-		)>,
-	>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256> + Send + Sync + 'static,
@@ -93,7 +87,7 @@ where
 	let pool_author = top_pool_author.clone();
 
 	// Add direct TOP pool rpc methods
-	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author, io, sender);
+	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(top_pool_author, io);
 
 	// author_getShieldingKey
 	let rsa_pubkey_name: &str = "author_getShieldingKey";

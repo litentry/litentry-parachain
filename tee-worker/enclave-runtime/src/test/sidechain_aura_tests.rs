@@ -52,7 +52,10 @@ use itp_stf_interface::system_pallet::{SystemPalletAccountInterface, SystemPalle
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{handle_state_mock::HandleStateMock, metrics_ocall_mock::MetricsOCallMock};
 use itp_time_utils::duration_now;
-use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
+use itp_top_pool_author::{
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
+	traits::AuthorApi,
+};
 use itp_types::{AccountId, Block as ParentchainBlock, RsaRequest, ShardIdentifier};
 use its_block_verification::slot::slot_from_timestamp_and_duration;
 use its_primitives::{traits::Block, types::SignedBlock as SignedSidechainBlock};
@@ -105,12 +108,16 @@ pub fn produce_sidechain_block_and_import_it() {
 	));
 	let top_pool = create_top_pool();
 
+	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
+
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter {},
+		DirectCallsOnlyFilter {},
 		state_handler.clone(),
 		shielding_key_repo,
 		Arc::new(MetricsOCallMock::default()),
+		Arc::new(sender),
 	));
 	let parentchain_block_import_trigger = Arc::new(TestParentchainBlockImportTrigger::default());
 	let peer_updater_mock = Arc::new(PeerUpdaterMock {});

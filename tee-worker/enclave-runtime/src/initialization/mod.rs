@@ -77,13 +77,14 @@ use itp_stf_state_handler::{
 	state_snapshot_repository_loader::StateSnapshotRepositoryLoader, StateHandler,
 };
 use itp_top_pool::pool::Options as PoolOptions;
-use itp_top_pool_author::author::AuthorTopFilter;
+use itp_top_pool_author::author::{AuthorTopFilter, BroadcastedTopFilter};
 use itp_types::{parentchain::ParentchainId, ShardIdentifier};
 use its_sidechain::{
 	block_composer::BlockComposer,
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_primitives::BroadcastedRequest;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
@@ -180,16 +181,17 @@ pub(crate) fn init_enclave(
 	let rpc_responder =
 		Arc::new(EnclaveRpcResponder::new(connection_registry.clone(), response_channel));
 
+	let (request_sink, broadcaster) = init(rpc_responder.clone());
+	let request_sink_cloned = request_sink.clone();
+
 	let top_pool_author = create_top_pool_author(
-		rpc_responder.clone(),
+		rpc_responder,
 		state_handler.clone(),
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
+		request_sink_cloned,
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
-
-	let (request_sink, broadcaster) = init(rpc_responder);
-	let request_sink_cloned = request_sink.clone();
 
 	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
 	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
@@ -200,7 +202,6 @@ pub(crate) fn init_enclave(
 		getter_executor,
 		shielding_key_repository,
 		Some(state_handler),
-		request_sink_cloned,
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 	GLOBAL_RPC_WS_HANDLER_COMPONENT.initialize(rpc_handler);
@@ -348,6 +349,7 @@ pub fn create_top_pool_author(
 	state_handler: Arc<EnclaveStateHandler>,
 	ocall_api: Arc<EnclaveOCallApi>,
 	shielding_key_repository: Arc<EnclaveShieldingKeyRepository>,
+	requests_sink: Arc<std::sync::mpsc::SyncSender<BroadcastedRequest>>,
 ) -> Arc<EnclaveTopPoolAuthor> {
 	let side_chain_api = Arc::new(EnclaveSidechainApi::new());
 	let top_pool =
@@ -356,8 +358,10 @@ pub fn create_top_pool_author(
 	Arc::new(EnclaveTopPoolAuthor::new(
 		top_pool,
 		AuthorTopFilter {},
+		BroadcastedTopFilter {},
 		state_handler,
 		shielding_key_repository,
 		ocall_api,
+		requests_sink,
 	))
 }

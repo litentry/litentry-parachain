@@ -45,7 +45,7 @@ use itp_stf_interface::system_pallet::SystemPalletEventInterface;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
 use itp_time_utils::duration_now;
-use itp_top_pool_author::top_filter::AllowAllTopsFilter;
+use itp_top_pool_author::top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter};
 use itp_types::Block as ParentchainBlock;
 use its_block_verification::slot::slot_from_timestamp_and_duration;
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
@@ -92,13 +92,16 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 		node_metadata_repo.clone(),
 	));
 	let top_pool = create_top_pool();
+	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter {},
+		DirectCallsOnlyFilter {},
 		state_handler.clone(),
 		shielding_key_repo,
 		Arc::new(MetricsOCallMock::default()),
+		Arc::new(sender),
 	));
 	let parentchain_block_import_trigger = Arc::new(TestParentchainBlockImportTrigger::default());
 	let peer_updater_mock = Arc::new(PeerUpdaterMock {});

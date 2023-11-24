@@ -21,7 +21,7 @@ use crate::{
 		create_indirect_trusted_operation, shard_id, trusted_call_signed, trusted_getter_signed,
 	},
 	test_utils::submit_operation_to_top_pool,
-	top_filter::{AllowAllTopsFilter, Filter, GettersOnlyFilter},
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter, Filter, GettersOnlyFilter},
 	traits::AuthorApi,
 };
 use codec::{Decode, Encode};
@@ -37,9 +37,10 @@ use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::H256;
 use std::sync::Arc;
 
-type TestAuthor<Filter> = Author<
+type TestAuthor<Filter, BroadcastedFilter> = Author<
 	TrustedOperationPoolMock,
 	Filter,
+	BroadcastedFilter,
 	HandleStateMock,
 	KeyRepositoryMock<ShieldingCryptoMock>,
 	MetricsOCallMock,
@@ -64,7 +65,8 @@ fn encrypt_and_decrypt_top(top: &TrustedOperation) -> TrustedOperation {
 
 #[test]
 fn submitting_to_author_inserts_in_pool() {
-	let (author, top_pool, shielding_key) = create_author_with_filter(AllowAllTopsFilter);
+	let (author, top_pool, shielding_key) =
+		create_author_with_filter(AllowAllTopsFilter, DirectCallsOnlyFilter);
 	let top = TrustedOperation::from(trusted_getter_signed());
 
 	let submit_response: H256 =
@@ -78,7 +80,8 @@ fn submitting_to_author_inserts_in_pool() {
 
 #[test]
 fn submitting_call_to_author_when_top_is_filtered_returns_error() {
-	let (author, top_pool, shielding_key) = create_author_with_filter(GettersOnlyFilter);
+	let (author, top_pool, shielding_key) =
+		create_author_with_filter(GettersOnlyFilter, DirectCallsOnlyFilter);
 	let top = TrustedOperation::direct_call(trusted_call_signed());
 
 	let submit_response = submit_operation_to_top_pool(&author, &top, &shielding_key, shard_id());
@@ -89,7 +92,8 @@ fn submitting_call_to_author_when_top_is_filtered_returns_error() {
 
 #[test]
 fn submitting_getter_to_author_when_top_is_filtered_inserts_in_pool() {
-	let (author, top_pool, shielding_key) = create_author_with_filter(GettersOnlyFilter);
+	let (author, top_pool, shielding_key) =
+		create_author_with_filter(GettersOnlyFilter, DirectCallsOnlyFilter);
 	let top = TrustedOperation::from(trusted_getter_signed());
 
 	let submit_response =
@@ -102,7 +106,8 @@ fn submitting_getter_to_author_when_top_is_filtered_inserts_in_pool() {
 #[test]
 fn submitting_direct_call_works() {
 	let trusted_operation = TrustedOperation::direct_call(trusted_call_signed());
-	let (author, top_pool, shielding_key) = create_author_with_filter(AllowAllTopsFilter);
+	let (author, top_pool, shielding_key) =
+		create_author_with_filter(AllowAllTopsFilter, DirectCallsOnlyFilter);
 
 	let _ = submit_operation_to_top_pool(&author, &trusted_operation, &shielding_key, shard_id())
 		.unwrap();
@@ -113,7 +118,8 @@ fn submitting_direct_call_works() {
 
 #[test]
 fn submitting_indirect_call_works() {
-	let (author, top_pool, shielding_key) = create_author_with_filter(AllowAllTopsFilter);
+	let (author, top_pool, shielding_key) =
+		create_author_with_filter(AllowAllTopsFilter, DirectCallsOnlyFilter);
 	let trusted_operation = create_indirect_trusted_operation();
 
 	let _ = submit_operation_to_top_pool(&author, &trusted_operation, &shielding_key, shard_id())
@@ -123,9 +129,13 @@ fn submitting_indirect_call_works() {
 	assert_eq!(1, author.get_pending_trusted_calls(shard_id()).len());
 }
 
-fn create_author_with_filter<F: Filter<Value = TrustedOperation>>(
+fn create_author_with_filter<
+	F: Filter<Value = TrustedOperation>,
+	BF: Filter<Value = TrustedOperation>,
+>(
 	filter: F,
-) -> (TestAuthor<F>, Arc<TrustedOperationPoolMock>, ShieldingCryptoMock) {
+	broadcasted_filter: BF,
+) -> (TestAuthor<F, BF>, Arc<TrustedOperationPoolMock>, ShieldingCryptoMock) {
 	let top_pool = Arc::new(TrustedOperationPoolMock::default());
 
 	let shard_id = shard_id();
@@ -137,13 +147,17 @@ fn create_author_with_filter<F: Filter<Value = TrustedOperation>>(
 		Arc::new(KeyRepositoryMock::<ShieldingCryptoMock>::new(encryption_key.clone()));
 	let ocall_mock = Arc::new(MetricsOCallMock::default());
 
+	let (sender, receiver) = std::sync::mpsc::sync_channel(1000);
+
 	(
 		Author::new(
 			top_pool.clone(),
 			filter,
+			broadcasted_filter,
 			Arc::new(state_facade),
 			shielding_key_repo,
 			ocall_mock,
+			Arc::new(sender),
 		),
 		top_pool,
 		encryption_key,

@@ -4677,6 +4677,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "itp-utils",
+ "litentry-primitives",
  "log 0.4.20",
  "sgx_tstd",
 ]
@@ -5305,6 +5306,7 @@ dependencies = [
  "itp-test",
  "itp-top-pool",
  "itp-types",
+ "itp-utils",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
  "lazy_static",

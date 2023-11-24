@@ -35,48 +35,35 @@ use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHan
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
 use litentry_primitives::{AesOutput, AesRequest};
 use log::*;
-use std::{
-	borrow::ToOwned,
-	format,
-	string::String,
-	sync::{mpsc::SyncSender, Arc},
-	vec,
-	vec::Vec,
-};
+use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
 type Hash = sp_core::H256;
-
-pub type MaybeRequestIdWithParams = Option<(Hash, Vec<String>)>;
 
 pub fn add_top_pool_direct_rpc_methods<R>(
 	top_pool_author: Arc<R>,
 	mut io_handler: IoHandler,
-	sender: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
 ) -> IoHandler
 where
 	R: AuthorApi<Hash, Hash> + Send + Sync + 'static,
 {
-	let cloned_sender = sender.clone();
 	// author_submitAndWatchRsaRequest
 	let author_submit_and_watch_rsa_request_name: &str = "author_submitAndWatchRsaRequest";
 	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_and_watch_rsa_request_name, move |params: Params| {
-		let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params.clone()) {
-			Ok(hash_value) => {
-				if let Ok(parsed_params) = params.parse::<Vec<String>>() {
-					sender.send((Some((hash_value, parsed_params)), None)).unwrap();
-				}
-
-				RpcReturnValue {
-					do_watch: true,
-					value: vec![],
-					status: DirectRequestStatus::TrustedOperationStatus(
-						TrustedOperationStatus::Submitted,
-						hash_value,
-					),
-				}
-				.to_hex()
-			},
+		let json_value = match author_submit_extrinsic_inner(
+			watch_author.clone(),
+			params,
+			Some("author_submitAndWatchBroadcastedRsaRequest".to_owned()),
+		) {
+			Ok(hash_value) => RpcReturnValue {
+				do_watch: true,
+				value: vec![],
+				status: DirectRequestStatus::TrustedOperationStatus(
+					TrustedOperationStatus::Submitted,
+					hash_value,
+				),
+			}
+			.to_hex(),
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),
 		};
 		Ok(json!(json_value))
@@ -89,7 +76,8 @@ where
 	io_handler.add_sync_method(
 		author_submit_and_watch_broadcasted_rsa_request,
 		move |params: Params| {
-			let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params) {
+			let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params, None)
+			{
 				Ok(hash_value) => {
 					RpcReturnValue {
 						do_watch: true,
@@ -111,7 +99,7 @@ where
 	let author_submit_extrinsic_name: &str = "author_submitRsaRequest";
 	let submit_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
-		let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params) {
+		let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params, None) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: false,
 				value: vec![],
@@ -166,23 +154,20 @@ where
 	let author_submit_and_watch_aes_request_name: &str = "author_submitAndWatchAesRequest";
 	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method(author_submit_and_watch_aes_request_name, move |params: Params| {
-		let json_value = match author_submit_aes_request_inner(watch_author.clone(), params.clone())
-		{
-			Ok(hash_value) => {
-				if let Ok(parsed_params) = params.parse::<Vec<String>>() {
-					cloned_sender.send((None, Some((hash_value, parsed_params)))).unwrap();
-				}
-
-				RpcReturnValue {
-					do_watch: true,
-					value: vec![],
-					status: DirectRequestStatus::TrustedOperationStatus(
-						TrustedOperationStatus::Submitted,
-						hash_value,
-					),
-				}
-				.to_hex()
-			},
+		let json_value = match author_submit_aes_request_inner(
+			watch_author.clone(),
+			params,
+			Some("author_submitAndWatchBroadcastedAesRequest".to_owned()),
+		) {
+			Ok(hash_value) => RpcReturnValue {
+				do_watch: true,
+				value: vec![],
+				status: DirectRequestStatus::TrustedOperationStatus(
+					TrustedOperationStatus::Submitted,
+					hash_value,
+				),
+			}
+			.to_hex(),
 			Err(error) => compute_hex_encoded_return_error(error.as_str()),
 		};
 		Ok(json!(json_value))
@@ -194,18 +179,19 @@ where
 	io_handler.add_sync_method(
 		author_submit_and_watch_broadcasted_aes_request_name,
 		move |params: Params| {
-			let json_value = match author_submit_aes_request_inner(watch_author.clone(), params) {
-				Ok(hash_value) => RpcReturnValue {
-					do_watch: true,
-					value: vec![],
-					status: DirectRequestStatus::TrustedOperationStatus(
-						TrustedOperationStatus::Submitted,
-						hash_value,
-					),
-				}
-				.to_hex(),
-				Err(error) => compute_hex_encoded_return_error(error.as_str()),
-			};
+			let json_value =
+				match author_submit_aes_request_inner(watch_author.clone(), params, None) {
+					Ok(hash_value) => RpcReturnValue {
+						do_watch: true,
+						value: vec![],
+						status: DirectRequestStatus::TrustedOperationStatus(
+							TrustedOperationStatus::Submitted,
+							hash_value,
+						),
+					}
+					.to_hex(),
+					Err(error) => compute_hex_encoded_return_error(error.as_str()),
+				};
 			Ok(json!(json_value))
 		},
 	);
@@ -305,16 +291,23 @@ fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 fn author_submit_extrinsic_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'static>(
 	author: Arc<R>,
 	params: Params,
+	json_rpc_method: Option<String>,
 ) -> Result<Hash, String> {
 	debug!("Author submit and watch trusted operation..");
 
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
+	info!("Got request hex: {:?}", &hex_encoded_params[0]);
+	std::println!("Got request hex: {:?}", &hex_encoded_params[0]);
+
 	let request =
 		RsaRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
 
-	let result = async { author.watch_top(request).await };
-	let response: Result<Hash, RpcError> = executor::block_on(result);
+	let response: Result<Hash, RpcError> = if let Some(method) = json_rpc_method {
+		executor::block_on(async { author.watch_and_broadcast_top(request, method).await })
+	} else {
+		executor::block_on(async { author.watch_top(request).await })
+	};
 
 	match &response {
 		Ok(h) => debug!("Trusted operation submitted successfully ({:?})", h),
@@ -327,16 +320,23 @@ fn author_submit_extrinsic_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'stati
 fn author_submit_aes_request_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'static>(
 	author: Arc<R>,
 	params: Params,
+	json_rpc_method: Option<String>,
 ) -> Result<Hash, String> {
 	debug!("Author submit and watch AesRequest..");
 
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 
+	info!("Got request hex: {:?}", &hex_encoded_params[0]);
+	std::println!("Got request hex: {:?}", &hex_encoded_params[0]);
+
 	let request =
 		AesRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
 
-	let result = async { author.watch_top(request).await };
-	let response: Result<Hash, RpcError> = executor::block_on(result);
+	let response: Result<Hash, RpcError> = if let Some(method) = json_rpc_method {
+		executor::block_on(async { author.watch_and_broadcast_top(request, method).await })
+	} else {
+		executor::block_on(async { author.watch_top(request).await })
+	};
 
 	match &response {
 		Ok(h) => debug!("AesRequest submitted successfully ({:?})", h),

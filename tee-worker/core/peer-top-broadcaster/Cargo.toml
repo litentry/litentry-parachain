@@ -19,6 +19,9 @@ itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-fe
 itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 
+# litentry
+litentry-primitives = { path = "../../litentry/primitives", default-features = false }
+
 [dev-dependencies]
 itc-direct-rpc-server = { path = "../direct-rpc-server", default-features = false, features = ["mocks"] }
 
@@ -31,6 +34,7 @@ sgx = [
     "itc-direct-rpc-server/sgx",
     "itc-direct-rpc-client/sgx",
     "itp-rpc/sgx",
+    "litentry-primitives/sgx",
 ]
 std = [
     "itp-stf-primitives/std",
@@ -40,4 +44,5 @@ std = [
     "itc-direct-rpc-server/std",
     "itc-direct-rpc-client/std",
     "itp-rpc/std",
+    "litentry-primitives/std",
 ]

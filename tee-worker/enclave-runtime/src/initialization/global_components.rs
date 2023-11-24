@@ -83,7 +83,7 @@ use itp_stf_state_observer::state_observer::StateObserver;
 use itp_top_pool::basic_pool::BasicPool;
 use itp_top_pool_author::{
 	api::SidechainApi,
-	author::{Author, AuthorTopFilter},
+	author::{Author, AuthorTopFilter, BroadcastedTopFilter},
 };
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use its_primitives::{
@@ -97,8 +97,9 @@ use its_sidechain::{
 	slots::FailSlotOnDemand,
 };
 use lazy_static::lazy_static;
+use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
-use sgx_tstd::{string::String, vec::Vec};
+use sgx_tstd::vec::Vec;
 use sp_core::{ed25519, ed25519::Pair};
 use std::sync::Arc;
 
@@ -270,6 +271,7 @@ pub type EnclaveTopPool = BasicPool<EnclaveSidechainApi, ParentchainBlock, Encla
 pub type EnclaveTopPoolAuthor = Author<
 	EnclaveTopPool,
 	AuthorTopFilter,
+	BroadcastedTopFilter,
 	EnclaveStateHandler,
 	EnclaveShieldingKeyRepository,
 	EnclaveOCallApi,
@@ -383,9 +385,8 @@ pub static GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT: ComponentContainer<
 	EnclaveDirectRpcBroadcaster,
 > = ComponentContainer::new("direct_rpc_broadcaster");
 
-#[allow(clippy::type_complexity)]
 pub static DIRECT_RPC_REQUEST_SINK_COMPONENT: ComponentContainer<
-	sgx_tstd::sync::mpsc::SyncSender<(Option<(Hash, Vec<String>)>, Option<(Hash, Vec<String>)>)>,
+	sgx_tstd::sync::mpsc::SyncSender<BroadcastedRequest>,
 > = ComponentContainer::new("direct_rpc_request_sink");
 
 /// attestation handler

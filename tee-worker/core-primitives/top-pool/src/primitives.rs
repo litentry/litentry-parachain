@@ -161,7 +161,7 @@ pub trait TrustedOperationPool: Send + Sync {
 	/// Block type.
 	type Block: BlockT;
 	/// TrustedOperation hash type.
-	type Hash: Hash + Eq + Member;
+	type Hash: Hash + Eq + Member + Encode;
 	/// In-pool operation type.
 	type InPoolOperation: InPoolOperation<
 		TrustedOperation = StfTrustedOperation,

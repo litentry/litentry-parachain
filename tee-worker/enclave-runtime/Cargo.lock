@@ -1930,6 +1930,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-types",
  "itp-utils",
+ "litentry-primitives",
  "log",
  "sgx_tstd",
 ]
@@ -2406,8 +2407,10 @@ dependencies = [
  "itp-test",
  "itp-top-pool",
  "itp-types",
+ "itp-utils",
  "jsonrpc-core",
  "lazy_static",
+ "litentry-primitives",
  "log",
  "parity-scale-codec",
  "sgx_tstd",

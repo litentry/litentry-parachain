@@ -11,7 +11,6 @@ use itp_test::mock::{
 use itp_top_pool_author::mocks::AuthorApiMock;
 use lc_stf_task_sender::stf_task_sender::{SendStfRequest, StfRequestSender};
 use litentry_primitives::Assertion;
-use std::sync::mpsc;
 
 #[test]
 fn test_threadpool_behaviour() {
@@ -20,14 +19,12 @@ fn test_threadpool_behaviour() {
 	let stf_enclave_signer_mock = StfEnclaveSignerMock::default();
 	let handle_state_mock = HandleStateMock::default();
 	let onchain_mock = OnchainMock::default();
-	let (sender, recv) = mpsc::sync_channel(1000);
 	let context = StfTaskContext::new(
 		shielding_key.clone(),
 		author_mock.into(),
 		stf_enclave_signer_mock.into(),
 		handle_state_mock.into(),
 		onchain_mock.into(),
-		Arc::new(sender),
 	);
 	let _handle = std::thread::spawn(move || {
 		run_stf_task_receiver(Arc::new(context)).unwrap();

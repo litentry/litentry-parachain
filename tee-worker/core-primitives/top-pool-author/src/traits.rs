@@ -17,6 +17,7 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
+use codec::Encode;
 
 use crate::error::Result;
 use ita_stf::{hash, TrustedOperation};
@@ -24,7 +25,7 @@ use itp_stf_primitives::types::AccountId;
 use itp_top_pool::primitives::PoolFuture;
 use itp_types::{BlockHash as SidechainBlockHash, DecryptableRequest, ShardIdentifier, H256};
 use jsonrpc_core::Error as RpcError;
-use std::vec::Vec;
+use std::{string::String, vec::Vec};
 
 /// Trait alias for a full STF author API
 pub trait FullAuthor = AuthorApi<H256, H256> + OnBlockImported<Hash = H256> + Send + Sync + 'static;
@@ -32,7 +33,7 @@ pub trait FullAuthor = AuthorApi<H256, H256> + OnBlockImported<Hash = H256> + Se
 /// Authoring RPC API
 pub trait AuthorApi<Hash, BlockHash> {
 	/// Submit encoded extrinsic for inclusion in block.
-	fn submit_top<R: DecryptableRequest>(&self, req: R) -> PoolFuture<Hash, RpcError>;
+	fn submit_top<R: DecryptableRequest + Encode>(&self, req: R) -> PoolFuture<Hash, RpcError>;
 
 	/// Return hash of Trusted Operation
 	fn hash_of(&self, xt: &TrustedOperation) -> Hash;
@@ -71,7 +72,13 @@ pub trait AuthorApi<Hash, BlockHash> {
 	///
 	/// See [`TrustedOperationStatus`](sp_transaction_pool::TrustedOperationStatus) for details on transaction
 	/// life cycle.
-	fn watch_top<R: DecryptableRequest>(&self, request: R) -> PoolFuture<Hash, RpcError>;
+	fn watch_top<R: DecryptableRequest + Encode>(&self, request: R) -> PoolFuture<Hash, RpcError>;
+
+	fn watch_and_broadcast_top<R: DecryptableRequest + Encode>(
+		&self,
+		request: R,
+		json_rpc_method: String,
+	) -> PoolFuture<Hash, RpcError>;
 
 	/// Litentry: set the rpc response value
 	fn update_connection_state(&self, updates: Vec<(Hash, (Vec<u8>, bool))>);

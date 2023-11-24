@@ -27,7 +27,7 @@ use std::sync::Arc;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		EnclaveStfEnclaveSigner, DIRECT_RPC_REQUEST_SINK_COMPONENT, GLOBAL_OCALL_API_COMPONENT,
+		EnclaveStfEnclaveSigner, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
@@ -95,7 +95,6 @@ fn run_vc_issuance_internal() -> Result<()> {
 	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
-	let request_sink = DIRECT_RPC_REQUEST_SINK_COMPONENT.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
@@ -115,7 +114,6 @@ fn run_vc_issuance_internal() -> Result<()> {
 		stf_enclave_signer,
 		state_handler,
 		ocall_api,
-		request_sink,
 	);
 	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain()?;
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;

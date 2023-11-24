@@ -23,7 +23,6 @@ use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
 };
-use itc_peer_top_broadcaster::MaybeRequestIdWithParams;
 use itc_tls_websocket_server::{ConnectionToken, WebSocketMessageHandler};
 use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 use itp_sgx_crypto::get_rsa3072_repository;
@@ -51,15 +50,12 @@ pub fn get_state_request_works() {
 	let getter_executor =
 		Arc::new(GetterExecutor::<_, GetStateMock<TestState>>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
-	let (sender, _receiver) =
-		std::sync::mpsc::sync_channel::<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>(1000);
 
 	let io_handler = public_api_rpc_handler(
 		top_pool_author,
 		getter_executor,
 		Arc::new(rsa_repository),
 		None::<Arc<HandleStateMock>>,
-		Arc::new(sender),
 	);
 	let rpc_handler = Arc::new(RpcWsHandler::new(io_handler, watch_extractor, connection_registry));
 

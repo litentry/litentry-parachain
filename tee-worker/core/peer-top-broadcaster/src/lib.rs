@@ -32,17 +32,16 @@ use std::sync::SgxMutex as Mutex;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
-use itc_direct_rpc_client::{
-	DirectRpcClientFactory, RequestParams, Response, RpcClient, RpcClientFactory,
-};
+use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClient, RpcClientFactory};
 use itc_direct_rpc_server::{
 	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry,
 	SendRpcResponse,
 };
-use itp_rpc::Id;
+use itp_rpc::{Id, RpcRequest};
 use itp_stf_primitives::types::Hash;
 use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
-use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use itp_utils::FromHexPrefixed;
+use litentry_primitives::BroadcastedRequest;
 use std::{
 	collections::HashMap,
 	string::{String, ToString},
@@ -154,10 +153,16 @@ where
 		HashMap::new()
 	}
 
-	pub fn broadcast<Hash: ToHexPrefixed>(&self, hash: Hash, params: RequestParams) {
+	pub fn broadcast(&self, request: BroadcastedRequest) {
 		if let Ok(mut peers) = self.peers.lock() {
+			let request = RpcRequest {
+				jsonrpc: "2.0".to_string(),
+				method: request.rpc_method.clone(),
+				params: vec![request.payload.clone()],
+				id: Id::Text(request.id),
+			};
 			peers.values_mut().for_each(|peer| {
-				if let Err(e) = peer.send(hash.to_hex(), params.clone()) {
+				if let Err(e) = peer.send(&request) {
 					log::warn!("Could not send top to peer reason: {:?}", e);
 				}
 			});
@@ -188,15 +193,14 @@ pub fn id_to_hash(id: &Id) -> Option<Hash> {
 pub fn init<Registry, ResponseChannelType>(
 	rpc_responder: Arc<RpcResponder<Registry, Hash, ResponseChannelType>>,
 ) -> (
-	Arc<std::sync::mpsc::SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
+	Arc<std::sync::mpsc::SyncSender<BroadcastedRequest>>,
 	Arc<DirectRpcBroadcaster<DirectRpcClientFactory>>,
 )
 where
 	Registry: RpcConnectionRegistry<Hash = Hash> + 'static,
 	ResponseChannelType: ResponseChannel<Registry::Connection> + 'static,
 {
-	let (sender, receiver) =
-		std::sync::mpsc::sync_channel::<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>(1000);
+	let (sender, receiver) = std::sync::mpsc::sync_channel::<BroadcastedRequest>(1000);
 
 	let peers = vec![];
 
@@ -208,13 +212,7 @@ where
 
 	std::thread::spawn(move || {
 		for received in receiver {
-			if let Some(received) = received.0 {
-				rpc_broadcaster.broadcast(received.0, RequestParams::Rsa(received.1))
-			}
-
-			if let Some(received) = received.1 {
-				rpc_broadcaster.broadcast(received.0, RequestParams::Aes(received.1))
-			}
+			rpc_broadcaster.broadcast(received);
 		}
 	});
 
@@ -254,14 +252,16 @@ where
 pub mod tests {
 	use crate::{DirectRpcBroadcaster, PeerUpdater};
 	use alloc::sync::Arc;
-	use itc_direct_rpc_client::{RequestParams, Response, RpcClient, RpcClientFactory};
+	use itc_direct_rpc_client::{Response, RpcClient, RpcClientFactory};
 	use itc_direct_rpc_server::{
 		mocks::response_channel_mock::ResponseChannelMock,
 		rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
 	};
-	use itp_rpc::{Id, RpcReturnValue};
+	use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 	use itp_stf_primitives::types::Hash;
 	use itp_types::H256;
+	use itp_utils::ToHexPrefixed;
+	use litentry_primitives::BroadcastedRequest;
 	use std::{error::Error, sync::mpsc::SyncSender};
 
 	type TestConnectionToken = u64;
@@ -275,11 +275,7 @@ pub mod tests {
 	}
 
 	impl RpcClient for MockedRpcClient {
-		fn send(
-			&mut self,
-			_request_id: String,
-			_params: RequestParams,
-		) -> Result<(), Box<dyn Error>> {
+		fn send(&mut self, _request: &RpcRequest) -> Result<(), Box<dyn Error>> {
 			self.sent_requests = self.sent_requests + 1;
 			Ok(())
 		}
@@ -333,8 +329,16 @@ pub mod tests {
 			DirectRpcBroadcaster::new(&vec!["localhost", "localhost2"], factory, rpc_responder);
 
 		//when
-		broadcaster.broadcast(Hash::random(), RequestParams::Aes(vec![]));
-		broadcaster.broadcast(Hash::random(), RequestParams::Aes(vec![]));
+		broadcaster.broadcast(BroadcastedRequest {
+			id: Hash::random().to_hex(),
+			payload: Hash::random().to_hex(),
+			rpc_method: "submit_and_broadcast".to_string(),
+		});
+		broadcaster.broadcast(BroadcastedRequest {
+			id: Hash::random().to_hex(),
+			payload: Hash::random().to_hex(),
+			rpc_method: "submit_and_broadcast".to_string(),
+		});
 
 		//then
 		let peers = broadcaster.peers.lock().unwrap();

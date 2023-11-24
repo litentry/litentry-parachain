@@ -33,7 +33,11 @@ use itp_test::mock::{
 	onchain_mock::OnchainMock,
 };
 use itp_top_pool::basic_pool::BasicPool;
-use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
+use itp_top_pool_author::{
+	api::SidechainApi,
+	author::Author,
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
+};
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_sidechain::{aura::block_importer::BlockImporter, block_composer::BlockComposer};
@@ -73,6 +77,7 @@ pub type TestTopPool =
 pub type TestTopPoolAuthor = Author<
 	TestTopPool,
 	AllowAllTopsFilter,
+	DirectCallsOnlyFilter,
 	TestStateHandler,
 	TestShieldingKeyRepo,
 	MetricsOCallMock,

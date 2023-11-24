@@ -45,7 +45,6 @@ use handler::{
 };
 use ita_sgx_runtime::Hash;
 use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
-use itc_peer_top_broadcaster::MaybeRequestIdWithParams;
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -54,16 +53,9 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
-use itp_utils::ToHexPrefixed;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error, info};
-use std::{
-	boxed::Box,
-	format,
-	string::String,
-	sync::{mpsc::SyncSender, Arc},
-	vec,
-};
+use std::{boxed::Box, format, string::String, sync::Arc};
 use threadpool::ThreadPool;
 
 #[cfg(test)]
@@ -97,7 +89,6 @@ pub struct StfTaskContext<
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
-	request_sink: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
 }
 
 impl<
@@ -116,9 +107,8 @@ where
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
-		request_sink: Arc<SyncSender<(MaybeRequestIdWithParams, MaybeRequestIdWithParams)>>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api, request_sink }
+		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api }
 	}
 
 	fn submit_trusted_call(
@@ -170,15 +160,12 @@ where
 			encrypted_trusted_call.len(),
 			top.encode().len()
 		);
-
-		let request = RsaRequest::new(*shard, encrypted_trusted_call);
-		let hex_encoded_request = request.to_hex();
-
-		executor::block_on(self.author_api.watch_top(request)).map_err(|e| {
+		executor::block_on(
+			self.author_api.watch_top(RsaRequest::new(*shard, encrypted_trusted_call)),
+		)
+		.map_err(|e| {
 			Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e))
 		})?;
-		let params = vec![hex_encoded_request];
-		self.request_sink.send((Some((top.hash(), params)), None)).unwrap();
 
 		Ok(())
 	}
