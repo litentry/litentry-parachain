@@ -19,7 +19,7 @@ use crate::sgx_reexport_prelude::*;
 
 use crate::{
 	build_client, ConvertParameterString, DataProviderConfig, Error, HttpError, LIT_TOKEN_ADDRESS,
-	UNISWAP_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
+	USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -190,6 +190,7 @@ pub enum Params {
 	ParamsBasicTypeWithDatePercent(ParamsBasicTypeWithDatePercent),
 	ParamsBasicTypeWithClassOfYear(ParamsBasicTypeWithClassOfYear),
 	ParamsBasicTypeWithAmountHolding(ParamsBasicTypeWithAmountHolding),
+	ParamsBasicTypeWithMirror(ParamsBasicTypeWithMirror),
 }
 
 impl AchainableSystemLabelName for Params {
@@ -206,6 +207,7 @@ impl AchainableSystemLabelName for Params {
 			Params::ParamsBasicTypeWithDatePercent(e) => e.name.clone(),
 			Params::ParamsBasicTypeWithClassOfYear(c) => c.name.clone(),
 			Params::ParamsBasicTypeWithAmountHolding(a) => a.name.clone(),
+			Params::ParamsBasicTypeWithMirror(a) => a.name.clone(),
 		}
 	}
 }
@@ -321,6 +323,20 @@ impl TryFrom<AchainableParams> for Params {
 
 				let p = ParamsBasicTypeWithToken::new(name, network, token);
 				Ok(Params::ParamsBasicTypeWithToken(p))
+			},
+			AchainableParams::Mirror(p) => {
+				let name = ap.to_string(&p.name)?;
+				let network = &p.chain;
+
+				let post_quantity = if let Some(post_quantity) = p.post_quantity {
+					let post = ap.to_string(&post_quantity)?;
+					Some(post)
+				} else {
+					None
+				};
+
+				let p = ParamsBasicTypeWithMirror::new(name, network, post_quantity);
+				Ok(Params::ParamsBasicTypeWithMirror(p))
 			},
 		}
 	}
@@ -512,6 +528,8 @@ pub struct ParamsBasicTypeWithAmountToken {
 
 	pub chain: String,
 	pub amount: String,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
 	pub token: Option<String>,
 }
 
@@ -625,6 +643,27 @@ impl Default for ParamsBasicTypeWithDatePercent {
 	}
 }
 
+// ParamsBasicTypeWithToken
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ParamsBasicTypeWithMirror {
+	#[serde(skip_serializing)]
+	#[serde(skip_deserializing)]
+	pub name: String,
+
+	pub chain: String,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub post_quantity: Option<String>,
+}
+
+impl ParamsBasicTypeWithMirror {
+	pub fn new(name: String, network: &Web3Network, post_quantity: Option<String>) -> Self {
+		let chain: &'static str = network.into();
+		Self { name, chain: chain.to_string(), post_quantity }
+	}
+}
+
 fn check_achainable_label(
 	client: &mut AchainableClient,
 	address: &str,
@@ -702,7 +741,9 @@ impl AchainableTotalTransactionsParser for AchainableClient {
 			// pop the last char: ")"
 			value_text.pop();
 
-			let value: u64 = value_text.parse::<u64>().unwrap_or_default();
+			let value = value_text
+				.parse::<u64>()
+				.map_err(|e| Error::AchainableError(format!("Parse txn count error: {:?}", e)))?;
 
 			return Ok(value)
 		}
@@ -726,17 +767,81 @@ impl AchainableAccountTotalTransactions for AchainableClient {
 		addresses: &[String],
 	) -> Result<u64, Error> {
 		let mut txs = 0_u64;
-		addresses.iter().for_each(|address| {
+		for address in addresses.iter() {
 			let name = "Account total transactions under {amount}".to_string();
 			let amount = "1".to_string();
 
 			let param = ParamsBasicTypeWithAmount::new(name, network, amount);
 			let body = ReqBody::new(address.into(), Params::ParamsBasicTypeWithAmount(param));
-			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs);
-			txs += tx.unwrap_or_default();
-		});
+			let tx = self.post(SystemLabelReqPath::default(), &body).and_then(Self::parse_txs)?;
+			txs += tx;
+		}
 
 		Ok(txs)
+	}
+}
+
+pub trait AchainableUtils {
+	fn get_balance(response: serde_json::Value) -> Result<f64, Error>;
+}
+
+impl AchainableUtils for AchainableClient {
+	fn get_balance(response: serde_json::Value) -> Result<f64, Error> {
+		let display_text = response
+			.get("display")
+			.and_then(|displays| {
+				displays.as_array().map(|displays| {
+					let mut text: std::option::Option<String> = None;
+					for v in displays.iter() {
+						text = v
+							.get("text")
+							.and_then(|text| {
+								text.as_str().map(|display_text| Some(display_text.to_string()))
+							})
+							.flatten();
+					}
+					text
+				})
+			})
+			.flatten();
+		if let Some(display_text) = display_text {
+			// TODO:
+			// text field format: Balance over 0 (Balance is 588.504602529)
+			let split_text = display_text.split("Balance is ").collect::<Vec<&str>>();
+			if split_text.len() != 2 {
+				return Err(Error::AchainableError("Invalid array".to_string()))
+			}
+
+			let mut value_text = split_text[1].to_string();
+
+			// pop the last char: ")"
+			value_text.pop();
+
+			let value = value_text
+				.parse::<f64>()
+				.map_err(|e| Error::AchainableError(format!("Parse balance error: {:?}", e)))?;
+
+			return Ok(value)
+		}
+
+		Err(Error::AchainableError("Invalid response".to_string()))
+	}
+}
+
+pub trait HoldingAmount {
+	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error>;
+}
+impl HoldingAmount for AchainableClient {
+	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
+		let mut total_balance = 0_f64;
+		for address in addresses.iter() {
+			let body = ReqBody::new(address.into(), param.clone());
+			let balance =
+				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance)?;
+			total_balance += balance;
+		}
+
+		Ok(total_balance.to_string())
 	}
 }
 
@@ -1130,10 +1235,8 @@ impl AchainableTagDeFi for AchainableClient {
 		let name_provider = "Uniswap V3 liquidity provider";
 		let chain: Web3Network = Web3Network::Ethereum;
 
-		if request_basic_type_with_token(self, address, name_trader, &chain, None)
-			.unwrap_or_default()
-			|| request_basic_type_with_token(self, address, name_provider, &chain, None)
-				.unwrap_or_default()
+		if request_basic_type_with_token(self, address, name_trader, &chain, None)?
+			|| request_basic_type_with_token(self, address, name_provider, &chain, None)?
 		{
 			return Ok(true)
 		}
@@ -1168,7 +1271,7 @@ impl AchainableTagDeFi for AchainableClient {
 		let name = "Uniswap V2 {token} liquidity provider";
 		let chain: Web3Network = Web3Network::Ethereum;
 
-		request_basic_type_with_token(self, address, name, &chain, Some(UNISWAP_TOKEN_ADDRESS))
+		request_basic_type_with_token(self, address, name, &chain, Some(USDC_TOKEN_ADDRESS))
 	}
 
 	fn usdc_uniswap_v3_lp(&mut self, address: &str) -> Result<bool, Error> {
@@ -1176,15 +1279,13 @@ impl AchainableTagDeFi for AchainableClient {
 		let name = "Uniswap V3 {token} liquidity provider";
 		let chain: Web3Network = Web3Network::Ethereum;
 
-		request_basic_type_with_token(self, address, name, &chain, Some(UNISWAP_TOKEN_ADDRESS))
+		request_basic_type_with_token(self, address, name, &chain, Some(USDC_TOKEN_ADDRESS))
 	}
 
 	fn usdt_uniswap_lp(&mut self, address: &str) -> Result<bool, Error> {
 		// Uniswap V2 {token} liquidity provider
 		// Uniswap V3 {token} liquidity provider
-		if self.usdt_uniswap_v2_lp(address).unwrap_or_default()
-			|| self.usdt_uniswap_v3_lp(address).unwrap_or_default()
-		{
+		if self.usdt_uniswap_v2_lp(address)? || self.usdt_uniswap_v3_lp(address)? {
 			return Ok(true)
 		}
 
@@ -1304,12 +1405,13 @@ mod tests {
 	use crate::{
 		achainable::{
 			AchainableAccountTotalTransactions, AchainableClient, AchainableTagAccount,
-			AchainableTagBalance, AchainableTagDeFi, AchainableTagDotsama,
+			AchainableTagBalance, AchainableTagDeFi, AchainableTagDotsama, AchainableUtils,
 		},
 		DataProviderConfigReader, ReadDataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG,
 	};
 	use lc_mock_server::run;
 	use litentry_primitives::Web3Network;
+	use serde_json::Value;
 
 	fn new_achainable_client() -> AchainableClient {
 		let _ = env_logger::builder().is_test(true).try_init();
@@ -1884,5 +1986,24 @@ mod tests {
 
 		let year = res.unwrap();
 		assert_eq!(year, "Invalid".to_string());
+	}
+
+	#[test]
+	fn get_balance_works() {
+		let data = r#"{
+			"name": "ERC20 balance over {amount}",
+			"result": true,
+			"display": [
+				{
+					"text": "Balance over 0 (Balance is 370)",
+					"result": true
+				}
+			],
+			"analyticsDisplay": [],
+			"runningCost": 1
+		}"#;
+		let value: Value = serde_json::from_str(data).unwrap();
+		let balance = AchainableClient::get_balance(value).unwrap();
+		assert_eq!(balance, 370.0_f64);
 	}
 }

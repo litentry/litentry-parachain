@@ -51,6 +51,7 @@ use std::{
 	sync::Arc,
 	vec::Vec,
 };
+use threadpool::ThreadPool;
 
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
@@ -68,18 +69,25 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	N::MetadataType: NodeMetadataTrait,
 {
 	let receiver = init_vc_task_sender_storage();
+	let n_workers = 4;
+	let pool = ThreadPool::new(n_workers);
 
 	while let Ok(req) = receiver.recv() {
-		if let Err(e) = req.sender.send(handle_request(
-			req.key,
-			req.encrypted_trusted_call,
-			req.shard,
-			context.clone(),
-			extrinsic_factory.clone(),
-			node_metadata_repo.clone(),
-		)) {
-			log::warn!("Unable to submit response back to the handler: {:?}", e);
-		}
+		let context_pool = context.clone();
+		let extrinsic_factory_pool = extrinsic_factory.clone();
+		let node_metadata_repo_pool = node_metadata_repo.clone();
+		pool.execute(move || {
+			if let Err(e) = req.sender.send(handle_request(
+				req.key,
+				req.encrypted_trusted_call,
+				req.shard,
+				context_pool,
+				extrinsic_factory_pool,
+				node_metadata_repo_pool,
+			)) {
+				log::warn!("Unable to submit response back to the handler: {:?}", e);
+			}
+		});
 	}
 }
 
