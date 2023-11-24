@@ -734,7 +734,10 @@ jobs:
       - name: Unzip client-api
         run: |
           git lfs pull
+          ls .
+          ls tee-worker
           tar -zxf tee-worker/client-api.tar.gz -C tee-worker/
+          echo "debug
           ls tee-worker/client-api/parachain-api
           ls tee-worker/client-api/sidechain-api
 
