@@ -24,3 +24,12 @@ pub enum VIP3MembershipCardLevel {
 	#[codec(index = 1)]
 	Silver,
 }
+
+impl VIP3MembershipCardLevel {
+	pub fn to_level(&self) -> usize {
+		match self {
+			VIP3MembershipCardLevel::Gold => 2,
+			VIP3MembershipCardLevel::Silver => 1,
+		}
+	}
+}

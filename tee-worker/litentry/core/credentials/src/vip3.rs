@@ -60,8 +60,8 @@ impl EnumTypeCredentialDetail for VIP3MembershipCardEntity {
 
 	fn get_breakdown(&self) -> &'static str {
 		match self.level {
-			VIP3MembershipCardLevel::Gold => "$is_gold_level",
-			VIP3MembershipCardLevel::Silver => "$is_silver_level",
+			VIP3MembershipCardLevel::Gold => "$is_gold_card",
+			VIP3MembershipCardLevel::Silver => "$is_silver_card",
 		}
 	}
 }

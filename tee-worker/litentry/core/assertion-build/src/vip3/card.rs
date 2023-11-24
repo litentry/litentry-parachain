@@ -14,13 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-use crate::*;
+use crate::{
+	vip3::{VIP3SBTInfo, VIP3SBTLogicInterface},
+	*,
+};
 use lc_credentials::vip3::{UpdateVIP3MembershipCardCredential, VIP3MembershipCardEntity};
 use litentry_primitives::VIP3MembershipCardLevel;
 
@@ -33,7 +30,12 @@ pub fn build(req: &AssertionBuildRequest, level: VIP3MembershipCardLevel) -> Res
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let value = true;
+	let mut sbt = VIP3SBTInfo::new()
+		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
+	let value = sbt
+		.has_card_level(addresses, &level)
+		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
+
 	let entity = VIP3MembershipCardEntity::new(level.clone());
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

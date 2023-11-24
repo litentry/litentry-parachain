@@ -91,7 +91,7 @@ where
 				),
 
 			Assertion::VIP3MembershipCard(level) =>
-				lc_assertion_build::vip3::build(&self.req, level),
+				lc_assertion_build::vip3::card::build(&self.req, level),
 		}?;
 
 		// post-process the credential
