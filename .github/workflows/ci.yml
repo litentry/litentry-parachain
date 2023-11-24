@@ -673,7 +673,7 @@ jobs:
         run: |
           git add .gitattributes tee-worker/client-api.tar.gz
           git commit -m "Add bundle to LFS"
-          git push origin dev
+          git push --all origin
 
 #      - name: Upload client-api as artifact
 #        uses: actions/upload-artifact@v3
