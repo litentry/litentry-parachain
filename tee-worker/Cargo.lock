@@ -4433,6 +4433,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "ita-parentchain-interface"
+version = "0.9.0"
+dependencies = [
+ "binary-merkle-tree",
+ "bs58",
+ "env_logger 0.9.3",
+ "frame-support",
+ "futures 0.3.28",
+ "futures 0.3.8",
+ "ita-sgx-runtime",
+ "ita-stf",
+ "itc-parentchain-indirect-calls-executor",
+ "itc-parentchain-test",
+ "itp-api-client-types",
+ "itp-node-api",
+ "itp-ocall-api",
+ "itp-sgx-crypto",
+ "itp-sgx-runtime-primitives",
+ "itp-stf-executor",
+ "itp-stf-primitives",
+ "itp-test",
+ "itp-top-pool-author",
+ "itp-types",
+ "itp-utils",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "sgx_types",
+ "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
+ "sp-runtime",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+]
+
+[[package]]
 name = "ita-sgx-runtime"
 version = "0.9.0"
 dependencies = [
@@ -4463,6 +4498,7 @@ dependencies = [
  "derive_more",
  "frame-support",
  "frame-system",
+ "hex 0.4.3",
  "hex-literal",
  "ita-sgx-runtime",
  "itp-hashing",
@@ -4490,6 +4526,7 @@ dependencies = [
  "sp-io 7.0.0",
  "sp-keyring",
  "sp-runtime",
+ "sp-std 5.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
 ]
 
 [[package]]
@@ -4515,7 +4552,6 @@ dependencies = [
 name = "itc-offchain-worker-executor"
 version = "0.9.0"
 dependencies = [
- "ita-stf",
  "itc-parentchain-light-client",
  "itp-extrinsics-factory",
  "itp-sgx-externalities",
@@ -4590,13 +4626,13 @@ dependencies = [
  "env_logger 0.9.3",
  "futures 0.3.28",
  "futures 0.3.8",
- "ita-stf",
  "itc-parentchain-test",
  "itp-api-client-types",
  "itp-node-api",
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "itp-stf-executor",
+ "itp-stf-interface",
  "itp-stf-primitives",
  "itp-test",
  "itp-top-pool-author",
@@ -4953,6 +4989,7 @@ version = "0.9.0"
 dependencies = [
  "derive_more",
  "itp-api-client-types",
+ "itp-stf-primitives",
  "parity-scale-codec",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
 ]
@@ -4962,6 +4999,7 @@ name = "itp-node-api-metadata-provider"
 version = "0.9.0"
 dependencies = [
  "itp-node-api-metadata",
+ "itp-stf-primitives",
  "sgx_tstd",
  "thiserror 1.0.44",
  "thiserror 1.0.9",
@@ -5082,7 +5120,7 @@ dependencies = [
 name = "itp-stf-executor"
 version = "0.9.0"
 dependencies = [
- "ita-stf",
+ "hex 0.4.3",
  "itc-parentchain-test",
  "itp-enclave-metrics",
  "itp-node-api",
@@ -5095,6 +5133,7 @@ dependencies = [
  "itp-stf-state-observer",
  "itp-test",
  "itp-time-utils",
+ "itp-top-pool",
  "itp-top-pool-author",
  "itp-types",
  "litentry-primitives",
@@ -5114,6 +5153,7 @@ version = "0.8.0"
 dependencies = [
  "itp-node-api-metadata",
  "itp-node-api-metadata-provider",
+ "itp-stf-primitives",
  "itp-types",
  "parity-scale-codec",
 ]
@@ -5122,17 +5162,20 @@ dependencies = [
 name = "itp-stf-primitives"
 version = "0.9.0"
 dependencies = [
+ "derive_more",
+ "itp-hashing",
+ "itp-sgx-runtime-primitives",
  "litentry-primitives",
  "parity-scale-codec",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
+ "sp-std 5.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
 ]
 
 [[package]]
 name = "itp-stf-state-handler"
 version = "0.9.0"
 dependencies = [
- "ita-stf",
  "itp-hashing",
  "itp-settings",
  "itp-sgx-crypto",
@@ -5197,23 +5240,29 @@ dependencies = [
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
+ "derive_more",
  "hex 0.4.3",
- "ita-stf",
+ "itp-node-api",
+ "itp-node-api-metadata-provider",
  "itp-ocall-api",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-interface",
+ "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-storage",
  "itp-teerex-storage",
  "itp-time-utils",
  "itp-types",
  "jsonrpc-core 18.0.0 (git+https://github.com/scs/jsonrpc?branch=no_std_v18)",
+ "litentry-primitives",
+ "log 0.4.20",
  "parity-scale-codec",
  "sgx_crypto_helper",
  "sgx_tstd",
  "sgx_types",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
+ "sp-io 7.0.0",
  "sp-runtime",
  "sp-std 5.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
 ]
@@ -5233,9 +5282,10 @@ version = "0.9.0"
 dependencies = [
  "byteorder 1.4.3",
  "derive_more",
- "ita-stf",
  "itc-direct-rpc-server",
+ "itp-sgx-runtime-primitives",
  "itp-stf-primitives",
+ "itp-test",
  "itp-types",
  "its-primitives",
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -5248,6 +5298,7 @@ dependencies = [
  "parity-util-mem",
  "serde 1.0.175",
  "sgx_tstd",
+ "sgx_types",
  "sp-application-crypto",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
@@ -5260,7 +5311,6 @@ version = "0.9.0"
 dependencies = [
  "derive_more",
  "futures 0.3.28",
- "ita-stf",
  "itp-enclave-metrics",
  "itp-ocall-api",
  "itp-sgx-crypto",
@@ -5290,25 +5340,23 @@ dependencies = [
  "frame-system",
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
+ "itp-stf-primitives",
+ "itp-utils",
  "litentry-primitives",
  "pallet-balances",
  "parity-scale-codec",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
+ "substrate-api-client",
 ]
 
 [[package]]
 name = "itp-utils"
 version = "0.9.0"
 dependencies = [
- "frame-support",
  "hex 0.4.3",
  "parity-scale-codec",
- "sgx_tstd",
- "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
 ]
 
 [[package]]
@@ -5321,6 +5369,8 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
+ "itp-stf-interface",
+ "itp-stf-primitives",
  "itp-time-utils",
  "itp-top-pool-author",
  "itp-types",
@@ -5371,6 +5421,7 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
+ "itp-stf-primitives",
  "itp-stf-state-handler",
  "itp-storage",
  "itp-test",
@@ -6998,7 +7049,6 @@ dependencies = [
  "sgx-verify",
  "sgx_crypto_helper",
  "sgx_types",
- "sgx_urts",
  "sp-consensus-grandpa",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-keyring",

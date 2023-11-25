@@ -22,8 +22,12 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{Index, TrustedCall, TrustedOperation};
-use itp_stf_primitives::types::KeyPair;
+use codec::Decode;
+use ita_stf::{Getter, Index, TrustedCall, TrustedCallSigned};
+use itp_stf_primitives::{
+	traits::TrustedCallSigning,
+	types::{KeyPair, TrustedOperation},
+};
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
@@ -48,7 +52,7 @@ impl SetBalanceCommand {
 
 		let (mrenclave, shard) = get_identifiers(trusted_args, cli);
 		let nonce = get_layer_two_nonce!(signer, cli, trusted_args);
-		let top: TrustedOperation = TrustedCall::balance_set_balance(
+		let top: TrustedOperation<TrustedCallSigned, Getter> = TrustedCall::balance_set_balance(
 			signer.public().into(),
 			who.public().into(),
 			self.amount,

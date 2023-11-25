@@ -65,17 +65,18 @@ where
 
 		// `()` is a trick to stop decoding after the call index. So the remaining bytes
 		//  of `call` after decoding only contain the parentchain's dispatchable's arguments.
-		let xt = UncheckedExtrinsicV4::<Address,
-		(CallIndex, ()),
-		PairSignature,
-		Self::SignedExtra,>::decode(call_mut)?;
-		let hashed_xt: H256 = hash_of(&xt);
+		let xt = UncheckedExtrinsicV4::<
+            Address,
+            (CallIndex, ()),
+            PairSignature,
+            Self::SignedExtra,
+        >::decode(call_mut)?;
 
 		Ok(SemiOpaqueExtrinsic {
 			signature: xt.signature,
 			call_index: xt.function.0,
 			call_args: call_mut,
-			hashed_extrinsic: hashed_xt,
+			hashed_extrinsic: hash_of(&xt),
 		})
 	}
 }

@@ -15,6 +15,7 @@
 
 */
 use derive_more::From;
+use itp_stf_primitives::error::StfError;
 
 #[derive(Debug, PartialEq, Eq, From)]
 pub enum Error {
@@ -28,3 +29,9 @@ pub enum Error {
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
+
+impl From<Error> for StfError {
+	fn from(_e: Error) -> Self {
+		StfError::InvalidMetadata
+	}
+}

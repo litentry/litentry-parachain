@@ -36,7 +36,6 @@ production = []
 sgx = [
     "sgx_tstd",
     "rand-sgx",
-    "itp-utils/sgx",
     "itp-sgx-crypto/sgx",
 ]
 std = [

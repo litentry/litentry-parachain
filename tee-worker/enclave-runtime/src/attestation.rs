@@ -32,7 +32,7 @@ use crate::{
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	},
 	utils::{
-		get_extrinsic_factory_from_solo_or_parachain,
+		get_extrinsic_factory_from_integritee_solo_or_parachain,
 		get_node_metadata_repository_from_integritee_solo_or_parachain,
 	},
 	Error as EnclaveError, Result as EnclaveResult,
@@ -155,7 +155,7 @@ pub unsafe extern "C" fn generate_ias_ra_extrinsic(
 	};
 
 	if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, extrinsic.encode()) {
-		return EnclaveError::Other(Box::new(e)).into()
+		return EnclaveError::BufferError(e).into()
 	};
 
 	sgx_status_t::SGX_SUCCESS
@@ -194,7 +194,7 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic(
 	};
 
 	if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, extrinsic.encode()) {
-		return EnclaveError::Other(Box::new(e)).into()
+		return EnclaveError::BufferError(e).into()
 	};
 	sgx_status_t::SGX_SUCCESS
 }
@@ -246,7 +246,7 @@ pub unsafe extern "C" fn generate_dcap_ra_quote(
 	let dcap_quote_slice = slice::from_raw_parts_mut(dcap_quote_p, dcap_quote_size as usize);
 
 	if let Err(e) = write_slice_and_whitespace_pad(dcap_quote_slice, dcap_quote) {
-		return EnclaveError::Other(Box::new(e)).into()
+		return EnclaveError::BufferError(e).into()
 	};
 
 	sgx_status_t::SGX_SUCCESS
@@ -298,7 +298,7 @@ pub unsafe extern "C" fn generate_dcap_ra_extrinsic_from_quote(
 	};
 
 	if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, extrinsic.encode()) {
-		return EnclaveError::Other(Box::new(e)).into()
+		return EnclaveError::BufferError(e).into()
 	};
 	sgx_status_t::SGX_SUCCESS
 }
@@ -418,7 +418,7 @@ pub fn generate_ias_skip_ra_extrinsic_from_der_cert_internal(
 }
 
 fn create_extrinsics(call: OpaqueCall) -> EnclaveResult<OpaqueExtrinsic> {
-	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 
 	match extrinsics.get(0) {
@@ -499,7 +499,7 @@ pub fn generate_generic_register_collateral_extrinsic<F>(
 where
 	F: Fn(&NodeMetadata) -> Result<[u8; 2], MetadataError>,
 {
-	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
 
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 	let call_ids = node_metadata_repo
@@ -508,16 +508,11 @@ where
 	info!("    [Enclave] Compose register collateral call: {:?}", call_ids);
 	let call = OpaqueCall::from_tuple(&(call_ids, collateral_data, data_signature, issuer_chain));
 
-	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?;
-	match extrinsic.get(0) {
-		Some(xt) => {
-			if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, xt.encode()) {
-				return EnclaveError::Other(Box::new(e)).into()
-			};
-			Ok(())
-		},
-		None => Err(EnclaveError::Other("Could not create extrinsic".into())),
-	}
+	let extrinsic = extrinsics_factory.create_extrinsics(&[call], None)?[0].clone();
+	if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, extrinsic.encode()) {
+		return EnclaveError::BufferError(e).into()
+	};
+	Ok(())
 }
 
 #[no_mangle]

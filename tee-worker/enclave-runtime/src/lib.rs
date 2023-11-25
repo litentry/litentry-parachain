@@ -82,18 +82,17 @@ use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::BlakeTwo256;
 use std::{
-	boxed::Box,
 	path::PathBuf,
 	slice,
 	string::{String, ToString},
 	vec::Vec,
 };
-
 mod attestation;
 mod empty_impls;
 mod initialization;
 mod ipfs;
 mod ocall;
+mod shard_vault;
 mod stf_task_handler;
 mod utils;
 mod vc_issuance_task;
@@ -221,7 +220,7 @@ pub unsafe extern "C" fn get_rsa_encryption_pubkey(
 	if let Err(e) =
 		write_slice_and_whitespace_pad(pubkey_slice, rsa_pubkey_json.as_bytes().to_vec())
 	{
-		return Error::Other(Box::new(e)).into()
+		return Error::BufferError(e).into()
 	};
 
 	sgx_status_t::SGX_SUCCESS
@@ -354,7 +353,7 @@ pub unsafe extern "C" fn call_rpc_methods(
 
 	let response_slice = slice::from_raw_parts_mut(response, response_len as usize);
 	if let Err(e) = write_slice_and_whitespace_pad(response_slice, res.into_bytes()) {
-		return Error::Other(Box::new(e)).into()
+		return Error::BufferError(e).into()
 	};
 
 	sgx_status_t::SGX_SUCCESS
