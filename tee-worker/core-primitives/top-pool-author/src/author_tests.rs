@@ -125,12 +125,11 @@ fn submitting_direct_call_works() {
 #[test]
 fn broadcasting_direct_call_works() {
 	let (author, _top_pool, shielding_key, broadcasted_requests_rx) =
-		create_author_with_filter(AllowAllTopsFilter, DirectCallsOnlyFilter);
-	let trusted_operation = TrustedOperation::direct_call(trusted_call_signed());
+		create_author_with_filter(AllowAllTopsFilter::new(), DirectCallsOnlyFilter::new());
+	let top_call = mock_top_direct_trusted_call_signed();
 
 	let (hash, request) =
-		submit_operation_to_top_pool(&author, &trusted_operation, &shielding_key, shard_id(), true)
-			.unwrap();
+		submit_operation_to_top_pool(&author, &top_call, &shielding_key, shard_id(), true).unwrap();
 
 	let broadcasted_request = broadcasted_requests_rx.try_recv().unwrap();
 	assert_eq!(broadcasted_request.rpc_method, "submit_and_watch".to_owned());
@@ -141,12 +140,11 @@ fn broadcasting_direct_call_works() {
 #[test]
 fn not_broadcasting_indirect_call_works() {
 	let (author, _top_pool, shielding_key, broadcasted_requests_rx) =
-		create_author_with_filter(AllowAllTopsFilter, DirectCallsOnlyFilter);
-	let trusted_operation = create_indirect_trusted_operation();
+		create_author_with_filter(AllowAllTopsFilter::new(), DirectCallsOnlyFilter::new());
+	let top_call = mock_top_indirect_trusted_call_signed();
 
 	let _ =
-		submit_operation_to_top_pool(&author, &trusted_operation, &shielding_key, shard_id(), true)
-			.unwrap();
+		submit_operation_to_top_pool(&author, &top_call, &shielding_key, shard_id(), true).unwrap();
 
 	assert!(broadcasted_requests_rx.try_recv().is_err())
 }

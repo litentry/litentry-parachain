@@ -27,6 +27,7 @@ use itp_storage::StorageProof;
 use itp_types::ShardIdentifier;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
+use teerex_primitives::EnclaveFingerprint;
 
 /// mock for EnclaveBase - use in tests
 pub struct EnclaveMock;

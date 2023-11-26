@@ -311,7 +311,7 @@ mod tests {
 
 	#[test]
 	fn direct_calls_only_filter_works() {
-		let filter = DirectCallsOnlyFilter;
+		let filter = DirectCallsOnlyFilter::new();
 
 		assert!(filter.filter(&mock_top_direct_trusted_call_signed()));
 		assert!(!filter.filter(&mock_top_indirect_trusted_call_signed()));

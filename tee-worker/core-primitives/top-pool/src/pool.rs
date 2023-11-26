@@ -487,7 +487,6 @@ pub mod tests {
 		futures,
 		futures::{executor::block_on, future::ready},
 	};
-	use litentry_primitives::LitentryMultiSignature;
 	use parity_util_mem::MallocSizeOf;
 	use serde::Serialize;
 	use sp_application_crypto::ed25519;
@@ -602,15 +601,6 @@ pub mod tests {
 		fn block_body<TOP>(&self, _id: &BlockId<Self::Block>) -> Self::BodyFuture {
 			futures::future::ready(Ok(None))
 		}
-	}
-
-	fn to_top(call: TrustedCall, nonce: Index) -> TrustedOperation {
-		let msg = &b"test-message"[..];
-		let (pair, _) = ed25519::Pair::generate();
-
-		let signature = pair.sign(&msg);
-		let multi_sig = LitentryMultiSignature::from(signature);
-		TrustedCallSigned::new(call, nonce, multi_sig).into_trusted_operation(true)
 	}
 
 	fn test_pool() -> Pool<TestApi, RpcResponderMock<H256>, TrustedOperationMock> {
