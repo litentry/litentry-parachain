@@ -196,7 +196,6 @@ where
 	);
 
 	// author_pendingExtrinsics
-	let author_pending_extrinsic_name: &str = "author_pendingExtrinsics";
 	let pending_author = top_pool_author.clone();
 	io_handler.add_sync_method("author_pendingExtrinsics", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_pendingExtrinsics");

@@ -21,7 +21,6 @@ use crate::{
 	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, SidechainBridge},
 	sync_block_broadcaster::BroadcastBlocks,
 	worker_peers_registry::PeersRegistry,
-	GetTokioHandle,
 };
 use codec::{Decode, Encode};
 use itp_types::{BlockHash, ShardIdentifier};

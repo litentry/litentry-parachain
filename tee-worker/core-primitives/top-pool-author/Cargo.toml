@@ -69,7 +69,6 @@ sgx = [
     "itp-sgx-crypto/sgx",
     "itp-stf-state-handler/sgx",
     "itp-top-pool/sgx",
-    "itp-utils/sgx",
     "thiserror_sgx",
     # litentry
     "litentry-primitives/sgx",

@@ -23,7 +23,7 @@ use crate::{
 use codec::Decode;
 
 use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 
 use itp_types::{AccountId, DirectRequestStatus};
 use itp_utils::FromHexPrefixed;
@@ -38,7 +38,9 @@ impl GetShardVaultCommand {
 	pub(crate) fn run(&self, cli: &Cli, _trusted_args: &TrustedCli) -> CliResult {
 		let direct_api = get_worker_api_direct(cli);
 		let rpc_method = "author_getShardVault".to_owned();
-		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(rpc_method, vec![]).unwrap();
+		let jsonrpc_call: String =
+			RpcRequest::compose_jsonrpc_call(Id::Text("1".to_string()), rpc_method, vec![])
+				.unwrap();
 		let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
 		// Decode RPC response.
 		let rpc_response: RpcResponse = serde_json::from_str(&rpc_response_str)

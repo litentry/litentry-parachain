@@ -32,7 +32,6 @@ use crate::{
 	prometheus_metrics::ReceiveEnclaveMetrics,
 	sync_block_broadcaster::BroadcastBlocks,
 	worker_peers_registry::PeersRegistry,
-	GetTokioHandle,
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, remote_attestation::RemoteAttestationCallBacks};
 use itp_node_api::node_api_factory::CreateNodeApi;

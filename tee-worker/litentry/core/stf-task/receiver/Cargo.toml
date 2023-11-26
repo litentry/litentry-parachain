@@ -74,7 +74,6 @@ sgx = [
     "itp-stf-executor/sgx",
     "itp-stf-state-handler/sgx",
     "itp-top-pool-author/sgx",
-    "itp-utils/sgx",
     "sp-core/full_crypto",
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",

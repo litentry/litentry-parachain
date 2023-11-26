@@ -59,13 +59,31 @@ where
 }
 
 /// Filter for direct calls only.
-pub struct DirectCallsOnlyFilter;
+pub struct DirectCallsOnlyFilter<TCS, G> {
+	_phantom: PhantomData<(TCS, G)>,
+}
 
-impl Filter for DirectCallsOnlyFilter {
-	type Value = TrustedOperation;
+impl<TCS, G> DirectCallsOnlyFilter<TCS, G> {
+	pub fn new() -> Self {
+		Self { _phantom: Default::default() }
+	}
+}
+
+impl<TCS, G> Default for DirectCallsOnlyFilter<TCS, G> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl<TCS, G> Filter for DirectCallsOnlyFilter<TCS, G>
+where
+	TCS: PartialEq + Encode + Debug,
+	G: PartialEq + Encode + Debug,
+{
+	type Value = StfTrustedOperation<TCS, G>;
 
 	fn filter(&self, value: &Self::Value) -> bool {
-		matches!(value, TrustedOperation::direct_call(_))
+		matches!(value, Self::Value::direct_call(_))
 	}
 }
 

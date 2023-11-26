@@ -77,7 +77,7 @@ pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>
 pub type AuthorTopFilter<TCS, G> = crate::top_filter::CallsOnlyFilter<TCS, G>;
 
 #[cfg(not(any(feature = "sidechain", feature = "offchain-worker", feature = "teeracle")))]
-pub type BroadcastedTopFilter = crate::top_filter::DenyAllFilter;
+pub type BroadcastedTopFilter<TCS, G> = crate::top_filter::DenyAllFilter<TCS, G>;
 
 /// Currently we treat all RPC operations as externals.
 ///
@@ -324,7 +324,7 @@ impl<
 							trusted_operation,
 							shard,
 						)
-						.map_err(map_top_error::<TopPool>),
+						.map_err(map_top_error::<TopPool, TCS, G>),
 				);
 				// broadcast only if filter allowed
 				if can_be_broadcasted {

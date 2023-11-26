@@ -85,7 +85,7 @@ where
 	}
 
 	/// Notify listeners about top execution.
-	pub fn top_executed(&mut self, hash: &H, response: &[u8], force_wait: bool) {
+	pub fn top_executed(&mut self, hash: &TxHash, response: &[u8], force_wait: bool) {
 		trace!(target: "txpool", "[{:?}] Top Executed", hash);
 		self.fire(hash, |watcher| watcher.top_executed(response, force_wait));
 	}
