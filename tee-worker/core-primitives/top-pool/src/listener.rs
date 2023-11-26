@@ -178,7 +178,7 @@ where
 			w.swap_rpc_connection_hash(new_hash);
 		} else {
 			// do not insert it to `watchers`, will be deallocated if it goes out of scope
-			Watcher::new_watcher(old_hash.clone(), self.rpc_response_sender.clone())
+			Watcher::new_watcher(old_hash, self.rpc_response_sender.clone())
 				.swap_rpc_connection_hash(new_hash);
 		}
 	}

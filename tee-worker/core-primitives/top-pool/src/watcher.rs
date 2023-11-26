@@ -131,7 +131,7 @@ where
 	// Litentry: set the new rpc response value and force_wait flag
 	pub fn update_connection_state(&mut self, encoded_value: Vec<u8>, force_wait: bool) {
 		if let Err(e) = self.rpc_response_sender.update_connection_state(
-			self.hash().clone(),
+			*self.hash(),
 			encoded_value,
 			force_wait,
 		) {
@@ -141,7 +141,7 @@ where
 
 	// Litentry: swap the old hash with the new one in rpc connection registry
 	pub fn swap_rpc_connection_hash(&self, new_hash: TxHash) {
-		if let Err(e) = self.rpc_response_sender.swap_hash(self.hash().clone(), new_hash) {
+		if let Err(e) = self.rpc_response_sender.swap_hash(*self.hash(), new_hash) {
 			warn!("failed to swap rpc connection hash: {:?}", e);
 		}
 	}

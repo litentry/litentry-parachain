@@ -43,14 +43,10 @@ pub trait ArgsExecutor {
 				let enclave_account = executor.get_enclave_account()?;
 				let trusted_call = match self.error() {
 					Error::IMPHandlingError(e) =>
-						TrustedCall::handle_imp_error(enclave_account.into(), None, e.clone(), hash),
+						TrustedCall::handle_imp_error(enclave_account.into(), None, e, hash),
 
-					Error::VCMPHandlingError(e) => TrustedCall::handle_vcmp_error(
-						enclave_account.into(),
-						None,
-						e.clone(),
-						hash,
-					),
+					Error::VCMPHandlingError(e) =>
+						TrustedCall::handle_vcmp_error(enclave_account.into(), None, e, hash),
 					_ => return Err(Error::Other(("unsupported error").into())),
 				};
 				let signed_trusted_call =
