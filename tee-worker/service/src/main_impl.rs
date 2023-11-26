@@ -518,7 +518,12 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	let mut register_enclave_xt_header: Option<Header> = None;
 	let mut we_are_primary_validateer: bool = false;
 
-	// litentry, Check if the enclave is already registered
+	let send_register_xt = move || {
+		println!("[+] Send register enclave extrinsic");
+		send_extrinsic(register_xt(), &node_api2, &tee_accountid2, is_development_mode)
+	};
+
+	// litentry: check if the enclave is already registered
 	// TODO: revisit the registration process (P-10)
 	match litentry_rpc_api.get_keys(storage_key("Teerex", "EnclaveRegistry"), None) {
 		Ok(Some(keys)) => {
@@ -557,11 +562,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				}
 			}
 			if !found {
-				let send_register_xt = move || {
-					println!("[+] Send register enclave extrinsic");
-					send_extrinsic(register_xt(), &node_api2, &tee_accountid2, is_development_mode)
-				};
-
 				// Todo: Can't unwrap here because the extrinsic is for some reason not found in the block
 				// even if it was successful: https://github.com/scs/substrate-api-client/issues/624.
 				let register_enclave_block_hash = send_register_xt();
@@ -569,15 +569,18 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 					litentry_rpc_api.get_header(register_enclave_block_hash).unwrap().unwrap();
 
 				// TODO: #1451: Fix api-client type hacks
-				let register_enclave_xt_header =
+				// TODO(Litentry): keep an eye on it - it's a hacky way to convert `SubstrateHeader` to `Header`
+				let header =
 					Header::decode(&mut api_register_enclave_xt_header.encode().as_slice())
 						.expect("Can decode previously encoded header; qed");
 
 				println!(
 					"[+] Enclave registered at block number: {:?}, hash: {:?}",
-					register_enclave_xt_header.number(),
-					register_enclave_xt_header.hash()
+					header.number(),
+					header.hash()
 				);
+
+				register_enclave_xt_header = Some(header);
 			}
 		},
 		_ => panic!("unknown error"),
