@@ -58,6 +58,17 @@ where
 	}
 }
 
+/// Filter for direct calls only.
+pub struct DirectCallsOnlyFilter;
+
+impl Filter for DirectCallsOnlyFilter {
+	type Value = TrustedOperation;
+
+	fn filter(&self, value: &Self::Value) -> bool {
+		matches!(value, TrustedOperation::direct_call(_))
+	}
+}
+
 /// Filter that allows all TOPs (i.e. not filter at all)
 pub struct AllowAllTopsFilter<TCS, G> {
 	_phantom: PhantomData<(TCS, G)>,
@@ -277,6 +288,15 @@ mod tests {
 
 		assert!(filter.filter(&mock_top_direct_trusted_call_signed()));
 		assert!(filter.filter(&mock_top_indirect_trusted_call_signed()));
+		assert!(!filter.filter(&mock_top_trusted_getter_signed()));
+	}
+
+	#[test]
+	fn direct_calls_only_filter_works() {
+		let filter = DirectCallsOnlyFilter;
+
+		assert!(filter.filter(&mock_top_direct_trusted_call_signed()));
+		assert!(!filter.filter(&mock_top_indirect_trusted_call_signed()));
 		assert!(!filter.filter(&mock_top_trusted_getter_signed()));
 	}
 }

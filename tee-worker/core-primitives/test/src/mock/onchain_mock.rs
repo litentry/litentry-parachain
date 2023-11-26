@@ -32,7 +32,7 @@ use sgx_types::*;
 use sp_core::H256;
 use sp_runtime::{traits::Header as HeaderTrait, AccountId32, OpaqueExtrinsic};
 use sp_std::prelude::*;
-use std::collections::HashMap;
+use std::{collections::HashMap, string::String};
 
 #[derive(Default, Clone, Debug)]
 pub struct OnchainMock {
@@ -157,6 +157,10 @@ impl EnclaveSidechainOCallApi for OnchainMock {
 		_shard_identifier: ShardIdentifier,
 	) -> SgxResult<Vec<SignedSidechainBlock>> {
 		Ok(Vec::new())
+	}
+
+	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
+		Ok(Vec::default())
 	}
 }
 

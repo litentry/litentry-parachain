@@ -55,7 +55,10 @@ use itp_stf_executor::enclave_signer::StfEnclaveSigner;
 use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
-use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
+use itp_top_pool_author::{
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
+	traits::AuthorApi,
+};
 use itp_types::{
 	parentchain::Address, AccountId, Block, RsaRequest, ShardIdentifier, ShieldFundsFn, H256,
 };
@@ -81,13 +84,16 @@ pub fn process_indirect_call_in_top_pool() {
 	let (_, shard_id) = init_state(state_handler.as_ref(), signer.public().into());
 
 	let top_pool = create_top_pool();
+	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
+		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler.clone(),
 		shielding_key_repo,
 		Arc::new(MetricsOCallMock::default()),
+		Arc::new(sender),
 	));
 
 	let encrypted_indirect_call =
@@ -117,13 +123,16 @@ pub fn submit_shielding_call_to_top_pool() {
 	let state_observer = Arc::new(ObserveStateMock::new(state));
 
 	let top_pool = create_top_pool();
+	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
+		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repo.clone(),
 		Arc::new(MetricsOCallMock::default()),
+		Arc::new(sender),
 	));
 
 	let enclave_signer =

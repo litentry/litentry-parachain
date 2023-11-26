@@ -22,6 +22,7 @@ use core::fmt::Debug;
 // Reexport BlockImport trait which implements fn block_import()
 use crate::{AuraVerifier, EnclaveOnChainOCallApi, SidechainBlockTrait};
 use itc_parentchain_block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport;
+use itc_peer_top_broadcaster::PeerUpdater;
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
@@ -56,6 +57,7 @@ pub struct BlockImporter<
 	StateKeyRepository,
 	TopPoolAuthor,
 	ParentchainBlockImporter,
+	PeersUpdater,
 	TCS,
 	G,
 > {
@@ -64,6 +66,7 @@ pub struct BlockImporter<
 	top_pool_author: Arc<TopPoolAuthor>,
 	parentchain_block_importer: Arc<ParentchainBlockImporter>,
 	ocall_api: Arc<OCallApi>,
+	peer_updater: Arc<PeersUpdater>,
 	_phantom: PhantomData<(Authority, ParentchainBlock, SignedSidechainBlock, TCS, G)>,
 }
 
@@ -76,6 +79,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 		TCS,
 		G,
 	>
@@ -88,6 +92,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 		TCS,
 		G,
 	> where
@@ -110,6 +115,7 @@ impl<
 	ParentchainBlockImporter: TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>
 		+ Send
 		+ Sync,
+	PeersUpdater: PeerUpdater,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
@@ -119,6 +125,7 @@ impl<
 		top_pool_author: Arc<TopPoolAuthor>,
 		parentchain_block_importer: Arc<ParentchainBlockImporter>,
 		ocall_api: Arc<OCallApi>,
+		peer_updater: Arc<PeersUpdater>,
 	) -> Self {
 		Self {
 			state_handler,
@@ -126,6 +133,7 @@ impl<
 			top_pool_author,
 			parentchain_block_importer,
 			ocall_api,
+			peer_updater,
 			_phantom: Default::default(),
 		}
 	}
@@ -167,6 +175,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 		TCS,
 		G,
 	> BlockImport<ParentchainBlock, SignedSidechainBlock>
@@ -179,6 +188,7 @@ impl<
 		StateKeyRepository,
 		TopPoolAuthor,
 		ParentchainBlockImporter,
+		PeersUpdater,
 		TCS,
 		G,
 	> where
@@ -201,6 +211,7 @@ impl<
 	ParentchainBlockImporter: TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>
 		+ Send
 		+ Sync,
+	PeersUpdater: PeerUpdater,
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
@@ -271,6 +282,11 @@ impl<
 		sidechain_block: &SignedSidechainBlock::Block,
 		last_imported_parentchain_header: &ParentchainBlock::Header,
 	) -> Result<ParentchainBlock::Header, ConsensusError> {
+		// get new peer list on each parentchain block import
+		if let Ok(peers) = self.ocall_api.get_trusted_peers_urls() {
+			self.peer_updater.update(peers);
+		}
+
 		// We trigger the import of parentchain blocks up until the last one we've seen in the
 		// sidechain block that we're importing. This is done to prevent forks in the sidechain (#423)
 		let maybe_latest_imported_block = self

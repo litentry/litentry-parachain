@@ -157,6 +157,8 @@ pub trait InPoolOperation {
 pub trait TrustedOperationPool<TOP>: Send + Sync {
 	/// Block type.
 	type Block: BlockT;
+	/// TrustedOperation hash type.
+	type Hash: Hash + Eq + Member + Encode;
 	/// In-pool operation type.
 	type InPoolOperation: InPoolOperation<TrustedOperation = TOP>;
 	/// Error type.

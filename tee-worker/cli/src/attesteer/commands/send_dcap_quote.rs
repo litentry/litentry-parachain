@@ -17,7 +17,7 @@
 
 use crate::{command_utils::get_worker_api_direct, Cli};
 use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
 use log::*;
@@ -39,8 +39,12 @@ impl SendDcapQuoteCmd {
 		};
 
 		let rpc_method = "attesteer_forwardDcapQuote".to_owned();
-		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call(rpc_method, vec![hex_encoded_quote]).unwrap();
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
+			rpc_method,
+			vec![hex_encoded_quote],
+		)
+		.unwrap();
 
 		let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
 

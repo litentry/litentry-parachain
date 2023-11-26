@@ -249,6 +249,7 @@ fn test_submit_trusted_call_to_top_pool() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -278,6 +279,7 @@ fn test_submit_trusted_getter_to_top_pool() {
 		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -315,6 +317,7 @@ fn test_differentiate_getter_and_call_works() {
 		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 	submit_operation_to_top_pool(
@@ -322,6 +325,7 @@ fn test_differentiate_getter_and_call_works() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -356,11 +360,12 @@ fn test_create_block_and_confirmation_works() {
 	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let trusted_operation = direct_top(signed_call);
 
-	let top_hash = submit_operation_to_top_pool(
+	let (top_hash, _) = submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -411,6 +416,7 @@ fn test_create_state_diff() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -469,6 +475,7 @@ fn test_executing_call_updates_account_nonce() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -526,6 +533,7 @@ fn test_signature_must_match_public_sender_in_call() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -556,6 +564,7 @@ fn test_invalid_nonce_call_is_not_executed() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -584,6 +593,7 @@ fn test_non_root_shielding_call_is_not_executed() {
 		&direct_top(signed_call),
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 
@@ -615,6 +625,7 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 		&trusted_operation,
 		&shielding_key,
 		shard,
+		false,
 	)
 	.unwrap();
 

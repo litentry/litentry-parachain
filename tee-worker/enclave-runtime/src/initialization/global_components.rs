@@ -33,6 +33,7 @@ use crate::{
 use ita_parentchain_interface::{integritee, target_a, target_b};
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, State as StfState, Stf, TrustedCallSigned};
+use itc_direct_rpc_client::DirectRpcClientFactory;
 use itc_direct_rpc_server::{
 	rpc_connection_registry::ConnectionRegistry, rpc_responder::RpcResponder,
 	rpc_watch_extractor::RpcWatchExtractor, rpc_ws_handler::RpcWsHandler,
@@ -49,6 +50,7 @@ use itc_parentchain::{
 		light_validation::LightValidation, light_validation_state::LightValidationState,
 	},
 };
+use itc_peer_top_broadcaster::DirectRpcBroadcaster;
 use itc_tls_websocket_server::{
 	config_provider::FromFileConfigProvider, ws_server::TungsteniteWsServer, ConnectionToken,
 };
@@ -75,7 +77,7 @@ use itp_stf_state_observer::state_observer::StateObserver;
 use itp_top_pool::basic_pool::BasicPool;
 use itp_top_pool_author::{
 	api::SidechainApi,
-	author::{Author, AuthorTopFilter},
+	author::{Author, AuthorTopFilter, BroadcastedTopFilter},
 };
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use its_primitives::{
@@ -89,6 +91,7 @@ use its_sidechain::{
 	slots::FailSlotOnDemand,
 };
 use lazy_static::lazy_static;
+use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
 use sp_core::{ed25519, ed25519::Pair};
@@ -291,12 +294,14 @@ pub type EnclaveTopPool = BasicPool<
 pub type EnclaveTopPoolAuthor = Author<
 	EnclaveTopPool,
 	AuthorTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
+	BroadcastedTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
 	EnclaveStateHandler,
 	EnclaveShieldingKeyRepository,
 	EnclaveOCallApi,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 >;
+pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster<DirectRpcClientFactory>;
 pub type EnclaveSidechainBlockComposer =
 	BlockComposer<ParentchainBlock, SignedSidechainBlock, Pair, EnclaveStateKeyRepository>;
 pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<
@@ -309,6 +314,7 @@ pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<
 	EnclaveTopPoolAuthor,
 	// For now the sidechain does only support one parentchain.
 	IntegriteeParentchainTriggeredBlockImportDispatcher,
+	EnclaveDirectRpcBroadcaster,
 	EnclaveTrustedCallSigned,
 	EnclaveGetter,
 >;
@@ -402,6 +408,15 @@ pub static GLOBAL_STATE_OBSERVER_COMPONENT: ComponentContainer<EnclaveStateObser
 /// TOP pool author.
 pub static GLOBAL_TOP_POOL_AUTHOR_COMPONENT: ComponentContainer<EnclaveTopPoolAuthor> =
 	ComponentContainer::new("top_pool_author");
+
+/// Direct RPC broadcaster
+pub static GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT: ComponentContainer<
+	EnclaveDirectRpcBroadcaster,
+> = ComponentContainer::new("direct_rpc_broadcaster");
+
+pub static DIRECT_RPC_REQUEST_SINK_COMPONENT: ComponentContainer<
+	sgx_tstd::sync::mpsc::SyncSender<BroadcastedRequest>,
+> = ComponentContainer::new("direct_rpc_request_sink");
 
 /// attestation handler
 pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttestationHandler> =

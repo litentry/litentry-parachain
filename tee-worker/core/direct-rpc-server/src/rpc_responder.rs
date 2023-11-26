@@ -138,13 +138,30 @@ where
 		Ok(())
 	}
 
+	fn update_force_wait(&self, hash: Self::Hash, force_wait: bool) -> DirectRpcResult<()> {
+		let (connection_token, rpc_response, _) = self
+			.connection_registry
+			.withdraw(&hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+		self.connection_registry.store(hash, connection_token, rpc_response, force_wait);
+
+		Ok(())
+	}
+
+	fn is_force_wait(&self, hash: Self::Hash) -> bool {
+		self.connection_registry.is_force_wait(&hash)
+	}
+
 	fn update_connection_state(
 		&self,
 		hash: Self::Hash,
 		encoded_value: Vec<u8>,
 		force_wait: bool,
 	) -> DirectRpcResult<()> {
-		debug!("set response value");
+		info!(
+			"updating connection state for hash {:?}: encoded_value {:?}, force_wait: {:?}",
+			hash, encoded_value, force_wait
+		);
 
 		// withdraw removes it from the registry
 		let (connection_token, rpc_response, _) = self

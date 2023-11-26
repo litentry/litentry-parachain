@@ -36,7 +36,7 @@ mod teeracle;
 mod tests;
 mod utils;
 mod worker;
-mod worker_peers_updater;
+mod worker_peers_registry;
 
 #[cfg(feature = "link-binary")]
 pub mod main_impl;

@@ -55,29 +55,34 @@ impl AchainableNameMirror {
 	}
 }
 
+// The Achainable API using these names can share this structure
 #[derive(Debug, PartialEq)]
-pub enum AchainableNameBalance {
+pub enum AchainableNameAmount {
 	BalanceUnderAmount,
 	BalanceOverAmount,
+	CreatedOverAmountContracts,
 }
 
-impl GetAchainableName for AchainableNameBalance {
+impl GetAchainableName for AchainableNameAmount {
 	fn name(&self) -> &'static str {
 		match self {
-			AchainableNameBalance::BalanceUnderAmount => "Balance under {amount}",
-			AchainableNameBalance::BalanceOverAmount => "Balance over {amount}",
+			AchainableNameAmount::BalanceUnderAmount => "Balance under {amount}",
+			AchainableNameAmount::BalanceOverAmount => "Balance over {amount}",
+			AchainableNameAmount::CreatedOverAmountContracts => "Created over {amount} contracts",
 		}
 	}
 }
 
-impl AchainableNameBalance {
-	pub fn from(param: ParameterString) -> Result<AchainableNameBalance, Error> {
+impl AchainableNameAmount {
+	pub fn from(param: ParameterString) -> Result<AchainableNameAmount, Error> {
 		let name_str = vec_to_string(param.to_vec())?;
 
-		if name_str == AchainableNameBalance::BalanceUnderAmount.name() {
-			return Ok(AchainableNameBalance::BalanceUnderAmount)
-		} else if name_str == AchainableNameBalance::BalanceOverAmount.name() {
-			return Ok(AchainableNameBalance::BalanceOverAmount)
+		if name_str == AchainableNameAmount::BalanceUnderAmount.name() {
+			return Ok(AchainableNameAmount::BalanceUnderAmount)
+		} else if name_str == AchainableNameAmount::BalanceOverAmount.name() {
+			return Ok(AchainableNameAmount::BalanceOverAmount)
+		} else if name_str == AchainableNameAmount::CreatedOverAmountContracts.name() {
+			return Ok(AchainableNameAmount::CreatedOverAmountContracts)
 		}
 
 		Err(Error::AchainableError("Invalid Achainable Name".to_string()))

@@ -25,7 +25,10 @@ use crate::{
 			initialize_test_state::init_state,
 			test_setup::{enclave_call_signer, TestStf},
 		},
-		mocks::{propose_to_import_call_mock::ProposeToImportOCallApi, types::*},
+		mocks::{
+			peer_updater_mock::PeerUpdaterMock,
+			propose_to_import_call_mock::ProposeToImportOCallApi, types::*,
+		},
 	},
 	top_pool_execution::{exec_aura_on_slot, send_blocks_and_extrinsics},
 };
@@ -50,7 +53,10 @@ use itp_stf_primitives::types::{StatePayload, TrustedOperation};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{handle_state_mock::HandleStateMock, metrics_ocall_mock::MetricsOCallMock};
 use itp_time_utils::duration_now;
-use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
+use itp_top_pool_author::{
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
+	traits::AuthorApi,
+};
 use itp_types::{AccountId, Block as ParentchainBlock, RsaRequest, ShardIdentifier};
 use its_block_verification::slot::slot_from_timestamp_and_duration;
 use its_primitives::{traits::Block, types::SignedBlock as SignedSidechainBlock};
@@ -103,20 +109,26 @@ pub fn produce_sidechain_block_and_import_it() {
 	));
 	let top_pool = create_top_pool();
 
+	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
+
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
+		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler.clone(),
 		shielding_key_repo,
 		Arc::new(MetricsOCallMock::default()),
+		Arc::new(sender),
 	));
 	let parentchain_block_import_trigger = Arc::new(TestParentchainBlockImportTrigger::default());
+	let peer_updater_mock = Arc::new(PeerUpdaterMock {});
 	let block_importer = Arc::new(TestBlockImporter::new(
 		state_handler.clone(),
 		state_key_repo.clone(),
 		top_pool_author.clone(),
 		parentchain_block_import_trigger.clone(),
 		ocall_api.clone(),
+		peer_updater_mock,
 	));
 	let block_composer = Arc::new(TestBlockComposer::new(signer.clone(), state_key_repo.clone()));
 	let proposer_environment =

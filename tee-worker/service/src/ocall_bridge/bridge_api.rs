@@ -236,6 +236,8 @@ pub trait SidechainBridge {
 		maybe_until_block_hash_encoded: Vec<u8>,
 		shard_identifier_encoded: Vec<u8>,
 	) -> OCallBridgeResult<Vec<u8>>;
+
+	fn get_trusted_peers_urls(&self) -> OCallBridgeResult<Vec<u8>>;
 }
 
 /// type for IPFS
