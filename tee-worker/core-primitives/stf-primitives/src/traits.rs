@@ -45,6 +45,9 @@ pub trait TrustedCallVerification {
 	fn nonce(&self) -> Index;
 
 	fn verify_signature(&self, mrenclave: &[u8; 32], shard: &ShardIdentifier) -> bool;
+
+	// Litentry: extend the trait for metric statistic purpose
+	fn metric_name(&self) -> &'static str;
 }
 
 /// validation for top pool

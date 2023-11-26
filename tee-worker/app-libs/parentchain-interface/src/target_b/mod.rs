@@ -58,7 +58,8 @@ pub enum IndirectCall {}
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
 {
-	fn dispatch(&self, _executor: &Executor) -> Result<()> {
+	type Args = ();
+	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		Err(Error::Other("no indirect calls defined for target_b".into()))
 	}
 }

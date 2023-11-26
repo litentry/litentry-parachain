@@ -54,7 +54,7 @@ use crate::{
 	},
 	rpc::worker_api_direct::sidechain_io_handler,
 	utils::{
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_node_metadata_repository_from_litentry_solo_or_parachain,
 		get_node_metadata_repository_from_target_a_solo_or_parachain,
 		get_node_metadata_repository_from_target_b_solo_or_parachain,
 		get_validator_accessor_from_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
@@ -308,7 +308,7 @@ pub unsafe extern "C" fn set_node_metadata(
 	info!("Setting node meta data for parentchain: {:?}", id);
 
 	let node_metadata_repository = match id {
-		ParentchainId::Litentry => get_node_metadata_repository_from_integritee_solo_or_parachain(),
+		ParentchainId::Litentry => get_node_metadata_repository_from_litentry_solo_or_parachain(),
 		ParentchainId::TargetA => get_node_metadata_repository_from_target_a_solo_or_parachain(),
 		ParentchainId::TargetB => get_node_metadata_repository_from_target_b_solo_or_parachain(),
 	};
@@ -598,7 +598,7 @@ fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>
 			} else if let Ok(handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
 				handler.import_dispatcher.dispatch_import(blocks_to_sync, events_to_sync)?;
 			} else {
-				return Err(Error::NoIntegriteeParentchainAssigned)
+				return Err(Error::NoLitentryParentchainAssigned)
 			};
 		},
 		ParentchainId::TargetA => {
@@ -705,7 +705,7 @@ fn internal_trigger_parentchain_block_import(id: &ParentchainId) -> Result<()> {
 					.ok_or(Error::ExpectedTriggeredImportDispatcher)?
 					.import_all()?
 			} else {
-				return Err(Error::NoIntegriteeParentchainAssigned)
+				return Err(Error::NoLitentryParentchainAssigned)
 			}
 		},
 		ParentchainId::TargetA => {

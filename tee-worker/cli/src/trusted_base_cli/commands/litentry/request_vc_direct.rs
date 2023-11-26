@@ -22,7 +22,7 @@ use crate::{
 	trusted_operation::perform_direct_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedOperation};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
 use lc_credentials::Credential;
@@ -251,7 +251,7 @@ impl RequestVcDirectCommand {
 		)
 		.expect("decoding shielding_key failed");
 
-		let top: TrustedOperation = TrustedCall::request_vc(
+		let top = TrustedCall::request_vc(
 			alice.public().into(),
 			id,
 			assertion,

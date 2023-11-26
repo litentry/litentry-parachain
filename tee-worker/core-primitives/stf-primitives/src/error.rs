@@ -15,7 +15,7 @@
 
 */
 use crate::types::{AccountId, Nonce};
-use alloc::string::String;
+use alloc::{format, string::String};
 use codec::{Decode, Encode};
 use derive_more::Display;
 use litentry_primitives::{Assertion, ErrorDetail, ErrorString, IMPError, VCMPError};

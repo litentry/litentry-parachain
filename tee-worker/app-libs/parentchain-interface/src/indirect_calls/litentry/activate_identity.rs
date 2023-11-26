@@ -14,18 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, ErrorDetail, IMPError, Result},
-	IndirectDispatch, IndirectExecutor,
-};
-use codec::{Decode, Encode};
-
-use ita_stf::TrustedCall;
-
 use crate::indirect_calls::litentry::args_executor::ArgsExecutor;
+use codec::{Decode, Encode};
+use ita_stf::{TrustedCall, TrustedCallSigned};
+use itc_parentchain_indirect_calls_executor::{
+	error::{Error, IMPError, Result},
+	IndirectDispatch,
+};
+use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::Identity;
+use litentry_primitives::{ErrorDetail, Identity};
 use log::debug;
 use sp_core::crypto::AccountId32;
 use sp_runtime::{
@@ -53,7 +52,7 @@ impl ArgsExecutor for ActivateIdentityArgs {
 		self.shard
 	}
 
-	fn prepare_trusted_call<Executor: IndirectExecutor>(
+	fn prepare_trusted_call<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		&self,
 		executor: &Executor,
 		address: MultiAddress<AccountId32, ()>,
@@ -77,7 +76,9 @@ impl ArgsExecutor for ActivateIdentityArgs {
 	}
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for ActivateIdentityArgs {
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for ActivateIdentityArgs
+{
 	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		self.execute(executor, args.0, args.1)

@@ -22,14 +22,12 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
 use ita_stf::{Getter, Index, TrustedCall, TrustedCallSigned};
 use itp_stf_primitives::{
 	traits::TrustedCallSigning,
 	types::{KeyPair, TrustedOperation},
 };
 use litentry_primitives::ParentchainBalance as Balance;
-use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
 use std::boxed::Box;
 #[derive(Parser)]

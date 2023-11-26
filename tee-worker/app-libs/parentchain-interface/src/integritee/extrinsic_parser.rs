@@ -15,9 +15,9 @@
 
 */
 
-use crate::executor::hash_of;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
+use itc_parentchain_indirect_calls_executor::hash_of;
 use itp_node_api::api_client::{
 	Address, CallIndex, PairSignature, ParentchainSignedExtra, Signature, UncheckedExtrinsicV4,
 };
@@ -71,12 +71,13 @@ where
             PairSignature,
             Self::SignedExtra,
         >::decode(call_mut)?;
+		let hashed_xt = hash_of(&xt);
 
 		Ok(SemiOpaqueExtrinsic {
 			signature: xt.signature,
 			call_index: xt.function.0,
 			call_args: call_mut,
-			hashed_extrinsic: hash_of(&xt),
+			hashed_extrinsic: hashed_xt,
 		})
 	}
 }

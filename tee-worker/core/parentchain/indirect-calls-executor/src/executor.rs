@@ -295,7 +295,7 @@ impl<
 	}
 }
 
-pub(crate) fn hash_of<T: Encode>(xt: &T) -> H256 {
+pub fn hash_of<T: Encode>(xt: &T) -> H256 {
 	blake2_256(&xt.encode()).into()
 }
 

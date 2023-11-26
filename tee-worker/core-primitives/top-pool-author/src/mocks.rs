@@ -205,7 +205,7 @@ where
 				for encoded_operation in encoded_operations {
 					if let Ok(top) = StfTrustedOperation::decode(&mut encoded_operation.as_slice())
 					{
-						if top.signed_caller_account() == Some(account) {
+						if top.signed_caller_account().as_ref() == Some(account) {
 							trusted_operations.push(top);
 						}
 					}

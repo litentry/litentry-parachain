@@ -32,8 +32,8 @@ use crate::{
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	},
 	utils::{
-		get_extrinsic_factory_from_integritee_solo_or_parachain,
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_extrinsic_factory_from_litentry_solo_or_parachain,
+		get_node_metadata_repository_from_litentry_solo_or_parachain,
 	},
 	Error as EnclaveError, Result as EnclaveResult,
 };
@@ -307,7 +307,7 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 	url: String,
 	quote: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 	info!("    [Enclave] Compose register enclave getting callIDs:");
 
 	let call_ids = node_metadata_repo
@@ -329,7 +329,7 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 	url: String,
 	quote: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 	info!("    [Enclave] Compose register enclave (skip-ra) getting callIDs:");
 
 	let call_ids = node_metadata_repo
@@ -365,7 +365,7 @@ pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
 	url: String,
 	cert_der: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 
 	info!("    [Enclave] Compose register enclave call");
 	let call_ids = node_metadata_repo
@@ -381,7 +381,7 @@ pub fn generate_ias_skip_ra_extrinsic_from_der_cert_internal(
 	url: String,
 	cert_der: &[u8],
 ) -> EnclaveResult<OpaqueExtrinsic> {
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 
 	info!("    [Enclave] Compose register ias enclave (skip-ra) call");
 	let call_ids = node_metadata_repo
@@ -418,7 +418,7 @@ pub fn generate_ias_skip_ra_extrinsic_from_der_cert_internal(
 }
 
 fn create_extrinsics(call: OpaqueCall) -> EnclaveResult<OpaqueExtrinsic> {
-	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
 	let extrinsics = extrinsics_factory.create_extrinsics(&[call], None)?;
 
 	match extrinsics.get(0) {
@@ -499,9 +499,9 @@ pub fn generate_generic_register_collateral_extrinsic<F>(
 where
 	F: Fn(&NodeMetadata) -> Result<[u8; 2], MetadataError>,
 {
-	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
 
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 	let call_ids = node_metadata_repo
 		.get_from_metadata(getter)?
 		.map_err(MetadataProviderError::MetadataError)?;

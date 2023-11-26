@@ -48,10 +48,11 @@ pub enum IndirectCall {
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
 {
-	fn dispatch(&self, executor: &Executor) -> Result<()> {
+	type Args = ();
+	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		trace!("dispatching indirect call {:?}", self);
 		match self {
-			IndirectCall::TransferToAliceShieldsFunds(args) => args.dispatch(executor),
+			IndirectCall::TransferToAliceShieldsFunds(args) => args.dispatch(executor, ()),
 		}
 	}
 }

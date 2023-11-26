@@ -14,16 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, ErrorDetail, IMPError, Result},
-	indirect_calls::litentry::args_executor::ArgsExecutor,
-	IndirectDispatch, IndirectExecutor,
-};
+use crate::indirect_calls::litentry::args_executor::ArgsExecutor;
 use codec::{Decode, Encode};
-use ita_stf::TrustedCall;
+use ita_stf::{TrustedCall, TrustedCallSigned};
+use itc_parentchain_indirect_calls_executor::{
+	error::{Error, IMPError, Result},
+	IndirectDispatch,
+};
+use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{AccountId, ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, ValidationData, Web3Network};
+use litentry_primitives::{ErrorDetail, Identity, ValidationData, Web3Network};
 use log::debug;
 use sp_core::crypto::AccountId32;
 use sp_runtime::MultiAddress;
@@ -51,7 +52,7 @@ impl ArgsExecutor for LinkIdentityArgs {
 		self.shard
 	}
 
-	fn prepare_trusted_call<Executor: IndirectExecutor>(
+	fn prepare_trusted_call<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		&self,
 		executor: &Executor,
 		_address: MultiAddress<AccountId, ()>,
@@ -85,7 +86,9 @@ impl ArgsExecutor for LinkIdentityArgs {
 	}
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for LinkIdentityArgs {
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for LinkIdentityArgs
+{
 	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		self.execute(executor, args.0, args.1)

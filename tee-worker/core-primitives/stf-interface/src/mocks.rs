@@ -28,7 +28,7 @@ use core::{fmt::Debug, marker::PhantomData};
 use itp_node_api_metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
 use itp_stf_primitives::traits::TrustedCallVerification;
-use itp_types::{parentchain::ParentchainId, AccountId, Index, OpaqueCall};
+use itp_types::{parentchain::ParentchainId, AccountId, Index, OpaqueCall, ShardIdentifier, H256};
 
 #[derive(Default)]
 pub struct StateInterfaceMock<State, StateDiff> {

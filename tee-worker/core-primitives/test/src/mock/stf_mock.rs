@@ -21,7 +21,8 @@ use itp_node_api::metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
 use itp_sgx_externalities::{SgxExternalities, SgxExternalitiesDiffType, SgxExternalitiesTrait};
 use itp_stf_interface::{
-	ExecuteCall, InitState, StateCallInterface, StateGetterInterface, UpdateState,
+	runtime_upgrade::RuntimeUpgradeInterface, ExecuteCall, InitState, StateCallInterface,
+	StateGetterInterface, UpdateState,
 };
 use itp_stf_primitives::{
 	traits::{
@@ -88,6 +89,13 @@ impl InitState<SgxExternalities, AccountId> for StfMock {
 impl StateGetterInterface<GetterMock, SgxExternalities> for StfMock {
 	fn execute_getter(_state: &mut SgxExternalities, _getter: GetterMock) -> Option<Vec<u8>> {
 		Some(vec![42])
+	}
+}
+
+impl RuntimeUpgradeInterface<SgxExternalities> for StfMock {
+	type Error = StfMockError;
+	fn on_runtime_upgrade(_state: &mut SgxExternalities) -> Result<(), Self::Error> {
+		Ok(())
 	}
 }
 
@@ -204,6 +212,10 @@ impl TrustedCallVerification for TrustedCallSignedMock {
 
 	fn verify_signature(&self, _mrenclave: &[u8; 32], _shard: &ShardIdentifier) -> bool {
 		true
+	}
+
+	fn metric_name(&self) -> &'static str {
+		Default::default()
 	}
 }
 

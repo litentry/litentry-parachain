@@ -28,7 +28,7 @@ use crate::{
 };
 use codec::Encode;
 use core::result::Result;
-use ita_sgx_runtime::Runtime;
+use ita_sgx_runtime::{Runtime, System};
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
 use itp_component_container::ComponentGetter;
@@ -147,11 +147,9 @@ where
 		Ok(json!(json_value.to_hex()))
 	});
 
-	// author_getNextNonce
+	let local_top_pool_author = top_pool_author.clone();
 	let state_storage = state.clone();
-
-	let author_get_next_nonce: &str = "author_getNextNonce";
-	io.add_sync_method(author_get_next_nonce, move |params: Params| {
+	io.add_sync_method("author_getNextNonce", move |params: Params| {
 		let state_nonce = state.clone();
 		if state_nonce.is_none() {
 			return Ok(json!(compute_hex_encoded_return_error(
@@ -173,8 +171,10 @@ where
 				let account = match AccountId::from_hex(account_hex.as_str()) {
 					Ok(acc) => acc,
 					Err(msg) => {
-						let error_msg: String =
-							format!("Could not retrieve author_getNextNonce calls due to: {}", msg);
+						let error_msg: String = format!(
+							"Could not retrieve author_getNextNonce calls due to: {:?}",
+							msg
+						);
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
@@ -182,7 +182,7 @@ where
 				match state_nonce_unwrap.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
 						let trusted_calls =
-							pool_author.get_pending_trusted_calls_for(shard, &account);
+							local_top_pool_author.get_pending_trusted_calls_for(shard, &account);
 						let pending_tx_count = trusted_calls.len();
 						#[allow(clippy::unwrap_used)]
 						let pending_tx_count = Index::try_from(pending_tx_count).unwrap();

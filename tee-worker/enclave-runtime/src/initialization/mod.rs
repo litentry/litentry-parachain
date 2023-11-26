@@ -41,8 +41,8 @@ use crate::{
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
 	utils::{
-		get_extrinsic_factory_from_integritee_solo_or_parachain,
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_extrinsic_factory_from_litentry_solo_or_parachain,
+		get_node_metadata_repository_from_litentry_solo_or_parachain,
 		get_triggered_dispatcher_from_solo_or_parachain,
 		get_validator_accessor_from_solo_or_parachain,
 	},
@@ -245,8 +245,8 @@ pub(crate) fn init_enclave_sidechain_components(
 	));
 
 	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
-	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let metadata_repository = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
 	let validator_accessor = get_validator_accessor_from_solo_or_parachain()?;
 
 	let sidechain_block_import_confirmation_handler =

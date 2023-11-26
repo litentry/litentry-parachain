@@ -23,7 +23,7 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
-use ita_stf::{Getter, TrustedCallSigned};
+use ita_stf::{Getter, StfError, TrustedCall, TrustedCallSigned};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
@@ -63,7 +63,7 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
-) -> TrustedOpResult {
+) -> TrustedOpResult<T> {
 	match top {
 		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
 		TrustedOperation::direct_call(_) => send_direct_request(cli, trusted_args, top),
@@ -74,7 +74,7 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 pub(crate) fn perform_direct_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	top: &TrustedOperation,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	key: RequestAesKey,
 ) -> TrustedOpResult<T> {
 	match top {
@@ -152,7 +152,7 @@ fn send_indirect_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	trusted_operation: &TrustedOperation<TrustedCallSigned, Getter>,
-) -> TrustedOpResult {
+) -> TrustedOpResult<T> {
 	let mut chain_api = get_chain_api(cli);
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let call_encrypted = encryption_key.encrypt(&trusted_operation.encode()).unwrap();
@@ -282,7 +282,7 @@ fn send_direct_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
-) -> TrustedOpResult {
+) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args, cli).unwrap();
 	let jsonrpc_call: String = get_json_request(shard, operation_call, encryption_key);
@@ -365,7 +365,7 @@ fn send_direct_request<T: Decode + Debug>(
 fn send_direct_vc_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 	key: RequestAesKey,
 ) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
@@ -428,7 +428,7 @@ fn send_direct_vc_request<T: Decode + Debug>(
 
 pub(crate) fn get_vc_json_request(
 	shard: ShardIdentifier,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 	key: RequestAesKey,
 ) -> String {

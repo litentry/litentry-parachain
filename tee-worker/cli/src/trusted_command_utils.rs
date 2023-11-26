@@ -67,7 +67,7 @@ const TRUSTED_KEYSTORE_PATH: &str = "my_trusted_keystore";
 
 pub(crate) fn get_balance(cli: &Cli, trusted_args: &TrustedCli, arg_who: &str) -> Option<u128> {
 	debug!("arg_who = {:?}", arg_who);
-	let who = get_pair_from_str(trusted_args, arg_who);
+	let who = get_pair_from_str(trusted_args, arg_who, cli);
 	let top = TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(
 		TrustedGetter::free_balance(who.public().into()).sign(&KeyPair::Sr25519(Box::new(who))),
 	));

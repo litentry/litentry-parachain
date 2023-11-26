@@ -18,7 +18,7 @@ use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
 	trusted_operation::perform_trusted_operation, Cli, CliError, CliResult, CliResultOk,
 };
-use ita_stf::{TrustedGetter, TrustedOperation};
+use ita_stf::{Getter, TrustedGetter};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::ParentchainAccountId;
 use sp_core::Pair;
@@ -34,9 +34,11 @@ pub struct IDGraphStats {
 impl IDGraphStats {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let who = get_pair_from_str(trusted_cli, &self.account, cli);
-		let top: TrustedOperation = TrustedGetter::id_graph_stats(who.public().into())
-			.sign(&KeyPair::Sr25519(Box::new(who)))
-			.into();
+		let top = Getter::trusted(
+			TrustedGetter::id_graph_stats(who.public().into())
+				.sign(&KeyPair::Sr25519(Box::new(who))),
+		)
+		.into();
 		let id_graph_stats = perform_trusted_operation::<IDGraphStatsVec>(cli, trusted_cli, &top);
 		println!("IDGraph stats:");
 		match id_graph_stats {

@@ -43,8 +43,8 @@ use itp_types::{
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{
-	collections::BTreeMap, fmt::Debug, marker::PhantomData, sync::Arc, time::Duration, vec,
-	vec::Vec,
+	collections::BTreeMap, fmt::Debug, marker::PhantomData, string::ToString, sync::Arc,
+	time::Duration, vec, vec::Vec,
 };
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
 where
@@ -132,9 +132,10 @@ where
 			self.node_metadata_repo.clone(),
 		) {
 			Err(e) => {
-				if let Err(e) = self.ocall_api.update_metric(
-					EnclaveMetric::FailedTrustedOperationIncrement(trusted_call.call.clone()),
-				) {
+				if let Err(e) =
+					self.ocall_api.update_metric(EnclaveMetric::FailedTrustedOperationIncrement(
+						trusted_call.metric_name().to_string(),
+					)) {
 					warn!("Failed to update metric for failed trusted operations: {:?}", e);
 				}
 				error!("Stf execute failed: {:?}", e);
@@ -148,7 +149,9 @@ where
 			},
 			Ok(result) => {
 				if let Err(e) = self.ocall_api.update_metric(
-					EnclaveMetric::SuccessfulTrustedOperationIncrement(trusted_call.call.clone()),
+					EnclaveMetric::SuccessfulTrustedOperationIncrement(
+						trusted_call.metric_name().to_string(),
+					),
 				) {
 					warn!("Failed to update metric for succesfull trusted operations: {:?}", e);
 				}

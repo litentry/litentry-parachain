@@ -21,8 +21,8 @@ use crate::{
 		GLOBAL_STATE_HANDLER_COMPONENT,
 	},
 	utils::{
-		get_extrinsic_factory_from_integritee_solo_or_parachain,
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_extrinsic_factory_from_litentry_solo_or_parachain,
+		get_node_metadata_repository_from_litentry_solo_or_parachain,
 	},
 };
 use codec::{Compact, Decode, Encode};
@@ -113,8 +113,8 @@ pub(crate) fn init_proxied_shard_vault_internal(shard: ShardIdentifier) -> Encla
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let enclave_signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
-	let enclave_extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let enclave_extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 	let vault = enclave_signer
 		.derive(vec![DeriveJunction::hard(shard.encode())].into_iter(), None)
 		.map_err(|_| Error::Other("failed to derive shard vault keypair".into()))?
@@ -141,7 +141,7 @@ pub(crate) fn init_proxied_shard_vault_internal(shard: ShardIdentifier) -> Encla
 	let xts = enclave_extrinsics_factory.create_extrinsics(&[call], None)?;
 
 	//this extrinsic must be included in a block before we can move on. otherwise the next will fail
-	ocall_api.send_to_parentchain(xts, &ParentchainId::Integritee, true)?;
+	ocall_api.send_to_parentchain(xts, &ParentchainId::Litentry, true)?;
 
 	// we are assuming nonce=0 here.
 	let nonce_cache = Arc::new(NonceCache::default());
@@ -163,7 +163,7 @@ pub(crate) fn init_proxied_shard_vault_internal(shard: ShardIdentifier) -> Encla
 	info!("add proxy call: 0x{}", hex::encode(call.0.clone()));
 	let xts = vault_extrinsics_factory.create_extrinsics(&[call], None)?;
 
-	ocall_api.send_to_parentchain(xts, &ParentchainId::Integritee, false)?;
+	ocall_api.send_to_parentchain(xts, &ParentchainId::Litentry, false)?;
 	Ok(())
 }
 
@@ -177,8 +177,8 @@ pub(crate) fn add_shard_vault_proxy(
 	};
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
-	let enclave_extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let enclave_extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 	let vault = get_shard_vault_account(shard)?;
 
 	debug!(
@@ -203,6 +203,6 @@ pub(crate) fn add_shard_vault_proxy(
 	info!("proxied add proxy call: 0x{}", hex::encode(call.0.clone()));
 	let xts = enclave_extrinsics_factory.create_extrinsics(&[call], None)?;
 
-	ocall_api.send_to_parentchain(xts, &ParentchainId::Integritee, false)?;
+	ocall_api.send_to_parentchain(xts, &ParentchainId::Litentry, false)?;
 	Ok(())
 }

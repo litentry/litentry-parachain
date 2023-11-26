@@ -1727,12 +1727,15 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
+ "lc-scheduled-enclave",
+ "litentry-primitives",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
+ "sp-std 5.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "thiserror",
 ]
 
@@ -2056,7 +2059,6 @@ dependencies = [
 name = "itp-enclave-metrics"
 version = "0.9.0"
 dependencies = [
- "ita-stf",
  "lc-stf-task-sender",
  "parity-scale-codec",
  "sgx_tstd",

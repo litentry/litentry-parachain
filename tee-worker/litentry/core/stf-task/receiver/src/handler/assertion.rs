@@ -18,6 +18,7 @@
 
 use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
 use ita_sgx_runtime::Hash;
+use ita_stf::{Getter, TrustedCallSigned};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -36,8 +37,8 @@ use std::{format, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
@@ -48,8 +49,8 @@ pub(crate) struct AssertionHandler<
 impl<K, A, S, H, O> TaskHandler for AssertionHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,

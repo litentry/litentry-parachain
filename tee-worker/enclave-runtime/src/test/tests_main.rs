@@ -510,8 +510,8 @@ fn test_signature_must_match_public_sender_in_call() {
 	let (top_pool_author, _, shard, mrenclave, shielding_key, _, stf_executor) = test_setup();
 
 	// create accounts
-	let receiver = funded_pair();
-	let victim = unfunded_public();
+	let sender = funded_pair();
+	let receiver = unfunded_public();
 
 	let trusted_operation = TrustedCall::balance_transfer(
 		Identity::Substrate(receiver.into()),

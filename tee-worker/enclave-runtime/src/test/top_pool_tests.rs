@@ -48,6 +48,7 @@ use itp_node_api::{
 	},
 	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 };
+use itp_node_api_metadata::pallet_teerex::TeerexCallIndexes;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_executor::enclave_signer::StfEnclaveSigner;

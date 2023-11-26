@@ -221,6 +221,20 @@ impl TrustedCall {
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
 		}
 	}
+
+	pub fn metric_name(&self) -> &'static str {
+		match self {
+			Self::link_identity(..) => "link_identity",
+			Self::request_vc(..) => "request_vc",
+			Self::link_identity_callback(..) => "link_identity_callback",
+			Self::request_vc_callback(..) => "request_vc_callback",
+			Self::handle_vcmp_error(..) => "handle_vcmp_error",
+			Self::handle_imp_error(..) => "handle_imp_error",
+			Self::deactivate_identity(..) => "deactivate_identity",
+			Self::activate_identity(..) => "activate_identity",
+			_ => "unsupported_trusted_call",
+		}
+	}
 }
 
 impl TrustedCallSigning<TrustedCallSigned> for TrustedCall {
@@ -290,6 +304,10 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut shard.encode());
 
 		self.signature.verify(payload.as_slice(), self.call.sender_identity())
+	}
+
+	fn metric_name(&self) -> &'static str {
+		self.call.metric_name()
 	}
 }
 

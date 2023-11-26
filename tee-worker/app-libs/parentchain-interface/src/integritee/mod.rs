@@ -18,12 +18,12 @@
 mod event_filter;
 mod event_handler;
 mod extrinsic_parser;
+
 use crate::{
 	decode_and_log_error,
 	indirect_calls::{
 		ActivateIdentityArgs, DeactivateIdentityArgs, InvokeArgs, LinkIdentityArgs,
-		RemoveScheduledEnclaveArgs, RequestVCArgs, ShieldFundsArgs,
-		TransferToAliceShieldsFundsArgs, UpdateScheduledEnclaveArgs, ALICE_ACCOUNT_ID,
+		RemoveScheduledEnclaveArgs, RequestVCArgs, ShieldFundsArgs, UpdateScheduledEnclaveArgs,
 	},
 	integritee::extrinsic_parser::ParseExtrinsic,
 };
@@ -40,7 +40,12 @@ use itc_parentchain_indirect_calls_executor::{
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
+use itp_types::{CallIndex, H256};
 use log::trace;
+use sp_core::crypto::AccountId32;
+use sp_runtime::MultiAddress;
+use sp_std::vec::Vec;
+
 /// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
 pub enum IndirectCall {
@@ -68,11 +73,12 @@ pub enum IndirectCall {
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
 {
-	fn dispatch(&self, executor: &Executor) -> Result<()> {
+	type Args = ();
+	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
 		trace!("dispatching indirect call {:?}", self);
 		match self {
-			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor),
-			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor),
+			IndirectCall::ShieldFunds(shieldfunds_args) => shieldfunds_args.dispatch(executor, ()),
+			IndirectCall::Invoke(invoke_args) => invoke_args.dispatch(executor, ()),
 			// Litentry
 			IndirectCall::LinkIdentity(verify_id, address, hash) =>
 				verify_id.dispatch(executor, (address.clone(), *hash)),
@@ -130,6 +136,7 @@ where
 				return None
 			},
 		};
+		let address = if let Some(signature) = xt.signature { Some(signature.0) } else { None };
 		let index = xt.call_index;
 		let call_args = &mut &xt.call_args[..];
 		log::trace!(
@@ -182,7 +189,7 @@ fn parse_batch_all<NodeMetadata: NodeMetadataTrait>(
 	hash: H256,
 ) -> Option<IndirectCall> {
 	let call_count: sp_std::vec::Vec<()> = Decode::decode(call_args).ok()?;
-	let mut calls: Vec<IndirectCall> = vec![];
+	let mut calls: Vec<IndirectCall> = Vec::new();
 	log::debug!("Received BatchAll including {} calls", call_count.len());
 	for _i in 0..call_count.len() {
 		let index: CallIndex = Decode::decode(call_args).ok()?;
