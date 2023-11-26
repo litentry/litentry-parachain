@@ -220,13 +220,10 @@ impl<
 			meta_data.confirm_processed_parentchain_block_call_indexes()
 		})??;
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
-
-		let fallback = ShardIdentifier::default();
-		let handled_shards = self.top_pool_author.list_handled_shards();
-		trace!("got handled shards: {:?}", handled_shards);
-		let shard = handled_shards.get(0).unwrap_or(&fallback);
 		trace!("prepared confirm_processed_parentchain_block() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);
-		Ok(OpaqueCall::from_tuple(&(call, shard, block_hash, block_number, root)))
+		// Litentry: we don't include `shard` in the extrinsic parameter to be backwards compatible,
+		//           however, we should not forget it in case we need it later
+		Ok(OpaqueCall::from_tuple(&(call, block_hash, block_number, root)))
 	}
 }
 
