@@ -38,8 +38,8 @@ export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, sig
 export async function sendTxUntilInBlockList(
     api: ApiPromise,
     txs: {
-          tx: SubmittableExtrinsic<ApiTypes>;
-    nonce: number;
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
     }[],
     signer: KeyringPair | KeyringPair[]
 ) {
@@ -205,8 +205,8 @@ export async function sendTxsWithUtility(
 export async function multiAccountTxSender(
     context: IntegrationTestContext,
     txs: {
-          tx: SubmittableExtrinsic<ApiTypes>;
-    nonce: number;
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
     }[],
     signers: KeyringPair | KeyringPair[],
     pallet: string,

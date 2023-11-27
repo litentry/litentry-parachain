@@ -32,29 +32,29 @@ export function encryptWithAes(key: HexString, nonce: Uint8Array, cleartext: Buf
 
 export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex' | 'utf-8'): HexString {
     // if (aesOutput.ciphertext && aesOutput.nonce) {
-        const secretKey = crypto.createSecretKey(hexToU8a(key));
-        const tagSize = 16;
-        const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
+    const secretKey = crypto.createSecretKey(hexToU8a(key));
+    const tagSize = 16;
+    const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
 
-        const nonce = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
-        const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
+    const nonce = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
+    const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
-        // notice!!! extract author_tag from ciphertext
-        // maybe this code only works with rust aes encryption
-        const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
+    // notice!!! extract author_tag from ciphertext
+    // maybe this code only works with rust aes encryption
+    const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
 
-        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
-            authTagLength: tagSize,
-        });
-        decipher.setAAD(aad);
-        decipher.setAuthTag(authorTag);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
+        authTagLength: tagSize,
+    });
+    decipher.setAAD(aad);
+    decipher.setAuthTag(authorTag);
 
-        const part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
-        const part2 = decipher.final(type);
+    const part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
+    const part2 = decipher.final(type);
 
-        return `0x${part1 + part2}`;
+    return `0x${part1 + part2}`;
     // } else {
-        // return u8aToHex(aesOutput as Uint8Array);
+    // return u8aToHex(aesOutput as Uint8Array);
     // }
 }
 
