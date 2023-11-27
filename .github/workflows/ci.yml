@@ -606,17 +606,28 @@ jobs:
       - set-condition
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true
 
-      - name: Check if bundle exists in LFS and if rebuild is required
+      - name: Download Latest
+        if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
+        run: | 
+          echo "Downloading latest build from S3"
+          curl -o litentry-cli.tar.gz https://kw-client-api.s3.eu-north-1.amazonaws.com/litentry-and-sora-quiz-master.vc.json
+          
+      - name: Upload client-api as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: client-api
+          path: client-api.tar.gz
+          if-no-files-found: 'warn' 
+
+      - name: Early exit if bundle exists and parachain/worker reubild is not required
         run: |
           # Check if either rebuild_parachain or rebuild_tee is true
-          if [[ "${{ needs.set-condition.outputs.rebuild_parachain }}" = "false" && "${{ needs.set-condition.outputs.rebuild_tee }}" = "false" && $(git lfs ls-files | grep -q 'tee-worker/client-api.tar.gz') ]]; then
-            echo "Bundle already exists in LFS and build is not required."
+          if [[ "${{ needs.set-condition.outputs.rebuild_parachain }}" = "false" && "${{ needs.set-condition.outputs.rebuild_tee }}" = "false" && -f "client-api.tar.gz" ]]; then
+            echo "Bundle already exists and rebuild is not required."
             exit 0
           else
-            echo "Rebuild is required. Proceeding with upload."
+            echo "Rebuild is required. Proceeding further..."
           fi
 
       - name: Pull polkadot image
@@ -661,27 +672,13 @@ jobs:
           sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
           tar -zcvf client-api.tar.gz client-api
 
-      - name: Set Git identity
-        run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
+      - name: Upload client-api as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: client-api
+          path: tee-worker/client-api.tar.gz
+          if-no-files-found: error
 
-      - name: Track the bundle file in LFS
-        run: git lfs track "tee-worker/client-api.tar.gz"
-
-      - name: Add and commit to LFS
-        run: |
-          git add .gitattributes tee-worker/client-api.tar.gz
-          git commit -m "Add bundle to LFS"
-          git push --all origin
-
-#      - name: Upload client-api as artifact
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: client-api
-#          path: tee-worker/client-api.tar.gz
-#          if-no-files-found: error
-#
       - name: Stop docker containers
         run: |
           cd tee-worker/docker
@@ -727,17 +724,13 @@ jobs:
         with:
           name: litentry-tee
 
-#      - uses: actions/download-artifact@v3
-#        with:
-#          name: client-api
+      - uses: actions/download-artifact@v3
+        with:
+          name: client-api
 
       - name: Unzip client-api
         run: |
-          git lfs pull
-          ls .
-          ls tee-worker
           tar -zxf tee-worker/client-api.tar.gz -C tee-worker/
-          echo "debug
           ls tee-worker/client-api/parachain-api
           ls tee-worker/client-api/sidechain-api
 

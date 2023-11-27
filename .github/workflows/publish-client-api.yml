@@ -1,0 +1,72 @@
+name: Publish Client API
+
+on:
+  pull_request:
+    branches:
+      - dev
+    types:
+      - closed
+
+  workflow_dispatch:
+    inputs:
+      s3_bucket:
+        description: Bucket name
+        required: true
+        default: client-api
+      s3_key:
+        description: AKI***
+        required: true
+      s3_secret:
+        description: "pst.."
+        required: true
+jobs:
+  publish_client_api_bundle:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          pip install s3-credentials
+          pip install -e '.'
+
+      - name: Run only on merged PR to dev
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev'
+        # if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'dev'
+        run: |
+          echo "PR merged into dev branch. Performing additional steps..."
+
+
+      - name: Download artifact
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci.yml
+          workflow_conclusion: success
+          name: client-api
+          # Optional, choose how to exit the action if no artifact is found
+          # can be one of:
+          #  "fail", "warn", "ignore"
+          # default fail
+          if_no_artifact_found: fail
+
+      - name: Check what's in folder
+        run: |
+          echo "debigging downloaded artifact"
+          ls -la .
+
+      - name: Upload Client API to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ github.event.inputs.s3_key }}
+          AWS_SECRET_ACCESS_KEY: ${{ github.event.inputs.s3_secret }}
+        run: |-
+          echo "uploading client-api.tar.gz"
+          s3-credentials put-object ${{ github.event.inputs.s3_bucket }} client-api.tar.gz
