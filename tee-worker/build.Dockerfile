@@ -102,11 +102,13 @@ WORKDIR /usr/local/bin
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /home/ubuntu/tee-worker/docker/entrypoint.sh /entrypoint.sh
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/litentry-worker
+RUN chmod +x /entrypoint.sh
 RUN ls -al /usr/local/bin
 
 # checks
@@ -114,9 +116,6 @@ ENV SGX_SDK /opt/sgxsdk
 ENV SGX_ENCLAVE_SIGNER $SGX_SDK/bin/x64/sgx_sign
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/sgx-aesm-service/aesm:$SGX_SDK/sdk_libs
 ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
-
-COPY tee-worker/docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
 
