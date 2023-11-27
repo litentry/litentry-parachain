@@ -461,7 +461,7 @@ pub unsafe extern "C" fn generate_register_quoting_enclave_extrinsic(
 		&collateral_data.1,
 		&collateral.qe_identity_issuer_chain,
 	) {
-		Ok(l) => l,
+		Ok(l) => l as u32,
 		Err(e) => return e.into(),
 	};
 	sgx_status_t::SGX_SUCCESS
@@ -493,7 +493,7 @@ pub unsafe extern "C" fn generate_register_tcb_info_extrinsic(
 		&collateral_data.1,
 		&collateral.tcb_info_issuer_chain,
 	) {
-		Ok(l) => l,
+		Ok(l) => l as u32,
 		Err(e) => return e.into(),
 	};
 	sgx_status_t::SGX_SUCCESS
@@ -509,8 +509,6 @@ pub fn generate_generic_register_collateral_extrinsic<F>(
 where
 	F: Fn(&NodeMetadata) -> Result<[u8; 2], MetadataError>,
 {
-	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
-
 	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
 	let call_ids = node_metadata_repo
 		.get_from_metadata(getter)?
