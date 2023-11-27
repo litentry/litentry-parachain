@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
+import type { KeypairType } from '@polkadot/util-crypto/types';
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
         {
@@ -60,11 +61,9 @@ export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex'
 export interface Signer {
     getAddressRaw(): Uint8Array;
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array>;
-    type(): SignerType;
+    type(): KeypairType;
     getAddressInSubstrateFormat(): Uint8Array;
 }
-
-type SignerType = 'ethereum' | 'sr25519' | 'ed25519' | 'ecdsa';
 
 export class PolkadotSigner implements Signer {
     keypair: KeyringPair;
@@ -81,7 +80,7 @@ export class PolkadotSigner implements Signer {
         return new Promise((resolve) => resolve(this.keypair.sign(message)));
     }
 
-    type(): SignerType {
+    type(): KeypairType {
         return this.keypair.type;
     }
 
@@ -107,7 +106,7 @@ export class EthersSigner implements Signer {
         });
     }
 
-    type(): SignerType {
+    type(): KeypairType {
         return 'ethereum';
     }
 

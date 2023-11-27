@@ -4,7 +4,7 @@ import type { IntegrationTestContext } from '../common-definitions';
 import { AesOutput } from 'parachain-api';
 import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
-import type { TypeRegistry, Vec } from '@polkadot/types';
+import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
