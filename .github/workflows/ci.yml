@@ -22,7 +22,6 @@ name: General CI
 # - set-condition
 # - parachain-build-dev
 # - tee-build
-# - tee-build
 #
 # [4] please note that job-level if `env` is not supported:
 # https://github.com/actions/runner/issues/1189
@@ -608,9 +607,21 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download Latest
+        working-directory: ./tee-worker/client-api
         if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
-        run: | 
-          echo "Downloading latest build from npm packages"
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .pnpmrc
+          pnpm config set @litentry:registry https://npm.pkg.github.com
+          
+          echo "Install client api dev packages"
+          pnpm i @litentry/parachain-api @litentry/sidechain-api
+          echo "Check downloaded"
+          ls -l node_modules/
+
+      - name: Compress packages
+        if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
+        run: |
+          tar -zcvf client-api.tar.gz tee-worker/client-api/parachain-api tee-worker/client-api/sidechain-api
 
       - name: Upload client-api as artifact
         uses: actions/upload-artifact@v3
