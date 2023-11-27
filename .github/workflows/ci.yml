@@ -617,7 +617,7 @@ jobs:
           pnpm config set @litentry:registry https://npm.pkg.github.com
           
           echo "Install client api dev packages"
-          pnpm i @litentry/parachain-api @litentry/sidechain-api
+          pnpm i -w @litentry/parachain-api @litentry/sidechain-api
           echo "Check downloaded"
           ls -l node_modules/
 
