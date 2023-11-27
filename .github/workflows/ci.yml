@@ -658,6 +658,23 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
+
+      - name: Collect docker logs if test fails
+        continue-on-error: true
+        uses: jwalton/gh-docker-logs@v2
+        if: failure()
+        with:
+          tail: all
+          dest: docker-logs
+
+      - name: Upload docker logs if test fails
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: build-client-api-docker-logs
+          path: docker-logs
+          if-no-files-found: ignore
+          retention-days: 3
       
   tee-test:
     runs-on: ubuntu-latest
