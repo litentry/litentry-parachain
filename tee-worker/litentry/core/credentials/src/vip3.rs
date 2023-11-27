@@ -27,6 +27,8 @@ const VC_VIP3_CARD_INFOS: [(&str, &str); 2] = [
 	("VIP3_CARD_LEVEL_SILVER_TYPE_REMPLACEME", "VIP3_CARD_LEVEL_SILVER_INFO_REMPLACEME"),
 ];
 
+const VIP3_BREAKDOWN: [&str; 2] = ["$is_gold_card", "$is_silver_card"];
+
 pub trait EnumTypeCredentialDetail {
 	fn get_info(&self) -> &'static str;
 	fn get_type(&self) -> &'static str;
@@ -60,18 +62,20 @@ impl EnumTypeCredentialDetail for VIP3MembershipCardEntity {
 
 	fn get_breakdown(&self) -> &'static str {
 		match self.level {
-			VIP3MembershipCardLevel::Gold => "$is_gold_card",
-			VIP3MembershipCardLevel::Silver => "$is_silver_card",
+			VIP3MembershipCardLevel::Gold => VIP3_BREAKDOWN[0],
+			VIP3MembershipCardLevel::Silver => VIP3_BREAKDOWN[1],
 		}
 	}
 }
 
 pub trait UpdateVIP3MembershipCardCredential {
-	fn update_vip3_membership_card(&mut self, entity: VIP3MembershipCardEntity, value: bool);
+	fn update_vip3_membership_card(&mut self, level: VIP3MembershipCardLevel, value: bool);
 }
 
 impl UpdateVIP3MembershipCardCredential for Credential {
-	fn update_vip3_membership_card(&mut self, entity: VIP3MembershipCardEntity, value: bool) {
+	fn update_vip3_membership_card(&mut self, level: VIP3MembershipCardLevel, value: bool) {
+		let entity = VIP3MembershipCardEntity::new(level);
+
 		self.add_subject_info(entity.get_info(), entity.get_type());
 
 		let assertion = AssertionLogic::new_item(entity.get_breakdown(), Op::Equal, "true");

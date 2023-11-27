@@ -43,6 +43,9 @@ pub struct VIP3SBTReqBody {}
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct LevelEntity {
+	// level == 0: NO VIP3 SBT holding
+	// level == 1: Silver
+	// level == 2: Gold
 	pub level: usize,
 }
 

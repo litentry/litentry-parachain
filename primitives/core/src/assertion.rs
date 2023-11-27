@@ -233,7 +233,7 @@ pub enum Assertion {
 	BnbDigitDomainClub(BnbDigitDomainType),
 	// ----- end SPACEID -----
 
-	#[codec(index=18)]
+	#[codec(index = 18)]
 	VIP3MembershipCard(VIP3MembershipCardLevel),
 }
 

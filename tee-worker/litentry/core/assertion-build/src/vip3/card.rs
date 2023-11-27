@@ -18,7 +18,7 @@ use crate::{
 	vip3::{VIP3SBTInfo, VIP3SBTLogicInterface},
 	*,
 };
-use lc_credentials::vip3::{UpdateVIP3MembershipCardCredential, VIP3MembershipCardEntity};
+use lc_credentials::vip3::UpdateVIP3MembershipCardCredential;
 use litentry_primitives::VIP3MembershipCardLevel;
 
 pub fn build(req: &AssertionBuildRequest, level: VIP3MembershipCardLevel) -> Result<Credential> {
@@ -36,10 +36,9 @@ pub fn build(req: &AssertionBuildRequest, level: VIP3MembershipCardLevel) -> Res
 		.has_card_level(addresses, &level)
 		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
 
-	let entity = VIP3MembershipCardEntity::new(level.clone());
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_vip3_membership_card(entity, value);
+			credential_unsigned.update_vip3_membership_card(level, value);
 			Ok(credential_unsigned)
 		},
 		Err(e) => {
