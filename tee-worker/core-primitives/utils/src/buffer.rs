@@ -24,10 +24,12 @@ use std::vec::Vec;
 use crate::sgx_reexport_prelude::thiserror;
 
 /// Fills a given buffer with data and the left over buffer space with white spaces.
+/// Throw an error if the buffer size is not enough to hold `data`,
+/// return the length of `data` otherwise.
 pub fn write_slice_and_whitespace_pad(
 	writable: &mut [u8],
 	data: Vec<u8>,
-) -> Result<(), BufferError> {
+) -> Result<usize, BufferError> {
 	ensure!(
 		data.len() <= writable.len(),
 		BufferError::InsufficientBufferSize(writable.len(), data.len())
@@ -36,7 +38,7 @@ pub fn write_slice_and_whitespace_pad(
 	left.clone_from_slice(&data);
 	// fill the right side with whitespace
 	right.iter_mut().for_each(|x| *x = 0x20);
-	Ok(())
+	Ok(data.len())
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -48,6 +50,15 @@ pub enum BufferError {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn write_slice_and_whitespace_pad_works() {
+		let mut writable = vec![0; 32];
+		let data = vec![1; 30];
+		assert_eq!(write_slice_and_whitespace_pad(&mut writable, data), Ok(30));
+		assert_eq!(&writable[..30], vec![1; 30]);
+		assert_eq!(&writable[30..], vec![0x20; 2]);
+	}
 
 	#[test]
 	fn write_slice_and_whitespace_pad_returns_error_if_buffer_too_small() {

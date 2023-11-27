@@ -136,8 +136,9 @@ impl RemoteAttestation for Enclave {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 
 		let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
+		let mut unchecked_extrinsic_size: u32 = 0;
 
-		trace!("Generating dcap_ra_extrinsic with URL: {}", w_url);
+		trace!("Generating ias_ra_extrinsic with URL: {}", w_url);
 
 		let url = w_url.encode();
 
@@ -149,6 +150,7 @@ impl RemoteAttestation for Enclave {
 				url.len() as u32,
 				unchecked_extrinsic.as_mut_ptr(),
 				unchecked_extrinsic.len() as u32,
+				&mut unchecked_extrinsic_size as *mut u32,
 				skip_ra.into(),
 			)
 		};
@@ -156,7 +158,7 @@ impl RemoteAttestation for Enclave {
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
-		Ok(unchecked_extrinsic)
+		Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 	}
 	fn generate_dcap_ra_extrinsic_from_quote(
 		&self,
@@ -165,6 +167,7 @@ impl RemoteAttestation for Enclave {
 	) -> EnclaveResult<Vec<u8>> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 		let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
+		let mut unchecked_extrinsic_size: u32 = 0;
 		let url = url.encode();
 
 		let result = unsafe {
@@ -177,13 +180,14 @@ impl RemoteAttestation for Enclave {
 				quote.len() as u32,
 				unchecked_extrinsic.as_mut_ptr(),
 				unchecked_extrinsic.len() as u32,
+				&mut unchecked_extrinsic_size as *mut u32,
 			)
 		};
 
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
-		Ok(unchecked_extrinsic.to_vec())
+		Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 	}
 
 	fn generate_dcap_ra_quote(&self, skip_ra: bool) -> EnclaveResult<Vec<u8>> {
@@ -242,7 +246,7 @@ impl RemoteAttestation for Enclave {
 		trace!("Generating dcap_ra_extrinsic with URL: {}", w_url);
 
 		let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
-
+		let mut unchecked_extrinsic_size: u32 = 0;
 		let url = w_url.encode();
 
 		let result = unsafe {
@@ -253,6 +257,7 @@ impl RemoteAttestation for Enclave {
 				url.len() as u32,
 				unchecked_extrinsic.as_mut_ptr(),
 				unchecked_extrinsic.len() as u32,
+				&mut unchecked_extrinsic_size as *mut u32,
 				skip_ra.into(),
 				quoting_enclave_target_info.as_ref(),
 				quote_size.as_ref(),
@@ -262,12 +267,13 @@ impl RemoteAttestation for Enclave {
 		ensure!(result == sgx_status_t::SGX_SUCCESS, Error::Sgx(result));
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
-		Ok(unchecked_extrinsic)
+		Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 	}
 
 	fn generate_register_quoting_enclave_extrinsic(&self, fmspc: Fmspc) -> EnclaveResult<Vec<u8>> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 		let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
+		let mut unchecked_extrinsic_size: u32 = 0;
 
 		trace!("Generating register quoting enclave");
 
@@ -280,6 +286,7 @@ impl RemoteAttestation for Enclave {
 				collateral_ptr,
 				unchecked_extrinsic.as_mut_ptr(),
 				unchecked_extrinsic.len() as u32,
+				&mut unchecked_extrinsic_size as *mut u32,
 			)
 		};
 		let free_status = unsafe { sgx_ql_free_quote_verification_collateral(collateral_ptr) };
@@ -287,12 +294,13 @@ impl RemoteAttestation for Enclave {
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 		ensure!(free_status == sgx_quote3_error_t::SGX_QL_SUCCESS, Error::SgxQuote(free_status));
 
-		Ok(unchecked_extrinsic)
+		Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 	}
 
 	fn generate_register_tcb_info_extrinsic(&self, fmspc: Fmspc) -> EnclaveResult<Vec<u8>> {
 		let mut retval = sgx_status_t::SGX_SUCCESS;
 		let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
+		let mut unchecked_extrinsic_size: u32 = 0;
 
 		trace!("Generating tcb_info registration");
 
@@ -305,6 +313,7 @@ impl RemoteAttestation for Enclave {
 				collateral_ptr,
 				unchecked_extrinsic.as_mut_ptr(),
 				unchecked_extrinsic.len() as u32,
+				&mut unchecked_extrinsic_size as *mut u32,
 			)
 		};
 		let free_status = unsafe { sgx_ql_free_quote_verification_collateral(collateral_ptr) };
@@ -312,7 +321,7 @@ impl RemoteAttestation for Enclave {
 		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 		ensure!(free_status == sgx_quote3_error_t::SGX_QL_SUCCESS, Error::SgxQuote(free_status));
 
-		Ok(unchecked_extrinsic)
+		Ok(Vec::from(&unchecked_extrinsic[..unchecked_extrinsic_size as usize]))
 	}
 
 	fn dump_ias_ra_cert_to_disk(&self) -> EnclaveResult<()> {
