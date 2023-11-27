@@ -20,10 +20,11 @@ pub use crate::sgx_reexport_prelude::*;
 
 use codec::{Decode, Encode};
 use futures::channel::oneshot;
+use itp_stf_primitives::types::KeyPair;
 use itp_types::{ShardIdentifier, H256};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::AesOutput;
+use litentry_primitives::{AesOutput, Assertion, Identity, LitentryMultiSignature};
 use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -45,6 +46,48 @@ pub struct VCRequest {
 	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
 	pub shard: ShardIdentifier,
 	pub key: Vec<u8>,
+}
+
+#[derive(Debug, Encode, Decode)]
+pub struct TrustedVCRequest {
+	pub signer: Identity,
+	pub who: Identity,
+	pub assertion: Assertion,
+}
+
+impl TrustedVCRequest {
+	pub fn sign(
+		self,
+		pair: &KeyPair,
+		mrenclave: &[u8; 32],
+		shard: &ShardIdentifier,
+	) -> TrustedVCRequestSigned {
+		let mut payload = self.encode();
+		payload.append(&mut mrenclave.encode());
+		payload.append(&mut shard.encode());
+
+		TrustedVCRequestSigned { vc_request: self, signature: pair.sign(payload.as_slice()) }
+	}
+}
+
+#[derive(Debug, Encode, Decode)]
+pub struct TrustedVCRequestSigned {
+	pub vc_request: TrustedVCRequest,
+	pub signature: LitentryMultiSignature,
+}
+
+impl TrustedVCRequestSigned {
+	pub fn new(vc_request: TrustedVCRequest, signature: LitentryMultiSignature) -> Self {
+		TrustedVCRequestSigned { vc_request, signature }
+	}
+
+	pub fn verify_signature(&self, mrenclave: &[u8; 32], shard: &ShardIdentifier) -> bool {
+		let mut payload = self.vc_request.encode();
+		payload.append(&mut mrenclave.encode());
+		payload.append(&mut shard.encode());
+
+		self.signature.verify(payload.as_slice(), &self.vc_request.signer)
+	}
 }
 
 #[derive(Encode, Decode, Clone)]

@@ -26,6 +26,7 @@ use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedO
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
 use lc_credentials::Credential;
+use lc_vc_task_sender::{TrustedVCRequest, TrustedVCRequestSigned};
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
@@ -251,15 +252,12 @@ impl RequestVcDirectCommand {
 		)
 		.expect("decoding shielding_key failed");
 
-		let top: TrustedOperation = TrustedCall::request_vc(
-			alice.public().into(),
-			id,
-			assertion,
-			Some(key),
-			Default::default(),
-		)
-		.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
-		.into_trusted_operation(trusted_cli.direct);
+		let top: TrustedVCRequestSigned =
+			TrustedVCRequest { signer: alice.public().into(), who: id, assertion }.sign(
+				&KeyPair::Sr25519(Box::new(alice)),
+				&mrenclave,
+				&shard,
+			);
 
 		// This should contain the AES Key for AESRequest
 		match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {

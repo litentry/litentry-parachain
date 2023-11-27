@@ -53,6 +53,7 @@ lc-credentials = { path = "../litentry/core/credentials" }
 # litentry
 frame-metadata = "15.0.0"
 ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
+lc-vc-task-sender = { path = "../litentry/core/vc-issuance/lc-vc-task-sender" }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }

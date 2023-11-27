@@ -31,6 +31,7 @@ use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use lc_vc_task_sender::TrustedVCRequestSigned;
 use litentry_primitives::{
 	aes_encrypt_default, AesRequest, ParentchainHash as Hash, RequestAesKey,
 };
@@ -74,17 +75,10 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 pub(crate) fn perform_direct_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	top: &TrustedOperation,
+	top: &TrustedVCRequestSigned,
 	key: RequestAesKey,
 ) -> TrustedOpResult<T> {
-	match top {
-		TrustedOperation::direct_call(call) => match call.call {
-			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
-			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
-		},
-		_ =>
-			Err(TrustedOperationError::Default { msg: "Only Direct Operation allowed".to_string() }),
-	}
+	send_direct_vc_request(cli, trusted_args, top, key)
 }
 
 pub(crate) fn execute_getter_from_cli_args<T: Decode + Debug>(
@@ -298,11 +292,11 @@ fn send_direct_request<T: Decode + Debug>(
 	let (sender, receiver) = channel();
 	direct_api.watch(jsonrpc_call, sender);
 
-	debug!("waiting for rpc response");
+	println!("waiting for rpc response");
 	loop {
 		match receiver.recv() {
 			Ok(response) => {
-				debug!("received response");
+				println!("received response");
 				let response: RpcResponse = serde_json::from_str(&response).unwrap();
 				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 					match return_value.status {
@@ -369,7 +363,7 @@ fn send_direct_request<T: Decode + Debug>(
 fn send_direct_vc_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedVCRequestSigned,
 	key: RequestAesKey,
 ) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
@@ -432,7 +426,7 @@ fn send_direct_vc_request<T: Decode + Debug>(
 
 pub(crate) fn get_vc_json_request(
 	shard: ShardIdentifier,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedVCRequestSigned,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 	key: RequestAesKey,
 ) -> String {
