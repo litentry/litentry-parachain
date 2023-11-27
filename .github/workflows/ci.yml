@@ -610,9 +610,9 @@ jobs:
         run: corepack enable && corepack enable pnpm
 
       - name: Download Latest
-        working-directory: ./tee-worker/client-api
         if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
         run: |
+          cd tee-worker/client-api
           echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .pnpmrc
           pnpm config set @litentry:registry https://npm.pkg.github.com
           
