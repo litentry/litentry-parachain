@@ -21,30 +21,36 @@ use mockall::predicate::*;
 #[cfg(test)]
 use mockall::*;
 
-use crate::worker::{UpdatePeers, WorkerResult};
+use crate::worker::{GetPeers, UpdatePeers, Url, WorkerResult};
 use std::sync::Arc;
 
 /// Updates the peers of the global worker.
 #[cfg_attr(test, automock)]
-pub trait UpdateWorkerPeers {
+pub trait PeersRegistry {
 	fn update_peers(&self) -> WorkerResult<()>;
+	fn read_trusted_peers(&self) -> WorkerResult<Vec<Url>>;
 }
 
-pub struct WorkerPeersUpdater<WorkerType> {
+pub struct WorkerPeersRegistry<WorkerType> {
 	worker: Arc<WorkerType>,
 }
 
-impl<WorkerType> WorkerPeersUpdater<WorkerType> {
+impl<WorkerType> WorkerPeersRegistry<WorkerType> {
 	pub fn new(worker: Arc<WorkerType>) -> Self {
-		WorkerPeersUpdater { worker }
+		WorkerPeersRegistry { worker }
 	}
 }
 
-impl<WorkerType> UpdateWorkerPeers for WorkerPeersUpdater<WorkerType>
+impl<WorkerType> PeersRegistry for WorkerPeersRegistry<WorkerType>
 where
-	WorkerType: UpdatePeers,
+	WorkerType: UpdatePeers + GetPeers,
 {
 	fn update_peers(&self) -> WorkerResult<()> {
 		self.worker.update_peers()
+	}
+
+	fn read_trusted_peers(&self) -> WorkerResult<Vec<Url>> {
+		let peer_urls = self.worker.read_peers_urls()?;
+		Ok(peer_urls.into_iter().filter(|urls| !urls.me).map(|urls| urls.trusted).collect())
 	}
 }
