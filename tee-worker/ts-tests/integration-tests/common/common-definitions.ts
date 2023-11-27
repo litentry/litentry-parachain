@@ -6,6 +6,9 @@ import { Wallet } from 'ethers';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 
+
+// If there are types already defined in the client-api, please avoid redefining these types. 
+// Instead, make every effort to use the types that have been generated within the client-api.
 interface EthersWalletItem {
     [key: string]: Wallet;
 }
