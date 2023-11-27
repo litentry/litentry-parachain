@@ -2,9 +2,16 @@
 name: Release Ts API Package
 
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
       inputs:
         tag:
+          description: 'Package release tag'
+          required: true
+          default: 'dev'
+        release:
           description: 'Release docker image tag'
           required: true
           default: 'latest'
@@ -12,21 +19,20 @@ env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
 jobs:
-        
   update-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Set env variables
-        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.tag }}" >> "$GITHUB_ENV"
+        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.release }}" >> "$GITHUB_ENV"
 
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
-          docker pull litentry/litentry-worker:${{ inputs.tag }}
-          docker pull litentry/litentry-cli:${{ inputs.tag }}
-          docker pull litentry/litentry-parachain:${{ inputs.tag }}
+          docker pull litentry/litentry-worker:${{ inputs.release }}
+          docker pull litentry/litentry-cli:${{ inputs.release }}
+          docker pull litentry/litentry-parachain:${{ inputs.release }}
 
       - run: docker images --all
 

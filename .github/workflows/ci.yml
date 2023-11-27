@@ -22,6 +22,7 @@ name: General CI
 # - set-condition
 # - parachain-build-dev
 # - tee-build
+# - tee-build
 #
 # [4] please note that job-level if `env` is not supported:
 # https://github.com/actions/runner/issues/1189
@@ -91,7 +92,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          lfs: true
 
       # Checks to see if any files in the PR/commit match one of the listed file types.
       # We can use this filter to decide whether or not to build docker images
@@ -610,15 +610,14 @@ jobs:
       - name: Download Latest
         if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
         run: | 
-          echo "Downloading latest build from S3"
-          curl -o litentry-cli.tar.gz https://kw-client-api.s3.eu-north-1.amazonaws.com/litentry-and-sora-quiz-master.vc.json
-          
+          echo "Downloading latest build from npm packages"
+
       - name: Upload client-api as artifact
         uses: actions/upload-artifact@v3
         with:
           name: client-api
           path: client-api.tar.gz
-          if-no-files-found: 'warn' 
+          if-no-files-found: 'warn'
 
       - name: Early exit if bundle exists and parachain/worker reubild is not required
         run: |
@@ -709,8 +708,6 @@ jobs:
           # - test_name: lit-resume-worker
     steps:
       - uses: actions/checkout@v4
-        with:
-          lfs: true
 
       - name: Pull polkadot image
         run: |
@@ -730,7 +727,7 @@ jobs:
 
       - name: Unzip client-api
         run: |
-          tar -zxf tee-worker/client-api.tar.gz -C tee-worker/
+          tar -zxf client-api.tar.gz -C tee-worker/
           ls tee-worker/client-api/parachain-api
           ls tee-worker/client-api/sidechain-api
 
