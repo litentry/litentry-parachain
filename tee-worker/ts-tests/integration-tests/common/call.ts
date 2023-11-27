@@ -1,7 +1,7 @@
 import { ApiPromise } from '@polkadot/api';
 import { hexToU8a, compactStripLength, u8aToString } from '@polkadot/util';
 import WebSocketAsPromised from 'websocket-as-promised';
-import type { JsonRpcRequest } from './type-definitions';
+import type { JsonRpcRequest } from './common-definitions';
 import type { WorkerRpcReturnValue } from 'parachain-api';
 import { Metadata, TypeRegistry } from '@polkadot/types';
 import type { Bytes } from '@polkadot/types-codec';

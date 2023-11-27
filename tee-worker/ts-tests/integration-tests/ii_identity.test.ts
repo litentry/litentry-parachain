@@ -18,7 +18,7 @@ import { assert } from 'chai';
 import { sendTxsWithUtility } from './common/transactions';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { IntegrationTestContext } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/common-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';

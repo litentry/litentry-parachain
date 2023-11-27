@@ -4,7 +4,7 @@ import { Keyring } from '@polkadot/api';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
-import { IntegrationTestContext, JsonRpcRequest } from './type-definitions';
+import { IntegrationTestContext, JsonRpcRequest } from './common-definitions';
 
 // format and setup
 const keyring = new Keyring({ type: 'sr25519' });
