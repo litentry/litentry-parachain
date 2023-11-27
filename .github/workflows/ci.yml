@@ -606,6 +606,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
       - name: Download Latest
         working-directory: ./tee-worker/client-api
         if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
@@ -657,9 +660,6 @@ jobs:
           docker load < litentry-parachain-dev.tar.gz
           docker load < litentry-tee.tar.gz
           docker images
-
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
 
       - name: Generate parachain artefacts
         run: |
