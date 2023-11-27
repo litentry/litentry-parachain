@@ -29,7 +29,7 @@ use ita_stf::{hash, Getter, TrustedOperation};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt};
-use itp_stf_primitives::types::AccountId;
+use itp_stf_primitives::types::{AccountId, Hash};
 use itp_stf_state_handler::query_shard_state::QueryShardState;
 use itp_top_pool::{
 	error::{Error as PoolError, IntoPoolError},
@@ -39,24 +39,42 @@ use itp_top_pool::{
 	},
 };
 use itp_types::{BlockHash as SidechainBlockHash, DecryptableRequest, ShardIdentifier};
+use itp_utils::hex::ToHexPrefixed;
 use jsonrpc_core::{
 	futures::future::{ready, TryFutureExt},
 	Error as RpcError,
 };
+use litentry_primitives::BroadcastedRequest;
 use log::*;
 use sp_runtime::generic;
-use std::{boxed::Box, sync::Arc, vec::Vec};
+use std::{
+	boxed::Box,
+	string::String,
+	sync::{mpsc::SyncSender, Arc},
+	vec::Vec,
+};
 
 /// Define type of TOP filter that is used in the Author
 #[cfg(feature = "sidechain")]
 pub type AuthorTopFilter = crate::top_filter::CallsOnlyFilter;
+#[cfg(feature = "sidechain")]
+pub type BroadcastedTopFilter = crate::top_filter::DirectCallsOnlyFilter;
+
 #[cfg(feature = "offchain-worker")]
 pub type AuthorTopFilter = crate::top_filter::IndirectCallsOnlyFilter;
+#[cfg(feature = "offchain-worker")]
+pub type BroadcastedTopFilter = crate::top_filter::DenyAllFilter;
+
 #[cfg(feature = "teeracle")] // Teeracle currently does not process any trusted operations
 pub type AuthorTopFilter = crate::top_filter::DenyAllFilter;
+#[cfg(feature = "teeracle")]
+pub type BroadcastedTopFilter = crate::top_filter::DenyAllFilter;
 
 #[cfg(not(any(feature = "sidechain", feature = "offchain-worker", feature = "teeracle")))]
 pub type AuthorTopFilter = crate::top_filter::CallsOnlyFilter;
+
+#[cfg(not(any(feature = "sidechain", feature = "offchain-worker", feature = "teeracle")))]
+pub type BroadcastedTopFilter = crate::top_filter::DenyAllFilter;
 
 /// Currently we treat all RPC operations as externals.
 ///
@@ -65,29 +83,42 @@ pub type AuthorTopFilter = crate::top_filter::CallsOnlyFilter;
 /// some unique operations via RPC and have them included in the pool.
 const TX_SOURCE: TrustedOperationSource = TrustedOperationSource::External;
 
+// remove duplication of this type definiton ?
+pub type RequestIdWithParamsAndMethod = Option<(Hash, Vec<String>)>;
+
 /// Authoring API for RPC calls
 ///
 ///
-pub struct Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
-where
+pub struct Author<
+	TopPool,
+	TopFilter,
+	BroadcastedTopFilter,
+	StateFacade,
+	ShieldingKeyRepository,
+	OCallApi,
+> where
 	TopPool: TrustedOperationPool + Sync + Send + 'static,
 	TopFilter: Filter<Value = TrustedOperation>,
+	BroadcastedTopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 {
 	top_pool: Arc<TopPool>,
 	top_filter: TopFilter,
+	broadcasted_top_filter: BroadcastedTopFilter,
 	state_facade: Arc<StateFacade>,
 	shielding_key_repo: Arc<ShieldingKeyRepository>,
 	ocall_api: Arc<OCallApi>,
+	request_sink: Arc<SyncSender<BroadcastedRequest>>,
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
-	Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+impl<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+	Author<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
 where
 	TopPool: TrustedOperationPool + Sync + Send + 'static,
 	TopFilter: Filter<Value = TrustedOperation>,
+	BroadcastedTopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
@@ -97,35 +128,50 @@ where
 	pub fn new(
 		top_pool: Arc<TopPool>,
 		top_filter: TopFilter,
+		broadcasted_top_filter: BroadcastedTopFilter,
 		state_facade: Arc<StateFacade>,
 		encryption_key: Arc<ShieldingKeyRepository>,
 		ocall_api: Arc<OCallApi>,
+		request_sink: Arc<SyncSender<BroadcastedRequest>>,
 	) -> Self {
-		Author { top_pool, top_filter, state_facade, shielding_key_repo: encryption_key, ocall_api }
+		Author {
+			top_pool,
+			top_filter,
+			broadcasted_top_filter,
+			state_facade,
+			shielding_key_repo: encryption_key,
+			ocall_api,
+			request_sink,
+		}
 	}
 }
 
 enum TopSubmissionMode {
 	Submit,
 	SubmitWatch,
+	SubmitWatchAndBroadcast(String),
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
-	Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+impl<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+	Author<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
 where
 	TopPool: TrustedOperationPool + Sync + Send + 'static,
 	TopFilter: Filter<Value = TrustedOperation>,
+	BroadcastedTopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 {
-	fn process_top<R: DecryptableRequest>(
+	fn process_top<R: DecryptableRequest + Encode>(
 		&self,
 		mut request: R,
 		submission_mode: TopSubmissionMode,
 	) -> PoolFuture<TxHash<TopPool>, RpcError> {
 		let shard = request.shard();
+
+		//we need to save it here as other function may eventually mutate it
+		let request_to_broadcast = request.to_hex();
 		// check if shard exists
 		match self.state_facade.shard_exists(&shard) {
 			Err(_) => return Box::pin(ready(Err(ClientError::InvalidShard.into()))),
@@ -203,6 +249,32 @@ where
 					)
 					.map_err(map_top_error::<TopPool>),
 			),
+
+			TopSubmissionMode::SubmitWatchAndBroadcast(s) => {
+				let id = self.hash_of(&trusted_operation).to_hex();
+				let can_be_broadcasted = self.broadcasted_top_filter.filter(&trusted_operation);
+				let result = Box::pin(
+					self.top_pool
+						.submit_and_watch(
+							&generic::BlockId::hash(best_block_hash),
+							TX_SOURCE,
+							trusted_operation,
+							shard,
+						)
+						.map_err(map_top_error::<TopPool>),
+				);
+				// broadcast only if filter allowed
+				if can_be_broadcasted {
+					if let Err(e) = self.request_sink.send(BroadcastedRequest {
+						id,
+						payload: request_to_broadcast,
+						rpc_method: s,
+					}) {
+						error!("Could not send broadcasted request, reason: {:?}", e);
+					}
+				}
+				result
+			},
 		}
 	}
 
@@ -255,18 +327,22 @@ fn map_top_error<P: TrustedOperationPool>(error: P::Error) -> RpcError {
 	.into()
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+impl<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
 	AuthorApi<TxHash<TopPool>, BlockHash<TopPool>>
-	for Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+	for Author<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
 where
 	TopPool: TrustedOperationPool + Sync + Send + 'static,
 	TopFilter: Filter<Value = TrustedOperation>,
+	BroadcastedTopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,
 	OCallApi: EnclaveMetricsOCallApi + Send + Sync + 'static,
 {
-	fn submit_top<R: DecryptableRequest>(&self, req: R) -> PoolFuture<TxHash<TopPool>, RpcError> {
+	fn submit_top<R: DecryptableRequest + Encode>(
+		&self,
+		req: R,
+	) -> PoolFuture<TxHash<TopPool>, RpcError> {
 		self.process_top(req, TopSubmissionMode::Submit)
 	}
 
@@ -336,11 +412,19 @@ where
 		failed_to_remove
 	}
 
-	fn watch_top<R: DecryptableRequest>(
+	fn watch_top<R: DecryptableRequest + Encode>(
 		&self,
 		request: R,
 	) -> PoolFuture<TxHash<TopPool>, RpcError> {
 		self.process_top(request, TopSubmissionMode::SubmitWatch)
+	}
+
+	fn watch_and_broadcast_top<R: DecryptableRequest + Encode>(
+		&self,
+		request: R,
+		json_rpc_method: String,
+	) -> PoolFuture<TxHash<TopPool>, RpcError> {
+		self.process_top(request, TopSubmissionMode::SubmitWatchAndBroadcast(json_rpc_method))
 	}
 
 	fn update_connection_state(&self, updates: Vec<(TxHash<TopPool>, (Vec<u8>, bool))>) {
@@ -352,11 +436,13 @@ where
 	}
 }
 
-impl<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi> OnBlockImported
-	for Author<TopPool, TopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+impl<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
+	OnBlockImported
+	for Author<TopPool, TopFilter, BroadcastedTopFilter, StateFacade, ShieldingKeyRepository, OCallApi>
 where
 	TopPool: TrustedOperationPool + Sync + Send + 'static,
 	TopFilter: Filter<Value = TrustedOperation>,
+	BroadcastedTopFilter: Filter<Value = TrustedOperation>,
 	StateFacade: QueryShardState,
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoDecrypt + 'static,

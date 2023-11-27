@@ -16,4 +16,5 @@
 */
 
 pub mod environment_mock;
+pub mod peer_updater_mock;
 pub mod proposer_mock;

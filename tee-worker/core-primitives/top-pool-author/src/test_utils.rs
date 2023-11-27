@@ -26,7 +26,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::RsaRequest;
 use jsonrpc_core::futures::executor;
 use sp_core::H256;
-use std::fmt::Debug;
+use std::{fmt::Debug, string::ToString};
 
 /// Test utility function to submit a trusted operation on an RPC author
 pub fn submit_operation_to_top_pool<R, S>(
@@ -34,13 +34,29 @@ pub fn submit_operation_to_top_pool<R, S>(
 	top: &TrustedOperation,
 	shielding_key: &S,
 	shard: ShardIdentifier,
-) -> Result<H256, jsonrpc_core::Error>
+	with_broadcast: bool,
+) -> Result<(H256, RsaRequest), jsonrpc_core::Error>
 where
 	R: AuthorApi<H256, H256>,
 	S: ShieldingCryptoEncrypt,
 	S::Error: Debug,
 {
 	let top_encrypted = shielding_key.encrypt(&top.encode()).unwrap();
-	let submit_future = async { author.watch_top(RsaRequest::new(shard, top_encrypted)).await };
-	executor::block_on(submit_future)
+	if with_broadcast {
+		let submit_future = async {
+			author
+				.watch_and_broadcast_top(
+					RsaRequest::new(shard, top_encrypted.clone()),
+					"submit_and_watch".to_string(),
+				)
+				.await
+		};
+		let hash = executor::block_on(submit_future)?;
+		Ok((hash, RsaRequest::new(shard, top_encrypted)))
+	} else {
+		let submit_future =
+			async { author.watch_top(RsaRequest::new(shard, top_encrypted.clone())).await };
+		let hash = executor::block_on(submit_future)?;
+		Ok((hash, RsaRequest::new(shard, top_encrypted)))
+	}
 }

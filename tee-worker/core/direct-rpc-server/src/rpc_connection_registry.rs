@@ -84,6 +84,14 @@ where
 		let mut map = self.connection_map.write().expect("Lock poisoning");
 		map.remove(hash)
 	}
+
+	fn is_force_wait(&self, hash: &Self::Hash) -> bool {
+		if let Some(v) = self.connection_map.read().unwrap().get(hash) {
+			v.2
+		} else {
+			false
+		}
+	}
 }
 
 #[cfg(test)]

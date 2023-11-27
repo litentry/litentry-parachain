@@ -698,9 +698,13 @@ where
 		for (top_hash, (encoded_value, force_wait)) in updates {
 			self.listener.write().unwrap().update_connection_state(
 				&top_hash,
-				encoded_value,
+				encoded_value.clone(),
 				force_wait,
 			);
+			self.listener
+				.write()
+				.unwrap()
+				.top_executed(&top_hash, &encoded_value, force_wait);
 		}
 	}
 
