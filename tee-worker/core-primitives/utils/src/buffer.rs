@@ -41,7 +41,7 @@ pub fn write_slice_and_whitespace_pad(
 	Ok(data.len())
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum BufferError {
 	#[error("Insufficient buffer size. Actual: {0}, required: {1}")]
 	InsufficientBufferSize(usize, usize),
