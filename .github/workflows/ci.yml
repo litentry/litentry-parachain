@@ -114,7 +114,7 @@ jobs:
           rebuild_client_api=false
           push_docker=false
           run_parachain_test=false
-          run_tee_test=false
+          run_tee_test=true
           if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
             rebuild_parachain=true
           fi
