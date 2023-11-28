@@ -716,6 +716,7 @@ jobs:
 
   tee-test:
     runs-on: ubuntu-latest
+    if: always()
     needs:
       - set-condition
       - update-client-api
