@@ -224,13 +224,13 @@ mod tests {
 	};
 	use core::assert_matches::assert_matches;
 	use itc_parentchain_test::ParentchainHeaderBuilder;
-	use itp_test::mock::sidechain_ocall_api_mock::OCallApiMock;
+	use itp_test::mock::sidechain_ocall_api_mock::SidechainOCallApiMock;
 	use itp_types::Block as ParentchainBlock;
 	use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 	use its_test::sidechain_block_builder::{SidechainBlockBuilder, SidechainBlockBuilderTrait};
 
 	type TestBlockImport = BlockImportMock<ParentchainBlock, SignedSidechainBlock>;
-	type TestOCallApi = OCallApiMock<SignedSidechainBlock>;
+	type TestOCallApi = SidechainOCallApiMock<SignedSidechainBlock>;
 	type TestPeerBlockSync = PeerBlockSync<
 		ParentchainBlock,
 		SignedSidechainBlock,
@@ -249,7 +249,8 @@ mod tests {
 				.with_import_result_once(Ok(parentchain_header.clone())),
 		);
 
-		let sidechain_ocall_api = Arc::new(OCallApiMock::<SignedSidechainBlock>::default());
+		let sidechain_ocall_api =
+			Arc::new(SidechainOCallApiMock::<SignedSidechainBlock>::default());
 
 		let peer_syncer =
 			create_peer_syncer(block_importer_mock.clone(), sidechain_ocall_api.clone());
@@ -267,7 +268,8 @@ mod tests {
 				.with_import_result_once(Err(Error::InvalidAuthority("auth".to_string()))),
 		);
 
-		let sidechain_ocall_api = Arc::new(OCallApiMock::<SignedSidechainBlock>::default());
+		let sidechain_ocall_api =
+			Arc::new(SidechainOCallApiMock::<SignedSidechainBlock>::default());
 
 		let peer_syncer =
 			create_peer_syncer(block_importer_mock.clone(), sidechain_ocall_api.clone());
@@ -289,11 +291,12 @@ mod tests {
 				Err(Error::BlockAncestryMismatch(1, H256::random(), "".to_string())),
 			));
 
-		let sidechain_ocall_api =
-			Arc::new(OCallApiMock::<SignedSidechainBlock>::default().with_peer_fetch_blocks(vec![
+		let sidechain_ocall_api = Arc::new(
+			SidechainOCallApiMock::<SignedSidechainBlock>::default().with_peer_fetch_blocks(vec![
 				SidechainBlockBuilder::random().build_signed(),
 				SidechainBlockBuilder::random().build_signed(),
-			]));
+			]),
+		);
 
 		let peer_syncer =
 			create_peer_syncer(block_importer_mock.clone(), sidechain_ocall_api.clone());

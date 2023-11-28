@@ -45,7 +45,8 @@ pub enum EnclaveMetric {
 	SuccessfulTrustedOperationIncrement(TrustedCall),
 	FailedTrustedOperationIncrement(TrustedCall),
 	ParentchainBlockImportTime(Duration),
-	SidechainBlockImportTime(Duration), // OracleMetric(OracleMetric<MetricsInfo>),
+	SidechainBlockImportTime(Duration),
+	// OracleMetric(OracleMetric<MetricsInfo>),
 }
 
 #[derive(Encode, Decode, Debug)]
