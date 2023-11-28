@@ -22,10 +22,8 @@ pub mod enclave_test;
 pub mod error;
 pub mod remote_attestation;
 pub mod sidechain;
-pub mod stf_task_handler;
 pub mod teeracle_api;
 pub mod utils;
-pub mod vc_issuance;
 
 pub type EnclaveResult<T> = Result<T, Error>;
 

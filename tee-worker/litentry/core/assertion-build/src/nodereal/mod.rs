@@ -26,7 +26,7 @@ pub mod bnb_domain_holding_amount;
 use crate::*;
 use lc_data_providers::{
 	nodereal::{BnbDomainApiList, DomainInfo, NoderealClient},
-	DataProviderConfigReader, ReadDataProviderConfig,
+	DataProviderConfig,
 };
 use litentry_primitives::BnbDigitDomainType;
 use serde::{Deserialize, Serialize};
@@ -37,26 +37,35 @@ impl BnbDomainInfo {
 	fn get_bnb_domain_data_by_owners(
 		&self,
 		owners: &[String],
+		data_provider_config: &DataProviderConfig,
 	) -> core::result::Result<serde_json::Value, ErrorDetail> {
-		let config = DataProviderConfigReader::read()?;
-		let mut client = NoderealClient::new(&config);
+		let mut client = NoderealClient::new(data_provider_config);
 		client.by_owners(owners).map_err(|e| e.into_error_detail())
 	}
 }
 
 pub trait BnbDomainInfoInterface {
-	fn get_bnb_domain_holding_amount(&self, addresses: &[String]) -> Result<usize>;
+	fn get_bnb_domain_holding_amount(
+		&self,
+		addresses: &[String],
+		data_provider_config: &DataProviderConfig,
+	) -> Result<usize>;
 	fn get_bnb_digit_domain_club_amount(
 		&self,
 		owners: &[String],
 		digit_domain_type: &BnbDigitDomainType,
+		data_provider_config: &DataProviderConfig,
 	) -> Result<usize>;
 }
 
 impl BnbDomainInfoInterface for BnbDomainInfo {
-	fn get_bnb_domain_holding_amount(&self, owners: &[String]) -> Result<usize> {
+	fn get_bnb_domain_holding_amount(
+		&self,
+		owners: &[String],
+		data_provider_config: &DataProviderConfig,
+	) -> Result<usize> {
 		let response = self
-			.get_bnb_domain_data_by_owners(owners)
+			.get_bnb_domain_data_by_owners(owners, data_provider_config)
 			.map_err(|e| Error::RequestVCFailed(Assertion::BnbDomainHolding, e))?;
 
 		let owned_domains: Domains = Domains::from_value(&response)
@@ -69,10 +78,12 @@ impl BnbDomainInfoInterface for BnbDomainInfo {
 		&self,
 		owners: &[String],
 		digit_domain_type: &BnbDigitDomainType,
+		data_provider_config: &DataProviderConfig,
 	) -> Result<usize> {
-		let response = self.get_bnb_domain_data_by_owners(owners).map_err(|e| {
-			Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)
-		})?;
+		let response =
+			self.get_bnb_domain_data_by_owners(owners, data_provider_config).map_err(|e| {
+				Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)
+			})?;
 
 		let owned_domains: Domains = Domains::from_value(&response).map_err(|e| {
 			Error::RequestVCFailed(Assertion::BnbDigitDomainClub(digit_domain_type.clone()), e)

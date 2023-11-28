@@ -54,9 +54,7 @@ use itp_enclave_api::{
 	enclave_base::EnclaveBase,
 	remote_attestation::{RemoteAttestation, TlsRemoteAttestation},
 	sidechain::Sidechain,
-	stf_task_handler::StfTaskHandler,
 	teeracle_api::TeeracleApi,
-	vc_issuance::VcIssuance,
 	Enclave,
 };
 use itp_node_api::{
@@ -74,11 +72,9 @@ use its_peer_fetch::{
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
-use lc_data_providers::DataProviderConfig;
 use litentry_primitives::ParentchainHeader as Header;
 use log::*;
 use my_node_runtime::{Hash, RuntimeEvent};
-use serde_json::Value;
 use sgx_types::*;
 #[cfg(feature = "dcap")]
 use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
@@ -89,7 +85,7 @@ use substrate_api_client::{
 
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
-use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
+use std::{collections::HashSet, env, str, sync::Arc, thread, time::Duration};
 
 extern crate config as rs_config;
 use itc_parentchain::primitives::ParentchainId;
@@ -213,8 +209,6 @@ fn main() {
 		},
 	};
 
-	let data_provider_config = get_data_provider_config(&config);
-
 	if let Some(run_config) = config.run_config() {
 		let shard = extract_shard(run_config.shard(), enclave.as_ref());
 
@@ -250,7 +244,6 @@ fn main() {
 		start_worker::<_, _, _, _, WorkerModeProvider>(
 			config,
 			&shard,
-			&data_provider_config,
 			enclave,
 			sidechain_blockstorage,
 			node_api,
@@ -358,7 +351,6 @@ fn main() {
 fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	config: Config,
 	shard: &ShardIdentifier,
-	data_provider_config: &DataProviderConfig,
 	enclave: Arc<E>,
 	sidechain_storage: Arc<D>,
 	integritee_rpc_api: ParentchainApi,
@@ -374,8 +366,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		+ RemoteAttestation
 		+ TlsRemoteAttestation
 		+ TeeracleApi
-		+ StfTaskHandler
-		+ VcIssuance
 		+ Clone,
 	D: BlockPruner + FetchBlocks<SignedSidechainBlock> + Sync + Send + 'static,
 	InitializationHandler: TrackInitialization + IsInitialized + Sync + Send + 'static,
@@ -663,23 +653,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	}
 
 	initialization_handler.registered_on_parentchain();
-
-	// ------------------------------------------------------------------------
-	// Start stf task handler thread
-	let enclave_api_stf_task_handler = enclave.clone();
-	let data_provider = data_provider_config.clone();
-	thread::spawn(move || {
-		enclave_api_stf_task_handler.run_stf_task_handler(data_provider).unwrap();
-	});
-
-	println!("[+] We are starting the VC Isolated thread");
-	// ------------------------------------------------------------------------
-	// Start vc issuance handler thread
-	let enclave_api_vc_task_handler = enclave.clone();
-	let data_provider = data_provider_config.clone();
-	thread::spawn(move || {
-		enclave_api_vc_task_handler.run_vc_issuance(data_provider).unwrap();
-	});
 
 	// ------------------------------------------------------------------------
 	// initialize teeracle interval
@@ -1232,81 +1205,4 @@ fn check_we_are_primary_validateer(
 	let enclave_count_of_previous_block =
 		node_api.enclave_count(Some(*register_enclave_xt_header.parent_hash()))?;
 	Ok(enclave_count_of_previous_block == 0)
-}
-
-fn get_data_provider_config(config: &Config) -> DataProviderConfig {
-	let built_in_modes = vec!["dev", "staging", "prod", "mock"];
-	let built_in_config: Value =
-		serde_json::from_slice(include_bytes!("running-mode-config.json")).unwrap();
-
-	let mut data_provider_config = if built_in_modes.contains(&config.running_mode.as_str()) {
-		let config = built_in_config.get(config.running_mode.as_str()).unwrap();
-		serde_json::from_value::<DataProviderConfig>(config.clone()).unwrap()
-	} else {
-		let file_path = config.running_mode.as_str();
-		let mut file = File::open(file_path)
-			.map_err(|e| format!("{:?}, file:{}", e, file_path))
-			.unwrap();
-		let mut data = String::new();
-		file.read_to_string(&mut data).unwrap();
-		serde_json::from_str::<DataProviderConfig>(data.as_str()).unwrap()
-	};
-	if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
-		data_provider_config.set_twitter_official_url(v);
-	}
-	if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
-		data_provider_config.set_twitter_litentry_url(v);
-	}
-	// Bearer Token is as same as App only Access Token on Twitter (https://developer.twitter.com/en/docs/authentication/oauth-2-0/application-only),
-	// that is for developers that just need read-only access to public information.
-	if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
-		data_provider_config.set_twitter_auth_token_v2(v);
-	}
-	if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
-		data_provider_config.set_discord_official_url(v);
-	}
-	if let Ok(v) = env::var("DISCORD_LITENTRY_URL") {
-		data_provider_config.set_discord_litentry_url(v);
-	}
-	if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
-		data_provider_config.set_discord_auth_token(v);
-	}
-	if let Ok(v) = env::var("ACHAINABLE_URL") {
-		data_provider_config.set_achainable_url(v);
-	}
-	if let Ok(v) = env::var("ACHAINABLE_AUTH_KEY") {
-		data_provider_config.set_achainable_auth_key(v);
-	}
-	if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
-		data_provider_config.set_credential_endpoint(v);
-	}
-	if let Ok(v) = env::var("ONEBLOCK_NOTION_KEY") {
-		data_provider_config.set_oneblock_notion_key(v);
-	}
-	if let Ok(v) = env::var("ONEBLOCK_NOTION_URL") {
-		data_provider_config.set_oneblock_notion_url(v);
-	}
-	if let Ok(v) = env::var("SORA_QUIZ_MASTER_ID") {
-		data_provider_config.set_sora_quiz_master_id(v);
-	}
-	if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
-		data_provider_config.set_sora_quiz_attendee_id(v);
-	}
-	if let Ok(v) = env::var("NODEREAL_API_KEY") {
-		data_provider_config.set_nodereal_api_key(v);
-	}
-	if let Ok(v) = env::var("NODEREAL_API_URL") {
-		data_provider_config.set_nodereal_api_url(v);
-	}
-	if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
-		data_provider_config.set_contest_legend_discord_role_id(v);
-	}
-	if let Ok(v) = env::var("CONTEST_POPULARITY_DISCORD_ROLE_ID") {
-		data_provider_config.set_contest_popularity_discord_role_id(v);
-	}
-	if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
-		data_provider_config.set_contest_participant_discord_role_id(v);
-	}
-
-	data_provider_config
 }

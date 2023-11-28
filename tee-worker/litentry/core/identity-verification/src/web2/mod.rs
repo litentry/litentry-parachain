@@ -28,7 +28,7 @@ use itp_sgx_crypto::ShieldingCryptoDecrypt;
 use lc_data_providers::{
 	discord_official::{DiscordMessage, DiscordOfficialClient},
 	twitter_official::{Tweet, TwitterOfficialClient},
-	DataProviderConfigReader, ReadDataProviderConfig, UserInfo,
+	DataProviderConfig, UserInfo,
 };
 use litentry_primitives::{
 	DiscordValidationData, ErrorDetail, Identity, IntoErrorDetail, TwitterValidationData,
@@ -57,12 +57,16 @@ pub fn verify(
 	identity: &Identity,
 	raw_msg: &[u8],
 	data: &Web2ValidationData,
+	config: &DataProviderConfig,
 ) -> Result<()> {
 	debug!("verify web2 identity, who: {:?}", who);
 
 	let (user_name, payload) = match data {
 		Web2ValidationData::Twitter(TwitterValidationData { ref tweet_id }) => {
-			let mut client = TwitterOfficialClient::v2();
+			let mut client = TwitterOfficialClient::v2(
+				config.twitter_official_url.as_str(),
+				config.twitter_auth_token_v2.as_str(),
+			);
 			let tweet: Tweet = client
 				.query_tweet(tweet_id.to_vec())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;
@@ -84,10 +88,7 @@ pub fn verify(
 			ref message_id,
 			..
 		}) => {
-			let data_provider_config =
-				DataProviderConfigReader::read().map_err(Error::UnclassifiedError)?;
-
-			let mut client = DiscordOfficialClient::new(&data_provider_config);
+			let mut client = DiscordOfficialClient::new(config);
 			let message: DiscordMessage = client
 				.query_message(channel_id.to_vec(), message_id.to_vec())
 				.map_err(|e| Error::LinkIdentityFailed(e.into_error_detail()))?;

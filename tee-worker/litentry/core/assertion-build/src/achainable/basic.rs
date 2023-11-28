@@ -21,7 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_uniswap_v2_or_v3_user, *};
-use lc_data_providers::ConvertParameterString;
+use lc_data_providers::{ConvertParameterString, DataProviderConfig};
 use std::string::ToString;
 
 /// NOTE:
@@ -43,7 +43,11 @@ use std::string::ToString;
 ///         }
 /// }
 ///
-pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
+pub fn build_basic(
+	req: &AssertionBuildRequest,
+	param: AchainableBasic,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
 
 	let identities = transpose_identity(&req.identities);
@@ -55,7 +59,8 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 	let achainable_param = AchainableParams::Basic(param.clone());
 	check_uniswap_v23_user_inputs(&achainable_param, &param)?;
 
-	let (v2_user, v3_user) = request_uniswap_v2_or_v3_user(addresses, achainable_param.clone())?;
+	let (v2_user, v3_user) =
+		request_uniswap_v2_or_v3_user(addresses, achainable_param.clone(), data_provider_config)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			let (desc, subtype) = get_uniswap_v23_info();

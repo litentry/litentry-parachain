@@ -1748,7 +1748,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "lc-vc-task-sender",
  "litentry-primitives",
  "log",
  "pallet-balances",
@@ -2727,7 +2726,7 @@ dependencies = [
  "http",
  "http_req",
  "itc-rest-client",
- "lazy_static",
+ "itp-utils",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2830,7 +2829,6 @@ dependencies = [
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
- "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-node-api",
  "itp-ocall-api",
@@ -2840,11 +2838,9 @@ dependencies = [
  "itp-stf-state-handler",
  "itp-top-pool-author",
  "itp-types",
- "lazy_static",
  "lc-assertion-build",
  "lc-credentials",
  "lc-data-providers",
- "lc-identity-verification",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
@@ -2853,9 +2849,7 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.39)",
- "thiserror",
  "threadpool",
- "url",
 ]
 
 [[package]]
@@ -2863,7 +2857,6 @@ name = "lc-vc-task-sender"
 version = "0.1.0"
 dependencies = [
  "futures 0.3.8",
- "itp-stf-primitives",
  "itp-types",
  "lazy_static",
  "lc-stf-task-sender",
@@ -2873,8 +2866,6 @@ dependencies = [
  "sgx_tstd",
  "sp-runtime",
  "sp-std 5.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
- "thiserror",
- "url",
 ]
 
 [[package]]

@@ -19,12 +19,14 @@ fn test_threadpool_behaviour() {
 	let stf_enclave_signer_mock = StfEnclaveSignerMock::default();
 	let handle_state_mock = HandleStateMock::default();
 	let onchain_mock = OnchainMock::default();
+	let data_provider_conifg = DataProviderConfig::new();
 	let context = StfTaskContext::new(
 		shielding_key.clone(),
 		author_mock.into(),
 		stf_enclave_signer_mock.into(),
 		handle_state_mock.into(),
 		onchain_mock.into(),
+		data_provider_conifg.into(),
 	);
 	let _handle = std::thread::spawn(move || {
 		run_stf_task_receiver(Arc::new(context)).unwrap();

@@ -94,9 +94,7 @@ mod empty_impls;
 mod initialization;
 mod ipfs;
 mod ocall;
-mod stf_task_handler;
 mod utils;
-mod vc_issuance_task;
 
 pub mod error;
 pub mod rpc;

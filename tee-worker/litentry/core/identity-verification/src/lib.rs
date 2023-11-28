@@ -40,7 +40,8 @@ mod web2;
 
 mod error;
 use error::{Error, Result};
+use lc_data_providers::DataProviderConfig;
 
-pub fn verify(r: &Web2IdentityVerificationRequest) -> Result<()> {
-	web2::verify(&r.who, &r.identity, &r.raw_msg, &r.validation_data)
+pub fn verify(r: &Web2IdentityVerificationRequest, config: &DataProviderConfig) -> Result<()> {
+	web2::verify(&r.who, &r.identity, &r.raw_msg, &r.validation_data, config)
 }

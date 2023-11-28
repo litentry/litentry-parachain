@@ -257,17 +257,4 @@ extern "C" {
 		until: *const u32,
 	) -> sgx_status_t;
 
-	pub fn run_stf_task_handler(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		data_provider_config: *const u8,
-		data_provider_config_size: usize,
-	) -> sgx_status_t;
-
-	pub fn run_vc_issuance(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		data_provider_config: *const u8,
-		data_provider_config_size: usize,
-	) -> sgx_status_t;
 }

@@ -179,14 +179,6 @@ enclave {
 		public sgx_status_t ignore_parentchain_block_import_validation_until(
 			[in] uint32_t* until
 		);
-		
-		public size_t run_stf_task_handler(
-			[in, size=data_providers_static_len] uint8_t* data_providers_static, uint32_t data_providers_static_len
-		);
-
-		public size_t run_vc_issuance(
-			[in, size=data_providers_static_len] uint8_t* data_providers_static, uint32_t data_providers_static_len
-		);
 	};
 
 	untrusted {

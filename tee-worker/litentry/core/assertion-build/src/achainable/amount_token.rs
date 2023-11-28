@@ -22,7 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_balance, *};
 use lc_credentials::litentry_profile::token_balance::TokenBalanceInfo;
-use lc_data_providers::{ETokenAddress, TokenFromString};
+use lc_data_providers::{DataProviderConfig, ETokenAddress, TokenFromString};
 
 // Input params:
 // {
@@ -56,6 +56,7 @@ use lc_data_providers::{ETokenAddress, TokenFromString};
 pub fn build_amount_token(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountToken,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
 
@@ -67,14 +68,15 @@ pub fn build_amount_token(
 
 	let token = ETokenAddress::from_vec(param.clone().token.unwrap_or_default());
 	let achainable_param = AchainableParams::AmountToken(param);
-	let balance = request_achainable_balance(addresses, achainable_param.clone())?
-		.parse::<f64>()
-		.map_err(|_| {
-			Error::RequestVCFailed(
-				Assertion::Achainable(achainable_param.clone()),
-				ErrorDetail::ParseError,
-			)
-		})?;
+	let balance =
+		request_achainable_balance(addresses, achainable_param.clone(), data_provider_config)?
+			.parse::<f64>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(achainable_param.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_token_balance(token, balance);

@@ -21,11 +21,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use lc_credentials::bnb_domain::bnb_domain_holding_amount::UpdaetBnbDomainHoldingAmountCredential;
+use lc_data_providers::DataProviderConfig;
 
 use super::{BnbDomainInfo, BnbDomainInfoInterface};
 use crate::*;
 
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("bnb domain holding amount");
 
 	let identities = transpose_identity(&req.identities);
@@ -34,7 +38,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let amount = BnbDomainInfo.get_bnb_domain_holding_amount(&addresses)?;
+	let amount = BnbDomainInfo.get_bnb_domain_holding_amount(&addresses, data_provider_config)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_bnb_holding_amount(amount);

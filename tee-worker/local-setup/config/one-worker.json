@@ -34,8 +34,6 @@
         "-h",
         "4545",
         "--ws-external",
-        "--running-mode",
-        "mock",
         "--enable-mock-server",
         "--parentchain-start-block",
         "0",

@@ -56,7 +56,6 @@ function generateWorkerCommandArguments(
     const isLaunch = command === 'launch';
 
     return [
-        '--running-mode mock',
         ...(workerParams.enableMockServer ? ['--enable-mock-server'] : []),
         ...(isLaunch ? ['--clean-reset'] : []),
         '--mu-ra-external-address localhost',

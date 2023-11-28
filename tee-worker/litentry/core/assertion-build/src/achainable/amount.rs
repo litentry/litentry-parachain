@@ -25,7 +25,9 @@ use crate::{
 	*,
 };
 use lc_credentials::litentry_profile::holding_amount::LitentryProfileHoldingAmount;
-use lc_data_providers::{achainable_names::AchainableNameAmount, ConvertParameterString};
+use lc_data_providers::{
+	achainable_names::AchainableNameAmount, ConvertParameterString, DataProviderConfig,
+};
 
 const CREATED_OVER_AMOUNT_CONTRACTS: &str = "Created over {amount} contracts";
 const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
@@ -98,7 +100,11 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 ///        ]
 /// }
 ///
-pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
+pub fn build_amount(
+	req: &AssertionBuildRequest,
+	param: AchainableAmount,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -116,16 +122,17 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 	let mut balance = 0.0;
 	let mut flag = false;
 	if bname == AchainableNameAmount::BalanceUnderAmount {
-		balance = request_achainable_balance(addresses, achainable_param.clone())?
-			.parse::<f64>()
-			.map_err(|_| {
-				Error::RequestVCFailed(
-					Assertion::Achainable(achainable_param.clone()),
-					ErrorDetail::ParseError,
-				)
-			})?;
+		balance =
+			request_achainable_balance(addresses, achainable_param.clone(), data_provider_config)?
+				.parse::<f64>()
+				.map_err(|_| {
+					Error::RequestVCFailed(
+						Assertion::Achainable(achainable_param.clone()),
+						ErrorDetail::ParseError,
+					)
+				})?;
 	} else {
-		flag = request_achainable(addresses, achainable_param.clone())?;
+		flag = request_achainable(addresses, achainable_param.clone(), data_provider_config)?;
 	}
 
 	match Credential::new(&req.who, &req.shard) {

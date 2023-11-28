@@ -26,5 +26,4 @@ itp-storage = { path = "../storage" }
 itp-types = { path = "../types" }
 
 # litentry
-lc-data-providers = { path = "../../litentry/core/data-providers" }
 teerex-primitives = { path = "../../../primitives/teerex", default-features = false }

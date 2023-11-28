@@ -108,11 +108,6 @@ args:
         long: clean-reset
         short: c
         help: Cleans and purges any previous state and key files and generates them anew before starting.
-    - running-mode:
-        long: running-mode
-        help: Litentry TEE service running mode <dev|staging|prod|mock>
-        takes_value: true
-        default_value: "dev"
     - enable-mock-server:
         long: enable-mock-server
         takes_value: false

@@ -28,14 +28,14 @@ use crate::{
 		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
 		EnclaveStateInitializer, EnclaveStateObserver, EnclaveStateSnapshotRepository,
 		EnclaveStfEnclaveSigner, EnclaveTopPool, EnclaveTopPoolAuthor,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL,
-		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
-		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
-		GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT, GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
-		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
-		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
-		GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
+		GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
+		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
+		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
@@ -87,6 +87,10 @@ use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+
+use lc_data_providers::DataProviderConfig;
+use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
+use lc_vc_task_receiver::run_vc_handler_runner;
 
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
@@ -200,6 +204,19 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
+	let data_provider_config = DataProviderConfig::new();
+	GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+
+	std::thread::spawn(move || {
+		#[allow(clippy::unwrap_used)]
+		run_stf_task_handler().unwrap();
+	});
+
+	std::thread::spawn(move || {
+		#[allow(clippy::unwrap_used)]
+		run_vc_issuance().unwrap();
+	});
+
 	Ok(())
 }
 
@@ -216,6 +233,68 @@ fn initialize_state_observer(
 		states_map.insert(shard, state);
 	}
 	Ok(Arc::new(EnclaveStateObserver::from_map(states_map)))
+}
+
+fn run_stf_task_handler() -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
+	let shielding_key = shielding_key_repository.retrieve_key().unwrap();
+
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository,
+		author_api.clone(),
+	));
+
+	let stf_task_context = StfTaskContext::new(
+		shielding_key,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+		data_provider_config,
+	);
+
+	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
+}
+
+fn run_vc_issuance() -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
+	let shielding_key = shielding_key_repository.retrieve_key().unwrap();
+
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository,
+		author_api.clone(),
+	));
+
+	let stf_task_context = StfTaskContext::new(
+		shielding_key,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+		data_provider_config,
+	);
+	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+	Ok(())
 }
 
 pub(crate) fn init_enclave_sidechain_components(

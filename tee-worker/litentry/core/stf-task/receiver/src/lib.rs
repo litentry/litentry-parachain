@@ -53,6 +53,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
+use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error, info};
 use std::{boxed::Box, format, string::String, sync::Arc};
@@ -89,6 +90,7 @@ pub struct StfTaskContext<
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
+	pub data_provider_config: Arc<DataProviderConfig>,
 }
 
 impl<
@@ -107,8 +109,16 @@ where
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
+		data_provider_config: Arc<DataProviderConfig>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api }
+		Self {
+			shielding_key,
+			author_api,
+			enclave_signer,
+			state_handler,
+			ocall_api,
+			data_provider_config,
+		}
 	}
 
 	fn submit_trusted_call(

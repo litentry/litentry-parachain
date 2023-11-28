@@ -52,7 +52,7 @@ where
 	type Result = ();
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
-		lc_identity_verification::verify(&self.req)
+		lc_identity_verification::verify(&self.req, &self.context.data_provider_config)
 	}
 
 	fn on_success(

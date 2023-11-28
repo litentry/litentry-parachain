@@ -44,14 +44,10 @@ use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 };
-use lazy_static::lazy_static;
+use itp_utils::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-#[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
+use std::env;
 
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
@@ -111,7 +107,7 @@ impl TokenFromString for ETokenAddress {
 	}
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize, Debug)]
 pub struct DataProviderConfig {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,
@@ -141,26 +137,91 @@ impl Default for DataProviderConfig {
 
 impl DataProviderConfig {
 	pub fn new() -> Self {
-		DataProviderConfig {
+		std::println!("Initializing data providers config");
+
+		// default prod config
+		let mut config = DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
-			twitter_litentry_url: "".to_string(),
-			twitter_auth_token_v2: "Bearer ".to_string(),
+			twitter_litentry_url: "http://127.0.0.1:9527”".to_string(),
+			twitter_auth_token_v2: "".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
-			discord_litentry_url: "".to_string(),
+			discord_litentry_url: "http://127.0.0.1:9527”".to_string(),
 			discord_auth_token: "".to_string(),
-			achainable_url: "https://graph.tdf-labs.io/".to_string(),
+			achainable_url: "https://label-production.graph.tdf-labs.io/".to_string(),
 			achainable_auth_key: "".to_string(),
-			credential_endpoint: "".to_string(),
+			credential_endpoint: "wss://tee-staging.litentry.io".to_string(),
 			oneblock_notion_key: "".to_string(),
-			oneblock_notion_url: "".to_string(),
-			sora_quiz_master_id: "".to_string(),
-			sora_quiz_attendee_id: "".to_string(),
+			oneblock_notion_url:
+				"https://api.notion.com/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children"
+					.to_string(),
+			sora_quiz_master_id: "1164463721989554218".to_string(),
+			sora_quiz_attendee_id: "1166941149219532800".to_string(),
 			nodereal_api_key: "".to_string(),
-			nodereal_api_url: "".to_string(),
-			contest_legend_discord_role_id: "".to_string(),
-			contest_popularity_discord_role_id: "".to_string(),
-			contest_participant_discord_role_id: "".to_string(),
+			nodereal_api_url: "https://open-platform.nodereal.io/".to_string(),
+			contest_legend_discord_role_id: "1172576273063739462".to_string(),
+			contest_popularity_discord_role_id: "1172576681119195208".to_string(),
+			contest_participant_discord_role_id: "1172576734135210104".to_string(),
+		};
+
+		// we allow to override following config properties for non prod dev
+		if_not_production!({
+			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
+				config.set_twitter_official_url(v);
+			}
+			if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
+				config.set_twitter_litentry_url(v);
+			}
+			if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
+				config.set_discord_official_url(v);
+			}
+			if let Ok(v) = env::var("DISCORD_LITENTRY_URL") {
+				config.set_discord_litentry_url(v);
+			}
+			if let Ok(v) = env::var("ACHAINABLE_URL") {
+				config.set_achainable_url(v);
+			}
+			if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
+				config.set_credential_endpoint(v);
+			}
+			if let Ok(v) = env::var("ONEBLOCK_NOTION_URL") {
+				config.set_oneblock_notion_url(v);
+			}
+			if let Ok(v) = env::var("SORA_QUIZ_MASTER_ID") {
+				config.set_sora_quiz_master_id(v);
+			}
+			if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
+				config.set_sora_quiz_attendee_id(v);
+			}
+			if let Ok(v) = env::var("NODEREAL_API_URL") {
+				config.set_nodereal_api_url(v);
+			}
+			if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
+				config.set_contest_legend_discord_role_id(v);
+			}
+			if let Ok(v) = env::var("CONTEST_POPULARITY_DISCORD_ROLE_ID") {
+				config.set_contest_popularity_discord_role_id(v);
+			}
+			if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
+				config.set_contest_participant_discord_role_id(v);
+			}
+		});
+		// set secrets from env variables
+		if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
+			config.set_twitter_auth_token_v2(v);
 		}
+		if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
+			config.set_discord_auth_token(v);
+		}
+		if let Ok(v) = env::var("ACHAINABLE_AUTH_KEY") {
+			config.set_achainable_auth_key(v);
+		}
+		if let Ok(v) = env::var("ONEBLOCK_NOTION_KEY") {
+			config.set_oneblock_notion_key(v);
+		}
+		if let Ok(v) = env::var("NODEREAL_API_KEY") {
+			config.set_nodereal_api_key(v);
+		}
+		config
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
 		debug!("set_twitter_official_url: {:?}", v);
@@ -233,27 +294,6 @@ impl DataProviderConfig {
 	pub fn set_contest_participant_discord_role_id(&mut self, v: String) {
 		debug!("set_contest_participant_discord_role_id: {:?}", v);
 		self.contest_participant_discord_role_id = v;
-	}
-}
-
-lazy_static! {
-	pub static ref GLOBAL_DATA_PROVIDER_CONFIG: RwLock<DataProviderConfig> =
-		RwLock::new(DataProviderConfig::new());
-}
-
-pub struct DataProviderConfigReader;
-pub trait ReadDataProviderConfig {
-	fn read() -> Result<DataProviderConfig, ErrorDetail>;
-}
-
-impl ReadDataProviderConfig for DataProviderConfigReader {
-	fn read() -> Result<DataProviderConfig, ErrorDetail> {
-		match GLOBAL_DATA_PROVIDER_CONFIG.read() {
-			Ok(c) => Ok(c.clone()),
-			Err(e) => Err(ErrorDetail::DataProviderError(ErrorString::truncate_from(
-				format!("{e:?}").as_bytes().to_vec(),
-			))),
-		}
 	}
 }
 
