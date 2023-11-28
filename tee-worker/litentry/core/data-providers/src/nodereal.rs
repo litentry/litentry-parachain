@@ -124,7 +124,7 @@ impl NoderealHttpMethods for NoderealClient {
 		let response = self
 			.client
 			.post_capture::<NoderealServiceReqPath, SpaceIDReqBody, serde_json::Value>(path, body);
-		response.map_err(|e| Error::AchainableError(format!("Nodereal response error: {}", e)))
+		response.map_err(|e| Error::NoderealError(format!("Nodereal response error: {}", e)))
 	}
 }
 
