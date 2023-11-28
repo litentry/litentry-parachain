@@ -170,14 +170,17 @@ export async function listenEvent(
 export async function sendTxsWithUtility(
     context: IntegrationTestContext,
     signer: KeyringPair,
-    txs: SubmittableExtrinsic<ApiTypes>[],
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce?: number;
+    }[],
     pallet: string,
     events: string[],
     listenTimeoutInBlockNumber?: number
 ): Promise<Event[]> {
     // ensure the tx is in block
     const isInBlockPromise = new Promise((resolve) => {
-        context.api.tx.utility.batchAll(txs.map((tx) => tx)).signAndSend(signer, async (result) => {
+        context.api.tx.utility.batchAll(txs.map(({ tx }) => tx)).signAndSend(signer, async (result) => {
             if (result.status.isInBlock) {
                 console.log(`Transaction included at blockHash ${result.status.asInBlock}`);
                 resolve(result.status);
