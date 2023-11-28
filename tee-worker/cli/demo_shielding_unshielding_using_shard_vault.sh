@@ -33,13 +33,13 @@ while getopts ":m:p:P:t:u:V:C:" opt; do
             READ_MRENCLAVE=$OPTARG
             ;;
         p)
-            LITENTRY_RPC_PORT=$OPTARG
+            INTEGRITEE_RPC_PORT=$OPTARG
             ;;
         P)
             WORKER_1_PORT=$OPTARG
             ;;
         u)
-            LITENTRY_RPC_URL=$OPTARG
+            INTEGRITEE_RPC_URL=$OPTARG
             ;;
         V)
             WORKER_1_URL=$OPTARG
@@ -54,17 +54,17 @@ while getopts ":m:p:P:t:u:V:C:" opt; do
 done
 
 # Using default port if none given as arguments.
-LITENTRY_RPC_PORT=${LITENTRY_RPC_PORT:-9944}
-LITENTRY_RPC_URL=${LITENTRY_RPC_URL:-"ws://127.0.0.1"}
+INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
+INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
 
 WORKER_1_PORT=${WORKER_1_PORT:-2000}
 WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 ${CLIENT_BIN} --version
-echo "Using node uri ${LITENTRY_RPC_URL}:${LITENTRY_RPC_PORT}"
+echo "Using node uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
 echo "Using trusted-worker uri ${WORKER_1_URL}:${WORKER_1_PORT}"
 echo ""
 
@@ -76,7 +76,7 @@ AMOUNT_SHIELD=$(( 6 * UNIT ))
 AMOUNT_TRANSFER=$(( 2 * UNIT ))
 AMOUNT_UNSHIELD=$(( 1 * UNIT ))
 
-CLIENT="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_1_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_1_URL}"
+CLIENT="${CLIENT_BIN} -p ${INTEGRITEE_RPC_PORT} -P ${WORKER_1_PORT} -u ${INTEGRITEE_RPC_URL} -U ${WORKER_1_URL}"
 
 # offchain-worker only suppports indirect calls
 CALLTYPE=
@@ -225,7 +225,7 @@ echo ""
 echo "* Send 3 consecutive 0.2 UNIT balance Transfer Bob -> Charlie"
 for i in $(seq 1 3); do
     # use direct calls so they are submitted to the top pool synchronously
-    $CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
+    $CLIENT trusted $CALLTYPE --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
 done
 echo ""
 
@@ -235,7 +235,7 @@ echo "✔ ok"
 echo ""
 
 echo "* Send a 2 UNIT balance Transfer Bob -> Charlie (that will fail)"
-$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} ${AMOUNT_TRANSFER}
+$CLIENT trusted $CALLTYPE --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} ${AMOUNT_TRANSFER}
 echo ""
 
 echo "* Assert Bob's incognito nonce..."
@@ -245,7 +245,7 @@ echo "✔ ok"
 echo ""
 
 echo "* Send another 0.2 UNIT balance Transfer Bob -> Charlie"
-$CLIENT trusted --direct --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
+$CLIENT trusted $CALLTYPE --mrenclave ${MRENCLAVE} transfer ${ICGACCOUNTBOB} ${ICGACCOUNTCHARLIE} $(( AMOUNT_TRANSFER / 10 ))
 echo ""
 
 echo "* Assert Bob's incognito nonce..."

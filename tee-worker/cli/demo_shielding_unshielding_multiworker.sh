@@ -8,7 +8,7 @@ set -euo pipefail
 while getopts ":p:A:B:u:W:V:C:" opt; do
     case $opt in
         p)
-            LITENTRY_RPC_PORT=$OPTARG
+            INTEGRITEE_RPC_PORT=$OPTARG
             ;;
         A)
             WORKER_1_PORT=$OPTARG
@@ -17,7 +17,7 @@ while getopts ":p:A:B:u:W:V:C:" opt; do
             WORKER_2_PORT=$OPTARG
             ;;
         u)
-            LITENTRY_RPC_URL=$OPTARG
+            INTEGRITEE_RPC_URL=$OPTARG
             ;;
         V)
             WORKER_1_URL=$OPTARG
@@ -35,8 +35,8 @@ while getopts ":p:A:B:u:W:V:C:" opt; do
 done
 
 # Using default port if none given as arguments.
-LITENTRY_RPC_PORT=${LITENTRY_RPC_PORT:-9944}
-LITENTRY_RPC_URL=${LITENTRY_RPC_URL:-"ws://127.0.0.1"}
+INTEGRITEE_RPC_PORT=${INTEGRITEE_RPC_PORT:-9944}
+INTEGRITEE_RPC_URL=${INTEGRITEE_RPC_URL:-"ws://127.0.0.1"}
 
 WORKER_1_PORT=${WORKER_1_PORT:-2000}
 WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
@@ -44,26 +44,26 @@ WORKER_1_URL=${WORKER_1_URL:-"wss://127.0.0.1"}
 WORKER_2_PORT=${WORKER_2_PORT:-3000}
 WORKER_2_URL=${WORKER_2_URL:-"wss://127.0.0.1"}
 
-CLIENT_BIN=${CLIENT_BIN:-"./../bin/litentry-cli"}
+CLIENT_BIN=${CLIENT_BIN:-"./../bin/integritee-cli"}
 
 echo "Using client binary ${CLIENT_BIN}"
 ${CLIENT_BIN} --version
-echo "Using node uri ${LITENTRY_RPC_URL}:${LITENTRY_RPC_PORT}"
+echo "Using node uri ${INTEGRITEE_RPC_URL}:${INTEGRITEE_RPC_PORT}"
 echo "Using trusted-worker 1 uri ${WORKER_1_URL}:${WORKER_1_PORT}"
 echo "Using trusted-worker 2 uri ${WORKER_2_URL}:${WORKER_2_PORT}"
 echo ""
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-"${SCRIPT_DIR}"/demo_shielding_unshielding.sh -p "${LITENTRY_RPC_PORT}" -u "${LITENTRY_RPC_URL}" -V "${WORKER_1_URL}" -P "${WORKER_1_PORT}" -C "${CLIENT_BIN}" -t first
-"${SCRIPT_DIR}"/demo_shielding_unshielding.sh -p "${LITENTRY_RPC_PORT}" -u "${LITENTRY_RPC_URL}" -V "${WORKER_2_URL}" -P "${WORKER_2_PORT}" -C "${CLIENT_BIN}" -t second
+"${SCRIPT_DIR}"/demo_shielding_unshielding.sh -p "${INTEGRITEE_RPC_PORT}" -u "${INTEGRITEE_RPC_URL}" -V "${WORKER_1_URL}" -P "${WORKER_1_PORT}" -C "${CLIENT_BIN}" -t first
+"${SCRIPT_DIR}"/demo_shielding_unshielding.sh -p "${INTEGRITEE_RPC_PORT}" -u "${INTEGRITEE_RPC_URL}" -V "${WORKER_2_URL}" -P "${WORKER_2_PORT}" -C "${CLIENT_BIN}" -t second
 
 if [ "$FLAVOR_ID" = offchain-worker ]; then
     echo "offchain-worker does not support shard vault shielding, therefore we skip those tests"
     exit 0
 fi
 
-"${SCRIPT_DIR}"/demo_shielding_unshielding_using_shard_vault.sh -p "${LITENTRY_RPC_PORT}" -u "${LITENTRY_RPC_URL}" -V "${WORKER_1_URL}" -P "${WORKER_1_PORT}" -C "${CLIENT_BIN}" -t first
-"${SCRIPT_DIR}"/demo_shielding_unshielding_using_shard_vault.sh -p "${LITENTRY_RPC_PORT}" -u "${LITENTRY_RPC_URL}" -V "${WORKER_2_URL}" -P "${WORKER_2_PORT}" -C "${CLIENT_BIN}" -t second
+"${SCRIPT_DIR}"/demo_shielding_unshielding_using_shard_vault.sh -p "${INTEGRITEE_RPC_PORT}" -u "${INTEGRITEE_RPC_URL}" -V "${WORKER_1_URL}" -P "${WORKER_1_PORT}" -C "${CLIENT_BIN}" -t first
+"${SCRIPT_DIR}"/demo_shielding_unshielding_using_shard_vault.sh -p "${INTEGRITEE_RPC_PORT}" -u "${INTEGRITEE_RPC_URL}" -V "${WORKER_2_URL}" -P "${WORKER_2_PORT}" -C "${CLIENT_BIN}" -t second
 
 exit 0

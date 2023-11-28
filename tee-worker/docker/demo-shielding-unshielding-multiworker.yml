@@ -21,8 +21,8 @@ services:
     networks:
       - litentry-test-network
     entrypoint:
-      "/usr/local/worker-cli/demo_shielding_unshielding_multiworker.sh -p 9912 -u ws://litentry-node
-      -V wss://litentry-worker-1 -A 2011 -W wss://litentry-worker-2 -B 2012 -C /usr/local/bin/litentry-cli 2>&1"
+      "/usr/local/worker-cli/demo_shielding_unshielding.sh -t first -p 9912 -u ws://litentry-node
+      -V wss://litentry-worker-1 -P 2011 -C /usr/local/bin/litentry-cli 2>&1"
     restart: "no"
 networks:
   litentry-test-network:
