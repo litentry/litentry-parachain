@@ -26,7 +26,7 @@ use codec::{Decode, Encode};
 use ita_stf::{Getter, StfError, TrustedCall, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
@@ -105,8 +105,12 @@ pub(crate) fn get_state<T: Decode>(
 	// Compose jsonrpc call.
 	let data = RsaRequest::new(shard, getter.encode());
 	let rpc_method = "state_executeGetter".to_owned();
-	let jsonrpc_call: String =
-		RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
+	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
+		rpc_method,
+		vec![data.to_hex()],
+	)
+	.unwrap();
 
 	let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
 
@@ -437,8 +441,12 @@ pub(crate) fn get_vc_json_request(
 
 	// compose jsonrpc call
 	let request = AesRequest { shard, payload: operation_call_encrypted, key: encrypted_key };
-	RpcRequest::compose_jsonrpc_call("author_submitVCRequest".to_string(), vec![request.to_hex()])
-		.unwrap()
+	RpcRequest::compose_jsonrpc_call(
+		Id::Number(1),
+		"author_submitVCRequest".to_string(),
+		vec![request.to_hex()],
+	)
+	.unwrap()
 }
 
 pub(crate) fn get_json_request(
@@ -451,6 +459,7 @@ pub(crate) fn get_json_request(
 	// compose jsonrpc call
 	let request = RsaRequest::new(shard, operation_call_encrypted);
 	RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
 		"author_submitAndWatchRsaRequest".to_string(),
 		vec![request.to_hex()],
 	)

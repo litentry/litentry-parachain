@@ -18,7 +18,9 @@
 
 //! Type definitions for testing. Includes various mocks.
 
-use crate::test::mocks::rpc_responder_mock::RpcResponderMock;
+use crate::test::mocks::{
+	peer_updater_mock::PeerUpdaterMock, rpc_responder_mock::RpcResponderMock,
+};
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, Stf, TrustedCallSigned};
 use itc_parentchain::block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
@@ -31,7 +33,11 @@ use itp_test::mock::{
 	onchain_mock::OnchainMock,
 };
 use itp_top_pool::basic_pool::BasicPool;
-use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
+use itp_top_pool_author::{
+	api::SidechainApi,
+	author::Author,
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
+};
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_sidechain::{aura::block_importer::BlockImporter, block_composer::BlockComposer};
@@ -71,6 +77,7 @@ pub type TestTopPool =
 pub type TestTopPoolAuthor = Author<
 	TestTopPool,
 	AllowAllTopsFilter,
+	DirectCallsOnlyFilter,
 	TestStateHandler,
 	TestShieldingKeyRepo,
 	MetricsOCallMock,
@@ -88,4 +95,5 @@ pub type TestBlockImporter = BlockImporter<
 	TestStateKeyRepo,
 	TestTopPoolAuthor,
 	TestParentchainBlockImportTrigger,
+	PeerUpdaterMock,
 >;

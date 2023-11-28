@@ -22,20 +22,21 @@ use crate::{
 	error::{Error, Result as EnclaveResult},
 	initialization::global_components::{
 		EnclaveBlockImportConfirmationHandler, EnclaveGetterExecutor, EnclaveLightClientSeal,
-		EnclaveOCallApi, EnclaveRpcConnectionRegistry, EnclaveRpcResponder,
-		EnclaveShieldingKeyRepository, EnclaveSidechainApi, EnclaveSidechainBlockImportQueue,
-		EnclaveSidechainBlockImportQueueWorker, EnclaveSidechainBlockImporter,
-		EnclaveSidechainBlockSyncer, EnclaveStateFileIo, EnclaveStateHandler,
-		EnclaveStateInitializer, EnclaveStateObserver, EnclaveStateSnapshotRepository,
-		EnclaveStfEnclaveSigner, EnclaveTopPool, EnclaveTopPoolAuthor,
+		EnclaveOCallApi, EnclaveRpcResponder, EnclaveShieldingKeyRepository, EnclaveSidechainApi,
+		EnclaveSidechainBlockImportQueue, EnclaveSidechainBlockImportQueueWorker,
+		EnclaveSidechainBlockImporter, EnclaveSidechainBlockSyncer, EnclaveStateFileIo,
+		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
+		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
+		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
-		GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
-		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
+		GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT, GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+		GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
@@ -56,6 +57,7 @@ use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
 };
+use itc_peer_top_broadcaster::init;
 use itc_tls_websocket_server::{
 	certificate_generation::ed25519_self_signed_certificate, create_ws_server, ConnectionToken,
 	WebSocketServer,
@@ -76,13 +78,14 @@ use itp_stf_state_handler::{
 	state_snapshot_repository_loader::StateSnapshotRepositoryLoader, StateHandler,
 };
 use itp_top_pool::pool::Options as PoolOptions;
-use itp_top_pool_author::author::AuthorTopFilter;
+use itp_top_pool_author::author::{AuthorTopFilter, BroadcastedTopFilter};
 use itp_types::{parentchain::ParentchainId, ShardIdentifier};
 use its_sidechain::{
 	block_composer::BlockComposer,
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_primitives::BroadcastedRequest;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
@@ -179,13 +182,24 @@ pub(crate) fn init_enclave(
 	// validateer completely breaking (IO PipeError).
 	// Corresponding GH issues are #545 and #600.
 
+	let response_channel = Arc::new(RpcResponseChannel::default());
+	let rpc_responder =
+		Arc::new(EnclaveRpcResponder::new(connection_registry.clone(), response_channel));
+
+	let (request_sink, broadcaster) = init(rpc_responder.clone());
+	let request_sink_cloned = request_sink.clone();
+
 	let top_pool_author = create_top_pool_author(
-		connection_registry.clone(),
+		rpc_responder,
 		state_handler.clone(),
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
+		request_sink_cloned,
 	);
 	GLOBAL_TOP_POOL_AUTHOR_COMPONENT.initialize(top_pool_author.clone());
+
+	GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.initialize(broadcaster);
+	DIRECT_RPC_REQUEST_SINK_COMPONENT.initialize(request_sink);
 
 	let getter_executor = Arc::new(EnclaveGetterExecutor::new(state_observer));
 	let io_handler = public_api_rpc_handler(
@@ -303,6 +317,8 @@ pub(crate) fn init_enclave_sidechain_components(
 ) -> EnclaveResult<()> {
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let direct_rpc_broadcaster = GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT.get()?;
+
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
 
@@ -322,6 +338,7 @@ pub(crate) fn init_enclave_sidechain_components(
 		top_pool_author,
 		parentchain_block_import_dispatcher,
 		ocall_api.clone(),
+		direct_rpc_broadcaster,
 	));
 
 	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
@@ -408,14 +425,12 @@ pub(crate) fn migrate_shard(
 
 /// Initialize the TOP pool author component.
 pub fn create_top_pool_author(
-	connection_registry: Arc<EnclaveRpcConnectionRegistry>,
+	rpc_responder: Arc<EnclaveRpcResponder>,
 	state_handler: Arc<EnclaveStateHandler>,
 	ocall_api: Arc<EnclaveOCallApi>,
 	shielding_key_repository: Arc<EnclaveShieldingKeyRepository>,
+	requests_sink: Arc<std::sync::mpsc::SyncSender<BroadcastedRequest>>,
 ) -> Arc<EnclaveTopPoolAuthor> {
-	let response_channel = Arc::new(RpcResponseChannel::default());
-	let rpc_responder = Arc::new(EnclaveRpcResponder::new(connection_registry, response_channel));
-
 	let side_chain_api = Arc::new(EnclaveSidechainApi::new());
 	let top_pool =
 		Arc::new(EnclaveTopPool::create(PoolOptions::default(), side_chain_api, rpc_responder));
@@ -423,8 +438,10 @@ pub fn create_top_pool_author(
 	Arc::new(EnclaveTopPoolAuthor::new(
 		top_pool,
 		AuthorTopFilter {},
+		BroadcastedTopFilter {},
 		state_handler,
 		shielding_key_repository,
 		ocall_api,
+		requests_sink,
 	))
 }

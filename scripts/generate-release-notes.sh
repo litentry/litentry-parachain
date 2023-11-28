@@ -20,6 +20,8 @@ REPO=https://github.com/litentry/litentry-parachain
 
 type=$2
 
+export DOCKER_TAG=$(echo $RELEASE_TAG | cut -d'-' -f1 | sed 's/p/v/')
+
 # helper functions to parse the type mask
 is_client_release() {
   [ "${type:0:1}" = "1" ]
@@ -43,7 +45,7 @@ if is_client_release; then
 
   # somehow `docker inspect` doesn't pull our litentry-parachain image sometimes
   docker pull "$NODE_BUILD_BASE_IMAGE"
-  docker pull "litentry/litentry-parachain:$RELEASE_TAG"
+  docker pull "litentry/litentry-parachain:$DOCKER_TAG"
 
   NODE_VERSION=$(grep version node/Cargo.toml | head -n1 | sed "s/'$//;s/.*'//")
   NODE_BIN=litentry-collator
@@ -106,7 +108,7 @@ version                      : $NODE_VERSION
 name                         : $NODE_BIN
 rustc                        : $NODE_RUSTC_VERSION
 sha1sum                      : $NODE_SHA1SUM
-docker image                 : litentry/litentry-parachain:$RELEASE_TAG
+docker image                 : litentry/litentry-parachain:$DOCKER_TAG
 <CODEBLOCK>
 
 EOF
@@ -151,7 +153,7 @@ if [ "$GENESIS_RELEASE" != "none" ]; then
 
   # double check that exported wasm matches what's written in chain-spec
   # intentionally use 'generate-prod' as chain type
-  docker run --rm "litentry/litentry-parachain:$RELEASE_TAG" build-spec --chain=generate-$GENESIS_RELEASE --raw | \
+  docker run --rm "litentry/litentry-parachain:$DOCKER_TAG" build-spec --chain=generate-$GENESIS_RELEASE --raw | \
   grep -F '"0x3a636f6465"' | sed 's/.*"0x3a636f6465": "//;s/",$//' | tr -d '\n' > /tmp/built-wasm
 
   if cmp /tmp/built-wasm litentry-collator/$GENESIS_RELEASE-genesis-wasm; then

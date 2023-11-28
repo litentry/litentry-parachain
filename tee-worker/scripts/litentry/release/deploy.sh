@@ -105,20 +105,20 @@ function main {
         ;;
       -x|--chain)
         CHAIN="$2"
-        shift
+        shift 2
         ;;
       -p|--parachain-port)
         PARACHAIN_PORT="$2"
-        shift
+        shift 2
         ;;
       -z|--parachain-host)
         PARACHAIN_HOST="$2"
-        shift
+        shift 2
         ;;
       -v|--copy-from-docker)
         COPY_FROM_DOCKER=true
         DOCKER_IMAGE="$2"
-        shift
+        shift 2
         ;;
       --prod)
         PRODUCTION=true
@@ -296,7 +296,7 @@ function generate_services {
       for subcommand_flag in $subcommand_flags; do
         args+=" $subcommand_flag"
       done
-      sed -i "s/ARGS/$args/" worker$i.service
+      sed -i "s;ARGS;$args;" worker$i.service
     done
     rm worker.service
     sudo cp *.service -f /etc/systemd/system/
