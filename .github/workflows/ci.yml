@@ -55,6 +55,11 @@ on:
         description: rebuild-tee-docker
         required: true
         default: true
+      rebuild-client-api:
+        type: boolean
+        description: rebuild-client-api
+        required: true
+        default: true
       push-docker:
         type: boolean
         description: push-docker
@@ -84,6 +89,7 @@ jobs:
     outputs:
       rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
       rebuild_tee: ${{ steps.env.outputs.rebuild_tee }}
+      rebuild_client_api: ${{ steps.env.outputs.rebuild_client_api }}
       push_docker: ${{ steps.env.outputs.push_docker }}
       run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
       run_tee_test: ${{ steps.env.outputs.run_tee_test }}
@@ -105,6 +111,7 @@ jobs:
         run: |
           rebuild_parachain=false
           rebuild_tee=false
+          rebuild_client_api=false
           push_docker=false
           run_parachain_test=false
           run_tee_test=false
@@ -113,6 +120,9 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
             rebuild_tee=true
+          fi
+          if [ "${{ github.event.inputs.rebuild-client-api }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
+            rebuild_client_api=true
           fi
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
@@ -127,6 +137,7 @@ jobs:
           fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
+          echo "rebuild_client_api=$rebuild_client_api" | tee -a $GITHUB_OUTPUT
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
           echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
@@ -309,7 +320,7 @@ jobs:
           docker images --all
           echo "::endgroup::"
 
-      - name: Pull docker image optinally
+      - name: Pull docker image optionally
         if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
           docker pull litentry/litentry-parachain:latest
@@ -599,49 +610,13 @@ jobs:
 
   update-client-api:
     runs-on: ubuntu-latest
+    if: needs.set-condition.outputs.rebuild_client_api == 'true'
     needs:
       - parachain-build-dev
       - tee-build
       - set-condition
     steps:
       - uses: actions/checkout@v4
-
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
-
-      - name: Download Latest
-        if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
-        run: |
-          cd tee-worker/client-api
-          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .pnpmrc
-          pnpm config set @litentry:registry https://npm.pkg.github.com
-          
-          echo "Install client api dev packages"
-          pnpm i -w @litentry/parachain-api @litentry/sidechain-api
-          echo "Check downloaded"
-          ls -l node_modules/
-
-      - name: Compress packages
-        if: needs.set-condition.outputs.rebuild_parachain == 'false' && needs.set-condition.outputs.rebuild_tee == 'false'
-        run: |
-          tar -zcvf client-api.tar.gz tee-worker/client-api/parachain-api tee-worker/client-api/sidechain-api
-
-      - name: Upload client-api as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: client-api
-          path: client-api.tar.gz
-          if-no-files-found: 'warn'
-
-      - name: Early exit if bundle exists and parachain/worker reubild is not required
-        run: |
-          # Check if either rebuild_parachain or rebuild_tee is true
-          if [[ "${{ needs.set-condition.outputs.rebuild_parachain }}" = "false" && "${{ needs.set-condition.outputs.rebuild_tee }}" = "false" && -f "client-api.tar.gz" ]]; then
-            echo "Bundle already exists and rebuild is not required."
-            exit 0
-          else
-            echo "Rebuild is required. Proceeding further..."
-          fi
 
       - name: Pull polkadot image
         run: |
@@ -711,11 +686,50 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
       
+
+  download-client-api:
+    runs-on: ubuntu-latest
+    if: needs.set-condition.outputs.rebuild_client_api == 'false'
+    needs:
+      - parachain-build-dev
+      - tee-build
+      - set-condition
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Download Latest
+        run: |
+          cd tee-worker/client-api
+          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .pnpmrc
+          pnpm config set @litentry:registry https://npm.pkg.github.com
+
+          echo "Install client api dev packages"
+          pnpm i -w @litentry/parachain-api @litentry/sidechain-api
+          echo "Check downloaded"
+          ls -l node_modules/@litentry
+
+      - name: Compress packages
+        run: |
+          tar -zcvf client-api.tar.gz tee-worker/client-api/node_modules/@litentry
+
+      - name: Upload client-api as artifact
+        if: needs.set-condition.outputs.rebuild_client_api == 'false'
+        uses: actions/upload-artifact@v3
+        with:
+          name: client-api
+          path: client-api.tar.gz
+          if-no-files-found: 'warn'
+
   tee-test:
     runs-on: ubuntu-latest
+    if: always()
     needs:
       - set-condition
       - update-client-api
+      - download-client-api
     strategy:
       fail-fast: false
       matrix:
