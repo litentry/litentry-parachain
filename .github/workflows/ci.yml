@@ -702,19 +702,12 @@ jobs:
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
 
-      - name: Download Latest
+      - name: Download Latest Client Api from S3
         run: |
-          cd tee-worker/client-api
-          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .pnpmrc
-          pnpm config set @litentry:registry https://npm.pkg.github.com
-          pnpm i -w @litentry/parachain-api @litentry/sidechain-api
-
-      - name: Compress packages
-        run: |
-          tar -zcvf client-api.tar.gz tee-worker/client-api/node_modules/@litentry
+          curl -O https://kw-client-api.s3.eu-north-1.amazonaws.com/client-api.tar.gz
+          ls -l
 
       - name: Upload client-api as artifact
-        if: needs.set-condition.outputs.rebuild_client_api == 'false'
         uses: actions/upload-artifact@v3
         with:
           name: client-api
