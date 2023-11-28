@@ -118,7 +118,6 @@ mod tests {
 
 	use super::*;
 	use lc_mock_server::run;
-	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
