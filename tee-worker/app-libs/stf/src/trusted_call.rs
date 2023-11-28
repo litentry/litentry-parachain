@@ -72,63 +72,6 @@ pub type IMT = ita_sgx_runtime::pallet_imt::Pallet<Runtime>;
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCall {
-	#[codec(index = 0)]
-	noop(Identity),
-	#[codec(index = 1)]
-	balance_set_balance(Identity, AccountId, Balance, Balance),
-	#[codec(index = 2)]
-	balance_transfer(Identity, AccountId, Balance),
-	#[codec(index = 3)]
-	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
-	#[codec(index = 4)]
-	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
-	#[cfg(feature = "evm")]
-	#[codec(index = 5)]
-	evm_withdraw(Identity, H160, Balance), // (Origin, Address EVM Account, Value)
-	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	#[codec(index = 6)]
-	evm_call(
-		Identity,
-		H160,
-		H160,
-		Vec<u8>,
-		U256,
-		u64,
-		U256,
-		Option<U256>,
-		Option<U256>,
-		Vec<(H160, Vec<H256>)>,
-	),
-	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	#[codec(index = 7)]
-	evm_create(
-		Identity,
-		H160,
-		Vec<u8>,
-		U256,
-		u64,
-		U256,
-		Option<U256>,
-		Option<U256>,
-		Vec<(H160, Vec<H256>)>,
-	),
-	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
-	#[cfg(feature = "evm")]
-	#[codec(index = 8)]
-	evm_create2(
-		Identity,
-		H160,
-		Vec<u8>,
-		H256,
-		U256,
-		u64,
-		U256,
-		Option<U256>,
-		Option<U256>,
-		Vec<(H160, Vec<H256>)>,
-	),
 	/// litentry trusted calls
 	/// the calls that should deliver a result other than `Empty` will need to include the parameter: `Option<RequestAesKey>`,
 	/// it's a 32-byte AES key defined by the client. This key will be used to encrypt the user-sensitive result in the DI response,
@@ -143,7 +86,7 @@ pub enum TrustedCall {
 	/// - it needs to be passed around in async handling of trusted call
 	/// - for multi-worker setup, the worker that processes the request can be differnet from the worker that receives the request, so
 	///   we can't maintain something like a global mapping between trusted call and aes-key, which only resides in the memory of one worker.
-	#[codec(index = 9)]
+	#[codec(index = 0)]
 	link_identity(
 		Identity,
 		Identity,
@@ -153,18 +96,18 @@ pub enum TrustedCall {
 		Option<RequestAesKey>,
 		H256,
 	),
-	#[codec(index = 10)]
+	#[codec(index = 1)]
 	deactivate_identity(Identity, Identity, Identity, H256),
-	#[codec(index = 11)]
+	#[codec(index = 2)]
 	activate_identity(Identity, Identity, Identity, H256),
-	#[codec(index = 12)]
+	#[codec(index = 3)]
 	request_vc(Identity, Identity, Assertion, Option<RequestAesKey>, H256),
-	#[codec(index = 13)]
+	#[codec(index = 4)]
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
-
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
-	#[codec(index = 14)]
+	// starting from index 20 to leave some room for future "normal" trusted calls
+	#[codec(index = 20)]
 	link_identity_callback(
 		Identity,
 		Identity,
@@ -173,7 +116,7 @@ pub enum TrustedCall {
 		Option<RequestAesKey>,
 		H256,
 	),
-	#[codec(index = 15)]
+	#[codec(index = 21)]
 	request_vc_callback(
 		Identity,
 		Identity,
@@ -184,12 +127,71 @@ pub enum TrustedCall {
 		Option<RequestAesKey>,
 		H256,
 	),
-	#[codec(index = 16)]
+	#[codec(index = 22)]
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
-	#[codec(index = 17)]
+	#[codec(index = 23)]
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
-	#[codec(index = 18)]
+	#[codec(index = 24)]
 	send_erroneous_parentchain_call(Identity),
+
+	// original integritee trusted calls, starting from index 50
+	#[codec(index = 50)]
+	noop(Identity),
+	#[codec(index = 51)]
+	balance_set_balance(Identity, AccountId, Balance, Balance),
+	#[codec(index = 52)]
+	balance_transfer(Identity, AccountId, Balance),
+	#[codec(index = 53)]
+	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
+	#[codec(index = 54)]
+	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
+	#[cfg(feature = "evm")]
+	#[codec(index = 55)]
+	evm_withdraw(Identity, H160, Balance), // (Origin, Address EVM Account, Value)
+	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	#[codec(index = 56)]
+	evm_call(
+		Identity,
+		H160,
+		H160,
+		Vec<u8>,
+		U256,
+		u64,
+		U256,
+		Option<U256>,
+		Option<U256>,
+		Vec<(H160, Vec<H256>)>,
+	),
+	// (Origin, Source, Init, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	#[codec(index = 57)]
+	evm_create(
+		Identity,
+		H160,
+		Vec<u8>,
+		U256,
+		u64,
+		U256,
+		Option<U256>,
+		Option<U256>,
+		Vec<(H160, Vec<H256>)>,
+	),
+	// (Origin, Source, Init, Salt, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
+	#[cfg(feature = "evm")]
+	#[codec(index = 58)]
+	evm_create2(
+		Identity,
+		H160,
+		Vec<u8>,
+		H256,
+		U256,
+		u64,
+		U256,
+		Option<U256>,
+		Option<U256>,
+		Vec<(H160, Vec<H256>)>,
+	),
 }
 
 impl TrustedCall {
