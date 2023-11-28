@@ -26,7 +26,7 @@ const allAssertions = [
 
 // It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 // So only use A1 to trigger the wrong event
-describeLitentry('VC test', 0, async (context) => {
+describeLitentry('VC ii test', 0, async (context) => {
     const indexList: HexString[] = [];
     step('Request VC', async () => {
         // request all vc
@@ -54,10 +54,10 @@ describeLitentry('VC test', 0, async (context) => {
         }
     });
     step('Disable VC', async () => {
-        const txs: any = [];
+        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
-            txs.push({ tx });
+            txs.push(tx);
         }
         const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCDisabled',
@@ -85,10 +85,11 @@ describeLitentry('VC test', 0, async (context) => {
     });
 
     step('Revoke VC', async () => {
-        const txs: any = [];
+        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
-            txs.push({ tx });
+            txs.push(tx);
         }
         const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCRevoked',
