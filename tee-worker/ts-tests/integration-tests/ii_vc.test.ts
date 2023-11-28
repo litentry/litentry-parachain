@@ -30,11 +30,13 @@ describeLitentry('VC ii test', 0, async (context) => {
     const indexList: HexString[] = [];
     step('Request VC', async () => {
         // request all vc
-        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+        const txs: {
+            tx: SubmittableExtrinsic<ApiTypes>;
+        }[] = [];
 
         allAssertions.forEach((assertion) => {
             const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion);
-            txs.push(tx);
+            txs.push({ tx });
         });
 
         const events = await sendTxsWithUtility(
@@ -54,10 +56,12 @@ describeLitentry('VC ii test', 0, async (context) => {
         }
     });
     step('Disable VC', async () => {
-        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+        const txs: {
+            tx: SubmittableExtrinsic<ApiTypes>;
+        }[] = [];
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
-            txs.push(tx);
+            txs.push({ tx });
         }
         const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCDisabled',
@@ -85,11 +89,13 @@ describeLitentry('VC ii test', 0, async (context) => {
     });
 
     step('Revoke VC', async () => {
-        const txs: SubmittableExtrinsic<ApiTypes>[] = [];
+        const txs: {
+            tx: SubmittableExtrinsic<ApiTypes>;
+        }[] = [];
 
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
-            txs.push(tx);
+            txs.push({ tx });
         }
         const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'vcManagement', [
             'VCRevoked',

@@ -81,7 +81,10 @@ export async function buildIdentityTxs(
     validations?: LitentryValidationData[],
     web3networks?: Web3Network[][]
 ): Promise<any[]> {
-    const txs: any[] = [];
+    const txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
+    }[] = [];
     const api = context.api;
     const mrEnclave = context.mrEnclave;
     const teeShieldingKey = context.teeShieldingKey;
