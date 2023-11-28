@@ -26,7 +26,7 @@ use core::marker::PhantomData;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_types::{BlockHash, ShardIdentifier};
 use sgx_types::{sgx_status_t, SgxResult};
-use std::vec::Vec;
+use std::{string::String, vec::Vec};
 
 pub struct OCallApiMock<SignedSidechainBlockType> {
 	fetch_from_peer_blocks: Option<Vec<SignedSidechainBlockType>>,
@@ -114,5 +114,9 @@ where
 				.collect()),
 			None => Err(sgx_status_t::SGX_ERROR_UNEXPECTED),
 		}
+	}
+
+	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
+		Ok(Vec::default())
 	}
 }

@@ -22,6 +22,7 @@
 /// multiple traits.
 use crate::{config::Config, error::Error, TrackInitialization};
 use async_trait::async_trait;
+use codec::{Decode, Encode};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_enclave_api::enclave_base::EnclaveBase;
 use itp_node_api::{api_client::PalletTeerexApi, node_api_factory::CreateNodeApi};
@@ -39,13 +40,27 @@ use std::{
 
 pub type WorkerResult<T> = Result<T, Error>;
 pub type Url = String;
+
+#[derive(Clone, Hash, Eq, PartialEq, Encode, Decode, Debug)]
+pub struct PeerUrls {
+	pub trusted: Url,
+	pub untrusted: Url,
+	pub me: bool,
+}
+
+impl PeerUrls {
+	pub fn new(trusted: Url, untrusted: Url, me: bool) -> Self {
+		PeerUrls { trusted, untrusted, me }
+	}
+}
+
 pub struct Worker<Config, NodeApiFactory, Enclave, InitializationHandler> {
 	_config: Config,
 	// unused yet, but will be used when more methods are migrated to the worker
 	_enclave_api: Arc<Enclave>,
 	node_api_factory: Arc<NodeApiFactory>,
 	initialization_handler: Arc<InitializationHandler>,
-	peers: RwLock<HashSet<Url>>,
+	peer_urls: RwLock<HashSet<PeerUrls>>,
 }
 
 impl<Config, NodeApiFactory, Enclave, InitializationHandler>
@@ -56,14 +71,14 @@ impl<Config, NodeApiFactory, Enclave, InitializationHandler>
 		enclave_api: Arc<Enclave>,
 		node_api_factory: Arc<NodeApiFactory>,
 		initialization_handler: Arc<InitializationHandler>,
-		peers: HashSet<Url>,
+		peer_urls: HashSet<PeerUrls>,
 	) -> Self {
 		Self {
 			_config: config,
 			_enclave_api: enclave_api,
 			node_api_factory,
 			initialization_handler,
-			peers: RwLock::new(peers),
+			peer_urls: RwLock::new(peer_urls),
 		}
 	}
 }
@@ -90,7 +105,7 @@ where
 
 		let blocks_json = vec![to_json_value(blocks)?];
 		let peers = self
-			.peers
+			.peer_urls
 			.read()
 			.map_err(|e| {
 				Error::Custom(format!("Encountered poisoned lock for peers: {:?}", e).into())
@@ -103,12 +118,14 @@ where
 			let blocks = blocks_json.clone();
 
 			tokio::spawn(async move {
-				debug!("Broadcasting block to peer with address: {:?}", url);
+				let untrusted_peer_url = url.untrusted;
+
+				debug!("Broadcasting block to peer with address: {:?}", untrusted_peer_url);
 				// FIXME: Websocket connection to a worker should stay, once established.
-				let client = match WsClientBuilder::default().build(&url).await {
+				let client = match WsClientBuilder::default().build(&untrusted_peer_url).await {
 					Ok(c) => c,
 					Err(e) => {
-						error!("Failed to create websocket client for block broadcasting (target url: {}): {:?}", url, e);
+						error!("Failed to create websocket client for block broadcasting (target url: {}): {:?}", untrusted_peer_url, e);
 						return
 					},
 				};
@@ -118,7 +135,7 @@ where
 				{
 					error!(
 						"Broadcast block request ({}) to {} failed: {:?}",
-						RPC_METHOD_NAME_IMPORT_BLOCKS, url, e
+						RPC_METHOD_NAME_IMPORT_BLOCKS, untrusted_peer_url, e
 					);
 				}
 			});
@@ -129,13 +146,32 @@ where
 
 /// Looks for new peers and updates them.
 pub trait UpdatePeers {
-	fn search_peers(&self) -> WorkerResult<HashSet<Url>>;
+	fn search_peers(&self) -> WorkerResult<HashSet<PeerUrls>>;
 
-	fn set_peers(&self, peers: HashSet<Url>) -> WorkerResult<()>;
+	fn set_peers_urls(&self, peers: HashSet<PeerUrls>) -> WorkerResult<()>;
 
 	fn update_peers(&self) -> WorkerResult<()> {
 		let peers = self.search_peers()?;
-		self.set_peers(peers)
+		self.set_peers_urls(peers)
+	}
+}
+
+pub trait GetPeers {
+	fn read_peers_urls(&self) -> WorkerResult<HashSet<PeerUrls>>;
+}
+
+impl<NodeApiFactory, Enclave, InitializationHandler> GetPeers
+	for Worker<Config, NodeApiFactory, Enclave, InitializationHandler>
+where
+	NodeApiFactory: CreateNodeApi + Send + Sync,
+	Enclave: EnclaveBase + itp_enclave_api::remote_attestation::TlsRemoteAttestation,
+{
+	fn read_peers_urls(&self) -> WorkerResult<HashSet<PeerUrls>> {
+		if let Ok(peer_urls) = self.peer_urls.read() {
+			Ok(peer_urls.clone())
+		} else {
+			Err(Error::Custom("Encountered poisoned lock for peers".into()))
+		}
 	}
 }
 
@@ -145,20 +181,22 @@ where
 	NodeApiFactory: CreateNodeApi + Send + Sync,
 	Enclave: EnclaveBase + itp_enclave_api::remote_attestation::TlsRemoteAttestation,
 {
-	fn search_peers(&self) -> WorkerResult<HashSet<String>> {
+	fn search_peers(&self) -> WorkerResult<HashSet<PeerUrls>> {
+		let worker_url_external = self._config.trusted_worker_url_external();
 		let node_api = self
 			.node_api_factory
 			.create_api()
 			.map_err(|e| Error::Custom(format!("Failed to create NodeApi: {:?}", e).into()))?;
 		let enclaves = node_api.all_enclaves(None)?;
-		let mut peer_urls = HashSet::<String>::new();
+		let mut peer_urls = HashSet::<PeerUrls>::new();
 		for enclave in enclaves {
 			// FIXME: This is temporary only, as block broadcasting should be moved to trusted ws server.
 			let enclave_url = enclave.url.clone();
 			let worker_api_direct = DirectWorkerApi::new(enclave_url.clone());
 			match worker_api_direct.get_untrusted_worker_url() {
 				Ok(untrusted_worker_url) => {
-					peer_urls.insert(untrusted_worker_url);
+					let is_me = enclave_url == worker_url_external;
+					peer_urls.insert(PeerUrls::new(enclave_url, untrusted_worker_url, is_me));
 				},
 				Err(e) => {
 					warn!("Failed to get untrusted worker url (enclave: {}): {:?}", enclave_url, e);
@@ -168,11 +206,14 @@ where
 		Ok(peer_urls)
 	}
 
-	fn set_peers(&self, peers: HashSet<Url>) -> WorkerResult<()> {
-		let mut peers_lock = self.peers.write().map_err(|e| {
-			Error::Custom(format!("Encountered poisoned lock for peers: {:?}", e).into())
+	fn set_peers_urls(&self, peers: HashSet<PeerUrls>) -> WorkerResult<()> {
+		let peers_vec: Vec<PeerUrls> = peers.clone().into_iter().collect();
+		info!("Setting peers urls: {:?}", peers_vec);
+
+		let mut peer_urls = self.peer_urls.write().map_err(|e| {
+			Error::Custom(format!("Encountered poisoned lock for peers urls: {:?}", e).into())
 		})?;
-		*peers_lock = peers;
+		*peer_urls = peers;
 		Ok(())
 	}
 }
@@ -224,8 +265,18 @@ mod tests {
 		run_server(W1_URL).await.unwrap();
 		run_server(W2_URL).await.unwrap();
 		let untrusted_worker_port = "4000".to_string();
-		let peers = vec![format!("ws://{}", W1_URL), format!("ws://{}", W2_URL)];
-		let peers: HashSet<String> = peers.into_iter().collect();
+		let mut peer_urls: HashSet<PeerUrls> = HashSet::new();
+
+		peer_urls.insert(PeerUrls {
+			untrusted: format!("ws://{}", W1_URL),
+			trusted: format!("ws://{}", W1_URL),
+			me: false,
+		});
+		peer_urls.insert(PeerUrls {
+			untrusted: format!("ws://{}", W2_URL),
+			trusted: format!("ws://{}", W2_URL),
+			me: false,
+		});
 
 		let worker = Worker::new(
 			local_worker_config(W1_URL.into(), untrusted_worker_port.clone(), "30".to_string()),
@@ -235,7 +286,7 @@ mod tests {
 				AccountKeyring::Alice.pair(),
 			)),
 			Arc::new(TrackInitializationMock {}),
-			peers,
+			peer_urls,
 		);
 
 		let resp = worker

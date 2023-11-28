@@ -41,6 +41,8 @@ async function sendRequest(
                 const result = parsed.result;
                 const res: WorkerRpcReturnValue = api.createType('WorkerRpcReturnValue', result) as any;
 
+                console.log('Got response: ' + JSON.stringify(res.toHuman()));
+
                 if (res.status.isError) {
                     console.log('Rpc response error: ' + decodeRpcBytesAsString(res.value));
                 }

@@ -15,7 +15,11 @@
 
 */
 
-use crate::{block_importer::BlockImporter, test::fixtures::validateer, ShardIdentifierFor};
+use crate::{
+	block_importer::BlockImporter,
+	test::{fixtures::validateer, mocks::peer_updater_mock::PeerUpdaterMock},
+	ShardIdentifierFor,
+};
 use codec::Encode;
 use core::assert_matches::assert_matches;
 use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
@@ -56,6 +60,7 @@ type TestBlockImporter = BlockImporter<
 	TestStateKeyRepo,
 	TestTopPoolAuthor,
 	TestParentchainBlockImportTrigger,
+	PeerUpdaterMock,
 >;
 
 fn state_key() -> Aes {
@@ -82,12 +87,15 @@ fn test_fixtures(
 	));
 	let state_key_repository = Arc::new(TestStateKeyRepo::new(state_key()));
 
+	let peer_updater_mock = Arc::new(PeerUpdaterMock {});
+
 	let block_importer = TestBlockImporter::new(
 		state_handler.clone(),
 		state_key_repository,
 		top_pool_author.clone(),
 		parentchain_block_import_trigger,
 		ocall_api,
+		peer_updater_mock,
 	);
 
 	(block_importer, state_handler, top_pool_author)

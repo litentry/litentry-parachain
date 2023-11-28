@@ -125,7 +125,7 @@ impl<AccountId> EnclaveGen<AccountId> {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq, Encode, Decode)]
+#[derive(Debug, Clone, PartialEq, Encode, Decode, Eq)]
 pub enum DirectRequestStatus {
 	/// Direct request was successfully executed
 	#[codec(index = 0)]
@@ -139,7 +139,7 @@ pub enum DirectRequestStatus {
 	Error,
 }
 
-#[derive(Debug, Clone, PartialEq, Encode, Decode)]
+#[derive(Debug, Clone, PartialEq, Encode, Decode, Eq)]
 pub enum TrustedOperationStatus {
 	/// TrustedOperation is submitted to the top pool.
 	#[codec(index = 0)]
@@ -176,6 +176,8 @@ pub enum TrustedOperationStatus {
 	/// TrustedOperation is no longer valid in the current state.
 	#[codec(index = 10)]
 	Invalid,
+	/// TrustedOperation has been executed.
+	TopExecuted(Vec<u8>, bool),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq)]
