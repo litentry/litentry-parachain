@@ -109,8 +109,8 @@ jobs:
       - name: Set condition
         id: env
         run: |
-          rebuild_parachain=false
-          rebuild_tee=false
+          rebuild_parachain=true
+          rebuild_tee=true
           rebuild_client_api=false
           push_docker=false
           run_parachain_test=false
