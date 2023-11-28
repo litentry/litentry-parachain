@@ -31,7 +31,6 @@ export function encryptWithAes(key: HexString, nonce: Uint8Array, cleartext: Buf
 }
 
 export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex' | 'utf-8'): HexString {
-    // if (aesOutput.ciphertext && aesOutput.nonce) {
     const secretKey = crypto.createSecretKey(hexToU8a(key));
     const tagSize = 16;
     const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
@@ -53,9 +52,6 @@ export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex'
     const part2 = decipher.final(type);
 
     return `0x${part1 + part2}`;
-    // } else {
-    // return u8aToHex(aesOutput as Uint8Array);
-    // }
 }
 
 export interface Signer {

@@ -354,10 +354,10 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Alice check identity
-        assertIdentityDeactivated(context, context.substrateWallet.alice, aliceDeactivatedEvents);
+        assertIdentityDeactivated(context.substrateWallet.alice, aliceDeactivatedEvents);
 
         // Bob check identity
-        assertIdentityDeactivated(context, context.substrateWallet.bob, bobDeactivatedEvents);
+        assertIdentityDeactivated(context.substrateWallet.bob, bobDeactivatedEvents);
     });
 
     step('check IDGraph after deactivateIdentity', async function () {

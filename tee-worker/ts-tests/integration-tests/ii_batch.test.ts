@@ -76,7 +76,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             ['IdentityDeactivated']
         );
 
-        await assertIdentityDeactivated(context, context.substrateWallet.alice, deactivatedEvents);
+        await assertIdentityDeactivated(context.substrateWallet.alice, deactivatedEvents);
     });
 
     step('batch test: deactivate error identities', async function () {
