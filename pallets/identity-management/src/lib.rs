@@ -131,12 +131,22 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
+		IDGraphFingerprintUpdated {
+			account: T::AccountId,
+			new_fingerprint: H256,
+		},
 	}
 
 	// delegatees who can send extrinsics(currently only `link_identity`) on users' behalf
 	#[pallet::storage]
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
+
+	// idgraph fingerprints so that the client can detect out-of-sync local IDGraph
+	#[pallet::storage]
+	#[pallet::getter(fn idgraph_fingerprint)]
+	pub type IDGraphFingerprint<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, H256, OptionQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -300,6 +310,20 @@ pub mod pallet {
 				IMPError::UnclassifiedError(detail) =>
 					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
 			}
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(35)]
+		#[pallet::weight(<T as Config>::WeightInfo::idgraph_updated())]
+		pub fn idgraph_updated(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			new_fingerprint: H256,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			// we don't care if `account` already exists
+			IDGraphFingerprint::<T>::insert(account.clone(), new_fingerprint);
+			Self::deposit_event(Event::IDGraphFingerprintUpdated { account, new_fingerprint });
 			Ok(Pays::No.into())
 		}
 	}
