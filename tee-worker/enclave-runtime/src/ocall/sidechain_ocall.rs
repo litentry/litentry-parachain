@@ -23,7 +23,7 @@ use itp_ocall_api::EnclaveSidechainOCallApi;
 use itp_types::{BlockHash, ShardIdentifier};
 use log::*;
 use sgx_types::{sgx_status_t, SgxResult};
-use std::vec::Vec;
+use std::{string::String, vec::Vec};
 
 impl EnclaveSidechainOCallApi for OcallApi {
 	fn propose_sidechain_blocks<SignedSidechainBlock: Encode>(
@@ -108,5 +108,32 @@ impl EnclaveSidechainOCallApi for OcallApi {
 			})?;
 
 		Ok(decoded_signed_blocks)
+	}
+
+	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
+		let mut rt: sgx_status_t = sgx_status_t::SGX_ERROR_UNEXPECTED;
+		const BLOCK_BUFFER_SIZE: usize = 262144; // Buffer size for sidechain blocks in bytes (256KB).
+
+		// We have to pre-allocate the vector and hope it's large enough (see GitHub issue #621).
+		let mut peers_encoded: Vec<u8> = vec![0; BLOCK_BUFFER_SIZE];
+
+		let res = unsafe {
+			ffi::ocall_get_trusted_peers_urls(
+				&mut rt as *mut sgx_status_t,
+				peers_encoded.as_mut_ptr(),
+				peers_encoded.len() as u32,
+			)
+		};
+
+		ensure!(rt == sgx_status_t::SGX_SUCCESS, rt);
+		ensure!(res == sgx_status_t::SGX_SUCCESS, res);
+
+		let decoded_peers: Vec<String> =
+			Decode::decode(&mut peers_encoded.as_slice()).map_err(|e| {
+				error!("Failed to decode peers list: {}", e);
+				sgx_status_t::SGX_ERROR_UNEXPECTED
+			})?;
+
+		Ok(decoded_peers)
 	}
 }

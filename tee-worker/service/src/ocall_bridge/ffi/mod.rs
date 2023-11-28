@@ -23,6 +23,7 @@
 
 pub mod fetch_sidechain_blocks_from_peer;
 pub mod get_ias_socket;
+pub mod get_peers;
 pub mod get_quote;
 pub mod get_qve_report_on_quote;
 pub mod get_update_info;
