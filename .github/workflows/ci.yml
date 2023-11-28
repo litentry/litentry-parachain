@@ -636,6 +636,9 @@ jobs:
           docker load < litentry-tee.tar.gz
           docker images
 
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
       - name: Generate parachain artefacts
         run: |
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
@@ -685,7 +688,6 @@ jobs:
           path: docker-logs
           if-no-files-found: ignore
           retention-days: 3
-      
 
   download-client-api:
     runs-on: ubuntu-latest
@@ -705,11 +707,7 @@ jobs:
           cd tee-worker/client-api
           echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .pnpmrc
           pnpm config set @litentry:registry https://npm.pkg.github.com
-
-          echo "Install client api dev packages"
           pnpm i -w @litentry/parachain-api @litentry/sidechain-api
-          echo "Check downloaded"
-          ls -l node_modules/@litentry
 
       - name: Compress packages
         run: |
