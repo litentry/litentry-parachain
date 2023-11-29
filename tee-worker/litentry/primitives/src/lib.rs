@@ -47,8 +47,8 @@ pub use parentchain_primitives::{
 	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
 	OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
 	Signature as ParentchainSignature, SoraQuizType, UserShieldingKeyNonceType,
-	UserShieldingKeyType, VCMPError, Web3Network, ASSERTION_FROM_DATE, MAX_TAG_LEN, MINUTES,
-	NONCE_LEN, USER_SHIELDING_KEY_LEN,
+	UserShieldingKeyType, VCMPError, VIP3MembershipCardLevel, Web3Network, ASSERTION_FROM_DATE,
+	MAX_TAG_LEN, MINUTES, NONCE_LEN, USER_SHIELDING_KEY_LEN,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};

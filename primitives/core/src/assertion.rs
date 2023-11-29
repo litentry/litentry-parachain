@@ -19,7 +19,7 @@
 
 use crate::{
 	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
-	Web3Network,
+	VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -195,6 +195,9 @@ pub enum Assertion {
 
 	BnbDigitDomainClub(BnbDigitDomainType),
 	// ----- end SPACEID -----
+
+	#[codec(index = 18)]
+	VIP3MembershipCard(VIP3MembershipCardLevel),
 }
 
 impl Assertion {
@@ -225,6 +228,8 @@ impl Assertion {
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
+			// VIP3 Member Card
+			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

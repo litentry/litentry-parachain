@@ -67,6 +67,7 @@ pub unsafe extern "C" fn run_stf_task_handler(dpc: *const u8, dpc_size: usize) -
 			dpc.set_contest_participant_discord_role_id(
 				data_provider_config.contest_participant_discord_role_id,
 			);
+			dpc.set_vip3_url(data_provider_config.vip3_url);
 		},
 		Err(e) => {
 			error!("Error while setting data provider config: {:?}", e);

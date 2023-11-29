@@ -53,6 +53,7 @@ pub mod achainable;
 pub mod generic_discord_role;
 pub mod nodereal;
 pub mod oneblock;
+pub mod vip3;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;

@@ -213,7 +213,8 @@ fn handle_stf_call_request(req: RequestType, _time: f64) {
 			Assertion::Oneblock(..) => "Oneblock",
 			Assertion::BnbDomainHolding => "BnbDomainHolding",
 			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
-			Assertion::GenericDiscordRole(..) => "GenericDiscordRole",
+			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
+			Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
 		},
 	};
 }
