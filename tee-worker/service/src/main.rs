@@ -87,6 +87,7 @@ use substrate_api_client::{
 	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
 
+use itp_utils::if_production_or;
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
@@ -222,13 +223,18 @@ fn main() {
 
 		// litentry: start the mock-server if enabled
 		if config.enable_mock_server {
-			let mock_server_port = config
-				.try_parse_mock_server_port()
-				.expect("mock server port to be a valid port number");
-			thread::spawn(move || {
-				info!("*** Starting mock server");
-				let _ = lc_mock_server::run(mock_server_port);
-			});
+			if_production_or!(
+				warn!("Mock server not started. Node is running in production mode."),
+				{
+					let mock_server_port = config
+						.try_parse_mock_server_port()
+						.expect("mock server port to be a valid port number");
+					thread::spawn(move || {
+						info!("*** Starting mock server");
+						let _ = lc_mock_server::run(mock_server_port);
+					});
+				}
+			)
 		}
 
 		if clean_reset {
