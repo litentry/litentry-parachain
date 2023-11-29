@@ -47,6 +47,7 @@ use itp_node_api::{
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
+use itp_utils::if_production_or;
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
@@ -181,13 +182,18 @@ pub(crate) fn main() {
 
 		// litentry: start the mock-server if enabled
 		if config.enable_mock_server {
-			let mock_server_port = config
-				.try_parse_mock_server_port()
-				.expect("mock server port to be a valid port number");
-			thread::spawn(move || {
-				info!("*** Starting mock server");
-				let _ = lc_mock_server::run(mock_server_port);
-			});
+			if_production_or!(
+				warn!("Mock server not started. Node is running in production mode."),
+				{
+					let mock_server_port = config
+						.try_parse_mock_server_port()
+						.expect("mock server port to be a valid port number");
+					thread::spawn(move || {
+						info!("*** Starting mock server");
+						let _ = lc_mock_server::run(mock_server_port);
+					});
+				}
+			)
 		}
 
 		if clean_reset {
