@@ -24,6 +24,12 @@ use rust_base58::base58::FromBase58;
 #[cfg(feature = "sgx")]
 use base58::FromBase58;
 
+#[cfg(feature = "std")]
+use std::sync::RwLock;
+
+#[cfg(feature = "sgx")]
+use std::sync::SgxRwLock as RwLock;
+
 use codec::{Decode, Encode};
 use futures::{channel::oneshot, FutureExt};
 use itp_rpc::RpcReturnValue;
@@ -32,12 +38,48 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
+use lazy_static::lazy_static;
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
 use litentry_primitives::{AesOutput, AesRequest};
 use log::*;
-use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
+use std::{
+	borrow::ToOwned,
+	collections::HashMap,
+	format,
+	string::{String, ToString},
+	sync::Arc,
+	time::{Duration, Instant},
+	vec,
+	vec::Vec,
+};
 
 type Hash = sp_core::H256;
+
+struct RateLimiter {
+	requests: RwLock<HashMap<Vec<u8>, Instant>>,
+}
+
+impl RateLimiter {
+	fn should_allow(&self, request_key: Vec<u8>) -> bool {
+		let requests = self.requests.read().unwrap();
+		if let Some(&last_instant) = requests.get(&request_key) {
+			if last_instant.elapsed() < Duration::from_secs(300) {
+				return false // Reject if within 5 minutes
+			}
+		}
+		drop(requests); // Drop read lock
+
+		let mut requests = self.requests.write().unwrap();
+		requests.insert(request_key, Instant::now()); // Update with current Instant
+		true
+	}
+}
+
+// Global instance using lazy_static
+lazy_static! {
+	static ref GLOBAL_RATE_LIMITER: RateLimiter =
+		RateLimiter { requests: RwLock::new(HashMap::new()) };
+}
 
 pub fn add_top_pool_direct_rpc_methods<R>(
 	top_pool_author: Arc<R>,
@@ -122,6 +164,9 @@ where
 			let shard: ShardIdentifier = request.shard;
 			let key = request.key;
 			let encrypted_trusted_call: AesOutput = request.payload;
+			if !GLOBAL_RATE_LIMITER.should_allow(encrypted_trusted_call.encode()) {
+				return Ok(json!(compute_hex_encoded_return_error("Request exceeded limit")))
+			}
 			let request_sender = VcRequestSender::new();
 			let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
 			let vc_request = VCRequest { encrypted_trusted_call, sender, shard, key };

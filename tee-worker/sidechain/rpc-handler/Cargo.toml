@@ -30,6 +30,7 @@ rust-base58 = { package = "rust-base58", version = "0.0.4", optional = true }
 
 # no-std compatible libraries
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
 log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
