@@ -19,6 +19,7 @@
 use crate::sgx_reexport_prelude::*;
 pub use litentry_primitives::{ErrorDetail, IMPError, VCMPError};
 
+use itp_types::parentchain::ParentchainError;
 use lc_scheduled_enclave::error::Error as ScheduledEnclaveError;
 use sgx_types::sgx_status_t;
 use sp_runtime::traits::LookupError;
@@ -53,6 +54,12 @@ pub enum Error {
 	BatchAllHandlingError,
 	#[error("ScheduledEnclave Error: {0:?}")]
 	ImportScheduledEnclave(ScheduledEnclaveError),
+}
+
+impl From<ParentchainError> for Error {
+	fn from(e: ParentchainError) -> Self {
+		Self::Other(format!("{:?}", e).into())
+	}
 }
 
 impl From<sgx_status_t> for Error {

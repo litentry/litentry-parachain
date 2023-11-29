@@ -16,7 +16,8 @@
 */
 
 use crate::{
-	error::Result, pallet_imp::IMPCallIndexes, pallet_sidechain::SidechainCallIndexes,
+	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
+	pallet_proxy::ProxyCallIndexes, pallet_sidechain::SidechainCallIndexes,
 	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
 	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
@@ -74,6 +75,13 @@ pub struct NodeMetadataMock {
 	utility_force_batch: u8,
 
 	imported_sidechain_block: u8,
+	proxy_module: u8,
+	add_proxy: u8,
+	proxy: u8,
+	balances_module: u8,
+	transfer: u8,
+	transfer_keep_alive: u8,
+	transfer_allow_death: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
 }
@@ -121,6 +129,13 @@ impl NodeMetadataMock {
 			utility_force_batch: 4u8,
 
 			imported_sidechain_block: 0u8,
+			proxy_module: 7u8,
+			add_proxy: 1u8,
+			proxy: 0u8,
+			balances_module: 10u8,
+			transfer: 7u8,
+			transfer_keep_alive: 3u8,
+			transfer_allow_death: 0u8,
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,
 		}
@@ -262,5 +277,29 @@ impl RuntimeCall for NodeMetadataMock {
 impl SystemSs58Prefix for NodeMetadataMock {
 	fn system_ss58_prefix(&self) -> Result<u16> {
 		Ok(131)
+	}
+}
+
+impl ProxyCallIndexes for NodeMetadataMock {
+	fn add_proxy_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.proxy_module, self.add_proxy])
+	}
+
+	fn proxy_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.proxy_module, self.proxy])
+	}
+}
+
+impl BalancesCallIndexes for NodeMetadataMock {
+	fn transfer_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.balances_module, self.transfer])
+	}
+
+	fn transfer_keep_alive_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.balances_module, self.transfer_keep_alive])
+	}
+
+	fn transfer_allow_death_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.balances_module, self.transfer_allow_death])
 	}
 }

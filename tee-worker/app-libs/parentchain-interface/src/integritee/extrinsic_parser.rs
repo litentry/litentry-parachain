@@ -15,9 +15,9 @@
 
 */
 
-use crate::executor::hash_of;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
+use itc_parentchain_indirect_calls_executor::hash_of;
 use itp_node_api::api_client::{
 	Address, CallIndex, PairSignature, ParentchainSignedExtra, Signature, UncheckedExtrinsicV4,
 };
@@ -65,11 +65,13 @@ where
 
 		// `()` is a trick to stop decoding after the call index. So the remaining bytes
 		//  of `call` after decoding only contain the parentchain's dispatchable's arguments.
-		let xt = UncheckedExtrinsicV4::<Address,
-		(CallIndex, ()),
-		PairSignature,
-		Self::SignedExtra,>::decode(call_mut)?;
-		let hashed_xt: H256 = hash_of(&xt);
+		let xt = UncheckedExtrinsicV4::<
+            Address,
+            (CallIndex, ()),
+            PairSignature,
+            Self::SignedExtra,
+        >::decode(call_mut)?;
+		let hashed_xt = hash_of(&xt);
 
 		Ok(SemiOpaqueExtrinsic {
 			signature: xt.signature,

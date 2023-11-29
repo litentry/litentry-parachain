@@ -24,9 +24,10 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use codec::Encode;
-use ita_stf::hash::TrustedOperationOrHash;
+use codec::{Decode, Encode};
+use core::fmt::Debug;
 use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_stf_primitives::types::TrustedOperationOrHash;
 use itp_types::{OpaqueCall, H256};
 use std::vec::Vec;
 
@@ -111,16 +112,24 @@ impl ExecutionStatus {
 ///
 ///
 #[derive(Clone, Debug, PartialEq)]
-pub struct ExecutedOperation {
+pub struct ExecutedOperation<TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+{
 	pub status: ExecutionStatus,
-	pub trusted_operation_or_hash: TrustedOperationOrHash<H256>,
+	pub trusted_operation_or_hash: TrustedOperationOrHash<TCS, G>,
 }
 
-impl ExecutedOperation {
+impl<TCS, G> ExecutedOperation<TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+{
 	/// Constructor for a successfully executed trusted operation.
 	pub fn success(
 		operation_hash: H256,
-		trusted_operation_or_hash: TrustedOperationOrHash<H256>,
+		trusted_operation_or_hash: TrustedOperationOrHash<TCS, G>,
 		extrinsic_call_backs: Vec<OpaqueCall>,
 		rpc_response_value: RpcResponseValue,
 		force_connection_wait: bool,
@@ -139,7 +148,7 @@ impl ExecutedOperation {
 	/// Constructor for a failed trusted operation execution.
 	pub fn failed(
 		operation_hash: H256,
-		trusted_operation_or_hash: TrustedOperationOrHash<H256>,
+		trusted_operation_or_hash: TrustedOperationOrHash<TCS, G>,
 		extrinsic_call_backs: Vec<OpaqueCall>,
 		rpc_response_value: RpcResponseValue,
 	) -> Self {
@@ -163,15 +172,21 @@ impl ExecutedOperation {
 ///
 /// Contains multiple executed operations
 #[derive(Clone, Debug)]
-pub struct BatchExecutionResult<Externalities: SgxExternalitiesTrait + Encode> {
+pub struct BatchExecutionResult<Externalities: SgxExternalitiesTrait + Encode, TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+{
 	pub state_hash_before_execution: H256,
-	pub executed_operations: Vec<ExecutedOperation>,
+	pub executed_operations: Vec<ExecutedOperation<TCS, G>>,
 	pub state_after_execution: Externalities,
 }
 
-impl<Externalities> BatchExecutionResult<Externalities>
+impl<Externalities, TCS, G> BatchExecutionResult<Externalities, TCS, G>
 where
 	Externalities: SgxExternalitiesTrait + Encode,
+	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
 	pub fn get_extrinsic_callbacks(&self) -> Vec<OpaqueCall> {
 		self.executed_operations
@@ -189,7 +204,7 @@ where
 	}
 
 	/// Returns all operations that were not executed.
-	pub fn get_failed_operations(&self) -> Vec<ExecutedOperation> {
+	pub fn get_failed_operations(&self) -> Vec<ExecutedOperation<TCS, G>> {
 		self.executed_operations.iter().filter(|ec| !ec.is_success()).cloned().collect()
 	}
 
@@ -211,6 +226,7 @@ where
 mod tests {
 	use super::*;
 	use itp_sgx_externalities::SgxExternalities;
+	use itp_test::mock::stf_mock::{GetterMock, TrustedCallSignedMock};
 
 	#[test]
 	fn is_success_works() {
@@ -250,8 +266,8 @@ mod tests {
 	}
 
 	fn batch_execution_result(
-		executed_calls: Vec<ExecutedOperation>,
-	) -> BatchExecutionResult<SgxExternalities> {
+		executed_calls: Vec<ExecutedOperation<TrustedCallSignedMock, GetterMock>>,
+	) -> BatchExecutionResult<SgxExternalities, TrustedCallSignedMock, GetterMock> {
 		BatchExecutionResult {
 			executed_operations: executed_calls,
 			state_hash_before_execution: H256::default(),
@@ -259,7 +275,9 @@ mod tests {
 		}
 	}
 
-	fn create_failed_operation_from_u8(int: u8) -> ExecutedOperation {
+	fn create_failed_operation_from_u8(
+		int: u8,
+	) -> ExecutedOperation<TrustedCallSignedMock, GetterMock> {
 		ExecutedOperation::failed(
 			H256::from([int; 32]),
 			TrustedOperationOrHash::Hash(H256::from([int; 32])),
@@ -268,7 +286,9 @@ mod tests {
 		)
 	}
 
-	fn create_success_operation_from_u8(int: u8) -> (ExecutedOperation, H256) {
+	fn create_success_operation_from_u8(
+		int: u8,
+	) -> (ExecutedOperation<TrustedCallSignedMock, GetterMock>, H256) {
 		let hash = H256::from([int; 32]);
 		let opaque_call: Vec<OpaqueCall> = vec![OpaqueCall(vec![int; 10])];
 		let operation = ExecutedOperation::success(

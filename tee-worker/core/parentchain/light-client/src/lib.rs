@@ -75,8 +75,6 @@ where
 {
 	fn submit_block(&mut self, signed_block: &SignedBlock<Block>) -> Result<(), Error>;
 
-	fn check_xt_inclusion(&mut self, block: &Block) -> Result<(), Error>;
-
 	fn get_state(&self) -> &LightValidationState<Block>;
 
 	fn set_ignore_validation_until(&mut self, until: u32) -> Result<(), Error>;
@@ -88,8 +86,6 @@ pub trait ExtrinsicSender {
 }
 
 pub trait LightClientState<Block: ParentchainBlockTrait> {
-	fn num_xt_to_be_included(&self) -> Result<usize, Error>;
-
 	fn genesis_hash(&self) -> Result<HashFor<Block>, Error>;
 
 	fn latest_finalized_header(&self) -> Result<Block::Header, Error>;

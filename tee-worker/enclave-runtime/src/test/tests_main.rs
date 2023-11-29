@@ -37,8 +37,7 @@ use ita_stf::{
 	helpers::{account_key_hash, set_block_number},
 	stf_sgx_tests,
 	test_genesis::{endowed_account as funded_pair, unendowed_account},
-	AccountInfo, Getter, State, StatePayload, TrustedCall, TrustedCallSigned, TrustedGetter,
-	TrustedOperation,
+	AccountInfo, Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
 };
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_sgx_crypto::{Aes, StateCrypto};
@@ -51,7 +50,10 @@ use itp_stf_interface::{
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	StateCallInterface,
 };
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::{
+	traits::TrustedCallSigning,
+	types::{ShardIdentifier, StatePayload, TrustedOperation},
+};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
@@ -73,7 +75,6 @@ use sgx_types::size_t;
 use sp_core::{crypto::Pair, ed25519 as spEd25519, H256};
 use sp_runtime::traits::Header as HeaderT;
 use std::{string::String, sync::Arc, time::Duration, vec::Vec};
-
 #[no_mangle]
 pub extern "C" fn test_main_entrance() -> size_t {
 	rsgx_unit_tests!(
@@ -275,17 +276,20 @@ fn test_submit_trusted_getter_to_top_pool() {
 	// when
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
-		&signed_getter.clone().into(),
+		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
 		false,
 	)
 	.unwrap();
 
-	let getters = top_pool_author.get_pending_trusted_getters(shard);
+	let getters = top_pool_author.get_pending_getters(shard);
 
 	// then
-	assert_eq!(getters[0], TrustedOperation::get(Getter::trusted(signed_getter)));
+	assert_eq!(
+		getters[0],
+		TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter))
+	);
 }
 
 fn test_differentiate_getter_and_call_works() {
@@ -310,7 +314,7 @@ fn test_differentiate_getter_and_call_works() {
 	// when
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
-		&signed_getter.clone().into(),
+		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
 		false,
@@ -326,11 +330,14 @@ fn test_differentiate_getter_and_call_works() {
 	.unwrap();
 
 	let calls = top_pool_author.get_pending_trusted_calls(shard);
-	let getters = top_pool_author.get_pending_trusted_getters(shard);
+	let getters = top_pool_author.get_pending_getters(shard);
 
 	// then
 	assert_eq!(calls[0], trusted_operation);
-	assert_eq!(getters[0], TrustedOperation::get(Getter::trusted(signed_getter)));
+	assert_eq!(
+		getters[0],
+		TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter))
+	);
 }
 
 fn test_create_block_and_confirmation_works() {
@@ -530,10 +537,9 @@ fn test_signature_must_match_public_sender_in_call() {
 	)
 	.unwrap();
 
-	// when
 	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
-	// then
+	// the top pool doesn't verify signatures, the call will only fail upon execution
 	assert!(!executed_batch.executed_operations[0].is_success());
 }
 
@@ -562,10 +568,9 @@ fn test_invalid_nonce_call_is_not_executed() {
 	)
 	.unwrap();
 
-	// when
 	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
-	// then
+	// due to #1488, even invalid nonces will enter the pool ready state, so we can only verify that the call will fail
 	assert!(!executed_batch.executed_operations[0].is_success());
 }
 
@@ -612,7 +617,8 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 		1000,
 	)
 	.sign(&enclave_call_signer.into(), 0, &mrenclave, &shard);
-	let trusted_operation = TrustedOperation::indirect_call(signed_call);
+	let trusted_operation =
+		TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_call);
 
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
@@ -740,7 +746,7 @@ fn execute_trusted_calls(
 	shard: &ShardIdentifier,
 	stf_executor: &TestStfExecutor,
 	top_pool_author: &TestTopPoolAuthor,
-) -> BatchExecutionResult<State> {
+) -> BatchExecutionResult<State, TrustedCallSigned, Getter> {
 	let top_pool_calls = top_pool_author.get_pending_trusted_calls(*shard);
 	let execution_result = stf_executor
 		.propose_state_update(
@@ -782,7 +788,7 @@ pub fn test_account() -> spEd25519::Pair {
 }
 
 /// transforms `call` into `TrustedOperation::direct(call)`
-pub fn direct_top(call: TrustedCallSigned) -> TrustedOperation {
+pub fn direct_top(call: TrustedCallSigned) -> TrustedOperation<TrustedCallSigned, Getter> {
 	call.into_trusted_operation(true)
 }
 

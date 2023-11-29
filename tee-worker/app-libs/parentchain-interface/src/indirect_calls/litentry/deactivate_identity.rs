@@ -14,71 +14,72 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, ErrorDetail, Result, VCMPError},
-	IndirectDispatch, IndirectExecutor,
-};
+use crate::indirect_calls::litentry::args_executor::ArgsExecutor;
 use codec::{Decode, Encode};
-
-use ita_stf::TrustedCall;
-
+use ita_stf::{TrustedCall, TrustedCallSigned};
+use itc_parentchain_indirect_calls_executor::{
+	error::{Error, IMPError, Result},
+	IndirectDispatch,
+};
+use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-
+use litentry_primitives::{ErrorDetail, Identity};
 use log::debug;
-use parachain_core_primitives::Assertion;
-use sp_runtime::traits::{AccountIdLookup, StaticLookup};
-
-use crate::indirect_calls::litentry::args_executor::ArgsExecutor;
 use sp_core::crypto::AccountId32;
-use sp_runtime::MultiAddress;
+use sp_runtime::{
+	traits::{AccountIdLookup, StaticLookup},
+	MultiAddress,
+};
+use std::vec::Vec;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct RequestVCArgs {
+pub struct DeactivateIdentityArgs {
 	shard: ShardIdentifier,
-	assertion: Assertion,
+	encrypted_identity: Vec<u8>,
 }
 
-impl ArgsExecutor for RequestVCArgs {
+impl ArgsExecutor for DeactivateIdentityArgs {
 	fn error(&self) -> Error {
-		Error::VCMPHandlingError(VCMPError::RequestVCFailed(
-			self.assertion.clone(),
-			ErrorDetail::ImportError,
-		))
+		Error::IMPHandlingError(IMPError::DeactivateIdentityFailed(ErrorDetail::ImportError))
 	}
 
 	fn name() -> &'static str {
-		"RequestVC"
+		"DeactivateIdentity"
 	}
 
 	fn shard(&self) -> ShardIdentifier {
 		self.shard
 	}
 
-	fn prepare_trusted_call<Executor: IndirectExecutor>(
+	fn prepare_trusted_call<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		&self,
 		executor: &Executor,
 		address: MultiAddress<AccountId32, ()>,
 		hash: H256,
 	) -> Result<TrustedCall> {
+		let identity: Identity =
+			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
 		let account = AccountIdLookup::lookup(address).unwrap();
 		debug!(
-			"indirect call Requested VC, who:{:?}, assertion: {:?}",
+			"execute indirect call: DeactivateIdentity, who: {:?}, identity: {:?}",
 			account_id_to_string(&account),
-			self.assertion
+			identity
 		);
+
 		let enclave_account_id = executor.get_enclave_account().unwrap();
-		Ok(TrustedCall::request_vc(
+		Ok(TrustedCall::deactivate_identity(
 			enclave_account_id.into(),
 			account.into(),
-			self.assertion.clone(),
-			None,
+			identity,
 			hash,
 		))
 	}
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RequestVCArgs {
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for DeactivateIdentityArgs
+{
 	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		self.execute(executor, args.0, args.1)

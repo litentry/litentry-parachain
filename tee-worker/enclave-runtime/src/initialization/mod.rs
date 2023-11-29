@@ -17,7 +17,6 @@
 
 pub mod global_components;
 pub mod parentchain;
-
 use crate::{
 	error::{Error, Result as EnclaveResult},
 	initialization::global_components::{
@@ -42,8 +41,8 @@ use crate::{
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
 	utils::{
-		get_extrinsic_factory_from_solo_or_parachain,
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_extrinsic_factory_from_litentry_solo_or_parachain,
+		get_node_metadata_repository_from_litentry_solo_or_parachain,
 		get_triggered_dispatcher_from_solo_or_parachain,
 		get_validator_accessor_from_solo_or_parachain,
 	},
@@ -52,6 +51,7 @@ use crate::{
 use base58::ToBase58;
 use codec::Encode;
 use core::str::FromStr;
+use ita_stf::{Getter, TrustedCallSigned};
 use itc_direct_rpc_server::{
 	create_determine_watch, rpc_connection_registry::ConnectionRegistry,
 	rpc_ws_handler::RpcWsHandler,
@@ -89,7 +89,6 @@ use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
-
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
@@ -262,8 +261,8 @@ pub(crate) fn init_enclave_sidechain_components(
 	));
 
 	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
-	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let metadata_repository = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
 	let validator_accessor = get_validator_accessor_from_solo_or_parachain()?;
 
 	let sidechain_block_import_confirmation_handler =
@@ -357,8 +356,8 @@ pub fn create_top_pool_author(
 
 	Arc::new(EnclaveTopPoolAuthor::new(
 		top_pool,
-		AuthorTopFilter {},
-		BroadcastedTopFilter {},
+		AuthorTopFilter::<TrustedCallSigned, Getter>::new(),
+		BroadcastedTopFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repository,
 		ocall_api,
