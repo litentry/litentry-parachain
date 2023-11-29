@@ -274,6 +274,9 @@ pub enum Error {
 
 	#[error("Achainable error: {0}")]
 	AchainableError(String),
+
+	#[error("Nodereal error: {0}")]
+	NoderealError(String),
 }
 
 impl IntoErrorDetail for Error {
