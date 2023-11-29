@@ -25,6 +25,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
+use itp_rpc::{Id, RpcRequest};
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -34,6 +35,7 @@ use std::{
 	vec::Vec,
 };
 
+// https://docs.nodereal.io/reference/getting-started-with-your-api
 pub enum NoderealChain {
 	// BNB Smart Chain
 	Bsc,
@@ -65,6 +67,22 @@ impl NoderealChain {
 	}
 }
 
+pub enum NoderealNetwork {
+	Mainnet,
+	Testnet,
+	Goerli,
+}
+
+impl NoderealNetwork {
+	pub fn to_string(&self) -> &'static str {
+		match self {
+			NoderealNetwork::Mainnet => "mainnet",
+			NoderealNetwork::Testnet => "testnet",
+			NoderealNetwork::Goerli => "goerli",
+		}
+	}
+}
+
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqPath {
@@ -77,38 +95,15 @@ impl ReqPath {
 	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ReqBody<P>
-where
-	P: Serialize,
-{
-	pub id: i64,
-	pub jsonrpc: String,
-	pub method: String,
-	pub params: P,
-}
-
-impl<P> ReqBody<P>
-where
-	P: Serialize,
-{
-	fn new(jsonrpc: &str, method: &str, params: P) -> Self {
-		ReqBody { id: 1, jsonrpc: jsonrpc.to_string(), method: method.to_string(), params }
-	}
-}
-
-impl<P> RestPath<ReqPath> for ReqBody<P>
-where
-	P: Serialize,
-{
+impl RestPath<ReqPath> for RpcRequest {
 	fn get_path(req: ReqPath) -> core::result::Result<String, HttpError> {
 		Ok(req.path)
 	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RespBody {
-	pub id: i64,
+pub struct RpcResponse {
+	pub id: Id,
 	pub jsonrpc: String,
 	pub result: serde_json::Value,
 }
@@ -121,7 +116,7 @@ pub struct NoderealJsonrpcClient {
 }
 
 impl NoderealJsonrpcClient {
-	pub fn new(chain: NoderealChain) -> Self {
+	pub fn new(chain: NoderealChain, network: NoderealNetwork) -> Self {
 		let api_key = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_key.clone();
 		let api_retry_delay =
 			GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_delay.clone();
@@ -132,8 +127,9 @@ impl NoderealJsonrpcClient {
 			.unwrap()
 			.nodereal_api_chain_network_url
 			.clone();
-		let base_url =
-			api_url.replace("{chain}", chain.to_string()).replace("{network}", "mainnet");
+		let base_url = api_url
+			.replace("{chain}", chain.to_string())
+			.replace("{network}", network.to_string());
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
@@ -144,9 +140,9 @@ impl NoderealJsonrpcClient {
 
 	// https://docs.nodereal.io/docs/cups-rate-limit
 	// add retry functionality to handle situations where requests may surpass predefined constraints.
-	fn retry<A>(&mut self, action: A) -> Result<RespBody, Error>
+	fn retry<A>(&mut self, action: A) -> Result<RpcResponse, Error>
 	where
-		A: Fn(&mut NoderealJsonrpcClient) -> Result<RespBody, HttpError>,
+		A: Fn(&mut NoderealJsonrpcClient) -> Result<RpcResponse, HttpError>,
 	{
 		let mut retries = 0;
 		// retry delay 1 second
@@ -191,12 +187,9 @@ impl NoderealJsonrpcClient {
 		}
 	}
 
-	fn post<P>(&mut self, body: &ReqBody<P>) -> Result<RespBody, Error>
-	where
-		P: Serialize,
-	{
+	fn post(&mut self, body: &RpcRequest) -> Result<RpcResponse, Error> {
 		self.retry(|c| {
-			c.client.post_capture::<ReqPath, ReqBody<P>, RespBody>(
+			c.client.post_capture::<ReqPath, RpcRequest, RpcResponse>(
 				ReqPath::new(c.api_key.as_str()),
 				body,
 			)
@@ -208,7 +201,7 @@ impl NoderealJsonrpcClient {
 pub struct GetNFTHoldingsParam {
 	// The address of the account in hex format
 	pub account_address: String,
-	// (optional) Please specify the type of token you query for, e.g. "ERC721", "ERC1155", etc.
+	// Please specify the type of token you query for, e.g. "ERC721", "ERC1155", etc.
 	pub token_type: String,
 	// page number in hex format
 	pub page: usize,
@@ -257,6 +250,7 @@ pub trait NftApiList {
 }
 
 impl NftApiList for NoderealJsonrpcClient {
+	// https://docs.nodereal.io/reference/nr_getnftholdings
 	fn get_nft_holdings(
 		&mut self,
 		param: &GetNFTHoldingsParam,
@@ -268,15 +262,21 @@ impl NftApiList for NoderealJsonrpcClient {
 			format!("0x{:X}", param.page_size),
 		];
 		debug!("get_nft_holdings: {:?}", param);
-		let req_body = ReqBody::new("2.0", "nr_getNFTHoldings", params);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getNFTHoldings".to_string(),
+			params,
+			id: Id::Number(1),
+		};
 		self.post(&req_body).map_err(|e| Error::RequestError(format!("{:?}", e))).map(
-			|resp: RespBody| {
+			|resp: RpcResponse| {
 				debug!("get_nft_holdings, response: {:?}", resp);
 				serde_json::from_value(resp.result).unwrap()
 			},
 		)
 	}
 
+	// https://docs.nodereal.io/reference/nr_gettokenbalance721
 	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<usize, Error> {
 		let params: Vec<String> = vec![
 			param.token_address.clone(),
@@ -284,7 +284,12 @@ impl NftApiList for NoderealJsonrpcClient {
 			param.block_number.clone(),
 		];
 		debug!("get_token_balance_721: {:?}", param);
-		let req_body = ReqBody::new("2.0", "nr_getTokenBalance721", params);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenBalance721".to_string(),
+			params,
+			id: Id::Number(1),
+		};
 		self.post(&req_body)
 			.map_err(|e| Error::RequestError(format!("{:?}", e)))
 			.map(|resp| {
@@ -317,7 +322,7 @@ mod tests {
 	#[test]
 	fn does_get_nft_holdings_works() {
 		init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, NoderealNetwork::Mainnet);
 		let param = GetNFTHoldingsParam {
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
 			token_type: "ERC721".into(),
@@ -336,7 +341,7 @@ mod tests {
 	#[test]
 	fn does_get_token_balance_721_works() {
 		init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, NoderealNetwork::Mainnet);
 		let param = GetTokenBalance721Param {
 			token_address: "0x07D971C03553011a48E951a53F48632D37652Ba1".into(),
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),

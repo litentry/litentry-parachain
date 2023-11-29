@@ -163,7 +163,7 @@ impl DataProviderConfig {
 			sora_quiz_attendee_id: "".to_string(),
 			nodereal_api_key: "".to_string(),
 			nodereal_api_retry_delay: 5000,
-			nodereal_api_retry_times: 3,
+			nodereal_api_retry_times: 2,
 			nodereal_api_url: "".to_string(),
 			nodereal_api_chain_network_url: "".to_string(),
 			contest_legend_discord_role_id: "".to_string(),

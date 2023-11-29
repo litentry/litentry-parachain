@@ -225,9 +225,6 @@ pub enum Assertion {
 	#[codec(index = 14)]
 	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
 
-	#[codec(index = 15)]
-	WeirdoGhostGangHolder,
-
 	// ----- begin SPACEID -----
 	#[codec(index = 16)]
 	BnbDomainHolding,
@@ -238,6 +235,9 @@ pub enum Assertion {
 
 	#[codec(index = 18)]
 	VIP3MembershipCard(VIP3MembershipCardLevel),
+
+	#[codec(index = 19)]
+	WeirdoGhostGangHolder,
 }
 
 impl Assertion {

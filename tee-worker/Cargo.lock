@@ -6137,6 +6137,7 @@ dependencies = [
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req)",
  "itc-rest-client",
+ "itp-rpc",
  "itp-stf-primitives",
  "lazy_static",
  "lc-mock-server",
@@ -6178,6 +6179,7 @@ version = "0.1.0"
 dependencies = [
  "hex 0.4.3",
  "ita-stf",
+ "itp-rpc",
  "lc-data-providers",
  "litentry-primitives",
  "log 0.4.20",

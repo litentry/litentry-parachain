@@ -106,9 +106,6 @@ where
 			Assertion::GenericDiscordRole(role_type) =>
 				lc_assertion_build::generic_discord_role::build(&self.req, role_type),
 
-			Assertion::WeirdoGhostGangHolder =>
-				lc_assertion_build::nodereal::weirdo_ghost_gang_holder::build(&self.req),
-
 			Assertion::BnbDomainHolding =>
 				lc_assertion_build::nodereal::bnb_domain::bnb_domain_holding_amount::build(
 					&self.req,
@@ -122,6 +119,9 @@ where
 
 			Assertion::VIP3MembershipCard(level) =>
 				lc_assertion_build::vip3::card::build(&self.req, level),
+
+			Assertion::WeirdoGhostGangHolder =>
+				lc_assertion_build::nodereal::nft_holder::weirdo_ghost_gang_holder::build(&self.req),
 		}?;
 
 		// post-process the credential

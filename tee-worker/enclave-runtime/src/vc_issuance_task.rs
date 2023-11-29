@@ -64,7 +64,9 @@ pub unsafe extern "C" fn run_vc_issuance(dpc: *const u8, dpc_size: usize) -> sgx
 			dpc.set_nodereal_api_retry_delay(data_provider_config.nodereal_api_retry_delay);
 			dpc.set_nodereal_api_retry_times(data_provider_config.nodereal_api_retry_times);
 			dpc.set_nodereal_api_url(data_provider_config.nodereal_api_url);
-			dpc.set_nodereal_api_chain_network_url(data_provider_config.nodereal_api_chain_network_url);
+			dpc.set_nodereal_api_chain_network_url(
+				data_provider_config.nodereal_api_chain_network_url,
+			);
 			dpc.set_contest_legend_discord_role_id(
 				data_provider_config.contest_legend_discord_role_id,
 			);

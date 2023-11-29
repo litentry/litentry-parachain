@@ -22,9 +22,9 @@ extern crate sgx_tstd as std;
 
 use core::result;
 
-use lc_credentials::nodereal::weirdo_ghost_gang_holder::WeirdoGhostGangHolderAssertionUpdate;
+use lc_credentials::nodereal::nft_holder::weirdo_ghost_gang_holder::WeirdoGhostGangHolderAssertionUpdate;
 use lc_data_providers::nodereal_jsonrpc::{
-	GetTokenBalance721Param, NftApiList, NoderealChain, NoderealJsonrpcClient,
+	GetTokenBalance721Param, NftApiList, NoderealChain, NoderealJsonrpcClient, NoderealNetwork,
 };
 
 use crate::*;
@@ -58,16 +58,16 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("WeirdoGhostGang holder");
 
 	let mut has_nft = false;
-	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, NoderealNetwork::Mainnet);
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
-		.filter(|(newtwork_type, _)| newtwork_type.is_evm())
+		.filter(|(newtwork_type, _)| *newtwork_type == Web3Network::Ethereum)
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let mut error: Option<DataProviderError> = None;
+	let mut errors: Vec<DataProviderError> = Vec::new();
 	for address in addresses {
 		match check_has_nft(&mut client, address.as_str()) {
 			Ok(res) => {
@@ -75,17 +75,23 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 				break
 			},
 			Err(err) => {
-				error = Some(err);
+				errors.push(err);
 			},
 		}
 	}
 
 	if !has_nft {
-		if let Some(e) = error {
+		if errors.len() > 0 {
 			return Err(Error::RequestVCFailed(
 				Assertion::WeirdoGhostGangHolder,
 				ErrorDetail::DataProviderError(ErrorString::truncate_from(
-					format!("{e:?}").as_bytes().to_vec(),
+					errors
+						.into_iter()
+						.map(|e| format!("{e:?}"))
+						.collect::<Vec<String>>()
+						.join(", ")
+						.as_bytes()
+						.to_vec(),
 				)),
 			))
 		}

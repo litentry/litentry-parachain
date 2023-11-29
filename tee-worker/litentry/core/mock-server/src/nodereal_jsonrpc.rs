@@ -15,8 +15,9 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
+use itp_rpc::Id;
 use lc_data_providers::nodereal_jsonrpc::{
-	GetNFTHoldingsResult, GetNFTHoldingsResultDetail, RespBody,
+	GetNFTHoldingsResult, GetNFTHoldingsResultDetail, RpcResponse,
 };
 use warp::{http::Response, hyper::body::Bytes, Filter};
 
@@ -38,17 +39,17 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 							token_symbol: "PLT".into(),
 						}],
 					};
-					let body = RespBody {
+					let body = RpcResponse {
 						jsonrpc: "2.0".into(),
-						id: 1,
+						id: Id::Number(1),
 						result: serde_json::to_value(result).unwrap(),
 					};
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
 				"nr_getTokenBalance721" => {
-					let body = RespBody {
+					let body = RpcResponse {
 						jsonrpc: "2.0".into(),
-						id: 1,
+						id: Id::Number(1),
 						result: serde_json::to_value("0x1").unwrap(),
 					};
 					Response::builder().body(serde_json::to_string(&body).unwrap())

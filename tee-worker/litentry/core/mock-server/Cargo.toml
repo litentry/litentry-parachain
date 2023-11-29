@@ -17,3 +17,4 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 ita-stf = { path = "../../../app-libs/stf" }
 lc-data-providers = { path = "../data-providers" }
 litentry-primitives = { path = "../../primitives" }
+itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }

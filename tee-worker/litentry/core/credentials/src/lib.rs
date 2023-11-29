@@ -82,8 +82,8 @@ pub mod oneblock;
 pub mod schema;
 use assertion_logic::{AssertionLogic, Op};
 pub mod generic_discord_role;
-pub mod vip3;
 pub mod nodereal;
+pub mod vip3;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";

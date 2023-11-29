@@ -22,10 +22,11 @@ export default {
                 A20: "Null",
                 Oneblock: "OneBlockCourseType",
                 GenericDiscordRole: "GenericDiscordRoleType",
-                WeirdoGhostGangHolder: "Null",
+                __Unused15: "Null",
                 BnbDomainHolding: "Null",
                 BnbDigitDomainClub: "BnbDigitDomainType",
                 VIP3MembershipCard: "VIP3MembershipCardLevel",
+                WeirdoGhostGangHolder: "Null",
             },
         },
         AssertionSupportedNetwork: {
