@@ -15,14 +15,13 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::{
-	get_layer_two_nonce,
 	trusted_base_cli::commands::litentry::request_vc::*,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
 	trusted_operation::perform_direct_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedOperation};
+use ita_stf::trusted_call_result::RequestVCResult;
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
 use lc_credentials::Credential;
@@ -65,7 +64,6 @@ impl RequestVcDirectCommand {
 		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
-		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
 		let assertion = match &self.command {
 			Command::A1 => Assertion::A1,

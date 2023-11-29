@@ -23,7 +23,7 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
-use ita_stf::{Getter, StfError, TrustedCall, TrustedOperation};
+use ita_stf::{Getter, StfError, TrustedOperation};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};

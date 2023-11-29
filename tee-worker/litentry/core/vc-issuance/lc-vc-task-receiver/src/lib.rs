@@ -27,8 +27,7 @@ pub use futures;
 use ita_sgx_runtime::Hash;
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
-	ConvertAccountId, OpaqueCall, SgxParentchainTypeConverter, TrustedCall, TrustedOperation,
-	VCMPCallIndexes, H256, IMT,
+	ConvertAccountId, OpaqueCall, SgxParentchainTypeConverter, VCMPCallIndexes, H256, IMT,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
@@ -44,7 +43,7 @@ use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::{init_vc_task_sender_storage, TrustedVCRequestSigned};
 use litentry_primitives::{
-	aes_decrypt, AesOutput, Identity, IdentityNetworkTuple, RequestAesKey, ShardIdentifier,
+	aes_decrypt, AesOutput, IdentityNetworkTuple, RequestAesKey, ShardIdentifier,
 };
 use std::{
 	collections::HashMap,
@@ -165,7 +164,7 @@ where
 
 	let vc_request = signed_request.vc_request;
 
-	GLOBAL_RATE_LIMITER.should_allow(vc_request.signer.clone().to_did().unwrap())?;
+	GLOBAL_RATE_LIMITER.should_allow(vc_request.signer.to_did().unwrap())?;
 	let (mut state, _) = context
 		.state_handler
 		.load_cloned(&shard)
@@ -196,7 +195,7 @@ where
 			who: vc_request.who.clone(),
 			assertion: vc_request.assertion.clone(),
 			identities,
-			maybe_key: Some(aes_key.clone()),
+			maybe_key: Some(aes_key),
 			top_hash: H256::zero(),
 			req_ext_hash: H256::zero(),
 		};

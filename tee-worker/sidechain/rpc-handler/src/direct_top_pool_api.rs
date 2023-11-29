@@ -32,20 +32,10 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
-use lazy_static::lazy_static;
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
 use litentry_primitives::{AesOutput, AesRequest};
 use log::*;
-use std::{
-	borrow::ToOwned,
-	collections::HashMap,
-	format,
-	string::{String, ToString},
-	sync::Arc,
-	time::{Duration, Instant},
-	vec,
-	vec::Vec,
-};
+use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
 type Hash = sp_core::H256;
 
