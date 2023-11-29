@@ -1245,6 +1245,8 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
 		data_provider_config.set_contest_participant_discord_role_id(v);
 	}
-
+	if let Ok(v) = env::var("VIP3_URL") {
+		data_provider_config.set_vip3_url(v);
+	}
 	data_provider_config
 }

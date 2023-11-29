@@ -90,6 +90,9 @@ where
 					&self.req,
 					digit_domain_type,
 				),
+
+			Assertion::VIP3MembershipCard(level) =>
+				lc_assertion_build::vip3::card::build(&self.req, level),
 		}?;
 
 		// post-process the credential
