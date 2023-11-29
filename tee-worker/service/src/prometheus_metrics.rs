@@ -29,7 +29,6 @@ use codec::{Decode, Encode};
 #[cfg(feature = "attesteer")]
 use core::time::Duration;
 use frame_support::scale_info::TypeInfo;
-use ita_stf::TrustedCall;
 #[cfg(feature = "dcap")]
 use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
@@ -192,11 +191,11 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 			EnclaveMetric::StfTaskExecutionTime(req, time) => {
 				handle_stf_call_request(*req, time);
 			},
-			EnclaveMetric::SuccessfulTrustedOperationIncrement(calls) => {
-				handle_trusted_operation(calls, inc_successful_trusted_operation_counter);
+			EnclaveMetric::SuccessfulTrustedOperationIncrement(metric_name) => {
+				ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION.with_label_values(&[&metric_name]).inc();
 			},
-			EnclaveMetric::FailedTrustedOperationIncrement(calls) => {
-				handle_trusted_operation(calls, inc_failed_trusted_operation_counter);
+			EnclaveMetric::FailedTrustedOperationIncrement(metric_name) => {
+				ENCLAVE_FAILED_TRUSTED_OPERATION.with_label_values(&[&metric_name]).inc();
 			},
 			#[cfg(feature = "teeracle")]
 			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
@@ -253,54 +252,11 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::BnbDomainHolding => "BnbDomainHolding",
 			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
 			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
+			Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
 		},
 	};
 	inc_stf_calls(category, label);
 	observe_execution_time(category, label, time)
-}
-
-// This function will increment the metric with provided label values.
-fn inc_successful_trusted_operation_counter(operation: &str) {
-	ENCLAVE_SUCCESSFUL_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
-}
-
-fn inc_failed_trusted_operation_counter(operation: &str) {
-	ENCLAVE_FAILED_TRUSTED_OPERATION.with_label_values(&[operation]).inc();
-}
-
-fn handle_trusted_operation<F>(call: TrustedCall, record_metric_fn: F)
-where
-	F: Fn(&str),
-{
-	match call {
-		TrustedCall::link_identity(..) => {
-			record_metric_fn("link_identity");
-		},
-		TrustedCall::request_vc(..) => {
-			record_metric_fn("request_vc");
-		},
-		TrustedCall::link_identity_callback(..) => {
-			record_metric_fn("link_identity_callback");
-		},
-		TrustedCall::request_vc_callback(..) => {
-			record_metric_fn("request_vc_callback");
-		},
-		TrustedCall::handle_vcmp_error(..) => {
-			record_metric_fn("handle_vcmp_error");
-		},
-		TrustedCall::handle_imp_error(..) => {
-			record_metric_fn("handle_icmp_error");
-		},
-		TrustedCall::deactivate_identity(..) => {
-			record_metric_fn("deactivate_identity");
-		},
-		TrustedCall::activate_identity(..) => {
-			record_metric_fn("activate_identity");
-		},
-		_ => {
-			record_metric_fn("unsupported_trusted_operation");
-		},
-	}
 }
 
 #[derive(Serialize, Deserialize, Debug)]

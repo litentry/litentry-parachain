@@ -15,12 +15,7 @@
 
 */
 
-use crate::{error::Error, Enclave, EnclaveResult};
-use codec::Encode;
-use frame_support::ensure;
-use itp_enclave_api_ffi as ffi;
-use log::*;
-use sgx_types::*;
+use crate::EnclaveResult;
 
 pub trait TeeracleApi: Send + Sync + 'static {
 	/// Update the currency market data for the token oracle.
@@ -34,72 +29,86 @@ pub trait TeeracleApi: Send + Sync + 'static {
 	fn update_weather_data_xt(&self, longitude: &str, latitude: &str) -> EnclaveResult<Vec<u8>>;
 }
 
-impl TeeracleApi for Enclave {
-	fn update_market_data_xt(
-		&self,
-		crypto_currency: &str,
-		fiat_currency: &str,
-	) -> EnclaveResult<Vec<u8>> {
-		info!(
-			"TeeracleApi update_market_data_xt in with crypto {} and fiat {}",
-			crypto_currency, fiat_currency
-		);
-		let mut retval = sgx_status_t::SGX_SUCCESS;
-		let response_max_len = 8192;
-		let mut response: Vec<u8> = vec![0u8; response_max_len as usize];
-		let mut response_len: u32 = 0;
+#[cfg(feature = "implement-ffi")]
+mod impl_ffi {
+	use super::TeeracleApi;
+	use crate::{error::Error, Enclave, EnclaveResult};
+	use codec::Encode;
+	use frame_support::ensure;
+	use itp_enclave_api_ffi as ffi;
+	use log::*;
+	use sgx_types::*;
+	impl TeeracleApi for Enclave {
+		fn update_market_data_xt(
+			&self,
+			crypto_currency: &str,
+			fiat_currency: &str,
+		) -> EnclaveResult<Vec<u8>> {
+			info!(
+				"TeeracleApi update_market_data_xt in with crypto {} and fiat {}",
+				crypto_currency, fiat_currency
+			);
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let response_max_len = 8192;
+			let mut response: Vec<u8> = vec![0u8; response_max_len as usize];
+			let mut response_len: u32 = 0;
 
-		let crypto_curr = crypto_currency.encode();
-		let fiat_curr = fiat_currency.encode();
+			let crypto_curr = crypto_currency.encode();
+			let fiat_curr = fiat_currency.encode();
 
-		let res = unsafe {
-			ffi::update_market_data_xt(
-				self.eid,
-				&mut retval,
-				crypto_curr.as_ptr(),
-				crypto_curr.len() as u32,
-				fiat_curr.as_ptr(),
-				fiat_curr.len() as u32,
-				response.as_mut_ptr(),
-				response_max_len,
-				&mut response_len as *mut u32,
-			)
-		};
+			let res = unsafe {
+				ffi::update_market_data_xt(
+					self.eid,
+					&mut retval,
+					crypto_curr.as_ptr(),
+					crypto_curr.len() as u32,
+					fiat_curr.as_ptr(),
+					fiat_curr.len() as u32,
+					response.as_mut_ptr(),
+					response_max_len,
+					&mut response_len as *mut u32,
+				)
+			};
 
-		ensure!(res == sgx_status_t::SGX_SUCCESS, Error::Sgx(res));
-		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			ensure!(res == sgx_status_t::SGX_SUCCESS, Error::Sgx(res));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
 
-		Ok(Vec::from(&response[..response_len as usize]))
-	}
-	fn update_weather_data_xt(&self, longitude: &str, latitude: &str) -> EnclaveResult<Vec<u8>> {
-		info!(
-			"TeeracleApi update_weather_data_xt in with latitude: {}, longitude: {}",
-			latitude, longitude
-		);
-		let mut retval = sgx_status_t::SGX_SUCCESS;
-		let response_max_len = 8192;
-		let mut response: Vec<u8> = vec![0u8; response_max_len as usize];
-		let mut response_len: u32 = 0;
+			Ok(Vec::from(&response[..response_len as usize]))
+		}
+		fn update_weather_data_xt(
+			&self,
+			longitude: &str,
+			latitude: &str,
+		) -> EnclaveResult<Vec<u8>> {
+			info!(
+				"TeeracleApi update_weather_data_xt in with latitude: {}, longitude: {}",
+				latitude, longitude
+			);
+			let mut retval = sgx_status_t::SGX_SUCCESS;
+			let response_max_len = 8192;
+			let mut response: Vec<u8> = vec![0u8; response_max_len as usize];
+			let mut response_len: u32 = 0;
 
-		let longitude_encoded: Vec<u8> = longitude.encode();
-		let latitude_encoded: Vec<u8> = latitude.encode();
+			let longitude_encoded: Vec<u8> = longitude.encode();
+			let latitude_encoded: Vec<u8> = latitude.encode();
 
-		let res = unsafe {
-			ffi::update_weather_data_xt(
-				self.eid,
-				&mut retval,
-				longitude_encoded.as_ptr(),
-				longitude_encoded.len() as u32,
-				latitude_encoded.as_ptr(),
-				latitude_encoded.len() as u32,
-				response.as_mut_ptr(),
-				response_max_len,
-				&mut response_len as *mut u32,
-			)
-		};
+			let res = unsafe {
+				ffi::update_weather_data_xt(
+					self.eid,
+					&mut retval,
+					longitude_encoded.as_ptr(),
+					longitude_encoded.len() as u32,
+					latitude_encoded.as_ptr(),
+					latitude_encoded.len() as u32,
+					response.as_mut_ptr(),
+					response_max_len,
+					&mut response_len as *mut u32,
+				)
+			};
 
-		ensure!(res == sgx_status_t::SGX_SUCCESS, Error::Sgx(res));
-		ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
-		Ok(Vec::from(&response[..response_len as usize]))
+			ensure!(res == sgx_status_t::SGX_SUCCESS, Error::Sgx(res));
+			ensure!(retval == sgx_status_t::SGX_SUCCESS, Error::Sgx(retval));
+			Ok(Vec::from(&response[..response_len as usize]))
+		}
 	}
 }

@@ -15,10 +15,10 @@
 
 */
 
-mod invoke;
+pub mod invoke;
 mod litentry;
-mod shield_funds;
-mod transfer_to_alice_shields_funds;
+pub mod shield_funds;
+pub mod transfer_to_alice_shields_funds;
 
 pub use invoke::InvokeArgs;
 pub use litentry::{

@@ -279,6 +279,8 @@ where
 		let _result = ecc_handle.open();
 		let (prv_k, pub_k) = ecc_handle.create_key_pair()?;
 		info!("Enclave Attestation] Generated ephemeral ECDSA keypair:");
+		debug!("     pubkey X is {:02x}", pub_k.gx.iter().format(""));
+		debug!("     pubkey Y is {:02x}", pub_k.gy.iter().format(""));
 
 		let qe_quote = if !skip_ra {
 			let qe_quote = match self.retrieve_qe_dcap_quote(
@@ -312,9 +314,9 @@ where
 		let _ = ecc_handle.close();
 
 		debug!("[Enclave] Generated ECC cert info:");
-		trace!("[Enclave] Generated ECC cert info: key_der={:#?}", &key_der);
-		trace!("[Enclave] Generated ECC cert info: cert_der={:#?}", &cert_der);
-		trace!("[Enclave] Generated ECC cert info: qe_quote={:#?}", &qe_quote);
+		trace!("[Enclave] Generated ECC cert info: key_der={:?}", &key_der);
+		trace!("[Enclave] Generated ECC cert info: cert_der={:?}", &cert_der);
+		trace!("[Enclave] Generated ECC cert info: qe_quote={:?}", &qe_quote);
 		Ok((key_der, cert_der, qe_quote))
 	}
 }

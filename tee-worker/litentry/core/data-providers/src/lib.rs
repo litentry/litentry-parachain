@@ -73,6 +73,7 @@ pub mod discord_litentry;
 pub mod discord_official;
 pub mod nodereal;
 pub mod twitter_official;
+pub mod vip3;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
@@ -131,6 +132,7 @@ pub struct DataProviderConfig {
 	pub contest_legend_discord_role_id: String,
 	pub contest_popularity_discord_role_id: String,
 	pub contest_participant_discord_role_id: String,
+	pub vip3_url: String,
 }
 
 impl Default for DataProviderConfig {
@@ -160,6 +162,7 @@ impl DataProviderConfig {
 			contest_legend_discord_role_id: "".to_string(),
 			contest_popularity_discord_role_id: "".to_string(),
 			contest_participant_discord_role_id: "".to_string(),
+			vip3_url: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -233,6 +236,10 @@ impl DataProviderConfig {
 	pub fn set_contest_participant_discord_role_id(&mut self, v: String) {
 		debug!("set_contest_participant_discord_role_id: {:?}", v);
 		self.contest_participant_discord_role_id = v;
+	}
+	pub fn set_vip3_url(&mut self, v: String) {
+		debug!("set_vip3_url: {:?}", v);
+		self.vip3_url = v;
 	}
 }
 

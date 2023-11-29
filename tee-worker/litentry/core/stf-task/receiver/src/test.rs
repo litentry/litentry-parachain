@@ -15,7 +15,7 @@ use litentry_primitives::Assertion;
 #[test]
 fn test_threadpool_behaviour() {
 	let shielding_key = ShieldingCryptoMock::default();
-	let author_mock: AuthorApiMock<H256, H256> = AuthorApiMock::default();
+	let author_mock = AuthorApiMock::default();
 	let stf_enclave_signer_mock = StfEnclaveSignerMock::default();
 	let handle_state_mock = HandleStateMock::default();
 	let onchain_mock = OnchainMock::default();
@@ -47,7 +47,8 @@ fn test_threadpool_behaviour() {
 
 	while let Ok(ext) = receiver.recv() {
 		let decrypted = shielding_key.decrypt(&ext).unwrap();
-		let decoded: TrustedOperation = Decode::decode(&mut decrypted.as_ref()).unwrap();
+		let decoded =
+			TrustedOperation::<TrustedCallSigned, Getter>::decode(&mut decrypted.as_ref()).unwrap();
 		if let TrustedOperation::direct_call(TrustedCallSigned {
 			call: TrustedCall::request_vc_callback(_, _, assertion, ..),
 			..
