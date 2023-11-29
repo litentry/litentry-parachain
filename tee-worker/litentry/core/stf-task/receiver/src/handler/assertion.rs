@@ -106,11 +106,16 @@ where
 			Assertion::GenericDiscordRole(role_type) =>
 				lc_assertion_build::generic_discord_role::build(&self.req, role_type),
 
+			Assertion::WeirdoGhostGangHolder =>
+				lc_assertion_build::nodereal::weirdo_ghost_gang_holder::build(&self.req),
+
 			Assertion::BnbDomainHolding =>
-				lc_assertion_build::nodereal::bnb_domain_holding_amount::build(&self.req),
+				lc_assertion_build::nodereal::bnb_domain::bnb_domain_holding_amount::build(
+					&self.req,
+				),
 
 			Assertion::BnbDigitDomainClub(digit_domain_type) =>
-				lc_assertion_build::nodereal::bnb_digit_domain_club_amount::build(
+				lc_assertion_build::nodereal::bnb_domain::bnb_digit_domain_club_amount::build(
 					&self.req,
 					digit_domain_type,
 				),

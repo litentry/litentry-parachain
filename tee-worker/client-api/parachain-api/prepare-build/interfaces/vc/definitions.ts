@@ -22,6 +22,7 @@ export default {
                 A20: "Null",
                 Oneblock: "OneBlockCourseType",
                 GenericDiscordRole: "GenericDiscordRoleType",
+                WeirdoGhostGangHolder: "Null",
                 BnbDomainHolding: "Null",
                 BnbDigitDomainClub: "BnbDigitDomainType",
                 VIP3MembershipCard: "VIP3MembershipCardLevel",

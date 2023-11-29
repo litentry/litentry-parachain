@@ -53,11 +53,11 @@ impl RangeCredentialDetail for BnbDomainHodingAmount {
 	}
 }
 
-pub trait UpdaetBnbDomainHoldingAmountCredential {
+pub trait UpdateBnbDomainHoldingAmountCredential {
 	fn update_bnb_holding_amount(&mut self, amount: usize);
 }
 
-impl UpdaetBnbDomainHoldingAmountCredential for Credential {
+impl UpdateBnbDomainHoldingAmountCredential for Credential {
 	fn update_bnb_holding_amount(&mut self, amount: usize) {
 		let bnb_amount = BnbDomainHodingAmount::new(amount);
 		let items = bnb_amount.get_assertion_items(amount);

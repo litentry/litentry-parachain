@@ -225,6 +225,9 @@ pub enum Assertion {
 	#[codec(index = 14)]
 	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
 
+	#[codec(index = 15)]
+	WeirdoGhostGangHolder,
+
 	// ----- begin SPACEID -----
 	#[codec(index = 16)]
 	BnbDomainHolding,
@@ -263,6 +266,7 @@ impl Assertion {
 			Self::Achainable(a) => vec![a.chain()],
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
+			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// VIP3 Member Card

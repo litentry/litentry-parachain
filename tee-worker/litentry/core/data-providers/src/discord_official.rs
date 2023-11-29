@@ -133,7 +133,7 @@ mod tests {
 		let message_id = "1";
 
 		let data_provider_config = DataProviderConfigReader::read().unwrap();
-		let mut client = DiscordOfficialClient::new(&data_provider_config);
+		let mut client: DiscordOfficialClient = DiscordOfficialClient::new(&data_provider_config);
 		let result =
 			client.query_message(channel_id.as_bytes().to_vec(), message_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "query discord error: {:?}", result);

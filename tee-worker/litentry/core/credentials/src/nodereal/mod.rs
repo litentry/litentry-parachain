@@ -20,29 +20,5 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_credentials::bnb_domain::bnb_domain_holding_amount::UpdaetBnbDomainHoldingAmountCredential;
-
-use super::{BnbDomainInfo, BnbDomainInfoInterface};
-use crate::*;
-
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	debug!("bnb domain holding amount");
-
-	let identities = transpose_identity(&req.identities);
-	let addresses = identities
-		.into_iter()
-		.flat_map(|(_, addresses)| addresses)
-		.collect::<Vec<String>>();
-
-	let amount = BnbDomainInfo.get_bnb_domain_holding_amount(&addresses)?;
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_bnb_holding_amount(amount);
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::BnbDomainHolding, e.into_error_detail()))
-		},
-	}
-}
+pub mod bnb_domain;
+pub mod weirdo_ghost_gang_holder;
