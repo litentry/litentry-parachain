@@ -824,6 +824,7 @@ dependencies = [
  "itc-tls-websocket-server",
  "itp-attestation-handler",
  "itp-component-container",
+ "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-import-queue",
  "itp-node-api",

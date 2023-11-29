@@ -94,13 +94,15 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 	let top_pool = create_top_pool();
 	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
+	let enclave_metrics_ocall_mock = Arc::new(MetricsOCallMock::default());
+
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter {},
 		DirectCallsOnlyFilter {},
 		state_handler.clone(),
 		shielding_key_repo,
-		Arc::new(MetricsOCallMock::default()),
+		enclave_metrics_ocall_mock.clone(),
 		Arc::new(sender),
 	));
 	let parentchain_block_import_trigger = Arc::new(TestParentchainBlockImportTrigger::default());
@@ -114,8 +116,12 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 		peer_updater_mock,
 	));
 	let block_composer = Arc::new(TestBlockComposer::new(signer.clone(), state_key_repo.clone()));
-	let proposer_environment =
-		ProposerFactory::new(top_pool_author.clone(), stf_executor.clone(), block_composer);
+	let proposer_environment = ProposerFactory::new(
+		top_pool_author.clone(),
+		stf_executor.clone(),
+		block_composer,
+		enclave_metrics_ocall_mock.clone(),
+	);
 	let extrinsics_factory = ExtrinsicsFactoryMock::default();
 	let validator_access = ValidatorAccessMock::default();
 
