@@ -269,12 +269,12 @@ impl NftApiList for NoderealJsonrpcClient {
 		];
 		debug!("get_nft_holdings: {:?}", param);
 		let req_body = ReqBody::new("2.0", "nr_getNFTHoldings", params);
-		self.post(&req_body)
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))
-			.map(|resp: RespBody| {
+		self.post(&req_body).map_err(|e| Error::RequestError(format!("{:?}", e))).map(
+			|resp: RespBody| {
 				debug!("get_nft_holdings, response: {:?}", resp);
 				serde_json::from_value(resp.result).unwrap()
-			})
+			},
+		)
 	}
 
 	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<usize, Error> {
