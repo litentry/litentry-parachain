@@ -253,6 +253,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::BnbDomainHolding => "BnbDomainHolding",
 			Assertion::BnbDigitDomainClub(..) => "BnbDigitDomainClub",
 			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
+			Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
 		},
 	};
 	inc_stf_calls(category, label);

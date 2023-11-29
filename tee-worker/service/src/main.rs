@@ -40,7 +40,7 @@ use crate::{
 	sync_block_broadcaster::SyncBlockBroadcaster,
 	utils::extract_shard,
 	worker::Worker,
-	worker_peers_updater::WorkerPeersUpdater,
+	worker_peers_registry::WorkerPeersRegistry,
 };
 use base58::ToBase58;
 use clap::{load_yaml, App};
@@ -87,6 +87,7 @@ use substrate_api_client::{
 	GetChainInfo, GetStorage, SubmitAndWatch, SubscribeChain, SubscribeEvents,
 };
 
+use itp_utils::if_production_or;
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
@@ -114,7 +115,7 @@ mod teeracle;
 mod tests;
 mod utils;
 mod worker;
-mod worker_peers_updater;
+mod worker_peers_registry;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -170,7 +171,7 @@ fn main() {
 	));
 	let sync_block_broadcaster =
 		Arc::new(SyncBlockBroadcaster::new(tokio_handle.clone(), worker.clone()));
-	let peer_updater = Arc::new(WorkerPeersUpdater::new(worker));
+	let peer_updater = Arc::new(WorkerPeersRegistry::new(worker));
 	let untrusted_peer_fetcher = UntrustedPeerFetcher::new(node_api_factory.clone());
 	let peer_sidechain_block_fetcher =
 		Arc::new(BlockFetcher::<SignedSidechainBlock, _>::new(untrusted_peer_fetcher));
@@ -222,13 +223,18 @@ fn main() {
 
 		// litentry: start the mock-server if enabled
 		if config.enable_mock_server {
-			let mock_server_port = config
-				.try_parse_mock_server_port()
-				.expect("mock server port to be a valid port number");
-			thread::spawn(move || {
-				info!("*** Starting mock server");
-				let _ = lc_mock_server::run(mock_server_port);
-			});
+			if_production_or!(
+				warn!("Mock server not started. Node is running in production mode."),
+				{
+					let mock_server_port = config
+						.try_parse_mock_server_port()
+						.expect("mock server port to be a valid port number");
+					thread::spawn(move || {
+						info!("*** Starting mock server");
+						let _ = lc_mock_server::run(mock_server_port);
+					});
+				}
+			)
 		}
 
 		if clean_reset {
@@ -1160,7 +1166,11 @@ fn send_extrinsic(
 	}
 
 	info!("[>] send extrinsic");
-	trace!("  encoded extrinsic: 0x{:}", hex::encode(extrinsic.clone()));
+	trace!(
+		"  encoded extrinsic len: {}, payload: 0x{:}",
+		extrinsic.len(),
+		hex::encode(extrinsic.clone())
+	);
 
 	// fixme: wait ...until_success doesn't work due to https://github.com/scs/substrate-api-client/issues/624
 	// fixme: currently, we don't verify if the extrinsic was a success here
@@ -1306,6 +1316,9 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	}
 	if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
 		data_provider_config.set_contest_participant_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("VIP3_URL") {
+		data_provider_config.set_vip3_url(v);
 	}
 
 	data_provider_config
