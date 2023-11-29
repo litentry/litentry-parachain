@@ -1160,7 +1160,11 @@ fn send_extrinsic(
 	}
 
 	info!("[>] send extrinsic");
-	trace!("  encoded extrinsic: 0x{:}", hex::encode(extrinsic.clone()));
+	trace!(
+		"  encoded extrinsic len: {}, payload: 0x{:}",
+		extrinsic.len(),
+		hex::encode(extrinsic.clone())
+	);
 
 	// fixme: wait ...until_success doesn't work due to https://github.com/scs/substrate-api-client/issues/624
 	// fixme: currently, we don't verify if the extrinsic was a success here
@@ -1306,6 +1310,9 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	}
 	if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
 		data_provider_config.set_contest_participant_discord_role_id(v);
+	}
+	if let Ok(v) = env::var("VIP3_URL") {
+		data_provider_config.set_vip3_url(v);
 	}
 
 	data_provider_config
