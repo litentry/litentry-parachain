@@ -55,11 +55,6 @@ on:
         description: rebuild-tee-docker
         required: true
         default: true
-      rebuild-client-api:
-        type: boolean
-        description: rebuild-client-api
-        required: true
-        default: true
       push-docker:
         type: boolean
         description: push-docker
@@ -89,7 +84,6 @@ jobs:
     outputs:
       rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
       rebuild_tee: ${{ steps.env.outputs.rebuild_tee }}
-      rebuild_client_api: ${{ steps.env.outputs.rebuild_client_api }}
       push_docker: ${{ steps.env.outputs.push_docker }}
       run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
       run_tee_test: ${{ steps.env.outputs.run_tee_test }}
@@ -111,7 +105,6 @@ jobs:
         run: |
           rebuild_parachain=false
           rebuild_tee=false
-          rebuild_client_api=false
           push_docker=false
           run_parachain_test=false
           run_tee_test=true
@@ -120,9 +113,6 @@ jobs:
           fi
           if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
             rebuild_tee=true
-          fi
-          if [ "${{ github.event.inputs.rebuild-client-api }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
-            rebuild_client_api=true
           fi
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
@@ -137,7 +127,6 @@ jobs:
           fi
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
-          echo "rebuild_client_api=$rebuild_client_api" | tee -a $GITHUB_OUTPUT
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
           echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
@@ -608,119 +597,12 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
-  update-client-api:
-    runs-on: ubuntu-latest
-    if: needs.set-condition.outputs.rebuild_client_api == 'true'
-    needs:
-      - parachain-build-dev
-      - tee-build
-      - set-condition
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: litentry-parachain-dev
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: litentry-tee
-
-      - name: Load docker image
-        run: |
-          docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
-          docker images
-
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
-
-      - name: Generate parachain artefacts
-        run: |
-          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
-
-      - name: Update metadata and generate types
-        timeout-minutes: 10
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
-
-      - name: Zip client-api
-        working-directory: ./tee-worker
-        run: |
-          sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
-          tar -zcvf client-api.tar.gz client-api
-
-      - name: Upload client-api as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: client-api
-          path: tee-worker/client-api.tar.gz
-          if-no-files-found: error
-
-      - name: Stop docker containers
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
-
-      - name: Collect docker logs if test fails
-        continue-on-error: true
-        uses: jwalton/gh-docker-logs@v2
-        if: failure()
-        with:
-          tail: all
-          dest: docker-logs
-
-      - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: build-client-api-docker-logs
-          path: docker-logs
-          if-no-files-found: ignore
-          retention-days: 3
-
-  download-client-api:
-    runs-on: ubuntu-latest
-    if: needs.set-condition.outputs.rebuild_client_api == 'false'
-    needs:
-      - parachain-build-dev
-      - tee-build
-      - set-condition
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
-
-      - name: Download Latest Client Api from S3
-        run: |
-          curl -O https://kw-client-api.s3.eu-north-1.amazonaws.com/client-api.tar.gz
-          ls -l
-
-      - name: Upload client-api as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: client-api
-          path: client-api.tar.gz
-          if-no-files-found: 'warn'
-
   tee-test:
     runs-on: ubuntu-latest
-    if: always()
+    if: needs.set-condition.outputs.run_tee_test == 'true'
     needs:
       - set-condition
-      - update-client-api
-      - download-client-api
+      - tee-build
     strategy:
       fail-fast: false
       matrix:
@@ -754,16 +636,6 @@ jobs:
         with:
           name: litentry-tee
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: client-api
-
-      - name: Unzip client-api
-        run: |
-          tar -zxf client-api.tar.gz -C tee-worker/
-          ls tee-worker/client-api/parachain-api
-          ls tee-worker/client-api/sidechain-api
-
       - name: Load docker image
         run: |
           docker load < litentry-parachain-dev.tar.gz
@@ -784,15 +656,19 @@ jobs:
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
 
+      - name: Update metadata and generate types
+        timeout-minutes: 10
+        run: |
+          cd tee-worker/docker
+          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
+
       - name: Integration Test ${{ matrix.test_name }}
-        if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop docker containers
-        if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
