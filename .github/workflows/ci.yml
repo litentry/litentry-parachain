@@ -107,7 +107,7 @@ jobs:
           rebuild_tee=false
           push_docker=false
           run_parachain_test=false
-          run_tee_test=true
+          run_tee_test=false
           if [ "${{ github.event.inputs.rebuild-parachain-docker }}" = "true" ] || [ "${{ steps.filter.outputs.parachain_src }}" = "true" ]; then
             rebuild_parachain=true
           fi
@@ -655,12 +655,6 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-
-#      - name: Update metadata and generate types
-#        timeout-minutes: 10
-#        run: |
-#          cd tee-worker/docker
-#          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
 
       - name: Integration Test ${{ matrix.test_name }}
         timeout-minutes: 40
