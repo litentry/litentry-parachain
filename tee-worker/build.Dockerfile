@@ -102,13 +102,11 @@ WORKDIR /usr/local/bin
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
 COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/docker/entrypoint.sh /entrypoint.sh
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
 RUN touch spid.txt key.txt
 RUN chmod +x /usr/local/bin/litentry-worker
-RUN chmod +x /entrypoint.sh
 RUN ls -al /usr/local/bin
 
 # checks
@@ -119,4 +117,5 @@ ENV AESM_PATH=/opt/intel/sgx-aesm-service/aesm
 
 RUN ldd /usr/local/bin/litentry-worker && /usr/local/bin/litentry-worker --version
 
+# TODO: use entrypoint and aesm service launch, see P-295 too
 ENTRYPOINT ["/usr/local/bin/litentry-worker"]
