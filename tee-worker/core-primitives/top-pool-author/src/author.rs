@@ -358,21 +358,20 @@ where
 	fn get_pending_trusted_getters(&self, shard: ShardIdentifier) -> Vec<TrustedOperation> {
 		self.top_pool
 			.ready(shard)
+			.filter(|o| matches!(o.data(), TrustedOperation::get(Getter::trusted(_))))
 			.map(|o| o.data().clone())
-			.into_iter()
-			.filter(|o| matches!(o, TrustedOperation::get(Getter::trusted(_))))
 			.collect()
 	}
 
 	fn get_pending_trusted_calls(&self, shard: ShardIdentifier) -> Vec<TrustedOperation> {
 		self.top_pool
 			.ready(shard)
-			.map(|o| o.data().clone())
-			.into_iter()
 			.filter(|o| {
-				matches!(o, TrustedOperation::direct_call(_))
-					|| matches!(o, TrustedOperation::indirect_call(_))
+				matches!(o.data(), TrustedOperation::direct_call(_))
+					|| matches!(o.data(), TrustedOperation::indirect_call(_))
 			})
+			.into_iter()
+			.map(|o| o.data().clone())
 			.collect()
 	}
 
