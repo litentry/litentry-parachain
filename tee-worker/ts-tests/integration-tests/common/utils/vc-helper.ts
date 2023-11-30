@@ -141,8 +141,16 @@ export const basicAssertions = [
             'Congratulations on your participation in our first quiz in collaboration with our partner, SORA. You have embarked on an exciting educational journey, exploring the world of DeFi & Web3 Identity, we truly appreciate your curiosity and dedication.',
         assertion: {
             GenericDiscordRole: {
-                soraquiz: 'attendee',
+                SoraQuiz: 'Attendee',
             },
+        },
+    },
+    // VIP3
+       {
+        description:
+            'Vip3',
+        assertion: {
+            VIP3MembershipCard: "Gold",
         },
     },
 ];
