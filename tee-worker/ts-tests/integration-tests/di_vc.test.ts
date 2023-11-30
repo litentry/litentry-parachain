@@ -13,7 +13,7 @@ import type { IntegrationTestContext } from './common/type-definitions';
 import { aesKey } from './common/call';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { basicAssertions, extraAssertions } from './common/utils/vc-helper';
+import { defaultAssertions, configurableAssertions } from './common/utils/vc-helper';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -32,7 +32,7 @@ describe('Test Vc (direct invocation)', function () {
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
     });
 
-    basicAssertions.forEach(({ description, assertion }) => {
+    defaultAssertions.forEach(({ description, assertion }) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
             const getNextNonce = () => currentNonce++;
@@ -67,7 +67,7 @@ describe('Test Vc (direct invocation)', function () {
             await assertVc(context, aliceSubject, res.value);
         });
     });
-    extraAssertions.forEach(({ description, assertion }) => {
+    configurableAssertions.forEach(({ description, assertion }) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
             const getNextNonce = () => currentNonce++;

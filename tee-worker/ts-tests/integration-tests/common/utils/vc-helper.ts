@@ -28,7 +28,7 @@ export async function handleVcEvents(
 }
 
 // https://github.com/litentry/litentry-parachain/tree/dev/tee-worker/litentry/core/assertion-build/src
-export const basicAssertions = [
+export const defaultAssertions = [
     {
         description: 'Have identified at least one account/address in both Web2 and Web3.',
         assertion: {
@@ -156,8 +156,9 @@ export const basicAssertions = [
 
 // In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
 // For the 'oneblock' assertion, need to configure the Polkadot/Kusma address,
-// and for 'bnb,' you need to configure the NODEREAL_API_KEY
-export const extraAssertions = [
+// and for 'bnb,' need to configure the NODEREAL_API_KEY
+// We cannot submit these two types of data involving privacy(cc @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
+export const configurableAssertions = [
     // Oneblock
     {
         description: 'A participant to the course co-created by OneBlock+ and Parity',
