@@ -17,10 +17,10 @@
 */
 
 use crate::{
+	globals::tokio_handle::GetTokioHandle,
 	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, SidechainBridge},
 	sync_block_broadcaster::BroadcastBlocks,
-	worker_peers_updater::UpdateWorkerPeers,
-	GetTokioHandle,
+	worker_peers_registry::PeersRegistry,
 };
 use codec::{Decode, Encode};
 use itp_types::{BlockHash, ShardIdentifier};
@@ -30,40 +30,46 @@ use its_storage::BlockStorage;
 use log::*;
 use std::sync::Arc;
 
-pub struct SidechainOCall<BlockBroadcaster, Storage, PeerUpdater, PeerBlockFetcher, TokioHandle> {
+pub struct SidechainOCall<
+	BlockBroadcaster,
+	Storage,
+	WorkerPeerRegistry,
+	PeerBlockFetcher,
+	TokioHandle,
+> {
 	block_broadcaster: Arc<BlockBroadcaster>,
 	block_storage: Arc<Storage>,
-	peer_updater: Arc<PeerUpdater>,
+	peer_registry: Arc<WorkerPeerRegistry>,
 	peer_block_fetcher: Arc<PeerBlockFetcher>,
 	tokio_handle: Arc<TokioHandle>,
 }
 
-impl<BlockBroadcaster, Storage, PeerUpdater, PeerBlockFetcher, TokioHandle>
-	SidechainOCall<BlockBroadcaster, Storage, PeerUpdater, PeerBlockFetcher, TokioHandle>
+impl<BlockBroadcaster, Storage, WorkerPeerRegistry, PeerBlockFetcher, TokioHandle>
+	SidechainOCall<BlockBroadcaster, Storage, WorkerPeerRegistry, PeerBlockFetcher, TokioHandle>
 {
 	pub fn new(
 		block_broadcaster: Arc<BlockBroadcaster>,
 		block_storage: Arc<Storage>,
-		peer_updater: Arc<PeerUpdater>,
+		peer_registry: Arc<WorkerPeerRegistry>,
 		peer_block_fetcher: Arc<PeerBlockFetcher>,
 		tokio_handle: Arc<TokioHandle>,
 	) -> Self {
 		SidechainOCall {
 			block_broadcaster,
 			block_storage,
-			peer_updater,
+			peer_registry,
 			peer_block_fetcher,
 			tokio_handle,
 		}
 	}
 }
 
-impl<BlockBroadcaster, Storage, PeerUpdater, PeerBlockFetcher, TokioHandle> SidechainBridge
-	for SidechainOCall<BlockBroadcaster, Storage, PeerUpdater, PeerBlockFetcher, TokioHandle>
+impl<BlockBroadcaster, Storage, WorkerPeerRegistry, PeerBlockFetcher, TokioHandle> SidechainBridge
+	for SidechainOCall<BlockBroadcaster, Storage, WorkerPeerRegistry, PeerBlockFetcher, TokioHandle>
 where
 	BlockBroadcaster: BroadcastBlocks,
 	Storage: BlockStorage<SignedSidechainBlock>,
-	PeerUpdater: UpdateWorkerPeers,
+	WorkerPeerRegistry: PeersRegistry,
 	PeerBlockFetcher: FetchBlocksFromPeer<SignedBlockType = SignedSidechainBlock>,
 	TokioHandle: GetTokioHandle,
 {
@@ -97,7 +103,7 @@ where
 
 		// FIXME: When & where should peers be updated?
 		debug!("Updating peers..");
-		if let Err(e) = self.peer_updater.update_peers() {
+		if let Err(e) = self.peer_registry.update_peers() {
 			error!("Error updating peers: {:?}", e);
 		// Fixme: returning an error here results in a `HeaderAncestryMismatch` error.
 		// status = sgx_status_t::SGX_ERROR_UNEXPECTED;
@@ -187,6 +193,11 @@ where
 
 		Ok(signed_sidechain_blocks.encode())
 	}
+
+	fn get_trusted_peers_urls(&self) -> OCallBridgeResult<Vec<u8>> {
+		let peers = self.peer_registry.read_trusted_peers().unwrap();
+		Ok(peers.encode())
+	}
 }
 
 #[cfg(test)]
@@ -196,7 +207,7 @@ mod tests {
 		globals::tokio_handle::ScopedTokioHandle,
 		tests::mocks::{
 			broadcast_blocks_mock::BroadcastBlocksMock,
-			update_worker_peers_mock::UpdateWorkerPeersMock,
+			update_worker_peers_mock::WorkerPeersRegistryMock,
 		},
 	};
 	use codec::Decode;
@@ -217,7 +228,7 @@ mod tests {
 	type TestSidechainOCall = SidechainOCall<
 		BroadcastBlocksMock,
 		BlockStorageMock,
-		UpdateWorkerPeersMock,
+		WorkerPeersRegistryMock,
 		FetchBlocksFromPeerMock<SignedSidechainBlock>,
 		ScopedTokioHandle,
 	>;
@@ -253,7 +264,7 @@ mod tests {
 	) -> TestSidechainOCall {
 		let block_broadcaster_mock = Arc::new(BroadcastBlocksMock {});
 		let block_storage_mock = Arc::new(BlockStorageMock {});
-		let peer_updater_mock = Arc::new(UpdateWorkerPeersMock {});
+		let worker_peers_registry_mock = Arc::new(WorkerPeersRegistryMock {});
 		let peer_block_fetcher_mock = Arc::new(
 			FetchBlocksFromPeerMock::<SignedSidechainBlock>::default()
 				.with_signed_blocks(peer_blocks_map),
@@ -263,7 +274,7 @@ mod tests {
 		SidechainOCall::new(
 			block_broadcaster_mock,
 			block_storage_mock,
-			peer_updater_mock,
+			worker_peers_registry_mock,
 			peer_block_fetcher_mock,
 			scoped_tokio_handle,
 		)

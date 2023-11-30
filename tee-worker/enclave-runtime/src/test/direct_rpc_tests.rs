@@ -24,7 +24,7 @@ use itc_direct_rpc_server::{
 	rpc_ws_handler::RpcWsHandler,
 };
 use itc_tls_websocket_server::{ConnectionToken, WebSocketMessageHandler};
-use itp_rpc::{RpcRequest, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 use itp_sgx_crypto::get_rsa3072_repository;
 use itp_sgx_temp_dir::TempDir;
 use itp_stf_executor::{getter_executor::GetterExecutor, mocks::GetStateMock};
@@ -48,7 +48,7 @@ pub fn get_state_request_works() {
 	let state: TestState = 78234u64;
 	let state_observer = Arc::new(ObserveStateMock::<TestState>::new(state));
 	let getter_executor =
-		Arc::new(GetterExecutor::<_, GetStateMock<TestState>>::new(state_observer));
+		Arc::new(GetterExecutor::<_, GetStateMock<TestState>, Getter>::new(state_observer));
 	let top_pool_author = Arc::new(AuthorApiMock::default());
 
 	let io_handler = public_api_rpc_handler(
@@ -64,9 +64,12 @@ pub fn get_state_request_works() {
 
 	let request = RsaRequest::new(ShardIdentifier::default(), getter.encode());
 
-	let request_string =
-		RpcRequest::compose_jsonrpc_call("state_executeGetter".to_string(), vec![request.to_hex()])
-			.unwrap();
+	let request_string = RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
+		"state_executeGetter".to_string(),
+		vec![request.to_hex()],
+	)
+	.unwrap();
 
 	let response_string =
 		rpc_handler.handle_message(ConnectionToken(1), request_string).unwrap().unwrap();

@@ -19,12 +19,14 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 # local deps
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
 itc-parentchain-block-import-dispatcher = { path = "../../../core/parentchain/block-import-dispatcher", default-features = false }
+itc-peer-top-broadcaster = { path = "../../../core/peer-top-broadcaster", default-features = false }
 itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-settings = { path = "../../../core-primitives/settings" }
 itp-sgx-crypto = { path = "../../../core-primitives/sgx/crypto", default-features = false }
 itp-sgx-externalities = { path = "../../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
+itp-stf-primitives = { path = "../../../core-primitives/stf-primitives", default-features = false }
 itp-stf-state-handler = { path = "../../../core-primitives/stf-state-handler", default-features = false }
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
 itp-top-pool-author = { path = "../../../core-primitives/top-pool-author", default-features = false }
@@ -61,11 +63,13 @@ std = [
     #local
     "ita-stf/std",
     "itc-parentchain-block-import-dispatcher/std",
+    "itc-peer-top-broadcaster/std",
     "itp-enclave-metrics/std",
     "itp-ocall-api/std",
     "itp-sgx-crypto/std",
     "itp-sgx-externalities/std",
     "itp-stf-executor/std",
+    "itp-stf-primitives/std",
     "itp-stf-state-handler/std",
     "itp-time-utils/std",
     "itp-types/std",
@@ -82,6 +86,7 @@ sgx = [
     "sgx_tstd",
     "ita-stf/sgx",
     "itc-parentchain-block-import-dispatcher/sgx",
+    "itc-peer-top-broadcaster/sgx",
     "itp-enclave-metrics/sgx",
     "itp-sgx-crypto/sgx",
     "itp-sgx-externalities/sgx",

@@ -32,8 +32,8 @@ use crate::{
 		GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
 	utils::{
-		get_extrinsic_factory_from_solo_or_parachain,
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_extrinsic_factory_from_litentry_solo_or_parachain,
+		get_node_metadata_repository_from_litentry_solo_or_parachain,
 	},
 	GLOBAL_STATE_HANDLER_COMPONENT,
 };
@@ -71,6 +71,7 @@ pub unsafe extern "C" fn run_vc_issuance(dpc: *const u8, dpc_size: usize) -> sgx
 			dpc.set_contest_participant_discord_role_id(
 				data_provider_config.contest_participant_discord_role_id,
 			);
+			dpc.set_vip3_url(data_provider_config.vip3_url);
 		},
 		Err(e) => {
 			error!("Error while setting data provider config: {:?}", e);
@@ -115,8 +116,8 @@ fn run_vc_issuance_internal() -> Result<()> {
 		state_handler,
 		ocall_api,
 	);
-	let extrinsic_factory = get_extrinsic_factory_from_solo_or_parachain()?;
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let extrinsic_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
 	Ok(())
 }

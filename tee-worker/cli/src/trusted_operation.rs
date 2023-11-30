@@ -23,12 +23,12 @@ use crate::{
 };
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode};
-use ita_stf::{Getter, StfError, TrustedCall, TrustedOperation};
+use ita_stf::{Getter, StfError, TrustedCall, TrustedCallSigned};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
 use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::{
@@ -62,7 +62,7 @@ pub(crate) type TrustedOpResult<T> = Result<T, TrustedOperationError>;
 pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	top: &TrustedOperation,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	match top {
 		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
@@ -74,7 +74,7 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 pub(crate) fn perform_direct_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	top: &TrustedOperation,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	key: RequestAesKey,
 ) -> TrustedOpResult<T> {
 	match top {
@@ -105,8 +105,12 @@ pub(crate) fn get_state<T: Decode>(
 	// Compose jsonrpc call.
 	let data = RsaRequest::new(shard, getter.encode());
 	let rpc_method = "state_executeGetter".to_owned();
-	let jsonrpc_call: String =
-		RpcRequest::compose_jsonrpc_call(rpc_method, vec![data.to_hex()]).unwrap();
+	let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
+		rpc_method,
+		vec![data.to_hex()],
+	)
+	.unwrap();
 
 	let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
 
@@ -151,7 +155,7 @@ pub(crate) fn get_state<T: Decode>(
 fn send_indirect_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	trusted_operation: &TrustedOperation,
+	trusted_operation: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	let mut chain_api = get_chain_api(cli);
 	let encryption_key = get_shielding_key(cli).unwrap();
@@ -281,7 +285,7 @@ pub fn read_shard(trusted_args: &TrustedCli, cli: &Cli) -> Result<ShardIdentifie
 fn send_direct_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args, cli).unwrap();
@@ -365,7 +369,7 @@ fn send_direct_request<T: Decode + Debug>(
 fn send_direct_vc_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 	key: RequestAesKey,
 ) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
@@ -428,7 +432,7 @@ fn send_direct_vc_request<T: Decode + Debug>(
 
 pub(crate) fn get_vc_json_request(
 	shard: ShardIdentifier,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 	key: RequestAesKey,
 ) -> String {
@@ -437,13 +441,17 @@ pub(crate) fn get_vc_json_request(
 
 	// compose jsonrpc call
 	let request = AesRequest { shard, payload: operation_call_encrypted, key: encrypted_key };
-	RpcRequest::compose_jsonrpc_call("author_submitVCRequest".to_string(), vec![request.to_hex()])
-		.unwrap()
+	RpcRequest::compose_jsonrpc_call(
+		Id::Number(1),
+		"author_submitVCRequest".to_string(),
+		vec![request.to_hex()],
+	)
+	.unwrap()
 }
 
 pub(crate) fn get_json_request(
 	shard: ShardIdentifier,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 ) -> String {
 	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
@@ -451,6 +459,7 @@ pub(crate) fn get_json_request(
 	// compose jsonrpc call
 	let request = RsaRequest::new(shard, operation_call_encrypted);
 	RpcRequest::compose_jsonrpc_call(
+		Id::Text("1".to_string()),
 		"author_submitAndWatchRsaRequest".to_string(),
 		vec![request.to_hex()],
 	)

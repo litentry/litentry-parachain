@@ -25,7 +25,7 @@ use crate::{
 	*,
 };
 use lc_credentials::litentry_profile::holding_amount::LitentryProfileHoldingAmount;
-use lc_data_providers::{achainable_names::AchainableNameBalance, ConvertParameterString};
+use lc_data_providers::{achainable_names::AchainableNameAmount, ConvertParameterString};
 
 const CREATED_OVER_AMOUNT_CONTRACTS: &str = "Created over {amount} contracts";
 const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
@@ -107,7 +107,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::Amount(param.clone());
-	let bname = AchainableNameBalance::from(achainable_param.name()).map_err(|e| {
+	let bname = AchainableNameAmount::from(achainable_param.name()).map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::Achainable(achainable_param.clone()),
 			e.into_error_detail(),
@@ -115,7 +115,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 	})?;
 	let mut balance = 0.0;
 	let mut flag = false;
-	if bname == AchainableNameBalance::BalanceUnderAmount {
+	if bname == AchainableNameAmount::BalanceUnderAmount {
 		balance = request_achainable_balance(addresses, achainable_param.clone())?
 			.parse::<f64>()
 			.map_err(|_| {
@@ -130,7 +130,7 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
-			if bname == AchainableNameBalance::BalanceUnderAmount {
+			if bname == AchainableNameAmount::BalanceUnderAmount {
 				credential_unsigned.update_eth_holding_amount(balance);
 			} else {
 				let (desc, subtype, content) =

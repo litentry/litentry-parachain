@@ -19,34 +19,32 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::watcher::Watcher;
-use codec::Encode;
+use crate::{primitives::TxHash, watcher::Watcher};
+
 use itc_direct_rpc_server::SendRpcResponse;
 use itp_types::BlockHash as SidechainBlockHash;
 use linked_hash_map::LinkedHashMap;
 use log::{debug, trace};
-use sp_runtime::traits;
-use std::{collections::HashMap, hash, string::String, sync::Arc, vec, vec::Vec};
+
+use std::{collections::HashMap, string::String, sync::Arc, vec, vec::Vec};
 
 /// Extrinsic pool default listener.
 #[derive(Default)]
-pub struct Listener<H, R>
+pub struct Listener<R>
 where
-	H: hash::Hash + Eq,
-	R: SendRpcResponse,
+	R: SendRpcResponse<Hash = TxHash>,
 {
-	watchers: HashMap<H, Watcher<H, R>>,
-	finality_watchers: LinkedHashMap<SidechainBlockHash, Vec<H>>,
+	watchers: HashMap<TxHash, Watcher<R>>,
+	finality_watchers: LinkedHashMap<SidechainBlockHash, Vec<TxHash>>,
 	rpc_response_sender: Arc<R>,
 }
 
 /// Maximum number of blocks awaiting finality at any time.
 const MAX_FINALITY_WATCHERS: usize = 512;
 
-impl<H, R> Listener<H, R>
+impl<R> Listener<R>
 where
-	H: hash::Hash + traits::Member + Encode,
-	R: SendRpcResponse<Hash = H>,
+	R: SendRpcResponse<Hash = TxHash>,
 {
 	pub fn new(rpc_response_sender: Arc<R>) -> Self {
 		Listener {
@@ -56,9 +54,9 @@ where
 		}
 	}
 
-	fn fire<F>(&mut self, hash: &H, fun: F)
+	fn fire<F>(&mut self, hash: &TxHash, fun: F)
 	where
-		F: FnOnce(&mut Watcher<H, R>),
+		F: FnOnce(&mut Watcher<R>),
 	{
 		let clean = if let Some(h) = self.watchers.get_mut(hash) {
 			fun(h);
@@ -75,19 +73,25 @@ where
 	/// Creates a new watcher for given verified extrinsic.
 	///
 	/// The watcher can be used to subscribe to life-cycle events of that extrinsic.
-	pub fn create_watcher(&mut self, hash: H) {
-		let new_watcher = Watcher::new_watcher(hash.clone(), self.rpc_response_sender.clone());
+	pub fn create_watcher(&mut self, hash: TxHash) {
+		let new_watcher = Watcher::new_watcher(hash, self.rpc_response_sender.clone());
 		self.watchers.insert(hash, new_watcher);
 	}
 
 	/// Notify the listeners about extrinsic broadcast.
-	pub fn broadcasted(&mut self, hash: &H, peers: Vec<String>) {
+	pub fn broadcasted(&mut self, hash: &TxHash, peers: Vec<String>) {
 		trace!(target: "txpool", "[{:?}] Broadcasted", hash);
 		self.fire(hash, |watcher| watcher.broadcast(peers));
 	}
 
+	/// Notify listeners about top execution.
+	pub fn top_executed(&mut self, hash: &TxHash, response: &[u8], force_wait: bool) {
+		trace!(target: "txpool", "[{:?}] Top Executed", hash);
+		self.fire(hash, |watcher| watcher.top_executed(response, force_wait));
+	}
+
 	/// New operation was added to the ready pool or promoted from the future pool.
-	pub fn ready(&mut self, tx: &H, old: Option<&H>) {
+	pub fn ready(&mut self, tx: &TxHash, old: Option<&TxHash>) {
 		trace!(target: "txpool", "[{:?}] Ready (replaced with {:?})", tx, old);
 		self.fire(tx, |watcher| watcher.ready());
 		if let Some(old) = old {
@@ -96,13 +100,13 @@ where
 	}
 
 	/// New operation was added to the future pool.
-	pub fn future(&mut self, tx: &H) {
+	pub fn future(&mut self, tx: &TxHash) {
 		trace!(target: "txpool", "[{:?}] Future", tx);
 		self.fire(tx, |watcher| watcher.future());
 	}
 
 	/// TrustedOperation was dropped from the pool because of the limit.
-	pub fn dropped(&mut self, tx: &H, by: Option<&H>) {
+	pub fn dropped(&mut self, tx: &TxHash, by: Option<&TxHash>) {
 		trace!(target: "txpool", "[{:?}] Dropped (replaced with {:?})", tx, by);
 		self.fire(tx, |watcher| match by {
 			Some(_) => watcher.usurped(),
@@ -111,16 +115,16 @@ where
 	}
 
 	/// TrustedOperation was removed as invalid.
-	pub fn invalid(&mut self, tx: &H) {
+	pub fn invalid(&mut self, tx: &TxHash) {
 		self.fire(tx, |watcher| watcher.invalid());
 	}
 
 	/// TrustedOperation was pruned from the pool.
 	#[allow(clippy::or_fun_call)]
-	pub fn pruned(&mut self, block_hash: SidechainBlockHash, tx: &H) {
+	pub fn pruned(&mut self, block_hash: SidechainBlockHash, tx: &TxHash) {
 		debug!(target: "txpool", "[{:?}] Pruned at {:?}", tx, block_hash);
 		self.fire(tx, |s| s.in_block(block_hash));
-		self.finality_watchers.entry(block_hash).or_insert(vec![]).push(tx.clone());
+		self.finality_watchers.entry(block_hash).or_insert(vec![]).push(*tx);
 
 		while self.finality_watchers.len() > MAX_FINALITY_WATCHERS {
 			if let Some((_hash, txs)) = self.finality_watchers.pop_front() {
@@ -132,7 +136,7 @@ where
 	}
 
 	/// TrustedOperation in block.
-	pub fn in_block(&mut self, tx: &H, block_hash: SidechainBlockHash) {
+	pub fn in_block(&mut self, tx: &TxHash, block_hash: SidechainBlockHash) {
 		self.fire(tx, |s| s.in_block(block_hash));
 	}
 
@@ -156,19 +160,25 @@ where
 	}
 
 	/// Litentry: set the rpc response value and force_wait flag for a given TrustedOperation `tx`.
-	pub fn update_connection_state(&mut self, tx: &H, encoded_value: Vec<u8>, force_wait: bool) {
+	pub fn update_connection_state(
+		&mut self,
+		tx: &TxHash,
+		encoded_value: Vec<u8>,
+		force_wait: bool,
+	) {
 		self.fire(tx, |s| s.update_connection_state(encoded_value, force_wait));
 	}
 
 	/// Litentry: swap the old hash with the new one in rpc connection registry
-	pub fn swap_rpc_connection_hash(&mut self, old_hash: H, new_hash: H) {
+	pub fn swap_rpc_connection_hash(&mut self, old_hash: TxHash, new_hash: TxHash) {
+		log::debug!("Swapping connection {:?} to {:?}", &old_hash, &new_hash);
 		// It's possible that the old top (hash) is already removed from the pool when we
 		// request to swap hashes, in this case we just create one to facilitate the swap
 		if let Some(w) = self.watchers.get(&old_hash) {
 			w.swap_rpc_connection_hash(new_hash);
 		} else {
 			// do not insert it to `watchers`, will be deallocated if it goes out of scope
-			Watcher::new_watcher(old_hash.clone(), self.rpc_response_sender.clone())
+			Watcher::new_watcher(old_hash, self.rpc_response_sender.clone())
 				.swap_rpc_connection_hash(new_hash);
 		}
 	}

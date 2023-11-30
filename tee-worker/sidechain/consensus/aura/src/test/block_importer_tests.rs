@@ -15,7 +15,11 @@
 
 */
 
-use crate::{block_importer::BlockImporter, test::fixtures::validateer, ShardIdentifierFor};
+use crate::{
+	block_importer::BlockImporter,
+	test::{fixtures::validateer, mocks::peer_updater_mock::PeerUpdaterMock},
+	ShardIdentifierFor,
+};
 use codec::Encode;
 use core::assert_matches::assert_matches;
 use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
@@ -23,7 +27,11 @@ use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
 use itp_sgx_crypto::{aes::Aes, mocks::KeyRepositoryMock, StateCrypto};
 use itp_sgx_externalities::SgxExternalitiesDiffType;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_test::mock::{handle_state_mock::HandleStateMock, onchain_mock::OnchainMock};
+use itp_test::mock::{
+	handle_state_mock::HandleStateMock,
+	onchain_mock::OnchainMock,
+	stf_mock::{GetterMock, TrustedCallSignedMock},
+};
 use itp_time_utils::{duration_now, now_as_millis};
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{Block as ParentchainBlock, Header as ParentchainHeader, H256};
@@ -43,7 +51,7 @@ use sp_keyring::ed25519::Keyring;
 use sp_runtime::generic::SignedBlock as SignedParentchainBlock;
 use std::sync::Arc;
 
-type TestTopPoolAuthor = AuthorApiMock<H256, H256>;
+type TestTopPoolAuthor = AuthorApiMock<H256, H256, TrustedCallSignedMock, GetterMock>;
 type TestParentchainBlockImportTrigger =
 	TriggerParentchainBlockImportMock<SignedParentchainBlock<ParentchainBlock>>;
 type TestStateKeyRepo = KeyRepositoryMock<Aes>;
@@ -56,6 +64,9 @@ type TestBlockImporter = BlockImporter<
 	TestStateKeyRepo,
 	TestTopPoolAuthor,
 	TestParentchainBlockImportTrigger,
+	PeerUpdaterMock,
+	TrustedCallSignedMock,
+	GetterMock,
 >;
 
 fn state_key() -> Aes {
@@ -82,12 +93,15 @@ fn test_fixtures(
 	));
 	let state_key_repository = Arc::new(TestStateKeyRepo::new(state_key()));
 
+	let peer_updater_mock = Arc::new(PeerUpdaterMock {});
+
 	let block_importer = TestBlockImporter::new(
 		state_handler.clone(),
 		state_key_repository,
 		top_pool_author.clone(),
 		parentchain_block_import_trigger,
 		ocall_api,
+		peer_updater_mock,
 	);
 
 	(block_importer, state_handler, top_pool_author)

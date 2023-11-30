@@ -18,7 +18,9 @@
 
 //! Type definitions for testing. Includes various mocks.
 
-use crate::test::mocks::rpc_responder_mock::RpcResponderMock;
+use crate::test::mocks::{
+	peer_updater_mock::PeerUpdaterMock, rpc_responder_mock::RpcResponderMock,
+};
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, Stf, TrustedCallSigned};
 use itc_parentchain::block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
@@ -26,12 +28,17 @@ use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMet
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_executor::executor::StfExecutor;
+use itp_stf_primitives::types::TrustedOperation;
 use itp_test::mock::{
 	handle_state_mock::HandleStateMock, metrics_ocall_mock::MetricsOCallMock,
 	onchain_mock::OnchainMock,
 };
 use itp_top_pool::basic_pool::BasicPool;
-use itp_top_pool_author::{api::SidechainApi, author::Author, top_filter::AllowAllTopsFilter};
+use itp_top_pool_author::{
+	api::SidechainApi,
+	author::Author,
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
+};
 use itp_types::{Block as ParentchainBlock, SignedBlock as SignedParentchainBlock};
 use its_primitives::types::SignedBlock as SignedSidechainBlock;
 use its_sidechain::{aura::block_importer::BlockImporter, block_composer::BlockComposer};
@@ -60,20 +67,33 @@ pub type TestParentchainBlockImportTrigger =
 
 pub type TestNodeMetadataRepository = NodeMetadataRepository<NodeMetadataMock>;
 
-pub type TestStfExecutor =
-	StfExecutor<TestOCallApi, TestStateHandler, TestNodeMetadataRepository, TestStf>;
+pub type TestStfExecutor = StfExecutor<
+	TestOCallApi,
+	TestStateHandler,
+	TestNodeMetadataRepository,
+	TestStf,
+	TrustedCallSigned,
+	Getter,
+>;
 
 pub type TestRpcResponder = RpcResponderMock<H256>;
 
-pub type TestTopPool =
-	BasicPool<SidechainApi<ParentchainBlock>, ParentchainBlock, TestRpcResponder>;
+pub type TestTopPool = BasicPool<
+	SidechainApi<ParentchainBlock, TrustedCallSigned>,
+	ParentchainBlock,
+	TestRpcResponder,
+	TrustedOperation<TrustedCallSigned, Getter>,
+>;
 
 pub type TestTopPoolAuthor = Author<
 	TestTopPool,
-	AllowAllTopsFilter,
+	AllowAllTopsFilter<TrustedCallSigned, Getter>,
+	DirectCallsOnlyFilter<TrustedCallSigned, Getter>,
 	TestStateHandler,
 	TestShieldingKeyRepo,
 	MetricsOCallMock,
+	TrustedCallSigned,
+	Getter,
 >;
 
 pub type TestBlockComposer =
@@ -88,4 +108,7 @@ pub type TestBlockImporter = BlockImporter<
 	TestStateKeyRepo,
 	TestTopPoolAuthor,
 	TestParentchainBlockImportTrigger,
+	PeerUpdaterMock,
+	TrustedCallSigned,
+	Getter,
 >;
