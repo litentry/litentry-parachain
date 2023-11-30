@@ -118,10 +118,8 @@ pub struct NoderealJsonrpcClient {
 impl NoderealJsonrpcClient {
 	pub fn new(chain: NoderealChain, network: NoderealNetwork) -> Self {
 		let api_key = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_key.clone();
-		let api_retry_delay =
-			GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_delay;
-		let api_retry_times =
-			GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_times;
+		let api_retry_delay = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_delay;
+		let api_retry_times = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_times;
 		let api_url = GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()
@@ -156,12 +154,10 @@ impl NoderealJsonrpcClient {
 			}
 
 			if retries > maximum_retries {
-				return Err(Error::RequestError(
-					format!(
-						"Fail to call call nodereal enhanced api within {} retries",
-						maximum_retries
-					),
-				))
+				return Err(Error::RequestError(format!(
+					"Fail to call call nodereal enhanced api within {} retries",
+					maximum_retries
+				)))
 			}
 
 			match action(self) {

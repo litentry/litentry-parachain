@@ -80,21 +80,19 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		}
 	}
 
-	if !has_nft {
-		if errors.len() > 0 {
-			return Err(Error::RequestVCFailed(
-				Assertion::WeirdoGhostGangHolder,
-				ErrorDetail::DataProviderError(ErrorString::truncate_from(
-					errors
-						.into_iter()
-						.map(|e| format!("{e:?}"))
-						.collect::<Vec<String>>()
-						.join(", ")
-						.as_bytes()
-						.to_vec(),
-				)),
-			))
-		}
+	if !has_nft && !errors.is_empty() {
+		return Err(Error::RequestVCFailed(
+			Assertion::WeirdoGhostGangHolder,
+			ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				errors
+					.into_iter()
+					.map(|e| format!("{e:?}"))
+					.collect::<Vec<String>>()
+					.join(", ")
+					.as_bytes()
+					.to_vec(),
+			)),
+		))
 	}
 
 	match Credential::new(&req.who, &req.shard) {
