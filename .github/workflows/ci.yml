@@ -599,9 +599,12 @@ jobs:
 
   tee-test:
     runs-on: ubuntu-latest
+    # we could use this if-condition on job level because `run_tee_test == false` implies
+    # rebuild_parachain == false AND rebuild_tee == false, so we've got nothing to push
     if: needs.set-condition.outputs.run_tee_test == 'true'
     needs:
       - set-condition
+      - parachain-build-dev
       - tee-build
     strategy:
       fail-fast: false
