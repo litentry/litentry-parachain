@@ -176,21 +176,17 @@ pub fn generate_dummy_trusted_cli() -> TrustedCli {
 
 #[tokio::main]
 async fn main() -> Result<(), String> {
-	println!("Starting stress test!");
+	println!("Starting smoke test!");
 	let cli = generate_dummy_cli();
 	let trusted_cli = generate_dummy_trusted_cli();
 	let cli = Arc::new(cli);
 	let trusted_cli = Arc::new(trusted_cli);
-	for x in 0..50 {
+	for x in 0..10 {
 		let copied_cli = cli.clone();
 		let copied_trusted_cli = trusted_cli.clone();
 		// We are not awaiting, just to bombard it with requests
-		std::thread::spawn(move || {
-			let user = User::generate_user_with_prime_junction(x);
-			user.request_vc(&copied_cli, &copied_trusted_cli);
-		});
+		let user = User::generate_user_with_prime_junction(x);
+		user.request_vc(&copied_cli, &copied_trusted_cli);
 	}
-	loop {}
-
 	Ok(())
 }
