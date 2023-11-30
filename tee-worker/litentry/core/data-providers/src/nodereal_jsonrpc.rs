@@ -119,9 +119,9 @@ impl NoderealJsonrpcClient {
 	pub fn new(chain: NoderealChain, network: NoderealNetwork) -> Self {
 		let api_key = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_key.clone();
 		let api_retry_delay =
-			GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_delay.clone();
+			GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_delay;
 		let api_retry_times =
-			GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_times.clone();
+			GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_times;
 		let api_url = GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()
@@ -160,8 +160,7 @@ impl NoderealJsonrpcClient {
 					format!(
 						"Fail to call call nodereal enhanced api within {} retries",
 						maximum_retries
-					)
-					.into(),
+					),
 				))
 			}
 
