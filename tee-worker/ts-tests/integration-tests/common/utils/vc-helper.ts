@@ -147,7 +147,7 @@ export const basicAssertions = [
     },
     // VIP3
     {
-        description: 'Vip3',
+        description: 'VIP3 Gold Card Holder',
         assertion: {
             VIP3MembershipCard: 'Gold',
         },
