@@ -15,8 +15,9 @@
 
 */
 use crate::helpers::{get_storage_double_map, get_storage_map};
+use itp_stf_primitives::types::Nonce;
 use itp_storage::StorageHasher;
-use itp_types::{AccountId, Nonce};
+use itp_types::AccountId;
 use sha3::{Digest, Keccak256};
 use sp_core::{H160, H256};
 use std::prelude::v1::*;
