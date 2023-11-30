@@ -27,7 +27,8 @@ pub use futures;
 use ita_sgx_runtime::Hash;
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
-	ConvertAccountId, OpaqueCall, SgxParentchainTypeConverter, VCMPCallIndexes, H256, IMT,
+	ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCallSigned, H256,
+	IMT,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -238,7 +239,7 @@ where
 			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
 		context
 			.ocall_api
-			.send_to_parentchain(xt, &ParentchainId::Litentry)
+			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
 			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
 
 		Ok(res.encode())
