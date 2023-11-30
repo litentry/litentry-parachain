@@ -315,14 +315,14 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// The integritee worker calls this function for every processed parentchain_block to
+		/// The litentry worker calls this function for every processed parentchain_block to
 		/// confirm a state update.
 		#[pallet::call_index(3)]
 		#[pallet::weight((<T as Config>::WeightInfo::confirm_processed_parentchain_block(), DispatchClass::Normal, Pays::Yes))]
 		pub fn confirm_processed_parentchain_block(
 			origin: OriginFor<T>,
 			block_hash: H256,
-			#[pallet::compact] block_number: T::BlockNumber,
+			block_number: T::BlockNumber,
 			trusted_calls_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;

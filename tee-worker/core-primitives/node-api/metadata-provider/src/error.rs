@@ -18,6 +18,8 @@
 #[cfg(feature = "sgx")]
 extern crate thiserror_sgx as thiserror;
 
+use itp_stf_primitives::error::StfError;
+
 #[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum Error {
 	/// Metadata has not been set
@@ -33,5 +35,11 @@ pub type Result<T> = core::result::Result<T, Error>;
 impl From<itp_node_api_metadata::error::Error> for Error {
 	fn from(e: itp_node_api_metadata::error::Error) -> Self {
 		Self::MetadataError(e)
+	}
+}
+
+impl From<Error> for StfError {
+	fn from(_e: Error) -> Self {
+		StfError::InvalidMetadata
 	}
 }

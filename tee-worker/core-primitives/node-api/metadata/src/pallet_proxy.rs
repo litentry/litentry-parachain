@@ -15,20 +15,25 @@
 
 */
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
-use codec::{Decode, Encode};
-use itp_types::{DecryptableRequest, RsaRequest};
+use crate::{error::Result, NodeMetadata};
 
-#[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct InvokeArgs {
-	request: RsaRequest,
+/// Pallet name:
+const PROXY: &str = "Proxy";
+/// the deposit needed to register up to 20 proxies in native parentchain token
+pub const PROXY_DEPOSIT: u128 = 21_000_000_000_000;
+
+pub trait ProxyCallIndexes {
+	fn add_proxy_call_indexes(&self) -> Result<[u8; 2]>;
+
+	fn proxy_call_indexes(&self) -> Result<[u8; 2]>;
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for InvokeArgs {
-	type Args = ();
-	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
-		log::debug!("Found trusted call extrinsic, submitting it to the top pool");
-		executor.submit_trusted_call(self.request.shard(), self.request.payload().to_vec());
-		Ok(())
+impl ProxyCallIndexes for NodeMetadata {
+	fn add_proxy_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(PROXY, "add_proxy")
+	}
+
+	fn proxy_call_indexes(&self) -> Result<[u8; 2]> {
+		self.call_indexes(PROXY, "proxy")
 	}
 }

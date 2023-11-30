@@ -124,7 +124,7 @@ impl DirectClient {
 		// Decode rpc response.
 		let rpc_response: RpcResponse = serde_json::from_str(&response_str)?;
 		let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result)
-			.map_err(|e| Error::Custom(Box::new(e)))?;
+			.map_err(|e| Error::Custom(format!("{:?}", e).into()))?;
 
 		// Decode Metadata.
 		RuntimeMetadataPrefixed::decode(&mut rpc_return_value.value.as_slice())
@@ -264,8 +264,9 @@ impl DirectApi for DirectClient {
 
 fn decode_from_rpc_response<T: Decode + std::fmt::Debug>(json_rpc_response: &str) -> Result<T> {
 	let rpc_response: RpcResponse = serde_json::from_str(json_rpc_response)?;
-	let rpc_return_value =
-		RpcReturnValue::from_hex(&rpc_response.result).map_err(|e| Error::Custom(Box::new(e)))?;
+	let rpc_return_value = RpcReturnValue::from_hex(&rpc_response.result)
+		.map_err(|e| Error::Custom(format!("{:?}", e).into()))?;
+
 	let response_message = T::decode(&mut rpc_return_value.value.as_slice())?;
 	match rpc_return_value.status {
 		DirectRequestStatus::Ok => Ok(response_message),

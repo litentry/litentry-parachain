@@ -21,7 +21,7 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use sp_core::Pair;
 
@@ -35,10 +35,9 @@ impl SendErroneousParentchainCallCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(root, cli, trusted_cli);
 
-		let top: TrustedOperation =
-			TrustedCall::send_erroneous_parentchain_call(root.public().into())
-				.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let top = TrustedCall::send_erroneous_parentchain_call(root.public().into())
+			.sign(&KeyPair::Sr25519(Box::new(root)), nonce, &mrenclave, &shard)
+			.into_trusted_operation(trusted_cli.direct);
 		Ok(perform_trusted_operation::<()>(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }

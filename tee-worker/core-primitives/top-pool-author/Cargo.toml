@@ -9,7 +9,6 @@ edition = "2021"
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # local dependencies
-ita-stf = { path = "../../app-libs/stf", default-features = false }
 itp-enclave-metrics = { path = "../enclave-metrics", default-features = false }
 itp-ocall-api = { path = "../ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
@@ -51,7 +50,6 @@ sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "po
 [features]
 default = ["std"]
 std = [
-    "ita-stf/std",
     "itp-sgx-crypto/std",
     "itp-enclave-metrics/std",
     "itp-ocall-api/std",
@@ -67,12 +65,10 @@ std = [
 sgx = [
     "sgx_tstd",
     "jsonrpc-core_sgx",
-    "ita-stf/sgx",
     "itp-enclave-metrics/sgx",
     "itp-sgx-crypto/sgx",
     "itp-stf-state-handler/sgx",
     "itp-top-pool/sgx",
-    "itp-utils/sgx",
     "thiserror_sgx",
     # litentry
     "litentry-primitives/sgx",
