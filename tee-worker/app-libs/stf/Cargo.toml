@@ -8,6 +8,7 @@ edition = "2021"
 # crates.io
 codec = { version = "3.0.0", default-features = false, features = ["derive"], package = "parity-scale-codec" }
 derive_more = { version = "0.99.5" }
+hex = { version = "0.4", default-features = false }
 hex-literal = { version = "0.4" }
 log = { version = "0.4", default-features = false }
 rlp = { version = "0.5", default-features = false }
@@ -37,6 +38,7 @@ pallet-balances = { default-features = false, git = "https://github.com/parityte
 pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
@@ -54,7 +56,6 @@ evm_std = ["evm", "ita-sgx-runtime/evm_std"]
 sgx = [
     "sgx_tstd",
     "itp-sgx-externalities/sgx",
-    "itp-utils/sgx",
     "sp-io/sgx",
     "itp-node-api/sgx",
     "itp-node-api-metadata-provider/sgx",
@@ -74,7 +75,6 @@ std = [
     "itp-stf-interface/std",
     "itp-storage/std",
     "itp-types/std",
-    "itp-utils/std",
     "itp-node-api/std",
     "itp-node-api-metadata/std",
     "itp-node-api-metadata-provider/std",

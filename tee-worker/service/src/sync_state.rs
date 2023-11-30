@@ -88,13 +88,12 @@ async fn get_enclave_url_of_first_registered<NodeApi: PalletTeerexApi, EnclaveAp
 	node_api: &NodeApi,
 	enclave_api: &EnclaveApi,
 ) -> Result<String> {
-	let self_mr_enclave = enclave_api.get_mrenclave()?;
+	let self_mr_enclave = enclave_api.get_fingerprint()?;
 	let first_enclave = node_api
 		.all_enclaves(None)?
 		.into_iter()
-		.find(|e| e.mr_enclave == self_mr_enclave)
+		.find(|e| e.mr_enclave == self_mr_enclave.to_fixed_bytes())
 		.ok_or(Error::NoPeerWorkerFound)?;
 	let worker_api_direct = DirectWorkerApi::new(first_enclave.url);
-
 	Ok(worker_api_direct.get_mu_ra_url()?)
 }

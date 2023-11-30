@@ -254,6 +254,7 @@ where
 			last_synced_header =
 				self.sync_parentchain(last_synced_header, overriden_start_block)?;
 			trace!("[{:?}] synced block number: {}", id, last_synced_header.number);
+			std::thread::sleep(std::time::Duration::from_secs(1));
 		}
 		self.trigger_parentchain_block_import()?;
 

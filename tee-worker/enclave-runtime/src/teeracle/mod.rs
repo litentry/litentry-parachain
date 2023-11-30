@@ -19,8 +19,8 @@ use crate::{
 	error::{Error, Result},
 	initialization::global_components::GLOBAL_OCALL_API_COMPONENT,
 	utils::{
-		get_extrinsic_factory_from_solo_or_parachain,
-		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_extrinsic_factory_from_litentry_solo_or_parachain,
+		get_node_metadata_repository_from_litentry_solo_or_parachain,
 	},
 };
 use codec::{Decode, Encode};
@@ -46,7 +46,7 @@ use sp_runtime::OpaqueExtrinsic;
 use std::{string::String, vec::Vec};
 
 fn update_weather_data_internal(weather_info: WeatherInfo) -> Result<Vec<OpaqueExtrinsic>> {
-	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let mut extrinsic_calls: Vec<OpaqueCall> = Vec::new();
@@ -82,8 +82,7 @@ where
 
 	println!("Update the longitude:  {}, for source {}", longitude, source_base_url);
 
-	let node_metadata_repository =
-		get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let node_metadata_repository = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 
 	let call_ids = node_metadata_repository
 		.get_from_metadata(|m| m.update_oracle_call_indexes())
@@ -107,7 +106,8 @@ pub unsafe extern "C" fn update_weather_data_xt(
 	weather_info_latitude: *const u8,
 	weather_info_latitude_size: u32,
 	unchecked_extrinsic: *mut u8,
-	unchecked_extrinsic_size: u32,
+	unchecked_extrinsic_max_size: u32,
+	unchecked_extrinsic_size: *mut u32,
 ) -> sgx_status_t {
 	let mut weather_info_longitude_slice =
 		slice::from_raw_parts(weather_info_longitude, weather_info_longitude_size as usize);
@@ -141,13 +141,17 @@ pub unsafe extern "C" fn update_weather_data_xt(
 	};
 
 	let extrinsic_slice =
-		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
+		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_max_size as usize);
 
 	// Save created extrinsic as slice in the return value unchecked_extrinsic.
-	if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, extrinsics.encode()) {
-		error!("Copying encoded extrinsics into return slice failed: {:?}", e);
-		return sgx_status_t::SGX_ERROR_UNEXPECTED
-	}
+	*unchecked_extrinsic_size =
+		match write_slice_and_whitespace_pad(extrinsic_slice, extrinsics.encode()) {
+			Ok(l) => l as u32,
+			Err(e) => {
+				error!("Copying encoded extrinsics into return slice failed: {:?}", e);
+				return sgx_status_t::SGX_ERROR_UNEXPECTED
+			},
+		};
 
 	sgx_status_t::SGX_SUCCESS
 }
@@ -160,7 +164,8 @@ pub unsafe extern "C" fn update_market_data_xt(
 	fiat_currency_ptr: *const u8,
 	fiat_currency_size: u32,
 	unchecked_extrinsic: *mut u8,
-	unchecked_extrinsic_size: u32,
+	unchecked_extrinsic_max_size: u32,
+	unchecked_extrinsic_size: *mut u32,
 ) -> sgx_status_t {
 	let mut crypto_currency_slice =
 		slice::from_raw_parts(crypto_currency_ptr, crypto_currency_size as usize);
@@ -185,13 +190,17 @@ pub unsafe extern "C" fn update_market_data_xt(
 		return sgx_status_t::SGX_ERROR_UNEXPECTED
 	}
 	let extrinsic_slice =
-		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_size as usize);
+		slice::from_raw_parts_mut(unchecked_extrinsic, unchecked_extrinsic_max_size as usize);
 
 	// Save created extrinsic as slice in the return value unchecked_extrinsic.
-	if let Err(e) = write_slice_and_whitespace_pad(extrinsic_slice, extrinsics.encode()) {
-		error!("Copying encoded extrinsics into return slice failed: {:?}", e);
-		return sgx_status_t::SGX_ERROR_UNEXPECTED
-	}
+	*unchecked_extrinsic_size =
+		match write_slice_and_whitespace_pad(extrinsic_slice, extrinsics.encode()) {
+			Ok(l) => l as u32,
+			Err(e) => {
+				error!("Copying encoded extrinsics into return slice failed: {:?}", e);
+				return sgx_status_t::SGX_ERROR_UNEXPECTED
+			},
+		};
 
 	sgx_status_t::SGX_SUCCESS
 }
@@ -200,7 +209,7 @@ fn update_market_data_internal(
 	crypto_currency: String,
 	fiat_currency: String,
 ) -> Result<Vec<OpaqueExtrinsic>> {
-	let extrinsics_factory = get_extrinsic_factory_from_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 
 	let mut extrinsic_calls: Vec<OpaqueCall> = Vec::new();
@@ -250,8 +259,7 @@ where
 		source_base_url,
 	);
 
-	let node_metadata_repository =
-		get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let node_metadata_repository = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
 
 	let call_ids = node_metadata_repository
 		.get_from_metadata(|m| m.update_exchange_rate_call_indexes())
