@@ -146,11 +146,10 @@ export const basicAssertions = [
         },
     },
     // VIP3
-       {
-        description:
-            'Vip3',
+    {
+        description: 'Vip3',
         assertion: {
-            VIP3MembershipCard: "Gold",
+            VIP3MembershipCard: 'Gold',
         },
     },
 ];
