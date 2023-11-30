@@ -22,7 +22,7 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use clap::Parser;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::{Identity, Web3Network};
 use sp_core::Pair;
@@ -67,7 +67,7 @@ impl LinkIdentityCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
-		let top: TrustedOperation = TrustedCall::link_identity_callback(
+		let top = TrustedCall::link_identity_callback(
 			alice.public().into(),
 			src_id,
 			dst_id,

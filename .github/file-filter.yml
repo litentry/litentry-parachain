@@ -32,4 +32,4 @@ tee_test: &tee_test
   - 'tee-worker/ts-tests/**'
   - 'tee-worker/cli/*.sh'
   - 'docker/**'
-  - 'tee-worker/docker/**'
+  - 'tee-worker/docker/*.yml'
