@@ -247,10 +247,14 @@ pub mod pallet {
 			T::ManageOrigin::ensure_origin(origin)?;
 
 			ensure!(LinkedIdentities::<T>::contains_key(&identity), Error::<T>::IdentityNotExist);
-			ensure!(identity != who, Error::<T>::RemovePrimeIdentityDisallowed);
+			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+			if who == identity {
+				let _ = IDGraphs::<T>::clear_prefix(&who, 1, None);
+			} else {
+				IDGraphs::<T>::remove(&who, &identity);
+			}
 
 			LinkedIdentities::<T>::remove(&identity);
-			IDGraphs::<T>::remove(&who, &identity);
 			Self::deposit_event(Event::IdentityRemoved { who, identity });
 
 			Ok(())

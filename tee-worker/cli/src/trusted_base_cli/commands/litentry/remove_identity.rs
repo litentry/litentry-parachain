@@ -22,7 +22,6 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use clap::Parser;
-use codec::Decode;
 use ita_stf::{Index, TrustedCall, TrustedOperation};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::Identity;

@@ -22,7 +22,10 @@ use sp_core::{H160, U256};
 use std::vec::Vec;
 
 use crate::{
-	helpers::{enclave_signer_account, ensure_enclave_signer_account, ensure_self},
+	helpers::{
+		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_alice,
+		ensure_self,
+	},
 	trusted_call_result::*,
 	Runtime, StfError, System, TrustedOperation,
 };
@@ -584,19 +587,20 @@ where
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
-
+			#[cfg(not(feature = "production"))]
 			TrustedCall::remove_identity(signer, who, identity) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
 
-				Self::remove_identity_internal(
-					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who.clone(),
-					identity.clone(),
-				)
-				.map_err(|e| {
-					debug!("removing identity failed error: {}", e);
-					e
-				})?;
+				let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure!(
+					ensure_enclave_signer_or_alice(&account),
+					StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
+				);
+
+				IMTCall::remove_identity { who, identity }
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
+
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
@@ -818,6 +822,7 @@ where
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
+			#[cfg(not(feature = "production"))]
 			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
