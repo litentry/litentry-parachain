@@ -63,8 +63,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `451`
 		//  Estimated: `6391`
-		// Minimum execution time: 2_036_569_000 picoseconds.
-		Weight::from_parts(2_077_497_000, 0)
+		// Minimum execution time: 2_127_029_000 picoseconds.
+		Weight::from_parts(2_251_066_000, 0)
 			.saturating_add(Weight::from_parts(0, 6391))
 			.saturating_add(T::DbWeight::get().reads(5))
 			.saturating_add(T::DbWeight::get().writes(1))
@@ -79,8 +79,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `477`
 		//  Estimated: `3942`
-		// Minimum execution time: 42_431_000 picoseconds.
-		Weight::from_parts(43_513_000, 0)
+		// Minimum execution time: 41_550_000 picoseconds.
+		Weight::from_parts(42_787_000, 0)
 			.saturating_add(Weight::from_parts(0, 3942))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(5))
@@ -89,8 +89,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `0`
 		//  Estimated: `0`
-		// Minimum execution time: 15_920_000 picoseconds.
-		Weight::from_parts(16_182_000, 0)
+		// Minimum execution time: 15_632_000 picoseconds.
+		Weight::from_parts(19_609_000, 0)
 			.saturating_add(Weight::from_parts(0, 0))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
@@ -103,8 +103,8 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `377`
 		//  Estimated: `3842`
-		// Minimum execution time: 38_361_000 picoseconds.
-		Weight::from_parts(39_425_000, 0)
+		// Minimum execution time: 39_070_000 picoseconds.
+		Weight::from_parts(43_725_000, 0)
 			.saturating_add(Weight::from_parts(0, 3842))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().writes(1))
@@ -121,13 +121,13 @@ impl<T: frame_system::Config> pallet_teerex::WeightInfo for WeightInfo<T> {
 		// Proof Size summary in bytes:
 		//  Measured:  `335`
 		//  Estimated: `3800 + t * (2475 ±0)`
-		// Minimum execution time: 33_989_000 picoseconds.
-		Weight::from_parts(31_641_354, 0)
+		// Minimum execution time: 34_486_000 picoseconds.
+		Weight::from_parts(32_202_871, 0)
 			.saturating_add(Weight::from_parts(0, 3800))
-			// Standard Error: 2_278
-			.saturating_add(Weight::from_parts(23_942, 0).saturating_mul(l.into()))
-			// Standard Error: 50_844
-			.saturating_add(Weight::from_parts(2_597_224, 0).saturating_mul(t.into()))
+			// Standard Error: 6_280
+			.saturating_add(Weight::from_parts(11_964, 0).saturating_mul(l.into()))
+			// Standard Error: 140_165
+			.saturating_add(Weight::from_parts(3_230_617, 0).saturating_mul(t.into()))
 			.saturating_add(T::DbWeight::get().reads(3))
 			.saturating_add(T::DbWeight::get().reads((1_u64).saturating_mul(t.into())))
 			.saturating_add(T::DbWeight::get().writes(1))
