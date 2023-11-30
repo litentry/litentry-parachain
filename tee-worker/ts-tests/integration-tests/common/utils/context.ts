@@ -8,7 +8,7 @@ import Options from 'websocket-as-promised/types/options';
 import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
 import { getEvmSigner, getSubstrateSigner } from '../helpers';
-import type { IntegrationTestContext, Web3Wallets } from '../common-definitions';
+import type { IntegrationTestContext, Web3Wallets } from '../common-types';
 
 import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';

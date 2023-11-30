@@ -3,7 +3,7 @@ import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU
 import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
-import { IntegrationTestContext, JsonRpcRequest } from './common-definitions';
+import { IntegrationTestContext, JsonRpcRequest } from './common-types';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer, encryptWithAes } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';

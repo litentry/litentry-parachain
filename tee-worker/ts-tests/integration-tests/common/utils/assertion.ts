@@ -7,7 +7,7 @@ import * as ed from '@noble/ed25519';
 import { buildIdentityHelper, parseIdGraph, parseIdentity } from './identity-helper';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeError } from 'sidechain-api';
 import { TeerexPrimitivesEnclave } from 'parachain-api';
-import type { IntegrationTestContext } from '../common-definitions';
+import type { IntegrationTestContext } from '../common-types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from './vc-helper';

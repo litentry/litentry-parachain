@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import colors from 'colors';
 import type { HexString } from '@polkadot/util/types';
 import type { Codec } from '@polkadot/types/types';
-import type { IntegrationTestContext } from './common-definitions';
+import type { IntegrationTestContext } from './common-types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 
 import { u8aToHex } from '@polkadot/util';

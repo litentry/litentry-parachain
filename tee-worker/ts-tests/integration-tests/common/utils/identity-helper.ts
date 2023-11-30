@@ -1,6 +1,6 @@
 import { u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import type { IntegrationTestContext } from '../common-definitions';
+import type { IntegrationTestContext } from '../common-types';
 import { AesOutput } from 'parachain-api';
 import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';

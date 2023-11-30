@@ -1,7 +1,7 @@
 import { ApiPromise } from 'parachain-api';
 import { KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import type { IntegrationTestContext, Web3Wallets } from '../common-definitions';
+import type { IntegrationTestContext, Web3Wallets } from '../common-types';
 import type { Metadata, TypeRegistry } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
 import { initIntegrationTestContext } from './context';
