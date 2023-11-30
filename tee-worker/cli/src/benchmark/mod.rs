@@ -19,17 +19,18 @@ use crate::{
 	command_utils::get_worker_api_direct,
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
-	trusted_command_utils::{
-		decode_balance, get_identifiers, get_keystore_path, get_pair_from_str,
-	},
+	trusted_command_utils::{get_identifiers, get_keystore_path, get_pair_from_str},
 	trusted_operation::{get_json_request, wait_until},
 	Cli, CliResult, CliResultOk, SR25519_KEY_TYPE,
 };
 use codec::Decode;
 use hdrhistogram::Histogram;
-use ita_stf::{Getter, Index, PublicGetter, TrustedCall, TrustedGetter, TrustedOperation};
+use ita_stf::{Getter, Index, PublicGetter, TrustedCall, TrustedCallSigned, TrustedGetter};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
-use itp_stf_primitives::types::KeyPair;
+use itp_stf_primitives::{
+	traits::TrustedCallSigning,
+	types::{KeyPair, TrustedOperation},
+};
 use itp_types::{
 	Balance, ShardIdentifier, TrustedOperationStatus,
 	TrustedOperationStatus::{InSidechainBlock, Submitted},
@@ -147,7 +148,7 @@ impl BenchmarkCommand {
 			let initial_balance = 10000000;
 
 			// Transfer amount from Alice to new account.
-			let top: TrustedOperation = TrustedCall::balance_transfer(
+			let top: TrustedOperation<TrustedCallSigned, Getter> = TrustedCall::balance_transfer(
 				funding_account_keys.public().into(),
 				account.public().into(),
 				initial_balance,
@@ -204,7 +205,7 @@ impl BenchmarkCommand {
 					let nonce = get_nonce(client.account.clone(), shard, &client.client_api);
 
 					// Transfer money from client account to new account.
-					let top: TrustedOperation = TrustedCall::balance_transfer(
+					let top: TrustedOperation<TrustedCallSigned, Getter> = TrustedCall::balance_transfer(
 						client.account.public().into(),
 						new_account.public().into(),
 						EXISTENTIAL_DEPOSIT,
@@ -367,4 +368,15 @@ fn is_submitted(s: TrustedOperationStatus) -> bool {
 
 fn is_sidechain_block(s: TrustedOperationStatus) -> bool {
 	matches!(s, InSidechainBlock(_))
+}
+
+fn decode_balance(maybe_encoded_balance: Option<Vec<u8>>) -> Option<Balance> {
+	maybe_encoded_balance.and_then(|encoded_balance| {
+		if let Ok(vd) = Balance::decode(&mut encoded_balance.as_slice()) {
+			Some(vd)
+		} else {
+			warn!("Could not decode balance. maybe hasn't been set? {:x?}", encoded_balance);
+			None
+		}
+	})
 }

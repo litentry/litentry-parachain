@@ -18,6 +18,7 @@
 
 use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
 use ita_sgx_runtime::Hash;
+use ita_stf::{Getter, TrustedCallSigned};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -36,8 +37,8 @@ use std::{format, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
@@ -48,8 +49,8 @@ pub(crate) struct AssertionHandler<
 impl<K, A, S, H, O> TaskHandler for AssertionHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
@@ -61,8 +62,13 @@ where
 		// create the initial credential
 		// TODO: maybe we can further simplify this
 		let mut credential = match self.req.assertion.clone() {
-			Assertion::A1 => lc_assertion_build::a1::build(&self.req),
-
+			Assertion::A1 => {
+				#[cfg(test)]
+				{
+					std::thread::sleep(core::time::Duration::from_secs(5));
+				}
+				lc_assertion_build::a1::build(&self.req)
+			},
 			Assertion::A2(guild_id) => lc_assertion_build::a2::build(&self.req, guild_id),
 
 			Assertion::A3(guild_id, channel_id, role_id) =>
@@ -97,9 +103,6 @@ where
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
 
-			Assertion::SoraQuiz(quiz_type) =>
-				lc_assertion_build::sora::quiz::build(&self.req, quiz_type),
-
 			Assertion::GenericDiscordRole(role_type) =>
 				lc_assertion_build::generic_discord_role::build(&self.req, role_type),
 
@@ -111,6 +114,9 @@ where
 					&self.req,
 					digit_domain_type,
 				),
+
+			Assertion::VIP3MembershipCard(level) =>
+				lc_assertion_build::vip3::card::build(&self.req, level),
 		}?;
 
 		// post-process the credential

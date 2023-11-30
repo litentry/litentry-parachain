@@ -11,7 +11,7 @@ tee-worker/bin/*.bin
 tee-worker/bin/key.txt
 tee-worker/bin/spid.txt
 tee-worker/bin/sidechain_db/
-tee-worker/docker/
+tee-worker/docker/*.yml
 tee-worker/docs/
 tee-worker/local-setup/
 tee-worker/scripts/

@@ -19,7 +19,7 @@
 
 use crate::{
 	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
-	SoraQuizType, Web3Network,
+	VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -109,6 +109,13 @@ pub struct AchainableToken {
 	pub token: ParameterString,
 }
 
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub struct AchainableMirror {
+	pub name: ParameterString,
+	pub chain: Web3Network,
+	pub post_quantity: Option<ParameterString>,
+}
+
 #[rustfmt::skip]
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AchainableParams {
@@ -134,6 +141,8 @@ pub enum AchainableParams {
 	Date(AchainableDate),
 	#[codec(index = 10)]
 	Token(AchainableToken),
+	#[codec(index = 11)]
+	Mirror(AchainableMirror),
 }
 
 impl AchainableParams {
@@ -150,6 +159,7 @@ impl AchainableParams {
 			AchainableParams::DatePercent(p) => p.name.clone(),
 			AchainableParams::Date(p) => p.name.clone(),
 			AchainableParams::Token(p) => p.name.clone(),
+			AchainableParams::Mirror(p) => p.name.clone(),
 		}
 	}
 
@@ -166,6 +176,7 @@ impl AchainableParams {
 			AchainableParams::DatePercent(p) => p.chain,
 			AchainableParams::Date(p) => p.chain,
 			AchainableParams::Token(p) => p.chain,
+			AchainableParams::Mirror(p) => p.chain,
 		}
 	}
 }
@@ -210,12 +221,8 @@ pub enum Assertion {
 	#[codec(index = 13)]
 	Oneblock(OneBlockCourseType),
 
-	// Sora Quiz
-	#[codec(index = 14)]
-	SoraQuiz(SoraQuizType),  // (sora_quiz_type)
-
 	// GenericDiscordRole
-	#[codec(index = 15)]
+	#[codec(index = 14)]
 	GenericDiscordRole(GenericDiscordRoleType),  // (generic_discord_role_type)
 
 	// ----- begin SPACEID -----
@@ -225,6 +232,9 @@ pub enum Assertion {
 	#[codec(index = 17)]
 	BnbDigitDomainClub(BnbDigitDomainType),
 	// ----- end SPACEID -----
+
+	#[codec(index = 18)]
+	VIP3MembershipCard(VIP3MembershipCardLevel),
 }
 
 impl Assertion {
@@ -255,6 +265,8 @@ impl Assertion {
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
+			// VIP3 Member Card
+			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

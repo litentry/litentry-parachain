@@ -45,19 +45,19 @@ pub use parentchain_primitives::{
 	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
-	AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
+	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
 	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
-	BoundedWeb3Network, ErrorDetail, ErrorString, GenericDiscordRoleType, Hash as ParentchainHash,
-	Header as ParentchainHeader, IMPError, Index as ParentchainIndex, IntoErrorDetail,
-	OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
-	Signature as ParentchainSignature, SoraQuizType, VCMPError, Web3Network, ASSERTION_FROM_DATE,
-	MINUTES,
+	BoundedWeb3Network, ContestType, ErrorDetail, ErrorString, GenericDiscordRoleType,
+	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
+	IntoErrorDetail, OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
+	Signature as ParentchainSignature, SoraQuizType, VCMPError, VIP3MembershipCardLevel,
+	Web3Network, ASSERTION_FROM_DATE, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
-use std::string::ToString;
+use std::string::{String, ToString};
 pub use teerex_primitives::{decl_rsa_request, ShardIdentifier};
 
 #[cfg(feature = "std")]
@@ -168,7 +168,7 @@ impl From<ecdsa::Signature> for LitentryMultiSignature {
 pub fn recover_evm_address(
 	msg: &[u8; 32],
 	sig: &[u8; 65],
-) -> core::result::Result<[u8; 20], sp_io::EcdsaVerifyError> {
+) -> Result<[u8; 20], sp_io::EcdsaVerifyError> {
 	let pubkey = secp256k1_ecdsa_recover(sig, msg)?;
 	let hashed_pk = keccak_256(&pubkey);
 
@@ -190,7 +190,7 @@ fn evm_eip191_wrap(msg: &[u8]) -> Vec<u8> {
 pub type IdentityNetworkTuple = (Identity, Vec<Web3Network>);
 
 // Represent a request that can be decrypted by the enclave
-// Both itp_types::Request and AesRequest should impelement this
+// Both itp_types::RsaRequest and AesRequest should impelement this
 pub trait DecryptableRequest {
 	type Error;
 	// the shard getter
@@ -201,5 +201,11 @@ pub trait DecryptableRequest {
 	fn decrypt<T: Debug>(
 		&mut self,
 		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
-	) -> core::result::Result<Vec<u8>, Self::Error>;
+	) -> Result<Vec<u8>, Self::Error>;
+}
+
+pub struct BroadcastedRequest {
+	pub id: String,
+	pub payload: String,
+	pub rpc_method: String,
 }

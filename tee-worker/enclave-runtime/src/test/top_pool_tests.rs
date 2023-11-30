@@ -29,14 +29,13 @@ use crate::test::{
 	},
 };
 use codec::Encode;
+use ita_parentchain_interface::integritee;
 use ita_stf::{
 	test_genesis::{endowed_account, unendowed_account},
-	TeerexCallIndexes, TrustedCall, TrustedOperation,
+	Getter, TrustedCall, TrustedCallSigned,
 };
 use itc_parentchain::indirect_calls_executor::{
-	filter_metadata::{ShieldFundsAndInvokeFilter, TestEventCreator},
-	parentchain_parser::ParentchainExtrinsicParser,
-	ExecuteIndirectCalls, IndirectCallsExecutor,
+	mock::TestEventCreator, ExecuteIndirectCalls, IndirectCallsExecutor,
 };
 use itc_parentchain_test::{
 	parentchain_block_builder::ParentchainBlockBuilder,
@@ -49,12 +48,17 @@ use itp_node_api::{
 	},
 	metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository},
 };
+use itp_node_api_metadata::pallet_teerex::TeerexCallIndexes;
 use itp_ocall_api::EnclaveAttestationOCallApi;
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_executor::enclave_signer::StfEnclaveSigner;
+use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperation};
 use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::metrics_ocall_mock::MetricsOCallMock;
-use itp_top_pool_author::{top_filter::AllowAllTopsFilter, traits::AuthorApi};
+use itp_top_pool_author::{
+	top_filter::{AllowAllTopsFilter, DirectCallsOnlyFilter},
+	traits::AuthorApi,
+};
 use itp_types::{
 	parentchain::Address, AccountId, Block, RsaRequest, ShardIdentifier, ShieldFundsFn, H256,
 };
@@ -65,7 +69,6 @@ use sgx_crypto_helper::RsaKeyPair;
 use sp_core::{ed25519, Pair};
 use sp_runtime::{MultiSignature, OpaqueExtrinsic};
 use std::{sync::Arc, vec::Vec};
-
 pub fn process_indirect_call_in_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
 	info!("Setting up test.");
@@ -81,13 +84,16 @@ pub fn process_indirect_call_in_top_pool() {
 	let (_, shard_id) = init_state(state_handler.as_ref(), signer.public().into());
 
 	let top_pool = create_top_pool();
+	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
-		AllowAllTopsFilter {},
+		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
+		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler.clone(),
 		shielding_key_repo,
 		Arc::new(MetricsOCallMock::default()),
+		Arc::new(sender),
 	));
 
 	let encrypted_indirect_call =
@@ -117,21 +123,25 @@ pub fn submit_shielding_call_to_top_pool() {
 	let state_observer = Arc::new(ObserveStateMock::new(state));
 
 	let top_pool = create_top_pool();
+	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
-		AllowAllTopsFilter {},
+		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
+		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler,
 		shielding_key_repo.clone(),
 		Arc::new(MetricsOCallMock::default()),
+		Arc::new(sender),
 	));
 
-	let enclave_signer = Arc::new(StfEnclaveSigner::<_, _, _, TestStf, _>::new(
-		state_observer,
-		ocall_api.clone(),
-		shielding_key_repo.clone(),
-		top_pool_author.clone(),
-	));
+	let enclave_signer =
+		Arc::new(StfEnclaveSigner::<_, _, _, TestStf, _, TrustedCallSigned, Getter>::new(
+			state_observer,
+			ocall_api.clone(),
+			shielding_key_repo.clone(),
+			top_pool_author.clone(),
+		));
 	let node_meta_data_repository = Arc::new(NodeMetadataRepository::default());
 	node_meta_data_repository.set_metadata(NodeMetadataMock::new());
 	let indirect_calls_executor =
@@ -140,8 +150,11 @@ pub fn submit_shielding_call_to_top_pool() {
 			_,
 			_,
 			_,
-			ShieldFundsAndInvokeFilter<ParentchainExtrinsicParser>,
+			integritee::ShieldFundsAndInvokeFilter<integritee::ParentchainExtrinsicParser>,
 			TestEventCreator,
+			integritee::ParentchainEventHandler,
+			TrustedCallSigned,
+			Getter,
 		>::new(
 			shielding_key_repo, enclave_signer, top_pool_author.clone(), node_meta_data_repository
 		);
@@ -176,7 +189,8 @@ fn encrypted_indirect_call<
 		10000u128,
 	);
 	let call_signed = sign_trusted_call(&call, attestation_api, shard_id, sender);
-	let trusted_operation = TrustedOperation::indirect_call(call_signed);
+	let trusted_operation =
+		TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(call_signed);
 	encrypt_trusted_operation(shielding_key, &trusted_operation)
 }
 

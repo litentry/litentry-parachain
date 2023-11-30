@@ -107,12 +107,19 @@ extern "C" {
 		sidechain_blocks_size: u32,
 	) -> sgx_status_t;
 
+	pub fn ocall_get_trusted_peers_urls(
+		ret_val: *mut sgx_status_t,
+		peers: *mut u8,
+		peers_size: u32,
+	) -> sgx_status_t;
+
 	pub fn ocall_send_to_parentchain(
 		ret_val: *mut sgx_status_t,
 		extrinsics: *const u8,
 		extrinsics_size: u32,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
+		await_each_inclusion: c_int,
 	) -> sgx_status_t;
 
 	pub fn ocall_read_ipfs(

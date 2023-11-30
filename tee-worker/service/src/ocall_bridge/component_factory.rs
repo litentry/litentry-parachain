@@ -17,6 +17,7 @@
 */
 
 use crate::{
+	globals::tokio_handle::GetTokioHandle,
 	ocall_bridge::{
 		bridge_api::{
 			GetOCallBridgeComponents, IpfsBridge, MetricsBridge, RemoteAttestationBridge,
@@ -30,8 +31,7 @@ use crate::{
 	},
 	prometheus_metrics::ReceiveEnclaveMetrics,
 	sync_block_broadcaster::BroadcastBlocks,
-	worker_peers_updater::UpdateWorkerPeers,
-	GetTokioHandle,
+	worker_peers_registry::PeersRegistry,
 };
 use itp_enclave_api::{enclave_base::EnclaveBase, remote_attestation::RemoteAttestationCallBacks};
 use itp_node_api::node_api_factory::CreateNodeApi;
@@ -48,7 +48,7 @@ pub struct OCallBridgeComponentFactory<
 	Broadcaster,
 	EnclaveApi,
 	Storage,
-	PeerUpdater,
+	WorkerPeersRegistry,
 	PeerBlockFetcher,
 	TokioHandle,
 	MetricsReceiver,
@@ -59,7 +59,7 @@ pub struct OCallBridgeComponentFactory<
 	block_broadcaster: Arc<Broadcaster>,
 	enclave_api: Arc<EnclaveApi>,
 	block_storage: Arc<Storage>,
-	peer_updater: Arc<PeerUpdater>,
+	peers_registry: Arc<WorkerPeersRegistry>,
 	peer_block_fetcher: Arc<PeerBlockFetcher>,
 	tokio_handle: Arc<TokioHandle>,
 	metrics_receiver: Arc<MetricsReceiver>,
@@ -70,7 +70,7 @@ impl<
 		Broadcaster,
 		EnclaveApi,
 		Storage,
-		PeerUpdater,
+		WorkerPeersRegistry,
 		PeerBlockFetcher,
 		TokioHandle,
 		MetricsReceiver,
@@ -80,7 +80,7 @@ impl<
 		Broadcaster,
 		EnclaveApi,
 		Storage,
-		PeerUpdater,
+		WorkerPeersRegistry,
 		PeerBlockFetcher,
 		TokioHandle,
 		MetricsReceiver,
@@ -94,7 +94,7 @@ impl<
 		block_broadcaster: Arc<Broadcaster>,
 		enclave_api: Arc<EnclaveApi>,
 		block_storage: Arc<Storage>,
-		peer_updater: Arc<PeerUpdater>,
+		peers_registry: Arc<WorkerPeersRegistry>,
 		peer_block_fetcher: Arc<PeerBlockFetcher>,
 		tokio_handle: Arc<TokioHandle>,
 		metrics_receiver: Arc<MetricsReceiver>,
@@ -106,7 +106,7 @@ impl<
 			block_broadcaster,
 			enclave_api,
 			block_storage,
-			peer_updater,
+			peers_registry,
 			peer_block_fetcher,
 			tokio_handle,
 			metrics_receiver,
@@ -119,7 +119,7 @@ impl<
 		Broadcaster,
 		EnclaveApi,
 		Storage,
-		PeerUpdater,
+		WorkerPeersRegistry,
 		PeerBlockFetcher,
 		TokioHandle,
 		MetricsReceiver,
@@ -129,7 +129,7 @@ impl<
 		Broadcaster,
 		EnclaveApi,
 		Storage,
-		PeerUpdater,
+		WorkerPeersRegistry,
 		PeerBlockFetcher,
 		TokioHandle,
 		MetricsReceiver,
@@ -138,7 +138,7 @@ impl<
 	Broadcaster: BroadcastBlocks + 'static,
 	EnclaveApi: EnclaveBase + RemoteAttestationCallBacks + 'static,
 	Storage: BlockStorage<SignedSidechainBlock> + 'static,
-	PeerUpdater: UpdateWorkerPeers + 'static,
+	WorkerPeersRegistry: PeersRegistry + 'static,
 	PeerBlockFetcher: FetchBlocksFromPeer<SignedBlockType = SignedSidechainBlock> + 'static,
 	TokioHandle: GetTokioHandle + 'static,
 	MetricsReceiver: ReceiveEnclaveMetrics + 'static,
@@ -151,7 +151,7 @@ impl<
 		Arc::new(SidechainOCall::new(
 			self.block_broadcaster.clone(),
 			self.block_storage.clone(),
-			self.peer_updater.clone(),
+			self.peers_registry.clone(),
 			self.peer_block_fetcher.clone(),
 			self.tokio_handle.clone(),
 		))

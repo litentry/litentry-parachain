@@ -12,7 +12,6 @@ env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
 jobs:
-        
   update-publish:
     runs-on: ubuntu-latest
     steps:

@@ -22,9 +22,11 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
-use itp_stf_primitives::types::KeyPair;
+use ita_stf::{Getter, Index, TrustedCall, TrustedCallSigned};
+use itp_stf_primitives::{
+	traits::TrustedCallSigning,
+	types::{KeyPair, TrustedOperation},
+};
 use litentry_primitives::ParentchainBalance as Balance;
 use log::*;
 use sp_core::{crypto::Ss58Codec, Pair};
@@ -58,11 +60,12 @@ impl TransferCommand {
 			self.amount,
 			nonce
 		);
-		let top: TrustedOperation =
+		let top: TrustedOperation<TrustedCallSigned, Getter> =
 			TrustedCall::balance_transfer(from.public().into(), to, self.amount)
 				.sign(&KeyPair::Sr25519(Box::new(from)), nonce, &mrenclave, &shard)
 				.into_trusted_operation(trusted_args.direct);
-		let res = perform_trusted_operation(cli, trusted_args, &top).map(|_| CliResultOk::None)?;
+		let res =
+			perform_trusted_operation::<()>(cli, trusted_args, &top).map(|_| CliResultOk::None)?;
 		info!("trusted call transfer executed");
 		Ok(res)
 	}

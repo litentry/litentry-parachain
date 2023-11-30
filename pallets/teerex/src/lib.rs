@@ -104,11 +104,22 @@ pub mod pallet {
 		NewMrenclaveSet {
 			new_mrenclave: MrEnclave,
 		},
+		RegisteredEnclaveLimitSet(u64),
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
 	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
+
+	#[pallet::type_value]
+	pub fn DefaultRegisteredEnclaveLimit() -> u64 {
+		3
+	}
+
+	#[pallet::storage]
+	#[pallet::getter(fn registered_enclave_limit)]
+	pub type RegisteredEnclaveLimit<T: Config> =
+		StorageValue<_, u64, ValueQuery, DefaultRegisteredEnclaveLimit>;
 
 	// Watch out: we start indexing with 1 instead of zero in order to
 	// avoid ambiguity between Null and 0.
@@ -304,14 +315,14 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// The integritee worker calls this function for every processed parentchain_block to
+		/// The litentry worker calls this function for every processed parentchain_block to
 		/// confirm a state update.
 		#[pallet::call_index(3)]
 		#[pallet::weight((<T as Config>::WeightInfo::confirm_processed_parentchain_block(), DispatchClass::Normal, Pays::Yes))]
 		pub fn confirm_processed_parentchain_block(
 			origin: OriginFor<T>,
 			block_hash: H256,
-			#[pallet::compact] block_number: T::BlockNumber,
+			block_number: T::BlockNumber,
 			trusted_calls_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -577,6 +588,26 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		/// Sets new registerd enclave limit, can be called only by admin.
+		#[pallet::call_index(14)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn set_registered_enclave_limit(
+			origin: OriginFor<T>,
+			new_limit: u64,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+
+			ensure!(
+				new_limit >= Self::enclave_count(),
+				<Error<T>>::CannotLowerRegisteredEnclaveLimit
+			);
+
+			RegisteredEnclaveLimit::<T>::put(new_limit);
+			Self::deposit_event(Event::RegisteredEnclaveLimitSet(new_limit));
+			Ok(().into())
+		}
+
 		/// Set registered mrenclave
 		/// This is a workaround to overcome the problem that the ra-report seems to contain
 		/// the old mrenclave after doing enclave update, which breaks the client/IDHub.
@@ -639,6 +670,10 @@ pub mod pallet {
 		TooManyTopics,
 		/// The length of the `data` passed to `publish_hash` exceeds the limit.
 		DataTooLong,
+		/// The number of registered enclaves reached the limit
+		RegisteredEnclaveLimitReached,
+		/// The limit cannot be lower than actual registered enclaves count
+		CannotLowerRegisteredEnclaveLimit,
 	}
 }
 
@@ -651,6 +686,12 @@ impl<T: Config> Pallet<T> {
 			log::info!("Updating already registered enclave");
 			<EnclaveIndex<T>>::get(sender)
 		} else {
+			// we are about to register new enclave so we don't check equality, it will eventually
+			// be reached
+			ensure!(
+				Self::enclave_count() < Self::registered_enclave_limit(),
+				<Error<T>>::RegisteredEnclaveLimitReached
+			);
 			let enclaves_count = Self::enclave_count()
 				.checked_add(1)
 				.ok_or("[Teerex]: Overflow adding new enclave to registry")?;

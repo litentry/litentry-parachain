@@ -43,7 +43,7 @@ export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex'
         const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
 
         const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
-            authTagLength: 16,
+            authTagLength: tagSize,
         });
         decipher.setAAD(aad);
         decipher.setAuthTag(authorTag);

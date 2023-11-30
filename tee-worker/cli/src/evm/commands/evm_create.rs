@@ -22,18 +22,17 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
-use ita_stf::{
-	evm_helpers::evm_create_address, Index, TrustedCall, TrustedGetter, TrustedOperation,
+use ita_stf::{evm_helpers::evm_create_address, Index, TrustedCall, TrustedGetter};
+use itp_stf_primitives::{
+	traits::TrustedCallSigning,
+	types::{KeyPair, TrustedOperation},
 };
-use itp_stf_primitives::types::KeyPair;
 use itp_types::AccountId;
 use log::*;
 use pallet_evm::{AddressMapping, HashedAddressMapping};
 use sp_core::{crypto::Ss58Codec, Pair, H160, U256};
 use sp_runtime::traits::BlakeTwo256;
 use std::vec::Vec;
-
 #[derive(Parser)]
 pub struct EvmCreateCommands {
 	/// Sender's incognito AccountId in ss58check format
@@ -80,7 +79,7 @@ impl EvmCreateCommands {
 		.sign(&from.into(), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_args.direct);
 
-		let _ = perform_trusted_operation(cli, trusted_args, &top)?;
+		perform_trusted_operation(cli, trusted_args, &top)?;
 
 		let execution_address = evm_create_address(sender_evm_acc, evm_account_nonce);
 		info!("trusted call evm_create executed");

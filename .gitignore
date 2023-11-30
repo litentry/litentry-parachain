@@ -6,6 +6,7 @@
 .cargo/config
 
 **/node_modules/
+**/ts-tests/.yarn
 
 docker/generated-*/
 tee-worker/docker/litentry/

@@ -25,6 +25,7 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 
 # internal dependencies
 ita-stf = { path = "../../../../app-libs/stf", default-features = false }
+itc-peer-top-broadcaster = { path = "../../../../core/peer-top-broadcaster", default-features = false }
 itp-types = { path = "../../../../core-primitives/types", default-features = false }
 
 itp-enclave-metrics = { path = "../../../../core-primitives/enclave-metrics", default-features = false }
@@ -34,6 +35,8 @@ itp-sgx-externalities = { path = "../../../../core-primitives/substrate-sgx/exte
 itp-stf-executor = { path = "../../../../core-primitives/stf-executor", default-features = false }
 itp-stf-state-handler = { path = "../../../../core-primitives/stf-state-handler", default-features = false }
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", default-features = false }
+itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
+
 
 # litentry
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
@@ -45,6 +48,17 @@ lc-identity-verification = { path = "../../identity-verification", default-featu
 lc-stf-task-sender = { path = "../sender", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
+[dev-dependencies]
+sgx_crypto_helper = { version = "1.1.6", git = "https://github.com/apache/incubator-teaclave-sgx-sdk", branch = "master" }
+itp-test = { path = "../../../../core-primitives/test" }
+itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", features = ["mocks"] }
+itp-top-pool = { path = "../../../../core-primitives/top-pool", features = ["mocks"] }
+itp-stf-executor = { path = "../../../../core-primitives/stf-executor", features = ["mocks"] }
+base58 = "0.2"
+jsonrpc-core = { version = "18" }
+lazy_static = { version = "1.1.0" }
+hex = "0.4.2"
+
 [features]
 default = ["std"]
 sgx = [
@@ -55,6 +69,7 @@ sgx = [
     "thiserror_sgx",
     "url_sgx",
     "ita-stf/sgx",
+    "itc-peer-top-broadcaster/sgx",
     "itp-sgx-externalities/sgx",
     "itp-stf-executor/sgx",
     "itp-stf-state-handler/sgx",
@@ -72,8 +87,10 @@ std = [
     "futures",
     "log/std",
     "thiserror",
+    "itc-peer-top-broadcaster/std",
     "itp-types/std",
     "itp-top-pool-author/std",
+    "itp-utils/std",
     "itp-stf-executor/std",
     "itp-stf-state-handler/std",
     "sp-core/std",

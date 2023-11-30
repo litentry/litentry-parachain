@@ -19,11 +19,12 @@ use crate::{
 	response_channel::ResponseChannel, DirectRpcError, DirectRpcResult, RpcConnectionRegistry,
 	RpcHash, SendRpcResponse,
 };
+use alloc::format;
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::{DirectRequestStatus, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
-use std::{boxed::Box, sync::Arc, vec::Vec};
+use std::{sync::Arc, vec::Vec};
 
 pub struct RpcResponder<Registry, Hash, ResponseChannelType>
 where
@@ -85,7 +86,7 @@ where
 		let mut new_response = rpc_response.clone();
 
 		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
-			.map_err(|e| DirectRpcError::Other(Box::new(e)))?;
+			.map_err(|e| DirectRpcError::Other(format!("{:?}", e).into()))?;
 
 		// Litentry:
 		// connections are per trusted call, but if we expect trusted call to have a side effect of creating another trusted call (callback)
@@ -137,13 +138,30 @@ where
 		Ok(())
 	}
 
+	fn update_force_wait(&self, hash: Self::Hash, force_wait: bool) -> DirectRpcResult<()> {
+		let (connection_token, rpc_response, _) = self
+			.connection_registry
+			.withdraw(&hash)
+			.ok_or(DirectRpcError::InvalidConnectionHash)?;
+		self.connection_registry.store(hash, connection_token, rpc_response, force_wait);
+
+		Ok(())
+	}
+
+	fn is_force_wait(&self, hash: Self::Hash) -> bool {
+		self.connection_registry.is_force_wait(&hash)
+	}
+
 	fn update_connection_state(
 		&self,
 		hash: Self::Hash,
 		encoded_value: Vec<u8>,
 		force_wait: bool,
 	) -> DirectRpcResult<()> {
-		debug!("set response value");
+		info!(
+			"updating connection state for hash {:?}: encoded_value {:?}, force_wait: {:?}",
+			hash, encoded_value, force_wait
+		);
 
 		// withdraw removes it from the registry
 		let (connection_token, rpc_response, _) = self
@@ -154,7 +172,7 @@ where
 		let mut new_response = rpc_response.clone();
 
 		let mut result = RpcReturnValue::from_hex(&rpc_response.result)
-			.map_err(|e| DirectRpcError::Other(Box::new(e)))?;
+			.map_err(|e| DirectRpcError::Other(format!("{:?}", e).into()))?;
 
 		result.value = encoded_value;
 		new_response.result = result.to_hex();

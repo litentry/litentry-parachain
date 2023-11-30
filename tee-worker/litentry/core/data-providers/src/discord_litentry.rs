@@ -42,7 +42,6 @@ pub struct DiscordResponse {
 	pub message: String,
 	pub has_errors: bool,
 	pub msg_code: u32,
-	pub success: bool,
 }
 
 impl RestPath<String> for DiscordResponse {
@@ -127,14 +126,14 @@ impl DiscordLitentryClient {
 		res
 	}
 
-	// user has role in channel
+	// user has role
 	pub fn has_role(
 		&mut self,
 		role_id_s: String,
 		handler: Vec<u8>,
 	) -> Result<DiscordResponse, Error> {
 		let handler_s = vec_to_string(handler)?;
-		debug!("discord check id_hubber, role_id: {}, handler: {}", role_id_s, handler_s);
+		debug!("discord has role, role_id: {}, handler: {}", role_id_s, handler_s);
 
 		let path = "/discord/user/has/role".to_string();
 		let query = vec![("roleid", role_id_s.as_str()), ("handler", handler_s.as_str())];
@@ -172,7 +171,6 @@ impl DiscordLitentryClient {
 mod tests {
 	use super::*;
 	use lc_mock_server::run;
-	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();

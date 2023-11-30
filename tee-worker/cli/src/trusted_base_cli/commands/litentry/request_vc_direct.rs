@@ -22,17 +22,17 @@ use crate::{
 	trusted_operation::perform_direct_operation,
 	Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
+use lc_credentials::Credential;
 use litentry_primitives::{
-	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
-	AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear, AchainableDate,
-	AchainableDateInterval, AchainableDatePercent, AchainableParams, AchainableToken, Assertion,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, RequestAesKey, SoraQuizType, Web3Network,
+	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
+	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
+	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
+	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
+	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
 };
-use log::*;
 use sp_core::Pair;
 
 // usage example (you can always use --help on subcommands to see more details)
@@ -48,6 +48,10 @@ use sp_core::Pair;
 // achainable VC:
 // ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
+//
+// vip3 VC:
+// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 vip3-membership-card gold
 
 #[derive(Parser)]
 pub struct RequestVcDirectCommand {
@@ -221,17 +225,32 @@ impl RequestVcDirectCommand {
 						token: to_para_str(&arg.token),
 					})),
 			},
-			Command::SoraQuiz(c) => match c {
-				SoraQuizCommand::Attendee => Assertion::SoraQuiz(SoraQuizType::Attendee),
-				SoraQuizCommand::Master => Assertion::SoraQuiz(SoraQuizType::Master),
-			},
 			Command::GenericDiscordRole(c) => match c {
-				GenericDiscordRoleCommand::Legend =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Legend),
-				GenericDiscordRoleCommand::Popularity =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Popularity),
-				GenericDiscordRoleCommand::Participant =>
-					Assertion::GenericDiscordRole(GenericDiscordRoleType::Participant),
+				GenericDiscordRoleCommand::Contest(s) => match s {
+					ContestCommand::Legend => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Legend),
+					),
+					ContestCommand::Popularity => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Popularity),
+					),
+					ContestCommand::Participant => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::Contest(ContestType::Participant),
+					),
+				},
+				GenericDiscordRoleCommand::SoraQuiz(s) => match s {
+					SoraQuizCommand::Attendee => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::SoraQuiz(SoraQuizType::Attendee),
+					),
+					SoraQuizCommand::Master => Assertion::GenericDiscordRole(
+						GenericDiscordRoleType::SoraQuiz(SoraQuizType::Master),
+					),
+				},
+			},
+			Command::VIP3MembershipCard(arg) => match arg {
+				VIP3MembershipCardLevelCommand::Gold =>
+					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Gold),
+				VIP3MembershipCardLevelCommand::Silver =>
+					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
 			},
 		};
 
@@ -242,7 +261,7 @@ impl RequestVcDirectCommand {
 		)
 		.expect("decoding shielding_key failed");
 
-		let top: TrustedOperation = TrustedCall::request_vc(
+		let top = TrustedCall::request_vc(
 			alice.public().into(),
 			id,
 			assertion,
@@ -253,7 +272,17 @@ impl RequestVcDirectCommand {
 		.into_trusted_operation(trusted_cli.direct);
 
 		// This should contain the AES Key for AESRequest
-		let _vc = perform_direct_operation(cli, trusted_cli, &top, key).unwrap();
+		match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {
+			Ok(mut vc) => {
+				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
+				let credential: Credential = serde_json::from_slice(&decrypted).unwrap();
+				println!("----Generated VC-----");
+				println!("{:?}", credential);
+			},
+			Err(e) => {
+				println!("{:?}", e);
+			},
+		}
 		Ok(CliResultOk::None)
 	}
 }

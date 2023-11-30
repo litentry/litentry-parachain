@@ -1,7 +1,8 @@
 #![allow(clippy::result_large_err)]
 
+use crate::{Getter, TrustedCallSigned};
 use ita_sgx_runtime::Hash;
-pub use ita_stf::{aes_encrypt_default, IdentityManagement};
+pub use ita_stf::aes_encrypt_default;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -22,8 +23,8 @@ use std::{format, sync::Arc};
 
 pub(crate) struct VCRequestHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
@@ -34,8 +35,8 @@ pub(crate) struct VCRequestHandler<
 impl<K, A, S, H, O> VCRequestHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
@@ -78,9 +79,6 @@ where
 			Assertion::Oneblock(course_type) =>
 				lc_assertion_build::oneblock::course::build(&self.req, course_type),
 
-			Assertion::SoraQuiz(quiz_type) =>
-				lc_assertion_build::sora::quiz::build(&self.req, quiz_type),
-
 			Assertion::GenericDiscordRole(role_type) =>
 				lc_assertion_build::generic_discord_role::build(&self.req, role_type),
 
@@ -92,6 +90,9 @@ where
 					&self.req,
 					digit_domain_type,
 				),
+
+			Assertion::VIP3MembershipCard(level) =>
+				lc_assertion_build::vip3::card::build(&self.req, level),
 		}?;
 
 		// post-process the credential

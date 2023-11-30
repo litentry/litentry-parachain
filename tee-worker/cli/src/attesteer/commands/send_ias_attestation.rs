@@ -16,7 +16,7 @@
 */
 
 use itc_rpc_client::direct_client::DirectApi;
-use itp_rpc::{RpcRequest, RpcResponse, RpcReturnValue};
+use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
 use itp_utils::FromHexPrefixed;
 use log::*;
@@ -36,12 +36,16 @@ impl SendIasAttestationReportCmd {
 		let direct_api = get_worker_api_direct(cli);
 		let hex_encoded_report = match read_to_string(&self.report) {
 			Ok(hex_encoded_report) => hex_encoded_report,
-			Err(e) => panic!("Opening hex encoded IAS attestation report file failed: {:#?}", e),
+			Err(e) => panic!("Opening hex encoded IAS attestation report file failed: {:?}", e),
 		};
 
 		let rpc_method = "attesteer_forwardIasAttestationReport".to_owned();
-		let jsonrpc_call: String =
-			RpcRequest::compose_jsonrpc_call(rpc_method, vec![hex_encoded_report]).unwrap();
+		let jsonrpc_call: String = RpcRequest::compose_jsonrpc_call(
+			Id::Text("1".to_string()),
+			rpc_method,
+			vec![hex_encoded_report],
+		)
+		.unwrap();
 
 		let rpc_response_str = direct_api.get(&jsonrpc_call).unwrap();
 

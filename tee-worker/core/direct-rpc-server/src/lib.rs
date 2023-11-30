@@ -20,6 +20,8 @@
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+extern crate alloc;
+
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
@@ -107,6 +109,8 @@ pub trait RpcConnectionRegistry: Send + Sync {
 	);
 
 	fn withdraw(&self, hash: &Self::Hash) -> Option<(Self::Connection, RpcResponse, ForceWait)>;
+
+	fn is_force_wait(&self, hash: &Self::Hash) -> bool;
 }
 
 /// Sends an RPC response back to the client.
@@ -121,6 +125,8 @@ pub trait SendRpcResponse: Send + Sync {
 
 	fn send_state(&self, hash: Self::Hash, state_encoded: Vec<u8>) -> DirectRpcResult<()>;
 
+	fn update_force_wait(&self, hash: Self::Hash, force_wait: bool) -> DirectRpcResult<()>;
+
 	// Litentry: update the `value` field in the returning structure and connection force_wait flag
 	fn update_connection_state(
 		&self,
@@ -131,6 +137,8 @@ pub trait SendRpcResponse: Send + Sync {
 
 	// Litentry: swap the old hash with the new one in rpc connection registry
 	fn swap_hash(&self, old_hash: Self::Hash, new_hash: Self::Hash) -> DirectRpcResult<()>;
+
+	fn is_force_wait(&self, hash: Self::Hash) -> bool;
 }
 
 /// Determines if a given connection must be watched (i.e. kept alive),

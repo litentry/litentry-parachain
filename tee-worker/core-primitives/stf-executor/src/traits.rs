@@ -16,11 +16,14 @@
 */
 
 use crate::{error::Result, BatchExecutionResult};
-use codec::Encode;
-use ita_stf::{ParentchainHeader, TrustedCall, TrustedCallSigned, TrustedOperation};
+use codec::{Decode, Encode};
+use core::fmt::Debug;
 use itp_sgx_externalities::SgxExternalitiesTrait;
-use itp_stf_primitives::types::{AccountId, ShardIdentifier};
-use itp_types::{parentchain::ParentchainId, H256};
+use itp_stf_primitives::{
+	traits::TrustedCallSigning,
+	types::{AccountId, ShardIdentifier, TrustedOperation},
+};
+use itp_types::H256;
 use sp_runtime::traits::Header as HeaderTrait;
 use std::{time::Duration, vec::Vec};
 
@@ -33,21 +36,32 @@ pub enum StatePostProcessing {
 /// Allows signing of a trusted call or a credential with the enclave account that is registered in the STF.
 ///
 /// The signing key is derived from the shielding key, which guarantees that all enclaves sign the same key.
-pub trait StfEnclaveSigning {
+pub trait StfEnclaveSigning<TCS>
+where
+	TCS: PartialEq + Encode + Debug,
+{
 	fn get_enclave_account(&self) -> Result<AccountId>;
 
-	fn sign_call_with_self(
+	fn sign_call_with_self<TC: Encode + Debug + TrustedCallSigning<TCS>>(
 		&self,
-		trusted_call: &TrustedCall,
+		trusted_call: &TC,
 		shard: &ShardIdentifier,
-	) -> Result<TrustedCallSigned>;
+	) -> Result<TCS>;
 
 	// litentry
 	fn sign_vc_with_self(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
 }
 
+pub trait StfShardVaultQuery {
+	fn get_shard_vault(&self, shard: &ShardIdentifier) -> Result<AccountId>;
+}
+
 /// Proposes a state update to `Externalities`.
-pub trait StateUpdateProposer {
+pub trait StateUpdateProposer<TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+{
 	type Externalities: SgxExternalitiesTrait + Encode;
 
 	/// Executes trusted calls within a given time frame without permanent state mutation.
@@ -56,12 +70,12 @@ pub trait StateUpdateProposer {
 	/// If the time expires, any remaining trusted calls within the batch will be ignored.
 	fn propose_state_update<PH, F>(
 		&self,
-		trusted_calls: &[TrustedOperation],
+		trusted_calls: &[TrustedOperation<TCS, G>],
 		header: &PH,
 		shard: &ShardIdentifier,
 		max_exec_duration: Duration,
 		prepare_state_function: F,
-	) -> Result<BatchExecutionResult<Self::Externalities>>
+	) -> Result<BatchExecutionResult<Self::Externalities, TCS, G>>
 	where
 		PH: HeaderTrait<Hash = H256>,
 		F: FnOnce(Self::Externalities) -> Self::Externalities;
@@ -70,10 +84,6 @@ pub trait StateUpdateProposer {
 /// Updates the STF state for a specific header.
 ///
 /// Cannot be implemented for a generic header currently, because the runtime expects a ParentchainHeader.
-pub trait StfUpdateState {
-	fn update_states(
-		&self,
-		header: &ParentchainHeader,
-		parentchain_id: &ParentchainId,
-	) -> Result<()>;
+pub trait StfUpdateState<PCH, PCID> {
+	fn update_states(&self, header: &PCH, parentchain_id: &PCID) -> Result<()>;
 }
