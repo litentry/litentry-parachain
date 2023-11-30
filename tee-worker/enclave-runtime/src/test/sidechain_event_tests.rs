@@ -31,7 +31,7 @@ use crate::{
 	top_pool_execution::{exec_aura_on_slot, send_blocks_and_extrinsics},
 };
 use ita_sgx_runtime::Runtime;
-use ita_stf::helpers::set_block_number;
+use ita_stf::{helpers::set_block_number, Getter, TrustedCallSigned};
 use itc_parentchain::light_client::mocks::validator_access_mock::ValidatorAccessMock;
 use itc_parentchain_test::ParentchainHeaderBuilder;
 use itp_extrinsics_factory::mock::ExtrinsicsFactoryMock;
@@ -96,8 +96,8 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
-		AllowAllTopsFilter {},
-		DirectCallsOnlyFilter {},
+		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
+		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler.clone(),
 		shielding_key_repo,
 		Arc::new(MetricsOCallMock::default()),

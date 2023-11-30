@@ -14,78 +14,71 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{
-	error::{Error, ErrorDetail, IMPError, Result},
-	indirect_calls::litentry::args_executor::ArgsExecutor,
-	IndirectDispatch, IndirectExecutor,
-};
+use crate::indirect_calls::litentry::args_executor::ArgsExecutor;
 use codec::{Decode, Encode};
-use ita_stf::TrustedCall;
-use itp_types::{AccountId, ShardIdentifier, H256};
+use ita_stf::{TrustedCall, TrustedCallSigned};
+use itc_parentchain_indirect_calls_executor::{
+	error::{Error, IMPError, Result},
+	IndirectDispatch,
+};
+use itp_stf_primitives::traits::IndirectExecutor;
+use itp_types::{ShardIdentifier, H256};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, ValidationData, Web3Network};
+use litentry_primitives::{ErrorDetail, Identity};
 use log::debug;
 use sp_core::crypto::AccountId32;
-use sp_runtime::MultiAddress;
+use sp_runtime::{
+	traits::{AccountIdLookup, StaticLookup},
+	MultiAddress,
+};
 use std::vec::Vec;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
-pub struct LinkIdentityArgs {
+pub struct ActivateIdentityArgs {
 	shard: ShardIdentifier,
-	account: AccountId,
 	encrypted_identity: Vec<u8>,
-	encrypted_validation_data: Vec<u8>,
-	encrypted_web3networks: Vec<u8>,
 }
 
-impl ArgsExecutor for LinkIdentityArgs {
+impl ArgsExecutor for ActivateIdentityArgs {
 	fn error(&self) -> Error {
-		Error::IMPHandlingError(IMPError::LinkIdentityFailed(ErrorDetail::ImportError))
+		Error::IMPHandlingError(IMPError::ActivateIdentityFailed(ErrorDetail::ImportError))
 	}
 
 	fn name() -> &'static str {
-		"LinkIdentity"
+		"ActivateIdentity"
 	}
 
 	fn shard(&self) -> ShardIdentifier {
 		self.shard
 	}
 
-	fn prepare_trusted_call<Executor: IndirectExecutor>(
+	fn prepare_trusted_call<Executor: IndirectExecutor<TrustedCallSigned, Error>>(
 		&self,
 		executor: &Executor,
-		_address: MultiAddress<AccountId, ()>,
+		address: MultiAddress<AccountId32, ()>,
 		hash: H256,
 	) -> Result<TrustedCall> {
 		let identity: Identity =
 			Identity::decode(&mut executor.decrypt(&self.encrypted_identity)?.as_slice())?;
-		let validation_data = ValidationData::decode(
-			&mut executor.decrypt(&self.encrypted_validation_data)?.as_slice(),
-		)?;
-		let web3networks: Vec<Web3Network> =
-			Decode::decode(&mut executor.decrypt(&self.encrypted_web3networks)?.as_slice())?;
-
+		let account = AccountIdLookup::lookup(address).unwrap();
 		debug!(
-			"indirect call LinkIdentity, who:{:?}, identity: {:?}, validation_data: {:?}",
-			account_id_to_string(&self.account),
-			identity,
-			validation_data
+			"execute indirect call: ActivateIdentity, who: {:?}, identity: {:?}",
+			account_id_to_string(&account),
+			identity
 		);
-
 		let enclave_account_id = executor.get_enclave_account().unwrap();
-		Ok(TrustedCall::link_identity(
+		Ok(TrustedCall::activate_identity(
 			enclave_account_id.into(),
-			self.account.clone().into(),
+			account.into(),
 			identity,
-			validation_data,
-			web3networks,
-			None,
 			hash,
 		))
 	}
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for LinkIdentityArgs {
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for ActivateIdentityArgs
+{
 	type Args = (Option<MultiAddress<AccountId32, ()>>, H256);
 	fn dispatch(&self, executor: &Executor, args: Self::Args) -> Result<()> {
 		self.execute(executor, args.0, args.1)

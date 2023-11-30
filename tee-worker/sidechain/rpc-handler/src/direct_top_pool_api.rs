@@ -17,6 +17,7 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
+use core::fmt::Debug;
 
 #[cfg(feature = "std")]
 use rust_base58::base58::FromBase58;
@@ -39,17 +40,18 @@ use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
 
 type Hash = sp_core::H256;
 
-pub fn add_top_pool_direct_rpc_methods<R>(
+pub fn add_top_pool_direct_rpc_methods<R, TCS, G>(
 	top_pool_author: Arc<R>,
 	mut io_handler: IoHandler,
 ) -> IoHandler
 where
-	R: AuthorApi<Hash, Hash> + Send + Sync + 'static,
+	R: AuthorApi<Hash, Hash, TCS, G> + Send + Sync + 'static,
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 {
-	// author_submitAndWatchRsaRequest
-	let author_submit_and_watch_rsa_request_name: &str = "author_submitAndWatchRsaRequest";
 	let watch_author = top_pool_author.clone();
-	io_handler.add_sync_method(author_submit_and_watch_rsa_request_name, move |params: Params| {
+	io_handler.add_sync_method("author_submitAndWatchRsaRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_submitAndWatchRsaRequest");
 		let json_value = match author_submit_extrinsic_inner(
 			watch_author.clone(),
 			params,
@@ -70,11 +72,9 @@ where
 	});
 
 	// author_submitAndWatchBroadcastedRsaRequest
-	let author_submit_and_watch_broadcasted_rsa_request: &str =
-		"author_submitAndWatchBroadcastedRsaRequest";
 	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method(
-		author_submit_and_watch_broadcasted_rsa_request,
+		"author_submitAndWatchBroadcastedRsaRequest",
 		move |params: Params| {
 			let json_value = match author_submit_extrinsic_inner(watch_author.clone(), params, None)
 			{
@@ -96,9 +96,9 @@ where
 	);
 
 	// author_submitRsaRequest
-	let author_submit_extrinsic_name: &str = "author_submitRsaRequest";
 	let submit_author = top_pool_author.clone();
-	io_handler.add_sync_method(author_submit_extrinsic_name, move |params: Params| {
+	io_handler.add_sync_method("author_submitRsaRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_submitRsaRequest");
 		let json_value = match author_submit_extrinsic_inner(submit_author.clone(), params, None) {
 			Ok(hash_value) => RpcReturnValue {
 				do_watch: false,
@@ -114,8 +114,8 @@ where
 		Ok(json!(json_value))
 	});
 
-	let author_submit_vc_request_name: &str = "author_submitVCRequest";
-	io_handler.add_method(author_submit_vc_request_name, move |params: Params| {
+	io_handler.add_method("author_submitVCRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_submitVCRequest");
 		async move {
 			let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
 			let request = AesRequest::from_hex(&hex_encoded_params[0].clone()).unwrap();
@@ -152,11 +152,12 @@ where
 		}
 		.boxed()
 	});
+
 	// Litentry: a morphling of `author_submitAndWatchRsaRequest`
 	// a different name is used to highlight the request type
-	let author_submit_and_watch_aes_request_name: &str = "author_submitAndWatchAesRequest";
 	let watch_author = top_pool_author.clone();
-	io_handler.add_sync_method(author_submit_and_watch_aes_request_name, move |params: Params| {
+	io_handler.add_sync_method("author_submitAndWatchAesRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_submitAndWatchAesRequest");
 		let json_value = match author_submit_aes_request_inner(
 			watch_author.clone(),
 			params,
@@ -176,11 +177,9 @@ where
 		Ok(json!(json_value))
 	});
 
-	let author_submit_and_watch_broadcasted_aes_request_name: &str =
-		"author_submitAndWatchBroadcastedAesRequest";
 	let watch_author = top_pool_author.clone();
 	io_handler.add_sync_method(
-		author_submit_and_watch_broadcasted_aes_request_name,
+		"author_submitAndWatchBroadcastedAesRequest",
 		move |params: Params| {
 			let json_value =
 				match author_submit_aes_request_inner(watch_author.clone(), params, None) {
@@ -200,9 +199,9 @@ where
 	);
 
 	// author_pendingExtrinsics
-	let author_pending_extrinsic_name: &str = "author_pendingExtrinsics";
 	let pending_author = top_pool_author.clone();
-	io_handler.add_sync_method(author_pending_extrinsic_name, move |params: Params| {
+	io_handler.add_sync_method("author_pendingExtrinsics", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_pendingExtrinsics");
 		match params.parse::<Vec<String>>() {
 			Ok(shards) => {
 				let mut retrieved_operations = vec![];
@@ -233,10 +232,9 @@ where
 		}
 	});
 
-	// author_pendingTrustedCallsFor
-	let author_pending_trusted_calls_for_name: &str = "author_pendingTrustedCallsFor";
 	let pending_author = top_pool_author;
-	io_handler.add_sync_method(author_pending_trusted_calls_for_name, move |params: Params| {
+	io_handler.add_sync_method("author_pendingTrustedCallsFor", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_pendingTrustedCallsFor");
 		match params.parse::<(String, String)>() {
 			Ok((shard_base58, account_hex)) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
@@ -251,7 +249,7 @@ where
 					Ok(acc) => acc,
 					Err(msg) => {
 						let error_msg: String =
-							format!("Could not retrieve pending trusted calls due to: {}", msg);
+							format!("Could not retrieve pending trusted calls due to: {:?}", msg);
 						return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 					},
 				};
@@ -291,11 +289,16 @@ fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
 }
 
-fn author_submit_extrinsic_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'static>(
+fn author_submit_extrinsic_inner<R, TCS, G>(
 	author: Arc<R>,
 	params: Params,
 	json_rpc_method: Option<String>,
-) -> Result<Hash, String> {
+) -> Result<Hash, String>
+where
+	R: AuthorApi<Hash, Hash, TCS, G> + Send + Sync + 'static,
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
+{
 	debug!("Author submit and watch trusted operation..");
 
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
@@ -320,11 +323,16 @@ fn author_submit_extrinsic_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'stati
 	response.map_err(|e| format!("{:?}", e))
 }
 
-fn author_submit_aes_request_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'static>(
+fn author_submit_aes_request_inner<R, TCS, G>(
 	author: Arc<R>,
 	params: Params,
 	json_rpc_method: Option<String>,
-) -> Result<Hash, String> {
+) -> Result<Hash, String>
+where
+	R: AuthorApi<Hash, Hash, TCS, G> + Send + Sync + 'static,
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
+{
 	debug!("Author submit and watch AesRequest..");
 
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;

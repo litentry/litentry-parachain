@@ -16,10 +16,7 @@
 
 */
 
-use crate::{
-	enclave_account,
-	ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge},
-};
+use crate::ocall_bridge::bridge_api::{OCallBridgeError, OCallBridgeResult, WorkerOnChainBridge};
 use codec::{Decode, Encode};
 use itp_api_client_types::ParentchainApi;
 use itp_enclave_api::enclave_base::EnclaveBase;
@@ -28,7 +25,12 @@ use itp_types::{parentchain::ParentchainId, WorkerRequest, WorkerResponse};
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::{sync::Arc, thread, vec::Vec};
-use substrate_api_client::{ac_primitives::serde_impls::StorageKey, GetStorage, SubmitExtrinsic};
+use substrate_api_client::{
+	ac_primitives::serde_impls::StorageKey, GetStorage, SubmitAndWatch, SubmitExtrinsic, XtStatus,
+};
+
+#[cfg(feature = "link-binary")]
+use crate::main_impl::enclave_account;
 
 pub struct WorkerOnChainOCall<E, F> {
 	enclave_api: Arc<E>,
@@ -122,6 +124,7 @@ where
 		&self,
 		extrinsics_encoded: Vec<u8>,
 		parentchain_id: Vec<u8>,
+		await_each_inlcusion: bool,
 	) -> OCallBridgeResult<()> {
 		// TODO: improve error handling, using a mut status is not good design?
 		let mut status: OCallBridgeResult<()> = Ok(());
@@ -140,14 +143,25 @@ where
 		if !extrinsics.is_empty() {
 			let parentchain_id = ParentchainId::decode(&mut parentchain_id.as_slice())?;
 			debug!(
-				"Enclave wants to send {} extrinsics to parentchain: {:?}",
+				"Enclave wants to send {} extrinsics to parentchain: {:?}. await each inclusion: {:?}",
 				extrinsics.len(),
-				parentchain_id
+				parentchain_id, await_each_inlcusion
 			);
 			let api = self.create_api(parentchain_id)?;
 			let mut send_extrinsic_failed = false;
 			for call in extrinsics.into_iter() {
-				if let Err(e) = api.submit_opaque_extrinsic(&call.encode().into()) {
+				if await_each_inlcusion {
+					if let Err(e) = api.submit_and_watch_opaque_extrinsic_until(
+						&call.encode().into(),
+						XtStatus::InBlock,
+					) {
+						error!(
+							"Could not send extrinsic to node: {:?}, error: {:?}",
+							serde_json::to_string(&call),
+							e
+						);
+					}
+				} else if let Err(e) = api.submit_opaque_extrinsic(&call.encode().into()) {
 					error!(
 						"Could not send extrinsic to node: {:?}, error: {:?}",
 						serde_json::to_string(&call),
@@ -180,6 +194,7 @@ where
 			//
 			// Another small thing that can be improved is to use rpc.system.accountNextIndex instead of system.account.nonce
 			// see https://polkadot.js.org/docs/api/cookbook/tx/#how-do-i-take-the-pending-tx-pool-into-account-in-my-nonce
+			#[cfg(feature = "link-binary")]
 			if send_extrinsic_failed {
 				// drop &self lifetime
 				let node_api_factory_cloned = self.integritee_api_factory.clone();
@@ -201,7 +216,6 @@ where
 				});
 			}
 		}
-
 		status
 	}
 }

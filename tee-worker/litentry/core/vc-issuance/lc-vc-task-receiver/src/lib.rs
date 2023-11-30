@@ -30,7 +30,9 @@ use ita_stf::{
 	ConvertAccountId, OpaqueCall, SgxParentchainTypeConverter, VCMPCallIndexes, H256, IMT,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_node_api::metadata::{
+	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+};
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -95,8 +97,8 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	node_metadata_repo: Arc<N>,
 ) where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
-	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
-	S: StfEnclaveSigning + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
@@ -137,8 +139,8 @@ pub fn handle_request<K, A, S, H, O, Z, N>(
 ) -> Result<Vec<u8>, String>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
-	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
-	S: StfEnclaveSigning + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,

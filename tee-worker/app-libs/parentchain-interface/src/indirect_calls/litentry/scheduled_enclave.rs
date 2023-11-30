@@ -14,13 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{error::Result, IndirectDispatch, IndirectExecutor};
 use codec::{Decode, Encode};
-
+use ita_stf::TrustedCallSigned;
+use itc_parentchain_indirect_calls_executor::{
+	error::{Error, Result},
+	IndirectDispatch,
+};
+use itp_stf_primitives::traits::IndirectExecutor;
 use itp_types::{MrEnclave, SidechainBlockNumber};
-
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
-
 use log::debug;
 
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]
@@ -29,7 +31,9 @@ pub struct UpdateScheduledEnclaveArgs {
 	mrenclave: MrEnclave,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for UpdateScheduledEnclaveArgs {
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for UpdateScheduledEnclaveArgs
+{
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!("execute indirect call: UpdateScheduledEnclave, sidechain_block_number: {:?}, mrenclave: {:?}", self.sbn, self.mrenclave);
@@ -43,7 +47,9 @@ pub struct RemoveScheduledEnclaveArgs {
 	sbn: codec::Compact<SidechainBlockNumber>,
 }
 
-impl<Executor: IndirectExecutor> IndirectDispatch<Executor> for RemoveScheduledEnclaveArgs {
+impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
+	IndirectDispatch<Executor, TrustedCallSigned> for RemoveScheduledEnclaveArgs
+{
 	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!(

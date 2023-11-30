@@ -61,6 +61,10 @@ enclave {
 			[in, size=shard_size] uint8_t* shard, uint32_t shard_size
 		);
 
+		public sgx_status_t init_proxied_shard_vault(
+			[in, size=shard_size] uint8_t* shard, uint32_t shard_size
+		);
+
 		public sgx_status_t trigger_parentchain_block_import(
 			[in, size=parentchain_id_size] uint8_t* parentchain_id, uint32_t parentchain_id_size
 		);
@@ -90,12 +94,17 @@ enclave {
 		public sgx_status_t get_ecc_signing_pubkey(
 			[out, size=pubkey_size] uint8_t* pubkey, uint32_t pubkey_size);
 
+		public sgx_status_t get_ecc_vault_pubkey(
+			[in, size=shard_size] uint8_t* shard, uint32_t shard_size,
+			[out, size=pubkey_size] uint8_t* pubkey, uint32_t pubkey_size);
+
 		public sgx_status_t get_mrenclave(
 			[out, size=mrenclave_size] uint8_t* mrenclave, uint32_t mrenclave_size);
 
 		public sgx_status_t generate_ias_ra_extrinsic(
 			[in, size=w_url_size] uint8_t* w_url, uint32_t w_url_size,
-			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size,
+			[out, size=unchecked_extrinsic_max_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_max_size,
+			[out] uint32_t* unchecked_extrinsic_size,
 			int skip_ra
 		);
 		public sgx_status_t generate_dcap_ra_quote(
@@ -108,12 +117,14 @@ enclave {
 		public sgx_status_t generate_dcap_ra_extrinsic_from_quote(
 			[in, size=w_url_size] uint8_t* w_url, uint32_t w_url_size,
 			[in, size=quote_size] uint8_t* quote, uint32_t quote_size,
-			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size
+			[out, size=unchecked_extrinsic_max_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_max_size,
+			[out] uint32_t* unchecked_extrinsic_size
 		);
 
 		public sgx_status_t generate_dcap_ra_extrinsic(
 			[in, size=w_url_size] uint8_t* w_url, uint32_t w_url_size,
-			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size,
+			[out, size=unchecked_extrinsic_max_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_max_size,
+			[out] uint32_t* unchecked_extrinsic_size,
 			int skip_ra,
 			[in] const sgx_target_info_t* quoting_enclave_target_info,
 			[in] uint32_t* quote_size
@@ -121,24 +132,28 @@ enclave {
 
 		public sgx_status_t generate_register_quoting_enclave_extrinsic(
 		    [in] const sgx_ql_qve_collateral_t *p_quote_collateral,
-			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size
+			[out, size=unchecked_extrinsic_max_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_max_size,
+			[out] uint32_t* unchecked_extrinsic_size
 		);
 
 		public sgx_status_t generate_register_tcb_info_extrinsic(
 		    [in] const sgx_ql_qve_collateral_t *p_quote_collateral,
-			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size
+			[out, size=unchecked_extrinsic_max_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_max_size,
+			[out] uint32_t* unchecked_extrinsic_size
 		);
 
 		public sgx_status_t update_market_data_xt(
 			[in, size=crypto_currency_size] uint8_t* crypto_currency, uint32_t crypto_currency_size,
 			[in, size=fiat_currency_size] uint8_t* fiat_currency, uint32_t fiat_currency_size,
-			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size
+			[out, size=unchecked_extrinsic_max_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_max_size,
+			[out] uint32_t* unchecked_extrinsic_size
 		);
 
 		public sgx_status_t update_weather_data_xt(
 			[in, size=weather_info_logitude_size] uint8_t* weather_info_logitude, uint32_t weather_info_logitude_size,
 			[in, size=weather_info_latitude_size] uint8_t* weather_info_latitude, uint32_t weather_info_latitude_size,
-			[out, size=unchecked_extrinsic_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_size
+			[out, size=unchecked_extrinsic_max_size] uint8_t* unchecked_extrinsic, uint32_t unchecked_extrinsic_max_size,
+			[out] uint32_t* unchecked_extrinsic_size
 		);
 
 		public sgx_status_t dump_ias_ra_cert_to_disk();
@@ -265,7 +280,8 @@ enclave {
 
 		sgx_status_t ocall_send_to_parentchain(
 			[in, size = extrinsics_size] uint8_t * extrinsics, uint32_t extrinsics_size,
-			[in, size=parentchain_id_size] uint8_t* parentchain_id, uint32_t parentchain_id_size
+			[in, size=parentchain_id_size] uint8_t* parentchain_id, uint32_t parentchain_id_size,
+			int await_each_inclusion
 		);
 	};
 };

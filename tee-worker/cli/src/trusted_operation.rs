@@ -28,7 +28,7 @@ use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
 use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use lc_vc_task_sender::TrustedVCRequestSigned;
@@ -63,7 +63,7 @@ pub(crate) type TrustedOpResult<T> = Result<T, TrustedOperationError>;
 pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	top: &TrustedOperation,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	match top {
 		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
@@ -149,7 +149,7 @@ pub(crate) fn get_state<T: Decode>(
 fn send_indirect_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	trusted_operation: &TrustedOperation,
+	trusted_operation: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	let mut chain_api = get_chain_api(cli);
 	let encryption_key = get_shielding_key(cli).unwrap();
@@ -279,7 +279,7 @@ pub fn read_shard(trusted_args: &TrustedCli, cli: &Cli) -> Result<ShardIdentifie
 fn send_direct_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args, cli).unwrap();
@@ -445,7 +445,7 @@ pub(crate) fn get_vc_json_request(
 
 pub(crate) fn get_json_request(
 	shard: ShardIdentifier,
-	operation_call: &TrustedOperation,
+	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 ) -> String {
 	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();

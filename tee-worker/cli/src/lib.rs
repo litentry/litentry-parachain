@@ -24,7 +24,7 @@
 #[macro_use]
 extern crate clap;
 extern crate chrono;
-extern crate core;
+
 extern crate env_logger;
 extern crate log;
 
@@ -120,6 +120,8 @@ pub enum CliError {
 	TrustedOp { msg: String },
 	#[error("EvmReadCommands error: {:?}", msg)]
 	EvmRead { msg: String },
+	#[error("worker rpc api error: {:?}", msg)]
+	WorkerRpcApi { msg: String },
 }
 
 pub type CliResult = Result<CliResultOk, CliError>;

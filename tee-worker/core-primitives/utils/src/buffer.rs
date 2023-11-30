@@ -17,37 +17,46 @@
 
 //! Buffer utility functions.
 
-use frame_support::ensure;
-use std::vec::Vec;
-
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-use crate::sgx_reexport_prelude::thiserror;
+use alloc::vec::Vec;
 
 /// Fills a given buffer with data and the left over buffer space with white spaces.
+/// Throw an error if the buffer size is not enough to hold `data`,
+/// return the length of `data` otherwise.
 pub fn write_slice_and_whitespace_pad(
 	writable: &mut [u8],
 	data: Vec<u8>,
-) -> Result<(), BufferError> {
-	ensure!(
-		data.len() <= writable.len(),
-		BufferError::InsufficientBufferSize(writable.len(), data.len())
-	);
+) -> Result<usize, BufferError> {
+	if data.len() > writable.len() {
+		return Err(BufferError::InsufficientBufferSize {
+			actual: writable.len(),
+			required: data.len(),
+		})
+	}
 	let (left, right) = writable.split_at_mut(data.len());
 	left.clone_from_slice(&data);
 	// fill the right side with whitespace
 	right.iter_mut().for_each(|x| *x = 0x20);
-	Ok(())
+	Ok(data.len())
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BufferError {
-	#[error("Insufficient buffer size. Actual: {0}, required: {1}")]
-	InsufficientBufferSize(usize, usize),
+	InsufficientBufferSize { actual: usize, required: usize },
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use alloc::vec;
+
+	#[test]
+	fn write_slice_and_whitespace_pad_works() {
+		let mut writable = vec![0; 32];
+		let data = vec![1; 30];
+		assert_eq!(write_slice_and_whitespace_pad(&mut writable, data), Ok(30));
+		assert_eq!(&writable[..30], vec![1; 30]);
+		assert_eq!(&writable[30..], vec![0x20; 2]);
+	}
 
 	#[test]
 	fn write_slice_and_whitespace_pad_returns_error_if_buffer_too_small() {

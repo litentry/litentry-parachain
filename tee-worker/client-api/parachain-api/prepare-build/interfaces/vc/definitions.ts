@@ -24,6 +24,7 @@ export default {
                 GenericDiscordRole: "GenericDiscordRoleType",
                 BnbDomainHolding: "Null",
                 BnbDigitDomainClub: "BnbDigitDomainType",
+                VIP3MembershipCard: "VIP3MembershipCardLevel",
             },
         },
         AssertionSupportedNetwork: {
@@ -131,6 +132,10 @@ export default {
         },
         GenericDiscordRoleSoraQuizType: {
             _enum: ["Attendee", "Master"],
+        },
+        // VIP3MembershipCard
+        VIP3MembershipCardLevel: {
+            _enum: ["Gold", "Silver"],
         },
     },
 };
