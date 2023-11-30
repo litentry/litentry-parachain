@@ -67,6 +67,8 @@ pub mod pallet {
 		type DelegateeAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
+		// dedicated origin to update the IDGraph hash
+		type UpdateIDGraphFingerprintOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
@@ -242,6 +244,20 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[pallet::call_index(6)]
+		#[pallet::weight(<T as Config>::WeightInfo::update_idgraph_fingerprint())]
+		pub fn update_idgraph_fingerprint(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			new_fingerprint: H256,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::UpdateIDGraphFingerprintOrigin::ensure_origin(origin)?;
+			// we don't care if `account` already exists
+			IDGraphFingerprint::<T>::insert(account.clone(), new_fingerprint);
+			Self::deposit_event(Event::IDGraphFingerprintUpdated { account, new_fingerprint });
+			Ok(Pays::No.into())
+		}
+
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
@@ -310,20 +326,6 @@ pub mod pallet {
 				IMPError::UnclassifiedError(detail) =>
 					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
 			}
-			Ok(Pays::No.into())
-		}
-
-		#[pallet::call_index(35)]
-		#[pallet::weight(<T as Config>::WeightInfo::idgraph_updated())]
-		pub fn idgraph_updated(
-			origin: OriginFor<T>,
-			account: T::AccountId,
-			new_fingerprint: H256,
-		) -> DispatchResultWithPostInfo {
-			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			// we don't care if `account` already exists
-			IDGraphFingerprint::<T>::insert(account.clone(), new_fingerprint);
-			Self::deposit_event(Event::IDGraphFingerprintUpdated { account, new_fingerprint });
 			Ok(Pays::No.into())
 		}
 	}

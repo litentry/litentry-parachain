@@ -28,8 +28,9 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
-		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
+		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EitherOfDiverse,
+		EnsureOrigin, Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers,
+		WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	ConsensusEngineId, PalletId, RuntimeDebug,
@@ -1022,6 +1023,8 @@ impl pallet_identity_management::Config for Runtime {
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+	type UpdateIDGraphFingerprintOrigin =
+		EitherOfDiverse<EnsureRootOrHalfCouncil, Self::TEECallOrigin>;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
