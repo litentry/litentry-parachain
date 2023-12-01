@@ -1,35 +1,43 @@
 import { describeLitentry, handleVcEvents } from './common/utils';
 import { step } from 'mocha-steps';
-import type { Assertion } from './common/type-definitions';
 import type { HexString } from '@polkadot/util/types';
 import { assert } from 'chai';
 import { sendTxsWithUtility, sendTxUntilInBlockList } from './common/transactions';
+import { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 
 // TODO: keep the list short, the manual types will be solved in #1878
 //       more extensive testing of assertion will be done in #1873
-const allAssertions: Assertion = {
-    A1: 'A1',
-    A2: ['A2'],
-    A3: ['A3', 'A3', 'A3'],
-    A4: '10.001',
-};
+const allAssertions = [
+    {
+        A1: 'A1',
+    },
+    {
+        A2: 'A2',
+    },
+
+    {
+        A3: ['A3', 'A3', 'A3'],
+    },
+
+    {
+        A4: '10',
+    },
+];
 
 // It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 // So only use A1 to trigger the wrong event
-describeLitentry('VC test', 0, async (context) => {
+describeLitentry('VC ii test', 0, async (context) => {
     const indexList: HexString[] = [];
-    const vcKeys: string[] = ['A1', 'A2', 'A3', 'A4'];
-
     step('Request VC', async () => {
         // request all vc
-        const txs: any = [];
-        for (let index = 0; index < vcKeys.length; index++) {
-            const key = vcKeys[index];
-            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, {
-                [key]: allAssertions[key as keyof Assertion],
-            } as any);
+        const txs: {
+            tx: SubmittableExtrinsic<ApiTypes>;
+        }[] = [];
+
+        allAssertions.forEach((assertion) => {
+            const tx = context.api.tx.vcManagement.requestVc(context.mrEnclave, assertion);
             txs.push({ tx });
-        }
+        });
 
         const events = await sendTxsWithUtility(
             context,
@@ -48,7 +56,9 @@ describeLitentry('VC test', 0, async (context) => {
         }
     });
     step('Disable VC', async () => {
-        const txs: any = [];
+        const txs: {
+            tx: SubmittableExtrinsic<ApiTypes>;
+        }[] = [];
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.disableVc(indexList[i]);
             txs.push({ tx });
@@ -79,7 +89,10 @@ describeLitentry('VC test', 0, async (context) => {
     });
 
     step('Revoke VC', async () => {
-        const txs: any = [];
+        const txs: {
+            tx: SubmittableExtrinsic<ApiTypes>;
+        }[] = [];
+
         for (let i = 0; i < indexList.length; i++) {
             const tx = context.api.tx.vcManagement.revokeVc(indexList[i]);
             txs.push({ tx });
