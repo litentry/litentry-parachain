@@ -22,6 +22,7 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
+itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
 
 # sgx dependencies
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
@@ -59,6 +60,7 @@ std = [
     "thiserror",
     "url",
     "itc-rest-client/std",
+    "itp-rpc/std",
     "log/std",
     "serde/std",
     "serde_json/std",

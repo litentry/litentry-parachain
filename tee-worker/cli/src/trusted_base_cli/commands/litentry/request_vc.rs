@@ -21,7 +21,7 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedOperation};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
 use lc_credentials::Credential;
@@ -88,6 +88,7 @@ pub enum Command {
 	GenericDiscordRole(GenericDiscordRoleCommand),
 	#[clap(subcommand)]
 	VIP3MembershipCard(VIP3MembershipCardLevelCommand),
+	WeirdoGhostGangHolder,
 }
 
 #[derive(Args)]
@@ -444,11 +445,12 @@ impl RequestVcCommand {
 				VIP3MembershipCardLevelCommand::Silver =>
 					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
 			},
+			Command::WeirdoGhostGangHolder => Assertion::WeirdoGhostGangHolder,
 		};
 
 		let key = Self::random_aes_key();
 
-		let top: TrustedOperation = TrustedCall::request_vc(
+		let top = TrustedCall::request_vc(
 			alice.public().into(),
 			id,
 			assertion,

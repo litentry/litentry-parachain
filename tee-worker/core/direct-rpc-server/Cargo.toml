@@ -38,7 +38,6 @@ std = [
     "sp-runtime/std",
     # integritee dependencies
     "itp-types/std",
-    "itp-utils/std",
     # local
     "itc-tls-websocket-server/std",
     "itp-rpc/std",
@@ -49,7 +48,6 @@ std = [
 sgx = [
     "itc-tls-websocket-server/sgx",
     "itp-rpc/sgx",
-    "itp-utils/sgx",
     "jsonrpc-core_sgx",
     "sgx_tstd",
     "thiserror_sgx",

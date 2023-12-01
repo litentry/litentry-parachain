@@ -66,8 +66,6 @@ std = [
     "fork-tree/std",
     # substrate
     "sp-runtime/std",
-    # scs
-    "itp-types/std",
 ]
 sgx = [
     "sgx_tstd",

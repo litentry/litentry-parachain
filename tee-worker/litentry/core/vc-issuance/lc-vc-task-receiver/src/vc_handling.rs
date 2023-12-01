@@ -1,7 +1,8 @@
 #![allow(clippy::result_large_err)]
 
+use crate::{Getter, TrustedCallSigned};
 use ita_sgx_runtime::Hash;
-pub use ita_stf::{aes_encrypt_default, IdentityManagement};
+pub use ita_stf::aes_encrypt_default;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -22,8 +23,8 @@ use std::{format, sync::Arc};
 
 pub(crate) struct VCRequestHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
@@ -34,8 +35,8 @@ pub(crate) struct VCRequestHandler<
 impl<K, A, S, H, O> VCRequestHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
@@ -82,16 +83,21 @@ where
 				lc_assertion_build::generic_discord_role::build(&self.req, role_type),
 
 			Assertion::BnbDomainHolding =>
-				lc_assertion_build::nodereal::bnb_domain_holding_amount::build(&self.req),
+				lc_assertion_build::nodereal::bnb_domain::bnb_domain_holding_amount::build(
+					&self.req,
+				),
 
 			Assertion::BnbDigitDomainClub(digit_domain_type) =>
-				lc_assertion_build::nodereal::bnb_digit_domain_club_amount::build(
+				lc_assertion_build::nodereal::bnb_domain::bnb_digit_domain_club_amount::build(
 					&self.req,
 					digit_domain_type,
 				),
 
 			Assertion::VIP3MembershipCard(level) =>
 				lc_assertion_build::vip3::card::build(&self.req, level),
+
+			Assertion::WeirdoGhostGangHolder =>
+				lc_assertion_build::nodereal::nft_holder::weirdo_ghost_gang_holder::build(&self.req),
 		}?;
 
 		// post-process the credential

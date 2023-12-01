@@ -17,16 +17,114 @@
 */
 
 use crate::error::{Error, ServiceResult};
-use codec::Encode;
-use itp_enclave_api::{enclave_base::EnclaveBase, Enclave};
 use itp_settings::files::{
 	LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SCHEDULED_ENCLAVE_FILE, SHARDS_PATH,
-	SHIELDING_KEY_FILE, SIDECHAIN_STORAGE_PATH, SIGNING_KEY_FILE,
-	TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	SIDECHAIN_STORAGE_PATH, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
 };
-use itp_types::ShardIdentifier;
-use log::*;
-use std::{fs, fs::File, path::Path};
+use std::{fs, path::Path};
+
+#[cfg(feature = "link-binary")]
+pub(crate) use needs_enclave::{
+	generate_shielding_key_file, generate_signing_key_file, init_shard, initialize_shard_and_keys,
+	migrate_shard,
+};
+
+#[cfg(feature = "link-binary")]
+mod needs_enclave {
+	use crate::error::{Error, ServiceResult};
+	use codec::Encode;
+	use itp_enclave_api::{enclave_base::EnclaveBase, Enclave};
+	use itp_settings::files::{
+		LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH, SHARDS_PATH, SHIELDING_KEY_FILE,
+		SIDECHAIN_STORAGE_PATH, SIGNING_KEY_FILE, TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+		TARGET_B_PARENTCHAIN_LIGHT_CLIENT_DB_PATH,
+	};
+	use itp_types::ShardIdentifier;
+	use log::*;
+	use std::{fs, fs::File, path::Path};
+
+	/// Initializes the shard and generates the key files.
+	pub(crate) fn initialize_shard_and_keys(
+		enclave: &Enclave,
+		shard_identifier: &ShardIdentifier,
+	) -> ServiceResult<()> {
+		println!("[+] Initialize the shard");
+		init_shard(enclave, shard_identifier);
+
+		println!("[+] Generate key files");
+		generate_signing_key_file(enclave);
+		generate_shielding_key_file(enclave);
+
+		Ok(())
+	}
+
+	pub(crate) fn init_shard(enclave: &Enclave, shard_identifier: &ShardIdentifier) {
+		use base58::ToBase58;
+
+		match enclave.init_shard(shard_identifier.encode()) {
+			Err(e) => {
+				println!(
+					"Failed to initialize shard {:?}: {:?}",
+					shard_identifier.0.to_base58(),
+					e
+				);
+			},
+			Ok(_) => {
+				println!("Successfully initialized shard {:?}", shard_identifier.0.to_base58());
+			},
+		}
+	}
+
+	pub(crate) fn migrate_shard(
+		enclave: &Enclave,
+		old_shard: &ShardIdentifier,
+		new_shard: &ShardIdentifier,
+	) {
+		match enclave.migrate_shard(old_shard.encode(), new_shard.encode()) {
+			Err(e) => {
+				println!(
+					"Failed to migrate old shard {:?} to new shard{:?}. {:?}",
+					old_shard, new_shard, e
+				);
+			},
+			Ok(_) => {
+				println!(
+					"Successfully migrate old shard {:?} to new shard{:?}",
+					old_shard, new_shard
+				);
+			},
+		}
+	}
+
+	pub(crate) fn generate_signing_key_file(enclave: &Enclave) {
+		info!("*** Get the signing key from the TEE\n");
+		let pubkey = enclave.get_ecc_signing_pubkey().unwrap();
+		debug!("[+] Signing key raw: {:?}", pubkey);
+		match fs::write(SIGNING_KEY_FILE, pubkey) {
+			Err(x) => {
+				error!("[-] Failed to write '{}'. {}", SIGNING_KEY_FILE, x);
+			},
+			_ => {
+				println!("[+] File '{}' written successfully", SIGNING_KEY_FILE);
+			},
+		}
+	}
+
+	pub(crate) fn generate_shielding_key_file(enclave: &Enclave) {
+		info!("*** Get the public key from the TEE\n");
+		let pubkey = enclave.get_rsa_shielding_pubkey().unwrap();
+		let file = File::create(SHIELDING_KEY_FILE).unwrap();
+		match serde_json::to_writer(file, &pubkey) {
+			Err(x) => {
+				error!("[-] Failed to write '{}'. {}", SHIELDING_KEY_FILE, x);
+			},
+			_ => {
+				println!("[+] File '{}' written successfully", SHIELDING_KEY_FILE);
+			},
+		}
+	}
+}
 
 /// Purge all worker files from `dir`.
 pub(crate) fn purge_files_from_dir(dir: &Path) -> ServiceResult<()> {
@@ -36,78 +134,6 @@ pub(crate) fn purge_files_from_dir(dir: &Path) -> ServiceResult<()> {
 	purge_files(dir)?;
 
 	Ok(())
-}
-
-/// Initializes the shard and generates the key files.
-pub(crate) fn initialize_shard_and_keys(
-	enclave: &Enclave,
-	shard_identifier: &ShardIdentifier,
-) -> ServiceResult<()> {
-	println!("[+] Initialize the shard");
-	init_shard(enclave, shard_identifier);
-
-	println!("[+] Generate key files");
-	generate_signing_key_file(enclave);
-	generate_shielding_key_file(enclave);
-
-	Ok(())
-}
-
-pub(crate) fn init_shard(enclave: &Enclave, shard_identifier: &ShardIdentifier) {
-	match enclave.init_shard(shard_identifier.encode()) {
-		Err(e) => {
-			println!("Failed to initialize shard {:?}: {:?}", shard_identifier, e);
-		},
-		Ok(_) => {
-			println!("Successfully initialized shard {:?}", shard_identifier);
-		},
-	}
-}
-
-pub(crate) fn migrate_shard(
-	enclave: &Enclave,
-	old_shard: &ShardIdentifier,
-	new_shard: &ShardIdentifier,
-) {
-	match enclave.migrate_shard(old_shard.encode(), new_shard.encode()) {
-		Err(e) => {
-			println!(
-				"Failed to migrate old shard {:?} to new shard{:?}. {:?}",
-				old_shard, new_shard, e
-			);
-		},
-		Ok(_) => {
-			println!("Successfully migrate old shard {:?} to new shard{:?}", old_shard, new_shard);
-		},
-	}
-}
-
-pub(crate) fn generate_signing_key_file(enclave: &Enclave) {
-	info!("*** Get the signing key from the TEE\n");
-	let pubkey = enclave.get_ecc_signing_pubkey().unwrap();
-	debug!("[+] Signing key raw: {:?}", pubkey);
-	match fs::write(SIGNING_KEY_FILE, pubkey) {
-		Err(x) => {
-			error!("[-] Failed to write '{}'. {}", SIGNING_KEY_FILE, x);
-		},
-		_ => {
-			println!("[+] File '{}' written successfully", SIGNING_KEY_FILE);
-		},
-	}
-}
-
-pub(crate) fn generate_shielding_key_file(enclave: &Enclave) {
-	info!("*** Get the public key from the TEE\n");
-	let pubkey = enclave.get_rsa_shielding_pubkey().unwrap();
-	let file = File::create(SHIELDING_KEY_FILE).unwrap();
-	match serde_json::to_writer(file, &pubkey) {
-		Err(x) => {
-			error!("[-] Failed to write '{}'. {}", SHIELDING_KEY_FILE, x);
-		},
-		_ => {
-			println!("[+] File '{}' written successfully", SHIELDING_KEY_FILE);
-		},
-	}
 }
 
 /// Purge all worker files in a given path.

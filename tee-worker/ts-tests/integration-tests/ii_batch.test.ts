@@ -23,7 +23,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
     const signerIdentities: LitentryPrimitivesIdentity[] = [];
 
     step('generate web3 wallets', async function () {
-        const web3Wallets = await generateWeb3Wallets(10);
+        const web3Wallets = await generateWeb3Wallets(3);
         evmSigners = web3Wallets.map((web3Signer) => {
             return web3Signer.evmWallet;
         });
@@ -45,7 +45,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             context,
             signerIdentities,
             identities,
-            0,
+            1,
             'ethereum',
             undefined,
             evmSigners
@@ -76,7 +76,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
             ['IdentityDeactivated']
         );
 
-        await assertIdentityDeactivated(context, context.substrateWallet.alice, deactivatedEvents);
+        await assertIdentityDeactivated(context.substrateWallet.alice, deactivatedEvents);
     });
 
     step('batch test: deactivate error identities', async function () {

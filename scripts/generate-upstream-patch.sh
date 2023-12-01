@@ -5,124 +5,101 @@ set -eo pipefail
 ROOTDIR=$(git rev-parse --show-toplevel)
 UPSTREAM_URL_PREFIX="https://github.com/integritee-network"
 
-function cleanup() {
-	rm -rf "$1"
-	echo "cleaned up $1"
-}
-
 function usage() {
 	echo "Usage:"
-	echo "For pallets: $0 p pallets-new-commit"
-	echo "For worker : $0 w worker-new-commit"
+	echo "For pallets: $0 p [pallets-new-commit]"
+	echo "For worker : $0 w [worker-new-commit]"
 }
 
-function check_upstream() {
-	local TARGET=$1
-	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
-	if [ "$(git remote get-url "upstream_$TARGET" 2>/dev/null)" != "$UPSTREAM_URL" ]; then
-		git remote add "upstream_$TARGET" "$UPSTREAM_URL"
+function add_upstream_url() {
+	local target=$1
+	local upstream_url="$UPSTREAM_URL_PREFIX/$target"
+	if [ "$(git remote get-url "upstream_$target" 2>/dev/null)" != "$upstream_url" ]; then
+		git remote add "upstream_$target" "$upstream_url"
 	fi
-}
-
-# This function generates 9 patches for the diffs between commit-A and commit-B
-# of the upstream repo, where
-# commit-A: the commit recorded in ./<TARGET_DIR>/upstream_commit
-# commit-B: the HEAD commit of upstream master or a given commit
-#
-# Patches will be generated under ./<TARGET_DIR>/
-function generate_worker_patch() {
-	local TARGET="worker"
-	local TARGET_DIR="$ROOTDIR/$TARGET"
-
-	if [[ $TARGET == "worker" ]]
-	then
-		TARGET_DIR="$ROOTDIR/tee-worker"
-	fi
-
-	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
-
-	cd "$TARGET_DIR"
-
-	if [ -f upstream_commit ]; then
-		OLD_COMMIT=$(head -1 upstream_commit)
-	else
-		echo "Can't find upstream_commit file in $TARGET_DIR, quit"
-		exit 1
-	fi
-
-	echo "fetch upstream_$TARGET"
-	git fetch -q "upstream_$TARGET"
-
-	local tmp_dir
-	tmp_dir=$(mktemp -d)
-	cd "$tmp_dir"
-	echo "cloning ""$UPSTREAM_URL"" to $tmp_dir"
-	git clone -q "$UPSTREAM_URL" repo
-	cd repo
-	[ "" != "$NEW_COMMIT" ] && git checkout "$NEW_COMMIT"
-	echo "generating patch ..."
-	git diff "$OLD_COMMIT" HEAD > "$TARGET_DIR/upstream.patch"
-	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
-
-	# Clean up TMP DIR
-	cleanup "$tmp_dir"
-
-	echo
 }
 
 # This function generates a patch for the diffs between commit-A and commit-B
-# of pallets repo
-# -> ./<TARGET_DIR>/pallets_xxx.patch
-# -> ./<TARGET_DIR>/primitives_xxx.patch
-function generate_pallets_patch() {
-	local TARGET='pallets'
-	local TARGET_DIR="$ROOTDIR/$TARGET"
+# of the upstream repo, where
+# 	- commit-A: the commit recorded in tee-worker/upstream_commit
+# 	- commit-B: the HEAD of the given commit
+# The patch will be generated under tee-worker/
+function generate_worker_patch() {
+	local dest_dir="$ROOTDIR/tee-worker"
+	local upstream_url="$UPSTREAM_URL_PREFIX/worker"
 
-	local UPSTREAM_URL="$UPSTREAM_URL_PREFIX/$TARGET"
-
-	cd "$TARGET_DIR"
+	cd "$dest_dir"
 
 	if [ -f upstream_commit ]; then
 		OLD_COMMIT=$(head -1 upstream_commit)
 	else
-		echo "Can't find upstream_commit file in $TARGET_DIR, quit"
+		echo "Can't find upstream_commit file in $dest_dir, quit"
 		exit 1
 	fi
 
-	echo "fetch upstream_$TARGET"
-	git fetch -q "upstream_$TARGET"
+	echo "fetching upstream_worker ..."
+	git fetch -q "upstream_worker"
 
 	local tmp_dir
 	tmp_dir=$(mktemp -d)
 	cd "$tmp_dir"
-	echo "cloning ""$UPSTREAM_URL"" to $tmp_dir"
-	git clone -q "$UPSTREAM_URL" repo
-	cd repo
-	[ "" != "$NEW_COMMIT" ] && git checkout "$NEW_COMMIT"
-	echo ">>> generating patch ..."
+	echo "cloning $upstream_url to $tmp_dir"
+	git clone -q "$upstream_url"
+	cd worker && git checkout "$1"
+	echo "generating patch ..."
+	git diff "$OLD_COMMIT" HEAD > "$dest_dir/upstream.patch"
+	git rev-parse --short HEAD > "$dest_dir/upstream_commit"
+	rm -rf "$tmp_dir"
+	echo "done"
+}
+
+# This function generates a handful of patches for the diffs between commit-A and commit-B
+# of the upstream repo, where
+# 	- commit-A: the commit recorded in tee-worker/upstream_commit
+# 	- commit-B: the HEAD of the given commit
+# The patches will be generated under pallets/
+#	- pallets/pallets_xxx.patch
+#	- pallets/primitives_xxx.patch
+function generate_pallets_patch() {
+	local dest_dir="$ROOTDIR/pallets"
+	local upstream_url="$UPSTREAM_URL_PREFIX/pallets"
+
+	cd "$dest_dir"
+	if [ -f upstream_commit ]; then
+		OLD_COMMIT=$(head -1 upstream_commit)
+	else
+		echo "Can't find upstream_commit file in $dest_dir, quit"
+		exit 1
+	fi
+
+	echo "fetching upstream_pallets"
+	git fetch -q "upstream_pallets"
+
+	local tmp_dir
+	tmp_dir=$(mktemp -d)
+	cd "$tmp_dir"
+	echo "cloning $upstream_url to $tmp_dir"
+	git clone -q "$upstream_url"
+	cd pallets && git checkout "$1"
+	echo "generating patch ..."
 
 	# pallets
 	local pallets=("parentchain" "sidechain" "teeracle" "teerex" "test-utils")
 	for p in "${pallets[@]}"; do
 		echo "generating $p.patch"
-		git diff --binary "$OLD_COMMIT" HEAD -- "$p" > "$TARGET_DIR/pallets_$p.patch"
+		git diff --binary "$OLD_COMMIT" HEAD -- "$p" > "$dest_dir/pallets_$p.patch"
 	done
 
 	# primitives
 	local primitives=("sidechain" "teeracle" "teerex" "common")
 	for p in "${primitives[@]}"; do
 		echo "generating primitives_$p.patch"
-		git diff --binary "$OLD_COMMIT" HEAD -- primitives/"$p" > "$TARGET_DIR/primitives_$p.patch"
+		git diff --binary "$OLD_COMMIT" HEAD -- primitives/"$p" > "$dest_dir/primitives_$p.patch"
 	done
 
-	echo ">>> generating patch done."
-
-	git rev-parse --short HEAD > "$TARGET_DIR/upstream_commit"
-
-	# Clean up TMP DIR
-	cleanup "$tmp_dir"
-
-	echo
+	git rev-parse --short HEAD > "$dest_dir/upstream_commit"
+	rm -rf "$tmp_dir"
+	echo "done"
 }
 
 function apply_pallets_tips() {
@@ -143,7 +120,7 @@ function apply_pallets_tips() {
 	echo "    - primitives/(common, sidechain, teeracle, teerex)"
 }
 
-function apply_woker_tips() {
+function apply_worker_tips() {
 	echo "======================================================================="
 	echo "upstream_commit(s) are updated."
 	echo "upstream.patch(s) are generated."
@@ -161,22 +138,18 @@ function apply_woker_tips() {
 	echo "- apply any changes of `workflows/build_and_test.yml` to $ROOTDIR/.github/workflows/ci.yml"
 }
 
-if [ -z "$2" ]; then
-	usage; exit 1
-fi
-NEW_COMMIT=$2
+NEW_COMMIT=${2:-master}
 
-OPT="$1"
-case "$OPT" in
+case "$1" in
 	p)
-		check_upstream "pallets"
-		generate_pallets_patch "$@"
+		add_upstream_url "pallets"
+		generate_pallets_patch "$NEW_COMMIT"
 		apply_pallets_tips
 		;;
 	w)
-		check_upstream "worker"
-		generate_worker_patch "$@"
-		apply_woker_tips
+		add_upstream_url "worker"
+		generate_worker_patch "$NEW_COMMIT"
+		apply_worker_tips
 		;;
 	*)
 		usage; exit 1 ;;

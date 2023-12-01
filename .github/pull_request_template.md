@@ -15,6 +15,6 @@ Please apply following PR-related labels when appropriate:
 
 ### Testing Evidences
 
-Please attach any relevent evidences if applicable
+Please attach any relevant evidences if applicable
 
 

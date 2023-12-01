@@ -17,11 +17,10 @@
 //! Implementation of the sidechain block importer struct.
 //! Imports sidechain blocks and applies the accompanying state diff to its state.
 
+use codec::{Decode, Encode};
+use core::fmt::Debug;
 // Reexport BlockImport trait which implements fn block_import()
-pub use its_consensus_common::BlockImport;
-
 use crate::{AuraVerifier, EnclaveOnChainOCallApi, SidechainBlockTrait};
-use ita_stf::hash::TrustedOperationOrHash;
 use itc_parentchain_block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport;
 use itc_peer_top_broadcaster::PeerUpdater;
 use itp_enclave_metrics::EnclaveMetric;
@@ -29,9 +28,11 @@ use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
 use itp_sgx_crypto::{key_repository::AccessKey, StateCrypto};
 use itp_sgx_externalities::SgxExternalities;
+use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperationOrHash};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::{AuthorApi, OnBlockImported};
 use itp_types::H256;
+pub use its_consensus_common::BlockImport;
 use its_consensus_common::Error as ConsensusError;
 use its_primitives::traits::{
 	BlockData, Header as HeaderTrait, ShardIdentifierFor, SignedBlock as SignedBlockTrait,
@@ -57,6 +58,8 @@ pub struct BlockImporter<
 	TopPoolAuthor,
 	ParentchainBlockImporter,
 	PeersUpdater,
+	TCS,
+	G,
 > {
 	state_handler: Arc<StateHandler>,
 	state_key_repository: Arc<StateKeyRepository>,
@@ -64,7 +67,7 @@ pub struct BlockImporter<
 	parentchain_block_importer: Arc<ParentchainBlockImporter>,
 	ocall_api: Arc<OCallApi>,
 	peer_updater: Arc<PeersUpdater>,
-	_phantom: PhantomData<(Authority, ParentchainBlock, SignedSidechainBlock)>,
+	_phantom: PhantomData<(Authority, ParentchainBlock, SignedSidechainBlock, TCS, G)>,
 }
 
 impl<
@@ -77,6 +80,8 @@ impl<
 		TopPoolAuthor,
 		ParentchainBlockImporter,
 		PeersUpdater,
+		TCS,
+		G,
 	>
 	BlockImporter<
 		Authority,
@@ -88,6 +93,8 @@ impl<
 		TopPoolAuthor,
 		ParentchainBlockImporter,
 		PeersUpdater,
+		TCS,
+		G,
 	> where
 	Authority: Pair,
 	Authority::Public: std::fmt::Debug + UncheckedFrom<[u8; 32]>,
@@ -104,11 +111,13 @@ impl<
 	StateHandler: HandleState<StateT = SgxExternalities>,
 	StateKeyRepository: AccessKey,
 	<StateKeyRepository as AccessKey>::KeyType: StateCrypto,
-	TopPoolAuthor: AuthorApi<H256, H256> + OnBlockImported<Hash = H256>,
+	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + OnBlockImported<Hash = H256>,
 	ParentchainBlockImporter: TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>
 		+ Send
 		+ Sync,
 	PeersUpdater: PeerUpdater,
+	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
+	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
 	pub fn new(
 		state_handler: Arc<StateHandler>,
@@ -167,6 +176,8 @@ impl<
 		TopPoolAuthor,
 		ParentchainBlockImporter,
 		PeersUpdater,
+		TCS,
+		G,
 	> BlockImport<ParentchainBlock, SignedSidechainBlock>
 	for BlockImporter<
 		Authority,
@@ -178,6 +189,8 @@ impl<
 		TopPoolAuthor,
 		ParentchainBlockImporter,
 		PeersUpdater,
+		TCS,
+		G,
 	> where
 	Authority: Pair,
 	Authority::Public: std::fmt::Debug + UncheckedFrom<[u8; 32]>,
@@ -194,11 +207,13 @@ impl<
 	StateHandler: HandleState<StateT = SgxExternalities>,
 	StateKeyRepository: AccessKey,
 	<StateKeyRepository as AccessKey>::KeyType: StateCrypto,
-	TopPoolAuthor: AuthorApi<H256, H256> + OnBlockImported<Hash = H256>,
+	TopPoolAuthor: AuthorApi<H256, H256, TCS, G> + OnBlockImported<Hash = H256>,
 	ParentchainBlockImporter: TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>
 		+ Send
 		+ Sync,
 	PeersUpdater: PeerUpdater,
+	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
+	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
 	type Verifier = AuraVerifier<Authority, ParentchainBlock, SignedSidechainBlock, OCallApi>;
 	type SidechainState = SgxExternalities;

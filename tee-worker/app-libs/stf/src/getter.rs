@@ -15,14 +15,14 @@
 
 */
 
-use crate::IdentityManagement;
 use codec::{Decode, Encode};
-use ita_sgx_runtime::System;
+use ita_sgx_runtime::{IdentityManagement, System};
 use itp_stf_interface::ExecuteGetter;
-use itp_stf_primitives::types::KeyPair;
+use itp_stf_primitives::{traits::GetterAuthorization, types::KeyPair};
 use itp_utils::{if_production_or, stringify::account_id_to_string};
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
+use sp_std::vec;
 use std::prelude::v1::*;
 
 #[cfg(feature = "evm")]
@@ -31,8 +31,12 @@ use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{get_evm_account, get_evm_account_codes, get_evm_account_storages};
 
+use itp_stf_primitives::traits::PoolTransactionValidation;
 #[cfg(feature = "evm")]
 use sp_core::{H160, H256};
+use sp_runtime::transaction_validity::{
+	TransactionValidityError, UnknownTransaction, ValidTransaction,
+};
 
 #[cfg(not(feature = "production"))]
 use crate::helpers::ALICE_ACCOUNTID32;
@@ -46,6 +50,11 @@ pub enum Getter {
 	trusted(TrustedGetterSigned),
 }
 
+impl Default for Getter {
+	fn default() -> Self {
+		Getter::public(PublicGetter::some_value)
+	}
+}
 impl From<PublicGetter> for Getter {
 	fn from(item: PublicGetter) -> Self {
 		Getter::public(item)
@@ -55,6 +64,31 @@ impl From<PublicGetter> for Getter {
 impl From<TrustedGetterSigned> for Getter {
 	fn from(item: TrustedGetterSigned) -> Self {
 		Getter::trusted(item)
+	}
+}
+
+impl GetterAuthorization for Getter {
+	fn is_authorized(&self) -> bool {
+		match self {
+			Self::trusted(ref getter) => getter.verify_signature(),
+			Self::public(_) => true,
+		}
+	}
+}
+
+impl PoolTransactionValidation for Getter {
+	fn validate(&self) -> Result<ValidTransaction, TransactionValidityError> {
+		match self {
+			Self::public(_) =>
+				Err(TransactionValidityError::Unknown(UnknownTransaction::CannotLookup)),
+			Self::trusted(trusted_getter_signed) => Ok(ValidTransaction {
+				priority: 1 << 20,
+				requires: vec![],
+				provides: vec![trusted_getter_signed.signature.encode()],
+				longevity: 64,
+				propagate: true,
+			}),
+		}
 	}
 }
 

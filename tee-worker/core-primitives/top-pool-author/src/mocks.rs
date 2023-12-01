@@ -17,6 +17,7 @@
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
+use core::fmt::Debug;
 
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
@@ -29,12 +30,11 @@ use crate::{
 	traits::{AuthorApi, OnBlockImported},
 };
 use codec::{Decode, Encode};
-use ita_stf::{
-	hash::{Hash, TrustedOperationOrHash},
-	Getter, TrustedGetterSigned, TrustedOperation,
+use itp_stf_primitives::{
+	traits::TrustedCallVerification,
+	types::{AccountId, TrustedOperation as StfTrustedOperation, TrustedOperationOrHash},
 };
-use itp_stf_primitives::types::AccountId;
-use itp_top_pool::primitives::PoolFuture;
+use itp_top_pool::primitives::{PoolFuture, PoolStatus};
 use itp_types::{DecryptableRequest, ShardIdentifier};
 use jsonrpc_core::{futures::future::ready, Error as RpcError};
 use lazy_static::lazy_static;
@@ -63,24 +63,24 @@ lazy_static! {
 }
 
 #[derive(Default)]
-pub struct AuthorApiMock<Hash, BlockHash> {
+pub struct AuthorApiMock<Hash, BlockHash, TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + TrustedCallVerification,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+{
 	tops: RwLock<HashMap<ShardIdentifier, Vec<Vec<u8>>>>,
-	_phantom: PhantomData<(Hash, BlockHash)>,
+	_phantom: PhantomData<(Hash, BlockHash, TCS, G)>,
 	pub remove_attempts: RwLock<usize>,
 }
 
-impl<Hash, BlockHash> AuthorApiMock<Hash, BlockHash> {
-	fn decode_trusted_operation(mut encoded_operation: &[u8]) -> Option<TrustedOperation> {
-		TrustedOperation::decode(&mut encoded_operation).ok()
-	}
-
-	fn decode_trusted_getter_signed(mut encoded_operation: &[u8]) -> Option<TrustedGetterSigned> {
-		TrustedGetterSigned::decode(&mut encoded_operation).ok()
-	}
-
+impl<Hash, BlockHash, TCS, G> AuthorApiMock<Hash, BlockHash, TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + TrustedCallVerification,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+{
 	fn remove_top(
 		&self,
-		bytes_or_hash: Vec<TrustedOperationOrHash<H256>>,
+		bytes_or_hash: Vec<TrustedOperationOrHash<TCS, G>>,
 		shard: ShardIdentifier,
 		_inblock: bool,
 	) -> Result<Vec<H256>> {
@@ -89,8 +89,8 @@ impl<Hash, BlockHash> AuthorApiMock<Hash, BlockHash> {
 			.map(|x| match x {
 				TrustedOperationOrHash::Hash(h) => h,
 				TrustedOperationOrHash::OperationEncoded(bytes) => {
-					let top: TrustedOperation =
-						TrustedOperation::decode(&mut bytes.as_slice()).unwrap();
+					let top: StfTrustedOperation<TCS, G> =
+						StfTrustedOperation::<TCS, G>::decode(&mut bytes.as_slice()).unwrap();
 					top.hash()
 				},
 				TrustedOperationOrHash::Operation(op) => op.hash(),
@@ -112,7 +112,11 @@ impl<Hash, BlockHash> AuthorApiMock<Hash, BlockHash> {
 	}
 }
 
-impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
+impl<TCS, G> AuthorApi<H256, H256, TCS, G> for AuthorApiMock<H256, H256, TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Clone + TrustedCallVerification + Send + Sync,
+	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
+{
 	fn submit_top<R: DecryptableRequest>(&self, req: R) -> PoolFuture<H256, RpcError> {
 		let mut write_lock = self.tops.write().unwrap();
 		let extrinsics = write_lock.entry(req.shard()).or_default();
@@ -120,7 +124,7 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 		Box::pin(ready(Ok(H256::default())))
 	}
 
-	fn hash_of(&self, xt: &TrustedOperation) -> H256 {
+	fn hash_of(&self, xt: &StfTrustedOperation<TCS, G>) -> H256 {
 		xt.hash()
 	}
 
@@ -129,16 +133,16 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 		Ok(extrinsics.unwrap_or_default())
 	}
 
-	fn get_pending_trusted_getters(&self, shard: ShardIdentifier) -> Vec<TrustedOperation> {
+	fn get_pending_getters(&self, shard: ShardIdentifier) -> Vec<StfTrustedOperation<TCS, G>> {
 		self.tops
 			.read()
 			.unwrap()
 			.get(&shard)
 			.map(|encoded_operations| {
-				let mut trusted_getters: Vec<TrustedOperation> = Vec::new();
+				let mut trusted_getters: Vec<StfTrustedOperation<TCS, G>> = Vec::new();
 				for encoded_operation in encoded_operations {
-					if let Some(g) = Self::decode_trusted_getter_signed(encoded_operation) {
-						trusted_getters.push(TrustedOperation::get(Getter::trusted(g)));
+					if let Ok(g) = G::decode(&mut encoded_operation.as_slice()) {
+						trusted_getters.push(StfTrustedOperation::<TCS, G>::get(g));
 					}
 				}
 				trusted_getters
@@ -146,15 +150,18 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 			.unwrap_or_default()
 	}
 
-	fn get_pending_trusted_calls(&self, shard: ShardIdentifier) -> Vec<TrustedOperation> {
+	fn get_pending_trusted_calls(
+		&self,
+		shard: ShardIdentifier,
+	) -> Vec<StfTrustedOperation<TCS, G>> {
 		self.tops
 			.read()
 			.unwrap()
 			.get(&shard)
 			.map(|encoded_operations| {
-				let mut trusted_operations: Vec<TrustedOperation> = Vec::new();
+				let mut trusted_operations: Vec<StfTrustedOperation<TCS, G>> = Vec::new();
 				for encoded_operation in encoded_operations {
-					if let Some(o) = Self::decode_trusted_operation(encoded_operation) {
+					if let Ok(o) = StfTrustedOperation::decode(&mut encoded_operation.as_slice()) {
 						trusted_operations.push(o);
 					}
 				}
@@ -163,21 +170,44 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 			.unwrap_or_default()
 	}
 
-	fn get_pending_trusted_calls_for(
-		&self,
-		shard: ShardIdentifier,
-		account: &AccountId,
-	) -> Vec<TrustedOperation> {
+	fn get_status(&self, shard: ShardIdentifier) -> PoolStatus {
 		self.tops
 			.read()
 			.unwrap()
 			.get(&shard)
 			.map(|encoded_operations| {
-				let mut trusted_operations: Vec<TrustedOperation> = Vec::new();
+				let mut trusted_operations: Vec<StfTrustedOperation<TCS, G>> = Vec::new();
 				for encoded_operation in encoded_operations {
-					if let Some(o) = Self::decode_trusted_operation(encoded_operation) {
-						if o.signed_caller_account().as_ref() == Some(account) {
-							trusted_operations.push(o);
+					if let Ok(o) = StfTrustedOperation::decode(&mut encoded_operation.as_slice()) {
+						trusted_operations.push(o);
+					}
+				}
+				PoolStatus {
+					ready: trusted_operations.len(),
+					ready_bytes: trusted_operations.encode().len(),
+					future: 0,
+					future_bytes: 0,
+				}
+			})
+			.unwrap_or_default()
+	}
+
+	fn get_pending_trusted_calls_for(
+		&self,
+		shard: ShardIdentifier,
+		account: &AccountId,
+	) -> Vec<StfTrustedOperation<TCS, G>> {
+		self.tops
+			.read()
+			.unwrap()
+			.get(&shard)
+			.map(|encoded_operations| {
+				let mut trusted_operations: Vec<StfTrustedOperation<TCS, G>> = Vec::new();
+				for encoded_operation in encoded_operations {
+					if let Ok(top) = StfTrustedOperation::decode(&mut encoded_operation.as_slice())
+					{
+						if top.signed_caller_account().as_ref() == Some(account) {
+							trusted_operations.push(top);
 						}
 					}
 				}
@@ -198,8 +228,8 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 	fn remove_calls_from_pool(
 		&self,
 		shard: ShardIdentifier,
-		executed_calls: Vec<(TrustedOperationOrHash<H256>, bool)>,
-	) -> Vec<TrustedOperationOrHash<H256>> {
+		executed_calls: Vec<(TrustedOperationOrHash<TCS, G>, bool)>,
+	) -> Vec<TrustedOperationOrHash<TCS, G>> {
 		let mut remove_attempts_lock = self.remove_attempts.write().unwrap();
 		*remove_attempts_lock += 1;
 
@@ -237,7 +267,11 @@ impl AuthorApi<H256, H256> for AuthorApiMock<H256, H256> {
 	fn swap_rpc_connection_hash(&self, _old_hash: H256, _new_hash: H256) {}
 }
 
-impl OnBlockImported for AuthorApiMock<H256, H256> {
+impl<TCS, G> OnBlockImported for AuthorApiMock<H256, H256, TCS, G>
+where
+	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + TrustedCallVerification,
+	G: PartialEq + Encode + Decode + Debug + Send + Sync,
+{
 	type Hash = H256;
 
 	fn on_block_imported(&self, _hashes: &[Self::Hash], _block_hash: H256) {}
@@ -247,26 +281,32 @@ impl OnBlockImported for AuthorApiMock<H256, H256> {
 mod tests {
 
 	use super::*;
-	use crate::test_fixtures::{create_indirect_trusted_operation, shard_id};
+	use crate::test_fixtures::shard_id;
 	use codec::Encode;
 	use futures::executor::block_on;
+	use itp_test::mock::stf_mock::{
+		mock_top_indirect_trusted_call_signed, GetterMock, TrustedCallSignedMock,
+	};
 	use itp_types::RsaRequest;
 	use std::vec;
 
 	#[test]
 	fn submitted_tops_can_be_removed_again() {
-		let author = AuthorApiMock::<H256, H256>::default();
+		let author = AuthorApiMock::<H256, H256, TrustedCallSignedMock, GetterMock>::default();
 		let shard = shard_id();
-		let trusted_operation = create_indirect_trusted_operation();
+		let trusted_operation = mock_top_indirect_trusted_call_signed();
 
 		let _ = block_on(author.submit_top(RsaRequest::new(shard, trusted_operation.encode())))
 			.unwrap();
 
 		assert_eq!(1, author.pending_tops(shard).unwrap().len());
 		assert_eq!(1, author.get_pending_trusted_calls(shard).len());
-		assert_eq!(0, author.get_pending_trusted_getters(shard).len());
+		assert_eq!(0, author.get_pending_getters(shard).len());
 
-		let trusted_operation_or_hash = TrustedOperationOrHash::from_top(trusted_operation.clone());
+		let trusted_operation_or_hash =
+			TrustedOperationOrHash::<TrustedCallSignedMock, GetterMock>::from_top(
+				trusted_operation.clone(),
+			);
 		let removed_tops = author.remove_top(vec![trusted_operation_or_hash], shard, true).unwrap();
 
 		assert_eq!(1, removed_tops.len());

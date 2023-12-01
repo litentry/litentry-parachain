@@ -17,6 +17,7 @@
 
 use codec::Encode;
 use finality_grandpa::BlockNumberOps;
+use ita_stf::{Getter, TrustedCallSigned};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
@@ -38,7 +39,7 @@ use sp_runtime::{
 };
 use std::{marker::PhantomData, string::ToString, sync::Arc, time::Duration, vec::Vec};
 
-pub type ExternalitiesFor<T> = <T as StateUpdateProposer>::Externalities;
+pub type ExternalitiesFor<T> = <T as StateUpdateProposer<TrustedCallSigned, Getter>>::Externalities;
 ///! `SlotProposer` instance that has access to everything needed to propose a sidechain block.
 pub struct SlotProposer<
 	ParentchainBlock: Block,
@@ -80,11 +81,12 @@ impl<
 	SignedSidechainBlock::Block: SidechainBlockTrait<Public = sp_core::ed25519::Public>,
 	<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as SidechainBlockTrait>::HeaderType:
 		HeaderTrait<ShardIdentifier = H256>,
-	StfExecutor: StateUpdateProposer,
+	StfExecutor: StateUpdateProposer<TrustedCallSigned, Getter>,
 	ExternalitiesFor<StfExecutor>:
 		SgxExternalitiesTrait + SidechainState + SidechainSystemExt + StateHash,
 	<ExternalitiesFor<StfExecutor> as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
-	TopPoolAuthor: AuthorApi<H256, ParentchainBlock::Hash> + Send + Sync + 'static,
+	TopPoolAuthor:
+		AuthorApi<H256, ParentchainBlock::Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	BlockComposer: ComposeBlock<
 			ExternalitiesFor<StfExecutor>,
 			ParentchainBlock,
