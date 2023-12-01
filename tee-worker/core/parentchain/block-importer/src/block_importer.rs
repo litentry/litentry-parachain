@@ -23,7 +23,9 @@ use itc_parentchain_indirect_calls_executor::ExecuteIndirectCalls;
 use itc_parentchain_light_client::{
 	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, Validator,
 };
+use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_executor::traits::StfUpdateState;
 use itp_types::{
 	parentchain::{IdentifyParentchain, ParentchainId},
@@ -43,11 +45,13 @@ pub struct ParentchainBlockImporter<
 	StfExecutor,
 	ExtrinsicsFactory,
 	IndirectCallsExecutor,
+	OCallApi,
 > {
 	validator_accessor: Arc<ValidatorAccessor>,
 	stf_executor: Arc<StfExecutor>,
 	extrinsics_factory: Arc<ExtrinsicsFactory>,
 	pub indirect_calls_executor: Arc<IndirectCallsExecutor>,
+	ocall_api: Arc<OCallApi>,
 	_phantom: PhantomData<ParentchainBlock>,
 }
 
@@ -57,6 +61,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OCallApi,
 	>
 	ParentchainBlockImporter<
 		ParentchainBlock,
@@ -64,6 +69,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OCallApi,
 	>
 {
 	pub fn new(
@@ -71,12 +77,14 @@ impl<
 		stf_executor: Arc<StfExecutor>,
 		extrinsics_factory: Arc<ExtrinsicsFactory>,
 		indirect_calls_executor: Arc<IndirectCallsExecutor>,
+		ocall_api: Arc<OCallApi>,
 	) -> Self {
 		ParentchainBlockImporter {
 			validator_accessor,
 			stf_executor,
 			extrinsics_factory,
 			indirect_calls_executor,
+			ocall_api,
 			_phantom: Default::default(),
 		}
 	}
@@ -88,6 +96,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OcallApi,
 	> ImportParentchainBlocks
 	for ParentchainBlockImporter<
 		ParentchainBlock,
@@ -95,6 +104,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OcallApi,
 	> where
 	ParentchainBlock: ParentchainBlockTrait<Hash = H256, Header = ParentchainHeader>,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
@@ -102,6 +112,7 @@ impl<
 	StfExecutor: StfUpdateState<ParentchainHeader, ParentchainId>,
 	ExtrinsicsFactory: CreateExtrinsics,
 	IndirectCallsExecutor: ExecuteIndirectCalls,
+	OcallApi: EnclaveMetricsOCallApi,
 {
 	type SignedBlockType = SignedBlockG<ParentchainBlock>;
 
@@ -117,6 +128,7 @@ impl<
 		for (signed_block, raw_events) in
 			blocks_to_import.into_iter().zip(events_to_import.into_iter())
 		{
+			let started = std::time::Instant::now();
 			if let Err(e) = self
 				.validator_accessor
 				.execute_mut_on_validator(|v| v.submit_block(&signed_block))
@@ -145,6 +157,12 @@ impl<
 					calls.push(executed_shielding_calls);
 				},
 				Err(e) => error!("[{:?}] Error executing relevant extrinsics: {:?}", id, e),
+			};
+			if let Err(e) = self
+				.ocall_api
+				.update_metric(EnclaveMetric::ParentchainBlockImportTime(started.elapsed()))
+			{
+				warn!("Failed to update metric for parentchain block import: {:?}", e);
 			};
 
 			info!(

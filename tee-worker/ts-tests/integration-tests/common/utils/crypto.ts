@@ -1,11 +1,12 @@
 import type { HexString } from '@polkadot/util/types';
-import { hexToU8a, u8aToHex, stringToU8a } from '@polkadot/util';
+import { hexToU8a, stringToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
-import { AesOutput } from '../type-definitions';
+import { AesOutput } from 'parachain-api';
 import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
+import type { KeypairType } from '@polkadot/util-crypto/types';
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
         {
@@ -30,41 +31,35 @@ export function encryptWithAes(key: HexString, nonce: Uint8Array, cleartext: Buf
 }
 
 export function decryptWithAes(key: HexString, aesOutput: AesOutput, type: 'hex' | 'utf-8'): HexString {
-    if (aesOutput.ciphertext && aesOutput.nonce) {
-        const secretKey = crypto.createSecretKey(hexToU8a(key));
-        const tagSize = 16;
-        const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
+    const secretKey = crypto.createSecretKey(hexToU8a(key));
+    const tagSize = 16;
+    const ciphertext = aesOutput.ciphertext ? aesOutput.ciphertext : hexToU8a('0x');
 
-        const nonce = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
-        const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
+    const nonce = aesOutput.nonce ? aesOutput.nonce : hexToU8a('0x');
+    const aad = aesOutput.aad ? aesOutput.aad : hexToU8a('0x');
 
-        // notice!!! extract author_tag from ciphertext
-        // maybe this code only works with rust aes encryption
-        const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
+    // notice!!! extract author_tag from ciphertext
+    // maybe this code only works with rust aes encryption
+    const authorTag = ciphertext.subarray(ciphertext.length - tagSize);
 
-        const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
-            authTagLength: tagSize,
-        });
-        decipher.setAAD(aad);
-        decipher.setAuthTag(authorTag);
+    const decipher = crypto.createDecipheriv('aes-256-gcm', secretKey, nonce, {
+        authTagLength: tagSize,
+    });
+    decipher.setAAD(aad);
+    decipher.setAuthTag(authorTag);
 
-        const part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
-        const part2 = decipher.final(type);
+    const part1 = decipher.update(ciphertext.subarray(0, ciphertext.length - tagSize), undefined, type);
+    const part2 = decipher.final(type);
 
-        return `0x${part1 + part2}`;
-    } else {
-        return u8aToHex(aesOutput as Uint8Array);
-    }
+    return `0x${part1 + part2}`;
 }
 
 export interface Signer {
     getAddressRaw(): Uint8Array;
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array>;
-    type(): SignerType;
+    type(): KeypairType;
     getAddressInSubstrateFormat(): Uint8Array;
 }
-
-type SignerType = 'ethereum' | 'sr25519' | 'ed25519' | 'ecdsa';
 
 export class PolkadotSigner implements Signer {
     keypair: KeyringPair;
@@ -81,7 +76,7 @@ export class PolkadotSigner implements Signer {
         return new Promise((resolve) => resolve(this.keypair.sign(message)));
     }
 
-    type(): SignerType {
+    type(): KeypairType {
         return this.keypair.type;
     }
 
@@ -107,7 +102,7 @@ export class EthersSigner implements Signer {
         });
     }
 
-    type(): SignerType {
+    type(): KeypairType {
         return 'ethereum';
     }
 

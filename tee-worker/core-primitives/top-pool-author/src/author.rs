@@ -458,9 +458,11 @@ impl<
 	fn get_pending_getters(&self, shard: ShardIdentifier) -> Vec<StfTrustedOperation<TCS, G>> {
 		self.top_pool
 			.ready(shard)
-			.map(|o| o.data().clone())
-			.into_iter()
-			.filter(|o| matches!(o, StfTrustedOperation::<TCS, G>::get(_)))
+			.filter_map(|o| match o.data() {
+				StfTrustedOperation::<TCS, G>::get(_) => Some(o.data().clone()),
+				StfTrustedOperation::<TCS, G>::direct_call(_)
+				| StfTrustedOperation::<TCS, G>::indirect_call(_) => None,
+			})
 			.collect()
 	}
 
@@ -470,11 +472,10 @@ impl<
 	) -> Vec<StfTrustedOperation<TCS, G>> {
 		self.top_pool
 			.ready(shard)
-			.map(|o| o.data().clone())
-			.into_iter()
-			.filter(|o| {
-				matches!(o, StfTrustedOperation::<TCS, G>::direct_call(_))
-					|| matches!(o, StfTrustedOperation::<TCS, G>::indirect_call(_))
+			.filter_map(|o| match o.data() {
+				StfTrustedOperation::<TCS, G>::direct_call(_)
+				| StfTrustedOperation::<TCS, G>::indirect_call(_) => Some(o.data().clone()),
+				StfTrustedOperation::<TCS, G>::get(_) => None,
 			})
 			.collect()
 	}

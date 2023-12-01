@@ -19,6 +19,7 @@ use crate::slot_proposer::{ExternalitiesFor, SlotProposer};
 use codec::Encode;
 use finality_grandpa::BlockNumberOps;
 use ita_stf::{Getter, TrustedCallSigned};
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_executor::traits::StateUpdateProposer;
 use itp_top_pool_author::traits::AuthorApi;
@@ -38,25 +39,34 @@ use std::{marker::PhantomData, sync::Arc};
 
 ///! `ProposerFactory` instance containing all the data to create the `SlotProposer` for the
 /// next `Slot`.
-pub struct ProposerFactory<ParentchainBlock: Block, TopPoolAuthor, StfExecutor, BlockComposer> {
+pub struct ProposerFactory<
+	ParentchainBlock: Block,
+	TopPoolAuthor,
+	StfExecutor,
+	BlockComposer,
+	MetricsApi,
+> {
 	top_pool_author: Arc<TopPoolAuthor>,
 	stf_executor: Arc<StfExecutor>,
 	block_composer: Arc<BlockComposer>,
+	metrics_api: Arc<MetricsApi>,
 	_phantom: PhantomData<ParentchainBlock>,
 }
 
-impl<ParentchainBlock: Block, TopPoolAuthor, StfExecutor, BlockComposer>
-	ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer>
+impl<ParentchainBlock: Block, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi>
+	ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi>
 {
 	pub fn new(
 		top_pool_executor: Arc<TopPoolAuthor>,
 		stf_executor: Arc<StfExecutor>,
 		block_composer: Arc<BlockComposer>,
+		metrics_api: Arc<MetricsApi>,
 	) -> Self {
 		Self {
 			top_pool_author: top_pool_executor,
 			stf_executor,
 			block_composer,
+			metrics_api,
 			_phantom: Default::default(),
 		}
 	}
@@ -68,8 +78,9 @@ impl<
 		TopPoolAuthor,
 		StfExecutor,
 		BlockComposer,
+		MetricsApi,
 	> Environment<ParentchainBlock, SignedSidechainBlock>
-	for ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer>
+	for ProposerFactory<ParentchainBlock, TopPoolAuthor, StfExecutor, BlockComposer, MetricsApi>
 where
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	SignedSidechainBlock: SignedSidechainBlockTrait<Public = sp_core::ed25519::Public, Signature = MultiSignature>
@@ -90,6 +101,7 @@ where
 		> + Send
 		+ Sync
 		+ 'static,
+	MetricsApi: EnclaveMetricsOCallApi,
 {
 	type Proposer = SlotProposer<
 		ParentchainBlock,
@@ -97,6 +109,7 @@ where
 		TopPoolAuthor,
 		StfExecutor,
 		BlockComposer,
+		MetricsApi,
 	>;
 	type Error = ConsensusError;
 
@@ -111,6 +124,7 @@ where
 			block_composer: self.block_composer.clone(),
 			parentchain_header: parent_header,
 			shard,
+			metrics_api: self.metrics_api.clone(),
 			_phantom: PhantomData,
 		})
 	}

@@ -24,7 +24,7 @@ import {
     sendRequestFromTrustedCall,
     createSignedTrustedCallSetIdentityNetworks,
 } from './common/di-utils'; // @fixme move to a better place
-import type { IntegrationTestContext } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';

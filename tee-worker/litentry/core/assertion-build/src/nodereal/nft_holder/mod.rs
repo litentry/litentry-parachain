@@ -20,5 +20,4 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-pub mod bnb_domain;
-pub mod nft_holder;
+pub mod weirdo_ghost_gang_holder;

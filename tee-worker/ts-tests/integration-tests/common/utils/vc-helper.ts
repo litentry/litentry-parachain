@@ -157,7 +157,7 @@ export const defaultAssertions = [
 // In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
 // For the 'oneblock' assertion, need to configure the Polkadot/Kusma address,
 // and for 'bnb,' need to configure the NODEREAL_API_KEY
-// We cannot submit these two types of data involving privacy(cc @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
+// We cannot submit these two types of data involving privacy(from @zhouhui), so we only need to test that their DI response is invalid and that the RequestVCFailed event is received, which should be tested separately from the defaultAssertions.
 export const configurableAssertions = [
     // Oneblock
     {
