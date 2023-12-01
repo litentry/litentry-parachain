@@ -246,7 +246,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
-			if identities.len() > 0 {
+			if !identities.is_empty() {
 				for identity in identities.iter() {
 					ensure!(
 						LinkedIdentities::<T>::contains_key(identity),

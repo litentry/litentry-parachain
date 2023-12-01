@@ -22,8 +22,8 @@ use crate::{
 		get_shard_vault::GetShardVaultCommand,
 		litentry::{
 			get_storage::GetStorageCommand, id_graph_stats::IDGraphStats,
-			link_identity::LinkIdentityCommand, request_vc::RequestVcCommand, remove_identity::RemoveIdentityCommand,
-			request_vc_direct::RequestVcDirectCommand,
+			link_identity::LinkIdentityCommand, remove_identity::RemoveIdentityCommand,
+			request_vc::RequestVcCommand, request_vc_direct::RequestVcDirectCommand,
 			send_erroneous_parentchain_call::SendErroneousParentchainCallCommand,
 		},
 		nonce::NonceCommand,
