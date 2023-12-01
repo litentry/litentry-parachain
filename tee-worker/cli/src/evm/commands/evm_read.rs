@@ -19,7 +19,6 @@ use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
 	trusted_operation::perform_trusted_operation, Cli, CliResult, CliResultOk,
 };
-use codec::Decode;
 use ita_stf::{Getter, TrustedCallSigned, TrustedGetter};
 use itp_stf_primitives::types::{KeyPair, TrustedOperation};
 use itp_types::AccountId;
@@ -53,7 +52,7 @@ impl EvmReadCommands {
 			H160::from_slice(&array_bytes::hex2bytes(&self.execution_address).unwrap());
 
 		let top = TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(
-			TrustedGetter::evm_account_storages(sender_acc, execution_address, H256::zero())
+			TrustedGetter::evm_account_storages(sender_acc.into(), execution_address, H256::zero())
 				.sign(&KeyPair::Sr25519(Box::new(sender))),
 		));
 		let hash = perform_trusted_operation::<H256>(cli, trusted_args, &top)?;

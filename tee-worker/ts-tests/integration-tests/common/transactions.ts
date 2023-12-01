@@ -6,12 +6,20 @@ import { expect } from 'chai';
 import colors from 'colors';
 import type { HexString } from '@polkadot/util/types';
 import type { Codec } from '@polkadot/types/types';
-import type { IntegrationTestContext, TransactionSubmit } from './type-definitions';
+import type { IntegrationTestContext } from './common-types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { RequestEvent } from './type-definitions';
 
 import { u8aToHex } from '@polkadot/util';
 import { FrameSystemEventRecord } from 'parachain-api';
+
+enum RequestEvent {
+    LinkIdentityRequested = 'LinkIdentityRequested',
+    DeactivateIdentityRequested = 'DeactivateIdentityRequested',
+    ActivateIdentityRequested = 'ActivateIdentityRequested',
+    VCRequested = 'VCRequested',
+    ItemCompleted = 'ItemCompleted',
+    BatchCompleted = 'BatchCompleted',
+}
 
 // transaction utils
 export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
@@ -29,7 +37,10 @@ export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, sig
 
 export async function sendTxUntilInBlockList(
     api: ApiPromise,
-    txs: TransactionSubmit[],
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
+    }[],
     signer: KeyringPair | KeyringPair[]
 ) {
     const signers = Array.isArray(signer) ? signer : [signer];
@@ -159,7 +170,10 @@ export async function listenEvent(
 export async function sendTxsWithUtility(
     context: IntegrationTestContext,
     signer: KeyringPair,
-    txs: TransactionSubmit[],
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce?: number;
+    }[],
     pallet: string,
     events: string[],
     listenTimeoutInBlockNumber?: number
@@ -193,7 +207,10 @@ export async function sendTxsWithUtility(
 
 export async function multiAccountTxSender(
     context: IntegrationTestContext,
-    txs: TransactionSubmit[],
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
+    }[],
     signers: KeyringPair | KeyringPair[],
     pallet: string,
     events: string[],

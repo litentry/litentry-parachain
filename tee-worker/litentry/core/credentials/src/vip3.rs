@@ -22,9 +22,9 @@ use litentry_primitives::VIP3MembershipCardLevel;
 
 const VC_VIP3_CARD_INFOS: [(&str, &str); 2] = [
 	// Gold: Type & Info
-	("VIP3_CARD_LEVEL_GOLD_TYPE_REPLACEME", "VIP3_CARD_LEVEL_GOLD_INFO_REMPLACEME"),
+	("VIP3 Gold Card Holder", "You are VIP3 Gold Card Holder"),
 	// Silver: Type & Info
-	("VIP3_CARD_LEVEL_SILVER_TYPE_REMPLACEME", "VIP3_CARD_LEVEL_SILVER_INFO_REMPLACEME"),
+	("VIP3 Silver Card Holder", "You are VIP3 Silver Card Holder"),
 ];
 
 const VIP3_BREAKDOWN: [&str; 2] = ["$is_gold_card", "$is_silver_card"];

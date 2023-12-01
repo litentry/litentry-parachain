@@ -17,7 +17,7 @@
 
 use crate::{BlockImport, ConfirmBlockImport, Error, Result};
 use core::marker::PhantomData;
-use itp_ocall_api::EnclaveSidechainOCallApi;
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_types::H256;
 use its_primitives::{
 	traits::{
@@ -51,11 +51,11 @@ pub struct PeerBlockSync<
 	ParentchainBlock,
 	SignedSidechainBlock,
 	BlockImporter,
-	SidechainOCallApi,
+	OCallApi,
 	ImportConfirmationHandler,
 > {
 	importer: Arc<BlockImporter>,
-	sidechain_ocall_api: Arc<SidechainOCallApi>,
+	ocall_api: Arc<OCallApi>,
 	import_confirmation_handler: Arc<ImportConfirmationHandler>,
 	_phantom: PhantomData<(ParentchainBlock, SignedSidechainBlock)>,
 }
@@ -64,14 +64,14 @@ impl<
 		ParentchainBlock,
 		SignedSidechainBlock,
 		BlockImporter,
-		SidechainOCallApi,
+		OCallApi,
 		ImportConfirmationHandler,
 	>
 	PeerBlockSync<
 		ParentchainBlock,
 		SignedSidechainBlock,
 		BlockImporter,
-		SidechainOCallApi,
+		OCallApi,
 		ImportConfirmationHandler,
 	> where
 	ParentchainBlock: ParentchainBlockTrait,
@@ -79,19 +79,19 @@ impl<
 	<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as BlockTrait>::HeaderType:
 		HeaderTrait<ShardIdentifier = H256>,
 	BlockImporter: BlockImport<ParentchainBlock, SignedSidechainBlock>,
-	SidechainOCallApi: EnclaveSidechainOCallApi,
+	OCallApi: EnclaveSidechainOCallApi + EnclaveMetricsOCallApi,
 	ImportConfirmationHandler: ConfirmBlockImport<
 		<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as BlockTrait>::HeaderType,
 	>,
 {
 	pub fn new(
 		importer: Arc<BlockImporter>,
-		sidechain_ocall_api: Arc<SidechainOCallApi>,
+		sidechain_ocall_api: Arc<OCallApi>,
 		import_confirmation_handler: Arc<ImportConfirmationHandler>,
 	) -> Self {
 		PeerBlockSync {
 			importer,
-			sidechain_ocall_api,
+			ocall_api: sidechain_ocall_api,
 			import_confirmation_handler,
 			_phantom: Default::default(),
 		}
@@ -110,7 +110,7 @@ impl<
 		);
 
 		let blocks_to_import: Vec<SignedSidechainBlock> =
-			self.sidechain_ocall_api.fetch_sidechain_blocks_from_peer(
+			self.ocall_api.fetch_sidechain_blocks_from_peer(
 				last_imported_sidechain_block_hash,
 				Some(import_until_block_hash),
 				shard_identifier,
@@ -145,16 +145,16 @@ impl<
 	}
 }
 
-impl<ParentchainBlock, SignedSidechainBlock, BlockImporter, SidechainOCallApi, ImportConfirmationHandler>
+impl<ParentchainBlock, SignedSidechainBlock, BlockImporter, OCallApi, ImportConfirmationHandler>
 	SyncBlockFromPeer<ParentchainBlock::Header, SignedSidechainBlock>
-	for PeerBlockSync<ParentchainBlock, SignedSidechainBlock, BlockImporter, SidechainOCallApi, ImportConfirmationHandler>
+	for PeerBlockSync<ParentchainBlock, SignedSidechainBlock, BlockImporter, OCallApi, ImportConfirmationHandler>
 where
 	ParentchainBlock: ParentchainBlockTrait,
 	SignedSidechainBlock: SignedSidechainBlockTrait,
 	<<SignedSidechainBlock as its_primitives::traits::SignedBlock>::Block as BlockTrait>::HeaderType:
 	HeaderTrait<ShardIdentifier = H256>,
 	BlockImporter: BlockImport<ParentchainBlock, SignedSidechainBlock>,
-	SidechainOCallApi: EnclaveSidechainOCallApi,
+	OCallApi: EnclaveSidechainOCallApi + EnclaveMetricsOCallApi,
 	ImportConfirmationHandler: ConfirmBlockImport<<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as BlockTrait>::HeaderType>,
 {
 	fn sync_block(

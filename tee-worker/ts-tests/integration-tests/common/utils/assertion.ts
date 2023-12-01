@@ -6,10 +6,11 @@ import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
 import { buildIdentityHelper, parseIdGraph, parseIdentity } from './identity-helper';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeError } from 'sidechain-api';
-import type { EnclaveResult, IntegrationTestContext } from '../type-definitions';
+import { TeerexPrimitivesEnclave } from 'parachain-api';
+import type { IntegrationTestContext } from '../common-types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import { jsonSchema } from '../type-definitions';
+import { jsonSchema } from './vc-helper';
 import { aesKey } from '../call';
 import colors from 'colors';
 import {
@@ -158,11 +159,7 @@ export async function assertIdentityCreated(
     console.log(colors.green('assertIdentityCreated complete'));
 }
 
-export async function assertIdentityDeactivated(
-    context: IntegrationTestContext,
-    signers: KeyringPair | KeyringPair[],
-    events: any[]
-) {
+export async function assertIdentityDeactivated(signers: KeyringPair | KeyringPair[], events: any[]) {
     for (let index = 0; index < events.length; index++) {
         const signer = Array.isArray(signers) ? signers[index] : signers;
 
@@ -226,12 +223,13 @@ export async function checkErrorDetail(events: Event[], expectedDetail: string) 
 
 export async function verifySignature(data: any, index: HexString, proofJson: any, api: ApiPromise) {
     const count = await api.query.teerex.enclaveCount();
-    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+    const enclaveRegistry = (await api.query.teerex.enclaveRegistry(count)) as unknown as TeerexPrimitivesEnclave;
+
     // Check vc index
     expect(index).to.be.eq(data.id);
     const signature = Buffer.from(hexToU8a(`0x${proofJson.proofValue}`));
     const message = Buffer.from(data.issuer.mrenclave);
-    const vcPubkey = Buffer.from(hexToU8a(`${res.vcPubkey}`));
+    const vcPubkey = Buffer.from(hexToU8a(enclaveRegistry.toHuman()['vcPubkey'] as HexString));
 
     const isValid = await ed.verify(signature, message, vcPubkey);
 
@@ -369,13 +367,16 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
 
     // step 5
     const enclaveCount = await context.api.query.teerex.enclaveCount();
-    const enclaveRegistry = (await context.api.query.teerex.enclaveRegistry(enclaveCount)) as any;
+
+    const enclaveRegistry = (await context.api.query.teerex.enclaveRegistry(
+        enclaveCount
+    )) as unknown as TeerexPrimitivesEnclave;
 
     const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
 
     const message = Buffer.from(vcWithoutProof.issuer.mrenclave);
 
-    const vcPubkey = Buffer.from(hexToU8a(`${enclaveRegistry.toHuman()['vcPubkey']}`));
+    const vcPubkey = Buffer.from(hexToU8a(enclaveRegistry.toHuman()['vcPubkey'] as HexString));
     const signatureStatus = await ed.verify(signature, message, vcPubkey);
 
     assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');

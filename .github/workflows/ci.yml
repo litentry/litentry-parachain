@@ -599,9 +599,9 @@ jobs:
 
   tee-test:
     runs-on: ubuntu-latest
-    if: needs.set-condition.outputs.run_tee_test == 'true'
     needs:
       - set-condition
+      - parachain-build-dev
       - tee-build
     strategy:
       fail-fast: false
@@ -657,12 +657,14 @@ jobs:
           docker compose -f litentry-parachain.build.yml build
 
       - name: Integration Test ${{ matrix.test_name }}
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
       - name: Stop docker containers
+        if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop

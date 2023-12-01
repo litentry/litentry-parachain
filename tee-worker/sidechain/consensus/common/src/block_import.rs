@@ -19,7 +19,8 @@
 
 use crate::{Error, Verifier};
 use codec::Decode;
-use itp_ocall_api::EnclaveSidechainOCallApi;
+use itp_enclave_metrics::EnclaveMetric;
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_sgx_crypto::StateCrypto;
 use its_primitives::traits::{
 	Block as SidechainBlockTrait, BlockData, Header as HeaderTrait, ShardIdentifierFor,
@@ -50,7 +51,7 @@ where
 	type StateCrypto: StateCrypto;
 
 	/// Context needed to derive verifier relevant data.
-	type Context: EnclaveSidechainOCallApi;
+	type Context: EnclaveSidechainOCallApi + EnclaveMetricsOCallApi;
 
 	/// Get a verifier instance.
 	fn verifier(
@@ -176,7 +177,14 @@ where
 		// Store block in storage.
 		self.get_context().store_sidechain_blocks(vec![signed_sidechain_block])?;
 
-		info!("Importing block {} took {} ms", block_number, start_time.elapsed().as_millis());
+		let import_duration = start_time.elapsed();
+		info!("Importing block {} took {} ms", block_number, import_duration.as_millis());
+		if let Err(e) = self
+			.get_context()
+			.update_metric(EnclaveMetric::SidechainBlockImportTime(import_duration))
+		{
+			warn!("Failed to update metric for sidechain block import: {:?}", e);
+		};
 
 		Ok(latest_parentchain_header)
 	}
