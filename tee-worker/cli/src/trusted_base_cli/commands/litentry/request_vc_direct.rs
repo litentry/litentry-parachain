@@ -252,6 +252,7 @@ impl RequestVcDirectCommand {
 				VIP3MembershipCardLevelCommand::Silver =>
 					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
 			},
+			Command::WeirdoGhostGangHolder => Assertion::WeirdoGhostGangHolder,
 		};
 
 		let mut key: RequestAesKey = RequestAesKey::default();
