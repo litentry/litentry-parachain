@@ -59,7 +59,7 @@ pub enum TrustedOperationError {
 
 pub type TrustedOpResult<T> = Result<T, TrustedOperationError>;
 
-pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
+pub fn perform_trusted_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
@@ -87,7 +87,7 @@ pub fn perform_direct_operation<T: Decode + Debug>(
 	}
 }
 
-pub(crate) fn execute_getter_from_cli_args<T: Decode + Debug>(
+pub fn execute_getter_from_cli_args<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	getter: &Getter,

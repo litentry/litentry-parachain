@@ -22,6 +22,7 @@ use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::{aes_encrypt_nonce, Assertion, Web3CommonValidationData, Web3Network};
 
 use codec::{Decode, Encode};
+use ita_stf::TrustedCallSigning;
 use itp_stf_primitives::types::ShardIdentifier;
 use sp_core::{blake2_256, sr25519, Pair};
 use std::sync::Arc;
@@ -127,7 +128,7 @@ impl User {
 		)
 		.expect("decoding shielding_key failed");
 
-		let top: TrustedOperation = TrustedCall::request_vc(
+		let top = TrustedCall::request_vc(
 			alice.public().into(),
 			id,
 			assertion,
@@ -157,9 +158,9 @@ impl User {
 pub fn generate_dummy_cli() -> Cli {
 	Cli {
 		node_url: "ws://127.0.0.1".to_string(),
-		node_port: "10044".to_string(),
+		node_port: "9944".to_string(),
 		worker_url: "wss://127.0.0.1".to_string(),
-		trusted_worker_port: "2100".to_string(),
+		trusted_worker_port: "2000".to_string(),
 		command: Commands::Base(BaseCommand::PrintMetadata),
 	}
 }
