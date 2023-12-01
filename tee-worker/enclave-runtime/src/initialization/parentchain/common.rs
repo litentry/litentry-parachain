@@ -58,7 +58,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
-		ocall_api,
+		ocall_api.clone(),
 		shielding_key_repository.clone(),
 		top_pool_author.clone(),
 	));
@@ -73,6 +73,7 @@ pub(crate) fn create_integritee_parentchain_block_importer(
 		stf_executor,
 		extrinsics_factory,
 		indirect_calls_executor,
+		ocall_api,
 	))
 }
 
@@ -89,7 +90,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
-		ocall_api,
+		ocall_api.clone(),
 		shielding_key_repository.clone(),
 		top_pool_author.clone(),
 	));
@@ -104,6 +105,7 @@ pub(crate) fn create_target_a_parentchain_block_importer(
 		stf_executor,
 		extrinsics_factory,
 		indirect_calls_executor,
+		ocall_api,
 	))
 }
 
@@ -120,7 +122,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
-		ocall_api,
+		ocall_api.clone(),
 		shielding_key_repository.clone(),
 		top_pool_author.clone(),
 	));
@@ -135,6 +137,7 @@ pub(crate) fn create_target_b_parentchain_block_importer(
 		stf_executor,
 		extrinsics_factory,
 		indirect_calls_executor,
+		ocall_api,
 	))
 }
 

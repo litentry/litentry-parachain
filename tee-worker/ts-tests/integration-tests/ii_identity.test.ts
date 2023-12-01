@@ -18,7 +18,7 @@ import { assert } from 'chai';
 import { sendTxsWithUtility } from './common/transactions';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { IntegrationTestContext } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/common-types';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
@@ -354,10 +354,10 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Alice check identity
-        assertIdentityDeactivated(context, context.substrateWallet.alice, aliceDeactivatedEvents);
+        assertIdentityDeactivated(context.substrateWallet.alice, aliceDeactivatedEvents);
 
         // Bob check identity
-        assertIdentityDeactivated(context, context.substrateWallet.bob, bobDeactivatedEvents);
+        assertIdentityDeactivated(context.substrateWallet.bob, bobDeactivatedEvents);
     });
 
     step('check IDGraph after deactivateIdentity', async function () {
