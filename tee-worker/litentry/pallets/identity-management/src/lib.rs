@@ -242,20 +242,28 @@ pub mod pallet {
 		pub fn remove_identity(
 			origin: OriginFor<T>,
 			who: Identity,
-			identity: Identity,
+			identities: Vec<Identity>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
 
-			ensure!(LinkedIdentities::<T>::contains_key(&identity), Error::<T>::IdentityNotExist);
-			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			if who == identity {
-				let _ = IDGraphs::<T>::clear_prefix(&who, 1, None);
-			} else {
-				IDGraphs::<T>::remove(&who, &identity);
-			}
+			if identities.len() > 0 {
+				for identity in identities.iter() {
+					ensure!(
+						LinkedIdentities::<T>::contains_key(identity),
+						Error::<T>::IdentityNotExist
+					);
+					ensure!(
+						IDGraphs::<T>::contains_key(&who, identity),
+						Error::<T>::IdentityNotExist
+					);
 
-			LinkedIdentities::<T>::remove(&identity);
-			Self::deposit_event(Event::IdentityRemoved { who, identity });
+					IDGraphs::<T>::remove(&who, identity);
+					LinkedIdentities::<T>::remove(identity);
+				}
+			} else {
+				// removing prime identity
+				let _ = IDGraphs::<T>::clear_prefix(&who, 1, None);
+			}
 
 			Ok(())
 		}

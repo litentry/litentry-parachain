@@ -25,7 +25,8 @@ use std::vec::Vec;
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_self, get_storage_by_key_hash, ensure_enclave_signer_or_alice,
+		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_alice,
+		ensure_self, get_storage_by_key_hash,
 	},
 	trusted_call_result::{RequestVCResult, TrustedCallResult},
 	Getter,
@@ -50,7 +51,7 @@ pub use itp_stf_primitives::{
 };
 use itp_types::{parentchain::ProxyType, Address};
 pub use itp_types::{OpaqueCall, H256};
-use itp_utils::stringify::account_id_to_string;
+use itp_utils::{if_production_or, stringify::account_id_to_string};
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainAccountId,
@@ -135,7 +136,7 @@ pub enum TrustedCall {
 	send_erroneous_parentchain_call(Identity),
 	#[cfg(not(feature = "production"))]
 	#[codec(index = 18)]
-	remove_identity(Identity, Identity, Identity),
+	remove_identity(Identity, Identity, Vec<Identity>),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
@@ -224,7 +225,7 @@ impl TrustedCall {
 			Self::handle_imp_error(sender_identity, ..) => sender_identity,
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
-      #[cfg(not(feature = "production"))]
+			#[cfg(not(feature = "production"))]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
 		}
 	}
@@ -681,19 +682,24 @@ where
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
-			#[cfg(not(feature = "production"))]
-			TrustedCall::remove_identity(signer, who, identity) => {
+			TrustedCall::remove_identity(signer, who, identities) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
+				if_production_or!(
+					{
+						log::error!("Removing identity in production mode is forbidden");
+					},
+					{
+						let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+						ensure!(
+							ensure_enclave_signer_or_alice(&account),
+							StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
+						);
 
-				let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
-				ensure!(
-					ensure_enclave_signer_or_alice(&account),
-					StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
+						IMTCall::remove_identity { who, identities }
+							.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+							.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
+					}
 				);
-
-				IMTCall::remove_identity { who, identity }
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-					.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
 
 				Ok(TrustedCallResult::Empty)
 			},
@@ -915,7 +921,7 @@ where
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-      #[cfg(not(feature = "production"))]
+			#[cfg(not(feature = "production"))]
 			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),

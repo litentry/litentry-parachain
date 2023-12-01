@@ -22,7 +22,7 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use clap::Parser;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::Identity;
 use sp_core::Pair;
@@ -45,23 +45,28 @@ use sp_core::Pair;
 pub struct RemoveIdentityCommand {
 	/// The prime identity in did format
 	src_did: String,
-	/// The to-be-removed identity in did format
-	dst_did: String,
+	/// The Identities vec in did format, separated by `,` to-be-removed
+	#[clap(num_args = 0.., value_delimiter = ',', default_value = "")]
+	dst_dids: Vec<String>,
 }
 
 impl RemoveIdentityCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let src_id: Identity = Identity::from_did(self.src_did.as_str()).unwrap();
-		let dst_id: Identity = Identity::from_did(self.dst_did.as_str()).unwrap();
+
+		let identities: Vec<Identity> = self
+			.dst_dids
+			.iter()
+			.map(|dst_did| Identity::from_did(dst_did.as_str()).unwrap())
+			.collect();
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
-		let top: TrustedOperation =
-			TrustedCall::remove_identity(alice.public().into(), src_id, dst_id)
-				.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
-				.into_trusted_operation(trusted_cli.direct);
+		let top = TrustedCall::remove_identity(alice.public().into(), src_id, identities)
+			.sign(&KeyPair::Sr25519(Box::new(alice)), nonce, &mrenclave, &shard)
+			.into_trusted_operation(trusted_cli.direct);
 		Ok(perform_trusted_operation::<()>(cli, trusted_cli, &top).map(|_| CliResultOk::None)?)
 	}
 }
