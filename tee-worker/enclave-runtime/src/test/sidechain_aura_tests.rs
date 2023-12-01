@@ -111,13 +111,15 @@ pub fn produce_sidechain_block_and_import_it() {
 
 	let (sender, _receiver) = std::sync::mpsc::sync_channel(1000);
 
+	let metrics_ocall_mock = Arc::new(MetricsOCallMock::default());
+
 	let top_pool_author = Arc::new(TestTopPoolAuthor::new(
 		top_pool,
 		AllowAllTopsFilter::<TrustedCallSigned, Getter>::new(),
 		DirectCallsOnlyFilter::<TrustedCallSigned, Getter>::new(),
 		state_handler.clone(),
 		shielding_key_repo,
-		Arc::new(MetricsOCallMock::default()),
+		metrics_ocall_mock.clone(),
 		Arc::new(sender),
 	));
 	let parentchain_block_import_trigger = Arc::new(TestParentchainBlockImportTrigger::default());
@@ -131,8 +133,12 @@ pub fn produce_sidechain_block_and_import_it() {
 		peer_updater_mock,
 	));
 	let block_composer = Arc::new(TestBlockComposer::new(signer.clone(), state_key_repo.clone()));
-	let proposer_environment =
-		ProposerFactory::new(top_pool_author.clone(), stf_executor.clone(), block_composer);
+	let proposer_environment = ProposerFactory::new(
+		top_pool_author.clone(),
+		stf_executor.clone(),
+		block_composer,
+		metrics_ocall_mock.clone(),
+	);
 	let extrinsics_factory = ExtrinsicsFactoryMock::default();
 	let validator_access = ValidatorAccessMock::default();
 
