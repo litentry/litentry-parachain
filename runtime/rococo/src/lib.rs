@@ -1023,8 +1023,7 @@ impl pallet_identity_management::Config for Runtime {
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
-	type UpdateIDGraphFingerprintOrigin =
-		EitherOfDiverse<EnsureRootOrHalfCouncil, Self::TEECallOrigin>;
+	type UpdateIDGraphHashOrigin = EitherOfDiverse<EnsureRootOrHalfCouncil, Self::TEECallOrigin>;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {

@@ -57,6 +57,7 @@ pub struct NodeMetadataMock {
 	imp_link_identity: u8,
 	imp_deactivate_identity: u8,
 	imp_activate_identity: u8,
+	imp_update_id_graph_hash: u8,
 	imp_identity_linked: u8,
 	imp_identity_deactivated: u8,
 	imp_identity_activated: u8,
@@ -111,6 +112,7 @@ impl NodeMetadataMock {
 			imp_link_identity: 1u8,
 			imp_deactivate_identity: 2u8,
 			imp_activate_identity: 3u8,
+			imp_update_id_graph_hash: 4u8,
 			imp_identity_linked: 6u8,
 			imp_identity_deactivated: 7u8,
 			imp_identity_activated: 7u8,
@@ -213,6 +215,10 @@ impl IMPCallIndexes for NodeMetadataMock {
 
 	fn activate_identity_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.imp_module, self.imp_activate_identity])
+	}
+
+	fn update_id_graph_hash_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.imp_module, self.imp_update_id_graph_hash])
 	}
 
 	fn identity_linked_call_indexes(&self) -> Result<[u8; 2]> {

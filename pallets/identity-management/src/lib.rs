@@ -68,7 +68,7 @@ pub mod pallet {
 		// origin that is allowed to call extrinsics
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 		// dedicated origin to update the IDGraph hash
-		type UpdateIDGraphFingerprintOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type UpdateIDGraphHashOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
@@ -133,9 +133,9 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
-		IDGraphFingerprintUpdated {
+		IDGraphHashUpdated {
 			account: T::AccountId,
-			new_fingerprint: H256,
+			new_hash: H256,
 		},
 	}
 
@@ -144,10 +144,10 @@ pub mod pallet {
 	#[pallet::getter(fn delegatee)]
 	pub type Delegatee<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, (), OptionQuery>;
 
-	// idgraph fingerprints so that the client can detect out-of-sync local IDGraph
+	// idgraph hashes so that the client can detect out-of-sync local IDGraph
 	#[pallet::storage]
-	#[pallet::getter(fn idgraph_fingerprint)]
-	pub type IDGraphFingerprint<T: Config> =
+	#[pallet::getter(fn id_graph_hash)]
+	pub type IDGraphHash<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, H256, OptionQuery>;
 
 	#[pallet::error]
@@ -245,16 +245,16 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(<T as Config>::WeightInfo::update_idgraph_fingerprint())]
-		pub fn update_idgraph_fingerprint(
+		#[pallet::weight(<T as Config>::WeightInfo::update_id_graph_hash())]
+		pub fn update_id_graph_hash(
 			origin: OriginFor<T>,
 			account: T::AccountId,
-			new_fingerprint: H256,
+			new_hash: H256,
 		) -> DispatchResultWithPostInfo {
-			let _ = T::UpdateIDGraphFingerprintOrigin::ensure_origin(origin)?;
+			let _ = T::UpdateIDGraphHashOrigin::ensure_origin(origin)?;
 			// we don't care if `account` already exists
-			IDGraphFingerprint::<T>::insert(account.clone(), new_fingerprint);
-			Self::deposit_event(Event::IDGraphFingerprintUpdated { account, new_fingerprint });
+			IDGraphHash::<T>::insert(account.clone(), new_hash);
+			Self::deposit_event(Event::IDGraphHashUpdated { account, new_hash });
 			Ok(Pays::No.into())
 		}
 

@@ -55,7 +55,7 @@ pub trait WeightInfo {
 	fn link_identity() -> Weight;
 	fn deactivate_identity() -> Weight;
 	fn activate_identity() -> Weight;
-	fn update_idgraph_fingerprint() -> Weight;
+	fn update_id_graph_hash() -> Weight;
 	fn identity_linked() -> Weight;
 	fn identity_deactivated() -> Weight;
 	fn identity_activated() -> Weight;
@@ -118,9 +118,9 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	/// Storage: IdentityManagement IDGraphFingerprint (r:0 w:1)
-	/// Proof: IdentityManagement IDGraphFingerprint (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
-	fn update_idgraph_fingerprint() -> Weight {
+	/// Storage: IdentityManagement IDGraphHash (r:0 w:1)
+	/// Proof: IdentityManagement IDGraphHash (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
+	fn update_id_graph_hash() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `255`
 		//  Estimated: `3720`
@@ -226,9 +226,9 @@ impl WeightInfo for () {
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	/// Storage: IdentityManagement IDGraphFingerprint (r:0 w:1)
-	/// Proof: IdentityManagement IDGraphFingerprint (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
-	fn update_idgraph_fingerprint() -> Weight {
+	/// Storage: IdentityManagement IDGraphHash (r:0 w:1)
+	/// Proof: IdentityManagement IDGraphHash (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
+	fn update_id_graph_hash() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `255`
 		//  Estimated: `3720`

@@ -151,8 +151,8 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	/// Storage: IdentityManagement IDGraphFingerprint (r:0 w:1)
-	/// Proof: IdentityManagement IDGraphFingerprint (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
+	/// Storage: IdentityManagement IDGraphHash (r:0 w:1)
+	/// Proof: IdentityManagement IDGraphHash (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
 	fn idgraph_updated() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `242`

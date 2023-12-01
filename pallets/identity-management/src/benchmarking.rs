@@ -93,13 +93,13 @@ benchmarks! {
 		assert_last_event::<T>(Event::ActivateIdentityRequested{ shard }.into());
 	}
 
-	update_idgraph_fingerprint {
+	update_id_graph_hash {
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
 		let new_fingerprint = H256::default();
 	}: _<T::RuntimeOrigin>(call_origin, account.clone(), new_fingerprint)
 	verify {
-		assert_last_event::<T>(Event::IDGraphFingerprintUpdated { account, new_fingerprint }.into())
+		assert_last_event::<T>(Event::IDGraphHashUpdated { account, new_fingerprint }.into())
 	}
 
 	// Benchmark `identity_linked`. There are no worst conditions. The benchmark showed that

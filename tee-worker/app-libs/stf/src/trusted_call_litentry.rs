@@ -43,6 +43,7 @@ use litentry_primitives::{
 	Web3Network,
 };
 use log::*;
+use sp_core::blake2_256;
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(not(feature = "production"))]
@@ -266,7 +267,7 @@ impl TrustedCallSigned {
 		)
 		.map_err(|e| {
 			debug!("pushing error event ... error: {}", e);
-			add_call_from_imp_error(
+			push_call_imp_some_error(
 				calls,
 				node_metadata_repo.clone(),
 				Some(account.clone()),
@@ -278,9 +279,17 @@ impl TrustedCallSigned {
 
 		debug!("pushing identity_linked event ...");
 		let id_graph = IMT::get_id_graph(&who);
+		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
-		calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));
+		calls.push(OpaqueCall::from_tuple(&(call_index, account.clone(), hash)));
+		// push `update_id_graph_hash` call
+		push_call_imp_update_id_graph_hash(
+			calls,
+			node_metadata_repo,
+			account,
+			blake2_256(&id_graph.encode()).into(),
+		);
 
 		if let Some(key) = maybe_key {
 			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
