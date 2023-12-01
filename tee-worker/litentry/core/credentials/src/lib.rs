@@ -79,8 +79,8 @@ pub mod schema;
 
 pub mod assertion_logic;
 use assertion_logic::{AssertionLogic, Op};
-pub mod bnb_domain;
 pub mod generic_discord_role;
+pub mod nodereal;
 pub mod vip3;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";

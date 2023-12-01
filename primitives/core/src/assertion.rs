@@ -198,6 +198,8 @@ pub enum Assertion {
 
 	#[codec(index = 18)]
 	VIP3MembershipCard(VIP3MembershipCardLevel),
+
+	WeirdoGhostGangHolder,
 }
 
 impl Assertion {
