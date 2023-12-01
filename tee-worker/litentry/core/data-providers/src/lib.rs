@@ -53,6 +53,7 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
+use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
 	VCMPError,
@@ -69,6 +70,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 pub mod achainable;
 pub mod achainable_names;
+mod ca_certs;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod nodereal;
@@ -304,6 +306,23 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 	debug!("base_url: {}", base_url);
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
+	RestClient::new(http_client, base_url)
+}
+
+pub fn build_client_with_cert(
+	base_url: &str,
+	headers: Headers,
+	certs: Vec<String>,
+) -> RestClient<HttpClient<SendWithCertificateVerification>> {
+	debug!("base_url: {}", base_url);
+	let base_url = Url::parse(base_url).unwrap();
+	let http_client = HttpClient::new(
+		SendWithCertificateVerification::new(certs),
+		true,
+		Some(TIMEOUT),
+		Some(headers),
+		None,
+	);
 	RestClient::new(http_client, base_url)
 }
 

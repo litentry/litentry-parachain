@@ -17,11 +17,14 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER_CONFIG};
+use crate::{
+	build_client_with_cert, ca_certs::get_ca_certs, vec_to_string, Error, HttpError, UserInfo,
+	GLOBAL_DATA_PROVIDER_CONFIG,
+};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
@@ -130,7 +133,7 @@ impl UserInfo for Tweet {
 }
 
 pub struct TwitterOfficialClient {
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 pub enum TargetUser {
@@ -167,7 +170,7 @@ impl TwitterOfficialClient {
 				.clone()
 				.as_str(),
 		);
-		let client = build_client(
+		let client = build_client_with_cert(
 			GLOBAL_DATA_PROVIDER_CONFIG
 				.read()
 				.unwrap()
@@ -175,6 +178,7 @@ impl TwitterOfficialClient {
 				.clone()
 				.as_str(),
 			headers.clone(),
+			get_ca_certs(),
 		);
 
 		TwitterOfficialClient { client }
