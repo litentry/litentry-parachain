@@ -30,7 +30,7 @@ import { LitentryValidationData, Web3Network } from 'parachain-api';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { Vec } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { blake2AsHex } from '@polkadot/util-crypto';
+
 describe('Test Identity (evm direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;

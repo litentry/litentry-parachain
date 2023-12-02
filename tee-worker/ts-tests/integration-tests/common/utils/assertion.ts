@@ -404,7 +404,7 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
 
 export async function assertIdGraphHash(
     context: IntegrationTestContext,
-    account: String,
+    account: string,
     idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]
 ) {
     const idGraphType = context.sidechainRegistry.createType(

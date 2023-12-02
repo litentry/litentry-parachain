@@ -33,7 +33,6 @@ import { Vec } from '@polkadot/types';
 import { ethers } from 'ethers';
 import type { HexString } from '@polkadot/util/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { blake2AsHex } from '@polkadot/util-crypto';
 
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
