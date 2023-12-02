@@ -755,7 +755,7 @@ where
 				hash,
 			) => Self::handle_link_identity_callback(
 				calls,
-				node_metadata_repo.clone(),
+				node_metadata_repo,
 				signer,
 				who,
 				identity,
