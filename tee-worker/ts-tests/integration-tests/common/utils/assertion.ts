@@ -404,7 +404,7 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
 
 export async function assertIdGraphHash(
     context: IntegrationTestContext,
-    account: string,
+    signer: Signer,
     idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]
 ) {
     const idGraphType = context.sidechainRegistry.createType(
@@ -414,6 +414,7 @@ export async function assertIdGraphHash(
     const localIdGraphHash = blake2AsHex(idGraphType.toU8a());
     console.log('local id graph hash: ', localIdGraphHash);
 
+    const account = u8aToHex(signer.getAddressInSubstrateFormat());
     // TODO: actually wait for `IDGraphHashUpdated` event rather than sleeping
     await sleep(15);
     const onChainIdGraphHash = (await context.api.query.identityManagement.idGraphHash(account)).toHuman();

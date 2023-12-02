@@ -147,7 +147,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.alice,
             aliceTxs,
             'identityManagement',
-            ['IdentityLinked']
+            ['IdentityLinked', 'IDGraphHashUpdated']
         );
 
         await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), aliceRespEvents);
@@ -200,7 +200,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.bob,
             bobTxs,
             'identityManagement',
-            ['IdentityLinked']
+            ['IdentityLinked', 'IDGraphHashUpdated']
         );
         await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.bob), bobRespEvents);
     });

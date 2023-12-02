@@ -234,7 +234,7 @@ describe('Test Identity (direct invocation)', function () {
             currentIndex++;
         }
 
-        await assertIdGraphHash(context, context.substrateWallet.alice.address, idGraph);
+        await assertIdGraphHash(context, new PolkadotSigner(context.substrateWallet.alice), idGraph);
     });
 
     step('linking invalid identity', async function () {
@@ -495,7 +495,7 @@ describe('Test Identity (direct invocation)', function () {
             console.debug('inactive ✅');
         }
 
-        await assertIdGraphHash(context, context.substrateWallet.alice.address, idGraph);
+        await assertIdGraphHash(context, new PolkadotSigner(context.substrateWallet.alice), idGraph);
     });
     step('activating identity', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
@@ -591,7 +591,7 @@ describe('Test Identity (direct invocation)', function () {
             console.debug('active ✅');
         }
 
-        await assertIdGraphHash(context, context.substrateWallet.alice.address, idGraph);
+        await assertIdGraphHash(context, new PolkadotSigner(context.substrateWallet.alice), idGraph);
     });
 
     step('check idgraph from sidechain storage before setting identity network', async function () {
@@ -651,7 +651,7 @@ describe('Test Identity (direct invocation)', function () {
             'idGraph should be changed after setting network'
         );
 
-        await assertIdGraphHash(context, context.substrateWallet.alice.address, idGraph);
+        await assertIdGraphHash(context, new PolkadotSigner(context.substrateWallet.alice), idGraph);
     });
 
     step('setting incompatible identity network(alice)', async function () {
