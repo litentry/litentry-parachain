@@ -26,6 +26,7 @@ import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import { sleep } from './common';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -399,4 +400,23 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
         'Ed25519Signature2020',
         'Check Vc proof type error: proof type should be Ed25519Signature2020'
     );
+}
+
+export async function assertIdGraphHash(
+    context: IntegrationTestContext,
+    account: String,
+    idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]
+) {
+    const idGraphType = context.sidechainRegistry.createType(
+        'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+        idGraph
+    );
+    const localIdGraphHash = blake2AsHex(idGraphType.toU8a());
+    console.log('local id graph hash: ', localIdGraphHash);
+
+    // TODO: actually wait for `IDGraphHashUpdated` event rather than sleeping
+    await sleep(15);
+    const onChainIdGraphHash = (await context.api.query.identityManagement.idGraphHash(account)).toHuman();
+    console.log('on-chain id graph hash: ', onChainIdGraphHash);
+    assert.equal(localIdGraphHash, onChainIdGraphHash);
 }

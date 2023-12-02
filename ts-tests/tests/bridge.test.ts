@@ -53,7 +53,6 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.parachainConfig.api.tx.bridgeTransfer.transferNative(bn100e12.toString(), receipt, 0),
             context.parachainConfig.alice
         );
-        // const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0)
         await sleep(15);
         const actual_receive = BigNumber.from('99,000,000,000,000,000,000'.replace(/,/g, ''));
         assert.equal(b.add(actual_receive).toString(), (await erc20.balanceOf(receipt)).toString());

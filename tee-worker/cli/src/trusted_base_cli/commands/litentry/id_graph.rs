@@ -25,7 +25,7 @@ use litentry_primitives::Identity;
 
 // usage example:
 //
-// ./bin/litentry-cli trusted -m <mrenclave> -d id-graph did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48
+// ./bin/litentry-cli trusted -d id-graph did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48
 //
 // returns:
 //
