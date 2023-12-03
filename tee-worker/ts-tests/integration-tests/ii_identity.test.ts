@@ -150,7 +150,7 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.alice,
             aliceTxs,
             'identityManagement',
-            ['IdentityLinked', 'IdGraphHashUpdated']
+            ['IdentityLinked', 'IDGraphHashUpdated']
         );
 
         identityLinkedEvents = aliceRespEvents.filter((e) =>

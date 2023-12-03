@@ -63,7 +63,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         );
         const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityLinked',
-            'IdGraphHashUpdated',
+            'IDGraphHashUpdated',
         ]);
 
         const identityLinkedEvents = events.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));

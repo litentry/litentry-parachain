@@ -26,7 +26,6 @@ import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
-import { sleep } from './common';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
