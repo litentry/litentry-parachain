@@ -140,6 +140,17 @@ impl<T: frame_system::Config> pallet_identity_management::WeightInfo for WeightI
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
+	fn identity_networks_set() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `255`
+		//  Estimated: `3720`
+		// Minimum execution time: 20_057_000 picoseconds.
+		Weight::from_parts(20_846_000, 0)
+			.saturating_add(Weight::from_parts(0, 3720))
+			.saturating_add(T::DbWeight::get().reads(1))
+	}
+	/// Storage: Teerex EnclaveIndex (r:1 w:0)
+	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
 	fn some_error() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `255`

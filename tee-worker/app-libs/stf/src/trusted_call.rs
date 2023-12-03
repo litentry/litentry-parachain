@@ -633,7 +633,7 @@ where
 				validation_data,
 				web3networks,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
@@ -648,7 +648,7 @@ where
 					web3networks.clone(),
 					top_hash,
 					maybe_key,
-					hash,
+					req_ext_hash,
 				)
 				.map_err(|e| {
 					push_call_imp_some_error(
@@ -656,7 +656,7 @@ where
 						node_metadata_repo.clone(),
 						Some(account),
 						e.to_imp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
@@ -670,13 +670,13 @@ where
 						identity,
 						web3networks,
 						maybe_key,
-						hash,
+						req_ext_hash,
 					)
 				} else {
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
-			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
+			TrustedCall::deactivate_identity(signer, who, identity, req_ext_hash) => {
 				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -696,23 +696,22 @@ where
 						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_imp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
 
 				debug!("pushing identity_deactivated event ...");
-				calls.push(OpaqueCall::from_tuple(&(call_index, account.clone(), hash)));
-				push_call_imp_update_id_graph_hash(
-					calls,
-					node_metadata_repo,
+				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
 					account,
-					blake2_256(&IMT::get_id_graph(&who).encode()).into(),
-					hash,
-				);
+					id_graph_hash,
+					req_ext_hash,
+				)));
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::activate_identity(signer, who, identity, hash) => {
+			TrustedCall::activate_identity(signer, who, identity, req_ext_hash) => {
 				debug!("activate_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -732,20 +731,19 @@ where
 						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_imp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
 
 				debug!("pushing identity_activated event ...");
-				calls.push(OpaqueCall::from_tuple(&(call_index, account.clone(), hash)));
-				push_call_imp_update_id_graph_hash(
-					calls,
-					node_metadata_repo,
+				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
 					account,
-					blake2_256(&IMT::get_id_graph(&who).encode()).into(),
-					hash,
-				);
+					id_graph_hash,
+					req_ext_hash,
+				)));
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::link_identity_callback(
@@ -754,7 +752,7 @@ where
 				identity,
 				web3networks,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			) => Self::handle_link_identity_callback(
 				calls,
 				node_metadata_repo,
@@ -763,9 +761,9 @@ where
 				identity,
 				web3networks,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			),
-			TrustedCall::request_vc(signer, who, assertion, maybe_key, hash) => {
+			TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) => {
 				debug!(
 					"request_vc, who: {}, assertion: {:?}",
 					account_id_to_string(&who),
@@ -780,7 +778,7 @@ where
 					who,
 					assertion,
 					top_hash,
-					hash,
+					req_ext_hash,
 					maybe_key,
 					shard,
 				)
@@ -791,7 +789,7 @@ where
 						node_metadata_repo,
 						Some(account),
 						e.to_vcmp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
@@ -805,7 +803,7 @@ where
 				vc_hash,
 				vc_payload,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			) => {
 				debug!(
 					"request_vc_callback, who: {}, assertion: {:?}",
@@ -827,7 +825,7 @@ where
 						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_vcmp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
@@ -837,7 +835,12 @@ where
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
 				calls.push(OpaqueCall::from_tuple(&(
-					call_index, account, assertion, vc_index, vc_hash, hash,
+					call_index,
+					account,
+					assertion,
+					vc_index,
+					vc_hash,
+					req_ext_hash,
 				)));
 
 				if let Some(key) = maybe_key {
@@ -850,7 +853,13 @@ where
 					Ok(TrustedCallResult::Empty)
 				}
 			},
-			TrustedCall::set_identity_networks(signer, who, identity, web3networks, hash) => {
+			TrustedCall::set_identity_networks(
+				signer,
+				who,
+				identity,
+				web3networks,
+				req_ext_hash,
+			) => {
 				debug!("set_identity_networks, networks: {:?}", web3networks);
 				// only support DI requests from the signer but we leave the room for changes
 				ensure!(
@@ -860,19 +869,25 @@ where
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 				);
+				let call_index = node_metadata_repo
+					.get_from_metadata(|m| m.identity_networks_set_call_indexes())??;
+
 				IMTCall::set_identity_networks { who: who.clone(), identity, web3networks }
 					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
-				push_call_imp_update_id_graph_hash(
-					calls,
-					node_metadata_repo,
+
+				debug!("pushing identity_networks_set event ...");
+				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
 					account,
-					blake2_256(&IMT::get_id_graph(&who).encode()).into(),
-					hash,
-				);
+					id_graph_hash,
+					req_ext_hash,
+				)));
+
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
+			TrustedCall::handle_imp_error(_enclave_account, account, e, req_ext_hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
 				push_call_imp_some_error(
@@ -880,11 +895,11 @@ where
 					node_metadata_repo,
 					account.and_then(|g| g.to_account_id()),
 					e.clone(),
-					hash,
+					req_ext_hash,
 				);
 				Err(e.into())
 			},
-			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
+			TrustedCall::handle_vcmp_error(_enclave_account, account, e, req_ext_hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
 				push_call_vcmp_some_error(
@@ -892,7 +907,7 @@ where
 					node_metadata_repo,
 					account.and_then(|g| g.to_account_id()),
 					e.clone(),
-					hash,
+					req_ext_hash,
 				);
 				Err(e.into())
 			},

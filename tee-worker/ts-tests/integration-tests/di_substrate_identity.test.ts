@@ -12,12 +12,7 @@ import {
     initIntegrationTestContext,
     PolkadotSigner,
 } from './common/utils';
-import {
-    assertFailedEvent,
-    assertIsInSidechainBlock,
-    assertLinkedEvent,
-    assertIdGraphHashUpdatedEvent,
-} from './common/utils/assertion';
+import { assertFailedEvent, assertIsInSidechainBlock, assertLinkedEvent } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -148,7 +143,6 @@ describe('Test Identity (direct invocation)', function () {
         });
 
         const identityLinkedEvents: any[] = [];
-        const idGraphHashUpdatedEvents: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [
                 [aliceSubject, true],
@@ -196,18 +190,10 @@ describe('Test Identity (direct invocation)', function () {
                 if (context.api.events.identityManagement.IdentityLinked.is(event)) {
                     identityLinkedEvents.push(event);
                 }
-                if (context.api.events.identityManagement.IDGraphHashUpdated.is(event)) {
-                    idGraphHashUpdatedEvents.push(event);
-                }
             });
         }
 
         await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), identityLinkedEvents, 3);
-        await assertIdGraphHashUpdatedEvent(
-            new PolkadotSigner(context.substrateWallet.alice),
-            idGraphHashUpdatedEvents,
-            3
-        );
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -448,7 +434,6 @@ describe('Test Identity (direct invocation)', function () {
         });
 
         const identityDeactivatedEvents: any[] = [];
-        const idGraphHashUpdatedEvents: any[] = [];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -475,17 +460,9 @@ describe('Test Identity (direct invocation)', function () {
                 if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
                     identityDeactivatedEvents.push(event);
                 }
-                if (context.api.events.identityManagement.IDGraphHashUpdated.is(event)) {
-                    idGraphHashUpdatedEvents.push(event);
-                }
             });
         }
         assert.equal(identityDeactivatedEvents.length, 3);
-        await assertIdGraphHashUpdatedEvent(
-            new PolkadotSigner(context.substrateWallet.alice),
-            idGraphHashUpdatedEvents,
-            3
-        );
     });
 
     step('check idgraph from sidechain storage after deactivating', async function () {
@@ -550,7 +527,6 @@ describe('Test Identity (direct invocation)', function () {
             identity: eveSubstrateIdentity,
         });
         const identityActivatedEvents: any[] = [];
-        const idGraphHashUpdatedEvents: any[] = [];
 
         for (const { nonce, identity } of activateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -577,17 +553,9 @@ describe('Test Identity (direct invocation)', function () {
                 if (context.api.events.identityManagement.IdentityActivated.is(event)) {
                     identityActivatedEvents.push(event);
                 }
-                if (context.api.events.identityManagement.IDGraphHashUpdated.is(event)) {
-                    idGraphHashUpdatedEvents.push(event);
-                }
             });
         }
         assert.equal(identityActivatedEvents.length, 3);
-        await assertIdGraphHashUpdatedEvent(
-            new PolkadotSigner(context.substrateWallet.alice),
-            idGraphHashUpdatedEvents,
-            3
-        );
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
@@ -641,7 +609,7 @@ describe('Test Identity (direct invocation)', function () {
         );
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const nonce = getNextNonce();
-        const idGraphHashUpdatedEvents: any[] = [];
+        const identityNetworksSetEvents: any[] = [];
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         // we set the network to ['Litentry', 'Kusama']
         const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
@@ -659,15 +627,11 @@ describe('Test Identity (direct invocation)', function () {
         assertIsInSidechainBlock('setIdentityNetworksCall', res);
         const events = (await eventsPromise).map(({ event }) => event);
         events.forEach((event) => {
-            if (context.api.events.identityManagement.IDGraphHashUpdated.is(event)) {
-                idGraphHashUpdatedEvents.push(event);
+            if (context.api.events.identityManagement.IdentityNetworksSet.is(event)) {
+                identityNetworksSetEvents.push(event);
             }
         });
-        await assertIdGraphHashUpdatedEvent(
-            new PolkadotSigner(context.substrateWallet.alice),
-            idGraphHashUpdatedEvents,
-            1
-        );
+        assert.equal(identityNetworksSetEvents.length, 1);
     });
 
     step('check idgraph from sidechain storage after setting identity network', async function () {

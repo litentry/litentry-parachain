@@ -96,14 +96,22 @@ pub mod pallet {
 		//       Can we retrieve that extrinsic hash in F/E?
 		IdentityLinked {
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityDeactivated {
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityActivated {
 			account: T::AccountId,
+			id_graph_hash: H256,
+			req_ext_hash: H256,
+		},
+		IdentityNetworksSet {
+			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		// event errors caused by processing in TEE
@@ -245,6 +253,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Update the id_graph hash explicitly
+		/// Each IDGraph mutation event includes the `id_graph_hash` already, however,
+		/// there might still be situations where we need to call this fn explicitly,
+		/// e.g. when populating the hashes for the existing IDGraphs for the first time.
 		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::update_id_graph_hash())]
 		pub fn update_id_graph_hash(
@@ -268,10 +280,12 @@ pub mod pallet {
 		pub fn identity_linked(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, req_ext_hash });
+			IDGraphHash::<T>::insert(account.clone(), id_graph_hash);
+			Self::deposit_event(Event::IdentityLinked { account, id_graph_hash, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -280,10 +294,16 @@ pub mod pallet {
 		pub fn identity_deactivated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityDeactivated { account, req_ext_hash });
+			IDGraphHash::<T>::insert(account.clone(), id_graph_hash);
+			Self::deposit_event(Event::IdentityDeactivated {
+				account,
+				id_graph_hash,
+				req_ext_hash,
+			});
 			Ok(Pays::No.into())
 		}
 
@@ -292,14 +312,34 @@ pub mod pallet {
 		pub fn identity_activated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityActivated { account, req_ext_hash });
+			IDGraphHash::<T>::insert(account.clone(), id_graph_hash);
+			Self::deposit_event(Event::IdentityActivated { account, id_graph_hash, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(34)]
+		#[pallet::weight(<T as Config>::WeightInfo::identity_networks_set())]
+		pub fn identity_networks_set(
+			origin: OriginFor<T>,
+			account: T::AccountId,
+			id_graph_hash: H256,
+			req_ext_hash: H256,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::TEECallOrigin::ensure_origin(origin)?;
+			IDGraphHash::<T>::insert(account.clone(), id_graph_hash);
+			Self::deposit_event(Event::IdentityNetworksSet {
+				account,
+				id_graph_hash,
+				req_ext_hash,
+			});
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(35)]
 		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,

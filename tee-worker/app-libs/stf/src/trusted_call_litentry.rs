@@ -248,7 +248,7 @@ impl TrustedCallSigned {
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 		maybe_key: Option<RequestAesKey>,
-		hash: H256,
+		req_ext_hash: H256,
 	) -> StfResult<TrustedCallResult>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
@@ -272,25 +272,18 @@ impl TrustedCallSigned {
 				node_metadata_repo.clone(),
 				Some(account.clone()),
 				e.to_imp_error(),
-				hash,
+				req_ext_hash,
 			);
 			e
 		})?;
 
 		debug!("pushing identity_linked event ...");
 		let id_graph = IMT::get_id_graph(&who);
+		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
 		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
-		calls.push(OpaqueCall::from_tuple(&(call_index, account.clone(), hash)));
-		// push `update_id_graph_hash` call
-		push_call_imp_update_id_graph_hash(
-			calls,
-			node_metadata_repo,
-			account,
-			blake2_256(&id_graph.encode()).into(),
-			hash,
-		);
+		calls.push(OpaqueCall::from_tuple(&(call_index, account, id_graph_hash, req_ext_hash)));
 
 		if let Some(key) = maybe_key {
 			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {

@@ -218,14 +218,6 @@ export async function assertLinkedEvent(signer: Signer, events: any[], expectedL
     console.log(colors.green('assertLinkedEvent passed'));
 }
 
-// assert the IDGraphHashUpdated event is emitted for the given signer
-export async function assertIdGraphHashUpdatedEvent(signer: Signer, events: any[], expectedLength: number) {
-    assert.equal(events.length, expectedLength);
-    const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
-    events.forEach((e) => assert.equal(signerAddress, e.data.account.toHex()));
-    console.log(colors.green('assertIdGraphHashUpdatedEvent passed'));
-}
-
 export async function assertIdentity(
     context: IntegrationTestContext,
     events: any[],
