@@ -6,10 +6,11 @@ import {
     checkErrorDetail,
     buildIdentityFromKeypair,
     PolkadotSigner,
+    assertIdGraphHashUpdatedEvent,
 } from './common/utils';
 import { step } from 'mocha-steps';
 import { sendTxsWithUtility } from './common/transactions';
-import { generateWeb3Wallets, assertIdentityLinked, assertIdentityDeactivated } from './common/utils';
+import { generateWeb3Wallets, assertLinkedEvent, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
@@ -62,9 +63,20 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         );
         const events = await sendTxsWithUtility(context, context.substrateWallet.alice, txs, 'identityManagement', [
             'IdentityLinked',
-            'IDGraphHashUpdated',
+            'IdGraphHashUpdated',
         ]);
-        assertIdentityLinked(context, context.substrateWallet.alice, events, identities);
+
+        const identityLinkedEvents = events.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
+        const idGraphHashUpdatedEvents = events.filter((e) =>
+            context.api.events.identityManagement.IDGraphHashUpdated.is(e)
+        );
+
+        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), identityLinkedEvents, txs.length);
+        await assertIdGraphHashUpdatedEvent(
+            new PolkadotSigner(context.substrateWallet.alice),
+            idGraphHashUpdatedEvents,
+            txs.length
+        );
     });
 
     step('batch test: deactivate identities', async function () {

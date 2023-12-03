@@ -10,6 +10,7 @@ import {
     buildIdentityFromKeypair,
     assertIdentityActivated,
     assertLinkedEvent,
+    assertIdGraphHashUpdatedEvent,
     PolkadotSigner,
 } from './common/utils';
 import { u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -62,6 +63,8 @@ describeLitentry('Test Identity', 0, (context) => {
     let web3networks: Web3Network[][] = [];
     let base58mrEnclave: string;
     let workerAddress: string;
+    let identityLinkedEvents;
+    let idGraphHashUpdatedEvents;
 
     step('init', async () => {
         base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
@@ -147,10 +150,26 @@ describeLitentry('Test Identity', 0, (context) => {
             context.substrateWallet.alice,
             aliceTxs,
             'identityManagement',
-            ['IdentityLinked', 'IDGraphHashUpdated']
+            ['IdentityLinked', 'IdGraphHashUpdated']
         );
 
-        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), aliceRespEvents);
+        identityLinkedEvents = aliceRespEvents.filter((e) =>
+            context.api.events.identityManagement.IdentityLinked.is(e)
+        );
+        idGraphHashUpdatedEvents = aliceRespEvents.filter((e) =>
+            context.api.events.identityManagement.IDGraphHashUpdated.is(e)
+        );
+
+        await assertLinkedEvent(
+            new PolkadotSigner(context.substrateWallet.alice),
+            identityLinkedEvents,
+            aliceTxs.length
+        );
+        await assertIdGraphHashUpdatedEvent(
+            new PolkadotSigner(context.substrateWallet.alice),
+            idGraphHashUpdatedEvents,
+            aliceTxs.length
+        );
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
@@ -202,7 +221,18 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked', 'IDGraphHashUpdated']
         );
-        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.bob), bobRespEvents);
+
+        identityLinkedEvents = bobRespEvents.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
+        idGraphHashUpdatedEvents = bobRespEvents.filter((e) =>
+            context.api.events.identityManagement.IDGraphHashUpdated.is(e)
+        );
+
+        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.bob), identityLinkedEvents, bobTxs.length);
+        await assertIdGraphHashUpdatedEvent(
+            new PolkadotSigner(context.substrateWallet.bob),
+            idGraphHashUpdatedEvents,
+            bobTxs.length
+        );
     });
 
     step('check IDGraph after LinkIdentity', async function () {

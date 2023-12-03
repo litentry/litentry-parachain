@@ -136,6 +136,7 @@ pub mod pallet {
 		IDGraphHashUpdated {
 			account: T::AccountId,
 			new_hash: H256,
+			req_ext_hash: H256,
 		},
 	}
 
@@ -250,11 +251,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			account: T::AccountId,
 			new_hash: H256,
+			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::UpdateIDGraphHashOrigin::ensure_origin(origin)?;
 			// we don't care if `account` already exists
 			IDGraphHash::<T>::insert(account.clone(), new_hash);
-			Self::deposit_event(Event::IDGraphHashUpdated { account, new_hash });
+			Self::deposit_event(Event::IDGraphHashUpdated { account, new_hash, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 

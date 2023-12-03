@@ -289,6 +289,7 @@ impl TrustedCallSigned {
 			node_metadata_repo,
 			account,
 			blake2_256(&id_graph.encode()).into(),
+			hash,
 		);
 
 		if let Some(key) = maybe_key {

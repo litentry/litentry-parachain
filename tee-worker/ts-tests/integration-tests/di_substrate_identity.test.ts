@@ -12,7 +12,12 @@ import {
     initIntegrationTestContext,
     PolkadotSigner,
 } from './common/utils';
-import { assertFailedEvent, assertIsInSidechainBlock, assertLinkedEvent } from './common/utils/assertion';
+import {
+    assertFailedEvent,
+    assertIsInSidechainBlock,
+    assertLinkedEvent,
+    assertIdGraphHashUpdatedEvent,
+} from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -142,7 +147,8 @@ describe('Test Identity (direct invocation)', function () {
             networks: eveSubstrateNetworks,
         });
 
-        const linkedIdentityEvents: any[] = [];
+        const identityLinkedEvents: any[] = [];
+        const idGraphHashUpdatedEvents: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [
                 [aliceSubject, true],
@@ -183,21 +189,25 @@ describe('Test Identity (direct invocation)', function () {
             await assertIsInSidechainBlock('linkIdentityCall', res);
 
             const events = (await eventsPromise).map(({ event }) => event);
-            let isIdentityLinked = false;
             events.forEach((event) => {
                 if (context.api.events.identityManagement.LinkIdentityFailed.is(event)) {
                     assert.fail(JSON.stringify(event.toHuman(), null, 4));
                 }
                 if (context.api.events.identityManagement.IdentityLinked.is(event)) {
-                    isIdentityLinked = true;
-                    linkedIdentityEvents.push(event);
+                    identityLinkedEvents.push(event);
+                }
+                if (context.api.events.identityManagement.IDGraphHashUpdated.is(event)) {
+                    idGraphHashUpdatedEvents.push(event);
                 }
             });
-            assert.isTrue(isIdentityLinked);
         }
-        assert.equal(linkedIdentityEvents.length, 3);
 
-        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), linkedIdentityEvents);
+        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), identityLinkedEvents, 3);
+        await assertIdGraphHashUpdatedEvent(
+            new PolkadotSigner(context.substrateWallet.alice),
+            idGraphHashUpdatedEvents,
+            3
+        );
     });
 
     step('check user sidechain storage after linking', async function () {

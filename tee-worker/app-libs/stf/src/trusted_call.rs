@@ -708,6 +708,7 @@ where
 					node_metadata_repo,
 					account,
 					blake2_256(&IMT::get_id_graph(&who).encode()).into(),
+					hash,
 				);
 				Ok(TrustedCallResult::Empty)
 			},
@@ -743,6 +744,7 @@ where
 					node_metadata_repo,
 					account,
 					blake2_256(&IMT::get_id_graph(&who).encode()).into(),
+					hash,
 				);
 				Ok(TrustedCallResult::Empty)
 			},
@@ -848,7 +850,7 @@ where
 					Ok(TrustedCallResult::Empty)
 				}
 			},
-			TrustedCall::set_identity_networks(signer, who, identity, web3networks, _) => {
+			TrustedCall::set_identity_networks(signer, who, identity, web3networks, hash) => {
 				debug!("set_identity_networks, networks: {:?}", web3networks);
 				// only support DI requests from the signer but we leave the room for changes
 				ensure!(
@@ -866,6 +868,7 @@ where
 					node_metadata_repo,
 					account,
 					blake2_256(&IMT::get_id_graph(&who).encode()).into(),
+					hash,
 				);
 				Ok(TrustedCallResult::Empty)
 			},
@@ -972,7 +975,7 @@ pub fn push_call_imp_some_error<NodeMetadataRepository>(
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
 	e: IMPError,
-	hash: H256,
+	req_ext_hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
@@ -980,7 +983,8 @@ pub fn push_call_imp_some_error<NodeMetadataRepository>(
 	debug!("pushing IMP::some_error call ...");
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(OpaqueCall::from_tuple(&(call_index, account, e, hash))),
+		Ok(Ok(call_index)) =>
+			calls.push(OpaqueCall::from_tuple(&(call_index, account, e, req_ext_hash))),
 		Ok(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
 		Err(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
 	}
@@ -991,14 +995,15 @@ pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
 	e: VCMPError,
-	hash: H256,
+	req_ext_hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	debug!("pushing VCMP::some_error call ...");
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(OpaqueCall::from_tuple(&(call_index, account, e, hash))),
+		Ok(Ok(call_index)) =>
+			calls.push(OpaqueCall::from_tuple(&(call_index, account, e, req_ext_hash))),
 		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
 	}
@@ -1008,14 +1013,16 @@ pub fn push_call_imp_update_id_graph_hash<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: ParentchainAccountId,
-	hash: H256,
+	id_graph_hash: H256,
+	req_ext_hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
 	debug!("pushing IMP::update_id_graph_hash call ...");
 	match node_metadata_repo.get_from_metadata(|m| m.update_id_graph_hash_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(OpaqueCall::from_tuple(&(call_index, account, hash))),
+		Ok(Ok(call_index)) =>
+			calls.push(OpaqueCall::from_tuple(&(call_index, account, id_graph_hash, req_ext_hash))),
 		Ok(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 		Err(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 	}
