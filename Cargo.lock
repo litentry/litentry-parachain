@@ -7456,7 +7456,7 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sp-std",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed)",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -7756,7 +7756,7 @@ dependencies = [
  "sp-keyring",
  "sp-runtime",
  "sp-std",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9)",
+ "substrate-fixed",
  "teeracle-primitives",
  "test-utils",
 ]
@@ -7846,6 +7846,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42#ff24c60ac7d9f87727ecdd0ded9a80c56e4f4b65"
 dependencies = [
  "jsonrpsee",
+ "log",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
  "sp-api",
@@ -13285,22 +13286,12 @@ dependencies = [
 [[package]]
 name = "substrate-fixed"
 version = "0.5.9"
-source = "git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9#a4fb461aae6205ffc55bed51254a40c52be04e5d"
+source = "git+https://github.com/encointer/substrate-fixed?tag=v0.5.9#a4fb461aae6205ffc55bed51254a40c52be04e5d"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
  "typenum 1.16.0 (git+https://github.com/encointer/typenum?tag=v1.16.0)",
-]
-
-[[package]]
-name = "substrate-fixed"
-version = "0.5.9"
-source = "git+https://github.com/encointer/substrate-fixed#df67f97a6db9b40215f105613b381ca82f1e2ff4"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "typenum 1.16.0 (git+https://github.com/encointer/typenum?tag=polkadot-v1.0.0)",
 ]
 
 [[package]]
@@ -13470,7 +13461,7 @@ name = "teeracle-primitives"
 version = "0.1.0"
 dependencies = [
  "common-primitives",
- "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed.git?tag=v0.5.9)",
+ "substrate-fixed",
 ]
 
 [[package]]
@@ -14105,15 +14096,6 @@ name = "typenum"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
-
-[[package]]
-name = "typenum"
-version = "1.16.0"
-source = "git+https://github.com/encointer/typenum?tag=polkadot-v1.0.0#4cba9a73f7e94ba38c824616efab93f177c9a556"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
-]
 
 [[package]]
 name = "typenum"
