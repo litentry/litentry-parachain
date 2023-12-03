@@ -369,8 +369,6 @@ export async function assertIdGraphHash(
     console.log('local id graph hash: ', localIdGraphHash);
 
     const account = u8aToHex(signer.getAddressInSubstrateFormat());
-    // TODO: actually wait for `IDGraphHashUpdated` event rather than sleeping
-    await sleep(15);
     const onChainIdGraphHash = (await context.api.query.identityManagement.idGraphHash(account)).toHuman();
     console.log('on-chain id graph hash: ', onChainIdGraphHash);
     assert.equal(localIdGraphHash, onChainIdGraphHash);
