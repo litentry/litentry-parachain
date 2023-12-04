@@ -58,6 +58,7 @@ impl RemoveIdentityCommand {
 		let identities: Vec<Identity> = self
 			.dst_dids
 			.iter()
+			.filter(|&dst_did| !dst_did.is_empty())
 			.map(|dst_did| Identity::from_did(dst_did.as_str()).unwrap())
 			.collect();
 

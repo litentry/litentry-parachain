@@ -261,7 +261,11 @@ pub mod pallet {
 					LinkedIdentities::<T>::remove(identity);
 				}
 			} else {
-				// removing prime identity
+				// removing prime identity with all linked identities
+				IDGraphs::iter_prefix(&who)
+					.collect::<IDGraph<T>>()
+					.iter()
+					.for_each(|(identity, _context)| LinkedIdentities::<T>::remove(identity));
 				let _ = IDGraphs::<T>::clear_prefix(&who, 1, None);
 			}
 
