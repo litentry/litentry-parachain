@@ -105,6 +105,9 @@ pub enum TrustedCall {
 	request_vc(Identity, Identity, Assertion, Option<RequestAesKey>, H256),
 	#[codec(index = 4)]
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
+	#[cfg(not(feature = "production"))]
+	#[codec(index = 5)]
+	remove_identity(Identity, Identity, Vec<Identity>),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	// starting from index 20 to leave some room for future "normal" trusted calls
@@ -134,9 +137,6 @@ pub enum TrustedCall {
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
 	#[codec(index = 24)]
 	send_erroneous_parentchain_call(Identity),
-	#[cfg(not(feature = "production"))]
-	#[codec(index = 18)]
-	remove_identity(Identity, Identity, Vec<Identity>),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
