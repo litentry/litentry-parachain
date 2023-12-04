@@ -93,8 +93,6 @@ pub mod pallet {
 		IdentityNotExist,
 		/// creating the prime identity manually is disallowed
 		LinkPrimeIdentityDisallowed,
-		/// removing the prime identity manually is disallowed
-		RemovePrimeIdentityDisallowed,
 		/// deactivate prime identity should be disallowed
 		DeactivatePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
@@ -266,7 +264,7 @@ pub mod pallet {
 					.collect::<IDGraph<T>>()
 					.iter()
 					.for_each(|(identity, _context)| LinkedIdentities::<T>::remove(identity));
-				let _ = IDGraphs::<T>::clear_prefix(&who, 1, None);
+				let _ = IDGraphs::<T>::clear_prefix(&who, u32::MAX, None);
 			}
 
 			Ok(())

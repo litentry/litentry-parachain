@@ -682,24 +682,19 @@ where
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
+			#[cfg(not(feature = "production"))]
 			TrustedCall::remove_identity(signer, who, identities) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
-				if_production_or!(
-					{
-						log::error!("Removing identity in production mode is forbidden");
-					},
-					{
-						let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
-						ensure!(
-							ensure_enclave_signer_or_alice(&account),
-							StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
-						);
 
-						IMTCall::remove_identity { who, identities }
-							.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-							.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
-					}
+				let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure!(
+					ensure_enclave_signer_or_alice(&account),
+					StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
 				);
+
+				IMTCall::remove_identity { who, identities }
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
 
 				Ok(TrustedCallResult::Empty)
 			},

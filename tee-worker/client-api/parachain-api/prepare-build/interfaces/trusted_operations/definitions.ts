@@ -38,12 +38,6 @@ export default {
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)",
                 set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
-                __Unused_remove_identity: "Null",
-                __Unused_link_identity_callback: "Null",
-                __Unused_request_vc_callback: "Null",
-                __Unused_handle_imp_error: "Null",
-                __Unused_handle_vcmp_error: "Null",
-                __Unused_send_erroneous_parentchain_call: "Null",
             },
         },
         TrustedOperationStatus: {
