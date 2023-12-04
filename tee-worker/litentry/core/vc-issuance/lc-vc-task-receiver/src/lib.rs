@@ -74,7 +74,7 @@ impl RateLimiter {
 		log::error!("Request key: {:?}", request_key);
 		if let Some(&last_instant) = requests.get(&request_key) {
 			if last_instant.elapsed() < Duration::from_secs(10) {
-				return Err("Request limit reached".to_string()) // Reject if within 5 minutes
+				return Err("Request limit reached".to_string()) // Reject if within 10 seconds
 			}
 		}
 		drop(requests); // Drop read lock

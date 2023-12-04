@@ -292,11 +292,11 @@ fn send_direct_request<T: Decode + Debug>(
 	let (sender, receiver) = channel();
 	direct_api.watch(jsonrpc_call, sender);
 
-	println!("waiting for rpc response");
+	debug!("waiting for rpc response");
 	loop {
 		match receiver.recv() {
 			Ok(response) => {
-				println!("received response");
+				debug!("received response");
 				let response: RpcResponse = serde_json::from_str(&response).unwrap();
 				if let Ok(return_value) = RpcReturnValue::from_hex(&response.result) {
 					match return_value.status {
