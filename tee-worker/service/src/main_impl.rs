@@ -1239,8 +1239,19 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("NODEREAL_API_KEY") {
 		data_provider_config.set_nodereal_api_key(v);
 	}
+	if let Ok(v) = env::var("NODEREAL_API_RETRY_DELAY") {
+		let value: u64 = v.parse().unwrap();
+		data_provider_config.set_nodereal_api_retry_delay(value);
+	}
+	if let Ok(v) = env::var("NODEREAL_API_RETRY_TIMES") {
+		let value: u16 = v.parse().unwrap();
+		data_provider_config.set_nodereal_api_retry_times(value);
+	}
 	if let Ok(v) = env::var("NODEREAL_API_URL") {
 		data_provider_config.set_nodereal_api_url(v);
+	}
+	if let Ok(v) = env::var("NODEREAL_API_CHAIN_NETWORK_URL") {
+		data_provider_config.set_nodereal_api_chain_network_url(v);
 	}
 	if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
 		data_provider_config.set_contest_legend_discord_role_id(v);
