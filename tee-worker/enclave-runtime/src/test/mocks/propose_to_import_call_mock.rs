@@ -131,7 +131,7 @@ impl EnclaveSidechainOCallApi for ProposeToImportOCallApi {
 }
 
 impl EnclaveMetricsOCallApi for ProposeToImportOCallApi {
-	fn update_metric<Metric: Encode>(&self, metric: Metric) -> SgxResult<()> {
+	fn update_metric<Metric: Encode>(&self, _metric: Metric) -> SgxResult<()> {
 		Ok(())
 	}
 }

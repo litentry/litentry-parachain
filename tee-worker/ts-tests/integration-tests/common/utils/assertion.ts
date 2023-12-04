@@ -4,7 +4,7 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import { buildIdentityHelper, parseIdGraph, parseIdentity } from './identity-helper';
+import { parseIdGraph, parseIdentity } from './identity-helper';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeError } from 'sidechain-api';
 import { TeerexPrimitivesEnclave } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
@@ -74,55 +74,6 @@ export function assertIdGraph(
         assert.isTrue(idGraphContext.linkBlock.toNumber() > 0, 'link_block should be greater than 0');
         assert.equal(idGraphContext.status.isActive, expected[1], 'isActive should be ' + expected[1]);
     });
-}
-
-export async function assertIdentityLinked(
-    context: IntegrationTestContext,
-    signers: KeyringPair | KeyringPair[],
-    events: any[],
-    expectedIdentities: LitentryPrimitivesIdentity[]
-) {
-    // We should parse idGraph from the last event, because the last event updates the verification status of all identities.
-    const eventIdGraph = parseIdGraph(context.sidechainRegistry, events[events.length - 1].data.idGraph, aesKey);
-
-    for (let index = 0; index < events.length; index++) {
-        const signer = Array.isArray(signers) ? signers[index] : signers;
-        const expectedIdentity = expectedIdentities[index];
-        const expectedIdentityTarget = expectedIdentity[`as${expectedIdentity.type}`];
-
-        const eventData = events[index].data;
-        const who = eventData.account.toHex();
-
-        // Check prime identity in idGraph
-        const expectedPrimeIdentity = await buildIdentityHelper(u8aToHex(signer.addressRaw), 'Substrate', context);
-        assert.equal(
-            expectedPrimeIdentity.toString(),
-            eventIdGraph[events.length][0].toString(),
-            'Check IdentityVerified error: eventIdGraph prime identity should be equal to expectedPrimeIdentity'
-        );
-
-        // Check event identity with expected identity
-        const eventIdentity = parseIdentity(context.sidechainRegistry, eventData.identity, aesKey);
-
-        const eventIdentityTarget = eventIdentity[`as${eventIdentity.type}`];
-
-        assert.equal(
-            expectedIdentityTarget.toString(),
-            eventIdentityTarget.toString(),
-            'Check IdentityVerified error: eventIdentityTarget should be equal to expectedIdentityTarget'
-        );
-
-        // Check identityContext in idGraph
-        const idGraphContext = eventIdGraph[index][1];
-        assert.isTrue(
-            idGraphContext.linkBlock.toNumber() > 0,
-            'Check InitialIDGraph error: link_block should be greater than 0'
-        );
-        assert.isTrue(idGraphContext.status.isActive, 'Check InitialIDGraph error: isActive should be true');
-
-        assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityCreated error: signer should be equal to who');
-    }
-    console.log(colors.green('assertIdentityVerified complete'));
 }
 
 export async function assertIdentityCreated(
@@ -260,16 +211,11 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
 }
 
 // assert the IdentityLinked event is emitted for the given signer
-export async function assertLinkedEvent(signer: Signer, events: any[]) {
-    assert.isAtLeast(events.length, 1, 'No IdentityLinked event was found');
-
-    for (let index = 0; index < events.length; index++) {
-        const who = events[index].data.account.toHex();
-        const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
-        assert.equal(who, signerAddress);
-    }
-
-    console.log(colors.green('assertIdentityLinked passed'));
+export async function assertLinkedEvent(signer: Signer, events: any[], expectedLength: number) {
+    assert.equal(events.length, expectedLength);
+    const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
+    events.forEach((e) => assert.equal(signerAddress, e.data.account.toHex()));
+    console.log(colors.green('assertLinkedEvent passed'));
 }
 
 export async function assertIdentity(
@@ -399,4 +345,22 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
         'Ed25519Signature2020',
         'Check Vc proof type error: proof type should be Ed25519Signature2020'
     );
+}
+
+export async function assertIdGraphHash(
+    context: IntegrationTestContext,
+    signer: Signer,
+    idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]
+) {
+    const idGraphType = context.sidechainRegistry.createType(
+        'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+        idGraph
+    );
+    const localIdGraphHash = blake2AsHex(idGraphType.toU8a());
+    console.log('local id graph hash: ', localIdGraphHash);
+
+    const account = u8aToHex(signer.getAddressInSubstrateFormat());
+    const onChainIdGraphHash = (await context.api.query.identityManagement.idGraphHash(account)).toHuman();
+    console.log('on-chain id graph hash: ', onChainIdGraphHash);
+    assert.equal(localIdGraphHash, onChainIdGraphHash);
 }

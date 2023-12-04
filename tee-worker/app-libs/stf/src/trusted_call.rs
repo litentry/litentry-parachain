@@ -639,7 +639,7 @@ where
 				validation_data,
 				web3networks,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
@@ -654,15 +654,15 @@ where
 					web3networks.clone(),
 					top_hash,
 					maybe_key,
-					hash,
+					req_ext_hash,
 				)
 				.map_err(|e| {
-					add_call_from_imp_error(
+					push_call_imp_some_error(
 						calls,
 						node_metadata_repo.clone(),
 						Some(account),
 						e.to_imp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
@@ -676,7 +676,7 @@ where
 						identity,
 						web3networks,
 						maybe_key,
-						hash,
+						req_ext_hash,
 					)
 				} else {
 					Ok(TrustedCallResult::Streamed)
@@ -703,7 +703,7 @@ where
 
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::deactivate_identity(signer, who, identity, hash) => {
+			TrustedCall::deactivate_identity(signer, who, identity, req_ext_hash) => {
 				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -713,26 +713,32 @@ where
 
 				Self::deactivate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who,
+					who.clone(),
 					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
+					push_call_imp_some_error(
 						calls,
-						node_metadata_repo,
+						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_imp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
 
 				debug!("pushing identity_deactivated event ...");
-				calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));
+				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account,
+					id_graph_hash,
+					req_ext_hash,
+				)));
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::activate_identity(signer, who, identity, hash) => {
+			TrustedCall::activate_identity(signer, who, identity, req_ext_hash) => {
 				debug!("activate_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
 					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -742,23 +748,29 @@ where
 
 				Self::activate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who,
+					who.clone(),
 					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
-					add_call_from_imp_error(
+					push_call_imp_some_error(
 						calls,
-						node_metadata_repo,
+						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_imp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
 
 				debug!("pushing identity_activated event ...");
-				calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));
+				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account,
+					id_graph_hash,
+					req_ext_hash,
+				)));
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::link_identity_callback(
@@ -767,7 +779,7 @@ where
 				identity,
 				web3networks,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			) => Self::handle_link_identity_callback(
 				calls,
 				node_metadata_repo,
@@ -776,9 +788,9 @@ where
 				identity,
 				web3networks,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			),
-			TrustedCall::request_vc(signer, who, assertion, maybe_key, hash) => {
+			TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) => {
 				debug!(
 					"request_vc, who: {}, assertion: {:?}",
 					account_id_to_string(&who),
@@ -793,18 +805,18 @@ where
 					who,
 					assertion,
 					top_hash,
-					hash,
+					req_ext_hash,
 					maybe_key,
 					shard,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
-					add_call_from_vcmp_error(
+					push_call_vcmp_some_error(
 						calls,
 						node_metadata_repo,
 						Some(account),
 						e.to_vcmp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
@@ -818,7 +830,7 @@ where
 				vc_hash,
 				vc_payload,
 				maybe_key,
-				hash,
+				req_ext_hash,
 			) => {
 				debug!(
 					"request_vc_callback, who: {}, assertion: {:?}",
@@ -835,12 +847,12 @@ where
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
-					add_call_from_vcmp_error(
+					push_call_vcmp_some_error(
 						calls,
 						node_metadata_repo.clone(),
 						Some(account.clone()),
 						e.to_vcmp_error(),
-						hash,
+						req_ext_hash,
 					);
 					e
 				})?;
@@ -850,7 +862,12 @@ where
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
 				calls.push(OpaqueCall::from_tuple(&(
-					call_index, account, assertion, vc_index, vc_hash, hash,
+					call_index,
+					account,
+					assertion,
+					vc_index,
+					vc_hash,
+					req_ext_hash,
 				)));
 
 				if let Some(key) = maybe_key {
@@ -863,39 +880,61 @@ where
 					Ok(TrustedCallResult::Empty)
 				}
 			},
-			TrustedCall::set_identity_networks(signer, who, identity, web3networks, _) => {
+			TrustedCall::set_identity_networks(
+				signer,
+				who,
+				identity,
+				web3networks,
+				req_ext_hash,
+			) => {
 				debug!("set_identity_networks, networks: {:?}", web3networks);
 				// only support DI requests from the signer but we leave the room for changes
 				ensure!(
 					ensure_self(&signer, &who),
 					Self::Error::Dispatch("Unauthorized signer".to_string())
 				);
-				IMTCall::set_identity_networks { who, identity, web3networks }
+				let account = SgxParentchainTypeConverter::convert(
+					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+				);
+				let call_index = node_metadata_repo
+					.get_from_metadata(|m| m.identity_networks_set_call_indexes())??;
+
+				IMTCall::set_identity_networks { who: who.clone(), identity, web3networks }
 					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
+
+				debug!("pushing identity_networks_set event ...");
+				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				calls.push(OpaqueCall::from_tuple(&(
+					call_index,
+					account,
+					id_graph_hash,
+					req_ext_hash,
+				)));
+
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::handle_imp_error(_enclave_account, account, e, hash) => {
+			TrustedCall::handle_imp_error(_enclave_account, account, e, req_ext_hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_imp_error(
+				push_call_imp_some_error(
 					calls,
 					node_metadata_repo,
 					account.and_then(|g| g.to_account_id()),
 					e.clone(),
-					hash,
+					req_ext_hash,
 				);
 				Err(e.into())
 			},
-			TrustedCall::handle_vcmp_error(_enclave_account, account, e, hash) => {
+			TrustedCall::handle_vcmp_error(_enclave_account, account, e, req_ext_hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
-				add_call_from_vcmp_error(
+				push_call_vcmp_some_error(
 					calls,
 					node_metadata_repo,
 					account.and_then(|g| g.to_account_id()),
 					e.clone(),
-					hash,
+					req_ext_hash,
 				);
 				Err(e.into())
 			},
@@ -975,42 +1014,61 @@ where
 	pallet_sudo::Pallet::<Runtime>::key().map_or(false, |k| account == &k)
 }
 
-// helper method to create and push an `OpaqueCall` from a IMPError, this function always succeeds
-pub fn add_call_from_imp_error<NodeMetadataRepository>(
+pub fn push_call_imp_some_error<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
 	e: IMPError,
-	hash: H256,
+	req_ext_hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
-	debug!("pushing imp_some_error event ...");
+	debug!("pushing IMP::some_error call ...");
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(OpaqueCall::from_tuple(&(call_index, account, e, hash))),
-		Ok(e) => warn!("error getting IMP call indexes: {:?}", e),
-		Err(e) => warn!("error getting IMP call indexes: {:?}", e),
+		Ok(Ok(call_index)) =>
+			calls.push(OpaqueCall::from_tuple(&(call_index, account, e, req_ext_hash))),
+		Ok(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
+		Err(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
 	}
 }
 
-// helper method to create and push an `OpaqueCall` from a VCMPError, this function always succeeds
-pub fn add_call_from_vcmp_error<NodeMetadataRepository>(
+pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
 	calls: &mut Vec<OpaqueCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
 	e: VCMPError,
-	hash: H256,
+	req_ext_hash: H256,
 ) where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
-	debug!("pushing vcmp_some_error event ...");
+	debug!("pushing VCMP::some_error call ...");
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(OpaqueCall::from_tuple(&(call_index, account, e, hash))),
-		Ok(e) => warn!("error getting VCMP call indexes: {:?}", e),
-		Err(e) => warn!("error getting VCMP call indexes: {:?}", e),
+		Ok(Ok(call_index)) =>
+			calls.push(OpaqueCall::from_tuple(&(call_index, account, e, req_ext_hash))),
+		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
+		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
+	}
+}
+
+pub fn push_call_imp_update_id_graph_hash<NodeMetadataRepository>(
+	calls: &mut Vec<OpaqueCall>,
+	node_metadata_repo: Arc<NodeMetadataRepository>,
+	account: ParentchainAccountId,
+	id_graph_hash: H256,
+	req_ext_hash: H256,
+) where
+	NodeMetadataRepository: AccessNodeMetadata,
+	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+{
+	debug!("pushing IMP::update_id_graph_hash call ...");
+	match node_metadata_repo.get_from_metadata(|m| m.update_id_graph_hash_call_indexes()) {
+		Ok(Ok(call_index)) =>
+			calls.push(OpaqueCall::from_tuple(&(call_index, account, id_graph_hash, req_ext_hash))),
+		Ok(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
+		Err(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 	}
 }
 
