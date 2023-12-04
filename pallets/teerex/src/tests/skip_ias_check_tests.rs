@@ -112,7 +112,7 @@ fn register_enclave_with_scheduled_enclave_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::update_scheduled_enclave(
 			RuntimeOrigin::root(),
-			0u32,
+			0u64,
 			Default::default(),
 		));
 		assert_ok!(Teerex::register_enclave(
