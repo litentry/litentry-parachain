@@ -675,7 +675,7 @@ describe('Test Identity (direct invocation)', function () {
                 assert.isTrue(v.isDispatch, `expected Dispatch, received ${v.type} instead`);
                 assert.equal(
                     v.asDispatch.toString(),
-                    ' error: Module(ModuleError { index: 6, error: [5, 0, 0, 0], message: Some("WrongWeb3NetworkTypes") })'
+                    ' error: Module(ModuleError { index: 6, error: [6, 0, 0, 0], message: Some("WrongWeb3NetworkTypes") })'
                 );
             },
             res
