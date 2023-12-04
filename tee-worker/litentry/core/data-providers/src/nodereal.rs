@@ -26,11 +26,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 #[cfg(feature = "std")]
 use chrono::{offset::Utc as TzUtc, DateTime, NaiveDateTime};
 
-use crate::{build_client, DataProviderConfig, Error, HttpError};
+use crate::{build_client_with_cert, DataProviderConfig, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
@@ -83,7 +83,7 @@ impl NoderealServiceReqPath {
 #[serde(rename_all = "camelCase")]
 pub struct SpaceIDReqBody(Vec<String>);
 impl RestPath<NoderealServiceReqPath> for SpaceIDReqBody {
-	fn get_path(req: NoderealServiceReqPath) -> core::result::Result<String, HttpError> {
+	fn get_path(req: NoderealServiceReqPath) -> Result<String, HttpError> {
 		Ok(req.path)
 	}
 }
@@ -91,7 +91,7 @@ impl RestPath<NoderealServiceReqPath> for SpaceIDReqBody {
 pub struct NoderealClient {
 	pub api_key: String,
 	pub api_url: String,
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl NoderealClient {
@@ -101,7 +101,7 @@ impl NoderealClient {
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(api_url.as_str(), headers);
+		let client = build_client_with_cert(api_url.as_str(), headers);
 
 		NoderealClient { api_key, api_url, client }
 	}
