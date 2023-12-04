@@ -111,7 +111,7 @@ fn register_enclave_with_empty_url_inserts_default() {
 fn register_enclave_with_scheduled_enclave_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::update_scheduled_enclave(
-			RuntimeOrigin::root(),
+			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
 			0u64,
 			Default::default(),
 		));

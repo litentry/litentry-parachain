@@ -549,7 +549,9 @@ jobs:
         run: |
           rustup show
           cargo test --locked --release -p core-primitives --lib
-          # test pallet-teerex separately
+          # test pallet-teerex separately, with all feature combinations
+          cargo test --locked --release -p pallet-teerex --lib
+          cargo test --locked --release -p pallet-teerex --lib --features=skip-ias-check
           cargo test --locked --release -p pallet-teerex --lib --features=skip-scheduled-enclave-check
           cargo test --locked --release -p pallet-teerex --lib --features=skip-ias-check,skip-scheduled-enclave-check
           # no `skip-ias-check` feature
