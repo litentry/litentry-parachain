@@ -18,9 +18,8 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client_with_cert, ca_certs::get_ca_certs, ConvertParameterString, DataProviderConfig,
-	Error, HttpError, LIT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS,
-	WETH_TOKEN_ADDRESS,
+	build_client_with_cert, ConvertParameterString, DataProviderConfig, Error, HttpError,
+	LIT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -50,11 +49,8 @@ impl AchainableClient {
 			AUTHORIZATION.as_str(),
 			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
-		let client = build_client_with_cert(
-			data_provider_config.achainable_url.clone().as_str(),
-			headers,
-			get_ca_certs(),
-		);
+		let client =
+			build_client_with_cert(data_provider_config.achainable_url.clone().as_str(), headers);
 
 		AchainableClient { client }
 	}

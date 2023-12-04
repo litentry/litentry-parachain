@@ -18,8 +18,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client_with_cert, ca_certs::get_ca_certs, vec_to_string, Error, HttpError, UserInfo,
-	GLOBAL_DATA_PROVIDER_CONFIG,
+	build_client_with_cert, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER_CONFIG,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -178,7 +177,6 @@ impl TwitterOfficialClient {
 				.clone()
 				.as_str(),
 			headers.clone(),
-			get_ca_certs(),
 		);
 
 		TwitterOfficialClient { client }

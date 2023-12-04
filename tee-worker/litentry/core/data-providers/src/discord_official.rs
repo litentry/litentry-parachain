@@ -18,8 +18,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client_with_cert, ca_certs::get_ca_certs, vec_to_string, DataProviderConfig, Error,
-	HttpError, UserInfo,
+	build_client_with_cert, vec_to_string, DataProviderConfig, Error, HttpError, UserInfo,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
@@ -86,7 +85,6 @@ impl DiscordOfficialClient {
 		let client = build_client_with_cert(
 			data_provider_config.discord_official_url.clone().as_str(),
 			headers,
-			get_ca_certs(),
 		);
 		DiscordOfficialClient { client }
 	}

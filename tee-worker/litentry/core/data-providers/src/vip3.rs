@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client_with_cert, ca_certs::get_ca_certs, DataProviderConfig, Error, HttpError};
+use crate::{build_client_with_cert, DataProviderConfig, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -73,7 +73,7 @@ impl VIP3Client {
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client_with_cert(api_url.as_str(), headers, get_ca_certs());
+		let client = build_client_with_cert(api_url.as_str(), headers);
 
 		VIP3Client { client }
 	}

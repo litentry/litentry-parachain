@@ -26,7 +26,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 #[cfg(feature = "std")]
 use chrono::{offset::Utc as TzUtc, DateTime, NaiveDateTime};
 
-use crate::{build_client_with_cert, ca_certs::get_ca_certs, DataProviderConfig, Error, HttpError};
+use crate::{build_client_with_cert, DataProviderConfig, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -101,7 +101,7 @@ impl NoderealClient {
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client_with_cert(api_url.as_str(), headers, get_ca_certs());
+		let client = build_client_with_cert(api_url.as_str(), headers);
 
 		NoderealClient { api_key, api_url, client }
 	}

@@ -47,6 +47,7 @@ use itc_rest_client::{
 use lazy_static::lazy_static;
 use log::debug;
 use serde::{Deserialize, Serialize};
+use std::vec;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
@@ -70,7 +71,6 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 pub mod achainable;
 pub mod achainable_names;
-mod ca_certs;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod nodereal;
@@ -331,12 +331,11 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 pub fn build_client_with_cert(
 	base_url: &str,
 	headers: Headers,
-	certs: Vec<String>,
 ) -> RestClient<HttpClient<SendWithCertificateVerification>> {
 	debug!("base_url: {}", base_url);
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(
-		SendWithCertificateVerification::new(certs),
+		SendWithCertificateVerification::new(vec![]),
 		true,
 		Some(TIMEOUT),
 		Some(headers),
