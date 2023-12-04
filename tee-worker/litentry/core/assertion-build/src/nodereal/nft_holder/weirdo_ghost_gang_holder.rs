@@ -24,7 +24,7 @@ use core::result;
 
 use lc_credentials::nodereal::nft_holder::weirdo_ghost_gang_holder::WeirdoGhostGangHolderAssertionUpdate;
 use lc_data_providers::nodereal_jsonrpc::{
-	GetTokenBalance721Param, NftApiList, NoderealChain, NoderealJsonrpcClient,
+	GetTokenBalance721Param, NftApiList, NoderealChain, NoderealJsonrpcClient, NoderealNetwork,
 };
 
 use crate::*;
@@ -58,7 +58,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("WeirdoGhostGang holder");
 
 	let mut has_nft = false;
-	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, NoderealNetwork::Mainnet);
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
@@ -113,11 +113,11 @@ mod tests {
 	use itp_stf_primitives::types::ShardIdentifier;
 	use lc_credentials::assertion_logic::{AssertionLogic, Op};
 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
-	use lc_mock_server::run;
+	use lc_mock_server::{default_getter, run};
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap() + "/nodereal_jsonrpc/";
+		let url = run(Arc::new(default_getter), 0).unwrap() + "/nodereal_jsonrpc/";
 		GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()

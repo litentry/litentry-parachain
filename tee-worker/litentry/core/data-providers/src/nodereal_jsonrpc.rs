@@ -67,6 +67,22 @@ impl NoderealChain {
 	}
 }
 
+pub enum NoderealNetwork {
+	Mainnet,
+	Testnet,
+	Goerli,
+}
+
+impl NoderealNetwork {
+	pub fn to_string(&self) -> &'static str {
+		match self {
+			NoderealNetwork::Mainnet => "mainnet",
+			NoderealNetwork::Testnet => "testnet",
+			NoderealNetwork::Goerli => "goerli",
+		}
+	}
+}
+
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ReqPath {
@@ -100,7 +116,7 @@ pub struct NoderealJsonrpcClient {
 }
 
 impl NoderealJsonrpcClient {
-	pub fn new(chain: NoderealChain) -> Self {
+	pub fn new(chain: NoderealChain, network: NoderealNetwork) -> Self {
 		let api_key = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_key.clone();
 		let api_retry_delay = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_delay;
 		let api_retry_times = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_times;
@@ -109,7 +125,9 @@ impl NoderealJsonrpcClient {
 			.unwrap()
 			.nodereal_api_chain_network_url
 			.clone();
-		let base_url = api_url.replace("{chain}", chain.to_string());
+		let base_url = api_url
+			.replace("{chain}", chain.to_string())
+			.replace("{network}", network.to_string());
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
@@ -281,11 +299,12 @@ impl NftApiList for NoderealJsonrpcClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use lc_mock_server::run;
+	use lc_mock_server::{default_getter, run};
+	use std::sync::Arc;
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap() + "/nodereal_jsonrpc/";
+		let url = run(Arc::new(default_getter), 0).unwrap() + "/nodereal_jsonrpc/";
 		GLOBAL_DATA_PROVIDER_CONFIG
 			.write()
 			.unwrap()
@@ -299,7 +318,7 @@ mod tests {
 	#[test]
 	fn does_get_nft_holdings_works() {
 		init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, NoderealNetwork::Mainnet);
 		let param = GetNFTHoldingsParam {
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
 			token_type: "ERC721".into(),
@@ -318,7 +337,7 @@ mod tests {
 	#[test]
 	fn does_get_token_balance_721_works() {
 		init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, NoderealNetwork::Mainnet);
 		let param = GetTokenBalance721Param {
 			token_address: "0x07D971C03553011a48E951a53F48632D37652Ba1".into(),
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
