@@ -17,11 +17,11 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, DataProviderConfig, Error, HttpError};
+use crate::{build_client_with_cert, DataProviderConfig, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
@@ -58,13 +58,13 @@ pub struct VIP3SBTInfoResponse {
 }
 
 impl RestPath<String> for VIP3SBTInfoResponse {
-	fn get_path(path: String) -> core::result::Result<String, HttpError> {
+	fn get_path(path: String) -> Result<String, HttpError> {
 		Ok(path)
 	}
 }
 
 pub struct VIP3Client {
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl VIP3Client {
@@ -73,7 +73,7 @@ impl VIP3Client {
 
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(api_url.as_str(), headers);
+		let client = build_client_with_cert(api_url.as_str(), headers);
 
 		VIP3Client { client }
 	}
