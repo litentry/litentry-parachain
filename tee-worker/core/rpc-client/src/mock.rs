@@ -117,4 +117,8 @@ impl DirectApi for DirectClientMock {
 	fn get_state_mrenclave(&self) -> Result<MrEnclave> {
 		unimplemented!()
 	}
+
+	fn get_all_id_graph_hash(&self, _shard: &ShardIdentifier) -> Result<Vec<(Identity, H256)>> {
+		unimplemented!()
+	}
 }
