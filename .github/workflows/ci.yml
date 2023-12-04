@@ -545,15 +545,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run unittests
+      - name: Run pallet-teerex unittests
         run: |
           rustup show
+          cargo +stable install cargo-hack --locked
+          cargo hack test --feature-powerset --features=default --locked --release -p pallet-teerex --lib
+
+      - name: Run all unittests
           cargo test --locked --release -p core-primitives --lib
-          # test pallet-teerex separately, with all feature combinations
-          cargo test --locked --release -p pallet-teerex --lib
-          cargo test --locked --release -p pallet-teerex --lib --features=skip-ias-check
-          cargo test --locked --release -p pallet-teerex --lib --features=skip-scheduled-enclave-check
-          cargo test --locked --release -p pallet-teerex --lib --features=skip-ias-check,skip-scheduled-enclave-check
           # no `skip-ias-check` feature
           cargo test --locked --release -p pallet-* --lib
           # with `skip-ias-check` feature only
