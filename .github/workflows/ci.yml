@@ -552,6 +552,7 @@ jobs:
           cargo hack test --feature-powerset --features=default --locked --release -p pallet-teerex --lib
 
       - name: Run all unittests
+        run: |
           cargo test --locked --release -p core-primitives --lib
           # no `skip-ias-check` feature
           cargo test --locked --release -p pallet-* --lib
