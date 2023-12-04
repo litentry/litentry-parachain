@@ -47,12 +47,14 @@ use itc_rest_client::{
 use lazy_static::lazy_static;
 use log::debug;
 use serde::{Deserialize, Serialize};
+use std::vec;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
+use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
 	VCMPError,
@@ -323,6 +325,22 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 	debug!("base_url: {}", base_url);
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
+	RestClient::new(http_client, base_url)
+}
+
+pub fn build_client_with_cert(
+	base_url: &str,
+	headers: Headers,
+) -> RestClient<HttpClient<SendWithCertificateVerification>> {
+	debug!("base_url: {}", base_url);
+	let base_url = Url::parse(base_url).unwrap();
+	let http_client = HttpClient::new(
+		SendWithCertificateVerification::new(vec![]),
+		true,
+		Some(TIMEOUT),
+		Some(headers),
+		None,
+	);
 	RestClient::new(http_client, base_url)
 }
 
