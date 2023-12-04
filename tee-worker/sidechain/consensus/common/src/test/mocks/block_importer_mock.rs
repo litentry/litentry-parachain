@@ -17,6 +17,7 @@
 
 use crate::{test::mocks::verifier_mock::VerifierMock, BlockImport, Error, Result};
 use core::marker::PhantomData;
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_crypto::aes::Aes;
 use itp_sgx_externalities::SgxExternalities;
 use itp_test::mock::onchain_mock::OnchainMock;
