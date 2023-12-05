@@ -267,10 +267,8 @@ impl DirectApi for DirectClient {
 	fn get_all_id_graph_hash(&self, shard: &ShardIdentifier) -> Result<Vec<(Identity, H256)>> {
 		let getter = Getter::public(PublicGetter::all_id_graph_hash);
 		self.get_state(*shard, &getter)
-			.ok_or(Error::Status(format!("failed to get state")))
-			.and_then(|v| {
-				Vec::<(Identity, H256)>::decode(&mut v.as_slice()).map_err(|e| Error::Codec(e))
-			})
+			.ok_or_else(|| Error::Status("failed to get state".to_string()))
+			.and_then(|v| Vec::<(Identity, H256)>::decode(&mut v.as_slice()).map_err(Error::Codec))
 	}
 }
 
