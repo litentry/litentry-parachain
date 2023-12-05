@@ -25,9 +25,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set env variables
-        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.worker-tag }}" >> "$GITHUB_ENV"
-
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
