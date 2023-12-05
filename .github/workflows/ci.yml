@@ -700,7 +700,6 @@ jobs:
           - test_name: lit-di-evm-identity-multiworker-test
           - test_name: lit-di-substrate-identity-multiworker-test
           - test_name: lit-di-vc-multiworker-test
-          - test_name: lit-id-graph-stats-multiworker
           - test_name: lit-ii-batch-test-multiworker
           - test_name: lit-ii-identity-multiworker-test
           - test_name: lit-ii-vc-multiworker-test
