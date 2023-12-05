@@ -38,6 +38,8 @@ export default {
                 activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)",
                 set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
+                __Unused_remove_identity: "Null",
+
             },
         },
         TrustedOperationStatus: {
