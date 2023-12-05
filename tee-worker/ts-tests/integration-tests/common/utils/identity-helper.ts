@@ -223,7 +223,7 @@ export async function buildValidations(
             ) as unknown as LitentryValidationData;
             validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'twitter') {
-            console.log('post verification msg to twitter', msg);
+            console.log('post verification msg to twitter: ', msg);
             const twitterValidationData = {
                 Web2Validation: {
                     Twitter: {

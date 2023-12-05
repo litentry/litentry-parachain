@@ -111,7 +111,7 @@ impl Send for SendWithCertificateVerification {
 		request: &mut Request,
 		writer: &mut Vec<u8>,
 	) -> Result<Response, Error> {
-		let mut cnf = Config::empty_root_store();
+		let mut cnf = Config::default();
 		for cert in self.root_certificates.iter() {
 			cnf.add_root_cert_content_pem_file(cert)?;
 		}

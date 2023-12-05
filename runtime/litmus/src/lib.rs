@@ -37,7 +37,6 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use hex_literal::hex;
 
-use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
@@ -73,10 +72,9 @@ use runtime_common::{
 	impl_runtime_transaction_payment_fees, prod_or_fast, BlockHashCount, BlockLength,
 	CouncilInstance, CouncilMembershipInstance, EnsureRootOrAllCouncil,
 	EnsureRootOrAllTechnicalCommittee, EnsureRootOrHalfCouncil, EnsureRootOrHalfTechnicalCommittee,
-	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee,
-	IMPExtrinsicWhitelistInstance, NegativeImbalance, RuntimeBlockWeights, SlowAdjustingFeeUpdate,
-	TechnicalCommitteeInstance, TechnicalCommitteeMembershipInstance,
-	VCMPExtrinsicWhitelistInstance, MAXIMUM_BLOCK_WEIGHT,
+	EnsureRootOrTwoThirdsCouncil, EnsureRootOrTwoThirdsTechnicalCommittee, NegativeImbalance,
+	RuntimeBlockWeights, SlowAdjustingFeeUpdate, TechnicalCommitteeInstance,
+	TechnicalCommitteeMembershipInstance, MAXIMUM_BLOCK_WEIGHT,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
@@ -153,7 +151,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("litmus-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9170,
+	spec_version: 9171,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -829,33 +827,6 @@ impl pallet_teeracle::Config for Runtime {
 	type MaxOracleBlobLen = ConstU32<4096>;
 }
 
-impl pallet_identity_management::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_identity_management::WeightInfo<Runtime>;
-	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
-	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
-}
-
-impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type GroupManagerOrigin = EnsureRootOrAllCouncil;
-}
-
-impl pallet_vc_management::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_vc_management::WeightInfo<Runtime>;
-	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
-	type SetAdminOrigin = EnsureRootOrHalfCouncil;
-	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
-	type ExtrinsicWhitelistOrigin = VCMPExtrinsicWhitelist;
-}
-
-impl pallet_group::Config<VCMPExtrinsicWhitelistInstance> for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type GroupManagerOrigin = EnsureRootOrAllCouncil;
-}
-
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
 
 impl runtime_common::ParaRuntimeRequirements for Runtime {}
@@ -925,11 +896,7 @@ construct_runtime! {
 		BridgeTransfer: pallet_bridge_transfer = 61,
 		Drop3: pallet_drop3 = 62,
 		ExtrinsicFilter: pallet_extrinsic_filter = 63,
-		IdentityManagement: pallet_identity_management = 64,
 		AssetManager: pallet_asset_manager = 65,
-		VCManagement: pallet_vc_management = 66,
-		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
-		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
@@ -998,10 +965,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Session
 			RuntimeCall::Session(_) |
 			// Balance
-			RuntimeCall::Balances(_) |
-			// Group
-			RuntimeCall::IMPExtrinsicWhitelist(_) |
-			RuntimeCall::VCMPExtrinsicWhitelist(_)
+			RuntimeCall::Balances(_)
 		)
 	}
 }
@@ -1028,8 +992,6 @@ mod benches {
 		// This module returned an error when ran the benchmark, temporarily chose to comment it out
 		// [pallet_collator_selection, CollatorSelection]
 		[cumulus_pallet_xcmp_queue, XcmpQueue]
-		[pallet_identity_management, IdentityManagement]
-		[pallet_vc_management, VCManagement]
 		[pallet_teerex, Teerex]
 		[pallet_sidechain, Sidechain]
 		[pallet_teeracle, Teeracle]

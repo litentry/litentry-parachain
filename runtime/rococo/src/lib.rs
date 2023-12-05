@@ -28,8 +28,9 @@ use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EnsureOrigin,
-		Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers, WithdrawReasons,
+		ConstU128, ConstU32, ConstU64, ConstU8, Contains, ContainsLengthBound, EitherOfDiverse,
+		EnsureOrigin, Everything, FindAuthor, InstanceFilter, OnFinalize, SortedMembers,
+		WithdrawReasons,
 	},
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	ConsensusEngineId, PalletId, RuntimeDebug,
@@ -241,7 +242,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9170,
+	spec_version: 9171,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1018,10 +1019,11 @@ impl pallet_teeracle::Config for Runtime {
 
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = weights::pallet_identity_management::WeightInfo<Runtime>;
+	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+	type UpdateIDGraphHashOrigin = EitherOfDiverse<EnsureRootOrHalfCouncil, Self::TEECallOrigin>;
 }
 
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
