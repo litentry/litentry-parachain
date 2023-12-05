@@ -69,26 +69,26 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
           npm config set @litentry:registry https://npm.pkg.github.com
 
-      # - name: Publish parachain API and sidechain API
-      #   working-directory: ./tee-worker/client-api
-      #   run: |
-      #     apis=("parachain-api" "sidechain-api")
-      #     for api in "${apis[@]}"; do
-      #       cd "$api"
+      - name: Publish parachain API and sidechain API
+        working-directory: ./tee-worker/client-api
+        run: |
+          apis=("parachain-api" "sidechain-api")
+          for api in "${apis[@]}"; do
+            cd "$api"
 
-      #       # Check if dist and build files exist
-      #       if [ -d "dist" ] && [ -d "build" ]; then
-      #         echo "$api dist and build files exist."
-      #       else
-      #         echo "$api dist and build files do not exist. Publishing failed."
-      #         exit 1
-      #       fi
+            # Check if dist and build files exist
+            if [ -d "dist" ] && [ -d "build" ]; then
+              echo "$api dist and build files exist."
+            else
+              echo "$api dist and build files do not exist. Publishing failed."
+              exit 1
+            fi
 
-      #       npm publish --tag ${{ inputs.release-tag }}
+            npm publish --tag ${{ inputs.release-tag }}
 
-      #       echo "------------------------$api published------------------------"
-      #       cd ..
-      #     done
+            echo "------------------------$api published------------------------"
+            cd ..
+          done
 
       - name: Stop docker containers
         run: |
