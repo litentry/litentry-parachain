@@ -26,13 +26,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set env variables
-        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.parachain-tag }}" >> "$GITHUB_ENV"
+        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.worker-tag }}" >> "$GITHUB_ENV"
 
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
           docker pull litentry/litentry-worker:${{ inputs.worker-tag }}
-          docker pull litentry/litentry-cli:${{ inputs.parachain-tag }}
+          docker pull litentry/litentry-cli:${{ inputs.worker-tag }}
           docker pull litentry/litentry-parachain:${{ inputs.parachain-tag }}
 
       - run: docker images --all
