@@ -51,7 +51,7 @@ pub use itp_stf_primitives::{
 };
 use itp_types::{parentchain::ProxyType, Address};
 pub use itp_types::{OpaqueCall, H256};
-use itp_utils::{if_production_or, stringify::account_id_to_string};
+use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainAccountId,
