@@ -454,3 +454,91 @@ fn id_graph_stats_works() {
 		assert!(stats.contains(&(alice.clone(), 3)));
 	});
 }
+
+#[test]
+fn remove_one_identity_works() {
+	new_test_ext().execute_with(|| {
+		let alice: Identity = ALICE.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			bob_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
+		));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			alice_twitter_identity(1),
+			vec![],
+		));
+
+		// alice's IDGraph should have 3 entries:
+		// alice's identity itself, bob_substrate_identity, alice_twitter_identity
+		assert_eq!(IMT::get_id_graph(&alice).len(), 3);
+
+		assert_ok!(IMT::remove_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			vec![bob_substrate_identity()],
+		));
+
+		assert_eq!(IMT::get_id_graph(&alice).len(), 2);
+	});
+}
+
+#[test]
+fn remove_whole_identity_graph_works() {
+	new_test_ext().execute_with(|| {
+		let alice: Identity = ALICE.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			bob_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
+		));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			alice_twitter_identity(1),
+			vec![],
+		));
+
+		// alice's IDGraph should have 3 entries:
+		// alice's identity itself, bob_substrate_identity, alice_twitter_identity
+		assert_eq!(IMT::get_id_graph(&alice).len(), 3);
+
+		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), alice.clone(), vec![],));
+
+		assert_eq!(IMT::get_id_graph(&alice).len(), 0);
+	});
+}
+
+#[test]
+fn remove_identity_graph_of_other_account_fails() {
+	new_test_ext().execute_with(|| {
+		let alice: Identity = ALICE.into();
+		let bob: Identity = BOB.into();
+
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			bob_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
+		));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			alice_twitter_identity(1),
+			vec![],
+		));
+
+		assert_noop!(
+			IMT::remove_identity(
+				RuntimeOrigin::signed(ALICE),
+				bob,
+				vec![alice_substrate_identity()],
+			),
+			Error::<Test>::IdentityNotExist
+		);
+	});
+}

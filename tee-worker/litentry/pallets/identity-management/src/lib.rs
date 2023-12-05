@@ -81,6 +81,8 @@ pub mod pallet {
 		IdentityDeactivated { who: Identity, identity: Identity },
 		/// an identity was activated
 		IdentityActivated { who: Identity, identity: Identity },
+		/// an identity was removed
+		IdentityRemoved { who: Identity, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -230,6 +232,42 @@ pub mod pallet {
 				*context = Some(c);
 				Ok(())
 			})
+		}
+
+		#[cfg(not(feature = "production"))]
+		#[pallet::call_index(5)]
+		#[pallet::weight({15_000_000})]
+		pub fn remove_identity(
+			origin: OriginFor<T>,
+			who: Identity,
+			identities: Vec<Identity>,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+
+			if !identities.is_empty() {
+				for identity in identities.iter() {
+					ensure!(
+						LinkedIdentities::<T>::contains_key(identity),
+						Error::<T>::IdentityNotExist
+					);
+					ensure!(
+						IDGraphs::<T>::contains_key(&who, identity),
+						Error::<T>::IdentityNotExist
+					);
+
+					IDGraphs::<T>::remove(&who, identity);
+					LinkedIdentities::<T>::remove(identity);
+				}
+			} else {
+				// removing prime identity with all linked identities
+				IDGraphs::iter_prefix(&who)
+					.collect::<IDGraph<T>>()
+					.iter()
+					.for_each(|(identity, _context)| LinkedIdentities::<T>::remove(identity));
+				let _ = IDGraphs::<T>::clear_prefix(&who, u32::MAX, None);
+			}
+
+			Ok(())
 		}
 	}
 
