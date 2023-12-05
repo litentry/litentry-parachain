@@ -25,7 +25,8 @@ use std::vec::Vec;
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_self, get_storage_by_key_hash,
+		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_alice,
+		ensure_self, get_storage_by_key_hash,
 	},
 	trusted_call_result::{RequestVCResult, TrustedCallResult},
 	Getter,
@@ -104,6 +105,9 @@ pub enum TrustedCall {
 	request_vc(Identity, Identity, Assertion, Option<RequestAesKey>, H256),
 	#[codec(index = 4)]
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
+	#[cfg(not(feature = "production"))]
+	#[codec(index = 5)]
+	remove_identity(Identity, Identity, Vec<Identity>),
 	// the following trusted calls should not be requested directly from external
 	// they are guarded by the signature check (either root or enclave_signer_account)
 	// starting from index 20 to leave some room for future "normal" trusted calls
@@ -221,6 +225,8 @@ impl TrustedCall {
 			Self::handle_imp_error(sender_identity, ..) => sender_identity,
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
+			#[cfg(not(feature = "production"))]
+			Self::remove_identity(sender_identity, ..) => sender_identity,
 		}
 	}
 
@@ -676,6 +682,22 @@ where
 					Ok(TrustedCallResult::Streamed)
 				}
 			},
+			#[cfg(not(feature = "production"))]
+			TrustedCall::remove_identity(signer, who, identities) => {
+				debug!("remove_identity, who: {}", account_id_to_string(&who));
+
+				let account = signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure!(
+					ensure_enclave_signer_or_alice(&account),
+					StfError::RemoveIdentityFailed(ErrorDetail::UnauthorizedSigner)
+				);
+
+				IMTCall::remove_identity { who, identities }
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| StfError::RemoveIdentityFailed(e.into()))?;
+
+				Ok(TrustedCallResult::Empty)
+			},
 			TrustedCall::deactivate_identity(signer, who, identity, req_ext_hash) => {
 				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
@@ -933,6 +955,8 @@ where
 			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
 			// litentry
 			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
+			#[cfg(not(feature = "production"))]
+			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
