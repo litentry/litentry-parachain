@@ -35,8 +35,8 @@ jobs:
       - name: Re-tag docker image
         run: |
           docker tag litentry/litentry-worker:${{ inputs.worker-tag }} litentry/litentry-worker:latest
-          docker tag litentry/litentry-cli:${{ inputs.worker-tag }} litentry/litentry-worker:latest
-          docker tag litentry/litentry-parachain:${{ inputs.parachain-tag }} litentry/litentry-worker:latest
+          docker tag litentry/litentry-cli:${{ inputs.worker-tag }} litentry/litentry-cli:latest
+          docker tag litentry/litentry-parachain:${{ inputs.parachain-tag }} litentry/litentry-parachain:latest
 
       - run: docker images --all
 
