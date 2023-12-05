@@ -165,6 +165,10 @@ where
 		TrustedVCRequestSigned::decode(&mut decrypted_trusted_operation.as_slice())
 			.map_err(|e| format!("Failed to decode trusted operation, {:?}", e))?;
 
+	if !signed_request.verify_signature(&shard) {
+		return Err("Bad Signature".to_string())
+	}
+
 	let vc_request = signed_request.vc_request;
 
 	GLOBAL_RATE_LIMITER.should_allow(vc_request.signer.to_did().unwrap())?;

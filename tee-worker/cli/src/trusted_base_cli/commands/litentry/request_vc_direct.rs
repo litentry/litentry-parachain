@@ -261,11 +261,8 @@ impl RequestVcDirectCommand {
 		.expect("decoding shielding_key failed");
 
 		let top: TrustedVCRequestSigned =
-			TrustedVCRequest { signer: alice.public().into(), who: id, assertion }.sign(
-				&KeyPair::Sr25519(Box::new(alice)),
-				&mrenclave,
-				&shard,
-			);
+			TrustedVCRequest { signer: alice.public().into(), who: id, assertion, aes_key: key }
+				.sign(&KeyPair::Sr25519(Box::new(alice)), &mrenclave, &shard);
 
 		// This should contain the AES Key for AESRequest
 		match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {

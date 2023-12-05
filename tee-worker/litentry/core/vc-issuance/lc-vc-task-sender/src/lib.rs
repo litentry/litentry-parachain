@@ -24,7 +24,7 @@ use itp_stf_primitives::types::KeyPair;
 use itp_types::{ShardIdentifier, H256};
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::{AesOutput, Assertion, Identity, LitentryMultiSignature};
+use litentry_primitives::{AesOutput, Assertion, Identity, LitentryMultiSignature, RequestAesKey};
 use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -53,6 +53,7 @@ pub struct TrustedVCRequest {
 	pub signer: Identity,
 	pub who: Identity,
 	pub assertion: Assertion,
+	pub aes_key: RequestAesKey,
 }
 
 impl TrustedVCRequest {
@@ -81,7 +82,8 @@ impl TrustedVCRequestSigned {
 		TrustedVCRequestSigned { vc_request, signature }
 	}
 
-	pub fn verify_signature(&self, mrenclave: &[u8; 32], shard: &ShardIdentifier) -> bool {
+	pub fn verify_signature(&self, shard: &ShardIdentifier) -> bool {
+		let mrenclave = shard.as_fixed_bytes();
 		let mut payload = self.vc_request.encode();
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
