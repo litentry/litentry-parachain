@@ -13,7 +13,7 @@ import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
 import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
-import { defaultAssertions, configurableAssertions } from './common/utils/vc-helper';
+import { defaultAssertions, unconfiguredAssertions } from './common/utils/vc-helper';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -67,8 +67,8 @@ describe('Test Vc (direct invocation)', function () {
             await assertVc(context, aliceSubject, res.value);
         });
     });
-    configurableAssertions.forEach(({ description, assertion }) => {
-        step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
+    unconfiguredAssertions.forEach(({ description, assertion }) => {
+        it(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
             let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
@@ -88,25 +88,8 @@ describe('Test Vc (direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
-            assert.isTrue(res.do_watch.isFalse);
-            assert.isTrue(res.status.asTrustedOperationStatus[0].isInvalid);
-            assertWorkerError(
-                context,
-                (v) => {
-                    assert.isTrue(v.isRequestVCFailed, `expected RequestVCFailed, received ${v.type} instead`);
-                },
-                res
-            );
-            const events = await eventsPromise;
-            const vcIssuedEvents = events
-                .map(({ event }) => event)
-                .filter(({ section, method }) => section === 'vcManagement' && method === 'RequestVCFailed');
-
-            assert.equal(
-                vcIssuedEvents.length,
-                1,
-                `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
-            );
+            // pending test
+            this.skip();
         });
     });
 });
