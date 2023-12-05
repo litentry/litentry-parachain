@@ -58,6 +58,13 @@ pub enum Id {
 }
 
 #[derive(Clone, Encode, Decode, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Id {
+	Number(u32),
+	Text(String),
+}
+
+#[derive(Clone, Encode, Decode, Debug, Serialize, Deserialize)]
 pub struct RpcResponse {
 	pub jsonrpc: String,
 	pub result: String, // hex encoded RpcReturnValue

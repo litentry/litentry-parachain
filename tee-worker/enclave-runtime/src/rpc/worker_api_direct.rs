@@ -23,7 +23,7 @@ use crate::{
 	initialization::global_components::GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	utils::{
 		get_stf_enclave_signer_from_solo_or_parachain,
-		get_validator_accessor_from_solo_or_parachain,
+		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
 use codec::Encode;
@@ -507,8 +507,7 @@ fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
 	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
 		.map_err(|e| format!("{:?}", e))?;
 
-	let validator_access =
-		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	let validator_access = get_validator_accessor_from_integritee_solo_or_parachain().unwrap();
 	validator_access
 		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
 		.map_err(|e| format!("{:?}", e))?;
@@ -537,8 +536,7 @@ fn attesteer_forward_ias_attestation_report_inner(
 	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)
 		.map_err(|e| format!("{:?}", e))?;
 
-	let validator_access =
-		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	let validator_access = get_validator_accessor_from_integritee_solo_or_parachain().unwrap();
 	validator_access
 		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
 		.map_err(|e| format!("{:?}", e))?;

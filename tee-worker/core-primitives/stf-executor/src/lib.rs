@@ -28,7 +28,7 @@ use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_primitives::types::TrustedOperationOrHash;
-use itp_types::{OpaqueCall, H256};
+use itp_types::{parentchain::ParentchainCall, H256};
 use std::vec::Vec;
 
 // re-export module to properly feature gate sgx and regular std environment
@@ -67,12 +67,12 @@ pub type RpcResponseValue = Vec<u8>;
 /// - for failed top, we apply the parachain effects too
 #[derive(Clone, Debug, PartialEq)]
 pub enum ExecutionStatus {
-	Success(H256, Vec<OpaqueCall>, RpcResponseValue, bool),
-	Failure(H256, Vec<OpaqueCall>, RpcResponseValue),
+	Success(H256, Vec<ParentchainCall>, RpcResponseValue, bool),
+	Failure(H256, Vec<ParentchainCall>, RpcResponseValue),
 }
 
 impl ExecutionStatus {
-	pub fn get_extrinsic_callbacks(&self) -> Vec<OpaqueCall> {
+	pub fn get_extrinsic_callbacks(&self) -> Vec<ParentchainCall> {
 		match self {
 			ExecutionStatus::Success(_, opaque_calls, _, _) => opaque_calls.clone(),
 			ExecutionStatus::Failure(_, opaque_calls, _) => opaque_calls.clone(),
@@ -130,7 +130,7 @@ where
 	pub fn success(
 		operation_hash: H256,
 		trusted_operation_or_hash: TrustedOperationOrHash<TCS, G>,
-		extrinsic_call_backs: Vec<OpaqueCall>,
+		extrinsic_call_backs: Vec<ParentchainCall>,
 		rpc_response_value: RpcResponseValue,
 		force_connection_wait: bool,
 	) -> Self {
@@ -188,7 +188,7 @@ where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
-	pub fn get_extrinsic_callbacks(&self) -> Vec<OpaqueCall> {
+	pub fn get_extrinsic_callbacks(&self) -> Vec<ParentchainCall> {
 		self.executed_operations
 			.iter()
 			.flat_map(|e| e.status.get_extrinsic_callbacks())
@@ -227,6 +227,7 @@ mod tests {
 	use super::*;
 	use itp_sgx_externalities::SgxExternalities;
 	use itp_test::mock::stf_mock::{GetterMock, TrustedCallSignedMock};
+	use itp_types::OpaqueCall;
 
 	#[test]
 	fn is_success_works() {
@@ -290,7 +291,8 @@ mod tests {
 		int: u8,
 	) -> (ExecutedOperation<TrustedCallSignedMock, GetterMock>, H256) {
 		let hash = H256::from([int; 32]);
-		let opaque_call: Vec<OpaqueCall> = vec![OpaqueCall(vec![int; 10])];
+		let opaque_call: Vec<ParentchainCall> =
+			vec![ParentchainCall::Integritee(OpaqueCall(vec![int; 10]))];
 		let operation = ExecutedOperation::success(
 			hash,
 			TrustedOperationOrHash::Hash(hash),

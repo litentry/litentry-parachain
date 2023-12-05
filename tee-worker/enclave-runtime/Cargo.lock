@@ -802,7 +802,7 @@ dependencies = [
 
 [[package]]
 name = "enclave-runtime"
-version = "0.12.0"
+version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
  "cid",
@@ -1713,21 +1713,13 @@ dependencies = [
 name = "ita-parentchain-interface"
 version = "0.9.0"
 dependencies = [
- "binary-merkle-tree",
  "bs58",
- "frame-support",
- "futures 0.3.8",
  "ita-sgx-runtime",
  "ita-stf",
  "itc-parentchain-indirect-calls-executor",
  "itp-api-client-types",
  "itp-node-api",
- "itp-ocall-api",
- "itp-sgx-crypto",
- "itp-sgx-runtime-primitives",
- "itp-stf-executor",
  "itp-stf-primitives",
- "itp-top-pool-author",
  "itp-types",
  "itp-utils",
  "lc-scheduled-enclave",
@@ -1735,11 +1727,9 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
- "thiserror",
 ]
 
 [[package]]
@@ -1770,7 +1760,6 @@ dependencies = [
 name = "ita-stf"
 version = "0.9.0"
 dependencies = [
- "derive_more",
  "frame-support",
  "frame-system",
  "hex 0.4.3",
@@ -1779,7 +1768,6 @@ dependencies = [
  "itp-hashing",
  "itp-node-api",
  "itp-node-api-metadata",
- "itp-node-api-metadata-provider",
  "itp-sgx-externalities",
  "itp-stf-interface",
  "itp-stf-primitives",
@@ -1891,7 +1879,6 @@ dependencies = [
  "itc-parentchain-light-client",
  "itp-enclave-metrics",
  "itp-extrinsics-factory",
- "itp-ocall-api",
  "itp-stf-executor",
  "itp-types",
  "log",
@@ -1915,7 +1902,6 @@ dependencies = [
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "itp-stf-executor",
- "itp-stf-interface",
  "itp-stf-primitives",
  "itp-test",
  "itp-top-pool-author",
@@ -2110,7 +2096,6 @@ dependencies = [
  "itp-node-api",
  "itp-nonce-cache",
  "itp-types",
- "log",
  "parity-scale-codec",
  "sgx_tstd",
  "sgx_types",
@@ -2223,7 +2208,6 @@ dependencies = [
  "log",
  "ofb",
  "parity-scale-codec",
- "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx?tag=sgx_1.1.3)",
  "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
  "sgx_crypto_helper",
  "sgx_rand",
@@ -2318,7 +2302,6 @@ name = "itp-stf-primitives"
 version = "0.9.0"
 dependencies = [
  "derive_more",
- "itp-hashing",
  "itp-sgx-runtime-primitives",
  "litentry-primitives",
  "parity-scale-codec",
@@ -2390,7 +2373,6 @@ dependencies = [
 name = "itp-test"
 version = "0.9.0"
 dependencies = [
- "derive_more",
  "hex 0.4.3",
  "itp-node-api",
  "itp-node-api-metadata-provider",
@@ -2432,7 +2414,6 @@ dependencies = [
  "byteorder 1.4.3",
  "derive_more",
  "itc-direct-rpc-server",
- "itp-sgx-runtime-primitives",
  "itp-stf-primitives",
  "itp-types",
  "its-primitives",
@@ -2441,10 +2422,8 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
- "thiserror",
 ]
 
 [[package]]
@@ -2460,7 +2439,6 @@ dependencies = [
  "itp-test",
  "itp-top-pool",
  "itp-types",
- "itp-utils",
  "jsonrpc-core",
  "lazy_static",
  "litentry-primitives",
@@ -2469,7 +2447,6 @@ dependencies = [
  "sgx_tstd",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
- "thiserror",
 ]
 
 [[package]]
@@ -2502,13 +2479,11 @@ dependencies = [
 name = "its-block-composer"
 version = "0.9.0"
 dependencies = [
- "ita-stf",
  "itp-node-api",
  "itp-settings",
  "itp-sgx-crypto",
  "itp-sgx-externalities",
  "itp-stf-executor",
- "itp-stf-interface",
  "itp-stf-primitives",
  "itp-time-utils",
  "itp-top-pool-author",
@@ -2605,6 +2580,7 @@ version = "0.9.0"
 dependencies = [
  "derive_more",
  "hex 0.4.3",
+ "itp-settings",
  "itp-sgx-externalities",
  "itp-stf-state-handler",
  "itp-time-utils",
@@ -2691,7 +2667,6 @@ name = "its-validateer-fetch"
 version = "0.9.0"
 dependencies = [
  "derive_more",
- "frame-support",
  "itp-ocall-api",
  "itp-teerex-storage",
  "itp-types",
@@ -2717,7 +2692,7 @@ source = "git+https://github.com/scs/jsonrpc?branch=no_std_v18#0faf53c491c3222b9
 dependencies = [
  "futures 0.3.8",
  "log",
- "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx)",
+ "serde 1.0.118",
  "serde_derive 1.0.118",
  "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx)",
 ]
@@ -4071,14 +4046,6 @@ checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
 [[package]]
 name = "serde"
 version = "1.0.118"
-source = "git+https://github.com/mesalock-linux/serde-sgx?tag=sgx_1.1.3#db0226f1d5d70fca6b96af2c285851502204e21c"
-dependencies = [
- "sgx_tstd",
-]
-
-[[package]]
-name = "serde"
-version = "1.0.118"
 source = "git+https://github.com/mesalock-linux/serde-sgx#db0226f1d5d70fca6b96af2c285851502204e21c"
 dependencies = [
  "serde_derive 1.0.118",
@@ -4099,7 +4066,7 @@ name = "serde-big-array"
 version = "0.3.0"
 source = "git+https://github.com/mesalock-linux/serde-big-array-sgx#94122c5167aee38b39b09a620a60db2c28cf7428"
 dependencies = [
- "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx)",
+ "serde 1.0.118",
  "serde_derive 1.0.118",
 ]
 
@@ -4132,7 +4099,7 @@ dependencies = [
  "indexmap 1.6.1",
  "itoa 0.4.5",
  "ryu",
- "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx)",
+ "serde 1.0.118",
  "sgx_tstd",
 ]
 
@@ -4143,7 +4110,7 @@ source = "git+https://github.com/mesalock-linux/serde-json-sgx#380893814ad2a0577
 dependencies = [
  "itoa 0.4.5",
  "ryu",
- "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx)",
+ "serde 1.0.118",
  "sgx_tstd",
 ]
 
@@ -4193,7 +4160,7 @@ version = "1.1.6"
 source = "git+https://github.com/apache/incubator-teaclave-sgx-sdk?branch=master#3c903bdac4e503dd27b9b1f761c4abfc55f2464c"
 dependencies = [
  "itertools 0.11.0",
- "serde 1.0.118 (git+https://github.com/mesalock-linux/serde-sgx)",
+ "serde 1.0.118",
  "serde-big-array",
  "serde_derive 1.0.118",
  "sgx_tcrypto",

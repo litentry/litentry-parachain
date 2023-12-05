@@ -70,6 +70,7 @@ echo ""
 
 # the parentchain token is 12 decimal
 UNIT=$(( 10 ** 12 ))
+FEE_TOLERANCE=$((10 ** 11))
 
 # we have to make these amounts greater than ED, see
 # https://github.com/litentry/litentry-parachain/issues/1162

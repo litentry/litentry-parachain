@@ -15,7 +15,6 @@ itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor",
 itc-parentchain-light-client = { path = "../light-client", default-features = false }
 itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
-itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 
@@ -39,7 +38,6 @@ std = [
     "itc-parentchain-light-client/std",
     "itp-enclave-metrics/std",
     "itp-extrinsics-factory/std",
-    "itp-ocall-api/std",
     "itp-stf-executor/std",
     "itp-types/std",
     # no-std compatible libraries

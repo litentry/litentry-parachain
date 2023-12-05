@@ -29,7 +29,7 @@ use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
-	parentchain::{AccountId, ParentchainId},
+	parentchain::{AccountId, ParentchainCall, ParentchainId},
 	OpaqueCall, ShardIdentifier, H256,
 };
 
@@ -82,7 +82,7 @@ where
 		shard: &ShardIdentifier,
 		call: TCS,
 		top_hash: H256,
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error>;
 }
@@ -110,7 +110,7 @@ where
 		self,
 		shard: &ShardIdentifier,
 		top_hash: H256,
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error>;
 
