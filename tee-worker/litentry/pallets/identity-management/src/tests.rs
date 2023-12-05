@@ -410,7 +410,7 @@ fn get_id_graph_works() {
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		// set the block number too as it's used to tell "recent"
 		for i in 1..22 {
-			System::set_block_number(i + 1);
+			System::set_block_number(i);
 			assert_ok!(IMT::link_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
@@ -422,8 +422,10 @@ fn get_id_graph_works() {
 		let id_graph = IMT::get_id_graph(&who);
 		assert_eq!(id_graph.len(), 22);
 
-		// index 0 has the oldest identity
+		// despite the first and second items from the graph have the same `link_block` number the prime identity goes first
+		assert_eq!(id_graph.get(0).unwrap().1.link_block, id_graph.get(1).unwrap().1.link_block);
 		assert_eq!(id_graph.get(0).unwrap().0, who);
+		assert_eq!(id_graph.get(1).unwrap().0, alice_twitter_identity(1));
 
 		// index 21 has the newest identity
 		assert_eq!(id_graph.get(21).unwrap().0, alice_twitter_identity(21));
