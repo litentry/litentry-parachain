@@ -293,9 +293,8 @@ pub const ASSERTION_FROM_DATE: [&str; ASSERTION_DATE_LEN] = [
 	"2022-07-01",
 	"2023-01-01",
 	"2023-07-01",
-
-	// In order to address the issue of the community encountering a false query for WBTC in November, 
-	// the product team feels that adding this date temporarily solves this problem.
+	// In order to address the issue of the community encountering a false query for WBTC in
+	// November, the product team feels that adding this date temporarily solves this problem.
 	"2023-12-01",
 ];
 
