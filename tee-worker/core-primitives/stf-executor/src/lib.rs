@@ -149,7 +149,7 @@ where
 	pub fn failed(
 		operation_hash: H256,
 		trusted_operation_or_hash: TrustedOperationOrHash<TCS, G>,
-		extrinsic_call_backs: Vec<OpaqueCall>,
+		extrinsic_call_backs: Vec<ParentchainCall>,
 		rpc_response_value: RpcResponseValue,
 	) -> Self {
 		ExecutedOperation {

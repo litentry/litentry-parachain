@@ -44,8 +44,8 @@ extern crate sgx_tstd as std;
 use crate::{
 	error::{Error, Result},
 	initialization::global_components::{
-		GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT, GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE,
-		GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE,
+		GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TARGET_A_PARACHAIN_HANDLER_COMPONENT,
 		GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE, GLOBAL_TARGET_A_SOLOCHAIN_HANDLER_COMPONENT,
@@ -57,15 +57,13 @@ use crate::{
 		get_node_metadata_repository_from_integritee_solo_or_parachain,
 		get_node_metadata_repository_from_target_a_solo_or_parachain,
 		get_node_metadata_repository_from_target_b_solo_or_parachain,
-		get_validator_accessor_from_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
+		get_validator_accessor_from_integritee_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
 	},
 };
 use codec::Decode;
 use core::ffi::c_int;
 use itc_parentchain::{
-	block_import_dispatcher::{
-		triggered_dispatcher::TriggerParentchainBlockImport, DispatchBlockImport,
-	},
+	block_import_dispatcher::DispatchBlockImport,
 	light_client::{concurrent_access::ValidatorAccess, Validator},
 	primitives::ParentchainId,
 };
@@ -267,7 +265,7 @@ pub unsafe extern "C" fn set_nonce(
 	info!("Setting the nonce of the enclave to: {} for parentchain: {:?}", *nonce, id);
 
 	let nonce_lock = match id {
-		ParentchainId::Litentry => GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
+		ParentchainId::Litentry => GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
 		ParentchainId::TargetA => GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
 		ParentchainId::TargetB => GLOBAL_TARGET_B_PARENTCHAIN_NONCE_CACHE.load_for_mutation(),
 	};
@@ -565,7 +563,7 @@ unsafe fn sync_parentchain_internal(
 pub unsafe extern "C" fn ignore_parentchain_block_import_validation_until(
 	until: *const u32,
 ) -> sgx_status_t {
-	let va = match get_validator_accessor_from_solo_or_parachain() {
+	let va = match get_validator_accessor_from_integritee_solo_or_parachain() {
 		Ok(r) => r,
 		Err(e) => {
 			error!("Can't get validator accessor: {:?}", e);
@@ -604,13 +602,13 @@ fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>
 	);
 	match id {
 		ParentchainId::Litentry => {
-			if let Ok(handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
+			if let Ok(handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
 				handler.import_dispatcher.dispatch_import(
 					blocks_to_sync,
 					events_to_sync,
 					is_syncing,
 				)?;
-			} else if let Ok(handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
+			} else if let Ok(handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
 				handler.import_dispatcher.dispatch_import(
 					blocks_to_sync,
 					events_to_sync,

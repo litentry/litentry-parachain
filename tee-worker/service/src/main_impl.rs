@@ -358,7 +358,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain", feature = "teeracle")))]
 	let flavor_str = "offchain-worker";
 
-	println!("Integritee Worker for {} v{}", flavor_str, VERSION);
+	println!("Litentry Worker for {} v{}", flavor_str, VERSION);
 
 	#[cfg(feature = "dcap")]
 	println!("  DCAP is enabled");
@@ -634,7 +634,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 			#[cfg(feature = "teeracle")]
 			start_periodic_market_update(
-				&integritee_rpc_api,
+				&litentry_rpc_api,
 				run_config.teeracle_update_interval(),
 				enclave.as_ref(),
 				&tokio_handle,
@@ -645,7 +645,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 			// Syncing all parentchain blocks, this might take a while..
 			let last_synced_header =
-				parentchain_handler.sync_parentchain(last_synced_header, true).unwrap();
+				parentchain_handler.sync_parentchain(last_synced_header, 0, true).unwrap();
 
 			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
 
@@ -716,7 +716,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Litentry);
 	loop {
 		if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
-			print_events(events, ParentchainId::Integritee)
+			print_events(events, ParentchainId::Litentry)
 		}
 	}
 }
@@ -728,19 +728,19 @@ fn init_provided_shard_vault<E: EnclaveBase>(
 ) {
 	if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
 		println!(
-			"[Integritee] shard vault account is already initialized in state: {}",
+			"[Litentry] shard vault account is already initialized in state: {}",
 			shard_vault.to_ss58check()
 		);
 	} else if we_are_primary_validateer {
-		println!("[Integritee] initializing proxied shard vault account now");
-		enclave.init_proxied_shard_vault(shard, &ParentchainId::Integritee).unwrap();
+		println!("[Litentry] initializing proxied shard vault account now");
+		enclave.init_proxied_shard_vault(shard, &ParentchainId::Litentry).unwrap();
 		println!(
-			"[Integritee] initialized shard vault account: : {}",
+			"[Litentry] initialized shard vault account: : {}",
 			enclave.get_ecc_vault_pubkey(shard).unwrap().to_ss58check()
 		);
 	} else {
 		panic!(
-			"[Integritee] no vault account has been initialized and we are not the primary worker"
+			"[Litentry] no vault account has been initialized and we are not the primary worker"
 		);
 	}
 }

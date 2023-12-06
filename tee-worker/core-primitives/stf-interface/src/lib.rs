@@ -30,7 +30,7 @@ use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_stf_primitives::traits::TrustedCallVerification;
 use itp_types::{
 	parentchain::{AccountId, ParentchainCall, ParentchainId},
-	OpaqueCall, ShardIdentifier, H256,
+	ShardIdentifier, H256,
 };
 
 #[cfg(feature = "mocks")]

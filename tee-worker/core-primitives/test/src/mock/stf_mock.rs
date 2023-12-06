@@ -32,7 +32,7 @@ use itp_stf_primitives::{
 };
 use itp_types::{
 	parentchain::{ParentchainCall, ParentchainId},
-	AccountId, Balance, Index, OpaqueCall, ShardIdentifier, H256,
+	AccountId, Balance, Index, ShardIdentifier, H256,
 };
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;

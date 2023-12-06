@@ -72,7 +72,7 @@ pub enum ParentchainId {
 impl std::fmt::Display for ParentchainId {
 	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
 		let message = match self {
-			ParentchainId::Integritee => "L1:Integritee",
+			ParentchainId::Litentry => "L1:Litentry",
 			ParentchainId::TargetA => "L1:AssetHub",
 			ParentchainId::TargetB => "L1:UNDEFINED",
 		};
@@ -172,14 +172,14 @@ impl From<ParentchainError> for () {
 /// a wrapper to target calls to specific parentchains
 #[derive(Encode, Debug, Clone, PartialEq, Eq)]
 pub enum ParentchainCall {
-	Integritee(OpaqueCall),
+	Litentry(OpaqueCall),
 	TargetA(OpaqueCall),
 	TargetB(OpaqueCall),
 }
 
 impl ParentchainCall {
-	pub fn as_integritee(&self) -> Option<OpaqueCall> {
-		if let Self::Integritee(call) = self {
+	pub fn as_litentry(&self) -> Option<OpaqueCall> {
+		if let Self::Litentry(call) = self {
 			Some(call.clone())
 		} else {
 			None
@@ -201,8 +201,8 @@ impl ParentchainCall {
 	}
 	pub fn as_opaque_call_for(&self, parentchain_id: ParentchainId) -> Option<OpaqueCall> {
 		match parentchain_id {
-			ParentchainId::Integritee =>
-				if let Self::Integritee(call) = self {
+			ParentchainId::Litentry =>
+				if let Self::Litentry(call) = self {
 					Some(call.clone())
 				} else {
 					None

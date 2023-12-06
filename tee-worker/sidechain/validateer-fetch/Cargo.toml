@@ -18,6 +18,9 @@ itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = f
 itp-teerex-storage = { path = "../../core-primitives/teerex-storage", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
 
+# litentry
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
 [features]
 default = ["std"]
 std = [
@@ -27,6 +30,7 @@ std = [
     "sp-std/std",
     "itp-types/std",
     "itp-ocall-api/std",
+    "frame-support/std",
 ]
 
 [dev-dependencies]

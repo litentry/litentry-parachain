@@ -225,6 +225,7 @@ impl<
 	fn epoch_data(
 		&self,
 		header: &ParentchainBlock::Header,
+		_shard: ShardIdentifierFor<Self::Output>,
 		_slot: Slot,
 	) -> Result<Self::EpochData, ConsensusError> {
 		authorities::<_, AuthorityPair, ParentchainBlock::Header>(&self.ocall_api, header)

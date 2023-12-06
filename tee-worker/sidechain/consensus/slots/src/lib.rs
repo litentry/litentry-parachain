@@ -207,6 +207,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 	fn epoch_data(
 		&self,
 		header: &ParentchainBlock::Header,
+		shard: ShardIdentifierFor<Self::Output>,
 		slot: Slot,
 	) -> Result<Self::EpochData, ConsensusError>;
 

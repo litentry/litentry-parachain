@@ -131,8 +131,12 @@ pub fn produce_sidechain_block_and_import_it() {
 		peer_updater_mock,
 	));
 	let block_composer = Arc::new(TestBlockComposer::new(signer, state_key_repo));
-	let proposer_environment =
-		ProposerFactory::new(top_pool_author.clone(), stf_executor, block_composer);
+	let proposer_environment = ProposerFactory::new(
+		top_pool_author.clone(),
+		stf_executor,
+		block_composer,
+		metrics_ocall_mock,
+	);
 
 	info!("Create trusted operations..");
 	let sender = endowed_account();
@@ -188,7 +192,7 @@ pub fn produce_sidechain_block_and_import_it() {
 
 	info!("Executing AURA on slot..");
 	let (blocks, opaque_calls) =
-		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _>(
+		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _, _, _>(
 			slot_info,
 			signer,
 			ocall_api,

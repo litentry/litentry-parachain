@@ -72,6 +72,22 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 	}
 }
 
+pub(crate) fn perform_direct_operation<T: Decode + Debug>(
+	cli: &Cli,
+	trusted_args: &TrustedCli,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
+	key: RequestAesKey,
+) -> TrustedOpResult<T> {
+	match top {
+		TrustedOperation::direct_call(call) => match call.call {
+			TrustedCall::request_vc(..) => send_direct_vc_request(cli, trusted_args, top, key),
+			_ => Err(TrustedOperationError::Default { msg: "Only request vc allowed".to_string() }),
+		},
+		_ =>
+			Err(TrustedOperationError::Default { msg: "Only Direct Operation allowed".to_string() }),
+	}
+}
+
 fn execute_getter_from_cli_args<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,

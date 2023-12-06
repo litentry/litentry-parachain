@@ -195,7 +195,7 @@ impl<
 	fn send_parentchain_effects(&self, parentchain_effects: Vec<ParentchainCall>) -> Result<()> {
 		let integritee_calls: Vec<OpaqueCall> = parentchain_effects
 			.iter()
-			.filter_map(|parentchain_call| parentchain_call.as_integritee())
+			.filter_map(|parentchain_call| parentchain_call.as_litentry())
 			.collect();
 		let target_a_calls: Vec<OpaqueCall> = parentchain_effects
 			.iter()

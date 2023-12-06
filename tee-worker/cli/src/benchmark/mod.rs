@@ -20,7 +20,7 @@ use crate::{
 	get_layer_two_nonce,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_keystore_path, get_pair_from_str},
-	trusted_operation::{get_json_request, get_state, perform_trusted_operation, wait_until},
+	trusted_operation::{get_json_request, get_state, wait_until},
 	Cli, CliResult, CliResultOk, SR25519_KEY_TYPE,
 };
 use codec::Decode;

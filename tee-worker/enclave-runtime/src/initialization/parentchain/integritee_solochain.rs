@@ -22,8 +22,9 @@ use crate::{
 			EnclaveExtrinsicsFactory, EnclaveNodeMetadataRepository, EnclaveOCallApi,
 			EnclaveStfExecutor, EnclaveValidatorAccessor,
 			IntegriteeParentchainBlockImportDispatcher,
-			GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE,
-			GLOBAL_OCALL_API_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+			GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+			GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE, GLOBAL_OCALL_API_COMPONENT,
+			GLOBAL_STATE_HANDLER_COMPONENT,
 		},
 		parentchain::common::{
 			create_extrinsics_factory, create_integritee_offchain_immediate_import_dispatcher,
@@ -56,7 +57,7 @@ impl IntegriteeSolochainHandler {
 	) -> Result<Self> {
 		let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 		let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
-		let light_client_seal = GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL.get()?;
+		let light_client_seal = GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL.get()?;
 		let node_metadata_repository = Arc::new(EnclaveNodeMetadataRepository::default());
 
 		let genesis_header = params.genesis_header.clone();
@@ -73,7 +74,7 @@ impl IntegriteeSolochainHandler {
 
 		let extrinsics_factory = create_extrinsics_factory(
 			genesis_hash,
-			GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE.clone(),
+			GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE.clone(),
 			node_metadata_repository.clone(),
 		)?;
 

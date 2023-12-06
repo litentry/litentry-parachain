@@ -114,7 +114,12 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 		peer_updater_mock,
 	));
 	let block_composer = Arc::new(TestBlockComposer::new(signer, state_key_repo));
-	let proposer_environment = ProposerFactory::new(top_pool_author, stf_executor, block_composer);
+	let proposer_environment = ProposerFactory::new(
+		top_pool_author,
+		stf_executor,
+		block_composer,
+		enclave_metrics_ocall_mock,
+	);
 
 	// Add some events to the state.
 	let topic_hash = H256::from([7; 32]);
@@ -152,7 +157,7 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 	let scheduled_enclave = Arc::new(ScheduledEnclaveMock::default());
 	info!("Executing AURA on slot..");
 	let (blocks, opaque_calls) =
-		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _>(
+		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _, _, _>(
 			slot_info,
 			signer,
 			ocall_api,

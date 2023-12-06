@@ -29,6 +29,9 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 log = { version = "0.4", default-features = false }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
+# litentry
+itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
+
 [features]
 default = ["std"]
 std = [
@@ -46,6 +49,7 @@ std = [
     "sp-runtime/std",
     # std compatible external
     "thiserror",
+    "itp-ocall-api/std",
 ]
 sgx = [
     # sgx

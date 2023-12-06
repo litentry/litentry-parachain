@@ -481,7 +481,10 @@ where
 				.map_err(|e| {
 					Self::Error::Dispatch(format!("Balance Unshielding error: {:?}", e.error))
 				})?;
-				burn_funds(account_incognito, value)?;
+				burn_funds(
+					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
+					value,
+				)?;
 
 				let vault_pubkey: [u8; 32] = get_storage_by_key_hash(SHARD_VAULT_KEY.into())
 					.ok_or_else(|| {
@@ -516,7 +519,7 @@ where
 				shield_funds(who, value)?;
 
 				// Send proof of execution on chain.
-				calls.push(ParentchainCall::Integritee(OpaqueCall::from_tuple(&(
+				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					node_metadata_repo
 						.get_from_metadata(|m| m.publish_hash_call_indexes())
 						.map_err(|_| StfError::InvalidMetadata)?
@@ -748,12 +751,12 @@ where
 
 				debug!("pushing identity_deactivated event ...");
 				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
-				calls.push(OpaqueCall::from_tuple(&(
+				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
 					id_graph_hash,
 					req_ext_hash,
-				)));
+				))));
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::activate_identity(signer, who, identity, req_ext_hash) => {
@@ -783,12 +786,12 @@ where
 
 				debug!("pushing identity_activated event ...");
 				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
-				calls.push(OpaqueCall::from_tuple(&(
+				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
 					id_graph_hash,
 					req_ext_hash,
-				)));
+				))));
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::link_identity_callback(
@@ -879,14 +882,14 @@ where
 				let call_index =
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
-				calls.push(OpaqueCall::from_tuple(&(
+				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
 					assertion,
 					vc_index,
 					vc_hash,
 					req_ext_hash,
-				)));
+				))));
 
 				if let Some(key) = maybe_key {
 					Ok(TrustedCallResult::RequestVC(RequestVCResult {
@@ -923,12 +926,12 @@ where
 
 				debug!("pushing identity_networks_set event ...");
 				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
-				calls.push(OpaqueCall::from_tuple(&(
+				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
 					id_graph_hash,
 					req_ext_hash,
-				)));
+				))));
 
 				Ok(TrustedCallResult::Empty)
 			},
@@ -958,11 +961,11 @@ where
 			},
 			TrustedCall::send_erroneous_parentchain_call(account) => {
 				// intentionally send wrong parameters, only used in testing
-				calls.push(OpaqueCall::from_tuple(&(
+				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes())??,
 					"wrong_param".as_bytes(),
 					account.encode(),
-				)));
+				))));
 				Ok(TrustedCallResult::Empty)
 			},
 		}
@@ -1048,7 +1051,7 @@ where
 }
 
 pub fn push_call_imp_some_error<NodeMetadataRepository>(
-	calls: &mut Vec<OpaqueCall>,
+	calls: &mut Vec<ParentchainCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
 	e: IMPError,
@@ -1060,15 +1063,19 @@ pub fn push_call_imp_some_error<NodeMetadataRepository>(
 	debug!("pushing IMP::some_error call ...");
 	// TODO: anyway to simplify this? `and_then` won't be applicable here
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) =>
-			calls.push(OpaqueCall::from_tuple(&(call_index, account, e, req_ext_hash))),
+		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
+			call_index,
+			account,
+			e,
+			req_ext_hash,
+		)))),
 		Ok(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
 		Err(e) => warn!("error getting IMP::some_error call indexes: {:?}", e),
 	}
 }
 
 pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
-	calls: &mut Vec<OpaqueCall>,
+	calls: &mut Vec<ParentchainCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: Option<ParentchainAccountId>,
 	e: VCMPError,
@@ -1079,15 +1086,19 @@ pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
 {
 	debug!("pushing VCMP::some_error call ...");
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
-		Ok(Ok(call_index)) =>
-			calls.push(OpaqueCall::from_tuple(&(call_index, account, e, req_ext_hash))),
+		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
+			call_index,
+			account,
+			e,
+			req_ext_hash,
+		)))),
 		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
 	}
 }
 
 pub fn push_call_imp_update_id_graph_hash<NodeMetadataRepository>(
-	calls: &mut Vec<OpaqueCall>,
+	calls: &mut Vec<ParentchainCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
 	account: ParentchainAccountId,
 	id_graph_hash: H256,
@@ -1098,8 +1109,12 @@ pub fn push_call_imp_update_id_graph_hash<NodeMetadataRepository>(
 {
 	debug!("pushing IMP::update_id_graph_hash call ...");
 	match node_metadata_repo.get_from_metadata(|m| m.update_id_graph_hash_call_indexes()) {
-		Ok(Ok(call_index)) =>
-			calls.push(OpaqueCall::from_tuple(&(call_index, account, id_graph_hash, req_ext_hash))),
+		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
+			call_index,
+			account,
+			id_graph_hash,
+			req_ext_hash,
+		)))),
 		Ok(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 		Err(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 	}

@@ -207,7 +207,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			});
 
 			let (blocks, parentchain_calls) =
-				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _>(
+				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _, _, _>(
 					slot.clone(),
 					authority,
 					ocall_api.clone(),
@@ -300,7 +300,7 @@ where
 	debug!("[Aura] Executing aura for slot: {:?}", slot);
 
 	let mut aura =
-		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _>::new(
+		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _, _, _>::new(
 			authority,
 			ocall_api.as_ref().clone(),
 			integritee_block_import_trigger,
@@ -345,7 +345,7 @@ where
 
 	let calls: Vec<OpaqueCall> = parentchain_calls
 		.iter()
-		.filter_map(|parentchain_call| parentchain_call.as_integritee())
+		.filter_map(|parentchain_call| parentchain_call.as_litentry())
 		.collect();
 	debug!("Enclave wants to send {} extrinsics to Integritee Parentchain", calls.len());
 	if !calls.is_empty() {

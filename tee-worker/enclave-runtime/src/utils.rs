@@ -79,9 +79,9 @@ pub unsafe fn utf8_str_from_raw<'a>(
 pub(crate) fn get_triggered_dispatcher_from_integritee_solo_or_parachain(
 ) -> Result<Arc<IntegriteeParentchainTriggeredBlockImportDispatcher>> {
 	let dispatcher =
-		if let Ok(solochain_handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		if let Ok(solochain_handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
 			get_triggered_dispatcher(solochain_handler.import_dispatcher.clone())?
-		} else if let Ok(parachain_handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
+		} else if let Ok(parachain_handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
 			get_triggered_dispatcher(parachain_handler.import_dispatcher.clone())?
 		} else {
 			return Err(Error::NoLitentryParentchainAssigned)
@@ -127,9 +127,9 @@ pub(crate) fn get_triggered_dispatcher<TriggeredDispatcher, T>(
 pub(crate) fn get_validator_accessor_from_integritee_solo_or_parachain(
 ) -> Result<Arc<EnclaveValidatorAccessor>> {
 	let validator_accessor =
-		if let Ok(solochain_handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		if let Ok(solochain_handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
 			solochain_handler.validator_accessor.clone()
-		} else if let Ok(parachain_handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
+		} else if let Ok(parachain_handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
 			parachain_handler.validator_accessor.clone()
 		} else {
 			return Err(Error::NoLitentryParentchainAssigned)
@@ -166,9 +166,9 @@ pub(crate) fn get_validator_accessor_from_target_b_solo_or_parachain(
 pub(crate) fn get_node_metadata_repository_from_integritee_solo_or_parachain(
 ) -> Result<Arc<EnclaveNodeMetadataRepository>> {
 	let metadata_repository =
-		if let Ok(solochain_handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		if let Ok(solochain_handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
 			solochain_handler.node_metadata_repository.clone()
-		} else if let Ok(parachain_handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
+		} else if let Ok(parachain_handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
 			parachain_handler.node_metadata_repository.clone()
 		} else {
 			return Err(Error::NoLitentryParentchainAssigned)
@@ -205,9 +205,9 @@ pub(crate) fn get_node_metadata_repository_from_target_b_solo_or_parachain(
 pub(crate) fn get_extrinsic_factory_from_integritee_solo_or_parachain(
 ) -> Result<Arc<EnclaveExtrinsicsFactory>> {
 	let extrinsics_factory =
-		if let Ok(solochain_handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		if let Ok(solochain_handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
 			solochain_handler.extrinsics_factory.clone()
-		} else if let Ok(parachain_handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
+		} else if let Ok(parachain_handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
 			parachain_handler.extrinsics_factory.clone()
 		} else {
 			return Err(Error::NoLitentryParentchainAssigned)
@@ -243,9 +243,9 @@ pub(crate) fn get_extrinsic_factory_from_target_b_solo_or_parachain(
 
 pub(crate) fn get_stf_executor_from_solo_or_parachain() -> Result<Arc<EnclaveStfExecutor>> {
 	let stf_executor =
-		if let Ok(solochain_handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		if let Ok(solochain_handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
 			solochain_handler.stf_executor.clone()
-		} else if let Ok(parachain_handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
+		} else if let Ok(parachain_handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
 			parachain_handler.stf_executor.clone()
 		} else {
 			return Err(Error::NoLitentryParentchainAssigned)
@@ -256,7 +256,7 @@ pub(crate) fn get_stf_executor_from_solo_or_parachain() -> Result<Arc<EnclaveStf
 pub(crate) fn get_stf_enclave_signer_from_solo_or_parachain() -> Result<Arc<EnclaveStfEnclaveSigner>>
 {
 	let stf_enclave_signer =
-		if let Ok(solochain_handler) = GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT.get() {
+		if let Ok(solochain_handler) = GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT.get() {
 			match &*solochain_handler.import_dispatcher {
 				BlockImportDispatcher::TriggeredDispatcher(dispatcher) =>
 					dispatcher.block_importer.indirect_calls_executor.stf_enclave_signer.clone(),
@@ -264,7 +264,7 @@ pub(crate) fn get_stf_enclave_signer_from_solo_or_parachain() -> Result<Arc<Encl
 					dispatcher.block_importer.indirect_calls_executor.stf_enclave_signer.clone(),
 				_ => return Err(Error::NoLitentryParentchainAssigned),
 			}
-		} else if let Ok(parachain_handler) = GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT.get() {
+		} else if let Ok(parachain_handler) = GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT.get() {
 			match &*parachain_handler.import_dispatcher {
 				BlockImportDispatcher::TriggeredDispatcher(dispatcher) =>
 					dispatcher.block_importer.indirect_calls_executor.stf_enclave_signer.clone(),

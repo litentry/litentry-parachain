@@ -139,7 +139,7 @@ pub(crate) fn init_proxied_shard_vault_internal(
 	info!("shard vault account derived pubkey: 0x{}", hex::encode(vault.public().0));
 
 	let (enclave_extrinsics_factory, node_metadata_repo) = match parentchain_id {
-		ParentchainId::Integritee => {
+		ParentchainId::Litentry => {
 			let (state_lock, mut state) = state_handler.load_for_mutation(&shard)?;
 			state.state.insert(SHARD_VAULT_KEY.into(), vault.public().0.to_vec());
 			state_handler.write_after_mutation(state, state_lock, &shard)?;

@@ -48,6 +48,7 @@ pub enum IndirectCall {
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 	IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
 {
+	type Args = ();
 	fn dispatch(&self, _executor: &Executor, _args: Self::Args) -> Result<()> {
 		debug!("shielding from TargetA extrinsic to Alice suppressed");
 		/*
