@@ -296,18 +296,14 @@ pub mod pallet {
 		pub fn get_id_graph(who: &Identity) -> IDGraph<T> {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
 
-			// Initial sort to ensure a deterministic order with case where prime identity `link_block` might be equal another identity-to be linked
+			// Initial sort to ensure a deterministic order
 			id_graph.sort_by(|a, b| {
-				let a_is_prime_identity = &a.0 == who;
-				let b_is_prime_identity = &b.0 == who;
-
-				match (a_is_prime_identity, b_is_prime_identity) {
-					(true, false) => Ordering::Less,
-					(false, true) => Ordering::Greater,
-					_ => {
-						// If neither are prime identites, use the regular sorting order
-						Ord::cmp(&a.1.link_block, &b.1.link_block)
-					},
+				let order = Ord::cmp(&a.1.link_block, &b.1.link_block);
+				if order == Ordering::Equal {
+					// Compare identities by their did formated string
+					Ord::cmp(&a.0.to_did().ok(), &b.0.to_did().ok())
+				} else {
+					order
 				}
 			});
 

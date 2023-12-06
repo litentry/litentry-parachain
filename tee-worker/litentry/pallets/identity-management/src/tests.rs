@@ -16,8 +16,8 @@
 
 use crate::{mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, Web3Network};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
+use rand::seq::SliceRandom;
 use sp_runtime::AccountId32;
-
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 pub const CHARLIE: AccountId32 = AccountId32::new([3u8; 32]);
@@ -410,7 +410,7 @@ fn get_id_graph_works() {
 		// fill in 21 identities, starting from 1 to reserve place for prime_id
 		// set the block number too as it's used to tell "recent"
 		for i in 1..22 {
-			System::set_block_number(i);
+			System::set_block_number(i + 1);
 			assert_ok!(IMT::link_identity(
 				RuntimeOrigin::signed(ALICE),
 				who.clone(),
@@ -422,13 +422,50 @@ fn get_id_graph_works() {
 		let id_graph = IMT::get_id_graph(&who);
 		assert_eq!(id_graph.len(), 22);
 
-		// despite the first and second items from the graph have the same `link_block` number the prime identity goes first
-		assert_eq!(id_graph.get(0).unwrap().1.link_block, id_graph.get(1).unwrap().1.link_block);
 		assert_eq!(id_graph.get(0).unwrap().0, who);
-		assert_eq!(id_graph.get(1).unwrap().0, alice_twitter_identity(1));
 
 		// index 21 has the newest identity
 		assert_eq!(id_graph.get(21).unwrap().0, alice_twitter_identity(21));
+	});
+}
+
+#[test]
+fn get_id_graph_identities_within_same_block() {
+	new_test_ext().execute_with(|| {
+		let who: Identity = ALICE.into();
+		System::set_block_number(1);
+
+		let mut identities = vec![
+			(alice_twitter_identity(1), vec![]),
+			(alice_substrate_identity(), vec![Web3Network::LitentryRococo]),
+			(alice_evm_identity(), vec![Web3Network::Ethereum]),
+			(bob_substrate_identity(), vec![Web3Network::Litentry]),
+		];
+
+		let mut rng = rand::thread_rng();
+		identities.shuffle(&mut rng);
+
+		for (identity, networks) in identities {
+			assert_ok!(IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				who.clone(),
+				identity,
+				networks,
+			));
+		}
+
+		let id_graph = IMT::get_id_graph(&who);
+		let sorted_identities = [
+			alice_evm_identity(),
+			who,
+			bob_substrate_identity(),
+			alice_substrate_identity(),
+			alice_twitter_identity(1),
+		];
+
+		for (i, identity) in sorted_identities.iter().enumerate() {
+			assert_eq!(&id_graph.get(i).unwrap().0, identity);
+		}
 	});
 }
 
