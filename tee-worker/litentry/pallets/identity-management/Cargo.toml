@@ -22,7 +22,6 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-rand = "0.8.5"
 
 [features]
 default = ["std"]
