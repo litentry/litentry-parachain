@@ -45,6 +45,7 @@ use frame_system::pallet_prelude::*;
 pub use litentry_primitives::{
 	all_evm_web3networks, all_substrate_web3networks, Identity, ParentchainBlockNumber, Web3Network,
 };
+use sp_core::{blake2_256, H256};
 use sp_std::{vec, vec::Vec};
 
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -311,6 +312,12 @@ pub mod pallet {
 			});
 
 			id_graph
+		}
+
+		pub fn all_id_graph_hash() -> Vec<(Identity, H256)> {
+			IDGraphLens::<T>::iter_keys()
+				.map(|k| (k.clone(), H256::from(blake2_256(&Self::get_id_graph(&k).encode()))))
+				.collect()
 		}
 
 		// get count of all keys account + identity in the IDGraphs
