@@ -3,7 +3,7 @@ import { xxhashAsU8a } from '@polkadot/util-crypto';
 import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polkadot/types/interfaces';
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity, createJsonRpcRequest, nextRequestId } from '../helpers';
-import type { IntegrationTestContext } from '../type-definitions';
+import type { IntegrationTestContext } from '../common-types';
 import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { HexString } from '@polkadot/util/types';
 import type { Metadata } from '@polkadot/types';

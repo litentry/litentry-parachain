@@ -28,7 +28,6 @@ pub mod pallet_democracy;
 pub mod pallet_drop3;
 pub mod pallet_extrinsic_filter;
 pub mod pallet_identity;
-pub mod pallet_identity_management;
 pub mod pallet_membership;
 pub mod pallet_multisig;
 pub mod pallet_preimage;
@@ -37,9 +36,7 @@ pub mod pallet_scheduler;
 pub mod pallet_session;
 pub mod pallet_sidechain;
 pub mod pallet_teeracle;
-// commented out due to upstream issue: https://github.com/integritee-network/pallets/issues/156
-// pub mod pallet_teerex;
+pub mod pallet_teerex;
 pub mod pallet_timestamp;
 pub mod pallet_treasury;
 pub mod pallet_utility;
-pub mod pallet_vc_management;

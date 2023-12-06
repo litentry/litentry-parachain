@@ -2,16 +2,23 @@ import { ApiPromise, SubmittableResult } from '@polkadot/api';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { defaultListenTimeoutInBlockNumber } from './utils';
 import { EventRecord, Event } from '@polkadot/types/interfaces';
-import { expect } from 'chai';
 import colors from 'colors';
 import type { HexString } from '@polkadot/util/types';
 import type { Codec } from '@polkadot/types/types';
-import type { IntegrationTestContext, TransactionSubmit } from './type-definitions';
+import type { IntegrationTestContext } from './common-types';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
-import { RequestEvent } from './type-definitions';
 
 import { u8aToHex } from '@polkadot/util';
 import { FrameSystemEventRecord } from 'parachain-api';
+
+enum RequestEvent {
+    LinkIdentityRequested = 'LinkIdentityRequested',
+    DeactivateIdentityRequested = 'DeactivateIdentityRequested',
+    ActivateIdentityRequested = 'ActivateIdentityRequested',
+    VCRequested = 'VCRequested',
+    ItemCompleted = 'ItemCompleted',
+    BatchCompleted = 'BatchCompleted',
+}
 
 // transaction utils
 export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, signer: KeyringPair) {
@@ -29,7 +36,10 @@ export async function sendTxUntilInBlock(tx: SubmittableExtrinsic<ApiTypes>, sig
 
 export async function sendTxUntilInBlockList(
     api: ApiPromise,
-    txs: TransactionSubmit[],
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
+    }[],
     signer: KeyringPair | KeyringPair[]
 ) {
     const signers = Array.isArray(signer) ? signer : [signer];
@@ -147,7 +157,7 @@ export async function listenEvent(
             // we should append the new events, as the desired events can be emitted in different blocks
             events.push(...eventsToUse);
 
-            if (events.length === txsLength) {
+            if (events.length === txsLength * methods.length) {
                 resolve(events.map((e) => e.event));
                 unsubscribe();
                 return;
@@ -159,7 +169,10 @@ export async function listenEvent(
 export async function sendTxsWithUtility(
     context: IntegrationTestContext,
     signer: KeyringPair,
-    txs: TransactionSubmit[],
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce?: number;
+    }[],
     pallet: string,
     events: string[],
     listenTimeoutInBlockNumber?: number
@@ -187,13 +200,15 @@ export async function sendTxsWithUtility(
         listenTimeoutInBlockNumber
     );
 
-    expect(eventResults.length).to.be.equal(txs.length);
     return eventResults;
 }
 
 export async function multiAccountTxSender(
     context: IntegrationTestContext,
-    txs: TransactionSubmit[],
+    txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
+    }[],
     signers: KeyringPair | KeyringPair[],
     pallet: string,
     events: string[],
@@ -217,7 +232,6 @@ export async function multiAccountTxSender(
         signersHex,
         listenTimeoutInBlockNumber
     );
-    expect(eventsResp.length).to.be.equal(txs.length);
     return eventsResp;
 }
 
@@ -242,7 +256,7 @@ export const subscribeToEventsWithExtHash = async (
             const allBlockEvents = await shiftedApi.query.system.events();
             const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
 
-            const matchingEvent = allExtrinsicEvents.find((eventRecord) => {
+            const matchingEvent = allExtrinsicEvents.filter((eventRecord) => {
                 const eventData = eventRecord.event.data.toHuman();
                 return (
                     eventData != undefined &&
@@ -252,7 +266,7 @@ export const subscribeToEventsWithExtHash = async (
                 );
             });
 
-            if (matchingEvent == undefined) {
+            if (matchingEvent.length == 0) {
                 blocksToScan -= 1;
                 if (blocksToScan < 1) {
                     reject(new Error(`timed out listening for reqExtHash: ${requestIdentifier} in parachain events`));
@@ -261,12 +275,7 @@ export const subscribeToEventsWithExtHash = async (
                 return;
             }
 
-            const extrinsicIndex = matchingEvent.phase.asApplyExtrinsic;
-            const requestEvents = allExtrinsicEvents.filter((eventRecord) =>
-                eventRecord.phase.asApplyExtrinsic.eq(extrinsicIndex)
-            );
-
-            resolve(requestEvents);
+            resolve(matchingEvent);
             (await unsubscribe)();
         });
     });

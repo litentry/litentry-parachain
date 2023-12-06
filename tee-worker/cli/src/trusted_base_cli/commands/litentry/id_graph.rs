@@ -25,7 +25,7 @@ use litentry_primitives::Identity;
 
 // usage example:
 //
-// ./bin/litentry-cli trusted -m <mrenclave> -d id-graph did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48
+// ./bin/litentry-cli trusted -d id-graph did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48
 //
 // returns:
 //
@@ -46,8 +46,8 @@ impl IDGraphCommand {
 		let top =
 			Getter::trusted(TrustedGetter::id_graph(id).sign(&KeyPair::Sr25519(Box::new(alice))))
 				.into();
-		let idgraph = perform_trusted_operation::<IDGraph<Runtime>>(cli, trusted_cli, &top);
-		println!("{:?}", idgraph.unwrap());
+		let id_graph = perform_trusted_operation::<IDGraph<Runtime>>(cli, trusted_cli, &top);
+		println!("{:?}", id_graph.unwrap());
 
 		Ok(CliResultOk::None)
 	}

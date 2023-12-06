@@ -24,6 +24,7 @@ use warp::Filter;
 pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
+pub mod nodereal_jsonrpc;
 pub mod twitter_litentry;
 pub mod twitter_official;
 
@@ -60,6 +61,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(discord_litentry::check_id_hubber())
 					.or(discord_litentry::check_join())
 					.or(discord_litentry::has_role())
+					.or(nodereal_jsonrpc::query())
 					.or(achainable::query())
 					.boxed(),
 			)

@@ -39,8 +39,9 @@ use itc_parentchain::{
 	},
 };
 use itp_component_container::ComponentGetter;
+use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_ocall_api::{EnclaveOnChainOCallApi, EnclaveSidechainOCallApi};
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi, EnclaveSidechainOCallApi};
 use itp_settings::sidechain::SLOT_DURATION;
 use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_externalities::SgxExternalities;
@@ -154,10 +155,11 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 			log_remaining_slot_duration(&slot, "Before AURA");
 
 			let shards = state_handler.list_shards()?;
-			let env = ProposerFactory::<Block, _, _, _>::new(
+			let env = ProposerFactory::<Block, _, _, _, _>::new(
 				top_pool_author,
 				stf_executor,
 				block_composer,
+				ocall_api.clone(),
 			);
 
 			if_not_production!({
@@ -296,14 +298,19 @@ pub(crate) fn send_blocks_and_extrinsics<
 where
 	ParentchainBlock: BlockTrait,
 	SignedSidechainBlock: SignedBlock + 'static,
-	OCallApi: EnclaveSidechainOCallApi,
+	OCallApi: EnclaveSidechainOCallApi + EnclaveMetricsOCallApi,
 	ValidatorAccessor: ValidatorAccess<ParentchainBlock> + Send + Sync + 'static,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	ExtrinsicsFactory: CreateExtrinsics,
 {
+	let started = std::time::Instant::now();
 	debug!("Proposing {} sidechain block(s) (broadcasting to peers)", blocks.len());
 	ocall_api.propose_sidechain_blocks(blocks)?;
-
+	if let Err(e) =
+		ocall_api.update_metric(EnclaveMetric::SidechainBlockBroadcastingTime(started.elapsed()))
+	{
+		warn!("Failed to update metric for sidechain block broadcasting time: {:?}", e);
+	};
 	let xts = extrinsics_factory.create_extrinsics(opaque_calls.as_slice(), None)?;
 
 	debug!("Sending sidechain block(s) confirmation extrinsic.. ");

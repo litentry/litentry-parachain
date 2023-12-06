@@ -1,7 +1,7 @@
 import { u8aToHex } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import type { IdentityGenericEvent, IntegrationTestContext } from '../type-definitions';
-import { AesOutput } from '../type-definitions';
+import type { IntegrationTestContext } from '../common-types';
+import { AesOutput } from 'parachain-api';
 import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
@@ -81,7 +81,10 @@ export async function buildIdentityTxs(
     validations?: LitentryValidationData[],
     web3networks?: Web3Network[][]
 ): Promise<any[]> {
-    const txs: any[] = [];
+    const txs: {
+        tx: SubmittableExtrinsic<ApiTypes>;
+        nonce: number;
+    }[] = [];
     const api = context.api;
     const mrEnclave = context.mrEnclave;
     const teeShieldingKey = context.teeShieldingKey;
@@ -155,31 +158,6 @@ export function parseIdentity(
     return identity;
 }
 
-export function createIdentityEvent(
-    sidechainRegistry: TypeRegistry,
-    who: HexString,
-    identityString?: HexString,
-    idGraphString?: HexString
-): IdentityGenericEvent {
-    const identity: LitentryPrimitivesIdentity =
-        identityString! &&
-        (sidechainRegistry.createType(
-            'LitentryPrimitivesIdentity',
-            identityString
-        ) as unknown as LitentryPrimitivesIdentity);
-    const idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
-        idGraphString! &&
-        (sidechainRegistry.createType(
-            'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
-            idGraphString
-        ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]);
-    return <IdentityGenericEvent>{
-        who,
-        identity,
-        idGraph,
-    };
-}
-
 export async function buildValidations(
     context: IntegrationTestContext,
     signerIdentities: LitentryPrimitivesIdentity[],
@@ -245,7 +223,7 @@ export async function buildValidations(
             ) as unknown as LitentryValidationData;
             validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'twitter') {
-            console.log('post verification msg to twitter', msg);
+            console.log('post verification msg to twitter: ', msg);
             const twitterValidationData = {
                 Web2Validation: {
                     Twitter: {
