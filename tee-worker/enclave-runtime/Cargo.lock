@@ -1727,11 +1727,9 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types",
  "sp-core",
  "sp-runtime",
  "sp-std",
- "thiserror",
 ]
 
 [[package]]
@@ -2427,7 +2425,6 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types",
  "sp-core",
  "sp-runtime",
 ]

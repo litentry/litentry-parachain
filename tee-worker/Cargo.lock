@@ -4456,12 +4456,9 @@ dependencies = [
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
- "sgx_types",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
 ]
 
 [[package]]
