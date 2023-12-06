@@ -28,7 +28,7 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, BoundedWeb3Network, ContestType, GenericDiscordRoleType, Identity,
+	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
 	OneBlockCourseType, ParameterString, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
 	Web3Network, REQUEST_AES_KEY_LEN,
 };
@@ -97,6 +97,8 @@ pub enum Command {
 	#[clap(subcommand)]
 	VIP3MembershipCard(VIP3MembershipCardLevelCommand),
 	WeirdoGhostGangHolder,
+	#[clap(subcommand)]
+	EVMAmountHolding(EVMAmountHoldingCommand),
 }
 
 #[derive(Args)]
@@ -175,6 +177,12 @@ pub enum ContestCommand {
 pub enum SoraQuizCommand {
 	Attendee,
 	Master,
+}
+
+#[derive(Subcommand)]
+pub enum EVMAmountHoldingCommand {
+	Ton,
+	Trx,
 }
 
 // I haven't found a good way to use common args for subcommands
@@ -443,6 +451,10 @@ impl RequestVcCommand {
 					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
 			},
 			Command::WeirdoGhostGangHolder => Assertion::WeirdoGhostGangHolder,
+			Command::EVMAmountHolding(c) => match c {
+				EVMAmountHoldingCommand::Ton => Assertion::EVMAmountHolding(EVMTokenType::Ton),
+				EVMAmountHoldingCommand::Trx => Assertion::EVMAmountHolding(EVMTokenType::Trx),
+			},
 		};
 
 		let key = Self::random_aes_key();

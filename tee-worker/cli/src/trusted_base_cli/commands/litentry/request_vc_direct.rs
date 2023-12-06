@@ -29,8 +29,8 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
-	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
+	AchainableToken, Assertion, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
+	OneBlockCourseType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
 };
 use sp_core::Pair;
 
@@ -248,6 +248,10 @@ impl RequestVcDirectCommand {
 					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
 			},
 			Command::WeirdoGhostGangHolder => Assertion::WeirdoGhostGangHolder,
+			Command::EVMAmountHolding(c) => match c {
+				EVMAmountHoldingCommand::Ton => Assertion::EVMAmountHolding(EVMTokenType::Ton),
+				EVMAmountHoldingCommand::Trx => Assertion::EVMAmountHolding(EVMTokenType::Trx),
+			},
 		};
 
 		let mut key: RequestAesKey = RequestAesKey::default();

@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
+use crate::{build_client, hex_to_decimal, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -226,6 +226,7 @@ pub trait NftApiList {
 	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<usize, Error>;
 }
 
+// NFT API
 impl NftApiList for NoderealJsonrpcClient {
 	// https://docs.nodereal.io/reference/nr_getnftholdings
 	fn get_nft_holdings(
@@ -278,6 +279,44 @@ impl NftApiList for NoderealJsonrpcClient {
 	}
 }
 
+#[derive(Serialize, Debug)]
+pub struct GetTokenBalance20Param {
+	// The address of the contract
+	pub contract_address: String,
+	// Target address
+	pub address: String,
+	// The block number in hex format or the string 'latest' or 'earliest' on which the balance will be checked
+	pub block_number: String,
+}
+
+// Fungible Tokens API
+pub trait FungibleApiList {
+	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error>;
+}
+
+impl FungibleApiList for NoderealJsonrpcClient {
+	// https://docs.nodereal.io/reference/nr_gettokenbalance20
+	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error> {
+		let params: Vec<String> =
+			vec![param.contract_address.clone(), param.address.clone(), param.block_number.clone()];
+		debug!("get_token_balance_20: {:?}", param);
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenBalance20".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+		self.post(&req_body)
+			.map_err(|e| Error::RequestError(format!("{:?}", e)))
+			.map(|resp| {
+				// result example: '0x', '0x8'
+				debug!("get_token_balance_20, response: {:?}", resp);
+				let result = resp.result.as_str().unwrap();
+				hex_to_decimal(&result[2..])
+			})
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -326,5 +365,18 @@ mod tests {
 		};
 		let result = client.get_token_balance_721(&param).unwrap();
 		assert_eq!(result, 1);
+	}
+
+	#[test]
+	fn does_get_token_balance_20_works() {
+		init();
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let param = GetTokenBalance20Param {
+			contract_address: "0x76A797A59Ba2C17726896976B7B3747BfD1d220f".into(),
+			address: "0x85Be4e2ccc9c85BE8783798B6e8A101BDaC6467F".into(),
+			block_number: "latest".into(),
+		};
+		let result = client.get_token_balance_20(&param).unwrap();
+		assert_eq!(result, 800.1);
 	}
 }
