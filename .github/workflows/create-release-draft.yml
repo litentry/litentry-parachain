@@ -197,28 +197,29 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
           
-      # - name: Cache worker-cache
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: |
-      #       worker-cache
-      #     key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
-      #     restore-keys: |
-      #       worker-cache-${{ env.REF_VERSION }}-
-      #       worker-cache-
+      - name: Cache worker-cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            worker-cache
+          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
+          restore-keys: |
+            worker-cache-${{ env.REF_VERSION }}-
+            worker-cache-
 
-      # - name: Create cache folder if not exist
-      #   run: |
-      #     for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
-      #       [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
-      #       echo "hello" > worker-cache/$i/nix
-      #     done
-      #     echo "::group::List worker-cache size"
-      #     du -sh worker-cache/*
-      #     echo "::endgroup::"
-      #     echo "::group::Show disk usage"
-      #     df -h .
-      #     echo "::endgroup::"
+      - name: Create cache folder if not exist
+        run: |
+          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
+            [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
+            echo "hello" > worker-cache/$i/nix
+          done
+          echo "::group::List worker-cache size"
+          du -sh worker-cache/*
+          echo "::endgroup::"
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+
       - name: Build local builder
         uses: docker/build-push-action@v5
         with:
@@ -230,27 +231,27 @@ jobs:
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
       
-      # - name: Copy caches from the built image
-      #   run: |
-      #     echo "::group::Show disk usage"
-      #     df -h .
-      #     echo "::endgroup::"
-      #     echo "::group::docker images"
-      #     docker images --all
-      #     echo "::endgroup::"
-      #     echo "::group::copy cache out"
-      #     for i in 'git/db' 'registry/cache' 'registry/index'; do
-      #       b="${i%/*}"
-      #       rm -rf worker-cache/$i
-      #       docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
-      #     done
-      #     rm -rf worker-cache/sccache
-      #     docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
-      #     du -sh worker-cache/*
-      #     echo "::endgroup::"
-      #     echo "::group::df -h ."
-      #     df -h .
-      #     echo "::endgroup::"
+      - name: Copy caches from the built image
+        run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          echo "::group::docker images"
+          docker images --all
+          echo "::endgroup::"
+          echo "::group::copy cache out"
+          for i in 'git/db' 'registry/cache' 'registry/index'; do
+            b="${i%/*}"
+            rm -rf worker-cache/$i
+            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
+          done
+          rm -rf worker-cache/sccache
+          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
+          du -sh worker-cache/*
+          echo "::endgroup::"
+          echo "::group::df -h ."
+          df -h .
+          echo "::endgroup::"
 
       - name: Build worker
         uses: docker/build-push-action@v5
