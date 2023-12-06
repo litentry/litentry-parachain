@@ -330,7 +330,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		let maybe_latest_target_b_parentchain_header =
 			match self.peek_latest_target_b_parentchain_header() {
 				Ok(Some(peeked_header)) => Some(peeked_header),
-				Ok(None) => slot_info.maybe_last_imported_target_b_parentchain_head.clone(),
+				Ok(None) => slot_info.maybe_last_imported_target_b_parentchain_head,
 				Err(e) => {
 					debug!(
 						target: logging_target,

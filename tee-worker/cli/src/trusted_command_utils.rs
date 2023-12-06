@@ -40,11 +40,13 @@ use substrate_client_keystore::LocalKeystore;
 #[macro_export]
 macro_rules! get_layer_two_nonce {
 	($signer_pair:ident, $cli: ident, $trusted_args:ident ) => {{
-		use crate::trusted_operation::perform_trusted_operation;
 		use ita_stf::{Getter, PublicGetter, TrustedCallSigned};
 		use itp_stf_primitives::types::TrustedOperation;
 		use litentry_primitives::Identity;
-		use $crate::trusted_command_utils::get_pending_trusted_calls_for;
+		use $crate::{
+			trusted_command_utils::get_pending_trusted_calls_for,
+			trusted_operation::perform_trusted_operation,
+		};
 		let top = TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::public(
 			PublicGetter::nonce(Identity::Substrate($signer_pair.public().into())),
 		));

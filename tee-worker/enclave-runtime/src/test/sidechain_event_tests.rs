@@ -157,7 +157,7 @@ pub fn ensure_events_get_reset_upon_block_proposal() {
 	let scheduled_enclave = Arc::new(ScheduledEnclaveMock::default());
 	info!("Executing AURA on slot..");
 	let (blocks, opaque_calls) =
-		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _, _, _>(
+		exec_aura_on_slot::<_, ParentchainBlock, SignedSidechainBlock, _, _, _, _, _, _, _3>(
 			slot_info,
 			signer,
 			ocall_api,

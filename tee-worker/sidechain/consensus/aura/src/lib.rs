@@ -115,6 +115,7 @@ impl<
 		StateHandler,
 	>
 {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		authority_pair: AuthorityPair,
 		ocall_api: OcallApi,

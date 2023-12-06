@@ -60,6 +60,6 @@ where
 		Ok(())
 	}
 	fn parentchain_id(&self) -> ParentchainId {
-		ParentchainId::Integritee
+		ParentchainId::Litentry
 	}
 }
