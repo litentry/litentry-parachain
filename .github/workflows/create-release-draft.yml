@@ -172,7 +172,7 @@ jobs:
   #           ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
   build-worker-docker:
-    if: ${{ github.event.inputs.release_client == 'true' }}
+    if: ${{ github.event.inputs.release_worker == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Free up disk space
