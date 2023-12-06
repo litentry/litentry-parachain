@@ -23,7 +23,7 @@ url_sgx = { package = "url", git = "https://github.com/mesalock-linux/rust-url-s
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # internal dependencies
 ita-sgx-runtime = { path = "../../../../app-libs/sgx-runtime", default-features = false }

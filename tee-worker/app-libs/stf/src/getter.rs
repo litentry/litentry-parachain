@@ -99,6 +99,8 @@ pub enum PublicGetter {
 	some_value,
 	#[codec(index = 1)]
 	nonce(Identity),
+	#[codec(index = 2)]
+	all_id_graph_hash,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -278,6 +280,8 @@ impl ExecuteGetter for PublicGetter {
 				} else {
 					None
 				},
+			PublicGetter::all_id_graph_hash =>
+				Some(IdentityManagement::all_id_graph_hash().encode()),
 		}
 	}
 
