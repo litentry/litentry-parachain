@@ -100,7 +100,7 @@ fn pre_build(htype: &AmountHoldingTimeType, min_balance: &ParameterString) -> Re
 // There's an issue for this: https://github.com/litentry/litentry-parachain/issues/1655
 //
 // There is a problem here, because TDF does not support mixed network types,
-// It is need to request TDF 2 (substrate+evm networks) * 14 (ASSERTION_FROM_DATE) * addresses http requests.
+// It is need to request TDF 2 (substrate+evm networks) * ASSERTION_DATE_LEN * addresses http requests.
 // If TDF can handle mixed network type, and even supports from_date array,
 // so that ideally, up to one http request can yield results.
 fn do_build(
