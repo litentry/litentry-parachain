@@ -247,14 +247,10 @@ mod tests {
 	fn do_build_lit_works() {
 		init();
 
-		let identities = vec![
-			(
-				Web3Network::Litentry,
-				vec![
-					"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(),
-				],
-			)
-		];
+		let identities = vec![(
+			Web3Network::Litentry,
+			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string()],
+		)];
 
 		let htype = AmountHoldingTimeType::LIT;
 		let q_min_balance = "10".to_string();
@@ -285,7 +281,10 @@ mod tests {
 
 		let identities = vec![(
 			Web3Network::Ethereum,
-			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(), "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12".to_string()],
+			vec![
+				"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(),
+				"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12".to_string(),
+			],
 		)];
 		let htype = AmountHoldingTimeType::WBTC;
 		let q_min_balance = "10".to_string();
