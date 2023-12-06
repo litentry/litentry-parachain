@@ -41,7 +41,6 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::parentchain::ParentchainId;
-use lazy_static::lazy_static;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::{init_vc_task_sender_storage, TrustedVCRequestSigned};
@@ -64,14 +63,17 @@ use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
-struct RateLimiter {
+pub struct RateLimiter {
 	requests: RwLock<HashMap<String, Instant>>,
 }
 
 impl RateLimiter {
+	fn new() -> Self {
+		Self { requests: RwLock::new(HashMap::new()) }
+	}
+
 	fn should_allow(&self, request_key: String) -> Result<(), String> {
 		let requests = self.requests.read().unwrap();
-		log::error!("Request key: {:?}", request_key);
 		if let Some(&last_instant) = requests.get(&request_key) {
 			if last_instant.elapsed() < Duration::from_secs(10) {
 				return Err("Request limit reached".to_string()) // Reject if within 10 seconds
@@ -79,17 +81,10 @@ impl RateLimiter {
 		}
 		drop(requests); // Drop read lock
 
-		log::error!("Writing to the hashmap");
 		let mut requests = self.requests.write().unwrap();
 		requests.insert(request_key, Instant::now()); // Update with current Instant
 		Ok(())
 	}
-}
-
-// Global instance using lazy_static
-lazy_static! {
-	static ref GLOBAL_RATE_LIMITER: RateLimiter =
-		RateLimiter { requests: RwLock::new(HashMap::new()) };
 }
 
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
@@ -110,11 +105,13 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	let receiver = init_vc_task_sender_storage();
 	let n_workers = 4;
 	let pool = ThreadPool::new(n_workers);
+	let rate_limiter = Arc::new(RateLimiter::new());
 
 	while let Ok(req) = receiver.recv() {
 		let context_pool = context.clone();
 		let extrinsic_factory_pool = extrinsic_factory.clone();
 		let node_metadata_repo_pool = node_metadata_repo.clone();
+		let rate_limiter_pool = rate_limiter.clone();
 		pool.execute(move || {
 			if let Err(e) = req.sender.send(handle_request(
 				req.key,
@@ -123,6 +120,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 				context_pool,
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
+				rate_limiter_pool,
 			)) {
 				log::warn!("Unable to submit response back to the handler: {:?}", e);
 			}
@@ -137,6 +135,7 @@ pub fn handle_request<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
+	rate_limiter: Arc<RateLimiter>,
 ) -> Result<Vec<u8>, String>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
@@ -171,7 +170,7 @@ where
 
 	let vc_request = signed_request.vc_request;
 
-	GLOBAL_RATE_LIMITER.should_allow(vc_request.signer.to_did().unwrap())?;
+	rate_limiter.should_allow(vc_request.signer.to_did().unwrap())?;
 	let (mut state, _) = context
 		.state_handler
 		.load_cloned(&shard)
