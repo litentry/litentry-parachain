@@ -27,7 +27,7 @@ on:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
       release_worker_tag:
-        description: an existing tag for creating release (e.g. v1.2.3)
+        description: an existing tag for creating worker release (e.g. v1.2.3)
         required: true
       diff_tag:
         description: an existing tag to run diff against (e.g. v1.2.0)
@@ -119,57 +119,57 @@ jobs:
             ${{ matrix.chain }}-parachain-srtool-digest.json
             ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
-  ## build docker image of parachain binary ##
-  build-docker:
-    if: ${{ github.event.inputs.release_client == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout codes on ${{ env.RELEASE_TAG }}
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-          fetch-depth: 0
+  # # build docker image of parachain binary ##
+  # build-parachain-docker:
+  #   if: ${{ github.event.inputs.release_client == 'true' }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout codes on ${{ env.RELEASE_TAG }}
+  #       uses: actions/checkout@v4
+  #       with:
+  #         ref: ${{ env.RELEASE_TAG }}
+  #         fetch-depth: 0
 
-      - name: Set env
-        run: |
-          DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+  #     - name: Set env
+  #       run: |
+  #         DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+  #         echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
 
-      - name: Build docker image
-        run: |
-          ./scripts/build-docker.sh production $DOCKER_TAG
-          echo "============================="
-          docker images
+  #     - name: Build docker image
+  #       run: |
+  #         ./scripts/build-docker.sh production $DOCKER_TAG
+  #         echo "============================="
+  #         docker images
 
-      # - name: Dockerhub login
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+  #     - name: Dockerhub login
+  #       uses: docker/login-action@v3
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # - name: Push docker image
-      #   run: |
-      #     docker push litentry/litentry-parachain:$DOCKER_TAG
+  #     - name: Push docker image
+  #       run: |
+  #         docker push litentry/litentry-parachain:$DOCKER_TAG
 
-      # - name: Generate genesis artefacts if need
-      #   if: github.event.inputs.genesis_release != 'none'
-      #   run: |
-      #     docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
-      #     docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
+  #     - name: Generate genesis artefacts if need
+  #       if: github.event.inputs.genesis_release != 'none'
+  #       run: |
+  #         docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
+  #         docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
-      # - name: Copy client binary to disk
-      #   run: |
-      #     docker cp $(docker create --rm litentry/litentry-parachain:$DOCKER_TAG):/usr/local/bin/litentry-collator .
+  #     - name: Copy client binary to disk
+  #       run: |
+  #         docker cp $(docker create --rm litentry/litentry-parachain:$DOCKER_TAG):/usr/local/bin/litentry-collator .
 
-      # - name: Upload the client binary
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: litentry-collator
-      #     if-no-files-found: ignore
-      #     path: |
-      #       litentry-collator
-      #       ${{ env.GENESIS_RELEASE }}-genesis-state
-      #       ${{ env.GENESIS_RELEASE }}-genesis-wasm
+  #     - name: Upload the client binary
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: litentry-collator
+  #         if-no-files-found: ignore
+  #         path: |
+  #           litentry-collator
+  #           ${{ env.GENESIS_RELEASE }}-genesis-state
+  #           ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
   build-worker-docker:
     if: ${{ github.event.inputs.release_client == 'true' }}
@@ -270,6 +270,18 @@ jobs:
           target: deployed-client
       
       - run: docker images --all
+
+      - name: Dockerhub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Push worker image
+        run: |
+          docker push litentry/litentry-worker:${{env.RELEASE_WORKER_TAG}}
+          docker push litentry/litentry-cli:${{env.RELEASE_WORKER_TAG}}
+
   # ## Build the enclave and package config files
   # build-tee:
   #   if: ${{ github.event.inputs.release_worker == 'true' }} || ${{ github.event.inputs.release_enclave == 'true' }}
@@ -322,7 +334,7 @@ jobs:
   # ## test again the built docker image ##
   # run-ts-tests:
   #   runs-on: ubuntu-latest
-  #   needs: build-docker
+  #   needs: build-parachain-docker
   #   strategy:
   #     matrix:
   #       chain:
@@ -364,7 +376,7 @@ jobs:
   # ## check extrinsic ##
   # extrinsic-ordering-check-from-bin:
   #   runs-on: ubuntu-latest
-  #   needs: build-docker
+  #   needs: build-parachain-docker
   #   strategy:
   #     matrix:
   #       chain: [rococo, litmus, litentry]
