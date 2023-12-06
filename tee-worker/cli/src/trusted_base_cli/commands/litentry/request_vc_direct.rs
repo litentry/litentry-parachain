@@ -18,7 +18,7 @@ use crate::{
 	trusted_base_cli::commands::litentry::request_vc::*,
 	trusted_cli::TrustedCli,
 	trusted_command_utils::{get_identifiers, get_pair_from_str},
-	trusted_operation::perform_direct_operation,
+	trusted_operation::perform_direct_vc_operation,
 	Cli, CliResult, CliResultOk,
 };
 use ita_stf::trusted_call_result::RequestVCResult;
@@ -265,7 +265,7 @@ impl RequestVcDirectCommand {
 				.sign(&KeyPair::Sr25519(Box::new(alice)), &mrenclave, &shard);
 
 		// This should contain the AES Key for AESRequest
-		match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {
+		match perform_direct_vc_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {
 			Ok(mut vc) => {
 				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
 				let credential: Credential = serde_json::from_slice(&decrypted).unwrap();

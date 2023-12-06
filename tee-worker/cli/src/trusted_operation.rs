@@ -72,7 +72,7 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 	}
 }
 
-pub(crate) fn perform_direct_operation<T: Decode + Debug>(
+pub(crate) fn perform_direct_vc_operation<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	top: &TrustedVCRequestSigned,
