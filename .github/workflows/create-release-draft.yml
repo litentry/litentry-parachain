@@ -179,7 +179,26 @@ jobs:
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          # use the docker driver to access the local image
+          # we don't need external caches or multi platforms here
+          # see https://docs.docker.com/build/drivers/
+          driver: docker
 
+      - name: Build local builder
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tee-worker/build.Dockerfile
+          tags: local-builder:${{env.RELEASE_WORKER_TAG}}
+          target: builder
+          build-args: |
+            WORKER_MODE_ARG=sidechain
+            ADDITIONAL_FEATURES_ARG=
+            
       - name: Build worker
         uses: docker/build-push-action@v5
         with:
