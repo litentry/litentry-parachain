@@ -140,6 +140,46 @@ jobs:
           echo "============================="
           docker images
 
+      # - name: Dockerhub login
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # - name: Push docker image
+      #   run: |
+      #     docker push litentry/litentry-parachain:$DOCKER_TAG
+
+      # - name: Generate genesis artefacts if need
+      #   if: github.event.inputs.genesis_release != 'none'
+      #   run: |
+      #     docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
+      #     docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
+
+      # - name: Copy client binary to disk
+      #   run: |
+      #     docker cp $(docker create --rm litentry/litentry-parachain:$DOCKER_TAG):/usr/local/bin/litentry-collator .
+
+      # - name: Upload the client binary
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: litentry-collator
+      #     if-no-files-found: ignore
+      #     path: |
+      #       litentry-collator
+      #       ${{ env.GENESIS_RELEASE }}-genesis-state
+      #       ${{ env.GENESIS_RELEASE }}-genesis-wasm
+
+  build-worker-docker:
+    if: ${{ github.event.inputs.release_client == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+
       - name: Build worker
         uses: docker/build-push-action@v5
         with:
@@ -157,37 +197,6 @@ jobs:
           target: deployed-client
       
       - run: docker images --all
-
-  #     - name: Dockerhub login
-  #       uses: docker/login-action@v3
-  #       with:
-  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
-  #         password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-  #     - name: Push docker image
-  #       run: |
-  #         docker push litentry/litentry-parachain:$DOCKER_TAG
-
-  #     - name: Generate genesis artefacts if need
-  #       if: github.event.inputs.genesis_release != 'none'
-  #       run: |
-  #         docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
-  #         docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
-
-  #     - name: Copy client binary to disk
-  #       run: |
-  #         docker cp $(docker create --rm litentry/litentry-parachain:$DOCKER_TAG):/usr/local/bin/litentry-collator .
-
-  #     - name: Upload the client binary
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: litentry-collator
-  #         if-no-files-found: ignore
-  #         path: |
-  #           litentry-collator
-  #           ${{ env.GENESIS_RELEASE }}-genesis-state
-  #           ${{ env.GENESIS_RELEASE }}-genesis-wasm
-
   # ## Build the enclave and package config files
   # build-tee:
   #   if: ${{ github.event.inputs.release_worker == 'true' }} || ${{ github.event.inputs.release_enclave == 'true' }}
