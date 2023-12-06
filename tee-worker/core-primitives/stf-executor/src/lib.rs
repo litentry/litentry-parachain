@@ -292,7 +292,7 @@ mod tests {
 	) -> (ExecutedOperation<TrustedCallSignedMock, GetterMock>, H256) {
 		let hash = H256::from([int; 32]);
 		let opaque_call: Vec<ParentchainCall> =
-			vec![ParentchainCall::Integritee(OpaqueCall(vec![int; 10]))];
+			vec![ParentchainCall::Litentry(OpaqueCall(vec![int; 10]))];
 		let operation = ExecutedOperation::success(
 			hash,
 			TrustedOperationOrHash::Hash(hash),
