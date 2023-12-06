@@ -447,8 +447,8 @@ fn test_create_state_diff() {
 		get_from_state_diff(state_diff, &account_key_hash::<AccountId>(&receiver.into()));
 
 	// state diff should consist of the following updates:
-	// (last_hash, sidechain block_number, sender_funds, receiver_funds, fee_recipient account [no clear, after polkadot_v0.9.26 update], events)
-	assert_eq!(state_diff.len(), 7);
+	// (last_hash, sidechain block_number, sender_funds, receiver_funds, fee_recipient account [no clear, after polkadot_v0.9.26 update], events, frame_system::LastRuntimeUpgradeInfo, pallet_identity_management_tee::migrations)
+	assert_eq!(state_diff.len(), 9);
 	assert_eq!(receiver_acc_info.data.free, TX_AMOUNT);
 	assert_eq!(
 		sender_acc_info.data.free,
