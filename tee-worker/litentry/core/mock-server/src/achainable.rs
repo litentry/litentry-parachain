@@ -65,7 +65,7 @@ const RES_BODY_OK_CLASS_OF_YEAR: &str = r#"
 "#;
 const RES_ERRBODY: &str = r#"Error request."#;
 
-use lc_data_providers::achainable::{Params, ReqBody};
+use lc_data_providers::achainable::ReqBody;
 use warp::{http::Response, path::FullPath, Filter};
 
 pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -90,26 +90,12 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			else if body.name == "Balance hodling {amount} since {date}"
 				|| body.name == "ERC20 hodling {amount} of {token} since {date}"
 			{
-				println!(">>> body: {:?}", body);
-
-				let date = match body.params {
-					Params::ParamsBasicTypeWithAmountHolding(a) => a.date,
-					_ => "".to_string(),
-				};
-
-				if body.address == "11111111111111111111111111" && date == "2017-01-01"
-					|| body.address == "333333333333333333" && date == "2018-07-01"
-					|| body.address == "111111111111111111111111112" && date == "2019-01-01"
-					|| body.address == "222222222222222222222223" && date == "2020-07-01"
-					|| body.address == "111111111111111111111111114" && date == "2018-01-01"
-					|| body.address == "222222222222222222222225" && date == "2022-07-01"
-					|| body.address == "111111111111111111111111116" && date == "2023-01-01"
-					|| body.address == "222222222222222222222227" && date == "2023-07-01"
+				if body.address == "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C13"
+					|| body.address == "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11"
 				{
 					Response::builder().body(RES_BODY_TRUE.to_string())
-				} else if body.address == "22222222222222222222222"
-					|| body.address == "4444444444444444444444"
-					|| body.address == "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+				} else if body.address == "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12"
+					|| body.address == "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C14"
 				{
 					Response::builder().body(RES_BODY_FALSE.to_string())
 				} else if body.address == "0xa94586fBB5B736a3f6AF31f84EEcc7677D2e7F84"
