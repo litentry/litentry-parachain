@@ -20,4 +20,3 @@ services:
 networks:
     litentry-test-network:
         driver: bridge
-# docker compose -f docker-compose.yml -f resume-worker.yml up relaychain-alice relaychain-bob litentry-node --no-build --exit-code-from resume-worker -- resume-worker
