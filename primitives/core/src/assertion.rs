@@ -277,7 +277,8 @@ impl Assertion {
 	}
 }
 
-pub const ASSERTION_FROM_DATE: [&str; 14] = [
+pub const ASSERTION_DATE_LEN: usize = 15;
+pub const ASSERTION_FROM_DATE: [&str; ASSERTION_DATE_LEN] = [
 	"2017-01-01",
 	"2017-07-01",
 	"2018-01-01",
@@ -292,6 +293,9 @@ pub const ASSERTION_FROM_DATE: [&str; 14] = [
 	"2022-07-01",
 	"2023-01-01",
 	"2023-07-01",
+	// In order to address the issue of the community encountering a false query for WBTC in
+	// November, the product team feels that adding this date temporarily solves this problem.
+	"2023-12-01",
 ];
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
