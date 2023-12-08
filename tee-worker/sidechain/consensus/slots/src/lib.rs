@@ -145,7 +145,7 @@ pub trait SlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<Self::Output>,
-		single_worker: bool,
+		is_single_worker: bool,
 	) -> Option<SlotResult<Self::Output>>;
 }
 
@@ -169,7 +169,7 @@ pub trait PerShardSlotWorkerScheduler<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: Vec<Self::ShardIdentifier>,
-		single_worker: bool,
+		is_single_worker: bool,
 	) -> Self::Output;
 }
 
@@ -278,7 +278,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<Self::Output>,
-		single_worker: bool,
+		is_single_worker: bool,
 	) -> Option<SlotResult<Self::Output>> {
 		let (_timestamp, slot) = (slot_info.timestamp, slot_info.slot);
 		let logging_target = self.logging_target();
@@ -496,7 +496,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			},
 		};
 
-		if single_worker {
+		if is_single_worker {
 			error!("Running as single worker, skipping timestamp within slot check")
 		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
@@ -539,9 +539,9 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<T::Output>,
-		single_worker: bool,
+		is_single_worker: bool,
 	) -> Option<SlotResult<Self::Output>> {
-		SimpleSlotWorker::on_slot(self, slot_info, shard, single_worker)
+		SimpleSlotWorker::on_slot(self, slot_info, shard, is_single_worker)
 	}
 }
 
@@ -556,7 +556,7 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shards: Vec<Self::ShardIdentifier>,
-		single_worker: bool,
+		is_single_worker: bool,
 	) -> Self::Output {
 		let logging_target = SimpleSlotWorker::logging_target(self);
 
@@ -591,7 +591,7 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 				slot_info.maybe_last_imported_target_b_parentchain_head.clone(),
 			);
 
-			match SimpleSlotWorker::on_slot(self, shard_slot.clone(), shard, single_worker) {
+			match SimpleSlotWorker::on_slot(self, shard_slot.clone(), shard, is_single_worker) {
 				Some(res) => {
 					slot_results.push(res);
 					debug!(

@@ -312,6 +312,8 @@ where
 		)
 		.with_claim_strategy(SlotClaimStrategy::RoundRobin);
 
+	// We only check if there are more workers registered, which might not really mean they are
+	// online and syncing sidechain state but that should be enough for now.
 	let is_single_worker = match ocall_api.get_trusted_peers_urls() {
 		Ok(urls) => urls.is_empty(),
 		Err(e) => {

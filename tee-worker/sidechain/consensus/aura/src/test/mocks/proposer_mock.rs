@@ -24,7 +24,6 @@ use its_test::{
 	sidechain_block_builder::{SidechainBlockBuilder, SidechainBlockBuilderTrait},
 	sidechain_block_data_builder::SidechainBlockDataBuilder,
 };
-use sp_runtime::scale_info::prelude::time::Instant;
 use std::time::Duration;
 
 pub struct DefaultProposerMock {
