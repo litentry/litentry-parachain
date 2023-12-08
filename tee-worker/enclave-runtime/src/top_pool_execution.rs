@@ -322,7 +322,7 @@ where
 	};
 
 	let (blocks, pxts): (Vec<_>, Vec<_>) =
-		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards)
+		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards, is_single_worker)
 			.into_iter()
 			.map(|r| (r.block, r.parentchain_effects))
 			.unzip();

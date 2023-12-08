@@ -448,6 +448,8 @@ mod tests {
 			Keyring::Alice.pair(),
 			onchain_mock,
 			trigger_parentchain_import,
+			None,
+			None,
 			OutdatedBlockEnvironmentMock,
 			Arc::new(ScheduledEnclaveMock::default()),
 			Arc::new(HandleStateMock::from_shard(ShardIdentifier::default()).unwrap()),
