@@ -17,6 +17,7 @@
 use crate::{
 	assertion_logic::AssertionLogic, nodereal::bnb_domain::RangeCredentialDetail, Credential,
 };
+use std::vec::Vec;
 
 // Type / Info
 const LIT_HOLDING_AMOUNT_INFO: (&str, &str) =
