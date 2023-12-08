@@ -22,7 +22,7 @@ use crate::{
 	Cli,
 };
 use base58::{FromBase58, ToBase58};
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, Input};
 use ita_stf::{Getter, StfError, TrustedCall, TrustedCallSigned};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient};
 use itp_node_api::api_client::{ParentchainApi, TEEREX};
@@ -40,7 +40,7 @@ use pallet_teerex::Event as TeerexEvent;
 use sp_core::H256;
 use std::{
 	fmt::Debug,
-	result::Result,
+	result::Result as StdResult,
 	sync::mpsc::{channel, Receiver},
 	time::Instant,
 };
@@ -57,7 +57,7 @@ pub(crate) enum TrustedOperationError {
 	Default { msg: String },
 }
 
-pub(crate) type TrustedOpResult<T> = Result<T, TrustedOperationError>;
+pub(crate) type TrustedOpResult<T> = StdResult<T, TrustedOperationError>;
 
 pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 	cli: &Cli,
@@ -65,9 +65,10 @@ pub(crate) fn perform_trusted_operation<T: Decode + Debug>(
 	top: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	match top {
-		TrustedOperation::indirect_call(_) => send_indirect_request(cli, trusted_args, top),
-		TrustedOperation::direct_call(_) => send_direct_request(cli, trusted_args, top),
-		TrustedOperation::get(getter) => execute_getter_from_cli_args(cli, trusted_args, getter),
+		TrustedOperation::indirect_call(_) => send_indirect_request::<T>(cli, trusted_args, top),
+		TrustedOperation::direct_call(_) => send_direct_request::<T>(cli, trusted_args, top),
+		TrustedOperation::get(getter) =>
+			execute_getter_from_cli_args::<T>(cli, trusted_args, getter),
 	}
 }
 
@@ -87,7 +88,7 @@ pub(crate) fn perform_direct_operation<T: Decode + Debug>(
 	}
 }
 
-pub(crate) fn execute_getter_from_cli_args<T: Decode + Debug>(
+fn execute_getter_from_cli_args<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
 	getter: &Getter,
@@ -97,7 +98,7 @@ pub(crate) fn execute_getter_from_cli_args<T: Decode + Debug>(
 	get_state(&direct_api, shard, getter)
 }
 
-pub(crate) fn get_state<T: Decode>(
+pub(crate) fn get_state<T: Decode + Debug>(
 	direct_api: &DirectClient,
 	shard: ShardIdentifier,
 	getter: &Getter,
@@ -140,12 +141,7 @@ pub(crate) fn get_state<T: Decode>(
 
 	match maybe_state {
 		Some(state) => {
-			let decoded = T::decode(&mut state.as_slice()).map_err(|err| {
-				error!("Failed to decode requested type: {:?}", err);
-				TrustedOperationError::Default {
-					msg: "Failed at decoding to requested type".to_string(),
-				}
-			})?;
+			let decoded = decode_response_value(&mut state.as_slice())?;
 			Ok(decoded)
 		},
 		None => Err(TrustedOperationError::Default { msg: "Value not present".to_string() }),
@@ -195,41 +191,41 @@ fn send_indirect_request<T: Decode + Debug>(
 	info!("Waiting for execution confirmation from enclave...");
 	let mut subscription = chain_api.subscribe_events().unwrap();
 	loop {
-		let event_records = subscription.next_events::<RuntimeEvent, Hash>().unwrap().unwrap();
-		for event_record in event_records {
-			if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
-				_signer,
-				confirmed_block_hash,
-				_merkle_root,
-				confirmed_block_number,
-			)) = event_record.event
-			{
-				info!("Confirmation of ProcessedParentchainBlock received");
-				debug!("Expected block Hash: {:?}", block_hash);
-				debug!("Confirmed stf block Hash: {:?}", confirmed_block_hash);
-				if let Err(e) = check_if_received_event_exceeds_expected(
-					&chain_api,
-					block_hash,
+		let event_result = subscription.next_events::<RuntimeEvent, Hash>();
+		if let Some(Ok(event_records)) = event_result {
+			for event_record in event_records {
+				if let RuntimeEvent::Teerex(TeerexEvent::ProcessedParentchainBlock(
+					_signer,
 					confirmed_block_hash,
+					trusted_calls_merkle_root,
 					confirmed_block_number,
-				) {
-					error!("ProcessedParentchainBlock event: {:?}", e);
-					return Err(TrustedOperationError::Default {
-						msg: format!("ProcessedParentchainBlock event: {:?}", e),
-					})
-				};
+				)) = event_record.event
+				{
+					info!("Confirmation of ProcessedParentchainBlock received");
+					debug!("shard: {:?}", shard);
+					debug!("confirmed parentchain block Hash: {:?}", block_hash);
+					debug!("trusted calls merkle root: {:?}", trusted_calls_merkle_root);
+					debug!("Confirmed stf block Hash: {:?}", confirmed_block_hash);
+					if let Err(e) = check_if_received_event_exceeds_expected(
+						&chain_api,
+						block_hash,
+						confirmed_block_hash,
+						confirmed_block_number,
+					) {
+						error!("ProcessedParentchainBlock event: {:?}", e);
+						return Err(TrustedOperationError::Default {
+							msg: format!("ProcessedParentchainBlock event: {:?}", e),
+						})
+					};
 
-				if confirmed_block_hash == block_hash {
-					// encode and decode to target type, this should probably read value from parachain event and
-					// return that result instead of block hash
-					let value = T::decode(&mut block_hash.encode().as_slice()).map_err(|e| {
-						TrustedOperationError::Default {
-							msg: format!("Could not decode result value: {:?}", e),
-						}
-					})?;
-					return Ok(value)
+					if confirmed_block_hash == block_hash {
+						let value = decode_response_value(&mut block_hash.encode().as_slice())?;
+						return Ok(value)
+					}
 				}
 			}
+		} else {
+			warn!("Error in event subscription: {:?}", event_result)
 		}
 	}
 }
@@ -337,11 +333,7 @@ fn send_direct_request<T: Decode + Debug>(
 							if !return_value.do_watch {
 								direct_api.close().unwrap();
 								let value =
-									T::decode(&mut return_value.value.as_slice()).map_err(|e| {
-										TrustedOperationError::Default {
-											msg: format!("Could not decode result value: {:?}", e),
-										}
-									})?;
+									decode_response_value(&mut return_value.value.as_slice())?;
 								return Ok(value)
 							}
 						},
@@ -408,12 +400,7 @@ fn send_direct_vc_request<T: Decode + Debug>(
 						DirectRequestStatus::Ok => {
 							debug!("request status is ignored");
 							direct_api.close().unwrap();
-							let value =
-								T::decode(&mut return_value.value.as_slice()).map_err(|e| {
-									TrustedOperationError::Default {
-										msg: format!("Could not decode result value: {:?}", e),
-									}
-								})?;
+							let value = decode_response_value(&mut return_value.value.as_slice())?;
 							return Ok(value)
 						},
 					}
@@ -447,6 +434,14 @@ pub(crate) fn get_vc_json_request(
 		vec![request.to_hex()],
 	)
 	.unwrap()
+}
+
+fn decode_response_value<T: Decode, I: Input>(
+	value: &mut I,
+) -> StdResult<T, TrustedOperationError> {
+	T::decode(value).map_err(|e| TrustedOperationError::Default {
+		msg: format!("Could not decode result value: {:?}", e),
+	})
 }
 
 pub(crate) fn get_json_request(

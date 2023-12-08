@@ -36,9 +36,9 @@ use itp_stf_primitives::{
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{
-	parentchain::{Header as ParentchainHeader, ParentchainId},
+	parentchain::{Header as ParentchainHeader, ParentchainCall, ParentchainId},
 	storage::StorageEntryVerified,
-	OpaqueCall, H256,
+	H256,
 };
 use log::*;
 use sp_runtime::traits::Header as HeaderTrait;
@@ -46,6 +46,7 @@ use std::{
 	collections::BTreeMap, fmt::Debug, marker::PhantomData, string::ToString, sync::Arc,
 	time::Duration, vec, vec::Vec,
 };
+
 pub struct StfExecutor<OCallApi, StateHandler, NodeMetadataRepository, Stf, TCS, G>
 where
 	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
@@ -122,7 +123,7 @@ where
 		}
 
 		debug!("execute on STF, call with nonce {}", trusted_call.nonce());
-		let mut extrinsic_call_backs: Vec<OpaqueCall> = Vec::new();
+		let mut extrinsic_call_backs: Vec<ParentchainCall> = Vec::new();
 		return match Stf::execute_call(
 			state,
 			shard,

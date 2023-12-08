@@ -9,14 +9,11 @@ edition = "2021"
 
 [dependencies]
 itp-types = { path = "../../../core-primitives/types", default-features = false }
-
-# substrate dependencies
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 [features]
 default = ["std"]
 std = [
     "itp-types/std",
-    # substrate dependencies
     "sp-runtime/std",
 ]

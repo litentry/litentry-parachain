@@ -93,8 +93,7 @@ pub fn transpose_identity(
 					}
 				},
 				Identity::Evm(address) => {
-					let mut address = account_id_to_string(address.as_ref());
-					address.insert_str(0, "0x");
+					let address = account_id_to_string(address.as_ref());
 					addresses.push((address, n));
 					networks_set.insert(n);
 				},
