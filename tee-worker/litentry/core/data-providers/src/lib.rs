@@ -163,7 +163,7 @@ impl DataProviderConfig {
 					.to_string(),
 			sora_quiz_master_id: "1164463721989554218".to_string(),
 			sora_quiz_attendee_id: "1166941149219532800".to_string(),
-			nodereal_api_key: "".to_string(),
+			nodereal_api_key: "https://{chain}-{network}.nodereal.io/".to_string(),
 			nodereal_api_retry_delay: 5000,
 			nodereal_api_retry_times: 2,
 			nodereal_api_url: "https://open-platform.nodereal.io/".to_string(),
@@ -171,7 +171,7 @@ impl DataProviderConfig {
 			contest_legend_discord_role_id: "1172576273063739462".to_string(),
 			contest_popularity_discord_role_id: "1172576681119195208".to_string(),
 			contest_participant_discord_role_id: "1172576734135210104".to_string(),
-			vip3_url: "".to_string(),
+			vip3_url: "https://dappapi.vip3.io/".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
@@ -205,6 +205,12 @@ impl DataProviderConfig {
 			}
 			if let Ok(v) = env::var("NODEREAL_API_URL") {
 				config.set_nodereal_api_url(v);
+			}
+			if let Ok(v) = env::var("NODEREAL_API_RETRY_DELAY") {
+				config.set_nodereal_api_retry_delay(v.parse::<u64>().unwrap());
+			}
+			if let Ok(v) = env::var("NODEREAL_API_RETRY_TIME") {
+				config.set_nodereal_api_retry_times(v.parse::<u16>().unwrap());
 			}
 			if let Ok(v) = env::var("NODEREAL_API_CHAIN_NETWORK_URL") {
 				config.set_nodereal_api_chain_network_url(v);
