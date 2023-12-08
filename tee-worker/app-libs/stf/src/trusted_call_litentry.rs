@@ -29,7 +29,7 @@ use crate::{
 };
 use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::{RuntimeOrigin, System};
+use ita_sgx_runtime::{IDGraph, RuntimeOrigin, System};
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
@@ -225,9 +225,7 @@ impl TrustedCallSigned {
 		);
 		IMTCall::link_identity { who, identity, web3networks }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::LinkIdentityFailed(e.into()))?;
-
-		Ok(())
+			.map_err(|e| StfError::LinkIdentityFailed(e.into()))
 	}
 
 	pub fn request_vc_callback_internal(signer: AccountId, assertion: Assertion) -> StfResult<()> {
@@ -259,7 +257,9 @@ impl TrustedCallSigned {
 			who.to_account_id().ok_or(StfError::InvalidAccount)?,
 		);
 
-		Self::link_identity_callback_internal(
+		let old_id_graph_len = IMT::id_graph_lens(&who);
+
+		let mutated_id_graph = Self::link_identity_callback_internal(
 			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
 			identity,
@@ -278,7 +278,7 @@ impl TrustedCallSigned {
 		})?;
 
 		debug!("pushing identity_linked event ...");
-		let id_graph = IMT::get_id_graph(&who);
+		let id_graph = IMT::get_aid_graph(&who);
 		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
 		// push `identity_linked` call
 		let call_index =
@@ -287,7 +287,8 @@ impl TrustedCallSigned {
 
 		if let Some(key) = maybe_key {
 			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
-				id_graph: aes_encrypt_default(&key, &id_graph.encode()),
+				mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+				id_graph_hash,
 			}))
 		} else {
 			Ok(TrustedCallResult::Empty)

@@ -34,6 +34,12 @@ pub enum TrustedCallResult {
 	LinkIdentity(LinkIdentityResult),
 	#[codec(index = 3)]
 	RequestVC(RequestVCResult),
+	#[codec(index = 4)]
+	DeactivateIdentity(DeactivateIdentityResult),
+	#[codec(index = 5)]
+	ActivateIdentity(ActivateIdentityResult),
+	#[codec(index = 6)]
+	SetIdentityNetworks(SetIdentityNetworksResult),
 }
 
 impl StfExecutionResult for TrustedCallResult {
@@ -43,6 +49,9 @@ impl StfExecutionResult for TrustedCallResult {
 			Self::Streamed => Vec::default(),
 			Self::LinkIdentity(result) => result.encode(),
 			Self::RequestVC(result) => result.encode(),
+			Self::DeactivateIdentity(result) => result.encode(),
+			Self::ActivateIdentity(result) => result.encode(),
+			Self::SetIdentityNetworks(result) => result.encode(),
 		}
 	}
 
@@ -51,9 +60,37 @@ impl StfExecutionResult for TrustedCallResult {
 	}
 }
 
+/// For the requests that mutate the IDGraph, the response result will contain at least:
+/// - `mutated_id_graph`: the mutated IDGraph, which is the subset the whole IDGraph
+/// - `id_graph_hash`: the nwe IDGraph hash after the mutation
+///
+/// Currently it applies to the following DI requests:
+/// - `link_identity`
+/// - `activate_identity`
+/// - `deactivate_identity`
+/// - `set_identity_networks`
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct LinkIdentityResult {
-	pub id_graph: AesOutput,
+	pub mutated_id_graph: AesOutput,
+	pub id_graph_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub struct DeactivateIdentityResult {
+	pub mutated_id_graph: AesOutput,
+	pub id_graph_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub struct ActivateIdentityResult {
+	pub mutated_id_graph: AesOutput,
+	pub id_graph_hash: H256,
+}
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
+pub struct SetIdentityNetworksResult {
+	pub mutated_id_graph: AesOutput,
+	pub id_graph_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
