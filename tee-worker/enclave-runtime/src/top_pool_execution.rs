@@ -249,7 +249,7 @@ where
 	SignedSidechainBlock::Signature: From<Authority::Signature>,
 	Authority: Pair<Public = sp_core::ed25519::Public>,
 	Authority::Public: Encode + UncheckedFrom<[u8; 32]>,
-	OCallApi: ValidateerFetch + EnclaveOnChainOCallApi + Send + 'static,
+	OCallApi: ValidateerFetch + EnclaveOnChainOCallApi + EnclaveSidechainOCallApi + Send + 'static,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	PEnvironment:
 		Environment<ParentchainBlock, SignedSidechainBlock, Error = ConsensusError> + Send + Sync,
@@ -271,8 +271,17 @@ where
 		)
 		.with_claim_strategy(SlotClaimStrategy::RoundRobin);
 
+	let is_single_worker = match ocall_api.get_trusted_peers_urls() {
+		Ok(urls) => urls.is_empty(),
+		Err(e) => {
+			warn!("Could not get trusted peers urls, error: {:?}", e);
+			warn!("Falling back to non single worker mode");
+			false
+		},
+	};
+
 	let (blocks, xts): (Vec<_>, Vec<_>) =
-		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards)
+		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards, is_single_worker)
 			.into_iter()
 			.map(|r| (r.block, r.parentchain_effects))
 			.unzip();

@@ -34,11 +34,11 @@ type AuthorityPair = ed25519::Pair;
 pub type ShardIdentifierFor<SidechainBlock> =
 	<<<SidechainBlock as SignedBlockTrait>::Block as SidechainBlockTrait>::HeaderType as SidechainHeaderTrait>::ShardIdentifier;
 
-pub type TestAura = Aura<
+pub type TestAura<E> = Aura<
 	AuthorityPair,
 	ParentchainBlock,
 	SignedSidechainBlock,
-	EnvironmentMock,
+	E,
 	OnchainMock,
 	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
 	ScheduledEnclaveMock,

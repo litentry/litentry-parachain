@@ -314,7 +314,7 @@ mod tests {
 	use super::*;
 	use crate::test::{
 		fixtures::{types::TestAura, validateer, SLOT_DURATION},
-		mocks::environment_mock::EnvironmentMock,
+		mocks::environment_mock::{EnvironmentMock, OutdatedBlockEnvironmentMock},
 	};
 	use itc_parentchain_block_import_dispatcher::trigger_parentchain_block_import_mock::TriggerParentchainBlockImportMock;
 	use itc_parentchain_test::{ParentchainBlockBuilder, ParentchainHeaderBuilder};
@@ -331,7 +331,7 @@ mod tests {
 	fn get_aura(
 		onchain_mock: OnchainMock,
 		trigger_parentchain_import: Arc<TriggerParentchainBlockImportMock<SignedParentchainBlock>>,
-	) -> TestAura {
+	) -> TestAura<EnvironmentMock> {
 		Aura::new(
 			Keyring::Alice.pair(),
 			onchain_mock,
@@ -342,7 +342,21 @@ mod tests {
 		)
 	}
 
-	fn get_default_aura() -> TestAura {
+	fn get_aura_outdated(
+		onchain_mock: OnchainMock,
+		trigger_parentchain_import: Arc<TriggerParentchainBlockImportMock<SignedParentchainBlock>>,
+	) -> TestAura<OutdatedBlockEnvironmentMock> {
+		Aura::new(
+			Keyring::Alice.pair(),
+			onchain_mock,
+			trigger_parentchain_import,
+			OutdatedBlockEnvironmentMock,
+			Arc::new(ScheduledEnclaveMock::default()),
+			Arc::new(HandleStateMock::from_shard(ShardIdentifier::default()).unwrap()),
+		)
+	}
+
+	fn get_default_aura() -> TestAura<EnvironmentMock> {
 		get_aura(Default::default(), Default::default())
 	}
 
@@ -433,7 +447,33 @@ mod tests {
 
 		let slot_info = now_slot_with_default_header(0.into());
 
-		assert!(SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default()).is_some());
+		assert!(
+			SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default(), false).is_some()
+		);
+	}
+
+	#[test]
+	fn on_slot_returns_no_block_if_slot_time_exceeded_for_multi_worker() {
+		let _ = env_logger::builder().is_test(true).try_init();
+
+		let onchain_mock = onchain_mock_with_default_authorities_and_header();
+		let mut aura = get_aura_outdated(onchain_mock, Default::default());
+		let slot_info = now_slot_with_default_header(0.into());
+
+		assert!(
+			SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default(), false).is_none()
+		);
+	}
+
+	#[test]
+	fn on_slot_returns_block_if_slot_time_exceeded_for_single_worker() {
+		let _ = env_logger::builder().is_test(true).try_init();
+
+		let onchain_mock = onchain_mock_with_default_authorities_and_header();
+		let mut aura = get_aura_outdated(onchain_mock, Default::default());
+		let slot_info = now_slot_with_default_header(0.into());
+
+		assert!(SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default(), true).is_some());
 	}
 
 	#[test]
@@ -449,6 +489,7 @@ mod tests {
 			&mut aura,
 			slot_info,
 			vec![Default::default(), Default::default()],
+			false,
 		);
 
 		assert_eq!(result.len(), 2);
@@ -475,6 +516,7 @@ mod tests {
 			&mut aura,
 			slot_info,
 			vec![Default::default(), Default::default()],
+			false,
 		);
 
 		assert_eq!(result.len(), 0);
@@ -495,7 +537,8 @@ mod tests {
 
 		let slot_info = now_slot(0.into(), &latest_parentchain_header);
 
-		let result = SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default()).unwrap();
+		let result =
+			SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default(), false).unwrap();
 
 		assert_eq!(
 			result.block.block.block_data().layer_one_head,
@@ -519,7 +562,7 @@ mod tests {
 
 		let slot_info = now_slot(2.into(), &latest_parentchain_header);
 
-		let result = SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default());
+		let result = SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default(), false);
 
 		assert!(result.is_none());
 		assert!(!parentchain_block_import_trigger.has_import_been_called());
@@ -551,7 +594,8 @@ mod tests {
 
 		let slot_info = now_slot(3.into(), &already_imported_parentchain_header);
 
-		let result = SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default()).unwrap();
+		let result =
+			SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default(), false).unwrap();
 
 		assert_eq!(
 			result.block.block.block_data().layer_one_head,
@@ -586,7 +630,7 @@ mod tests {
 
 		// If the validateer set one (instead of the latest one) is looked up, the slot will be claimed. But it should not, as the latest one should be used.
 		let slot_info = now_slot(2.into(), &already_imported_parentchain_header);
-		let result = SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default());
+		let result = SimpleSlotWorker::on_slot(&mut aura, slot_info, Default::default(), false);
 
 		assert!(result.is_none());
 		assert!(!parentchain_block_import_trigger.has_import_been_called());

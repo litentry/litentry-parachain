@@ -144,6 +144,7 @@ pub trait SlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<Self::Output>,
+		single_worker: bool,
 	) -> Option<SlotResult<Self::Output>>;
 }
 
@@ -167,6 +168,7 @@ pub trait PerShardSlotWorkerScheduler<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: Vec<Self::ShardIdentifier>,
+		single_worker: bool,
 	) -> Self::Output;
 }
 
@@ -256,6 +258,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<Self::Output>,
+		single_worker: bool,
 	) -> Option<SlotResult<Self::Output>> {
 		let (_timestamp, slot) = (slot_info.timestamp, slot_info.slot);
 		let logging_target = self.logging_target();
@@ -374,7 +377,9 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			},
 		};
 
-		if !timestamp_within_slot(&slot_info, &proposing.block) {
+		if single_worker {
+			error!("Running as single worker, skipping timestamp within slot check")
+		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				target: logging_target,
 				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",
@@ -413,8 +418,9 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<T::Output>,
+		single_worker: bool,
 	) -> Option<SlotResult<Self::Output>> {
-		SimpleSlotWorker::on_slot(self, slot_info, shard)
+		SimpleSlotWorker::on_slot(self, slot_info, shard, single_worker)
 	}
 }
 
@@ -429,6 +435,7 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shards: Vec<Self::ShardIdentifier>,
+		single_worker: bool,
 	) -> Self::Output {
 		let logging_target = SimpleSlotWorker::logging_target(self);
 
@@ -461,7 +468,7 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 				slot_info.last_imported_parentchain_head.clone(),
 			);
 
-			match SimpleSlotWorker::on_slot(self, shard_slot, shard) {
+			match SimpleSlotWorker::on_slot(self, shard_slot, shard, single_worker) {
 				Some(res) => {
 					info!(
 						target: logging_target,

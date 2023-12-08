@@ -16,6 +16,7 @@
 */
 
 use crate::ConsensusError;
+use itp_time_utils::now_as_millis;
 use itp_types::{Block as ParentchainBlock, Header};
 use its_consensus_common::{Proposal, Proposer};
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
@@ -23,13 +24,14 @@ use its_test::{
 	sidechain_block_builder::{SidechainBlockBuilder, SidechainBlockBuilderTrait},
 	sidechain_block_data_builder::SidechainBlockDataBuilder,
 };
+use sp_runtime::scale_info::prelude::time::Instant;
 use std::time::Duration;
 
-pub struct ProposerMock {
+pub struct DefaultProposerMock {
 	pub(crate) parentchain_header: Header,
 }
 
-impl Proposer<ParentchainBlock, SignedSidechainBlock> for ProposerMock {
+impl Proposer<ParentchainBlock, SignedSidechainBlock> for DefaultProposerMock {
 	fn propose(
 		&self,
 		_max_duration: Duration,
@@ -38,6 +40,30 @@ impl Proposer<ParentchainBlock, SignedSidechainBlock> for ProposerMock {
 			block: {
 				let block_data = SidechainBlockDataBuilder::random()
 					.with_layer_one_head(self.parentchain_header.hash())
+					.build();
+				SidechainBlockBuilder::random().with_block_data(block_data).build_signed()
+			},
+
+			parentchain_effects: Default::default(),
+		})
+	}
+}
+
+pub struct OutdatedBlockProposerMock {
+	pub(crate) parentchain_header: Header,
+}
+
+impl Proposer<ParentchainBlock, SignedSidechainBlock> for OutdatedBlockProposerMock {
+	fn propose(
+		&self,
+		_max_duration: Duration,
+	) -> Result<Proposal<SignedSidechainBlock>, ConsensusError> {
+		let past = now_as_millis() - 1000;
+		Ok(Proposal {
+			block: {
+				let block_data = SidechainBlockDataBuilder::random()
+					.with_layer_one_head(self.parentchain_header.hash())
+					.with_timestamp(past)
 					.build();
 				SidechainBlockBuilder::random().with_block_data(block_data).build_signed()
 			},
