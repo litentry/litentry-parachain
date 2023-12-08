@@ -4,29 +4,39 @@ name: Release Ts API Package
 on:
   workflow_dispatch:
       inputs:
-        tag:
-          description: 'Release docker image tag'
+        parachain-tag:
+          description: 'Parachain docker image tag'
+          required: true
+          default: 'latest'
+        worker-tag:
+          description: 'Worker docker image tag'
+          required: true
+          default: 'latest'
+        release-tag:
+          description: 'Client-api release tag'
           required: true
           default: 'latest'
 env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 
 jobs:
-        
   update-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set env variables
-        run: echo "RELEASE_IMAGE_VERSION=${{ inputs.tag }}" >> "$GITHUB_ENV"
-
       - name: Pull litentry image optionally
         run: |
           docker pull parity/polkadot
-          docker pull litentry/litentry-worker:${{ inputs.tag }}
-          docker pull litentry/litentry-cli:${{ inputs.tag }}
-          docker pull litentry/litentry-parachain:${{ inputs.tag }}
+          docker pull litentry/litentry-worker:${{ inputs.worker-tag }}
+          docker pull litentry/litentry-cli:${{ inputs.worker-tag }}
+          docker pull litentry/litentry-parachain:${{ inputs.parachain-tag }}
+
+      - name: Re-tag docker image
+        run: |
+          docker tag litentry/litentry-worker:${{ inputs.worker-tag }} litentry/litentry-worker:latest
+          docker tag litentry/litentry-cli:${{ inputs.worker-tag }} litentry/litentry-cli:latest
+          docker tag litentry/litentry-parachain:${{ inputs.parachain-tag }} litentry/litentry-parachain:latest
 
       - run: docker images --all
 
@@ -74,7 +84,7 @@ jobs:
               exit 1
             fi
 
-            npm publish --tag ${{ inputs.tag }}
+            npm publish --tag ${{ inputs.release-tag }}
 
             echo "------------------------$api published------------------------"
             cd ..

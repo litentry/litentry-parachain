@@ -15,7 +15,8 @@ extern "C" {
 		quote: *const u8,
 		quote_size: u32,
 		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_size: u32,
+		unchecked_extrinsic_max_size: u32,
+		unchecked_extrinsic_size: *mut u32,
 	) -> sgx_status_t;
 
 	pub fn init(
@@ -61,9 +62,11 @@ extern "C" {
 		shard_size: u32,
 	) -> sgx_status_t;
 
-	pub fn trigger_parentchain_block_import(
+	pub fn init_proxied_shard_vault(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
+		shard: *const u8,
+		shard_size: u32,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
 	) -> sgx_status_t;
@@ -81,6 +84,7 @@ extern "C" {
 		events_proofs_size: usize,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
+		is_syncing: c_int,
 	) -> sgx_status_t;
 
 	pub fn set_nonce(
@@ -114,6 +118,15 @@ extern "C" {
 		pubkey_size: u32,
 	) -> sgx_status_t;
 
+	pub fn get_ecc_vault_pubkey(
+		eid: sgx_enclave_id_t,
+		retval: *mut sgx_status_t,
+		shard: *const u8,
+		shard_size: u32,
+		pubkey: *mut u8,
+		pubkey_size: u32,
+	) -> sgx_status_t;
+
 	pub fn get_mrenclave(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
@@ -127,7 +140,8 @@ extern "C" {
 		w_url: *const u8,
 		w_url_size: u32,
 		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_size: u32,
+		unchecked_extrinsic_max_size: u32,
+		unchecked_extrinsic_size: *mut u32,
 		skip_ra: c_int,
 	) -> sgx_status_t;
 
@@ -137,7 +151,8 @@ extern "C" {
 		w_url: *const u8,
 		w_url_size: u32,
 		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_size: u32,
+		unchecked_extrinsic_max_size: u32,
+		unchecked_extrinsic_size: *mut u32,
 		skip_ra: c_int,
 		quoting_enclave_target_info: Option<&sgx_target_info_t>,
 		quote_size: Option<&u32>,
@@ -158,7 +173,8 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		collateral: *const sgx_ql_qve_collateral_t,
 		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_size: u32,
+		unchecked_extrinsic_max_size: u32,
+		unchecked_extrinsic_size: *mut u32,
 	) -> sgx_status_t;
 
 	pub fn generate_register_tcb_info_extrinsic(
@@ -166,7 +182,8 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		collateral: *const sgx_ql_qve_collateral_t,
 		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_size: u32,
+		unchecked_extrinsic_max_size: u32,
+		unchecked_extrinsic_size: *mut u32,
 	) -> sgx_status_t;
 
 	pub fn dump_ias_ra_cert_to_disk(
@@ -206,7 +223,8 @@ extern "C" {
 		fiat_currency: *const u8,
 		fiat_currency_size: u32,
 		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_size: u32,
+		unchecked_extrinsic_max_size: u32,
+		unchecked_extrinsic_size: *mut u32,
 	) -> sgx_status_t;
 
 	pub fn update_weather_data_xt(
@@ -217,7 +235,8 @@ extern "C" {
 		weather_info_latitude: *const u8,
 		weather_info_latitude_size: u32,
 		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_size: u32,
+		unchecked_extrinsic_max_size: u32,
+		unchecked_extrinsic_size: *mut u32,
 	) -> sgx_status_t;
 
 	pub fn run_state_provisioning_server(

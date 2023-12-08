@@ -24,12 +24,16 @@ use crate::{
 		get_expected_raw_message, verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
-	AccountId, StfError, StfResult,
+	AccountId, ConvertAccountId, SgxParentchainTypeConverter, ShardIdentifier, StfError, StfResult,
+	H256,
 };
+use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::RuntimeOrigin;
+use ita_sgx_runtime::{RuntimeOrigin, System};
 use itp_node_api::metadata::NodeMetadataTrait;
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
+use itp_node_api_metadata_provider::AccessNodeMetadata;
+use itp_types::parentchain::ParentchainCall;
 use itp_utils::{if_production_or, stringify::account_id_to_string};
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -40,6 +44,7 @@ use litentry_primitives::{
 	Web3Network,
 };
 use log::*;
+use sp_core::blake2_256;
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(not(feature = "production"))]
@@ -237,14 +242,14 @@ impl TrustedCallSigned {
 	// common handler for both web2 and web3 identity verification
 	#[allow(clippy::too_many_arguments)]
 	pub fn handle_link_identity_callback<NodeMetadataRepository>(
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		signer: Identity,
 		who: Identity,
 		identity: Identity,
 		web3networks: Vec<Web3Network>,
 		maybe_key: Option<RequestAesKey>,
-		hash: H256,
+		req_ext_hash: H256,
 	) -> StfResult<TrustedCallResult>
 	where
 		NodeMetadataRepository: AccessNodeMetadata,
@@ -263,21 +268,28 @@ impl TrustedCallSigned {
 		)
 		.map_err(|e| {
 			debug!("pushing error event ... error: {}", e);
-			add_call_from_imp_error(
+			push_call_imp_some_error(
 				calls,
 				node_metadata_repo.clone(),
 				Some(account.clone()),
 				e.to_imp_error(),
-				hash,
+				req_ext_hash,
 			);
 			e
 		})?;
 
 		debug!("pushing identity_linked event ...");
 		let id_graph = IMT::get_id_graph(&who);
+		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
+		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
-		calls.push(OpaqueCall::from_tuple(&(call_index, account, hash)));
+		calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
+			call_index,
+			account,
+			id_graph_hash,
+			req_ext_hash,
+		))));
 
 		if let Some(key) = maybe_key {
 			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {

@@ -1,5 +1,5 @@
 name: "litentry-worker"
-version: "0.12.0"
+version: "0.0.1"
 about: Worker using Intel SGX TEE for litentry parachain node
 authors: "Trust Computing GmbH <info@litentry.com>"
 

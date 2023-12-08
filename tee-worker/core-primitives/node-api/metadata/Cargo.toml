@@ -11,6 +11,7 @@ derive_more = { version = "0.99.5" }
 
 # local
 itp-api-client-types = { default-features = false, path = "../api-client-types" }
+itp-stf-primitives = { default-features = false, path = "../../stf-primitives" }
 
 # substrate
 sp-core = { git = "https://github.com/paritytech/substrate.git", default-features = false, branch = "polkadot-v0.9.42" }
@@ -21,6 +22,7 @@ std = [
     "codec/std",
     "itp-api-client-types/std",
     "sp-core/std",
+    "itp-stf-primitives/std",
 ]
 
 # used for unit testing only!

@@ -22,7 +22,7 @@ use crate::{
 	Cli, CliResult, CliResultOk,
 };
 use clap::Parser;
-use ita_stf::{Index, TrustedCall, TrustedOperation};
+use ita_stf::{Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::{Identity, Web3Network};
 use sp_core::Pair;
@@ -30,14 +30,12 @@ use sp_core::Pair;
 // usage exmaple:
 //
 // # link `my_twitter` identity to substrate //Bob account
-// ./bin/litentry-cli trusted --mrenclave <mrenclave> \
-//   --direct link-identity \
+// ./bin/litentry-cli trusted -d link-identity \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
 //   did:litentry:twitter:my_twitter
 //
 // # link an evm identity to substrate //Bob account, with web3networks
-// ./bin/litentry-cli trusted --mrenclave <mrenclave> \
-//   --direct link-identity \
+// ./bin/litentry-cli trusted -d link-identity \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 \
 //   did:litentry:evm:0x0D9bFD1f18f5f4FD08247DC54aD3528909c4b3E9 \
 //   bsc,ethereum
@@ -67,7 +65,7 @@ impl LinkIdentityCommand {
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
 
-		let top: TrustedOperation = TrustedCall::link_identity_callback(
+		let top = TrustedCall::link_identity_callback(
 			alice.public().into(),
 			src_id,
 			dst_id,

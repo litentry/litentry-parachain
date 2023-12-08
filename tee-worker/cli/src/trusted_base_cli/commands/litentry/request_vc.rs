@@ -21,7 +21,7 @@ use crate::{
 	trusted_operation::perform_trusted_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedOperation};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
 use lc_credentials::Credential;
@@ -30,23 +30,27 @@ use litentry_primitives::{
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
-	ParameterString, RequestAesKey, SoraQuizType, Web3Network, REQUEST_AES_KEY_LEN,
+	ParameterString, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
+	REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
 // a8:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
 // oneblock VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
 //
 // achainable VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc \
+// ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
+//
+// ./bin/litentry-cli trusted -d request-vc \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 vip3-membership-card gold
 
 pub fn to_para_str(s: &str) -> ParameterString {
 	ParameterString::truncate_from(s.as_bytes().to_vec())
@@ -82,6 +86,9 @@ pub enum Command {
 	Achainable(AchainableCommand),
 	#[clap(subcommand)]
 	GenericDiscordRole(GenericDiscordRoleCommand),
+	#[clap(subcommand)]
+	VIP3MembershipCard(VIP3MembershipCardLevelCommand),
+	WeirdoGhostGangHolder,
 }
 
 #[derive(Args)]
@@ -141,6 +148,12 @@ pub enum GenericDiscordRoleCommand {
 	Contest(ContestCommand),
 	#[clap(subcommand)]
 	SoraQuiz(SoraQuizCommand),
+}
+
+#[derive(Subcommand)]
+pub enum VIP3MembershipCardLevelCommand {
+	Gold,
+	Silver,
 }
 
 #[derive(Subcommand)]
@@ -244,9 +257,11 @@ impl RequestVcCommand {
 	pub(crate) fn run(&self, cli: &Cli, trusted_cli: &TrustedCli) -> CliResult {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
+		println!(">>>id: {:?}", id);
 
 		let (mrenclave, shard) = get_identifiers(trusted_cli, cli);
 		let nonce = get_layer_two_nonce!(alice, cli, trusted_cli);
+		println!(">>>nonce: {}", nonce);
 
 		let assertion = match &self.command {
 			Command::A1 => Assertion::A1,
@@ -424,11 +439,18 @@ impl RequestVcCommand {
 					),
 				},
 			},
+			Command::VIP3MembershipCard(arg) => match arg {
+				VIP3MembershipCardLevelCommand::Gold =>
+					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Gold),
+				VIP3MembershipCardLevelCommand::Silver =>
+					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
+			},
+			Command::WeirdoGhostGangHolder => Assertion::WeirdoGhostGangHolder,
 		};
 
 		let key = Self::random_aes_key();
 
-		let top: TrustedOperation = TrustedCall::request_vc(
+		let top = TrustedCall::request_vc(
 			alice.public().into(),
 			id,
 			assertion,

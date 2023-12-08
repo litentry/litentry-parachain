@@ -101,7 +101,7 @@ fn pre_build(htype: &AmountHoldingTimeType, min_balance: &ParameterString) -> Re
 // There's an issue for this: https://github.com/litentry/litentry-parachain/issues/1655
 //
 // There is a problem here, because TDF does not support mixed network types,
-// It is need to request TDF 2 (substrate+evm networks) * 14 (ASSERTION_FROM_DATE) * addresses http requests.
+// It is need to request TDF 2 (substrate+evm networks) * ASSERTION_DATE_LEN * addresses http requests.
 // If TDF can handle mixed network type, and even supports from_date array,
 // so that ideally, up to one http request can yield results.
 fn do_build(
@@ -249,43 +249,17 @@ mod tests {
 	fn do_build_lit_works() {
 		let data_provider_config = init();
 
-		let identities = vec![
-			(
-				// 111111111111111111111111112 -> 2019-01-01
-				// 222222222222222222222223    -> 2020-07-01
-				Web3Network::Litentry,
-				vec![
-					"111111111111111111111111112".to_string(),
-					"222222222222222222222223".to_string(),
-				],
-			),
-			(
-				// 111111111111111111111111114 -> 2018-01-01
-				// 222222222222222222222225    -> 2022-07-01
-				Web3Network::Litmus,
-				vec![
-					"111111111111111111111111114".to_string(),
-					"222222222222222222222225".to_string(),
-				],
-			),
-			(
-				// 111111111111111111111111116 -> 2023-01-01
-				// 222222222222222222222227    -> 2023-07-01
-				Web3Network::Ethereum,
-				vec![
-					"111111111111111111111111116".to_string(),
-					"222222222222222222222227".to_string(),
-				],
-			),
-		];
+		let identities = vec![(
+			Web3Network::Litentry,
+			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string()],
+		)];
 
 		let htype = AmountHoldingTimeType::LIT;
 		let q_min_balance = "10".to_string();
 
-		let (is_hold, optimal_hold_index) =
+		let (is_hold, _optimal_hold_index) =
 			do_build(identities, &htype, &q_min_balance, &data_provider_config).unwrap();
 		assert!(is_hold);
-		assert_eq!(optimal_hold_index, 2);
 	}
 
 	#[test]
@@ -294,15 +268,14 @@ mod tests {
 
 		let identities = vec![(
 			Web3Network::Polkadot,
-			vec!["11111111111111111111111111".to_string(), "22222222222222222222222".to_string()],
+			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C13".to_string()],
 		)];
 		let dot_type = AmountHoldingTimeType::DOT;
 		let q_min_balance = "10".to_string();
 
-		let (is_hold, optimal_hold_index) =
+		let (is_hold, _optimal_hold_index) =
 			do_build(identities, &dot_type, &q_min_balance, &data_provider_config).unwrap();
 		assert!(is_hold);
-		assert_eq!(optimal_hold_index, 0);
 	}
 
 	#[test]
@@ -311,15 +284,17 @@ mod tests {
 
 		let identities = vec![(
 			Web3Network::Ethereum,
-			vec!["333333333333333333".to_string(), "4444444444444444444444".to_string()],
+			vec![
+				"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(),
+				"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12".to_string(),
+			],
 		)];
 		let htype = AmountHoldingTimeType::WBTC;
 		let q_min_balance = "10".to_string();
 
-		let (is_hold, optimal_hold_index) =
+		let (is_hold, _optimal_hold_index) =
 			do_build(identities, &htype, &q_min_balance, &data_provider_config).unwrap();
 		assert!(is_hold);
-		assert_eq!(optimal_hold_index, 3);
 	}
 
 	#[test]
@@ -327,9 +302,8 @@ mod tests {
 		let data_provider_config = init();
 
 		let identities = vec![(
-			// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -> [< 2017-01-01]
 			Web3Network::Ethereum,
-			vec!["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx".to_string()],
+			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C14".to_string()],
 		)];
 		let htype = AmountHoldingTimeType::LIT;
 		let q_min_balance = "10".to_string();

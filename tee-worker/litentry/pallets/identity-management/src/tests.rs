@@ -17,7 +17,6 @@
 use crate::{mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, Web3Network};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use sp_runtime::AccountId32;
-
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 pub const CHARLIE: AccountId32 = AccountId32::new([3u8; 32]);
@@ -422,11 +421,73 @@ fn get_id_graph_works() {
 		let id_graph = IMT::get_id_graph(&who);
 		assert_eq!(id_graph.len(), 22);
 
-		// index 0 has the oldest identity
 		assert_eq!(id_graph.get(0).unwrap().0, who);
 
 		// index 21 has the newest identity
 		assert_eq!(id_graph.get(21).unwrap().0, alice_twitter_identity(21));
+	});
+}
+
+#[test]
+fn get_id_graph_identities_within_same_block() {
+	new_test_ext().execute_with(|| {
+		let who: Identity = ALICE.into();
+		System::set_block_number(1);
+
+		let identities = vec![
+			(alice_twitter_identity(1), vec![]),
+			(alice_substrate_identity(), vec![Web3Network::LitentryRococo]),
+			(alice_evm_identity(), vec![Web3Network::Ethereum]),
+			(bob_substrate_identity(), vec![Web3Network::Litentry]),
+		];
+
+		for (identity, networks) in identities {
+			assert_ok!(IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				who.clone(),
+				identity,
+				networks,
+			));
+		}
+
+		let id_graph = IMT::get_id_graph(&who);
+		let sorted_identities = [
+			alice_evm_identity(),
+			who.clone(),
+			bob_substrate_identity(),
+			alice_substrate_identity(),
+			alice_twitter_identity(1),
+		];
+
+		for (i, identity) in sorted_identities.iter().enumerate() {
+			assert_eq!(&id_graph.get(i).unwrap().0, identity);
+		}
+
+		// clear all identites
+		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), who.clone(), vec![],));
+
+		// change order of the identites
+		let identities = vec![
+			(bob_substrate_identity(), vec![Web3Network::Litentry]),
+			(alice_substrate_identity(), vec![Web3Network::LitentryRococo]),
+			(alice_twitter_identity(1), vec![]),
+			(alice_evm_identity(), vec![Web3Network::Ethereum]),
+		];
+
+		for (identity, networks) in identities {
+			assert_ok!(IMT::link_identity(
+				RuntimeOrigin::signed(ALICE),
+				who.clone(),
+				identity,
+				networks,
+			));
+		}
+
+		let id_graph = IMT::get_id_graph(&who);
+
+		for (i, identity) in sorted_identities.iter().enumerate() {
+			assert_eq!(&id_graph.get(i).unwrap().0, identity);
+		}
 	});
 }
 
@@ -452,5 +513,93 @@ fn id_graph_stats_works() {
 		// alice's identity itself, bob_substrate_identity, alice_twitter_identity
 		assert_eq!(stats.len(), 1);
 		assert!(stats.contains(&(alice.clone(), 3)));
+	});
+}
+
+#[test]
+fn remove_one_identity_works() {
+	new_test_ext().execute_with(|| {
+		let alice: Identity = ALICE.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			bob_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
+		));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			alice_twitter_identity(1),
+			vec![],
+		));
+
+		// alice's IDGraph should have 3 entries:
+		// alice's identity itself, bob_substrate_identity, alice_twitter_identity
+		assert_eq!(IMT::get_id_graph(&alice).len(), 3);
+
+		assert_ok!(IMT::remove_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			vec![bob_substrate_identity()],
+		));
+
+		assert_eq!(IMT::get_id_graph(&alice).len(), 2);
+	});
+}
+
+#[test]
+fn remove_whole_identity_graph_works() {
+	new_test_ext().execute_with(|| {
+		let alice: Identity = ALICE.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			bob_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
+		));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			alice_twitter_identity(1),
+			vec![],
+		));
+
+		// alice's IDGraph should have 3 entries:
+		// alice's identity itself, bob_substrate_identity, alice_twitter_identity
+		assert_eq!(IMT::get_id_graph(&alice).len(), 3);
+
+		assert_ok!(IMT::remove_identity(RuntimeOrigin::signed(ALICE), alice.clone(), vec![],));
+
+		assert_eq!(IMT::get_id_graph(&alice).len(), 0);
+	});
+}
+
+#[test]
+fn remove_identity_graph_of_other_account_fails() {
+	new_test_ext().execute_with(|| {
+		let alice: Identity = ALICE.into();
+		let bob: Identity = BOB.into();
+
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			bob_substrate_identity(),
+			vec![Web3Network::Litentry].try_into().unwrap(),
+		));
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			alice.clone(),
+			alice_twitter_identity(1),
+			vec![],
+		));
+
+		assert_noop!(
+			IMT::remove_identity(
+				RuntimeOrigin::signed(ALICE),
+				bob,
+				vec![alice_substrate_identity()],
+			),
+			Error::<Test>::IdentityNotExist
+		);
 	});
 }

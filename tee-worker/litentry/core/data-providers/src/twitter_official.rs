@@ -17,11 +17,11 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, UserInfo};
+use crate::{build_client_with_cert, vec_to_string, Error, HttpError, UserInfo};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
@@ -130,7 +130,7 @@ impl UserInfo for Tweet {
 }
 
 pub struct TwitterOfficialClient {
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 pub enum TargetUser {
@@ -159,7 +159,7 @@ impl TwitterOfficialClient {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(AUTHORIZATION.as_str(), token);
-		let client = build_client(url, headers.clone());
+		let client = build_client_with_cert(url, headers.clone());
 
 		TwitterOfficialClient { client }
 	}

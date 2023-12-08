@@ -19,7 +19,7 @@ threadpool_sgx = { git = "https://github.com/mesalock-linux/rust-threadpool-sgx"
 # no_std dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 log = { version = "0.4", default-features = false }
-sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # internal dependencies
 ita-sgx-runtime = { path = "../../../../app-libs/sgx-runtime", default-features = false }

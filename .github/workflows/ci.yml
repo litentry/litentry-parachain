@@ -309,7 +309,7 @@ jobs:
           docker images --all
           echo "::endgroup::"
 
-      - name: Pull docker image optinally
+      - name: Pull docker image optionally
         if: needs.set-condition.outputs.rebuild_parachain == 'false'
         run: |
           docker pull litentry/litentry-parachain:latest
@@ -545,9 +545,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run unittests
+      - name: Run pallet-teerex unittests
         run: |
           rustup show
+          cargo +stable install cargo-hack --locked
+          cargo hack test --feature-powerset --features=default --locked --release -p pallet-teerex --lib
+
+      - name: Run all unittests
+        run: |
           cargo test --locked --release -p core-primitives --lib
           # no `skip-ias-check` feature
           cargo test --locked --release -p pallet-* --lib
@@ -596,96 +601,18 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-    
-  update-client-api:
-    runs-on: ubuntu-latest
-    needs:
-      - parachain-build-dev
-      - tee-build
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Pull polkadot image
-        run: |
-          docker pull parity/polkadot
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: litentry-parachain-dev
-
-      - uses: actions/download-artifact@v3
-        with:
-          name: litentry-tee
-
-      - name: Load docker image
-        run: |
-          docker load < litentry-parachain-dev.tar.gz
-          docker load < litentry-tee.tar.gz
-          docker images
-
-      - name: Enable corepack and pnpm
-        run: corepack enable && corepack enable pnpm
-        
-      - name: Generate parachain artefacts
-        run: |
-          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-
-      - name: Build litentry parachain docker images
-        run: |
-          cd tee-worker/docker
-          docker compose -f litentry-parachain.build.yml build
-        
-      - name: Update metadata and generate types
-        timeout-minutes: 10
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
-      
-      - name: Zip client-api
-        working-directory: ./tee-worker
-        run: |
-         sudo rm -rf client-api/node_modules client-api/parachain-api/node_modules client-api/sidechain-api/node_modules
-         tar -zcvf client-api.tar.gz client-api
-
-      - name: Upload client-api as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: client-api
-          path: tee-worker/client-api.tar.gz
-          if-no-files-found: error
-          
-      - name: Stop docker containers
-        run: |
-          cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
-
-      - name: Collect docker logs if test fails
-        continue-on-error: true
-        uses: jwalton/gh-docker-logs@v2
-        if: failure()
-        with:
-          tail: all
-          dest: docker-logs
-
-      - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: build-client-api-docker-logs
-          path: docker-logs
-          if-no-files-found: ignore
-          retention-days: 3
-      
-  tee-test:
+  tee-single-worker-test:
     runs-on: ubuntu-latest
     needs:
       - set-condition
-      - update-client-api
+      - parachain-build-dev
+      - tee-build
     strategy:
       fail-fast: false
       matrix:
         include:
-          - test_name: demo-indirect-invocation
+          - test_name: demo-shielding-unshielding-multiworker
           - test_name: demo-direct-call
           # Litentry
           - test_name: lit-set-heartbeat-timeout
@@ -713,16 +640,6 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: litentry-tee
-          
-      - uses: actions/download-artifact@v3
-        with:
-          name: client-api
-      
-      - name: Unzip client-api
-        run: |
-          tar -zxf client-api.tar.gz -C tee-worker/
-          ls tee-worker/client-api/parachain-api
-          ls tee-worker/client-api/sidechain-api
 
       - name: Load docker image
         run: |
@@ -743,19 +660,101 @@ jobs:
         run: |
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
-      
-      - name: Integration Test ${{ matrix.test_name }}
+
+      - name: Integration single worker test ${{ matrix.test_name }}
         if: needs.set-condition.outputs.run_tee_test == 'true'
         timeout-minutes: 40
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
 
-      - name: Stop docker containers
+      - name: Stop integration single worker docker containers
         if: needs.set-condition.outputs.run_tee_test == 'true'
         run: |
           cd tee-worker/docker
           docker compose -f docker-compose.yml -f ${{ matrix.test_name }}.yml stop
+
+      - name: Collect docker logs if test fails
+        continue-on-error: true
+        uses: jwalton/gh-docker-logs@v2
+        if: failure()
+        with:
+          tail: all
+          dest: docker-logs
+
+      - name: Upload docker logs if test fails
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: ${{ matrix.test_name }}-docker-logs
+          path: docker-logs
+          if-no-files-found: ignore
+          retention-days: 3
+
+  tee-multi-worker-test:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    needs:
+      - set-condition
+      - parachain-build-dev
+      - tee-build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - test_name: lit-di-evm-identity-multiworker-test
+          - test_name: lit-di-substrate-identity-multiworker-test
+          - test_name: lit-di-vc-multiworker-test
+          - test_name: lit-ii-batch-test-multiworker
+          - test_name: lit-ii-identity-multiworker-test
+          - test_name: lit-ii-vc-multiworker-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull polkadot image
+        run: |
+          docker pull parity/polkadot
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: litentry-parachain-dev
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: litentry-tee
+
+      - name: Load docker image
+        run: |
+          docker load < litentry-parachain-dev.tar.gz
+          docker load < litentry-tee.tar.gz
+          docker images
+
+      - name: Enable corepack and pnpm
+        run: corepack enable && corepack enable pnpm
+
+      - name: Generate parachain artefacts
+        run: |
+          ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
+          ls -l docker/generated-rococo/
+          ls -l tee-worker/docker/litentry/
+
+      - name: Build litentry parachain docker images
+        run: |
+          cd tee-worker/docker
+          docker compose -f litentry-parachain.build.yml build
+
+      - name: Integration multi worker test ${{ matrix.test_name }}
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        timeout-minutes: 40
+        run: |
+          cd tee-worker/docker
+          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml up --no-build --exit-code-from ${{ matrix.test_name }} ${{ matrix.test_name }}
+
+      - name: Stop integration multi worker docker containers
+        if: needs.set-condition.outputs.run_tee_test == 'true'
+        run: |
+          cd tee-worker/docker
+          docker compose -f multiworker-docker-compose.yml -f ${{ matrix.test_name }}.yml stop
 
       - name: Collect docker logs if test fails
         continue-on-error: true
@@ -779,7 +778,7 @@ jobs:
   #
   # Only try to push docker image when
   #   - parachain-ts-test passes
-  #   - tee-test passes
+  #   - tee-single-worker-test passes
   #   - set-condition.outputs.push_docker is `true`
   # Whether the parachain or tee-worker image will actually be pushed still depends on if a new image was built/rebuilt.
   # This is important not to overwrite any other jobs where a rebuild **was** triggered.
@@ -793,7 +792,7 @@ jobs:
     needs:
       - set-condition
       - parachain-ts-test
-      - tee-test
+      - tee-single-worker-test
     if: ${{ !failure() && needs.set-condition.outputs.push_docker == 'true' }}
     steps:
       - uses: actions/download-artifact@v3

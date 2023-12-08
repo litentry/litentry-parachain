@@ -37,8 +37,7 @@ use ita_stf::{
 	helpers::{account_key_hash, set_block_number},
 	stf_sgx_tests,
 	test_genesis::{endowed_account as funded_pair, unendowed_account},
-	AccountInfo, Getter, State, StatePayload, TrustedCall, TrustedCallSigned, TrustedGetter,
-	TrustedOperation,
+	AccountInfo, Getter, State, TrustedCall, TrustedCallSigned, TrustedGetter,
 };
 use itp_node_api::metadata::{metadata_mocks::NodeMetadataMock, provider::NodeMetadataRepository};
 use itp_sgx_crypto::{Aes, StateCrypto};
@@ -51,11 +50,14 @@ use itp_stf_interface::{
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
 	StateCallInterface,
 };
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::{
+	traits::TrustedCallSigning,
+	types::{ShardIdentifier, StatePayload, TrustedOperation},
+};
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::handle_state_mock;
 use itp_top_pool_author::{test_utils::submit_operation_to_top_pool, traits::AuthorApi};
-use itp_types::{AccountId, Block, Header};
+use itp_types::{AccountId, Balance, Block, Header};
 use its_primitives::{
 	traits::{
 		Block as BlockTrait, BlockData, Header as SidechainHeaderTrait,
@@ -73,7 +75,6 @@ use sgx_types::size_t;
 use sp_core::{crypto::Pair, ed25519 as spEd25519, H256};
 use sp_runtime::traits::Header as HeaderT;
 use std::{string::String, sync::Arc, time::Duration, vec::Vec};
-
 #[no_mangle]
 pub extern "C" fn test_main_entrance() -> size_t {
 	rsgx_unit_tests!(
@@ -275,17 +276,20 @@ fn test_submit_trusted_getter_to_top_pool() {
 	// when
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
-		&signed_getter.clone().into(),
+		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
 		false,
 	)
 	.unwrap();
 
-	let getters = top_pool_author.get_pending_trusted_getters(shard);
+	let getters = top_pool_author.get_pending_getters(shard);
 
 	// then
-	assert_eq!(getters[0], TrustedOperation::get(Getter::trusted(signed_getter)));
+	assert_eq!(
+		getters[0],
+		TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter))
+	);
 }
 
 fn test_differentiate_getter_and_call_works() {
@@ -296,7 +300,7 @@ fn test_differentiate_getter_and_call_works() {
 	let sender = funded_pair();
 
 	let signed_getter = TrustedGetter::free_balance(Identity::Substrate(sender.public().into()))
-		.sign(&sender.clone().into());
+		.sign(&sender.into());
 
 	let signed_call = TrustedCall::balance_set_balance(
 		Identity::Substrate(sender.public().into()),
@@ -304,13 +308,13 @@ fn test_differentiate_getter_and_call_works() {
 		42,
 		42,
 	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let trusted_operation = direct_top(signed_call);
 
 	// when
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
-		&signed_getter.clone().into(),
+		&TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter.clone())),
 		&shielding_key,
 		shard,
 		false,
@@ -326,11 +330,14 @@ fn test_differentiate_getter_and_call_works() {
 	.unwrap();
 
 	let calls = top_pool_author.get_pending_trusted_calls(shard);
-	let getters = top_pool_author.get_pending_trusted_getters(shard);
+	let getters = top_pool_author.get_pending_getters(shard);
 
 	// then
 	assert_eq!(calls[0], trusted_operation);
-	assert_eq!(getters[0], TrustedOperation::get(Getter::trusted(signed_getter)));
+	assert_eq!(
+		getters[0],
+		TrustedOperation::<TrustedCallSigned, Getter>::get(Getter::trusted(signed_getter))
+	);
 }
 
 fn test_create_block_and_confirmation_works() {
@@ -365,8 +372,7 @@ fn test_create_block_and_confirmation_works() {
 	// when
 	let execution_result = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
-	let executed_operation_hashes =
-		execution_result.get_executed_operation_hashes().iter().copied().collect();
+	let executed_operation_hashes = execution_result.get_executed_operation_hashes().to_vec();
 
 	let signed_block = block_composer
 		.compose_block(
@@ -395,13 +401,13 @@ fn test_create_state_diff() {
 
 	let sender = funded_pair();
 	let receiver = unfunded_public();
-
+	const TX_AMOUNT: Balance = 1_000_000_000_000;
 	let signed_call = TrustedCall::balance_transfer(
 		Identity::Substrate(sender.public().into()),
 		receiver.into(),
-		1000,
+		TX_AMOUNT,
 	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let trusted_operation = direct_top(signed_call);
 
 	submit_operation_to_top_pool(
@@ -416,8 +422,7 @@ fn test_create_state_diff() {
 	// when
 	let execution_result = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
-	let executed_operation_hashes =
-		execution_result.get_executed_operation_hashes().iter().copied().collect();
+	let executed_operation_hashes = execution_result.get_executed_operation_hashes().to_vec();
 
 	let signed_block = block_composer
 		.compose_block(
@@ -436,16 +441,19 @@ fn test_create_state_diff() {
 
 	// then
 	let sender_acc_info: AccountInfo =
-		get_from_state_diff(&state_diff, &account_key_hash::<AccountId>(&sender.public().into()));
+		get_from_state_diff(state_diff, &account_key_hash::<AccountId>(&sender.public().into()));
 
 	let receiver_acc_info: AccountInfo =
-		get_from_state_diff(&state_diff, &account_key_hash::<AccountId>(&receiver.into()));
+		get_from_state_diff(state_diff, &account_key_hash::<AccountId>(&receiver.into()));
 
 	// state diff should consist of the following updates:
-	// (last_hash, sidechain block_number, sender_funds, receiver_funds, [no clear, after polkadot_v0.9.26 update], events, frame_system::LastRuntimeUpgradeInfo, pallet_identity_management_tee::migrations)
-	assert_eq!(state_diff.len(), 8);
-	assert_eq!(receiver_acc_info.data.free, 1000);
-	assert_eq!(sender_acc_info.data.free, 1000);
+	// (last_hash, sidechain block_number, sender_funds, receiver_funds, fee_recipient account [no clear, after polkadot_v0.9.26 update], events, frame_system::LastRuntimeUpgradeInfo, pallet_identity_management_tee::migrations)
+	assert_eq!(state_diff.len(), 9);
+	assert_eq!(receiver_acc_info.data.free, TX_AMOUNT);
+	assert_eq!(
+		sender_acc_info.data.free,
+		ita_stf::test_genesis::ENDOWED_ACC_FUNDS - TX_AMOUNT - ita_stf::STF_TX_FEE
+	);
 }
 
 fn test_executing_call_updates_account_nonce() {
@@ -460,7 +468,7 @@ fn test_executing_call_updates_account_nonce() {
 		receiver.into(),
 		1000,
 	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard)
+	.sign(&sender.into(), 0, &mrenclave, &shard)
 	.into_trusted_operation(false);
 
 	submit_operation_to_top_pool(
@@ -500,9 +508,9 @@ fn test_call_set_update_parentchain_block() {
 
 	TestStf::update_parentchain_block(&mut state, header.clone()).unwrap();
 
-	assert_eq!(header.hash(), state.execute_with(|| Parentchain::block_hash()));
-	assert_eq!(parent_hash, state.execute_with(|| Parentchain::parent_hash()));
-	assert_eq!(block_number, state.execute_with(|| Parentchain::block_number()));
+	assert_eq!(header.hash(), state.execute_with(Parentchain::block_hash));
+	assert_eq!(parent_hash, state.execute_with(Parentchain::parent_hash));
+	assert_eq!(block_number, state.execute_with(Parentchain::block_number));
 }
 
 fn test_signature_must_match_public_sender_in_call() {
@@ -518,7 +526,7 @@ fn test_signature_must_match_public_sender_in_call() {
 		sender.public().into(),
 		1000,
 	)
-	.sign(&sender.clone().into(), 10, &mrenclave, &shard)
+	.sign(&sender.into(), 10, &mrenclave, &shard)
 	.into_trusted_operation(true);
 
 	submit_operation_to_top_pool(
@@ -530,10 +538,9 @@ fn test_signature_must_match_public_sender_in_call() {
 	)
 	.unwrap();
 
-	// when
 	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
-	// then
+	// the top pool doesn't verify signatures, the call will only fail upon execution
 	assert!(!executed_batch.executed_operations[0].is_success());
 }
 
@@ -550,7 +557,7 @@ fn test_invalid_nonce_call_is_not_executed() {
 		receiver.into(),
 		1000,
 	)
-	.sign(&sender.clone().into(), 10, &mrenclave, &shard)
+	.sign(&sender.into(), 10, &mrenclave, &shard)
 	.into_trusted_operation(true);
 
 	submit_operation_to_top_pool(
@@ -562,10 +569,9 @@ fn test_invalid_nonce_call_is_not_executed() {
 	)
 	.unwrap();
 
-	// when
 	let executed_batch = execute_trusted_calls(&shard, stf_executor.as_ref(), &top_pool_author);
 
-	// then
+	// due to #1488, even invalid nonces will enter the pool ready state, so we can only verify that the call will fail
 	assert!(!executed_batch.executed_operations[0].is_success());
 }
 
@@ -578,7 +584,7 @@ fn test_non_root_shielding_call_is_not_executed() {
 
 	let signed_call = TrustedCall::balance_shield(
 		Identity::Substrate(sender_acc.clone().into()),
-		sender_acc.clone(),
+		sender_acc,
 		1000,
 	)
 	.sign(&sender.into(), 0, &mrenclave, &shard);
@@ -608,11 +614,12 @@ fn test_shielding_call_with_enclave_self_is_executed() {
 
 	let signed_call = TrustedCall::balance_shield(
 		Identity::Substrate(enclave_call_signer.public().into()),
-		sender_account.clone(),
+		sender_account,
 		1000,
 	)
 	.sign(&enclave_call_signer.into(), 0, &mrenclave, &shard);
-	let trusted_operation = TrustedOperation::indirect_call(signed_call);
+	let trusted_operation =
+		TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_call);
 
 	submit_operation_to_top_pool(
 		top_pool_author.as_ref(),
@@ -648,7 +655,7 @@ pub fn test_retrieve_events() {
 		receiver.public().into(),
 		transfer_value,
 	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
 	TestStf::execute_call(
@@ -661,7 +668,7 @@ pub fn test_retrieve_events() {
 	)
 	.unwrap();
 
-	assert_eq!(TestStf::get_events(&mut state).len(), 3);
+	assert_eq!(TestStf::get_events(&mut state).len(), 4);
 }
 
 pub fn test_retrieve_event_count() {
@@ -679,7 +686,7 @@ pub fn test_retrieve_event_count() {
 		receiver.public().into(),
 		transfer_value,
 	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 
 	// when
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
@@ -695,7 +702,7 @@ pub fn test_retrieve_event_count() {
 	.unwrap();
 
 	let event_count = TestStf::get_event_count(&mut state);
-	assert_eq!(event_count, 3);
+	assert_eq!(event_count, 4);
 }
 
 pub fn test_reset_events() {
@@ -712,7 +719,7 @@ pub fn test_reset_events() {
 		receiver.public().into(),
 		transfer_value,
 	)
-	.sign(&sender.clone().into(), 0, &mrenclave, &shard);
+	.sign(&sender.into(), 0, &mrenclave, &shard);
 	let repo = Arc::new(NodeMetadataRepository::<NodeMetadataMock>::default());
 	let shard = ShardIdentifier::default();
 	TestStf::execute_call(
@@ -727,7 +734,7 @@ pub fn test_reset_events() {
 	let receiver_acc_info = TestStf::get_account_data(&mut state, &receiver.public().into());
 	assert_eq!(receiver_acc_info.free, transfer_value);
 	// Ensure that there really have been events generated.
-	assert_eq!(TestStf::get_events(&mut state).len(), 3);
+	assert_eq!(TestStf::get_events(&mut state).len(), 4);
 
 	// Remove the events.
 	TestStf::reset_events(&mut state);
@@ -740,21 +747,20 @@ fn execute_trusted_calls(
 	shard: &ShardIdentifier,
 	stf_executor: &TestStfExecutor,
 	top_pool_author: &TestTopPoolAuthor,
-) -> BatchExecutionResult<State> {
+) -> BatchExecutionResult<State, TrustedCallSigned, Getter> {
 	let top_pool_calls = top_pool_author.get_pending_trusted_calls(*shard);
-	let execution_result = stf_executor
+	stf_executor
 		.propose_state_update(
 			&top_pool_calls,
 			&latest_parentchain_header(),
-			&shard,
+			shard,
 			Duration::from_millis(600),
 			|mut s| {
 				s.set_block_number(&s.get_block_number().map_or(1, |n| n + 1));
 				s
 			},
 		)
-		.unwrap();
-	execution_result
+		.unwrap()
 }
 
 // helper functions
@@ -782,7 +788,7 @@ pub fn test_account() -> spEd25519::Pair {
 }
 
 /// transforms `call` into `TrustedOperation::direct(call)`
-pub fn direct_top(call: TrustedCallSigned) -> TrustedOperation {
+pub fn direct_top(call: TrustedCallSigned) -> TrustedOperation<TrustedCallSigned, Getter> {
 	call.into_trusted_operation(true)
 }
 

@@ -14,7 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall};
+use crate::{
+	handler::TaskHandler, EnclaveOnChainOCallApi, Getter, StfTaskContext, TrustedCall,
+	TrustedCallSigned,
+};
 use ita_sgx_runtime::Hash;
 use ita_stf::H256;
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -30,8 +33,8 @@ use std::sync::Arc;
 
 pub(crate) struct IdentityVerificationHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
@@ -42,8 +45,8 @@ pub(crate) struct IdentityVerificationHandler<
 impl<K, A, S, H, O> TaskHandler for IdentityVerificationHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,

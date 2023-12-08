@@ -25,11 +25,13 @@ pub use futures;
 use ita_sgx_runtime::Hash;
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
-	ConvertAccountId, OpaqueCall, SgxParentchainTypeConverter, TrustedCall, TrustedOperation,
-	VCMPCallIndexes, H256, IMT,
+	ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCall,
+	TrustedCallSigned, TrustedOperation, H256, IMT,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
+use itp_node_api::metadata::{
+	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+};
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
@@ -57,8 +59,8 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	node_metadata_repo: Arc<N>,
 ) where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
-	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
-	S: StfEnclaveSigning + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
@@ -99,8 +101,8 @@ pub fn handle_request<K, A, S, H, O, Z, N>(
 ) -> Result<Vec<u8>, String>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
-	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
-	S: StfEnclaveSigning + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
@@ -120,10 +122,12 @@ where
 		None => return Err("Failed to decrypted trusted operation".to_string()),
 	};
 
-	let trusted_operation = TrustedOperation::decode(&mut decrypted_trusted_operation.as_slice())
-		.map_err(|e| format!("Failed to decode trusted operation, {:?}", e))?;
+	let trusted_operation = TrustedOperation::<TrustedCallSigned, Getter>::decode(
+		&mut decrypted_trusted_operation.as_slice(),
+	)
+	.map_err(|e| format!("Failed to decode trusted operation, {:?}", e))?;
 
-	let trusted_call = match trusted_operation.to_call() {
+	let trusted_call: &TrustedCallSigned = match trusted_operation.to_call() {
 		Some(s) => s,
 		None => return Err("Failed to convert trusted operation to trusted call".to_string()),
 	};
@@ -206,7 +210,7 @@ where
 				.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
 			context
 				.ocall_api
-				.send_to_parentchain(xt, &ParentchainId::Litentry)
+				.send_to_parentchain(xt, &ParentchainId::Litentry, false)
 				.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
 
 			Ok(res.encode())

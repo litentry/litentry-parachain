@@ -2,6 +2,7 @@
 
 members = [
     "app-libs/oracle",
+    "app-libs/parentchain-interface",
     "app-libs/sgx-runtime",
     "app-libs/stf",
     "cli",
@@ -98,11 +99,6 @@ sgx_urts = { version = "1.1.6", git = "https://github.com/apache/incubator-teacl
 [patch.crates-io]
 ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cleanup" }
 
-#[patch."https://github.com/integritee-network/sgx-runtime"]
-#sgx-runtime = { path = "../sgx-runtime/runtime"}
-#sp-io = { path = "../sgx-runtime/substrate-sgx/sp-io"}
-#sgx-externalities = { path = "../sgx-runtime/substrate-sgx/externalities"}
-
 #[patch."https://github.com/integritee-network/integritee-node"]
 #my-node-runtime = { package = "integritee-node-runtime", git = "https://github.com/integritee-network//integritee-node", branch = "ab/integrate-pallet-teerex-refactoring" }
 
@@ -123,6 +119,3 @@ ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cl
 #teerex-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #teeracle-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #common-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
-
-#[patch."https://github.com/integritee-network/http_req"]
-#http_req = {path = '..//http_req' }

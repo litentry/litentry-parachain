@@ -21,6 +21,7 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
+itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # sgx dependencies
@@ -51,7 +52,6 @@ sgx = [
     "sgx_tstd",
     "chrono_sgx",
     "itc-rest-client/sgx",
-    "itp-utils/sgx",
     "litentry-primitives/sgx",
 ]
 std = [
@@ -60,6 +60,7 @@ std = [
     "thiserror",
     "url",
     "itc-rest-client/std",
+    "itp-rpc/std",
     "itp-utils/std",
     "log/std",
     "serde/std",

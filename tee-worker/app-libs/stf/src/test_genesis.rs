@@ -14,11 +14,10 @@
 	limitations under the License.
 
 */
-
-use crate::StfError;
 use frame_support::traits::UnfilteredDispatchable;
 use ita_sgx_runtime::{Balance, Runtime, System};
 use itp_sgx_externalities::SgxExternalitiesTrait;
+use itp_stf_primitives::error::StfError;
 use itp_storage::storage_value_key;
 use log::*;
 use sgx_tstd as std;
@@ -43,9 +42,9 @@ const ENDOWED_SEED: Seed = *b"12345678901234567890123456789012";
 const SECOND_ENDOWED_SEED: Seed = *b"22345678901234567890123456789012";
 const UNENDOWED_SEED: Seed = *b"92345678901234567890123456789012";
 
-const ALICE_FUNDS: Balance = 1000000000000000;
-pub const ENDOWED_ACC_FUNDS: Balance = 2000;
-pub const SECOND_ENDOWED_ACC_FUNDS: Balance = 1000;
+const ALICE_FUNDS: Balance = 10_000_000_000_000_000;
+pub const ENDOWED_ACC_FUNDS: Balance = 2_000_000_000_000;
+pub const SECOND_ENDOWED_ACC_FUNDS: Balance = 1_000_000_000_000;
 
 pub fn endowed_account() -> ed25519::Pair {
 	ed25519::Pair::from_seed(&ENDOWED_SEED)

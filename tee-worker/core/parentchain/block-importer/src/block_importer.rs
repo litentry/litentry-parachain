@@ -23,9 +23,14 @@ use itc_parentchain_indirect_calls_executor::ExecuteIndirectCalls;
 use itc_parentchain_light_client::{
 	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, Validator,
 };
+use itp_enclave_metrics::EnclaveMetric;
 use itp_extrinsics_factory::CreateExtrinsics;
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_stf_executor::traits::StfUpdateState;
-use itp_types::{parentchain::IdentifyParentchain, OpaqueCall, H256};
+use itp_types::{
+	parentchain::{IdentifyParentchain, ParentchainId},
+	OpaqueCall, H256,
+};
 use log::*;
 use sp_runtime::{
 	generic::SignedBlock as SignedBlockG,
@@ -40,11 +45,13 @@ pub struct ParentchainBlockImporter<
 	StfExecutor,
 	ExtrinsicsFactory,
 	IndirectCallsExecutor,
+	OCallApi,
 > {
-	validator_accessor: Arc<ValidatorAccessor>,
+	pub validator_accessor: Arc<ValidatorAccessor>,
 	stf_executor: Arc<StfExecutor>,
 	extrinsics_factory: Arc<ExtrinsicsFactory>,
-	indirect_calls_executor: Arc<IndirectCallsExecutor>,
+	pub indirect_calls_executor: Arc<IndirectCallsExecutor>,
+	ocall_api: Arc<OCallApi>,
 	_phantom: PhantomData<ParentchainBlock>,
 }
 
@@ -54,6 +61,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OCallApi,
 	>
 	ParentchainBlockImporter<
 		ParentchainBlock,
@@ -61,6 +69,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OCallApi,
 	>
 {
 	pub fn new(
@@ -68,12 +77,14 @@ impl<
 		stf_executor: Arc<StfExecutor>,
 		extrinsics_factory: Arc<ExtrinsicsFactory>,
 		indirect_calls_executor: Arc<IndirectCallsExecutor>,
+		ocall_api: Arc<OCallApi>,
 	) -> Self {
 		ParentchainBlockImporter {
 			validator_accessor,
 			stf_executor,
 			extrinsics_factory,
 			indirect_calls_executor,
+			ocall_api,
 			_phantom: Default::default(),
 		}
 	}
@@ -85,6 +96,7 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OcallApi,
 	> ImportParentchainBlocks
 	for ParentchainBlockImporter<
 		ParentchainBlock,
@@ -92,13 +104,15 @@ impl<
 		StfExecutor,
 		ExtrinsicsFactory,
 		IndirectCallsExecutor,
+		OcallApi,
 	> where
 	ParentchainBlock: ParentchainBlockTrait<Hash = H256, Header = ParentchainHeader>,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	ValidatorAccessor: ValidatorAccess<ParentchainBlock> + IdentifyParentchain,
-	StfExecutor: StfUpdateState,
+	StfExecutor: StfUpdateState<ParentchainHeader, ParentchainId>,
 	ExtrinsicsFactory: CreateExtrinsics,
 	IndirectCallsExecutor: ExecuteIndirectCalls,
+	OcallApi: EnclaveMetricsOCallApi,
 {
 	type SignedBlockType = SignedBlockG<ParentchainBlock>;
 
@@ -114,17 +128,11 @@ impl<
 		for (signed_block, raw_events) in
 			blocks_to_import.into_iter().zip(events_to_import.into_iter())
 		{
-			// Check if there are any extrinsics in the to-be-imported block that we sent and cached in the light-client before.
-			// If so, remove them now from the cache.
-			if let Err(e) = self.validator_accessor.execute_mut_on_validator(|v| {
-				// TODO(Litentry):
-				// comment out the inclusion check
-				// see https://github.com/litentry/litentry-parachain/issues/1617
-				//
-				// v.check_xt_inclusion(v.num_relays(), &signed_block.block)?;
-
-				v.submit_block(&signed_block)
-			}) {
+			let started = std::time::Instant::now();
+			if let Err(e) = self
+				.validator_accessor
+				.execute_mut_on_validator(|v| v.submit_block(&signed_block))
+			{
 				error!("[{:?}] Header submission to light client failed: {:?}", id, e);
 				return Err(e.into())
 			}
@@ -148,7 +156,13 @@ impl<
 				Ok(executed_shielding_calls) => {
 					calls.push(executed_shielding_calls);
 				},
-				Err(_) => error!("[{:?}] Error executing relevant extrinsics", id),
+				Err(e) => error!("[{:?}] Error executing relevant extrinsics: {:?}", id, e),
+			};
+			if let Err(e) = self
+				.ocall_api
+				.update_metric(EnclaveMetric::ParentchainBlockImportTime(started.elapsed()))
+			{
+				warn!("Failed to update metric for parentchain block import: {:?}", e);
 			};
 
 			info!(
@@ -168,5 +182,9 @@ impl<
 			.execute_mut_on_validator(|v| v.send_extrinsics(parentchain_extrinsics))?;
 
 		Ok(())
+	}
+
+	fn parentchain_id(&self) -> ParentchainId {
+		self.validator_accessor.parentchain_id()
 	}
 }

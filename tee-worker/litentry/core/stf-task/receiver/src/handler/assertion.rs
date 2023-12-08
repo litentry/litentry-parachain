@@ -18,6 +18,7 @@
 
 use crate::{handler::TaskHandler, EnclaveOnChainOCallApi, StfTaskContext, TrustedCall, H256};
 use ita_sgx_runtime::Hash;
+use ita_stf::{Getter, TrustedCallSigned};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
@@ -36,8 +37,8 @@ use std::{format, string::ToString, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
@@ -48,8 +49,8 @@ pub(crate) struct AssertionHandler<
 impl<K, A, S, H, O> TaskHandler for AssertionHandler<K, A, S, H, O>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi,
@@ -145,15 +146,27 @@ where
 				),
 
 			Assertion::BnbDomainHolding =>
-				lc_assertion_build::nodereal::bnb_domain_holding_amount::build(
+				lc_assertion_build::nodereal::bnb_domain::bnb_domain_holding_amount::build(
 					&self.req,
 					&self.context.data_provider_config,
 				),
 
 			Assertion::BnbDigitDomainClub(digit_domain_type) =>
-				lc_assertion_build::nodereal::bnb_digit_domain_club_amount::build(
+				lc_assertion_build::nodereal::bnb_domain::bnb_digit_domain_club_amount::build(
 					&self.req,
 					digit_domain_type,
+					&self.context.data_provider_config,
+				),
+
+			Assertion::VIP3MembershipCard(level) => lc_assertion_build::vip3::card::build(
+				&self.req,
+				level,
+				&self.context.data_provider_config,
+			),
+
+			Assertion::WeirdoGhostGangHolder =>
+				lc_assertion_build::nodereal::nft_holder::weirdo_ghost_gang_holder::build(
+					&self.req,
 					&self.context.data_provider_config,
 				),
 		}?;

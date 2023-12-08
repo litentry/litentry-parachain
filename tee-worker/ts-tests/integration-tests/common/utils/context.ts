@@ -1,4 +1,4 @@
-import { WsProvider, ApiPromise } from 'parachain-api';
+import { WsProvider, ApiPromise, TeerexPrimitivesEnclave } from 'parachain-api';
 import { Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { ethers } from 'ethers';
@@ -8,7 +8,7 @@ import Options from 'websocket-as-promised/types/options';
 import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
 import { getEvmSigner, getSubstrateSigner } from '../helpers';
-import type { IntegrationTestContext, EnclaveResult, Web3Wallets } from '../type-definitions';
+import type { IntegrationTestContext, Web3Wallets } from '../common-types';
 
 import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
@@ -84,20 +84,26 @@ export async function getEnclave(api: ApiPromise): Promise<{
 }> {
     const count = await api.query.teerex.enclaveCount();
 
-    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as EnclaveResult;
+    const enclaveRegistry = (
+        await api.query.teerex.enclaveRegistry(count)
+    ).toHuman() as unknown as TeerexPrimitivesEnclave;
 
     const teeShieldingKey = crypto.createPublicKey({
         key: {
             alg: 'RSA-OAEP-256',
             kty: 'RSA',
             use: 'enc',
-            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString('base64url'),
-            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString('base64url'),
+            n: Buffer.from(JSON.parse(enclaveRegistry.shieldingKey as unknown as HexString).n.reverse()).toString(
+                'base64url'
+            ),
+            e: Buffer.from(JSON.parse(enclaveRegistry.shieldingKey as unknown as HexString).e.reverse()).toString(
+                'base64url'
+            ),
         },
         format: 'jwk',
     });
     //@TODO mrEnclave should verify from storage
-    const mrEnclave = res.mrEnclave;
+    const mrEnclave = enclaveRegistry.mrEnclave as unknown as HexString;
     return {
         mrEnclave,
         teeShieldingKey,
