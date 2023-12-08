@@ -206,6 +206,9 @@ impl DataProviderConfig {
 			if let Ok(v) = env::var("NODEREAL_API_URL") {
 				config.set_nodereal_api_url(v);
 			}
+			if let Ok(v) = env::var("NODEREAL_API_CHAIN_NETWORK_URL") {
+				config.set_nodereal_api_chain_network_url(v);
+			}
 			if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
 				config.set_contest_legend_discord_role_id(v);
 			}
@@ -214,6 +217,9 @@ impl DataProviderConfig {
 			}
 			if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
 				config.set_contest_participant_discord_role_id(v);
+			}
+			if let Ok(v) = env::var("VIP3_URL") {
+				config.set_vip3_url(v);
 			}
 		});
 		// set secrets from env variables
