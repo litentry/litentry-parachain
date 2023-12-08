@@ -67,11 +67,6 @@ extern "C" {
 		retval: *mut sgx_status_t,
 		shard: *const u8,
 		shard_size: u32,
-	) -> sgx_status_t;
-
-	pub fn trigger_parentchain_block_import(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
 	) -> sgx_status_t;
@@ -89,6 +84,7 @@ extern "C" {
 		events_proofs_size: usize,
 		parentchain_id: *const u8,
 		parentchain_id_size: u32,
+		is_syncing: c_int,
 	) -> sgx_status_t;
 
 	pub fn set_nonce(

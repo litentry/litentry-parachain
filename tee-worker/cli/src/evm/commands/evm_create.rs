@@ -79,7 +79,7 @@ impl EvmCreateCommands {
 		.sign(&from.into(), nonce, &mrenclave, &shard)
 		.into_trusted_operation(trusted_args.direct);
 
-		perform_trusted_operation(cli, trusted_args, &top)?;
+		perform_trusted_operation::<()>(cli, trusted_args, &top)?;
 
 		let execution_address = evm_create_address(sender_evm_acc, evm_account_nonce);
 		info!("trusted call evm_create executed");
