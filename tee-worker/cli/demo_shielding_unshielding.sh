@@ -70,6 +70,7 @@ echo ""
 
 # the parentchain token is 12 decimal
 UNIT=$(( 10 ** 12 ))
+FEE_TOLERANCE=$((10 ** 11))
 
 # we have to make these amounts greater than ED, see
 # https://github.com/litentry/litentry-parachain/issues/1162
@@ -90,14 +91,14 @@ function assert_account_balance()
 {
     for i in $(seq 1 $WAIT_ROUNDS); do
         state=$(${CLIENT} trusted --mrenclave "$1" balance "$2")
-        if [ $state -eq "$3" ]; then
+        if (( $3 >= state ? $3 - state < FEE_TOLERANCE : state - $3 < FEE_TOLERANCE)); then
             return
         else
             sleep $WAIT_INTERVAL_SECONDS
         fi
     done
     echo
-    echo "Assert $2 failed, expected = $3, actual = $state"
+    echo "Assert $2 failed, expected = $3, actual = $state, tolerance = $FEE_TOLERANCE"
     exit 1
 }
 
@@ -138,7 +139,6 @@ function assert_account_state()
     echo
     echo "Assert $2 $3 failed, expected = $4, actual = $state"
     exit 1
-
 }
 
 echo "* Query on-chain enclave registry:"

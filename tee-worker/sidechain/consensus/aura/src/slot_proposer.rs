@@ -194,7 +194,7 @@ impl<
 		};
 
 		info!(
-			"Queue/Timeslot/Transactions: {:?};{};{}",
+			"Queue/Timeslot/Transactions: {:?};{}ms;{}",
 			trusted_calls.len(),
 			max_duration.as_millis(),
 			number_executed_transactions

@@ -40,8 +40,8 @@ static DEFAULT_FAIL_AT: &str = "0";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Config {
-	pub integritee_rpc_url: String,
-	pub integritee_rpc_port: String,
+	pub litentry_rpc_url: String,
+	pub litentry_rpc_port: String,
 	pub target_a_parentchain_rpc_url: Option<String>,
 	pub target_a_parentchain_rpc_port: Option<String>,
 	pub target_b_parentchain_rpc_url: Option<String>,
@@ -88,8 +88,8 @@ pub struct Config {
 #[allow(clippy::too_many_arguments)]
 impl Config {
 	pub fn new(
-		integritee_rpc_url: String,
-		integritee_rpc_port: String,
+		litentry_rpc_url: String,
+		litentry_rpc_port: String,
 		target_a_parentchain_rpc_url: Option<String>,
 		target_a_parentchain_rpc_port: Option<String>,
 		target_b_parentchain_rpc_url: Option<String>,
@@ -114,8 +114,8 @@ impl Config {
 		fail_at: u64,
 	) -> Self {
 		Self {
-			integritee_rpc_url,
-			integritee_rpc_port,
+			litentry_rpc_url,
+			litentry_rpc_port,
 			target_a_parentchain_rpc_url,
 			target_a_parentchain_rpc_port,
 			target_b_parentchain_rpc_url,
@@ -142,8 +142,8 @@ impl Config {
 	}
 
 	/// Integritee RPC endpoint (including ws://).
-	pub fn integritee_rpc_endpoint(&self) -> String {
-		format!("{}:{}", self.integritee_rpc_url, self.integritee_rpc_port)
+	pub fn litentry_rpc_endpoint(&self) -> String {
+		format!("{}:{}", self.litentry_rpc_url, self.litentry_rpc_port)
 	}
 
 	pub fn target_a_parentchain_rpc_endpoint(&self) -> Option<String> {
@@ -429,8 +429,8 @@ mod test {
 		let config = Config::from(&empty_args);
 		let expected_worker_ip = "127.0.0.1";
 
-		assert_eq!(config.integritee_rpc_url, DEFAULT_NODE_URL);
-		assert_eq!(config.integritee_rpc_port, DEFAULT_NODE_PORT);
+		assert_eq!(config.litentry_rpc_url, DEFAULT_NODE_URL);
+		assert_eq!(config.litentry_rpc_port, DEFAULT_NODE_PORT);
 		assert_eq!(config.target_a_parentchain_rpc_url, None);
 		assert_eq!(config.target_a_parentchain_rpc_port, None);
 		assert_eq!(config.target_b_parentchain_rpc_url, None);
@@ -515,8 +515,8 @@ mod test {
 
 		let config = Config::from(&args);
 
-		assert_eq!(config.integritee_rpc_url, node_ip);
-		assert_eq!(config.integritee_rpc_port, node_port);
+		assert_eq!(config.litentry_rpc_url, node_ip);
+		assert_eq!(config.litentry_rpc_port, node_port);
 		assert_eq!(config.trusted_worker_port, trusted_port);
 		assert_eq!(config.untrusted_worker_port, untrusted_port);
 		assert_eq!(config.mu_ra_port, mu_ra_port);
