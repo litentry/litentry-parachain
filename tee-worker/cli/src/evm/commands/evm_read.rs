@@ -55,7 +55,15 @@ impl EvmReadCommands {
 			TrustedGetter::evm_account_storages(sender_acc.into(), execution_address, H256::zero())
 				.sign(&KeyPair::Sr25519(Box::new(sender))),
 		));
-		let hash = perform_trusted_operation::<H256>(cli, trusted_args, &top)?;
-		Ok(CliResultOk::H256 { hash })
+		match perform_trusted_operation::<H256>(cli, trusted_args, &top) {
+			Ok(hash) => {
+				println!("{:?}", hash);
+				Ok(CliResultOk::H256 { hash })
+			},
+			Err(e) => {
+				error!("Nothing in state! Reason: {:?} !", e);
+				Err(CliError::EvmRead { msg: "Nothing in state!".to_string() })
+			},
+		}
 	}
 }

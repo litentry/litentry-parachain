@@ -24,8 +24,8 @@ macro_rules! get_layer_two_evm_nonce {
 			TrustedGetter::evm_nonce($signer_pair.public().into())
 				.sign(&KeyPair::Sr25519(Box::new($signer_pair.clone()))),
 		));
-		let nonce =
-			perform_trusted_operation::<Index>($cli, $trusted_args, &top).unwrap_or_default();
+		let res = perform_trusted_operation::<Index>($cli, $trusted_args, &top);
+		let nonce = res.ok().unwrap_or(0);
 		debug!("got evm nonce: {:?}", nonce);
 		nonce
 	}};

@@ -74,7 +74,12 @@ where
 		todo!()
 	}
 
-	fn epoch_data(&self, _header: &B::Header, _slot: Slot) -> Result<Self::EpochData> {
+	fn epoch_data(
+		&self,
+		_header: &B::Header,
+		_shard: ShardIdentifierFor<Self::Output>,
+		_slot: Slot,
+	) -> Result<Self::EpochData> {
 		todo!()
 	}
 
@@ -103,14 +108,36 @@ where
 		todo!()
 	}
 
-	fn import_parentchain_blocks_until(
+	fn import_integritee_parentchain_blocks_until(
 		&self,
 		_last_imported_parentchain_header: &<B::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<B::Header>> {
 		todo!()
 	}
 
-	fn peek_latest_parentchain_header(&self) -> Result<Option<B::Header>> {
+	fn peek_latest_integritee_parentchain_header(&self) -> Result<Option<B::Header>> {
+		todo!()
+	}
+
+	fn import_target_a_parentchain_blocks_until(
+		&self,
+		_last_imported_parentchain_header: &<B::Header as ParentchainHeaderTrait>::Hash,
+	) -> Result<Option<B::Header>> {
+		todo!()
+	}
+
+	fn peek_latest_target_a_parentchain_header(&self) -> Result<Option<B::Header>> {
+		todo!()
+	}
+
+	fn import_target_b_parentchain_blocks_until(
+		&self,
+		_last_imported_parentchain_header: &<B::Header as ParentchainHeaderTrait>::Hash,
+	) -> Result<Option<B::Header>> {
+		todo!()
+	}
+
+	fn peek_latest_target_b_parentchain_header(&self) -> Result<Option<B::Header>> {
 		todo!()
 	}
 

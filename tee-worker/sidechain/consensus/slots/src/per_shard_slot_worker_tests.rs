@@ -94,5 +94,7 @@ fn slot_info_from_now() -> SlotInfo<ParentchainBlock> {
 		SLOT_DURATION,
 		slot_ends_at,
 		ParentchainHeaderBuilder::default().build(),
+		None,
+		None,
 	)
 }

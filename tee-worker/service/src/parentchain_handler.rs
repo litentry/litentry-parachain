@@ -48,10 +48,8 @@ pub trait HandleParentchain {
 		&self,
 		last_synced_header: Header,
 		overriden_start_block: u32,
+		is_syncing: bool,
 	) -> ServiceResult<Header>;
-
-	/// Triggers the import of the synced parentchain blocks inside the enclave.
-	fn trigger_parentchain_block_import(&self) -> ServiceResult<()>;
 
 	/// Syncs and directly imports parentchain blocks from the latest synced header
 	/// until the specified until_header.
@@ -153,6 +151,7 @@ where
 		&self,
 		last_synced_header: Header,
 		overriden_start_block: u32,
+		is_syncing: bool,
 	) -> ServiceResult<Header> {
 		let id = self.parentchain_id();
 		trace!("[{:?}] Getting current head", id);
@@ -162,7 +161,7 @@ where
 			.ok_or(Error::MissingLastFinalizedBlock)?;
 		let curr_block_number = curr_block.block.header().number();
 
-		println!(
+		info!(
 			"[{:?}] Syncing blocks from {} to {}",
 			id, last_synced_header.number, curr_block_number
 		);
@@ -183,7 +182,7 @@ where
 				start_block,
 				min(start_block + BLOCK_SYNC_BATCH_SIZE, curr_block_number),
 			)?;
-			println!("[+] [{:?}] Found {} block(s) to sync", id, block_chunk_to_sync.len());
+			info!("[{:?}] Found {} block(s) to sync", id, block_chunk_to_sync.len());
 			if block_chunk_to_sync.is_empty() {
 				return Ok(until_synced_header)
 			}
@@ -195,7 +194,7 @@ where
 				})
 				.collect::<Result<Vec<_>, _>>()?;
 
-			println!("[+] [{:?}] Found {} event vector(s) to sync", id, events_chunk_to_sync.len());
+			info!("[{:?}] Found {} event vector(s) to sync", id, events_chunk_to_sync.len());
 
 			let events_proofs_chunk_to_sync: Vec<StorageProof> = block_chunk_to_sync
 				.iter()
@@ -209,12 +208,17 @@ where
 				events_chunk_to_sync.as_slice(),
 				events_proofs_chunk_to_sync.as_slice(),
 				self.parentchain_id(),
+				is_syncing,
 			)?;
 
 			let api_client_until_synced_header = block_chunk_to_sync
 				.last()
 				.map(|b| b.block.header.clone())
 				.ok_or(Error::EmptyChunk)?;
+			info!(
+				"[{:?}] Synced {} out of {} finalized parentchain blocks",
+				id, until_synced_header.number, curr_block_number,
+			);
 
 			// #TODO: #1451: fix api/client types
 			until_synced_header =
@@ -227,11 +231,6 @@ where
 				id, until_synced_header.number, curr_block_number,
 			);
 		}
-	}
-
-	fn trigger_parentchain_block_import(&self) -> ServiceResult<()> {
-		trace!("[{:?}] trigger parentchain block import", self.parentchain_id());
-		Ok(self.enclave_api.trigger_parentchain_block_import(self.parentchain_id())?)
 	}
 
 	fn sync_and_import_parentchain_until(
@@ -252,12 +251,10 @@ where
 
 		while last_synced_header.number() < until_header.number() {
 			last_synced_header =
-				self.sync_parentchain(last_synced_header, overriden_start_block)?;
-			trace!("[{:?}] synced block number: {}", id, last_synced_header.number);
+				self.sync_parentchain(last_synced_header, overriden_start_block, true)?;
+			println!("[{:?}] synced block number: #{}", id, last_synced_header.number);
 			std::thread::sleep(std::time::Duration::from_secs(1));
 		}
-		self.trigger_parentchain_block_import()?;
-
 		Ok(last_synced_header)
 	}
 }

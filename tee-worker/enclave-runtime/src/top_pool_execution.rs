@@ -25,9 +25,16 @@ use crate::{
 	},
 	sync::{EnclaveLock, EnclaveStateRWLock},
 	utils::{
-		get_extrinsic_factory_from_litentry_solo_or_parachain,
-		get_stf_executor_from_solo_or_parachain, get_triggered_dispatcher_from_solo_or_parachain,
-		get_validator_accessor_from_solo_or_parachain,
+		get_extrinsic_factory_from_integritee_solo_or_parachain,
+		get_extrinsic_factory_from_target_a_solo_or_parachain,
+		get_extrinsic_factory_from_target_b_solo_or_parachain,
+		get_stf_executor_from_solo_or_parachain,
+		get_triggered_dispatcher_from_integritee_solo_or_parachain,
+		get_triggered_dispatcher_from_target_a_solo_or_parachain,
+		get_triggered_dispatcher_from_target_b_solo_or_parachain,
+		get_validator_accessor_from_integritee_solo_or_parachain,
+		get_validator_accessor_from_target_a_solo_or_parachain,
+		get_validator_accessor_from_target_b_solo_or_parachain,
 	},
 };
 use codec::Encode;
@@ -47,7 +54,7 @@ use itp_sgx_crypto::key_repository::AccessKey;
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
-use itp_types::{Block, OpaqueCall, H256};
+use itp_types::{parentchain::ParentchainCall, Block, OpaqueCall, H256};
 use itp_utils::if_not_production;
 use its_primitives::{
 	traits::{
@@ -100,25 +107,53 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let slot_beginning_timestamp = duration_now();
 
-	let parentchain_import_dispatcher = get_triggered_dispatcher_from_solo_or_parachain()?;
+	let integritee_parentchain_import_dispatcher =
+		get_triggered_dispatcher_from_integritee_solo_or_parachain()?;
+	let maybe_target_a_parentchain_import_dispatcher =
+		get_triggered_dispatcher_from_target_a_solo_or_parachain().ok();
+	let maybe_target_b_parentchain_import_dispatcher =
+		get_triggered_dispatcher_from_target_b_solo_or_parachain().ok();
 
-	let validator_access = get_validator_accessor_from_solo_or_parachain()?;
+	let maybe_latest_target_a_parentchain_header =
+		if let Some(ref _triggered_dispatcher) = maybe_target_a_parentchain_import_dispatcher {
+			let validator_access = get_validator_accessor_from_target_a_solo_or_parachain()?;
+			Some(validator_access.execute_on_validator(|v| {
+				let latest_parentchain_header = v.latest_finalized_header()?;
+				Ok(latest_parentchain_header)
+			})?)
+		} else {
+			None
+		};
+
+	let maybe_latest_target_b_parentchain_header =
+		if let Some(ref _triggered_dispatcher) = maybe_target_b_parentchain_import_dispatcher {
+			let validator_access = get_validator_accessor_from_target_b_solo_or_parachain()?;
+			Some(validator_access.execute_on_validator(|v| {
+				let latest_parentchain_header = v.latest_finalized_header()?;
+				Ok(latest_parentchain_header)
+			})?)
+		} else {
+			None
+		};
+
+	let integritee_validator_access = get_validator_accessor_from_integritee_solo_or_parachain()?;
 
 	// This gets the latest imported block. We accept that all of AURA, up until the block production
 	// itself, will  operate on a parentchain block that is potentially outdated by one block
 	// (in case we have a block in the queue, but not imported yet).
-	let current_parentchain_header = validator_access.execute_on_validator(|v| {
-		let latest_parentchain_header = v.latest_finalized_header()?;
-		Ok(latest_parentchain_header)
-	})?;
+	let current_integritee_parentchain_header =
+		integritee_validator_access.execute_on_validator(|v| {
+			let latest_parentchain_header = v.latest_finalized_header()?;
+			Ok(latest_parentchain_header)
+		})?;
 
 	// Import any sidechain blocks that are in the import queue. In case we are missing blocks,
 	// a peer sync will happen. If that happens, the slot time might already be used up just by this import.
 	let sidechain_block_import_queue_worker =
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT.get()?;
 
-	let latest_parentchain_header =
-		sidechain_block_import_queue_worker.process_queue(&current_parentchain_header)?;
+	let latest_integritee_parentchain_header = sidechain_block_import_queue_worker
+		.process_queue(&current_integritee_parentchain_header)?;
 
 	trace!(
 		"Elapsed time to process sidechain block import queue: {} ms",
@@ -131,8 +166,6 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let block_composer = GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT.get()?;
 
-	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
-
 	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
@@ -144,7 +177,9 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 	match yield_next_slot(
 		slot_beginning_timestamp,
 		SLOT_DURATION,
-		latest_parentchain_header,
+		latest_integritee_parentchain_header,
+		maybe_latest_target_a_parentchain_header,
+		maybe_latest_target_b_parentchain_header,
 		&mut LastSlot,
 	)? {
 		Some(slot) => {
@@ -171,12 +206,14 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 				}
 			});
 
-			let (blocks, opaque_calls) =
-				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _>(
+			let (blocks, parentchain_calls) =
+				exec_aura_on_slot::<_, _, SignedSidechainBlock, _, _, _, _, _, _, _>(
 					slot.clone(),
 					authority,
 					ocall_api.clone(),
-					parentchain_import_dispatcher,
+					integritee_parentchain_import_dispatcher,
+					maybe_target_a_parentchain_import_dispatcher,
+					maybe_target_b_parentchain_import_dispatcher,
 					env,
 					shards,
 					GLOBAL_SCHEDULED_ENCLAVE.clone(),
@@ -198,13 +235,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 			log_remaining_slot_duration(&slot, "After AURA");
 
-			send_blocks_and_extrinsics::<Block, _, _, _, _>(
-				blocks,
-				opaque_calls,
-				ocall_api,
-				validator_access.as_ref(),
-				extrinsics_factory.as_ref(),
-			)?;
+			send_blocks_and_extrinsics::<Block, _, _>(blocks, parentchain_calls, ocall_api)?;
 
 			log_remaining_slot_duration(&slot, "After broadcasting and sending extrinsic");
 		},
@@ -226,19 +257,23 @@ pub(crate) fn exec_aura_on_slot<
 	SignedSidechainBlock,
 	OCallApi,
 	PEnvironment,
-	BlockImportTrigger,
+	IntegriteeBlockImportTrigger,
+	TargetABlockImportTrigger,
+	TargetBBlockImportTrigger,
 	ScheduledEnclave,
 	StateHandler,
 >(
 	slot: SlotInfo<ParentchainBlock>,
 	authority: Authority,
 	ocall_api: Arc<OCallApi>,
-	block_import_trigger: Arc<BlockImportTrigger>,
+	integritee_block_import_trigger: Arc<IntegriteeBlockImportTrigger>,
+	maybe_target_a_block_import_trigger: Option<Arc<TargetABlockImportTrigger>>,
+	maybe_target_b_block_import_trigger: Option<Arc<TargetBBlockImportTrigger>>,
 	proposer_environment: PEnvironment,
 	shards: Vec<ShardIdentifierFor<SignedSidechainBlock>>,
 	scheduled_enclave: Arc<ScheduledEnclave>,
 	state_handler: Arc<StateHandler>,
-) -> Result<(Vec<SignedSidechainBlock>, Vec<OpaqueCall>)>
+) -> Result<(Vec<SignedSidechainBlock>, Vec<ParentchainCall>)>
 where
 	ParentchainBlock: BlockTrait<Hash = H256>,
 	SignedSidechainBlock:
@@ -253,7 +288,11 @@ where
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	PEnvironment:
 		Environment<ParentchainBlock, SignedSidechainBlock, Error = ConsensusError> + Send + Sync,
-	BlockImportTrigger:
+	IntegriteeBlockImportTrigger:
+		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
+	TargetABlockImportTrigger:
+		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
+	TargetBBlockImportTrigger:
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
 	ScheduledEnclave: ScheduledEnclaveUpdater,
 	StateHandler: HandleState<StateT = SgxExternalities>,
@@ -261,10 +300,12 @@ where
 	debug!("[Aura] Executing aura for slot: {:?}", slot);
 
 	let mut aura =
-		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _>::new(
+		Aura::<_, ParentchainBlock, SignedSidechainBlock, PEnvironment, _, _, _, _, _, _>::new(
 			authority,
 			ocall_api.as_ref().clone(),
-			block_import_trigger,
+			integritee_block_import_trigger,
+			maybe_target_a_block_import_trigger,
+			maybe_target_b_block_import_trigger,
 			proposer_environment,
 			scheduled_enclave,
 			state_handler,
@@ -280,37 +321,27 @@ where
 		},
 	};
 
-	let (blocks, xts): (Vec<_>, Vec<_>) =
-		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards, is_single_worker)
+	let (blocks, pxts): (Vec<_>, Vec<_>) =
+		PerShardSlotWorkerScheduler::on_slot(&mut aura, slot, shards)
 			.into_iter()
 			.map(|r| (r.block, r.parentchain_effects))
 			.unzip();
 
-	let opaque_calls: Vec<OpaqueCall> = xts.into_iter().flatten().collect();
+	let opaque_calls: Vec<ParentchainCall> = pxts.into_iter().flatten().collect();
 	Ok((blocks, opaque_calls))
 }
 
 /// Broadcasts sidechain blocks to fellow peers and sends opaque calls as extrinsic to the parentchain.
-pub(crate) fn send_blocks_and_extrinsics<
-	ParentchainBlock,
-	SignedSidechainBlock,
-	OCallApi,
-	ValidatorAccessor,
-	ExtrinsicsFactory,
->(
+pub(crate) fn send_blocks_and_extrinsics<ParentchainBlock, SignedSidechainBlock, OCallApi>(
 	blocks: Vec<SignedSidechainBlock>,
-	opaque_calls: Vec<OpaqueCall>,
+	parentchain_calls: Vec<ParentchainCall>,
 	ocall_api: Arc<OCallApi>,
-	validator_access: &ValidatorAccessor,
-	extrinsics_factory: &ExtrinsicsFactory,
 ) -> Result<()>
 where
 	ParentchainBlock: BlockTrait,
 	SignedSidechainBlock: SignedBlock + 'static,
 	OCallApi: EnclaveSidechainOCallApi + EnclaveMetricsOCallApi,
-	ValidatorAccessor: ValidatorAccess<ParentchainBlock> + Send + Sync + 'static,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
-	ExtrinsicsFactory: CreateExtrinsics,
 {
 	let started = std::time::Instant::now();
 	debug!("Proposing {} sidechain block(s) (broadcasting to peers)", blocks.len());
@@ -320,10 +351,40 @@ where
 	{
 		warn!("Failed to update metric for sidechain block broadcasting time: {:?}", e);
 	};
-	let xts = extrinsics_factory.create_extrinsics(opaque_calls.as_slice(), None)?;
 
-	debug!("Sending sidechain block(s) confirmation extrinsic.. ");
-	validator_access.execute_mut_on_validator(|v| v.send_extrinsics(xts))?;
+	let calls: Vec<OpaqueCall> = parentchain_calls
+		.iter()
+		.filter_map(|parentchain_call| parentchain_call.as_litentry())
+		.collect();
+	debug!("Enclave wants to send {} extrinsics to Integritee Parentchain", calls.len());
+	if !calls.is_empty() {
+		let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+		let xts = extrinsics_factory.create_extrinsics(calls.as_slice(), None)?;
+		let validator_access = get_validator_accessor_from_integritee_solo_or_parachain()?;
+		validator_access.execute_mut_on_validator(|v| v.send_extrinsics(xts))?;
+	}
+	let calls: Vec<OpaqueCall> = parentchain_calls
+		.iter()
+		.filter_map(|parentchain_call| parentchain_call.as_target_a())
+		.collect();
+	debug!("Enclave wants to send {} extrinsics to TargetA Parentchain", calls.len());
+	if !calls.is_empty() {
+		let extrinsics_factory = get_extrinsic_factory_from_target_a_solo_or_parachain()?;
+		let xts = extrinsics_factory.create_extrinsics(calls.as_slice(), None)?;
+		let validator_access = get_validator_accessor_from_target_a_solo_or_parachain()?;
+		validator_access.execute_mut_on_validator(|v| v.send_extrinsics(xts))?;
+	}
+	let calls: Vec<OpaqueCall> = parentchain_calls
+		.iter()
+		.filter_map(|parentchain_call| parentchain_call.as_target_b())
+		.collect();
+	debug!("Enclave wants to send {} extrinsics to TargetB Parentchain", calls.len());
+	if !calls.is_empty() {
+		let extrinsics_factory = get_extrinsic_factory_from_target_b_solo_or_parachain()?;
+		let xts = extrinsics_factory.create_extrinsics(calls.as_slice(), None)?;
+		let validator_access = get_validator_accessor_from_target_b_solo_or_parachain()?;
+		validator_access.execute_mut_on_validator(|v| v.send_extrinsics(xts))?;
+	}
 
 	Ok(())
 }

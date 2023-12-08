@@ -28,7 +28,6 @@ itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-
 itp-types = { path = "../../core-primitives/types", default-features = false }
 
 # Substrate dependencies
-
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # no-std compatible libraries
@@ -57,7 +56,6 @@ std = [
     "itp-stf-state-handler/std",
     "itp-top-pool-author/std",
     "itp-types/std",
-    "sp-core/std",
     "sp-runtime/std",
     "thiserror",
 ]

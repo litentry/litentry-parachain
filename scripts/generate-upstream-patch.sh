@@ -135,7 +135,7 @@ function apply_worker_tips() {
 
 	echo "- resolve any conflicts"
 	echo "- optionally update Cargo.lock file"
-	echo "- apply any changes of `workflows/build_and_test.yml` to $ROOTDIR/.github/workflows/ci.yml"
+	echo "- apply any changes of workflows/build_and_test.yml to $ROOTDIR/.github/workflows/ci.yml"
 }
 
 NEW_COMMIT=${2:-master}

@@ -31,7 +31,8 @@ use itp_stf_primitives::{
 	types::{KeyPair, Nonce, TrustedOperation},
 };
 use itp_types::{
-	parentchain::ParentchainId, AccountId, Balance, Index, OpaqueCall, ShardIdentifier, H256,
+	parentchain::{ParentchainCall, ParentchainId},
+	AccountId, Balance, Index, ShardIdentifier, H256,
 };
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
@@ -73,7 +74,7 @@ impl StateCallInterface<TrustedCallSignedMock, SgxExternalities, NodeMetadataRep
 		shard: &ShardIdentifier,
 		call: TrustedCallSignedMock,
 		top_hash: H256,
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
 	) -> Result<(), Self::Error> {
 		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
@@ -177,7 +178,7 @@ impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
 		self,
 		_shard: &ShardIdentifier,
 		_top_hash: H256,
-		_calls: &mut Vec<OpaqueCall>,
+		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepositoryMock>,
 	) -> Result<(), Self::Error> {
 		match self.call {

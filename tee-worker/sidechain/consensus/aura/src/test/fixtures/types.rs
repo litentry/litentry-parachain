@@ -41,6 +41,8 @@ pub type TestAura<E> = Aura<
 	E,
 	OnchainMock,
 	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
+	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
+	TriggerParentchainBlockImportMock<SignedBlock<ParentchainBlock>>,
 	ScheduledEnclaveMock,
 	HandleStateMock,
 >;

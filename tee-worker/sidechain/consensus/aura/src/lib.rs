@@ -29,12 +29,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[macro_use]
 extern crate sgx_tstd as std;
 
+use codec::Encode;
 use core::marker::PhantomData;
 use itc_parentchain_block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport;
 use itp_ocall_api::EnclaveOnChainOCallApi;
 use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::duration_now;
+
+use itp_utils::hex::hex_encode;
 use its_block_verification::slot::slot_author;
 use its_consensus_common::{Environment, Error as ConsensusError, Proposer};
 use its_consensus_slots::{SimpleSlotWorker, Slot, SlotInfo};
@@ -69,13 +72,17 @@ pub struct Aura<
 	SidechainBlock,
 	Environment,
 	OcallApi,
-	ImportTrigger,
+	IntegriteeImportTrigger,
+	TargetAImportTrigger,
+	TargetBImportTrigger,
 	ScheduledEnclave,
 	StateHandler,
 > {
 	authority_pair: AuthorityPair,
 	ocall_api: OcallApi,
-	parentchain_import_trigger: Arc<ImportTrigger>,
+	parentchain_integritee_import_trigger: Arc<IntegriteeImportTrigger>,
+	maybe_parentchain_target_a_import_trigger: Option<Arc<TargetAImportTrigger>>,
+	maybe_parentchain_target_b_import_trigger: Option<Arc<TargetBImportTrigger>>,
 	environment: Environment,
 	claim_strategy: SlotClaimStrategy,
 	scheduled_enclave: Arc<ScheduledEnclave>,
@@ -89,7 +96,9 @@ impl<
 		SidechainBlock,
 		Environment,
 		OcallApi,
-		ImportTrigger,
+		IntegriteeImportTrigger,
+		TargetAImportTrigger,
+		TargetBImportTrigger,
 		ScheduledEnclave,
 		StateHandler,
 	>
@@ -99,15 +108,20 @@ impl<
 		SidechainBlock,
 		Environment,
 		OcallApi,
-		ImportTrigger,
+		IntegriteeImportTrigger,
+		TargetAImportTrigger,
+		TargetBImportTrigger,
 		ScheduledEnclave,
 		StateHandler,
 	>
 {
+	#[allow(clippy::too_many_arguments)]
 	pub fn new(
 		authority_pair: AuthorityPair,
 		ocall_api: OcallApi,
-		parentchain_import_trigger: Arc<ImportTrigger>,
+		parentchain_integritee_import_trigger: Arc<IntegriteeImportTrigger>,
+		maybe_parentchain_target_a_import_trigger: Option<Arc<TargetAImportTrigger>>,
+		maybe_parentchain_target_b_import_trigger: Option<Arc<TargetBImportTrigger>>,
 		environment: Environment,
 		scheduled_enclave: Arc<ScheduledEnclave>,
 		state_handler: Arc<StateHandler>,
@@ -115,7 +129,9 @@ impl<
 		Self {
 			authority_pair,
 			ocall_api,
-			parentchain_import_trigger,
+			parentchain_integritee_import_trigger,
+			maybe_parentchain_target_a_import_trigger,
+			maybe_parentchain_target_b_import_trigger,
 			environment,
 			claim_strategy: SlotClaimStrategy::RoundRobin,
 			scheduled_enclave,
@@ -154,7 +170,9 @@ impl<
 		SignedSidechainBlock,
 		E,
 		OcallApi,
-		ImportTrigger,
+		IntegriteeImportTrigger,
+		TargetAImportTrigger,
+		TargetBImportTrigger,
 		ScheduledEnclave,
 		StateHandler,
 	> SimpleSlotWorker<ParentchainBlock>
@@ -164,7 +182,9 @@ impl<
 		SignedSidechainBlock,
 		E,
 		OcallApi,
-		ImportTrigger,
+		IntegriteeImportTrigger,
+		TargetAImportTrigger,
+		TargetBImportTrigger,
 		ScheduledEnclave,
 		StateHandler,
 	> where
@@ -175,7 +195,11 @@ impl<
 	E::Proposer: Proposer<ParentchainBlock, SignedSidechainBlock>,
 	SignedSidechainBlock: SignedBlock + Send + 'static,
 	OcallApi: ValidateerFetch + EnclaveOnChainOCallApi + Send + 'static,
-	ImportTrigger:
+	IntegriteeImportTrigger:
+		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
+	TargetAImportTrigger:
+		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
+	TargetBImportTrigger:
 		TriggerParentchainBlockImport<SignedBlockType = SignedParentchainBlock<ParentchainBlock>>,
 	ScheduledEnclave: ScheduledEnclaveUpdater,
 	StateHandler: HandleState<StateT = SgxExternalities>,
@@ -202,6 +226,7 @@ impl<
 	fn epoch_data(
 		&self,
 		header: &ParentchainBlock::Header,
+		_shard: ShardIdentifierFor<Self::Output>,
 		_slot: Slot,
 	) -> Result<Self::EpochData, ConsensusError> {
 		authorities::<_, AuthorityPair, ParentchainBlock::Header>(&self.ocall_api, header)
@@ -248,12 +273,17 @@ impl<
 		proposing_remaining_duration(slot_info, duration_now())
 	}
 
-	fn import_parentchain_blocks_until(
+	// Design remark: the following may seem too explicit and it certainly could be abstracted.
+	// however, as pretty soon we may not want to assume same Block types for all parentchains,
+	// it may make sense to abstract once we do that.
+
+	fn import_integritee_parentchain_blocks_until(
 		&self,
 		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
+		log::trace!(target: self.logging_target(), "import Integritee blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
 		let maybe_parentchain_block = self
-			.parentchain_import_trigger
+			.parentchain_integritee_import_trigger
 			.import_until(|parentchain_block| {
 				parentchain_block.block.hash() == *parentchain_header_hash
 			})
@@ -262,11 +292,71 @@ impl<
 		Ok(maybe_parentchain_block.map(|b| b.block.header().clone()))
 	}
 
-	fn peek_latest_parentchain_header(
+	fn import_target_a_parentchain_blocks_until(
+		&self,
+		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
+	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
+		log::trace!(target: self.logging_target(), "import TargetA blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		let maybe_parentchain_block = self
+			.maybe_parentchain_target_a_import_trigger
+			.clone()
+			.ok_or_else(|| ConsensusError::Other("no target_a assigned".into()))?
+			.import_until(|parentchain_block| {
+				parentchain_block.block.hash() == *parentchain_header_hash
+			})
+			.map_err(|e| ConsensusError::Other(e.into()))?;
+
+		Ok(maybe_parentchain_block.map(|b| b.block.header().clone()))
+	}
+
+	fn import_target_b_parentchain_blocks_until(
+		&self,
+		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
+	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
+		log::trace!(target: self.logging_target(), "import TargetB blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		let maybe_parentchain_block = self
+			.maybe_parentchain_target_b_import_trigger
+			.clone()
+			.ok_or_else(|| ConsensusError::Other("no target_b assigned".into()))?
+			.import_until(|parentchain_block| {
+				parentchain_block.block.hash() == *parentchain_header_hash
+			})
+			.map_err(|e| ConsensusError::Other(e.into()))?;
+
+		Ok(maybe_parentchain_block.map(|b| b.block.header().clone()))
+	}
+
+	fn peek_latest_integritee_parentchain_header(
 		&self,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
 		let maybe_parentchain_block = self
-			.parentchain_import_trigger
+			.parentchain_integritee_import_trigger
+			.peek_latest()
+			.map_err(|e| ConsensusError::Other(format!("{:?}", e).into()))?;
+
+		Ok(maybe_parentchain_block.map(|b| b.block.header().clone()))
+	}
+
+	fn peek_latest_target_a_parentchain_header(
+		&self,
+	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
+		let maybe_parentchain_block = self
+			.maybe_parentchain_target_a_import_trigger
+			.clone()
+			.ok_or_else(|| ConsensusError::Other("no target_a assigned".into()))?
+			.peek_latest()
+			.map_err(|e| ConsensusError::Other(format!("{:?}", e).into()))?;
+
+		Ok(maybe_parentchain_block.map(|b| b.block.header().clone()))
+	}
+
+	fn peek_latest_target_b_parentchain_header(
+		&self,
+	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
+		let maybe_parentchain_block = self
+			.maybe_parentchain_target_b_import_trigger
+			.clone()
+			.ok_or_else(|| ConsensusError::Other("no target_b assigned".into()))?
 			.peek_latest()
 			.map_err(|e| ConsensusError::Other(format!("{:?}", e).into()))?;
 
@@ -309,6 +399,12 @@ where
 		.collect())
 }
 
+pub enum AnyImportTrigger<Integritee, TargetA, TargetB> {
+	Integritee(Integritee),
+	TargetA(TargetA),
+	TargetB(TargetB),
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -336,6 +432,8 @@ mod tests {
 			Keyring::Alice.pair(),
 			onchain_mock,
 			trigger_parentchain_import,
+			None,
+			None,
 			EnvironmentMock,
 			Arc::new(ScheduledEnclaveMock::default()),
 			Arc::new(HandleStateMock::from_shard(ShardIdentifier::default()).unwrap()),
@@ -367,7 +465,9 @@ mod tests {
 			timestamp: now,
 			duration: SLOT_DURATION,
 			ends_at: now + SLOT_DURATION,
-			last_imported_parentchain_head: header.clone(),
+			last_imported_integritee_parentchain_head: header.clone(),
+			maybe_last_imported_target_a_parentchain_head: None,
+			maybe_last_imported_target_b_parentchain_head: None,
 		}
 	}
 
@@ -509,7 +609,9 @@ mod tests {
 			timestamp: now,
 			duration: nano_dur,
 			ends_at: now + nano_dur,
-			last_imported_parentchain_head: ParentchainHeaderBuilder::default().build(),
+			last_imported_integritee_parentchain_head: ParentchainHeaderBuilder::default().build(),
+			maybe_last_imported_target_a_parentchain_head: None,
+			maybe_last_imported_target_b_parentchain_head: None,
 		};
 
 		let result = PerShardSlotWorkerScheduler::on_slot(
