@@ -28,8 +28,11 @@ use self::{
 };
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagDeFi, HoldingAmount, Params},
-	DataProviderConfigReader, ReadDataProviderConfig,
+	achainable::{
+		AchainableClient, AchainableTagDeFi, HoldingAmount, Params, ParamsBasicTypeWithAmountToken,
+	},
+	achainable_names::{AchainableNameAmountToken, GetAchainableName},
+	DataProviderConfigReader, ReadDataProviderConfig, LIT_TOKEN_ADDRESS,
 };
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
@@ -155,4 +158,74 @@ pub fn request_achainable_balance(
 	})?;
 
 	Ok(balance)
+}
+
+pub fn query_lit_holding_amount(
+	aparam: &AchainableParams,
+	identities: &Vec<(Web3Network, Vec<String>)>,
+) -> Result<usize> {
+	let mut total_lit_balance = 0;
+
+	let data_provider_config = DataProviderConfigReader::read()
+		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e))?;
+	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
+
+	for (network, addresses) in identities {
+		let q_param = if *network == Web3Network::Ethereum {
+			let param = ParamsBasicTypeWithAmountToken::new(
+				AchainableNameAmountToken::ERC20BalanceOverAmount.name().to_string(),
+				&Web3Network::Ethereum,
+				"0".to_string(),
+				Some(LIT_TOKEN_ADDRESS.to_string()),
+			);
+			param
+		} else if *network == Web3Network::Bsc {
+			let param = ParamsBasicTypeWithAmountToken::new(
+				AchainableNameAmountToken::BEP20BalanceOverAmount.name().to_string(),
+				&Web3Network::Bsc,
+				"0".to_string(),
+				Some(LIT_TOKEN_ADDRESS.to_string()),
+			);
+
+			param
+		} else if *network == Web3Network::Litentry {
+			let param = ParamsBasicTypeWithAmountToken::new(
+				AchainableNameAmountToken::BalanceOverAmount.name().to_string(),
+				&Web3Network::Litentry,
+				"0".to_string(),
+				None,
+			);
+
+			param
+		} else if *network == Web3Network::Litmus {
+			let param = ParamsBasicTypeWithAmountToken::new(
+				AchainableNameAmountToken::BalanceOverAmount.name().to_string(),
+				&Web3Network::Litmus,
+				"0".to_string(),
+				None,
+			);
+
+			param
+		} else {
+			continue
+		};
+
+		let params = Params::ParamsBasicTypeWithAmountToken(q_param);
+		let balance = client
+			.holding_amount(addresses.clone(), params)
+			.map_err(|e| {
+				Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e.into_error_detail())
+			})?
+			.parse::<usize>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(aparam.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
+
+		total_lit_balance += balance;
+	}
+
+	Ok(total_lit_balance)
 }

@@ -236,7 +236,9 @@ impl TryFrom<AchainableParams> for Params {
 				let token =
 					if p.token.is_some() { Some(ap.to_string(&p.token.unwrap())?) } else { None };
 
-				let p = ParamsBasicTypeWithAmountToken::new(name, network, amount, token);
+				// At this step, we do not care about the content inside the chains and instead use real chain data to fill in the request
+				// so use network[0] as a placehold.
+				let p = ParamsBasicTypeWithAmountToken::new(name, &network[0], amount, token);
 				Ok(Params::ParamsBasicTypeWithAmountToken(p))
 			},
 			AchainableParams::Amount(p) => {
