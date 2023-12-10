@@ -98,7 +98,11 @@ pub mod constants;
 #[cfg(test)]
 mod tests;
 pub mod weights;
+pub mod precompiles;
 pub mod xcm_config;
+
+pub use precompiles::RococoNetworkPrecompiles;
+pub type Precompiles = RococoNetworkPrecompiles<Runtime>;
 
 #[derive(Clone)]
 pub struct TransactionConverter;
@@ -1149,6 +1153,7 @@ parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
+	pub PrecompilesValue: Precompiles = RococoNetworkPrecompiles::<_>::new();
 	// BlockGasLimit / MAX_POV_SIZE
 	pub GasLimitPovSizeRatio: u64 = (NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS) / cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64;
 }
@@ -1206,8 +1211,8 @@ impl pallet_evm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	// Minimal effort, no precompile for now
-	type PrecompilesType = ();
-	type PrecompilesValue = ();
+	type PrecompilesType = Precompiles;
+	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type OnChargeTransaction = OnChargeEVMTransaction<DealWithFees<Runtime>>;
 	type BlockGasLimit = BlockGasLimit;
