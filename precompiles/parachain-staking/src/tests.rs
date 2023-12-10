@@ -45,15 +45,19 @@ fn test_delegate_with_auto_compound_is_ok() {
 				.expect_no_logs()
 				.execute_returns(EvmDataWriter::new().write(true).build());
 
-			assert_last_event!(MetaEvent::ParachainStaking(Event::Delegation {
-				delegator: 2u8.into(),
-				locked_amount: 10,
-				candidate: 1u8.into(),
-				delegator_position: DelegatorAdded::AddedToTop { new_total: 40 },
-				auto_compound: Percent::from_percent(50),
-			}));
+			assert_last_event!(MetaEvent::ParachainStaking(
+				pallet_parachain_staking::Event::Delegation {
+					delegator: 2u8.into(),
+					locked_amount: 10,
+					candidate: 1u8.into(),
+					delegator_position: pallet_parachain_staking::DelegatorAdded::AddedToTop {
+						new_total: 40
+					},
+					auto_compound: Percent::from_percent(50),
+				}
+			));
 			assert_eq!(
-				vec![AutoCompoundConfig {
+				vec![pallet_parachain_staking::AutoCompoundConfig {
 					delegator: 2u8.into(),
 					value: Percent::from_percent(50)
 				}],

@@ -23,13 +23,12 @@ mod tests;
 use fp_evm::{PrecompileHandle, PrecompileOutput};
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
-	sp_runtime::Percent,
-	traits::{Currency, Get},
+	traits::Currency,
 };
 use pallet_evm::{AddressMapping, Precompile};
 use precompile_utils::{
-	succeed, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
-	PrecompileHandleExt, RuntimeHelper,
+	succeed, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier, PrecompileHandleExt,
+	RuntimeHelper,
 };
 use sp_runtime::traits::Dispatchable;
 use sp_std::{marker::PhantomData, vec::Vec};
@@ -98,7 +97,6 @@ where
 
 		handle.check_function_modifier(match selector {
 			Action::TransferNative => FunctionModifier::NonPayable,
-			_ => FunctionModifier::View,
 		})?;
 
 		match selector {

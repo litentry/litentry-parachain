@@ -16,11 +16,8 @@
 
 extern crate alloc;
 use crate::{mock::*, *};
-use fp_evm::ExitError;
 use frame_support::assert_ok;
 use precompile_utils::testing::*;
-use sp_core::H160;
-use sp_runtime::{traits::Zero, AccountId32, Perbill};
 
 fn precompiles() -> BridgeTransferMockPrecompile<Test> {
 	PrecompilesValue::get()
@@ -59,7 +56,10 @@ fn transfer_native_is_ok() {
 			pallet_balances::Pallet::<Test>::free_balance(TreasuryAccount::get()),
 			ENDOWED_BALANCE + 10
 		);
-		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(1u8.into()), ENDOWED_BALANCE - 100);
+		assert_eq!(
+			pallet_balances::Pallet::<Test>::free_balance(1u8.into()),
+			ENDOWED_BALANCE - 100
+		);
 		assert_events(vec![
 			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
 				who: TreasuryAccount::get(),

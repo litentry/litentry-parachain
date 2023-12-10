@@ -20,7 +20,6 @@ use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, ConstU64, SortedMembers},
 	weights::Weight,
-	PalletId,
 };
 use hex_literal::hex;
 use pallet_evm::{
@@ -29,7 +28,7 @@ use pallet_evm::{
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
-	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup},
 	AccountId32,
 };
 
@@ -48,7 +47,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Evm: pallet_evm::{Pallet, Config<T>, Call, Storage, Event<T>},
+		Evm: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Bridge: pallet_bridge::{Pallet, Call, Storage, Event<T>},
 		BridgeTransfer: pallet_bridge_transfer::{Pallet, Call, Storage, Event<T>},
@@ -185,8 +184,7 @@ where
 {
 	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		match handle.code_address() {
-			a if a == precompile_address() =>
-				Some(BridgeTransferPrecompile::<R>::execute(handle)),
+			a if a == precompile_address() => Some(BridgeTransferPrecompile::<R>::execute(handle)),
 			_ => None,
 		}
 	}
