@@ -145,6 +145,7 @@ pub trait SlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<Self::Output>,
+		is_single_worker: bool,
 	) -> Option<SlotResult<Self::Output>>;
 }
 
@@ -168,6 +169,7 @@ pub trait PerShardSlotWorkerScheduler<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: Vec<Self::ShardIdentifier>,
+		is_single_worker: bool,
 	) -> Self::Output;
 }
 
@@ -276,6 +278,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<Self::Output>,
+		is_single_worker: bool,
 	) -> Option<SlotResult<Self::Output>> {
 		let (_timestamp, slot) = (slot_info.timestamp, slot_info.slot);
 		let logging_target = self.logging_target();
@@ -330,7 +333,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		let maybe_latest_target_b_parentchain_header =
 			match self.peek_latest_target_b_parentchain_header() {
 				Ok(Some(peeked_header)) => Some(peeked_header),
-				Ok(None) => slot_info.maybe_last_imported_target_b_parentchain_head,
+				Ok(None) => slot_info.maybe_last_imported_target_b_parentchain_head.clone(),
 				Err(e) => {
 					debug!(
 						target: logging_target,
@@ -493,14 +496,9 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 			},
 		};
 
-		// TODO(Kai@litentry): comment out the time slot check for now
-		// It's an audacious change: it means we'll always produce a block once proposed, even though it comes late.
-		// The rationale is we are having one-worker set-up, with this single block author, it's more important to produce
-		// a block with stf update at all than producing "timely" blocks. We don't have a sync or slot-scheduling issue.
-		//
-		// We meed more tests to tell if it can be applied to multiple workers (e.g. in CI) - it might create forks.
-		/*
-		if !timestamp_within_slot(&slot_info, &proposing.block) {
+		if is_single_worker {
+			error!("Running as single worker, skipping timestamp within slot check")
+		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				target: logging_target,
 				"⌛️ Discarding proposal for slot {}, block number {}; block production took too long",
@@ -509,7 +507,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 			return None
 		}
-		*/
 
 		if last_imported_integritee_header.is_some() {
 			println!(
@@ -542,8 +539,9 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shard: ShardIdentifierFor<T::Output>,
+		is_single_worker: bool,
 	) -> Option<SlotResult<Self::Output>> {
-		SimpleSlotWorker::on_slot(self, slot_info, shard)
+		SimpleSlotWorker::on_slot(self, slot_info, shard, is_single_worker)
 	}
 }
 
@@ -558,6 +556,7 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 		&mut self,
 		slot_info: SlotInfo<ParentchainBlock>,
 		shards: Vec<Self::ShardIdentifier>,
+		is_single_worker: bool,
 	) -> Self::Output {
 		let logging_target = SimpleSlotWorker::logging_target(self);
 
@@ -592,7 +591,7 @@ impl<ParentchainBlock: ParentchainBlockTrait, T: SimpleSlotWorker<ParentchainBlo
 				slot_info.maybe_last_imported_target_b_parentchain_head.clone(),
 			);
 
-			match SimpleSlotWorker::on_slot(self, shard_slot.clone(), shard) {
+			match SimpleSlotWorker::on_slot(self, shard_slot.clone(), shard, is_single_worker) {
 				Some(res) => {
 					slot_results.push(res);
 					debug!(

@@ -145,6 +145,7 @@ where
 		&mut self,
 		slot_info: SlotInfo<B>,
 		_shard: ShardIdentifierFor<Self::Output>,
+		_is_single_worker: bool,
 	) -> Option<SlotResult<Self::Output>> {
 		self.slot_infos.push(slot_info);
 
