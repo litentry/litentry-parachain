@@ -47,8 +47,8 @@ std = [
 	"pallet-evm/std",
 	"sp-core/std",
 	"sp-io/std",
-	"sp-std/std",
 	"sp-runtime/std",
+	"sp-std/std",
 	"xcm/std",
 ]
 testing = ["similar-asserts", "std"]

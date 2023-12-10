@@ -20,17 +20,20 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use fp_evm::PrecompileHandle;
+use fp_evm::{PrecompileHandle, PrecompileOutput};
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::Percent,
 	traits::{Currency, Get},
 };
 use pallet_evm::AddressMapping;
-use precompile_utils::prelude::*;
+use precompile_utils::{
+    error, revert, succeed, Address, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
+    PrecompileHandleExt, RuntimeHelper,
+};
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
-use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 type BalanceOf<Runtime> = <<Runtime as pallet_bridge::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,

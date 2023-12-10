@@ -20,17 +20,20 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-use fp_evm::PrecompileHandle;
+use fp_evm::{PrecompileHandle, PrecompileOutput};
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	sp_runtime::Percent,
 	traits::{Currency, Get},
 };
 use pallet_evm::AddressMapping;
-use precompile_utils::prelude::*;
+use precompile_utils::{
+    error, revert, succeed, Address, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
+    PrecompileHandleExt, RuntimeHelper,
+};
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
-use sp_std::{convert::TryInto, marker::PhantomData, vec::Vec};
+use sp_std::{marker::PhantomData, vec::Vec};
 
 type BalanceOf<Runtime> = <<Runtime as pallet_parachain_staking::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
@@ -351,9 +354,9 @@ where
 	) -> EvmResult<PrecompileOutput> {
 		let mut input = handle.read_input()?;
 		input.expect_arguments(2)?;
-		let delegator: [u8; 32] = input.read::<H256>()?.into();
+		let delegator: [u8; 32] = input.read::<U256>()?.into();
 		let delegator = Runtime::AccountId::from(delegator);
-		let candidate: [u8; 32] = input.read::<H256>()?.into();
+		let candidate: [u8; 32] = input.read::<U256>()?.into();
 		let candidate = Runtime::AccountId::from(candidate);
 
 		// DelegationScheduledRequests:
