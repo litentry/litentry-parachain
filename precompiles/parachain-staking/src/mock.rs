@@ -187,18 +187,22 @@ impl AddressMapping<AccountId> for TruncatedAddressMapping {
 	}
 }
 
+pub trait IntoH160 {
+	fn into_h160(&self) -> H160;
+}
 // silly for test purpose only
-impl From<u8> for H160 {
-	fn from(x: u8) -> H160 {
+impl IntoH160 for u8 {
+	fn into_h160(x: u8) -> H160 {
 		H160::repeat_byte(x)
 	}
 }
 
 impl From<u8> for AccountId {
 	fn from(x: u8) -> AccountId {
-		TruncatedAddressMapping::into_account_id(Into::<H160>::into(x))
+		TruncatedAddressMapping::into_account_id(x.into_h160())
 	}
 }
+
 parameter_types! {
 	pub PrecompilesValue: ParachainStakingMockPrecompile<Test> = ParachainStakingMockPrecompile(Default::default());
 	pub WeightPerGas: Weight = Weight::from_parts(1, 0);
