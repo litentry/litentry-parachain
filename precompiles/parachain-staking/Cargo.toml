@@ -27,18 +27,18 @@ fp-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0
 pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false, features = ["forbid-evm-reentrancy"] }
 
 [dev-dependencies]
-derive_more = { version = "0.99.5" }
-scale-info = { version = "2.10.0", default-features = false, features = ["derive", "std"] }
+derive_more = { version = "0.99.5", default-features = false }
+scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 serde = { version = "1.0", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 
 # Local
-precompile-utils = { path = "../../precompiles/utils", default-features = false, features = ["std", "testing"] }
+precompile-utils = { path = "../../precompiles/utils", default-features = false, features = ["testing"] }
 
 # Substrate
-pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42", features = ["insecure_zero_ed", "std"] }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, features = ["std"] }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", features = ["std"] }
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42", features = ["insecure_zero_ed"] }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
 [features]
 default = ["std"]

@@ -6,7 +6,7 @@ version = '0.9.17'
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len", "full"] }
-hex-literal = { version = '0.4.1' }
+hex-literal = { version = '0.4.1', default-features = false }
 log = { version = "0.4", default-features = false }
 scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 
