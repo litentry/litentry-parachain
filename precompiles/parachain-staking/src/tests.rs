@@ -37,7 +37,7 @@ fn test_delegate_with_auto_compound_is_ok() {
 					2u8.into(),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::DelegateWithAutoCompound)
-						.write(Address(1u8.into()))
+						.write(1u8.into())
 						.write(10)
 						.write(Percent::from_percent(50))
 						.build(),
@@ -76,8 +76,8 @@ fn delegation_request_is_pending_works() {
 					1u8.into(),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(Address(2u8.into()))
-						.write(Address(1u8.into()))
+						.write(2u8.into())
+						.write(1u8.into())
 						.build(),
 				)
 				.expect_no_logs()
@@ -89,7 +89,7 @@ fn delegation_request_is_pending_works() {
 					2u8.into(),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::ScheduleRevokeDelegation)
-						.write(Address(1u8.into()))
+						.write(1u8.into())
 						.build(),
 				)
 				.expect_no_logs()
@@ -101,8 +101,8 @@ fn delegation_request_is_pending_works() {
 					1u8.into(),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(Address(2u8.into()))
-						.write(Address(1u8.into()))
+						.write(2u8.into())
+						.write(1u8.into())
 						.build(),
 				)
 				.expect_no_logs()

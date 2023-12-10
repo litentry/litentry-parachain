@@ -28,10 +28,9 @@ use frame_support::{
 };
 use pallet_evm::{AddressMapping, Precompile};
 use precompile_utils::{
-	error, revert, succeed, Address, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
+	succeed, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
 	PrecompileHandleExt, RuntimeHelper,
 };
-use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::{marker::PhantomData, vec::Vec};
 
@@ -61,13 +60,13 @@ where
 		let mut input = handle.read_input()?;
 		input.expect_arguments(3)?;
 		let amount = input.read::<BalanceOf<Runtime>>()?;
-		let receipt: Vec<u8> = input.read::<Bytes>()?.into();
+		let recipient: Vec<u8> = input.read::<Bytes>()?.into();
 		let dest_id: u8 = input.read::<u8>()?;
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let call =
-			pallet_bridge_transfer::Call::<Runtime>::transfer_native { amount, receipt, dest_id };
+			pallet_bridge_transfer::Call::<Runtime>::transfer_native { amount, recipient, dest_id };
 
 		// Dispatch call (if enough gas).
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;

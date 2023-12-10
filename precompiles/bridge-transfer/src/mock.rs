@@ -19,6 +19,7 @@ use fp_evm::IsPrecompileResult;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU32, ConstU64, SortedMembers},
+	weights::Weight,
 	PalletId,
 };
 use hex_literal::hex;
@@ -148,7 +149,7 @@ impl SortedMembers<AccountId> for TransferNativeAnyone {
 
 impl pallet_bridge_transfer::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type BridgeOrigin = bridge::EnsureBridge<Test>;
+	type BridgeOrigin = pallet_bridge::EnsureBridge<Test>;
 	type TransferNativeMembers = TransferNativeAnyone;
 	type SetMaximumIssuanceOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type NativeTokenResourceId = NativeTokenResourceId;
@@ -180,12 +181,12 @@ pub struct BridgeTransferMockPrecompile<R>(PhantomData<R>);
 impl<R> PrecompileSet for BridgeTransferMockPrecompile<R>
 where
 	R: pallet_evm::Config,
-	ParachainStakingPrecompile<R>: Precompile,
+	BridgeTransferPrecompile<R>: Precompile,
 {
 	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		match handle.code_address() {
 			a if a == precompile_address() =>
-				Some(ParachainStakingPrecompile::<R>::execute(handle)),
+				Some(BridgeTransferPrecompile::<R>::execute(handle)),
 			_ => None,
 		}
 	}

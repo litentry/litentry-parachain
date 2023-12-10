@@ -29,7 +29,7 @@ fn precompiles() -> BridgeTransferMockPrecompile<Test> {
 #[test]
 fn transfer_native_is_ok() {
 	new_test_ext().execute_with(|| {
-		let dest_bridge_id: bridge::BridgeChainId = 0;
+		let dest_bridge_id: pallet_bridge::BridgeChainId = 0;
 		let resource_id = NativeTokenResourceId::get();
 		let dest_account: Vec<u8> = vec![1];
 		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(
@@ -59,15 +59,15 @@ fn transfer_native_is_ok() {
 			pallet_balances::Pallet::<Test>::free_balance(TreasuryAccount::get()),
 			ENDOWED_BALANCE + 10
 		);
-		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(RELAYER_A), ENDOWED_BALANCE - 100);
+		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(1u8.into()), ENDOWED_BALANCE - 100);
 		assert_events(vec![
 			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
 				who: TreasuryAccount::get(),
 				amount: 10,
 			}),
-			RuntimeEvent::Bridge(bridge::Event::FungibleTransfer(
+			RuntimeEvent::Bridge(pallet_bridge::Event::FungibleTransfer(
 				dest_bridge_id,
-				1,
+				1u8.into(),
 				resource_id,
 				100 - 10,
 				dest_account,

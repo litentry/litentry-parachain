@@ -7,6 +7,7 @@ version = '0.9.17'
 [dependencies]
 log = { version = "0.4", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }
+parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 rustc-hex = { version = "2.0.1", default-features = false }
 
 # Local
@@ -16,7 +17,6 @@ precompile-utils = { path = "../../precompiles/utils", default-features = false 
 # Substrate
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 frame-system =  { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
-parity-scale-codec = { version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
@@ -28,6 +28,7 @@ pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkado
 
 [dev-dependencies]
 derive_more = { version = "0.99.5" }
+scale-info = { version = "2.10.0", default-features = false, features = [ "derive", "std" ] }
 serde = { version = "1.0", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 
@@ -37,7 +38,6 @@ precompile-utils = { path = "../../precompiles/utils", default-features = false,
 # Substrate
 pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42", features = [ "insecure_zero_ed", "std" ] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, features = [ "std" ] }
-scale-info = { version = "2.10.0", default-features = false, features = [ "derive", "std" ] }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", features = [ "std" ] }
 
 [features]

@@ -633,11 +633,11 @@ where
 		let candidate = Runtime::AccountId::from(candidate);
 		let amount = input.read::<BalanceOf<Runtime>>()?;
 		let auto_compound: u8 = input.read::<u8>()?;
-		let auto_compound = Percent::from_percent(auto_compound);
 
 		if auto_compound > 100 {
 			return Err(error("Must be an integer between 0 and 100 included"))
 		}
+		let auto_compound = Percent::from_percent(auto_compound);
 
 		// Build call with origin.
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);

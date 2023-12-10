@@ -371,6 +371,16 @@ pub(crate) fn last_event() -> RuntimeEvent {
 	System::events().pop().expect("Event expected").event
 }
 
+/// Assert input equal to the last event emitted
+#[macro_export]
+macro_rules! assert_last_event {
+	($event:expr) => {
+		match &$event {
+			e => assert_eq!(*e, $crate::mock::last_event()),
+		}
+	};
+}
+
 pub(crate) fn events() -> Vec<pallet_parachain_staking::Event<Test>> {
 	System::events()
 		.into_iter()
