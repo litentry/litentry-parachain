@@ -166,15 +166,19 @@ export async function createSignedTrustedCallSetIdentityNetworks(
     subject: LitentryPrimitivesIdentity,
     identity: string,
     web3networks: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_identity_networks', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)'],
+        [
+            'set_identity_networks',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)',
+        ],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, web3networks, hash]
+        [subject.toHuman(), subject.toHuman(), identity, web3networks, aesKey, hash]
     );
 }
 
@@ -204,15 +208,16 @@ export async function createSignedTrustedCallDeactivateIdentity(
     signer: Signer,
     subject: LitentryPrimitivesIdentity,
     identity: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)'],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, hash]
+        [subject.toHuman(), subject.toHuman(), identity, aesKey, hash]
     );
 }
 export async function createSignedTrustedCallActivateIdentity(
@@ -222,15 +227,16 @@ export async function createSignedTrustedCallActivateIdentity(
     signer: Signer,
     subject: LitentryPrimitivesIdentity,
     identity: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)'],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, hash]
+        [subject.toHuman(), subject.toHuman(), identity, aesKey, hash]
     );
 }
 

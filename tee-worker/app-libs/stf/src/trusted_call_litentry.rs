@@ -226,7 +226,9 @@ impl TrustedCallSigned {
 		);
 		IMTCall::link_identity { who, identity, web3networks }
 			.dispatch_bypass_filter(RuntimeOrigin::root())
-			.map_err(|e| StfError::LinkIdentityFailed(e.into()))
+			.map_err(|e| StfError::LinkIdentityFailed(e.into()))?;
+
+		Ok(())
 	}
 
 	pub fn request_vc_callback_internal(signer: AccountId, assertion: Assertion) -> StfResult<()> {
@@ -258,12 +260,15 @@ impl TrustedCallSigned {
 			who.to_account_id().ok_or(StfError::InvalidAccount)?,
 		);
 
+		// the pallet extrinsic doesn't accept customised return type, so
+		// we have to do the if-condition outside of extrinsic call
 		let old_id_graph_len = IMT::id_graph_lens(&who);
+		let mut mutated_id_graph = IDGraph::<Runtime>::default();
 
-		let mutated_id_graph = Self::link_identity_callback_internal(
+		Self::link_identity_callback_internal(
 			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
-			identity,
+			identity.clone(),
 			web3networks,
 		)
 		.map_err(|e| {
@@ -279,8 +284,9 @@ impl TrustedCallSigned {
 		})?;
 
 		debug!("pushing identity_linked event ...");
-		let id_graph = IMT::get_aid_graph(&who);
+		let id_graph = IMT::get_id_graph(&who);
 		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
+
 		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
@@ -291,13 +297,22 @@ impl TrustedCallSigned {
 			req_ext_hash,
 		))));
 
+		if old_id_graph_len == 0 {
+			mutated_id_graph = id_graph;
+		} else if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
+			mutated_id_graph.push((identity, identity_context))
+		} else {
+			// if should not happen, so we just log the error here
+			error!("failed to get identity_context for {:?}, {:?}", &who, &identity);
+		}
+
 		if let Some(key) = maybe_key {
-			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
+			return Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {
 				mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 				id_graph_hash,
 			}))
-		} else {
-			Ok(TrustedCallResult::Empty)
 		}
+
+		Ok(TrustedCallResult::Empty)
 	}
 }
