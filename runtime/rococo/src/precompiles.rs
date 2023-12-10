@@ -34,7 +34,7 @@ use sp_std::{fmt::Debug, marker::PhantomData};
 #[derive(Debug, Default, Clone, Copy)]
 pub struct RococoNetworkPrecompiles<R>(PhantomData<R>);
 
-impl<R, C> RococoNetworkPrecompiles<R> {
+impl<R> RococoNetworkPrecompiles<R> {
 	pub fn new() -> Self {
 		Self(Default::default())
 	}

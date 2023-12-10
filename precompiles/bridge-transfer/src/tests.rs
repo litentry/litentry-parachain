@@ -41,7 +41,7 @@ fn transfer_native_is_ok() {
 
 		precompiles()
 			.prepare_test(
-				1u8.into(),
+				1u8.into_account_id(),
 				precompile_address(),
 				EvmDataWriter::new_with_selector(Action::TransferNative)
 					.write(100)
@@ -57,7 +57,7 @@ fn transfer_native_is_ok() {
 			ENDOWED_BALANCE + 10
 		);
 		assert_eq!(
-			pallet_balances::Pallet::<Test>::free_balance(1u8.into()),
+			pallet_balances::Pallet::<Test>::free_balance(1u8.into_account_id()),
 			ENDOWED_BALANCE - 100
 		);
 		assert_events(vec![
@@ -67,7 +67,7 @@ fn transfer_native_is_ok() {
 			}),
 			RuntimeEvent::Bridge(pallet_bridge::Event::FungibleTransfer(
 				dest_bridge_id,
-				1u8.into(),
+				1u8.into_account_id(),
 				resource_id,
 				100 - 10,
 				dest_account,

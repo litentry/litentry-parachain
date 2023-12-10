@@ -197,7 +197,10 @@ impl IntoH160 for u8 {
 	}
 }
 
-impl From<u8> for AccountId {
+pub trait IntoAccountId {
+	fn into_account_id(&self) -> AccountId;
+}
+impl IntoAccountId for u8 {
 	fn from(x: u8) -> AccountId {
 		TruncatedAddressMapping::into_account_id(x.into_h160())
 	}

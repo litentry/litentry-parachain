@@ -213,7 +213,10 @@ impl IntoH160 for u8 {
 	}
 }
 
-impl From<u8> for AccountId {
+pub trait IntoAccountId {
+	fn into_account_id(&self) -> AccountId;
+}
+impl IntoAccountId for u8 {
 	fn from(x: u8) -> AccountId {
 		TruncatedAddressMapping::into_account_id(x.into_h160())
 	}
@@ -250,13 +253,13 @@ impl pallet_evm::Config for Test {
 pub const ENDOWED_BALANCE: Balance = 100_000_000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let bridge_id: AccountId = 0u8.into();
-	let treasury_account: AccountId = 8u8.into();
+	let bridge_id: AccountId = 0u8.into_account_id();
+	let treasury_account: AccountId = 8u8.into_account_id();
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(bridge_id, ENDOWED_BALANCE),
-			(1u8.into(), ENDOWED_BALANCE),
+			(1u8.into_account_id(), ENDOWED_BALANCE),
 			(treasury_account, ENDOWED_BALANCE),
 		],
 	}
