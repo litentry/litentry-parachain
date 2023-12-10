@@ -17,6 +17,7 @@
 // This file is part of Utils package, originally developed by Purestake/Astar Inc.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::double_must_use)]
 
 extern crate alloc;
 
