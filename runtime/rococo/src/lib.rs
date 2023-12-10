@@ -95,10 +95,10 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
+pub mod precompiles;
 #[cfg(test)]
 mod tests;
 pub mod weights;
-pub mod precompiles;
 pub mod xcm_config;
 
 pub use precompiles::RococoNetworkPrecompiles;

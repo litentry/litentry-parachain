@@ -16,7 +16,6 @@
 //
 // This file is part of Utils package, originally developed by Purestake/Astar Inc.
 
-
 #![crate_type = "proc-macro"]
 extern crate proc_macro;
 
