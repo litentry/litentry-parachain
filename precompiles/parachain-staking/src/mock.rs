@@ -187,23 +187,9 @@ impl AddressMapping<AccountId> for TruncatedAddressMapping {
 	}
 }
 
-pub trait IntoH160 {
-	fn into_h160(&self) -> H160;
-}
 // silly for test purpose only
-impl IntoH160 for u8 {
-	fn into_h160(x: u8) -> H160 {
-		H160::repeat_byte(x)
-	}
-}
-
-pub trait IntoAccountId {
-	fn into_account_id(&self) -> AccountId;
-}
-impl IntoAccountId for u8 {
-	fn from(x: u8) -> AccountId {
-		TruncatedAddressMapping::into_account_id(x.into_h160())
-	}
+fn u8_into_account_id(x: u8) -> AccountId {
+	TruncatedAddressMapping::into_account_id(H160::repeat_byte(x))
 }
 
 parameter_types! {

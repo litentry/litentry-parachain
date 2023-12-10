@@ -28,16 +28,16 @@ fn precompiles() -> ParachainStakingMockPrecompile<Test> {
 #[test]
 fn test_delegate_with_auto_compound_is_ok() {
 	ExtBuilder::default()
-		.with_balances(vec![(1u8.into_account_id(), 130), (2u8.into_account_id(), 125)])
-		.with_candidates(vec![(1u8.into_account_id(), 30)])
+		.with_balances(vec![(u8_into_account_id(1u8), 130), (u8_into_account_id(2u8), 125)])
+		.with_candidates(vec![(u8_into_account_id(1u8), 30)])
 		.build()
 		.execute_with(|| {
 			precompiles()
 				.prepare_test(
-					2u8.into_account_id(),
+					u8_into_account_id(2u8),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::DelegateWithAutoCompound)
-						.write(1u8.into_account_id())
+						.write(u8_into_account_id(1u8))
 						.write(10)
 						.write(Percent::from_percent(50))
 						.build(),
@@ -47,9 +47,9 @@ fn test_delegate_with_auto_compound_is_ok() {
 
 			assert_last_event!(MetaEvent::ParachainStaking(
 				pallet_parachain_staking::Event::Delegation {
-					delegator: 2u8.into_account_id(),
+					delegator: u8_into_account_id(2u8),
 					locked_amount: 10,
-					candidate: 1u8.into_account_id(),
+					candidate: u8_into_account_id(1u8),
 					delegator_position: pallet_parachain_staking::DelegatorAdded::AddedToTop {
 						new_total: 40
 					},
@@ -58,10 +58,10 @@ fn test_delegate_with_auto_compound_is_ok() {
 			));
 			assert_eq!(
 				vec![pallet_parachain_staking::AutoCompoundConfig {
-					delegator: 2u8.into_account_id(),
+					delegator: u8_into_account_id(2u8),
 					value: Percent::from_percent(50)
 				}],
-				ParachainStaking::auto_compounding_delegations(&1u8.into_account_id()),
+				ParachainStaking::auto_compounding_delegations(&u8_into_account_id(1u8)),
 			);
 		});
 }
@@ -70,22 +70,22 @@ fn test_delegate_with_auto_compound_is_ok() {
 fn delegation_request_is_pending_works() {
 	ExtBuilder::default()
 		.with_balances(vec![
-			(1.into_account_id(), 10_000),
-			(2.into_account_id(), 500),
-			(3.into_account_id(), 500),
+			(u8_into_account_id(1), 10_000),
+			(u8_into_account_id(2), 500),
+			(u8_into_account_id(3), 500),
 		])
-		.with_candidates(vec![(1.into_account_id(), 1_000)])
-		.with_delegations(vec![(2.into_account_id(), 1.into_account_id(), 50)])
+		.with_candidates(vec![(u8_into_account_id(1), 1_000)])
+		.with_delegations(vec![(u8_into_account_id(2), u8_into_account_id(1), 50)])
 		.build()
 		.execute_with(|| {
 			// Assert that we dont have pending requests
 			precompiles()
 				.prepare_test(
-					1u8.into_account_id(),
+					u8_into_account_id(1u8),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(2u8.into_account_id())
-						.write(1u8.into_account_id())
+						.write(u8_into_account_id(2u8))
+						.write(u8_into_account_id(1u8))
 						.build(),
 				)
 				.expect_no_logs()
@@ -94,10 +94,10 @@ fn delegation_request_is_pending_works() {
 			// Schedule Revoke request
 			precompiles()
 				.prepare_test(
-					2u8.into_account_id(),
+					u8_into_account_id(2u8),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::ScheduleRevokeDelegation)
-						.write(1u8.into_account_id())
+						.write(u8_into_account_id(1u8))
 						.build(),
 				)
 				.expect_no_logs()
@@ -106,11 +106,11 @@ fn delegation_request_is_pending_works() {
 			// Assert that we have pending requests
 			precompiles()
 				.prepare_test(
-					1u8.into_account_id(),
+					u8_into_account_id(1u8),
 					precompile_address(),
 					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(2u8.into_account_id())
-						.write(1u8.into_account_id())
+						.write(u8_into_account_id(2u8))
+						.write(u8_into_account_id(1u8))
 						.build(),
 				)
 				.expect_no_logs()

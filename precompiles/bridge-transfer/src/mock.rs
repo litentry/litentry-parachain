@@ -18,7 +18,7 @@ use super::*;
 use fp_evm::IsPrecompileResult;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU32, ConstU64, SortedMembers},
+	traits::{ConstU128, ConstU32, ConstU64, SortedMembers},
 	weights::Weight,
 };
 use hex_literal::hex;
@@ -74,7 +74,7 @@ impl frame_system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type DbWeight = ();
 	type Version = ();
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<Balance>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -94,7 +94,7 @@ impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type DustRemoval = ();
 	type RuntimeEvent = RuntimeEvent;
-	type ExistentialDeposit = ConstU64<1>;
+	type ExistentialDeposit = ConstU128<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
 	type MaxLocks = ConstU32<100>;
@@ -109,7 +109,7 @@ impl pallet_balances::Config for Test {
 parameter_types! {
 	pub const TestChainId: u8 = 5;
 	pub const ProposalLifetime: u64 = 100;
-	pub const TreasuryAccount:u64 = 0x8;
+	pub const TreasuryAccount: AccountId = u8_into_account_id(8u8);
 }
 
 impl pallet_bridge::Config for Test {
@@ -203,23 +203,9 @@ impl AddressMapping<AccountId> for TruncatedAddressMapping {
 	}
 }
 
-pub trait IntoH160 {
-	fn into_h160(&self) -> H160;
-}
 // silly for test purpose only
-impl IntoH160 for u8 {
-	fn into_h160(x: u8) -> H160 {
-		H160::repeat_byte(x)
-	}
-}
-
-pub trait IntoAccountId {
-	fn into_account_id(&self) -> AccountId;
-}
-impl IntoAccountId for u8 {
-	fn from(x: u8) -> AccountId {
-		TruncatedAddressMapping::into_account_id(x.into_h160())
-	}
+fn u8_into_account_id(x: u8) -> AccountId {
+	TruncatedAddressMapping::into_account_id(H160::repeat_byte(x))
 }
 
 parameter_types! {
@@ -253,13 +239,13 @@ impl pallet_evm::Config for Test {
 pub const ENDOWED_BALANCE: Balance = 100_000_000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let bridge_id: AccountId = 0u8.into_account_id();
-	let treasury_account: AccountId = 8u8.into_account_id();
+	let bridge_id: AccountId = u8_into_account_id(0u8);
+	let treasury_account: AccountId = u8_into_account_id(8u8);
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(bridge_id, ENDOWED_BALANCE),
-			(1u8.into_account_id(), ENDOWED_BALANCE),
+			(u8_into_account_id(1u8), ENDOWED_BALANCE),
 			(treasury_account, ENDOWED_BALANCE),
 		],
 	}
