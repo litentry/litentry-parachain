@@ -28,7 +28,7 @@ use crate::{
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
 		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
 		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT,
-		GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
+		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
@@ -41,10 +41,10 @@ use crate::{
 	ocall::OcallApi,
 	rpc::{rpc_response_channel::RpcResponseChannel, worker_api_direct::public_api_rpc_handler},
 	utils::{
-		get_extrinsic_factory_from_litentry_solo_or_parachain,
-		get_node_metadata_repository_from_litentry_solo_or_parachain,
-		get_triggered_dispatcher_from_solo_or_parachain,
-		get_validator_accessor_from_solo_or_parachain,
+		get_extrinsic_factory_from_integritee_solo_or_parachain,
+		get_node_metadata_repository_from_integritee_solo_or_parachain,
+		get_triggered_dispatcher_from_integritee_solo_or_parachain,
+		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 	Hash,
 };
@@ -111,7 +111,7 @@ pub(crate) fn init_enclave(
 		base_dir.join(LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH),
 		ParentchainId::Litentry,
 	)?);
-	GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL.initialize(integritee_light_client_seal);
+	GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL.initialize(integritee_light_client_seal);
 
 	let target_a_light_client_seal = Arc::new(EnclaveLightClientSeal::new(
 		base_dir.join(TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH),
@@ -247,7 +247,8 @@ pub(crate) fn init_enclave_sidechain_components(
 	let mrenclave = attestation_handler.get_mrenclave()?;
 	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;
 
-	let parentchain_block_import_dispatcher = get_triggered_dispatcher_from_solo_or_parachain()?;
+	let parentchain_block_import_dispatcher =
+		get_triggered_dispatcher_from_integritee_solo_or_parachain()?;
 
 	let signer = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
@@ -261,9 +262,9 @@ pub(crate) fn init_enclave_sidechain_components(
 	));
 
 	let sidechain_block_import_queue = GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT.get()?;
-	let metadata_repository = get_node_metadata_repository_from_litentry_solo_or_parachain()?;
-	let extrinsics_factory = get_extrinsic_factory_from_litentry_solo_or_parachain()?;
-	let validator_accessor = get_validator_accessor_from_solo_or_parachain()?;
+	let metadata_repository = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	let extrinsics_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let validator_accessor = get_validator_accessor_from_integritee_solo_or_parachain()?;
 
 	let sidechain_block_import_confirmation_handler =
 		Arc::new(EnclaveBlockImportConfirmationHandler::new(

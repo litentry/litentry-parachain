@@ -27,6 +27,7 @@ sp-consensus-slots = { default-features = false, git = "https://github.com/parit
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # local deps
+itp-settings = { path = "../../../core-primitives/settings" }
 itp-time-utils = { path = "../../../core-primitives/time-utils", default-features = false }
 its-consensus-common = { path = "../common", default-features = false }
 
@@ -44,7 +45,6 @@ its-test = { path = "../../test" }
 sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 itp-test = { path = "../../../core-primitives/test" }
 tokio = { version = "1.6.1", features = ["full"] }
-itp-settings = { path = "../../../core-primitives/settings" }
 
 [features]
 default = ["std"]

@@ -99,6 +99,8 @@ pub enum PublicGetter {
 	some_value,
 	#[codec(index = 1)]
 	nonce(Identity),
+	#[codec(index = 2)]
+	all_id_graph_hash,
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -199,8 +201,8 @@ impl ExecuteGetter for TrustedGetterSigned {
 				if let Some(account_id) = who.to_account_id() {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter free_balance");
-					debug!("AccountInfo for {} is {:?}", account_id_to_string(&account_id), info);
-					debug!("Account free balance is {}", info.data.free);
+					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
+					std::println!("⣿STF⣿ 🔍 TrustedGetter query: free balance for ⣿⣿⣿ is ⣿⣿⣿",);
 					Some(info.data.free.encode())
 				} else {
 					None
@@ -209,7 +211,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 				if let Some(account_id) = who.to_account_id() {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter reserved_balance");
-					debug!("AccountInfo for {} is {:?}", account_id_to_string(&account_id), info);
+					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 					debug!("Account reserved balance is {}", info.data.reserved);
 					Some(info.data.reserved.encode())
 				} else {
@@ -278,6 +280,8 @@ impl ExecuteGetter for PublicGetter {
 				} else {
 					None
 				},
+			PublicGetter::all_id_graph_hash =>
+				Some(IdentityManagement::all_id_graph_hash().encode()),
 		}
 	}
 
