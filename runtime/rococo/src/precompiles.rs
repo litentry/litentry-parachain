@@ -18,7 +18,7 @@ use pallet_evm::{
     ExitRevert, IsPrecompileResult, Precompile, PrecompileFailure, PrecompileHandle,
     PrecompileResult, PrecompileSet,
 };
-use pallet_evm_precompile_assets_erc20::{AddressToAssetId, Erc20AssetsPrecompileSet};
+use pallet_evm_precompile_bridge_transfer::BridgeTransferPrecompile;
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
 use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
@@ -27,9 +27,6 @@ use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
 use pallet_evm_precompile_sha3fips::Sha3FIPS256;
 use pallet_evm_precompile_simple::{ECRecover, ECRecoverPublicKey, Identity, Ripemd160, Sha256};
-use pallet_evm_precompile_sr25519::Sr25519Precompile;
-use pallet_evm_precompile_substrate_ecdsa::SubstrateEcdsaPrecompile;
-use pallet_evm_precompile_xcm::XcmPrecompile;
 use sp_core::H160;
 use sp_std::fmt::Debug;
 use sp_std::marker::PhantomData;
@@ -57,8 +54,8 @@ impl<R, C> RococoNetworkPrecompiles<R> {
 /// 1024-2047 Precompiles that are not in Ethereum Mainnet
 impl<R> PrecompileSet for RococoNetworkPrecompiles<R>
 where
-    ParachainStakingWrapper<R>: PrecompileSet,
-    BridgeTransferWrapper<R>: Precompile,
+    ParachainStakingPrecompile<R>: Precompile,
+    BridgeTransferPrecompile<R>: Precompile,
     Dispatch<R>: Precompile,
     R: pallet_evm::Config,
 {
@@ -94,7 +91,7 @@ where
             // ParachainStaking: pallet_parachain_staking = 45
             a if a == hash(20480 + 45) => Some(ParachainStakingPrecompile::<R>::execute(handle)),
             // BridgeTransfer: pallet_bridge_transfer = 61
-            a if a == hash(20480 + 61) => Some(BridgeTransferWrapper::<R>::execute(handle)),
+            a if a == hash(20480 + 61) => Some(BridgeTransferPrecompile::<R>::execute(handle)),
             // Default
             _ => None,
         }

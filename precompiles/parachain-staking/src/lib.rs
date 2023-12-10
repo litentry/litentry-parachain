@@ -36,7 +36,6 @@ type BalanceOf<Runtime> = <<Runtime as pallet_parachain_staking::Config>::Curren
 	<Runtime as frame_system::Config>::AccountId,
 >>::Balance;
 
-use super::AccountId;
 /// A precompile to wrap the functionality from parachain_staking.
 ///
 /// EXAMPLE USECASE:
@@ -53,7 +52,7 @@ where
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 	<Runtime::RuntimeCall as Dispatchable>::RuntimeOrigin: From<Option<Runtime::AccountId>>,
 	Runtime::RuntimeCall: From<pallet_parachain_staking::Call<Runtime>>,
-	BalanceOf<Runtime>: TryFrom<U256> + Into<U256> + solidity::Codec,
+	BalanceOf<Runtime>: EvmData,
 {
 	/* TODO: Only part for delagator is implemented for minimal task purpose
 	// Constants

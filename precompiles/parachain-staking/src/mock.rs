@@ -15,13 +15,16 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use super::*;
-use pallet_parachain_staking::{AwardedPts, InflationInfo, Points, Range};
-
+use fp_evm::IsPrecompileResult;
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{Everything, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 };
+use pallet_evm::{
+	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
+};
+use pallet_parachain_staking::{AwardedPts, InflationInfo, Points, Range};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,

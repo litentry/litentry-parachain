@@ -22,7 +22,7 @@ use sp_core::H160;
 use sp_runtime::{traits::Zero, AccountId32, Perbill};
 use super::mock::*;
 
-fn precompiles() -> ParachainStakingMockPrecompile<Test> {
+fn precompiles() -> BridgeTransferMockPrecompile<Test> {
 	PrecompilesValue::get()
 }
 
@@ -35,9 +35,9 @@ fn test_delegate_with_auto_compound_is_ok() {
 		.execute_with(|| {
 			precompiles()
 				.prepare_test(
-					2u8.into(),
+					2.into(),
 					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::DelegateWithAutoCompound)
+					EvmDataWriter::new_with_selector(Action::TransferNative)
 						.write(Address(1u8.into()))
 						.write(10)
 						.write(Percent::from_percent(50))
@@ -64,49 +64,51 @@ fn test_delegate_with_auto_compound_is_ok() {
 }
 
 #[test]
-fn delegation_request_is_pending_works() {
-	ExtBuilder::default()
-		.with_balances(vec![(1.into(), 10_000), (2.into(), 500), (3.into(), 500)])
-		.with_candidates(vec![(1.into(), 1_000)])
-		.with_delegations(vec![(2.into(), 1.into(), 50)])
-		.build()
-		.execute_with(|| {
-			// Assert that we dont have pending requests
-			precompiles()
-				.prepare_test(
-					1u8.into(),
-					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(Address(2u8.into()))
-						.write(Address(1u8.into()))
-						.build(),
-				)
-				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(false).build());
+fn transfer_native_is_ok() {
+	new_test_ext().execute_with(|| {
+		let dest_bridge_id: bridge::BridgeChainId = 0;
+		let resource_id = NativeTokenResourceId::get();
+		let dest_account: Vec<u8> = vec![1];
+		assert_ok!(pallet_bridge::Pallet::<Test>::update_fee(
+			RuntimeOrigin::root(),
+			dest_bridge_id,
+			10
+		));
+		assert_ok!(pallet_bridge::Pallet::<Test>::whitelist_chain(
+			RuntimeOrigin::root(),
+			dest_bridge_id
+		));
 
-			// Schedule Revoke request
-			precompiles()
-				.prepare_test(
-					2u8.into(),
-					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::ScheduleRevokeDelegation)
-						.write(Address(1u8.into()))
-						.build(),
-				)
-				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(true).build());
+		precompiles()
+			.prepare_test(
+				1u8.into(),
+				precompile_address(),
+				EvmDataWriter::new_with_selector(Action::TransferNative)
+					.write(100)
+					.write(dest_account.clone())
+					.write(dest_bridge_id)
+					.build(),
+			)
+			.expect_no_logs()
+			.execute_returns(EvmDataWriter::new().write(true).build());
 
-			// Assert that we have pending requests
-			precompiles()
-				.prepare_test(
-					1u8.into(),
-					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::DelegationRequestIsPending)
-						.write(Address(2u8.into()))
-						.write(Address(1u8.into()))
-						.build(),
-				)
-				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(false).build());
-		})
+		assert_eq!(
+			pallet_balances::Pallet::<Test>::free_balance(TreasuryAccount::get()),
+			ENDOWED_BALANCE + 10
+		);
+		assert_eq!(pallet_balances::Pallet::<Test>::free_balance(RELAYER_A), ENDOWED_BALANCE - 100);
+		assert_events(vec![
+			mock::RuntimeEvent::Balances(pallet_balances::Event::Deposit {
+				who: TreasuryAccount::get(),
+				amount: 10,
+			}),
+			RuntimeEvent::Bridge(bridge::Event::FungibleTransfer(
+				dest_bridge_id,
+				1,
+				resource_id,
+				100 - 10,
+				dest_account,
+			)),
+		]);
+	})
 }
