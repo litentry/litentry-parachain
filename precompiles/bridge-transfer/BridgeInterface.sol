@@ -8,7 +8,7 @@ pragma solidity >=0.8.3;
 /// wraps the pallet
 interface BridgeTransfer {
     /// @dev Transfers some amount of the native token to some recipient on a (whitelisted) destination chain
-    /// @custom:selector e40d85c0
+    /// @custom:selector c7358d27
     /// @param amount the delegator that made the delegation
     /// @param receipt the candidate for which the delegation was made
     /// @param dest_id a pending request exists for such delegation
