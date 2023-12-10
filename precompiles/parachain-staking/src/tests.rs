@@ -15,12 +15,12 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 extern crate alloc;
+use super::mock::*;
 use fp_evm::ExitError;
 use frame_support::assert_ok;
 use precompile_utils::testing::*;
 use sp_core::H160;
 use sp_runtime::{traits::Zero, AccountId32, Perbill};
-use super::mock::*;
 
 fn precompiles() -> ParachainStakingMockPrecompile<Test> {
 	PrecompilesValue::get()
