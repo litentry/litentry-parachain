@@ -15,12 +15,11 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 extern crate alloc;
-use super::mock::*;
-use fp_evm::ExitError;
-use frame_support::assert_ok;
+use crate::{
+	mock::{RuntimeEvent as MetaEvent, *},
+	*,
+};
 use precompile_utils::testing::*;
-use sp_core::H160;
-use sp_runtime::{traits::Zero, AccountId32, Perbill};
 
 fn precompiles() -> ParachainStakingMockPrecompile<Test> {
 	PrecompilesValue::get()
@@ -46,13 +45,13 @@ fn test_delegate_with_auto_compound_is_ok() {
 				.expect_no_logs()
 				.execute_returns(EvmDataWriter::new().write(true).build());
 
-			assert_event_emitted!(Event::Delegation {
+			assert_last_event!(MetaEvent::ParachainStaking(Event::Delegation {
 				delegator: 2u8.into(),
 				locked_amount: 10,
 				candidate: 1u8.into(),
 				delegator_position: DelegatorAdded::AddedToTop { new_total: 40 },
 				auto_compound: Percent::from_percent(50),
-			});
+			}));
 			assert_eq!(
 				vec![AutoCompoundConfig {
 					delegator: 2u8.into(),

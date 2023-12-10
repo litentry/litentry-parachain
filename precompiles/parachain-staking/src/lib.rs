@@ -28,10 +28,10 @@ use frame_support::{
 };
 use pallet_evm::{AddressMapping, Precompile};
 use precompile_utils::{
-	succeed, EvmData, EvmDataWriter, EvmResult, FunctionModifier, PrecompileHandleExt,
+	error, succeed, EvmData, EvmDataWriter, EvmResult, FunctionModifier, PrecompileHandleExt,
 	RuntimeHelper,
 };
-use sp_core::{H256, U256};
+use sp_core::H256;
 use sp_runtime::traits::Dispatchable;
 use sp_std::marker::PhantomData;
 
@@ -633,6 +633,7 @@ where
 		let candidate = Runtime::AccountId::from(candidate);
 		let amount = input.read::<BalanceOf<Runtime>>()?;
 		let auto_compound: u8 = input.read::<u8>()?;
+		let auto_compound = Percent::from_percent(auto_compound);
 
 		if auto_compound > 100 {
 			return Err(error("Must be an integer between 0 and 100 included"))

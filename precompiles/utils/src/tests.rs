@@ -31,7 +31,7 @@ fn u256_repeat_byte(byte: u8) -> U256 {
 fn display_bytes(bytes: &[u8]) {
 	bytes
 		.chunks_exact(32)
-		.map(|chunk| H256::from_slice(chunk))
+		.map(H256::from_slice)
 		.for_each(|hash| println!("{:?}", hash));
 }
 
@@ -561,7 +561,7 @@ fn write_vec_bytes() {
 
 	writer_output
 		.chunks_exact(32)
-		.map(|chunk| H256::from_slice(chunk))
+		.map(H256::from_slice)
 		.for_each(|hash| println!("{:?}", hash));
 
 	// We pad data to a multiple of 32 bytes.
@@ -614,7 +614,7 @@ fn read_vec_of_bytes() {
 
 	writer_output
 		.chunks_exact(32)
-		.map(|chunk| H256::from_slice(chunk))
+		.map(H256::from_slice)
 		.for_each(|hash| println!("{:?}", hash));
 
 	let mut reader = EvmDataReader::new(&writer_output);

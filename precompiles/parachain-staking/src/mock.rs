@@ -18,13 +18,13 @@ use super::*;
 use fp_evm::IsPrecompileResult;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, GenesisBuild, OnFinalize, OnInitialize},
+	traits::{ConstU64, Everything, GenesisBuild, OnFinalize, OnInitialize},
 	weights::Weight,
 };
 use pallet_evm::{
 	AddressMapping, EnsureAddressNever, EnsureAddressRoot, PrecompileResult, PrecompileSet,
 };
-use pallet_parachain_staking::{AwardedPts, InflationInfo, Points, Range};
+use pallet_parachain_staking::{InflationInfo, Range};
 use sp_core::{H160, H256};
 use sp_runtime::{
 	testing::Header,
@@ -50,6 +50,7 @@ construct_runtime!(
 		Evm: pallet_evm::{Pallet, Config<T>, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		ParachainStaking: pallet_parachain_staking::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 	}
 );
 
@@ -370,7 +371,7 @@ pub(crate) fn last_event() -> RuntimeEvent {
 	System::events().pop().expect("Event expected").event
 }
 
-pub(crate) fn events() -> Vec<pallet::Event<Test>> {
+pub(crate) fn events() -> Vec<pallet_parachain_staking::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)

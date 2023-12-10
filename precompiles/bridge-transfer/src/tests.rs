@@ -15,7 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 extern crate alloc;
-use super::mock::*;
+use crate::{mock::*, *};
 use fp_evm::ExitError;
 use frame_support::assert_ok;
 use precompile_utils::testing::*;
@@ -24,43 +24,6 @@ use sp_runtime::{traits::Zero, AccountId32, Perbill};
 
 fn precompiles() -> BridgeTransferMockPrecompile<Test> {
 	PrecompilesValue::get()
-}
-
-#[test]
-fn test_delegate_with_auto_compound_is_ok() {
-	ExtBuilder::default()
-		.with_balances(vec![(1u8.into(), 130), (2u8.into(), 125)])
-		.with_candidates(vec![(1u8.into(), 30)])
-		.build()
-		.execute_with(|| {
-			precompiles()
-				.prepare_test(
-					2.into(),
-					precompile_address(),
-					EvmDataWriter::new_with_selector(Action::TransferNative)
-						.write(Address(1u8.into()))
-						.write(10)
-						.write(Percent::from_percent(50))
-						.build(),
-				)
-				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(true).build());
-
-			assert_event_emitted!(Event::Delegation {
-				delegator: 2u8.into(),
-				locked_amount: 10,
-				candidate: 1u8.into(),
-				delegator_position: DelegatorAdded::AddedToTop { new_total: 40 },
-				auto_compound: Percent::from_percent(50),
-			});
-			assert_eq!(
-				vec![AutoCompoundConfig {
-					delegator: 2u8.into(),
-					value: Percent::from_percent(50)
-				}],
-				ParachainStaking::auto_compounding_delegations(&1u8.into()),
-			);
-		});
 }
 
 #[test]
