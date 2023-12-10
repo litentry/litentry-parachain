@@ -45,7 +45,7 @@ fn transfer_native_is_ok() {
 				precompile_address(),
 				EvmDataWriter::new_with_selector(Action::TransferNative)
 					.write(100u128)
-					.write(dest_account.clone())
+					.write(Bytes(dest_account.clone()))
 					.write(dest_bridge_id)
 					.build(),
 			)
