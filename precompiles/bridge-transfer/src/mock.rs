@@ -109,7 +109,7 @@ impl pallet_balances::Config for Test {
 parameter_types! {
 	pub const TestChainId: u8 = 5;
 	pub const ProposalLifetime: u64 = 100;
-	pub const TreasuryAccount: AccountId = u8_into_account_id(8u8);
+	pub TreasuryAccount: AccountId = U8Wrapper(0u8).into();
 }
 
 impl pallet_bridge::Config for Test {
@@ -204,8 +204,24 @@ impl AddressMapping<AccountId> for TruncatedAddressMapping {
 }
 
 // silly for test purpose only
-fn u8_into_account_id(x: u8) -> AccountId {
-	TruncatedAddressMapping::into_account_id(H160::repeat_byte(x))
+pub struct U8Wrapper(pub u8);
+impl From<U8Wrapper> for H160 {
+	fn from(x: U8Wrapper) -> H160 {
+		H160::repeat_byte(x.0)
+	}
+}
+impl From<U8Wrapper> for H256 {
+	fn from(x: U8Wrapper) -> H256 {
+		let h160 = H160::repeat_byte(x.0);
+		let mut data = [0u8; 32];
+		data[0..20].copy_from_slice(&h160[..]);
+		data.into()
+	}
+}
+impl From<U8Wrapper> for AccountId {
+	fn from(x: U8Wrapper) -> AccountId {
+		TruncatedAddressMapping::into_account_id(x.into())
+	}
 }
 
 parameter_types! {
@@ -239,13 +255,13 @@ impl pallet_evm::Config for Test {
 pub const ENDOWED_BALANCE: Balance = 100_000_000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let bridge_id: AccountId = u8_into_account_id(0u8);
-	let treasury_account: AccountId = u8_into_account_id(8u8);
+	let bridge_id: AccountId = U8Wrapper(0u8).into();
+	let treasury_account: AccountId = U8Wrapper(8u8).into();
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(bridge_id, ENDOWED_BALANCE),
-			(u8_into_account_id(1u8), ENDOWED_BALANCE),
+			(U8Wrapper(1u8).into(), ENDOWED_BALANCE),
 			(treasury_account, ENDOWED_BALANCE),
 		],
 	}

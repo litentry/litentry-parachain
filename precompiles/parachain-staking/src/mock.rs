@@ -188,8 +188,24 @@ impl AddressMapping<AccountId> for TruncatedAddressMapping {
 }
 
 // silly for test purpose only
-fn u8_into_account_id(x: u8) -> AccountId {
-	TruncatedAddressMapping::into_account_id(H160::repeat_byte(x))
+pub struct U8Wrapper(pub u8);
+impl From<U8Wrapper> for H160 {
+	fn from(x: U8Wrapper) -> H160 {
+		H160::repeat_byte(x.0)
+	}
+}
+impl From<U8Wrapper> for H256 {
+	fn from(x: U8Wrapper) -> H256 {
+		let h160 = H160::repeat_byte(x.0);
+		let mut data = [0u8; 32];
+		data[0..20].copy_from_slice(&h160[..]);
+		data.into()
+	}
+}
+impl From<U8Wrapper> for AccountId {
+	fn from(x: U8Wrapper) -> AccountId {
+		TruncatedAddressMapping::into_account_id(x.into())
+	}
 }
 
 parameter_types! {
@@ -286,7 +302,7 @@ impl ExtBuilder {
 		self
 	}
 
-	pub(crate) fn with_auto_compounding_delegations(
+	pub(crate) fn _with_auto_compounding_delegations(
 		mut self,
 		delegations: Vec<(AccountId, AccountId, Balance, Percent)>,
 	) -> Self {
@@ -323,7 +339,7 @@ impl ExtBuilder {
 }
 
 /// Rolls forward one block. Returns the new block number.
-pub(crate) fn roll_one_block() -> u64 {
+pub(crate) fn _roll_one_block() -> u64 {
 	ParachainStaking::on_finalize(System::block_number());
 	Balances::on_finalize(System::block_number());
 	System::on_finalize(System::block_number());
@@ -335,11 +351,11 @@ pub(crate) fn roll_one_block() -> u64 {
 }
 
 /// Rolls to the desired block. Returns the number of blocks played.
-pub(crate) fn roll_to(n: u64) -> u64 {
+pub(crate) fn _roll_to(n: u64) -> u64 {
 	let mut num_blocks = 0;
 	let mut block = System::block_number();
 	while block < n {
-		block = roll_one_block();
+		block = _roll_one_block();
 		num_blocks += 1;
 	}
 	num_blocks
@@ -348,16 +364,16 @@ pub(crate) fn roll_to(n: u64) -> u64 {
 /// Rolls block-by-block to the beginning of the specified round.
 /// This will complete the block in which the round change occurs.
 /// Returns the number of blocks played.
-pub(crate) fn roll_to_round_begin(round: u64) -> u64 {
+pub(crate) fn _roll_to_round_begin(round: u64) -> u64 {
 	let block = (round - 1) * DefaultBlocksPerRound::get() as u64;
-	roll_to(block)
+	_roll_to(block)
 }
 
 /// Rolls block-by-block to the end of the specified round.
 /// The block following will be the one in which the specified round change occurs.
-pub(crate) fn roll_to_round_end(round: u64) -> u64 {
+pub(crate) fn _roll_to_round_end(round: u64) -> u64 {
 	let block = round * DefaultBlocksPerRound::get() as u64 - 1;
-	roll_to(block)
+	_roll_to(block)
 }
 
 pub(crate) fn last_event() -> RuntimeEvent {
@@ -374,7 +390,7 @@ macro_rules! assert_last_event {
 	};
 }
 
-pub(crate) fn events() -> Vec<pallet_parachain_staking::Event<Test>> {
+pub(crate) fn _events() -> Vec<pallet_parachain_staking::Event<Test>> {
 	System::events()
 		.into_iter()
 		.map(|r| r.event)

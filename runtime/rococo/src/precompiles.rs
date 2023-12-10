@@ -96,7 +96,7 @@ where
 		}
 	}
 
-	fn is_precompile(&self, address: H160, gas: u64) -> IsPrecompileResult {
+	fn is_precompile(&self, address: H160, _gas: u64) -> IsPrecompileResult {
 		IsPrecompileResult::Answer {
 			is_precompile: Self::used_addresses().any(|x| x == address),
 			extra_cost: 0,
