@@ -116,6 +116,6 @@ fn delegation_request_is_pending_works() {
 						.build(),
 				)
 				.expect_no_logs()
-				.execute_returns(EvmDataWriter::new().write(false).build());
+				.execute_returns(EvmDataWriter::new().write(true).build());
 		})
 }
