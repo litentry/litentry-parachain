@@ -26,10 +26,10 @@ use frame_support::{
 	sp_runtime::Percent,
 	traits::{Currency, Get},
 };
-use pallet_evm::AddressMapping;
+use pallet_evm::{AddressMapping, Precompile};
 use precompile_utils::{
-    error, revert, succeed, Address, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
-    PrecompileHandleExt, RuntimeHelper,
+	error, revert, succeed, Address, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
+	PrecompileHandleExt, RuntimeHelper,
 };
 use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;

@@ -26,14 +26,14 @@ use frame_support::{
 	sp_runtime::Percent,
 	traits::{Currency, Get},
 };
-use pallet_evm::AddressMapping;
+use pallet_evm::{AddressMapping, Precompile};
 use precompile_utils::{
-    error, revert, succeed, Address, Bytes, EvmData, EvmDataWriter, EvmResult, FunctionModifier,
-    PrecompileHandleExt, RuntimeHelper,
+	succeed, EvmData, EvmDataWriter, EvmResult, FunctionModifier, PrecompileHandleExt,
+	RuntimeHelper,
 };
-use sp_core::{H160, U256};
+use sp_core::{H256, U256};
 use sp_runtime::traits::Dispatchable;
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 
 type BalanceOf<Runtime> = <<Runtime as pallet_parachain_staking::Config>::Currency as Currency<
 	<Runtime as frame_system::Config>::AccountId,
@@ -354,9 +354,9 @@ where
 	) -> EvmResult<PrecompileOutput> {
 		let mut input = handle.read_input()?;
 		input.expect_arguments(2)?;
-		let delegator: [u8; 32] = input.read::<U256>()?.into();
+		let delegator: [u8; 32] = input.read::<H256>()?.into();
 		let delegator = Runtime::AccountId::from(delegator);
-		let candidate: [u8; 32] = input.read::<U256>()?.into();
+		let candidate: [u8; 32] = input.read::<H256>()?.into();
 		let candidate = Runtime::AccountId::from(candidate);
 
 		// DelegationScheduledRequests:
@@ -635,9 +635,7 @@ where
 		let auto_compound: u8 = input.read::<u8>()?;
 
 		if auto_compound > 100 {
-			return Err(RevertReason::custom("Must be an integer between 0 and 100 included")
-				.in_field("auto_compound")
-				.into())
+			return Err(error("Must be an integer between 0 and 100 included"))
 		}
 
 		// Build call with origin.
@@ -764,9 +762,7 @@ where
 		let value: u8 = input.read::<u8>()?;
 
 		if value > 100 {
-			return Err(RevertReason::custom("Must be an integer between 0 and 100 included")
-				.in_field("value")
-				.into())
+			return Err(error("Must be an integer between 0 and 100 included"))
 		}
 
 		let value = Percent::from_percent(value);
