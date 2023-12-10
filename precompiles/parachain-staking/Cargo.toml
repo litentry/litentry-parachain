@@ -43,13 +43,13 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 [features]
 default = [ "std" ]
 std = [
-	"fp-evm/std",
-	"frame-support/std",
-	"frame-system/std",
-	"pallet-parachain-staking/std",
-	"parity-scale-codec/std",
-	"precompile-utils/std",
-	"sp-core/std",
-	"sp-runtime/std",
-	"sp-std/std",
+    "fp-evm/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-parachain-staking/std",
+    "parity-scale-codec/std",
+    "precompile-utils/std",
+    "sp-core/std",
+    "sp-runtime/std",
+    "sp-std/std",
 ]

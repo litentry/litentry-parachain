@@ -39,16 +39,16 @@ hex-literal = "0.4.1"
 [features]
 default = ["std"]
 std = [
-	"evm/std",
-	"parity-scale-codec/std",
-	"fp-evm/std",
-	"frame-support/std",
-	"frame-system/std",
-	"pallet-evm/std",
-	"sp-core/std",
-	"sp-io/std",
-	"sp-runtime/std",
-	"sp-std/std",
-	"xcm/std",
+    "evm/std",
+    "parity-scale-codec/std",
+    "fp-evm/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-evm/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "sp-std/std",
+    "xcm/std",
 ]
 testing = ["similar-asserts", "std"]
