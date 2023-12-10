@@ -33,6 +33,7 @@ use ita_sgx_runtime::{RuntimeOrigin, System};
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
+use itp_types::parentchain::ParentchainCall;
 use itp_utils::{if_production_or, stringify::account_id_to_string};
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
@@ -241,7 +242,7 @@ impl TrustedCallSigned {
 	// common handler for both web2 and web3 identity verification
 	#[allow(clippy::too_many_arguments)]
 	pub fn handle_link_identity_callback<NodeMetadataRepository>(
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 		signer: Identity,
 		who: Identity,
@@ -283,7 +284,12 @@ impl TrustedCallSigned {
 		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
-		calls.push(OpaqueCall::from_tuple(&(call_index, account, id_graph_hash, req_ext_hash)));
+		calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
+			call_index,
+			account,
+			id_graph_hash,
+			req_ext_hash,
+		))));
 
 		if let Some(key) = maybe_key {
 			Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {

@@ -23,7 +23,7 @@ use crate::{
 	initialization::global_components::GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	utils::{
 		get_stf_enclave_signer_from_solo_or_parachain,
-		get_validator_accessor_from_solo_or_parachain,
+		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
 use codec::Encode;
@@ -327,8 +327,7 @@ where
 	});
 
 	// state_getMrenclave
-	let state_get_mrenclave_name: &str = "state_getMrenclave";
-	io.add_sync_method(state_get_mrenclave_name, |_: Params| {
+	io.add_sync_method("state_getMrenclave", |_: Params| {
 		let json_value = match GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave() {
 			Ok(mrenclave) => RpcReturnValue {
 				do_watch: false,
@@ -346,10 +345,8 @@ where
 	});
 
 	if_not_production!({
-		// state_updateScheduledEnclave
-		// params: sidechainBlockNumber, hex encoded mrenclave
-		let mrenclave_update_scheduled_name: &str = "state_updateScheduledEnclave";
-		io.add_sync_method(mrenclave_update_scheduled_name, move |params: Params| {
+		// state_updateScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
+		io.add_sync_method("state_updateScheduledEnclave", move |params: Params| {
 			match params.parse::<(SidechainBlockNumber, String)>() {
 				Ok((bn, mrenclave)) =>
 					return match hex::decode(&mrenclave) {
@@ -386,8 +383,7 @@ where
 		});
 
 		// state_getStorage
-		let state_get_storage = "state_getStorage";
-		io.add_sync_method(state_get_storage, move |params: Params| {
+		io.add_sync_method("state_getStorage", move |params: Params| {
 			if state_storage.is_none() {
 				return Ok(json!(compute_hex_encoded_return_error(
 					"state_getStorage is not avaiable"
@@ -507,8 +503,8 @@ fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
 	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
 		.map_err(|e| format!("{:?}", e))?;
 
-	let validator_access =
-		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	let validator_access = get_validator_accessor_from_integritee_solo_or_parachain()
+		.map_err(|e| format!("{:?}", e))?;
 	validator_access
 		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
 		.map_err(|e| format!("{:?}", e))?;
@@ -537,8 +533,8 @@ fn attesteer_forward_ias_attestation_report_inner(
 	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)
 		.map_err(|e| format!("{:?}", e))?;
 
-	let validator_access =
-		get_validator_accessor_from_solo_or_parachain().map_err(|e| format!("{:?}", e))?;
+	let validator_access = get_validator_accessor_from_integritee_solo_or_parachain()
+		.map_err(|e| format!("{:?}", e))?;
 	validator_access
 		.execute_mut_on_validator(|v| v.send_extrinsics(vec![ext.clone()]))
 		.map_err(|e| format!("{:?}", e))?;

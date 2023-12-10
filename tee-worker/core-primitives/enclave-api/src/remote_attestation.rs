@@ -146,7 +146,7 @@ mod impl_ffi {
 			let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
 			let mut unchecked_extrinsic_size: u32 = 0;
 
-			trace!("Generating dcap_ra_extrinsic with URL: {}", w_url);
+			trace!("Generating ias_ra_extrinsic with URL: {}", w_url);
 
 			let url = w_url.encode();
 
@@ -255,7 +255,6 @@ mod impl_ffi {
 
 			let mut unchecked_extrinsic: Vec<u8> = vec![0u8; EXTRINSIC_MAX_SIZE];
 			let mut unchecked_extrinsic_size: u32 = 0;
-
 			let url = w_url.encode();
 
 			let result = unsafe {

@@ -156,12 +156,16 @@ pub type EnclaveValidatorAccessor = ValidatorAccessor<
 	EnclaveLightClientSeal,
 >;
 
-pub type EnclaveParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
+pub type IntegriteeParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
+pub type TargetAParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
+pub type TargetBParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
 
 /// Import queue for the events
 ///
 /// Note: `Vec<u8>` is correct. It should not be `Vec<Vec<u8>`
-pub type EnclaveParentchainEventImportQueue = ImportQueue<Vec<u8>>;
+pub type IntegriteeParentchainEventImportQueue = ImportQueue<Vec<u8>>;
+pub type TargetAParentchainEventImportQueue = ImportQueue<Vec<u8>>;
+pub type TargetBParentchainEventImportQueue = ImportQueue<Vec<u8>>;
 
 // Stuff for the integritee parentchain
 
@@ -188,8 +192,8 @@ pub type IntegriteeParentchainBlockImporter = ParentchainBlockImporter<
 
 pub type IntegriteeParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
 	IntegriteeParentchainBlockImporter,
-	EnclaveParentchainBlockImportQueue,
-	EnclaveParentchainEventImportQueue,
+	IntegriteeParentchainBlockImportQueue,
+	IntegriteeParentchainEventImportQueue,
 >;
 
 pub type IntegriteeParentchainImmediateBlockImportDispatcher =
@@ -231,8 +235,8 @@ pub type TargetAParentchainBlockImporter = ParentchainBlockImporter<
 
 pub type TargetAParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
 	TargetAParentchainBlockImporter,
-	EnclaveParentchainBlockImportQueue,
-	EnclaveParentchainEventImportQueue,
+	TargetAParentchainBlockImportQueue,
+	TargetAParentchainEventImportQueue,
 >;
 
 pub type TargetAParentchainImmediateBlockImportDispatcher =
@@ -274,8 +278,8 @@ pub type TargetBParentchainBlockImporter = ParentchainBlockImporter<
 
 pub type TargetBParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
 	TargetBParentchainBlockImporter,
-	EnclaveParentchainBlockImportQueue,
-	EnclaveParentchainEventImportQueue,
+	TargetBParentchainBlockImportQueue,
+	TargetBParentchainEventImportQueue,
 >;
 
 pub type TargetBParentchainImmediateBlockImportDispatcher =
@@ -378,7 +382,7 @@ pub static GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 > = ComponentContainer::new("Signing key repository");
 
 /// Light client db seal for the Integritee parentchain
-pub static GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL: ComponentContainer<
+pub static GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL: ComponentContainer<
 	EnclaveLightClientSeal,
 > = ComponentContainer::new("Integritee Parentchain EnclaveLightClientSealSync");
 
@@ -430,7 +434,7 @@ pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttes
 
 lazy_static! {
 	/// Global nonce cache for the Integritee Parentchain.
-	pub static ref GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE: Arc<NonceCache> = Default::default();
+	pub static ref GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE: Arc<NonceCache> = Default::default();
 
 	/// Global nonce cache for the Target A parentchain..
 	pub static ref GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE: Arc<NonceCache> = Default::default();
@@ -440,11 +444,11 @@ lazy_static! {
 }
 
 /// Solochain Handler.
-pub static GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT: ComponentContainer<
+pub static GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT: ComponentContainer<
 	IntegriteeSolochainHandler,
 > = ComponentContainer::new("integritee solochain handler");
 
-pub static GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<
+pub static GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<
 	IntegriteeParachainHandler,
 > = ComponentContainer::new("integritee parachain handler");
 
