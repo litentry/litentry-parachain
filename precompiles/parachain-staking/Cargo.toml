@@ -11,7 +11,7 @@ rustc-hex = { version = "2.0.1", default-features = false }
 
 # Local
 pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
-precompile-utils = { path = "./precompiles/utils", default-features = false }
+precompile-utils = { path = "../../precompiles/utils", default-features = false }
 
 # Substrate
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
@@ -32,10 +32,10 @@ serde = { version = "1.0", default-features = false }
 sha3 = { version = "0.10", default-features = false }
 
 # Local
-precompile-utils = { path = "./precompiles/utils", default-features = false, features = [ "std", "testing" ] }
+precompile-utils = { path = "../../precompiles/utils", default-features = false, features = [ "std", "testing" ] }
 
 # Substrate
-pallet-balances = pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42", features = [ "insecure_zero_ed", "std" ] }
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42", features = [ "insecure_zero_ed", "std" ] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false, features = [ "std" ] }
 scale-info = { version = "2.10.0", default-features = false, features = [ "derive", "std" ] }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", features = [ "std" ] }

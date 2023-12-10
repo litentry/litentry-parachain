@@ -1,11 +1,8 @@
 [package]
-name = "precompile-utils-macro"
-authors = ["StakeTechnologies", "PureStake"]
-description = ""
-version = "0.1.0"
-edition.workspace = true
-homepage.workspace = true
-repository.workspace = true
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = '2021'
+name = 'precompile-utils-macro'
+version = '0.9.17'
 
 [lib]
 proc-macro = true
@@ -16,7 +13,7 @@ path = "tests/tests.rs"
 
 [dependencies]
 num_enum = { version = "0.5.3", default-features = false }
-proc-macro2 = { workspace = true }
-quote = { workspace = true }
+proc-macro2 = { version = "1" }
+quote = { version = "1" }
 sha3 = { version = "0.10", default-features = false }
-syn = { workspace = true, features = ["extra-traits", "fold", "full", "visit"] }
+syn = { version = "2", features = ["extra-traits", "fold", "full", "visit"] }

@@ -21,7 +21,7 @@ use pallet_evm::{
 use pallet_evm_precompile_assets_erc20::{AddressToAssetId, Erc20AssetsPrecompileSet};
 use pallet_evm_precompile_blake2::Blake2F;
 use pallet_evm_precompile_bn128::{Bn128Add, Bn128Mul, Bn128Pairing};
-use pallet_evm_precompile_dapps_staking::DappsStakingWrapper;
+use pallet_evm_precompile_parachain_staking::ParachainStakingPrecompile;
 use pallet_evm_precompile_dispatch::Dispatch;
 use pallet_evm_precompile_ed25519::Ed25519Verify;
 use pallet_evm_precompile_modexp::Modexp;
@@ -92,7 +92,7 @@ where
             a if a == hash(1027) => Some(Ed25519Verify::execute(handle)),
             // Litentry precompiles (starts from 0x5000):
             // ParachainStaking: pallet_parachain_staking = 45
-            a if a == hash(20480 + 45) => Some(ParachainStakingWrapper::<R>::execute(handle)),
+            a if a == hash(20480 + 45) => Some(ParachainStakingPrecompile::<R>::execute(handle)),
             // BridgeTransfer: pallet_bridge_transfer = 61
             a if a == hash(20480 + 61) => Some(BridgeTransferWrapper::<R>::execute(handle)),
             // Default
