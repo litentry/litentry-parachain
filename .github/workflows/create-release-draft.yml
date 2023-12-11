@@ -26,9 +26,6 @@ on:
       release_tag:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
-      release_worker_tag:
-        description: an existing tag for creating worker release (e.g. v1.2.3)
-        required: true
       diff_tag:
         description: an existing tag to run diff against (e.g. v1.2.0)
         default: ""
@@ -44,7 +41,6 @@ on:
 
 env:
   RELEASE_TAG: ${{ github.event.inputs.release_tag }}
-  RELEASE_WORKER_TAG: ${{ github.event.inputs.release_worker_tag }}
   DIFF_TAG: ${{ github.event.inputs.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.genesis_release }}
   DOCKER_BUILDKIT: 1
@@ -188,6 +184,10 @@ jobs:
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
+      - name: Set worker tag
+        run: |
+          WORKER_TAG=$(echo "p0.10.17-9170-w0.0.1-100" | cut -d'-' -f4- | sed 's/w/v/')
+          echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -258,7 +258,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:${{env.RELEASE_WORKER_TAG}}
+          tags: litentry/litentry-worker:$WORKER_TAG
           target: deployed-worker
 
       - name: Build cli
@@ -266,7 +266,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:${{env.RELEASE_WORKER_TAG}}
+          tags: litentry/litentry-cli:$WORKER_TAG
           target: deployed-client
       
       - run: docker images --all
@@ -279,8 +279,8 @@ jobs:
 
       - name: Push worker image
         run: |
-          docker push litentry/litentry-worker:${{env.RELEASE_WORKER_TAG}}
-          docker push litentry/litentry-cli:${{env.RELEASE_WORKER_TAG}}
+          docker push litentry/litentry-worker:$WORKER_TAG
+          docker push litentry/litentry-cli:$WORKER_TAG
 
   ## Build the enclave and package config files
   build-tee:
