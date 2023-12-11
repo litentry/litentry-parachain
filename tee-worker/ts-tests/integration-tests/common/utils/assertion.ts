@@ -20,7 +20,6 @@ import {
     RequestVCResult,
     PalletVcManagementVcContext,
     StfError,
-    LinkIdentityResult,
 } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
@@ -210,12 +209,25 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-// assert the IdentityLinked event is emitted for the given signer
-export async function assertLinkedEvent(signer: Signer, events: any[], expectedLength: number) {
+// for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
+export async function assertIdGraphMutation(
+    signer: Signer,
+    events: any[],
+    idGraphHashResults: any[] | undefined,
+    expectedLength: number
+) {
     assert.equal(events.length, expectedLength);
+    if (idGraphHashResults != undefined) {
+        assert.equal(idGraphHashResults!.length, expectedLength);
+    }
     const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
-    events.forEach((e) => assert.equal(signerAddress, e.data.account.toHex()));
-    console.log(colors.green('assertLinkedEvent passed'));
+    events.forEach((e, i) => {
+        assert.equal(signerAddress, e.data.account.toHex());
+        if (idGraphHashResults != undefined) {
+            assert.equal(idGraphHashResults![i], e.data.idGraphHash.toHex());
+        }
+    });
+    console.log(colors.green('assertIdGraphMutation passed'));
 }
 
 export async function assertIdentity(
@@ -240,19 +252,24 @@ export function assertWorkerError(
     check(errValueDecoded);
 }
 
-export function assertIdentityLinkedResult(
+// a common assertion for all DI requests that might mutate the IdGraph
+// returns the `id_graph_hash` in the `returnValue`
+export function assertIdGraphMutationResult(
     context: IntegrationTestContext,
     returnValue: WorkerRpcReturnValue,
-    expectedIdGraphIdentities: [LitentryPrimitivesIdentity, boolean][]
-) {
-    const decodedResult = context.api.createType(
-        'LinkIdentityResult',
-        returnValue.value
-    ) as unknown as LinkIdentityResult;
+    resultType:
+        | 'LinkIdentityResult'
+        | 'DeactivateIdentityResult'
+        | 'ActivateIdentityResult'
+        | 'SetIdentityNetworksResult',
+    expectedIdGraph: [LitentryPrimitivesIdentity, boolean][]
+): HexString {
+    const decodedResult = context.api.createType(resultType, returnValue.value) as any;
 
-    assert.isNotNull(decodedResult.id_graph);
-    const idGraphData = parseIdGraph(context.sidechainRegistry, decodedResult.id_graph, aesKey);
-    assertIdGraph(idGraphData, expectedIdGraphIdentities);
+    assert.isNotNull(decodedResult.mutated_id_graph);
+    const idGraph = parseIdGraph(context.sidechainRegistry, decodedResult.mutated_id_graph, aesKey);
+    assertIdGraph(idGraph, expectedIdGraph);
+    return u8aToHex(decodedResult.id_graph_hash);
 }
 
 /* 
