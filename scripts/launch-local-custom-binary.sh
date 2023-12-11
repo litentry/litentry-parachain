@@ -47,7 +47,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # https://api.github.com/repos/paritytech/polkadot/releases/latest is not reliable as
   # polkadot could publish release which has no binary
   #
-  url="https://github.com/paritytech/polkadot/releases/download/v0.9.39/polkadot"
+  url="https://github.com/paritytech/polkadot/releases/download/v0.9.42/polkadot"
   POLKADOT_BIN="$TMPDIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
@@ -79,6 +79,7 @@ echo "starting dev network with binaries ..."
 
 # generate chain spec
 ROCOCO_CHAINSPEC=rococo-local-chain-spec.json
+# initial status of rococo you want
 FORK_CHAINSPEC="$ROOTDIR/node/res/chain_specs/rococo-fork.json"
 $POLKADOT_BIN build-spec --chain rococo-local --disable-default-bootnode --raw > $ROCOCO_CHAINSPEC
 
