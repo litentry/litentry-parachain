@@ -94,6 +94,7 @@ pub enum AchainableNameAmountToken {
 	BEP20BalanceOverAmount,
 	ERC20BalanceOverAmount,
 	BalanceOverAmount,
+	LITHoldingAmount, // Custom Name
 }
 
 impl GetAchainableName for AchainableNameAmountToken {
@@ -102,6 +103,7 @@ impl GetAchainableName for AchainableNameAmountToken {
 			AchainableNameAmountToken::BEP20BalanceOverAmount => "BEP20 balance over {amount}",
 			AchainableNameAmountToken::ERC20BalanceOverAmount => "ERC20 balance over {amount}",
 			AchainableNameAmountToken::BalanceOverAmount => "Balance over {amount}",
+			AchainableNameAmountToken::LITHoldingAmount => "LIT Holding Amount",
 		}
 	}
 }
@@ -116,6 +118,8 @@ impl AchainableNameAmountToken {
 			return Ok(AchainableNameAmountToken::ERC20BalanceOverAmount)
 		} else if name_str == AchainableNameAmountToken::BalanceOverAmount.name() {
 			return Ok(AchainableNameAmountToken::BalanceOverAmount)
+		} else if name_str == AchainableNameAmountToken::LITHoldingAmount.name() {
+			return Ok(AchainableNameAmountToken::LITHoldingAmount)
 		}
 
 		Err(Error::AchainableError("Unsupported name in this Type".to_string()))

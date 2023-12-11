@@ -165,51 +165,39 @@ pub fn query_lit_holding_amount(
 	aparam: &AchainableParams,
 	identities: &Vec<(Web3Network, Vec<String>)>,
 ) -> Result<usize> {
-	let mut total_lit_balance = 0;
+	let mut total_lit_balance = 0_f64;
 
 	let data_provider_config = DataProviderConfigReader::read()
 		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e))?;
 	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
 
 	for (network, addresses) in identities {
-		let q_param = if *network == Web3Network::Ethereum {
-			let param = ParamsBasicTypeWithAmountToken::new(
-				AchainableNameAmountToken::ERC20BalanceOverAmount.name().to_string(),
-				&Web3Network::Ethereum,
-				"0".to_string(),
+		let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {
+			(
+				AchainableNameAmountToken::ERC20BalanceOverAmount,
+				Web3Network::Ethereum,
 				Some(LIT_TOKEN_ADDRESS.to_string()),
-			);
-			param
+			)
 		} else if *network == Web3Network::Bsc {
-			let param = ParamsBasicTypeWithAmountToken::new(
-				AchainableNameAmountToken::BEP20BalanceOverAmount.name().to_string(),
-				&Web3Network::Bsc,
-				"0".to_string(),
+			(
+				AchainableNameAmountToken::BEP20BalanceOverAmount,
+				Web3Network::Bsc,
 				Some(LIT_TOKEN_ADDRESS.to_string()),
-			);
-
-			param
+			)
 		} else if *network == Web3Network::Litentry {
-			let param = ParamsBasicTypeWithAmountToken::new(
-				AchainableNameAmountToken::BalanceOverAmount.name().to_string(),
-				&Web3Network::Litentry,
-				"0".to_string(),
-				None,
-			);
-
-			param
+			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litentry, None)
 		} else if *network == Web3Network::Litmus {
-			let param = ParamsBasicTypeWithAmountToken::new(
-				AchainableNameAmountToken::BalanceOverAmount.name().to_string(),
-				&Web3Network::Litmus,
-				"0".to_string(),
-				None,
-			);
-
-			param
+			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litmus, None)
 		} else {
 			continue
 		};
+
+		let q_param = ParamsBasicTypeWithAmountToken::new(
+			q_name.name().to_string(),
+			&q_network,
+			"0".to_string(),
+			q_token,
+		);
 
 		let params = Params::ParamsBasicTypeWithAmountToken(q_param);
 		let balance = client
@@ -217,7 +205,7 @@ pub fn query_lit_holding_amount(
 			.map_err(|e| {
 				Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e.into_error_detail())
 			})?
-			.parse::<usize>()
+			.parse::<f64>()
 			.map_err(|_| {
 				Error::RequestVCFailed(
 					Assertion::Achainable(aparam.clone()),
@@ -228,5 +216,5 @@ pub fn query_lit_holding_amount(
 		total_lit_balance += balance;
 	}
 
-	Ok(total_lit_balance)
+	Ok(total_lit_balance as usize)
 }

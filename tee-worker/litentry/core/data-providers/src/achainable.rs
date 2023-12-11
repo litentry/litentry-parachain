@@ -158,6 +158,10 @@ impl ReqBody {
 	pub fn new(address: String, params: Params) -> Self {
 		ReqBody { name: params.name(), address, params, include_metadata: true }
 	}
+
+	pub fn new_with_false_metadata(address: String, params: Params) -> Self {
+		ReqBody { name: params.name(), address, params, include_metadata: false }
+	}
 }
 
 pub trait AchainableSystemLabelName {
@@ -839,7 +843,7 @@ impl HoldingAmount for AchainableClient {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
 		let mut total_balance = 0_f64;
 		for address in addresses.iter() {
-			let body = ReqBody::new(address.into(), param.clone());
+			let body = ReqBody::new_with_false_metadata(address.into(), param.clone());
 			let balance =
 				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance)?;
 			total_balance += balance;

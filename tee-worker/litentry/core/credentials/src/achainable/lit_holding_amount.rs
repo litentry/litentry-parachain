@@ -21,7 +21,7 @@ use std::vec::Vec;
 
 // Type / Info
 const LIT_HOLDING_AMOUNT_INFO: (&str, &str) =
-	("LIT HOLDING AMOUNT TYPE", "LIT HOLDING AMOUNT DESCRIPTION");
+	("Token holding amount", "The amount of a particular token you are holding");
 const LIT_HOLDING_AMOUNT_BREAKDOWN: &str = "lit_holding_amount";
 const LIT_BALANCE_RANGE: [usize; 10] = [0, 1, 50, 100, 200, 500, 800, 1200, 1600, 3000];
 
