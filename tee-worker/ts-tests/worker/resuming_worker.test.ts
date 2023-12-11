@@ -6,7 +6,7 @@ import * as process from 'process';
 import { step } from 'mocha-steps';
 import WebSocketAsPromised from 'websocket-as-promised';
 import os from 'os';
-import { initWorkerConnection, sleep } from './common/utils';
+import { initWorkerConnection, sleep } from './../integration-tests/common/utils';
 import { assert } from 'chai';
 import type { HexString } from '@polkadot/util/types';
 import * as base58 from 'micro-base58';
