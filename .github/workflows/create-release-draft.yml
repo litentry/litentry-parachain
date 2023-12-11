@@ -171,6 +171,17 @@ jobs:
     if: ${{ github.event.inputs.release_worker == 'true' }}
     runs-on: ubuntu-latest
     steps:
+          
+      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+      - name: Set env
+        run: |
+          WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f4- | sed 's/w/v/')
+          echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
+
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
         uses: jlumbroso/free-disk-space@main
@@ -178,17 +189,7 @@ jobs:
           tool-cache: true
           swap-storage: false
           large-packages: false
-          
-      - name: Checkout codes on ${{ env.RELEASE_TAG }}
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-          fetch-depth: 0
-      - name: Set worker tag
-        run: |
-          WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f4- | sed 's/w/v/')
-          echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
-        
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
