@@ -121,28 +121,22 @@ where
 		.try_into()
 		.map_err(|e| format!("Failed to convert to UserShieldingKeyType: {:?}", e))?;
 
-	let decrypted_trusted_operation = match aes_decrypt(&aes_key, &mut encrypted_trusted_call) {
-		Some(s) => s,
-		None => return Err("Failed to decrypted trusted operation".to_string()),
-	};
+	let decrypted_trusted_operation = aes_decrypt(&aes_key, &mut encrypted_trusted_call)
+		.ok_or("Failed to decrypt trusted operation".to_string())?;
 
 	let trusted_operation = TrustedOperation::<TrustedCallSigned, Getter>::decode(
 		&mut decrypted_trusted_operation.as_slice(),
 	)
 	.map_err(|e| format!("Failed to decode trusted operation, {:?}", e))?;
 
-	let trusted_call: &TrustedCallSigned = match trusted_operation.to_call() {
-		Some(s) => s,
-		None => return Err("Failed to convert trusted operation to trusted call".to_string()),
-	};
+	let trusted_call: &TrustedCallSigned = trusted_operation
+		.to_call()
+		.ok_or("Failed to convert trusted operation to trusted call".to_string())?;
 
 	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, _hash) =
 		trusted_call.call.clone()
 	{
-		let key = match maybe_key {
-			Some(s) => s,
-			None => return Err("User shielding key not provided".to_string()),
-		};
+		let key = maybe_key.ok_or("User shielding key not provided".to_string())?;
 		let identities: Vec<IdentityNetworkTuple> = context
 			.state_handler
 			.execute_on_current(&shard, |state, _| {
@@ -173,10 +167,9 @@ where
 			})
 			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
 
-		let signer = match signer.to_account_id() {
-			Some(s) => s,
-			None => return Err("Invalid signer account, failed to convert".to_string()),
-		};
+		let signer = signer
+			.to_account_id()
+			.ok_or("Invalid signer account, failed to convert".to_string())?;
 
 		let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
 			shard,
