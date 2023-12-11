@@ -186,7 +186,7 @@ jobs:
           fetch-depth: 0
       - name: Set worker tag
         run: |
-          WORKER_TAG=$(echo "p0.10.17-9170-w0.0.1-100" | cut -d'-' -f4- | sed 's/w/v/')
+          WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f4- | sed 's/w/v/')
           echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
         
       - name: Set up Docker Buildx
