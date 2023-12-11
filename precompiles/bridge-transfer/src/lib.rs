@@ -38,12 +38,6 @@ type BalanceOf<Runtime> = <<Runtime as pallet_bridge::Config>::Currency as Curre
 >>::Balance;
 
 /// A precompile to wrap the functionality from bridge_transfer.
-///
-/// EXAMPLE USECASE:
-/// A simple example usecase is a contract that allows donors to donate, and stakes all the funds
-/// toward one fixed address chosen by the deployer.
-/// Such a contract could be deployed by a collator candidate, and the deploy address distributed to
-/// supporters who want to donate toward a perpetual nomination fund.
 pub struct BridgeTransferPrecompile<Runtime>(PhantomData<Runtime>);
 
 impl<Runtime> BridgeTransferPrecompile<Runtime>
