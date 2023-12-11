@@ -60,9 +60,9 @@ impl StfExecutionResult for TrustedCallResult {
 	}
 }
 
-/// For the requests that mutate the IDGraph, the response result will contain at least:
-/// - `mutated_id_graph`: the mutated IDGraph, which is the subset the whole IDGraph
-/// - `id_graph_hash`: the nwe IDGraph hash after the mutation
+/// For requests that mutate the IDGraph, the response result will contain at least:
+/// - `mutated_id_graph`: the mutated IDGraph, which is the subset of the whole IDGraph
+/// - `id_graph_hash`: the new IDGraph hash after the mutation
 ///
 /// Currently it applies to the following DI requests:
 /// - `link_identity`
