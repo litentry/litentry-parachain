@@ -36,7 +36,6 @@ pub mod migrations;
 
 pub use pallet::*;
 pub mod identity_context;
-use core::cmp::Ordering;
 pub use identity_context::*;
 
 use frame_support::{pallet_prelude::*, sp_runtime::traits::One, traits::StorageVersion};
@@ -297,15 +296,7 @@ pub mod pallet {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
 
 			// Initial sort to ensure a deterministic order
-			id_graph.sort_by(|a, b| {
-				let order = Ord::cmp(&a.1.link_block, &b.1.link_block);
-				if order == Ordering::Equal {
-					// Compare identities by their did formated string
-					Ord::cmp(&a.0.to_did().ok(), &b.0.to_did().ok())
-				} else {
-					order
-				}
-			});
+			sort_id_graph::<T>(&mut id_graph);
 
 			id_graph
 		}

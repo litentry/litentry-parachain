@@ -23,7 +23,6 @@ mod vc_handling;
 
 use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
-use core::cmp::Ordering;
 pub use futures;
 use ita_sgx_runtime::{Hash, Runtime};
 use ita_stf::{
@@ -49,7 +48,7 @@ use lc_vc_task_sender::init_vc_task_sender_storage;
 use litentry_primitives::{
 	aes_decrypt, AesOutput, Identity, IdentityNetworkTuple, RequestAesKey, ShardIdentifier,
 };
-use pallet_identity_management_tee::IdentityContext;
+use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
 use std::{
 	format,
 	string::{String, ToString},
@@ -155,15 +154,10 @@ where
 				);
 				let mut id_graph =
 					state.iter_prefix::<Identity, IdentityContext<Runtime>>(&prefix_key).unwrap();
-				id_graph.sort_by(|a, b| {
-					let order = Ord::cmp(&a.1.link_block, &b.1.link_block);
-					if order == Ordering::Equal {
-						// Compare identities by their did formated string
-						Ord::cmp(&a.0.to_did().ok(), &b.0.to_did().ok())
-					} else {
-						order
-					}
-				});
+
+				// Sorts the IDGraph in place
+				sort_id_graph::<Runtime>(&mut id_graph);
+
 				let assertion_networks = assertion.clone().get_supported_web3networks();
 				let identities: Vec<IdentityNetworkTuple> = id_graph
 					.into_iter()
