@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 # This scripts starts a local network with 2 relaychain nodes + 1 parachain node.
+# This scripts will not rebuild node bin!!
 # The binaries are passed as arguments for this script.
 #
 # mainly used on CI-runner, where:
@@ -25,10 +26,9 @@ CHAIN=$1
 POLKADOT_BIN="$2"
 PARACHAIN_BIN="$3"
 
-# Check if TMPDIR is already set
-TMPDIR=${TMPDIR:-"/tmp/parachain_dev"}
+LITENTRY_PARACHAIN_DIR=${LITENTRY_PARACHAIN_DIR:-"/tmp/parachain_dev"}
 
-[ -d "$TMPDIR" ] || mkdir -p "$TMPDIR"
+[ -d "$LITENTRY_PARACHAIN_DIR" ] || mkdir -p "$LITENTRY_PARACHAIN_DIR"
 ROOTDIR=$(git rev-parse --show-toplevel)
 
 cd "$ROOTDIR"
@@ -48,7 +48,7 @@ if [ -z "$POLKADOT_BIN" ]; then
   # polkadot could publish release which has no binary
   #
   url="https://github.com/paritytech/polkadot/releases/download/v0.9.42/polkadot"
-  POLKADOT_BIN="$TMPDIR/polkadot"
+  POLKADOT_BIN="$LITENTRY_PARACHAIN_DIR/polkadot"
   wget -O "$POLKADOT_BIN" -q "$url"
   chmod a+x "$POLKADOT_BIN"
 fi
@@ -73,19 +73,17 @@ if ! "$PARACHAIN_BIN" --version &> /dev/null; then
   exit 1
 fi
 
-cd "$TMPDIR"
+cd "$LITENTRY_PARACHAIN_DIR"
 
 echo "starting dev network with binaries ..."
 
 # generate chain spec
 ROCOCO_CHAINSPEC=rococo-local-chain-spec.json
-# initial status of rococo you want
-FORK_CHAINSPEC="$ROOTDIR/node/res/chain_specs/rococo-fork.json"
 $POLKADOT_BIN build-spec --chain rococo-local --disable-default-bootnode --raw > $ROCOCO_CHAINSPEC
 
 # generate genesis state and wasm for registration
-$PARACHAIN_BIN export-genesis-state --chain $FORK_CHAINSPEC > genesis-state
-$PARACHAIN_BIN export-genesis-wasm --chain $FORK_CHAINSPEC > genesis-wasm
+$PARACHAIN_BIN export-genesis-state --chain $CHAIN-dev > genesis-state
+$PARACHAIN_BIN export-genesis-wasm --chain $CHAIN-dev > genesis-wasm
 
 # run alice and bob as relay nodes
 $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --alice --tmp --port ${AlicePort:-30336} --ws-port ${AliceWSPort:-9946} --rpc-port ${AliceRPCPort:-9936} &> "relay.alice.log" &
@@ -98,10 +96,11 @@ $POLKADOT_BIN --chain $ROCOCO_CHAINSPEC --bob --tmp --port ${BobPort:-30337} --w
 sleep 10
 
 # run a litentry-collator instance
-$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $FORK_CHAINSPEC \
-  --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all \
+$PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
+  --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --rpc-methods=Unsafe \
   --port ${CollatorPort:-30333} --ws-port ${CollatorWSPort:-9944} --rpc-port ${CollatorRPCPort:-9933} --execution wasm \
   --state-pruning archive --blocks-pruning archive \
+  --enable-evm-rpc \
   -- \
   --execution wasm --chain $ROCOCO_CHAINSPEC --port 30332 --ws-port 9943 --rpc-port 9932 \
   --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
@@ -114,8 +113,8 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-corepack yarn
-corepack yarn register-parathread 2>&1 | tee "$TMPDIR/register-parathread.log"
+corepack pnpm install
+corepack pnpm run register-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/register-parathread.log"
 print_divider
 
 echo "upgrade parathread to parachain now ..."
@@ -127,10 +126,10 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-corepack yarn
-corepack yarn upgrade-parathread 2>&1 | tee "$TMPDIR/upgrade-parathread.log"
+corepack pnpm install
+corepack pnpm run upgrade-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/upgrade-parathread.log"
 print_divider
 
-echo "done. please check $TMPDIR for generated files if need"
+echo "done. please check $LITENTRY_PARACHAIN_DIR for generated files if need"
 
 print_divider
