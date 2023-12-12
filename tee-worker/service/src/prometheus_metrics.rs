@@ -286,6 +286,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
 			Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
 			Assertion::WeirdoGhostGangHolder => "WeirdoGhostGangHolder",
+			Assertion::LITStaking => "LITStaking",
 		},
 	};
 	inc_stf_calls(category, label);

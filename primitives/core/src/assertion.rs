@@ -238,6 +238,9 @@ pub enum Assertion {
 
 	#[codec(index = 19)]
 	WeirdoGhostGangHolder,
+
+	#[codec(index = 20)]
+	LITStaking,
 }
 
 impl Assertion {
@@ -271,6 +274,13 @@ impl Assertion {
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// VIP3 Member Card
 			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
+			// LITStaking
+			Self::LITStaking => vec![
+				Web3Network::Ethereum,
+				Web3Network::Bsc,
+				Web3Network::Litentry,
+				Web3Network::Litmus,
+			],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
