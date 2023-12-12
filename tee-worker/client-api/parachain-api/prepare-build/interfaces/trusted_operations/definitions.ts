@@ -34,12 +34,12 @@ export default {
             _enum: {
                 link_identity:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, Option<RequestAesKey>, H256)",
-                deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
-                activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)",
+                deactivate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)",
+                activate_identity: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)",
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, Option<RequestAesKey>, H256)",
-                set_identity_networks: "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)",
+                set_identity_networks:
+                    "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)",
                 __Unused_remove_identity: "Null",
-
             },
         },
         TrustedOperationStatus: {

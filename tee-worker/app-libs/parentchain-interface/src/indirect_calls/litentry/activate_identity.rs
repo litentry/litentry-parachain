@@ -71,6 +71,7 @@ impl ArgsExecutor for ActivateIdentityArgs {
 			enclave_account_id.into(),
 			account.into(),
 			identity,
+			None,
 			hash,
 		))
 	}

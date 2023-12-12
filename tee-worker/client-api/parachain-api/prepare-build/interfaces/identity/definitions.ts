@@ -4,7 +4,20 @@ export default {
             account: "AccountId",
         },
         LinkIdentityResult: {
-            id_graph: "AesOutput",
+            mutated_id_graph: "AesOutput",
+            id_graph_hash: "H256",
+        },
+        DeactivateIdentityResult: {
+            mutated_id_graph: "AesOutput",
+            id_graph_hash: "H256",
+        },
+        ActivateIdentityResult: {
+            mutated_id_graph: "AesOutput",
+            id_graph_hash: "H256",
+        },
+        SetIdentityNetworksResult: {
+            mutated_id_graph: "AesOutput",
+            id_graph_hash: "H256",
         },
         LitentryIdentity: {
             _enum: {

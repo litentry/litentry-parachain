@@ -3,7 +3,6 @@ use crate::teeracle::{schedule_periodic_reregistration_thread, start_periodic_ma
 
 #[cfg(not(feature = "dcap"))]
 use crate::utils::check_files;
-
 use crate::{
 	account_funding::{setup_account_funding, EnclaveAccountInfoProvider},
 	config::Config,
@@ -56,6 +55,7 @@ use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
+use regex::Regex;
 use serde_json::Value;
 use sgx_types::*;
 use sp_runtime::traits::Header as HeaderT;
@@ -73,7 +73,11 @@ use itp_enclave_api::Enclave;
 use sp_core::crypto::{AccountId32, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiSigner;
-use std::{collections::HashSet, env, fs::File, io::Read, str, sync::Arc, thread, time::Duration};
+use std::{
+	collections::HashSet, env, fmt::Debug, fs::File, io::Read, str, sync::Arc, thread,
+	time::Duration,
+};
+use substrate_api_client::ac_node_api::{EventRecord, Phase::ApplyExtrinsic};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -115,10 +119,8 @@ pub(crate) fn main() {
 		)
 		.unwrap(),
 	);
-	let node_api_factory = Arc::new(NodeApiFactory::new(
-		config.integritee_rpc_endpoint(),
-		AccountKeyring::Alice.pair(),
-	));
+	let node_api_factory =
+		Arc::new(NodeApiFactory::new(config.litentry_rpc_endpoint(), AccountKeyring::Alice.pair()));
 	let enclave = Arc::new(enclave_init(&config).unwrap());
 	let initialization_handler = Arc::new(InitializationHandler::default());
 	let worker = Arc::new(EnclaveWorker::new(
@@ -356,7 +358,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	#[cfg(not(any(feature = "offchain-worker", feature = "sidechain", feature = "teeracle")))]
 	let flavor_str = "offchain-worker";
 
-	println!("Integritee Worker for {} v{}", flavor_str, VERSION);
+	println!("Litentry Worker for {} v{}", flavor_str, VERSION);
 
 	#[cfg(feature = "dcap")]
 	println!("  DCAP is enabled");
@@ -403,9 +405,6 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	});
 
 	let tokio_handle = tokio_handle_getter.get_handle();
-
-	#[cfg(feature = "teeracle")]
-	let teeracle_tokio_handle = tokio_handle.clone();
 
 	// ------------------------------------------------------------------------
 	// Get the public key of our TEE.
@@ -472,7 +471,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			&config,
 			enclave.clone(),
 			sidechain_storage.clone(),
-			tokio_handle,
+			&tokio_handle,
 		);
 	}
 
@@ -623,45 +622,51 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		enclave_api_vc_task_handler.run_vc_issuance(data_provider).unwrap();
 	});
 
-	// ------------------------------------------------------------------------
-	// initialize teeracle interval
-	#[cfg(feature = "teeracle")]
-	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
-		schedule_periodic_reregistration_thread(
-			send_register_xt,
-			run_config.reregister_teeracle_interval(),
-		);
+	match WorkerModeProvider::worker_mode() {
+		WorkerMode::Teeracle => {
+			// ------------------------------------------------------------------------
+			// initialize teeracle interval
+			#[cfg(feature = "teeracle")]
+			schedule_periodic_reregistration_thread(
+				send_register_xt,
+				run_config.reregister_teeracle_interval(),
+			);
 
-		start_periodic_market_update(
-			&litentry_rpc_api,
-			run_config.teeracle_update_interval(),
-			enclave.as_ref(),
-			&teeracle_tokio_handle,
-		);
-	}
+			#[cfg(feature = "teeracle")]
+			start_periodic_market_update(
+				&litentry_rpc_api,
+				run_config.teeracle_update_interval(),
+				enclave.as_ref(),
+				&tokio_handle,
+			);
+		},
+		WorkerMode::OffChainWorker => {
+			println!("*** [+] Finished initializing light client, syncing parentchain...");
 
-	if WorkerModeProvider::worker_mode() != WorkerMode::Teeracle {
-		println!("*** [+] Finished initializing light client, syncing parentchain...");
+			// Syncing all parentchain blocks, this might take a while..
+			let last_synced_header =
+				parentchain_handler.sync_parentchain(last_synced_header, 0, true).unwrap();
 
-		// Litentry: apply skipped parentchain block
-		let parentchain_start_block = config
-			.try_parse_parentchain_start_block()
-			.expect("parentchain start block to be a valid number");
+			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
 
-		println!(
-			"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
-			last_synced_header.number, parentchain_start_block
-		);
+			info!("skipping shard vault check because not yet supported for offchain worker");
+		},
+		WorkerMode::Sidechain => {
+			println!("*** [+] Finished initializing light client, syncing parentchain...");
 
-		// Syncing all parentchain blocks, this might take a while..
-		let mut last_synced_header = parentchain_handler
-			.sync_parentchain(last_synced_header, parentchain_start_block)
-			.unwrap();
+			// Litentry: apply skipped parentchain block
+			let parentchain_start_block = config
+				.try_parse_parentchain_start_block()
+				.expect("parentchain start block to be a valid number");
 
-		// ------------------------------------------------------------------------
-		// Initialize the sidechain
-		if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
-			last_synced_header = sidechain_init_block_production(
+			println!(
+				"*** [+] last_synced_header: {}, config.parentchain_start_block: {}",
+				last_synced_header.number, parentchain_start_block
+			);
+
+			// ------------------------------------------------------------------------
+			// Initialize the sidechain
+			let last_synced_header = sidechain_init_block_production(
 				enclave.clone(),
 				register_enclave_xt_header,
 				we_are_primary_validateer,
@@ -673,44 +678,13 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 				config.fail_at,
 			)
 			.unwrap();
-		}
 
-		// ------------------------------------------------------------------------
-		// start parentchain syncing loop (subscribe to header updates)
-		thread::Builder::new()
-			.name("parentchain_sync_loop".to_owned())
-			.spawn(move || {
-				if let Err(e) =
-					subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header)
-				{
-					error!("Parentchain block syncing terminated with a failure: {:?}", e);
-				}
-				println!("[!] Parentchain block syncing has terminated");
-			})
-			.unwrap();
+			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
 
-		if WorkerModeProvider::worker_mode() == WorkerMode::OffChainWorker {
-			info!("skipping shard vault check because not yet supported for offchain worker");
-		} else if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
-			println!(
-				"shard vault account is already initialized in state: {}",
-				shard_vault.to_ss58check()
-			);
-		} else if we_are_primary_validateer {
-			println!("initializing proxied shard vault account now");
-			enclave.init_proxied_shard_vault(shard).unwrap();
-			println!(
-				"initialized shard vault account: : {}",
-				enclave.get_ecc_vault_pubkey(shard).unwrap().to_ss58check()
-			);
-		} else {
-			panic!("no vault account has been initialized and we are not the primary worker");
-		}
-	}
+			init_provided_shard_vault(shard, &enclave, we_are_primary_validateer);
 
-	// ------------------------------------------------------------------------
-	if WorkerModeProvider::worker_mode() == WorkerMode::Sidechain {
-		spawn_worker_for_shard_polling(shard, litentry_rpc_api.clone(), initialization_handler);
+			spawn_worker_for_shard_polling(shard, litentry_rpc_api.clone(), initialization_handler);
+		},
 	}
 
 	if let Some(url) = config.target_a_parentchain_rpc_endpoint() {
@@ -718,6 +692,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			&enclave,
 			&tee_accountid,
 			url,
+			shard,
 			ParentchainId::TargetA,
 			is_development_mode,
 		)
@@ -728,6 +703,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			&enclave,
 			&tee_accountid,
 			url,
+			shard,
 			ParentchainId::TargetB,
 			is_development_mode,
 		)
@@ -740,8 +716,32 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 	println!("[+] [{:?}] Subscribed to events. waiting...", ParentchainId::Litentry);
 	loop {
 		if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
-			print_events(events)
+			print_events(events, ParentchainId::Litentry)
 		}
+	}
+}
+
+fn init_provided_shard_vault<E: EnclaveBase>(
+	shard: &ShardIdentifier,
+	enclave: &Arc<E>,
+	we_are_primary_validateer: bool,
+) {
+	if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
+		println!(
+			"[Litentry] shard vault account is already initialized in state: {}",
+			shard_vault.to_ss58check()
+		);
+	} else if we_are_primary_validateer {
+		println!("[Litentry] initializing proxied shard vault account now");
+		enclave.init_proxied_shard_vault(shard, &ParentchainId::Litentry).unwrap();
+		println!(
+			"[Litentry] initialized shard vault account: : {}",
+			enclave.get_ecc_vault_pubkey(shard).unwrap().to_ss58check()
+		);
+	} else {
+		panic!(
+			"[Litentry] no vault account has been initialized and we are not the primary worker"
+		);
 	}
 }
 
@@ -749,6 +749,7 @@ fn init_target_parentchain<E>(
 	enclave: &Arc<E>,
 	tee_account_id: &AccountId32,
 	url: String,
+	shard: &ShardIdentifier,
 	parentchain_id: ParentchainId,
 	is_development_mode: bool,
 ) where
@@ -776,24 +777,12 @@ fn init_target_parentchain<E>(
 
 		// Syncing all parentchain blocks, this might take a while..
 		let last_synched_header =
-			parentchain_handler.sync_parentchain(last_synched_header, 0).unwrap();
+			parentchain_handler.sync_parentchain(last_synched_header, 0, true).unwrap();
 
-		// start parentchain syncing loop (subscribe to header updates)
-		thread::Builder::new()
-			.name(format!("{:?}_parentchain_sync_loop", parentchain_id))
-			.spawn(move || {
-				if let Err(e) =
-					subscribe_to_parentchain_new_headers(parentchain_handler, last_synched_header)
-				{
-					error!(
-						"[{:?}] parentchain block syncing terminated with a failure: {:?}",
-						parentchain_id, e
-					);
-				}
-				println!("[!] [{:?}] parentchain block syncing has terminated", parentchain_id);
-			})
-			.unwrap();
+		start_parentchain_header_subscription_thread(parentchain_handler, last_synched_header)
 	}
+	println!("[{:?}] initializing proxied shard vault account now", parentchain_id);
+	enclave.init_proxied_shard_vault(shard, &parentchain_id).unwrap();
 
 	// Subscribe to events and print them.
 	println!("*** [{:?}] Subscribing to events...", parentchain_id);
@@ -804,7 +793,7 @@ fn init_target_parentchain<E>(
 		.name(format!("{:?}_parentchain_event_subscription", parentchain_id))
 		.spawn(move || loop {
 			if let Some(Ok(events)) = subscription.next_events::<RuntimeEvent, Hash>() {
-				print_events(events)
+				print_events(events, parentchain_id)
 			}
 		})
 		.unwrap();
@@ -879,128 +868,21 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 	});
 }
 
-fn print_events(events: Vec<Event>) {
+fn print_events<R, H>(events: Vec<EventRecord<R, H>>, parentchain_id: ParentchainId)
+where
+	R: Debug,
+{
 	for evr in &events {
-		debug!("Decoded: phase = {:?}, event = {:?}", evr.phase, evr.event);
-		match &evr.event {
-			RuntimeEvent::Balances(be) => {
-				info!("[+] Received balances event");
-				debug!("{:?}", be);
-				match &be {
-					pallet_balances::Event::Transfer {
-						from: transactor,
-						to: dest,
-						amount: value,
-					} => {
-						debug!("    Transactor:  {:?}", transactor.to_ss58check());
-						debug!("    Destination: {:?}", dest.to_ss58check());
-						debug!("    Value:       {:?}", value);
-					},
-					_ => {
-						trace!("Ignoring unsupported balances event");
-					},
-				}
-			},
-			RuntimeEvent::Teerex(re) => {
-				debug!("{:?}", re);
-				match &re {
-					my_node_runtime::pallet_teerex::Event::AddedEnclave(sender, worker_url) => {
-						println!("[+] Received AddedEnclave event");
-						println!("    Sender (Worker):  {:?}", sender);
-						println!("    Registered URL: {:?}", str::from_utf8(worker_url).unwrap());
-					},
-					my_node_runtime::pallet_teerex::Event::Forwarded(shard) => {
-						println!(
-							"[+] Received trusted call for shard {}",
-							shard.encode().to_base58()
-						);
-					},
-					my_node_runtime::pallet_teerex::Event::ProcessedParentchainBlock(
-						sender,
-						block_hash,
-						merkle_root,
-						block_number,
-					) => {
-						info!("[+] Received ProcessedParentchainBlock event");
-						debug!("    From:    {:?}", sender);
-						debug!("    Block Hash: {:?}", hex::encode(block_hash));
-						debug!("    Merkle Root: {:?}", hex::encode(merkle_root));
-						debug!("    Block Number: {:?}", block_number);
-					},
-					my_node_runtime::pallet_teerex::Event::ShieldFunds(incognito_account) => {
-						info!("[+] Received ShieldFunds event");
-						debug!("    For:    {:?}", incognito_account);
-					},
-					my_node_runtime::pallet_teerex::Event::UnshieldedFunds(incognito_account) => {
-						info!("[+] Received UnshieldedFunds event");
-						debug!("    For:    {:?}", incognito_account);
-					},
-					_ => {
-						trace!("Ignoring unsupported pallet_teerex event");
-					},
-				}
-			},
-			#[cfg(feature = "teeracle")]
-			RuntimeEvent::Teeracle(re) => {
-				debug!("{:?}", re);
-				match &re {
-					my_node_runtime::pallet_teeracle::Event::ExchangeRateUpdated(
-						source,
-						currency,
-						new_value,
-					) => {
-						println!("[+] Received ExchangeRateUpdated event");
-						println!("    Data source:  {}", source);
-						println!("    Currency:  {}", currency);
-						println!("    Exchange rate: {:?}", new_value);
-					},
-					my_node_runtime::pallet_teeracle::Event::ExchangeRateDeleted(
-						source,
-						currency,
-					) => {
-						println!("[+] Received ExchangeRateDeleted event");
-						println!("    Data source:  {}", source);
-						println!("    Currency:  {}", currency);
-					},
-					my_node_runtime::pallet_teeracle::Event::AddedToWhitelist(
-						source,
-						mrenclave,
-					) => {
-						println!("[+] Received AddedToWhitelist event");
-						println!("    Data source:  {}", source);
-						println!("    Currency:  {:?}", mrenclave);
-					},
-					my_node_runtime::pallet_teeracle::Event::RemovedFromWhitelist(
-						source,
-						mrenclave,
-					) => {
-						println!("[+] Received RemovedFromWhitelist event");
-						println!("    Data source:  {}", source);
-						println!("    Currency:  {:?}", mrenclave);
-					},
-					_ => {
-						trace!("Ignoring unsupported pallet_teeracle event");
-					},
-				}
-			},
-			#[cfg(feature = "sidechain")]
-			RuntimeEvent::Sidechain(re) => match &re {
-				my_node_runtime::pallet_sidechain::Event::ProposedSidechainBlock(
-					sender,
-					payload,
-				) => {
-					info!("[+] Received ProposedSidechainBlock event");
-					debug!("    From:    {:?}", sender);
-					debug!("    Payload: {:?}", hex::encode(payload));
-				},
-				_ => {
-					trace!("Ignoring unsupported pallet_sidechain event");
-				},
-			},
-			_ => {
-				trace!("Ignoring event {:?}", evr);
-			},
+		if evr.phase == ApplyExtrinsic(0) {
+			// not interested in intrinsics
+			continue
 		}
+		let re = Regex::new(r"\s[0-9a-f]*\s\(").unwrap();
+		let event_str = re
+			.replace_all(format!("{:?}", evr.event).as_str(), "(")
+			.replace("RuntimeEvent::", "")
+			.replace("Event::", "");
+		println!("[{}] Event: {}", parentchain_id, event_str);
 	}
 }
 
@@ -1123,6 +1005,27 @@ fn send_extrinsic(
 	}
 }
 
+fn start_parentchain_header_subscription_thread<E: EnclaveBase + Sidechain>(
+	parentchain_handler: Arc<ParentchainHandler<ParentchainApi, E>>,
+	last_synced_header: Header,
+) {
+	let parentchain_id = *parentchain_handler.parentchain_id();
+	thread::Builder::new()
+		.name(format!("{:?}_parentchain_sync_loop", parentchain_id))
+		.spawn(move || {
+			if let Err(e) =
+				subscribe_to_parentchain_new_headers(parentchain_handler, last_synced_header)
+			{
+				error!(
+					"[{:?}] parentchain block syncing terminated with a failure: {:?}",
+					parentchain_id, e
+				);
+			}
+			println!("[!] [{:?}] parentchain block syncing has terminated", parentchain_id);
+		})
+		.unwrap();
+}
+
 /// Subscribe to the node API finalized heads stream and trigger a parent chain sync
 /// upon receiving a new header.
 fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
@@ -1145,19 +1048,19 @@ fn subscribe_to_parentchain_new_headers<E: EnclaveBase + Sidechain>(
 	// - I still feel it's only a workaround, not a perfect solution
 	//
 	// TODO: now the sync will panic if disconnected - it heavily relys on the worker-restart to work (even manually)
+	let parentchain_id = parentchain_handler.parentchain_id();
 	loop {
 		let new_header = subscription
 			.next()
 			.ok_or(Error::ApiSubscriptionDisconnected)?
 			.map_err(|e| Error::ApiClient(e.into()))?;
 
-		println!(
-			"[+] Received finalized header update ({}), syncing parent chain...",
-			new_header.number
+		info!(
+			"[{:?}] Received finalized header update ({}), syncing parent chain...",
+			parentchain_id, new_header.number
 		);
 
-		// the overriden_start_block shouldn't matter here
-		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header, 0)?;
+		last_synced_header = parentchain_handler.sync_parentchain(last_synced_header, 0, false)?;
 	}
 }
 

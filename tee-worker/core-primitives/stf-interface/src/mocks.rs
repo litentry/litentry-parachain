@@ -28,7 +28,10 @@ use core::{fmt::Debug, marker::PhantomData};
 use itp_node_api_metadata::metadata_mocks::NodeMetadataMock;
 use itp_node_api_metadata_provider::NodeMetadataRepository;
 use itp_stf_primitives::traits::TrustedCallVerification;
-use itp_types::{parentchain::ParentchainId, AccountId, Index, OpaqueCall, ShardIdentifier, H256};
+use itp_types::{
+	parentchain::{ParentchainCall, ParentchainId},
+	AccountId, Index, ShardIdentifier, H256,
+};
 
 #[derive(Default)]
 pub struct StateInterfaceMock<State, StateDiff> {
@@ -66,7 +69,7 @@ where
 		_shard: &ShardIdentifier,
 		_call: TCS,
 		_top_hash: H256,
-		_calls: &mut Vec<OpaqueCall>,
+		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
 	) -> Result<Self::Result, Self::Error> {
 		unimplemented!()
@@ -105,7 +108,7 @@ impl ExecuteCall<NodeMetadataRepository<NodeMetadataMock>> for CallExecutorMock 
 		self,
 		_shard: &ShardIdentifier,
 		_top_hash: H256,
-		_calls: &mut Vec<OpaqueCall>,
+		_calls: &mut Vec<ParentchainCall>,
 		_node_metadata_repo: Arc<NodeMetadataRepository<NodeMetadataMock>>,
 	) -> Result<(), Self::Error> {
 		unimplemented!()

@@ -65,11 +65,11 @@ impl EnclaveBase for EnclaveMock {
 		unimplemented!()
 	}
 
-	fn init_proxied_shard_vault(&self, _shard: &ShardIdentifier) -> EnclaveResult<()> {
-		unimplemented!()
-	}
-
-	fn trigger_parentchain_block_import(&self, _: &ParentchainId) -> EnclaveResult<()> {
+	fn init_proxied_shard_vault(
+		&self,
+		_shard: &ShardIdentifier,
+		_parentchain_id: &ParentchainId,
+	) -> EnclaveResult<()> {
 		unimplemented!()
 	}
 
@@ -109,6 +109,7 @@ impl Sidechain for EnclaveMock {
 		_events: &[Vec<u8>],
 		_events_proofs: &[StorageProof],
 		_: &ParentchainId,
+		_: bool,
 	) -> EnclaveResult<()> {
 		Ok(())
 	}
