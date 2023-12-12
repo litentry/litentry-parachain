@@ -27,8 +27,10 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         // write contract sample
         // params: bytes32 _candidate, uint256 _amount, uint8 _autoCompound  see notion interfaces:https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
+
+        // candidate: collator address:5GKVBdNwNY6H7uqKtx3gks3t9aSpjG6uHEsFYKWUJtexxkyQ transform to bytes32: 0xbc36f40fcf0e5f8f5245195f4c522a5f1ea85b1c279eedc22437de0568bc1f2a(public key) reference:https://polkadot.subscan.io/tools/format_transform?input=5GKVBdNwNY6H7uqKtx3gks3t9aSpjG6uHEsFYKWUJtexxkyQ&type=All
         const delegateWithAutoCompoundTx = precompileContract.methods.delegateWithAutoCompound(
-            '0x000000000000000000000000aaafB3972B05630fCceE866eC69CdADd9baC2771',
+            '0xbc36f40fcf0e5f8f5245195f4c522a5f1ea85b1c279eedc22437de0568bc1f2a',
             1,
             1
         );
@@ -43,17 +45,19 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             evmAccountRaw.privateKey
         );
 
-        console.log(createTransaction);
+        console.log(createTransaction.rawTransaction);
 
         // send transaction
-        // const receipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
-
+        const receipt = await web3.eth.sendSignedTransaction(createTransaction.rawTransaction!);
+            console.log(receipt);
+            
         // read contract sample
-        // params: bytes32 delegator, bytes32 candidate
+        // params: bytes32 delegator(user address), bytes32 candidate(collator address, see above)
+        // why doesn't it work?
         const pending = await precompileContract.methods
             .delegationRequestIsPending(
-                '0x000000000000000000000000aaafB3972B05630fCceE866eC69CdADd9baC2771',
-                '0x000000000000000000000000aaafB3972B05630fCceE866eC69CdADd9baC2771'
+                '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
+                '0xbc36f40fcf0e5f8f5245195f4c522a5f1ea85b1c279eedc22437de0568bc1f2a',
             )
             .call();
 
