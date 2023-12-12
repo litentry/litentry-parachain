@@ -110,7 +110,7 @@ pub trait SgxExternalitiesTrait {
 	/// Get the next key in state after the given one (excluded) in lexicographic order.
 	fn next_storage_key(&self, key: &[u8]) -> Option<Vec<u8>>;
 
-	/// Iter prefix
+	/// Reads all keys and values under given prefix
 	fn iter_prefix<K: Decode + Debug, V: Decode + Debug>(
 		&self,
 		key_prefix: &[u8],
