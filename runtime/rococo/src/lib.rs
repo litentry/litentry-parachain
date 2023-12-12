@@ -57,7 +57,7 @@ use sp_runtime::{
 		DispatchInfoOf, Dispatchable, PostDispatchInfoOf, UniqueSaturatedInto,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, FixedPointNumber,
+	ApplyExtrinsicResult,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
 use sp_std::prelude::*;
@@ -1129,7 +1129,6 @@ impl FeeCalculator for TransactionPaymentAsGasPrice {
 		// It will biased normal transfer (base weight is not biased by Multiplier) too much for
 		// Ethereum tx
 		let weight_to_fee: u128 = 1;
-		let weight_to_fee_include_decimal: u128 = weight_to_fee;
 		let min_gas_price = weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128);
 		(min_gas_price.into(), <Runtime as frame_system::Config>::DbWeight::get().reads(1))
 	}
