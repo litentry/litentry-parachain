@@ -16,7 +16,8 @@
 */
 
 use crate::error::Result;
-use ita_stf::hash::TrustedOperationOrHash;
+use codec::{Decode, Encode};
+use core::fmt::Debug;
 use itc_parentchain_light_client::{
 	concurrent_access::ValidatorAccess, BlockNumberOps, ExtrinsicSender, LightClientState,
 	NumberFor,
@@ -24,9 +25,10 @@ use itc_parentchain_light_client::{
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_stf_executor::{traits::StateUpdateProposer, ExecutedOperation};
 use itp_stf_interface::system_pallet::SystemPalletEventInterface;
+use itp_stf_primitives::{traits::TrustedCallVerification, types::TrustedOperationOrHash};
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{OpaqueCall, ShardIdentifier, H256};
+use itp_types::{parentchain::ParentchainCall, OpaqueCall, ShardIdentifier, H256};
 use log::*;
 use sp_runtime::traits::Block;
 use std::{marker::PhantomData, sync::Arc, time::Duration, vec::Vec};
@@ -47,13 +49,15 @@ pub struct Executor<
 	ValidatorAccessor,
 	ExtrinsicsFactory,
 	Stf,
+	TCS,
+	G,
 > {
 	top_pool_author: Arc<TopPoolAuthor>,
 	stf_executor: Arc<StfExecutor>,
 	state_handler: Arc<StateHandler>,
 	validator_accessor: Arc<ValidatorAccessor>,
 	extrinsics_factory: Arc<ExtrinsicsFactory>,
-	_phantom: PhantomData<(ParentchainBlock, Stf)>,
+	_phantom: PhantomData<(ParentchainBlock, Stf, TCS, G)>,
 }
 
 impl<
@@ -64,6 +68,8 @@ impl<
 		ValidatorAccessor,
 		ExtrinsicsFactory,
 		Stf,
+		TCS,
+		G,
 	>
 	Executor<
 		ParentchainBlock,
@@ -73,15 +79,19 @@ impl<
 		ValidatorAccessor,
 		ExtrinsicsFactory,
 		Stf,
+		TCS,
+		G,
 	> where
 	ParentchainBlock: Block<Hash = H256>,
-	StfExecutor: StateUpdateProposer,
-	TopPoolAuthor: AuthorApi<H256, ParentchainBlock::Hash>,
+	StfExecutor: StateUpdateProposer<TCS, G>,
+	TopPoolAuthor: AuthorApi<H256, ParentchainBlock::Hash, TCS, G>,
 	StateHandler: QueryShardState + HandleState<StateT = StfExecutor::Externalities>,
 	ValidatorAccessor: ValidatorAccess<ParentchainBlock> + Send + Sync + 'static,
 	ExtrinsicsFactory: CreateExtrinsics,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	Stf: SystemPalletEventInterface<StfExecutor::Externalities>,
+	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
+	G: PartialEq + Encode + Decode + Debug + Clone + Send + Sync,
 {
 	pub fn new(
 		top_pool_author: Arc<TopPoolAuthor>,
@@ -104,14 +114,18 @@ impl<
 		let max_duration = Duration::from_secs(5);
 		let latest_parentchain_header = self.get_latest_parentchain_header()?;
 
-		let mut parentchain_effects: Vec<OpaqueCall> = Vec::new();
+		let mut parentchain_effects: Vec<ParentchainCall> = Vec::new();
 
 		let shards = self.state_handler.list_shards()?;
-		debug!("Executing calls on {} shard(s)", shards.len());
+		trace!("Executing calls on {} shard(s)", shards.len());
 
 		for shard in shards {
+			debug!(
+				"executing pending tops in top pool with status: {:?}",
+				self.top_pool_author.get_status(shard)
+			);
 			let trusted_calls = self.top_pool_author.get_pending_trusted_calls(shard);
-			debug!("Executing {} trusted calls on shard {:?}", trusted_calls.len(), shard);
+			trace!("Executing {} trusted calls on shard {:?}", trusted_calls.len(), shard);
 
 			let batch_execution_result = self.stf_executor.propose_state_update(
 				&trusted_calls,
@@ -128,7 +142,7 @@ impl<
 				.append(&mut batch_execution_result.get_extrinsic_callbacks().clone());
 
 			let failed_operations = batch_execution_result.get_failed_operations();
-			let successful_operations: Vec<ExecutedOperation> = batch_execution_result
+			let successful_operations: Vec<ExecutedOperation<TCS, G>> = batch_execution_result
 				.get_executed_operation_hashes()
 				.into_iter()
 				.map(|h| {
@@ -172,16 +186,40 @@ impl<
 	fn apply_state_update(
 		&self,
 		shard: &ShardIdentifier,
-		updated_state: <StfExecutor as StateUpdateProposer>::Externalities,
+		updated_state: <StfExecutor as StateUpdateProposer<TCS, G>>::Externalities,
 	) -> Result<()> {
 		self.state_handler.reset(updated_state, shard)?;
 		Ok(())
 	}
 
-	fn send_parentchain_effects(&self, parentchain_effects: Vec<OpaqueCall>) -> Result<()> {
-		let extrinsics = self
-			.extrinsics_factory
-			.create_extrinsics(parentchain_effects.as_slice(), None)?;
+	fn send_parentchain_effects(&self, parentchain_effects: Vec<ParentchainCall>) -> Result<()> {
+		let integritee_calls: Vec<OpaqueCall> = parentchain_effects
+			.iter()
+			.filter_map(|parentchain_call| parentchain_call.as_litentry())
+			.collect();
+		let target_a_calls: Vec<OpaqueCall> = parentchain_effects
+			.iter()
+			.filter_map(|parentchain_call| parentchain_call.as_target_a())
+			.collect();
+		let target_b_calls: Vec<OpaqueCall> = parentchain_effects
+			.iter()
+			.filter_map(|parentchain_call| parentchain_call.as_target_b())
+			.collect();
+		debug!(
+			"stf wants to send calls to parentchains: Integritee: {} TargetA: {} TargetB: {}",
+			integritee_calls.len(),
+			target_a_calls.len(),
+			target_b_calls.len()
+		);
+		if !target_a_calls.is_empty() {
+			warn!("sending extrinsics to target A unimplemented")
+		};
+		if !target_b_calls.is_empty() {
+			warn!("sending extrinsics to target B unimplemented")
+		};
+
+		let extrinsics =
+			self.extrinsics_factory.create_extrinsics(integritee_calls.as_slice(), None)?;
 		self.validator_accessor
 			.execute_mut_on_validator(|v| v.send_extrinsics(extrinsics))?;
 		Ok(())
@@ -190,8 +228,8 @@ impl<
 	fn remove_calls_from_pool(
 		&self,
 		shard: &ShardIdentifier,
-		executed_calls: Vec<ExecutedOperation>,
-	) -> Vec<ExecutedOperation> {
+		executed_calls: Vec<ExecutedOperation<TCS, G>>,
+	) -> Vec<ExecutedOperation<TCS, G>> {
 		let executed_calls_tuple: Vec<_> = executed_calls
 			.iter()
 			.map(|e| (e.trusted_operation_or_hash.clone(), e.is_success()))
@@ -213,22 +251,25 @@ mod tests {
 
 	use super::*;
 	use codec::{Decode, Encode};
-	use ita_stf::{TrustedCall, TrustedOperation};
 	use itc_parentchain_light_client::mocks::validator_access_mock::ValidatorAccessMock;
 	use itp_extrinsics_factory::mock::ExtrinsicsFactoryMock;
 	use itp_sgx_externalities::SgxExternalitiesTrait;
 	use itp_stf_executor::mocks::StfExecutorMock;
-	use itp_stf_primitives::types::KeyPair;
-	use itp_test::mock::handle_state_mock::HandleStateMock;
+
+	use itp_test::mock::{
+		handle_state_mock::HandleStateMock,
+		stf_mock::{GetterMock, TrustedCallSignedMock},
+	};
 	use itp_top_pool_author::mocks::AuthorApiMock;
 	use itp_types::{Block as ParentchainBlock, RsaRequest};
-	use sp_core::{ed25519, Pair};
+
+	use itp_test::mock::stf_mock::mock_top_indirect_trusted_call_signed;
 	use std::boxed::Box;
 
 	type TestStateHandler = HandleStateMock;
 	type TestStfInterface = SystemPalletEventInterfaceMock;
 	type State = <TestStateHandler as HandleState>::StateT;
-	type TestTopPoolAuthor = AuthorApiMock<H256, H256>;
+	type TestTopPoolAuthor = AuthorApiMock<H256, H256, TrustedCallSignedMock, GetterMock>;
 	type TestStfExecutor = StfExecutorMock<State>;
 	type TestValidatorAccess = ValidatorAccessMock;
 	type TestExtrinsicsFactory = ExtrinsicsFactoryMock;
@@ -240,6 +281,8 @@ mod tests {
 		TestValidatorAccess,
 		TestExtrinsicsFactory,
 		TestStfInterface,
+		TrustedCallSignedMock,
+		GetterMock,
 	>;
 
 	const EVENT_COUNT_KEY: &[u8] = b"event_count";
@@ -274,17 +317,19 @@ mod tests {
 	}
 
 	#[test]
-	fn executing_tops_from_pool_works() {
+	fn executing_tops_from_pool_works_and_empties_pool() {
 		let stf_executor = Arc::new(TestStfExecutor::new(State::default()));
 		let top_pool_author = Arc::new(TestTopPoolAuthor::default());
-		top_pool_author.submit_top(RsaRequest::new(shard(), create_trusted_operation().encode()));
+		top_pool_author
+			.submit_top(RsaRequest::new(shard(), mock_top_indirect_trusted_call_signed().encode()));
 
 		assert_eq!(1, top_pool_author.pending_tops(shard()).unwrap().len());
 
 		let executor = create_executor(top_pool_author.clone(), stf_executor);
-		executor.execute().unwrap();
 
-		assert!(top_pool_author.pending_tops(shard()).unwrap().is_empty());
+		assert!(executor.execute().is_ok());
+
+		assert_eq!(0, top_pool_author.pending_tops(shard()).unwrap().len());
 	}
 
 	#[test]
@@ -320,24 +365,6 @@ mod tests {
 			validator_access,
 			extrinsics_factory,
 		)
-	}
-
-	fn create_trusted_operation() -> TrustedOperation {
-		let sender = ed25519::Pair::from_seed(b"33345678901234567890123456789012");
-		let receiver = ed25519::Pair::from_seed(b"14565678901234567890123456789012");
-
-		let trusted_call = TrustedCall::balance_transfer(
-			sender.public().into(),
-			receiver.public().into(),
-			10000u128,
-		);
-		let call_signed =
-			trusted_call.sign(&KeyPair::Ed25519(Box::new(sender)), 0, &mr_enclave(), &shard());
-		TrustedOperation::indirect_call(call_signed)
-	}
-
-	fn mr_enclave() -> [u8; 32] {
-		[4u8; 32]
 	}
 
 	fn shard() -> ShardIdentifier {

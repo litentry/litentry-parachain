@@ -36,6 +36,7 @@ pub mod migrations;
 
 pub use pallet::*;
 pub mod identity_context;
+use core::cmp::Ordering;
 pub use identity_context::*;
 
 use frame_support::{pallet_prelude::*, sp_runtime::traits::One, traits::StorageVersion};
@@ -44,6 +45,7 @@ use frame_system::pallet_prelude::*;
 pub use litentry_primitives::{
 	all_evm_web3networks, all_substrate_web3networks, Identity, ParentchainBlockNumber, Web3Network,
 };
+use sp_core::{blake2_256, H256};
 use sp_std::{vec, vec::Vec};
 
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
@@ -81,6 +83,8 @@ pub mod pallet {
 		IdentityDeactivated { who: Identity, identity: Identity },
 		/// an identity was activated
 		IdentityActivated { who: Identity, identity: Identity },
+		/// an identity was removed
+		IdentityRemoved { who: Identity, identity: Identity },
 	}
 
 	#[pallet::error]
@@ -118,6 +122,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn id_graph_lens)]
 	pub type IDGraphLens<T: Config> = StorageMap<_, Blake2_128Concat, Identity, u32, ValueQuery>;
 
 	#[pallet::call]
@@ -231,6 +236,42 @@ pub mod pallet {
 				Ok(())
 			})
 		}
+
+		#[cfg(not(feature = "production"))]
+		#[pallet::call_index(5)]
+		#[pallet::weight({15_000_000})]
+		pub fn remove_identity(
+			origin: OriginFor<T>,
+			who: Identity,
+			identities: Vec<Identity>,
+		) -> DispatchResult {
+			T::ManageOrigin::ensure_origin(origin)?;
+
+			if !identities.is_empty() {
+				for identity in identities.iter() {
+					ensure!(
+						LinkedIdentities::<T>::contains_key(identity),
+						Error::<T>::IdentityNotExist
+					);
+					ensure!(
+						IDGraphs::<T>::contains_key(&who, identity),
+						Error::<T>::IdentityNotExist
+					);
+
+					IDGraphs::<T>::remove(&who, identity);
+					LinkedIdentities::<T>::remove(identity);
+				}
+			} else {
+				// removing prime identity with all linked identities
+				IDGraphs::iter_prefix(&who)
+					.collect::<IDGraph<T>>()
+					.iter()
+					.for_each(|(identity, _context)| LinkedIdentities::<T>::remove(identity));
+				let _ = IDGraphs::<T>::clear_prefix(&who, u32::MAX, None);
+			}
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -255,8 +296,25 @@ pub mod pallet {
 		// get the whole IDGraph, sorted by `link_block` (earliest -> latest)
 		pub fn get_id_graph(who: &Identity) -> IDGraph<T> {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
-			id_graph.sort_by(|a, b| Ord::cmp(&a.1.link_block, &b.1.link_block));
+
+			// Initial sort to ensure a deterministic order
+			id_graph.sort_by(|a, b| {
+				let order = Ord::cmp(&a.1.link_block, &b.1.link_block);
+				if order == Ordering::Equal {
+					// Compare identities by their did formated string
+					Ord::cmp(&a.0.to_did().ok(), &b.0.to_did().ok())
+				} else {
+					order
+				}
+			});
+
 			id_graph
+		}
+
+		pub fn all_id_graph_hash() -> Vec<(Identity, H256)> {
+			IDGraphLens::<T>::iter_keys()
+				.map(|k| (k.clone(), H256::from(blake2_256(&Self::get_id_graph(&k).encode()))))
+				.collect()
 		}
 
 		// get count of all keys account + identity in the IDGraphs

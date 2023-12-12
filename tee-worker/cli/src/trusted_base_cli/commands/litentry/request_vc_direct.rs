@@ -22,7 +22,7 @@ use crate::{
 	trusted_operation::perform_direct_operation,
 	Cli, CliResult, CliResultOk,
 };
-use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedOperation};
+use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
 use lc_credentials::Credential;
@@ -31,23 +31,27 @@ use litentry_primitives::{
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
-	RequestAesKey, SoraQuizType, Web3Network,
+	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
 };
 use sp_core::Pair;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
 // a8:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
+// ./bin/litentry-cli trusted -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
 // oneblock VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
+// ./bin/litentry-cli trusted -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
 //
 // achainable VC:
-// ./bin/litentry-cli trusted -m <mrencalve> -d request-vc-direct \
+// ./bin/litentry-cli trusted -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 achainable amount-holding a litentry 1 2014-05-01
+//
+// vip3 VC:
+// ./bin/litentry-cli trusted -d request-vc-direct \
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 vip3-membership-card gold
 
 #[derive(Parser)]
 pub struct RequestVcDirectCommand {
@@ -242,6 +246,13 @@ impl RequestVcDirectCommand {
 					),
 				},
 			},
+			Command::VIP3MembershipCard(arg) => match arg {
+				VIP3MembershipCardLevelCommand::Gold =>
+					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Gold),
+				VIP3MembershipCardLevelCommand::Silver =>
+					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
+			},
+			Command::WeirdoGhostGangHolder => Assertion::WeirdoGhostGangHolder,
 		};
 
 		let mut key: RequestAesKey = RequestAesKey::default();
@@ -251,7 +262,7 @@ impl RequestVcDirectCommand {
 		)
 		.expect("decoding shielding_key failed");
 
-		let top: TrustedOperation = TrustedCall::request_vc(
+		let top = TrustedCall::request_vc(
 			alice.public().into(),
 			id,
 			assertion,

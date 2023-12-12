@@ -18,13 +18,14 @@ use crate::{
 	trusted_cli::TrustedCli, trusted_command_utils::get_pair_from_str,
 	trusted_operation::perform_trusted_operation, Cli, CliResult, CliResultOk,
 };
-use ita_stf::{IDGraph, Runtime, TrustedGetter, TrustedOperation};
+use ita_sgx_runtime::IDGraph;
+use ita_stf::{Getter, Runtime, TrustedGetter};
 use itp_stf_primitives::types::KeyPair;
 use litentry_primitives::Identity;
 
 // usage example:
 //
-// ./bin/litentry-cli trusted -m <mrenclave> -d id-graph did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48
+// ./bin/litentry-cli trusted -d id-graph did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48
 //
 // returns:
 //
@@ -42,10 +43,11 @@ impl IDGraphCommand {
 		let alice = get_pair_from_str(trusted_cli, "//Alice", cli);
 		let id: Identity = Identity::from_did(self.did.as_str()).unwrap();
 
-		let top: TrustedOperation =
-			TrustedGetter::id_graph(id).sign(&KeyPair::Sr25519(Box::new(alice))).into();
-		let idgraph = perform_trusted_operation::<IDGraph<Runtime>>(cli, trusted_cli, &top);
-		println!("{:?}", idgraph.unwrap());
+		let top =
+			Getter::trusted(TrustedGetter::id_graph(id).sign(&KeyPair::Sr25519(Box::new(alice))))
+				.into();
+		let id_graph = perform_trusted_operation::<IDGraph<Runtime>>(cli, trusted_cli, &top);
+		println!("{:?}", id_graph.unwrap());
 
 		Ok(CliResultOk::None)
 	}

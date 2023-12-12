@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+pub mod get_storage;
 pub mod id_graph;
 pub mod id_graph_stats;
 pub mod link_identity;
+pub mod remove_identity;
 pub mod request_vc;
 pub mod request_vc_direct;
 pub mod send_erroneous_parentchain_call;

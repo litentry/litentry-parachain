@@ -19,7 +19,7 @@
 
 use crate::{
 	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
-	Web3Network,
+	VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -232,6 +232,12 @@ pub enum Assertion {
 	#[codec(index = 17)]
 	BnbDigitDomainClub(BnbDigitDomainType),
 	// ----- end SPACEID -----
+
+	#[codec(index = 18)]
+	VIP3MembershipCard(VIP3MembershipCardLevel),
+
+	#[codec(index = 19)]
+	WeirdoGhostGangHolder,
 }
 
 impl Assertion {
@@ -260,15 +266,19 @@ impl Assertion {
 			Self::Achainable(a) => vec![a.chain()],
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
+			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
+			// VIP3 Member Card
+			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
 	}
 }
 
-pub const ASSERTION_FROM_DATE: [&str; 14] = [
+pub const ASSERTION_DATE_LEN: usize = 15;
+pub const ASSERTION_FROM_DATE: [&str; ASSERTION_DATE_LEN] = [
 	"2017-01-01",
 	"2017-07-01",
 	"2018-01-01",
@@ -283,6 +293,9 @@ pub const ASSERTION_FROM_DATE: [&str; 14] = [
 	"2022-07-01",
 	"2023-01-01",
 	"2023-07-01",
+	// In order to address the issue of the community encountering a false query for WBTC in
+	// November, the product team feels that adding this date temporarily solves this problem.
+	"2023-12-01",
 ];
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]

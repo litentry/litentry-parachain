@@ -29,6 +29,9 @@ pub use network::*;
 mod assertion;
 pub use assertion::*;
 
+mod vip3;
+pub use vip3::*;
+
 mod error;
 pub use error::*;
 

@@ -17,6 +17,9 @@
 
 use codec::Encode;
 use finality_grandpa::BlockNumberOps;
+use ita_stf::{Getter, TrustedCallSigned};
+use itp_enclave_metrics::EnclaveMetric;
+use itp_ocall_api::EnclaveMetricsOCallApi;
 use itp_sgx_externalities::{SgxExternalitiesTrait, StateHash};
 use itp_stf_executor::traits::StateUpdateProposer;
 use itp_time_utils::now_as_millis;
@@ -36,7 +39,7 @@ use sp_runtime::{
 };
 use std::{marker::PhantomData, string::ToString, sync::Arc, time::Duration, vec::Vec};
 
-pub type ExternalitiesFor<T> = <T as StateUpdateProposer>::Externalities;
+pub type ExternalitiesFor<T> = <T as StateUpdateProposer<TrustedCallSigned, Getter>>::Externalities;
 ///! `SlotProposer` instance that has access to everything needed to propose a sidechain block.
 pub struct SlotProposer<
 	ParentchainBlock: Block,
@@ -44,19 +47,33 @@ pub struct SlotProposer<
 	TopPoolAuthor,
 	StfExecutor,
 	BlockComposer,
+	MetricsApi,
 > {
 	pub(crate) top_pool_author: Arc<TopPoolAuthor>,
 	pub(crate) stf_executor: Arc<StfExecutor>,
 	pub(crate) block_composer: Arc<BlockComposer>,
 	pub(crate) parentchain_header: ParentchainBlock::Header,
 	pub(crate) shard: ShardIdentifierFor<SignedSidechainBlock>,
+	pub(crate) metrics_api: Arc<MetricsApi>,
 	pub(crate) _phantom: PhantomData<ParentchainBlock>,
 }
 
-impl<ParentchainBlock, SignedSidechainBlock, TopPoolAuthor, BlockComposer, StfExecutor>
-	Proposer<ParentchainBlock, SignedSidechainBlock>
-	for SlotProposer<ParentchainBlock, SignedSidechainBlock, TopPoolAuthor, StfExecutor, BlockComposer>
-where
+impl<
+		ParentchainBlock,
+		SignedSidechainBlock,
+		TopPoolAuthor,
+		BlockComposer,
+		StfExecutor,
+		MetricsApi,
+	> Proposer<ParentchainBlock, SignedSidechainBlock>
+	for SlotProposer<
+		ParentchainBlock,
+		SignedSidechainBlock,
+		TopPoolAuthor,
+		StfExecutor,
+		BlockComposer,
+		MetricsApi,
+	> where
 	ParentchainBlock: Block<Hash = H256>,
 	NumberFor<ParentchainBlock>: BlockNumberOps,
 	SignedSidechainBlock: SignedSidechainBlockTrait<Public = sp_core::ed25519::Public, Signature = MultiSignature>
@@ -64,11 +81,12 @@ where
 	SignedSidechainBlock::Block: SidechainBlockTrait<Public = sp_core::ed25519::Public>,
 	<<SignedSidechainBlock as SignedSidechainBlockTrait>::Block as SidechainBlockTrait>::HeaderType:
 		HeaderTrait<ShardIdentifier = H256>,
-	StfExecutor: StateUpdateProposer,
+	StfExecutor: StateUpdateProposer<TrustedCallSigned, Getter>,
 	ExternalitiesFor<StfExecutor>:
 		SgxExternalitiesTrait + SidechainState + SidechainSystemExt + StateHash,
 	<ExternalitiesFor<StfExecutor> as SgxExternalitiesTrait>::SgxExternalitiesType: Encode,
-	TopPoolAuthor: AuthorApi<H256, ParentchainBlock::Hash> + Send + Sync + 'static,
+	TopPoolAuthor:
+		AuthorApi<H256, ParentchainBlock::Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	BlockComposer: ComposeBlock<
 			ExternalitiesFor<StfExecutor>,
 			ParentchainBlock,
@@ -76,6 +94,7 @@ where
 		> + Send
 		+ Sync
 		+ 'static,
+	MetricsApi: EnclaveMetricsOCallApi,
 {
 	/// Proposes a new sidechain block.
 	///
@@ -87,6 +106,7 @@ where
 		&self,
 		max_duration: Duration,
 	) -> Result<Proposal<SignedSidechainBlock>, ConsensusError> {
+		let mut started = std::time::Instant::now();
 		let latest_parentchain_header = &self.parentchain_header;
 
 		// 1) Retrieve trusted calls from top pool.
@@ -96,6 +116,14 @@ where
 			debug!("Got following trusted calls from pool: {:?}", trusted_calls);
 		}
 
+		if let Err(e) = self
+			.metrics_api
+			.update_metric(EnclaveMetric::SidechainSlotPrepareTime(started.elapsed()))
+		{
+			warn!("Failed to update metric for sidechain slot prepare time: {:?}", e);
+		};
+
+		started = std::time::Instant::now();
 		// 2) Execute trusted calls.
 		let batch_execution_result = self
 			.stf_executor
@@ -137,6 +165,15 @@ where
 				.collect(),
 		);
 
+		if let Err(e) = self
+			.metrics_api
+			.update_metric(EnclaveMetric::SidechainSlotStfExecutionTime(started.elapsed()))
+		{
+			warn!("Failed to update metric for sidechain slot stf execution time: {:?}", e);
+		};
+
+		started = std::time::Instant::now();
+
 		// 3) Compose sidechain block.
 		let sidechain_block = self
 			.block_composer
@@ -149,8 +186,15 @@ where
 			)
 			.map_err(|e| ConsensusError::Other(e.to_string().into()))?;
 
+		if let Err(e) = self
+			.metrics_api
+			.update_metric(EnclaveMetric::SidechainSlotBlockCompositionTime(started.elapsed()))
+		{
+			warn!("Failed to update metric for sidechain slot block composition time: {:?}", e);
+		};
+
 		info!(
-			"Queue/Timeslot/Transactions: {:?};{};{}",
+			"Queue/Timeslot/Transactions: {:?};{}ms;{}",
 			trusted_calls.len(),
 			max_duration.as_millis(),
 			number_executed_transactions

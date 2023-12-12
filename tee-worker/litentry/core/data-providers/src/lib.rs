@@ -47,12 +47,14 @@ use itc_rest_client::{
 use lazy_static::lazy_static;
 use log::debug;
 use serde::{Deserialize, Serialize};
+use std::vec;
 
 #[cfg(feature = "std")]
 use std::sync::RwLock;
 #[cfg(feature = "sgx")]
 use std::sync::SgxRwLock as RwLock;
 
+use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
 	AchainableParams, Assertion, ErrorDetail, ErrorString, IntoErrorDetail, ParameterString,
 	VCMPError,
@@ -72,7 +74,9 @@ pub mod achainable_names;
 pub mod discord_litentry;
 pub mod discord_official;
 pub mod nodereal;
+pub mod nodereal_jsonrpc;
 pub mod twitter_official;
+pub mod vip3;
 
 const TIMEOUT: Duration = Duration::from_secs(3u64);
 
@@ -127,10 +131,14 @@ pub struct DataProviderConfig {
 	pub sora_quiz_master_id: String,
 	pub sora_quiz_attendee_id: String,
 	pub nodereal_api_key: String,
+	pub nodereal_api_retry_delay: u64,
+	pub nodereal_api_retry_times: u16,
 	pub nodereal_api_url: String,
+	pub nodereal_api_chain_network_url: String,
 	pub contest_legend_discord_role_id: String,
 	pub contest_popularity_discord_role_id: String,
 	pub contest_participant_discord_role_id: String,
+	pub vip3_url: String,
 }
 
 impl Default for DataProviderConfig {
@@ -156,10 +164,14 @@ impl DataProviderConfig {
 			sora_quiz_master_id: "".to_string(),
 			sora_quiz_attendee_id: "".to_string(),
 			nodereal_api_key: "".to_string(),
+			nodereal_api_retry_delay: 5000,
+			nodereal_api_retry_times: 2,
 			nodereal_api_url: "".to_string(),
+			nodereal_api_chain_network_url: "".to_string(),
 			contest_legend_discord_role_id: "".to_string(),
 			contest_popularity_discord_role_id: "".to_string(),
 			contest_participant_discord_role_id: "".to_string(),
+			vip3_url: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -218,9 +230,21 @@ impl DataProviderConfig {
 		debug!("set_nodereal_api_key: {:?}", v);
 		self.nodereal_api_key = v;
 	}
+	pub fn set_nodereal_api_retry_delay(&mut self, v: u64) {
+		debug!("set_nodereal_api_retry_delay: {:?}", v);
+		self.nodereal_api_retry_delay = v;
+	}
+	pub fn set_nodereal_api_retry_times(&mut self, v: u16) {
+		debug!("set_nodereal_api_retry_times: {:?}", v);
+		self.nodereal_api_retry_times = v;
+	}
 	pub fn set_nodereal_api_url(&mut self, v: String) {
 		debug!("set_nodereal_api_url: {:?}", v);
 		self.nodereal_api_url = v;
+	}
+	pub fn set_nodereal_api_chain_network_url(&mut self, v: String) {
+		debug!("set_nodereal_api_chain_network_url: {:?}", v);
+		self.nodereal_api_chain_network_url = v;
 	}
 	pub fn set_contest_legend_discord_role_id(&mut self, v: String) {
 		debug!("set_contest_legend_discord_role_id: {:?}", v);
@@ -233,6 +257,10 @@ impl DataProviderConfig {
 	pub fn set_contest_participant_discord_role_id(&mut self, v: String) {
 		debug!("set_contest_participant_discord_role_id: {:?}", v);
 		self.contest_participant_discord_role_id = v;
+	}
+	pub fn set_vip3_url(&mut self, v: String) {
+		debug!("set_vip3_url: {:?}", v);
+		self.vip3_url = v;
 	}
 }
 
@@ -267,6 +295,9 @@ pub enum Error {
 
 	#[error("Achainable error: {0}")]
 	AchainableError(String),
+
+	#[error("Nodereal error: {0}")]
+	NoderealError(String),
 }
 
 impl IntoErrorDetail for Error {
@@ -294,6 +325,22 @@ pub fn build_client(base_url: &str, headers: Headers) -> RestClient<HttpClient<D
 	debug!("base_url: {}", base_url);
 	let base_url = Url::parse(base_url).unwrap();
 	let http_client = HttpClient::new(DefaultSend {}, true, Some(TIMEOUT), Some(headers), None);
+	RestClient::new(http_client, base_url)
+}
+
+pub fn build_client_with_cert(
+	base_url: &str,
+	headers: Headers,
+) -> RestClient<HttpClient<SendWithCertificateVerification>> {
+	debug!("base_url: {}", base_url);
+	let base_url = Url::parse(base_url).unwrap();
+	let http_client = HttpClient::new(
+		SendWithCertificateVerification::new(vec![]),
+		true,
+		Some(TIMEOUT),
+		Some(headers),
+		None,
+	);
 	RestClient::new(http_client, base_url)
 }
 

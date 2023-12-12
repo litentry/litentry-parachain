@@ -2,9 +2,8 @@ import { ApiPromise } from '@polkadot/api';
 import { u8aToHex, hexToU8a, compactAddLength, bufferToU8a, u8aConcat, stringToU8a } from '@polkadot/util';
 import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
-import { HexString } from '@polkadot/util/types';
 import { Bytes } from '@polkadot/types-codec';
-import { IntegrationTestContext, JsonRpcRequest, PublicKeyJson } from './type-definitions';
+import { IntegrationTestContext, JsonRpcRequest } from './common-types';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer, encryptWithAes } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
@@ -14,8 +13,6 @@ import { u32, Option, u8, Vector } from 'scale-ts';
 import { Index } from '@polkadot/types/interfaces';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
-import { AesOutput as CustomAesOutput } from './type-definitions';
-import { AesOutput } from 'parachain-api/build/interfaces';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
 
 // Send the request to worker ws
@@ -169,15 +166,19 @@ export async function createSignedTrustedCallSetIdentityNetworks(
     subject: LitentryPrimitivesIdentity,
     identity: string,
     web3networks: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['set_identity_networks', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, H256)'],
+        [
+            'set_identity_networks',
+            '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>, Option<RequestAesKey>, H256)',
+        ],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, web3networks, hash]
+        [subject.toHuman(), subject.toHuman(), identity, web3networks, aesKey, hash]
     );
 }
 
@@ -207,15 +208,16 @@ export async function createSignedTrustedCallDeactivateIdentity(
     signer: Signer,
     subject: LitentryPrimitivesIdentity,
     identity: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        ['deactivate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)'],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, hash]
+        [subject.toHuman(), subject.toHuman(), identity, aesKey, hash]
     );
 }
 export async function createSignedTrustedCallActivateIdentity(
@@ -225,15 +227,16 @@ export async function createSignedTrustedCallActivateIdentity(
     signer: Signer,
     subject: LitentryPrimitivesIdentity,
     identity: string,
+    aesKey: string,
     hash: string
 ) {
     return createSignedTrustedCall(
         parachainApi,
-        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, H256)'],
+        ['activate_identity', '(LitentryIdentity, LitentryIdentity, LitentryIdentity, Option<RequestAesKey>, H256)'],
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, hash]
+        [subject.toHuman(), subject.toHuman(), identity, aesKey, hash]
     );
 }
 
@@ -304,7 +307,10 @@ export const sendRequestFromGetter = async (
 export const getTeeShieldingKey = async (context: IntegrationTestContext) => {
     const request = createJsonRpcRequest('author_getShieldingKey', Uint8Array.from([]), nextRequestId(context));
     const res = await sendRequest(context.tee, request, context.api);
-    const k = JSON.parse(decodeRpcBytesAsString(res.value)) as PublicKeyJson;
+    const k = JSON.parse(decodeRpcBytesAsString(res.value)) as {
+        n: Uint8Array;
+        e: Uint8Array;
+    };
 
     return createPublicKey({
         key: {
@@ -380,13 +386,4 @@ export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
 export function getTopHash(parachainApi: ApiPromise, call: TrustedCallSigned) {
     const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
     return blake2AsHex(trustedOperation.toU8a());
-}
-
-export function parseAesOutput(parachainApi: ApiPromise, value: HexString): CustomAesOutput {
-    const aesOutput = parachainApi.createType('AesOutput', value) as unknown as AesOutput;
-    const output = new CustomAesOutput();
-    output.ciphertext = hexToU8a(aesOutput.ciphertext.toHex());
-    output.aad = hexToU8a(aesOutput.aad.toHex());
-    output.nonce = aesOutput.nonce.toU8a();
-    return output;
 }

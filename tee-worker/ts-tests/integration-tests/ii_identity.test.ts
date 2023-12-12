@@ -9,7 +9,7 @@ import {
     assertIdentityDeactivated,
     buildIdentityFromKeypair,
     assertIdentityActivated,
-    assertLinkedEvent,
+    assertIdGraphMutation,
     PolkadotSigner,
 } from './common/utils';
 import { u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -18,7 +18,7 @@ import { assert } from 'chai';
 import { sendTxsWithUtility } from './common/transactions';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
-import type { IntegrationTestContext } from './common/type-definitions';
+import type { IntegrationTestContext } from './common/common-types';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { sendRequest } from './common/call';
@@ -62,6 +62,7 @@ describeLitentry('Test Identity', 0, (context) => {
     let web3networks: Web3Network[][] = [];
     let base58mrEnclave: string;
     let workerAddress: string;
+    let identityLinkedEvents;
 
     step('init', async () => {
         base58mrEnclave = base58.encode(Buffer.from(context.mrEnclave.slice(2), 'hex'));
@@ -150,7 +151,16 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityLinked']
         );
 
-        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), aliceRespEvents);
+        identityLinkedEvents = aliceRespEvents.filter((e) =>
+            context.api.events.identityManagement.IdentityLinked.is(e)
+        );
+
+        await assertIdGraphMutation(
+            new PolkadotSigner(context.substrateWallet.alice),
+            identityLinkedEvents,
+            undefined,
+            aliceTxs.length
+        );
 
         // Bob check extension substrate identity
         // https://github.com/litentry/litentry-parachain/issues/1137
@@ -202,7 +212,14 @@ describeLitentry('Test Identity', 0, (context) => {
             'identityManagement',
             ['IdentityLinked']
         );
-        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.bob), bobRespEvents);
+
+        identityLinkedEvents = bobRespEvents.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
+        await assertIdGraphMutation(
+            new PolkadotSigner(context.substrateWallet.bob),
+            identityLinkedEvents,
+            undefined,
+            bobTxs.length
+        );
     });
 
     step('check IDGraph after LinkIdentity', async function () {
@@ -354,10 +371,10 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Alice check identity
-        assertIdentityDeactivated(context, context.substrateWallet.alice, aliceDeactivatedEvents);
+        assertIdentityDeactivated(context.substrateWallet.alice, aliceDeactivatedEvents);
 
         // Bob check identity
-        assertIdentityDeactivated(context, context.substrateWallet.bob, bobDeactivatedEvents);
+        assertIdentityDeactivated(context.substrateWallet.bob, bobDeactivatedEvents);
     });
 
     step('check IDGraph after deactivateIdentity', async function () {

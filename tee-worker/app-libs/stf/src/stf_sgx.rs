@@ -17,9 +17,8 @@
 
 #[cfg(feature = "test")]
 use crate::test_genesis::test_genesis_setup;
-
-use crate::{helpers::enclave_signer_account, Stf, StfError, ENCLAVE_ACCOUNT_KEY};
-use codec::Encode;
+use crate::{helpers::enclave_signer_account, Stf, ENCLAVE_ACCOUNT_KEY};
+use codec::{Decode, Encode};
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
 use ita_sgx_runtime::Executive;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
@@ -29,18 +28,23 @@ use itp_stf_interface::{
 	runtime_upgrade::RuntimeUpgradeInterface,
 	sudo_pallet::SudoPalletInterface,
 	system_pallet::{SystemPalletAccountInterface, SystemPalletEventInterface},
-	ExecuteCall, ExecuteGetter, InitState, StateCallInterface, StateGetterInterface, UpdateState,
+	ExecuteCall, ExecuteGetter, InitState, ShardVaultQuery, StateCallInterface,
+	StateGetterInterface, UpdateState, SHARD_VAULT_KEY,
 };
-use itp_stf_primitives::types::ShardIdentifier;
+use itp_stf_primitives::{
+	error::StfError, traits::TrustedCallVerification, types::ShardIdentifier,
+};
 use itp_storage::storage_value_key;
-use itp_types::{parentchain::ParentchainId, OpaqueCall, H256};
+use itp_types::{
+	parentchain::{AccountId, ParentchainCall, ParentchainId},
+	H256,
+};
 use itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::StaticLookup;
 use std::{fmt::Debug, format, prelude::v1::*, sync::Arc, vec};
 
-impl<Call, Getter, State, Runtime, AccountId> InitState<State, AccountId>
-	for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime, AccountId> InitState<State, AccountId> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait + Debug,
 	<State as SgxExternalitiesTrait>::SgxExternalitiesType: core::default::Default,
@@ -93,9 +97,9 @@ where
 	}
 }
 
-impl<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime>
 	UpdateState<State, <State as SgxExternalitiesTrait>::SgxExternalitiesDiffType>
-	for Stf<Call, Getter, State, Runtime>
+	for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait + Debug,
 	<State as SgxExternalitiesTrait>::SgxExternalitiesType: core::default::Default,
@@ -119,48 +123,66 @@ where
 	fn storage_hashes_to_update_on_block(parentchain_id: &ParentchainId) -> Vec<Vec<u8>> {
 		// Get all shards that are currently registered.
 		match parentchain_id {
-			ParentchainId::Litentry => vec![shards_key_hash()],
+			ParentchainId::Litentry => vec![], // shards_key_hash() moved to stf_executor and is currently unused
 			ParentchainId::TargetA => vec![],
 			ParentchainId::TargetB => vec![],
 		}
 	}
 }
 
-impl<Call, Getter, State, Runtime, NodeMetadataRepository>
-	StateCallInterface<Call, State, NodeMetadataRepository> for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime, NodeMetadataRepository>
+	StateCallInterface<TCS, State, NodeMetadataRepository> for Stf<TCS, G, State, Runtime>
 where
-	Call: ExecuteCall<NodeMetadataRepository>,
+	TCS: PartialEq
+		+ ExecuteCall<NodeMetadataRepository>
+		+ Encode
+		+ Decode
+		+ Debug
+		+ Clone
+		+ Sync
+		+ Send
+		+ TrustedCallVerification,
 	State: SgxExternalitiesTrait + Debug,
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 {
-	type Error = Call::Error;
-	type Result = Call::Result;
+	type Error = TCS::Error;
+	type Result = TCS::Result;
 
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
-		call: Call,
+		call: TCS,
 		top_hash: H256,
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error> {
 		state.execute_with(|| call.execute(shard, top_hash, calls, node_metadata_repo))
 	}
 }
 
-impl<Call, Getter, State, Runtime> StateGetterInterface<Getter, State>
-	for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime> StateGetterInterface<G, State> for Stf<TCS, G, State, Runtime>
 where
-	Getter: ExecuteGetter,
+	G: PartialEq + ExecuteGetter,
 	State: SgxExternalitiesTrait + Debug,
 {
-	fn execute_getter(state: &mut State, getter: Getter) -> Option<Vec<u8>> {
+	fn execute_getter(state: &mut State, getter: G) -> Option<Vec<u8>> {
 		state.execute_with(|| getter.execute())
 	}
 }
 
-impl<Call, Getter, State, Runtime> SudoPalletInterface<State> for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime> ShardVaultQuery<State> for Stf<TCS, G, State, Runtime>
+where
+	State: SgxExternalitiesTrait + Debug,
+{
+	fn get_vault(state: &mut State) -> Option<AccountId> {
+		state
+			.get(SHARD_VAULT_KEY.as_bytes())
+			.and_then(|v| Decode::decode(&mut v.clone().as_slice()).ok())
+	}
+}
+
+impl<TCS, G, State, Runtime> SudoPalletInterface<State> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait,
 	Runtime: frame_system::Config + pallet_sudo::Config,
@@ -176,8 +198,8 @@ where
 	}
 }
 
-impl<Call, Getter, State, Runtime, AccountId> SystemPalletAccountInterface<State, AccountId>
-	for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime, AccountId> SystemPalletAccountInterface<State, AccountId>
+	for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait,
 	Runtime: frame_system::Config<AccountId = AccountId>,
@@ -199,8 +221,7 @@ where
 	}
 }
 
-impl<Call, Getter, State, Runtime> SystemPalletEventInterface<State>
-	for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime> SystemPalletEventInterface<State> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait,
 	Runtime: frame_system::Config,
@@ -233,8 +254,8 @@ where
 	}
 }
 
-impl<Call, Getter, State, Runtime, ParentchainHeader>
-	ParentchainPalletInterface<State, ParentchainHeader> for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime, ParentchainHeader> ParentchainPalletInterface<State, ParentchainHeader>
+	for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait,
 	Runtime: frame_system::Config<Header = ParentchainHeader> + pallet_parentchain::Config,
@@ -256,8 +277,7 @@ where
 	}
 }
 
-impl<Call, Getter, State, Runtime> RuntimeUpgradeInterface<State>
-	for Stf<Call, Getter, State, Runtime>
+impl<TCS, G, State, Runtime> RuntimeUpgradeInterface<State> for Stf<TCS, G, State, Runtime>
 where
 	State: SgxExternalitiesTrait,
 	Runtime: frame_system::Config,
@@ -290,16 +310,6 @@ where
 		});
 		Ok(())
 	}
-}
-
-pub fn storage_hashes_to_update_per_shard(_shard: &ShardIdentifier) -> Vec<Vec<u8>> {
-	Vec::new()
-}
-
-pub fn shards_key_hash() -> Vec<u8> {
-	// here you have to point to a storage value containing a Vec of
-	// ShardIdentifiers the enclave uses this to autosubscribe to no shards
-	vec![]
 }
 
 /// Creates valid enclave account with a balance that is above the existential deposit.

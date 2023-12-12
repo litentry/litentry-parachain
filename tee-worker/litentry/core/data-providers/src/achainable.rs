@@ -18,13 +18,13 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::{
-	build_client, ConvertParameterString, DataProviderConfig, Error, HttpError, LIT_TOKEN_ADDRESS,
-	USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
+	build_client_with_cert, ConvertParameterString, DataProviderConfig, Error, HttpError,
+	LIT_TOKEN_ADDRESS, USDC_TOKEN_ADDRESS, USDT_TOKEN_ADDRESS, WETH_TOKEN_ADDRESS,
 };
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient},
+	http_client::{HttpClient, SendWithCertificateVerification},
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
@@ -38,7 +38,7 @@ use std::{
 };
 
 pub struct AchainableClient {
-	client: RestClient<HttpClient<DefaultSend>>,
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
 
 impl AchainableClient {
@@ -49,7 +49,8 @@ impl AchainableClient {
 			AUTHORIZATION.as_str(),
 			data_provider_config.achainable_auth_key.clone().as_str(),
 		);
-		let client = build_client(data_provider_config.achainable_url.clone().as_str(), headers);
+		let client =
+			build_client_with_cert(data_provider_config.achainable_url.clone().as_str(), headers);
 
 		AchainableClient { client }
 	}
@@ -178,6 +179,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(untagged)]
 pub enum Params {
 	ParamsBasicType(ParamsBasicType),
 	ParamsBasicTypeWithAmount(ParamsBasicTypeWithAmount),

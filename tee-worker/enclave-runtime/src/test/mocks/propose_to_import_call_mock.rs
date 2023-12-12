@@ -19,7 +19,9 @@
 use crate::test::mocks::types::TestBlockImporter;
 use codec::{Decode, Encode};
 use itc_parentchain::primitives::ParentchainId;
-use itp_ocall_api::{EnclaveOnChainOCallApi, EnclaveSidechainOCallApi, Result};
+use itp_ocall_api::{
+	EnclaveMetricsOCallApi, EnclaveOnChainOCallApi, EnclaveSidechainOCallApi, Result,
+};
 use itp_types::{
 	storage::StorageEntryVerified, BlockHash, Header as ParentchainHeader, ShardIdentifier,
 	WorkerRequest, WorkerResponse, H256,
@@ -52,6 +54,7 @@ impl EnclaveOnChainOCallApi for ProposeToImportOCallApi {
 		&self,
 		_extrinsics: Vec<OpaqueExtrinsic>,
 		_: &ParentchainId,
+		_: bool,
 	) -> SgxResult<()> {
 		Ok(())
 	}
@@ -124,5 +127,11 @@ impl EnclaveSidechainOCallApi for ProposeToImportOCallApi {
 
 	fn get_trusted_peers_urls(&self) -> SgxResult<Vec<String>> {
 		Ok(vec![])
+	}
+}
+
+impl EnclaveMetricsOCallApi for ProposeToImportOCallApi {
+	fn update_metric<Metric: Encode>(&self, _metric: Metric) -> SgxResult<()> {
+		Ok(())
 	}
 }

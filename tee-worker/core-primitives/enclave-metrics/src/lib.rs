@@ -20,11 +20,12 @@
 #[cfg(all(feature = "std", feature = "sgx"))]
 compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
 
+extern crate core;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
-use ita_stf::TrustedCall;
+use core::time::Duration;
 use lc_stf_task_sender::RequestType;
 use std::{boxed::Box, string::String};
 use substrate_fixed::types::U32F32;
@@ -40,8 +41,14 @@ pub enum EnclaveMetric {
 	TopPoolSizeDecrement,
 	ExchangeRateOracle(ExchangeRateOracleMetric),
 	StfTaskExecutionTime(Box<RequestType>, f64),
-	SuccessfulTrustedOperationIncrement(TrustedCall),
-	FailedTrustedOperationIncrement(TrustedCall),
+	SuccessfulTrustedOperationIncrement(String),
+	FailedTrustedOperationIncrement(String),
+	ParentchainBlockImportTime(Duration),
+	SidechainBlockImportTime(Duration),
+	SidechainSlotPrepareTime(Duration),
+	SidechainSlotStfExecutionTime(Duration),
+	SidechainSlotBlockCompositionTime(Duration),
+	SidechainBlockBroadcastingTime(Duration),
 	// OracleMetric(OracleMetric<MetricsInfo>),
 }
 

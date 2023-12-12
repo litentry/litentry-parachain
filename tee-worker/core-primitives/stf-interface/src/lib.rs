@@ -23,10 +23,15 @@
 extern crate alloc;
 
 use alloc::{sync::Arc, vec::Vec};
-use codec::Encode;
+use codec::{Decode, Encode};
+use core::fmt::Debug;
 use itp_node_api_metadata::NodeMetadataTrait;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
-use itp_types::{parentchain::ParentchainId, OpaqueCall, ShardIdentifier, H256};
+use itp_stf_primitives::traits::TrustedCallVerification;
+use itp_types::{
+	parentchain::{AccountId, ParentchainCall, ParentchainId},
+	ShardIdentifier, H256,
+};
 
 #[cfg(feature = "mocks")]
 pub mod mocks;
@@ -35,10 +40,17 @@ pub mod runtime_upgrade;
 pub mod sudo_pallet;
 pub mod system_pallet;
 
+pub const SHARD_VAULT_KEY: &str = "ShardVaultPubKey";
+
 /// Interface to initialize a new state.
 pub trait InitState<State, AccountId> {
 	/// Initialize a new state for a given enclave account.
 	fn init_state(enclave_account: AccountId) -> State;
+}
+
+/// Interface to query shard vault account for shard
+pub trait ShardVaultQuery<S> {
+	fn get_vault(state: &mut S) -> Option<AccountId>;
 }
 
 /// Interface for all functions calls necessary to update an already
@@ -50,10 +62,11 @@ pub trait UpdateState<State, StateDiff> {
 }
 
 /// Interface to execute state mutating calls on a state.
-pub trait StateCallInterface<Call, State, NodeMetadataRepository>
+pub trait StateCallInterface<TCS, State, NodeMetadataRepository>
 where
 	NodeMetadataRepository: AccessNodeMetadata,
 	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
+	TCS: PartialEq + Encode + Decode + Debug + Clone + Send + Sync + TrustedCallVerification,
 {
 	type Error: Encode;
 	type Result: StfExecutionResult;
@@ -67,17 +80,17 @@ where
 	fn execute_call(
 		state: &mut State,
 		shard: &ShardIdentifier,
-		call: Call,
+		call: TCS,
 		top_hash: H256,
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error>;
 }
 
 /// Interface to execute state reading getters on a state.
-pub trait StateGetterInterface<Getter, State> {
+pub trait StateGetterInterface<G, S> {
 	/// Execute a getter on a specific state.
-	fn execute_getter(state: &mut State, getter: Getter) -> Option<Vec<u8>>;
+	fn execute_getter(state: &mut S, getter: G) -> Option<Vec<u8>>;
 }
 
 /// Trait used to abstract the call execution.
@@ -97,7 +110,7 @@ where
 		self,
 		shard: &ShardIdentifier,
 		top_hash: H256,
-		calls: &mut Vec<OpaqueCall>,
+		calls: &mut Vec<ParentchainCall>,
 		node_metadata_repo: Arc<NodeMetadataRepository>,
 	) -> Result<Self::Result, Self::Error>;
 

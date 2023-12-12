@@ -44,7 +44,7 @@ use handler::{
 	assertion::AssertionHandler, identity_verification::IdentityVerificationHandler, TaskHandler,
 };
 use ita_sgx_runtime::Hash;
-use ita_stf::{hash::Hash as TopHash, TrustedCall, TrustedOperation};
+use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
 use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
@@ -55,7 +55,12 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error, info};
-use std::{boxed::Box, format, string::String, sync::Arc};
+use std::{
+	boxed::Box,
+	format,
+	string::{String, ToString},
+	sync::Arc,
+};
 use threadpool::ThreadPool;
 
 #[cfg(test)]
@@ -79,8 +84,8 @@ pub enum Error {
 #[allow(dead_code)]
 pub struct StfTaskContext<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-	A: AuthorApi<Hash, Hash>,
-	S: StfEnclaveSigning,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > {
@@ -93,8 +98,8 @@ pub struct StfTaskContext<
 
 impl<
 		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
-		A: AuthorApi<Hash, Hash>,
-		S: StfEnclaveSigning,
+		A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
+		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
 	> StfTaskContext<K, A, S, H, O>
@@ -122,7 +127,8 @@ where
 			.sign_call_with_self(trusted_call, shard)
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
-		let top = TrustedOperation::direct_call(signed_trusted_call);
+		let top: TrustedOperation<TrustedCallSigned, Getter> =
+			TrustedOperation::direct_call(signed_trusted_call);
 
 		// find out if we have any trusted operation which has the same hash in the pool already.
 		// The hash can be used to de-duplicate a trusted operation for a certain request, as the
@@ -160,9 +166,10 @@ where
 			encrypted_trusted_call.len(),
 			top.encode().len()
 		);
-		executor::block_on(
-			self.author_api.watch_top(RsaRequest::new(*shard, encrypted_trusted_call)),
-		)
+		executor::block_on(self.author_api.watch_and_broadcast_top(
+			RsaRequest::new(*shard, encrypted_trusted_call),
+			"author_submitAndWatchBroadcastedRsaRequest".to_string(),
+		))
 		.map_err(|e| {
 			Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e))
 		})?;
@@ -177,8 +184,8 @@ pub fn run_stf_task_receiver<K, A, S, H, O>(
 ) -> Result<(), Error>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
-	A: AuthorApi<Hash, Hash> + Send + Sync + 'static,
-	S: StfEnclaveSigning + Send + Sync + 'static,
+	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
+	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,

@@ -22,8 +22,11 @@ export default {
                 A20: "Null",
                 Oneblock: "OneBlockCourseType",
                 GenericDiscordRole: "GenericDiscordRoleType",
+                __Unused15: "Null",
                 BnbDomainHolding: "Null",
                 BnbDigitDomainClub: "BnbDigitDomainType",
+                VIP3MembershipCard: "VIP3MembershipCardLevel",
+                WeirdoGhostGangHolder: "Null",
             },
         },
         AssertionSupportedNetwork: {
@@ -131,6 +134,10 @@ export default {
         },
         GenericDiscordRoleSoraQuizType: {
             _enum: ["Attendee", "Master"],
+        },
+        // VIP3MembershipCard
+        VIP3MembershipCardLevel: {
+            _enum: ["Gold", "Silver"],
         },
     },
 };

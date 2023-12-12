@@ -50,6 +50,7 @@ pub mod generic_discord_role;
 pub mod holding_time;
 pub mod nodereal;
 pub mod oneblock;
+pub mod vip3;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;
@@ -92,8 +93,7 @@ pub fn transpose_identity(
 					}
 				},
 				Identity::Evm(address) => {
-					let mut address = account_id_to_string(address.as_ref());
-					address.insert_str(0, "0x");
+					let address = account_id_to_string(address.as_ref());
 					addresses.push((address, n));
 					networks_set.insert(n);
 				},

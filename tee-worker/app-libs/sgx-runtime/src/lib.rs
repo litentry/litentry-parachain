@@ -75,7 +75,7 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use pallet_balances::Call as BalancesCall;
-pub use pallet_parentchain::{self, Call as ParentchainCall};
+pub use pallet_parentchain::Call as ParentchainPalletCall;
 pub use pallet_timestamp::Call as TimestampCall;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -139,7 +139,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("node-template"),
 	impl_name: create_runtime_str!("node-template"),
 	authoring_version: 1,
-	spec_version: 100,
+	spec_version: 101,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,

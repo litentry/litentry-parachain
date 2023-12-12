@@ -19,7 +19,6 @@
 //!
 //! This allows the crates themselves to stay as generic as possible
 //! and ensures that the global instances are initialized once.
-
 use crate::{
 	initialization::parentchain::{
 		integritee_parachain::IntegriteeParachainHandler,
@@ -31,6 +30,7 @@ use crate::{
 	rpc::rpc_response_channel::RpcResponseChannel,
 	tls_ra::seal_handler::SealHandler,
 };
+use ita_parentchain_interface::{integritee, target_a, target_b};
 use ita_sgx_runtime::Runtime;
 use ita_stf::{Getter, State as StfState, Stf, TrustedCallSigned};
 use itc_direct_rpc_client::DirectRpcClientFactory;
@@ -44,13 +44,7 @@ use itc_parentchain::{
 		BlockImportDispatcher,
 	},
 	block_importer::ParentchainBlockImporter,
-	indirect_calls_executor::{
-		filter_metadata::{
-			EventCreator, ShieldFundsAndInvokeFilter, TransferToAliceShieldsFundsFilter,
-		},
-		parentchain_parser::ParentchainExtrinsicParser,
-		IndirectCallsExecutor,
-	},
+	indirect_calls_executor::{filter_metadata::EventCreator, IndirectCallsExecutor},
 	light_client::{
 		concurrent_access::ValidatorAccessor, io::LightClientStateSealSync,
 		light_validation::LightValidation, light_validation_state::LightValidationState,
@@ -74,7 +68,7 @@ use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,
 	state_getter::StfStateGetter,
 };
-use itp_stf_primitives::types::Hash;
+use itp_stf_primitives::types::{Hash, TrustedOperation};
 use itp_stf_state_handler::{
 	file_io::sgx::SgxStateFileIo, state_initializer::StateInitializer,
 	state_snapshot_repository::StateSnapshotRepository, StateHandler,
@@ -119,17 +113,26 @@ pub type EnclaveStateInitializer =
 	StateInitializer<StfState, EnclaveStf, EnclaveShieldingKeyRepository>;
 pub type EnclaveStateHandler =
 	StateHandler<EnclaveStateSnapshotRepository, EnclaveStateObserver, EnclaveStateInitializer>;
-pub type EnclaveGetterExecutor = GetterExecutor<EnclaveStateObserver, StfStateGetter<EnclaveStf>>;
+pub type EnclaveGetterExecutor =
+	GetterExecutor<EnclaveStateObserver, StfStateGetter<EnclaveStf>, Getter>;
 pub type EnclaveOCallApi = OcallApi;
 pub type EnclaveNodeMetadataRepository = NodeMetadataRepository<NodeMetadata>;
-pub type EnclaveStfExecutor =
-	StfExecutor<EnclaveOCallApi, EnclaveStateHandler, EnclaveNodeMetadataRepository, EnclaveStf>;
+pub type EnclaveStfExecutor = StfExecutor<
+	EnclaveOCallApi,
+	EnclaveStateHandler,
+	EnclaveNodeMetadataRepository,
+	EnclaveStf,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
+>;
 pub type EnclaveStfEnclaveSigner = StfEnclaveSigner<
 	EnclaveOCallApi,
 	EnclaveStateObserver,
 	EnclaveShieldingKeyRepository,
 	EnclaveStf,
 	EnclaveTopPoolAuthor,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
 >;
 pub type EnclaveAttestationHandler =
 	IntelAttestationHandler<EnclaveOCallApi, EnclaveSigningKeyRepository>;
@@ -139,7 +142,7 @@ pub type EnclaveRpcWsHandler =
 	RpcWsHandler<RpcWatchExtractor<Hash>, EnclaveRpcConnectionRegistry, Hash>;
 pub type EnclaveWebSocketServer = TungsteniteWsServer<EnclaveRpcWsHandler, FromFileConfigProvider>;
 pub type EnclaveRpcResponder = RpcResponder<EnclaveRpcConnectionRegistry, Hash, RpcResponseChannel>;
-pub type EnclaveSidechainApi = SidechainApi<ParentchainBlock>;
+pub type EnclaveSidechainApi = SidechainApi<ParentchainBlock, EnclaveTrustedCallSigned>;
 
 // Parentchain types relevant for all parentchains
 pub type EnclaveLightClientSeal =
@@ -147,48 +150,50 @@ pub type EnclaveLightClientSeal =
 pub type EnclaveExtrinsicsFactory =
 	ExtrinsicsFactory<EnclaveParentchainSigner, NonceCache, EnclaveNodeMetadataRepository>;
 
-/// The enclave's generic indirect executor type.
-///
-/// The `IndirectCallsFilter` calls filter can be configured per parentchain.
-pub type EnclaveIndirectCallsExecutor<IndirectCallsFilter> = IndirectCallsExecutor<
-	EnclaveShieldingKeyRepository,
-	EnclaveStfEnclaveSigner,
-	EnclaveTopPoolAuthor,
-	EnclaveNodeMetadataRepository,
-	IndirectCallsFilter,
-	EventCreator,
->;
-
 pub type EnclaveValidatorAccessor = ValidatorAccessor<
 	LightValidation<ParentchainBlock, EnclaveOCallApi>,
 	ParentchainBlock,
 	EnclaveLightClientSeal,
 >;
 
-pub type EnclaveParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
+pub type IntegriteeParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
+pub type TargetAParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
+pub type TargetBParentchainBlockImportQueue = ImportQueue<SignedParentchainBlock>;
 
 /// Import queue for the events
 ///
 /// Note: `Vec<u8>` is correct. It should not be `Vec<Vec<u8>`
-pub type EnclaveParentchainEventImportQueue = ImportQueue<Vec<u8>>;
+pub type IntegriteeParentchainEventImportQueue = ImportQueue<Vec<u8>>;
+pub type TargetAParentchainEventImportQueue = ImportQueue<Vec<u8>>;
+pub type TargetBParentchainEventImportQueue = ImportQueue<Vec<u8>>;
 
 // Stuff for the integritee parentchain
 
-pub type IntegriteeParentchainIndirectExecutor =
-	EnclaveIndirectCallsExecutor<ShieldFundsAndInvokeFilter<ParentchainExtrinsicParser>>;
+pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
+	EnclaveShieldingKeyRepository,
+	EnclaveStfEnclaveSigner,
+	EnclaveTopPoolAuthor,
+	EnclaveNodeMetadataRepository,
+	integritee::ShieldFundsAndInvokeFilter<integritee::ParentchainExtrinsicParser>,
+	EventCreator<integritee::FilterableEvents>,
+	integritee::ParentchainEventHandler,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
+>;
 
 pub type IntegriteeParentchainBlockImporter = ParentchainBlockImporter<
 	ParentchainBlock,
 	EnclaveValidatorAccessor,
 	EnclaveStfExecutor,
 	EnclaveExtrinsicsFactory,
-	IntegriteeParentchainIndirectExecutor,
+	IntegriteeParentchainIndirectCallsExecutor,
+	EnclaveOCallApi,
 >;
 
 pub type IntegriteeParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
 	IntegriteeParentchainBlockImporter,
-	EnclaveParentchainBlockImportQueue,
-	EnclaveParentchainEventImportQueue,
+	IntegriteeParentchainBlockImportQueue,
+	IntegriteeParentchainEventImportQueue,
 >;
 
 pub type IntegriteeParentchainImmediateBlockImportDispatcher =
@@ -207,21 +212,31 @@ pub type IntegriteeParentchainBlockImportDispatcher = BlockImportDispatcher<
 ///
 /// Also note that the extrinsic parser must be changed if the signed extra contains the
 /// `AssetTxPayment`.
-pub type TargetAParentchainIndirectExecutor =
-	EnclaveIndirectCallsExecutor<TransferToAliceShieldsFundsFilter<ParentchainExtrinsicParser>>;
+pub type TargetAParentchainIndirectCallsExecutor = IndirectCallsExecutor<
+	EnclaveShieldingKeyRepository,
+	EnclaveStfEnclaveSigner,
+	EnclaveTopPoolAuthor,
+	EnclaveNodeMetadataRepository,
+	target_a::TransferToAliceShieldsFundsFilter<target_a::ParentchainExtrinsicParser>,
+	EventCreator<target_a::FilterableEvents>,
+	target_a::ParentchainEventHandler,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
+>;
 
 pub type TargetAParentchainBlockImporter = ParentchainBlockImporter<
 	ParentchainBlock,
 	EnclaveValidatorAccessor,
 	EnclaveStfExecutor,
 	EnclaveExtrinsicsFactory,
-	TargetAParentchainIndirectExecutor,
+	TargetAParentchainIndirectCallsExecutor,
+	EnclaveOCallApi,
 >;
 
 pub type TargetAParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
 	TargetAParentchainBlockImporter,
-	EnclaveParentchainBlockImportQueue,
-	EnclaveParentchainEventImportQueue,
+	TargetAParentchainBlockImportQueue,
+	TargetAParentchainEventImportQueue,
 >;
 
 pub type TargetAParentchainImmediateBlockImportDispatcher =
@@ -240,21 +255,31 @@ pub type TargetAParentchainBlockImportDispatcher = BlockImportDispatcher<
 ///
 /// Also note that the extrinsic parser must be changed if the signed extra contains the
 /// `AssetTxPayment`.
-pub type TargetBParentchainIndirectExecutor =
-	EnclaveIndirectCallsExecutor<TransferToAliceShieldsFundsFilter<ParentchainExtrinsicParser>>;
+pub type TargetBParentchainIndirectCallsExecutor = IndirectCallsExecutor<
+	EnclaveShieldingKeyRepository,
+	EnclaveStfEnclaveSigner,
+	EnclaveTopPoolAuthor,
+	EnclaveNodeMetadataRepository,
+	target_b::TargetBExtrinsicFilter<target_b::ParentchainExtrinsicParser>,
+	EventCreator<target_b::FilterableEvents>,
+	target_b::ParentchainEventHandler,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
+>;
 
 pub type TargetBParentchainBlockImporter = ParentchainBlockImporter<
 	ParentchainBlock,
 	EnclaveValidatorAccessor,
 	EnclaveStfExecutor,
 	EnclaveExtrinsicsFactory,
-	TargetBParentchainIndirectExecutor,
+	TargetBParentchainIndirectCallsExecutor,
+	EnclaveOCallApi,
 >;
 
 pub type TargetBParentchainTriggeredBlockImportDispatcher = TriggeredDispatcher<
 	TargetBParentchainBlockImporter,
-	EnclaveParentchainBlockImportQueue,
-	EnclaveParentchainEventImportQueue,
+	TargetBParentchainBlockImportQueue,
+	TargetBParentchainEventImportQueue,
 >;
 
 pub type TargetBParentchainImmediateBlockImportDispatcher =
@@ -266,15 +291,22 @@ pub type TargetBParentchainBlockImportDispatcher = BlockImportDispatcher<
 >;
 
 /// Sidechain types
-pub type EnclaveTopPool = BasicPool<EnclaveSidechainApi, ParentchainBlock, EnclaveRpcResponder>;
+pub type EnclaveTopPool = BasicPool<
+	EnclaveSidechainApi,
+	ParentchainBlock,
+	EnclaveRpcResponder,
+	TrustedOperation<EnclaveTrustedCallSigned, EnclaveGetter>,
+>;
 
 pub type EnclaveTopPoolAuthor = Author<
 	EnclaveTopPool,
-	AuthorTopFilter,
-	BroadcastedTopFilter,
+	AuthorTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
+	BroadcastedTopFilter<EnclaveTrustedCallSigned, EnclaveGetter>,
 	EnclaveStateHandler,
 	EnclaveShieldingKeyRepository,
 	EnclaveOCallApi,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
 >;
 pub type EnclaveDirectRpcBroadcaster = DirectRpcBroadcaster<DirectRpcClientFactory>;
 pub type EnclaveSidechainBlockComposer =
@@ -290,6 +322,8 @@ pub type EnclaveSidechainBlockImporter = SidechainBlockImporter<
 	// For now the sidechain does only support one parentchain.
 	IntegriteeParentchainTriggeredBlockImportDispatcher,
 	EnclaveDirectRpcBroadcaster,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
 >;
 pub type EnclaveSidechainBlockImportQueue = ImportQueue<SignedSidechainBlock>;
 pub type EnclaveBlockImportConfirmationHandler = BlockImportConfirmationHandler<
@@ -326,6 +360,8 @@ pub type EnclaveOffchainWorkerExecutor = itc_offchain_worker_executor::executor:
 	EnclaveValidatorAccessor,
 	EnclaveExtrinsicsFactory,
 	EnclaveStf,
+	EnclaveTrustedCallSigned,
+	EnclaveGetter,
 >;
 
 // Base component instances
@@ -346,7 +382,7 @@ pub static GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 > = ComponentContainer::new("Signing key repository");
 
 /// Light client db seal for the Integritee parentchain
-pub static GLOBAL_LITENTRY_PARENTCHAIN_LIGHT_CLIENT_SEAL: ComponentContainer<
+pub static GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL: ComponentContainer<
 	EnclaveLightClientSeal,
 > = ComponentContainer::new("Integritee Parentchain EnclaveLightClientSealSync");
 
@@ -398,7 +434,7 @@ pub static GLOBAL_ATTESTATION_HANDLER_COMPONENT: ComponentContainer<EnclaveAttes
 
 lazy_static! {
 	/// Global nonce cache for the Integritee Parentchain.
-	pub static ref GLOBAL_LITENTRY_PARENTCHAIN_NONCE_CACHE: Arc<NonceCache> = Default::default();
+	pub static ref GLOBAL_INTEGRITEE_PARENTCHAIN_NONCE_CACHE: Arc<NonceCache> = Default::default();
 
 	/// Global nonce cache for the Target A parentchain..
 	pub static ref GLOBAL_TARGET_A_PARENTCHAIN_NONCE_CACHE: Arc<NonceCache> = Default::default();
@@ -408,11 +444,11 @@ lazy_static! {
 }
 
 /// Solochain Handler.
-pub static GLOBAL_LITENTRY_SOLOCHAIN_HANDLER_COMPONENT: ComponentContainer<
+pub static GLOBAL_INTEGRITEE_SOLOCHAIN_HANDLER_COMPONENT: ComponentContainer<
 	IntegriteeSolochainHandler,
 > = ComponentContainer::new("integritee solochain handler");
 
-pub static GLOBAL_LITENTRY_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<
+pub static GLOBAL_INTEGRITEE_PARACHAIN_HANDLER_COMPONENT: ComponentContainer<
 	IntegriteeParachainHandler,
 > = ComponentContainer::new("integritee parachain handler");
 

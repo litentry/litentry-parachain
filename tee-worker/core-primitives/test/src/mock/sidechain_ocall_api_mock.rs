@@ -23,7 +23,7 @@ use std::sync::RwLock;
 
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
-use itp_ocall_api::EnclaveSidechainOCallApi;
+use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveSidechainOCallApi};
 use itp_types::{BlockHash, ShardIdentifier};
 use sgx_types::{sgx_status_t, SgxResult};
 use std::{string::String, vec::Vec};
@@ -68,6 +68,16 @@ where
 			number_of_fetch_calls: RwLock::new(*self.number_of_fetch_calls.read().unwrap()),
 			_phantom: self._phantom,
 		}
+	}
+}
+
+impl<SignedSidechainBlockType> EnclaveMetricsOCallApi
+	for SidechainOCallApiMock<SignedSidechainBlockType>
+where
+	SignedSidechainBlockType: Clone + Encode + Decode + Send + Sync,
+{
+	fn update_metric<Metric: Encode>(&self, _metric: Metric) -> SgxResult<()> {
+		Ok(())
 	}
 }
 

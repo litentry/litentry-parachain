@@ -13,6 +13,7 @@ sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-s
 ita-stf = { path = "../../../app-libs/stf", default-features = false }
 itc-parentchain-indirect-calls-executor = { path = "../indirect-calls-executor", default-features = false }
 itc-parentchain-light-client = { path = "../light-client", default-features = false }
+itp-enclave-metrics = { path = "../../../core-primitives/enclave-metrics", default-features = false }
 itp-extrinsics-factory = { path = "../../../core-primitives/extrinsics-factory", default-features = false }
 itp-stf-executor = { path = "../../../core-primitives/stf-executor", default-features = false }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
@@ -28,6 +29,9 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 log = { version = "0.4", default-features = false }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
+# litentry
+itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
+
 [features]
 default = ["std"]
 std = [
@@ -35,6 +39,7 @@ std = [
     "ita-stf/std",
     "itc-parentchain-indirect-calls-executor/std",
     "itc-parentchain-light-client/std",
+    "itp-enclave-metrics/std",
     "itp-extrinsics-factory/std",
     "itp-stf-executor/std",
     "itp-types/std",
@@ -44,6 +49,7 @@ std = [
     "sp-runtime/std",
     # std compatible external
     "thiserror",
+    "itp-ocall-api/std",
 ]
 sgx = [
     # sgx
@@ -52,6 +58,7 @@ sgx = [
     "ita-stf/sgx",
     "itc-parentchain-indirect-calls-executor/sgx",
     "itc-parentchain-light-client/sgx",
+    "itp-enclave-metrics/sgx",
     "itp-extrinsics-factory/sgx",
     "itp-stf-executor/sgx",
     # sgx enabled external libraries
