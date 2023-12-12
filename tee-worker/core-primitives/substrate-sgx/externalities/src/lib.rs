@@ -181,6 +181,7 @@ where
 		self.state_diff.clear();
 	}
 
+	// Note: This implementation only works for keys encoded with Blake2_128Concat
 	fn iter_prefix<K: Decode + Debug, V: Decode + Debug>(
 		&self,
 		key_prefix: &[u8],
@@ -303,6 +304,7 @@ impl Encode for EncodeOpaqueValue {
 pub mod tests {
 
 	use super::*;
+	use itp_storage::{storage_double_map_key, storage_map_key, StorageHasher};
 
 	#[test]
 	fn mutating_externalities_through_environmental_variable_works() {
@@ -423,5 +425,46 @@ pub mod tests {
 			})
 		});
 		assert!(stored_value.is_some());
+	}
+
+	#[test]
+	fn iter_prefix_works() {
+		let mut externalities = SgxExternalities::default();
+
+		let key_1 = storage_double_map_key(
+			"Pallet",
+			"Storage",
+			&1_u32,
+			&StorageHasher::Blake2_128Concat,
+			&2_u32,
+			&StorageHasher::Blake2_128Concat,
+		);
+		let key_2 = storage_double_map_key(
+			"Pallet",
+			"Storage",
+			&1_u32,
+			&StorageHasher::Blake2_128Concat,
+			&3_u32,
+			&StorageHasher::Blake2_128Concat,
+		);
+		let prefix_key =
+			storage_map_key("Pallet", "Storage", &1_u32, &StorageHasher::Blake2_128Concat);
+
+		// Fill state.
+		externalities.execute_with(|| {
+			with_externalities(|e| {
+				e.insert(key_1, 10_u32.encode());
+				e.insert(key_2, 20_u32.encode());
+			})
+			.unwrap()
+		});
+		// Perform iter prefix
+		externalities.execute_with(|| {
+			with_externalities(|e| {
+				let values = e.iter_prefix::<u32, u32>(&prefix_key).unwrap();
+				assert_eq!(values, [(2, 10), (3, 20)]);
+			})
+			.unwrap()
+		});
 	}
 }
