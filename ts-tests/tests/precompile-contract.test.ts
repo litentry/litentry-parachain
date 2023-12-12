@@ -10,6 +10,7 @@ import { compiled } from './compile';
 import precompileContractAbi from '../precompile/contracts/staking.json';
 describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const precompileContractAddress = '0x000000000000000000000000000000000000502d';
+    // 10000 lit test token
     const evmAccountRaw = {
         privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
         address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
