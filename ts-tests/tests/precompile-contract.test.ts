@@ -3,11 +3,12 @@ import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
 import { hexToU8a } from '@polkadot/util';
-import { createPair, encodeAddress } from '@polkadot/keyring';
+import Keyring, { createPair, encodeAddress } from '@polkadot/keyring';
 import Web3 from 'web3';
 import ethers from 'ethers';
 import { compiled } from './compile';
 import precompileContractAbi from '../precompile/contracts/staking.json';
+import { mnemonicGenerate, mnemonicToMiniSecret } from '@polkadot/util-crypto';
 
 describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const precompileContractAddress = '0x000000000000000000000000000000000000502d';
@@ -40,6 +41,29 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         console.log('Result: ', result);
         return result;
     };
+
+    step('Address with not sufficient amount of tokens', async function () {
+        // Some mnemonic phrase
+        const mnemonicAlice = mnemonicGenerate();
+        // Create valid Substrate-compatible seed from mnemonic
+        const seedAlice = mnemonicToMiniSecret(mnemonicAlice);
+        const secretKey = Buffer.from(seedAlice).toString('hex');
+
+        const delegateWithAutoCompound = precompileContract.methods.delegateWithAutoCompound(candidateCollator, 1, 1);
+        // construct transaction
+        const transaction = await web3.eth.accounts.signTransaction(
+            {
+                to: precompileContractAddress,
+                data: delegateWithAutoCompound.encodeABI(),
+                gas: await delegateWithAutoCompound.estimateGas(),
+            },
+            secretKey
+        );
+        console.log('Raw transaction ', transaction.rawTransaction);
+        const result = await web3.eth.sendSignedTransaction(transaction.rawTransaction!);
+
+        console.log('result', result); // probably should fail ¯\_(ツ)_/¯
+    });
 
     // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
     step('Test precompile contract', async function () {
