@@ -367,7 +367,7 @@ where
 		// )
 		handle.record_db_read::<Runtime>(
 			48 + (
-				56 * (<Runtime as pallet_parachain_staking::Config>::MaxTopDelegationsPerCandidate::get()
+				54 * (<Runtime as pallet_parachain_staking::Config>::MaxTopDelegationsPerCandidate::get()
 				+ <Runtime as pallet_parachain_staking::Config>::MaxBottomDelegationsPerCandidate::get())
 				as usize),
 		)?;

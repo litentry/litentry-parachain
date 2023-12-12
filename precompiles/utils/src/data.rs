@@ -443,7 +443,7 @@ impl EvmData for u8 {
 		let data = reader
 			.input
 			.get(range)
-			.ok_or_else(|| revert("tried to parse u64 out of bounds"))?;
+			.ok_or_else(|| revert("tried to parse u8 out of bounds"))?;
 
 		Ok(data[31])
 	}
