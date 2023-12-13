@@ -1,10 +1,18 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
+import { signAndSend, describeLitentry } from './utils';
+import { hasher, hexToU8a, u8aConcat, u8aToHex } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
 import Web3 from 'web3';
+
+export function evmToAddress(evmAddress, ss58Format, hashType = 'blake2') {
+    const message = u8aConcat('evm:', evmAddress);
+    if (message.length !== 24) {
+        throw new Error(`Converting ${evmAddress}: Invalid evm address length`);
+    }
+    return encodeAddress(hasher(hashType, message), ss58Format);
+}
 
 describeLitentry('Test EVM Module Transfer', ``, (context) => {
     console.log(`Test EVM Module Transfer`);
@@ -30,7 +38,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
+            mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress
@@ -98,7 +106,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
+            mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress
@@ -160,7 +168,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
+            mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress

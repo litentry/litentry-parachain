@@ -1139,7 +1139,7 @@ impl pallet_evm::Config for Runtime {
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = pallet_evm::EnsureAddressRoot<AccountId>;
+	type CallOrigin = pallet_evm::EnsureAddressTruncated;
 	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
 	// From evm address to parachain address
 	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
@@ -1344,7 +1344,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::IMPExtrinsicWhitelist(_) |
 			RuntimeCall::VCMPExtrinsicWhitelist(_) |
 			// EVM
-			RuntimeCall::EVM(_) |
+			// Substrate EVM extrinsic not allowed
+			// So no EVM pallet
 			RuntimeCall::Ethereum(_)
 		)
 	}
