@@ -109,6 +109,10 @@ launch-binary-litmus:
 launch-binary-rococo:
 	@./scripts/launch-local-binary.sh rococo
 
+.PHONY: launch-custom-binary-rococo ## Launch a local rococo-parachain network with binary already built under target files
+launch-custom-binary-rococo:
+	@./scripts/launch-local-custom-binary.sh rococo
+
 # run tests
 
 .PHONY: test-cargo-all ## cargo test --all
