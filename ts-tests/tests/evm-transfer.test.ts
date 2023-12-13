@@ -124,7 +124,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const transferTransaction = await web3.eth.accounts.signTransaction(
             {
                 from: evmAccountRaw.address,
-                to: eveMappedEVMAccount,
+                to: u8aToHex(eveMappedEVMAccount),
                 value: value, // must be higher than ExistentialDeposit
                 gasPrice: 25000,
                 gas: 1000000,
