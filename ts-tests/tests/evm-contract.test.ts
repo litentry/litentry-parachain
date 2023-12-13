@@ -19,6 +19,13 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             await signAndSend(extrinsic, context.alice);
         }
 
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
+
+        // Deposit money into substrate account's truncated EVM address's mapping substrate account
+        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, 30000000000000);
+        await signAndSend(tx_init, context.eve);
+
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
             context.eve.address
@@ -33,7 +40,6 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
 
-        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
         let value = 20000000000000; // 20 000 000 000 000
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
