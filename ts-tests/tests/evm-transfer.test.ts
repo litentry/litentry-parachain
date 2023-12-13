@@ -23,10 +23,6 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             console.log(`setMode await end: ${temp.block.header.number}`);
         }
 
-        // Get the initial balance of Eve and EVM external account
-        const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
-            context.eve.address
-        );
         // EVM module transfer for substrate account
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
@@ -45,6 +41,11 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         // Deposit money into substrate account's truncated EVM address's mapping substrate account
         const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, 30000000000000);
         await signAndSend(tx_init, context.eve);
+
+        // Get the initial balance of Eve and EVM external account
+        const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
+            context.eve.address
+        );
 
         let value = 20000000000000; // 20 000 000 000 000
         // 25000 is min_gas_price setup
