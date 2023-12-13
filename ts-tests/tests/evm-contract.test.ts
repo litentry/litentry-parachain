@@ -77,11 +77,11 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
     });
 
     step('Deploy and test contract by EVM external account', async function () {
-        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We want evm works in Normal Mode, switch back to filterMode, after testing.
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
-        if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+        if ('Normal' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Normal'));
             await signAndSend(extrinsic, context.alice);
         }
 
