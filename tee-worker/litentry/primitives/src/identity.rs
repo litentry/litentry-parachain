@@ -29,7 +29,7 @@ use itp_utils::{
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
-use sp_core::{crypto::AccountId32, ed25519, sr25519, ByteArray, H160};
+use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, H160};
 use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
 	BoundedVec,
@@ -92,7 +92,6 @@ impl Debug for IdentityString {
 }
 
 #[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Address20([u8; 20]);
 
 impl AsRef<[u8; 20]> for Address20 {
@@ -130,7 +129,6 @@ impl Debug for Address20 {
 }
 
 #[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Address32([u8; 32]);
 impl AsRef<[u8; 32]> for Address32 {
 	fn as_ref(&self) -> &[u8; 32] {
@@ -198,11 +196,72 @@ impl Debug for Address32 {
 	}
 }
 
+// TODO: maybe use macros to reduce verbosity
+#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+pub struct Address33([u8; 33]);
+impl AsRef<[u8; 33]> for Address33 {
+	fn as_ref(&self) -> &[u8; 33] {
+		&self.0
+	}
+}
+
+impl Default for Address33 {
+	fn default() -> Self {
+		Address33([0u8; 33])
+	}
+}
+
+impl From<[u8; 33]> for Address33 {
+	fn from(value: [u8; 33]) -> Self {
+		Self(value)
+	}
+}
+
+impl<'a> TryFrom<&'a [u8]> for Address33 {
+	type Error = ();
+	fn try_from(x: &'a [u8]) -> Result<Address33, ()> {
+		if x.len() == 33 {
+			let mut data = [0; 33];
+			data.copy_from_slice(x);
+			Ok(Address33(data))
+		} else {
+			Err(())
+		}
+	}
+}
+
+impl From<Address33> for ecdsa::Public {
+	fn from(value: Address33) -> Self {
+		let raw: [u8; 33] = *value.as_ref();
+		ecdsa::Public::from_raw(raw)
+	}
+}
+
+impl From<&Address33> for ecdsa::Public {
+	fn from(value: &Address33) -> Self {
+		(*value).into()
+	}
+}
+
+impl From<ecdsa::Public> for Address33 {
+	fn from(k: ecdsa::Public) -> Self {
+		k.0.into()
+	}
+}
+
+impl Debug for Address33 {
+	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+		if_production_or!(
+			f.debug_tuple("Address33").finish(),
+			f.debug_tuple("Address33").field(&self.0).finish()
+		)
+	}
+}
+
 /// Web2 and Web3 Identity based on handle/public key
 /// We only include the network categories (substrate/evm) without concrete types
 /// see https://github.com/litentry/litentry-parachain/issues/1841
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen, EnumIter)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Identity {
 	// web2
 	#[codec(index = 0)]
@@ -217,6 +276,12 @@ pub enum Identity {
 	Substrate(Address32),
 	#[codec(index = 4)]
 	Evm(Address20),
+	// bitcoin addresses are derived (one-way hash) from the pubkey
+	// by using `Address33` as the Identity handle, it requires that pubkey
+	// is retrievable by the wallet API when verifying the bitcoin account.
+	// e.g. unisat-wallet: https://docs.unisat.io/dev/unisat-developer-service/unisat-wallet#getpublickey
+	#[codec(index = 5)]
+	Bitcoin(Address33),
 }
 
 impl Identity {
@@ -225,7 +290,7 @@ impl Identity {
 	}
 
 	pub fn is_web3(&self) -> bool {
-		matches!(self, Self::Substrate(..) | Self::Evm(..))
+		matches!(self, Self::Substrate(..) | Self::Evm(..) | Self::Bitcoin(..))
 	}
 
 	pub fn is_substrate(&self) -> bool {
@@ -236,10 +301,17 @@ impl Identity {
 		matches!(self, Self::Evm(..))
 	}
 
+	pub fn is_bitcoin(&self) -> bool {
+		matches!(self, Self::Bitcoin(..))
+	}
+
 	// check if the given web3networks match the identity
 	pub fn matches_web3networks(&self, networks: &Vec<Web3Network>) -> bool {
 		(self.is_substrate() && !networks.is_empty() && networks.iter().all(|n| n.is_substrate()))
 			|| (self.is_evm() && !networks.is_empty() && networks.iter().all(|n| n.is_evm()))
+			|| (self.is_bitcoin()
+				&& !networks.is_empty()
+				&& networks.iter().all(|n| n.is_bitcoin()))
 			|| (self.is_web2() && networks.is_empty())
 	}
 
@@ -281,6 +353,13 @@ impl Identity {
 						.try_into()
 						.map_err(|_| "Address20 conversion error")?;
 					return Ok(Identity::Evm(handle))
+				} else if v[0] == "bitcoin" {
+					let handle = decode_hex(v[1])
+						.unwrap()
+						.as_slice()
+						.try_into()
+						.map_err(|_| "Address33 conversion error")?;
+					return Ok(Identity::Bitcoin(handle))
 				} else if v[0] == "github" {
 					return Ok(Identity::Github(IdentityString::new(v[1].as_bytes().to_vec())))
 				} else if v[0] == "discord" {
@@ -308,6 +387,8 @@ impl Identity {
 				Identity::Evm(address) => std::format!("evm:{}", &hex_encode(address.as_ref())),
 				Identity::Substrate(address) =>
 					std::format!("substrate:{}", &hex_encode(address.as_ref())),
+				Identity::Bitcoin(address) =>
+					std::format!("bitcoin:{}", &hex_encode(address.as_ref())),
 				Identity::Twitter(handle) => std::format!(
 					"twitter:{}",
 					std::str::from_utf8(handle.inner_ref())
@@ -358,6 +439,12 @@ impl From<Address20> for Identity {
 	}
 }
 
+impl From<Address33> for Identity {
+	fn from(value: Address33) -> Self {
+		Identity::Bitcoin(value)
+	}
+}
+
 impl From<[u8; 32]> for Identity {
 	fn from(value: [u8; 32]) -> Self {
 		Identity::Substrate(value.into())
@@ -367,6 +454,12 @@ impl From<[u8; 32]> for Identity {
 impl From<[u8; 20]> for Identity {
 	fn from(value: [u8; 20]) -> Self {
 		Identity::Evm(value.into())
+	}
+}
+
+impl From<[u8; 33]> for Identity {
+	fn from(value: [u8; 33]) -> Self {
+		Identity::Bitcoin(value.into())
 	}
 }
 
@@ -388,6 +481,7 @@ mod tests {
 					Identity::Github(..) => true,
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => false,
+					Identity::Bitcoin(..) => false,
 				}
 			)
 		})
@@ -404,6 +498,7 @@ mod tests {
 					Identity::Github(..) => false,
 					Identity::Substrate(..) => true,
 					Identity::Evm(..) => true,
+					Identity::Bitcoin(..) => true,
 				}
 			)
 		})
@@ -420,6 +515,7 @@ mod tests {
 					Identity::Github(..) => false,
 					Identity::Substrate(..) => true,
 					Identity::Evm(..) => false,
+					Identity::Bitcoin(..) => false,
 				}
 			)
 		})
@@ -436,6 +532,24 @@ mod tests {
 					Identity::Github(..) => false,
 					Identity::Substrate(..) => false,
 					Identity::Evm(..) => true,
+					Identity::Bitcoin(..) => false,
+				}
+			)
+		})
+	}
+
+	#[test]
+	fn is_bitcoin_works() {
+		Identity::iter().for_each(|identity| {
+			assert_eq!(
+				identity.is_bitcoin(),
+				match identity {
+					Identity::Twitter(..) => false,
+					Identity::Discord(..) => false,
+					Identity::Github(..) => false,
+					Identity::Substrate(..) => false,
+					Identity::Evm(..) => false,
+					Identity::Bitcoin(..) => true,
 				}
 			)
 		})
@@ -497,6 +611,14 @@ mod tests {
 	fn test_evm_did() {
 		let identity = Identity::Evm([0; 20].into());
 		let did_str = "did:litentry:evm:0x0000000000000000000000000000000000000000";
+		assert_eq!(identity.to_did().unwrap(), did_str);
+		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
+	}
+
+	#[test]
+	fn test_bitcoin_did() {
+		let identity = Identity::Bitcoin([0; 33].into());
+		let did_str = "did:litentry:bitcoin:0x000000000000000000000000000000000000000000000000000000000000000000";
 		assert_eq!(identity.to_did().unwrap(), did_str);
 		assert_eq!(Identity::from_did(did_str).unwrap(), identity);
 	}
