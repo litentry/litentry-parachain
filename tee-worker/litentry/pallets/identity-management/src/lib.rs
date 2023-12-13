@@ -43,7 +43,7 @@ use frame_support::{pallet_prelude::*, sp_runtime::traits::One, traits::StorageV
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	all_evm_web3networks, all_substrate_web3networks, Identity, ParentchainBlockNumber, Web3Network,
+	all_evm_web3networks, all_substrate_web3networks, Identity, ParachainBlockNumber, Web3Network,
 };
 use sp_core::{blake2_256, H256};
 use sp_std::{vec, vec::Vec};

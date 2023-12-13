@@ -60,8 +60,8 @@ pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
-	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainAccountId,
-	ParentchainBlockNumber, RequestAesKey, RequestAesKeyNonce, VCMPError, ValidationData,
+	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParachainBlockNumber,
+	ParentchainAccountId, RequestAesKey, RequestAesKeyNonce, VCMPError, ValidationData,
 	Web3Network,
 };
 use log::*;

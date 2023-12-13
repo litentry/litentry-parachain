@@ -35,9 +35,9 @@ pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
 pub use error::Result;
-use itp_stf_primitives::types::ShardIdentifier;
 use litentry_primitives::{
-	Assertion, Identity, IdentityNetworkTuple, RequestAesKey, Web2ValidationData, Web3Network,
+	Assertion, Identity, IdentityNetworkTuple, ParachainBlockNumber, RequestAesKey,
+	ShardIdentifier, SidechainBlockNumber, Web2ValidationData, Web3Network,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -90,6 +90,8 @@ pub struct AssertionBuildRequest {
 	pub assertion: Assertion,
 	pub identities: Vec<IdentityNetworkTuple>,
 	pub top_hash: H256,
+	pub parachain_block_number: ParachainBlockNumber,
+	pub sidechain_block_number: SidechainBlockNumber,
 	pub maybe_key: Option<RequestAesKey>,
 	pub req_ext_hash: H256,
 }

@@ -40,7 +40,7 @@ use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::{from_iso8601, now_as_iso8601};
 use itp_types::AccountId;
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, Web3Network};
+use litentry_primitives::{Identity, ParachainBlockNumber, SidechainBlockNumber, Web3Network};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -140,6 +140,9 @@ pub struct CredentialSubject {
 	pub description: String,
 	#[serde(rename = "type")]
 	pub types: String,
+	pub type_info: String,
+	pub parachain_block_number: ParachainBlockNumber,
+	pub sidechain_block_number: SidechainBlockNumber,
 	/// (Optional) Data source definitions for trusted data providers
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub data_source: Option<Vec<DataSource>>,

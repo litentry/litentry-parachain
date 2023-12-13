@@ -46,7 +46,7 @@ pub use parentchain_primitives::{
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
 	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
-	Balance as ParentchainBalance, BlockNumber as ParentchainBlockNumber, BnbDigitDomainType,
+	Balance as ParentchainBalance, BlockNumber as ParachainBlockNumber, BnbDigitDomainType,
 	BoundedWeb3Network, ContestType, ErrorDetail, ErrorString, GenericDiscordRoleType,
 	Hash as ParentchainHash, Header as ParentchainHeader, IMPError, Index as ParentchainIndex,
 	IntoErrorDetail, OneBlockCourseType, ParameterString, SchemaContentString, SchemaIdString,
@@ -58,7 +58,7 @@ use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
 use sp_runtime::traits::Verify;
 use std::string::{String, ToString};
-pub use teerex_primitives::{decl_rsa_request, ShardIdentifier};
+pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
