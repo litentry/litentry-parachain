@@ -6054,6 +6054,7 @@ dependencies = [
  "frame-support",
  "hex 0.4.0",
  "hex 0.4.3",
+ "hex-literal",
  "http 0.2.1",
  "http 0.2.9",
  "http_req 0.8.1 (git+https://github.com/integritee-network/http_req?branch=master)",
@@ -6075,6 +6076,7 @@ dependencies = [
  "serde 1.0.193",
  "serde_json 1.0.103",
  "sgx_tstd",
+ "sp-core",
  "ss58-registry",
  "thiserror 1.0.9",
  "url 2.1.1",
@@ -7018,6 +7020,7 @@ dependencies = [
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
+ "staking-primitives",
  "strum 0.25.0",
  "strum_macros 0.25.3",
  "teerex-primitives",
@@ -13776,6 +13779,13 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "staking-primitives"
+version = "0.9.12"
+dependencies = [
+ "pallet-parachain-staking",
+]
 
 [[package]]
 name = "static_assertions"

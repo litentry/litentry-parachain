@@ -26,11 +26,11 @@ const LIT_STAKING_INFOS: (&str, &str) = ("LIT staking amount", "The amount of LI
 pub const LIT_STAKING_AMOUNT_RANGE: [usize; 10] = [0, 1, 50, 100, 200, 500, 800, 1200, 1600, 3000];
 
 pub struct LITStakingAmount {
-	pub amount: usize,
+	pub amount: u128,
 }
 
 impl LITStakingAmount {
-	pub fn new(amount: usize) -> Self {
+	pub fn new(amount: u128) -> Self {
 		Self { amount }
 	}
 }
@@ -54,13 +54,13 @@ impl RangeCredentialDetail for LITStakingAmount {
 }
 
 pub trait UpdateLITStakingAmountCredential {
-	fn update_lit_staking_amount(&mut self, amount: usize);
+	fn update_lit_staking_amount(&mut self, amount: u128);
 }
 
 impl UpdateLITStakingAmountCredential for Credential {
-	fn update_lit_staking_amount(&mut self, amount: usize) {
+	fn update_lit_staking_amount(&mut self, amount: u128) {
 		let lit_staking = LITStakingAmount::new(amount);
-		let items = lit_staking.get_assertion_items(amount);
+		let items = lit_staking.get_assertion_items(amount as usize);
 		let mut assertion = AssertionLogic::new_and();
 		for item in items {
 			assertion = assertion.add_item(item);

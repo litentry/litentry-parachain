@@ -39,6 +39,9 @@ itp-utils = { path = "../../../core-primitives/utils", default-features = false 
 
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
+hex-literal = { version = "0.4" }
+sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
 # litentry
 lc-credentials = { path = "../credentials", default-features = false }
 lc-data-providers = { path = "../data-providers", default-features = false }
