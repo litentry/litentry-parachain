@@ -1,0 +1,19 @@
+[package]
+authors = ["Trust Computing GmbH <info@litentry.com>"]
+edition = '2021'
+name = 'precompile-utils-macro'
+version = '0.9.17'
+
+[lib]
+proc-macro = true
+
+[[test]]
+name = "tests"
+path = "tests/tests.rs"
+
+[dependencies]
+num_enum = { version = "0.5.3", default-features = false }
+proc-macro2 = { version = "1" }
+quote = { version = "1" }
+sha3 = { version = "0.10", default-features = false }
+syn = { version = "2", features = ["extra-traits", "fold", "full", "visit"] }
