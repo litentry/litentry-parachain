@@ -57,7 +57,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
 
         // If a substrate account using pallet_evm to trigger evm transaction,
         // it will bump 2 for nonce (one for substrate extrinsic, one for evm).
-        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 2);
+        // +1 nonce for original substrate account, plus another 1 nonce for original substrate account's truncated evm address's mapped susbtrate account. 
+        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(
             evmAccountInitBalance.free.toBigInt() + BigInt(value)
         );
