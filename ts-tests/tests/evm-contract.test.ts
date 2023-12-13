@@ -33,11 +33,11 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
 
-        let eveMappedAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
         let value = 20000000000000; // 20 000 000 000 000
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
-            eveMappedAccount,
+            eveMappedEVMAccount,
             evmAccountRaw.address,
             '0x',
             value,

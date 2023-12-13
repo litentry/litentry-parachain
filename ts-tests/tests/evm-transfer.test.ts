@@ -37,14 +37,19 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
 
-        let eveMappedAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
         console.log(`eve address: ${context.eve.publicKey}`);
-        console.log(`eveMappedAccount: ${eveMappedAccount}`);
+        console.log(`eveMappedEVMAccount: ${eveMappedEVMAccount}`);
+
+        // Deposit money into substrate account's truncated EVM address's mapping substrate account
+        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, 30000000000000);
+        await signAndSend(tx_init, context.eve);
 
         let value = 20000000000000; // 20 000 000 000 000
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
-            eveMappedAccount,
+            eveMappedEVMAccount,
             evmAccountRaw.address,
             '0x',
             value,
@@ -94,8 +99,10 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         }
 
         // Get the initial balance of Eve and EVM external account
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
-            context.eve.address
+            eveMappedSustrateAccount
         );
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
@@ -106,7 +113,6 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             evmAccountRaw.mappedAddress
         );
         console.log(`evmAccount Balance: ${evmAccountInitBalance}`);
-        let eveMappedAccount = u8aToHex(context.eve.publicKey.slice(0, 20));
 
         // Create Web3 instance
         const web3 = new Web3('http://localhost:9944');
@@ -118,7 +124,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         const transferTransaction = await web3.eth.accounts.signTransaction(
             {
                 from: evmAccountRaw.address,
-                to: eveMappedAccount,
+                to: eveMappedEVMAccount,
                 value: value, // must be higher than ExistentialDeposit
                 gasPrice: 25000,
                 gas: 1000000,
@@ -130,7 +136,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         console.log(`Tx successful with hash: ${transferReceipt.transactionHash}`);
 
         const { nonce: eveCurrentNonce, data: eveCurrentBalance } = await context.api.query.system.account(
-            context.eve.address
+            eveMappedSustrateAccount
         );
         const { nonce: evmAccountCurrentNonce, data: evmAccountCurrentBalance } =
             await context.api.query.system.account(evmAccountRaw.mappedAddress);
@@ -173,13 +179,13 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
             { publicKey: hexToU8a(evmAccountRaw.mappedAddress), secretKey: new Uint8Array([]) }
         );
 
-        let eveMappedAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
         let value = 100000000000; // ExistentialDeposit = 100 000 000 000 (0x174876E800)
         // Sign Tx with substrate signature, try manipulate evm account out of substrate signature's control
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
             evmAccountRaw.address,
-            eveMappedAccount,
+            eveMappedEVMAccount,
             '0x',
             value,
             1000000,
