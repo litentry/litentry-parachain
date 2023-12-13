@@ -27,7 +27,7 @@ use derive_more::{Deref, DerefMut, From, IntoIterator};
 use itp_hashing::Hash;
 use serde::{Deserialize, Serialize};
 use sp_core::{hashing::blake2_256, H256};
-use std::{collections::BTreeMap, vec, vec::Vec};
+use std::{collections::BTreeMap, fmt::Debug, vec, vec::Vec};
 
 pub use scope_limited::{set_and_run_with_externalities, with_externalities};
 
@@ -110,6 +110,12 @@ pub trait SgxExternalitiesTrait {
 	/// Get the next key in state after the given one (excluded) in lexicographic order.
 	fn next_storage_key(&self, key: &[u8]) -> Option<Vec<u8>>;
 
+	/// Reads all keys and values under given prefix
+	fn iter_prefix<K: Decode + Debug, V: Decode + Debug>(
+		&self,
+		key_prefix: &[u8],
+	) -> Option<Vec<(K, V)>>;
+
 	/// Clears all values that match the given key prefix.
 	fn clear_prefix(&mut self, key_prefix: &[u8], maybe_limit: Option<u32>) -> u32;
 
@@ -173,6 +179,41 @@ where
 
 	fn prune_state_diff(&mut self) {
 		self.state_diff.clear();
+	}
+
+	// Note: This implementation only works for keys encoded with Blake2_128Concat
+	fn iter_prefix<K: Decode + Debug, V: Decode + Debug>(
+		&self,
+		key_prefix: &[u8],
+	) -> Option<Vec<(K, V)>> {
+		// The size of the hash part in Blake2_128Concat (16 bytes for blake2_128)
+		const HASH_PART_SIZE: usize = 16;
+
+		let key_values = self
+			.state
+			.range::<[u8], _>((Bound::Included(key_prefix), Bound::Unbounded))
+			.take_while(|(k, _)| k.starts_with(key_prefix))
+			.filter_map(|(encoded_key, encoded_value)| {
+				let suffix_start = key_prefix.len() + HASH_PART_SIZE;
+				if encoded_key.len() > suffix_start {
+					let suffix = &encoded_key[suffix_start..];
+					let decoded_key = K::decode(&mut &suffix[..]).ok();
+					let decoded_value = V::decode(&mut &encoded_value[..]).ok();
+					match (decoded_key, decoded_value) {
+						(Some(key), Some(value)) => Some((key, value)),
+						_ => None,
+					}
+				} else {
+					None
+				}
+			})
+			.collect::<Vec<_>>();
+
+		if key_values.is_empty() {
+			None
+		} else {
+			Some(key_values)
+		}
 	}
 
 	fn clear_prefix(&mut self, key_prefix: &[u8], _maybe_limit: Option<u32>) -> u32 {
@@ -263,6 +304,7 @@ impl Encode for EncodeOpaqueValue {
 pub mod tests {
 
 	use super::*;
+	use itp_storage::{storage_double_map_key, storage_map_key, StorageHasher};
 
 	#[test]
 	fn mutating_externalities_through_environmental_variable_works() {
@@ -383,5 +425,46 @@ pub mod tests {
 			})
 		});
 		assert!(stored_value.is_some());
+	}
+
+	#[test]
+	fn iter_prefix_works() {
+		let mut externalities = SgxExternalities::default();
+
+		let key_1 = storage_double_map_key(
+			"Pallet",
+			"Storage",
+			&1_u32,
+			&StorageHasher::Blake2_128Concat,
+			&2_u32,
+			&StorageHasher::Blake2_128Concat,
+		);
+		let key_2 = storage_double_map_key(
+			"Pallet",
+			"Storage",
+			&1_u32,
+			&StorageHasher::Blake2_128Concat,
+			&3_u32,
+			&StorageHasher::Blake2_128Concat,
+		);
+		let prefix_key =
+			storage_map_key("Pallet", "Storage", &1_u32, &StorageHasher::Blake2_128Concat);
+
+		// Fill state.
+		externalities.execute_with(|| {
+			with_externalities(|e| {
+				e.insert(key_1, 10_u32.encode());
+				e.insert(key_2, 20_u32.encode());
+			})
+			.unwrap()
+		});
+		// Perform iter prefix
+		externalities.execute_with(|| {
+			with_externalities(|e| {
+				let values = e.iter_prefix::<u32, u32>(&prefix_key).unwrap();
+				assert_eq!(values, [(2, 10), (3, 20)]);
+			})
+			.unwrap()
+		});
 	}
 }
