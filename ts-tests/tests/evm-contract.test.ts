@@ -2,19 +2,10 @@ import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
-import { hasher, hexToU8a, u8aConcat, u8aToHex } from '@polkadot/util';
-import { createPair, encodeAddress } from '@polkadot/keyring';
+import { evmToAddress } from '@polkadot/util-crypto'
 import Web3 from 'web3';
 
 import { compiled } from './compile';
-
-export function evmToAddress(evmAddress, ss58Format, hashType = 'blake2') {
-    const message = u8aConcat('evm:', evmAddress);
-    if (message.length !== 24) {
-        throw new Error(`Converting ${evmAddress}: Invalid evm address length`);
-    }
-    return encodeAddress(hasher(hashType, message), ss58Format);
-}
 
 describeLitentry('Test EVM Module Contract', ``, (context) => {
     console.log(`Test EVM Module Contract`);
