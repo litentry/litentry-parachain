@@ -2,7 +2,7 @@ import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
-import { assertIsInSidechainBlock, assertVc, assertWorkerError } from './common/utils/assertion';
+import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
     getTeeShieldingKey,

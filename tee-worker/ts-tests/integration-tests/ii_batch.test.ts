@@ -9,7 +9,7 @@ import {
 } from './common/utils';
 import { step } from 'mocha-steps';
 import { sendTxsWithUtility } from './common/transactions';
-import { generateWeb3Wallets, assertLinkedEvent, assertIdentityDeactivated } from './common/utils';
+import { generateWeb3Wallets, assertIdGraphMutation, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
@@ -65,7 +65,12 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         ]);
 
         const identityLinkedEvents = events.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
-        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.alice), identityLinkedEvents, txs.length);
+        await assertIdGraphMutation(
+            new PolkadotSigner(context.substrateWallet.alice),
+            identityLinkedEvents,
+            undefined,
+            txs.length
+        );
     });
 
     step('batch test: deactivate identities', async function () {

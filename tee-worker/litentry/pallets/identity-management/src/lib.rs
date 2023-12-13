@@ -121,6 +121,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn id_graph_lens)]
 	pub type IDGraphLens<T: Config> = StorageMap<_, Blake2_128Concat, Identity, u32, ValueQuery>;
 
 	#[pallet::call]
