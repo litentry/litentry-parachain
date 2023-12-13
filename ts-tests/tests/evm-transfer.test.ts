@@ -8,7 +8,7 @@ import Web3 from 'web3';
 
 describeLitentry('Test EVM Module Transfer', ``, (context) => {
     console.log(`Test EVM Module Transfer`);
-
+    const config = loadConfig();
     step('Transfer Value from Eve to EVM external account', async function () {
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         // We do not test mode in initialization since ts-test concerns filter function too.
@@ -107,7 +107,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
         let eveMappedAccount = u8aToHex(context.eve.publicKey.slice(0, 20));
 
         // Create Web3 instance
-        const web3 = new Web3('http://localhost:9944');
+        const web3 = new Web3(config.parachain_ws);
 
         let value = 100000000000;
         // ExistentialDeposit = 100 000 000 000 (0x174876E800)

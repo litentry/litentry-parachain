@@ -10,6 +10,7 @@ import { compiled } from './compile';
 
 describeLitentry('Test EVM Module Contract', ``, (context) => {
     console.log(`Test EVM Module Contract`);
+    const config = loadConfig();
 
     step('Transfer Value from Eve to EVM external account', async function () {
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
@@ -90,7 +91,7 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         const bytecode = compiled.evm.bytecode.object;
         const abi = compiled.abi;
         // Create Web3 instance
-        const web3 = new Web3('http://localhost:9944');
+        const web3 = new Web3(config.parachain_ws);
 
         // Create deploy function
         const deploy = async (accountFrom: any) => {
