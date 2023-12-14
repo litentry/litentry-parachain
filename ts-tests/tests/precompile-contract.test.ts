@@ -8,9 +8,9 @@ import Web3 from 'web3';
 import ethers from 'ethers';
 import { compiled } from './compile';
 import precompileContractAbi from '../precompile/contracts/staking.json';
-import { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress } from '@polkadot/util-crypto';
+import { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress, evmToAddress } from '@polkadot/util-crypto';
 
-const toBigNumber = (int: number) => int * 1_000_000_000_000;
+const toBigNumber = (int: number) => int * 1e12;
 
 describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const config = loadConfig();
@@ -20,7 +20,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const evmAccountRaw = {
         privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
         address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-        mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
+        mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771'),
     };
 
     // candidate: collator address:5GKVBdNwNY6H7uqKtx3gks3t9aSpjG6uHEsFYKWUJtexxkyQ
@@ -59,14 +59,17 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             console.log(`setMode await end: ${temp.block.header.number}`);
         }
 
-        const aliceMappedAccount = from.publicKey.slice(0, 20);
+        const aliceMappedAccount = from.publicKey.slice(0, 20); // pretend to be evm
         console.log(`alice address: ${from.publicKey}`);
         console.log(`aliceMappedAccount: ${aliceMappedAccount}`);
 
+        // 1 - substrate Alice has 70 tokens
+        // 2 - alice need to turn to own evm address account
+
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
-            aliceMappedAccount,
-            to.address,
+            aliceMappedAccount, // evm like
+            to.address, // evm like
             '0x',
             toBigNumber(65),
             1000000,
@@ -108,6 +111,12 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         }
     });
 
+    const printBalance = (label: string, bl: any) => {
+        console.group(label);
+        console.log('free', bl.free.toNumber() / 1e12, 'reserved', bl.reserved.toNumber() / 1e12);
+        console.groupEnd();
+    };
+
     const obtainCollatorPublicKey = async () => {
         const result = await context.api.query.parachainStaking.candidates();
         const collators = result.toJSON() as string[];
@@ -119,49 +128,61 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     step('Test precompile contract', async function () {
         // const collatorPublicKey = await obtainCollatorPublicKey();
         const { data } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-
+        printBalance('initial balance', data);
         // top up LITs if not sufficient amount for staking (require: 50 LITs minimum)
         if (data.free.toNumber() < toBigNumber(60)) {
+            console.log('transferring more tokens');
+
             await transferTokens(context.alice, evmAccountRaw);
         }
 
-        const printBalance = (label: string, bl: any) => {
-            console.group(label);
-            console.log('free', bl.free.toNumber(), 'reserved', bl.reserved.toNumber());
-            console.groupEnd();
-        };
-
         //// TESTS
+        // scheduleRevokeDelegation(collator)
+        const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
+        await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
+        const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        printBalance('balanceAfterRevoke', balanceAfterRevoke);
 
-        const nonstakedResult = await precompileContract.methods
+        const isPendingRequest = await precompileContract.methods
             .delegationRequestIsPending(evmAccountRaw.mappedAddress, collatorPublicKey)
             .call();
 
-        console.log('pending staking', nonstakedResult);
+        console.log('pending staking', isPendingRequest);
 
-        // // delegateWithAutoCompound(collator, amount, percent)
-        // const delegateWithAutoCompound = precompileContract.methods.delegateWithAutoCompound(
-        //     collatorPublicKey,
-        //     toBigNumber(60),
-        //     20
-        // );
+        if (isPendingRequest) {
+            // cancelDelegationRequest(collator)
+            const cancelDelegationRequest = precompileContract.methods.cancelDelegationRequest(collatorPublicKey);
+            await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
+            const { data: balanceAfterCancel } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+            printBalance('balanceAfterCancel', balanceAfterCancel);
+        }
 
-        // // construct transaction
-        // await executeTransaction(delegateWithAutoCompound, 'delegateWithAutoCompound');
-        // const { data: balance } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        const shouldBeFalse = await precompileContract.methods
+            .delegationRequestIsPending(evmAccountRaw.mappedAddress, collatorPublicKey)
+            .call();
 
-        // printBalance('balance', balance);
+        console.log('should be false', shouldBeFalse);
+        // delegateWithAutoCompound(collator, amount, percent)
+        const delegateWithAutoCompound = precompileContract.methods.delegateWithAutoCompound(
+            collatorPublicKey,
+            toBigNumber(60),
+            20
+        );
+        // construct transaction
+        await executeTransaction(delegateWithAutoCompound, 'delegateWithAutoCompound');
+        const { data: balance } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        printBalance('balance', balance);
         // // expect(balance.free.toNumber()).to.lt(balance.free.toNumber() - toBigNumber(60));
         // // expect(balance.reserved.toNumber()).to.eq(toBigNumber(60));
 
-        // // delegatorBondMore(collator, amount)
-        // const delegatorBondMore = precompileContract.methods.delegatorBondMore(collatorPublicKey, toBigNumber(1));
-        // await executeTransaction(delegatorBondMore, 'delegatorBondMore');
+        // delegatorBondMore(collator, amount)
+        const delegatorBondMore = precompileContract.methods.delegatorBondMore(collatorPublicKey, toBigNumber(1));
+        await executeTransaction(delegatorBondMore, 'delegatorBondMore');
 
-        // const { data: balanceAfterBondMore } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-        // // expect(balanceAfterBondMore.free.toNumber()).to.eq(balanceAfterBondMore.free.toNumber() - toBigNumber(1));
-        // // expect(balanceAfterBondMore.reserved.toNumber()).to.eq(toBigNumber(61));
-        // printBalance('balanceAfterBondMore', balanceAfterBondMore);
+        const { data: balanceAfterBondMore } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        // expect(balanceAfterBondMore.free.toNumber()).to.eq(balanceAfterBondMore.free.toNumber() - toBigNumber(1));
+        // expect(balanceAfterBondMore.reserved.toNumber()).to.eq(toBigNumber(61));
+        printBalance('balanceAfterBondMore', balanceAfterBondMore);
 
         // // Ask minqi should it be triggered after execute
         // // scheduleDelegatorBondLess(collator, amount)
@@ -173,38 +194,32 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         // const { data: balanceAfterBondLess } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
         // printBalance('balanceAfterBondLess', balanceAfterBondLess);
 
-        // // scheduleRevokeDelegation(collator)
-        // const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
-        // await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
-        // const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-        // printBalance('balanceAfterRevoke', balanceAfterRevoke);
-
         // cancelDelegationRequest(collator)
         const cancelDelegationRequest = precompileContract.methods.cancelDelegationRequest(collatorPublicKey);
         await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
         const { data: balanceAfterCancel } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
         printBalance('balanceAfterCancel', balanceAfterCancel);
 
-        // delegate(collator, amount)
-        const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(55));
-        await executeTransaction(delegate, 'delegate');
-        const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-        printBalance('balanceAfterDelegate', balanceAfterDelegate);
+        // // delegate(collator, amount)
+        // const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(55));
+        // await executeTransaction(delegate, 'delegate');
+        // const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        // printBalance('balanceAfterDelegate', balanceAfterDelegate);
 
-        // setAutoCompound(collator, percent)
-        const setAutoCompound = precompileContract.methods.setAutoCompound(collatorPublicKey);
-        await executeTransaction(setAutoCompound, 'setAutoCompound');
+        // // setAutoCompound(collator, percent)
+        // const setAutoCompound = precompileContract.methods.setAutoCompound(collatorPublicKey);
+        // await executeTransaction(setAutoCompound, 'setAutoCompound');
 
-        // executeDelegationRequest(delegator, collator)
-        const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
-            evmAccountRaw.mappedAddress,
-            collatorPublicKey
-        );
-        await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
-        const { data: balanceAfterExecuteDelegation } = await context.api.query.system.account(
-            evmAccountRaw.mappedAddress
-        );
-        printBalance('balanceAfterExecuteDelegation', balanceAfterExecuteDelegation);
+        // // executeDelegationRequest(delegator, collator)
+        // const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
+        //     evmAccountRaw.mappedAddress,
+        //     collatorPublicKey
+        // );
+        // await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
+        // const { data: balanceAfterExecuteDelegation } = await context.api.query.system.account(
+        //     evmAccountRaw.mappedAddress
+        // );
+        // printBalance('balanceAfterExecuteDelegation', balanceAfterExecuteDelegation);
 
         const stakedResult = await precompileContract.methods
             .delegationRequestIsPending(evmAccountRaw.mappedAddress, collatorPublicKey)
