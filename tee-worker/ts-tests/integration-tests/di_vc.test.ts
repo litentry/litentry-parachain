@@ -25,8 +25,7 @@ describe('Test Vc (direct invocation)', function () {
     before(async () => {
         context = await initIntegrationTestContext(
             process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
-            process.env.NODE_ENDPOINT!, // @fixme evil assertion; centralize env access
-            0
+            process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
@@ -74,7 +73,7 @@ describe('Test Vc (direct invocation)', function () {
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
             console.log(`request vc ${Object.keys(assertion)[0]} for Alice ... Assertion description: ${description}`);
-            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+            subscribeToEventsWithExtHash(requestIdentifier, context);
 
             const requestVcCall = await createSignedTrustedCallRequestVc(
                 context.api,
@@ -87,7 +86,7 @@ describe('Test Vc (direct invocation)', function () {
                 requestIdentifier
             );
 
-            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
+            await sendRequestFromTrustedCall(context, teeShieldingKey, requestVcCall);
             // pending test
             this.skip();
         });

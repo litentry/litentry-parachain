@@ -30,6 +30,7 @@ use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMap
 use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, H160};
+use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
 	BoundedVec,
@@ -318,16 +319,10 @@ impl Identity {
 	/// Currently we only support mapping from Address32/Address20 to AccountId, not opposite.
 	pub fn to_account_id(&self) -> Option<AccountId> {
 		match self {
-			Identity::Substrate(address) => {
-				let mut data = [0u8; 32];
-				data.copy_from_slice(address.as_ref());
-				Some(AccountId32::from(data))
-			},
-			Identity::Evm(address) => {
-				let substrate_version =
-					HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()));
-				Some(AccountId32::from(Into::<[u8; 32]>::into(substrate_version)))
-			},
+			Identity::Substrate(address) => Some(address.into()),
+			Identity::Evm(address) =>
+				Some(HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()))),
+			Identity::Bitcoin(address) => Some(blake2_256(address.as_ref()).into()),
 			_ => None,
 		}
 	}

@@ -5,6 +5,7 @@ import { Metadata, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
+import { ECPairInterface } from 'ecpair';
 
 // If there are types already defined in the client-api, please avoid redefining these types.
 // Instead, make every effort to use the types that have been generated within the client-api.
@@ -14,6 +15,9 @@ interface EthersWalletItem {
 interface SubstrateWalletItem {
     [key: string]: KeyringPair;
 }
+interface BitcoinWalletItem {
+    [key: string]: ECPairInterface;
+}
 export type IntegrationTestContext = {
     tee: WebSocketAsPromised;
     api: ApiPromise;
@@ -21,9 +25,9 @@ export type IntegrationTestContext = {
     mrEnclave: HexString;
     ethersWallet: EthersWalletItem;
     substrateWallet: SubstrateWalletItem;
+    bitcoinWallet: BitcoinWalletItem;
     sidechainMetaData: Metadata;
     sidechainRegistry: TypeRegistry;
-    web3Signers: Web3Wallets[];
     chainIdentifier: number;
     requestId: number;
 };
@@ -31,6 +35,7 @@ export type IntegrationTestContext = {
 export type Web3Wallets = {
     substrateWallet: KeyringPair;
     evmWallet: Wallet;
+    bitcoinWallet: ECPairInterface;
 };
 
 export type JsonRpcRequest = {

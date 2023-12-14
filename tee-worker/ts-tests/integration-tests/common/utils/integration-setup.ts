@@ -1,12 +1,12 @@
 import { ApiPromise } from 'parachain-api';
 import { KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import type { IntegrationTestContext, Web3Wallets } from '../common-types';
+import type { IntegrationTestContext } from '../common-types';
 import type { Metadata, TypeRegistry } from '@polkadot/types';
 import type { HexString } from '@polkadot/util/types';
 import { initIntegrationTestContext } from './context';
 
-export function describeLitentry(title: string, walletsNumber: number, cb: (context: IntegrationTestContext) => void) {
+export function describeLitentry(title: string, cb: (context: IntegrationTestContext) => void) {
     describe(title, function () {
         // Set timeout to 6000 seconds
         this.timeout(6000000);
@@ -18,9 +18,9 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
             teeShieldingKey: {} as KeyObject,
             ethersWallet: {},
             substrateWallet: {},
+            bitcoinWallet: {},
             sidechainMetaData: {} as Metadata,
             sidechainRegistry: {} as TypeRegistry,
-            web3Signers: [] as Web3Wallets[],
             // default LitentryRococo
             chainIdentifier: 42,
             requestId: 0,
@@ -29,20 +29,16 @@ export function describeLitentry(title: string, walletsNumber: number, cb: (cont
         before('Starting Litentry(parachain&tee)', async function () {
             //env url
 
-            const tmp = await initIntegrationTestContext(
-                process.env.WORKER_ENDPOINT!,
-                process.env.NODE_ENDPOINT!,
-                walletsNumber
-            );
+            const tmp = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
             context.mrEnclave = tmp.mrEnclave;
             context.api = tmp.api;
             context.tee = tmp.tee;
             context.teeShieldingKey = tmp.teeShieldingKey;
             context.ethersWallet = tmp.ethersWallet;
             context.substrateWallet = tmp.substrateWallet;
+            context.bitcoinWallet = tmp.bitcoinWallet;
             context.sidechainMetaData = tmp.sidechainMetaData;
             context.sidechainRegistry = tmp.sidechainRegistry;
-            context.web3Signers = tmp.web3Signers;
             context.chainIdentifier = tmp.chainIdentifier;
         });
 

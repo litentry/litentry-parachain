@@ -4,6 +4,7 @@ import type { IntegrationTestContext } from '../common-types';
 import { AesOutput } from 'parachain-api';
 import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
+import { ECPairInterface } from 'ecpair';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
@@ -163,12 +164,14 @@ export async function buildValidations(
     signerIdentities: LitentryPrimitivesIdentity[],
     identities: LitentryPrimitivesIdentity[],
     startingSidechainNonce: number,
-    network: 'ethereum' | 'substrate' | 'twitter',
+    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin',
     substrateSigners?: KeyringPair[] | KeyringPair,
-    evmSigners?: ethers.Wallet[]
+    evmSigners?: ethers.Wallet[],
+    bitcoinSigners?: ECPairInterface[] | ECPairInterface
 ): Promise<LitentryValidationData[]> {
     let evmSignature: HexString;
     let substrateSignature: Uint8Array;
+    let bitcoinSignature: Uint8Array;
     const validations: LitentryValidationData[] = [];
 
     for (let index = 0; index < identities.length; index++) {
@@ -220,6 +223,27 @@ export async function buildValidations(
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 substrateValidationData
+            ) as unknown as LitentryValidationData;
+            validations.push(encodedVerifyIdentityValidation);
+        } else if (network === 'bitcoin') {
+            const bitcoinValidationData = {
+                Web3Validation: {
+                    Bitcoin: {
+                        message: '' as HexString,
+                        signature: {
+                            Ecdsa: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to bitcoin: ', msg);
+            bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
+            const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
+            bitcoinSignature = bitcoinSigner.sign(Buffer.from(ethers.utils.arrayify(msg))) as Uint8Array;
+            bitcoinValidationData!.Web3Validation.Bitcoin.signature.Ecdsa = u8aToHex(bitcoinSignature);
+            const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
+                'LitentryValidationData',
+                bitcoinValidationData
             ) as unknown as LitentryValidationData;
             validations.push(encodedVerifyIdentityValidation);
         } else if (network === 'twitter') {

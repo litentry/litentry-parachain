@@ -51,7 +51,7 @@ async function getNonce(base58mrEnclave: string, workerAddr: string, context: In
     return nonce;
 }
 
-describeLitentry('Test Identity', 0, (context) => {
+describeLitentry('Test Identity', (context) => {
     // random wrong msg
     const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
     let signatureSubstrate;

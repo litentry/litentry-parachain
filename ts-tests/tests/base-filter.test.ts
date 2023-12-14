@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
-import { assert } from 'chai';
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
 
 describeLitentry('Test Base Filter', ``, (context) => {

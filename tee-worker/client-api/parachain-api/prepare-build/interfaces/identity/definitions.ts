@@ -26,13 +26,26 @@ export default {
                 Github: "IdentityString",
                 Substrate: "Address32",
                 Evm: "Address20",
+                Bitcoin: "Address33",
             },
         },
         Address32: "[u8;32]",
         Address20: "[u8;20]",
+        Address33: "[u8;33]",
         IdentityString: "Vec<u8>",
         Web3Network: {
-            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
+            _enum: [
+                "Polkadot",
+                "Kusama",
+                "Litentry",
+                "Litmus",
+                "LitentryRococo",
+                "Khala",
+                "SubstrateTestnet",
+                "Ethereum",
+                "Bsc",
+                "Bitcoin",
+            ],
         },
         LitentryValidationData: {
             _enum: {
@@ -58,6 +71,7 @@ export default {
             _enum: {
                 Substrate: "Web3CommonValidationData",
                 Evm: "Web3CommonValidationData",
+                Bitcoin: "Web3CommonValidationData",
             },
         },
         Web3CommonValidationData: {
