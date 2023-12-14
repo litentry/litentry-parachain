@@ -16,6 +16,8 @@
 
 use crate::{BlockNumberOf, Config, Web3Network};
 use codec::{Decode, Encode};
+use core::cmp::Ordering;
+use litentry_primitives::Identity;
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 
@@ -68,4 +70,16 @@ impl<T: Config> IdentityContext<T> {
 		web3networks.dedup();
 		web3networks
 	}
+}
+
+pub fn sort_id_graph<T: Config>(id_graph: &mut [(Identity, IdentityContext<T>)]) {
+	id_graph.sort_by(|a, b| {
+		let order = Ord::cmp(&a.1.link_block, &b.1.link_block);
+		if order == Ordering::Equal {
+			// Compare identities by their did formated string
+			Ord::cmp(&a.0.to_did().ok(), &b.0.to_did().ok())
+		} else {
+			order
+		}
+	});
 }

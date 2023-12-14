@@ -2,8 +2,7 @@ import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
 import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
-import { hexToU8a } from '@polkadot/util';
-import { createPair, encodeAddress } from '@polkadot/keyring';
+import { evmToAddress } from '@polkadot/util-crypto'
 import Web3 from 'web3';
 
 import { compiled } from './compile';
@@ -21,6 +20,13 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
             await signAndSend(extrinsic, context.alice);
         }
 
+        let eveMappedEVMAccount = context.eve.publicKey.slice(0, 20);
+        let eveMappedSustrateAccount = evmToAddress(eveMappedEVMAccount, 31);
+
+        // Deposit money into substrate account's truncated EVM address's mapping substrate account
+        const tx_init = context.api.tx.balances.transfer(eveMappedSustrateAccount, 30000000000000);
+        await signAndSend(tx_init, context.eve);
+
         // Get the initial balance of Eve and EVM external account
         const { nonce: eveInitNonce, data: eveInitBalance } = await context.api.query.system.account(
             context.eve.address
@@ -29,17 +35,16 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
+            mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress
         );
 
-        let eveMappedAccount = context.eve.publicKey.slice(0, 20);
         let value = 20000000000000; // 20 000 000 000 000
         // 25000 is min_gas_price setup
         const tx = context.api.tx.evm.call(
-            eveMappedAccount,
+            eveMappedEVMAccount,
             evmAccountRaw.address,
             '0x',
             value,
@@ -59,7 +64,8 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
 
         // If a substrate account using pallet_evm to trigger evm transaction,
         // it will bump 2 for nonce (one for substrate extrinsic, one for evm).
-        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 2);
+        // +1 nonce for original substrate account, plus another 1 nonce for original substrate account's truncated evm address's mapped susbtrate account. 
+        expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(
             evmAccountInitBalance.free.toBigInt() + BigInt(value)
         );
@@ -70,18 +76,18 @@ describeLitentry('Test EVM Module Contract', ``, (context) => {
     });
 
     step('Deploy and test contract by EVM external account', async function () {
-        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // We want evm works in Normal Mode, switch back to filterMode, after testing.
         // We do not test mode in initialization since ts-test concerns filter function too.
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
-        if ('Test' !== filterMode) {
-            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
+        if ('Normal' !== filterMode) {
+            let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Normal'));
             await signAndSend(extrinsic, context.alice);
         }
 
         const evmAccountRaw = {
             privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
             address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
-            mappedAddress: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771000000000000000000000000',
+            mappedAddress: evmToAddress('0xaaafB3972B05630fCceE866eC69CdADd9baC2771', 31),
         };
         const { nonce: evmAccountInitNonce, data: evmAccountInitBalance } = await context.api.query.system.account(
             evmAccountRaw.mappedAddress

@@ -10472,7 +10472,6 @@ dependencies = [
  "pallet-drop3",
  "pallet-ethereum",
  "pallet-evm",
- "pallet-evm-address",
  "pallet-evm-precompile-blake2",
  "pallet-evm-precompile-bn128",
  "pallet-evm-precompile-bridge-transfer",

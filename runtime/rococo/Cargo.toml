@@ -90,7 +90,6 @@ pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-featu
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
-pallet-evm-address = { path = "../../pallets/evm-address", default-features = false }
 pallet-extrinsic-filter = { path = "../../pallets/extrinsic-filter", default-features = false }
 pallet-identity-management = { path = "../../pallets/identity-management", default-features = false }
 pallet-parachain-staking = { path = "../../pallets/parachain-staking", default-features = false }
@@ -154,7 +153,6 @@ runtime-benchmarks = [
     "pallet-democracy/runtime-benchmarks",
     "pallet-ethereum/runtime-benchmarks",
     "pallet-evm/runtime-benchmarks",
-    "pallet-evm-address/runtime-benchmarks",
     "pallet-identity/runtime-benchmarks",
     "pallet-membership/runtime-benchmarks",
     "pallet-multisig/runtime-benchmarks",
@@ -224,7 +222,6 @@ std = [
     "pallet-evm-precompile-sha3fips/std",
     "pallet-evm-precompile-bridge-transfer/std",
     "pallet-evm-precompile-parachain-staking/std",
-    "pallet-evm-address/std",
     "pallet-identity/std",
     "pallet-membership/std",
     "pallet-multisig/std",
@@ -303,7 +300,6 @@ try-runtime = [
     "pallet-democracy/try-runtime",
     "pallet-ethereum/try-runtime",
     "pallet-evm/try-runtime",
-    "pallet-evm-address/try-runtime",
     "pallet-identity/try-runtime",
     "pallet-drop3/try-runtime",
     "pallet-extrinsic-filter/try-runtime",
