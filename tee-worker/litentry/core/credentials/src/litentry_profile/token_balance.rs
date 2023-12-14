@@ -32,6 +32,31 @@ const USDT_C_TOKEN_BALANCE_RANGE: [f64; 10] =
 const LIT_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0];
 const WBTC_TOKEN_BALANCE_RANGE: [f64; 10] =
 	[0.0, 0.001, 0.05, 0.1, 0.5, 10.0, 50.0, 100.0, 500.0, 1000.0];
+const CRV_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1800.0];
+const MATIC_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1800.0];
+const DYDX_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0];
+const AMP_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 2000.0, 5000.0, 10000.0, 18000.0, 30000.0, 50000.0, 80000.0, 120000.0];
+const CVX_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0];
+const TUSD_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0];
+const USDD_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0];
+const GUSD_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0];
+const LINK_TOKEN_BALANCE_RANGE: [f64; 9] = [0.0, 1.0, 5.0, 20.0, 40.0, 80.0, 150.0, 240.0, 400.0];
+const GRT_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1800.0];
+const COMP_TOKEN_BALANCE_RANGE: [f64; 11] =
+	[0.0, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 80.0, 150.0, 250.0, 400.0];
+const PEOPLE_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 200.0, 500.0, 1000.0, 1800.0, 3000.0, 5000.0, 8000.0, 12000.0];
+const GTC_TOKEN_BALANCE_RANGE: [f64; 9] =
+	[0.0, 1.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0];
 
 pub trait TokenBalanceInfo {
 	fn update_token_balance(&mut self, token: ETokenAddress, balance: f64);
@@ -81,27 +106,68 @@ fn update_assertion(token: ETokenAddress, balance: f64, credential: &mut Credent
 
 fn get_token_info(token: &ETokenAddress) -> (&'static str, &'static str) {
 	match token {
-		ETokenAddress::Lit | ETokenAddress::Usdc | ETokenAddress::Usdt | ETokenAddress::Wbtc =>
-			VC_TOKEN_BALANCE_INFOS[0],
+		ETokenAddress::WBTC
+		| ETokenAddress::LIT
+		| ETokenAddress::USDC
+		| ETokenAddress::USDT
+		| ETokenAddress::CRV
+		| ETokenAddress::MATIC
+		| ETokenAddress::DYDX
+		| ETokenAddress::AMP
+		| ETokenAddress::CVX
+		| ETokenAddress::TUSD
+		| ETokenAddress::USDD
+		| ETokenAddress::GUSD
+		| ETokenAddress::LINK
+		| ETokenAddress::GRT
+		| ETokenAddress::COMP
+		| ETokenAddress::PEOPLE
+		| ETokenAddress::GTC => VC_TOKEN_BALANCE_INFOS[0],
 		_ => ("UnknownType", ("UnkonwDescription")),
 	}
 }
 
 fn get_assertion_content(token: &ETokenAddress) -> &'static str {
 	match token {
-		ETokenAddress::Lit => "$lit_holding_amount",
-		ETokenAddress::Usdc => "$usdc_holding_amount",
-		ETokenAddress::Usdt => "$usdt_holding_amount",
-		ETokenAddress::Wbtc => "$wbtc_holding_amount",
+		ETokenAddress::WBTC => "$wbtc_holding_amount",
+		ETokenAddress::LIT => "$lit_holding_amount",
+		ETokenAddress::USDC => "$usdc_holding_amount",
+		ETokenAddress::USDT => "$usdt_holding_amount",
+		ETokenAddress::CRV => "$lit_holding_amount",
+		ETokenAddress::MATIC => "$usdc_holding_amount",
+		ETokenAddress::DYDX => "$usdt_holding_amount",
+		ETokenAddress::AMP => "$wbtc_holding_amount",
+		ETokenAddress::CVX => "$lit_holding_amount",
+		ETokenAddress::TUSD => "$usdc_holding_amount",
+		ETokenAddress::USDD => "$usdt_holding_amount",
+		ETokenAddress::GUSD => "$wbtc_holding_amount",
+		ETokenAddress::LINK => "$lit_holding_amount",
+		ETokenAddress::GRT => "$usdc_holding_amount",
+		ETokenAddress::COMP => "$usdt_holding_amount",
+		ETokenAddress::PEOPLE => "$wbtc_holding_amount",
+		ETokenAddress::GTC => "$wbtc_holding_amount",
 		_ => "Unknown",
 	}
 }
 
 fn get_balance_range(token: &ETokenAddress) -> Vec<f64> {
 	match token {
-		ETokenAddress::Lit => LIT_TOKEN_BALANCE_RANGE.to_vec(),
-		ETokenAddress::Usdc | ETokenAddress::Usdt => USDT_C_TOKEN_BALANCE_RANGE.to_vec(),
-		ETokenAddress::Wbtc => WBTC_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::WBTC => WBTC_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::LIT => LIT_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::USDC | ETokenAddress::USDT => USDT_C_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::CRV => CRV_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::MATIC => MATIC_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::DYDX => DYDX_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::AMP => AMP_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::CVX => CVX_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::TUSD => TUSD_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::USDD => USDD_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::GUSD => GUSD_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::LINK => LINK_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::GRT => GRT_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::COMP => COMP_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::PEOPLE => PEOPLE_TOKEN_BALANCE_RANGE.to_vec(),
+		ETokenAddress::GTC => GTC_TOKEN_BALANCE_RANGE.to_vec(),
 		_ => {
 			vec![]
 		},
@@ -110,10 +176,23 @@ fn get_balance_range(token: &ETokenAddress) -> Vec<f64> {
 
 fn get_token_range_last(token: &ETokenAddress) -> f64 {
 	match token {
-		ETokenAddress::Lit => *LIT_TOKEN_BALANCE_RANGE.last().unwrap_or(&3000.0),
-		ETokenAddress::Usdc | ETokenAddress::Usdt =>
+		ETokenAddress::WBTC => *WBTC_TOKEN_BALANCE_RANGE.last().unwrap_or(&1000.0),
+		ETokenAddress::LIT => *LIT_TOKEN_BALANCE_RANGE.last().unwrap_or(&3000.0),
+		ETokenAddress::USDC | ETokenAddress::USDT =>
 			*USDT_C_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
-		ETokenAddress::Wbtc => *WBTC_TOKEN_BALANCE_RANGE.last().unwrap_or(&1000.0),
+		ETokenAddress::CRV => *CRV_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
+		ETokenAddress::MATIC => *MATIC_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
+		ETokenAddress::DYDX => *DYDX_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
+		ETokenAddress::AMP => *AMP_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
+		ETokenAddress::CVX => *CVX_TOKEN_BALANCE_RANGE.last().unwrap_or(&12000.0),
+		ETokenAddress::TUSD => *TUSD_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
+		ETokenAddress::USDD => *USDD_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
+		ETokenAddress::GUSD => *GUSD_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
+		ETokenAddress::LINK => *LINK_TOKEN_BALANCE_RANGE.last().unwrap_or(&400.0),
+		ETokenAddress::GRT => *GRT_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
+		ETokenAddress::COMP => *COMP_TOKEN_BALANCE_RANGE.last().unwrap_or(&400.0),
+		ETokenAddress::PEOPLE => *PEOPLE_TOKEN_BALANCE_RANGE.last().unwrap_or(&12000.0),
+		ETokenAddress::GTC => *GTC_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
 		_ => 0.0,
 	}
 }
