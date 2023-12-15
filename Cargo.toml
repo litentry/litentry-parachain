@@ -15,6 +15,7 @@ members = [
     'pallets/parentchain',
     'pallets/test-utils',
     'pallets/group',
+    'precompiles/*',
     'primitives/common',
     'primitives/core',
     'primitives/core/macros',

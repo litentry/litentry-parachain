@@ -35,7 +35,7 @@ use frame_support::{
 	weights::{constants::RocksDbWeight, ConstantMultiplier, IdentityFee, Weight},
 	ConsensusEngineId, PalletId, RuntimeDebug,
 };
-use frame_system::{EnsureRoot, RawOrigin};
+use frame_system::EnsureRoot;
 use hex_literal::hex;
 
 use runtime_common::EnsureEnclaveSigner;
@@ -57,7 +57,7 @@ use sp_runtime::{
 		DispatchInfoOf, Dispatchable, PostDispatchInfoOf, UniqueSaturatedInto,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError},
-	ApplyExtrinsicResult, FixedPointNumber,
+	ApplyExtrinsicResult,
 };
 pub use sp_runtime::{MultiAddress, Perbill, Percent, Permill};
 use sp_std::prelude::*;
@@ -86,7 +86,7 @@ use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 use pallet_ethereum::{Call::transact, PostLogContent, TransactionStatus};
 use pallet_evm::{
-	AddressMapping, EVMCurrencyAdapter, FeeCalculator, GasWeightMapping,
+	EVMCurrencyAdapter, FeeCalculator, GasWeightMapping,
 	OnChargeEVMTransaction as OnChargeEVMTransactionT, Runner,
 };
 // Make the WASM binary available.
@@ -95,10 +95,14 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub mod asset_config;
 pub mod constants;
+pub mod precompiles;
 #[cfg(test)]
 mod tests;
 pub mod weights;
 pub mod xcm_config;
+
+pub use precompiles::RococoNetworkPrecompiles;
+pub type Precompiles = RococoNetworkPrecompiles<Runtime>;
 
 #[derive(Clone)]
 pub struct TransactionConverter;
@@ -1045,37 +1049,6 @@ impl pallet_group::Config<VCMPExtrinsicWhitelistInstance> for Runtime {
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
 }
 
-use pallet_evm::EnsureAddressOrigin;
-pub struct EnsureAddressEqualAndStore<T>(sp_std::marker::PhantomData<T>);
-impl<T, OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressEqualAndStore<T>
-where
-	T: pallet_evm_address::Config<EVMId = H160>,
-	OuterOrigin: Into<Result<RawOrigin<T::AccountId>, OuterOrigin>> + From<RawOrigin<T::AccountId>>,
-{
-	type Success = ();
-
-	fn try_address_origin(address: &H160, origin: OuterOrigin) -> Result<(), OuterOrigin> {
-		origin.into().and_then(|o| match o {
-			RawOrigin::Root => Ok(()),
-			RawOrigin::Signed(account_id) => {
-				// AddressMapping revert logic check here
-				if H160::from_slice(&account_id.encode()[0..20]) == *address {
-					match pallet_evm_address::Pallet::<T>::add_address_mapping(
-						*address,
-						account_id.clone(),
-					) {
-						Ok(_) => Ok(()),
-						Err(_) => Err(OuterOrigin::from(RawOrigin::Signed(account_id))),
-					}
-				} else {
-					Err(OuterOrigin::from(RawOrigin::Signed(account_id)))
-				}
-			},
-			r => Err(OuterOrigin::from(r)),
-		})
-	}
-}
-
 // For OnChargeEVMTransaction implementation
 type CurrencyAccountId<T> = <T as frame_system::Config>::AccountId;
 type BalanceFor<T> =
@@ -1121,23 +1094,11 @@ where
 pub struct TransactionPaymentAsGasPrice;
 impl FeeCalculator for TransactionPaymentAsGasPrice {
 	fn min_gas_price() -> (U256, Weight) {
-		// note: transaction-payment differs from EIP-1559 in that its tip and length fees are not
-		//       scaled by the multiplier, which means its multiplier will be overstated when
-		//       applied to an ethereum transaction
-		// note: transaction-payment uses both a congestion modifier (next_fee_multiplier, which is
-		//       updated once per block in on_finalize) and a 'WeightToFee' implementation. Our
-		//       runtime implements this as a 'ConstantModifier', so we can get away with a simple
-		//       multiplication here.
-		// It is imperative that `saturating_mul_int` be performed as late as possible in the
-		// expression since it involves fixed point multiplication with a division by a fixed
-		// divisor. This leads to truncation and subsequent precision loss if performed too early.
-		// This can lead to min_gas_price being same across blocks even if the multiplier changes.
-		// There's still some precision loss when the final `gas_price` (used_gas * min_gas_price)
-		// is computed in frontier, but that's currently unavoidable.
-		// Identity Weight To FEE in TransactionPayment!
+		// We do not want to involve Transaction Payment Multiplier here
+		// It will biased normal transfer (base weight is not biased by Multiplier) too much for
+		// Ethereum tx
 		let weight_to_fee: u128 = 1;
-		let min_gas_price = TransactionPayment::next_fee_multiplier()
-			.saturating_mul_int(weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128));
+		let min_gas_price = weight_to_fee.saturating_mul(WEIGHT_PER_GAS as u128);
 		(min_gas_price.into(), <Runtime as frame_system::Config>::DbWeight::get().reads(1))
 	}
 }
@@ -1149,29 +1110,9 @@ parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(
 		NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS
 	);
+	pub PrecompilesValue: Precompiles = RococoNetworkPrecompiles::<_>::new();
 	// BlockGasLimit / MAX_POV_SIZE
-	pub GasLimitPovSizeRatio: u64 = (NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT.ref_time() / WEIGHT_PER_GAS) / cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64;
-}
-
-pub struct EVMAddressMapping<T>(sp_std::marker::PhantomData<T>);
-impl<T> AddressMapping<T::AccountId> for EVMAddressMapping<T>
-where
-	T: pallet_evm_address::Config<EVMId = H160> + frame_system::Config<AccountId = AccountId>,
-{
-	fn into_account_id(address: H160) -> T::AccountId {
-		match pallet_evm_address::Pallet::<T>::get_address_mapped(address) {
-			Some(r) => r,
-			None => TruncatedAddressMapping::into_account_id(address),
-		}
-	}
-}
-pub struct TruncatedAddressMapping;
-impl AddressMapping<AccountId> for TruncatedAddressMapping {
-	fn into_account_id(address: H160) -> AccountId {
-		let mut data = [0u8; 32];
-		data[0..20].copy_from_slice(&address[..]);
-		AccountId::from(Into::<[u8; 32]>::into(data))
-	}
+	pub GasLimitPovSizeRatio: u64 = 4;
 }
 
 pub struct FindAuthorTruncated<T>(sp_std::marker::PhantomData<T>);
@@ -1198,16 +1139,16 @@ impl pallet_evm::Config for Runtime {
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
-	type CallOrigin = EnsureAddressEqualAndStore<Runtime>;
+	type CallOrigin = pallet_evm::EnsureAddressTruncated;
 	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
 	// From evm address to parachain address
-	type AddressMapping = EVMAddressMapping<Self>;
+	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	// Minimal effort, no precompile for now
-	type PrecompilesType = ();
-	type PrecompilesValue = ();
+	type PrecompilesType = Precompiles;
+	type PrecompilesValue = PrecompilesValue;
 	type ChainId = ChainId;
 	type OnChargeTransaction = OnChargeEVMTransaction<DealWithFees<Runtime>>;
 	type BlockGasLimit = BlockGasLimit;
@@ -1229,11 +1170,6 @@ impl pallet_ethereum::Config for Runtime {
 	type PostLogContent = PostBlockAndTxnHashes;
 	// Maximum length (in bytes) of revert message to include in Executed event
 	type ExtraDataLength = ConstU32<30>;
-}
-
-impl pallet_evm_address::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type EVMId = H160;
 }
 
 impl runtime_common::BaseRuntimeRequirements for Runtime {}
@@ -1321,7 +1257,6 @@ construct_runtime! {
 		// Frontier
 		EVM: pallet_evm = 120,
 		Ethereum: pallet_ethereum = 121,
-		EVMAddress: pallet_evm_address = 122,
 
 		// TMP
 		Sudo: pallet_sudo = 255,
@@ -1409,7 +1344,8 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::IMPExtrinsicWhitelist(_) |
 			RuntimeCall::VCMPExtrinsicWhitelist(_) |
 			// EVM
-			RuntimeCall::EVM(_) |
+			// Substrate EVM extrinsic not allowed
+			// So no EVM pallet
 			RuntimeCall::Ethereum(_)
 		)
 	}
