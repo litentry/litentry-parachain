@@ -34,7 +34,7 @@ use substrate_api_client::{compose_extrinsic, CallIndex, UncheckedExtrinsicV4, X
 pub struct LinkIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
-	/// Identity to be created
+	/// Identity to be created, in did form
 	identity: String,
 	/// Shard identifier
 	shard: String,
@@ -64,7 +64,7 @@ impl LinkIdentityCommand {
 		}
 
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
-		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
+		let encrypted_identity = tee_shielding_key.encrypt(&identity.encode()).unwrap();
 
 		// TODO: the params are incorrect - and need to be reworked too
 		let vdata: Option<Vec<u8>> = None;

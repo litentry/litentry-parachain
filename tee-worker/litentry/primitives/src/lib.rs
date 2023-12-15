@@ -52,7 +52,10 @@ pub use parentchain_primitives::{
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
-use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};
+use sp_io::{
+	crypto::secp256k1_ecdsa_recover,
+	hashing::{blake2_256, keccak_256},
+};
 use sp_runtime::traits::Verify;
 use std::string::ToString;
 
@@ -81,6 +84,7 @@ impl LitentryMultiSignature {
 				self.verify_substrate(substrate_wrap(msg).as_slice(), address)
 					|| self.verify_substrate(msg, address),
 			Identity::Evm(address) => self.verify_evm(msg, address),
+			Identity::Bitcoin(address) => self.verify_bitcoin(msg, address),
 			_ => false,
 		}
 	}
@@ -96,11 +100,10 @@ impl LitentryMultiSignature {
 				Err(()) => false,
 			},
 			(Self::Ecdsa(ref sig), who) => {
-				let m = sp_io::hashing::blake2_256(msg);
+				let m = blake2_256(msg);
 				match sp_io::crypto::secp256k1_ecdsa_recover_compressed(sig.as_ref(), &m) {
 					Ok(pubkey) =>
-						&sp_io::hashing::blake2_256(pubkey.as_ref())
-							== <dyn AsRef<[u8; 32]>>::as_ref(who),
+						&blake2_256(pubkey.as_ref()) == <dyn AsRef<[u8; 32]>>::as_ref(who),
 					_ => false,
 				}
 			},
@@ -121,6 +124,19 @@ impl LitentryMultiSignature {
 				let data = user_readable_message.as_bytes();
 				return verify_evm_signature(evm_eip191_wrap(data).as_slice(), sig, signer)
 					|| verify_evm_signature(data, sig, signer)
+			},
+			_ => false,
+		}
+	}
+
+	fn verify_bitcoin(&self, msg: &[u8], signer: &Address33) -> bool {
+		match self {
+			Self::Ecdsa(ref sig) => {
+				let m = blake2_256(msg);
+				match sp_io::crypto::secp256k1_ecdsa_recover_compressed(sig.as_ref(), &m) {
+					Ok(pubkey) => pubkey.as_ref() == signer.as_ref(),
+					_ => false,
+				}
 			},
 			_ => false,
 		}

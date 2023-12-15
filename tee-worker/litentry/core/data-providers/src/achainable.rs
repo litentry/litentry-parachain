@@ -186,6 +186,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
 		Web3Network::Ethereum => "ethereum".into(),
 		Web3Network::Bsc => "bsc".into(),
+		Web3Network::Bitcoin => "bitcoin".into(),
 	}
 }
 
