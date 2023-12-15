@@ -21,7 +21,7 @@ async function runtimeUpgrade(api: ApiPromise, wasm: string) {
 
     // authorize and enact the upgrade
     await api.tx.sudo
-        .sudo(api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm)))
+        .sudo(api.tx.parachainSystem.authorizeUpgrade(blake2AsHex(wasm), true))
         .signAndSend(alice, { nonce: -1 });
     console.log('Submitted authorizeUpgrade');
     await api.tx.parachainSystem.enactAuthorizedUpgrade(wasm).signAndSend(alice, { nonce: -1 });
