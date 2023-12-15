@@ -83,7 +83,7 @@ impl LitentryStakingClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(" https://litentry-rpc.dwellir.com:443", headers);
+		let client = build_client("https://litentry-rpc.dwellir.com:443", headers);
 		LitentryStakingClient { client }
 	}
 
