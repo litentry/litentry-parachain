@@ -2,6 +2,8 @@ import { WsProvider, ApiPromise, TeerexPrimitivesEnclave } from 'parachain-api';
 import { Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { ethers } from 'ethers';
+import { ECPairFactory } from 'ecpair';
+import * as ecc from 'tiny-secp256k1';
 import WebSocketAsPromised from 'websocket-as-promised';
 import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
@@ -32,11 +34,11 @@ export async function initWorkerConnection(endpoint: string): Promise<WebSocketA
 
 export async function initIntegrationTestContext(
     workerEndpoint: string,
-    substrateEndpoint: string,
-    walletsNumber: number
+    substrateEndpoint: string
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
     await cryptoWaitReady();
+    const ecPair = ECPairFactory(ecc);
 
     const ethersWallet = {
         alice: new ethers.Wallet(getEvmSigner().alice),
@@ -47,6 +49,10 @@ export async function initIntegrationTestContext(
     };
 
     const substrateWallet = getSubstrateSigner();
+
+    const bitcoinWallet = {
+        alice: ecPair.makeRandom(),
+    };
 
     const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
 
@@ -61,7 +67,6 @@ export async function initIntegrationTestContext(
     const requestId = 1;
 
     const { sidechainMetaData, sidechainRegistry } = await getSidechainMetadata(wsp, api, requestId);
-    const web3Signers = await generateWeb3Wallets(walletsNumber);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return {
         tee: wsp,
@@ -70,9 +75,9 @@ export async function initIntegrationTestContext(
         mrEnclave,
         ethersWallet,
         substrateWallet,
+        bitcoinWallet,
         sidechainMetaData,
         sidechainRegistry,
-        web3Signers,
         chainIdentifier,
         requestId,
     };
@@ -114,13 +119,16 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
     const seed = 'litentry seed';
     const addresses: Web3Wallets[] = [];
     const keyring = new Keyring({ type: 'sr25519' });
+    const ecPair = ECPairFactory(ecc);
 
     for (let i = 0; i < count; i++) {
         const substratePair = keyring.addFromUri(`${seed}//${i}`);
         const evmWallet = ethers.Wallet.createRandom();
+        const bitcoinPair = ecPair.makeRandom();
         addresses.push({
             substrateWallet: substratePair,
             evmWallet: evmWallet,
+            bitcoinWallet: bitcoinPair,
         });
     }
     return addresses;
