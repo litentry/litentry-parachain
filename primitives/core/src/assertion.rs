@@ -275,12 +275,7 @@ impl Assertion {
 			// VIP3 Member Card
 			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
 			// LITStaking
-			Self::LITStaking => vec![
-				Web3Network::Ethereum,
-				Web3Network::Bsc,
-				Web3Network::Litentry,
-				Web3Network::Litmus,
-			],
+			Self::LITStaking => vec![Web3Network::Litentry],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}

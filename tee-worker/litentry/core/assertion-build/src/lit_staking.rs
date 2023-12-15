@@ -17,7 +17,6 @@
 use crate::*;
 use codec::Decode;
 use frame_support::{StorageHasher, Twox64Concat};
-use hex_literal::hex;
 use http::header::CONNECTION;
 use itc_rest_client::{
 	error::Error as RestClientError,
@@ -30,31 +29,33 @@ use itp_types::Balance;
 use itp_utils::hex_display::AsBytesRef;
 use lc_credentials::litentry_profile::lit_staking::UpdateLITStakingAmountCredential;
 use lc_data_providers::build_client;
-use litentry_primitives::types;
+use litentry_primitives::Delegator;
 use serde::{Deserialize, Serialize};
-use sp_core::twox_128;
+use std::string::ToString;
+
+const LIT_TOKEN_DECIMALS: u128 = 1_000_000_000_000;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct RequestStakingData {
-	params: Vec<String>,
-	method: String,
-	jsonrpc: String,
+pub struct JsonRPCRequest {
 	id: usize,
+	jsonrpc: String,
+	method: String,
+	params: Vec<String>,
 }
 
-impl RequestStakingData {
-	pub fn new(storage_key: String) -> Self {
+impl JsonRPCRequest {
+	pub fn state_getstorage(params: &str) -> Self {
 		Self {
-			params: vec![storage_key],
-			method: "state_getStorage".to_string(),
-			jsonrpc: "2.0".to_string(),
 			id: 1,
+			jsonrpc: "2.0".to_string(),
+			method: "state_getStorage".to_string(),
+			params: vec![params.to_string()],
 		}
 	}
 }
 
-impl RestPath<String> for RequestStakingData {
+impl RestPath<String> for JsonRPCRequest {
 	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
 		Ok(path)
 	}
@@ -62,7 +63,7 @@ impl RestPath<String> for RequestStakingData {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct LitentryStakingResponse {
+pub struct JsonRPCResponse {
 	pub id: usize,
 	pub jsonrpc: String,
 	pub result: String,
@@ -86,12 +87,9 @@ impl LitentryStakingClient {
 		LitentryStakingClient { client }
 	}
 
-	pub fn send_request(&mut self, data: &RequestStakingData) -> Result<LitentryStakingResponse> {
+	pub fn send_request(&mut self, data: &JsonRPCRequest) -> Result<JsonRPCResponse> {
 		self.client
-			.post_capture::<String, RequestStakingData, LitentryStakingResponse>(
-				String::default(),
-				data,
-			)
+			.post_capture::<String, JsonRPCRequest, JsonRPCResponse>(String::default(), data)
 			.map_err(|e| {
 				Error::RequestVCFailed(
 					Assertion::LITStaking,
@@ -103,16 +101,94 @@ impl LitentryStakingClient {
 	}
 }
 
+pub trait QueryParachainStaking {
+	fn query_delegator_state(&mut self, key: &str) -> Result<String>;
+}
+
+impl QueryParachainStaking for LitentryStakingClient {
+	fn query_delegator_state(&mut self, key: &str) -> Result<String> {
+		let data = JsonRPCRequest::state_getstorage(key);
+		let res = self.send_request(&data)?;
+		Ok(res.result)
+	}
+}
+
+pub struct DelegatorState;
+impl DelegatorState {
+	pub fn query_lit_staking(
+		&mut self,
+		client: &mut LitentryStakingClient,
+		identities: &[Identity],
+	) -> Result<u128> {
+		let mut total_staking_amount = 0_u128;
+
+		for identity in identities {
+			let storage_key = DelegatorState::delegator_state_storage_key(identity)?;
+			let storage_in_hex = client.query_delegator_state(&storage_key)?;
+
+			let delegator = DelegatorState::decode_delegator(&storage_in_hex)?;
+			let total = delegator.total;
+
+			total_staking_amount += total;
+		}
+
+		Ok(total_staking_amount / LIT_TOKEN_DECIMALS)
+	}
+
+	fn delegator_state_storage_key(identity: &Identity) -> Result<String> {
+		// encoded partial key: ParachainStaking DelegatorState
+		// 0xa686a3043d0adcf2fa655e57bc595a78131da8bc800de21b19b3ba9ed33cfacc
+		let params = "0xa686a3043d0adcf2fa655e57bc595a78131da8bc800de21b19b3ba9ed33cfacc";
+		let acc = identity
+			.to_account_id()
+			.ok_or(Error::RequestVCFailed(Assertion::LITStaking, ErrorDetail::ParseError))?;
+		let cocat = Twox64Concat::hash(acc.as_ref());
+
+		Ok(params.to_string() + &hex::encode(&cocat))
+	}
+
+	fn decode_delegator(storage_in_hex: &str) -> Result<Delegator<AccountId, Balance>> {
+		// Remove 0x
+		if let Some(storage_in_hex_without_prefix) = storage_in_hex.strip_prefix("0x") {
+			return hex::decode(storage_in_hex_without_prefix)
+				.map(|decoded| Delegator::<AccountId, Balance>::decode(&mut decoded.as_bytes_ref()))
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::LITStaking,
+						ErrorDetail::StfError(ErrorString::truncate_from(
+							format!("{:?}", e).as_bytes().to_vec(),
+						)),
+					)
+				})?
+				.map_err(|e| {
+					Error::RequestVCFailed(
+						Assertion::LITStaking,
+						ErrorDetail::StfError(ErrorString::truncate_from(
+							format!("{:?}", e).as_bytes().to_vec(),
+						)),
+					)
+				})
+		}
+
+		Err(Error::RequestVCFailed(
+			Assertion::LITStaking,
+			ErrorDetail::DataProviderError(ErrorString::truncate_from(
+				"Invalid ParachainStaking DelegatorState".as_bytes().to_vec(),
+			)),
+		))
+	}
+}
+
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	debug!("Building LIT staking");
+	debug!("Assertion building LIT staking amount");
 
-	let identities = transpose_identity(&req.identities);
-	let addresses = identities
-		.into_iter()
-		.flat_map(|(_, addresses)| addresses)
-		.collect::<Vec<String>>();
+	let mut identities = vec![];
+	req.identities.iter().for_each(|identity| {
+		identities.push(identity.0.clone());
+	});
 
-	let staking_amount = query_lit_staking(&addresses)?;
+	let mut client = LitentryStakingClient::new();
+	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_lit_staking_amount(staking_amount);
@@ -125,58 +201,35 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	}
 }
 
-fn query_lit_staking(addresses: &[String]) -> Result<u128> {
-	let total_staking_amount: u128 = 0_u128;
-
-	let mut client = LitentryStakingClient::new();
-	for address in addresses {
-		let storage_key = delegator_state_storage_key(address);
-		let data = RequestStakingData::new(storage_key);
-		println!(">>> request data: {:#?}", serde_json::to_string(&data));
-
-		let response = client.send_request(&data)?;
-		println!(">>> response: {:?}", response);
-		let result = response.result;
-		let input = hex::decode(&result[2..]).unwrap();
-		let delegator =
-			types::Delegator::<AccountId, Balance>::decode(&mut input.as_bytes_ref()).unwrap();
-		println!(">>> delegator: {:?}", delegator);
-	}
-
-	Ok(total_staking_amount)
-}
-
-fn twox_128_hex(name: &str) -> String {
-	let pallet_name = twox_128(name.as_bytes());
-	hex::encode(pallet_name)
-}
-
-fn delegator_state_storage_key(_address: &str) -> String {
-	let pallet_name = "ParachainStaking";
-	let pallet_name = twox_128_hex(pallet_name);
-	println!("pallet_name: {}", pallet_name);
-
-	let state = "DelegatorState";
-	let state = twox_128_hex(state);
-	println!("state: {}", state);
-
-	let acc =
-		AccountId::new(hex!["facd1c88fb4bc1448c4bc66af9e3ba040d0c236e9f85d8ffd313aed04278a61e"]);
-	let cocat = Twox64Concat::hash(acc.as_ref());
-	let acc = hex::encode(&cocat);
-	println!("cocat: {:?}", acc);
-
-	"0x".to_string() + &pallet_name + &state + &acc
-}
-
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use sp_core::{crypto::Ss58Codec, ed25519};
 
 	#[test]
-	fn query_lit_staking_works() {
-		let addresses = vec!["".to_string()];
-		let v = query_lit_staking(&addresses).is_ok();
-		assert!(v);
+	fn decode_delegator_works() {
+		let delegator_in_hex = "0xa06c6b3f286fc8fe59cfe3d85ea8df043ddc08742ff9cfe2ed3d6ba1da1f4b4a18149ccce9d526a65ba54fccc24f5d1dee62f9b87915d4004eb932959d468a9e6200f008d0236e040000000000000000001acba651394c1b8d65d06702662921077e58b09d0fc15f3126a427144f83c95f00b0b522399003000000000000000000223188d5f28ee27f7e9067e89bc52fca8f1da20c6a7548a21cef18d8934f820f006048774c3a0400000000000000000024f07a3858f8d4dece9806b6c7e4ee165ba8c98e6ff4d066dd0284d46aee967d00e046350eb003000000000000000000e0d0031d0a450dfc4bb16333fe575dfb8452bb0f79c768181478190a5d9a653f00b064d8ab8103000000000000000000fc7a9dd32be14db4695555aa9a2abd240a8c2160f84ccb403a985701dd13fe5000409dde18410300000000000000000000d04f567cab160000000000000000000000000000000000000000000000000000";
+		let d = DelegatorState::decode_delegator(delegator_in_hex);
+		assert!(d.is_ok());
+	}
+
+	#[test]
+	fn decode_delegator_should_fail_works() {
+		let delegator_in_hex = "0xa0";
+		let d = DelegatorState::decode_delegator(delegator_in_hex);
+		assert!(d.is_err());
+	}
+
+	#[test]
+	fn delegator_state_storage_key_works() {
+		let address = "4A2nt96tH4ej9B3S9sagrKdJubYvu8No4hE9kjjrXMWvGLYW";
+
+		let pubkey = ed25519::Public::from_ss58check(address).unwrap();
+		let acc = AccountId::new(pubkey.0);
+		let identity = Identity::from(acc);
+
+		let storage_key = DelegatorState::delegator_state_storage_key(&identity).unwrap();
+		let target_key = "0xa686a3043d0adcf2fa655e57bc595a78131da8bc800de21b19b3ba9ed33cfacc01e6a2b4eb558329a06c6b3f286fc8fe59cfe3d85ea8df043ddc08742ff9cfe2ed3d6ba1da1f4b4a".to_string();
+		assert_eq!(storage_key, target_key);
 	}
 }
