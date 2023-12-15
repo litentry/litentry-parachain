@@ -81,13 +81,16 @@ export default {
 
         LitentryMultiSignature: {
             _enum: {
-                Ed25519: "ed25519::Signature",
-                Sr25519: "sr25519::Signature",
-                Ecdsa: "ecdsa::Signature",
+                Ed25519: "Ed25519Signature",
+                Sr25519: "Sr25519Signature",
+                Ecdsa: "EcdsaSignature",
                 Ethereum: "EthereumSignature",
                 EthereumPrettified: "EthereumSignature",
             },
         },
+        Ed25519Signature: "([u8; 64])",
+        Sr25519Signature: "([u8; 64])",
+        EcdsaSignature: "([u8; 65])",
         EthereumSignature: "([u8; 65])",
 
         IdentityGenericEvent: {

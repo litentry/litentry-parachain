@@ -1,16 +1,18 @@
-import { u8aToHex } from '@polkadot/util';
-import { blake2AsHex } from '@polkadot/util-crypto';
+import { numberToU8a, u8aToHex } from '@polkadot/util';
+import { blake2AsHex, blake2AsU8a } from '@polkadot/util-crypto';
 import type { IntegrationTestContext } from '../common-types';
 import { AesOutput } from 'parachain-api';
 import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
 import { ECPairInterface } from 'ecpair';
+import * as ecc from 'tiny-secp256k1';
 import type { TypeRegistry } from '@polkadot/types';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
+import { bufferToU8a } from '@polkadot/util';
 
 // blake2_256(<sidechain nonce> + <primary AccountId> + <identity-to-be-linked>)
 export function generateVerificationMessage(
@@ -239,8 +241,12 @@ export async function buildValidations(
             console.log('post verification msg to bitcoin: ', msg);
             bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
             const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
-            bitcoinSignature = bitcoinSigner.sign(Buffer.from(ethers.utils.arrayify(msg))) as Uint8Array;
+            const rawSignature = ecc.signRecoverable(blake2AsU8a(msg, 256), bufferToU8a(bitcoinSigner.privateKey));
+            bitcoinSignature = bufferToU8a(
+                Buffer.concat([rawSignature.signature, numberToU8a(rawSignature.recoveryId)])
+            );
             bitcoinValidationData!.Web3Validation.Bitcoin.signature.Ecdsa = u8aToHex(bitcoinSignature);
+            console.log('bitcoinSignature', u8aToHex(bitcoinSignature));
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 bitcoinValidationData

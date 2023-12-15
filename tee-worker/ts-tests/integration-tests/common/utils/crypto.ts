@@ -1,12 +1,18 @@
 import type { HexString } from '@polkadot/util/types';
-import { hexToU8a, stringToU8a } from '@polkadot/util';
+import { bufferToU8a, hexToU8a, stringToU8a, numberToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { AesOutput } from 'parachain-api';
 import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
-import type { KeypairType } from '@polkadot/util-crypto/types';
+import { ECPairInterface } from 'ecpair';
+import * as ecc from 'tiny-secp256k1';
+
+// TODO: `ecdsa` type could actually be used by both substrate and bitcoin
+//       do we need to differentiate them?
+export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum';
+
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
         {
@@ -113,5 +119,32 @@ export class EthersSigner implements Signer {
         merged.set(prefix);
         merged.set(address, 4);
         return blake2AsU8a(merged, 256);
+    }
+}
+
+export class BitcoinSigner implements Signer {
+    keypair: ECPairInterface;
+
+    constructor(keypair: ECPairInterface) {
+        this.keypair = keypair;
+    }
+
+    getAddressRaw(): Uint8Array {
+        return bufferToU8a(this.keypair.publicKey);
+    }
+
+    sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
+        const rawSignature = ecc.signRecoverable(blake2AsU8a(message), bufferToU8a(this.keypair.privateKey));
+        return new Promise((resolve) =>
+            resolve(bufferToU8a(Buffer.concat([rawSignature.signature, numberToU8a(rawSignature.recoveryId)])))
+        );
+    }
+
+    type(): KeypairType {
+        return 'ecdsa';
+    }
+
+    getAddressInSubstrateFormat(): Uint8Array {
+        return blake2AsU8a(this.keypair.publicKey, 256);
     }
 }
