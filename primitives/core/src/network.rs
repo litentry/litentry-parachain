@@ -61,7 +61,6 @@ pub enum Web3Network {
 	Bsc,
 
 	// btc
-	#[codec(index = 9)]
 	Bitcoin,
 }
 
@@ -77,6 +76,7 @@ impl Web3Network {
 			Web3Network::SubstrateTestnet => "SubstrateTestnet",
 			Web3Network::Ethereum => "Ethereum",
 			Web3Network::Bsc => "Bsc",
+			Web3Network::Bitcoin => "Bitcoin",
 		}
 	}
 

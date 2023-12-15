@@ -35,7 +35,7 @@ pub struct LinkIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
 	/// Identity to be created, in did form
-	identity: String,
+	did: String,
 	/// Shard identifier
 	shard: String,
 }
@@ -57,11 +57,7 @@ impl LinkIdentityCommand {
 		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
 		let chain_api = chain_api.set_signer(who.clone());
 
-		let identity: Result<Identity, _> = serde_json::from_str(self.identity.as_str());
-		if let Err(e) = identity {
-			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return
-		}
+		let identity = Identity::from_did(self.did.as_str()).unwrap();
 
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
 		let encrypted_identity = tee_shielding_key.encrypt(&identity.encode()).unwrap();

@@ -21,10 +21,11 @@ extern crate sgx_tstd as std;
 use serde::{Deserialize, Serialize};
 
 use codec::{Decode, Encode, MaxEncodedLen};
+use itp_utils::hex::decode_hex;
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::TypeInfo;
-use sp_core::{crypto::AccountId32, ed25519, sr25519, ByteArray, H160};
+use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, H160};
 use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
@@ -53,6 +54,19 @@ impl From<[u8; 20]> for Address20 {
 	}
 }
 
+impl<'a> TryFrom<&'a [u8]> for Address20 {
+	type Error = ();
+	fn try_from(x: &'a [u8]) -> Result<Address20, ()> {
+		if x.len() == 20 {
+			let mut data = [0; 20];
+			data.copy_from_slice(x);
+			Ok(Address20(data))
+		} else {
+			Err(())
+		}
+	}
+}
+
 #[derive(Encode, Decode, Copy, Clone, Debug, Default, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Address32([u8; 32]);
@@ -72,6 +86,19 @@ impl From<AccountId32> for Address32 {
 	fn from(value: AccountId32) -> Self {
 		let raw: [u8; 32] = value.as_slice().try_into().unwrap();
 		Address32::from(raw)
+	}
+}
+
+impl<'a> TryFrom<&'a [u8]> for Address32 {
+	type Error = ();
+	fn try_from(x: &'a [u8]) -> Result<Address32, ()> {
+		if x.len() == 32 {
+			let mut data = [0; 32];
+			data.copy_from_slice(x);
+			Ok(Address32(data))
+		} else {
+			Err(())
+		}
 	}
 }
 
@@ -101,7 +128,7 @@ impl From<ed25519::Public> for Address32 {
 }
 
 // TODO: maybe use macros to reduce verbosity
-#[derive(Encode, Decode, Copy, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Copy, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 pub struct Address33([u8; 33]);
 impl AsRef<[u8; 33]> for Address33 {
 	fn as_ref(&self) -> &[u8; 33] {
@@ -213,6 +240,66 @@ impl Identity {
 			Identity::Bitcoin(address) => Some(blake2_256(address.as_ref()).into()),
 			_ => None,
 		}
+	}
+
+	#[cfg(any(feature = "std", feature = "sgx"))]
+	pub fn from_did(s: &str) -> Result<Self, std::boxed::Box<dyn std::error::Error + 'static>> {
+		let did_prefix = std::string::String::from("did:litentry:");
+		if s.starts_with(&did_prefix) {
+			let did_suffix = &s[did_prefix.len()..];
+			let v: Vec<&str> = did_suffix.split(':').collect();
+			if v.len() == 2 {
+				if v[0] == "substrate" {
+					let handle = decode_hex(v[1])
+						.unwrap()
+						.as_slice()
+						.try_into()
+						.map_err(|_| "Address32 conversion error")?;
+					return Ok(Identity::Substrate(handle))
+				} else if v[0] == "evm" {
+					let handle = decode_hex(v[1])
+						.unwrap()
+						.as_slice()
+						.try_into()
+						.map_err(|_| "Address20 conversion error")?;
+					return Ok(Identity::Evm(handle))
+				} else if v[0] == "bitcoin" {
+					let handle = decode_hex(v[1])
+						.unwrap()
+						.as_slice()
+						.try_into()
+						.map_err(|_| "Address33 conversion error")?;
+					return Ok(Identity::Bitcoin(handle))
+				} else if v[0] == "github" {
+					return Ok(Identity::Github(
+						v[1].as_bytes()
+							.to_vec()
+							.try_into()
+							.map_err(|_| "github conversion error")?,
+					))
+				} else if v[0] == "discord" {
+					return Ok(Identity::Discord(
+						v[1].as_bytes()
+							.to_vec()
+							.try_into()
+							.map_err(|_| "discord conversion error")?,
+					))
+				} else if v[0] == "twitter" {
+					return Ok(Identity::Twitter(
+						v[1].as_bytes()
+							.to_vec()
+							.try_into()
+							.map_err(|_| "twitter conversion error")?,
+					))
+				} else {
+					return Err("Unknown did type".into())
+				}
+			} else {
+				return Err("Wrong did suffix".into())
+			}
+		}
+
+		Err("Wrong did prefix".into())
 	}
 }
 
