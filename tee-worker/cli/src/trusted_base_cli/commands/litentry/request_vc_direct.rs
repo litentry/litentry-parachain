@@ -122,11 +122,7 @@ impl RequestVcDirectCommand {
 				AchainableCommand::AmountToken(arg) =>
 					Assertion::Achainable(AchainableParams::AmountToken(AchainableAmountToken {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 						token: arg.token.as_ref().map(|s| to_para_str(s)),
 					})),

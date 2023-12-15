@@ -330,12 +330,8 @@ where
 	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 {
-	debug!("Author submit and watch AesRequest..");
-
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
-
-	info!("Got request hex: {:?}", &hex_encoded_params[0]);
-	std::println!("Got request hex: {:?}", &hex_encoded_params[0]);
+	info!("author_submitAndWatchAesRequest, request hex: {:?}", &hex_encoded_params[0]);
 
 	let request =
 		AesRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
