@@ -26,9 +26,8 @@ use codec::{Decode, Encode};
 pub use futures;
 use ita_sgx_runtime::{Hash, Runtime};
 use ita_stf::{
-	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
-	AccountId, ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCall,
-	TrustedCallSigned, TrustedOperation, ENCLAVE_ACCOUNT_KEY, H256,
+	aes_encrypt_default, trusted_call_result::RequestVCResult, AccountId, ConvertAccountId, Getter,
+	OpaqueCall, SgxParentchainTypeConverter, TrustedCallSigned, ENCLAVE_ACCOUNT_KEY, H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
