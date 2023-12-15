@@ -24,7 +24,10 @@ use crate::{
 	achainable::{query_lit_holding_amount, request_achainable_balance},
 	*,
 };
-use lc_credentials::{achainable::lit_holding_amount::AchainableLitHoldingAmountUpdate, litentry_profile::token_balance::TokenBalanceInfo};
+use lc_credentials::{
+	achainable::lit_holding_amount::AchainableLitHoldingAmountUpdate,
+	litentry_profile::token_balance::TokenBalanceInfo,
+};
 use lc_data_providers::{
 	achainable_names::{AchainableNameAmountToken, GetAchainableName},
 	ETokenAddress, TokenFromString,
