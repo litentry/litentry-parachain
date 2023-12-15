@@ -26,13 +26,26 @@ export default {
                 Github: "IdentityString",
                 Substrate: "Address32",
                 Evm: "Address20",
+                Bitcoin: "Address33",
             },
         },
         Address32: "[u8;32]",
         Address20: "[u8;20]",
+        Address33: "[u8;33]",
         IdentityString: "Vec<u8>",
         Web3Network: {
-            _enum: ["Polkadot", "Kusama", "Litentry", "Litmus", "LitentryRococo", "Khala", "SubstrateTestnet", "Ethereum", "Bsc"],
+            _enum: [
+                "Polkadot",
+                "Kusama",
+                "Litentry",
+                "Litmus",
+                "LitentryRococo",
+                "Khala",
+                "SubstrateTestnet",
+                "Ethereum",
+                "Bsc",
+                "Bitcoin",
+            ],
         },
         LitentryValidationData: {
             _enum: {
@@ -58,6 +71,7 @@ export default {
             _enum: {
                 Substrate: "Web3CommonValidationData",
                 Evm: "Web3CommonValidationData",
+                Bitcoin: "Web3CommonValidationData",
             },
         },
         Web3CommonValidationData: {
@@ -67,13 +81,16 @@ export default {
 
         LitentryMultiSignature: {
             _enum: {
-                Ed25519: "ed25519::Signature",
-                Sr25519: "sr25519::Signature",
-                Ecdsa: "ecdsa::Signature",
+                Ed25519: "Ed25519Signature",
+                Sr25519: "Sr25519Signature",
+                Ecdsa: "EcdsaSignature",
                 Ethereum: "EthereumSignature",
                 EthereumPrettified: "EthereumSignature",
             },
         },
+        Ed25519Signature: "([u8; 64])",
+        Sr25519Signature: "([u8; 64])",
+        EcdsaSignature: "([u8; 65])",
         EthereumSignature: "([u8; 65])",
 
         IdentityGenericEvent: {

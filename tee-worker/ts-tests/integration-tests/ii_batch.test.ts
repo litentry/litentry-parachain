@@ -15,7 +15,7 @@ import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec } from '@polkadot/types';
 
-describeLitentry('Test Batch Utility', 0, (context) => {
+describeLitentry('Test Batch Utility', (context) => {
     let identities: LitentryPrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
     let evmSigners: ethers.Wallet[] = [];

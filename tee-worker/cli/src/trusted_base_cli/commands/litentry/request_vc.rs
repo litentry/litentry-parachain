@@ -28,9 +28,9 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
-	ParameterString, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
-	REQUEST_AES_KEY_LEN,
+	AchainableToken, Assertion, BoundedWeb3Network, ContestType, GenericDiscordRoleType, Identity,
+	OneBlockCourseType, ParameterString, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
+	Web3Network, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -53,6 +53,15 @@ use sp_core::Pair;
 
 pub fn to_para_str(s: &str) -> ParameterString {
 	ParameterString::truncate_from(s.as_bytes().to_vec())
+}
+
+pub fn to_chains(networks: &[String]) -> BoundedWeb3Network {
+	let networks: Vec<Web3Network> = networks
+		.iter()
+		.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
+		.collect();
+
+	networks.try_into().unwrap()
 }
 
 #[derive(Parser)]
@@ -181,7 +190,7 @@ pub struct AmountHoldingArg {
 #[derive(Args)]
 pub struct AmountTokenArg {
 	pub name: String,
-	pub chain: String,
+	pub chain: Vec<String>,
 	pub amount: String,
 	pub token: Option<String>,
 }
@@ -273,14 +282,7 @@ impl RequestVcCommand {
 			Command::A4(arg) => Assertion::A4(to_para_str(&arg.minimum_amount)),
 			Command::A6 => Assertion::A6,
 			Command::A7(arg) => Assertion::A7(to_para_str(&arg.minimum_amount)),
-			Command::A8(arg) => {
-				let networks: Vec<Web3Network> = arg
-					.networks
-					.iter()
-					.map(|n| n.as_str().try_into().expect("cannot convert to Web3Network"))
-					.collect();
-				Assertion::A8(networks.try_into().unwrap())
-			},
+			Command::A8(arg) => Assertion::A8(to_chains(&arg.networks)),
 			Command::A10(arg) => Assertion::A10(to_para_str(&arg.minimum_amount)),
 			Command::A11(arg) => Assertion::A11(to_para_str(&arg.minimum_amount)),
 			Command::A13(arg) => {
@@ -314,11 +316,7 @@ impl RequestVcCommand {
 				AchainableCommand::AmountToken(arg) =>
 					Assertion::Achainable(AchainableParams::AmountToken(AchainableAmountToken {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 						token: arg.token.as_ref().map(|s| to_para_str(s)),
 					})),
