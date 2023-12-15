@@ -60,6 +60,8 @@ pub enum Web2ValidationData {
 pub enum Web3ValidationData {
 	Substrate(Web3CommonValidationData),
 	Evm(Web3CommonValidationData),
+	#[codec(index = 2)]
+	Bitcoin(Web3CommonValidationData),
 }
 
 impl Web3ValidationData {
@@ -67,6 +69,7 @@ impl Web3ValidationData {
 		match self {
 			Self::Substrate(data) => &data.message,
 			Self::Evm(data) => &data.message,
+			Self::Bitcoin(data) => &data.message,
 		}
 	}
 
@@ -74,6 +77,7 @@ impl Web3ValidationData {
 		match self {
 			Self::Substrate(data) => &data.signature,
 			Self::Evm(data) => &data.signature,
+			Self::Bitcoin(data) => &data.signature,
 		}
 	}
 }

@@ -50,6 +50,8 @@ pub fn verify(
 				return Err(Error::LinkIdentityFailed(ErrorDetail::VerifySubstrateSignatureFailed)),
 			Web3ValidationData::Evm(_) =>
 				return Err(Error::LinkIdentityFailed(ErrorDetail::VerifyEvmSignatureFailed)),
+			Web3ValidationData::Bitcoin(_) =>
+				return Err(Error::LinkIdentityFailed(ErrorDetail::VerifyBitcoinSignatureFailed)),
 		}
 	}
 

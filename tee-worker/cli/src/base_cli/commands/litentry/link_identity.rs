@@ -34,8 +34,8 @@ use substrate_api_client::{compose_extrinsic, CallIndex, UncheckedExtrinsicV4, X
 pub struct LinkIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
-	/// Identity to be created
-	identity: String,
+	/// Identity to be created, in did form
+	did: String,
 	/// Shard identifier
 	shard: String,
 }
@@ -57,14 +57,10 @@ impl LinkIdentityCommand {
 		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
 		let chain_api = chain_api.set_signer(who.clone());
 
-		let identity: Result<Identity, _> = serde_json::from_str(self.identity.as_str());
-		if let Err(e) = identity {
-			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return
-		}
+		let identity = Identity::from_did(self.did.as_str()).unwrap();
 
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
-		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
+		let encrypted_identity = tee_shielding_key.encrypt(&identity.encode()).unwrap();
 
 		// TODO: the params are incorrect - and need to be reworked too
 		let vdata: Option<Vec<u8>> = None;
