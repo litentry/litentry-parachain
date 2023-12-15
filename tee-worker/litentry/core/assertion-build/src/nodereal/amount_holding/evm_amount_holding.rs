@@ -46,33 +46,23 @@ fn get_holding_balance(
 	let mut total_balance = 0_f64;
 
 	for address in addresses.iter() {
-		let contract_address = token_type.get_address(address.0).unwrap();
+		let param = GetTokenBalance20Param {
+			contract_address: token_type.get_address(address.0).unwrap().into(),
+			address: address.1.clone(),
+			block_number: "latest".into(),
+		};
 		match address.0 {
-			Web3Network::Bsc => {
-				let bsc_param = GetTokenBalance20Param {
-					contract_address: contract_address.into(),
-					address: address.1.clone(),
-					block_number: "latest".into(),
-				};
-				match bsc_client.get_token_balance_20(&bsc_param) {
-					Ok(balance) => {
-						total_balance += balance;
-					},
-					Err(err) => return Err(err),
-				}
+			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param) {
+				Ok(balance) => {
+					total_balance += balance;
+				},
+				Err(err) => return Err(err),
 			},
-			Web3Network::Ethereum => {
-				let eth_param = GetTokenBalance20Param {
-					contract_address: contract_address.into(),
-					address: address.1.clone(),
-					block_number: "latest".into(),
-				};
-				match eth_client.get_token_balance_20(&eth_param) {
-					Ok(balance) => {
-						total_balance += balance;
-					},
-					Err(err) => return Err(err),
-				}
+			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param) {
+				Ok(balance) => {
+					total_balance += balance;
+				},
+				Err(err) => return Err(err),
 			},
 			_ => {},
 		}

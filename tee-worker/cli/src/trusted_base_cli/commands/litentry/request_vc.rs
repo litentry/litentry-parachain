@@ -28,9 +28,9 @@ use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
-	OneBlockCourseType, ParameterString, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
-	Web3Network, REQUEST_AES_KEY_LEN,
+	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType,
+	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, RequestAesKey,
+	SoraQuizType, VIP3MembershipCardLevel, Web3Network, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
