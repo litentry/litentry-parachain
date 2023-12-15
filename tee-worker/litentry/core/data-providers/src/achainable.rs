@@ -165,6 +165,10 @@ impl ReqBody {
 	pub fn new(address: String, params: Params) -> Self {
 		ReqBody { name: params.name(), address, params, include_metadata: true }
 	}
+
+	pub fn new_with_false_metadata(address: String, params: Params) -> Self {
+		ReqBody { name: params.name(), address, params, include_metadata: false }
+	}
 }
 
 pub trait AchainableSystemLabelName {
@@ -243,7 +247,9 @@ impl TryFrom<AchainableParams> for Params {
 				let token =
 					if p.token.is_some() { Some(ap.to_string(&p.token.unwrap())?) } else { None };
 
-				let p = ParamsBasicTypeWithAmountToken::new(name, network, amount, token);
+				// At this step, we do not care about the content inside the chains and instead use real chain data to fill in the request
+				// so use network[0] as a placehold.
+				let p = ParamsBasicTypeWithAmountToken::new(name, &network[0], amount, token);
 				Ok(Params::ParamsBasicTypeWithAmountToken(p))
 			},
 			AchainableParams::Amount(p) => {
@@ -844,7 +850,7 @@ impl HoldingAmount for AchainableClient {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
 		let mut total_balance = 0_f64;
 		for address in addresses.iter() {
-			let body = ReqBody::new(address.into(), param.clone());
+			let body = ReqBody::new_with_false_metadata(address.into(), param.clone());
 			let balance =
 				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance)?;
 			total_balance += balance;

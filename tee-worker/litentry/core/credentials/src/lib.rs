@@ -78,6 +78,7 @@ pub mod oneblock;
 pub mod schema;
 
 pub mod assertion_logic;
+pub mod achainable;
 use assertion_logic::{AssertionLogic, Op};
 pub mod generic_discord_role;
 pub mod litentry_profile;

@@ -83,3 +83,40 @@ impl AchainableNameBalance {
 		Err(Error::AchainableError("Invalid Achainable Name".to_string()))
 	}
 }
+
+#[derive(Debug, PartialEq)]
+pub enum AchainableNameAmountToken {
+	BEP20BalanceOverAmount,
+	ERC20BalanceOverAmount,
+	BalanceOverAmount,
+	LITHoldingAmount, // Custom Name
+}
+
+impl GetAchainableName for AchainableNameAmountToken {
+	fn name(&self) -> &'static str {
+		match self {
+			AchainableNameAmountToken::BEP20BalanceOverAmount => "BEP20 balance over {amount}",
+			AchainableNameAmountToken::ERC20BalanceOverAmount => "ERC20 balance over {amount}",
+			AchainableNameAmountToken::BalanceOverAmount => "Balance over {amount}",
+			AchainableNameAmountToken::LITHoldingAmount => "LIT Holding Amount",
+		}
+	}
+}
+
+impl AchainableNameAmountToken {
+	pub fn from(param: ParameterString) -> Result<AchainableNameAmountToken, Error> {
+		let name_str = vec_to_string(param.to_vec())?;
+
+		if name_str == AchainableNameAmountToken::BEP20BalanceOverAmount.name() {
+			return Ok(AchainableNameAmountToken::BEP20BalanceOverAmount)
+		} else if name_str == AchainableNameAmountToken::ERC20BalanceOverAmount.name() {
+			return Ok(AchainableNameAmountToken::ERC20BalanceOverAmount)
+		} else if name_str == AchainableNameAmountToken::BalanceOverAmount.name() {
+			return Ok(AchainableNameAmountToken::BalanceOverAmount)
+		} else if name_str == AchainableNameAmountToken::LITHoldingAmount.name() {
+			return Ok(AchainableNameAmountToken::LITHoldingAmount)
+		}
+
+		Err(Error::AchainableError("Unsupported name in this Type".to_string()))
+	}
+}
