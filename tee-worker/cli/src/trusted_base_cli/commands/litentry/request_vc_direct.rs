@@ -25,7 +25,6 @@ use crate::{
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
-use lc_credentials::Credential;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
@@ -276,9 +275,9 @@ impl RequestVcDirectCommand {
 		match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {
 			Ok(mut vc) => {
 				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-				let credential: Credential = serde_json::from_slice(&decrypted).unwrap();
+				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
 				println!("----Generated VC-----");
-				println!("{:?}", credential);
+				println!("{}", credential_str);
 			},
 			Err(e) => {
 				println!("{:?}", e);
