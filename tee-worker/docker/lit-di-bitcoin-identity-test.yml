@@ -1,7 +1,7 @@
 services:
-    lit-di-evm-identity-test:
+    lit-di-bitcoin-identity-test:
         image: litentry/litentry-cli:latest
-        container_name: litentry-di-evm-identity-test
+        container_name: litentry-di-bitcoin-identity-test
         volumes:
             - ../ts-tests:/ts-tests
             - ../client-api:/client-api
