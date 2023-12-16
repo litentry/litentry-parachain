@@ -12,7 +12,7 @@ import type { IntegrationTestContext, Web3Wallets } from '../common-types';
 import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
-import * as bitcore from 'bitcore-lib';
+import bitcore from 'bitcore-lib';
 
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 15;

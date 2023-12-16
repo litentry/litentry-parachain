@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
-import * as bitcore from 'bitcore-lib';
+import bitcore from 'bitcore-lib';
 
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 

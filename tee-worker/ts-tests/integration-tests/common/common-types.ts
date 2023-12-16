@@ -5,7 +5,7 @@ import { Metadata, TypeRegistry } from '@polkadot/types';
 import { Wallet } from 'ethers';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
-import * as bitcore from 'bitcore-lib';
+import bitcore from 'bitcore-lib';
 
 // If there are types already defined in the client-api, please avoid redefining these types.
 // Instead, make every effort to use the types that have been generated within the client-api.

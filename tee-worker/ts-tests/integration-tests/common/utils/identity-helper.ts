@@ -11,7 +11,7 @@ import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { bufferToU8a } from '@polkadot/util';
-import * as bitcore from 'bitcore-lib';
+import bitcore from 'bitcore-lib';
 
 // blake2_256(<sidechain nonce> + <primary AccountId> + <identity-to-be-linked>)
 export function generateVerificationMessage(
@@ -55,6 +55,8 @@ export async function buildIdentityFromKeypair(
                 return 'Substrate';
             case 'ecdsa':
                 return 'Substrate';
+            case 'bitcoin':
+                return 'Bitcoin';
             default:
                 return 'Substrate';
         }
@@ -232,7 +234,7 @@ export async function buildValidations(
                     Bitcoin: {
                         message: '' as HexString,
                         signature: {
-                            Ecdsa: '' as HexString,
+                            Bitcoin: '' as HexString,
                         },
                     },
                 },
@@ -243,8 +245,10 @@ export async function buildValidations(
             // we need to sign the hex string without `0x` prefix, the signature is base64-encoded string
             const sig = new bitcore.Message(msg.substring(2)).sign(bitcoinSigner);
             bitcoinSignature = bufferToU8a(Buffer.from(sig, 'base64'));
-            bitcoinValidationData!.Web3Validation.Bitcoin.signature.Ecdsa = u8aToHex(bitcoinSignature);
-            console.log('bitcoinSignature', u8aToHex(bitcoinSignature));
+            bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
+            console.log('bitcoin pubkey: ', u8aToHex(bufferToU8a(bitcoinSigner.toPublicKey().toBuffer())));
+            console.log('bitcoin sig (base64): ', sig);
+            console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
             const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
                 'LitentryValidationData',
                 bitcoinValidationData
