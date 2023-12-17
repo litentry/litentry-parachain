@@ -2,8 +2,6 @@ import { WsProvider, ApiPromise, TeerexPrimitivesEnclave } from 'parachain-api';
 import { Keyring } from '@polkadot/api';
 import { cryptoWaitReady } from '@polkadot/util-crypto';
 import { ethers } from 'ethers';
-import { ECPairFactory } from 'ecpair';
-import * as ecc from 'tiny-secp256k1';
 import WebSocketAsPromised from 'websocket-as-promised';
 import WebSocket from 'ws';
 import Options from 'websocket-as-promised/types/options';
@@ -11,10 +9,10 @@ import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
 import { getEvmSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, Web3Wallets } from '../common-types';
-
 import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
+import bitcore from 'bitcore-lib';
 
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 15;
@@ -38,7 +36,6 @@ export async function initIntegrationTestContext(
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
     await cryptoWaitReady();
-    const ecPair = ECPairFactory(ecc);
 
     const ethersWallet = {
         alice: new ethers.Wallet(getEvmSigner().alice),
@@ -51,7 +48,7 @@ export async function initIntegrationTestContext(
     const substrateWallet = getSubstrateSigner();
 
     const bitcoinWallet = {
-        alice: ecPair.makeRandom(),
+        alice: new bitcore.PrivateKey(),
     };
 
     const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
@@ -119,12 +116,11 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
     const seed = 'litentry seed';
     const addresses: Web3Wallets[] = [];
     const keyring = new Keyring({ type: 'sr25519' });
-    const ecPair = ECPairFactory(ecc);
 
     for (let i = 0; i < count; i++) {
         const substratePair = keyring.addFromUri(`${seed}//${i}`);
         const evmWallet = ethers.Wallet.createRandom();
-        const bitcoinPair = ecPair.makeRandom();
+        const bitcoinPair = new bitcore.PrivateKey();
         addresses.push({
             substrateWallet: substratePair,
             evmWallet: evmWallet,

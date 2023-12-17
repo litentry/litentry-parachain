@@ -54,7 +54,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceBitcoinIdentity = await buildIdentityHelper(
-            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.publicKey)),
+            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
             'Bitcoin',
             context
         );
