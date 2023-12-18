@@ -4,7 +4,7 @@ import { step } from 'mocha-steps';
 import { signAndSend, describeLitentry } from './utils';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
-import { evmToAddress } from '@polkadot/util-crypto'
+import { evmToAddress } from '@polkadot/util-crypto';
 import Web3 from 'web3';
 
 describeLitentry('Test EVM Module Transfer', ``, (context) => {
@@ -75,7 +75,7 @@ describeLitentry('Test EVM Module Transfer', ``, (context) => {
 
         // If a substrate account using pallet_evm to trigger evm transaction,
         // it will bump 2 for nonce (one for substrate extrinsic, one for evm).
-        // +1 nonce for original substrate account, plus another 1 nonce for original substrate account's truncated evm address's mapped susbtrate account. 
+        // +1 nonce for original substrate account, plus another 1 nonce for original substrate account's truncated evm address's mapped susbtrate account.
         expect(eveCurrentNonce.toNumber()).to.equal(eveInitNonce.toNumber() + 1);
         expect(evmAccountCurrentBalance.free.toBigInt()).to.equal(
             evmAccountInitBalance.free.toBigInt() + BigInt(value)

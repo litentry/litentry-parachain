@@ -1,12 +1,15 @@
 import type { HexString } from '@polkadot/util/types';
-import { hexToU8a, stringToU8a } from '@polkadot/util';
+import { bufferToU8a, hexToU8a, isString, stringToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { AesOutput } from 'parachain-api';
 import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
-import type { KeypairType } from '@polkadot/util-crypto/types';
+import bitcore from 'bitcore-lib';
+
+export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
+
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
         {
@@ -113,5 +116,36 @@ export class EthersSigner implements Signer {
         merged.set(prefix);
         merged.set(address, 4);
         return blake2AsU8a(merged, 256);
+    }
+}
+
+export class BitcoinSigner implements Signer {
+    keypair: bitcore.PrivateKey;
+
+    constructor(keypair: bitcore.PrivateKey) {
+        this.keypair = keypair;
+    }
+
+    getAddressRaw(): Uint8Array {
+        return bufferToU8a(this.keypair.toPublicKey().toBuffer());
+    }
+
+    sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
+        return new Promise((resolve, reject) => {
+            if (isString(message)) {
+                const sig = new bitcore.Message(message).sign(this.keypair);
+                resolve(bufferToU8a(Buffer.from(sig, 'base64')));
+            } else {
+                reject('wrong message type');
+            }
+        });
+    }
+
+    type(): KeypairType {
+        return 'bitcoin';
+    }
+
+    getAddressInSubstrateFormat(): Uint8Array {
+        return blake2AsU8a(this.getAddressRaw(), 256);
     }
 }
