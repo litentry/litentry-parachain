@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(feature = "std", feature = "sgx"))]
-compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the same time");
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-pub mod amount_holding;
-pub mod bnb_domain;
-pub mod nft_holder;
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum EVMTokenType {
+	#[codec(index = 0)]
+	Ton,
+	#[codec(index = 1)]
+	Trx,
+}
