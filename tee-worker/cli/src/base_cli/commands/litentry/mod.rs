@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod dump_id_graph_hash;
+pub mod id_graph_hash;
 pub mod link_identity;
 pub mod set_heartbeat_timeout;
 

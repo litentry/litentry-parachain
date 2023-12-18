@@ -21,7 +21,7 @@ use crate::{
 		faucet::FaucetCommand,
 		listen::ListenCommand,
 		litentry::{
-			dump_id_graph_hash::DumpIDGraphHashCommand, link_identity::LinkIdentityCommand,
+			id_graph_hash::IDGraphHashCommand, link_identity::LinkIdentityCommand,
 			set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
 		},
 		register_tcb_info::RegisterTcbInfoCommand,
@@ -93,8 +93,8 @@ pub enum BaseCommand {
 	/// set heartbeat timeout storage
 	SetHeartbeatTimeout(SetHeartbeatTimeoutCommand),
 
-	/// dump all IDGraph hashes stored in sidechain
-	DumpIDGraphHash(DumpIDGraphHashCommand),
+	/// get the IDGraph hash of the given identity
+	IDGraphHash(IDGraphHashCommand),
 }
 
 impl BaseCommand {
@@ -115,7 +115,7 @@ impl BaseCommand {
 			BaseCommand::PrintSgxMetadataRaw => print_sgx_metadata_raw(cli),
 			BaseCommand::LinkIdentity(cmd) => cmd.run(cli),
 			BaseCommand::SetHeartbeatTimeout(cmd) => cmd.run(cli),
-			BaseCommand::DumpIDGraphHash(cmd) => cmd.run(cli),
+			BaseCommand::IDGraphHash(cmd) => cmd.run(cli),
 		}
 	}
 }

@@ -293,7 +293,10 @@ pub mod pallet {
 		}
 
 		// get the whole IDGraph, sorted by `link_block` (earliest -> latest)
-		pub fn get_id_graph(who: &Identity) -> IDGraph<T> {
+		//
+		// TODO: shall we change the return type to Option<IDGraph<T>> and return
+		//       `None` if the IDGraph doesn't exist?
+		pub fn id_graph(who: &Identity) -> IDGraph<T> {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
 
 			// Initial sort to ensure a deterministic order
@@ -302,10 +305,14 @@ pub mod pallet {
 			id_graph
 		}
 
-		pub fn all_id_graph_hash() -> Vec<(Identity, H256)> {
-			IDGraphLens::<T>::iter_keys()
-				.map(|k| (k.clone(), H256::from(blake2_256(&Self::get_id_graph(&k).encode()))))
-				.collect()
+		// get the IDGraph hash of the given `who`
+		pub fn id_graph_hash(who: &Identity) -> Option<H256> {
+			let id_graph = Self::id_graph(who);
+			if id_graph.is_empty() {
+				None
+			} else {
+				Some(H256::from(blake2_256(&id_graph.encode())))
+			}
 		}
 
 		// get count of all keys account + identity in the IDGraphs

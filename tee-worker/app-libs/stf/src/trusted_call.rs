@@ -760,7 +760,7 @@ where
 				})?;
 
 				debug!("pushing identity_deactivated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				let id_graph_hash: H256 = blake2_256(&IMT::id_graph(&who).encode()).into();
 
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
@@ -811,7 +811,7 @@ where
 				})?;
 
 				debug!("pushing identity_activated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				let id_graph_hash: H256 = blake2_256(&IMT::id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
@@ -971,7 +971,7 @@ where
 				.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
 
 				debug!("pushing identity_networks_set event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				let id_graph_hash: H256 = blake2_256(&IMT::id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,

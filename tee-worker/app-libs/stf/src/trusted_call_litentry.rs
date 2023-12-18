@@ -169,7 +169,7 @@ impl TrustedCallSigned {
 			),
 		}
 
-		let id_graph = IMT::get_id_graph(&who);
+		let id_graph = IMT::id_graph(&who);
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
@@ -284,7 +284,7 @@ impl TrustedCallSigned {
 		})?;
 
 		debug!("pushing identity_linked event ...");
-		let id_graph = IMT::get_id_graph(&who);
+		let id_graph = IMT::id_graph(&who);
 		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
 
 		// push `identity_linked` call
@@ -293,7 +293,6 @@ impl TrustedCallSigned {
 		calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 			call_index,
 			account,
-			id_graph_hash,
 			req_ext_hash,
 		))));
 
