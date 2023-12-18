@@ -8,6 +8,7 @@ import { parseIdGraph, parseIdentity } from './identity-helper';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeError } from 'sidechain-api';
 import { TeerexPrimitivesEnclave } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
+import { getIdGraphHash } from '../di-utils';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from './vc-helper';
@@ -25,6 +26,7 @@ import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import { KeyObject } from 'crypto';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -217,15 +219,11 @@ export async function assertIdGraphMutation(
     expectedLength: number
 ) {
     assert.equal(events.length, expectedLength);
-    if (idGraphHashResults != undefined) {
-        assert.equal(idGraphHashResults!.length, expectedLength);
-    }
+    assert.equal(idGraphHashResults!.length, expectedLength);
+
     const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
     events.forEach((e, i) => {
         assert.equal(signerAddress, e.data.account.toHex());
-        if (idGraphHashResults != undefined) {
-            assert.equal(idGraphHashResults![i], e.data.idGraphHash.toHex());
-        }
     });
     console.log(colors.green('assertIdGraphMutation passed'));
 }
@@ -366,18 +364,18 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
 
 export async function assertIdGraphHash(
     context: IntegrationTestContext,
-    signer: Signer,
+    teeShieldingKey: KeyObject,
+    identity: LitentryPrimitivesIdentity,
     idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]
 ) {
     const idGraphType = context.sidechainRegistry.createType(
         'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idGraph
     );
-    const localIdGraphHash = blake2AsHex(idGraphType.toU8a());
-    console.log('local id graph hash: ', localIdGraphHash);
+    const computedIdGraphHash = blake2AsHex(idGraphType.toU8a());
+    console.log('computed id graph hash: ', computedIdGraphHash);
 
-    const account = u8aToHex(signer.getAddressInSubstrateFormat());
-    const onChainIdGraphHash = (await context.api.query.identityManagement.idGraphHash(account)).toHuman();
-    console.log('on-chain id graph hash: ', onChainIdGraphHash);
-    assert.equal(localIdGraphHash, onChainIdGraphHash);
+    const queriedIdGraphHash = (await getIdGraphHash(context, teeShieldingKey, identity)).toHex();
+    console.log('queried id graph hash: ', queriedIdGraphHash);
+    assert.equal(computedIdGraphHash, queriedIdGraphHash);
 }

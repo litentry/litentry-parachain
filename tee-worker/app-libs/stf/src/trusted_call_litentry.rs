@@ -282,10 +282,9 @@ impl TrustedCallSigned {
 			e
 		})?;
 
-		debug!("pushing identity_linked event ...");
-		let id_graph = IMT::id_graph(&who);
 		let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 
+		debug!("pushing identity_linked event ...");
 		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
@@ -296,7 +295,7 @@ impl TrustedCallSigned {
 		))));
 
 		if old_id_graph_len == 0 {
-			mutated_id_graph = id_graph;
+			mutated_id_graph = IMT::id_graph(&who);
 		} else if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
 			mutated_id_graph.push((identity, identity_context))
 		} else {

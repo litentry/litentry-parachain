@@ -182,7 +182,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             currentIndex++;
         }
 
-        await assertIdGraphHash(context, new BitcoinSigner(context.bitcoinWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
     step('deactivating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
@@ -268,7 +268,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             console.debug('inactive ✅');
         }
 
-        await assertIdGraphHash(context, new BitcoinSigner(context.bitcoinWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
     step('activating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
@@ -354,6 +354,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             console.debug('active ✅');
         }
 
-        await assertIdGraphHash(context, new BitcoinSigner(context.bitcoinWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
 });

@@ -10,7 +10,7 @@ import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { u32, Option, u8, Vector } from 'scale-ts';
-import { Index } from '@polkadot/types/interfaces';
+import { H256, Index } from '@polkadot/types/interfaces';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
@@ -282,9 +282,21 @@ export const getSidechainNonce = async (
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], subject.toHuman());
     const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
-    const nonce = await sendRequestFromGetter(context, teeShieldingKey, getter);
-    const nonceValue = decodeNonce(nonce.value.toHex());
-    return context.api.createType('Index', nonceValue) as Index;
+    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
+    const nonce = decodeNonce(res.value.toHex());
+    return context.api.createType('Index', nonce);
+};
+
+export const getIdGraphHash = async (
+    context: IntegrationTestContext,
+    teeShieldingKey: KeyObject,
+    identity: LitentryPrimitivesIdentity
+): Promise<H256> => {
+    const getterPublic = createPublicGetter(context.api, ['id_graph_hash', '(LitentryIdentity)'], identity.toHuman());
+    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
+    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
+    const hash = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
+    return context.api.createType('H256', hash);
 };
 
 export const sendRequestFromTrustedCall = async (

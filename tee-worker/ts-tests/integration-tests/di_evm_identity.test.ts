@@ -212,7 +212,7 @@ describe('Test Identity (evm direct invocation)', function () {
             currentIndex++;
         }
 
-        await assertIdGraphHash(context, new EthersSigner(context.ethersWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
     });
     step('deactivating identity(alice evm account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
@@ -312,7 +312,7 @@ describe('Test Identity (evm direct invocation)', function () {
             console.debug('inactive ✅');
         }
 
-        await assertIdGraphHash(context, new EthersSigner(context.ethersWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
     });
     step('activating identity(alice evm account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceEvmIdentity)).toNumber();
@@ -412,7 +412,7 @@ describe('Test Identity (evm direct invocation)', function () {
             console.debug('active ✅');
         }
 
-        await assertIdGraphHash(context, new EthersSigner(context.ethersWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceEvmIdentity, idGraph);
     });
 
     step('deactivating prime identity is disallowed', async function () {
