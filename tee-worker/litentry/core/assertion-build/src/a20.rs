@@ -51,6 +51,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let who = match req.who {
 		Identity::Substrate(account) => account_id_to_string(&account),
 		Identity::Evm(account) => account_id_to_string(&account),
+		Identity::Bitcoin(account) => account_id_to_string(&account),
 		_ => unreachable!(),
 	};
 	debug!("Assertion A20 build, who: {:?}", who);
