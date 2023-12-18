@@ -759,13 +759,12 @@ where
 					e
 				})?;
 
-				debug!("pushing identity_deactivated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::id_graph(&who).encode()).into();
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 
+				debug!("pushing identity_deactivated event ...");
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
-					id_graph_hash,
 					req_ext_hash,
 				))));
 
@@ -810,8 +809,9 @@ where
 					e
 				})?;
 
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+
 				debug!("pushing identity_activated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
@@ -970,8 +970,9 @@ where
 				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 				.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
 
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+
 				debug!("pushing identity_networks_set event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,

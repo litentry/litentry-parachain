@@ -44,7 +44,6 @@ use litentry_primitives::{
 	Web3Network,
 };
 use log::*;
-use sp_core::blake2_256;
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(not(feature = "production"))]
@@ -285,7 +284,7 @@ impl TrustedCallSigned {
 
 		debug!("pushing identity_linked event ...");
 		let id_graph = IMT::id_graph(&who);
-		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
+		let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 
 		// push `identity_linked` call
 		let call_index =
