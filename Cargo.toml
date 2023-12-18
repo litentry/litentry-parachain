@@ -19,7 +19,6 @@ members = [
     'primitives/common',
     'primitives/core',
     'primitives/core/macros',
-    'primitives/staking',
     'primitives/sidechain',
     'primitives/teeracle',
     'primitives/teerex',

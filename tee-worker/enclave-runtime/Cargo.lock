@@ -2759,6 +2759,7 @@ dependencies = [
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
+ "pallet-parachain-staking",
  "parity-scale-codec",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
  "serde 1.0.188",
@@ -3055,7 +3056,6 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "staking-primitives",
  "strum",
  "strum_macros",
  "teerex-primitives 0.1.0",
@@ -4879,13 +4879,6 @@ dependencies = [
  "serde 1.0.188",
  "serde_json 1.0.107",
  "unicode-xid 0.2.4",
-]
-
-[[package]]
-name = "staking-primitives"
-version = "0.9.12"
-dependencies = [
- "pallet-parachain-staking",
 ]
 
 [[package]]

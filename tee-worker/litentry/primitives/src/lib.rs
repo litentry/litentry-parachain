@@ -53,7 +53,6 @@ pub use parentchain_primitives::{
 	Signature as ParentchainSignature, SoraQuizType, VCMPError, VIP3MembershipCardLevel,
 	Web3Network, ASSERTION_FROM_DATE, MINUTES,
 };
-pub use parentchain_staking_primitives::types::Delegator;
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
 use sp_io::{crypto::secp256k1_ecdsa_recover, hashing::keccak_256};

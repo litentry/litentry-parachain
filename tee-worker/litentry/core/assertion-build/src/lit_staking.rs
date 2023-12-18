@@ -29,7 +29,7 @@ use itp_types::Balance;
 use itp_utils::hex_display::AsBytesRef;
 use lc_credentials::litentry_profile::lit_staking::UpdateLITStakingAmountCredential;
 use lc_data_providers::build_client;
-use litentry_primitives::Delegator;
+use pallet_parachain_staking::types::Delegator;
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
 
