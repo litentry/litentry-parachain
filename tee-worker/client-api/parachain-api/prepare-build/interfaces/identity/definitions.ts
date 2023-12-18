@@ -86,12 +86,14 @@ export default {
                 Ecdsa: "EcdsaSignature",
                 Ethereum: "EthereumSignature",
                 EthereumPrettified: "EthereumSignature",
+                Bitcoin: "BitcoinSignature",
             },
         },
         Ed25519Signature: "([u8; 64])",
         Sr25519Signature: "([u8; 64])",
         EcdsaSignature: "([u8; 65])",
         EthereumSignature: "([u8; 65])",
+        BitcoinSignature: "([u8; 65])",
 
         IdentityGenericEvent: {
             who: "AccountId",

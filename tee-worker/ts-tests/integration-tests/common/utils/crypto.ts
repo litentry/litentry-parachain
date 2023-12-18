@@ -1,17 +1,14 @@
 import type { HexString } from '@polkadot/util/types';
-import { bufferToU8a, hexToU8a, stringToU8a, numberToU8a } from '@polkadot/util';
+import { bufferToU8a, hexToU8a, isString, stringToU8a } from '@polkadot/util';
 import { KeyObject } from 'crypto';
 import { AesOutput } from 'parachain-api';
 import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
-import { ECPairInterface } from 'ecpair';
-import * as ecc from 'tiny-secp256k1';
+import bitcore from 'bitcore-lib';
 
-// TODO: `ecdsa` type could actually be used by both substrate and bitcoin
-//       do we need to differentiate them?
-export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum';
+export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 
 export function encryptWithTeeShieldingKey(teeShieldingKey: KeyObject, plaintext: Uint8Array): Buffer {
     return crypto.publicEncrypt(
@@ -123,28 +120,32 @@ export class EthersSigner implements Signer {
 }
 
 export class BitcoinSigner implements Signer {
-    keypair: ECPairInterface;
+    keypair: bitcore.PrivateKey;
 
-    constructor(keypair: ECPairInterface) {
+    constructor(keypair: bitcore.PrivateKey) {
         this.keypair = keypair;
     }
 
     getAddressRaw(): Uint8Array {
-        return bufferToU8a(this.keypair.publicKey);
+        return bufferToU8a(this.keypair.toPublicKey().toBuffer());
     }
 
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array> {
-        const rawSignature = ecc.signRecoverable(blake2AsU8a(message), bufferToU8a(this.keypair.privateKey));
-        return new Promise((resolve) =>
-            resolve(bufferToU8a(Buffer.concat([rawSignature.signature, numberToU8a(rawSignature.recoveryId)])))
-        );
+        return new Promise((resolve, reject) => {
+            if (isString(message)) {
+                const sig = new bitcore.Message(message).sign(this.keypair);
+                resolve(bufferToU8a(Buffer.from(sig, 'base64')));
+            } else {
+                reject('wrong message type');
+            }
+        });
     }
 
     type(): KeypairType {
-        return 'ecdsa';
+        return 'bitcoin';
     }
 
     getAddressInSubstrateFormat(): Uint8Array {
-        return blake2AsU8a(this.keypair.publicKey, 256);
+        return blake2AsU8a(this.getAddressRaw(), 256);
     }
 }
