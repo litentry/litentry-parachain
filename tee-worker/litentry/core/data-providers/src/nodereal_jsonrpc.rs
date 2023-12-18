@@ -268,14 +268,21 @@ impl NftApiList for NoderealJsonrpcClient {
 			params,
 			id: Id::Number(1),
 		};
-		self.post(&req_body)
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))
-			.map(|resp| {
+
+		match self.post(&req_body) {
+			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_721, response: {:?}", resp);
-				let result = resp.result.as_str().unwrap();
-				usize::from_str_radix(&result[2..], 16).unwrap_or_default()
-			})
+				match resp.result.as_str() {
+					Some(result) => Ok(usize::from_str_radix(&result[2..], 16).unwrap_or_default()),
+					None => Err(Error::RequestError(format!(
+						"Cannot tansform response result {:?} to &str",
+						resp.result
+					))),
+				}
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
 	}
 }
 
@@ -306,14 +313,21 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			params,
 			id: Id::Number(1),
 		};
-		self.post(&req_body)
-			.map_err(|e| Error::RequestError(format!("{:?}", e)))
-			.map(|resp| {
+
+		match self.post(&req_body) {
+			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_20, response: {:?}", resp);
-				let result = resp.result.as_str().unwrap();
-				hex_to_decimal(&result[2..])
-			})
+				match resp.result.as_str() {
+					Some(result) => Ok(hex_to_decimal(&result[2..])),
+					None => Err(Error::RequestError(format!(
+						"Cannot tansform response result {:?} to &str",
+						resp.result
+					))),
+				}
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
 	}
 }
 

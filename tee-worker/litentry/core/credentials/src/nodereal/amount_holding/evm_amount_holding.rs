@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use lc_data_providers::achainable::web3_network_to_chain;
 use litentry_primitives::{all_evm_web3networks, EVMTokenType, Web3Network};
 
 use crate::{
@@ -70,20 +71,6 @@ impl AssertionTokenName for EVMTokenType {
 		match self {
 			EVMTokenType::Ton => "TON",
 			EVMTokenType::Trx => "TRX",
-		}
-	}
-}
-
-trait AssertionNetworkName {
-	fn get_network_name(&self) -> Option<&'static str>;
-}
-
-impl AssertionNetworkName for Web3Network {
-	fn get_network_name(&self) -> Option<&'static str> {
-		match self {
-			Web3Network::Bsc => Some("Bsc"),
-			Web3Network::Ethereum => Some("Ethereum"),
-			_ => None,
 		}
 	}
 }
@@ -159,7 +146,7 @@ fn create_network_assertion_logic(
 	assertion = assertion.add_item(AssertionLogic::new_item(
 		ASSERTION_KEYS.network,
 		Op::Equal,
-		network.get_network_name()?,
+		web3_network_to_chain(&network).as_str(),
 	));
 	assertion = assertion.add_item(AssertionLogic::new_item(
 		ASSERTION_KEYS.address,

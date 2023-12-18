@@ -47,7 +47,7 @@ fn get_holding_balance(
 
 	for address in addresses.iter() {
 		let param = GetTokenBalance20Param {
-			contract_address: token_type.get_address(address.0).unwrap().into(),
+			contract_address: token_type.get_address(address.0).unwrap_or_default().into(),
 			address: address.1.clone(),
 			block_number: "latest".into(),
 		};
@@ -92,23 +92,21 @@ pub fn build(req: &AssertionBuildRequest, token_type: EVMTokenType) -> Result<Cr
 		)
 	});
 
-	if result.is_err() {
-		return Err(result.err().unwrap())
-	}
-
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned
-				.update_evm_amount_holding_assertion(token_type, result.ok().unwrap());
-			Ok(credential_unsigned)
+	match result {
+		Ok(value) => match Credential::new(&req.who, &req.shard) {
+			Ok(mut credential_unsigned) => {
+				credential_unsigned.update_evm_amount_holding_assertion(token_type, value);
+				Ok(credential_unsigned)
+			},
+			Err(e) => {
+				error!("Generate unsigned credential failed {:?}", e);
+				Err(Error::RequestVCFailed(
+					Assertion::EVMAmountHolding(token_type),
+					e.into_error_detail(),
+				))
+			},
 		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::EVMAmountHolding(token_type),
-				e.into_error_detail(),
-			))
-		},
+		Err(e) => Err(e),
 	}
 }
 
@@ -133,7 +131,7 @@ mod tests {
 						Box::new(AssertionLogic::Item {
 							src: "$network".into(),
 							op: Op::Equal,
-							dst: "Ethereum".into(),
+							dst: "ethereum".into(),
 						}),
 						Box::new(AssertionLogic::Item {
 							src: "$address".into(),
@@ -147,7 +145,7 @@ mod tests {
 						Box::new(AssertionLogic::Item {
 							src: "$network".into(),
 							op: Op::Equal,
-							dst: "Bsc".into(),
+							dst: "bsc".into(),
 						}),
 						Box::new(AssertionLogic::Item {
 							src: "$address".into(),
