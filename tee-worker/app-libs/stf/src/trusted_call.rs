@@ -37,9 +37,10 @@ use itp_stf_primitives::types::{AccountId, KeyPair, ShardIdentifier};
 pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
-	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
-	ErrorDetail, IMPError, Identity, ParentchainAccountId, ParentchainBlockNumber,
-	UserShieldingKeyNonceType, UserShieldingKeyType, VCMPError, ValidationData, Web3Network,
+	aes_encrypt_default, all_bitcoin_web3networks, all_evm_web3networks,
+	all_substrate_web3networks, AesOutput, Assertion, ErrorDetail, IMPError, Identity,
+	ParentchainAccountId, ParentchainBlockNumber, UserShieldingKeyNonceType, UserShieldingKeyType,
+	VCMPError, ValidationData, Web3Network,
 };
 use log::*;
 use sp_core::crypto::AccountId32;
@@ -502,6 +503,7 @@ where
 				let web3networks = match who {
 					Identity::Substrate(..) => all_substrate_web3networks(),
 					Identity::Evm(..) => all_evm_web3networks(),
+					Identity::Bitcoin(..) => all_bitcoin_web3networks(),
 					_ => vec![],
 				};
 				Self::handle_set_user_shielding_key(

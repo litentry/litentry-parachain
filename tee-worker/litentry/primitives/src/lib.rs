@@ -40,7 +40,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use itp_utils::hex::hex_encode;
 use log::error;
 pub use parentchain_primitives::{
-	all_evm_web3networks, all_substrate_web3networks, all_web3networks,
+	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
 	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,

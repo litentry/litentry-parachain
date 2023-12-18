@@ -60,7 +60,6 @@ pub enum Web2ValidationData {
 pub enum Web3ValidationData {
 	Substrate(Web3CommonValidationData),
 	Evm(Web3CommonValidationData),
-	#[codec(index = 2)]
 	Bitcoin(Web3CommonValidationData),
 }
 
