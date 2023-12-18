@@ -12,7 +12,7 @@ import {
     assertWorkerError,
     assertIdGraphHash,
 } from './common/utils';
-import { assertFailedEvent, assertIsInSidechainBlock, assertIdGraphMutation } from './common/utils/assertion';
+import { assertFailedEvent, assertIsInSidechainBlock, assertIdGraphMutationEvent } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -124,7 +124,6 @@ describe('Test Identity (evm direct invocation)', function () {
         });
 
         const identityLinkedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [
                 [aliceEvmIdentity, true],
@@ -150,8 +149,13 @@ describe('Test Identity (evm direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-            idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'LinkIdentityResult', expectedIdGraphs[0])
+            assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                aliceEvmIdentity,
+                res,
+                'LinkIdentityResult',
+                expectedIdGraphs[0]
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
@@ -167,12 +171,7 @@ describe('Test Identity (evm direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
-            new EthersSigner(context.ethersWallet.alice),
-            identityLinkedEvents,
-            idGraphHashResults,
-            2
-        );
+        await assertIdGraphMutationEvent(new EthersSigner(context.ethersWallet.alice), identityLinkedEvents, 2);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -242,7 +241,6 @@ describe('Test Identity (evm direct invocation)', function () {
         });
 
         const identityDeactivatedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [[bobEvmIdentity, false]],
             [[eveSubstrateIdentity, false]],
@@ -263,8 +261,13 @@ describe('Test Identity (evm direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
-            idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'DeactivateIdentityResult', expectedIdGraphs[0])
+            await assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                aliceEvmIdentity,
+                res,
+                'DeactivateIdentityResult',
+                expectedIdGraphs[0]
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
@@ -280,12 +283,7 @@ describe('Test Identity (evm direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
-            new EthersSigner(context.ethersWallet.alice),
-            identityDeactivatedEvents,
-            idGraphHashResults,
-            2
-        );
+        await assertIdGraphMutationEvent(new EthersSigner(context.ethersWallet.alice), identityDeactivatedEvents, 2);
     });
 
     step('check idGraph from sidechain storage after deactivating', async function () {
@@ -342,7 +340,6 @@ describe('Test Identity (evm direct invocation)', function () {
         });
 
         const identityActivatedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [[bobEvmIdentity, true]],
             [[eveSubstrateIdentity, true]],
@@ -363,8 +360,13 @@ describe('Test Identity (evm direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
-            idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'ActivateIdentityResult', expectedIdGraphs[0])
+            await assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                aliceEvmIdentity,
+                res,
+                'ActivateIdentityResult',
+                expectedIdGraphs[0]
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('activateIdentityCall', res);
@@ -380,12 +382,7 @@ describe('Test Identity (evm direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
-            new EthersSigner(context.ethersWallet.alice),
-            identityActivatedEvents,
-            idGraphHashResults,
-            2
-        );
+        await assertIdGraphMutationEvent(new EthersSigner(context.ethersWallet.alice), identityActivatedEvents, 2);
     });
 
     step('check idGraph from sidechain storage after activating', async function () {

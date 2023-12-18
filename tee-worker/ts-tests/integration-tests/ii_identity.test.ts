@@ -9,7 +9,7 @@ import {
     assertIdentityDeactivated,
     buildIdentityFromKeypair,
     assertIdentityActivated,
-    assertIdGraphMutation,
+    assertIdGraphMutationEvent,
     PolkadotSigner,
 } from './common/utils';
 import { u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
@@ -155,10 +155,9 @@ describeLitentry('Test Identity', (context) => {
             context.api.events.identityManagement.IdentityLinked.is(e)
         );
 
-        await assertIdGraphMutation(
+        await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
-            undefined,
             aliceTxs.length
         );
 
@@ -214,10 +213,9 @@ describeLitentry('Test Identity', (context) => {
         );
 
         identityLinkedEvents = bobRespEvents.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
-        await assertIdGraphMutation(
+        await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.bob),
             identityLinkedEvents,
-            undefined,
             bobTxs.length
         );
     });

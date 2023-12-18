@@ -815,7 +815,6 @@ where
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
-					id_graph_hash,
 					req_ext_hash,
 				))));
 
@@ -976,7 +975,6 @@ where
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
-					id_graph_hash,
 					req_ext_hash,
 				))));
 
@@ -1160,29 +1158,6 @@ pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
 		)))),
 		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
-	}
-}
-
-pub fn push_call_imp_update_id_graph_hash<NodeMetadataRepository>(
-	calls: &mut Vec<ParentchainCall>,
-	node_metadata_repo: Arc<NodeMetadataRepository>,
-	account: ParentchainAccountId,
-	id_graph_hash: H256,
-	req_ext_hash: H256,
-) where
-	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-{
-	debug!("pushing IMP::update_id_graph_hash call ...");
-	match node_metadata_repo.get_from_metadata(|m| m.update_id_graph_hash_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-			call_index,
-			account,
-			id_graph_hash,
-			req_ext_hash,
-		)))),
-		Ok(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
-		Err(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 	}
 }
 

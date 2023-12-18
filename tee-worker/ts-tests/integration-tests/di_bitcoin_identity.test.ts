@@ -12,7 +12,7 @@ import {
     assertIdGraphMutationResult,
     assertIdGraphHash,
 } from './common/utils';
-import { assertIsInSidechainBlock, assertIdGraphMutation } from './common/utils/assertion';
+import { assertIsInSidechainBlock, assertIdGraphMutationEvent } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -98,7 +98,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         });
 
         const identityLinkedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [
                 [aliceBitcoinIdentity, true],
@@ -123,8 +122,13 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-            idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'LinkIdentityResult', expectedIdGraphs[0])
+            await assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                aliceBitcoinIdentity,
+                res,
+                'LinkIdentityResult',
+                expectedIdGraphs[0]
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
@@ -140,12 +144,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
-            new BitcoinSigner(context.bitcoinWallet.alice),
-            identityLinkedEvents,
-            idGraphHashResults,
-            1
-        );
+        await assertIdGraphMutationEvent(new BitcoinSigner(context.bitcoinWallet.alice), identityLinkedEvents, 1);
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -155,7 +154,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             aliceBitcoinIdentity
         );
         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
@@ -201,7 +199,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         });
 
         const identityDeactivatedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, false]]];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
@@ -219,8 +216,13 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
-            idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'DeactivateIdentityResult', expectedIdGraphs[0])
+            await assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                aliceBitcoinIdentity,
+                res,
+                'DeactivateIdentityResult',
+                expectedIdGraphs[0]
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
@@ -236,12 +238,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
-            new BitcoinSigner(context.bitcoinWallet.alice),
-            identityDeactivatedEvents,
-            idGraphHashResults,
-            1
-        );
+        await assertIdGraphMutationEvent(new BitcoinSigner(context.bitcoinWallet.alice), identityDeactivatedEvents, 1);
     });
 
     step('check idGraph from sidechain storage after deactivating', async function () {
@@ -270,6 +267,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
         await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
+
     step('activating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
@@ -287,7 +285,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         });
 
         const identityActivatedEvents: any[] = [];
-        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, true]]];
 
         for (const { nonce, identity } of activateIdentityRequestParams) {
@@ -305,8 +302,13 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
-            idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'ActivateIdentityResult', expectedIdGraphs[0])
+            await assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                aliceBitcoinIdentity,
+                res,
+                'ActivateIdentityResult',
+                expectedIdGraphs[0]
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('activateIdentityCall', res);
@@ -322,12 +324,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
-            new BitcoinSigner(context.bitcoinWallet.alice),
-            identityActivatedEvents,
-            idGraphHashResults,
-            1
-        );
+        await assertIdGraphMutationEvent(new BitcoinSigner(context.bitcoinWallet.alice), identityActivatedEvents, 1);
     });
 
     step('check idGraph from sidechain storage after activating', async function () {

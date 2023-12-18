@@ -211,21 +211,15 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-// for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
-export async function assertIdGraphMutation(
-    signer: Signer,
-    events: any[],
-    idGraphHashResults: any[] | undefined,
-    expectedLength: number
-) {
+// for IdGraph mutation, assert the corresponding event is emitted for the given signer
+export async function assertIdGraphMutationEvent(signer: Signer, events: any[], expectedLength: number) {
     assert.equal(events.length, expectedLength);
-    assert.equal(idGraphHashResults!.length, expectedLength);
 
     const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
-    events.forEach((e, i) => {
+    events.forEach((e) => {
         assert.equal(signerAddress, e.data.account.toHex());
     });
-    console.log(colors.green('assertIdGraphMutation passed'));
+    console.log(colors.green('assertIdGraphMutationEvent passed'));
 }
 
 export async function assertIdentity(
@@ -252,8 +246,10 @@ export function assertWorkerError(
 
 // a common assertion for all DI requests that might mutate the IdGraph
 // returns the `id_graph_hash` in the `returnValue`
-export function assertIdGraphMutationResult(
+export async function assertIdGraphMutationResult(
     context: IntegrationTestContext,
+    teeShieldingKey: KeyObject,
+    identity: LitentryPrimitivesIdentity,
     returnValue: WorkerRpcReturnValue,
     resultType:
         | 'LinkIdentityResult'
@@ -261,13 +257,15 @@ export function assertIdGraphMutationResult(
         | 'ActivateIdentityResult'
         | 'SetIdentityNetworksResult',
     expectedIdGraph: [LitentryPrimitivesIdentity, boolean][]
-): HexString {
+) {
     const decodedResult = context.api.createType(resultType, returnValue.value) as any;
-
     assert.isNotNull(decodedResult.mutated_id_graph);
     const idGraph = parseIdGraph(context.sidechainRegistry, decodedResult.mutated_id_graph, aesKey);
     assertIdGraph(idGraph, expectedIdGraph);
-    return u8aToHex(decodedResult.id_graph_hash);
+    const queriedIdGraphHash = (await getIdGraphHash(context, teeShieldingKey, identity)).toHex();
+    assert.equal(u8aToHex(decodedResult.id_graph_hash), queriedIdGraphHash);
+
+    console.log(colors.green('assertIdGraphMutationResult passed'));
 }
 
 /* 
