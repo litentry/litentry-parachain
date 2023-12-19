@@ -15,6 +15,7 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 pub mod holding_amount;
+pub mod lit_staking;
 pub mod mirror;
 pub mod token_balance;
 
