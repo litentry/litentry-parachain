@@ -96,11 +96,11 @@ fn get_generic_discord_role_id(
 
 #[cfg(test)]
 mod tests {
-	use crate::{generic_discord_role::build, AccountId, AssertionBuildRequest};
+	use crate::{generic_discord_role::build, AccountId, Arc, AssertionBuildRequest};
 	use itp_stf_primitives::types::ShardIdentifier;
 	use lc_credentials::assertion_logic::{AssertionLogic, Op};
 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
-	use lc_mock_server::run;
+	use lc_mock_server::{default_getter, run};
 	use litentry_primitives::{
 		Assertion, ContestType, GenericDiscordRoleType, Identity, IdentityNetworkTuple,
 		IdentityString, SoraQuizType,
@@ -110,7 +110,7 @@ mod tests {
 
 	fn init() {
 		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap();
+		let url = run(Arc::new(default_getter), 0).unwrap();
 		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_discord_litentry_url(url);
 		GLOBAL_DATA_PROVIDER_CONFIG
 			.write()

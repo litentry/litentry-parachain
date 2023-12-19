@@ -18,8 +18,8 @@
 // when requesting VCs.
 
 use crate::{
-	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
-	VIP3MembershipCardLevel, Web3Network,
+	AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType, GenericDiscordRoleType,
+	OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -216,6 +216,8 @@ pub enum Assertion {
 	VIP3MembershipCard(VIP3MembershipCardLevel),
 
 	WeirdoGhostGangHolder,
+
+	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
 }
 
 impl Assertion {

@@ -370,3 +370,17 @@ impl ConvertParameterString for AchainableParams {
 		})
 	}
 }
+
+fn hex_to_decimal(hex_string: &str) -> f64 {
+	let parts: Vec<&str> = hex_string.split('.').collect();
+
+	let integer_part = u64::from_str_radix(parts[0], 16).unwrap_or_default();
+
+	if parts.len() > 1 {
+		let decimal_part = u64::from_str_radix(parts[1], 16).unwrap();
+		let decimal_str = format!("{}.{}", integer_part, decimal_part);
+		decimal_str.parse::<f64>().unwrap_or_default()
+	} else {
+		integer_part as f64
+	}
+}
