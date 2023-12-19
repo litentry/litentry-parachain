@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, u8aToString } from '@polkadot/util';
+import { u8aToHex, u8aToString, bufferToU8a } from '@polkadot/util';
 import {
     assertIdGraphMutationResult,
     assertIdGraphHash,
@@ -43,6 +43,7 @@ describe('Test Identity (direct invocation)', function () {
     // - a `mock_user` twitter
     // - alice's evm identity
     // - eve's substrate identity (as alice can't link her own substrate again)
+    // - alice's bitcoin identity
     const linkIdentityRequestParams: {
         nonce: number;
         identity: LitentryPrimitivesIdentity;
@@ -54,8 +55,7 @@ describe('Test Identity (direct invocation)', function () {
     before(async () => {
         context = await initIntegrationTestContext(
             process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
-            process.env.NODE_ENDPOINT!, // @fixme evil assertion; centralize env access
-            0
+            process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
         );
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
@@ -142,6 +142,31 @@ describe('Test Identity (direct invocation)', function () {
             networks: eveSubstrateNetworks,
         });
 
+        const bitcoinNonce = getNextNonce();
+        const bitcoinIdentity = await buildIdentityHelper(
+            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            'Bitcoin',
+            context
+        );
+        console.log('bitcoin id: ', bitcoinIdentity.toHuman());
+        const [bitcoinValidation] = await buildValidations(
+            context,
+            [aliceSubject],
+            [bitcoinIdentity],
+            bitcoinNonce,
+            'bitcoin',
+            undefined,
+            undefined,
+            context.bitcoinWallet.alice
+        );
+        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['Bitcoin']) as unknown as Vec<Web3Network>; // @fixme #1878
+        linkIdentityRequestParams.push({
+            nonce: bitcoinNonce,
+            identity: bitcoinIdentity,
+            validation: bitcoinValidation,
+            networks: bitcoinNetworks,
+        });
+
         const identityLinkedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
@@ -151,6 +176,7 @@ describe('Test Identity (direct invocation)', function () {
             ],
             [[evmIdentity, true]],
             [[eveSubstrateIdentity, true]],
+            [[bitcoinIdentity, true]],
         ];
 
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
@@ -191,7 +217,7 @@ describe('Test Identity (direct invocation)', function () {
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
             idGraphHashResults,
-            3
+            4
         );
     });
 
@@ -206,7 +232,7 @@ describe('Test Identity (direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [[], ['Ethereum', 'Bsc'], ['Polkadot', 'Litentry']];
+        const expectedWeb3Networks = [[], ['Ethereum', 'Bsc'], ['Polkadot', 'Litentry'], ['Bitcoin']];
         let currentIndex = 0;
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -432,12 +458,24 @@ describe('Test Identity (direct invocation)', function () {
             identity: eveSubstrateIdentity,
         });
 
+        const bitcoinNonce = getNextNonce();
+        const bitcoinIdentity = await buildIdentityHelper(
+            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            'Bitcoin',
+            context
+        );
+        deactivateIdentityRequestParams.push({
+            nonce: bitcoinNonce,
+            identity: bitcoinIdentity,
+        });
+
         const identityDeactivatedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, false]],
             [[evmIdentity, false]],
             [[eveSubstrateIdentity, false]],
+            [[bitcoinIdentity, false]],
         ];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
@@ -475,7 +513,7 @@ describe('Test Identity (direct invocation)', function () {
             new PolkadotSigner(context.substrateWallet.alice),
             identityDeactivatedEvents,
             idGraphHashResults,
-            3
+            4
         );
     });
 
@@ -541,12 +579,24 @@ describe('Test Identity (direct invocation)', function () {
             identity: eveSubstrateIdentity,
         });
 
+        const bitcoinNonce = getNextNonce();
+        const bitcoinIdentity = await buildIdentityHelper(
+            u8aToHex(bufferToU8a(context.bitcoinWallet.alice.toPublicKey().toBuffer())),
+            'Bitcoin',
+            context
+        );
+        activateIdentityRequestParams.push({
+            nonce: bitcoinNonce,
+            identity: bitcoinIdentity,
+        });
+
         const identityActivatedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, true]],
             [[evmIdentity, true]],
             [[eveSubstrateIdentity, true]],
+            [[bitcoinIdentity, true]],
         ];
 
         for (const { nonce, identity } of activateIdentityRequestParams) {
@@ -584,7 +634,7 @@ describe('Test Identity (direct invocation)', function () {
             new PolkadotSigner(context.substrateWallet.alice),
             identityActivatedEvents,
             idGraphHashResults,
-            3
+            4
         );
     });
 

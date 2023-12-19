@@ -94,9 +94,21 @@ export const createSignedTrustedCall = async (
     if (withWrappedBytes) {
         payload = u8aConcat(stringToU8a('<Bytes>'), payload, stringToU8a('</Bytes>'));
     }
-    const signature = parachainApi.createType('LitentryMultiSignature', {
-        [signer.type()]: u8aToHex(await signer.sign(payload)),
-    });
+
+    let signature;
+
+    // for bitcoin signature, we expect a hex-encoded `string` without `0x` prefix
+    // TODO: any better idiomatic way?
+    if (signer.type() === 'bitcoin') {
+        const payloadStr = u8aToHex(payload).substring(2);
+        signature = parachainApi.createType('LitentryMultiSignature', {
+            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
+        });
+    } else {
+        signature = parachainApi.createType('LitentryMultiSignature', {
+            [signer.type()]: u8aToHex(await signer.sign(payload)),
+        });
+    }
     return parachainApi.createType('TrustedCallSigned', {
         call: call,
         index: nonce,
@@ -115,9 +127,18 @@ export const createSignedTrustedGetter = async (
         [variant]: parachainApi.createType(argType, params),
     });
     const payload = getter.toU8a();
-    const signature = parachainApi.createType('LitentryMultiSignature', {
-        [signer.type()]: u8aToHex(await signer.sign(payload)),
-    });
+
+    let signature;
+    if (signer.type() === 'bitcoin') {
+        const payloadStr = u8aToHex(payload).substring(2);
+        signature = parachainApi.createType('LitentryMultiSignature', {
+            [signer.type()]: u8aToHex(await signer.sign(payloadStr)),
+        });
+    } else {
+        signature = parachainApi.createType('LitentryMultiSignature', {
+            [signer.type()]: u8aToHex(await signer.sign(payload)),
+        });
+    }
     return parachainApi.createType('TrustedGetterSigned', {
         getter: getter,
         signature: signature,

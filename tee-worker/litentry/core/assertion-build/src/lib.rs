@@ -97,6 +97,11 @@ pub fn transpose_identity(
 					addresses.push((address, n));
 					networks_set.insert(n);
 				},
+				Identity::Bitcoin(address) => {
+					let address = account_id_to_string(address.as_ref());
+					addresses.push((address, n));
+					networks_set.insert(n);
+				},
 				_ => {},
 			};
 		});
