@@ -27,6 +27,7 @@ export default {
                 BnbDigitDomainClub: "BnbDigitDomainType",
                 VIP3MembershipCard: "VIP3MembershipCardLevel",
                 WeirdoGhostGangHolder: "Null",
+                LITStaking: "Null",
                 EVMAmountHolding: "EVMTokenType",
             },
         },
