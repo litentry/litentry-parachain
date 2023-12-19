@@ -31,14 +31,17 @@ describeLitentry('Test Batch Utility', (context) => {
 
     step('batch test: link identities', async function () {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
         for (let index = 0; index < evmSigners.length; index++) {
             const signer = evmSigners[index];
             const evmIdentity = await buildIdentityHelper(signer.address, 'Evm', context);
             identities.push(evmIdentity);
             we3networks.push(defaultNetworks as unknown as Vec<Web3Network>); // @fixme #1878
-            signerIdentities.push(aliceSubject);
+            signerIdentities.push(aliceSubstrateIdentity);
         }
 
         const evmValidations = await buildValidations(

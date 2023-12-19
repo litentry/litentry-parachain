@@ -94,11 +94,14 @@ describeLitentry('Test Identity', (context) => {
         eveIdentities = [evmIdentity, eveSubstrateIdentity, twitterIdentity];
         charlieIdentities = [charlieSubstrateIdentity];
 
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
         const evmValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [evmIdentity],
             nonce,
             'ethereum',
@@ -108,7 +111,7 @@ describeLitentry('Test Identity', (context) => {
 
         const eveSubstrateValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [eveSubstrateIdentity],
             nonce + 1,
             'substrate',
@@ -117,7 +120,7 @@ describeLitentry('Test Identity', (context) => {
 
         const twitterValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [twitterIdentity],
             nonce + 2,
             'twitter'
@@ -173,10 +176,13 @@ describeLitentry('Test Identity', (context) => {
                 },
             },
         };
-        const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
+        const bobSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.bob),
+            context
+        );
         nonce = await getNonce(base58mrEnclave, workerAddress, context);
         console.log('nonce for step link identities', nonce);
-        const msg = generateVerificationMessage(context, bobSubject, charlieSubstrateIdentity, nonce);
+        const msg = generateVerificationMessage(context, bobSubstrateIdentity, charlieSubstrateIdentity, nonce);
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
         // sign the wrapped version as in polkadot-extension
@@ -223,9 +229,18 @@ describeLitentry('Test Identity', (context) => {
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const identityHex = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex();
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
-        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
+        const respIdGraph = await checkIdGraph(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            aliceSubstrateIdentity,
+            identityHex
+        );
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active');
     });
@@ -297,7 +312,10 @@ describeLitentry('Test Identity', (context) => {
 
     step('link already linked identity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
         const aliceIdentities = [twitterIdentity];
 
@@ -305,7 +323,7 @@ describeLitentry('Test Identity', (context) => {
         console.log('nonce for step link already linked identity', nonce);
         const aliceTwitterValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [twitterIdentity],
             nonce,
             'twitter',
