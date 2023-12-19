@@ -94,18 +94,22 @@ pub mod pallet {
 		//       Can we retrieve that extrinsic hash in F/E?
 		IdentityLinked {
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityDeactivated {
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityActivated {
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityNetworksSet {
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		// event errors caused by processing in TEE
@@ -244,10 +248,11 @@ pub mod pallet {
 		pub fn identity_linked(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, req_ext_hash });
+			Self::deposit_event(Event::IdentityLinked { account, id_graph_hash, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -256,10 +261,15 @@ pub mod pallet {
 		pub fn identity_deactivated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityDeactivated { account, req_ext_hash });
+			Self::deposit_event(Event::IdentityDeactivated {
+				account,
+				id_graph_hash,
+				req_ext_hash,
+			});
 			Ok(Pays::No.into())
 		}
 
@@ -268,10 +278,11 @@ pub mod pallet {
 		pub fn identity_activated(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityActivated { account, req_ext_hash });
+			Self::deposit_event(Event::IdentityActivated { account, id_graph_hash, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -280,10 +291,15 @@ pub mod pallet {
 		pub fn identity_networks_set(
 			origin: OriginFor<T>,
 			account: T::AccountId,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityNetworksSet { account, req_ext_hash });
+			Self::deposit_event(Event::IdentityNetworksSet {
+				account,
+				id_graph_hash,
+				req_ext_hash,
+			});
 			Ok(Pays::No.into())
 		}
 

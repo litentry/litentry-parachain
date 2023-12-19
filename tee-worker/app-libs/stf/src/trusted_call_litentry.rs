@@ -291,6 +291,7 @@ impl TrustedCallSigned {
 		calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 			call_index,
 			account,
+			id_graph_hash,
 			req_ext_hash,
 		))));
 

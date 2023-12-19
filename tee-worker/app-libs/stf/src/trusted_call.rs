@@ -765,6 +765,7 @@ where
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
+					id_graph_hash,
 					req_ext_hash,
 				))));
 
@@ -815,6 +816,7 @@ where
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
+					id_graph_hash,
 					req_ext_hash,
 				))));
 
@@ -975,6 +977,7 @@ where
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
+					id_graph_hash,
 					req_ext_hash,
 				))));
 

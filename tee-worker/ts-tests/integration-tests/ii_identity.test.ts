@@ -161,6 +161,7 @@ describeLitentry('Test Identity', (context) => {
         await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
+            undefined,
             aliceTxs.length
         );
 
@@ -222,6 +223,7 @@ describeLitentry('Test Identity', (context) => {
         await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.bob),
             identityLinkedEvents,
+            undefined,
             bobTxs.length
         );
     });

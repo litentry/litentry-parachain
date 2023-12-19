@@ -71,6 +71,7 @@ describeLitentry('Test Batch Utility', (context) => {
         await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
+            undefined,
             txs.length
         );
     });

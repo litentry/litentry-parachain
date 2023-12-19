@@ -211,13 +211,24 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
     return true;
 }
 
-// for IdGraph mutation, assert the corresponding event is emitted for the given signer
-export async function assertIdGraphMutationEvent(signer: Signer, events: any[], expectedLength: number) {
+// for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
+export async function assertIdGraphMutationEvent(
+    signer: Signer,
+    events: any[],
+    idGraphHashResults: any[] | undefined,
+    expectedLength: number
+) {
     assert.equal(events.length, expectedLength);
+    if (idGraphHashResults != undefined) {
+        assert.equal(idGraphHashResults!.length, expectedLength);
+    }
 
     const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
-    events.forEach((e) => {
+    events.forEach((e, i) => {
         assert.equal(signerAddress, e.data.account.toHex());
+        if (idGraphHashResults != undefined) {
+            assert.equal(idGraphHashResults![i], e.data.idGraphHash.toHex());
+        }
     });
     console.log(colors.green('assertIdGraphMutationEvent passed'));
 }
@@ -257,7 +268,7 @@ export async function assertIdGraphMutationResult(
         | 'ActivateIdentityResult'
         | 'SetIdentityNetworksResult',
     expectedIdGraph: [LitentryPrimitivesIdentity, boolean][]
-) {
+): Promise<HexString> {
     const decodedResult = context.api.createType(resultType, returnValue.value) as any;
     assert.isNotNull(decodedResult.mutated_id_graph);
     const idGraph = parseIdGraph(context.sidechainRegistry, decodedResult.mutated_id_graph, aesKey);
@@ -266,6 +277,7 @@ export async function assertIdGraphMutationResult(
     assert.equal(u8aToHex(decodedResult.id_graph_hash), queriedIdGraphHash);
 
     console.log(colors.green('assertIdGraphMutationResult passed'));
+    return u8aToHex(decodedResult.id_graph_hash);
 }
 
 /* 

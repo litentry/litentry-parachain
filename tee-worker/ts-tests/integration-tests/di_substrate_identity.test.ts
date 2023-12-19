@@ -171,6 +171,7 @@ describe('Test Identity (direct invocation)', function () {
         });
 
         const identityLinkedEvents: any[] = [];
+        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [
                 [aliceSubstrateIdentity, true],
@@ -198,13 +199,15 @@ describe('Test Identity (direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-            await assertIdGraphMutationResult(
-                context,
-                teeShieldingKey,
-                aliceSubstrateIdentity,
-                res,
-                'LinkIdentityResult',
-                expectedIdGraphs[0]
+            idGraphHashResults.push(
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceSubstrateIdentity,
+                    res,
+                    'LinkIdentityResult',
+                    expectedIdGraphs[0]
+                )
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
@@ -220,7 +223,12 @@ describe('Test Identity (direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutationEvent(new PolkadotSigner(context.substrateWallet.alice), identityLinkedEvents, 4);
+        await assertIdGraphMutationEvent(
+            new PolkadotSigner(context.substrateWallet.alice),
+            identityLinkedEvents,
+            idGraphHashResults,
+            4
+        );
     });
 
     step('check user sidechain storage after linking', async function () {
@@ -475,6 +483,7 @@ describe('Test Identity (direct invocation)', function () {
         });
 
         const identityDeactivatedEvents: any[] = [];
+        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, false]],
             [[evmIdentity, false]],
@@ -497,13 +506,15 @@ describe('Test Identity (direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
-            await assertIdGraphMutationResult(
-                context,
-                teeShieldingKey,
-                aliceSubstrateIdentity,
-                res,
-                'DeactivateIdentityResult',
-                expectedIdGraphs[0]
+            idGraphHashResults.push(
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceSubstrateIdentity,
+                    res,
+                    'DeactivateIdentityResult',
+                    expectedIdGraphs[0]
+                )
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
@@ -521,6 +532,7 @@ describe('Test Identity (direct invocation)', function () {
         await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.alice),
             identityDeactivatedEvents,
+            idGraphHashResults,
             4
         );
     });
@@ -599,6 +611,7 @@ describe('Test Identity (direct invocation)', function () {
         });
 
         const identityActivatedEvents: any[] = [];
+        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, true]],
             [[evmIdentity, true]],
@@ -621,13 +634,15 @@ describe('Test Identity (direct invocation)', function () {
             );
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
-            await assertIdGraphMutationResult(
-                context,
-                teeShieldingKey,
-                aliceSubstrateIdentity,
-                res,
-                'ActivateIdentityResult',
-                expectedIdGraphs[0]
+            idGraphHashResults.push(
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceSubstrateIdentity,
+                    res,
+                    'ActivateIdentityResult',
+                    expectedIdGraphs[0]
+                )
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('activateIdentityCall', res);
@@ -642,7 +657,12 @@ describe('Test Identity (direct invocation)', function () {
                 }
             });
         }
-        await assertIdGraphMutationEvent(new PolkadotSigner(context.substrateWallet.alice), identityActivatedEvents, 4);
+        await assertIdGraphMutationEvent(
+            new PolkadotSigner(context.substrateWallet.alice),
+            identityActivatedEvents,
+            idGraphHashResults,
+            4
+        );
     });
 
     step('check idgraph from sidechain storage after activating', async function () {
@@ -698,6 +718,7 @@ describe('Test Identity (direct invocation)', function () {
         const nonce = getNextNonce();
 
         const identityNetworksSetEvents: any[] = [];
+        const idGraphHashResults: any[] = [];
         let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[eveSubstrateIdentity, true]]];
 
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
@@ -715,13 +736,15 @@ describe('Test Identity (direct invocation)', function () {
         );
 
         const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setIdentityNetworksCall);
-        await assertIdGraphMutationResult(
-            context,
-            teeShieldingKey,
-            aliceSubstrateIdentity,
-            res,
-            'ActivateIdentityResult',
-            expectedIdGraphs[0]
+        idGraphHashResults.push(
+            await assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                aliceSubstrateIdentity,
+                res,
+                'ActivateIdentityResult',
+                expectedIdGraphs[0]
+            )
         );
         expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
         await assertIsInSidechainBlock('setIdentityNetworksCall', res);
@@ -735,6 +758,7 @@ describe('Test Identity (direct invocation)', function () {
         await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.alice),
             identityNetworksSetEvents,
+            idGraphHashResults,
             1
         );
     });
