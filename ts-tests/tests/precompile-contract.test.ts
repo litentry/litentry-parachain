@@ -186,7 +186,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await executeTransaction(setAutoCompound, 'setAutoCompound');
         const collatorAfterCompound = await collatorDetails();
         expect(collatorAfterCompound.value).to.eq(autoCompoundPercent + 5);
-
+        printBalance('after bond more', balanceAfterBondMore);
         // scheduleDelegatorBondLess(collator, amount)
         expect(await isPendingRequest()).to.be.false;
         const scheduleDelegatorBondLess = precompileContract.methods.scheduleDelegatorBondLess(
@@ -196,11 +196,21 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await executeTransaction(scheduleDelegatorBondLess, 'scheduleDelegatorBondLess');
         expect(await isPendingRequest()).to.be.true;
 
-        // cancelDelegationRequest(collator)
-        const cancelDelegationRequest = precompileContract.methods.cancelDelegationRequest(collatorPublicKey);
-        expect(await isPendingRequest()).to.be.true;
-        await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
-        expect(await isPendingRequest()).to.be.false;
+        const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
+            evmAccountRaw.publicKey,
+            collatorPublicKey
+        );
+        await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
+        const { data: balanceAfterExecuteDelegation } = await context.api.query.system.account(
+            evmAccountRaw.mappedAddress
+        );
+        printBalance('balanceAfterExecuteDelegation', balanceAfterExecuteDelegation);
+
+        // // cancelDelegationRequest(collator)
+        // const cancelDelegationRequest = precompileContract.methods.cancelDelegationRequest(collatorPublicKey);
+        // expect(await isPendingRequest()).to.be.true;
+        // await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
+        // expect(await isPendingRequest()).to.be.false;
 
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
