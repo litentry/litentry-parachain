@@ -108,6 +108,7 @@ where
 			Assertion::WeirdoGhostGangHolder =>
 				lc_assertion_build::nodereal::nft_holder::weirdo_ghost_gang_holder::build(&self.req),
 
+			Assertion::LITStaking => lc_assertion_build::lit_staking::build(&self.req),
 			Assertion::EVMAmountHolding(token_type) =>
 				lc_assertion_build::nodereal::amount_holding::evm_amount_holding::build(
 					&self.req, token_type,

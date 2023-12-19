@@ -1529,6 +1529,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
 name = "hex_lit"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1695,7 +1701,7 @@ dependencies = [
  "serde 1.0.166",
  "serde_json 1.0.100",
  "sgx_tstd",
- "substrate-fixed",
+ "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
  "thiserror 1.0.9",
  "url",
 ]
@@ -2069,7 +2075,7 @@ version = "0.9.0"
 dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
- "substrate-fixed",
+ "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed?tag=v0.5.9)",
 ]
 
 [[package]]
@@ -2729,6 +2735,7 @@ dependencies = [
  "frame-support",
  "futures 0.3.8",
  "hex 0.4.0",
+ "hex-literal",
  "http",
  "http_req",
  "ita-stf",
@@ -2747,6 +2754,7 @@ dependencies = [
  "lc-stf-task-sender",
  "litentry-primitives",
  "log",
+ "pallet-parachain-staking",
  "parity-scale-codec",
  "rust-base58 0.0.4 (git+https://github.com/mesalock-linux/rust-base58-sgx)",
  "serde 1.0.166",
@@ -3420,6 +3428,25 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-parachain-staking"
+version = "0.1.0"
+dependencies = [
+ "core-primitives",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "substrate-fixed 0.5.9 (git+https://github.com/encointer/substrate-fixed)",
 ]
 
 [[package]]
@@ -5117,6 +5144,26 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "typenum 1.16.0 (git+https://github.com/encointer/typenum?tag=v1.16.0)",
+]
+
+[[package]]
+name = "substrate-fixed"
+version = "0.5.9"
+source = "git+https://github.com/encointer/substrate-fixed#a75f3ba3f7c7893fb420500639cc055f964b1b88"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
+ "substrate-typenum",
+]
+
+[[package]]
+name = "substrate-typenum"
+version = "1.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0f0091e93c2c75b233ae39424c52cb8a662c0811fb68add149e20e5d7e8a788"
+dependencies = [
+ "parity-scale-codec",
+ "scale-info",
 ]
 
 [[package]]

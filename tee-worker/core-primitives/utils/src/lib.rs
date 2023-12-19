@@ -31,9 +31,12 @@ pub mod sgx_reexport_prelude {
 	pub use thiserror_sgx as thiserror;
 }
 
+extern crate alloc;
+
 pub mod buffer;
 pub mod error;
 pub mod hex;
+pub mod hex_display;
 pub mod stringify;
 
 // Public re-exports.
