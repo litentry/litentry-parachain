@@ -20,31 +20,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::request_uniswap_v2_or_v3_user, *};
-use lc_data_providers::ConvertParameterString;
-use std::string::ToString;
+use crate::{
+	achainable::{request_achainable, request_uniswap_v2_or_v3_user},
+	*,
+};
+use lc_credentials::achainable::{bab_holder::UpdateBABHolder, uniswap_user::UpdateUniswapUser};
+use lc_data_providers::achainable_names::AchainableNameBasic;
 
-/// NOTE:
-/// Build is uniswap v2/v3 user
-/// name: Because it is necessary to request the interface four times to determine whether the uniswapv2/v3 user requires it, we can agree on the name here as IsUniswapV23User.
-/// chain: ethereum
-///
-/// assertions":[
-/// {
-///        {
-///            src:$is_uniswap_v2_user,
-///            op:==,
-///            dst:true
-///        },
-///        {
-///            src: is_uniswap_v3_user,
-///            op: ==,
-///            dst: true
-///         }
-/// }
-///
 pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
-	debug!("Assertion Achainable build_basic, who: {:?}", account_id_to_string(&req.who));
+	debug!("Assertion Achainable building Basic");
 
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -53,47 +37,29 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::Basic(param.clone());
-	check_uniswap_v23_user_inputs(&achainable_param, &param)?;
-
-	let (v2_user, v3_user) = request_uniswap_v2_or_v3_user(addresses, achainable_param.clone())?;
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			let (desc, subtype) = get_uniswap_v23_info();
-			credential_unsigned.add_subject_info(desc, subtype);
-			credential_unsigned.update_uniswap_v23_info(v2_user, v3_user);
-
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::Achainable(achainable_param),
-				e.into_error_detail(),
-			))
-		},
-	}
-}
-
-fn get_uniswap_v23_info() -> (&'static str, &'static str) {
-	(
-		"You are a trader or liquidity provider of Uniswap V2 or V3. 
-	Uniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f. 
-	Uniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984.",
-		"Uniswap V2/V3 User",
-	)
-}
-
-fn check_uniswap_v23_user_inputs(
-	achainable_param: &AchainableParams,
-	param: &AchainableBasic,
-) -> Result<bool> {
-	let name = achainable_param.to_string(&param.name)?;
-	if name != "Uniswap V2/V3 user" {
-		return Err(Error::RequestVCFailed(
+	let mut credential = Credential::new(&req.who, &req.shard).map_err(|e| {
+		Error::RequestVCFailed(
 			Assertion::Achainable(achainable_param.clone()),
-			ErrorDetail::StfError(ErrorString::truncate_from("Invalid name".to_string().into())),
-		))
+			e.into_error_detail(),
+		)
+	})?;
+
+	let basic_name = AchainableNameBasic::from(param.name).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+	match basic_name {
+		AchainableNameBasic::UniswapV23User => {
+			let (v2_user, v3_user) = request_uniswap_v2_or_v3_user(addresses, achainable_param)?;
+			credential.update_uniswap_user(v2_user, v3_user);
+		},
+		AchainableNameBasic::BABHolder => {
+			let is_bab_holder = request_achainable(addresses, achainable_param)?;
+			credential.update_bab_holder(is_bab_holder);
+		},
 	}
 
-	Ok(true)
+	Ok(credential)
 }
