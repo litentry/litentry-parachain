@@ -246,6 +246,9 @@ pub enum Assertion {
 	#[codec(index = 19)]
 	WeirdoGhostGangHolder,
 
+	#[codec(index = 20)]
+	BRC20AmountHolder,
+
 	#[codec(index = 22)]
 	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
 }

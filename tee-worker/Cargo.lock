@@ -6161,6 +6161,7 @@ dependencies = [
  "itp-time-utils",
  "itp-types",
  "itp-utils",
+ "lazy_static",
  "lc-data-providers",
  "litentry-primitives",
  "log 0.4.20",
