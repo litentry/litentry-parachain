@@ -150,26 +150,13 @@ impl DelegatorState {
 	fn decode_delegator(storage_in_hex: &str) -> Result<Delegator<AccountId, ParentchainBalance>> {
 		// Remove 0x
 		if let Some(storage_in_hex_without_prefix) = storage_in_hex.strip_prefix("0x") {
-			return hex::decode(storage_in_hex_without_prefix)
-				.map(|decoded| {
+			if let Ok(decoded) = hex::decode(storage_in_hex_without_prefix) {
+				if let Ok(delegator) =
 					Delegator::<AccountId, ParentchainBalance>::decode(&mut decoded.as_bytes_ref())
-				})
-				.map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::LITStaking,
-						ErrorDetail::StfError(ErrorString::truncate_from(
-							format!("{:?}", e).as_bytes().to_vec(),
-						)),
-					)
-				})?
-				.map_err(|e| {
-					Error::RequestVCFailed(
-						Assertion::LITStaking,
-						ErrorDetail::StfError(ErrorString::truncate_from(
-							format!("{:?}", e).as_bytes().to_vec(),
-						)),
-					)
-				})
+				{
+					return Ok(delegator)
+				}
+			}
 		}
 
 		Err(Error::RequestVCFailed(
