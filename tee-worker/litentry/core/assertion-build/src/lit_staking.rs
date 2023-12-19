@@ -25,10 +25,10 @@ use itc_rest_client::{
 	RestPath, RestPost,
 };
 use itp_stf_primitives::types::AccountId;
-use itp_types::Balance;
 use itp_utils::hex_display::AsBytesRef;
 use lc_credentials::litentry_profile::lit_staking::UpdateLITStakingAmountCredential;
 use lc_data_providers::build_client;
+use litentry_primitives::ParentchainBalance;
 use pallet_parachain_staking::types::Delegator;
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
@@ -147,11 +147,13 @@ impl DelegatorState {
 		Ok(params.to_string() + &hex::encode(&cocat))
 	}
 
-	fn decode_delegator(storage_in_hex: &str) -> Result<Delegator<AccountId, Balance>> {
+	fn decode_delegator(storage_in_hex: &str) -> Result<Delegator<AccountId, ParentchainBalance>> {
 		// Remove 0x
 		if let Some(storage_in_hex_without_prefix) = storage_in_hex.strip_prefix("0x") {
 			return hex::decode(storage_in_hex_without_prefix)
-				.map(|decoded| Delegator::<AccountId, Balance>::decode(&mut decoded.as_bytes_ref()))
+				.map(|decoded| {
+					Delegator::<AccountId, ParentchainBalance>::decode(&mut decoded.as_bytes_ref())
+				})
 				.map_err(|e| {
 					Error::RequestVCFailed(
 						Assertion::LITStaking,
