@@ -250,6 +250,8 @@ impl Assertion {
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// VIP3 Member Card
 			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
+			// EVMHoldingAmount
+			Self::EVMAmountHolding(..) => vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
