@@ -26,6 +26,35 @@ pub trait GetAchainableName {
 }
 
 #[derive(Debug)]
+pub enum AchainableNameBasic {
+	BABHolder,
+	UniswapV23User, // custom name
+}
+
+impl GetAchainableName for AchainableNameBasic {
+	fn name(&self) -> &'static str {
+		match self {
+			AchainableNameBasic::BABHolder => "BAB token holder",
+			AchainableNameBasic::UniswapV23User => "Uniswap V2/V3 user",
+		}
+	}
+}
+
+impl AchainableNameBasic {
+	pub fn from(param: ParameterString) -> Result<AchainableNameBasic, Error> {
+		let name_str = vec_to_string(param.to_vec())?;
+
+		if name_str == AchainableNameBasic::BABHolder.name() {
+			return Ok(AchainableNameBasic::BABHolder)
+		} else if name_str == AchainableNameBasic::UniswapV23User.name() {
+			return Ok(AchainableNameBasic::UniswapV23User)
+		}
+
+		Err(Error::AchainableError("Invalid Achainable Name in Basic Type".to_string()))
+	}
+}
+
+#[derive(Debug)]
 pub enum AchainableNameMirror {
 	IsAPublicationOnMirror,
 	HasWrittenOverQuantityPostsOnMirror,

@@ -42,7 +42,8 @@ use frame_support::{pallet_prelude::*, sp_runtime::traits::One, traits::StorageV
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	all_evm_web3networks, all_substrate_web3networks, Identity, ParentchainBlockNumber, Web3Network,
+	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, Identity,
+	ParentchainBlockNumber, Web3Network,
 };
 use sp_core::{blake2_256, H256};
 use sp_std::{vec, vec::Vec};
@@ -158,6 +159,7 @@ pub mod pallet {
 				let prime_identity_web3networks = match who {
 					Identity::Substrate(_) => all_substrate_web3networks(),
 					Identity::Evm(_) => all_evm_web3networks(),
+					Identity::Bitcoin(_) => all_bitcoin_web3networks(),
 					_ => vec![],
 				};
 				let context = <IdentityContext<T>>::new(

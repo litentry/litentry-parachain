@@ -14,7 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-pub mod amount_holding_time;
-pub mod bab_holder;
-pub mod lit_holding_amount;
-pub mod uniswap_user;
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+pub enum EVMTokenType {
+	#[codec(index = 0)]
+	Ton,
+	#[codec(index = 1)]
+	Trx,
+}
