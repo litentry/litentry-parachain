@@ -18,8 +18,8 @@
 // when requesting VCs.
 
 use crate::{
-	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
-	VIP3MembershipCardLevel, Web3Network,
+	AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType, GenericDiscordRoleType,
+	OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -248,6 +248,9 @@ pub enum Assertion {
 
 	#[codec(index = 20)]
 	LITStaking,
+	
+	#[codec(index = 22)]
+	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
 }
 
 impl Assertion {
@@ -276,13 +279,16 @@ impl Assertion {
 			Self::Achainable(arg) => arg.chains(),
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
-			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// VIP3 Member Card
 			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
 			// LITStaking
 			Self::LITStaking => vec![Web3Network::Litentry],
+			// Weirdo Ghost Gang
+			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
+			// EVM Amount Holding
+			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
