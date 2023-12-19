@@ -35,7 +35,6 @@ use frame_support::{
 	traits::{Get, ReservableCurrency},
 	RuntimeDebug,
 };
-use log::debug;
 use scale_info::TypeInfo;
 use sp_runtime::traits::Saturating;
 use sp_std::{vec, vec::Vec};
@@ -91,8 +90,6 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
 		let mut scheduled_requests = <DelegationScheduledRequests<T>>::get(&collator);
-		debug!("igor: delegation_schedule_revoke");
-		debug!("{:?}", &scheduled_requests);
 		ensure!(
 			!scheduled_requests.iter().any(|req| req.delegator == delegator),
 			<Error<T>>::PendingDelegationRequestAlreadyExists,
@@ -101,7 +98,6 @@ impl<T: Config> Pallet<T> {
 		let bonded_amount = state.get_bond_amount(&collator).ok_or(<Error<T>>::DelegationDNE)?;
 		let now = <Round<T>>::get().current;
 		let when = now.saturating_add(T::RevokeDelegationDelay::get());
-		debug!("now {:?} when {:?}", &now, &when);
 		scheduled_requests.push(ScheduledRequest {
 			delegator: delegator.clone(),
 			action: DelegationAction::Revoke(bonded_amount),
@@ -128,13 +124,11 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
 		let mut scheduled_requests = <DelegationScheduledRequests<T>>::get(&collator);
-		debug!("{}", "igor: delegation_schedule_bond_decrease");
 
 		ensure!(
 			!scheduled_requests.iter().any(|req| req.delegator == delegator),
 			<Error<T>>::PendingDelegationRequestAlreadyExists,
 		);
-		debug!("{:?}", &scheduled_requests);
 		let bonded_amount = state.get_bond_amount(&collator).ok_or(<Error<T>>::DelegationDNE)?;
 		ensure!(bonded_amount > decrease_amount, <Error<T>>::DelegatorBondBelowMin);
 		let new_amount: BalanceOf<T> = bonded_amount - decrease_amount;
@@ -173,8 +167,6 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
 		let mut scheduled_requests = <DelegationScheduledRequests<T>>::get(&collator);
-		debug!("igor: delegation_cancel_request");
-		debug!(" state {:?}", &state);
 		let request =
 			Self::cancel_request_with_state(&delegator, &mut state, &mut scheduled_requests)
 				.ok_or(<Error<T>>::PendingDelegationRequestDNE)?;
@@ -210,8 +202,6 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
 		let mut scheduled_requests = <DelegationScheduledRequests<T>>::get(&collator);
-		debug!("igor: delegation_execute_scheduled_request");
-		debug!("{:?}", &state);
 		let request_idx = scheduled_requests
 			.iter()
 			.position(|req| req.delegator == delegator)
@@ -219,13 +209,11 @@ impl<T: Config> Pallet<T> {
 		let request = &scheduled_requests[request_idx];
 
 		let now = <Round<T>>::get().current;
-		debug!("{} now: {}", &request.when_executable, now);
 		ensure!(request.when_executable <= now, <Error<T>>::PendingDelegationRequestNotDueYet);
 
 		match request.action {
 			DelegationAction::Revoke(amount) => {
 				// revoking last delegation => leaving set of delegators
-				debug!("DelegationAction::Revoke");
 
 				let leaving = if state.delegations.0.len() == 1usize {
 					true
@@ -240,7 +228,6 @@ impl<T: Config> Pallet<T> {
 				// remove from pending requests
 				let amount = scheduled_requests.remove(request_idx).action.amount();
 				state.less_total = state.less_total.saturating_sub(amount);
-				debug!("{:?}", amount);
 
 				// remove delegation from delegator state
 				state.rm_delegation(&collator);
@@ -270,11 +257,9 @@ impl<T: Config> Pallet<T> {
 			},
 			DelegationAction::Decrease(_) => {
 				// remove from pending requests
-				debug!("DelegationAction::Decrease");
 
 				let amount = scheduled_requests.remove(request_idx).action.amount();
 				state.less_total = state.less_total.saturating_sub(amount);
-				debug!("{:?}", &state);
 				// decrease delegation
 				for bond in &mut state.delegations.0 {
 					if bond.owner == collator {

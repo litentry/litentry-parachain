@@ -186,7 +186,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await executeTransaction(setAutoCompound, 'setAutoCompound');
         const collatorAfterCompound = await collatorDetails();
         expect(collatorAfterCompound.value).to.eq(autoCompoundPercent + 5);
-        printBalance('after bond more', balanceAfterBondMore);
+
         // scheduleDelegatorBondLess(collator, amount)
         expect(await isPendingRequest()).to.be.false;
         const scheduleDelegatorBondLess = precompileContract.methods.scheduleDelegatorBondLess(
@@ -196,48 +196,57 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await executeTransaction(scheduleDelegatorBondLess, 'scheduleDelegatorBondLess');
         expect(await isPendingRequest()).to.be.true;
 
+        // cancelDelegationRequest(collator)
+        const cancelDelegationRequest = precompileContract.methods.cancelDelegationRequest(collatorPublicKey);
+        expect(await isPendingRequest()).to.be.true;
+        await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
+        expect(await isPendingRequest()).to.be.false;
+
+        // testing bond less + execution
+        await executeTransaction(scheduleDelegatorBondLess, 'scheduleDelegatorBondLess again to test execution');
+        expect(await isPendingRequest()).to.be.true;
+
+        console.log('Waithing 2 blocks before execute delegation request');
+        await context.api.rpc.chain.getBlock();
+        await context.api.rpc.chain.getBlock();
+
+        // executeDelegationRequest(delegator, collator);
         const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
             evmAccountRaw.publicKey,
             collatorPublicKey
         );
         await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
-        const { data: balanceAfterExecuteDelegation } = await context.api.query.system.account(
-            evmAccountRaw.mappedAddress
+        const { data: balanceAfterBondLess } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        expect(balanceAfterBondLess.free.toNumber()).to.closeTo(
+            balanceAfterBondMore.free.toNumber() + toBigNumber(5),
+            toBigNumber(1)
         );
-        printBalance('balanceAfterExecuteDelegation', balanceAfterExecuteDelegation);
+        expect(balanceAfterBondLess.reserved.toNumber()).to.eq(
+            balanceAfterBondMore.reserved.toNumber() - toBigNumber(5)
+        );
 
-        // // cancelDelegationRequest(collator)
-        // const cancelDelegationRequest = precompileContract.methods.cancelDelegationRequest(collatorPublicKey);
-        // expect(await isPendingRequest()).to.be.true;
-        // await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
-        // expect(await isPendingRequest()).to.be.false;
+        // testing revoke delegation + execute
+        // scheduleRevokeDelegation(collator);
+        const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
+        await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
 
-        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        console.log('Waithing 2 blocks before execute delegation request');
+        await context.api.rpc.chain.getBlock();
+        await context.api.rpc.chain.getBlock();
+
+        await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
+        const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        expect(balanceAfterRevoke.free.toNumber()).to.closeTo(toBigNumber(65), toBigNumber(1));
+        expect(balanceAfterRevoke.reserved.toNumber()).to.eq(0);
+
+        // delegate(collator, amount);
+        const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(10));
+        await executeTransaction(delegate, 'delegate');
+        const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        expect(balanceAfterDelegate.reserved.toNumber).to.eq(toBigNumber(10));
+
+        // In casex evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
-
-    // once we add ability to customise minimum waiting time for `executeDelegationRequest` implement tests for the rest functions
-    // step('test time sensitive functions', async () => {
-    //     delegate(collator, amount);
-    //     const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(55));
-    //     await executeTransaction(delegate, 'delegate');
-    //     const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-    //     printBalance('balanceAfterDelegate', balanceAfterDelegate);
-    //     scheduleRevokeDelegation(collator);
-    //     const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
-    //     await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
-    //     const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-    //     printBalance('balanceAfterRevoke', balanceAfterRevoke);
-    //     executeDelegationRequest(delegator, collator);
-    //     const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
-    //         evmAccountRaw.mappedAddress,
-    //         collatorPublicKey
-    //     );
-    //     await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
-    //     const { data: balanceAfterExecuteDelegation } = await context.api.query.system.account(
-    //         evmAccountRaw.mappedAddress
-    //     );
-    //     printBalance('balanceAfterExecuteDelegation', balanceAfterExecuteDelegation);
-    // });
 });
