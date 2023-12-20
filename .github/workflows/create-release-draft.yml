@@ -254,10 +254,6 @@ jobs:
       #     echo "::group::df -h ."
       #     df -h .
       #     echo "::endgroup::"
-      
-      - name: Echo env
-        run: |
-          echo "$WORKER_TAG"
 
       - name: Build worker
         uses: docker/build-push-action@v5
@@ -266,6 +262,7 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:$WORKER_TAG
           target: deployed-worker
+      - run: echo $WORKER_TAG
 
       - name: Build cli
         uses: docker/build-push-action@v5
@@ -274,6 +271,7 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:$WORKER_TAG
           target: deployed-client
+      - run: echo $WORKER_TAG
       
       - run: docker images --all
 
