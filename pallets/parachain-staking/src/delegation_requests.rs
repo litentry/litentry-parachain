@@ -38,6 +38,7 @@ use frame_support::{
 use scale_info::TypeInfo;
 use sp_runtime::traits::Saturating;
 use sp_std::{vec, vec::Vec};
+
 /// An action that can be performed upon a delegation
 #[derive(Clone, Eq, PartialEq, Encode, Decode, RuntimeDebug, TypeInfo, PartialOrd, Ord)]
 pub enum DelegationAction<Balance> {
@@ -90,6 +91,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
 		let mut scheduled_requests = <DelegationScheduledRequests<T>>::get(&collator);
+
 		ensure!(
 			!scheduled_requests.iter().any(|req| req.delegator == delegator),
 			<Error<T>>::PendingDelegationRequestAlreadyExists,
@@ -130,6 +132,7 @@ impl<T: Config> Pallet<T> {
 			<Error<T>>::PendingDelegationRequestAlreadyExists,
 		);
 		let bonded_amount = state.get_bond_amount(&collator).ok_or(<Error<T>>::DelegationDNE)?;
+
 		ensure!(bonded_amount > decrease_amount, <Error<T>>::DelegatorBondBelowMin);
 		let new_amount: BalanceOf<T> = bonded_amount - decrease_amount;
 		ensure!(new_amount >= T::MinDelegation::get(), <Error<T>>::DelegationBelowMin);
@@ -167,6 +170,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let mut state = <DelegatorState<T>>::get(&delegator).ok_or(<Error<T>>::DelegatorDNE)?;
 		let mut scheduled_requests = <DelegationScheduledRequests<T>>::get(&collator);
+
 		let request =
 			Self::cancel_request_with_state(&delegator, &mut state, &mut scheduled_requests)
 				.ok_or(<Error<T>>::PendingDelegationRequestDNE)?;
@@ -210,7 +214,6 @@ impl<T: Config> Pallet<T> {
 
 		let now = <Round<T>>::get().current;
 		ensure!(request.when_executable <= now, <Error<T>>::PendingDelegationRequestNotDueYet);
-
 		match request.action {
 			DelegationAction::Revoke(amount) => {
 				// revoking last delegation => leaving set of delegators
@@ -257,7 +260,6 @@ impl<T: Config> Pallet<T> {
 			},
 			DelegationAction::Decrease(_) => {
 				// remove from pending requests
-
 				let amount = scheduled_requests.remove(request_idx).action.amount();
 				state.less_total = state.less_total.saturating_sub(amount);
 				// decrease delegation
