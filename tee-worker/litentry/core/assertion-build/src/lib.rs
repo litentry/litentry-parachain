@@ -48,6 +48,7 @@ pub mod a8;
 pub mod achainable;
 pub mod generic_discord_role;
 pub mod holding_time;
+pub mod lit_staking;
 pub mod nodereal;
 pub mod oneblock;
 pub mod vip3;
@@ -93,6 +94,11 @@ pub fn transpose_identity(
 					}
 				},
 				Identity::Evm(address) => {
+					let address = account_id_to_string(address.as_ref());
+					addresses.push((address, n));
+					networks_set.insert(n);
+				},
+				Identity::Bitcoin(address) => {
 					let address = account_id_to_string(address.as_ref());
 					addresses.push((address, n));
 					networks_set.insert(n);

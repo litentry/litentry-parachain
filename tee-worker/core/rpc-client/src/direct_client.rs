@@ -65,7 +65,7 @@ pub trait DirectApi {
 	fn get_state_metadata_raw(&self) -> Result<String>;
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
 	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
-	fn get_all_id_graph_hash(&self, shard: &ShardIdentifier) -> Result<Vec<(Identity, H256)>>;
+	fn get_id_graph_hash(&self, shard: &ShardIdentifier, identity: &Identity) -> Result<H256>;
 }
 
 impl DirectClient {
@@ -264,11 +264,11 @@ impl DirectApi for DirectClient {
 		Ok(mrenclave)
 	}
 
-	fn get_all_id_graph_hash(&self, shard: &ShardIdentifier) -> Result<Vec<(Identity, H256)>> {
-		let getter = Getter::public(PublicGetter::all_id_graph_hash);
+	fn get_id_graph_hash(&self, shard: &ShardIdentifier, identity: &Identity) -> Result<H256> {
+		let getter = Getter::public(PublicGetter::id_graph_hash(identity.clone()));
 		self.get_state(*shard, &getter)
 			.ok_or_else(|| Error::Status("failed to get state".to_string()))
-			.and_then(|v| Vec::<(Identity, H256)>::decode(&mut v.as_slice()).map_err(Error::Codec))
+			.and_then(|v| H256::decode(&mut v.as_slice()).map_err(Error::Codec))
 	}
 }
 
