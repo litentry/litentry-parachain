@@ -266,14 +266,11 @@ fn deactivate_identity_works() {
 		// identity is only deactivated, so it still exists
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
-		assert_noop!(
-			IMT::deactivate_identity(
-				RuntimeOrigin::signed(ALICE),
-				who.clone(),
-				bob_substrate_identity(),
-			),
-			Error::<Test>::DeactivatePrimeIdentityDisallowed
-		);
+		assert_ok!(IMT::deactivate_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			bob_substrate_identity(),
+		));
 	});
 }
 
