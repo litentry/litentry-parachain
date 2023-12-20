@@ -206,7 +206,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await executeTransaction(scheduleDelegatorBondLess, 'scheduleDelegatorBondLess again to test execution');
         expect(await isPendingRequest()).to.be.true;
 
-        console.log('Waithing 2 blocks before execute delegation request');
+        console.log('Waiting 2 blocks before execute delegation request');
         await context.api.rpc.chain.getBlock();
         await context.api.rpc.chain.getBlock();
 
@@ -230,13 +230,13 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
         await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
 
-        console.log('Waithing 2 blocks before execute delegation request');
+        console.log('Waiting 2 blocks before execute delegation request');
         await context.api.rpc.chain.getBlock();
         await context.api.rpc.chain.getBlock();
 
         await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
         const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-        expect(balanceAfterRevoke.free.toNumber()).to.closeTo(toBigNumber(65), toBigNumber(1));
+        expect(balanceAfterRevoke.free.toNumber()).to.closeTo(balance.free.toNumber(), toBigNumber(1));
         expect(balanceAfterRevoke.reserved.toNumber()).to.eq(0);
 
         // delegate(collator, amount);
