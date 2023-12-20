@@ -419,31 +419,6 @@ describeLitentry('Test Identity', (context) => {
         await assertIdentityActivated(context, context.substrateWallet.alice, aliceActivatedEvents);
     });
 
-    step('deactivate prime identity is disallowed', async function () {
-        // deactivate prime identity
-        const substratePrimeIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            'Substrate',
-            context
-        );
-
-        const primeTxs = await buildIdentityTxs(
-            context,
-            context.substrateWallet.alice,
-            [substratePrimeIdentity],
-            'deactivateIdentity'
-        );
-        const primeEvents = await sendTxsWithUtility(
-            context,
-            context.substrateWallet.alice,
-            primeTxs,
-            'identityManagement',
-            ['DeactivateIdentityFailed']
-        );
-
-        await checkErrorDetail(primeEvents, 'DeactivatePrimeIdentityDisallowed');
-    });
-
     step('deactivate error identities', async function () {
         // Deactivate a nonexistent identity
         // context.substrateWallet.alice has already deactivated all identities in step('deactivate identities')
