@@ -170,10 +170,11 @@ def setup_environment(offset, config, parachain_dir):
         "MuRaPort",
         "UntrustedHttpPort",
     ]:
-        config["workers"][0]["flags"] = [
-            flag.replace("$" + p, os.environ.get(p, ""))
-            for flag in config["workers"][0]["flags"]
-        ]
+        if len(config["workers"]) > 0:
+            config["workers"][0]["flags"] = [
+                flag.replace("$" + p, os.environ.get(p, ""))
+                for flag in config["workers"][0]["flags"]
+            ]
 
 def setup_worker_log_level(log_config_path):
     log_level_dic = {}

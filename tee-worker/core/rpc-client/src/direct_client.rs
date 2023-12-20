@@ -21,14 +21,16 @@ use crate::ws_client::{WsClient, WsClientControl};
 use base58::ToBase58;
 use codec::{Decode, Encode};
 use frame_metadata::RuntimeMetadataPrefixed;
-use ita_stf::Getter;
+use ita_stf::{Getter, PublicGetter};
 use itp_api_client_types::Metadata;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::{DirectRequestStatus, RsaRequest};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
+use litentry_primitives::Identity;
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
+use sp_core::H256;
 use std::{
 	sync::{
 		mpsc::{channel, Sender as MpscSender},
@@ -63,6 +65,7 @@ pub trait DirectApi {
 	fn get_state_metadata_raw(&self) -> Result<String>;
 	fn get_next_nonce(&self, shard: &ShardIdentifier, account: &AccountId) -> Result<u32>;
 	fn get_state_mrenclave(&self) -> Result<MrEnclave>;
+	fn get_id_graph_hash(&self, shard: &ShardIdentifier, identity: &Identity) -> Result<H256>;
 }
 
 impl DirectClient {
@@ -259,6 +262,13 @@ impl DirectApi for DirectClient {
 
 		info!("[+] Got enclave: {:?}", mrenclave);
 		Ok(mrenclave)
+	}
+
+	fn get_id_graph_hash(&self, shard: &ShardIdentifier, identity: &Identity) -> Result<H256> {
+		let getter = Getter::public(PublicGetter::id_graph_hash(identity.clone()));
+		self.get_state(*shard, &getter)
+			.ok_or_else(|| Error::Status("failed to get state".to_string()))
+			.and_then(|v| H256::decode(&mut v.as_slice()).map_err(Error::Codec))
 	}
 }
 

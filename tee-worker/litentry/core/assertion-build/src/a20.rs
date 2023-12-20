@@ -48,12 +48,16 @@ impl RestPath<String> for EarlyBirdResponse {
 }
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
-	let mut who = match req.who {
+	// Note: it's not perfectly implemented here
+	//       it only attests if the main address meets the criteria, but we should have implemented
+	//       the supported web3networks and attested the linked identities.
+	//       However, this VC is probably too old to change
+	let who = match req.who {
 		Identity::Substrate(account) => account_id_to_string(&account),
 		Identity::Evm(account) => account_id_to_string(&account),
+		Identity::Bitcoin(account) => account_id_to_string(&account),
 		_ => unreachable!(),
 	};
-	who.insert_str(0, "0x");
 	debug!("Assertion A20 build, who: {:?}", who);
 
 	let mut headers = Headers::new();

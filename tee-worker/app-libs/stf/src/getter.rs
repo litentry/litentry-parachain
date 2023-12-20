@@ -99,6 +99,8 @@ pub enum PublicGetter {
 	some_value,
 	#[codec(index = 1)]
 	nonce(Identity),
+	#[codec(index = 2)]
+	id_graph_hash(Identity),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -199,8 +201,8 @@ impl ExecuteGetter for TrustedGetterSigned {
 				if let Some(account_id) = who.to_account_id() {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter free_balance");
-					debug!("AccountInfo for {} is {:?}", account_id_to_string(&account_id), info);
-					debug!("Account free balance is {}", info.data.free);
+					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
+					std::println!("⣿STF⣿ 🔍 TrustedGetter query: free balance for ⣿⣿⣿ is ⣿⣿⣿",);
 					Some(info.data.free.encode())
 				} else {
 					None
@@ -209,7 +211,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 				if let Some(account_id) = who.to_account_id() {
 					let info = System::account(&account_id);
 					debug!("TrustedGetter reserved_balance");
-					debug!("AccountInfo for {} is {:?}", account_id_to_string(&account_id), info);
+					debug!("AccountInfo for {} is {:?}", account_id_to_string(&who), info);
 					debug!("Account reserved balance is {}", info.data.reserved);
 					Some(info.data.reserved.encode())
 				} else {
@@ -248,7 +250,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
+			TrustedGetter::id_graph(who) => Some(IdentityManagement::id_graph(&who).encode()),
 
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
@@ -278,6 +280,8 @@ impl ExecuteGetter for PublicGetter {
 				} else {
 					None
 				},
+			PublicGetter::id_graph_hash(identity) =>
+				IdentityManagement::id_graph_hash(&identity).map(|h| h.encode()),
 		}
 	}
 

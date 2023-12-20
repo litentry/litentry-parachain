@@ -16,7 +16,10 @@
 */
 
 use crate::{
-	test::{fixtures::types::ShardIdentifierFor, mocks::proposer_mock::ProposerMock},
+	test::{
+		fixtures::types::ShardIdentifierFor,
+		mocks::proposer_mock::{DefaultProposerMock, OutdatedBlockProposerMock},
+	},
 	ConsensusError,
 };
 use itp_types::{Block as ParentchainBlock, Header};
@@ -27,7 +30,7 @@ use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 pub struct EnvironmentMock;
 
 impl Environment<ParentchainBlock, SignedSidechainBlock> for EnvironmentMock {
-	type Proposer = ProposerMock;
+	type Proposer = DefaultProposerMock;
 	type Error = ConsensusError;
 
 	fn init(
@@ -35,6 +38,21 @@ impl Environment<ParentchainBlock, SignedSidechainBlock> for EnvironmentMock {
 		header: Header,
 		_: ShardIdentifierFor<SignedSidechainBlock>,
 	) -> Result<Self::Proposer, Self::Error> {
-		Ok(ProposerMock { parentchain_header: header })
+		Ok(DefaultProposerMock { parentchain_header: header })
+	}
+}
+
+pub struct OutdatedBlockEnvironmentMock;
+
+impl Environment<ParentchainBlock, SignedSidechainBlock> for OutdatedBlockEnvironmentMock {
+	type Proposer = OutdatedBlockProposerMock;
+	type Error = ConsensusError;
+
+	fn init(
+		&mut self,
+		header: Header,
+		_: ShardIdentifierFor<SignedSidechainBlock>,
+	) -> Result<Self::Proposer, Self::Error> {
+		Ok(OutdatedBlockProposerMock { parentchain_header: header })
 	}
 }

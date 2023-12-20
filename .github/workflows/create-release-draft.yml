@@ -383,7 +383,7 @@ jobs:
         chain: [rococo, litmus, litentry]
         include:
           - chain: rococo
-            ref_url: wss://rpc.rococo-parachain-sg.litentry.io
+            ref_url: wss://rpc.rococo-parachain.litentry.io
           - chain: litmus
             ref_url: wss://rpc.litmus-parachain.litentry.io
           - chain: litentry
