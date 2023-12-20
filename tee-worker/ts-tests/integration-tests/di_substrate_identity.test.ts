@@ -269,7 +269,7 @@ describe('Test Identity (direct invocation)', function () {
     });
 
     step('linking invalid identity', async function () {
-        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+        const bobSubstrateIdentity = await buildIdentityFromKeypair(
             new PolkadotSigner(context.substrateWallet.bob),
             context
         );
@@ -281,10 +281,10 @@ describe('Test Identity (direct invocation)', function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const twitterNonce = getNextNonce();
         const evmNonce = getNextNonce();
-        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.bob.address, 'Evm', context);
         const [evmValidation] = await buildValidations(
             context,
-            [aliceSubstrateIdentity],
+            [bobSubstrateIdentity],
             [evmIdentity],
             evmNonce,
             'ethereum',
@@ -435,7 +435,7 @@ describe('Test Identity (direct invocation)', function () {
         await assertFailedEvent(context, events, 'LinkIdentityFailed', 'IdentityAlreadyLinked');
     });
 
-    step('deactivating identity', async function () {
+    step('deactivating linked identities', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
@@ -563,7 +563,7 @@ describe('Test Identity (direct invocation)', function () {
 
         await assertIdGraphHash(context, teeShieldingKey, aliceSubstrateIdentity, idGraph);
     });
-    step('activating identity', async function () {
+    step('activating linked identities', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
@@ -836,6 +836,135 @@ describe('Test Identity (direct invocation)', function () {
             idGraph[3][1].web3networks.toHuman()?.toString(),
             expectedWeb3Networks.toString(),
             'idGraph should not be changed after setting incompatible network'
+        );
+    });
+
+    step('deactivate prime identity', async function () {
+        // deactivating prime identity should be possible and create the IDGraph if one doesn't exist already
+        const bobSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.bob),
+            context
+        );
+
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, bobSubstrateIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
+
+        const deactivateIdentityRequestParams: {
+            nonce: number;
+            identity: LitentryPrimitivesIdentity;
+        }[] = [];
+
+        deactivateIdentityRequestParams.push({
+            nonce: getNextNonce(),
+            identity: bobSubstrateIdentity,
+        });
+
+        const identityDeactivatedEvents: any[] = [];
+        const idGraphHashResults: any[] = [];
+        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[bobSubstrateIdentity, false]]];
+
+        for (const { nonce, identity } of deactivateIdentityRequestParams) {
+            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+            const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+            const deactivateIdentityCall = await createSignedTrustedCallDeactivateIdentity(
+                context.api,
+                context.mrEnclave,
+                context.api.createType('Index', nonce),
+                new PolkadotSigner(context.substrateWallet.bob),
+                bobSubstrateIdentity,
+                bobSubstrateIdentity.toHex(),
+                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+                requestIdentifier
+            );
+
+            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
+            idGraphHashResults.push(
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    bobSubstrateIdentity,
+                    res,
+                    'DeactivateIdentityResult',
+                    expectedIdGraphs[0]
+                )
+            );
+            expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+            await assertIsInSidechainBlock('deactivateIdentityCall', res);
+
+            const events = (await eventsPromise).map(({ event }) => event);
+            events.forEach((event) => {
+                if (context.api.events.identityManagement.DeactivateIdentityFailed.is(event)) {
+                    assert.fail(JSON.stringify(event.toHuman(), null, 4));
+                }
+                if (context.api.events.identityManagement.IdentityDeactivated.is(event)) {
+                    identityDeactivatedEvents.push(event);
+                }
+            });
+        }
+        await assertIdGraphMutationEvent(
+            new PolkadotSigner(context.substrateWallet.bob),
+            identityDeactivatedEvents,
+            idGraphHashResults,
+            1
+        );
+    });
+
+    step('setting identity networks for prime identity)', async function () {
+        const charlieSubstrateIdentity = await buildIdentityHelper(
+            u8aToHex(context.substrateWallet.charlie.addressRaw),
+            'Substrate',
+            context
+        );
+
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, charlieSubstrateIdentity)).toNumber();
+        const getNextNonce = () => currentNonce++;
+
+        const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        const nonce = getNextNonce();
+
+        const identityNetworksSetEvents: any[] = [];
+        const idGraphHashResults: any[] = [];
+        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[charlieSubstrateIdentity, true]]];
+
+        const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
+        // we set the network to ['Litentry', 'Kusama']
+        const setIdentityNetworksCall = await createSignedTrustedCallSetIdentityNetworks(
+            context.api,
+            context.mrEnclave,
+            context.api.createType('Index', nonce),
+            new PolkadotSigner(context.substrateWallet.charlie),
+            charlieSubstrateIdentity,
+            charlieSubstrateIdentity.toHex(),
+            context.api.createType('Vec<Web3Network>', ['Litentry', 'Kusama']).toHex(),
+            context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+            requestIdentifier
+        );
+
+        const res = await sendRequestFromTrustedCall(context, teeShieldingKey, setIdentityNetworksCall);
+        idGraphHashResults.push(
+            await assertIdGraphMutationResult(
+                context,
+                teeShieldingKey,
+                charlieSubstrateIdentity,
+                res,
+                'ActivateIdentityResult',
+                expectedIdGraphs[0]
+            )
+        );
+        expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
+        await assertIsInSidechainBlock('setIdentityNetworksCall', res);
+
+        const events = (await eventsPromise).map(({ event }) => event);
+        events.forEach((event) => {
+            if (context.api.events.identityManagement.IdentityNetworksSet.is(event)) {
+                identityNetworksSetEvents.push(event);
+            }
+        });
+        await assertIdGraphMutationEvent(
+            new PolkadotSigner(context.substrateWallet.charlie),
+            identityNetworksSetEvents,
+            idGraphHashResults,
+            1
         );
     });
 });
