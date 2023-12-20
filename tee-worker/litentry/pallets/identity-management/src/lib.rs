@@ -95,8 +95,6 @@ pub mod pallet {
 		IdentityNotExist,
 		/// creating the prime identity manually is disallowed
 		LinkPrimeIdentityDisallowed,
-		/// deactivate prime identity should be disallowed
-		DeactivatePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
 		/// identity doesn't match the network types
@@ -148,26 +146,7 @@ pub mod pallet {
 				Error::<T>::WrongWeb3NetworkTypes
 			);
 
-			// if there's no IDGraph, create one - `who` will be the prime identity
-			// please note the web3networks for the prime identity will be all avaiable networks
-			if IDGraphs::<T>::get(&who, &who).is_none() {
-				ensure!(
-					!LinkedIdentities::<T>::contains_key(&who),
-					Error::<T>::IdentityAlreadyLinked
-				);
-
-				let prime_identity_web3networks = match who {
-					Identity::Substrate(_) => all_substrate_web3networks(),
-					Identity::Evm(_) => all_evm_web3networks(),
-					Identity::Bitcoin(_) => all_bitcoin_web3networks(),
-					_ => vec![],
-				};
-				let context = <IdentityContext<T>>::new(
-					<T as frame_system::Config>::BlockNumber::one(),
-					prime_identity_web3networks,
-				);
-				Self::insert_identity_with_limit(&who, &who, context)?;
-			}
+			Self::maybe_create_id_graph(&who)?;
 
 			let context =
 				<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), web3networks);
@@ -184,8 +163,8 @@ pub mod pallet {
 			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			Self::maybe_create_id_graph(&who)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			ensure!(identity != who, Error::<T>::DeactivatePrimeIdentityDisallowed);
 
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
@@ -205,7 +184,9 @@ pub mod pallet {
 			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			Self::maybe_create_id_graph(&who)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				c.activate();
@@ -225,7 +206,9 @@ pub mod pallet {
 			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			Self::maybe_create_id_graph(&who)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				ensure!(
@@ -276,6 +259,31 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		// try to create an IDGraph if there's none - `who` will be the prime identity
+		// please note the web3networks for the prime identity will be all avaiable networks
+		fn maybe_create_id_graph(who: &Identity) -> Result<(), DispatchError> {
+			if IDGraphs::<T>::get(&who, &who).is_none() {
+				ensure!(
+					!LinkedIdentities::<T>::contains_key(&who),
+					Error::<T>::IdentityAlreadyLinked
+				);
+
+				let prime_identity_web3networks = match who {
+					Identity::Substrate(_) => all_substrate_web3networks(),
+					Identity::Evm(_) => all_evm_web3networks(),
+					Identity::Bitcoin(_) => all_bitcoin_web3networks(),
+					_ => vec![],
+				};
+				let context = <IdentityContext<T>>::new(
+					// TODO: should the `link_block` be 1 or current sidechain height?
+					<T as frame_system::Config>::BlockNumber::one(),
+					prime_identity_web3networks,
+				);
+				Self::insert_identity_with_limit(&who, &who, context)?;
+			}
+			Ok(())
+		}
+
 		fn insert_identity_with_limit(
 			owner: &Identity,
 			identity: &Identity,
