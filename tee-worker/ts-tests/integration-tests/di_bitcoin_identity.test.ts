@@ -12,7 +12,7 @@ import {
     assertIdGraphMutationResult,
     assertIdGraphHash,
 } from './common/utils';
-import { assertIsInSidechainBlock, assertIdGraphMutation } from './common/utils/assertion';
+import { assertIsInSidechainBlock, assertIdGraphMutationEvent } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,
@@ -124,7 +124,14 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
             idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'LinkIdentityResult', expectedIdGraphs[0])
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceBitcoinIdentity,
+                    res,
+                    'LinkIdentityResult',
+                    expectedIdGraphs[0]
+                )
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('linkIdentityCall', res);
@@ -140,7 +147,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
+        await assertIdGraphMutationEvent(
             new BitcoinSigner(context.bitcoinWallet.alice),
             identityLinkedEvents,
             idGraphHashResults,
@@ -155,7 +162,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             aliceBitcoinIdentity
         );
         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
-
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
@@ -182,7 +188,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             currentIndex++;
         }
 
-        await assertIdGraphHash(context, new BitcoinSigner(context.bitcoinWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
     step('deactivating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
@@ -220,7 +226,14 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, deactivateIdentityCall);
             idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'DeactivateIdentityResult', expectedIdGraphs[0])
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceBitcoinIdentity,
+                    res,
+                    'DeactivateIdentityResult',
+                    expectedIdGraphs[0]
+                )
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('deactivateIdentityCall', res);
@@ -236,7 +249,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
+        await assertIdGraphMutationEvent(
             new BitcoinSigner(context.bitcoinWallet.alice),
             identityDeactivatedEvents,
             idGraphHashResults,
@@ -268,8 +281,9 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             console.debug('inactive ✅');
         }
 
-        await assertIdGraphHash(context, new BitcoinSigner(context.bitcoinWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
+
     step('activating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
@@ -306,7 +320,14 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
             const res = await sendRequestFromTrustedCall(context, teeShieldingKey, activateIdentityCall);
             idGraphHashResults.push(
-                assertIdGraphMutationResult(context, res, 'ActivateIdentityResult', expectedIdGraphs[0])
+                await assertIdGraphMutationResult(
+                    context,
+                    teeShieldingKey,
+                    aliceBitcoinIdentity,
+                    res,
+                    'ActivateIdentityResult',
+                    expectedIdGraphs[0]
+                )
             );
             expectedIdGraphs = expectedIdGraphs.slice(1, expectedIdGraphs.length);
             await assertIsInSidechainBlock('activateIdentityCall', res);
@@ -322,7 +343,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             });
         }
 
-        await assertIdGraphMutation(
+        await assertIdGraphMutationEvent(
             new BitcoinSigner(context.bitcoinWallet.alice),
             identityActivatedEvents,
             idGraphHashResults,
@@ -354,6 +375,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             console.debug('active ✅');
         }
 
-        await assertIdGraphHash(context, new BitcoinSigner(context.bitcoinWallet.alice), idGraph);
+        await assertIdGraphHash(context, teeShieldingKey, aliceBitcoinIdentity, idGraph);
     });
 });

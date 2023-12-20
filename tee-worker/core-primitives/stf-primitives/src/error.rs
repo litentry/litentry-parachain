@@ -70,6 +70,8 @@ pub enum StfError {
 	#[codec(index = 16)]
 	#[display(fmt = "RemovingIdentityFailed: {:?}", _0)]
 	RemoveIdentityFailed(ErrorDetail),
+	#[codec(index = 17)]
+	EmptyIDGraph,
 }
 
 impl From<IMPError> for StfError {
