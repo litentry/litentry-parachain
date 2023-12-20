@@ -814,6 +814,12 @@ impl AchainableUtils for AchainableClient {
 			})
 			.flatten();
 		if let Some(display_text) = display_text {
+			// If it is a newly created brand new account, Achainable returns `Address has no [token] balance`,
+			// so it will not be parsed and will directly return 0
+			if display_text.contains("Address has no") {
+				return Ok(0_f64)
+			}
+
 			// TODO:
 			// text field format: Balance over 0 (Balance is 588.504602529)
 			let split_text = display_text.split("Balance is ").collect::<Vec<&str>>();

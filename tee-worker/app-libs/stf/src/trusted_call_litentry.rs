@@ -44,7 +44,6 @@ use litentry_primitives::{
 	Web3Network,
 };
 use log::*;
-use sp_core::blake2_256;
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(not(feature = "production"))]
@@ -169,7 +168,7 @@ impl TrustedCallSigned {
 			),
 		}
 
-		let id_graph = IMT::get_id_graph(&who);
+		let id_graph = IMT::id_graph(&who);
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
@@ -283,10 +282,9 @@ impl TrustedCallSigned {
 			e
 		})?;
 
-		debug!("pushing identity_linked event ...");
-		let id_graph = IMT::get_id_graph(&who);
-		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
+		let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 
+		debug!("pushing identity_linked event ...");
 		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
@@ -298,7 +296,7 @@ impl TrustedCallSigned {
 		))));
 
 		if old_id_graph_len == 0 {
-			mutated_id_graph = id_graph;
+			mutated_id_graph = IMT::id_graph(&who);
 		} else if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
 			mutated_id_graph.push((identity, identity_context))
 		} else {

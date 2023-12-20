@@ -9,8 +9,7 @@ import { encryptWithTeeShieldingKey, Signer, encryptWithAes } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { u32, Option, u8, Vector } from 'scale-ts';
-import { Index } from '@polkadot/types/interfaces';
+import { H256, Index } from '@polkadot/types/interfaces';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
@@ -159,7 +158,7 @@ export async function createSignedTrustedCallLinkIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    subject: LitentryPrimitivesIdentity,
+    primeIdentity: LitentryPrimitivesIdentity,
     identity: string,
     validationData: string,
     web3networks: string,
@@ -175,7 +174,7 @@ export async function createSignedTrustedCallLinkIdentity(
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, validationData, web3networks, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, validationData, web3networks, aesKey, hash]
     );
 }
 
@@ -184,7 +183,7 @@ export async function createSignedTrustedCallSetIdentityNetworks(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    subject: LitentryPrimitivesIdentity,
+    primeIdentity: LitentryPrimitivesIdentity,
     identity: string,
     web3networks: string,
     aesKey: string,
@@ -199,7 +198,7 @@ export async function createSignedTrustedCallSetIdentityNetworks(
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, web3networks, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, web3networks, aesKey, hash]
     );
 }
 
@@ -208,7 +207,7 @@ export async function createSignedTrustedCallRequestVc(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    subject: LitentryPrimitivesIdentity,
+    primeIdentity: LitentryPrimitivesIdentity,
     assertion: string,
     aesKey: string,
     hash: string
@@ -219,7 +218,7 @@ export async function createSignedTrustedCallRequestVc(
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), assertion, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), assertion, aesKey, hash]
     );
 }
 export async function createSignedTrustedCallDeactivateIdentity(
@@ -227,7 +226,7 @@ export async function createSignedTrustedCallDeactivateIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    subject: LitentryPrimitivesIdentity,
+    primeIdentity: LitentryPrimitivesIdentity,
     identity: string,
     aesKey: string,
     hash: string
@@ -238,7 +237,7 @@ export async function createSignedTrustedCallDeactivateIdentity(
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, aesKey, hash]
     );
 }
 export async function createSignedTrustedCallActivateIdentity(
@@ -246,7 +245,7 @@ export async function createSignedTrustedCallActivateIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    subject: LitentryPrimitivesIdentity,
+    primeIdentity: LitentryPrimitivesIdentity,
     identity: string,
     aesKey: string,
     hash: string
@@ -257,20 +256,20 @@ export async function createSignedTrustedCallActivateIdentity(
         signer,
         mrenclave,
         nonce,
-        [subject.toHuman(), subject.toHuman(), identity, aesKey, hash]
+        [primeIdentity.toHuman(), primeIdentity.toHuman(), identity, aesKey, hash]
     );
 }
 
 export async function createSignedTrustedGetterIdGraph(
     parachainApi: ApiPromise,
     signer: Signer,
-    subject: LitentryPrimitivesIdentity
+    primeIdentity: LitentryPrimitivesIdentity
 ): Promise<Getter> {
     const getterSigned = await createSignedTrustedGetter(
         parachainApi,
         ['id_graph', '(LitentryIdentity)'],
         signer,
-        subject.toHuman()
+        primeIdentity.toHuman()
     );
     return parachainApi.createType('Getter', { trusted: getterSigned }) as unknown as Getter; // @fixme 1878;
 }
@@ -278,13 +277,29 @@ export async function createSignedTrustedGetterIdGraph(
 export const getSidechainNonce = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
-    subject: LitentryPrimitivesIdentity
+    primeIdentity: LitentryPrimitivesIdentity
 ): Promise<Index> => {
-    const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], subject.toHuman());
+    const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
     const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
-    const nonce = await sendRequestFromGetter(context, teeShieldingKey, getter);
-    const nonceValue = decodeNonce(nonce.value.toHex());
-    return context.api.createType('Index', nonceValue) as Index;
+    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
+    const nonce = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
+    return context.api.createType('Index', nonce);
+};
+
+export const getIdGraphHash = async (
+    context: IntegrationTestContext,
+    teeShieldingKey: KeyObject,
+    primeIdentity: LitentryPrimitivesIdentity
+): Promise<H256> => {
+    const getterPublic = createPublicGetter(
+        context.api,
+        ['id_graph_hash', '(LitentryIdentity)'],
+        primeIdentity.toHuman()
+    );
+    const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
+    const res = await sendRequestFromGetter(context, teeShieldingKey, getter);
+    const hash = context.api.createType('Option<Bytes>', hexToU8a(res.value.toHex())).unwrap();
+    return context.api.createType('H256', hash);
 };
 
 export const sendRequestFromTrustedCall = async (
@@ -388,13 +403,6 @@ export const createAesRequest = async (
         })
         .toU8a();
 };
-
-export function decodeNonce(nonceInHex: string) {
-    const optionalType = Option(Vector(u8));
-    const encodedNonce = optionalType.dec(nonceInHex) as number[];
-    const nonce = u32.dec(new Uint8Array(encodedNonce));
-    return nonce;
-}
 
 export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
     const idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(value.toHex()));

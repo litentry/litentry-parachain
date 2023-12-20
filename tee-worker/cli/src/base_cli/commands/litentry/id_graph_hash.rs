@@ -18,32 +18,26 @@ use crate::{command_utils::get_worker_api_direct, Cli, CliResult, CliResultOk};
 use codec::Decode;
 use itc_rpc_client::direct_client::DirectApi;
 use itp_types::ShardIdentifier;
-use itp_utils::ToHexPrefixed;
+use litentry_primitives::Identity;
 
-// usage: ./bin/litentry-cli dump-id-graph-hash
+// usage: ./bin/litentry-cli id-graph-hash did-identity
 //
-// this command prints a list of (AccountId32, H256) collections which represent the IDGraph owner and hash, respectively
-// example result:
-// ```
-// 0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d, 0xd47cd39a19bc0094a4ec6ebf147cd1bde820e8d07574df02505607ec53c39ceb
-// 0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48, 0x6fd466064ab4aa8eeae19e0ddc25a99fefd3bf326caef98cf0c24b6467805f9d
-// ```
-// please note the evm address is converted to substrate account to faciliate the population of on-chain storage,
-// as the parachain extrinsic `update_id_graph_hash` expects a T::AccountId, same as other extrinsic callbacks
+// this command prints the id graph hash of the given identity in did form
 
 #[derive(Parser)]
-pub struct DumpIDGraphHashCommand {}
+pub struct IDGraphHashCommand {
+	/// identity to query, in did form
+	did: String,
+}
 
-impl DumpIDGraphHashCommand {
+impl IDGraphHashCommand {
 	pub(crate) fn run(&self, cli: &Cli) -> CliResult {
 		let direct_api = get_worker_api_direct(cli);
 		let mrenclave = direct_api.get_state_mrenclave().unwrap();
 		let shard = ShardIdentifier::decode(&mut &mrenclave[..]).unwrap();
-		let id_graph_hash = direct_api.get_all_id_graph_hash(&shard).unwrap();
-
-		id_graph_hash.iter().for_each(|(identity, hash)| {
-			println!("{}, {:?}", identity.to_account_id().unwrap().to_hex(), hash)
-		});
+		let identity = Identity::from_did(self.did.as_str()).unwrap();
+		let id_graph_hash = direct_api.get_id_graph_hash(&shard, &identity).unwrap();
+		println!("{:?}", id_graph_hash);
 
 		Ok(CliResultOk::None)
 	}
