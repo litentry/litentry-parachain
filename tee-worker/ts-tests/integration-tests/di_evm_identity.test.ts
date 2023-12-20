@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, u8aToString } from '@polkadot/util';
+import { u8aToHex } from '@polkadot/util';
 import {
     buildIdentityFromKeypair,
     buildIdentityHelper,
@@ -9,10 +9,9 @@ import {
     initIntegrationTestContext,
     EthersSigner,
     assertIdGraphMutationResult,
-    assertWorkerError,
     assertIdGraphHash,
 } from './common/utils';
-import { assertFailedEvent, assertIsInSidechainBlock, assertIdGraphMutationEvent } from './common/utils/assertion';
+import { assertIsInSidechainBlock, assertIdGraphMutationEvent } from './common/utils/assertion';
 import {
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedGetterIdGraph,

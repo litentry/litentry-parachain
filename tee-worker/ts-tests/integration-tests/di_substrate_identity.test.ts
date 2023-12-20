@@ -274,14 +274,13 @@ describe('Test Identity (direct invocation)', function () {
             context
         );
 
-        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
-
+        let currentNonce = (await getSidechainNonce(context, teeShieldingKey, bobSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
         const twitterNonce = getNextNonce();
         const evmNonce = getNextNonce();
-        const evmIdentity = await buildIdentityHelper(context.ethersWallet.bob.address, 'Evm', context);
+        const evmIdentity = await buildIdentityHelper(context.ethersWallet.alice.address, 'Evm', context);
         const [evmValidation] = await buildValidations(
             context,
             [bobSubstrateIdentity],
@@ -300,7 +299,7 @@ describe('Test Identity (direct invocation)', function () {
             context.mrEnclave,
             context.api.createType('Index', twitterNonce),
             new PolkadotSigner(context.substrateWallet.bob),
-            aliceSubstrateIdentity,
+            bobSubstrateIdentity,
             twitterIdentity.toHex(),
             evmValidation.toHex(),
             evmNetworks.toHex(),
@@ -813,7 +812,7 @@ describe('Test Identity (direct invocation)', function () {
                 assert.isTrue(v.isDispatch, `expected Dispatch, received ${v.type} instead`);
                 assert.equal(
                     v.asDispatch.toString(),
-                    ' error: Module(ModuleError { index: 6, error: [5, 0, 0, 0], message: Some("WrongWeb3NetworkTypes") })'
+                    ' error: Module(ModuleError { index: 6, error: [4, 0, 0, 0], message: Some("WrongWeb3NetworkTypes") })'
                 );
             },
             res
@@ -872,7 +871,7 @@ describe('Test Identity (direct invocation)', function () {
                 context.api.createType('Index', nonce),
                 new PolkadotSigner(context.substrateWallet.bob),
                 bobSubstrateIdentity,
-                bobSubstrateIdentity.toHex(),
+                identity.toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier
             );
