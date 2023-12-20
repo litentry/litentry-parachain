@@ -262,9 +262,9 @@ pub mod pallet {
 		// try to create an IDGraph if there's none - `who` will be the prime identity
 		// please note the web3networks for the prime identity will be all avaiable networks
 		fn maybe_create_id_graph(who: &Identity) -> Result<(), DispatchError> {
-			if IDGraphs::<T>::get(&who, &who).is_none() {
+			if IDGraphs::<T>::get(who, who).is_none() {
 				ensure!(
-					!LinkedIdentities::<T>::contains_key(&who),
+					!LinkedIdentities::<T>::contains_key(who),
 					Error::<T>::IdentityAlreadyLinked
 				);
 
@@ -279,7 +279,7 @@ pub mod pallet {
 					<T as frame_system::Config>::BlockNumber::one(),
 					prime_identity_web3networks,
 				);
-				Self::insert_identity_with_limit(&who, &who, context)?;
+				Self::insert_identity_with_limit(who, who, context)?;
 			}
 			Ok(())
 		}
