@@ -131,8 +131,8 @@ impl<T: Config> Pallet<T> {
 			!scheduled_requests.iter().any(|req| req.delegator == delegator),
 			<Error<T>>::PendingDelegationRequestAlreadyExists,
 		);
-		let bonded_amount = state.get_bond_amount(&collator).ok_or(<Error<T>>::DelegationDNE)?;
 
+		let bonded_amount = state.get_bond_amount(&collator).ok_or(<Error<T>>::DelegationDNE)?;
 		ensure!(bonded_amount > decrease_amount, <Error<T>>::DelegatorBondBelowMin);
 		let new_amount: BalanceOf<T> = bonded_amount - decrease_amount;
 		ensure!(new_amount >= T::MinDelegation::get(), <Error<T>>::DelegationBelowMin);
@@ -217,7 +217,6 @@ impl<T: Config> Pallet<T> {
 		match request.action {
 			DelegationAction::Revoke(amount) => {
 				// revoking last delegation => leaving set of delegators
-
 				let leaving = if state.delegations.0.len() == 1usize {
 					true
 				} else {
@@ -262,6 +261,7 @@ impl<T: Config> Pallet<T> {
 				// remove from pending requests
 				let amount = scheduled_requests.remove(request_idx).action.amount();
 				state.less_total = state.less_total.saturating_sub(amount);
+
 				// decrease delegation
 				for bond in &mut state.delegations.0 {
 					if bond.owner == collator {
