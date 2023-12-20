@@ -29,13 +29,10 @@ use lc_credentials::{
 	litentry_profile::token_balance::TokenBalanceInfo,
 };
 use lc_data_providers::{
-	achainable_names::{AchainableNameAmountToken, GetAchainableName},
-	ETokenAddress, TokenFromString,
+	achainable_names::AchainableNameAmountToken, ETokenAddress, TokenFromString,
 };
 
-const LIT_HOLDING_AMOUNT_NAME: &str = "LIT Holding Amount";
-
-/// USDC / USDT Holder
+/// ERC20 Holder: USDC and others
 /// assertions:[
 /// {
 ///    and:[
@@ -62,59 +59,44 @@ pub fn build_amount_token(
 	let identities = transpose_identity(&req.identities);
 	let achainable_param = AchainableParams::AmountToken(param.clone());
 
-	// LIT Holding Amount
-	// Since "LIT Holding Amount" is a custom name in this context, we need to differentiate it by identifying which VC it refers to.
-	if is_lit_holding_amount(&achainable_param)? {
-		let lit_holding_amount = query_lit_holding_amount(&achainable_param, &identities)?;
-
-		return match Credential::new(&req.who, &req.shard) {
-			Ok(mut credential_unsigned) => {
-				credential_unsigned.update_lit_holding_amount(lit_holding_amount);
-				Ok(credential_unsigned)
-			},
-			Err(e) => {
-				error!("Generate unsigned credential failed {:?}", e);
-				Err(Error::RequestVCFailed(
-					Assertion::Achainable(achainable_param),
-					e.into_error_detail(),
-				))
-			},
-		}
-	}
-
-	// USDC / USDT Holder
-	let addresses = identities
-		.into_iter()
-		.flat_map(|(_, addresses)| addresses)
-		.collect::<Vec<String>>();
-	let token = ETokenAddress::from_vec(param.token.unwrap_or_default());
-	let balance = request_achainable_balance(addresses, achainable_param.clone())?
-		.parse::<f64>()
-		.map_err(|_| {
-			Error::RequestVCFailed(
-				Assertion::Achainable(achainable_param.clone()),
-				ErrorDetail::ParseError,
-			)
-		})?;
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_token_balance(token, balance);
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::Achainable(achainable_param),
-				e.into_error_detail(),
-			))
-		},
-	}
-}
-
-fn is_lit_holding_amount(param: &AchainableParams) -> Result<bool> {
-	let name_amount_token = AchainableNameAmountToken::from(param.name()).map_err(|e| {
-		Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
+	let mut credential = Credential::new(&req.who, &req.shard).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
 	})?;
 
-	Ok(name_amount_token.name() == LIT_HOLDING_AMOUNT_NAME)
+	let amount_token_name =
+		AchainableNameAmountToken::from(achainable_param.name()).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(achainable_param.clone()),
+				e.into_error_detail(),
+			)
+		})?;
+	match amount_token_name {
+		AchainableNameAmountToken::LITHoldingAmount => {
+			let lit_holding_amount = query_lit_holding_amount(&achainable_param, &identities)?;
+			credential.update_lit_holding_amount(lit_holding_amount);
+		},
+		_ => {
+			// Token Holder
+			let addresses = identities
+				.into_iter()
+				.flat_map(|(_, addresses)| addresses)
+				.collect::<Vec<String>>();
+			let token = ETokenAddress::from_vec(param.token.unwrap_or_default());
+			let balance = request_achainable_balance(addresses, achainable_param.clone())?
+				.parse::<f64>()
+				.map_err(|_| {
+					Error::RequestVCFailed(
+						Assertion::Achainable(achainable_param.clone()),
+						ErrorDetail::ParseError,
+					)
+				})?;
+
+			credential.update_token_balance(token, balance);
+		},
+	}
+
+	Ok(credential)
 }
