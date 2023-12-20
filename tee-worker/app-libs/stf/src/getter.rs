@@ -100,7 +100,7 @@ pub enum PublicGetter {
 	#[codec(index = 1)]
 	nonce(Identity),
 	#[codec(index = 2)]
-	all_id_graph_hash,
+	id_graph_hash(Identity),
 }
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -250,7 +250,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					None
 				},
 			// litentry
-			TrustedGetter::id_graph(who) => Some(IdentityManagement::get_id_graph(&who).encode()),
+			TrustedGetter::id_graph(who) => Some(IdentityManagement::id_graph(&who).encode()),
 
 			// TODO: we need to re-think it
 			//       currently, _who is ignored meaning it's actually not a "trusted" getter.
@@ -280,8 +280,8 @@ impl ExecuteGetter for PublicGetter {
 				} else {
 					None
 				},
-			PublicGetter::all_id_graph_hash =>
-				Some(IdentityManagement::all_id_graph_hash().encode()),
+			PublicGetter::id_graph_hash(identity) =>
+				IdentityManagement::id_graph_hash(&identity).map(|h| h.encode()),
 		}
 	}
 

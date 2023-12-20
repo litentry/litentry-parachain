@@ -55,7 +55,6 @@ pub trait WeightInfo {
 	fn link_identity() -> Weight;
 	fn deactivate_identity() -> Weight;
 	fn activate_identity() -> Weight;
-	fn update_id_graph_hash() -> Weight;
 	fn identity_linked() -> Weight;
 	fn identity_deactivated() -> Weight;
 	fn identity_activated() -> Weight;
@@ -116,19 +115,6 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 		// Minimum execution time: 15_907_000 picoseconds.
 		Weight::from_parts(16_350_000, 1561)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
-	}
-	/// Storage: Teerex EnclaveIndex (r:1 w:0)
-	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	/// Storage: IdentityManagement IDGraphHash (r:0 w:1)
-	/// Proof: IdentityManagement IDGraphHash (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
-	fn update_id_graph_hash() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `255`
-		//  Estimated: `3720`
-		// Minimum execution time: 22_016_000 picoseconds.
-		Weight::from_parts(22_404_000, 3720)
-			.saturating_add(T::DbWeight::get().reads(1_u64))
-			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
@@ -246,19 +232,6 @@ impl WeightInfo for () {
 		// Minimum execution time: 15_907_000 picoseconds.
 		Weight::from_parts(16_350_000, 1561)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
-	}
-	/// Storage: Teerex EnclaveIndex (r:1 w:0)
-	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
-	/// Storage: IdentityManagement IDGraphHash (r:0 w:1)
-	/// Proof: IdentityManagement IDGraphHash (max_values: None, max_size: Some(80), added: 2555, mode: MaxEncodedLen)
-	fn update_id_graph_hash() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `255`
-		//  Estimated: `3720`
-		// Minimum execution time: 22_016_000 picoseconds.
-		Weight::from_parts(22_404_000, 3720)
-			.saturating_add(RocksDbWeight::get().reads(1_u64))
-			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	/// Storage: Teerex EnclaveIndex (r:1 w:0)
 	/// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
