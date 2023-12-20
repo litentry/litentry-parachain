@@ -179,7 +179,7 @@ jobs:
           fetch-depth: 0
       - name: Set env
         run: |
-          WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f3 | sed 's/w/v/')
+          WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f3- | sed 's/w/v/')
           echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
 
       # - name: Free up disk space
@@ -264,7 +264,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:$WORKER_TAG
+          tags: litentry/litentry-worker:v0.0.1-100
           target: deployed-worker
 
       - name: Build cli
@@ -272,7 +272,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:$WORKER_TAG
+          tags: litentry/litentry-cli:v0.0.1-100
           target: deployed-client
       
       - run: docker images --all
