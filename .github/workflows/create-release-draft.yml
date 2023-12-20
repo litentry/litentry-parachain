@@ -254,17 +254,12 @@ jobs:
       #     df -h .
       #     echo "::endgroup::"
       
-      - name: Echo litentry/litentry-worker:$WORKER_TAG
-        run: |
-          echo "litentry/litentry-worker:$WORKER_TAG"
-          echo "litentry/litentry-cli:$WORKER_TAG"
-
       - name: Build worker
         uses: docker/build-push-action@v5
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:v0.0.1-100
+          tags: litentry/litentry-worker:${{ env.WORKER_TAG }}
           target: deployed-worker
 
       - name: Build cli
@@ -272,7 +267,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:v0.0.1-100
+          tags: litentry/litentry-cli:${{ env.WORKER_TAG }}
           target: deployed-client
       
       - run: docker images --all
