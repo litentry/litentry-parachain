@@ -180,6 +180,7 @@ jobs:
       - name: Set env
         run: |
           WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f3- | sed 's/w/v/')
+          echo "$WORKER_TAG"
           echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
 
       - name: Free up disk space
