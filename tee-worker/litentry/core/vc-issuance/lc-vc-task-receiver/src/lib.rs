@@ -23,7 +23,7 @@ use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
 use frame_support::ensure;
 pub use futures;
-use ita_sgx_runtime::{Hash, Runtime};
+use ita_sgx_runtime::{pallet_imt::get_eligible_identities, Hash, Runtime};
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
 	ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCall,
@@ -154,27 +154,7 @@ where
 				sort_id_graph::<Runtime>(&mut id_graph);
 
 				let assertion_networks = assertion.clone().get_supported_web3networks();
-				id_graph
-					.into_iter()
-					.filter_map(|item| {
-						if item.1.is_active() {
-							let mut networks = item.1.web3networks.to_vec();
-							// filter out identities whose web3networks are not supported by this specific `assertion`.
-							// We do it here before every request sending because:
-							// - it's a common step for all assertion buildings, for those assertions which only
-							//   care about web2 identities, this step will empty `IdentityContext.web3networks`
-							// - it helps to reduce the request size a bit
-							networks.retain(|n| assertion_networks.contains(n));
-							if networks.is_empty() && item.0.is_web3() {
-								None
-							} else {
-								Some((item.0, networks))
-							}
-						} else {
-							None
-						}
-					})
-					.collect()
+				get_eligible_identities(id_graph, assertion_networks)
 			})
 			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
 
