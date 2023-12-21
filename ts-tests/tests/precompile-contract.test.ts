@@ -154,10 +154,11 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             autoCompoundPercent
         );
 
+        let afterDelegateBalance = balance;
         // skip test if already delegated
         if (balance.reserved.toNumber() === 0) {
             await executeTransaction(delegateWithAutoCompound, 'delegateWithAutoCompound');
-            const { data: afterDelegateBalance } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+            afterDelegateBalance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
 
             expect(balance.free.toNumber() - toBigNumber(60)).to.closeTo(
                 afterDelegateBalance.free.toNumber(),
@@ -166,8 +167,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             expect(afterDelegateBalance.reserved.toNumber()).to.eq(toBigNumber(60));
             const collator = await collatorDetails();
             expect(collator.value).to.eq(autoCompoundPercent);
-
-            balance = afterDelegateBalance;
         }
 
         // delegatorBondMore(collator, amount)
@@ -179,7 +178,9 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             balanceAfterBondMore.free.toNumber() - toBigNumber(1),
             toBigNumber(1)
         );
-        expect(balanceAfterBondMore.reserved.toNumber()).to.eq(balance.reserved.toNumber() + toBigNumber(1));
+        expect(balanceAfterBondMore.reserved.toNumber()).to.eq(
+            afterDelegateBalance.reserved.toNumber() + toBigNumber(1)
+        );
 
         // setAutoCompound(collator, percent);
         const setAutoCompound = precompileContract.methods.setAutoCompound(collatorPublicKey, autoCompoundPercent + 5);
@@ -240,12 +241,12 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         expect(balanceAfterRevoke.reserved.toNumber()).to.eq(0);
 
         // delegate(collator, amount);
-        const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(10));
+        const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(57));
         await executeTransaction(delegate, 'delegate');
         const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-        expect(balanceAfterDelegate.reserved.toNumber).to.eq(toBigNumber(10));
+        expect(balanceAfterDelegate.reserved.toNumber()).to.eq(toBigNumber(57));
 
-        // In casex evm is not enabled in Normal Mode, switch back to filterMode, after test.
+        // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
     });
