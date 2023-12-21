@@ -172,16 +172,23 @@ impl TrustedCallSigned {
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities: Vec<IdentityNetworkTuple> = id_graph
 			.into_iter()
-			.filter(|item| item.1.is_active())
-			.map(|item| {
-				let mut networks = item.1.web3networks.to_vec();
-				// filter out the web3networks which are not supported by this specific `assertion`.
-				// We do it here before every request sending because:
-				// - it's a common step for all assertion buildings, for those assertions which only
-				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
-				// - it helps to reduce the request size a bit
-				networks.retain(|n| assertion_networks.contains(n));
-				(item.0, networks)
+			.filter_map(|item| {
+				if item.1.is_active() {
+					let mut networks = item.1.web3networks.to_vec();
+					// filter out identities whose web3networks are not supported by this specific `assertion`.
+					// We do it here before every request sending because:
+					// - it's a common step for all assertion buildings, for those assertions which only
+					//   care about web2 identities, this step will empty `IdentityContext.web3networks`
+					// - it helps to reduce the request size a bit
+					networks.retain(|n| assertion_networks.contains(n));
+					if networks.is_empty() && item.0.is_web3() {
+						None
+					} else {
+						Some((item.0, networks))
+					}
+				} else {
+					None
+				}
 			})
 			.collect();
 		let assertion_build: RequestType = AssertionBuildRequest {
