@@ -439,7 +439,8 @@ describeLitentry('Test Identity', (context) => {
 
         await checkErrorDetail(aliceDeactivatedEvents, 'IdentityNotExist');
 
-        // deactivate a wrong identity (alice) for charlie
+        // deactivate a idneity for charlie, who is already linked to another IDGraph
+        // so creation of charlie's IDGraph should fail
         const charlieDeactivateTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.charlie,
@@ -454,7 +455,7 @@ describeLitentry('Test Identity', (context) => {
             ['DeactivateIdentityFailed']
         );
 
-        await checkErrorDetail(charlieDeactivateEvents, 'IdentityNotExist');
+        await checkErrorDetail(charlieDeactivateEvents, 'IdentityAlreadyLinked');
     });
 
     step('exceeding IDGraph limit not allowed', async function () {
