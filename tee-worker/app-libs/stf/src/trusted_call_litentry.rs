@@ -191,6 +191,12 @@ impl TrustedCallSigned {
 				}
 			})
 			.collect();
+
+		ensure!(
+			!identities.is_empty(),
+			StfError::RequestVCFailed(assertion, ErrorDetail::NoEligibleIdentity)
+		);
+
 		let assertion_build: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			signer,

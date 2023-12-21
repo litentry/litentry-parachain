@@ -19,10 +19,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-mod vc_handling;
-
 use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
+use frame_support::ensure;
 pub use futures;
 use ita_sgx_runtime::{Hash, Runtime};
 use ita_stf::{
@@ -56,6 +55,8 @@ use std::{
 	vec::Vec,
 };
 use threadpool::ThreadPool;
+
+mod vc_handling;
 
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
@@ -153,19 +154,31 @@ where
 				sort_id_graph::<Runtime>(&mut id_graph);
 
 				let assertion_networks = assertion.clone().get_supported_web3networks();
-				let identities: Vec<IdentityNetworkTuple> = id_graph
+				id_graph
 					.into_iter()
-					.filter(|item| item.1.is_active())
-					.map(|item| {
-						let mut networks = item.1.web3networks.to_vec();
-						networks.retain(|n| assertion_networks.contains(n));
-						(item.0, networks)
+					.filter_map(|item| {
+						if item.1.is_active() {
+							let mut networks = item.1.web3networks.to_vec();
+							// filter out identities whose web3networks are not supported by this specific `assertion`.
+							// We do it here before every request sending because:
+							// - it's a common step for all assertion buildings, for those assertions which only
+							//   care about web2 identities, this step will empty `IdentityContext.web3networks`
+							// - it helps to reduce the request size a bit
+							networks.retain(|n| assertion_networks.contains(n));
+							if networks.is_empty() && item.0.is_web3() {
+								None
+							} else {
+								Some((item.0, networks))
+							}
+						} else {
+							None
+						}
 					})
-					.collect();
-
-				identities
+					.collect()
 			})
 			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
+
+		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
 		let signer = signer
 			.to_account_id()
