@@ -1,0 +1,6 @@
+{
+    "connections": 4,
+    "iterations": 4,
+    "substrateEndpoint": "ws://localhost:10933",
+    "workerEndpoint": "wss://localhost:2989"
+}

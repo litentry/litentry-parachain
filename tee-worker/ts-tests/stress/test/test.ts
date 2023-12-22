@@ -77,7 +77,7 @@ describe('load test runner', function () {
             const contextManager = apiContextManager(config, log).map(async (api) => {
                 return {
                     api,
-                    session: await newUserSession(primary, userShieldingKey, api, log, runner),
+                    session: await newUserSession(primary, userShieldingKey, api, log),
                 };
             });
 

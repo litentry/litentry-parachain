@@ -11,14 +11,9 @@ import {
 } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import crypto, { KeyObject, createPublicKey } from 'crypto';
+import { Metadata } from '@polkadot/types/metadata';
+import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import {
-    LitentryPrimitivesIdentity,
-    TypeRegistry as SidechainTypeRegistry,
-    Metadata as SidechainMetadata,
-} from 'sidechain-api';
-import {
-    Bytes,
-    Codec,
     FrameSystemEventRecord,
     Getter,
     ApiPromise as ParachainApiPromise,
@@ -34,6 +29,8 @@ import WsWebSocket from 'ws';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
 import { PublicGetter } from 'parachain-api';
+import { Bytes, TypeRegistry } from '@polkadot/types';
+import { Codec } from '@polkadot/types/types';
 
 async function logLine(log: WritableStream<string>, message: string): Promise<void> {
     const writer = log.getWriter();
@@ -53,7 +50,7 @@ export type Api = {
     mrEnclave: `0x${string}`;
     teeShieldingKey: crypto.KeyObject;
     teeWorker: WebSocketAsPromised;
-    sidechainRegistry: SidechainTypeRegistry;
+    sidechainRegistry: TypeRegistry;
 };
 
 function encryptWithAes(key: string, nonce: Uint8Array, cleartext: Buffer): HexString {
@@ -69,7 +66,7 @@ function encryptWithAes(key: string, nonce: Uint8Array, cleartext: Buffer): HexS
 
 function generateVerificationMessage(
     parachainApi: ParachainApiPromise,
-    sidechainRegistry: SidechainTypeRegistry,
+    sidechainRegistry: TypeRegistry,
     signer: LitentryPrimitivesIdentity,
     identity: LitentryPrimitivesIdentity,
     sidechainNonce: number
@@ -83,7 +80,7 @@ function generateVerificationMessage(
 
 export async function buildValidation(
     parachainApi: ParachainApiPromise,
-    sidechainRegistry: SidechainTypeRegistry,
+    sidechainRegistry: TypeRegistry,
     signerIdentity: LitentryPrimitivesIdentity,
     identity: LitentryPrimitivesIdentity,
     startingSidechainNonce: number,
@@ -121,7 +118,7 @@ export async function buildValidation(
 
 export async function buildIdentityFromWallet(
     wallet: Wallet,
-    sidechainRegistry: SidechainTypeRegistry
+    sidechainRegistry: TypeRegistry
 ): Promise<LitentryPrimitivesIdentity> {
     if (wallet.type === 'evm') {
         const identity = {
@@ -195,12 +192,12 @@ export async function getSidechainMetadata(
     wsClient: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     log: WritableStream<string>
-): Promise<{ sidechainMetaData: SidechainMetadata; sidechainRegistry: SidechainTypeRegistry }> {
+): Promise<{ sidechainMetaData: Metadata; sidechainRegistry: TypeRegistry }> {
     const request = { jsonrpc: '2.0', method: 'state_getMetadata', params: [], id: 1 };
     const resp = await sendRequest(wsClient, request, parachainApi, log);
 
-    const sidechainRegistry = new SidechainTypeRegistry();
-    const sidechainMetaData = new SidechainMetadata(sidechainRegistry, resp.value);
+    const sidechainRegistry = new TypeRegistry();
+    const sidechainMetaData = new Metadata(sidechainRegistry, resp.value);
 
     sidechainRegistry.setMetadata(sidechainMetaData);
     return { sidechainMetaData, sidechainRegistry };
@@ -466,6 +463,36 @@ export const subscribeToEventsWithExtHash = async (
     });
 };
 
+// given an encoded trusted operation, construct an aes request bytes that are sent in RPC request parameters
+export const createAesRequest = async (
+    parachainApi: ParachainApiPromise,
+    mrenclave: string,
+    teeShieldingKey: KeyObject,
+    aesKey: Uint8Array,
+    top: Uint8Array,
+    keyNonce: string
+) => {
+    const encryptedAesKey = compactAddLength(bufferToU8a(encryptWithTeeShieldingKey(teeShieldingKey, aesKey)));
+    return parachainApi
+        .createType('AesRequest', {
+            shard: hexToU8a(mrenclave),
+            key: encryptedAesKey,
+            payload: parachainApi
+                .createType('AesOutput', {
+                    ciphertext: compactAddLength(
+                        hexToU8a(encryptWithAes(u8aToHex(aesKey), hexToU8a(keyNonce), Buffer.from(top)))
+                    ),
+                    add: hexToU8a('0x'),
+                    nonce: hexToU8a(keyNonce),
+                })
+                .toU8a(),
+        })
+        .toU8a();
+};
+
+const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
+const keyNonce = '0x010101010101010101010101';
+
 export const sendRequestFromTrustedCall = async (
     wsp: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
@@ -477,22 +504,35 @@ export const sendRequestFromTrustedCall = async (
     // construct trusted operation
     const trustedOperation = parachainApi.createType('TrustedOperation', { direct_call: call });
     // create the request parameter
-    const requestParam = await createRsaRequest(
-        wsp,
+    const requestParam = await createAesRequest(
         parachainApi,
         mrenclave,
         teeShieldingKey,
-        false,
-        trustedOperation.toU8a()
+        hexToU8a(aesKey),
+        trustedOperation.toU8a(),
+        keyNonce
     );
-    const request = {
-        jsonrpc: '2.0',
-        method: 'author_submitAndWatchRsRequest',
-        params: [u8aToHex(requestParam)],
-        id: 1,
-    };
+    const id = 1; // Math.floor(1 + 999999 * Math.random());
+    const request = createJsonRpcRequest('author_submitAndWatchAesRequest', [u8aToHex(requestParam)], id);
+
     return sendRequest(wsp, request, parachainApi, log);
 };
+
+type JsonRpcRequest = {
+    jsonrpc: string;
+    method: string;
+    params: any;
+    id: number;
+};
+
+export function createJsonRpcRequest(method: string, params: any, id: number): JsonRpcRequest {
+    return {
+        jsonrpc: '2.0',
+        method,
+        params,
+        id,
+    };
+}
 
 export function createSignedTrustedCallSetUserShieldingKey(
     parachainApi: ParachainApiPromise,

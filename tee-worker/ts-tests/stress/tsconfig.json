@@ -15,7 +15,6 @@
         "parachain-api/*": ["../parachain-api/dist/*", "../parachain-api/build/*"],
         "sidechain-api/*": ["../sidechain-api/src/*", "../sidechain-api/build/*"]
     },
-    "references": [{ "path": "../parachain-api" }, { "path": "../sidechain-api" }],
     "ts-node": {
         "esm": true,
         "experimentalResolver": true,

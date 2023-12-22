@@ -1,7 +1,10 @@
 import {
     ApiPromise as ParachainApiPromise,
     WsProvider as ParachainWsProvider,
-    definitions as teeTypes,
+    identity,
+    vc,
+    trusted_operations,
+    sidechain,
 } from 'parachain-api';
 import { initWorkerConnection, getSidechainMetadata, getEnclave, Api } from './litentry-api';
 import { ContextManager } from './context-manager';
@@ -27,7 +30,7 @@ export const apiContextManager = (
             async ({ provider }) => ({
                 parachainApi: await ParachainApiPromise.create({
                     provider,
-                    types: teeTypes.types,
+                    types: { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types },
                 }),
             }),
             async ({ parachainApi }) => {

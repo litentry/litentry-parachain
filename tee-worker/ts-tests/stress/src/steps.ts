@@ -1,4 +1,5 @@
-import { LitentryPrimitivesIdentity, TypeRegistry as SidechainTypeRegistry } from 'sidechain-api';
+import { TypeRegistry } from '@polkadot/types';
+import { LitentryPrimitivesIdentity } from 'sidechain-api';
 import {
     Wallet,
     buildIdentityFromWallet,
@@ -7,7 +8,6 @@ import {
     createSignedTrustedCallDeactivateIdentity,
     createSignedTrustedCallLinkIdentity,
     createSignedTrustedCallRequestVc,
-    createSignedTrustedCallSetUserShieldingKey,
     sendRequestFromTrustedCall,
     subscribeToEventsWithExtHash,
 } from './litentry-api';
@@ -18,57 +18,13 @@ import { Index } from '@polkadot/types/interfaces';
 import { Measurement, Runner } from './measurement';
 
 const aesKey = '0x22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12';
-
-export async function setShieldingKey(
-    runner: Runner<string, boolean>,
-    primary: Wallet,
-    sidechainRegistry: SidechainTypeRegistry,
-    teeWorker: WebSocketAsPromised,
-    parachainApi: ParachainApiPromise,
-    mrEnclave: string,
-    teeShieldingKey: crypto.KeyObject,
-    userShieldingKey: string,
-    nonce: Index,
-    subject: LitentryPrimitivesIdentity,
-    log: WritableStream<string>
-): Promise<void> {
-    const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-
-    const setUserShieldingKeyCall = await createSignedTrustedCallSetUserShieldingKey(
-        parachainApi,
-        mrEnclave,
-        nonce,
-        primary,
-        subject,
-        userShieldingKey,
-        requestIdentifier
-    );
-
-    const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
-
-    await runner('setShieldingKey', async () => {
-        await sendRequestFromTrustedCall(
-            teeWorker,
-            parachainApi,
-            mrEnclave,
-            teeShieldingKey,
-            setUserShieldingKeyCall,
-            log
-        );
-
-        const events = await eventsPromise;
-
-        return events
-            .map(({ event }) => event)
-            .some((event) => parachainApi.events.identityManagement.UserShieldingKeySet.is(event));
-    });
-}
+const keyNonce = '0x010101010101010101010101';
 
 export async function linkIdentity(
     runner: Runner<string, boolean>,
     primary: Wallet,
     secondary: Wallet,
-    sidechainRegistry: SidechainTypeRegistry,
+    sidechainRegistry: TypeRegistry,
     teeWorker: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrEnclave: string,
@@ -109,7 +65,15 @@ export async function linkIdentity(
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
     await runner('linkIdentity', async () => {
-        await sendRequestFromTrustedCall(teeWorker, parachainApi, mrEnclave, teeShieldingKey, linkIdentityCall, log);
+        const response = await sendRequestFromTrustedCall(
+            teeWorker,
+            parachainApi,
+            mrEnclave,
+            teeShieldingKey,
+            linkIdentityCall,
+            log
+        );
+        console.log(response.toHuman());
 
         const events = await eventsPromise;
         return events
@@ -121,7 +85,7 @@ export async function linkIdentity(
 export async function requestVc1(
     runner: Runner<string, boolean>,
     primary: Wallet,
-    sidechainRegistry: SidechainTypeRegistry,
+    sidechainRegistry: TypeRegistry,
     teeWorker: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrEnclave: string,
@@ -145,7 +109,15 @@ export async function requestVc1(
     const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, parachainApi);
 
     await runner('requestVc1', async () => {
-        await sendRequestFromTrustedCall(teeWorker, parachainApi, mrEnclave, teeShieldingKey, requestVcCall, log);
+        const response = await sendRequestFromTrustedCall(
+            teeWorker,
+            parachainApi,
+            mrEnclave,
+            teeShieldingKey,
+            requestVcCall,
+            log
+        );
+        console.log(response.toHuman());
 
         const events = await eventsPromise;
 
@@ -156,7 +128,7 @@ export async function requestVc1(
 export async function requestVc4(
     runner: Runner<string, boolean>,
     primary: Wallet,
-    sidechainRegistry: SidechainTypeRegistry,
+    sidechainRegistry: TypeRegistry,
     teeWorker: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrEnclave: string,
@@ -192,7 +164,7 @@ export async function deactivateIdentity(
     runner: Runner<string, boolean>,
     primary: Wallet,
     secondary: Wallet,
-    sidechainRegistry: SidechainTypeRegistry,
+    sidechainRegistry: TypeRegistry,
     teeWorker: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrEnclave: string,
@@ -236,7 +208,7 @@ export async function activateIdentity(
     runner: Runner<string, boolean>,
     primary: Wallet,
     secondary: Wallet,
-    sidechainRegistry: SidechainTypeRegistry,
+    sidechainRegistry: TypeRegistry,
     teeWorker: WebSocketAsPromised,
     parachainApi: ParachainApiPromise,
     mrEnclave: string,

@@ -99,7 +99,7 @@ async function main() {
         const userShieldingKey = u8aToHex(new Uint8Array(exportedKey));
 
         const contextManager = apiContextManager(config, log).map(async (api) => {
-            const userSession = await newUserSession(primary, userShieldingKey, api, log, runner);
+            const userSession = await newUserSession(primary, userShieldingKey, api, log);
             const stepGenerator = newStepGenerator(api, userSession, log, runner);
             return stepGenerator;
         });
