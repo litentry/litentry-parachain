@@ -21,7 +21,9 @@
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID",
-        "vip3_url": "https://dappapi.vip3.io/"
+        "vip3_url": "https://dappapi.vip3.io/",
+        "geniidata_url": "https://api.geniidata.com/api/1/brc20/balance?",
+        "geniidata_api_key": "142cf1b0-1ca7-11ee-bb5e-9d74c2e854ac"
     },
     "mock": {
         "twitter_official_url": "http://localhost:19527",
@@ -45,7 +47,9 @@
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID",
-        "vip3_url": "https://dappapi.vip3.io/"
+        "vip3_url": "https://dappapi.vip3.io/",
+        "geniidata_url": "https://api.geniidata.com/api/1/brc20/balance?",
+        "geniidata_api_key": "142cf1b0-1ca7-11ee-bb5e-9d74c2e854ac"
     },
     "prod": {
         "twitter_official_url": "https://api.twitter.com",
@@ -69,7 +73,9 @@
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID",
-        "vip3_url": "https://dappapi.vip3.io/"
+        "vip3_url": "https://dappapi.vip3.io/",
+        "geniidata_url": "https://api.geniidata.com/api/1/brc20/balance?",
+        "geniidata_api_key": "142cf1b0-1ca7-11ee-bb5e-9d74c2e854ac"
     },
     "staging": {
         "twitter_official_url": "https://api.twitter.com",
@@ -93,6 +99,8 @@
         "contest_legend_discord_role_id": "CONTEST_LEGEND_DISCORD_ROLE_ID",
         "contest_popularity_discord_role_id": "CONTEST_POPULARITY_DISCORD_ROLE_ID",
         "contest_participant_discord_role_id": "CONTEST_PARTICIPANT_DISCORD_ROLE_ID",
-        "vip3_url": "https://dappapi.vip3.io/"
+        "vip3_url": "https://dappapi.vip3.io/",
+        "geniidata_url": "https://api.geniidata.com/api/1/brc20/balance?",
+        "geniidata_api_key": "142cf1b0-1ca7-11ee-bb5e-9d74c2e854ac"
     }
 }

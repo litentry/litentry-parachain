@@ -50,6 +50,7 @@ pub mod a6;
 pub mod a7;
 pub mod a8;
 pub mod achainable;
+pub mod brc20;
 pub mod generic_discord_role;
 pub mod lit_staking;
 pub mod nodereal;
@@ -58,21 +59,29 @@ pub mod vip3;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;
-use itp_utils::stringify::account_id_to_string;
+use itp_utils::stringify::{account_id_to_string, account_id_to_string_without_prefix};
 use lc_credentials::Credential;
 use lc_data_providers::achainable::web3_network_to_chain;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
-	AchainableAmount, AchainableAmountHolding, AchainableAmountToken, AchainableAmounts,
-	AchainableBasic, AchainableBetweenPercents, AchainableDate, AchainableDateInterval,
-	AchainableDatePercent, AchainableParams, AchainableToken, Assertion, ErrorDetail, ErrorString,
-	Identity, IdentityNetworkTuple, IntoErrorDetail, OneBlockCourseType, ParameterString,
-	VCMPError as Error, Web3Network, ASSERTION_FROM_DATE,
+	p2pkh_address, p2sh_address, p2tr_address, p2wpkh_address, AchainableAmount,
+	AchainableAmountHolding, AchainableAmountToken, AchainableAmounts, AchainableBasic,
+	AchainableBetweenPercents, AchainableDate, AchainableDateInterval, AchainableDatePercent,
+	AchainableParams, AchainableToken, Assertion, ErrorDetail, ErrorString, Identity,
+	IdentityNetworkTuple, IntoErrorDetail, OneBlockCourseType, ParameterString, VCMPError as Error,
+	Web3Network, ASSERTION_FROM_DATE,
 };
 use log::*;
 use rust_base58::ToBase58;
 use ss58_registry::Ss58AddressFormat;
-use std::{collections::HashSet, format, string::String, sync::Arc, vec, vec::Vec};
+use std::{
+	collections::HashSet,
+	format,
+	string::{String, ToString},
+	sync::Arc,
+	vec,
+	vec::Vec,
+};
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -103,7 +112,8 @@ pub fn transpose_identity(
 					networks_set.insert(n);
 				},
 				Identity::Bitcoin(address) => {
-					let address = account_id_to_string(address.as_ref());
+					let address = account_id_to_string_without_prefix(address.as_ref());
+					let address = pubkey_to_address(&n, &address);
 					addresses.push((address, n));
 					networks_set.insert(n);
 				},
@@ -156,6 +166,25 @@ pub fn ss58_address_of(
 	bytes.extend(&blake2b.as_bytes()[0..2]);
 
 	Ok(bytes.to_base58())
+}
+
+fn pubkey_to_address(network: &Web3Network, pubkey: &str) -> String {
+	match network {
+		Web3Network::BitcoinP2tr => p2tr_address(pubkey),
+		Web3Network::BitcoinP2pkh => p2pkh_address(pubkey),
+		Web3Network::BitcoinP2sh => p2sh_address(pubkey),
+		Web3Network::BitcoinP2wpkh => p2wpkh_address(pubkey),
+		Web3Network::BitcoinP2wsh => "".to_string(),
+		Web3Network::Polkadot
+		| Web3Network::Kusama
+		| Web3Network::Litentry
+		| Web3Network::Litmus
+		| Web3Network::LitentryRococo
+		| Web3Network::Khala
+		| Web3Network::SubstrateTestnet
+		| Web3Network::Ethereum
+		| Web3Network::Bsc => "".to_string(),
+	}
 }
 
 #[cfg(test)]
@@ -222,5 +251,43 @@ mod tests {
 			)
 		);
 		assert_eq!(result.get(4).unwrap(), &(Web3Network::Bsc, vec![[4u8; 20].to_hex()]));
+	}
+
+	#[test]
+	fn pubkey_to_address_works() {
+		// p2wpkh
+		let addr = "bc1qlht0muueu6wln5qqwtvczjepnfeerpaw480067";
+		let pubkey = "0272cbf3e56e238897ca9ee9ca9594a82803cfdf19121bd939cbe3f2e1bcaffc7b";
+		let network = Web3Network::BitcoinP2wpkh;
+		let gen_addr = pubkey_to_address(&network, &pubkey);
+		assert_eq!(addr, gen_addr);
+
+		// p2sh
+		let addr = "35KQSeZpaABvNWmKAMXo7mAAtXZBqCd4sw";
+		let pubkey = "02e46883d2101f09e875dd4a67ee5c2dce9d821b9a610a7e12ab0de7494b19b7d0";
+		let network = Web3Network::BitcoinP2sh;
+		let gen_addr = pubkey_to_address(&network, &pubkey);
+		assert_eq!(addr, gen_addr);
+
+		// p2tr
+		let addr = "bc1pwgqves622fs5s42h4sr8hu9y6ej232hga8uxal7xgkcsy8a3ryqqvgku7t";
+		let pubkey = "031d867537093a8eaace96717ba0aa226a5bf368c6c84ca5dfb214d380bc91afbe";
+		let network = Web3Network::BitcoinP2tr;
+		let gen_addr = pubkey_to_address(&network, &pubkey);
+		assert_eq!(addr, gen_addr);
+
+		// p2pkh
+		let addr = "1CY8nArJbvLSHQmKp3SiG8T5WSBfnMJpJx";
+		let pubkey = "02784a686e5ffc74d713f66cb8885d6b75c062c61df5f6de8f86f07c340ebc183c";
+		let network = Web3Network::BitcoinP2pkh;
+		let gen_addr = pubkey_to_address(&network, &pubkey);
+		assert_eq!(addr, gen_addr);
+
+		// p2wsh
+		let addr = "";
+		let pubkey = "02e46883d2101f09e875dd4a67ee5c2dce9d821b9a610a7e12ab0de7494b19b7d0";
+		let network = Web3Network::BitcoinP2wsh;
+		let gen_addr = pubkey_to_address(&network, &pubkey);
+		assert_eq!(addr, gen_addr);
 	}
 }

@@ -186,7 +186,6 @@ pub enum Assertion {
 	A6,
 	A7(ParameterString),                                    // (minimum_amount)
 	A8(BoundedWeb3Network),                                 // litentry, litmus, polkadot, kusama, khala, ethereum
-	A9,
 	A10(ParameterString),                                   // (minimum_amount)
 	A11(ParameterString),                                   // (minimum_amount)
 
@@ -218,8 +217,10 @@ pub enum Assertion {
 	WeirdoGhostGangHolder,
 
 	LITStaking,
-	
+
 	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
+
+	BRC20AmountHolder,
 }
 
 impl Assertion {
@@ -257,6 +258,14 @@ impl Assertion {
 			Self::LITStaking => vec![Web3Network::Litentry],
 			// EVM Amount Holding
 			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
+			// BRC20 Holder
+			Self::BRC20AmountHolder => vec![
+				Web3Network::BitcoinP2tr,
+				Web3Network::BitcoinP2pkh,
+				Web3Network::BitcoinP2sh,
+				Web3Network::BitcoinP2wpkh,
+				Web3Network::BitcoinP2wsh,
+			],
 			// we don't care about any specific web3 network
 			Self::A1 |
 			Self::A2(..) |

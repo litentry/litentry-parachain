@@ -71,6 +71,7 @@ pub mod achainable;
 pub mod achainable_names;
 pub mod discord_litentry;
 pub mod discord_official;
+pub mod geniidata;
 pub mod nodereal;
 pub mod nodereal_jsonrpc;
 pub mod twitter_official;
@@ -189,6 +190,8 @@ pub struct DataProviderConfig {
 	pub contest_popularity_discord_role_id: String,
 	pub contest_participant_discord_role_id: String,
 	pub vip3_url: String,
+	pub geniidata_url: String,
+	pub geniidata_api_key: String,
 }
 
 impl Default for DataProviderConfig {
@@ -222,6 +225,8 @@ impl DataProviderConfig {
 			contest_popularity_discord_role_id: "".to_string(),
 			contest_participant_discord_role_id: "".to_string(),
 			vip3_url: "".to_string(),
+			geniidata_url: "".to_string(),
+			geniidata_api_key: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -312,6 +317,14 @@ impl DataProviderConfig {
 		debug!("set_vip3_url: {:?}", v);
 		self.vip3_url = v;
 	}
+	pub fn set_geniidata_url(&mut self, v: String) {
+		debug!("set_geniidata_url: {:?}", v);
+		self.geniidata_url = v;
+	}
+	pub fn set_geniidata_api_key(&mut self, v: String) {
+		debug!("set_geniidata_api_key: {:?}", v);
+		self.geniidata_api_key = v;
+	}
 }
 
 lazy_static! {
@@ -329,6 +342,12 @@ pub enum Error {
 
 	#[error("Achainable error: {0}")]
 	AchainableError(String),
+
+	#[error("Nodereal error: {0}")]
+	NoderealError(String),
+
+	#[error("GeniiData error: {0}")]
+	GeniiDataError(String),
 }
 
 impl IntoErrorDetail for Error {
