@@ -22,9 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_credentials::brc20::amount_holder::BRC20AmountHolderCredential;
-use lc_data_providers::{
-	geniidata::GeniidataClient, DataProviderConfigReader, ReadDataProviderConfig,
-};
+use lc_data_providers::geniidata::GeniidataClient;
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
@@ -36,10 +34,12 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let data_provider_config = DataProviderConfigReader::read()
+	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
+		error!("Generate unsigned credential failed {:?}", e);
+		Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
+	})?;
+	let mut client = GeniidataClient::new()
 		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e))?;
-	let mut client = GeniidataClient::new(&data_provider_config);
-
 	let response = client.create_brc20_amount_holder_sum(addresses).map_err(|e| {
 		Error::RequestVCFailed(
 			Assertion::BRC20AmountHolder,
@@ -48,15 +48,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 			)),
 		)
 	})?;
+	credential_unsigned.update_brc20_amount_holder_credential(&response);
 
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_brc20_amount_holder_credential(&response);
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail()))
-		},
-	}
+	Ok(credential_unsigned)
 }

@@ -173,3 +173,6 @@ fn get_token_range_last(token: &BRC20Token) -> f64 {
 		_ => 0.0,
 	}
 }
+
+#[cfg(test)]
+mod tests {}

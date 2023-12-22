@@ -20,7 +20,10 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{build_client_with_cert, DataProviderConfig, Error as DataProviderError};
+use crate::{
+	build_client_with_cert, DataProviderConfigReader, Error as DataProviderError,
+	ReadDataProviderConfig,
+};
 use http::header::ACCEPT;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -29,6 +32,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
+use litentry_primitives::ErrorDetail;
 use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
@@ -36,10 +40,6 @@ use std::{
 	vec,
 	vec::Vec,
 };
-
-pub struct GeniidataClient {
-	client: RestClient<HttpClient<SendWithCertificateVerification>>,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -74,16 +74,21 @@ impl RestPath<String> for GeniidataResponse {
 	}
 }
 
+pub struct GeniidataClient {
+	client: RestClient<HttpClient<SendWithCertificateVerification>>,
+}
+
 impl GeniidataClient {
-	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
+	pub fn new() -> core::result::Result<Self, ErrorDetail> {
+		let data_provider_config = DataProviderConfigReader::read()?;
+
 		let mut headers = Headers::new();
 		headers.insert(ACCEPT.as_str(), "application/json");
-		headers.insert("api-key", data_provider_config.geniidata_api_key.clone().as_str());
+		headers.insert("api-key", data_provider_config.geniidata_api_key.as_str());
 
-		let client =
-			build_client_with_cert(data_provider_config.geniidata_url.clone().as_str(), headers);
+		let client = build_client_with_cert(data_provider_config.geniidata_url.as_str(), headers);
 
-		GeniidataClient { client }
+		Ok(GeniidataClient { client })
 	}
 
 	pub fn create_brc20_amount_holder_sum(
