@@ -27,19 +27,24 @@ const VC_BRC20_AMOUNT_HOLDER_DESCRIPTIONS: &str =
 const VC_BRC20_AMOUNT_HOLDER_TYPE: &str = "Token holding amount";
 
 const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "Mmss", "long", "cats", "BTCs"];
-const ORDI_TOKEN_BALANCE_RANGE: [f64; 10] =
-	[0.0, 1.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1000.0];
-const SATS_TOKEN_BALANCE_RANGE: [f64; 6] =
-	[0.0, 40_000_000.0, 200_000_000.0, 1_000_000_000.0, 2_000_000_000.0, 4_000_000_000.0];
-const RATS_TOKEN_BALANCE_RANGE: [f64; 6] =
-	[0.0, 40_000_000.0, 200_000_000.0, 1_000_000_000.0, 2_000_000_000.0, 4_000_000_000.0];
-const MMSS_TOKEN_BALANCE_RANGE: [f64; 10] =
-	[0.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 3500.0, 5000.0, 8000.0, 12000.0];
-const LONG_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 10.0, 50.0, 200.0, 500.0, 1000.0, 2000.0, 3500.0];
-const CATS_TOKEN_BALANCE_RANGE: [f64; 10] =
-	[0.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 3500.0, 5000.0, 8000.0, 12000.0];
-const BTCS_TOKEN_BALANCE_RANGE: [f64; 10] =
-	[0.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 3500.0, 5000.0, 8000.0, 12000.0];
+const ORDI_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 1.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0];
+const SATS_TOKEN_BALANCE_RANGE: [f64; 8] = [
+	0.0,
+	40_000_000.0,
+	200_000_000.0,
+	500_000_000.0,
+	1_000_000_000.0,
+	2_000_000_000.0,
+	4_000_000_000.0,
+	6_000_000_000.0,
+];
+const RATS_TOKEN_BALANCE_RANGE: [f64; 8] =
+	[0.0, 40_000.0, 200_000.0, 1_000_000.0, 2_000_000.0, 4_000_000.0, 10_000_000.0, 20_000_000.0];
+const MMSS_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0, 2000.0];
+const LONG_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 20.0, 50.0, 200.0, 500.0, 1000.0, 2000.0, 3000.0];
+const CATS_TOKEN_BALANCE_RANGE: [f64; 7] =
+	[0.0, 10_000.0, 50_000.0, 100_000.0, 200_000.0, 500_000.0, 800_000.0];
+const BTCS_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0];
 
 enum BRC20Token {
 	Ordi,
@@ -163,13 +168,13 @@ fn get_balance_range(token: &BRC20Token) -> Vec<f64> {
 
 fn get_token_range_last(token: &BRC20Token) -> f64 {
 	match token {
-		BRC20Token::Ordi => *ORDI_TOKEN_BALANCE_RANGE.last().unwrap_or(&1000.0),
-		BRC20Token::Sats => *SATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&3000.0),
-		BRC20Token::Rats => *RATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
-		BRC20Token::Mmss => *MMSS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
-		BRC20Token::Long => *LONG_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
-		BRC20Token::Cats => *CATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
-		BRC20Token::Btcs => *BTCS_TOKEN_BALANCE_RANGE.last().unwrap_or(&12000.0),
+		BRC20Token::Ordi => *ORDI_TOKEN_BALANCE_RANGE.last().unwrap_or(&500.0),
+		BRC20Token::Sats => *SATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&6_000_000_000.0),
+		BRC20Token::Rats => *RATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&20_000_000.0),
+		BRC20Token::Mmss => *MMSS_TOKEN_BALANCE_RANGE.last().unwrap_or(&2000.0),
+		BRC20Token::Long => *LONG_TOKEN_BALANCE_RANGE.last().unwrap_or(&3000.0),
+		BRC20Token::Cats => *CATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&800_000.0),
+		BRC20Token::Btcs => *BTCS_TOKEN_BALANCE_RANGE.last().unwrap_or(&800.0),
 		_ => 0.0,
 	}
 }
