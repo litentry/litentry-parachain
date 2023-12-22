@@ -26,9 +26,6 @@ use lc_data_providers::geniidata::GeniidataClient;
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
-
-	// TODO: here still missing one step: convert 'address', which is a pubkey, into real BTC/BRC20 address,
-	// which the data provider (GeniiData.com) can recognize.
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
