@@ -20,7 +20,7 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{build_client_with_cert, DataProviderConfig, Error, ErrorString};
+use crate::{build_client_with_cert, DataProviderConfig, Error as DataProviderError};
 use http::header::ACCEPT;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -29,8 +29,6 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::{Assertion, ErrorDetail, VCMPError};
-use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
@@ -91,14 +89,16 @@ impl GeniidataClient {
 	pub fn create_brc20_amount_holder_sum(
 		&mut self,
 		addresses: Vec<String>,
-	) -> Result<Vec<ResponseItem>, Error> {
+	) -> Result<Vec<ResponseItem>, DataProviderError> {
 		let mut all_items: Vec<ResponseItem> = Vec::new();
 		for address in addresses {
 			let query = vec![("limit", "20"), ("offset", "0"), ("address", &address)];
 			let response = self
 				.client
 				.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())
-				.map_err(|e| Error::GeniiDataError(format!("GeniiData response error: {}", e)))?;
+				.map_err(|e| {
+					DataProviderError::GeniiDataError(format!("GeniiData response error: {}", e))
+				})?;
 
 			all_items.extend(response.data.list);
 		}
