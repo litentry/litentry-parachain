@@ -249,10 +249,10 @@ pub enum Assertion {
 	#[codec(index = 20)]
 	LITStaking,
 
-	#[codec(index = 22)]
+	#[codec(index = 21)]
 	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
 
-	#[codec(index = 23)]
+	#[codec(index = 22)]
 	BRC20AmountHolder,
 }
 
