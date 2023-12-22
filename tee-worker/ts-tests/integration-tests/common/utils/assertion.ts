@@ -8,6 +8,7 @@ import { parseIdGraph, parseIdentity } from './identity-helper';
 import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeError } from 'sidechain-api';
 import { TeerexPrimitivesEnclave } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
+import { getIdGraphHash } from '../di-utils';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from './vc-helper';
@@ -25,6 +26,7 @@ import { Bytes } from '@polkadot/types-codec';
 import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import { KeyObject } from 'crypto';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -210,7 +212,7 @@ export async function checkJson(vc: any, proofJson: any): Promise<boolean> {
 }
 
 // for IdGraph mutation, assert the corresponding event is emitted for the given signer and the id_graph_hash matches
-export async function assertIdGraphMutation(
+export async function assertIdGraphMutationEvent(
     signer: Signer,
     events: any[],
     idGraphHashResults: any[] | undefined,
@@ -220,6 +222,7 @@ export async function assertIdGraphMutation(
     if (idGraphHashResults != undefined) {
         assert.equal(idGraphHashResults!.length, expectedLength);
     }
+
     const signerAddress = u8aToHex(signer.getAddressInSubstrateFormat());
     events.forEach((e, i) => {
         assert.equal(signerAddress, e.data.account.toHex());
@@ -227,7 +230,7 @@ export async function assertIdGraphMutation(
             assert.equal(idGraphHashResults![i], e.data.idGraphHash.toHex());
         }
     });
-    console.log(colors.green('assertIdGraphMutation passed'));
+    console.log(colors.green('assertIdGraphMutationEvent passed'));
 }
 
 export async function assertIdentity(
@@ -254,8 +257,10 @@ export function assertWorkerError(
 
 // a common assertion for all DI requests that might mutate the IdGraph
 // returns the `id_graph_hash` in the `returnValue`
-export function assertIdGraphMutationResult(
+export async function assertIdGraphMutationResult(
     context: IntegrationTestContext,
+    teeShieldingKey: KeyObject,
+    identity: LitentryPrimitivesIdentity,
     returnValue: WorkerRpcReturnValue,
     resultType:
         | 'LinkIdentityResult'
@@ -263,12 +268,15 @@ export function assertIdGraphMutationResult(
         | 'ActivateIdentityResult'
         | 'SetIdentityNetworksResult',
     expectedIdGraph: [LitentryPrimitivesIdentity, boolean][]
-): HexString {
+): Promise<HexString> {
     const decodedResult = context.api.createType(resultType, returnValue.value) as any;
-
     assert.isNotNull(decodedResult.mutated_id_graph);
     const idGraph = parseIdGraph(context.sidechainRegistry, decodedResult.mutated_id_graph, aesKey);
     assertIdGraph(idGraph, expectedIdGraph);
+    const queriedIdGraphHash = (await getIdGraphHash(context, teeShieldingKey, identity)).toHex();
+    assert.equal(u8aToHex(decodedResult.id_graph_hash), queriedIdGraphHash);
+
+    console.log(colors.green('assertIdGraphMutationResult passed'));
     return u8aToHex(decodedResult.id_graph_hash);
 }
 
@@ -366,18 +374,18 @@ export async function assertVc(context: IntegrationTestContext, subject: Litentr
 
 export async function assertIdGraphHash(
     context: IntegrationTestContext,
-    signer: Signer,
+    teeShieldingKey: KeyObject,
+    identity: LitentryPrimitivesIdentity,
     idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][]
 ) {
     const idGraphType = context.sidechainRegistry.createType(
         'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idGraph
     );
-    const localIdGraphHash = blake2AsHex(idGraphType.toU8a());
-    console.log('local id graph hash: ', localIdGraphHash);
+    const computedIdGraphHash = blake2AsHex(idGraphType.toU8a());
+    console.log('computed id graph hash: ', computedIdGraphHash);
 
-    const account = u8aToHex(signer.getAddressInSubstrateFormat());
-    const onChainIdGraphHash = (await context.api.query.identityManagement.idGraphHash(account)).toHuman();
-    console.log('on-chain id graph hash: ', onChainIdGraphHash);
-    assert.equal(localIdGraphHash, onChainIdGraphHash);
+    const queriedIdGraphHash = (await getIdGraphHash(context, teeShieldingKey, identity)).toHex();
+    console.log('queried id graph hash: ', queriedIdGraphHash);
+    assert.equal(computedIdGraphHash, queriedIdGraphHash);
 }

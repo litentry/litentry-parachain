@@ -18,7 +18,7 @@ import { defaultAssertions, unconfiguredAssertions } from './common/utils/vc-hel
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
-    let aliceSubject: LitentryPrimitivesIdentity = undefined as any;
+    let aliceSubstrateIdentity: LitentryPrimitivesIdentity = undefined as any;
 
     this.timeout(6000000);
 
@@ -28,12 +28,15 @@ describe('Test Vc (direct invocation)', function () {
             process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
         );
         teeShieldingKey = await getTeeShieldingKey(context);
-        aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
     });
 
     defaultAssertions.forEach(({ description, assertion }) => {
         step(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
-            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -45,7 +48,7 @@ describe('Test Vc (direct invocation)', function () {
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
                 new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubject,
+                aliceSubstrateIdentity,
                 context.api.createType('Assertion', assertion).toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier
@@ -63,12 +66,12 @@ describe('Test Vc (direct invocation)', function () {
                 1,
                 `vcIssuedEvents.length != 1, please check the ${Object.keys(assertion)[0]} call`
             );
-            await assertVc(context, aliceSubject, res.value);
+            await assertVc(context, aliceSubstrateIdentity, res.value);
         });
     });
     unconfiguredAssertions.forEach(({ description, assertion }) => {
         it(`request vc ${Object.keys(assertion)[0]} (alice)`, async function () {
-            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubject)).toNumber();
+            let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
             const getNextNonce = () => currentNonce++;
             const nonce = getNextNonce();
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -80,7 +83,7 @@ describe('Test Vc (direct invocation)', function () {
                 context.mrEnclave,
                 context.api.createType('Index', nonce),
                 new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubject,
+                aliceSubstrateIdentity,
                 context.api.createType('Assertion', assertion).toHex(),
                 context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
                 requestIdentifier

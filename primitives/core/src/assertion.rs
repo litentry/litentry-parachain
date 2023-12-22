@@ -246,6 +246,9 @@ pub enum Assertion {
 	#[codec(index = 19)]
 	WeirdoGhostGangHolder,
 
+	#[codec(index = 20)]
+	LITStaking,
+	
 	#[codec(index = 22)]
 	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
 
@@ -283,6 +286,8 @@ impl Assertion {
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// VIP3 Member Card
 			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
+			// LITStaking
+			Self::LITStaking => vec![Web3Network::Litentry],
 			// Weirdo Ghost Gang
 			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// EVM Amount Holding
