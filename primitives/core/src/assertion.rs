@@ -246,11 +246,11 @@ pub enum Assertion {
 	#[codec(index = 19)]
 	WeirdoGhostGangHolder,
 
-	#[codec(index = 20)]
-	BRC20AmountHolder,
-
 	#[codec(index = 22)]
 	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
+
+	#[codec(index = 23)]
+	BRC20AmountHolder,
 }
 
 impl Assertion {
@@ -287,6 +287,8 @@ impl Assertion {
 			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// EVM Amount Holding
 			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
+			// BRC20 Holder
+			Self::BRC20AmountHolder => vec![Web3Network::Bitcoin],
 			// we don't care about any specific web3 network
 			_ => vec![],
 		}
