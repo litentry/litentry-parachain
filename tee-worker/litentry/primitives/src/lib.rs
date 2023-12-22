@@ -86,12 +86,15 @@ pub enum LitentryMultiSignature {
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
 	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
-	/// Same as the above, but the payload bytes are hex-encoded and prepended with a readable prefix
+	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
 	#[codec(index = 4)]
 	EthereumPrettified(EthereumSignature),
-	/// Bitcoin signed message
+	/// Bitcoin signed message, a hex-encoded string of original &[u8] message, without `0x` prefix
 	#[codec(index = 5)]
 	Bitcoin(BitcoinSignature),
+	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
+	#[codec(index = 6)]
+	BitcoinPrettified(BitcoinSignature),
 }
 
 impl LitentryMultiSignature {
