@@ -36,7 +36,7 @@ fn set_user_shielding_key_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
-			vec![],
+			vec![Web3Network::Litentry],
 		));
 		assert_eq!(IMT::user_shielding_keys(who.clone()), Some(shielding_key));
 		System::assert_last_event(RuntimeEvent::IMT(crate::Event::UserShieldingKeySet {
@@ -122,6 +122,29 @@ fn link_identity_with_wrong_network_fails() {
 }
 
 #[test]
+fn link_identity_with_empty_network_works() {
+	new_test_ext(true).execute_with(|| {
+		let web3networks: Vec<Web3Network> = vec![];
+		let who: Identity = BOB.into();
+		assert_ok!(IMT::link_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			alice_evm_identity(),
+			web3networks,
+		));
+		assert_eq!(
+			IMT::id_graphs(who.clone(), alice_evm_identity()).unwrap(),
+			IdentityContext {
+				link_block: 1,
+				web3networks: vec![Web3Network::Ethereum, Web3Network::Bsc].try_into().unwrap(),
+				status: IdentityStatus::Active
+			}
+		);
+		assert_eq!(crate::IDGraphLens::<Test>::get(&who), 2);
+	});
+}
+
+#[test]
 fn cannot_link_identity_again() {
 	new_test_ext(true).execute_with(|| {
 		let web3networks: Vec<Web3Network> = vec![Web3Network::Polkadot];
@@ -194,7 +217,7 @@ fn remove_identity_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
-			vec![],
+			vec![Web3Network::Litentry],
 		));
 		assert_noop!(
 			IMT::remove_identity(
@@ -256,7 +279,7 @@ fn set_identity_networks_works() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
-			vec![],
+			vec![Web3Network::Litentry],
 		));
 		assert_noop!(
 			IMT::remove_identity(
@@ -305,7 +328,7 @@ fn set_identity_networks_with_wrong_network_fails() {
 			RuntimeOrigin::signed(ALICE),
 			who.clone(),
 			shielding_key,
-			vec![],
+			vec![Web3Network::Litentry],
 		));
 		assert_noop!(
 			IMT::remove_identity(
