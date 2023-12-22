@@ -273,7 +273,10 @@ impl Assertion {
 			// DOT holder
 			Self::A7(..) => vec![Web3Network::Polkadot],
 			// WBTC/ETH holder
-			Self::A10(..) | Self::A11(..) => vec![Web3Network::Ethereum],
+			Self::A10(..) |
+			Self::A11(..) |
+			Self::VIP3MembershipCard(..) |
+			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
@@ -284,18 +287,20 @@ impl Assertion {
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
-			// VIP3 Member Card
-			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
 			// LITStaking
 			Self::LITStaking => vec![Web3Network::Litentry],
-			// Weirdo Ghost Gang
-			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// EVM Amount Holding
 			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// BRC20 Holder
 			Self::BRC20AmountHolder => vec![Web3Network::Bitcoin],
 			// we don't care about any specific web3 network
-			_ => vec![],
+			Self::A1 |
+			Self::A2(..) |
+			Self::A3(..) |
+			Self::A6 |
+			Self::A13(..) |
+			Self::A20 |
+			Self::GenericDiscordRole(..) => vec![],
 		}
 	}
 }

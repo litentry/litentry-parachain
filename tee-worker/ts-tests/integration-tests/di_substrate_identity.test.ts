@@ -162,7 +162,9 @@ describe('Test Identity (direct invocation)', function () {
             undefined,
             context.bitcoinWallet.alice
         );
-        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', ['Bitcoin']) as unknown as Vec<Web3Network>; // @fixme #1878
+        const bitcoinNetworks = context.api.createType('Vec<Web3Network>', [
+            'BitcoinP2tr',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
             nonce: bitcoinNonce,
             identity: bitcoinIdentity,
@@ -242,7 +244,7 @@ describe('Test Identity (direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [[], ['Ethereum', 'Bsc'], ['Polkadot', 'Litentry'], ['Bitcoin']];
+        const expectedWeb3Networks = [[], ['Ethereum', 'Bsc'], ['Polkadot', 'Litentry'], ['BitcoinP2tr']];
         let currentIndex = 0;
 
         for (const { identity } of linkIdentityRequestParams) {
