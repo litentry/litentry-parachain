@@ -42,7 +42,8 @@ use frame_support::{pallet_prelude::*, traits::StorageVersion};
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	all_substrate_web3networks, Identity, ParentchainBlockNumber, UserShieldingKeyType, Web3Network,
+	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, Identity,
+	ParentchainBlockNumber, UserShieldingKeyType, Web3Network,
 };
 use sp_std::vec::Vec;
 
@@ -170,13 +171,28 @@ pub mod pallet {
 			);
 			ensure!(identity != who, Error::<T>::LinkPrimeIdentityDisallowed);
 
-			ensure!(
-				identity.matches_web3networks(web3networks.as_ref()),
-				Error::<T>::WrongWeb3NetworkTypes
-			);
+			let mut adjusted_web3networks = web3networks;
 
-			let context =
-				<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), web3networks);
+			// To reduce the encoded call size, the client has a workaround on `staging` branch to
+			// pass in empty `web3networks`, we'll need to restore it to full network types
+			if identity.is_web3() && adjusted_web3networks.is_empty() {
+				adjusted_web3networks = match identity {
+					Identity::Substrate(..) => all_substrate_web3networks(),
+					Identity::Evm(..) => all_evm_web3networks(),
+					Identity::Bitcoin(..) => all_bitcoin_web3networks(),
+					_ => Vec::new(),
+				};
+			} else {
+				ensure!(
+					identity.matches_web3networks(adjusted_web3networks.as_ref()),
+					Error::<T>::WrongWeb3NetworkTypes
+				);
+			}
+
+			let context = <IdentityContext<T>>::new(
+				<frame_system::Pallet<T>>::block_number(),
+				adjusted_web3networks,
+			);
 			Self::insert_identity_with_limit(&who, &identity, context)?;
 			Self::deposit_event(Event::IdentityLinked { who, identity });
 			Ok(())

@@ -22,7 +22,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use litentry_primitives::{Identity, IdentityString, USER_SHIELDING_KEY_LEN};
+use litentry_primitives::{Identity, IdentityString, Web3Network, USER_SHIELDING_KEY_LEN};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -140,7 +140,7 @@ pub fn new_test_ext(set_shielding_key: bool) -> sp_io::TestExternalities {
 				RuntimeOrigin::signed(ALICE),
 				who,
 				shielding_key.clone(),
-				vec![],
+				vec![Web3Network::Litentry],
 			);
 		}
 	});

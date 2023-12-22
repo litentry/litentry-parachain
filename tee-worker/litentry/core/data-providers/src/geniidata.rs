@@ -20,15 +20,12 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{
-	build_client,  Error as DataProviderError,
-	GLOBAL_DATA_PROVIDER_CONFIG,
-};
+use crate::{build_client, Error as DataProviderError, GLOBAL_DATA_PROVIDER_CONFIG};
 use http::header::ACCEPT;
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as RestClientError,
-	http_client::{HttpClient, DefaultSend},
+	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
@@ -82,9 +79,15 @@ impl GeniidataClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
 		headers.insert(ACCEPT.as_str(), "application/json");
-		headers.insert("api-key", GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().geniidata_api_key.as_str());
+		headers.insert(
+			"api-key",
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().geniidata_api_key.as_str(),
+		);
 
-		let client = build_client(GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().geniidata_url.as_str(), headers);
+		let client = build_client(
+			GLOBAL_DATA_PROVIDER_CONFIG.read().unwrap().geniidata_url.as_str(),
+			headers,
+		);
 
 		GeniidataClient { client }
 	}
