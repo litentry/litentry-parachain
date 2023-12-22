@@ -18,7 +18,7 @@ use crate::{
 	mock::*, Error, Identity, IdentityContext, IdentityStatus, UserShieldingKeyType, Web3Network,
 };
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
-use litentry_primitives::USER_SHIELDING_KEY_LEN;
+use litentry_primitives::{all_evm_web3networks, USER_SHIELDING_KEY_LEN};
 use sp_runtime::AccountId32;
 
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
@@ -136,7 +136,7 @@ fn link_identity_with_empty_network_works() {
 			IMT::id_graphs(who.clone(), alice_evm_identity()).unwrap(),
 			IdentityContext {
 				link_block: 1,
-				web3networks: vec![Web3Network::Ethereum, Web3Network::Bsc].try_into().unwrap(),
+				web3networks: all_evm_web3networks().try_into().unwrap(),
 				status: IdentityStatus::Active
 			}
 		);
