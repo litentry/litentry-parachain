@@ -21,9 +21,9 @@ pub use crate::sgx_reexport_prelude::*;
 
 use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
-use frame_support::ensure;
+use frame_support::{ensure, sp_runtime::traits::One};
 pub use futures;
-use ita_sgx_runtime::{pallet_imt::get_eligible_identities, Hash, Runtime};
+use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
 	ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCall,
@@ -152,6 +152,14 @@ where
 
 				// Sorts the IDGraph in place
 				sort_id_graph::<Runtime>(&mut id_graph);
+
+				if id_graph.is_empty() {
+					// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+					id_graph.push((
+						who.clone(),
+						IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
+					));
+				}
 
 				let assertion_networks = assertion.clone().get_supported_web3networks();
 				get_eligible_identities(id_graph, assertion_networks)

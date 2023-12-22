@@ -28,8 +28,11 @@ use crate::{
 	H256,
 };
 use codec::Encode;
-use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::{pallet_imt::get_eligible_identities, IDGraph, RuntimeOrigin, System};
+use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
+use ita_sgx_runtime::{
+	pallet_imt::{get_eligible_identities, IdentityContext},
+	BlockNumber, IDGraph, RuntimeOrigin, System,
+};
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
@@ -167,7 +170,14 @@ impl TrustedCallSigned {
 			),
 		}
 
-		let id_graph = IMT::id_graph(&who);
+		let mut id_graph = IMT::id_graph(&who);
+		if id_graph.is_empty() {
+			// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+			id_graph.push((
+				who.clone(),
+				IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
+			));
+		}
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities = get_eligible_identities(id_graph, assertion_networks);
 
