@@ -52,27 +52,20 @@ enum BRC20Token {
 	Unknown,
 }
 
+struct AssertionKeys {
+	token: &'static str,
+	holding_amount: &'static str,
+}
+
+const ASSERTION_KEYS: AssertionKeys =
+	AssertionKeys { token: "$token", holding_amount: "$holding_amount" };
+
 pub trait BRC20AmountHolderCredential {
 	fn update_brc20_amount_holder_credential(&mut self, response_items: &[ResponseItem]);
 }
 
 impl BRC20AmountHolderCredential for Credential {
 	fn update_brc20_amount_holder_credential(&mut self, response_items: &[ResponseItem]) {
-		// let found_tokens: Vec<String> = items
-		// 	.iter()
-		// 	.filter_map(|item| {
-		// 		BRC20_TOKENS
-		// 			.iter()
-		// 			.find(|&&name| name == item.tick)
-		// 			.map(|name| name.to_string())
-		// 	})
-		// 	.collect();
-		// let matching_items: Vec<ResponseItem> = response_items
-		//     .iter()
-		//     .filter(|item| BRC20_TOKENS.contains(&item.tick.as_str()))
-		//     .cloned()
-		//     .collect();
-
 		for item in response_items {
 			if BRC20_TOKENS.contains(&item.tick.as_str()) {
 				let token = tick_to_brctoken(&item.tick);
@@ -90,15 +83,22 @@ impl BRC20AmountHolderCredential for Credential {
 fn update_assertion(token: BRC20Token, balance: f64, credential: &mut Credential) {
 	let mut assertion = AssertionLogic::new_and();
 
-	let content = get_assertion_content(&token);
+	assertion = assertion.add_item(AssertionLogic::new_item(
+		ASSERTION_KEYS.token,
+		Op::Equal,
+		brctoken_to_tick(&token),
+	));
+
 	let range = get_balance_range(&token);
 	let index = BalanceRange::index(&range, balance);
 	match index {
 		Some(index) => {
 			let min = format!("{}", range[index]);
 			let max = format!("{}", range[index + 1]);
-			let min_item = AssertionLogic::new_item(content, Op::GreaterEq, &min);
-			let max_item = AssertionLogic::new_item(content, Op::LessThan, &max);
+			let min_item =
+				AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::GreaterEq, &min);
+			let max_item =
+				AssertionLogic::new_item(ASSERTION_KEYS.holding_amount, Op::LessThan, &max);
 
 			assertion = assertion.add_item(min_item);
 			assertion = assertion.add_item(max_item);
@@ -107,7 +107,7 @@ fn update_assertion(token: BRC20Token, balance: f64, credential: &mut Credential
 		},
 		None => {
 			let min_item = AssertionLogic::new_item(
-				content,
+				ASSERTION_KEYS.holding_amount,
 				Op::GreaterEq,
 				&format!("{}", get_token_range_last(&token)),
 			);
@@ -125,7 +125,7 @@ fn tick_to_brctoken(tick: &str) -> BRC20Token {
 		"ordi" => BRC20Token::Ordi,
 		"sats" => BRC20Token::Sats,
 		"rats" => BRC20Token::Rats,
-		"Mmss" => BRC20Token::Mmss,
+		"MMSS" => BRC20Token::Mmss,
 		"long" => BRC20Token::Long,
 		"cats" => BRC20Token::Cats,
 		"BTCs" => BRC20Token::Btcs,
@@ -133,15 +133,15 @@ fn tick_to_brctoken(tick: &str) -> BRC20Token {
 	}
 }
 
-fn get_assertion_content(token: &BRC20Token) -> &'static str {
+fn brctoken_to_tick(token: &BRC20Token) -> &'static str {
 	match token {
-		BRC20Token::Ordi => "$ordi_holding_amount",
-		BRC20Token::Sats => "$sats_holding_amount",
-		BRC20Token::Rats => "$rats_holding_amount",
-		BRC20Token::Mmss => "$MMSS_holding_amount",
-		BRC20Token::Long => "$long_holding_amount",
-		BRC20Token::Cats => "$cats_holding_amount",
-		BRC20Token::Btcs => "$BTCs_holding_amount",
+		BRC20Token::Ordi => "$ordi",
+		BRC20Token::Sats => "$sats",
+		BRC20Token::Rats => "$rats",
+		BRC20Token::Mmss => "$MMSS",
+		BRC20Token::Long => "$long",
+		BRC20Token::Cats => "$cats",
+		BRC20Token::Btcs => "$BTCs",
 		_ => "Unknown",
 	}
 }
