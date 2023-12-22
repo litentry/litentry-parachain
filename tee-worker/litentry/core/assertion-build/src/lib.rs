@@ -48,6 +48,7 @@ pub mod a8;
 pub mod achainable;
 pub mod generic_discord_role;
 pub mod holding_time;
+pub mod lit_staking;
 pub mod nodereal;
 pub mod oneblock;
 pub mod vip3;

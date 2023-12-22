@@ -759,9 +759,9 @@ where
 					e
 				})?;
 
-				debug!("pushing identity_deactivated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 
+				debug!("pushing identity_deactivated event ...");
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
@@ -810,8 +810,9 @@ where
 					e
 				})?;
 
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+
 				debug!("pushing identity_activated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
@@ -970,8 +971,9 @@ where
 				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 				.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
 
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+
 				debug!("pushing identity_networks_set event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					account,
@@ -1159,29 +1161,6 @@ pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
 		)))),
 		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
-	}
-}
-
-pub fn push_call_imp_update_id_graph_hash<NodeMetadataRepository>(
-	calls: &mut Vec<ParentchainCall>,
-	node_metadata_repo: Arc<NodeMetadataRepository>,
-	account: ParentchainAccountId,
-	id_graph_hash: H256,
-	req_ext_hash: H256,
-) where
-	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-{
-	debug!("pushing IMP::update_id_graph_hash call ...");
-	match node_metadata_repo.get_from_metadata(|m| m.update_id_graph_hash_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-			call_index,
-			account,
-			id_graph_hash,
-			req_ext_hash,
-		)))),
-		Ok(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
-		Err(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 	}
 }
 
