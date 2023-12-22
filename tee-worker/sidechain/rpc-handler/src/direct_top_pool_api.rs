@@ -122,9 +122,6 @@ where
 			let shard: ShardIdentifier = request.shard;
 			let key = request.key;
 			let encrypted_trusted_call: AesOutput = request.payload;
-			// if !GLOBAL_RATE_LIMITER.should_allow(encrypted_trusted_call.ciphertext.clone()) {
-			// 	return Ok(json!(compute_hex_encoded_return_error("Request exceeded limit")))
-			// }
 			let request_sender = VcRequestSender::new();
 			let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
 			let vc_request = VCRequest { encrypted_trusted_call, sender, shard, key };
