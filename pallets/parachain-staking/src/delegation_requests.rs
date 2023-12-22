@@ -214,7 +214,6 @@ impl<T: Config> Pallet<T> {
 
 		let now = <Round<T>>::get().current;
 		ensure!(request.when_executable <= now, <Error<T>>::PendingDelegationRequestNotDueYet);
-
 		match request.action {
 			DelegationAction::Revoke(amount) => {
 				// revoking last delegation => leaving set of delegators
