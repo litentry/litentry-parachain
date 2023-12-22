@@ -60,8 +60,12 @@ pub enum Web3Network {
 	Ethereum,
 	Bsc,
 
-	// btc
-	Bitcoin,
+	// btc, see https://github.com/rust-bitcoin/rust-bitcoin/blob/9ea3e29d61569479b7b4618c8ae1992612f3d01a/bitcoin/src/address/mod.rs#L64-L75
+	BitcoinP2tr,
+	BitcoinP2pkh,
+	BitcoinP2sh,
+	BitcoinP2wpkh,
+	BitcoinP2wsh,
 }
 
 impl Web3Network {
@@ -76,7 +80,11 @@ impl Web3Network {
 			Web3Network::SubstrateTestnet => "SubstrateTestnet",
 			Web3Network::Ethereum => "Ethereum",
 			Web3Network::Bsc => "Bsc",
-			Web3Network::Bitcoin => "Bitcoin",
+			Web3Network::BitcoinP2tr => "BitcoinP2tr",
+			Web3Network::BitcoinP2pkh => "BitcoinP2pkh",
+			Web3Network::BitcoinP2sh => "BitcoinP2sh",
+			Web3Network::BitcoinP2wpkh => "BitcoinP2wpkh",
+			Web3Network::BitcoinP2wsh => "BitcoinP2wsh",
 		}
 	}
 
@@ -95,7 +103,14 @@ impl Web3Network {
 	}
 
 	pub fn is_bitcoin(&self) -> bool {
-		matches!(self, Self::Bitcoin)
+		matches!(
+			self,
+			Self::BitcoinP2tr |
+				Self::BitcoinP2pkh |
+				Self::BitcoinP2sh |
+				Self::BitcoinP2wpkh |
+				Self::BitcoinP2wsh
+		)
 	}
 }
 
@@ -140,7 +155,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
 					Web3Network::Bsc => true,
-					Web3Network::Bitcoin => false,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
 				}
 			)
 		})
@@ -161,7 +180,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
-					Web3Network::Bitcoin => false,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
 				}
 			)
 		})
@@ -182,7 +205,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
-					Web3Network::Bitcoin => true,
+					Web3Network::BitcoinP2tr => true,
+					Web3Network::BitcoinP2pkh => true,
+					Web3Network::BitcoinP2sh => true,
+					Web3Network::BitcoinP2wpkh => true,
+					Web3Network::BitcoinP2wsh => true,
 				}
 			)
 		})
