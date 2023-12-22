@@ -19,7 +19,6 @@ use crate::{
 	litentry_profile::{BalanceRange, BalanceRangeIndex},
 	Credential,
 };
-use lazy_static::lazy_static;
 use lc_data_providers::geniidata::ResponseItem;
 use std::vec::Vec;
 
@@ -27,11 +26,7 @@ const VC_BRC20_AMOUNT_HOLDER_DESCRIPTIONS: &str =
 	"The amount of a particular token you are holding";
 const VC_BRC20_AMOUNT_HOLDER_TYPE: &str = "Token holding amount";
 
-lazy_static! {
-	static ref BRC20_TOKENS: Vec<&'static str> =
-		vec!["ordi", "sats", "rats", "Mmss", "long", "cats", "BTCs",];
-}
-
+const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "Mmss", "long", "cats", "BTCs"];
 const ORDI_TOKEN_BALANCE_RANGE: [f64; 10] =
 	[0.0, 1.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1000.0];
 const SATS_TOKEN_BALANCE_RANGE: [f64; 6] =
@@ -46,7 +41,7 @@ const CATS_TOKEN_BALANCE_RANGE: [f64; 10] =
 const BTCS_TOKEN_BALANCE_RANGE: [f64; 10] =
 	[0.0, 100.0, 200.0, 500.0, 1000.0, 2000.0, 3500.0, 5000.0, 8000.0, 12000.0];
 
-enum BRCToken {
+enum BRC20Token {
 	Ordi,
 	Sats,
 	Rats,
@@ -92,7 +87,7 @@ impl BRC20AmountHolderCredential for Credential {
 
 // TODO: the following part is exactly the same structure from 'token_balance.rs'.
 // Anyway the refactor is planned later. So continue using the same mechanism.
-fn update_assertion(token: BRCToken, balance: f64, credential: &mut Credential) {
+fn update_assertion(token: BRC20Token, balance: f64, credential: &mut Credential) {
 	let mut assertion = AssertionLogic::new_and();
 
 	let content = get_assertion_content(&token);
@@ -125,56 +120,56 @@ fn update_assertion(token: BRCToken, balance: f64, credential: &mut Credential) 
 	credential.credential_subject.assertions.push(assertion);
 }
 
-fn tick_to_brctoken(tick: &str) -> BRCToken {
+fn tick_to_brctoken(tick: &str) -> BRC20Token {
 	match tick {
-		"ordi" => BRCToken::Ordi,
-		"sats" => BRCToken::Sats,
-		"rats" => BRCToken::Rats,
-		"Mmss" => BRCToken::Mmss,
-		"long" => BRCToken::Long,
-		"cats" => BRCToken::Cats,
-		"BTCs" => BRCToken::Btcs,
-		_ => BRCToken::Unknown,
+		"ordi" => BRC20Token::Ordi,
+		"sats" => BRC20Token::Sats,
+		"rats" => BRC20Token::Rats,
+		"Mmss" => BRC20Token::Mmss,
+		"long" => BRC20Token::Long,
+		"cats" => BRC20Token::Cats,
+		"BTCs" => BRC20Token::Btcs,
+		_ => BRC20Token::Unknown,
 	}
 }
 
-fn get_assertion_content(token: &BRCToken) -> &'static str {
+fn get_assertion_content(token: &BRC20Token) -> &'static str {
 	match token {
-		BRCToken::Ordi => "$ordi_holding_amount",
-		BRCToken::Sats => "$sats_holding_amount",
-		BRCToken::Rats => "$rats_holding_amount",
-		BRCToken::Mmss => "$MMSS_holding_amount",
-		BRCToken::Long => "$long_holding_amount",
-		BRCToken::Cats => "$cats_holding_amount",
-		BRCToken::Btcs => "$BTCs_holding_amount",
+		BRC20Token::Ordi => "$ordi_holding_amount",
+		BRC20Token::Sats => "$sats_holding_amount",
+		BRC20Token::Rats => "$rats_holding_amount",
+		BRC20Token::Mmss => "$MMSS_holding_amount",
+		BRC20Token::Long => "$long_holding_amount",
+		BRC20Token::Cats => "$cats_holding_amount",
+		BRC20Token::Btcs => "$BTCs_holding_amount",
 		_ => "Unknown",
 	}
 }
 
-fn get_balance_range(token: &BRCToken) -> Vec<f64> {
+fn get_balance_range(token: &BRC20Token) -> Vec<f64> {
 	match token {
-		BRCToken::Ordi => ORDI_TOKEN_BALANCE_RANGE.to_vec(),
-		BRCToken::Sats => SATS_TOKEN_BALANCE_RANGE.to_vec(),
-		BRCToken::Rats => RATS_TOKEN_BALANCE_RANGE.to_vec(),
-		BRCToken::Mmss => MMSS_TOKEN_BALANCE_RANGE.to_vec(),
-		BRCToken::Long => LONG_TOKEN_BALANCE_RANGE.to_vec(),
-		BRCToken::Cats => CATS_TOKEN_BALANCE_RANGE.to_vec(),
-		BRCToken::Btcs => BTCS_TOKEN_BALANCE_RANGE.to_vec(),
+		BRC20Token::Ordi => ORDI_TOKEN_BALANCE_RANGE.to_vec(),
+		BRC20Token::Sats => SATS_TOKEN_BALANCE_RANGE.to_vec(),
+		BRC20Token::Rats => RATS_TOKEN_BALANCE_RANGE.to_vec(),
+		BRC20Token::Mmss => MMSS_TOKEN_BALANCE_RANGE.to_vec(),
+		BRC20Token::Long => LONG_TOKEN_BALANCE_RANGE.to_vec(),
+		BRC20Token::Cats => CATS_TOKEN_BALANCE_RANGE.to_vec(),
+		BRC20Token::Btcs => BTCS_TOKEN_BALANCE_RANGE.to_vec(),
 		_ => {
 			vec![]
 		},
 	}
 }
 
-fn get_token_range_last(token: &BRCToken) -> f64 {
+fn get_token_range_last(token: &BRC20Token) -> f64 {
 	match token {
-		BRCToken::Ordi => *ORDI_TOKEN_BALANCE_RANGE.last().unwrap_or(&1000.0),
-		BRCToken::Sats => *SATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&3000.0),
-		BRCToken::Rats => *RATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
-		BRCToken::Mmss => *MMSS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
-		BRCToken::Long => *LONG_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
-		BRCToken::Cats => *CATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
-		BRCToken::Btcs => *BTCS_TOKEN_BALANCE_RANGE.last().unwrap_or(&12000.0),
+		BRC20Token::Ordi => *ORDI_TOKEN_BALANCE_RANGE.last().unwrap_or(&1000.0),
+		BRC20Token::Sats => *SATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&3000.0),
+		BRC20Token::Rats => *RATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
+		BRC20Token::Mmss => *MMSS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1800.0),
+		BRC20Token::Long => *LONG_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
+		BRC20Token::Cats => *CATS_TOKEN_BALANCE_RANGE.last().unwrap_or(&1200.0),
+		BRC20Token::Btcs => *BTCS_TOKEN_BALANCE_RANGE.last().unwrap_or(&12000.0),
 		_ => 0.0,
 	}
 }
