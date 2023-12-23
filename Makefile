@@ -32,7 +32,7 @@ build-all:
 
 .PHONY: build-node ## Build release node with `tee-dev` feature
 build-node:
-	cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release --features=tee-dev
+	cargo build --locked -p $(call pkgid, $(NODE_BIN)) --release --features=tee-dev,fast-runtime
 
 .PHONY: build-runtime-litentry ## Build litentry release runtime
 build-runtime-litentry:
@@ -61,7 +61,7 @@ srtool-build-wasm-rococo:
 .PHONY: build-docker-release ## Build docker image using cargo profile `release`
 # with `tee-dev` feature as we use release profile in dev
 build-docker-release:
-	@./scripts/build-docker.sh release latest --features=tee-dev
+	@./scripts/build-docker.sh release latest --features=tee-dev,fast-runtime
 
 .PHONY: build-docker-production ## Build docker image using cargo profile `production`
 build-docker-production:
