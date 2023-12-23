@@ -9,13 +9,13 @@ import {
 } from './common/utils';
 import { step } from 'mocha-steps';
 import { sendTxsWithUtility } from './common/transactions';
-import { generateWeb3Wallets, assertIdGraphMutation, assertIdentityDeactivated } from './common/utils';
+import { generateWeb3Wallets, assertIdGraphMutationEvent, assertIdentityDeactivated } from './common/utils';
 import { ethers } from 'ethers';
 import type { LitentryPrimitivesIdentity } from 'sidechain-api';
 import type { LitentryValidationData, Web3Network } from 'parachain-api';
 import { Vec } from '@polkadot/types';
 
-describeLitentry('Test Batch Utility', 0, (context) => {
+describeLitentry('Test Batch Utility', (context) => {
     let identities: LitentryPrimitivesIdentity[] = [];
     let validations: LitentryValidationData[] = [];
     let evmSigners: ethers.Wallet[] = [];
@@ -31,14 +31,17 @@ describeLitentry('Test Batch Utility', 0, (context) => {
 
     step('batch test: link identities', async function () {
         const defaultNetworks = context.api.createType('Vec<Web3Network>', ['Ethereum']);
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
         for (let index = 0; index < evmSigners.length; index++) {
             const signer = evmSigners[index];
             const evmIdentity = await buildIdentityHelper(signer.address, 'Evm', context);
             identities.push(evmIdentity);
             we3networks.push(defaultNetworks as unknown as Vec<Web3Network>); // @fixme #1878
-            signerIdentities.push(aliceSubject);
+            signerIdentities.push(aliceSubstrateIdentity);
         }
 
         const evmValidations = await buildValidations(
@@ -65,7 +68,7 @@ describeLitentry('Test Batch Utility', 0, (context) => {
         ]);
 
         const identityLinkedEvents = events.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
-        await assertIdGraphMutation(
+        await assertIdGraphMutationEvent(
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
             undefined,

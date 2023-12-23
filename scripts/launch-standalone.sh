@@ -27,3 +27,5 @@ echo "Starting litentry-collator in standalone mode ..."
 $PARACHAIN_BIN --dev --unsafe-ws-external --unsafe-rpc-external \
   --port "${CollatorPort:-30333}" --ws-port "${CollatorWSPort:-9944}" --rpc-port "${CollatorRPCPort:-9933}" \
   &> "$LITENTRY_PARACHAIN_DIR/para.alice.log" &
+
+sleep 10

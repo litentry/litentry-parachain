@@ -265,6 +265,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Identity::Github(_) => "Github",
 			Identity::Substrate(_) => "Substrate",
 			Identity::Evm(_) => "Evm",
+			Identity::Bitcoin(_) => "Bitcoin",
 		},
 		RequestType::AssertionVerification(request) => match request.assertion {
 			Assertion::A1 => "A1",
@@ -286,6 +287,9 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::GenericDiscordRole(_) => "GenericDiscordRole",
 			Assertion::VIP3MembershipCard(..) => "VIP3MembershipCard",
 			Assertion::WeirdoGhostGangHolder => "WeirdoGhostGangHolder",
+			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
+			Assertion::LITStaking => "LITStaking",
+			Assertion::EVMAmountHolding(_) => "EVMAmountHolding",
 		},
 	};
 	inc_stf_calls(category, label);

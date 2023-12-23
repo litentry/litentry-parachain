@@ -1,0 +1,165 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            }
+        ],
+        "name": "cancelDelegationRequest",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            }
+        ],
+        "name": "delegate",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "amount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint8",
+                "name": "autoCompound",
+                "type": "uint8"
+            }
+        ],
+        "name": "delegateWithAutoCompound",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "delegator",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            }
+        ],
+        "name": "delegationRequestIsPending",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "more",
+                "type": "uint256"
+            }
+        ],
+        "name": "delegatorBondMore",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "delegator",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            }
+        ],
+        "name": "executeDelegationRequest",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint256",
+                "name": "less",
+                "type": "uint256"
+            }
+        ],
+        "name": "scheduleDelegatorBondLess",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            }
+        ],
+        "name": "scheduleRevokeDelegation",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "candidate",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "uint8",
+                "name": "value",
+                "type": "uint8"
+            }
+        ],
+        "name": "setAutoCompound",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]

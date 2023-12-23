@@ -73,6 +73,7 @@ pub mod achainable;
 pub mod achainable_names;
 pub mod discord_litentry;
 pub mod discord_official;
+pub mod geniidata;
 pub mod nodereal;
 pub mod nodereal_jsonrpc;
 pub mod twitter_official;
@@ -85,13 +86,39 @@ pub const WETH_TOKEN_ADDRESS: &str = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2
 pub const USDT_TOKEN_ADDRESS: &str = "0xdac17f958d2ee523a2206206994597c13d831ec7";
 pub const USDC_TOKEN_ADDRESS: &str = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 pub const LIT_TOKEN_ADDRESS: &str = "0xb59490ab09a0f526cc7305822ac65f2ab12f9723";
+pub const CRV_TOKEN_ADDRESS: &str = "0xd533a949740bb3306d119cc777fa900ba034cd52";
+pub const MATIC_TOKEN_ADDRESS: &str = "0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0";
+pub const DYDX_TOKEN_ADDRESS: &str = "0x92d6c1e31e14520e676a687f0a93788b716beff5";
+pub const AMP_TOKEN_ADDRESS: &str = "0xff20817765cb7f73d4bde2e66e067e58d11095c2";
+pub const CVX_TOKEN_ADDRESS: &str = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
+pub const TUSD_TOKEN_ADDRESS: &str = "0x0000000000085d4780b73119b644ae5ecd22b376";
+pub const USDD_TOKEN_ADDRESS: &str = "0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6";
+pub const GUSD_TOKEN_ADDRESS: &str = "0x056fd409e1d7a124bd7017459dfea2f387b6d5cd";
+pub const LINK_TOKEN_ADDRESS: &str = "0x514910771af9ca656af840dff83e8264ecf986ca";
+pub const GRT_TOKEN_ADDRESS: &str = "0xc944e90c64b2c07662a292be6244bdf05cda44a7";
+pub const COMP_TOKEN_ADDRESS: &str = "0xc00e94cb662c3520282e6f5717214004a7f26888";
+pub const PEOPLE_TOKEN_ADDRESS: &str = "0x7a58c0be72be218b41c608b7fe7c5bb630736c71";
+pub const GTC_TOKEN_ADDRESS: &str = "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f";
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum ETokenAddress {
-	Wbtc,
-	Lit,
-	Usdc,
-	Usdt,
+	WBTC,
+	LIT,
+	USDC,
+	USDT,
+	CRV,
+	MATIC,
+	DYDX,
+	AMP,
+	CVX,
+	TUSD,
+	USDD,
+	GUSD,
+	LINK,
+	GRT,
+	COMP,
+	PEOPLE,
+	GTC,
 	Unknown,
 }
 
@@ -102,13 +129,39 @@ impl TokenFromString for ETokenAddress {
 	fn from_vec(vec: ParameterString) -> ETokenAddress {
 		let address = vec_to_string(vec.to_vec()).unwrap_or_default();
 		if address == WBTC_TOKEN_ADDRESS {
-			ETokenAddress::Wbtc
+			ETokenAddress::WBTC
 		} else if address == LIT_TOKEN_ADDRESS {
-			ETokenAddress::Lit
-		} else if address == USDT_TOKEN_ADDRESS {
-			ETokenAddress::Usdt
+			ETokenAddress::LIT
 		} else if address == USDC_TOKEN_ADDRESS {
-			ETokenAddress::Usdc
+			ETokenAddress::USDC
+		} else if address == USDT_TOKEN_ADDRESS {
+			ETokenAddress::USDT
+		} else if address == CRV_TOKEN_ADDRESS {
+			ETokenAddress::CRV
+		} else if address == MATIC_TOKEN_ADDRESS {
+			ETokenAddress::MATIC
+		} else if address == DYDX_TOKEN_ADDRESS {
+			ETokenAddress::DYDX
+		} else if address == AMP_TOKEN_ADDRESS {
+			ETokenAddress::AMP
+		} else if address == CVX_TOKEN_ADDRESS {
+			ETokenAddress::CVX
+		} else if address == TUSD_TOKEN_ADDRESS {
+			ETokenAddress::TUSD
+		} else if address == USDD_TOKEN_ADDRESS {
+			ETokenAddress::USDD
+		} else if address == GUSD_TOKEN_ADDRESS {
+			ETokenAddress::GUSD
+		} else if address == LINK_TOKEN_ADDRESS {
+			ETokenAddress::LINK
+		} else if address == GRT_TOKEN_ADDRESS {
+			ETokenAddress::GRT
+		} else if address == COMP_TOKEN_ADDRESS {
+			ETokenAddress::COMP
+		} else if address == PEOPLE_TOKEN_ADDRESS {
+			ETokenAddress::PEOPLE
+		} else if address == GTC_TOKEN_ADDRESS {
+			ETokenAddress::GTC
 		} else {
 			ETokenAddress::Unknown
 		}
@@ -139,6 +192,8 @@ pub struct DataProviderConfig {
 	pub contest_popularity_discord_role_id: String,
 	pub contest_participant_discord_role_id: String,
 	pub vip3_url: String,
+	pub geniidata_url: String,
+	pub geniidata_api_key: String,
 }
 
 impl Default for DataProviderConfig {
@@ -172,6 +227,8 @@ impl DataProviderConfig {
 			contest_popularity_discord_role_id: "".to_string(),
 			contest_participant_discord_role_id: "".to_string(),
 			vip3_url: "".to_string(),
+			geniidata_url: "".to_string(),
+			geniidata_api_key: "".to_string(),
 		}
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
@@ -262,6 +319,14 @@ impl DataProviderConfig {
 		debug!("set_vip3_url: {:?}", v);
 		self.vip3_url = v;
 	}
+	pub fn set_geniidata_url(&mut self, v: String) {
+		debug!("set_geniidata_url: {:?}", v);
+		self.geniidata_url = v;
+	}
+	pub fn set_geniidata_api_key(&mut self, v: String) {
+		debug!("set_geniidata_api_key: {:?}", v);
+		self.geniidata_api_key = v;
+	}
 }
 
 lazy_static! {
@@ -298,6 +363,9 @@ pub enum Error {
 
 	#[error("Nodereal error: {0}")]
 	NoderealError(String),
+
+	#[error("GeniiData error: {0}")]
+	GeniiDataError(String),
 }
 
 impl IntoErrorDetail for Error {
@@ -353,5 +421,19 @@ impl ConvertParameterString for AchainableParams {
 		vec_to_string(field.to_vec()).map_err(|_| {
 			VCMPError::RequestVCFailed(Assertion::Achainable(self.clone()), ErrorDetail::ParseError)
 		})
+	}
+}
+
+fn hex_to_decimal(hex_string: &str) -> f64 {
+	let parts: Vec<&str> = hex_string.split('.').collect();
+
+	let integer_part = u64::from_str_radix(parts[0], 16).unwrap_or_default();
+
+	if parts.len() > 1 {
+		let decimal_part = u64::from_str_radix(parts[1], 16).unwrap();
+		let decimal_str = format!("{}.{}", integer_part, decimal_part);
+		decimal_str.parse::<f64>().unwrap_or_default()
+	} else {
+		integer_part as f64
 	}
 }

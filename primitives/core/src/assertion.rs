@@ -18,8 +18,8 @@
 // when requesting VCs.
 
 use crate::{
-	AccountId, BnbDigitDomainType, BoundedWeb3Network, GenericDiscordRoleType, OneBlockCourseType,
-	VIP3MembershipCardLevel, Web3Network,
+	AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType, GenericDiscordRoleType,
+	OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -40,7 +40,14 @@ pub struct AchainableAmountHolding {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub struct AchainableAmountToken {
 	pub name: ParameterString,
-	pub chain: Web3Network,
+
+	// Considering the uniformity of the structure, all relevant chain structures should be changed
+	// to BoundedWeb3Network. However, this would be a significant modification for the previous
+	// VC. Considering the tight timeline for this New Year compain, we will temporarily only
+	// change this AchainableAmountToken' chain field to BoundedWeb3Network. Afterwards, it needs
+	// to be modified to be consistent.
+	pub chain: BoundedWeb3Network,
+
 	pub amount: ParameterString,
 	pub token: Option<ParameterString>,
 }
@@ -163,20 +170,20 @@ impl AchainableParams {
 		}
 	}
 
-	pub fn chain(&self) -> Web3Network {
+	pub fn chains(&self) -> Vec<Web3Network> {
 		match self {
-			AchainableParams::AmountHolding(p) => p.chain,
-			AchainableParams::AmountToken(p) => p.chain,
-			AchainableParams::Amount(p) => p.chain,
-			AchainableParams::Amounts(p) => p.chain,
-			AchainableParams::Basic(p) => p.chain,
-			AchainableParams::BetweenPercents(p) => p.chain,
-			AchainableParams::ClassOfYear(p) => p.chain,
-			AchainableParams::DateInterval(p) => p.chain,
-			AchainableParams::DatePercent(p) => p.chain,
-			AchainableParams::Date(p) => p.chain,
-			AchainableParams::Token(p) => p.chain,
-			AchainableParams::Mirror(p) => p.chain,
+			AchainableParams::AmountHolding(arg) => vec![arg.chain],
+			AchainableParams::AmountToken(arg) => arg.chain.to_vec(),
+			AchainableParams::Amount(arg) => vec![arg.chain],
+			AchainableParams::Amounts(arg) => vec![arg.chain],
+			AchainableParams::Basic(arg) => vec![arg.chain],
+			AchainableParams::BetweenPercents(arg) => vec![arg.chain],
+			AchainableParams::ClassOfYear(arg) => vec![arg.chain],
+			AchainableParams::DateInterval(arg) => vec![arg.chain],
+			AchainableParams::DatePercent(arg) => vec![arg.chain],
+			AchainableParams::Date(arg) => vec![arg.chain],
+			AchainableParams::Token(arg) => vec![arg.chain],
+			AchainableParams::Mirror(arg) => vec![arg.chain],
 		}
 	}
 }
@@ -238,6 +245,15 @@ pub enum Assertion {
 
 	#[codec(index = 19)]
 	WeirdoGhostGangHolder,
+
+	#[codec(index = 20)]
+	LITStaking,
+
+	#[codec(index = 22)]
+	EVMAmountHolding(EVMTokenType),  // (evm_token_type)
+
+	#[codec(index = 23)]
+	BRC20AmountHolder,
 }
 
 impl Assertion {
@@ -257,22 +273,40 @@ impl Assertion {
 			// DOT holder
 			Self::A7(..) => vec![Web3Network::Polkadot],
 			// WBTC/ETH holder
-			Self::A10(..) | Self::A11(..) => vec![Web3Network::Ethereum],
+			Self::A10(..) |
+			Self::A11(..) |
+			Self::VIP3MembershipCard(..) |
+			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
-			Self::Achainable(a) => vec![a.chain()],
+			Self::Achainable(arg) => arg.chains(),
 			// Oneblock Assertion
 			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
-			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
-			// VIP3 Member Card
-			Self::VIP3MembershipCard(..) => vec![Web3Network::Ethereum],
+			// LITStaking
+			Self::LITStaking => vec![Web3Network::Litentry],
+			// EVM Amount Holding
+			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
+			// BRC20 Holder
+			Self::BRC20AmountHolder => vec![
+				Web3Network::BitcoinP2tr,
+				Web3Network::BitcoinP2pkh,
+				Web3Network::BitcoinP2sh,
+				Web3Network::BitcoinP2wpkh,
+				Web3Network::BitcoinP2wsh,
+			],
 			// we don't care about any specific web3 network
-			_ => vec![],
+			Self::A1 |
+			Self::A2(..) |
+			Self::A3(..) |
+			Self::A6 |
+			Self::A13(..) |
+			Self::A20 |
+			Self::GenericDiscordRole(..) => vec![],
 		}
 	}
 }

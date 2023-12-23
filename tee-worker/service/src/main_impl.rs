@@ -1168,5 +1168,11 @@ fn get_data_provider_config(config: &Config) -> DataProviderConfig {
 	if let Ok(v) = env::var("VIP3_URL") {
 		data_provider_config.set_vip3_url(v);
 	}
+	if let Ok(v) = env::var("GENIIDATA_URL") {
+		data_provider_config.set_geniidata_url(v);
+	}
+	if let Ok(v) = env::var("GENIIDATA_API_KEY") {
+		data_provider_config.set_geniidata_api_key(v);
+	}
 	data_provider_config
 }

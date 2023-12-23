@@ -9,10 +9,10 @@ import { KeyObject } from 'crypto';
 import { getSidechainMetadata } from '../call';
 import { getEvmSigner, getSubstrateSigner } from '../helpers';
 import type { IntegrationTestContext, Web3Wallets } from '../common-types';
-
 import { identity, vc, trusted_operations, sidechain } from 'parachain-api';
 import crypto from 'crypto';
 import type { HexString } from '@polkadot/util/types';
+import bitcore from 'bitcore-lib';
 
 // maximum block number that we wait in listening events before we timeout
 export const defaultListenTimeoutInBlockNumber = 15;
@@ -32,8 +32,7 @@ export async function initWorkerConnection(endpoint: string): Promise<WebSocketA
 
 export async function initIntegrationTestContext(
     workerEndpoint: string,
-    substrateEndpoint: string,
-    walletsNumber: number
+    substrateEndpoint: string
 ): Promise<IntegrationTestContext> {
     const provider = new WsProvider(substrateEndpoint);
     await cryptoWaitReady();
@@ -48,6 +47,10 @@ export async function initIntegrationTestContext(
 
     const substrateWallet = getSubstrateSigner();
 
+    const bitcoinWallet = {
+        alice: new bitcore.PrivateKey(),
+    };
+
     const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
 
     const api = await ApiPromise.create({
@@ -61,7 +64,6 @@ export async function initIntegrationTestContext(
     const requestId = 1;
 
     const { sidechainMetaData, sidechainRegistry } = await getSidechainMetadata(wsp, api, requestId);
-    const web3Signers = await generateWeb3Wallets(walletsNumber);
     const { mrEnclave, teeShieldingKey } = await getEnclave(api);
     return {
         tee: wsp,
@@ -70,9 +72,9 @@ export async function initIntegrationTestContext(
         mrEnclave,
         ethersWallet,
         substrateWallet,
+        bitcoinWallet,
         sidechainMetaData,
         sidechainRegistry,
-        web3Signers,
         chainIdentifier,
         requestId,
     };
@@ -118,9 +120,11 @@ export async function generateWeb3Wallets(count: number): Promise<Web3Wallets[]>
     for (let i = 0; i < count; i++) {
         const substratePair = keyring.addFromUri(`${seed}//${i}`);
         const evmWallet = ethers.Wallet.createRandom();
+        const bitcoinPair = new bitcore.PrivateKey();
         addresses.push({
             substrateWallet: substratePair,
             evmWallet: evmWallet,
+            bitcoinWallet: bitcoinPair,
         });
     }
     return addresses;
