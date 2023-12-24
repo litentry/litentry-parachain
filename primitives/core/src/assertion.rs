@@ -254,6 +254,9 @@ pub enum Assertion {
 
 	#[codec(index = 22)]
 	BRC20AmountHolder,
+
+	#[codec(index = 23)]
+	CryptoSummary,
 }
 
 impl Assertion {

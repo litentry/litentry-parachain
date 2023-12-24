@@ -99,6 +99,7 @@ pub enum Command {
 	WeirdoGhostGangHolder,
 	#[clap(subcommand)]
 	EVMAmountHolding(EVMAmountHoldingCommand),
+	CryptoSummary,
 }
 
 #[derive(Args)]
@@ -455,6 +456,7 @@ impl RequestVcCommand {
 				EVMAmountHoldingCommand::Ton => Assertion::EVMAmountHolding(EVMTokenType::Ton),
 				EVMAmountHoldingCommand::Trx => Assertion::EVMAmountHolding(EVMTokenType::Trx),
 			},
+			Command::CryptoSummary => Assertion::CryptoSummary,
 		};
 
 		let key = Self::random_aes_key();
