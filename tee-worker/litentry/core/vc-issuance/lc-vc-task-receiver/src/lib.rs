@@ -174,7 +174,6 @@ where
 		let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
 			shard,
 			signer,
-			enclave_account: enclave_signer_account(),
 			who,
 			assertion,
 			identities,

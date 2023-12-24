@@ -45,7 +45,7 @@ pub enum Error {
 	#[error("AccountId lookup error")]
 	AccountIdLookup,
 	#[error("convert parent chain block number error")]
-	ConvertParachainBlockNumber,
+	ConvertParentchainBlockNumber,
 	#[error("IMP handling error: {0:?}")]
 	IMPHandlingError(IMPError),
 	#[error("VCMP handling error: {0:?}")]

@@ -30,14 +30,15 @@ pub mod sgx_reexport_prelude {
 	pub use url_sgx as url;
 }
 
-use itp_types::{AccountId, H256};
+// TODO: the sidechain block number type is chaotic from upstream
+use itp_types::{AccountId, BlockNumber as SidechainBlockNumber, H256};
 pub mod error;
 pub mod stf_task_sender;
 use codec::{Decode, Encode};
 pub use error::Result;
 use litentry_primitives::{
-	Assertion, Identity, IdentityNetworkTuple, ParachainBlockNumber, RequestAesKey,
-	ShardIdentifier, SidechainBlockNumber, Web2ValidationData, Web3Network,
+	Assertion, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
+	ShardIdentifier, Web2ValidationData, Web3Network,
 };
 use sp_runtime::traits::ConstU32;
 use sp_std::prelude::Vec;
@@ -85,12 +86,11 @@ pub type MaxIdentityLength = ConstU32<64>;
 pub struct AssertionBuildRequest {
 	pub shard: ShardIdentifier,
 	pub signer: AccountId,
-	pub enclave_account: AccountId,
 	pub who: Identity,
 	pub assertion: Assertion,
 	pub identities: Vec<IdentityNetworkTuple>,
 	pub top_hash: H256,
-	pub parachain_block_number: ParachainBlockNumber,
+	pub parachain_block_number: ParentchainBlockNumber,
 	pub sidechain_block_number: SidechainBlockNumber,
 	pub maybe_key: Option<RequestAesKey>,
 	pub req_ext_hash: H256,

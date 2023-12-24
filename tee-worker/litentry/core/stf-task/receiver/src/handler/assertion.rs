@@ -33,7 +33,7 @@ use litentry_primitives::{
 };
 use log::*;
 use sp_core::hashing::blake2_256;
-use std::{format, sync::Arc, vec::Vec};
+use std::{format, string::ToString, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -143,9 +143,15 @@ where
 			)
 		})?;
 
+		credential.parachain_block_number = self.req.parachain_block_number;
+		credential.sidechain_block_number = self.req.sidechain_block_number;
+
 		let data_provider_config = DataProviderConfigReader::read()
 			.map_err(|e| VCMPError::RequestVCFailed(self.req.assertion.clone(), e))?;
 		credential.credential_subject.endpoint = data_provider_config.credential_endpoint;
+
+		credential.credential_subject.assertion_text =
+			format!("{:?}", self.req.assertion).to_string();
 
 		credential.issuer.id =
 			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
