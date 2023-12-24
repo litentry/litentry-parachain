@@ -26,7 +26,8 @@ const VC_BRC20_AMOUNT_HOLDER_DESCRIPTIONS: &str =
 	"The amount of a particular token you are holding";
 const VC_BRC20_AMOUNT_HOLDER_TYPE: &str = "Token holding amount";
 
-const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "Mmss", "long", "cats", "BTCs"];
+// Keep all name in lowercase here by purpose
+const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "mmss", "long", "cats", "btcs"];
 const ORDI_TOKEN_BALANCE_RANGE: [f64; 8] = [0.0, 1.0, 5.0, 20.0, 50.0, 100.0, 200.0, 500.0];
 const SATS_TOKEN_BALANCE_RANGE: [f64; 8] = [
 	0.0,
@@ -72,7 +73,7 @@ pub trait BRC20AmountHolderCredential {
 impl BRC20AmountHolderCredential for Credential {
 	fn update_brc20_amount_holder_credential(&mut self, response_items: &[ResponseItem]) {
 		for item in response_items {
-			if BRC20_TOKENS.contains(&item.tick.as_str()) {
+			if BRC20_TOKENS.contains(&item.tick.to_lowercase().as_str()) {
 				let token = tick_to_brctoken(&item.tick);
 				let balance: f64 = item.overall_balance.parse().unwrap_or(0.0);
 				update_assertion(token, balance, self);

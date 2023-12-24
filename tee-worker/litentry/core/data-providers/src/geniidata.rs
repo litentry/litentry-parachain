@@ -21,7 +21,7 @@ use crate::sgx_reexport_prelude::*;
 extern crate sgx_tstd as std;
 
 use crate::{build_client, Error as DataProviderError, GLOBAL_DATA_PROVIDER_CONFIG};
-use http::header::ACCEPT;
+use http::header::{ACCEPT, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as RestClientError,
@@ -39,7 +39,6 @@ use std::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct ResponseItem {
 	pub tick: String,
 	pub address: String,
@@ -49,7 +48,6 @@ pub struct ResponseItem {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 struct ReponseData {
 	pub count: u64,
 	pub limit: String,
@@ -58,7 +56,6 @@ struct ReponseData {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 struct GeniidataResponse {
 	pub code: u64,
 	pub message: String,
@@ -78,6 +75,7 @@ pub struct GeniidataClient {
 impl GeniidataClient {
 	pub fn new() -> Self {
 		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(ACCEPT.as_str(), "application/json");
 		headers.insert(
 			"api-key",
