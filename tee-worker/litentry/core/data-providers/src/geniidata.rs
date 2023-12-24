@@ -24,7 +24,7 @@ use crate::{
 	build_client_with_cert, DataProviderConfigReader, Error as DataProviderError,
 	ReadDataProviderConfig,
 };
-use http::header::ACCEPT;
+use http::header::{ACCEPT, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
 	error::Error as RestClientError,
@@ -42,7 +42,6 @@ use std::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct ResponseItem {
 	pub tick: String,
 	pub address: String,
@@ -52,7 +51,6 @@ pub struct ResponseItem {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 struct ReponseData {
 	pub count: u64,
 	pub limit: String,
@@ -61,7 +59,6 @@ struct ReponseData {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 struct GeniidataResponse {
 	pub code: u64,
 	pub message: String,
@@ -83,6 +80,7 @@ impl GeniidataClient {
 		let data_provider_config = DataProviderConfigReader::read()?;
 
 		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(ACCEPT.as_str(), "application/json");
 		headers.insert("api-key", data_provider_config.geniidata_api_key.as_str());
 
