@@ -25,6 +25,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 mod aes;
 mod aes_request;
+mod bitcoin_address;
 mod bitcoin_signature;
 mod ethereum_signature;
 mod identity;
@@ -32,6 +33,7 @@ mod validation_data;
 
 pub use aes::*;
 pub use aes_request::*;
+pub use bitcoin_address::*;
 pub use bitcoin_signature::*;
 pub use ethereum_signature::*;
 pub use identity::*;

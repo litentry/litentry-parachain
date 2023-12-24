@@ -179,7 +179,11 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
 		Web3Network::Ethereum => "ethereum".into(),
 		Web3Network::Bsc => "bsc".into(),
-		Web3Network::Bitcoin => "bitcoin".into(),
+		Web3Network::BitcoinP2tr => "bitcoin_p2tr".into(),
+		Web3Network::BitcoinP2pkh => "bitcoin_p2pkh".into(),
+		Web3Network::BitcoinP2sh => "bitcoin_p2sh".into(),
+		Web3Network::BitcoinP2wpkh => "bitcoin_p2wpkh".into(),
+		Web3Network::BitcoinP2wsh => "bitcoin_p2wsh".into(),
 	}
 }
 
@@ -814,6 +818,12 @@ impl AchainableUtils for AchainableClient {
 			})
 			.flatten();
 		if let Some(display_text) = display_text {
+			// If it is a newly created brand new account, Achainable returns `Address has no [token] balance`,
+			// so it will not be parsed and will directly return 0
+			if display_text.contains("Address has no") {
+				return Ok(0_f64)
+			}
+
 			// TODO:
 			// text field format: Balance over 0 (Balance is 588.504602529)
 			let split_text = display_text.split("Balance is ").collect::<Vec<&str>>();

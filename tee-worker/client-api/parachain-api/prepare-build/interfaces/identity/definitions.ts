@@ -44,7 +44,11 @@ export default {
                 "SubstrateTestnet",
                 "Ethereum",
                 "Bsc",
-                "Bitcoin",
+                "BitcoinP2tr",
+                "BitcoinP2pkh",
+                "BitcoinP2sh",
+                "BitcoinP2wpkh",
+                "BitcoinP2wsh",
             ],
         },
         LitentryValidationData: {
