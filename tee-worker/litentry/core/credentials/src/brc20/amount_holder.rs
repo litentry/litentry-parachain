@@ -24,7 +24,7 @@ use std::vec::Vec;
 
 const VC_BRC20_AMOUNT_HOLDER_DESCRIPTIONS: &str =
 	"The amount of a particular token you are holding";
-const VC_BRC20_AMOUNT_HOLDER_TYPE: &str = "Token holding amount";
+const VC_BRC20_AMOUNT_HOLDER_TYPE: &str = "Token holding amount list";
 
 // Keep all name in lowercase here by purpose
 const BRC20_TOKENS: [&str; 7] = ["ordi", "sats", "rats", "mmss", "long", "cats", "btcs"];
