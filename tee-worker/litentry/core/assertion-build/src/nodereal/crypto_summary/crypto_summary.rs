@@ -21,8 +21,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_credentials::nodereal::crypto_summary::{};
-use lc_data_providers::{nodereal_jsonrpc::{}, DataProviderConfigReader, ReadDataProviderConfig};
+use lc_data_providers::{self, DataProviderConfigReader, ReadDataProviderConfig};
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
@@ -58,8 +57,6 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 			_ => {},
 		}
 	}
-
-
 
 	let data_provider_config = DataProviderConfigReader::read()
 		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
