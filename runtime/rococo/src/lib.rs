@@ -855,19 +855,19 @@ impl pallet_parachain_staking::Config for Runtime {
 	type Currency = Balances;
 	type MonetaryGovernanceOrigin = EnsureRootOrAllCouncil;
 	/// Minimum round length is 2 minutes (10 * 12 second block times)
-	type MinBlocksPerRound = ConstU32<{ 2 * MINUTES }>;
+	type MinBlocksPerRound = ConstU32<{ prod_or_fast!(2 * MINUTES, 2) }>;
 	/// Blocks per round
-	type DefaultBlocksPerRound = ConstU32<{ 2 * MINUTES }>;
+	type DefaultBlocksPerRound = ConstU32<{ prod_or_fast!(2 * MINUTES, 2) }>;
 	/// Rounds before the collator leaving the candidates request can be executed
-	type LeaveCandidatesDelay = ConstU32<28>;
+	type LeaveCandidatesDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
 	/// Rounds before the candidate bond increase/decrease can be executed
-	type CandidateBondLessDelay = ConstU32<28>;
+	type CandidateBondLessDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
 	/// Rounds before the delegator exit can be executed
-	type LeaveDelegatorsDelay = ConstU32<28>;
+	type LeaveDelegatorsDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
 	/// Rounds before the delegator revocation can be executed
-	type RevokeDelegationDelay = ConstU32<28>;
+	type RevokeDelegationDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
 	/// Rounds before the delegator bond increase/decrease can be executed
-	type DelegationBondLessDelay = ConstU32<28>;
+	type DelegationBondLessDelay = ConstU32<{ prod_or_fast!(28, 1) }>;
 	/// Rounds before the reward is paid
 	type RewardPaymentDelay = ConstU32<2>;
 	/// Minimum collators selected per round, default at genesis and minimum forever after
