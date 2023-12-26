@@ -29,7 +29,6 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestGet, RestPath,
 };
-use litentry_primitives::ErrorDetail;
 use serde::{Deserialize, Serialize};
 use std::{
 	format, str,
