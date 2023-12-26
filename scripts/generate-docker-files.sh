@@ -22,8 +22,8 @@ print_divider
 
 echo "installing parachain-launch ..."
 pnpm install
-pnpm update
-pnpm run build
+# pnpm update
+# pnpm run build
 print_divider
 
 # pull the polkadot image to make sure we are using the latest
