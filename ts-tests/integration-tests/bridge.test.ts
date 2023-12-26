@@ -1,7 +1,7 @@
-import { createERCDepositData, describeCrossChainTransfer } from './setup-bridge';
+import { createERCDepositData, describeCrossChainTransfer } from '../common/setup/setup-bridge';
 import { step } from 'mocha-steps';
 import { toHex } from 'web3-utils';
-import { signAndSend, sleep } from './utils';
+import { signAndSend, sleep } from '../common/utils';
 import { assert } from 'chai';
 import { BigNumber, ethers } from 'ethers';
 

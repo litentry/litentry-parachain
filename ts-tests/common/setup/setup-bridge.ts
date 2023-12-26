@@ -5,7 +5,7 @@ import { Contract, ethers, Wallet } from 'ethers';
 import { BN } from '@polkadot/util';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from './utils';
+import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from '../utils';
 import { toWei } from 'web3-utils';
 
 const path = require('path');

@@ -17,7 +17,7 @@
         "test-runtime-upgrade": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/runtime-upgrade.test.ts'",
         "test-all": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/**/*.test.ts'",
         "test-precompile-contract": "pnpm exec mocha --exit --sort -r ts-node/register 'tests/precompile-contract.test.ts'",
-        "format": "pnpm exec prettier --write 'tests/**/*.test.ts'"
+        "format": "pnpm exec prettier --write '**.ts'"
     },
     "author": "Litentry Dev",
     "license": "ISC",

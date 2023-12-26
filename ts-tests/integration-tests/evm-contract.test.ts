@@ -1,11 +1,11 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
+import { signAndSend, describeLitentry, loadConfig, sleep } from '../common/utils';
 import { evmToAddress } from '@polkadot/util-crypto';
 import Web3 from 'web3';
 
-import { compiled } from './compile';
+import { compiled } from '../common/utils/compile';
 
 describeLitentry('Test EVM Module Contract', ``, (context) => {
     console.log(`Test EVM Module Contract`);

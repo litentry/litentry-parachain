@@ -1,10 +1,10 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
+import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
 import Web3 from 'web3';
-import precompileContractAbi from '../precompile/contracts/staking.json';
-import { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress, evmToAddress } from '@polkadot/util-crypto';
+import precompileContractAbi from '../common/abi/precompile/staking.json';
+import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 
 const toBigNumber = (int: number) => int * 1e12;
