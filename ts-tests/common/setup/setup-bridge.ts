@@ -9,11 +9,11 @@ import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWr
 import { toWei } from 'web3-utils';
 
 const path = require('path');
-const BridgeContract = require('../bridge/contracts/Bridge.json');
-const ERC20HandlerContract = require('../bridge/contracts/ERC20Handler.json');
-const ERC721HandlerContract = require('../bridge/contracts/ERC721Handler.json');
-const GenericHandlerContract = require('../bridge/contracts/GenericHandler.json');
-const ERC20Contract = require('../bridge/contracts/MintableERC20.json');
+const BridgeContract = require('../abi/bridge/Bridge.json');
+const ERC20HandlerContract = require('../abi/bridge/ERC20Handler.json');
+const ERC721HandlerContract = require('../abi/bridge/ERC721Handler.json');
+const GenericHandlerContract = require('../abi/bridge/GenericHandler.json');
+const ERC20Contract = require('../abi/bridge/MintableERC20.json');
 
 class EthConfig {
     wallets!: { alice: Wallet; bob: Wallet; charlie: Wallet; dave: Wallet; eve: Wallet };

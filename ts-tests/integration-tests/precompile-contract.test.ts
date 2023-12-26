@@ -3,7 +3,7 @@ import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
 import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
 import Web3 from 'web3';
-import precompileContractAbi from '../common/abi/precompile/staking.json';
+import precompileContractAbi from '../common/abi/precompile/Staking.json';
 import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 
