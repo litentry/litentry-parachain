@@ -117,8 +117,6 @@ where
 
 			Assertion::BRC20AmountHolder =>
 				lc_assertion_build::brc20::amount_holder::build(&self.req),
-
-			_ => unimplemented!(),
 		}?;
 
 		// post-process the credential
