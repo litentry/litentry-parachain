@@ -59,6 +59,9 @@ export default {
                 request_vc: "(LitentryIdentity, LitentryIdentity, Assertion, H256)",
                 set_identity_networks:
                     "(LitentryIdentity, LitentryIdentity, LitentryIdentity, Vec<Web3Network>)",
+                link_identity_short:
+                    "(LitentryIdentity, LitentryIdentity, LitentryValidationData, Vec<Web3Network>, UserShieldingKeyNonceType, H256)",
+
             },
         },
         UserShieldingKeyType: "[u8; 32]",

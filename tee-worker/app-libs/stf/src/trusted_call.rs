@@ -127,6 +127,19 @@ pub enum TrustedCall {
 	remove_identity(Identity, Identity, Identity, H256),
 	request_vc(Identity, Identity, Assertion, H256),
 	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>),
+	// a hotfix to work around the "too long encoded call size" problem
+	// it's similiar to `link_identity`, but with reduced parameters:
+	// - the first identity is the prime identity, whose signature is required
+	// - the second identity is the to-be-linked identity
+	// in this sense, it can only be called via DI
+	link_identity_short(
+		Identity,
+		Identity,
+		ValidationData,
+		Vec<Web3Network>,
+		UserShieldingKeyNonceType,
+		H256,
+	),
 	set_user_shielding_key_with_networks(
 		Identity,
 		Identity,
@@ -167,6 +180,7 @@ impl TrustedCall {
 			TrustedCall::set_identity_networks(sender_identity, ..) => sender_identity,
 			TrustedCall::set_user_shielding_key_with_networks(sender_identity, ..) =>
 				sender_identity,
+			TrustedCall::link_identity_short(sender_identity, ..) => sender_identity,
 			TrustedCall::link_identity_callback(sender_identity, ..) => sender_identity,
 			TrustedCall::request_vc_callback(sender_identity, ..) => sender_identity,
 			TrustedCall::handle_imp_error(sender_identity, ..) => sender_identity,
@@ -564,6 +578,38 @@ where
 				}
 				Ok(())
 			},
+			TrustedCall::link_identity_short(
+				signer,
+				identity,
+				validation_data,
+				web3networks,
+				nonce,
+				hash,
+			) => {
+				debug!("link_identity_short, who: {}", account_id_to_string(&signer));
+
+				if let Err(e) = Self::link_identity_internal(
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					signer.clone(),
+					identity,
+					validation_data,
+					web3networks,
+					nonce,
+					hash,
+					shard,
+				) {
+					add_call_from_imp_error(
+						calls,
+						node_metadata_repo,
+						Some(SgxParentchainTypeConverter::convert(
+							signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+						)),
+						e.to_imp_error(),
+						hash,
+					);
+				}
+				Ok(())
+			},
 			TrustedCall::remove_identity(signer, who, identity, hash) => {
 				debug!("remove_identity, who: {}", account_id_to_string(&who));
 				let account = SgxParentchainTypeConverter::convert(
@@ -778,6 +824,7 @@ where
 			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
+			TrustedCall::link_identity_short(..) => debug!("No storage updates needed..."),
 			TrustedCall::set_user_shielding_key_with_networks(..) =>
 				debug!("No storage updates needed..."),
 			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
