@@ -4,10 +4,9 @@
   "main": "",
   "license": "GPL-3.0",
   "scripts": {
-    "build": "cd node_modules/@open-web3/parachain-launch && corepack yarn install && corepack yarn run build",
-    "start": "node_modules/.bin/parachain-launch"
+    "start": "node_modules/@open-web3/parachain-launch/bin/parachain-launch"
   },
   "dependencies": {
-    "@open-web3/parachain-launch": "github:Kailai-Wang/parachain-launch#use-raw-binary"
+    "@open-web3/parachain-launch": "^1.4.2"
   }
 }
