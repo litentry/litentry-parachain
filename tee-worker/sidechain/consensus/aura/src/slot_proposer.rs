@@ -137,6 +137,7 @@ impl<
 					sidechain_db
 						.set_block_number(&sidechain_db.get_block_number().map_or(1, |n| n + 1));
 					sidechain_db.set_timestamp(&now_as_millis());
+					sidechain_db.set_parentchain_block_number(latest_parentchain_header);
 					sidechain_db
 				},
 			)

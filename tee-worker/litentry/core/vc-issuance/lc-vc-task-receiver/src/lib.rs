@@ -26,9 +26,9 @@ use codec::{Decode, Encode};
 pub use futures;
 use ita_sgx_runtime::{Hash, Runtime};
 use ita_stf::{
-	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
-	ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCall,
-	TrustedCallSigned, TrustedOperation, H256,
+	aes_encrypt_default, trusted_call_result::RequestVCResult, ConvertAccountId, Getter,
+	OpaqueCall, SgxParentchainTypeConverter, TrustedCall, TrustedCallSigned, TrustedOperation,
+	H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -39,14 +39,15 @@ use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_storage::{storage_map_key, StorageHasher};
+use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::parentchain::ParentchainId;
+use itp_types::{parentchain::ParentchainId, BlockNumber as SidechainBlockNumber};
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
 use litentry_primitives::{
-	aes_decrypt, AesOutput, Identity, IdentityNetworkTuple, RequestAesKey, ShardIdentifier,
+	aes_decrypt, AesOutput, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
+	ShardIdentifier,
 };
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
 use std::{
@@ -133,11 +134,11 @@ where
 		.to_call()
 		.ok_or_else(|| "Failed to convert trusted operation to trusted call".to_string())?;
 
-	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, _hash) =
+	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) =
 		trusted_call.call.clone()
 	{
 		let key = maybe_key.ok_or_else(|| "User shielding key not provided".to_string())?;
-		let identities: Vec<IdentityNetworkTuple> = context
+		let (identities, parachain_block_number, sidechain_block_number) = context
 			.state_handler
 			.execute_on_current(&shard, |state, _| {
 				let prefix_key = storage_map_key(
@@ -163,7 +164,16 @@ where
 					})
 					.collect();
 
-				identities
+				let parachain_block_number = state
+					.get(&storage_value_key("Parentchain", "Number"))
+					.and_then(|v| ParentchainBlockNumber::decode(&mut v.as_slice()).ok())
+					.unwrap();
+				let sidechain_block_number = state
+					.get(&storage_value_key("System", "Number"))
+					.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
+					.unwrap();
+
+				(identities, parachain_block_number, sidechain_block_number)
 			})
 			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
 
@@ -177,9 +187,11 @@ where
 			who,
 			assertion,
 			identities,
-			maybe_key,
 			top_hash: H256::zero(),
-			req_ext_hash: H256::zero(),
+			parachain_block_number,
+			sidechain_block_number,
+			maybe_key,
+			req_ext_hash,
 		};
 
 		let vc_request_handler =
