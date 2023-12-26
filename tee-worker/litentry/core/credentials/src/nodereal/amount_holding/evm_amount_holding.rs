@@ -37,36 +37,6 @@ impl EVMTokenAddress for EVMTokenType {
 				Some("0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3"),
 			(EVMTokenType::Trx, Web3Network::Ethereum) =>
 				Some("0x50327c6c5a14dcade707abad2e27eb517df87ab5"),
-			(EVMTokenType::Pepe, Web3Network::Ethereum) =>
-				Some("0x6982508145454Ce325dDbE47a25d4ec3d2311933"),
-			(EVMTokenType::Shib, Web3Network::Ethereum) =>
-				Some("0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE"),
-			(EVMTokenType::Uni, Web3Network::Ethereum) =>
-				Some("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"),
-			(EVMTokenType::Bnb, Web3Network::Ethereum) =>
-				Some("0xB8c77482e45F1F44dE1745F52C74426C631bDD52"),
-			(EVMTokenType::Link, Web3Network::Ethereum) =>
-				Some("0x514910771AF9Ca656af840dff83E8264EcF986CA"),
-			(EVMTokenType::Blur, Web3Network::Ethereum) =>
-				Some("0x5283D291DBCF85356A21bA090E6db59121208b44"),
-			(EVMTokenType::Arb, Web3Network::Ethereum) =>
-				Some("0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1"),
-			(EVMTokenType::Bat, Web3Network::Ethereum) =>
-				Some("0x0D8775F648430679A709E98d2b0Cb6250d2887EF"),
-			(EVMTokenType::Inj, Web3Network::Ethereum) =>
-				Some("0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30"),
-			(EVMTokenType::Aave, Web3Network::Ethereum) =>
-				Some("0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"),
-			(EVMTokenType::Wld, Web3Network::Ethereum) =>
-				Some("0x163f8C2467924be0ae7B5347228CABF260318753"),
-			(EVMTokenType::Ftt, Web3Network::Ethereum) =>
-				Some("0x50D1c9771902476076eCFc8B2A83Ad6b9355a4c9"),
-			(EVMTokenType::Cake, Web3Network::Ethereum) =>
-				Some("0x152649eA73beAb28c5b49B26eb48f7EAD6d4c898"),
-			(EVMTokenType::Lit, Web3Network::Ethereum) =>
-				Some("0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723"),
-			(EVMTokenType::Eth, Web3Network::Ethereum) =>
-				Some("0x0000000000000000000000000000000000000000"),
 			_ => None,
 		}
 	}

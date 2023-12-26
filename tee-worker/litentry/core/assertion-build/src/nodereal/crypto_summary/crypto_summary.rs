@@ -20,12 +20,15 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use lc_credentials::nodereal::crypto_summary::CryptoSummaryCredentialUpdate;
+
 use crate::*;
-use lc_data_providers::{self, DataProviderConfigReader, ReadDataProviderConfig};
+
+use super::CryptoSummary;
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
-	let addresses = identities
+	let _addresses = identities
 		.into_iter()
 		.filter(|(newtwork_type, _)| newtwork_type.is_evm())
 		.flat_map(|(newtwork_type, addresses)| {
@@ -33,52 +36,15 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		})
 		.collect::<Vec<(Web3Network, String)>>();
 
-	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth);
-
-	for address in addresses.iter() {
-		let param = GetTokenBalance20Param {
-			contract_address: token_type.get_address(address.0).unwrap_or_default().into(),
-			address: address.1.clone(),
-			block_number: "latest".into(),
-		};
-		match address.0 {
-			Web3Network::Bsc => match bsc_client.get_token_balance_20(&param) {
-				Ok(balance) => {
-					total_balance += balance;
-				},
-				Err(err) => return Err(err),
-			},
-			Web3Network::Ethereum => match eth_client.get_token_balance_20(&param) {
-				Ok(balance) => {
-					total_balance += balance;
-				},
-				Err(err) => return Err(err),
-			},
-			_ => {},
-		}
-	}
-
-	let data_provider_config = DataProviderConfigReader::read()
-		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
-	let mut client = AlliumClient::new(&data_provider_config);
-
-	let response = client.create_crypto_summary(addresses).map_err(|e| {
-		Error::RequestVCFailed(
-			Assertion::CryptoSummary,
-			ErrorDetail::DataProviderError(ErrorString::truncate_from(
-				format!("{e:?}").as_bytes().to_vec(),
-			)),
-		)
+	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
+		error!("Generate unsigned credential failed {:?}", e);
+		Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail())
 	})?;
+	
+	let summary = CryptoSummary::new().logic().map_err(|e| {
+		Error::RequestVCFailed(Assertion::CryptoSummary, e)
+	})?;
+	credential_unsigned.update_crypto_summary_credential(summary.is_empty());
 
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_crypto_summary_credential(&response);
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail()))
-		},
-	}
+	Ok(credential_unsigned)
 }

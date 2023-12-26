@@ -85,7 +85,6 @@ pub mod brc20;
 pub mod generic_discord_role;
 pub mod nodereal;
 pub mod vip3;
-pub mod crypto_summary;
 
 pub const LITENTRY_ISSUER_NAME: &str = "Litentry TEE Worker";
 pub const PROOF_PURPOSE: &str = "assertionMethod";

@@ -23,34 +23,4 @@ pub enum EVMTokenType {
 	Ton,
 	#[codec(index = 1)]
 	Trx,
-	#[codec(index = 2)]
-	Pepe,
-	#[codec(index = 3)]
-	Shib,
-	#[codec(index = 4)]
-	Uni,
-	#[codec(index = 5)]
-	Bnb,
-	#[codec(index = 6)]
-	Link,
-	#[codec(index = 7)]
-	Blur,
-	#[codec(index = 8)]
-	Arb,
-	#[codec(index = 9)]
-	Bat,
-	#[codec(index = 10)]
-	Inj,
-	#[codec(index = 11)]
-	Aave,
-	#[codec(index = 12)]
-	Wld,
-	#[codec(index = 13)]
-	Ftt,
-	#[codec(index = 14)]
-	Cake,
-	#[codec(index = 15)]
-	Lit,
-	#[codec(index = 16)]
-	Eth,
 }

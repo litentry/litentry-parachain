@@ -299,6 +299,7 @@ pub struct GetTokenBalance20Param {
 // Fungible Tokens API
 pub trait FungibleApiList {
 	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error>;
+	fn get_token_holdings(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error>;
 }
 
 impl FungibleApiList for NoderealJsonrpcClient {
@@ -328,6 +329,10 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
+	}
+
+	fn get_token_holdings(&mut self, _param: &GetTokenBalance20Param) -> Result<f64, Error> {
+		todo!()
 	}
 }
 

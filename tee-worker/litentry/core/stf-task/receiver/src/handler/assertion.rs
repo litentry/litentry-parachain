@@ -132,6 +132,8 @@ where
 
 			Assertion::BRC20AmountHolder =>
 				lc_assertion_build::brc20::amount_holder::build(&self.req),
+
+			Assertion::CryptoSummary => lc_assertion_build::nodereal::crypto_summary::build(&self.req),
 		}?;
 
 		// post-process the credential

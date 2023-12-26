@@ -279,7 +279,8 @@ impl Assertion {
 			Self::A10(..) |
 			Self::A11(..) |
 			Self::VIP3MembershipCard(..) |
-			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
+			Self::WeirdoGhostGangHolder |
+			Self::CryptoSummary => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
