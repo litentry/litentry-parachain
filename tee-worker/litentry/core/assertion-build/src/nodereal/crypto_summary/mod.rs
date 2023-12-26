@@ -22,10 +22,11 @@ extern crate sgx_tstd as std;
 
 mod crypto_summary;
 
+use crate::*;
 pub use crypto_summary::*;
 use lc_credentials::nodereal::crypto_summary::{CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH, CRYPTO_SUMMARY_NFT_ADDRESSES_ETH_NFT};
-use lc_data_providers::nodereal_jsonrpc::{NoderealJsonrpcClient, NoderealChain};
-use litentry_primitives::ErrorDetail;
+use lc_data_providers::nodereal_jsonrpc::{NoderealJsonrpcClient, NoderealChain, FungibleApiList};
+use litentry_primitives::{ErrorDetail, Assertion};
 use serde::{Deserialize, Serialize};
 use std::{
     string::String,
@@ -125,15 +126,15 @@ impl CryptoSummary {
         }
     }
 
-    pub fn logic(&mut self) -> core::result::Result<SummaryHoldings, ErrorDetail> {
-        // let response = eth_client.create_crypto_summary(addresses).map_err(|e| {
-        //     Error::RequestVCFailed(
-        //         Assertion::CryptoSummary,
-        //         ErrorDetail::DataProviderError(ErrorString::truncate_from(
-        //             format!("{e:?}").as_bytes().to_vec(),
-        //         )),
-        //     )
-        // })?;
+    pub fn logic(&mut self, addresses: Vec<String>) -> core::result::Result<SummaryHoldings, ErrorDetail> {
+
+        // Handle Ethererum network
+        let response = self.eth_client.get_token_holdings(&address).map_err(|e| {
+            Error::RequestVCFailed(
+                Assertion::CryptoSummary,
+                ErrorDetail::DataProviderError(e),
+            )
+        })?;
 
         // logic
         let _x = CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH;

@@ -299,7 +299,7 @@ pub struct GetTokenBalance20Param {
 // Fungible Tokens API
 pub trait FungibleApiList {
 	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error>;
-	fn get_token_holdings(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error>;
+	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error>;
 }
 
 impl FungibleApiList for NoderealJsonrpcClient {
@@ -331,8 +331,21 @@ impl FungibleApiList for NoderealJsonrpcClient {
 		}
 	}
 
-	fn get_token_holdings(&mut self, _param: &GetTokenBalance20Param) -> Result<f64, Error> {
-		todo!()
+	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error> {
+		// TODO:
+		// page_size max is 0x64(100).
+		// If the amount of data involved is too large, it also involves page flipping operations.
+		let params: Vec<String> = vec![address.to_string(), "0x1".to_string(),"0x64".to_string()];
+		debug!("get_token_holdings: {:?}", params);
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenHoldings".to_string(),
+			params: params.to_vec(),
+			id: Id::Number(1),
+		};
+		
+		self.post(&req_body).map_err(|e|e)
 	}
 }
 

@@ -20,15 +20,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use lc_credentials::nodereal::crypto_summary::CryptoSummaryCredentialUpdate;
-
 use crate::*;
-
+use lc_credentials::nodereal::crypto_summary::CryptoSummaryCredentialUpdate;
 use super::CryptoSummary;
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
-	let _addresses = identities
+	let addresses = identities
 		.into_iter()
 		.filter(|(newtwork_type, _)| newtwork_type.is_evm())
 		.flat_map(|(newtwork_type, addresses)| {
@@ -38,10 +36,10 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
 		error!("Generate unsigned credential failed {:?}", e);
-		Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail())
+		Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail()) 
 	})?;
 	
-	let summary = CryptoSummary::new().logic().map_err(|e| {
+	let summary = CryptoSummary::new().logic(addresses).map_err(|e| {
 		Error::RequestVCFailed(Assertion::CryptoSummary, e)
 	})?;
 	credential_unsigned.update_crypto_summary_credential(summary.is_empty());
