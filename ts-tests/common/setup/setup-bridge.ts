@@ -237,7 +237,7 @@ async function startChainBridge(
     log: string
 ) {
     require('dotenv').config();
-    const dataDir = './bridge/data';
+    const dataDir = '../common/data';
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
     }
@@ -260,7 +260,7 @@ async function startChainBridge(
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
-        ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', './bridge/keys'],
+        ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', '../common/keys'],
         { env: { STAGE: 'dev' } }
     );
     lsProcess.stdout.pipe(logging);
@@ -306,8 +306,8 @@ export function describeCrossChainTransfer(
 
 
             const wallets = {
-                alice: new ethers.Wallet('2077225e01c04faf1eda17fa5ee710438cce289d18414fd7cf1c555c9a539de4',provider),
-                bob: new ethers.Wallet("4a2d1d6c6298bcbfe1e77261fb4e0398857bf9273ba12ec64e5717a3c144193e", provider),
+                alice: new ethers.Wallet(generateTestKeys().alice,provider),
+                bob: new ethers.Wallet(generateTestKeys().bob, provider),
                 charlie: new ethers.Wallet(generateTestKeys().charlie, provider),
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
@@ -342,7 +342,7 @@ export function describeCrossChainTransfer(
                 ethConfig.wallets.bob.address,
                 parachainConfig.bob.address,
                 config.bridge_path,
-                './bridge/bob.json',
+                '../common/bob.json',
                 '/tmp/parachain_dev/bob.log'
             );
             await sleep(5);
