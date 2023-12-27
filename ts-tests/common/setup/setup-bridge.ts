@@ -25,6 +25,7 @@ class EthConfig {
 }
 
 function generateTestKeys(): { alice: string; bob: string; charlie: string; dave: string; eve: string } {
+    
     const secp256k1PrivateKeyLength = 32;
     const names = ['alice', 'bob', 'charlie', 'dave', 'eve'];
     let keys = new Array<string>();
@@ -255,10 +256,11 @@ async function startChainBridge(
         config
     );
     const logging = fs.createWriteStream(log, { flags: 'w+' });
+    
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
-        ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', '../keys'],
+        ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', './bridge/keys'],
         { env: { STAGE: 'dev' } }
     );
     lsProcess.stdout.pipe(logging);
@@ -301,14 +303,16 @@ export function describeCrossChainTransfer(
             const parachainConfig = await initApiPromise(config);
 
             const provider = new ethers.providers.JsonRpcProvider(config.eth_endpoint);
+
+
             const wallets = {
-                alice: new ethers.Wallet(generateTestKeys().alice, provider),
-                bob: new ethers.Wallet(generateTestKeys().bob, provider),
+                alice: new ethers.Wallet('2077225e01c04faf1eda17fa5ee710438cce289d18414fd7cf1c555c9a539de4',provider),
+                bob: new ethers.Wallet("4a2d1d6c6298bcbfe1e77261fb4e0398857bf9273ba12ec64e5717a3c144193e", provider),
                 charlie: new ethers.Wallet(generateTestKeys().charlie, provider),
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
-            };
-            
+            };            
+        
             const { bridge, erc20Handler, erc721Handler, genericHandler, erc20 } = await deployBridgeContracts(
                 wallets.alice
             );
