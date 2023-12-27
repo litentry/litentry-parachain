@@ -258,7 +258,7 @@ async function startChainBridge(
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
-        ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', './bridge/keys'],
+        ['--verbosity', 'trace', '--blockstore', dataDir, '--config', config, '--keystore', '../keys'],
         { env: { STAGE: 'dev' } }
     );
     lsProcess.stdout.pipe(logging);
@@ -296,6 +296,7 @@ export function describeCrossChainTransfer(
         };
 
         before('Deploying Bridge Contracts', async function () {
+
             const config = loadConfig();
             const parachainConfig = await initApiPromise(config);
 
@@ -307,6 +308,7 @@ export function describeCrossChainTransfer(
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
             };
+            
             const { bridge, erc20Handler, erc721Handler, genericHandler, erc20 } = await deployBridgeContracts(
                 wallets.alice
             );
