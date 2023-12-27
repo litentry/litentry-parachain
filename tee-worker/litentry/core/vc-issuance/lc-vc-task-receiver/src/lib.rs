@@ -49,6 +49,7 @@ use litentry_primitives::{
 	aes_decrypt, AesOutput, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
 	ShardIdentifier,
 };
+use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
 use std::{
 	format,
@@ -90,7 +91,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
 			)) {
-				log::warn!("Unable to submit response back to the handler: {:?}", e);
+				warn!("Unable to submit response back to the handler: {:?}", e);
 			}
 		});
 	}
@@ -147,8 +148,11 @@ where
 					&who,
 					&StorageHasher::Blake2_128Concat,
 				);
-				let mut id_graph =
-					state.iter_prefix::<Identity, IdentityContext<Runtime>>(&prefix_key).unwrap();
+
+				// `None` means empty IDGraph, thus `unwrap_or_default`
+				let mut id_graph = state
+					.iter_prefix::<Identity, IdentityContext<Runtime>>(&prefix_key)
+					.unwrap_or_default();
 
 				// Sorts the IDGraph in place
 				sort_id_graph::<Runtime>(&mut id_graph);
@@ -164,14 +168,15 @@ where
 					})
 					.collect();
 
+				// should never be `None`, but use `unwrap_or_default` to not panic
 				let parachain_block_number = state
 					.get(&storage_value_key("Parentchain", "Number"))
 					.and_then(|v| ParentchainBlockNumber::decode(&mut v.as_slice()).ok())
-					.unwrap();
+					.unwrap_or_default();
 				let sidechain_block_number = state
 					.get(&storage_value_key("System", "Number"))
 					.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
-					.unwrap();
+					.unwrap_or_default();
 
 				(identities, parachain_block_number, sidechain_block_number)
 			})
@@ -181,7 +186,7 @@ where
 			.to_account_id()
 			.ok_or_else(|| "Invalid signer account, failed to convert".to_string())?;
 
-		let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
+		let req = AssertionBuildRequest {
 			shard,
 			signer,
 			who,
@@ -194,16 +199,11 @@ where
 			req_ext_hash,
 		};
 
-		let vc_request_handler =
-			VCRequestHandler { req: assertion_build, context: context.clone() };
+		let vc_request_handler = VCRequestHandler { req, context: context.clone() };
 		let response = vc_request_handler
 			.process()
 			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
 
-		let call_index = node_metadata_repo
-			.get_from_metadata(|m| m.vc_issued_call_indexes())
-			.unwrap()
-			.unwrap();
 		let result = aes_encrypt_default(&key, &response.vc_payload);
 		let account = SgxParentchainTypeConverter::convert(
 			match response.assertion_request.who.to_account_id() {
@@ -211,6 +211,18 @@ where
 				None => return Err("Failed to convert account".to_string()),
 			},
 		);
+
+		let res = RequestVCResult {
+			vc_index: response.vc_index,
+			vc_hash: response.vc_hash,
+			vc_payload: result,
+		};
+
+		let call_index = node_metadata_repo
+			.get_from_metadata(|m| m.vc_issued_call_indexes())
+			.unwrap()
+			.unwrap();
+
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
 			account,
@@ -219,19 +231,19 @@ where
 			response.vc_hash,
 			H256::zero(),
 		));
-		let res = RequestVCResult {
-			vc_index: response.vc_index,
-			vc_hash: response.vc_hash,
-			vc_payload: result,
-		};
+
 		// This internally fetches nonce from a Mutex and then updates it thereby ensuring ordering
-		let xt = extrinsic_factory
-			.create_extrinsics(&[call], None)
-			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
-		context
-			.ocall_api
-			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
-			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
+		// Only log the error message even if it fails as `res` is already available to the client
+		match extrinsic_factory.create_extrinsics(&[call], None) {
+			Ok(xt) => {
+				if let Err(e) =
+					context.ocall_api.send_to_parentchain(xt, &ParentchainId::Litentry, false)
+				{
+					warn!("Unable to send extrinsic to parentchain: {:?}", e);
+				}
+			},
+			Err(e) => warn!("Failed to construct extrinsic: {:?}", e),
+		};
 
 		Ok(res.encode())
 	} else {
