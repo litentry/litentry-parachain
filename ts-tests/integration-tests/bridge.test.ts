@@ -69,7 +69,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.ethConfig.erc20Handler.address
         );
         const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0);
-        const Bridge = require('../bridge/contracts/Bridge.json');
+        const Bridge = require('../common/abi/bridge/Bridge.json');
         const inter = new ethers.utils.Interface(Bridge.abi);
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferNative(
