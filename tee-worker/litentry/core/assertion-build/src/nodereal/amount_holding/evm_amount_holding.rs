@@ -182,11 +182,12 @@ mod tests {
 		let req: AssertionBuildRequest = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
 			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::EVMAmountHolding(EVMTokenType::Ton),
 			identities,
 			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
@@ -235,11 +236,12 @@ mod tests {
 		let req: AssertionBuildRequest = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
 			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::EVMAmountHolding(EVMTokenType::Ton),
 			identities,
 			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
@@ -288,11 +290,12 @@ mod tests {
 		let req: AssertionBuildRequest = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
 			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::EVMAmountHolding(EVMTokenType::Ton),
 			identities,
 			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
