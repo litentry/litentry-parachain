@@ -5,15 +5,15 @@ import { Contract, ethers, Wallet } from 'ethers';
 import { BN } from '@polkadot/util';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from '../utils';
+import { initApiPromise, loadConfig, ParachainConfig, signAndSend, sleep, sudoWrapper } from './utils';
 import { toWei } from 'web3-utils';
 
 const path = require('path');
-const BridgeContract = require('../abi/bridge/Bridge.json');
-const ERC20HandlerContract = require('../abi/bridge/ERC20Handler.json');
-const ERC721HandlerContract = require('../abi/bridge/ERC721Handler.json');
-const GenericHandlerContract = require('../abi/bridge/GenericHandler.json');
-const ERC20Contract = require('../abi/bridge/MintableERC20.json');
+const BridgeContract = require('../common/bridge/contracts/Bridge.json');
+const ERC20HandlerContract = require('../common/bridge/contracts/ERC20Handler.json');
+const ERC721HandlerContract = require('../common/bridge/contracts/ERC721Handler.json');
+const GenericHandlerContract = require('../common/bridge/contracts/GenericHandler.json');
+const ERC20Contract = require('../common/bridge/contracts/MintableERC20.json');
 
 class EthConfig {
     wallets!: { alice: Wallet; bob: Wallet; charlie: Wallet; dave: Wallet; eve: Wallet };
@@ -25,7 +25,6 @@ class EthConfig {
 }
 
 function generateTestKeys(): { alice: string; bob: string; charlie: string; dave: string; eve: string } {
-    
     const secp256k1PrivateKeyLength = 32;
     const names = ['alice', 'bob', 'charlie', 'dave', 'eve'];
     let keys = new Array<string>();
@@ -237,7 +236,7 @@ async function startChainBridge(
     log: string
 ) {
     require('dotenv').config();
-    const dataDir = './common/data';
+    const dataDir = './bridge/data';
     if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
     }
@@ -256,7 +255,6 @@ async function startChainBridge(
         config
     );
     const logging = fs.createWriteStream(log, { flags: 'w+' });
-    
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
@@ -298,21 +296,17 @@ export function describeCrossChainTransfer(
         };
 
         before('Deploying Bridge Contracts', async function () {
-
             const config = loadConfig();
             const parachainConfig = await initApiPromise(config);
 
             const provider = new ethers.providers.JsonRpcProvider(config.eth_endpoint);
-
-
             const wallets = {
-                alice: new ethers.Wallet(generateTestKeys().alice,provider),
+                alice: new ethers.Wallet(generateTestKeys().alice, provider),
                 bob: new ethers.Wallet(generateTestKeys().bob, provider),
                 charlie: new ethers.Wallet(generateTestKeys().charlie, provider),
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
-            };            
-        
+            };
             const { bridge, erc20Handler, erc721Handler, genericHandler, erc20 } = await deployBridgeContracts(
                 wallets.alice
             );
@@ -342,7 +336,7 @@ export function describeCrossChainTransfer(
                 ethConfig.wallets.bob.address,
                 parachainConfig.bob.address,
                 config.bridge_path,
-                './common/bob.json',
+                './bridge/bob.json',
                 '/tmp/parachain_dev/bob.log'
             );
             await sleep(5);
