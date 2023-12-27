@@ -24,12 +24,12 @@ mod summary;
 
 use crate::*;
 use lc_credentials::nodereal::crypto_summary::{
-	CRYPTO_SUMMARY_NFT_ADDRESSES_ETH_NFT, CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+	CRYPTO_SUMMARY_NFT_ADDRESSES_ETH, CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
 };
 use lc_data_providers::nodereal_jsonrpc::{
 	FungibleApiList, GetNFTHoldingsParam, NftApiList, NoderealChain, NoderealJsonrpcClient,
 };
-use litentry_primitives::{Assertion, ErrorDetail};
+use litentry_primitives::ErrorDetail;
 use serde::{Deserialize, Serialize};
 use std::{string::String, vec, vec::Vec};
 pub use summary::*;
@@ -104,16 +104,59 @@ pub struct NameAndAddress {
 	pub address: String,
 }
 
+impl NameAndAddress {
+    pub fn new(name: &str, address: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            address: address.to_string(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Item {
 	pub network: String,
 	pub list: Vec<NameAndAddress>,
 }
 
+impl Item {
+	pub fn new(network: String, list: Vec<NameAndAddress>) -> Self {
+		let mut item = Item::default();
+
+		if !list.is_empty() {
+			item.network = network;
+			item.list = list;
+		}		
+
+		item
+	}
+
+	pub fn is_empty(&self) -> bool {
+		self.list.is_empty()
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct TokenAndNFT {
+	#[serde(rename = "TOKEN")]
 	pub token: Vec<Item>,
+
+	#[serde(rename = "NFT")]
 	pub nft: Vec<Item>,
+}
+
+impl TokenAndNFT {
+	pub fn add_token(&mut self, item: Item) {
+		if !item.is_empty() {
+			self.token.push(item);
+		}		
+	}
+
+	pub fn add_nft(&mut self, item: Item) {
+		if !item.is_empty() {
+			self.nft.push(item);
+		}		
+	}
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -127,12 +170,30 @@ impl SummaryHoldings {
 		self.summary.token.is_empty() && self.summary.nft.is_empty()
 	}
 
-	pub fn from_flags(bsc_token: &[bool], eth_token: &[bool], eth_nft: &[bool]) -> Self {
-		// logic
-		let _x = CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH;
-		let _y = CRYPTO_SUMMARY_NFT_ADDRESSES_ETH_NFT;
+	pub fn construct(bsc_token: &[bool], eth_token: &[bool], eth_nft: &[bool]) -> Self {
+		let bsc_token_list = Self::collect_list(&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH, &bsc_token);
+		let eth_token_list = Self::collect_list(&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH, &eth_token);
+		let eth_nft_list = Self::collect_list(&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH, &eth_nft);
 
-		todo!()
+		let mut token_and_nft = TokenAndNFT::default();
+		token_and_nft.add_token(Item::new(web3_network_to_chain(&Web3Network::Bsc), bsc_token_list));
+		token_and_nft.add_token(Item::new(web3_network_to_chain(&Web3Network::Ethereum), eth_token_list));
+		token_and_nft.add_nft(Item::new(web3_network_to_chain(&Web3Network::Ethereum), eth_nft_list));
+
+		SummaryHoldings { summary: token_and_nft }
+	}
+
+	fn collect_list(source: &[(&str, &str); 15], flags: &[bool]) -> Vec<NameAndAddress> {
+		let mut list = vec![];
+        for (index, is_holder) in flags.iter().enumerate() {
+            if *is_holder {
+				let (address, name) = source[index];
+                let name_and_address = NameAndAddress::new(name, address);
+                list.push(name_and_address)
+            }
+        }
+
+		list
 	}
 }
 
@@ -155,7 +216,7 @@ impl CryptoSummary {
 	) -> core::result::Result<SummaryHoldings, ErrorDetail> {
 		let mut flag_bsc_token: [bool; 15] = [false; 15];
 		let mut flag_eth_token: [bool; 15] = [false; 15];
-		let mut flag_eth_nfg: [bool; 15] = [false; 15];
+		let mut flag_eth_nft: [bool; 15] = [false; 15];
 
 		for (network, addresses) in identities {
 			if *network == Web3Network::Bsc {
@@ -198,19 +259,38 @@ impl CryptoSummary {
 						.get_nft_holdings(&param)
 						.map_err(|e| e.into_error_detail())?;
 					let details = res_nft.details;
-					Self::update_holding_flag(&mut flag_eth_nfg, &details)
+					Self::update_holding_flag(&mut flag_eth_nft, &details)
 				}
 			}
 		}
 
-		Ok(SummaryHoldings::from_flags(&flag_bsc_token, &flag_eth_token, &flag_eth_nfg))
+		Ok(SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft))
 	}
 
 	fn update_holding_flag<'a, T>(flag_array: &mut [bool], result: &[T])
 	where
 		T: Serialize + Deserialize<'a>,
 	{
+        for (index, f) in flag_array.iter().enumerate() {
+            if *f == false {
 
-		todo!()
+            }
+        }
+	}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::SummaryHoldings;
+
+	#[test]
+	fn summary_construct_works() {
+		let flag_bsc_token = [false, true, true, true, true, true, true, true, true, true, true, true, true, true, true];
+		let flag_eth_token = [false, false, false,false,false,false,false,false,false,false,false,false,false,false,false];
+		let flag_eth_nft = [true,  false, false,false,false,false,false,false,false,false,false,false,false,false,false];
+
+		let summary = SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft);
+		println!(">> {}", serde_json::to_string(&summary).unwrap());
+		assert!(!summary.is_empty());
 	}
 }
