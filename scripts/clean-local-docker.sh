@@ -40,7 +40,10 @@ IMG=$(docker images --filter=reference="generated-$CHAIN*" --format "{{.Reposito
 [ -z "$IMG" ] || docker rmi -f $IMG
 
 rm -rf "$LITENTRY_PARACHAIN_DIR"
-rm -rf "$ROOTDIR/ts-tests/bridge/bob.json"
-rm -rf "$ROOTDIR/ts-tests/bridge/data/"
-
+ls $ROOTDIR/ts-tests
+echo "remove ts-tests/common/bob.json and ts-tests/common/data/..."
+rm -rf "$ROOTDIR/ts-tests/common/bob.json"
+rm -rf "$ROOTDIR/ts-tests/common/data/"
+echo "remove ts-tests/..."
+ls $ROOTDIR/ts-tests
 echo "cleaned up."
