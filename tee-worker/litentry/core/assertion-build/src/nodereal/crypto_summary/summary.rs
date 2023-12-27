@@ -20,27 +20,19 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+use super::CryptoSummary;
 use crate::*;
 use lc_credentials::nodereal::crypto_summary::CryptoSummaryCredentialUpdate;
-use super::CryptoSummary;
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
-	let addresses = identities
-		.into_iter()
-		.filter(|(newtwork_type, _)| newtwork_type.is_evm())
-		.flat_map(|(newtwork_type, addresses)| {
-			addresses.into_iter().map(move |address| (newtwork_type, address))
-		})
-		.collect::<Vec<(Web3Network, String)>>();
+	let summary = CryptoSummary::new()
+		.logic(&identities)
+		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
 
 	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
 		error!("Generate unsigned credential failed {:?}", e);
-		Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail()) 
-	})?;
-	
-	let summary = CryptoSummary::new().logic(addresses).map_err(|e| {
-		Error::RequestVCFailed(Assertion::CryptoSummary, e)
+		Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail())
 	})?;
 	credential_unsigned.update_crypto_summary_credential(summary.is_empty());
 

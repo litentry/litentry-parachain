@@ -279,8 +279,7 @@ impl Assertion {
 			Self::A10(..) |
 			Self::A11(..) |
 			Self::VIP3MembershipCard(..) |
-			Self::WeirdoGhostGangHolder |
-			Self::CryptoSummary => vec![Web3Network::Ethereum],
+			Self::WeirdoGhostGangHolder => vec![Web3Network::Ethereum],
 			// total tx over `networks`
 			Self::A8(network) => network.to_vec(),
 			// polkadot paticipation
@@ -294,7 +293,8 @@ impl Assertion {
 			// LITStaking
 			Self::LITStaking => vec![Web3Network::Litentry],
 			// EVM Amount Holding
-			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
+			Self::EVMAmountHolding(_) | Self::CryptoSummary =>
+				vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// BRC20 Holder
 			Self::BRC20AmountHolder => vec![
 				Web3Network::BitcoinP2tr,

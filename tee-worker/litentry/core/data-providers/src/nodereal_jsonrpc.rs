@@ -335,7 +335,7 @@ impl FungibleApiList for NoderealJsonrpcClient {
 		// TODO:
 		// page_size max is 0x64(100).
 		// If the amount of data involved is too large, it also involves page flipping operations.
-		let params: Vec<String> = vec![address.to_string(), "0x1".to_string(),"0x64".to_string()];
+		let params: Vec<String> = vec![address.to_string(), "0x1".to_string(), "0x64".to_string()];
 		debug!("get_token_holdings: {:?}", params);
 
 		let req_body = RpcRequest {
@@ -344,8 +344,8 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			params: params.to_vec(),
 			id: Id::Number(1),
 		};
-		
-		self.post(&req_body).map_err(|e|e)
+
+		self.post(&req_body)
 	}
 }
 
