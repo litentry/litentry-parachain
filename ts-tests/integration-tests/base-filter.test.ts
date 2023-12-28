@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
+import { signAndSend, describeLitentry } from '../common/utils';
 
 describeLitentry('Test Base Filter', ``, (context) => {
     console.log(`Test Base Filter`);
