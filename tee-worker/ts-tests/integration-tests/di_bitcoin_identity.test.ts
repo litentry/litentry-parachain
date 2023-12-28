@@ -40,12 +40,24 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
     // Alice links:
     // - alice's evm identity
+    // - bob's bitcoin identity
     const linkIdentityRequestParams: {
         nonce: number;
         identity: LitentryPrimitivesIdentity;
         validation: LitentryValidationData;
         networks: Vec<Web3Network>;
     }[] = [];
+
+    const deactivateIdentityRequestParams: {
+        nonce: number;
+        identity: LitentryPrimitivesIdentity;
+    }[] = [];
+
+    const activateIdentityRequestParams: {
+        nonce: number;
+        identity: LitentryPrimitivesIdentity;
+    }[] = [];
+
     this.timeout(6000000);
 
     before(async () => {
@@ -223,11 +235,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const deactivateIdentityRequestParams: {
-            nonce: number;
-            identity: LitentryPrimitivesIdentity;
-        }[] = [];
-
         const aliceEvmNonce = getNextNonce();
 
         deactivateIdentityRequestParams.push({
@@ -295,7 +302,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        for (const { identity } of linkIdentityRequestParams) {
+        for (const { identity } of deactivateIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
@@ -316,11 +323,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     step('activating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
-
-        const activateIdentityRequestParams: {
-            nonce: number;
-            identity: LitentryPrimitivesIdentity;
-        }[] = [];
 
         const aliceEvmNonce = getNextNonce();
 
