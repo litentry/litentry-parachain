@@ -6,8 +6,8 @@
         "target": "es5",
         "lib": ["es2019"],
         "rootDir": ".",
-        "outDir": "build",
+        "outDir": "build"
     },
-    "include": ["integration-tests/**/*.ts", "integration-tests/**/*.d.ts", "common/utils/integration-setup.ts", "common/setup/upgrade-parathread.ts", "common/setup/setup-enclave.ts", "common/setup/setup-bridge.ts", "common/setup/register-parathread.ts", "common/utils/compile.ts", "global.d.ts"],
+    "include": ["ts-tests/**/*.ts", "ts-tests/**/*.d.ts"],
     "exclude": ["node_modules"]
 }
