@@ -25,7 +25,6 @@ class EthConfig {
 }
 
 function generateTestKeys(): { alice: string; bob: string; charlie: string; dave: string; eve: string } {
-    
     const secp256k1PrivateKeyLength = 32;
     const names = ['alice', 'bob', 'charlie', 'dave', 'eve'];
     let keys = new Array<string>();
@@ -256,7 +255,7 @@ async function startChainBridge(
         config
     );
     const logging = fs.createWriteStream(log, { flags: 'w+' });
-    
+
     const lsProcess = spawn(
         // `${process.env.GOPATH}/bin/chainbridge`,
         bridgePath,
@@ -298,21 +297,19 @@ export function describeCrossChainTransfer(
         };
 
         before('Deploying Bridge Contracts', async function () {
-
             const config = loadConfig();
             const parachainConfig = await initApiPromise(config);
 
             const provider = new ethers.providers.JsonRpcProvider(config.eth_endpoint);
 
-
             const wallets = {
-                alice: new ethers.Wallet(generateTestKeys().alice,provider),
+                alice: new ethers.Wallet(generateTestKeys().alice, provider),
                 bob: new ethers.Wallet(generateTestKeys().bob, provider),
                 charlie: new ethers.Wallet(generateTestKeys().charlie, provider),
                 dave: new ethers.Wallet(generateTestKeys().dave, provider),
                 eve: new ethers.Wallet(generateTestKeys().eve, provider),
-            };            
-        
+            };
+
             const { bridge, erc20Handler, erc721Handler, genericHandler, erc20 } = await deployBridgeContracts(
                 wallets.alice
             );
