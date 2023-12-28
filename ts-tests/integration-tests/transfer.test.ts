@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
+import { signAndSend, describeLitentry } from '../common/utils';
 
 describeLitentry('Test Balance Transfer', ``, (context) => {
     console.log(`Test Balance Transfer`);

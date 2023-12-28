@@ -1,7 +1,7 @@
 import { blake2AsHex } from '@polkadot/util-crypto';
 import * as fs from 'fs';
 import { Keyring, ApiPromise, WsProvider } from '@polkadot/api';
-import { describeLitentry } from './utils';
+import { describeLitentry } from '../common/utils/integration-setup';
 import '@polkadot/wasm-crypto/initOnlyAsm';
 import * as path from 'path';
 import { expect } from 'chai';

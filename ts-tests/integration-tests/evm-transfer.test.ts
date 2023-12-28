@@ -1,7 +1,7 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig } from './utils';
+import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
 import { hexToU8a, u8aToHex } from '@polkadot/util';
 import { createPair, encodeAddress } from '@polkadot/keyring';
 import { evmToAddress } from '@polkadot/util-crypto';
