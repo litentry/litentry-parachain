@@ -1,6 +1,6 @@
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 import { step } from 'mocha-steps';
-import { AbiItem, Hex } from 'web3-utils';
+import { AbiItem } from 'web3-utils';
 import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
 import Web3 from 'web3';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
