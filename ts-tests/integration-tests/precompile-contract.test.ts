@@ -1,18 +1,23 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
-import { AbiItem } from 'web3-utils';
+import { AbiItem, Hex } from 'web3-utils';
 import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
 import Web3 from 'web3';
-import precompileContractAbi from '../common/abi/precompile/Staking.json';
+import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
+import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
+const BN = require('bn.js');
 import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
+import { HexString } from '@polkadot/util/types';
 
 const toBigNumber = (int: number) => int * 1e12;
+const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
 
 describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const config = loadConfig();
 
-    const precompileContractAddress = '0x000000000000000000000000000000000000502d';
+    const precompileStakingContractAddress = '0x000000000000000000000000000000000000502d';
+    const precompileBridgeContractAddress = '0x000000000000000000000000000000000000503d';
     const evmAccountRaw = {
         privateKey: '0x01ab6e801c06e59ca97a14fc0a1978b27fa366fc87450e0b65459dd3515b7391',
         address: '0xaaafB3972B05630fCceE866eC69CdADd9baC2771',
@@ -25,9 +30,17 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     const collatorPublicKey = '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d';
 
     const web3 = new Web3(config.parachain_ws);
-    const precompileContract = new web3.eth.Contract(precompileContractAbi as AbiItem[], precompileContractAddress);
 
-    const executeTransaction = async (delegateTransaction: any, label = '') => {
+    const precompileStakingContract = new web3.eth.Contract(
+        precompileStakingContractAbi as AbiItem[],
+        precompileStakingContractAddress
+    );
+    const precompileBridgeContract = new web3.eth.Contract(
+        precompileBridgeContractAbi as AbiItem[],
+        precompileBridgeContractAddress
+    );
+
+    const executeTransaction = async (delegateTransaction: any, contractAddress: HexString, label = '') => {
         console.log(`=== Executing ${label} ===`);
 
         // estimate gas doesn't work
@@ -36,7 +49,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         const transaction = await web3.eth.accounts.signTransaction(
             {
-                to: precompileContractAddress,
+                to: contractAddress,
                 data: delegateTransaction.encodeABI(),
                 gas: 1000000,
             },
@@ -85,7 +98,9 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     };
 
     const isPendingRequest = async () =>
-        await precompileContract.methods.delegationRequestIsPending(evmAccountRaw.publicKey, collatorPublicKey).call();
+        await precompileStakingContract.methods
+            .delegationRequestIsPending(evmAccountRaw.publicKey, collatorPublicKey)
+            .call();
 
     const collatorDetails = async () => {
         const response = await context.api.query.parachainStaking.autoCompoundingDelegations(collatorPublicKey);
@@ -98,7 +113,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         const randomSeed = mnemonicToMiniSecret(mnemonicGenerate());
         const secretKey = Buffer.from(randomSeed).toString('hex');
 
-        const delegateWithAutoCompound = precompileContract.methods.delegateWithAutoCompound(
+        const delegateWithAutoCompound = precompileStakingContract.methods.delegateWithAutoCompound(
             collatorPublicKey,
             toBigNumber(60),
             1
@@ -107,7 +122,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         try {
             await web3.eth.accounts.signTransaction(
                 {
-                    to: precompileContractAddress,
+                    to: precompileStakingContractAddress,
                     data: delegateWithAutoCompound.encodeABI(),
                     gas: await delegateWithAutoCompound.estimateGas(),
                 },
@@ -118,11 +133,9 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             expect(e).to.be.instanceof(Error);
         }
     });
-
-    // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
-    step('Test precompile contract', async function () {
-        console.time('Test precompile contract');
+    step('test transferNative', async function () {
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
+
         if ('Test' !== filterMode) {
             let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
             let temp = await context.api.rpc.chain.getBlock();
@@ -131,6 +144,19 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             temp = await context.api.rpc.chain.getBlock();
             console.log(`setMode await end: ${temp.block.header.number}`);
         }
+
+        const transferNativeTx = precompileBridgeContract.methods.transferNative(
+            bn1e12.toNumber(),
+            '0xaaafB3972B05630fCceE866eC69CdADd9baC2772',
+            0
+        );
+
+        await executeTransaction(transferNativeTx, precompileBridgeContractAddress, 'transferNative');
+    });
+    // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
+    step('Test precompile contract', async function () {
+        console.time('Test precompile contract');
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
 
         let balance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
         printBalance('initial balance', balance);
@@ -149,7 +175,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         const autoCompoundPercent = 20;
 
         // delegateWithAutoCompound(collator, amount, percent)
-        const delegateWithAutoCompound = precompileContract.methods.delegateWithAutoCompound(
+        const delegateWithAutoCompound = precompileStakingContract.methods.delegateWithAutoCompound(
             collatorPublicKey,
             toBigNumber(60),
             autoCompoundPercent
@@ -158,7 +184,11 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         let afterDelegateBalance = balance;
         // skip test if already delegated
         if (balance.reserved.toNumber() === 0) {
-            await executeTransaction(delegateWithAutoCompound, 'delegateWithAutoCompound');
+            await executeTransaction(
+                delegateWithAutoCompound,
+                precompileStakingContractAddress,
+                'delegateWithAutoCompound'
+            );
             afterDelegateBalance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
 
             expect(balance.free.toNumber() - toBigNumber(60)).to.closeTo(
@@ -171,8 +201,11 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         }
 
         // delegatorBondMore(collator, amount)
-        const delegatorBondMore = precompileContract.methods.delegatorBondMore(collatorPublicKey, toBigNumber(1));
-        await executeTransaction(delegatorBondMore, 'delegatorBondMore');
+        const delegatorBondMore = precompileStakingContract.methods.delegatorBondMore(
+            collatorPublicKey,
+            toBigNumber(1)
+        );
+        await executeTransaction(delegatorBondMore, precompileStakingContractAddress, 'delegatorBondMore');
 
         const { data: balanceAfterBondMore } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
         expect(balanceAfterBondMore.free.toNumber()).to.closeTo(
@@ -184,28 +217,39 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         );
 
         // setAutoCompound(collator, percent);
-        const setAutoCompound = precompileContract.methods.setAutoCompound(collatorPublicKey, autoCompoundPercent + 5);
-        await executeTransaction(setAutoCompound, 'setAutoCompound');
+        const setAutoCompound = precompileStakingContract.methods.setAutoCompound(
+            collatorPublicKey,
+            autoCompoundPercent + 5
+        );
+        await executeTransaction(setAutoCompound, precompileStakingContractAddress, 'setAutoCompound');
         const collatorAfterCompound = await collatorDetails();
         expect(collatorAfterCompound.value).to.eq(autoCompoundPercent + 5);
 
         // scheduleDelegatorBondLess(collator, amount)
         expect(await isPendingRequest()).to.be.false;
-        const scheduleDelegatorBondLess = precompileContract.methods.scheduleDelegatorBondLess(
+        const scheduleDelegatorBondLess = precompileStakingContract.methods.scheduleDelegatorBondLess(
             collatorPublicKey,
             toBigNumber(5)
         );
-        await executeTransaction(scheduleDelegatorBondLess, 'scheduleDelegatorBondLess');
+        await executeTransaction(
+            scheduleDelegatorBondLess,
+            precompileStakingContractAddress,
+            'scheduleDelegatorBondLess'
+        );
         expect(await isPendingRequest()).to.be.true;
 
         // cancelDelegationRequest(collator)
-        const cancelDelegationRequest = precompileContract.methods.cancelDelegationRequest(collatorPublicKey);
+        const cancelDelegationRequest = precompileStakingContract.methods.cancelDelegationRequest(collatorPublicKey);
         expect(await isPendingRequest()).to.be.true;
-        await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
+        await executeTransaction(cancelDelegationRequest, precompileStakingContractAddress, 'cancelDelegationRequest');
         expect(await isPendingRequest()).to.be.false;
 
         // testing bond less + execution
-        await executeTransaction(scheduleDelegatorBondLess, 'scheduleDelegatorBondLess again to test execution');
+        await executeTransaction(
+            scheduleDelegatorBondLess,
+            precompileStakingContractAddress,
+            'scheduleDelegatorBondLess again to test execution'
+        );
         expect(await isPendingRequest()).to.be.true;
 
         console.log('Waiting 2 blocks before execute delegation request');
@@ -213,11 +257,15 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await context.api.rpc.chain.getBlock();
 
         // executeDelegationRequest(delegator, collator);
-        const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
+        const executeDelegationRequest = precompileStakingContract.methods.executeDelegationRequest(
             evmAccountRaw.publicKey,
             collatorPublicKey
         );
-        await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
+        await executeTransaction(
+            executeDelegationRequest,
+            precompileStakingContractAddress,
+            'executeDelegationRequest'
+        );
         const { data: balanceAfterBondLess } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
         expect(balanceAfterBondLess.free.toNumber()).to.closeTo(
             balanceAfterBondMore.free.toNumber() + toBigNumber(5),
@@ -229,21 +277,29 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         // testing revoke delegation + execute
         // scheduleRevokeDelegation(collator);
-        const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
-        await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
+        const scheduleRevokeDelegation = precompileStakingContract.methods.scheduleRevokeDelegation(collatorPublicKey);
+        await executeTransaction(
+            scheduleRevokeDelegation,
+            precompileStakingContractAddress,
+            'scheduleRevokeDelegation'
+        );
 
         console.log('Waiting 2 blocks before execute delegation request');
         await context.api.rpc.chain.getBlock();
         await context.api.rpc.chain.getBlock();
 
-        await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
+        await executeTransaction(
+            executeDelegationRequest,
+            precompileStakingContractAddress,
+            'executeDelegationRequest'
+        );
         const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
         expect(balanceAfterRevoke.free.toNumber()).to.closeTo(balance.free.toNumber(), toBigNumber(1));
         expect(balanceAfterRevoke.reserved.toNumber()).to.eq(0);
 
         // delegate(collator, amount);
-        const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(57));
-        await executeTransaction(delegate, 'delegate');
+        const delegate = precompileStakingContract.methods.delegate(collatorPublicKey, toBigNumber(57));
+        await executeTransaction(delegate, precompileStakingContractAddress, 'delegate');
         const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
         expect(balanceAfterDelegate.reserved.toNumber()).to.eq(toBigNumber(57));
 
