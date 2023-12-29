@@ -50,6 +50,9 @@ use sp_core::Pair;
 //
 // ./bin/litentry-cli trusted -d request-vc \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 vip3-membership-card gold
+//
+// ./bin/litentry-cli trusted -d request-vc \
+//   did:litentry:substrate:0x52a6c52dc82940a36fefd1474cc0778517bb1a56b7bda0e308b6c19152dd7510 achainable amount-token test-name -c=bsc,ethereum 1 token-value
 
 pub fn to_para_str(s: &str) -> ParameterString {
 	ParameterString::truncate_from(s.as_bytes().to_vec())
@@ -195,13 +198,20 @@ pub struct AmountHoldingArg {
 	pub token: Option<String>,
 }
 
+// positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
+// additionally, only the last positional argument, or second to last positional argument may be set to `.num_args()`
+//
+// the best bet is to use a flag explicitly, be sure to use euqal form for `chain`, e.g.:
+// -- name -c=bsc,ethereum 10
+// -- name -c=bsc,ethereum 10 token
 #[derive(Args, Debug)]
 pub struct AmountTokenArg {
 	pub name: String,
 	#[clap(
+		short, long,
 		num_args = 1..,
-		required(true),
-		value_delimiter(','),
+		required = true,
+		value_delimiter = ',',
 	)]
 	pub chain: Vec<String>,
 	pub amount: String,
