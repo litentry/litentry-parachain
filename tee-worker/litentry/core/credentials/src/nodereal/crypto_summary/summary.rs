@@ -14,12 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use super::{Item, SummaryHoldings};
 use crate::*;
 
-use super::SummaryHoldings;
-
-const VC_CRYPTO_SUMMARY_DESCRIPTIONS: &str = "DESCRIPTION placeholder";
-const VC_CRYPTO_SUMMARY_TYPE: &str = "TYPE placeholder";
+const VC_CRYPTO_SUMMARY_DESCRIPTIONS: &str = "Generate a summary of your on-chain identity";
+const VC_CRYPTO_SUMMARY_TYPE: &str = "IDHub Crypto Summary ";
 
 pub const CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH: [(&str, &str); 15] = [
 	("0x6982508145454Ce325dDbE47a25d4ec3d2311933", "PEPE"),
@@ -63,42 +62,82 @@ pub trait CryptoSummaryCredentialUpdate {
 
 impl CryptoSummaryCredentialUpdate for Credential {
 	fn update_crypto_summary_credential(&mut self, summary: SummaryHoldings) {
-		// let found_tokens: Vec<String> = items
-		// 	.iter()
-		// 	.filter_map(|item| {
-		// 		let lowercase_token_address = item.token_address.to_lowercase(),
-		// 		CRYPTO_SUMMARY_TOKEN_ADDRESSES
-		// 			.get(&lowercase_token_address)
-		// 			.map(|name| name.to_string())
-		// 	})
-		// 	.collect(),
+		let (value, and_logic) = build_assertions(summary);
 
-		// 	let mut and_logic = AssertionLogic::new_and(),
-		// 	AssertionLogic::new_item("$network", Op::Equal, &ETH),
-		// 	AssertionLogic::new_item("$network", Op::Equal, &Polkadot),
-		// 	AssertionLogic::new_item("$network", Op::Equal, &Polygon),
-
-		// 	AssertionLogic::new_item("$token", Op::Equal, ""),
-
-		// // from_date's Op is ALWAYS Op::LessThan
-		// let from_date_logic = AssertionLogic::new_item("$from_date", Op::LessThan, from_date),
-
-		// // minimum_amount' Op is ALWAYS Op::Equal
-		// let minimum_amount_logic =
-		// 	AssertionLogic::new_item("$minimum_amount", Op::Equal, minimum_amount),
-
-		// // to_date's Op is ALWAYS Op::GreaterEq
-		// let to_date = format_assertion_to_date(),
-		// let to_date_logic = AssertionLogic::new_item("$to_date", Op::GreaterEq, &to_date),
-
-		// let assertion = AssertionLogic::new_and()
-		// 	.add_item(minimum_amount_logic)
-		// 	.add_item(from_date_logic)
-		// 	.add_item(to_date_logic),
-
-		// self.credential_subject.assertions.push(assertion),
-		// self.credential_subject.values.push(value),
+		self.credential_subject.assertions.push(and_logic);
+		self.credential_subject.values.push(value);
 
 		self.add_subject_info(VC_CRYPTO_SUMMARY_DESCRIPTIONS, VC_CRYPTO_SUMMARY_TYPE);
+	}
+}
+
+fn build_assertions(summary: SummaryHoldings) -> (bool, AssertionLogic) {
+	let is_empty = summary.is_empty();
+
+	let mut and_logic = AssertionLogic::new_and();
+
+	// TOKENs
+	let token_assertion = token_items(summary.summary.token);
+	and_logic = and_logic.add_item(token_assertion);
+
+	// NFTs
+	let nft_assertion = token_items(summary.summary.nft);
+	and_logic = and_logic.add_item(nft_assertion);
+
+	(!is_empty, and_logic)
+}
+
+fn token_items(items: Vec<Item>) -> AssertionLogic {
+	let mut and_logic = AssertionLogic::new_and();
+	for item in items {
+		let mut item_logic = AssertionLogic::new_and();
+
+		let network_item = AssertionLogic::new_item("$network", Op::Equal, &item.network);
+		item_logic = item_logic.add_item(network_item);
+
+		for token in item.list {
+			let mut inner_logic = AssertionLogic::new_and();
+
+			let name_item = AssertionLogic::new_item("$token_name", Op::Equal, &token.name);
+			inner_logic = inner_logic.add_item(name_item);
+
+			let address_item =
+				AssertionLogic::new_item("$token_address", Op::Equal, &token.address);
+			inner_logic = inner_logic.add_item(address_item);
+
+			item_logic = item_logic.add_item(inner_logic)
+		}
+
+		and_logic = and_logic.add_item(item_logic);
+	}
+
+	and_logic
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::nodereal::crypto_summary::SummaryHoldings;
+
+	use super::build_assertions;
+
+	#[test]
+	fn build_assertions_works() {
+		let flag_bsc_token = [
+			false, true, true, true, true, true, true, true, true, true, true, true, true, true,
+			true,
+		];
+		let flag_eth_token = [
+			false, false, false, false, false, false, false, false, false, false, false, false,
+			false, false, false,
+		];
+		let flag_eth_nft = [
+			true, false, false, false, false, false, false, false, false, false, false, false,
+			false, false, false,
+		];
+
+		let summary = SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft);
+		let (value, logic) = build_assertions(summary);
+		println!("assertions: {}", serde_json::to_string(&logic).unwrap());
+		assert!(value);
 	}
 }
