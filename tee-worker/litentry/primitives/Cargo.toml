@@ -43,6 +43,7 @@ sgx = [
     "sgx_tstd",
     "rand-sgx",
     "itp-sgx-crypto/sgx",
+    "parentchain-primitives/sgx",
 ]
 std = [
     "strum/std",

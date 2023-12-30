@@ -21,16 +21,20 @@ use core::fmt::{Debug, Formatter};
 #[cfg(all(not(feature = "sgx"), feature = "std"))]
 use serde::{Deserialize, Serialize};
 
+use crate::{AccountId, Web3Network};
+
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use itp_utils::{
 	hex::{decode_hex, hex_encode},
 	if_production_or,
 };
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
-use parentchain_primitives::{AccountId, Web3Network};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
-use sp_core::{crypto::AccountId32, ecdsa, ed25519, sr25519, ByteArray, H160};
-use sp_io::hashing::blake2_256;
+use sp_core::{
+	blake2_256,
+	crypto::{AccountId32, ByteArray},
+	ecdsa, ed25519, sr25519, H160,
+};
 use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
 	BoundedVec,
@@ -308,12 +312,12 @@ impl Identity {
 
 	// check if the given web3networks match the identity
 	pub fn matches_web3networks(&self, networks: &Vec<Web3Network>) -> bool {
-		(self.is_substrate() && !networks.is_empty() && networks.iter().all(|n| n.is_substrate()))
-			|| (self.is_evm() && !networks.is_empty() && networks.iter().all(|n| n.is_evm()))
-			|| (self.is_bitcoin()
-				&& !networks.is_empty()
-				&& networks.iter().all(|n| n.is_bitcoin()))
-			|| (self.is_web2() && networks.is_empty())
+		(self.is_substrate() && !networks.is_empty() && networks.iter().all(|n| n.is_substrate())) ||
+			(self.is_evm() && !networks.is_empty() && networks.iter().all(|n| n.is_evm())) ||
+			(self.is_bitcoin() &&
+				!networks.is_empty() &&
+				networks.iter().all(|n| n.is_bitcoin())) ||
+			(self.is_web2() && networks.is_empty())
 	}
 
 	/// Currently we only support mapping from Address32/Address20 to AccountId, not opposite.

@@ -5,22 +5,27 @@ name = 'core-primitives'
 version = '0.9.12'
 
 [dependencies]
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
 strum = { version = "0.25.0", default-features = false }
 strum_macros = { version = "0.25.3", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
+pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v0.9.42", default-features = false }
 ring = { version = "0.16.20", default-features = false, features = ["alloc"] }
 scale-info = { version = "2.10.0", default-features = false, features = ["derive"] }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
+itp-utils = { path = "../../tee-worker/core-primitives/utils", default-features = false }
 litentry-macros = { path = "macros" }
+sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
 [features]
 default = ["std"]
 std = [
+    "serde/std",
     "strum/std",
     "codec/std",
     "scale-info/std",
@@ -29,4 +34,9 @@ std = [
     "sp-runtime/std",
     "sp-std/std",
     "ring/std",
+    "itp-utils/std",
+    "pallet-evm/std",
+]
+sgx = [
+    "dep:sgx_tstd",
 ]

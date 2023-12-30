@@ -1305,10 +1305,14 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
+ "itp-utils",
  "litentry-macros 0.9.12",
+ "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "ring 0.16.20",
  "scale-info",
+ "serde 1.0.193",
+ "sgx_tstd",
  "sp-core",
  "sp-runtime",
  "sp-std 5.0.0",
