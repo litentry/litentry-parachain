@@ -33,8 +33,8 @@ on:
     branches:
       - dev
     paths-ignore:
-      - '**/dependabot.yml'
-      - '**/README.md'
+      - "**/dependabot.yml"
+      - "**/README.md"
   pull_request:
     branches:
       - dev
@@ -225,7 +225,7 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_tee == 'true'
-    container: 'litentry/litentry-tee-dev:latest'
+    container: "litentry/litentry-tee-dev:latest"
     steps:
       - uses: actions/checkout@v4
 
@@ -500,7 +500,7 @@ jobs:
 
       - name: Run ts tests for ${{ matrix.chain }}
         if: needs.set-condition.outputs.run_parachain_test == 'true'
-        timeout-minutes: 30
+        timeout-minutes: 35
         run: |
           make test-ts-docker-${{ matrix.chain }}
 

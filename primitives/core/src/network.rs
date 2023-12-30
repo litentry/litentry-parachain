@@ -70,9 +70,17 @@ pub enum Web3Network {
 	#[codec(index = 8)]
 	Bsc,
 
-	// btc
+	// btc, see https://github.com/rust-bitcoin/rust-bitcoin/blob/9ea3e29d61569479b7b4618c8ae1992612f3d01a/bitcoin/src/address/mod.rs#L64-L75
 	#[codec(index = 9)]
-	Bitcoin,
+	BitcoinP2tr,
+	#[codec(index = 10)]
+	BitcoinP2pkh,
+	#[codec(index = 11)]
+	BitcoinP2sh,
+	#[codec(index = 12)]
+	BitcoinP2wpkh,
+	#[codec(index = 13)]
+	BitcoinP2wsh,
 }
 
 // mainly used in CLI
@@ -101,7 +109,14 @@ impl Web3Network {
 	}
 
 	pub fn is_bitcoin(&self) -> bool {
-		matches!(self, Self::Bitcoin)
+		matches!(
+			self,
+			Self::BitcoinP2tr |
+				Self::BitcoinP2pkh |
+				Self::BitcoinP2sh |
+				Self::BitcoinP2wpkh |
+				Self::BitcoinP2wsh
+		)
 	}
 }
 
@@ -146,7 +161,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
 					Web3Network::Bsc => true,
-					Web3Network::Bitcoin => false,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
 				}
 			)
 		})
@@ -167,7 +186,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
-					Web3Network::Bitcoin => false,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
 				}
 			)
 		})
@@ -188,7 +211,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
-					Web3Network::Bitcoin => true,
+					Web3Network::BitcoinP2tr => true,
+					Web3Network::BitcoinP2pkh => true,
+					Web3Network::BitcoinP2sh => true,
+					Web3Network::BitcoinP2wpkh => true,
+					Web3Network::BitcoinP2wsh => true,
 				}
 			)
 		})

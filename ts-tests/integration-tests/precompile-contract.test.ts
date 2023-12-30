@@ -1,10 +1,10 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
+import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
 import Web3 from 'web3';
-import precompileContractAbi from '../precompile/contracts/staking.json';
-import { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress, evmToAddress } from '@polkadot/util-crypto';
+import precompileContractAbi from '../common/abi/precompile/Staking.json';
+import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 
 const toBigNumber = (int: number) => int * 1e12;
@@ -121,6 +121,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
     // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
     step('Test precompile contract', async function () {
+        console.time('Test precompile contract');
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
             let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
@@ -154,10 +155,11 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             autoCompoundPercent
         );
 
+        let afterDelegateBalance = balance;
         // skip test if already delegated
         if (balance.reserved.toNumber() === 0) {
             await executeTransaction(delegateWithAutoCompound, 'delegateWithAutoCompound');
-            const { data: afterDelegateBalance } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+            afterDelegateBalance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
 
             expect(balance.free.toNumber() - toBigNumber(60)).to.closeTo(
                 afterDelegateBalance.free.toNumber(),
@@ -166,8 +168,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             expect(afterDelegateBalance.reserved.toNumber()).to.eq(toBigNumber(60));
             const collator = await collatorDetails();
             expect(collator.value).to.eq(autoCompoundPercent);
-
-            balance = afterDelegateBalance;
         }
 
         // delegatorBondMore(collator, amount)
@@ -179,7 +179,9 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             balanceAfterBondMore.free.toNumber() - toBigNumber(1),
             toBigNumber(1)
         );
-        expect(balanceAfterBondMore.reserved.toNumber()).to.eq(balance.reserved.toNumber() + toBigNumber(1));
+        expect(balanceAfterBondMore.reserved.toNumber()).to.eq(
+            afterDelegateBalance.reserved.toNumber() + toBigNumber(1)
+        );
 
         // setAutoCompound(collator, percent);
         const setAutoCompound = precompileContract.methods.setAutoCompound(collatorPublicKey, autoCompoundPercent + 5);
@@ -202,32 +204,53 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await executeTransaction(cancelDelegationRequest, 'cancelDelegationRequest');
         expect(await isPendingRequest()).to.be.false;
 
+        // testing bond less + execution
+        await executeTransaction(scheduleDelegatorBondLess, 'scheduleDelegatorBondLess again to test execution');
+        expect(await isPendingRequest()).to.be.true;
+
+        console.log('Waiting 2 blocks before execute delegation request');
+        await context.api.rpc.chain.getBlock();
+        await context.api.rpc.chain.getBlock();
+
+        // executeDelegationRequest(delegator, collator);
+        const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
+            evmAccountRaw.publicKey,
+            collatorPublicKey
+        );
+        await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
+        const { data: balanceAfterBondLess } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        expect(balanceAfterBondLess.free.toNumber()).to.closeTo(
+            balanceAfterBondMore.free.toNumber() + toBigNumber(5),
+            toBigNumber(1)
+        );
+        expect(balanceAfterBondLess.reserved.toNumber()).to.eq(
+            balanceAfterBondMore.reserved.toNumber() - toBigNumber(5)
+        );
+
+        // testing revoke delegation + execute
+        // scheduleRevokeDelegation(collator);
+        const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
+        await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
+
+        console.log('Waiting 2 blocks before execute delegation request');
+        await context.api.rpc.chain.getBlock();
+        await context.api.rpc.chain.getBlock();
+
+        await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
+        const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        expect(balanceAfterRevoke.free.toNumber()).to.closeTo(balance.free.toNumber(), toBigNumber(1));
+        expect(balanceAfterRevoke.reserved.toNumber()).to.eq(0);
+
+        // delegate(collator, amount);
+        const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(57));
+        await executeTransaction(delegate, 'delegate');
+        const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
+        expect(balanceAfterDelegate.reserved.toNumber()).to.eq(toBigNumber(57));
+
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
-    });
 
-    // once we add ability to customise minimum waiting time for `executeDelegationRequest` implement tests for the rest functions
-    // step('test time sensitive functions', async () => {
-    //     delegate(collator, amount);
-    //     const delegate = precompileContract.methods.delegate(collatorPublicKey, toBigNumber(55));
-    //     await executeTransaction(delegate, 'delegate');
-    //     const { data: balanceAfterDelegate } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-    //     printBalance('balanceAfterDelegate', balanceAfterDelegate);
-    //     scheduleRevokeDelegation(collator);
-    //     const scheduleRevokeDelegation = precompileContract.methods.scheduleRevokeDelegation(collatorPublicKey);
-    //     await executeTransaction(scheduleRevokeDelegation, 'scheduleRevokeDelegation');
-    //     const { data: balanceAfterRevoke } = await context.api.query.system.account(evmAccountRaw.mappedAddress);
-    //     printBalance('balanceAfterRevoke', balanceAfterRevoke);
-    //     executeDelegationRequest(delegator, collator);
-    //     const executeDelegationRequest = precompileContract.methods.executeDelegationRequest(
-    //         evmAccountRaw.mappedAddress,
-    //         collatorPublicKey
-    //     );
-    //     await executeTransaction(executeDelegationRequest, 'executeDelegationRequest');
-    //     const { data: balanceAfterExecuteDelegation } = await context.api.query.system.account(
-    //         evmAccountRaw.mappedAddress
-    //     );
-    //     printBalance('balanceAfterExecuteDelegation', balanceAfterExecuteDelegation);
-    // });
+        console.timeEnd('Test precompile contract');
+    });
 });

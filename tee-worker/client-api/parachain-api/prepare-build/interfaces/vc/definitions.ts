@@ -29,6 +29,7 @@ export default {
                 WeirdoGhostGangHolder: "Null",
                 LITStaking: "Null",
                 EVMAmountHolding: "EVMTokenType",
+                BRC20AmountHolder: "Null",
             },
         },
         AssertionSupportedNetwork: {
