@@ -14,16 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#[cfg(all(not(feature = "std"), feature = "sgx"))]
-extern crate sgx_tstd as std;
-
-use core::fmt::{Debug, Formatter};
-#[cfg(all(not(feature = "sgx"), feature = "std"))]
-use serde::{Deserialize, Serialize};
+pub extern crate alloc;
 
 use crate::{AccountId, Web3Network};
-
+use alloc::{format, str, string::String};
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
+use core::fmt::{Debug, Formatter};
 use itp_utils::{
 	hex::{decode_hex, hex_encode},
 	if_production_or,
@@ -31,10 +27,10 @@ use itp_utils::{
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{
-	blake2_256,
 	crypto::{AccountId32, ByteArray},
 	ecdsa, ed25519, sr25519, H160,
 };
+use sp_io::hashing::blake2_256;
 use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32},
 	BoundedVec,
@@ -63,9 +59,7 @@ impl Encode for IdentityString {
 }
 
 #[derive(Eq, PartialEq, Clone, MaxEncodedLen, Default)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct IdentityString {
-	#[cfg_attr(feature = "std", serde(flatten))]
 	pub inner: IdentityInnerString,
 }
 
@@ -331,9 +325,8 @@ impl Identity {
 		}
 	}
 
-	#[cfg(any(feature = "std", feature = "sgx"))]
-	pub fn from_did(s: &str) -> Result<Self, std::boxed::Box<dyn std::error::Error + 'static>> {
-		let did_prefix = std::string::String::from("did:litentry:");
+	pub fn from_did(s: &str) -> Result<Self, &'static str> {
+		let did_prefix = String::from("did:litentry:");
 		if s.starts_with(&did_prefix) {
 			let did_suffix = &s[did_prefix.len()..];
 			let v: Vec<&str> = did_suffix.split(':').collect();
@@ -376,31 +369,27 @@ impl Identity {
 		Err("Wrong did prefix".into())
 	}
 
-	#[cfg(any(feature = "std", feature = "sgx"))]
-	pub fn to_did(
-		&self,
-	) -> Result<std::string::String, std::boxed::Box<dyn std::error::Error + 'static>> {
-		Ok(std::format!(
+	pub fn to_did(&self) -> Result<String, &'static str> {
+		Ok(format!(
 			"did:litentry:{}",
 			match self {
-				Identity::Evm(address) => std::format!("evm:{}", &hex_encode(address.as_ref())),
+				Identity::Evm(address) => format!("evm:{}", &hex_encode(address.as_ref())),
 				Identity::Substrate(address) =>
-					std::format!("substrate:{}", &hex_encode(address.as_ref())),
-				Identity::Bitcoin(address) =>
-					std::format!("bitcoin:{}", &hex_encode(address.as_ref())),
-				Identity::Twitter(handle) => std::format!(
+					format!("substrate:{}", &hex_encode(address.as_ref())),
+				Identity::Bitcoin(address) => format!("bitcoin:{}", &hex_encode(address.as_ref())),
+				Identity::Twitter(handle) => format!(
 					"twitter:{}",
-					std::str::from_utf8(handle.inner_ref())
+					str::from_utf8(handle.inner_ref())
 						.map_err(|_| "twitter handle conversion error")?
 				),
-				Identity::Discord(handle) => std::format!(
+				Identity::Discord(handle) => format!(
 					"discord:{}",
-					std::str::from_utf8(handle.inner_ref())
+					str::from_utf8(handle.inner_ref())
 						.map_err(|_| "discord handle conversion error")?
 				),
-				Identity::Github(handle) => std::format!(
+				Identity::Github(handle) => format!(
 					"github:{}",
-					std::str::from_utf8(handle.inner_ref())
+					str::from_utf8(handle.inner_ref())
 						.map_err(|_| "github handle conversion error")?
 				),
 			}
