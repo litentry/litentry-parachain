@@ -82,7 +82,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	disable_vc {
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let identity: Identity = frame_benchmarking::account::<AccountId>("TEST_B", 0u32, USER_SEED).into();
+		let identity: Identity = frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
 		let assertion = Assertion::A1;
 		let req_ext_hash = H256::default();
 		let tee_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
@@ -96,7 +96,7 @@ benchmarks! {
 	// execution time is constant irrespective of encrypted_data size.
 	revoke_vc {
 		let account: T::AccountId =  frame_benchmarking::account("TEST_A", 0u32, USER_SEED);
-		let identity: Identity = frame_benchmarking::account::<AccountId>("TEST_B", 0u32, USER_SEED).into();
+		let identity: Identity = frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
 		let assertion = Assertion::A1;
 		let req_ext_hash = H256::default();
 		let tee_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
