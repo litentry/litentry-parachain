@@ -7,7 +7,7 @@ export async function handleVcEvents(
         switch (method) {
             case 'VCIssued':
                 results.push({
-                    account: events[k].data.account.toHex(),
+                    identity: events[k].data.identity.toHex(),
                     index: events[k].data.index.toHex(),
                 });
                 break;

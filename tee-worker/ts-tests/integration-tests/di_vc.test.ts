@@ -11,14 +11,14 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryPrimitivesIdentity } from 'sidechain-api';
+import { CorePrimitivesIdentity } from 'parachain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { defaultAssertions, unconfiguredAssertions } from './common/utils/vc-helper';
 
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
-    let aliceSubstrateIdentity: LitentryPrimitivesIdentity = undefined as any;
+    let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
 
     this.timeout(6000000);
 

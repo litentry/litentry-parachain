@@ -1,12 +1,14 @@
 import type { HexString } from '@polkadot/util/types';
-import { bufferToU8a, hexToU8a, isString, stringToU8a } from '@polkadot/util';
+import { bufferToU8a, hexToU8a, isString, stringToU8a, u8aToHex } from '@polkadot/util';
 import { KeyObject } from 'crypto';
-import { AesOutput } from 'parachain-api';
+import { AesOutput, CorePrimitivesIdentity } from 'parachain-api';
 import crypto from 'crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
 import bitcore from 'bitcore-lib';
+import { IntegrationTestContext } from 'common/common-types';
+import { buildIdentityHelper } from './identity-helper';
 
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';
 
@@ -62,6 +64,7 @@ export interface Signer {
     sign(message: HexString | string | Uint8Array): Promise<Uint8Array>;
     type(): KeypairType;
     getAddressInSubstrateFormat(): Uint8Array;
+    getIdentity(api: IntegrationTestContext): Promise<CorePrimitivesIdentity>;
 }
 
 export class PolkadotSigner implements Signer {
@@ -85,6 +88,10 @@ export class PolkadotSigner implements Signer {
 
     getAddressInSubstrateFormat(): Uint8Array {
         return this.getAddressRaw();
+    }
+
+    getIdentity(context: IntegrationTestContext): Promise<CorePrimitivesIdentity> {
+        return buildIdentityHelper(u8aToHex(this.getAddressRaw()), 'Substrate', context);
     }
 }
 
@@ -117,6 +124,10 @@ export class EthersSigner implements Signer {
         merged.set(address, 4);
         return blake2AsU8a(merged, 256);
     }
+
+    getIdentity(context: IntegrationTestContext): Promise<CorePrimitivesIdentity> {
+        return buildIdentityHelper(u8aToHex(this.getAddressRaw()), 'Evm', context);
+    }
 }
 
 export class BitcoinSigner implements Signer {
@@ -147,5 +158,9 @@ export class BitcoinSigner implements Signer {
 
     getAddressInSubstrateFormat(): Uint8Array {
         return blake2AsU8a(this.getAddressRaw(), 256);
+    }
+
+    getIdentity(context: IntegrationTestContext): Promise<CorePrimitivesIdentity> {
+        return buildIdentityHelper(u8aToHex(this.getAddressRaw()), 'Bitcoin', context);
     }
 }
