@@ -50,7 +50,7 @@ pub use teerex_primitives::ShardIdentifier;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{ShardIdentifier, Vec, WeightInfo, H256};
-	use core_primitives::{ErrorDetail, IMPError};
+	use core_primitives::{ErrorDetail, IMPError, Identity};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -93,22 +93,22 @@ pub mod pallet {
 		// TODO: what if the event is triggered by an extrinsic that is included in a batch call?
 		//       Can we retrieve that extrinsic hash in F/E?
 		IdentityLinked {
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityDeactivated {
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityActivated {
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityNetworksSet {
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
@@ -119,23 +119,23 @@ pub mod pallet {
 		// why is the `account` in the error event an Option?
 		// because in some erroneous cases we can't get the extrinsic sender (e.g. decode error)
 		LinkIdentityFailed {
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		DeactivateIdentityFailed {
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		ActivateIdentityFailed {
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		ImportScheduledEnclaveFailed,
 		UnclassifiedError {
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
@@ -247,12 +247,12 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_linked())]
 		pub fn identity_linked(
 			origin: OriginFor<T>,
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { account, id_graph_hash, req_ext_hash });
+			Self::deposit_event(Event::IdentityLinked { identity, id_graph_hash, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -260,13 +260,13 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_deactivated())]
 		pub fn identity_deactivated(
 			origin: OriginFor<T>,
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityDeactivated {
-				account,
+				identity,
 				id_graph_hash,
 				req_ext_hash,
 			});
@@ -277,12 +277,12 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_activated())]
 		pub fn identity_activated(
 			origin: OriginFor<T>,
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityActivated { account, id_graph_hash, req_ext_hash });
+			Self::deposit_event(Event::IdentityActivated { identity, id_graph_hash, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -290,13 +290,13 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_networks_set())]
 		pub fn identity_networks_set(
 			origin: OriginFor<T>,
-			account: T::AccountId,
+			identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityNetworksSet {
-				account,
+				identity,
 				id_graph_hash,
 				req_ext_hash,
 			});
@@ -307,30 +307,34 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			error: IMPError,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			match error {
 				IMPError::LinkIdentityFailed(detail) =>
-					Self::deposit_event(Event::LinkIdentityFailed { account, detail, req_ext_hash }),
+					Self::deposit_event(Event::LinkIdentityFailed {
+						identity,
+						detail,
+						req_ext_hash,
+					}),
 				IMPError::DeactivateIdentityFailed(detail) =>
 					Self::deposit_event(Event::DeactivateIdentityFailed {
-						account,
+						identity,
 						detail,
 						req_ext_hash,
 					}),
 				IMPError::ActivateIdentityFailed(detail) =>
 					Self::deposit_event(Event::ActivateIdentityFailed {
-						account,
+						identity,
 						detail,
 						req_ext_hash,
 					}),
 				IMPError::ImportScheduledEnclaveFailed =>
 					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
 				IMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
+					Self::deposit_event(Event::UnclassifiedError { identity, detail, req_ext_hash }),
 			}
 			Ok(Pays::No.into())
 		}

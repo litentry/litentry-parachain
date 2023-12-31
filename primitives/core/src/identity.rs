@@ -359,14 +359,14 @@ impl Identity {
 				} else if v[0] == "twitter" {
 					return Ok(Identity::Twitter(IdentityString::new(v[1].as_bytes().to_vec())))
 				} else {
-					return Err("Unknown did type".into())
+					return Err("Unknown did type")
 				}
 			} else {
-				return Err("Wrong did suffix".into())
+				return Err("Wrong did suffix")
 			}
 		}
 
-		Err("Wrong did prefix".into())
+		Err("Wrong did prefix")
 	}
 
 	pub fn to_did(&self) -> Result<String, &'static str> {
