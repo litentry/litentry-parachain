@@ -27,8 +27,7 @@ pub use futures;
 use ita_sgx_runtime::{Hash, Runtime};
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
-	ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCall,
-	TrustedCallSigned, TrustedOperation, H256,
+	Getter, OpaqueCall, TrustedCall, TrustedCallSigned, TrustedOperation, H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -194,15 +193,9 @@ where
 			.unwrap()
 			.unwrap();
 		let result = aes_encrypt_default(&key, &response.vc_payload);
-		let account = SgxParentchainTypeConverter::convert(
-			match response.assertion_request.who.to_account_id() {
-				Some(s) => s,
-				None => return Err("Failed to convert account".to_string()),
-			},
-		);
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			response.assertion_request.who,
 			response.assertion_request.assertion,
 			response.vc_index,
 			response.vc_hash,
