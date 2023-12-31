@@ -24,8 +24,7 @@ use crate::{
 		get_expected_raw_message, verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
-	AccountId, ConvertAccountId, SgxParentchainTypeConverter, ShardIdentifier, StfError, StfResult,
-	H256,
+	AccountId, ShardIdentifier, StfError, StfResult, H256,
 };
 use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure};
@@ -255,10 +254,6 @@ impl TrustedCallSigned {
 		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	{
 		debug!("link_identity_callback, who: {}", account_id_to_string(&who));
-		let account = SgxParentchainTypeConverter::convert(
-			who.to_account_id().ok_or(StfError::InvalidAccount)?,
-		);
-
 		// the pallet extrinsic doesn't accept customised return type, so
 		// we have to do the if-condition outside of extrinsic call
 		let old_id_graph_len = IMT::id_graph_lens(&who);
@@ -275,7 +270,7 @@ impl TrustedCallSigned {
 			push_call_imp_some_error(
 				calls,
 				node_metadata_repo.clone(),
-				Some(account.clone()),
+				Some(who.clone()),
 				e.to_imp_error(),
 				req_ext_hash,
 			);
@@ -290,7 +285,7 @@ impl TrustedCallSigned {
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 		calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			who.clone(),
 			id_graph_hash,
 			req_ext_hash,
 		))));
