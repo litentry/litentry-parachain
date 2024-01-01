@@ -9,7 +9,6 @@ import type { PalletIdentityManagementTeeError } from 'sidechain-api';
 import { TeerexPrimitivesEnclave, CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
 import { getIdGraphHash } from '../di-utils';
-import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import { jsonSchema } from './vc-helper';
 import { aesKey } from '../call';
@@ -77,50 +76,14 @@ export function assertIdGraph(
     });
 }
 
-export async function assertIdentityCreated(
-    context: IntegrationTestContext,
-    signers: KeyringPair | KeyringPair[],
-    events: any[],
-    aesKey: HexString,
-    expectedIdentities: CorePrimitivesIdentity[]
-) {
+export async function assertIdentityDeactivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     for (let index = 0; index < events.length; index++) {
-        const signer = Array.isArray(signers) ? signers[index] : signers;
-        const expectedIdentity = expectedIdentities[index];
-        const expectedIdentityTarget = expectedIdentity[`as${expectedIdentity.type}`];
         const eventData = events[index].data;
-        const who = eventData.account.toHex();
-        const eventIdentity = parseIdentity(context, eventData.identity, aesKey);
-        const eventIdentityTarget = eventIdentity[`as${eventIdentity.type}`];
-        // Check identity caller
-        assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityCreated error: signer should be equal to who');
-
-        // Check identity type
-        assert.equal(
-            expectedIdentity.type,
-            eventIdentity.type,
-            'Check IdentityCreated error: eventIdentity type should be equal to expectedIdentity type'
-        );
-        // Check identity in event
-        assert.equal(
-            expectedIdentityTarget.toString(),
-            eventIdentityTarget.toString(),
-            'Check IdentityCreated error: eventIdentityTarget should be equal to expectedIdentityTarget'
-        );
-    }
-    console.log(colors.green('assertIdentityCreated complete'));
-}
-
-export async function assertIdentityDeactivated(signers: KeyringPair | KeyringPair[], events: any[]) {
-    for (let index = 0; index < events.length; index++) {
-        const signer = Array.isArray(signers) ? signers[index] : signers;
-
-        const eventData = events[index].data;
-        const who = eventData.account.toHex();
-
-        assert.equal(
-            who,
-            u8aToHex(signer.addressRaw),
+        const who = eventData.identity;
+        const signerIdentity = await signer.getIdentity(context);
+        assert.deepEqual(
+            who.toHuman(),
+            signerIdentity.toHuman(),
             'Check IdentityDeactivated error: signer should be equal to who'
         );
     }
@@ -128,18 +91,16 @@ export async function assertIdentityDeactivated(signers: KeyringPair | KeyringPa
     console.log(colors.green('assertIdentityDeactivated complete'));
 }
 
-export async function assertIdentityActivated(
-    context: IntegrationTestContext,
-    signers: KeyringPair | KeyringPair[],
-    events: any[]
-) {
+export async function assertIdentityActivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     for (let index = 0; index < events.length; index++) {
-        const signer = Array.isArray(signers) ? signers[index] : signers;
-
         const eventData = events[index].data;
-        const who = eventData.account.toHex();
-
-        assert.equal(who, u8aToHex(signer.addressRaw), 'Check IdentityActivated error: signer should be equal to who');
+        const who = eventData.identity;
+        const signerIdentity = await signer.getIdentity(context);
+        assert.deepEqual(
+            who.toHuman(),
+            signerIdentity.toHuman(),
+            'Check IdentityActivated error: signer should be equal to who'
+        );
     }
 
     console.log(colors.green('assertIdentityActivated complete'));

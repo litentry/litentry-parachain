@@ -390,10 +390,10 @@ describeLitentry('Test Identity', (context) => {
         );
 
         // Alice check identity
-        assertIdentityDeactivated(context.substrateWallet.alice, aliceDeactivatedEvents);
+        assertIdentityDeactivated(context, new PolkadotSigner(context.substrateWallet.alice), aliceDeactivatedEvents);
 
         // Bob check identity
-        assertIdentityDeactivated(context.substrateWallet.bob, bobDeactivatedEvents);
+        assertIdentityDeactivated(context, new PolkadotSigner(context.substrateWallet.bob), bobDeactivatedEvents);
     });
 
     step('check IDGraph after deactivateIdentity', async function () {
@@ -417,7 +417,7 @@ describeLitentry('Test Identity', (context) => {
             ['IdentityActivated']
         );
         // Alice check identity
-        await assertIdentityActivated(context, context.substrateWallet.alice, aliceActivatedEvents);
+        await assertIdentityActivated(context, new PolkadotSigner(context.substrateWallet.alice), aliceActivatedEvents);
     });
 
     step('deactivate prime identity is disallowed', async function () {
