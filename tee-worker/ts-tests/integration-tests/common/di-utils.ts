@@ -5,7 +5,7 @@ import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
 import { WorkerRpcReturnValue, TrustedCallSigned, Getter, CorePrimitivesIdentity } from 'parachain-api';
-import { encryptWithTeeShieldingKey, Signer, encryptWithAes } from './utils';
+import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
@@ -336,6 +336,9 @@ export const sendRequestFromGetter = async (
     //            this is what `state_executeGetter` expects in rust
     const requestParam = await createRsaRequest(context.api, context.mrEnclave, teeShieldingKey, true, getter.toU8a());
     const request = createJsonRpcRequest('state_executeGetter', [u8aToHex(requestParam)], nextRequestId(context));
+    // in multiworker setup in some cases state might not be immediately propagated to other nodes so we wait 1 sec
+    // hopefully we will query correct state
+    await sleep(1);
     return sendRequest(context.tee, request, context.api);
 };
 
