@@ -14,24 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+use self::summary::{
+	CRYPTO_SUMMARY_NFT_ADDRESSES_ETH, CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
+	CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+};
 use crate::*;
 use lc_data_providers::{
 	achainable::web3_network_to_chain,
 	nodereal_jsonrpc::{
-		EthBalance, FungibleApiList, GetNFTHoldingsParam, NftApiList, NoderealChain,
-		NoderealJsonrpcClient,
+		FungibleApiList, GetNFTHoldingsParam, NftApiList, NoderealChain, NoderealJsonrpcClient,
 	},
 };
 use litentry_primitives::{ErrorDetail, IntoErrorDetail};
 use serde::{Deserialize, Serialize};
 use std::{string::String, vec, vec::Vec};
 
-use self::summary::{
-	CRYPTO_SUMMARY_NFT_ADDRESSES_ETH, CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
-	CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
-};
-
 pub mod summary;
+
+const ETH_TOKEN_DECIMALS: f64 = 1_000_000_000_000_000_000.0;
 
 /*
 SUMMARY: {
@@ -231,13 +231,9 @@ impl CryptoSummaryClient {
 		identities: &Vec<(Web3Network, Vec<String>)>,
 	) -> core::result::Result<SummaryHoldings, ErrorDetail> {
 		// Corresponds one-to-one with CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH
-		// let mut flag_bsc_token: [bool; 11] = [false; 11];
-		// let mut flag_eth_token: [bool; 14] = [false; 14];
-		// let mut flag_eth_nft: [bool; 15] = [false; 15];
-
-		let mut flag_bsc_token = vec![false];
-		let mut flag_eth_token = vec![false];
-		let mut flag_eth_nft = vec![false];
+		let mut flag_bsc_token: [bool; 12] = [false; 12];
+		let mut flag_eth_token: [bool; 15] = [false; 15];
+		let mut flag_eth_nft: [bool; 15] = [false; 15];
 
 		// ETH and BNB holder use different APIs than other tokens, so they need to be handled separately
 		let mut is_eth_holder = false;
@@ -245,35 +241,31 @@ impl CryptoSummaryClient {
 
 		for (network, addresses) in identities {
 			if *network == Web3Network::Bsc {
-				// Token
-				// If these BSC Tokens are all included, there is no need to continue searching
-				if flag_bsc_token.contains(&false) {
-					for address in addresses {
-						let res = self
-							.bsc_client
-							.get_token_holdings(address)
-							.map_err(|e| e.into_error_detail())?;
+				// Query Token
+				for address in addresses {
+					let res = self
+						.bsc_client
+						.get_token_holdings(address)
+						.map_err(|e| e.into_error_detail())?;
 
-						let result: ResponseTokenResult = serde_json::from_value(res.result)
-							.map_err(|_| ErrorDetail::ParseError)?;
-						let mut token_addresses = vec![];
-						result.details.iter().for_each(|detail| {
-							token_addresses.push(detail.token_address.clone());
-						});
-						Self::update_holding_flag(
-							&mut flag_bsc_token,
-							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
-							&token_addresses,
-						);
+					let result: ResponseTokenResult =
+						serde_json::from_value(res.result).map_err(|_| ErrorDetail::ParseError)?;
+					let mut token_addresses = vec![];
+					result.details.iter().for_each(|detail| {
+						token_addresses.push(detail.token_address.clone());
+					});
+					Self::update_holding_flag(
+						&mut flag_bsc_token,
+						&CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
+						&token_addresses,
+					);
 
-						// Query BNB balance on BSC
-						if !is_bnb_holder {
-							if let Ok(balance) = self.bsc_client.get_balance(address) {
-								// Holder balance > 0.0
-								if balance > 0.0 {
-									is_bnb_holder = true;
-								}
-							}
+					// Query BNB balance on BSC
+					if !is_bnb_holder {
+						let native_balance = result.native_token_balance;
+						let balance = get_native_token_balance(&native_balance);
+						if balance > 0.0 {
+							is_bnb_holder = true;
 						}
 					}
 				}
@@ -281,71 +273,64 @@ impl CryptoSummaryClient {
 
 			if *network == Web3Network::Ethereum {
 				for address in addresses {
-					// Tokens
-					// If these ETH ERC20 are all included, there is no need to continue searching
-					if flag_eth_token.contains(&false) {
-						let res_token = self
-							.eth_client
-							.get_token_holdings(address)
-							.map_err(|e| e.into_error_detail())?;
-						let result: ResponseTokenResult = serde_json::from_value(res_token.result)
-							.map_err(|_| ErrorDetail::ParseError)?;
+					// Query Token
+					let res_token = self
+						.eth_client
+						.get_token_holdings(address)
+						.map_err(|e| e.into_error_detail())?;
+					let result: ResponseTokenResult = serde_json::from_value(res_token.result)
+						.map_err(|_| ErrorDetail::ParseError)?;
 
-						let mut token_addresses = vec![];
-						result.details.iter().for_each(|detail| {
-							token_addresses.push(detail.token_address.clone());
-						});
-						Self::update_holding_flag(
-							&mut flag_eth_token,
-							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
-							&token_addresses,
-						);
+					let mut token_addresses = vec![];
+					result.details.iter().for_each(|detail| {
+						token_addresses.push(detail.token_address.clone());
+					});
+					Self::update_holding_flag(
+						&mut flag_eth_token,
+						&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+						&token_addresses,
+					);
 
-						// Query ETH balance on Ethereum
-						if !is_eth_holder {
-							if let Ok(balance) = self.eth_client.get_balance(address) {
-								// Holder balance > 0.0
-								if balance > 0.0 {
-									is_eth_holder = true;
-								}
-							}
+					// Query ETH balance on Ethereum
+					if !is_eth_holder {
+						let native_balance = result.native_token_balance;
+						let balance = get_native_token_balance(&native_balance);
+						if balance > 0.0 {
+							is_eth_holder = true;
 						}
 					}
 
-					// NFT
-					// If these NFTs are all included, there is no need to continue searching
-					if flag_eth_nft.contains(&false) {
-						let param = GetNFTHoldingsParam {
-							account_address: address.to_string(),
-							token_type: "ERC721".to_string(),
-							page: 1,
-							page_size: 100,
-						};
+					// Query NFT
+					let param = GetNFTHoldingsParam {
+						account_address: address.to_string(),
+						token_type: "ERC721".to_string(),
+						page: 1,
+						page_size: 100,
+					};
 
-						let res_nft = self
-							.eth_client
-							.get_nft_holdings(&param)
-							.map_err(|e| e.into_error_detail())?;
-						let details = res_nft.details;
+					let res_nft = self
+						.eth_client
+						.get_nft_holdings(&param)
+						.map_err(|e| e.into_error_detail())?;
+					let details = res_nft.details;
 
-						let mut nft_addresses = vec![];
-						details.iter().for_each(|detail| {
-							nft_addresses.push(detail.token_address.clone());
-						});
+					let mut nft_addresses = vec![];
+					details.iter().for_each(|detail| {
+						nft_addresses.push(detail.token_address.clone());
+					});
 
-						Self::update_holding_flag(
-							&mut flag_eth_nft,
-							&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH,
-							&nft_addresses,
-						)
-					}
+					Self::update_holding_flag(
+						&mut flag_eth_nft,
+						&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH,
+						&nft_addresses,
+					)
 				}
 			}
 		}
 
-		// Add ETH and BNB
-		flag_bsc_token.push(is_bnb_holder);
-		flag_eth_token.push(is_eth_holder);
+		// Update ETH and BNB
+		flag_bsc_token[11] = is_bnb_holder;
+		flag_eth_token[14] = is_eth_holder;
 
 		Ok(SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft))
 	}
@@ -366,9 +351,14 @@ impl CryptoSummaryClient {
 	}
 }
 
+fn get_native_token_balance(native_balance: &str) -> f64 {
+	let native_balance = u64::from_str_radix(&native_balance[2..], 16).unwrap_or_default() as f64;
+	native_balance / ETH_TOKEN_DECIMALS
+}
+
 #[cfg(test)]
 mod tests {
-	use super::{CryptoSummaryClient, SummaryHoldings};
+	use super::{get_native_token_balance, CryptoSummaryClient, SummaryHoldings};
 	use crate::nodereal::crypto_summary::summary::CRYPTO_SUMMARY_NFT_ADDRESSES_ETH;
 
 	#[test]
@@ -423,5 +413,13 @@ mod tests {
 			&bsc_addresses,
 		);
 		assert!(flag_bsc.contains(&true));
+	}
+
+	#[test]
+	fn get_native_token_balance_works() {
+		let native_token_balance =
+			"0x00000000000000000000000000000000000000000000000000c92180664030d4";
+		let balance = get_native_token_balance(native_token_balance);
+		assert_eq!(balance, 0.05661330567385518);
 	}
 }

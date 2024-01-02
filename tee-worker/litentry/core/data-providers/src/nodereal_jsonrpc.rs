@@ -332,9 +332,6 @@ impl FungibleApiList for NoderealJsonrpcClient {
 	}
 
 	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error> {
-		// TODO:
-		// page_size max is 0x64(100).
-		// If the amount of data involved is too large, it also involves page flipping operations.
 		let params: Vec<String> = vec![address.to_string(), "0x1".to_string(), "0x64".to_string()];
 		debug!("get_token_holdings: {:?}", params);
 
