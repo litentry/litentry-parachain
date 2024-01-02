@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
-import { signAndSend, describeLitentry, loadConfig, subscribeToEvents, sleep } from '../common/utils';
+import { signAndSend, describeLitentry, loadConfig, subscribeToEvents } from '../common/utils';
 import Web3 from 'web3';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
 import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
@@ -295,7 +295,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
 
-        console.timeEnd('Test precompile contract');
+        console.timeEnd('Test precompile staking contract');
     });
     step('Test precompile contract with bridge', async function () {
         let balance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
@@ -317,7 +317,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         // The above two steps are necessary, otherwise the contract transaction will be reverted.
         // transfer native token
-
         const transferNativeTx = precompileBridgeContract.methods.transferNative(
             bn1e12 / 100, // 0.01 LIT
             '0xaaafB3972B05630fCceE866eC69CdADd9baC2772', // random address
@@ -330,5 +329,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         const eventsPromise = subscribeToEvents('chainBridge', 'FungibleTransfer', context.api);
         const events = (await eventsPromise).map(({ event }) => event);
         expect(events.length).to.eq(1);
+
+        console.timeEnd('Test precompile bridge contract');
     });
 });
