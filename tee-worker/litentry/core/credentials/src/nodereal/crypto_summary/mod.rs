@@ -25,7 +25,10 @@ use litentry_primitives::{ErrorDetail, IntoErrorDetail};
 use serde::{Deserialize, Serialize};
 use std::{string::String, vec, vec::Vec};
 
-use self::summary::{CRYPTO_SUMMARY_NFT_ADDRESSES_ETH, CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH};
+use self::summary::{
+	CRYPTO_SUMMARY_NFT_ADDRESSES_ETH, CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
+	CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+};
 
 pub mod summary;
 
@@ -266,7 +269,7 @@ impl CryptoSummaryClient {
 						});
 						Self::update_holding_flag(
 							&mut flag_eth_token,
-							CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+							CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
 							&token_addresses,
 						);
 					}
@@ -313,7 +316,7 @@ impl CryptoSummaryClient {
 		for (index, is_holder) in flag_array.iter_mut().enumerate() {
 			if !*is_holder {
 				let (token_address, _token_name) = source[index];
-				if token_addresses.contains(&token_address.to_string()) {
+				if token_addresses.contains(&token_address.to_lowercase()) {
 					*is_holder = true;
 				}
 			}
