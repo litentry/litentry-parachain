@@ -349,6 +349,16 @@ impl FungibleApiList for NoderealJsonrpcClient {
 	}
 }
 
+pub trait EthBalance {
+	fn get_balance(&self) -> Result<RpcResponse, Error>;
+}
+
+impl EthBalance for NoderealJsonrpcClient {
+	fn get_balance(&self) -> Result<RpcResponse, Error> {
+		todo!()
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
