@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
-import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
+import { signAndSend, describeLitentry, loadConfig, subscribeToEvents, sleep } from '../common/utils';
 import Web3 from 'web3';
 import precompileStakingContractAbi from '../common/abi/precompile/Staking.json';
 import precompileBridgeContractAbi from '../common/abi/precompile/Bridge.json';
@@ -75,7 +75,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         console.log('transfer from Alice to alice EMV');
 
         // Deposit money into substrate account's truncated EVM address's mapping substrate account
-        const tx_init = context.api.tx.balances.transfer(aliceMappedSustrateAccount, 70 * 1e12);
+        const tx_init = context.api.tx.balances.transfer(aliceMappedSustrateAccount, 100 * 1e12);
         await signAndSend(tx_init, context.alice);
 
         // 25000 is min_gas_price setup
@@ -83,7 +83,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             aliceEVMMappedAccount, // evm like
             to.address, // evm like
             '0x',
-            toBigNumber(65),
+            toBigNumber(100),
             1000000,
             25000,
             null,
@@ -133,9 +133,11 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             expect(e).to.be.instanceof(Error);
         }
     });
-    step('test transferNative', async function () {
-        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
 
+    // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
+    step('Test precompile contract', async function () {
+        console.time('Test precompile contract');
+        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
             let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
             let temp = await context.api.rpc.chain.getBlock();
@@ -144,20 +146,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
             temp = await context.api.rpc.chain.getBlock();
             console.log(`setMode await end: ${temp.block.header.number}`);
         }
-
-        const transferNativeTx = precompileBridgeContract.methods.transferNative(
-            bn1e12.toNumber(),
-            '0xaaafB3972B05630fCceE866eC69CdADd9baC2772',
-            0
-        );
-
-        await executeTransaction(transferNativeTx, precompileBridgeContractAddress, 'transferNative');
-    });
-    // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
-    step('Test precompile contract', async function () {
-        console.time('Test precompile contract');
-        const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
-
         let balance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
         printBalance('initial balance', balance);
 
@@ -308,5 +296,39 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         await signAndSend(extrinsic, context.alice);
 
         console.timeEnd('Test precompile contract');
+    });
+    step('Test precompile contract with bridge', async function () {
+        let balance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
+        if (balance.free.toNumber() < toBigNumber(0.01)) {
+            await transferTokens(context.alice, evmAccountRaw);
+            expect(balance.free.toNumber()).to.gt(toBigNumber(0.01));
+        }
+
+        // update chain bridge fee
+        const updateFeeTx = context.api.tx.sudo.sudo(context.api.tx.chainBridge.updateFee(0, bn1e12 / 1000));
+        await signAndSend(updateFeeTx, context.alice);
+
+        const bridge_fee = await context.api.query.chainBridge.bridgeFee(0);
+        expect(bridge_fee.toString()).to.eq((bn1e12 / 1000).toString());
+
+        // set chainId to whitelist
+        const whitelistChainTx = context.api.tx.sudo.sudo(context.api.tx.chainBridge.whitelistChain(0));
+        await signAndSend(whitelistChainTx, context.alice);
+
+        // The above two steps are necessary, otherwise the contract transaction will be reverted.
+        // transfer native token
+
+        const transferNativeTx = precompileBridgeContract.methods.transferNative(
+            bn1e12 / 100, // 0.01 LIT
+            '0xaaafB3972B05630fCceE866eC69CdADd9baC2772', // random address
+            0
+        );
+
+        const res = await executeTransaction(transferNativeTx, precompileBridgeContractAddress, 'transferNative');
+        expect(res.status).to.eq(true);
+
+        const eventsPromise = subscribeToEvents('chainBridge', 'FungibleTransfer', context.api);
+        const events = (await eventsPromise).map(({ event }) => event);
+        expect(events.length).to.eq(1);
     });
 });
