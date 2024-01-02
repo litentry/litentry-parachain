@@ -8199,6 +8199,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_enum"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "683751d591e6d81200c39fb0d1032608b77724f34114db54f571ff1317b337c0"
+dependencies = [
+ "num_enum_derive 0.7.1",
+]
+
+[[package]]
 name = "num_enum_derive"
 version = "0.5.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8216,6 +8225,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96667db765a921f7b295ffee8b60472b686a51d4f21c2ee4ffdb94c7013b65a6"
 dependencies = [
  "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.32",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c11e44798ad209ccdd91fc192f0526a369a01234f7373e1b141c96d7cee4f0e"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.32",
@@ -8864,7 +8884,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.20",
- "num_enum 0.6.1",
+ "num_enum 0.7.1",
  "pallet-bridge",
  "pallet-bridge-transfer",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
@@ -8913,7 +8933,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.20",
- "num_enum 0.6.1",
+ "num_enum 0.7.1",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "pallet-parachain-staking",
  "parity-scale-codec",
@@ -10187,7 +10207,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "log 0.4.20",
- "num_enum 0.6.1",
+ "num_enum 0.7.1",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "precompile-utils-macro",
