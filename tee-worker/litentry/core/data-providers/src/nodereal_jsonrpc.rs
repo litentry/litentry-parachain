@@ -350,12 +350,34 @@ impl FungibleApiList for NoderealJsonrpcClient {
 }
 
 pub trait EthBalance {
-	fn get_balance(&self) -> Result<RpcResponse, Error>;
+	fn get_balance(&mut self, address: &str) -> Result<f64, Error>;
 }
 
 impl EthBalance for NoderealJsonrpcClient {
-	fn get_balance(&self) -> Result<RpcResponse, Error> {
-		todo!()
+	fn get_balance(&mut self, address: &str) -> Result<f64, Error> {
+		let params = vec![address.to_string(), "latest".to_string()];
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "eth_getBalance".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body) {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("eth_getBalance, response: {:?}", resp);
+				match resp.result.as_str() {
+					Some(result) => Ok(hex_to_decimal(&result[2..])),
+					None => Err(Error::RequestError(format!(
+						"Cannot tansform response result {:?} to &str",
+						resp.result
+					))),
+				}
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
 	}
 }
 

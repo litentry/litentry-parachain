@@ -18,7 +18,8 @@ use crate::*;
 use lc_data_providers::{
 	achainable::web3_network_to_chain,
 	nodereal_jsonrpc::{
-		FungibleApiList, GetNFTHoldingsParam, NftApiList, NoderealChain, NoderealJsonrpcClient, EthBalance,
+		EthBalance, FungibleApiList, GetNFTHoldingsParam, NftApiList, NoderealChain,
+		NoderealJsonrpcClient,
 	},
 };
 use litentry_primitives::{ErrorDetail, IntoErrorDetail};
@@ -267,8 +268,12 @@ impl CryptoSummaryClient {
 
 						// Query BNB balance on BSC
 						if !is_bnb_holder {
-							let _balance = self.bsc_client.get_balance().unwrap().result;
-							is_bnb_holder = false;
+							if let Ok(balance) = self.bsc_client.get_balance(address) {
+								// Holder balance > 0.0
+								if balance > 0.0 {
+									is_bnb_holder = true;
+								}
+							}
 						}
 					}
 				}
@@ -298,9 +303,13 @@ impl CryptoSummaryClient {
 
 						// Query ETH balance on Ethereum
 						if !is_eth_holder {
-							let _balance = self.eth_client.get_balance().unwrap().result;
-							is_eth_holder = false;
-						}						
+							if let Ok(balance) = self.eth_client.get_balance(address) {
+								// Holder balance > 0.0
+								if balance > 0.0 {
+									is_eth_holder = true;
+								}
+							}
+						}
 					}
 
 					// NFT
@@ -359,14 +368,13 @@ impl CryptoSummaryClient {
 
 #[cfg(test)]
 mod tests {
-	use crate::nodereal::crypto_summary::summary::CRYPTO_SUMMARY_NFT_ADDRESSES_ETH;
 	use super::{CryptoSummaryClient, SummaryHoldings};
+	use crate::nodereal::crypto_summary::summary::CRYPTO_SUMMARY_NFT_ADDRESSES_ETH;
 
 	#[test]
 	fn summary_construct_works() {
-		let flag_bsc_token = [
-			false, true, true, true, true, true, true, true, true, true, true, true
-		];
+		let flag_bsc_token =
+			[false, true, true, true, true, true, true, true, true, true, true, true];
 		let flag_eth_token = [
 			false, false, false, false, false, false, false, false, false, false, false, false,
 			false, false, true,
