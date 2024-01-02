@@ -30,7 +30,16 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 ///   Substrate(SubstrateNetwork),
 ///   Evm(EvmNetwork),
 /// }
+///
 /// TODO: theoretically this should the the union of the supported networks of all data providers
+///
+/// Since the incorporation of Bitcoin network, the name `Web3Network` might not be the best word,
+/// as different kinds of bitcoin types (BitcoinP2tr, BitcoinP2pkh, ...) still belong to the same
+/// network (bitcoin mainnet) despite of having 5 entries in this enum.
+///
+/// More precisely, it should reflect "the way" how the same identity handle (e.g. pubkey) is
+/// differently used: either in different networks (e.g. eth vs bsc), or as different addresses in
+/// the same network or not (e.g. bitcoin/substrate)
 #[derive(
 	Encode,
 	Decode,
