@@ -49,6 +49,7 @@ export async function initIntegrationTestContext(
 
     const bitcoinWallet = {
         alice: new bitcore.PrivateKey(),
+        bob: new bitcore.PrivateKey(),
     };
 
     const types = { ...identity.types, ...vc.types, ...trusted_operations.types, ...sidechain.types };
