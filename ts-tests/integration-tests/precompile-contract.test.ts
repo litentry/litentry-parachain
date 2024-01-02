@@ -135,7 +135,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
     });
 
     // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
-    step('Test precompile contract', async function () {
+    step('Test precompile staking contract', async function () {
         console.time('Test precompile contract');
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
@@ -297,7 +297,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         console.timeEnd('Test precompile staking contract');
     });
-    step('Test precompile contract with bridge', async function () {
+    step('Test precompile bridge contract', async function () {
         let balance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
         if (balance.free.toNumber() < toBigNumber(0.01)) {
             await transferTokens(context.alice, evmAccountRaw);
