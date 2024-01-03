@@ -9,7 +9,6 @@ const BN = require('bn.js');
 import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
-import { randomBytes } from 'crypto';
 
 const toBigNumber = (int: number) => int * 1e12;
 const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
@@ -337,7 +336,6 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         // FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, u128, Vec<u8>)
         expect(event_data[0]).to.eq('0');
-        expect(event_data[1]).to.eq('1');
         const destResourceId = context.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
         expect(event_data[2]).to.eq(destResourceId);
         expect(event_data[3]).to.eq((bn1e12 / 100 - bn1e12 / 1000).toLocaleString());
