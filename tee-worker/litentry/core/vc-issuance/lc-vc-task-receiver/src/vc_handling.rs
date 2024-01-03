@@ -105,6 +105,9 @@ where
 				lc_assertion_build::nodereal::amount_holding::evm_amount_holding::build(
 					&self.req, token_type,
 				),
+
+			Assertion::BRC20AmountHolder =>
+				lc_assertion_build::brc20::amount_holder::build(&self.req),
 		}?;
 
 		// post-process the credential

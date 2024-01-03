@@ -289,6 +289,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::WeirdoGhostGangHolder => "WeirdoGhostGangHolder",
 			Assertion::LITStaking => "LITStaking",
 			Assertion::EVMAmountHolding(_) => "EVMAmountHolding",
+			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
 		},
 	};
 	inc_stf_calls(category, label);

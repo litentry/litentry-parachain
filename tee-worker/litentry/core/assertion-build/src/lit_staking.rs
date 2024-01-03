@@ -66,7 +66,7 @@ impl RestPath<String> for JsonRPCRequest {
 pub struct JsonRPCResponse {
 	pub id: usize,
 	pub jsonrpc: String,
-	pub result: String,
+	pub result: Option<String>,
 }
 
 pub struct LitentryStakingClient {
@@ -102,13 +102,14 @@ impl LitentryStakingClient {
 }
 
 pub trait QueryParachainStaking {
-	fn query_delegator_state(&mut self, key: &str) -> Result<String>;
+	fn query_delegator_state(&mut self, key: &str) -> Result<Option<String>>;
 }
 
 impl QueryParachainStaking for LitentryStakingClient {
-	fn query_delegator_state(&mut self, key: &str) -> Result<String> {
+	fn query_delegator_state(&mut self, key: &str) -> Result<Option<String>> {
 		let data = JsonRPCRequest::state_getstorage(key);
 		let res = self.send_request(&data)?;
+
 		Ok(res.result)
 	}
 }
@@ -126,10 +127,12 @@ impl DelegatorState {
 			let storage_key = DelegatorState::delegator_state_storage_key(identity)?;
 			let storage_in_hex = client.query_delegator_state(&storage_key)?;
 
-			let delegator = DelegatorState::decode_delegator(&storage_in_hex)?;
-			let total = delegator.total;
+			if let Some(storage_in_hex) = storage_in_hex {
+				let delegator = DelegatorState::decode_delegator(&storage_in_hex)?;
+				let total = delegator.total;
 
-			total_staking_amount += total;
+				total_staking_amount += total;
+			}
 		}
 
 		Ok(total_staking_amount / LIT_TOKEN_DECIMALS)

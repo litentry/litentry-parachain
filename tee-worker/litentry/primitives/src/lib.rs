@@ -25,6 +25,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 
 mod aes;
 mod aes_request;
+mod bitcoin_address;
 mod bitcoin_signature;
 mod ethereum_signature;
 mod identity;
@@ -32,6 +33,7 @@ mod validation_data;
 
 pub use aes::*;
 pub use aes_request::*;
+pub use bitcoin_address::*;
 pub use bitcoin_signature::*;
 pub use ethereum_signature::*;
 pub use identity::*;
@@ -69,6 +71,8 @@ pub use teerex_primitives::{decl_rsa_request, ShardIdentifier};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
+pub const LITENTRY_PRETTIFIED_MESSAGE_PREFIX: &str = "Litentry authorization token: ";
+
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum LitentryMultiSignature {
@@ -84,12 +88,15 @@ pub enum LitentryMultiSignature {
 	/// An ECDSA/keccak256 signature. An Ethereum signature. hash message with keccak256
 	#[codec(index = 3)]
 	Ethereum(EthereumSignature),
-	/// Same as the above, but the payload bytes are hex-encoded and prepended with a readable prefix
+	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
 	#[codec(index = 4)]
 	EthereumPrettified(EthereumSignature),
-	/// Bitcoin signed message
+	/// Bitcoin signed message, a hex-encoded string of original &[u8] message, without `0x` prefix
 	#[codec(index = 5)]
 	Bitcoin(BitcoinSignature),
+	/// Same as above, but the payload bytes are prepended with a readable prefix and `0x`
+	#[codec(index = 6)]
+	BitcoinPrettified(BitcoinSignature),
 }
 
 impl LitentryMultiSignature {
@@ -128,17 +135,15 @@ impl LitentryMultiSignature {
 
 	fn verify_evm(&self, msg: &[u8], signer: &Address20) -> bool {
 		match self {
-			Self::Ethereum(ref sig) => {
-				let data = msg;
-				return verify_evm_signature(evm_eip191_wrap(data).as_slice(), sig, signer)
-					|| verify_evm_signature(data, sig, signer)
-			},
+			Self::Ethereum(ref sig) =>
+				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
+					|| verify_evm_signature(msg, sig, signer),
 			Self::EthereumPrettified(ref sig) => {
-				let user_readable_message =
-					"Litentry authorization token: ".to_string() + &hex_encode(msg);
-				let data = user_readable_message.as_bytes();
-				return verify_evm_signature(evm_eip191_wrap(data).as_slice(), sig, signer)
-					|| verify_evm_signature(data, sig, signer)
+				let prettified_msg =
+					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
+				let msg = prettified_msg.as_bytes();
+				return verify_evm_signature(evm_eip191_wrap(msg).as_slice(), sig, signer)
+					|| verify_evm_signature(msg, sig, signer)
 			},
 			_ => false,
 		}
@@ -146,31 +151,37 @@ impl LitentryMultiSignature {
 
 	fn verify_bitcoin(&self, msg: &[u8], signer: &Address33) -> bool {
 		match self {
-			Self::Bitcoin(ref sig) => verify_bitcoin_signature(msg, sig, signer),
+			Self::Bitcoin(ref sig) =>
+				verify_bitcoin_signature(hex::encode(msg).as_str(), sig, signer),
+			Self::BitcoinPrettified(ref sig) => {
+				let prettified_msg =
+					LITENTRY_PRETTIFIED_MESSAGE_PREFIX.to_string() + &hex_encode(msg);
+				verify_bitcoin_signature(prettified_msg.as_str(), sig, signer)
+			},
 			_ => false,
 		}
 	}
 }
 
-pub fn verify_evm_signature(data: &[u8], sig: &EthereumSignature, who: &Address20) -> bool {
-	let digest = keccak_256(data);
+pub fn verify_evm_signature(msg: &[u8], sig: &EthereumSignature, who: &Address20) -> bool {
+	let digest = keccak_256(msg);
 	return match recover_evm_address(&digest, sig.as_ref()) {
 		Ok(recovered_evm_address) => recovered_evm_address == who.as_ref().as_slice(),
 		Err(_e) => {
-			error!("Could not verify evm signature msg: {:?}, signer {:?}", data, who);
+			error!("Could not verify evm signature msg: {:?}, signer {:?}", msg, who);
 			false
 		},
 	}
 }
 
-pub fn verify_bitcoin_signature(msg: &[u8], sig: &BitcoinSignature, who: &Address33) -> bool {
+pub fn verify_bitcoin_signature(msg: &str, sig: &BitcoinSignature, who: &Address33) -> bool {
 	if let Ok(msg_sig) = MessageSignature::from_slice(sig.as_ref()) {
-		let msg_hash = signed_msg_hash(hex::encode(msg).as_str());
+		let msg_hash = signed_msg_hash(msg);
 		let secp = secp256k1::Secp256k1::new();
 		return match msg_sig.recover_pubkey(&secp, msg_hash) {
 			Ok(recovered_pub_key) => &recovered_pub_key.inner.serialize() == who.as_ref(),
 			Err(_) => {
-				error!("Could not verify bitcoin signature msg: {:?}, signer {:?}", msg, who);
+				error!("Could not recover pubkey from bitcoin msg: {:?}, signer {:?}", msg, who);
 				false
 			},
 		}
@@ -262,7 +273,7 @@ mod tests {
 		let pubkey_ref: &[u8] = pubkey.as_ref();
 		let sig_ref: &[u8] = sig.as_ref();
 		assert!(verify_bitcoin_signature(
-			&msg,
+			hex::encode(msg).as_str(),
 			&sig_ref.try_into().unwrap(),
 			&pubkey_ref.try_into().unwrap()
 		));
