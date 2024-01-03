@@ -139,10 +139,8 @@ mod tests {
 
 	#[test]
 	fn build_assertions_works() {
-		let flag_bsc_token = [
-			false, true, true, true, true, true, true, true, true, true, true, true, true, true,
-			true,
-		];
+		let flag_bsc_token =
+			[false, true, true, true, true, true, true, true, true, true, true, true];
 		let flag_eth_token = [
 			false, false, false, false, false, false, false, false, false, false, false, false,
 			false, false, false,

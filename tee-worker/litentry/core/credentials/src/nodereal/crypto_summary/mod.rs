@@ -375,15 +375,14 @@ mod tests {
 		];
 
 		let summary = SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft);
-		println!("summary: {:?}", summary);
 		assert!(!summary.is_empty());
 	}
 
 	#[test]
 	fn update_nft_holding_flag_works() {
 		let nft_addresses = vec![
-			"0x9401518f4EBBA857BAA879D9f76E1Cc8b31ed197".to_string(),
-			"0x6339e5E072086621540D0362C4e3Cea0d643E114".to_string(),
+			"0x9401518f4EBBA857BAA879D9f76E1Cc8b31ed197".to_lowercase(),
+			"0x6339e5E072086621540D0362C4e3Cea0d643E114".to_lowercase(),
 		];
 		let mut flag_eth_nft = [
 			false, false, false, false, false, false, false, false, false, false, false, false,
@@ -400,13 +399,11 @@ mod tests {
 	#[test]
 	fn update_bsc_holding_flag_works() {
 		let bsc_addresses = vec![
-			"0x9401518f4EBBA857BAA879D9f76E1Cc8b31ed197".to_string(),
-			"0x6339e5E072086621540D0362C4e3Cea0d643E114".to_string(),
+			"0x9401518f4EBBA857BAA879D9f76E1Cc8b31ed197".to_lowercase(),
+			"0x6339e5E072086621540D0362C4e3Cea0d643E114".to_lowercase(),
 		];
-		let mut flag_bsc = [
-			false, false, false, false, false, false, false, false, false, false, false, false,
-			false, false, false,
-		];
+		let mut flag_bsc =
+			[false, false, false, false, false, false, false, false, false, false, false, false];
 		CryptoSummaryClient::update_holding_flag(
 			&mut flag_bsc,
 			&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH,
