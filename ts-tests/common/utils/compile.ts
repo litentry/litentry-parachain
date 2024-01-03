@@ -25,22 +25,21 @@ contract Hello {
 const input = {
     language: 'Solidity',
     sources: {
-      'hello.sol': {
-        content: source
-      }
+        'hello.sol': {
+            content: source,
+        },
     },
     settings: {
-      outputSelection: {
-        '*': {
-          '*': ['*']
-        }
-      },
-      // evmVersion: "byzantium",
-    }
-  };
+        outputSelection: {
+            '*': {
+                '*': ['*'],
+            },
+        },
+        // evmVersion: "byzantium",
+    },
+};
 const result = JSON.parse(solcWrapper.compile(JSON.stringify(input)));
 if (!result.contracts) {
-  console.log(result.errors);
+    console.log(result.errors);
 }
 export const compiled: any = result.contracts['hello.sol']['Hello'];
-

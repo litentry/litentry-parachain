@@ -1,7 +1,7 @@
-import { createERCDepositData, describeCrossChainTransfer } from './setup-bridge';
+import { createERCDepositData, describeCrossChainTransfer } from '../common/setup/setup-bridge';
 import { step } from 'mocha-steps';
 import { toHex } from 'web3-utils';
-import { signAndSend, sleep } from './utils';
+import { signAndSend, sleep } from '../common/utils';
 import { assert } from 'chai';
 import { BigNumber, ethers } from 'ethers';
 
@@ -15,8 +15,11 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
         // substrate native token
         // const destResourceId = "0x00000000000000000000000000000063a7e2be78898ba83824b0c0cc8dfb6001"
         const destResourceId = context.parachainConfig.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
+
         const depositAmount = toHex(BigNumber.from('100,000,000,000,000,000,000'.replace(/,/g, '')).toString());
         let destinationChainID = parseInt(context.parachainConfig.api.consts.chainBridge.bridgeChainId.toString());
+        console.log(destinationChainID);
+
         //FERDIE key command: polkadot key inspect //Ferdie
         const destinationRecipientAddress = '0x1cbd2d43530a44705ad088af313e18f80b53ef16b36177cd4b77b846f2a5f07c';
 
@@ -64,7 +67,7 @@ describeCrossChainTransfer('Test Cross-chain Transfer', ``, (context) => {
             context.ethConfig.erc20Handler.address
         );
         const fee = await context.parachainConfig.api.query.chainBridge.bridgeFee(0);
-        const Bridge = require('../bridge/contracts/Bridge.json');
+        const Bridge = require('../common/abi/bridge/Bridge.json');
         const inter = new ethers.utils.Interface(Bridge.abi);
         await signAndSend(
             context.parachainConfig.api.tx.bridgeTransfer.transferNative(

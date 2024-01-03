@@ -2,7 +2,7 @@ import { u8aConcat } from '@polkadot/util';
 import { expect } from 'chai';
 import { step } from 'mocha-steps';
 
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
+import { signAndSend, describeLitentry, loadConfig, sleep } from '../common/utils';
 
 describeLitentry('Test Transaction Fee', ``, (context) => {
     console.log(`Test Transaction Fee`);

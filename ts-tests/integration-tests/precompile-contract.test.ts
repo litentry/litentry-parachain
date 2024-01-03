@@ -1,10 +1,10 @@
 import { assert, expect } from 'chai';
 import { step } from 'mocha-steps';
 import { AbiItem } from 'web3-utils';
-import { signAndSend, describeLitentry, loadConfig, sleep } from './utils';
+import { signAndSend, describeLitentry, loadConfig } from '../common/utils';
 import Web3 from 'web3';
-import precompileContractAbi from '../precompile/contracts/staking.json';
-import { mnemonicGenerate, mnemonicToMiniSecret, decodeAddress, evmToAddress } from '@polkadot/util-crypto';
+import precompileContractAbi from '../common/abi/precompile/Staking.json';
+import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 
 const toBigNumber = (int: number) => int * 1e12;
@@ -121,6 +121,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
     // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
     step('Test precompile contract', async function () {
+        console.time('Test precompile contract');
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
             let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
@@ -249,5 +250,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         // In case evm is not enabled in Normal Mode, switch back to filterMode, after test.
         let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode(filterMode));
         await signAndSend(extrinsic, context.alice);
+
+        console.timeEnd('Test precompile contract');
     });
 });
