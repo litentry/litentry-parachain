@@ -9,6 +9,7 @@ const BN = require('bn.js');
 import { mnemonicGenerate, mnemonicToMiniSecret, evmToAddress } from '@polkadot/util-crypto';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { HexString } from '@polkadot/util/types';
+import { randomBytes } from 'crypto';
 
 const toBigNumber = (int: number) => int * 1e12;
 const bn1e12 = new BN(10).pow(new BN(12)).mul(new BN(1));
@@ -136,7 +137,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
     // To see full params types for the interfaces, check notion page: https://web3builders.notion.site/Parachain-Precompile-Contract-0c34929e5f16408084446dcf3dd36006
     step('Test precompile staking contract', async function () {
-        console.time('Test precompile contract');
+        console.time('Test precompile staking contract');
         const filterMode = (await context.api.query.extrinsicFilter.mode()).toHuman();
         if ('Test' !== filterMode) {
             let extrinsic = context.api.tx.sudo.sudo(context.api.tx.extrinsicFilter.setMode('Test'));
@@ -298,6 +299,8 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         console.timeEnd('Test precompile staking contract');
     });
     step('Test precompile bridge contract', async function () {
+        console.time('Test precompile bridge contract');
+        const dest_address = '0xaaafb3972b05630fccee866ec69cdadd9bac2772'; // random address
         let balance = (await context.api.query.system.account(evmAccountRaw.mappedAddress)).data;
         if (balance.free.toNumber() < toBigNumber(0.01)) {
             await transferTokens(context.alice, evmAccountRaw);
@@ -319,7 +322,7 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
         // transfer native token
         const transferNativeTx = precompileBridgeContract.methods.transferNative(
             bn1e12 / 100, // 0.01 LIT
-            '0xaaafB3972B05630fCceE866eC69CdADd9baC2772', // random address
+            dest_address,
             0
         );
 
@@ -328,7 +331,17 @@ describeLitentry('Test Parachain Precompile Contract', ``, (context) => {
 
         const eventsPromise = subscribeToEvents('chainBridge', 'FungibleTransfer', context.api);
         const events = (await eventsPromise).map(({ event }) => event);
+
         expect(events.length).to.eq(1);
+        const event_data = events[0].toHuman().data! as Array<string>;
+
+        // FungibleTransfer(BridgeChainId, DepositNonce, ResourceId, u128, Vec<u8>)
+        expect(event_data[0]).to.eq('0');
+        expect(event_data[1]).to.eq('1');
+        const destResourceId = context.api.consts.bridgeTransfer.nativeTokenResourceId.toHex();
+        expect(event_data[2]).to.eq(destResourceId);
+        expect(event_data[3]).to.eq((bn1e12 / 100 - bn1e12 / 1000).toLocaleString());
+        expect(event_data[4]).to.eq(dest_address);
 
         console.timeEnd('Test precompile bridge contract');
     });
