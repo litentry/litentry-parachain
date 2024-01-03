@@ -103,7 +103,7 @@ pub struct ResponseToken {
 pub struct ResponseTokenResult {
 	pub total_count: String,
 	pub native_token_balance: String,
-	pub details: Vec<ResponseToken>,
+	pub details: Option<Vec<ResponseToken>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -251,14 +251,16 @@ impl CryptoSummaryClient {
 					let result: ResponseTokenResult =
 						serde_json::from_value(res.result).map_err(|_| ErrorDetail::ParseError)?;
 					let mut token_addresses = vec![];
-					result.details.iter().for_each(|detail| {
-						token_addresses.push(detail.token_address.clone());
-					});
-					Self::update_holding_flag(
-						&mut flag_bsc_token,
-						&CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
-						&token_addresses,
-					);
+					if let Some(details) = result.details {
+						details.iter().for_each(|detail| {
+							token_addresses.push(detail.token_address.clone());
+						});
+						Self::update_holding_flag(
+							&mut flag_bsc_token,
+							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_BSC,
+							&token_addresses,
+						);
+					}
 
 					// Query BNB balance on BSC
 					if !is_bnb_holder {
@@ -282,14 +284,16 @@ impl CryptoSummaryClient {
 						.map_err(|_| ErrorDetail::ParseError)?;
 
 					let mut token_addresses = vec![];
-					result.details.iter().for_each(|detail| {
-						token_addresses.push(detail.token_address.clone());
-					});
-					Self::update_holding_flag(
-						&mut flag_eth_token,
-						&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
-						&token_addresses,
-					);
+					if let Some(details) = result.details {
+						details.iter().for_each(|detail| {
+							token_addresses.push(detail.token_address.clone());
+						});
+						Self::update_holding_flag(
+							&mut flag_eth_token,
+							&CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH,
+							&token_addresses,
+						);
+					}
 
 					// Query ETH balance on Ethereum
 					if !is_eth_holder {
@@ -312,6 +316,9 @@ impl CryptoSummaryClient {
 						.eth_client
 						.get_nft_holdings(&param)
 						.map_err(|e| e.into_error_detail())?;
+
+					error!("nft token res: {:?}", res_nft);
+
 					let details = res_nft.details;
 
 					let mut nft_addresses = vec![];
