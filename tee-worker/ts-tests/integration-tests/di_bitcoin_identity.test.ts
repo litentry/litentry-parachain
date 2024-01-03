@@ -35,15 +35,28 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceBitcoinIdentity: CorePrimitivesIdentity = undefined as any;
     let aliceEvmIdentity: CorePrimitivesIdentity;
+    let bobBitcoinIdentity: CorePrimitivesIdentity;
 
     // Alice links:
     // - alice's evm identity
+    // - bob's bitcoin identity
     const linkIdentityRequestParams: {
         nonce: number;
         identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
         networks: Vec<Web3Network>;
     }[] = [];
+
+    const deactivateIdentityRequestParams: {
+        nonce: number;
+        identity: CorePrimitivesIdentity;
+    }[] = [];
+
+    const activateIdentityRequestParams: {
+        nonce: number;
+        identity: CorePrimitivesIdentity;
+    }[] = [];
+
     this.timeout(6000000);
 
     before(async () => {
@@ -58,6 +71,11 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             context
         );
         aliceEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
+        bobBitcoinIdentity = await buildIdentityHelper(
+            u8aToHex(bufferToU8a(context.bitcoinWallet.bob.toPublicKey().toBuffer())),
+            'Bitcoin',
+            context
+        );
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
@@ -75,12 +93,12 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const aliceNonce = getNextNonce();
+        const aliceEvmNonce = getNextNonce();
         const [aliceEvmValidation] = await buildValidations(
             context,
             [aliceBitcoinIdentity],
             [aliceEvmIdentity],
-            aliceNonce,
+            aliceEvmNonce,
             'ethereum',
             undefined,
             [context.ethersWallet.alice]
@@ -90,10 +108,32 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             'Bsc',
         ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
-            nonce: aliceNonce,
+            nonce: aliceEvmNonce,
             identity: aliceEvmIdentity,
             validation: aliceEvmValidation,
             networks: aliceEvmNetworks,
+        });
+
+        // link another bitcoin account with prettified signature
+        const bobBitcoinNonce = getNextNonce();
+        const [bobBitcoinValidation] = await buildValidations(
+            context,
+            [aliceBitcoinIdentity],
+            [bobBitcoinIdentity],
+            bobBitcoinNonce,
+            'bitcoinPrettified',
+            undefined,
+            undefined,
+            context.bitcoinWallet.bob
+        );
+        const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', [
+            'BitcoinP2tr',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        linkIdentityRequestParams.push({
+            nonce: bobBitcoinNonce,
+            identity: bobBitcoinIdentity,
+            validation: bobBitcoinValidation,
+            networks: bobBitcoinNetowrks,
         });
 
         const identityLinkedEvents: any[] = [];
@@ -103,6 +143,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
                 [aliceBitcoinIdentity, true],
                 [aliceEvmIdentity, true],
             ],
+            [[bobBitcoinIdentity, true]],
         ];
 
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
@@ -151,7 +192,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             new BitcoinSigner(context.bitcoinWallet.alice),
             identityLinkedEvents,
             idGraphHashResults,
-            1
+            2
         );
     });
 
@@ -165,7 +206,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [['Ethereum', 'Bsc']];
+        const expectedWeb3Networks = [['Ethereum', 'Bsc'], ['BitcoinP2tr']];
         let currentIndex = 0;
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -193,11 +234,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     step('deactivating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
-
-        const deactivateIdentityRequestParams: {
-            nonce: number;
-            identity: CorePrimitivesIdentity;
-        }[] = [];
 
         const aliceEvmNonce = getNextNonce();
 
@@ -267,7 +303,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        for (const { identity } of linkIdentityRequestParams) {
+        for (const { identity } of deactivateIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
@@ -288,11 +324,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
     step('activating identity(alice bitcoin account)', async function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
-
-        const activateIdentityRequestParams: {
-            nonce: number;
-            identity: CorePrimitivesIdentity;
-        }[] = [];
 
         const aliceEvmNonce = getNextNonce();
 
