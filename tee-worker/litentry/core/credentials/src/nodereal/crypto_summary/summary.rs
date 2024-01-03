@@ -18,7 +18,7 @@ use super::{Item, SummaryHoldings};
 use crate::*;
 
 const VC_CRYPTO_SUMMARY_DESCRIPTIONS: &str = "Generate a summary of your on-chain identity";
-const VC_CRYPTO_SUMMARY_TYPE: &str = "IDHub Crypto Summary ";
+const VC_CRYPTO_SUMMARY_TYPE: &str = "IDHub Crypto Summary";
 
 /// Doesn't exists on BSC including:
 /// PEPE, BLUR, WLD
@@ -74,12 +74,12 @@ pub const CRYPTO_SUMMARY_NFT_ADDRESSES_ETH: [(&str, &str); 15] = [
 ];
 
 pub trait CryptoSummaryCredentialUpdate {
-	fn update_crypto_summary_credential(&mut self, summary: SummaryHoldings);
+	fn update_crypto_summary_credential(&mut self, txs: u64, summary: SummaryHoldings);
 }
 
 impl CryptoSummaryCredentialUpdate for Credential {
-	fn update_crypto_summary_credential(&mut self, summary: SummaryHoldings) {
-		let (value, and_logic) = build_assertions(summary);
+	fn update_crypto_summary_credential(&mut self, txs: u64, summary: SummaryHoldings) {
+		let (value, and_logic) = build_assertions(txs, summary);
 
 		self.credential_subject.assertions.push(and_logic);
 		self.credential_subject.values.push(value);
@@ -88,24 +88,32 @@ impl CryptoSummaryCredentialUpdate for Credential {
 	}
 }
 
-fn build_assertions(summary: SummaryHoldings) -> (bool, AssertionLogic) {
+fn build_assertions(txs: u64, summary: SummaryHoldings) -> (bool, AssertionLogic) {
 	let is_empty = summary.is_empty();
 
 	let mut and_logic = AssertionLogic::new_and();
 
+	// Total Txs
+	let txs_item = AssertionLogic::new_item("$total_txs", Op::Equal, &txs.to_string());
+	and_logic = and_logic.add_item(txs_item);
+
 	// TOKENs
-	let token_assertion = token_items(summary.summary.token);
+	let token_assertion = token_items("TOKEN", summary.summary.token);
 	and_logic = and_logic.add_item(token_assertion);
 
 	// NFTs
-	let nft_assertion = token_items(summary.summary.nft);
+	let nft_assertion = token_items("NFT", summary.summary.nft);
 	and_logic = and_logic.add_item(nft_assertion);
 
 	(!is_empty, and_logic)
 }
 
-fn token_items(items: Vec<Item>) -> AssertionLogic {
+fn token_items(name: &str, items: Vec<Item>) -> AssertionLogic {
 	let mut and_logic = AssertionLogic::new_and();
+
+	let kind_item = AssertionLogic::new_item("$kind", Op::Equal, name);
+	and_logic = and_logic.add_item(kind_item);
+
 	for item in items {
 		let mut item_logic = AssertionLogic::new_and();
 
@@ -142,7 +150,7 @@ mod tests {
 		let flag_bsc_token =
 			[false, true, true, true, true, true, true, true, true, true, true, true];
 		let flag_eth_token = [
-			false, false, false, false, false, false, false, false, false, false, false, false,
+			false, false, true, false, false, false, false, false, false, false, false, false,
 			false, false, false,
 		];
 		let flag_eth_nft = [
@@ -150,9 +158,9 @@ mod tests {
 			false, false, false,
 		];
 
+		let txs = 100_u64;
 		let summary = SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft);
-		let (value, logic) = build_assertions(summary);
-		println!("assertions: {}", serde_json::to_string(&logic).unwrap());
+		let (value, _logic) = build_assertions(txs, summary);
 		assert!(value);
 	}
 }

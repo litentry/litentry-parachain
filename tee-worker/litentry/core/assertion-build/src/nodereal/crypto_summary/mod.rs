@@ -28,7 +28,7 @@ use crate::*;
 
 pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
-	let summary = CryptoSummaryClient::new()
+	let (txs, summary) = CryptoSummaryClient::new()
 		.logic(&identities)
 		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
 
@@ -36,7 +36,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		error!("Generate unsigned credential failed {:?}", e);
 		Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail())
 	})?;
-	credential_unsigned.update_crypto_summary_credential(summary);
+	credential_unsigned.update_crypto_summary_credential(txs, summary);
 
 	Ok(credential_unsigned)
 }

@@ -23,6 +23,7 @@ use lc_data_providers::{
 	achainable::web3_network_to_chain,
 	nodereal_jsonrpc::{
 		FungibleApiList, GetNFTHoldingsParam, NftApiList, NoderealChain, NoderealJsonrpcClient,
+		TransactionCount,
 	},
 };
 use litentry_primitives::{ErrorDetail, IntoErrorDetail};
@@ -229,7 +230,7 @@ impl CryptoSummaryClient {
 	pub fn logic(
 		&mut self,
 		identities: &Vec<(Web3Network, Vec<String>)>,
-	) -> core::result::Result<SummaryHoldings, ErrorDetail> {
+	) -> core::result::Result<(u64, SummaryHoldings), ErrorDetail> {
 		// Corresponds one-to-one with CRYPTO_SUMMARY_TOKEN_ADDRESSES_ETH
 		let mut flag_bsc_token: [bool; 12] = [false; 12];
 		let mut flag_eth_token: [bool; 15] = [false; 15];
@@ -238,6 +239,8 @@ impl CryptoSummaryClient {
 		// ETH and BNB holder use different APIs than other tokens, so they need to be handled separately
 		let mut is_eth_holder = false;
 		let mut is_bnb_holder = false;
+
+		let mut total_txs = 0_u64;
 
 		for (network, addresses) in identities {
 			if *network == Web3Network::Bsc {
@@ -270,6 +273,13 @@ impl CryptoSummaryClient {
 							is_bnb_holder = true;
 						}
 					}
+
+					// Total txs on BSC
+					let tx = self
+						.bsc_client
+						.get_transaction_count(address)
+						.map_err(|e| e.into_error_detail())?;
+					total_txs += tx;
 				}
 			}
 
@@ -317,8 +327,6 @@ impl CryptoSummaryClient {
 						.get_nft_holdings(&param)
 						.map_err(|e| e.into_error_detail())?;
 
-					error!("nft token res: {:?}", res_nft);
-
 					let details = res_nft.details;
 
 					let mut nft_addresses = vec![];
@@ -330,7 +338,14 @@ impl CryptoSummaryClient {
 						&mut flag_eth_nft,
 						&CRYPTO_SUMMARY_NFT_ADDRESSES_ETH,
 						&nft_addresses,
-					)
+					);
+
+					// Total txs on Ethereum
+					let tx = self
+						.eth_client
+						.get_transaction_count(address)
+						.map_err(|e| e.into_error_detail())?;
+					total_txs += tx;
 				}
 			}
 		}
@@ -339,7 +354,7 @@ impl CryptoSummaryClient {
 		flag_bsc_token[11] = is_bnb_holder;
 		flag_eth_token[14] = is_eth_holder;
 
-		Ok(SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft))
+		Ok((total_txs, SummaryHoldings::construct(&flag_bsc_token, &flag_eth_token, &flag_eth_nft)))
 	}
 
 	fn update_holding_flag(

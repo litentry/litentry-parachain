@@ -378,6 +378,38 @@ impl EthBalance for NoderealJsonrpcClient {
 	}
 }
 
+pub trait TransactionCount {
+	fn get_transaction_count(&mut self, address: &str) -> Result<u64, Error>;
+}
+
+impl TransactionCount for NoderealJsonrpcClient {
+	fn get_transaction_count(&mut self, address: &str) -> Result<u64, Error> {
+		let params = vec![address.to_string(), "latest".to_string()];
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "eth_getTransactionCount".to_string(),
+			params,
+			id: Id::Number(1),
+		};
+
+		match self.post(&req_body) {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("eth_getTransactionCount, response: {:?}", resp);
+				match resp.result.as_str() {
+					Some(result) => Ok(hex_to_decimal(&result[2..]) as u64),
+					None => Err(Error::RequestError(format!(
+						"Cannot tansform response result {:?} to &str",
+						resp.result
+					))),
+				}
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
