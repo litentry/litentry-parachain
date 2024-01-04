@@ -440,7 +440,7 @@ pub fn hex_to_decimal(hex_string: &str) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::hex_to_decimal;
+	use crate::hex_to_decimal;
 
 	#[test]
 	fn hex_to_decimal_works() {
