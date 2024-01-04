@@ -437,3 +437,15 @@ pub fn hex_to_decimal(hex_string: &str) -> f64 {
 		integer_part as f64
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use crate::hex_to_decimal;
+
+	#[test]
+	fn hex_to_decimal_works() {
+		let hex_string = "0000000000000000000000000000000000000000000000000000000babf2cf8b";
+		let d = hex_to_decimal(hex_string);
+		assert_eq!(d, 50129457035.0);
+	}
+}
