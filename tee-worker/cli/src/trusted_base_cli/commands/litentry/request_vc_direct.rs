@@ -252,6 +252,7 @@ impl RequestVcDirectCommand {
 				EVMAmountHoldingCommand::Ton => Assertion::EVMAmountHolding(EVMTokenType::Ton),
 				EVMAmountHoldingCommand::Trx => Assertion::EVMAmountHolding(EVMTokenType::Trx),
 			},
+			Command::CryptoSummary => Assertion::CryptoSummary,
 		};
 
 		let mut key: RequestAesKey = RequestAesKey::default();

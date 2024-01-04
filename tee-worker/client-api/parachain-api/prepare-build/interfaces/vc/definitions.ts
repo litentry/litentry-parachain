@@ -30,6 +30,7 @@ export default {
                 LITStaking: "Null",
                 EVMAmountHolding: "EVMTokenType",
                 BRC20AmountHolder: "Null",
+                CyptoSummary: "Null",
             },
         },
         AssertionSupportedNetwork: {
