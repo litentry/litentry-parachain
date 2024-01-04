@@ -12,7 +12,7 @@ name = "tests"
 path = "tests/tests.rs"
 
 [dependencies]
-num_enum = { version = "0.5.3", default-features = false }
+num_enum = { version = "0.7.1", default-features = false }
 proc-macro2 = { version = "1" }
 quote = { version = "1" }
 sha3 = { version = "0.10", default-features = false }
