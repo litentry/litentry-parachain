@@ -25,7 +25,7 @@ use core::result;
 use crate::*;
 use lc_credentials::{
 	nodereal::amount_holding::evm_amount_holding::{
-		EVMAmountHoldingAssertionUpdate, EVMTokenAddress,
+		EVMAmountHoldingAssertionUpdate, EVMTokenAddress, TokenDecimals,
 	},
 	Credential,
 };
@@ -44,6 +44,8 @@ fn get_holding_balance(
 	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth);
 	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc);
 	let mut total_balance = 0_f64;
+
+	let decimals = token_type.get_decimals();
 
 	for address in addresses.iter() {
 		let param = GetTokenBalance20Param {
@@ -68,7 +70,7 @@ fn get_holding_balance(
 		}
 	}
 
-	Ok(total_balance)
+	Ok(total_balance / decimals)
 }
 
 pub fn build(req: &AssertionBuildRequest, token_type: EVMTokenType) -> Result<Credential> {
@@ -203,17 +205,17 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "1600".into()
+								dst: "0".into()
 							}),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "3000".into()
+								dst: "100".into()
 							})
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);
@@ -309,12 +311,17 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "3000".into()
+								dst: "0".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "100".into()
 							})
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);

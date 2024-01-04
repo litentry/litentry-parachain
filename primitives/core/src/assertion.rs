@@ -254,6 +254,9 @@ pub enum Assertion {
 
 	#[codec(index = 22)]
 	BRC20AmountHolder,
+
+	#[codec(index = 23)]
+	CryptoSummary,
 }
 
 impl Assertion {
@@ -290,7 +293,8 @@ impl Assertion {
 			// LITStaking
 			Self::LITStaking => vec![Web3Network::Litentry],
 			// EVM Amount Holding
-			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
+			Self::EVMAmountHolding(_) | Self::CryptoSummary =>
+				vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// BRC20 Holder
 			Self::BRC20AmountHolder => vec![Web3Network::BitcoinP2tr],
 			// we don't care about any specific web3 network

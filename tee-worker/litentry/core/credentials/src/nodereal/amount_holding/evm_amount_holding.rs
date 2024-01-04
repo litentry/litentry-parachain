@@ -75,6 +75,18 @@ impl AssertionTokenName for EVMTokenType {
 	}
 }
 
+pub trait TokenDecimals {
+	fn get_decimals(&self) -> f64;
+}
+
+impl TokenDecimals for EVMTokenType {
+	fn get_decimals(&self) -> f64 {
+		match self {
+			EVMTokenType::Ton | EVMTokenType::Trx => 1_000_000_000.0,
+		}
+	}
+}
+
 pub trait EVMAmountHoldingAssertionUpdate {
 	fn update_evm_amount_holding_assertion(&mut self, token_type: EVMTokenType, amount: f64);
 }
