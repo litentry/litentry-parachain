@@ -20,7 +20,23 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-pub mod amount_holding;
-pub mod bnb_domain;
-pub mod crypto_summary;
-pub mod nft_holder;
+use lc_credentials::nodereal::crypto_summary::{
+	summary::CryptoSummaryCredentialUpdate, CryptoSummaryClient,
+};
+
+use crate::*;
+
+pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+	let identities = transpose_identity(&req.identities);
+	let (txs, summary) = CryptoSummaryClient::new()
+		.logic(&identities)
+		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
+
+	let mut credential_unsigned = Credential::new(&req.who, &req.shard).map_err(|e| {
+		error!("Generate unsigned credential failed {:?}", e);
+		Error::RequestVCFailed(Assertion::CryptoSummary, e.into_error_detail())
+	})?;
+	credential_unsigned.update_crypto_summary_credential(txs, summary);
+
+	Ok(credential_unsigned)
+}
