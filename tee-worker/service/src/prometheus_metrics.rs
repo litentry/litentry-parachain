@@ -219,6 +219,8 @@ fn handle_stf_call_request(req: RequestType, _time: f64) {
 			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
 			Assertion::LITStaking => "LITStaking",
 			Assertion::EVMAmountHolding(_) => "EVMAmountHolding",
+			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
+			Assertion::CryptoSummary => "CryptoSummary",
 		},
 	};
 }

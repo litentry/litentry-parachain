@@ -299,6 +299,7 @@ pub struct GetTokenBalance20Param {
 // Fungible Tokens API
 pub trait FungibleApiList {
 	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error>;
+	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error>;
 }
 
 impl FungibleApiList for NoderealJsonrpcClient {
@@ -320,6 +321,84 @@ impl FungibleApiList for NoderealJsonrpcClient {
 				debug!("get_token_balance_20, response: {:?}", resp);
 				match resp.result.as_str() {
 					Some(result) => Ok(hex_to_decimal(&result[2..])),
+					None => Err(Error::RequestError(format!(
+						"Cannot tansform response result {:?} to &str",
+						resp.result
+					))),
+				}
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+
+	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error> {
+		let params: Vec<String> = vec![address.to_string(), "0x1".to_string(), "0x64".to_string()];
+		debug!("get_token_holdings: {:?}", params);
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "nr_getTokenHoldings".to_string(),
+			params: params.to_vec(),
+			id: 1,
+		};
+
+		self.post(&req_body)
+	}
+}
+
+pub trait EthBalance {
+	fn get_balance(&mut self, address: &str) -> Result<f64, Error>;
+}
+
+impl EthBalance for NoderealJsonrpcClient {
+	fn get_balance(&mut self, address: &str) -> Result<f64, Error> {
+		let params = vec![address.to_string(), "latest".to_string()];
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "eth_getBalance".to_string(),
+			params,
+			id: 1,
+		};
+
+		match self.post(&req_body) {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("eth_getBalance, response: {:?}", resp);
+				match resp.result.as_str() {
+					Some(result) => Ok(hex_to_decimal(&result[2..])),
+					None => Err(Error::RequestError(format!(
+						"Cannot tansform response result {:?} to &str",
+						resp.result
+					))),
+				}
+			},
+			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
+		}
+	}
+}
+
+pub trait TransactionCount {
+	fn get_transaction_count(&mut self, address: &str) -> Result<u64, Error>;
+}
+
+impl TransactionCount for NoderealJsonrpcClient {
+	fn get_transaction_count(&mut self, address: &str) -> Result<u64, Error> {
+		let params = vec![address.to_string(), "latest".to_string()];
+
+		let req_body = RpcRequest {
+			jsonrpc: "2.0".to_string(),
+			method: "eth_getTransactionCount".to_string(),
+			params,
+			id: 1,
+		};
+
+		match self.post(&req_body) {
+			Ok(resp) => {
+				// result example: '0x', '0x8'
+				debug!("eth_getTransactionCount, response: {:?}", resp);
+				match resp.result.as_str() {
+					Some(result) => Ok(hex_to_decimal(&result[2..]) as u64),
 					None => Err(Error::RequestError(format!(
 						"Cannot tansform response result {:?} to &str",
 						resp.result

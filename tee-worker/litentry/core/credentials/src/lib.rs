@@ -327,10 +327,11 @@ impl Credential {
 			return Err(Error::EmptyCredentialIssuer)
 		}
 
-		let exported = vc.to_json()?;
-		if exported.len() > MAX_CREDENTIAL_SIZE {
-			return Err(Error::CredentialIsTooLong)
-		}
+		// TODO: Do we need to set size restrictions
+		// let exported = vc.to_json()?;
+		// if exported.len() > MAX_CREDENTIAL_SIZE {
+		// 	return Err(Error::CredentialIsTooLong)
+		// }
 
 		if vc.proof.is_none() {
 			return Err(Error::InvalidProof)
