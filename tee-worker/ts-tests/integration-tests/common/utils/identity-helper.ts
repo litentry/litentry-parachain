@@ -143,19 +143,6 @@ export function parseIdGraph(
     return idGraph;
 }
 
-export function parseIdentity(
-    context: IntegrationTestContext,
-    identityOutput: AesOutput,
-    aesKey: HexString
-): CorePrimitivesIdentity {
-    const decryptedIdentity = decryptWithAes(aesKey, identityOutput, 'hex');
-    const identity = context.api.createType(
-        'CorePrimitivesIdentity',
-        decryptedIdentity
-    ) as unknown as CorePrimitivesIdentity;
-    return identity;
-}
-
 export async function buildValidations(
     context: IntegrationTestContext,
     signerIdentities: CorePrimitivesIdentity[],

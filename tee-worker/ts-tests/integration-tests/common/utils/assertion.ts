@@ -4,7 +4,7 @@ import { hexToU8a, u8aToHex } from '@polkadot/util';
 import Ajv from 'ajv';
 import { assert, expect } from 'chai';
 import * as ed from '@noble/ed25519';
-import { parseIdGraph, parseIdentity } from './identity-helper';
+import { parseIdGraph } from './identity-helper';
 import type { PalletIdentityManagementTeeError } from 'sidechain-api';
 import { TeerexPrimitivesEnclave, CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from '../common-types';
@@ -79,7 +79,7 @@ export function assertIdGraph(
 export async function assertIdentityDeactivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
-        const who = eventData.identity;
+        const who = eventData.primeIdentity;
         const signerIdentity = await signer.getIdentity(context);
         assert.deepEqual(
             who.toHuman(),
@@ -94,7 +94,7 @@ export async function assertIdentityDeactivated(context: IntegrationTestContext,
 export async function assertIdentityActivated(context: IntegrationTestContext, signer: Signer, events: any[]) {
     for (let index = 0; index < events.length; index++) {
         const eventData = events[index].data;
-        const who = eventData.identity;
+        const who = eventData.primeIdentity;
         const signerIdentity = await signer.getIdentity(context);
         assert.deepEqual(
             who.toHuman(),
@@ -187,25 +187,12 @@ export async function assertIdGraphMutationEvent(
 
     const signerIdentity = await signer.getIdentity(context);
     events.forEach((e, i) => {
-        assert.deepEqual(signerIdentity.toHuman(), e.data.identity.toHuman());
+        assert.deepEqual(signerIdentity.toHuman(), e.data.primeIdentity.toHuman());
         if (idGraphHashResults != undefined) {
             assert.equal(idGraphHashResults![i], e.data.idGraphHash.toHex());
         }
     });
     console.log(colors.green('assertIdGraphMutationEvent passed'));
-}
-
-export async function assertIdentity(
-    context: IntegrationTestContext,
-    events: any[],
-    expectedIdentities: CorePrimitivesIdentity[]
-) {
-    assert.isAtLeast(events.length, 1, 'Check assertIdentity error: events length should be greater than 1');
-    for (let index = 0; index < events.length; index++) {
-        const identity = parseIdentity(context, events[index].data.identity, aesKey);
-        assert.deepEqual(identity.toString(), expectedIdentities[index].toString());
-    }
-    console.log(colors.green('assertIdentity passed'));
 }
 
 export function assertWorkerError(

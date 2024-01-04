@@ -93,22 +93,22 @@ pub mod pallet {
 		// TODO: what if the event is triggered by an extrinsic that is included in a batch call?
 		//       Can we retrieve that extrinsic hash in F/E?
 		IdentityLinked {
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityDeactivated {
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityActivated {
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		IdentityNetworksSet {
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
@@ -116,26 +116,26 @@ pub mod pallet {
 		// copied from core_primitives::IMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
 		//
-		// why is the `account` in the error event an Option?
+		// why is the `prime_identity` in the error event an Option?
 		// because in some erroneous cases we can't get the extrinsic sender (e.g. decode error)
 		LinkIdentityFailed {
-			identity: Option<Identity>,
+			prime_identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		DeactivateIdentityFailed {
-			identity: Option<Identity>,
+			prime_identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		ActivateIdentityFailed {
-			identity: Option<Identity>,
+			prime_identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		ImportScheduledEnclaveFailed,
 		UnclassifiedError {
-			identity: Option<Identity>,
+			prime_identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
@@ -247,12 +247,16 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_linked())]
 		pub fn identity_linked(
 			origin: OriginFor<T>,
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityLinked { identity, id_graph_hash, req_ext_hash });
+			Self::deposit_event(Event::IdentityLinked {
+				prime_identity,
+				id_graph_hash,
+				req_ext_hash,
+			});
 			Ok(Pays::No.into())
 		}
 
@@ -260,13 +264,13 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_deactivated())]
 		pub fn identity_deactivated(
 			origin: OriginFor<T>,
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityDeactivated {
-				identity,
+				prime_identity,
 				id_graph_hash,
 				req_ext_hash,
 			});
@@ -277,12 +281,16 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_activated())]
 		pub fn identity_activated(
 			origin: OriginFor<T>,
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::IdentityActivated { identity, id_graph_hash, req_ext_hash });
+			Self::deposit_event(Event::IdentityActivated {
+				prime_identity,
+				id_graph_hash,
+				req_ext_hash,
+			});
 			Ok(Pays::No.into())
 		}
 
@@ -290,13 +298,13 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::identity_networks_set())]
 		pub fn identity_networks_set(
 			origin: OriginFor<T>,
-			identity: Identity,
+			prime_identity: Identity,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
 			Self::deposit_event(Event::IdentityNetworksSet {
-				identity,
+				prime_identity,
 				id_graph_hash,
 				req_ext_hash,
 			});
@@ -307,7 +315,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,
-			identity: Option<Identity>,
+			prime_identity: Option<Identity>,
 			error: IMPError,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
@@ -315,26 +323,30 @@ pub mod pallet {
 			match error {
 				IMPError::LinkIdentityFailed(detail) =>
 					Self::deposit_event(Event::LinkIdentityFailed {
-						identity,
+						prime_identity,
 						detail,
 						req_ext_hash,
 					}),
 				IMPError::DeactivateIdentityFailed(detail) =>
 					Self::deposit_event(Event::DeactivateIdentityFailed {
-						identity,
+						prime_identity,
 						detail,
 						req_ext_hash,
 					}),
 				IMPError::ActivateIdentityFailed(detail) =>
 					Self::deposit_event(Event::ActivateIdentityFailed {
-						identity,
+						prime_identity,
 						detail,
 						req_ext_hash,
 					}),
 				IMPError::ImportScheduledEnclaveFailed =>
 					Self::deposit_event(Event::ImportScheduledEnclaveFailed),
 				IMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { identity, detail, req_ext_hash }),
+					Self::deposit_event(Event::UnclassifiedError {
+						prime_identity,
+						detail,
+						req_ext_hash,
+					}),
 			}
 			Ok(Pays::No.into())
 		}

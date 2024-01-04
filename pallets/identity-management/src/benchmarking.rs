@@ -99,10 +99,10 @@ benchmarks! {
 		let id_graph_hash = H256::default();
 		let req_ext_hash = H256::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
-	}: _<T::RuntimeOrigin>(call_origin, identity.clone(), id_graph_hash, req_ext_hash)
+		let prime_identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
+	}: _<T::RuntimeOrigin>(call_origin, prime_identity.clone(), id_graph_hash, req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityLinked { identity, id_graph_hash, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityLinked { prime_identity, id_graph_hash, req_ext_hash }.into());
 	}
 
 	// Benchmark `identity_deactivated`. There are no worst conditions. The benchmark showed that
@@ -111,10 +111,10 @@ benchmarks! {
 		let id_graph_hash = H256::default();
 		let req_ext_hash = H256::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
-	}: _<T::RuntimeOrigin>(call_origin, identity.clone(), id_graph_hash, req_ext_hash)
+		let prime_identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
+	}: _<T::RuntimeOrigin>(call_origin, prime_identity.clone(), id_graph_hash, req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityDeactivated { identity, id_graph_hash, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityDeactivated { prime_identity, id_graph_hash, req_ext_hash }.into());
 	}
 
 	// Benchmark `identity_activated`. There are no worst conditions. The benchmark showed that
@@ -123,10 +123,10 @@ benchmarks! {
 		let id_graph_hash = H256::default();
 		let req_ext_hash = H256::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
-	}: _<T::RuntimeOrigin>(call_origin, identity.clone(), id_graph_hash, req_ext_hash)
+		let prime_identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
+	}: _<T::RuntimeOrigin>(call_origin, prime_identity.clone(), id_graph_hash, req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityActivated { identity, id_graph_hash, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityActivated { prime_identity, id_graph_hash, req_ext_hash }.into());
 	}
 
 	// Benchmark `identity_networks_set`. There are no worst conditions. The benchmark showed that
@@ -135,23 +135,23 @@ benchmarks! {
 		let id_graph_hash = H256::default();
 		let req_ext_hash = H256::default();
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
-	}: _<T::RuntimeOrigin>(call_origin, identity.clone(), id_graph_hash, req_ext_hash)
+		let prime_identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
+	}: _<T::RuntimeOrigin>(call_origin, prime_identity.clone(), id_graph_hash, req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::IdentityNetworksSet { identity, id_graph_hash, req_ext_hash }.into());
+		assert_last_event::<T>(Event::IdentityNetworksSet { prime_identity, id_graph_hash, req_ext_hash }.into());
 	}
 
 	// Benchmark `some_error`. There are no worst conditions. The benchmark showed that
 	// execution time is constant irrespective of encrypted_data size.
 	some_error {
 		let call_origin = T::TEECallOrigin::try_successful_origin().map_err(|_| BenchmarkError::Weightless)?;
-		let identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
+		let prime_identity: Identity =  frame_benchmarking::account::<AccountId>("TEST_A", 0u32, USER_SEED).into();
 		let detail = ErrorDetail::WrongWeb2Handle;
 		let error = IMPError::LinkIdentityFailed(detail.clone());
 		let req_ext_hash = H256::default();
 	}: _<T::RuntimeOrigin>(call_origin, Some(identity.clone()), error, req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityFailed { identity: Some(identity), detail, req_ext_hash }.into())
+		assert_last_event::<T>(Event::LinkIdentityFailed { prime_identity: Some(identity), detail, req_ext_hash }.into())
 	}
 }
 
