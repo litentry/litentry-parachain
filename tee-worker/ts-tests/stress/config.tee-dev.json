@@ -2,5 +2,5 @@
     "connections": 4,
     "iterations": 4,
     "substrateEndpoint": "ws://tee-dev.litentry.io:9944",
-    "workerEndpoint": "wss://tee-dev.litentry.io:2000"
+    "workerEndpoint": "ws://tee-dev.litentry.io:2000"
 }
