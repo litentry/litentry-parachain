@@ -143,7 +143,7 @@ fn tee_callback_with_registered_enclave_works() {
 		));
 		System::assert_last_event(RuntimeEvent::IdentityManagement(
 			crate::Event::LinkIdentityFailed {
-				identity: None,
+				prime_identity: None,
 				detail: ErrorDetail::WrongWeb2Handle,
 				req_ext_hash: H256::default(),
 			},

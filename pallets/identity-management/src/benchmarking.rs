@@ -149,9 +149,9 @@ benchmarks! {
 		let detail = ErrorDetail::WrongWeb2Handle;
 		let error = IMPError::LinkIdentityFailed(detail.clone());
 		let req_ext_hash = H256::default();
-	}: _<T::RuntimeOrigin>(call_origin, Some(identity.clone()), error, req_ext_hash)
+	}: _<T::RuntimeOrigin>(call_origin, Some(prime_identity.clone()), error, req_ext_hash)
 	verify {
-		assert_last_event::<T>(Event::LinkIdentityFailed { prime_identity: Some(identity), detail, req_ext_hash }.into())
+		assert_last_event::<T>(Event::LinkIdentityFailed { prime_identity: Some(prime_identity), detail, req_ext_hash }.into())
 	}
 }
 
