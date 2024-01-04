@@ -71,6 +71,9 @@ impl RestPath<String> for GeniidataResponse {
 	}
 }
 
+// According to https://geniidata.readme.io/reference/get-brc20-tick-list-copy, the maximum limit is i32::MAX
+const GENIIDATA_QUERY_LIMIT: &str = "2147483647";
+
 pub struct GeniidataClient {
 	client: RestClient<HttpClient<SendWithCertificateVerification>>,
 }
@@ -95,7 +98,8 @@ impl GeniidataClient {
 	) -> Result<Vec<ResponseItem>, DataProviderError> {
 		let mut all_items: Vec<ResponseItem> = Vec::new();
 		for address in addresses {
-			let query = vec![("limit", "20"), ("offset", "0"), ("address", &address)];
+			let query =
+				vec![("limit", GENIIDATA_QUERY_LIMIT), ("offset", "0"), ("address", &address)];
 			let response = self
 				.client
 				.get_with::<String, GeniidataResponse>("".to_string(), query.as_slice())

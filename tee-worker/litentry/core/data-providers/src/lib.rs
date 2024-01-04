@@ -424,7 +424,7 @@ impl ConvertParameterString for AchainableParams {
 	}
 }
 
-fn hex_to_decimal(hex_string: &str) -> f64 {
+pub fn hex_to_decimal(hex_string: &str) -> f64 {
 	let parts: Vec<&str> = hex_string.split('.').collect();
 
 	let integer_part = u64::from_str_radix(parts[0], 16).unwrap_or_default();
@@ -435,5 +435,17 @@ fn hex_to_decimal(hex_string: &str) -> f64 {
 		decimal_str.parse::<f64>().unwrap_or_default()
 	} else {
 		integer_part as f64
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::hex_to_decimal;
+
+	#[test]
+	fn hex_to_decimal_works() {
+		let hex_string = "0000000000000000000000000000000000000000000000000000000babf2cf8b";
+		let d = hex_to_decimal(hex_string);
+		assert_eq!(d, 50129457035.0);
 	}
 }
