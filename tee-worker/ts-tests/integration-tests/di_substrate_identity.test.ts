@@ -27,8 +27,7 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { LitentryPrimitivesIdentity } from 'sidechain-api';
+import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Vec } from '@polkadot/types';
 import { ethers } from 'ethers';
 import type { HexString } from '@polkadot/util/types';
@@ -37,7 +36,7 @@ import { subscribeToEventsWithExtHash } from './common/transactions';
 describe('Test Identity (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
-    let aliceSubstrateIdentity: LitentryPrimitivesIdentity = undefined as any;
+    let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
 
     // Alice links:
     // - a `mock_user` twitter
@@ -46,7 +45,7 @@ describe('Test Identity (direct invocation)', function () {
     // - alice's bitcoin identity
     const linkIdentityRequestParams: {
         nonce: number;
-        identity: LitentryPrimitivesIdentity;
+        identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
         networks: Vec<Web3Network>;
     }[] = [];
@@ -174,7 +173,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const identityLinkedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [
                 [aliceSubstrateIdentity, true],
                 [twitterIdentity, true],
@@ -226,6 +225,7 @@ describe('Test Identity (direct invocation)', function () {
         }
 
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
             idGraphHashResults,
@@ -443,7 +443,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const deactivateIdentityRequestParams: {
             nonce: number;
-            identity: LitentryPrimitivesIdentity;
+            identity: CorePrimitivesIdentity;
         }[] = [];
 
         const twitterNonce = getNextNonce();
@@ -486,7 +486,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const identityDeactivatedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, false]],
             [[evmIdentity, false]],
             [[eveSubstrateIdentity, false]],
@@ -532,6 +532,7 @@ describe('Test Identity (direct invocation)', function () {
             });
         }
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.alice),
             identityDeactivatedEvents,
             idGraphHashResults,
@@ -571,7 +572,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const activateIdentityRequestParams: {
             nonce: number;
-            identity: LitentryPrimitivesIdentity;
+            identity: CorePrimitivesIdentity;
         }[] = [];
 
         const twitterNonce = getNextNonce();
@@ -614,7 +615,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const identityActivatedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [[twitterIdentity, true]],
             [[evmIdentity, true]],
             [[eveSubstrateIdentity, true]],
@@ -660,6 +661,7 @@ describe('Test Identity (direct invocation)', function () {
             });
         }
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.alice),
             identityActivatedEvents,
             idGraphHashResults,
@@ -721,7 +723,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const identityNetworksSetEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[eveSubstrateIdentity, true]]];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[eveSubstrateIdentity, true]]];
 
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         // we set the network to ['Litentry', 'Kusama']
@@ -758,6 +760,7 @@ describe('Test Identity (direct invocation)', function () {
             }
         });
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.alice),
             identityNetworksSetEvents,
             idGraphHashResults,
