@@ -208,7 +208,7 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "100".into()
+								dst: "1".into()
 							})
 						]
 					}
@@ -254,17 +254,17 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "0".into()
+								dst: "100".into()
 							}),
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "100".into()
+								dst: "200".into()
 							})
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);
@@ -310,7 +310,7 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "100".into()
+								dst: "1".into()
 							})
 						]
 					}
