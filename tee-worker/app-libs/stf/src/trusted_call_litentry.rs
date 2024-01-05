@@ -27,8 +27,11 @@ use crate::{
 	AccountId, ShardIdentifier, StfError, StfResult, H256,
 };
 use codec::Encode;
-use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::{IDGraph, RuntimeOrigin, System};
+use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
+use ita_sgx_runtime::{
+	pallet_imt::{get_eligible_identities, IdentityContext},
+	BlockNumber, IDGraph, RuntimeOrigin, System,
+};
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
@@ -39,8 +42,7 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, RequestAesKey, ValidationData,
-	Web3Network,
+	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };
 use log::*;
 use std::{sync::Arc, vec::Vec};
@@ -167,22 +169,22 @@ impl TrustedCallSigned {
 			),
 		}
 
-		let id_graph = IMT::id_graph(&who);
+		let mut id_graph = IMT::id_graph(&who);
+		if id_graph.is_empty() {
+			// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+			id_graph.push((
+				who.clone(),
+				IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
+			));
+		}
 		let assertion_networks = assertion.get_supported_web3networks();
-		let identities: Vec<IdentityNetworkTuple> = id_graph
-			.into_iter()
-			.filter(|item| item.1.is_active())
-			.map(|item| {
-				let mut networks = item.1.web3networks.to_vec();
-				// filter out the web3networks which are not supported by this specific `assertion`.
-				// We do it here before every request sending because:
-				// - it's a common step for all assertion buildings, for those assertions which only
-				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
-				// - it helps to reduce the request size a bit
-				networks.retain(|n| assertion_networks.contains(n));
-				(item.0, networks)
-			})
-			.collect();
+		let identities = get_eligible_identities(id_graph, assertion_networks);
+
+		ensure!(
+			!identities.is_empty(),
+			StfError::RequestVCFailed(assertion, ErrorDetail::NoEligibleIdentity)
+		);
+
 		let assertion_build: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			signer,

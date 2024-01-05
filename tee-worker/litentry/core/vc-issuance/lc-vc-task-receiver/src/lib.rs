@@ -19,12 +19,11 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-mod vc_handling;
-
 use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
+use frame_support::{ensure, sp_runtime::traits::One};
 pub use futures;
-use ita_sgx_runtime::{Hash, Runtime};
+use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
 use ita_stf::{
 	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
 	Getter, OpaqueCall, TrustedCall, TrustedCallSigned, TrustedOperation, H256,
@@ -55,6 +54,8 @@ use std::{
 	vec::Vec,
 };
 use threadpool::ThreadPool;
+
+mod vc_handling;
 
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
@@ -151,20 +152,20 @@ where
 				// Sorts the IDGraph in place
 				sort_id_graph::<Runtime>(&mut id_graph);
 
-				let assertion_networks = assertion.clone().get_supported_web3networks();
-				let identities: Vec<IdentityNetworkTuple> = id_graph
-					.into_iter()
-					.filter(|item| item.1.is_active())
-					.map(|item| {
-						let mut networks = item.1.web3networks.to_vec();
-						networks.retain(|n| assertion_networks.contains(n));
-						(item.0, networks)
-					})
-					.collect();
+				if id_graph.is_empty() {
+					// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+					id_graph.push((
+						who.clone(),
+						IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
+					));
+				}
 
-				identities
+				let assertion_networks = assertion.clone().get_supported_web3networks();
+				get_eligible_identities(id_graph, assertion_networks)
 			})
 			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
+
+		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
 		let signer = signer
 			.to_account_id()

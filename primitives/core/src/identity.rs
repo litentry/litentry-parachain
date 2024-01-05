@@ -16,7 +16,10 @@
 
 pub extern crate alloc;
 
-use crate::{AccountId, Web3Network};
+use crate::{
+	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, AccountId,
+	Web3Network,
+};
 use alloc::{format, str, string::String};
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use core::fmt::{Debug, Formatter};
@@ -304,14 +307,25 @@ impl Identity {
 		matches!(self, Self::Bitcoin(..))
 	}
 
+	pub fn default_web3networks(&self) -> Vec<Web3Network> {
+		match self {
+			Identity::Substrate(_) => all_substrate_web3networks(),
+			Identity::Evm(_) => all_evm_web3networks(),
+			Identity::Bitcoin(_) => all_bitcoin_web3networks(),
+			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => Vec::new(),
+		}
+	}
+
 	// check if the given web3networks match the identity
 	pub fn matches_web3networks(&self, networks: &Vec<Web3Network>) -> bool {
-		(self.is_substrate() && !networks.is_empty() && networks.iter().all(|n| n.is_substrate())) ||
-			(self.is_evm() && !networks.is_empty() && networks.iter().all(|n| n.is_evm())) ||
-			(self.is_bitcoin() &&
-				!networks.is_empty() &&
-				networks.iter().all(|n| n.is_bitcoin())) ||
-			(self.is_web2() && networks.is_empty())
+		match self {
+			Identity::Substrate(_) =>
+				!networks.is_empty() && networks.iter().all(|n| n.is_substrate()),
+			Identity::Evm(_) => !networks.is_empty() && networks.iter().all(|n| n.is_evm()),
+			Identity::Bitcoin(_) => !networks.is_empty() && networks.iter().all(|n| n.is_bitcoin()),
+			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) =>
+				networks.is_empty(),
+		}
 	}
 
 	/// Currently we only support mapping from Address32/Address20 to AccountId, not opposite.
@@ -321,7 +335,7 @@ impl Identity {
 			Identity::Evm(address) =>
 				Some(HashedAddressMapping::into_account_id(H160::from_slice(address.as_ref()))),
 			Identity::Bitcoin(address) => Some(blake2_256(address.as_ref()).into()),
-			_ => None,
+			Identity::Twitter(_) | Identity::Discord(_) | Identity::Github(_) => None,
 		}
 	}
 
