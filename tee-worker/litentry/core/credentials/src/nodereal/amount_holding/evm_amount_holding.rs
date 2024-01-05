@@ -42,8 +42,8 @@ impl EVMTokenAddress for EVMTokenType {
 	}
 }
 
-const EVM_HOLDING_AMOUNT_RANGE: [f64; 8] =
-	[0.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0];
+const EVM_HOLDING_AMOUNT_RANGE: [f64; 10] =
+	[0.0, 1.0, 50.0, 100.0, 200.0, 500.0, 800.0, 1200.0, 1600.0, 3000.0];
 
 const TYPE: &str = "Token Holding Amount";
 const DESCRIPTION: &str = "The amount of a particular token you are holding";
