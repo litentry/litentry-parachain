@@ -57,12 +57,6 @@ export const defaultAssertions = [
         },
     },
     {
-        description: "The range of the user's Twitter follower count",
-        assertion: {
-            A6: 'A6',
-        },
-    },
-    {
         description: 'The length of time a user continues to hold DOT token',
         assertion: {
             A7: '10.01',
