@@ -33,7 +33,7 @@ describe('Test Vc (direct invocation)', function () {
     // We need this linking to not have empty eligible identities for any vc request
     const linkIdentityRequestParams: {
         nonce: number;
-        identity: LitentryPrimitivesIdentity;
+        identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
         networks: Vec<Web3Network>;
     }[] = [];
