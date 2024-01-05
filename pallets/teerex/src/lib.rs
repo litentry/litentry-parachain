@@ -133,6 +133,10 @@ pub mod pallet {
 	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn schedule_enclave)]
+	pub type ScheduleEnclave<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn quoting_enclave)]
 	pub type QuotingEnclaveRegistry<T: Config> = StorageValue<_, QuotingEnclave, ValueQuery>;
 
@@ -282,11 +286,15 @@ pub mod pallet {
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
 			//       should we check the current sidechain_blocknumber >= registered
 			// sidechain_blocknumber?
-			#[cfg(not(feature = "skip-scheduled-enclave-check"))]
-			ensure!(
-				ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
-				Error::<T>::EnclaveNotInSchedule
-			);
+			// Dev setup -> SkipScheduledEnclave Extrinsic -> Does it make sense to set in dev
+			// setup?
+			let schedule_enclave = ScheduleEnclave::<T>::get();
+			if schedule_enclave {
+				ensure!(
+					ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
+					Error::<T>::EnclaveNotInSchedule
+				);
+			}
 
 			Self::add_enclave(&sender, &enclave)?;
 			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
@@ -636,6 +644,18 @@ pub mod pallet {
 			Self::deposit_event(Event::NewMrenclaveSet { new_mrenclave });
 			// Do not pay a fee
 			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(31)]
+		#[pallet::weight(100)]
+		pub fn set_schedule_enclave(
+			origin: OriginFor<T>,
+			schedule_enclave: bool,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_root(origin)?;
+
+			<ScheduleEnclave<T>>::set(schedule_enclave);
+			Ok(().into())
 		}
 	}
 
