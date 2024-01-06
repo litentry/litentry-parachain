@@ -11,11 +11,7 @@ import {
 } from '@polkadot/util';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import crypto, { KeyObject, createPublicKey } from 'crypto';
-import {
-    LitentryPrimitivesIdentity,
-    TypeRegistry as SidechainTypeRegistry,
-    Metadata as SidechainMetadata,
-} from 'sidechain-api';
+import { TypeRegistry as SidechainTypeRegistry, Metadata as SidechainMetadata } from 'sidechain-api';
 import {
     Bytes,
     Codec,
@@ -25,15 +21,16 @@ import {
     WorkerRpcReturnValue,
     LitentryValidationData,
     Assertion,
+    CorePrimitivesIdentity,
+    TrustedCallSigned,
+    PublicGetter,
 } from 'parachain-api';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { Index } from '@polkadot/types/interfaces';
 import { Option, u32, u8, Vector } from 'scale-ts';
-import { TrustedCallSigned } from 'parachain-api';
 import WsWebSocket from 'ws';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
-import { PublicGetter } from 'parachain-api';
 
 async function logLine(log: WritableStream<string>, message: string): Promise<void> {
     const writer = log.getWriter();
@@ -69,13 +66,12 @@ function encryptWithAes(key: string, nonce: Uint8Array, cleartext: Buffer): HexS
 
 function generateVerificationMessage(
     parachainApi: ParachainApiPromise,
-    sidechainRegistry: SidechainTypeRegistry,
-    signer: LitentryPrimitivesIdentity,
-    identity: LitentryPrimitivesIdentity,
+    signer: CorePrimitivesIdentity,
+    identity: CorePrimitivesIdentity,
     sidechainNonce: number
 ): HexString {
-    const encodedIdentity = sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
-    const encodedWho = sidechainRegistry.createType('LitentryPrimitivesIdentity', signer).toU8a();
+    const encodedIdentity = parachainApi.createType('CorePrimitivesIdentity', identity).toU8a();
+    const encodedWho = parachainApi.createType('CorePrimitivesIdentity', signer).toU8a();
     const encodedSidechainNonce = parachainApi.createType('Index', sidechainNonce);
     const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encodedWho, encodedIdentity]);
     return blake2AsHex(msg, 256);
@@ -84,18 +80,12 @@ function generateVerificationMessage(
 export async function buildValidation(
     parachainApi: ParachainApiPromise,
     sidechainRegistry: SidechainTypeRegistry,
-    signerIdentity: LitentryPrimitivesIdentity,
-    identity: LitentryPrimitivesIdentity,
+    signerIdentity: CorePrimitivesIdentity,
+    identity: CorePrimitivesIdentity,
     startingSidechainNonce: number,
     signer: Wallet
 ): Promise<LitentryValidationData> {
-    const message = generateVerificationMessage(
-        parachainApi,
-        sidechainRegistry,
-        signerIdentity,
-        identity,
-        startingSidechainNonce
-    );
+    const message = generateVerificationMessage(parachainApi, signerIdentity, identity, startingSidechainNonce);
 
     return parachainApi.createType('LitentryValidationData', {
         Web3Validation:
@@ -121,17 +111,14 @@ export async function buildValidation(
 
 export async function buildIdentityFromWallet(
     wallet: Wallet,
-    sidechainRegistry: SidechainTypeRegistry
-): Promise<LitentryPrimitivesIdentity> {
+    api: ParachainApiPromise
+): Promise<CorePrimitivesIdentity> {
     if (wallet.type === 'evm') {
         const identity = {
             Evm: wallet.wallet.address,
         };
 
-        return sidechainRegistry.createType(
-            'LitentryPrimitivesIdentity',
-            identity
-        ) as unknown as LitentryPrimitivesIdentity;
+        return api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
     }
 
     const { keyringPair } = wallet;
@@ -155,10 +142,7 @@ export async function buildIdentityFromWallet(
         [type]: address,
     };
 
-    return sidechainRegistry.createType(
-        'LitentryPrimitivesIdentity',
-        identity
-    ) as unknown as LitentryPrimitivesIdentity;
+    return api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
 }
 
 export function decodeRpcBytesAsString(value: Bytes): string {
@@ -264,7 +248,7 @@ export const createSignedTrustedGetter = (
 export function createSignedTrustedGetterUserShieldingKey(
     parachainApi: ParachainApiPromise,
     signer: KeyringPair,
-    subject: LitentryPrimitivesIdentity
+    subject: CorePrimitivesIdentity
 ) {
     const getterSigned = createSignedTrustedGetter(
         parachainApi,
@@ -343,7 +327,7 @@ export const getSidechainNonce = async (
     parachainApi: ParachainApiPromise,
     mrenclave: string,
     teeShieldingKey: KeyObject,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(parachainApi, ['nonce', '(LitentryIdentity)'], subject.toHuman());
@@ -499,7 +483,7 @@ export function createSignedTrustedCallSetUserShieldingKey(
     mrenclave: string,
     nonce: Codec,
     signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     key: string,
     hash: string,
     withWrappedBytes = false
@@ -520,7 +504,7 @@ export function createSignedTrustedCallLinkIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     identity: string,
     validationData: string,
     web3networks: string,
@@ -545,8 +529,8 @@ export function createSignedTrustedCallDeactivateIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
-    identity: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
+    identity: CorePrimitivesIdentity,
     hash: string
 ) {
     return createSignedTrustedCall(
@@ -564,8 +548,8 @@ export function createSignedTrustedCallActivateIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
-    identity: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
+    identity: CorePrimitivesIdentity,
     hash: string
 ) {
     return createSignedTrustedCall(
@@ -583,7 +567,7 @@ export function createSignedTrustedCallRequestVc(
     mrenclave: string,
     nonce: Codec,
     signer: Wallet,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     assertion: Assertion,
     key: string,
     hash: string

@@ -18,8 +18,8 @@
 // when requesting VCs.
 
 use crate::{
-	AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType, GenericDiscordRoleType,
-	OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
+	all_web3networks, AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType,
+	GenericDiscordRoleType, OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -271,6 +271,8 @@ impl Assertion {
 	// the broader `Web3Network` (see network.rs)
 	pub fn get_supported_web3networks(&self) -> Vec<Web3Network> {
 		match self {
+			// A1, any web3 network is allowed
+			Self::A1 => all_web3networks(),
 			// LIT holder, not including `LitentryRococo` as it's not supported by any data provider
 			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
 			// DOT holder
@@ -298,7 +300,6 @@ impl Assertion {
 			// BRC20 Holder
 			Self::BRC20AmountHolder => vec![Web3Network::BitcoinP2tr],
 			// we don't care about any specific web3 network
-			Self::A1 |
 			Self::A2(..) |
 			Self::A3(..) |
 			Self::A6 |

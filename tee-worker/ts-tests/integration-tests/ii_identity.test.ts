@@ -16,8 +16,7 @@ import { u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { sendTxsWithUtility } from './common/transactions';
-import type { LitentryPrimitivesIdentity } from 'sidechain-api';
-import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from './common/common-types';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
@@ -55,8 +54,8 @@ describeLitentry('Test Identity', (context) => {
     // random wrong msg
     const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
     let signatureSubstrate;
-    let eveIdentities: LitentryPrimitivesIdentity[] = [];
-    let charlieIdentities: LitentryPrimitivesIdentity[] = [];
+    let eveIdentities: CorePrimitivesIdentity[] = [];
+    let charlieIdentities: CorePrimitivesIdentity[] = [];
     let eveValidations: LitentryValidationData[] = [];
     let bobValidations: LitentryValidationData[] = [];
     let web3networks: Web3Network[][] = [];
@@ -159,6 +158,7 @@ describeLitentry('Test Identity', (context) => {
         );
 
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
             undefined,
@@ -221,6 +221,7 @@ describeLitentry('Test Identity', (context) => {
 
         identityLinkedEvents = bobRespEvents.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.bob),
             identityLinkedEvents,
             undefined,
@@ -230,7 +231,7 @@ describeLitentry('Test Identity', (context) => {
 
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const identityHex = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex();
+        const identityHex = context.api.createType('CorePrimitivesIdentity', twitterIdentity).toHex();
         const aliceSubstrateIdentity = await buildIdentityFromKeypair(
             new PolkadotSigner(context.substrateWallet.alice),
             context
@@ -389,10 +390,10 @@ describeLitentry('Test Identity', (context) => {
         );
 
         // Alice check identity
-        assertIdentityDeactivated(context.substrateWallet.alice, aliceDeactivatedEvents);
+        assertIdentityDeactivated(context, new PolkadotSigner(context.substrateWallet.alice), aliceDeactivatedEvents);
 
         // Bob check identity
-        assertIdentityDeactivated(context.substrateWallet.bob, bobDeactivatedEvents);
+        assertIdentityDeactivated(context, new PolkadotSigner(context.substrateWallet.bob), bobDeactivatedEvents);
     });
 
     step('check IDGraph after deactivateIdentity', async function () {
@@ -416,7 +417,7 @@ describeLitentry('Test Identity', (context) => {
             ['IdentityActivated']
         );
         // Alice check identity
-        await assertIdentityActivated(context, context.substrateWallet.alice, aliceActivatedEvents);
+        await assertIdentityActivated(context, new PolkadotSigner(context.substrateWallet.alice), aliceActivatedEvents);
     });
 
     step('deactivate error identities', async function () {

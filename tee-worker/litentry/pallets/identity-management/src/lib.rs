@@ -268,17 +268,11 @@ pub mod pallet {
 					Error::<T>::IdentityAlreadyLinked
 				);
 
-				let prime_identity_web3networks = match who {
-					Identity::Substrate(_) => all_substrate_web3networks(),
-					Identity::Evm(_) => all_evm_web3networks(),
-					Identity::Bitcoin(_) => all_bitcoin_web3networks(),
-					_ => vec![],
-				};
 				let context = <IdentityContext<T>>::new(
-					// TODO: should the `link_block` be 1 or current sidechain height?
 					<T as frame_system::Config>::BlockNumber::one(),
-					prime_identity_web3networks,
+					who.default_web3networks(),
 				);
+
 				Self::insert_identity_with_limit(who, who, context)?;
 			}
 			Ok(())

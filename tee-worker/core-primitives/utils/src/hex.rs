@@ -100,7 +100,7 @@ mod tests {
 	fn hex_encode_decode_works_empty_input_for_decode() {
 		let data = String::new();
 
-		let decoded_data = decode_hex(&data).unwrap();
+		let decoded_data = decode_hex(data).unwrap();
 
 		assert!(decoded_data.is_empty());
 	}

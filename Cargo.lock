@@ -1186,11 +1186,15 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
+ "itp-utils",
  "litentry-macros",
+ "pallet-evm",
  "parity-scale-codec",
  "ring",
  "scale-info",
+ "serde",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
  "strum 0.25.0",
@@ -4384,6 +4388,14 @@ name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
+
+[[package]]
+name = "itp-utils"
+version = "0.9.0"
+dependencies = [
+ "hex",
+ "parity-scale-codec",
+]
 
 [[package]]
 name = "jobserver"
