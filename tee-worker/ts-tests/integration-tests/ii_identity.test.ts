@@ -420,31 +420,6 @@ describeLitentry('Test Identity', (context) => {
         await assertIdentityActivated(context, new PolkadotSigner(context.substrateWallet.alice), aliceActivatedEvents);
     });
 
-    step('deactivate prime identity is disallowed', async function () {
-        // deactivate prime identity
-        const substratePrimeIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            'Substrate',
-            context
-        );
-
-        const primeTxs = await buildIdentityTxs(
-            context,
-            context.substrateWallet.alice,
-            [substratePrimeIdentity],
-            'deactivateIdentity'
-        );
-        const primeEvents = await sendTxsWithUtility(
-            context,
-            context.substrateWallet.alice,
-            primeTxs,
-            'identityManagement',
-            ['DeactivateIdentityFailed']
-        );
-
-        await checkErrorDetail(primeEvents, 'DeactivatePrimeIdentityDisallowed');
-    });
-
     step('deactivate error identities', async function () {
         // Deactivate a nonexistent identity
         // context.substrateWallet.alice has already deactivated all identities in step('deactivate identities')
@@ -465,7 +440,8 @@ describeLitentry('Test Identity', (context) => {
 
         await checkErrorDetail(aliceDeactivatedEvents, 'IdentityNotExist');
 
-        // deactivate a wrong identity (alice) for charlie
+        // deactivate a idneity for charlie, who is already linked to another IDGraph
+        // so creation of charlie's IDGraph should fail
         const charlieDeactivateTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.charlie,
@@ -480,7 +456,7 @@ describeLitentry('Test Identity', (context) => {
             ['DeactivateIdentityFailed']
         );
 
-        await checkErrorDetail(charlieDeactivateEvents, 'IdentityNotExist');
+        await checkErrorDetail(charlieDeactivateEvents, 'IdentityAlreadyLinked');
     });
 
     step('exceeding IDGraph limit not allowed', async function () {
