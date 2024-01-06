@@ -733,10 +733,11 @@ where
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_deactivated_call_indexes())??;
 
+				let old_id_graph = IMT::id_graph(&who);
 				Self::deactivate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
-					identity.clone(),
+					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
@@ -760,18 +761,14 @@ where
 					req_ext_hash,
 				))));
 
-				let mut mutated_id_graph = IDGraph::<Runtime>::default();
-				if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
-					if let Some(key) = maybe_key {
-						mutated_id_graph.push((identity, identity_context));
-						return Ok(TrustedCallResult::DeactivateIdentity(DeactivateIdentityResult {
-							mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
-							id_graph_hash,
-						}))
-					}
-				} else {
-					// if should not happen, so we just log the error here
-					error!("failed to get identity_context for {:?}, {:?}", &who, &identity);
+				let mut mutated_id_graph = IMT::id_graph(&who);
+				mutated_id_graph.retain(|i| !old_id_graph.contains(i));
+
+				if let Some(key) = maybe_key {
+					return Ok(TrustedCallResult::DeactivateIdentity(DeactivateIdentityResult {
+						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						id_graph_hash,
+					}))
 				}
 
 				Ok(TrustedCallResult::Empty)
@@ -780,11 +777,12 @@ where
 				debug!("activate_identity, who: {}", account_id_to_string(&who));
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_activated_call_indexes())??;
+				let old_id_graph = IMT::id_graph(&who);
 
 				Self::activate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
-					identity.clone(),
+					identity,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
@@ -808,18 +806,14 @@ where
 					req_ext_hash,
 				))));
 
-				let mut mutated_id_graph = IDGraph::<Runtime>::default();
-				if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
-					if let Some(key) = maybe_key {
-						mutated_id_graph.push((identity, identity_context));
-						return Ok(TrustedCallResult::ActivateIdentity(ActivateIdentityResult {
-							mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
-							id_graph_hash,
-						}))
-					}
-				} else {
-					// if should not happen, so we just log the error here
-					error!("failed to get identity_context for {:?}, {:?}", &who, &identity);
+				let mut mutated_id_graph = IMT::id_graph(&who);
+				mutated_id_graph.retain(|i| !old_id_graph.contains(i));
+
+				if let Some(key) = maybe_key {
+					return Ok(TrustedCallResult::ActivateIdentity(ActivateIdentityResult {
+						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						id_graph_hash,
+					}))
 				}
 
 				Ok(TrustedCallResult::Empty)
@@ -941,14 +935,11 @@ where
 				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_networks_set_call_indexes())??;
+				let old_id_graph = IMT::id_graph(&who);
 
-				IMTCall::set_identity_networks {
-					who: who.clone(),
-					identity: identity.clone(),
-					web3networks,
-				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
-				.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
+				IMTCall::set_identity_networks { who: who.clone(), identity, web3networks }
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
+					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
 
 				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 
@@ -960,23 +951,14 @@ where
 					req_ext_hash,
 				))));
 
-				let mut mutated_id_graph = IDGraph::<Runtime>::default();
-				if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
-					if let Some(key) = maybe_key {
-						mutated_id_graph.push((identity, identity_context));
-						return Ok(TrustedCallResult::SetIdentityNetworks(
-							SetIdentityNetworksResult {
-								mutated_id_graph: aes_encrypt_default(
-									&key,
-									&mutated_id_graph.encode(),
-								),
-								id_graph_hash,
-							},
-						))
-					}
-				} else {
-					// if should not happen, so we just log the error here
-					error!("failed to get identity_context for {:?}, {:?}", &who, &identity);
+				let mut mutated_id_graph = IMT::id_graph(&who);
+				mutated_id_graph.retain(|i| !old_id_graph.contains(i));
+
+				if let Some(key) = maybe_key {
+					return Ok(TrustedCallResult::SetIdentityNetworks(SetIdentityNetworksResult {
+						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						id_graph_hash,
+					}))
 				}
 
 				Ok(TrustedCallResult::Empty)
