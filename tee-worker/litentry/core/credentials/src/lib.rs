@@ -251,7 +251,7 @@ impl Credential {
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id =
-			subject.to_did().map_err(|err| Error::ParseError(format!("{}", err)))?;
+			subject.to_did().map_err(|err| Error::ParseError(err.to_string()))?;
 		vc.issuance_date = now_as_iso8601();
 		vc.credential_schema = None;
 		vc.proof = None;
@@ -320,10 +320,11 @@ impl Credential {
 			return Err(Error::EmptyCredentialIssuer)
 		}
 
-		let exported = vc.to_json()?;
-		if exported.len() > MAX_CREDENTIAL_SIZE {
-			return Err(Error::CredentialIsTooLong)
-		}
+		// TODO: Do we need to set size restrictions
+		// let exported = vc.to_json()?;
+		// if exported.len() > MAX_CREDENTIAL_SIZE {
+		// 	return Err(Error::CredentialIsTooLong)
+		// }
 
 		if vc.proof.is_none() {
 			return Err(Error::InvalidProof)

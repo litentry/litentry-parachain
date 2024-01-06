@@ -91,6 +91,7 @@ export default {
                 Ethereum: "EthereumSignature",
                 EthereumPrettified: "EthereumSignature",
                 Bitcoin: "BitcoinSignature",
+                BitcoinPrettified: "BitcoinSignature",
             },
         },
         Ed25519Signature: "([u8; 64])",

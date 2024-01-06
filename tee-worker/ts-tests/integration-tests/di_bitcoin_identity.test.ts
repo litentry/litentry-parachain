@@ -26,25 +26,37 @@ import {
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { LitentryPrimitivesIdentity } from 'sidechain-api';
+import { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import { Vec } from '@polkadot/types';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 
 describe('Test Identity (bitcoin direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
-    let aliceBitcoinIdentity: LitentryPrimitivesIdentity = undefined as any;
-    let aliceEvmIdentity: LitentryPrimitivesIdentity;
+    let aliceBitcoinIdentity: CorePrimitivesIdentity = undefined as any;
+    let aliceEvmIdentity: CorePrimitivesIdentity;
+    let bobBitcoinIdentity: CorePrimitivesIdentity;
 
     // Alice links:
     // - alice's evm identity
+    // - bob's bitcoin identity
     const linkIdentityRequestParams: {
         nonce: number;
-        identity: LitentryPrimitivesIdentity;
+        identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
         networks: Vec<Web3Network>;
     }[] = [];
+
+    const deactivateIdentityRequestParams: {
+        nonce: number;
+        identity: CorePrimitivesIdentity;
+    }[] = [];
+
+    const activateIdentityRequestParams: {
+        nonce: number;
+        identity: CorePrimitivesIdentity;
+    }[] = [];
+
     this.timeout(6000000);
 
     before(async () => {
@@ -59,6 +71,11 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             context
         );
         aliceEvmIdentity = await buildIdentityFromKeypair(new EthersSigner(context.ethersWallet.alice), context);
+        bobBitcoinIdentity = await buildIdentityHelper(
+            u8aToHex(bufferToU8a(context.bitcoinWallet.bob.toPublicKey().toBuffer())),
+            'Bitcoin',
+            context
+        );
     });
 
     step('check idGraph from sidechain storage before linking', async function () {
@@ -76,12 +93,12 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const aliceNonce = getNextNonce();
+        const aliceEvmNonce = getNextNonce();
         const [aliceEvmValidation] = await buildValidations(
             context,
             [aliceBitcoinIdentity],
             [aliceEvmIdentity],
-            aliceNonce,
+            aliceEvmNonce,
             'ethereum',
             undefined,
             [context.ethersWallet.alice]
@@ -91,19 +108,42 @@ describe('Test Identity (bitcoin direct invocation)', function () {
             'Bsc',
         ]) as unknown as Vec<Web3Network>; // @fixme #1878
         linkIdentityRequestParams.push({
-            nonce: aliceNonce,
+            nonce: aliceEvmNonce,
             identity: aliceEvmIdentity,
             validation: aliceEvmValidation,
             networks: aliceEvmNetworks,
         });
 
+        // link another bitcoin account with prettified signature
+        const bobBitcoinNonce = getNextNonce();
+        const [bobBitcoinValidation] = await buildValidations(
+            context,
+            [aliceBitcoinIdentity],
+            [bobBitcoinIdentity],
+            bobBitcoinNonce,
+            'bitcoinPrettified',
+            undefined,
+            undefined,
+            context.bitcoinWallet.bob
+        );
+        const bobBitcoinNetowrks = context.api.createType('Vec<Web3Network>', [
+            'BitcoinP2tr',
+        ]) as unknown as Vec<Web3Network>; // @fixme #1878
+        linkIdentityRequestParams.push({
+            nonce: bobBitcoinNonce,
+            identity: bobBitcoinIdentity,
+            validation: bobBitcoinValidation,
+            networks: bobBitcoinNetowrks,
+        });
+
         const identityLinkedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [
             [
                 [aliceBitcoinIdentity, true],
                 [aliceEvmIdentity, true],
             ],
+            [[bobBitcoinIdentity, true]],
         ];
 
         for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
@@ -148,10 +188,11 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         }
 
         await assertIdGraphMutationEvent(
+            context,
             new BitcoinSigner(context.bitcoinWallet.alice),
             identityLinkedEvents,
             idGraphHashResults,
-            1
+            2
         );
     });
 
@@ -165,7 +206,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
         // according to the order of linkIdentityRequestParams
-        const expectedWeb3Networks = [['Ethereum', 'Bsc']];
+        const expectedWeb3Networks = [['Ethereum', 'Bsc'], ['BitcoinP2tr']];
         let currentIndex = 0;
 
         for (const { identity } of linkIdentityRequestParams) {
@@ -194,11 +235,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const deactivateIdentityRequestParams: {
-            nonce: number;
-            identity: LitentryPrimitivesIdentity;
-        }[] = [];
-
         const aliceEvmNonce = getNextNonce();
 
         deactivateIdentityRequestParams.push({
@@ -208,7 +244,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
         const identityDeactivatedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, false]]];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, false]]];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -250,6 +286,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         }
 
         await assertIdGraphMutationEvent(
+            context,
             new BitcoinSigner(context.bitcoinWallet.alice),
             identityDeactivatedEvents,
             idGraphHashResults,
@@ -266,7 +303,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         const res = await sendRequestFromGetter(context, teeShieldingKey, idGraphGetter);
         const idGraph = decodeIdGraph(context.sidechainRegistry, res.value);
 
-        for (const { identity } of linkIdentityRequestParams) {
+        for (const { identity } of deactivateIdentityRequestParams) {
             const identityDump = JSON.stringify(identity.toHuman(), null, 4);
             console.debug(`checking identity: ${identityDump}`);
             const idGraphNode = idGraph.find(([idGraphNodeIdentity]) => idGraphNodeIdentity.eq(identity));
@@ -288,11 +325,6 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceBitcoinIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
 
-        const activateIdentityRequestParams: {
-            nonce: number;
-            identity: LitentryPrimitivesIdentity;
-        }[] = [];
-
         const aliceEvmNonce = getNextNonce();
 
         activateIdentityRequestParams.push({
@@ -302,7 +334,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
 
         const identityActivatedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, true]]];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[aliceEvmIdentity, true]]];
 
         for (const { nonce, identity } of activateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -344,6 +376,7 @@ describe('Test Identity (bitcoin direct invocation)', function () {
         }
 
         await assertIdGraphMutationEvent(
+            context,
             new BitcoinSigner(context.bitcoinWallet.alice),
             identityActivatedEvents,
             idGraphHashResults,

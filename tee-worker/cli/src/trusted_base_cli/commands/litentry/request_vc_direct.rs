@@ -96,6 +96,7 @@ impl RequestVcDirectCommand {
 			},
 			Command::A14 => Assertion::A14,
 			Command::A20 => Assertion::A20,
+			Command::BnbDomainHolding => Assertion::BnbDomainHolding,
 			Command::Oneblock(c) => match c {
 				OneblockCommand::Completion =>
 					Assertion::Oneblock(OneBlockCourseType::CourseCompletion),
@@ -252,6 +253,7 @@ impl RequestVcDirectCommand {
 				EVMAmountHoldingCommand::Ton => Assertion::EVMAmountHolding(EVMTokenType::Ton),
 				EVMAmountHoldingCommand::Trx => Assertion::EVMAmountHolding(EVMTokenType::Trx),
 			},
+			Command::CryptoSummary => Assertion::CryptoSummary,
 		};
 
 		let mut key: RequestAesKey = RequestAesKey::default();

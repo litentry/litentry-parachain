@@ -19,16 +19,14 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-mod vc_handling;
-
 use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
+use frame_support::{ensure, sp_runtime::traits::One};
 pub use futures;
-use ita_sgx_runtime::{Hash, Runtime};
+use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
 use ita_stf::{
-	aes_encrypt_default, trusted_call_result::RequestVCResult, ConvertAccountId, Getter,
-	OpaqueCall, SgxParentchainTypeConverter, TrustedCall, TrustedCallSigned, TrustedOperation,
-	H256,
+	aes_encrypt_default, trusted_call_result::RequestVCResult, Getter, OpaqueCall, TrustedCall,
+	TrustedCallSigned, TrustedOperation, H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -58,6 +56,8 @@ use std::{
 	vec::Vec,
 };
 use threadpool::ThreadPool;
+
+mod vc_handling;
 
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
@@ -157,16 +157,13 @@ where
 				// Sorts the IDGraph in place
 				sort_id_graph::<Runtime>(&mut id_graph);
 
-				let assertion_networks = assertion.clone().get_supported_web3networks();
-				let identities: Vec<IdentityNetworkTuple> = id_graph
-					.into_iter()
-					.filter(|item| item.1.is_active())
-					.map(|item| {
-						let mut networks = item.1.web3networks.to_vec();
-						networks.retain(|n| assertion_networks.contains(n));
-						(item.0, networks)
-					})
-					.collect();
+				if id_graph.is_empty() {
+					// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+					id_graph.push((
+						who.clone(),
+						IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
+					));
+				}
 
 				// should never be `None`, but use `unwrap_or_default` to not panic
 				let parachain_block_number = state
@@ -178,9 +175,16 @@ where
 					.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
 					.unwrap_or_default();
 
-				(identities, parachain_block_number, sidechain_block_number)
+				let assertion_networks = assertion.clone().get_supported_web3networks();
+				(
+					get_eligible_identities(id_graph, assertion_networks),
+					parachain_block_number,
+					sidechain_block_number,
+				)
 			})
 			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
+
+		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
 		let signer = signer
 			.to_account_id()
@@ -205,27 +209,9 @@ where
 			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
 
 		let result = aes_encrypt_default(&key, &response.vc_payload);
-		let account = SgxParentchainTypeConverter::convert(
-			match response.assertion_request.who.to_account_id() {
-				Some(s) => s,
-				None => return Err("Failed to convert account".to_string()),
-			},
-		);
-
-		let res = RequestVCResult {
-			vc_index: response.vc_index,
-			vc_hash: response.vc_hash,
-			vc_payload: result,
-		};
-
-		let call_index = node_metadata_repo
-			.get_from_metadata(|m| m.vc_issued_call_indexes())
-			.unwrap()
-			.unwrap();
-
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			response.assertion_request.who,
 			response.assertion_request.assertion,
 			response.vc_index,
 			response.vc_hash,
