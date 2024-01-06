@@ -44,8 +44,7 @@ use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
 use litentry_primitives::{
-	aes_decrypt, AesOutput, Identity, IdentityNetworkTuple, ParentchainBlockNumber, RequestAesKey,
-	ShardIdentifier,
+	aes_decrypt, AesOutput, Identity, ParentchainBlockNumber, RequestAesKey, ShardIdentifier,
 };
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
@@ -208,6 +207,10 @@ where
 			.process()
 			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
 
+		let call_index = node_metadata_repo
+			.get_from_metadata(|m| m.vc_issued_call_indexes())
+			.unwrap()
+			.unwrap();
 		let result = aes_encrypt_default(&key, &response.vc_payload);
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
@@ -217,19 +220,19 @@ where
 			response.vc_hash,
 			H256::zero(),
 		));
-
-		// This internally fetches nonce from a Mutex and then updates it thereby ensuring ordering
-		// Only log the error message even if it fails as `res` is already available to the client
-		match extrinsic_factory.create_extrinsics(&[call], None) {
-			Ok(xt) => {
-				if let Err(e) =
-					context.ocall_api.send_to_parentchain(xt, &ParentchainId::Litentry, false)
-				{
-					warn!("Unable to send extrinsic to parentchain: {:?}", e);
-				}
-			},
-			Err(e) => warn!("Failed to construct extrinsic: {:?}", e),
+		let res = RequestVCResult {
+			vc_index: response.vc_index,
+			vc_hash: response.vc_hash,
+			vc_payload: result,
 		};
+		// This internally fetches nonce from a Mutex and then updates it thereby ensuring ordering
+		let xt = extrinsic_factory
+			.create_extrinsics(&[call], None)
+			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
+		context
+			.ocall_api
+			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
+			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
 
 		Ok(res.encode())
 	} else {
