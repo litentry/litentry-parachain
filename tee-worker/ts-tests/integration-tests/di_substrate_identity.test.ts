@@ -855,7 +855,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const deactivateIdentityRequestParams: {
             nonce: number;
-            identity: LitentryPrimitivesIdentity;
+            identity: CorePrimitivesIdentity;
         }[] = [];
 
         deactivateIdentityRequestParams.push({
@@ -865,7 +865,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const identityDeactivatedEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[bobSubstrateIdentity, false]]];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[bobSubstrateIdentity, false]]];
 
         for (const { nonce, identity } of deactivateIdentityRequestParams) {
             const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -906,6 +906,7 @@ describe('Test Identity (direct invocation)', function () {
             });
         }
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.bob),
             identityDeactivatedEvents,
             idGraphHashResults,
@@ -928,7 +929,7 @@ describe('Test Identity (direct invocation)', function () {
 
         const identityNetworksSetEvents: any[] = [];
         const idGraphHashResults: any[] = [];
-        let expectedIdGraphs: [LitentryPrimitivesIdentity, boolean][][] = [[[charlieSubstrateIdentity, true]]];
+        let expectedIdGraphs: [CorePrimitivesIdentity, boolean][][] = [[[charlieSubstrateIdentity, true]]];
 
         const eventsPromise = subscribeToEventsWithExtHash(requestIdentifier, context);
         // we set the network to ['Litentry', 'Kusama']
@@ -965,6 +966,7 @@ describe('Test Identity (direct invocation)', function () {
             }
         });
         await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.charlie),
             identityNetworksSetEvents,
             idGraphHashResults,
