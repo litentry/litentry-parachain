@@ -146,11 +146,14 @@ where
 			)
 		})?;
 
+		credential.parachain_block_number = self.req.parachain_block_number;
+		credential.sidechain_block_number = self.req.sidechain_block_number;
+
 		let data_provider_config = DataProviderConfigReader::read()
 			.map_err(|e| VCMPError::RequestVCFailed(self.req.assertion.clone(), e))?;
-		credential
-			.credential_subject
-			.set_endpoint(data_provider_config.credential_endpoint);
+		credential.credential_subject.endpoint = data_provider_config.credential_endpoint;
+
+		credential.credential_subject.assertion_text = format!("{:?}", self.req.assertion);
 
 		credential.issuer.id =
 			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {

@@ -2810,6 +2810,7 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "sp-io",
+ "sp-runtime",
  "thiserror",
 ]
 
