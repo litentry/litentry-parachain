@@ -16,7 +16,7 @@ der = { default-features = false, version = "0.6.0" }
 hex = { default-features = false, version = "0.4.3", features = ["alloc"] }
 ring = { version = "0.16.20", default-features = false, features = ["alloc"] }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
-serde = { default-features = false, version = "1.0.193", features = ["derive"] }
+serde = { default-features = false, version = "1.0.195", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 webpki = { git = "https://github.com/rustls/webpki", version = "=0.102.0-alpha.3", rev = "da923ed", package = "rustls-webpki", default-features = false, features = ["alloc", "ring"] }
 x509-cert = { default-features = false, version = "0.1.0", features = ["alloc"] }
