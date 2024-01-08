@@ -30,7 +30,16 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 ///   Substrate(SubstrateNetwork),
 ///   Evm(EvmNetwork),
 /// }
+///
 /// TODO: theoretically this should the the union of the supported networks of all data providers
+///
+/// Since the incorporation of Bitcoin network, the name `Web3Network` might not be the best word,
+/// as different kinds of bitcoin types (BitcoinP2tr, BitcoinP2pkh, ...) still belong to the same
+/// network (bitcoin mainnet) despite of having 5 entries in this enum.
+///
+/// More precisely, it should reflect "the way" how the same identity handle (e.g. pubkey) is
+/// differently used: either in different networks (e.g. eth vs bsc), or as different addresses in
+/// the same network or not (e.g. bitcoin/substrate)
 #[derive(
 	Encode,
 	Decode,
@@ -69,6 +78,18 @@ pub enum Web3Network {
 	Ethereum,
 	#[codec(index = 8)]
 	Bsc,
+
+	// btc, see https://github.com/rust-bitcoin/rust-bitcoin/blob/9ea3e29d61569479b7b4618c8ae1992612f3d01a/bitcoin/src/address/mod.rs#L64-L75
+	#[codec(index = 9)]
+	BitcoinP2tr,
+	#[codec(index = 10)]
+	BitcoinP2pkh,
+	#[codec(index = 11)]
+	BitcoinP2sh,
+	#[codec(index = 12)]
+	BitcoinP2wpkh,
+	#[codec(index = 13)]
+	BitcoinP2wsh,
 }
 
 // mainly used in CLI
@@ -95,6 +116,17 @@ impl Web3Network {
 	pub fn is_evm(&self) -> bool {
 		matches!(self, Self::Ethereum | Self::Bsc)
 	}
+
+	pub fn is_bitcoin(&self) -> bool {
+		matches!(
+			self,
+			Self::BitcoinP2tr |
+				Self::BitcoinP2pkh |
+				Self::BitcoinP2sh |
+				Self::BitcoinP2wpkh |
+				Self::BitcoinP2wsh
+		)
+	}
 }
 
 pub fn all_web3networks() -> Vec<Web3Network> {
@@ -107,6 +139,10 @@ pub fn all_substrate_web3networks() -> Vec<Web3Network> {
 
 pub fn all_evm_web3networks() -> Vec<Web3Network> {
 	Web3Network::iter().filter(|n| n.is_evm()).collect()
+}
+
+pub fn all_bitcoin_web3networks() -> Vec<Web3Network> {
+	Web3Network::iter().filter(|n| n.is_bitcoin()).collect()
 }
 
 #[cfg(test)]
@@ -134,6 +170,11 @@ mod tests {
 					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
 					Web3Network::Bsc => true,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
 				}
 			)
 		})
@@ -154,6 +195,36 @@ mod tests {
 					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
+					Web3Network::BitcoinP2tr => false,
+					Web3Network::BitcoinP2pkh => false,
+					Web3Network::BitcoinP2sh => false,
+					Web3Network::BitcoinP2wpkh => false,
+					Web3Network::BitcoinP2wsh => false,
+				}
+			)
+		})
+	}
+
+	#[test]
+	fn is_bitcoin_works() {
+		Web3Network::iter().for_each(|network| {
+			assert_eq!(
+				network.is_bitcoin(),
+				match network {
+					Web3Network::Polkadot => false,
+					Web3Network::Kusama => false,
+					Web3Network::Litentry => false,
+					Web3Network::Litmus => false,
+					Web3Network::LitentryRococo => false,
+					Web3Network::Khala => false,
+					Web3Network::SubstrateTestnet => false,
+					Web3Network::Ethereum => false,
+					Web3Network::Bsc => false,
+					Web3Network::BitcoinP2tr => true,
+					Web3Network::BitcoinP2pkh => true,
+					Web3Network::BitcoinP2sh => true,
+					Web3Network::BitcoinP2wpkh => true,
+					Web3Network::BitcoinP2wsh => true,
 				}
 			)
 		})

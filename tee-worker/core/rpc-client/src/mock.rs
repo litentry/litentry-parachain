@@ -120,7 +120,7 @@ impl DirectApi for DirectClientMock {
 		unimplemented!()
 	}
 
-	fn get_all_id_graph_hash(&self, _shard: &ShardIdentifier) -> Result<Vec<(Identity, H256)>> {
+	fn get_id_graph_hash(&self, _shard: &ShardIdentifier, _identity: &Identity) -> Result<H256> {
 		unimplemented!()
 	}
 }

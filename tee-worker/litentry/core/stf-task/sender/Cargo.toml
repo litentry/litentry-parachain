@@ -27,7 +27,7 @@ sp-std = { git = "https://github.com/paritytech/substrate.git", branch = "polkad
 itp-types = { path = "../../../../core-primitives/types", default-features = false }
 
 # litentry
-itp-stf-primitives = { default-features = false, path = "../../../../core-primitives/stf-primitives" }
+itp-stf-primitives = { path = "../../../../core-primitives/stf-primitives", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 
 [features]
@@ -44,4 +44,6 @@ std = [
     "thiserror",
     "url",
     "itp-types/std",
+    "itp-stf-primitives/std",
+    "litentry-primitives/std",
 ]

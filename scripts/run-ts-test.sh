@@ -34,4 +34,5 @@ fi
 if $evm; then
     pnpm run test-evm-transfer 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
     pnpm run test-evm-contract 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
+    pnpm run test-precompile-contract 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/parachain_ci_test.log"
 fi

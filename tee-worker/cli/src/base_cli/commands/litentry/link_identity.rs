@@ -17,7 +17,7 @@
 use super::IMP;
 use crate::{
 	command_utils::{get_chain_api, *},
-	Cli, CliError, CliResult, CliResultOk,
+	Cli, CliResult, CliResultOk,
 };
 use base58::FromBase58;
 use codec::{Decode, Encode};
@@ -33,8 +33,8 @@ use substrate_api_client::{ac_compose_macros::compose_extrinsic, SubmitAndWatch,
 pub struct LinkIdentityCommand {
 	/// AccountId in ss58check format
 	account: String,
-	/// Identity to be created
-	identity: String,
+	/// Identity to be created, in did form
+	did: String,
 	/// Shard identifier
 	shard: String,
 }
@@ -56,16 +56,9 @@ impl LinkIdentityCommand {
 		let who = sr25519_core::Pair::from_string(&self.account, None).unwrap();
 		chain_api.set_signer(who.clone().into());
 
-		let identity: Result<Identity, _> = serde_json::from_str(self.identity.as_str());
-		if let Err(e) = identity {
-			warn!("Deserialize Identity error: {:?}", e.to_string());
-			return Err(CliError::Extrinsic {
-				msg: format!("Deserialize Identity error: {:?}", e.to_string()),
-			})
-		}
-
+		let identity = Identity::from_did(self.did.as_str()).unwrap();
 		let tee_shielding_key = get_shielding_key(cli).unwrap();
-		let encrypted_identity = tee_shielding_key.encrypt(&identity.unwrap().encode()).unwrap();
+		let encrypted_identity = tee_shielding_key.encrypt(&identity.encode()).unwrap();
 
 		// TODO: the params are incorrect - and need to be reworked too
 		let vdata: Option<Vec<u8>> = None;

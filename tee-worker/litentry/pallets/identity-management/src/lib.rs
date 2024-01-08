@@ -42,7 +42,8 @@ use frame_support::{pallet_prelude::*, sp_runtime::traits::One, traits::StorageV
 use frame_system::pallet_prelude::*;
 
 pub use litentry_primitives::{
-	all_evm_web3networks, all_substrate_web3networks, Identity, ParentchainBlockNumber, Web3Network,
+	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, Identity,
+	ParentchainBlockNumber, Web3Network,
 };
 use sp_core::{blake2_256, H256};
 use sp_std::{vec, vec::Vec};
@@ -94,8 +95,6 @@ pub mod pallet {
 		IdentityNotExist,
 		/// creating the prime identity manually is disallowed
 		LinkPrimeIdentityDisallowed,
-		/// deactivate prime identity should be disallowed
-		DeactivatePrimeIdentityDisallowed,
 		/// IDGraph len limit reached
 		IDGraphLenLimitReached,
 		/// identity doesn't match the network types
@@ -147,25 +146,7 @@ pub mod pallet {
 				Error::<T>::WrongWeb3NetworkTypes
 			);
 
-			// if there's no IDGraph, create one - `who` will be the prime identity
-			// please note the web3networks for the prime identity will be all avaiable networks
-			if IDGraphs::<T>::get(&who, &who).is_none() {
-				ensure!(
-					!LinkedIdentities::<T>::contains_key(&who),
-					Error::<T>::IdentityAlreadyLinked
-				);
-
-				let prime_identity_web3networks = match who {
-					Identity::Substrate(_) => all_substrate_web3networks(),
-					Identity::Evm(_) => all_evm_web3networks(),
-					_ => vec![],
-				};
-				let context = <IdentityContext<T>>::new(
-					<T as frame_system::Config>::BlockNumber::one(),
-					prime_identity_web3networks,
-				);
-				Self::insert_identity_with_limit(&who, &who, context)?;
-			}
+			Self::maybe_create_id_graph(&who)?;
 
 			let context =
 				<IdentityContext<T>>::new(<frame_system::Pallet<T>>::block_number(), web3networks);
@@ -182,8 +163,8 @@ pub mod pallet {
 			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			Self::maybe_create_id_graph(&who)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
-			ensure!(identity != who, Error::<T>::DeactivatePrimeIdentityDisallowed);
 
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
@@ -203,7 +184,9 @@ pub mod pallet {
 			identity: Identity,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			Self::maybe_create_id_graph(&who)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				c.activate();
@@ -223,7 +206,9 @@ pub mod pallet {
 			web3networks: Vec<Web3Network>,
 		) -> DispatchResult {
 			T::ManageOrigin::ensure_origin(origin)?;
+			Self::maybe_create_id_graph(&who)?;
 			ensure!(IDGraphs::<T>::contains_key(&who, &identity), Error::<T>::IdentityNotExist);
+
 			IDGraphs::<T>::try_mutate(&who, &identity, |context| {
 				let mut c = context.take().ok_or(Error::<T>::IdentityNotExist)?;
 				ensure!(
@@ -274,6 +259,25 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		// try to create an IDGraph if there's none - `who` will be the prime identity
+		// please note the web3networks for the prime identity will be all avaiable networks
+		fn maybe_create_id_graph(who: &Identity) -> Result<(), DispatchError> {
+			if IDGraphs::<T>::get(who, who).is_none() {
+				ensure!(
+					!LinkedIdentities::<T>::contains_key(who),
+					Error::<T>::IdentityAlreadyLinked
+				);
+
+				let context = <IdentityContext<T>>::new(
+					<T as frame_system::Config>::BlockNumber::one(),
+					who.default_web3networks(),
+				);
+
+				Self::insert_identity_with_limit(who, who, context)?;
+			}
+			Ok(())
+		}
+
 		fn insert_identity_with_limit(
 			owner: &Identity,
 			identity: &Identity,
@@ -293,7 +297,10 @@ pub mod pallet {
 		}
 
 		// get the whole IDGraph, sorted by `link_block` (earliest -> latest)
-		pub fn get_id_graph(who: &Identity) -> IDGraph<T> {
+		//
+		// TODO: shall we change the return type to Option<IDGraph<T>> and return
+		//       `None` if the IDGraph doesn't exist?
+		pub fn id_graph(who: &Identity) -> IDGraph<T> {
 			let mut id_graph = IDGraphs::iter_prefix(who).collect::<IDGraph<T>>();
 
 			// Initial sort to ensure a deterministic order
@@ -302,10 +309,14 @@ pub mod pallet {
 			id_graph
 		}
 
-		pub fn all_id_graph_hash() -> Vec<(Identity, H256)> {
-			IDGraphLens::<T>::iter_keys()
-				.map(|k| (k.clone(), H256::from(blake2_256(&Self::get_id_graph(&k).encode()))))
-				.collect()
+		// get the IDGraph hash of the given `who`
+		pub fn id_graph_hash(who: &Identity) -> Option<H256> {
+			let id_graph = Self::id_graph(who);
+			if id_graph.is_empty() {
+				None
+			} else {
+				Some(H256::from(blake2_256(&id_graph.encode())))
+			}
 		}
 
 		// get count of all keys account + identity in the IDGraphs

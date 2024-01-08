@@ -98,6 +98,19 @@ where
 
 			Assertion::WeirdoGhostGangHolder =>
 				lc_assertion_build::nodereal::nft_holder::weirdo_ghost_gang_holder::build(&self.req),
+
+			Assertion::LITStaking => lc_assertion_build::lit_staking::build(&self.req),
+
+			Assertion::EVMAmountHolding(token_type) =>
+				lc_assertion_build::nodereal::amount_holding::evm_amount_holding::build(
+					&self.req, token_type,
+				),
+
+			Assertion::BRC20AmountHolder =>
+				lc_assertion_build::brc20::amount_holder::build(&self.req),
+
+			Assertion::CryptoSummary =>
+				lc_assertion_build::nodereal::crypto_summary::build(&self.req),
 		}?;
 
 		// post-process the credential
@@ -111,9 +124,7 @@ where
 
 		let data_provider_config = DataProviderConfigReader::read()
 			.map_err(|e| VCMPError::RequestVCFailed(self.req.assertion.clone(), e))?;
-		credential
-			.credential_subject
-			.set_endpoint(data_provider_config.credential_endpoint);
+		credential.credential_subject.endpoint = data_provider_config.credential_endpoint;
 
 		credential.issuer.id =
 			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {

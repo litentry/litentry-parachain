@@ -11,22 +11,11 @@ const allAssertions = [
     {
         A1: 'A1',
     },
-    {
-        A2: 'A2',
-    },
-
-    {
-        A3: ['A3', 'A3', 'A3'],
-    },
-
-    {
-        A4: '10',
-    },
 ];
 
 // It doesn't make much difference test A1 only vs test A1 - A11, one VC type is enough.
 // So only use A1 to trigger the wrong event
-describeLitentry('VC ii test', 0, async (context) => {
+describeLitentry('VC ii test', async (context) => {
     const indexList: HexString[] = [];
     step('Request VC', async () => {
         // request all vc

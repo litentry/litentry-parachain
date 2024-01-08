@@ -24,7 +24,7 @@ use core::result;
 
 use lc_credentials::nodereal::nft_holder::weirdo_ghost_gang_holder::WeirdoGhostGangHolderAssertionUpdate;
 use lc_data_providers::nodereal_jsonrpc::{
-	GetTokenBalance721Param, NftApiList, NoderealChain, NoderealJsonrpcClient, NoderealNetwork,
+	GetTokenBalance721Param, NftApiList, NoderealChain, NoderealJsonrpcClient,
 };
 
 use crate::*;
@@ -58,7 +58,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("WeirdoGhostGang holder");
 
 	let mut has_nft = false;
-	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, NoderealNetwork::Mainnet);
+	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
@@ -137,11 +137,12 @@ mod tests {
 		let req: AssertionBuildRequest = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
 			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::WeirdoGhostGangHolder,
 			identities,
 			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};

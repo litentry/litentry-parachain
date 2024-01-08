@@ -19,15 +19,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 pub use crate::sgx_reexport_prelude::*;
 
-mod vc_handling;
-
 use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
+use frame_support::{ensure, sp_runtime::traits::One};
 pub use futures;
-use ita_sgx_runtime::{Hash, Runtime};
+use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
 use ita_stf::{
-	aes_encrypt_default, helpers::enclave_signer_account, trusted_call_result::RequestVCResult,
-	ConvertAccountId, Getter, OpaqueCall, SgxParentchainTypeConverter, TrustedCall,
+	aes_encrypt_default, trusted_call_result::RequestVCResult, Getter, OpaqueCall, TrustedCall,
 	TrustedCallSigned, TrustedOperation, H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
@@ -39,15 +37,16 @@ use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_storage::{storage_map_key, StorageHasher};
+use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::parentchain::ParentchainId;
+use itp_types::{parentchain::ParentchainId, BlockNumber as SidechainBlockNumber};
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
 use litentry_primitives::{
-	aes_decrypt, AesOutput, Identity, IdentityNetworkTuple, RequestAesKey, ShardIdentifier,
+	aes_decrypt, AesOutput, Identity, ParentchainBlockNumber, RequestAesKey, ShardIdentifier,
 };
+use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
 use std::{
 	format,
@@ -56,6 +55,8 @@ use std::{
 	vec::Vec,
 };
 use threadpool::ThreadPool;
+
+mod vc_handling;
 
 pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
@@ -89,7 +90,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
 			)) {
-				log::warn!("Unable to submit response back to the handler: {:?}", e);
+				warn!("Unable to submit response back to the handler: {:?}", e);
 			}
 		});
 	}
@@ -133,11 +134,11 @@ where
 		.to_call()
 		.ok_or_else(|| "Failed to convert trusted operation to trusted call".to_string())?;
 
-	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, _hash) =
+	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) =
 		trusted_call.call.clone()
 	{
 		let key = maybe_key.ok_or_else(|| "User shielding key not provided".to_string())?;
-		let identities: Vec<IdentityNetworkTuple> = context
+		let (identities, parachain_block_number, sidechain_block_number) = context
 			.state_handler
 			.execute_on_current(&shard, |state, _| {
 				let prefix_key = storage_map_key(
@@ -146,45 +147,62 @@ where
 					&who,
 					&StorageHasher::Blake2_128Concat,
 				);
-				let mut id_graph =
-					state.iter_prefix::<Identity, IdentityContext<Runtime>>(&prefix_key).unwrap();
+
+				// `None` means empty IDGraph, thus `unwrap_or_default`
+				let mut id_graph = state
+					.iter_prefix::<Identity, IdentityContext<Runtime>>(&prefix_key)
+					.unwrap_or_default();
 
 				// Sorts the IDGraph in place
 				sort_id_graph::<Runtime>(&mut id_graph);
 
-				let assertion_networks = assertion.clone().get_supported_web3networks();
-				let identities: Vec<IdentityNetworkTuple> = id_graph
-					.into_iter()
-					.filter(|item| item.1.is_active())
-					.map(|item| {
-						let mut networks = item.1.web3networks.to_vec();
-						networks.retain(|n| assertion_networks.contains(n));
-						(item.0, networks)
-					})
-					.collect();
+				if id_graph.is_empty() {
+					// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+					id_graph.push((
+						who.clone(),
+						IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
+					));
+				}
 
-				identities
+				// should never be `None`, but use `unwrap_or_default` to not panic
+				let parachain_block_number = state
+					.get(&storage_value_key("Parentchain", "Number"))
+					.and_then(|v| ParentchainBlockNumber::decode(&mut v.as_slice()).ok())
+					.unwrap_or_default();
+				let sidechain_block_number = state
+					.get(&storage_value_key("System", "Number"))
+					.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
+					.unwrap_or_default();
+
+				let assertion_networks = assertion.clone().get_supported_web3networks();
+				(
+					get_eligible_identities(id_graph, assertion_networks),
+					parachain_block_number,
+					sidechain_block_number,
+				)
 			})
 			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
+
+		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
 		let signer = signer
 			.to_account_id()
 			.ok_or_else(|| "Invalid signer account, failed to convert".to_string())?;
 
-		let assertion_build: AssertionBuildRequest = AssertionBuildRequest {
+		let req = AssertionBuildRequest {
 			shard,
 			signer,
-			enclave_account: enclave_signer_account(),
 			who,
 			assertion,
 			identities,
-			maybe_key,
 			top_hash: H256::zero(),
-			req_ext_hash: H256::zero(),
+			parachain_block_number,
+			sidechain_block_number,
+			maybe_key,
+			req_ext_hash,
 		};
 
-		let vc_request_handler =
-			VCRequestHandler { req: assertion_build, context: context.clone() };
+		let vc_request_handler = VCRequestHandler { req, context: context.clone() };
 		let response = vc_request_handler
 			.process()
 			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
@@ -194,15 +212,9 @@ where
 			.unwrap()
 			.unwrap();
 		let result = aes_encrypt_default(&key, &response.vc_payload);
-		let account = SgxParentchainTypeConverter::convert(
-			match response.assertion_request.who.to_account_id() {
-				Some(s) => s,
-				None => return Err("Failed to convert account".to_string()),
-			},
-		);
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			response.assertion_request.who,
 			response.assertion_request.assertion,
 			response.vc_index,
 			response.vc_hash,

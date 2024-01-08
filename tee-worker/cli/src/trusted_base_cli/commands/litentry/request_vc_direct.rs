@@ -25,13 +25,12 @@ use crate::{
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
 use itp_utils::hex::decode_hex;
-use lc_credentials::Credential;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
-	AchainableToken, Assertion, ContestType, GenericDiscordRoleType, Identity, OneBlockCourseType,
-	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
+	AchainableToken, Assertion, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
+	OneBlockCourseType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
 };
 use sp_core::Pair;
 
@@ -97,6 +96,7 @@ impl RequestVcDirectCommand {
 			},
 			Command::A14 => Assertion::A14,
 			Command::A20 => Assertion::A20,
+			Command::BnbDomainHolding => Assertion::BnbDomainHolding,
 			Command::Oneblock(c) => match c {
 				OneblockCommand::Completion =>
 					Assertion::Oneblock(OneBlockCourseType::CourseCompletion),
@@ -122,11 +122,7 @@ impl RequestVcDirectCommand {
 				AchainableCommand::AmountToken(arg) =>
 					Assertion::Achainable(AchainableParams::AmountToken(AchainableAmountToken {
 						name: to_para_str(&arg.name),
-						chain: arg
-							.chain
-							.as_str()
-							.try_into()
-							.expect("cannot convert to Web3Network"),
+						chain: to_chains(&arg.chain),
 						amount: to_para_str(&arg.amount),
 						token: arg.token.as_ref().map(|s| to_para_str(s)),
 					})),
@@ -253,6 +249,11 @@ impl RequestVcDirectCommand {
 					Assertion::VIP3MembershipCard(VIP3MembershipCardLevel::Silver),
 			},
 			Command::WeirdoGhostGangHolder => Assertion::WeirdoGhostGangHolder,
+			Command::EVMAmountHolding(c) => match c {
+				EVMAmountHoldingCommand::Ton => Assertion::EVMAmountHolding(EVMTokenType::Ton),
+				EVMAmountHoldingCommand::Trx => Assertion::EVMAmountHolding(EVMTokenType::Trx),
+			},
+			Command::CryptoSummary => Assertion::CryptoSummary,
 		};
 
 		let mut key: RequestAesKey = RequestAesKey::default();
@@ -276,9 +277,9 @@ impl RequestVcDirectCommand {
 		match perform_direct_operation::<RequestVCResult>(cli, trusted_cli, &top, key) {
 			Ok(mut vc) => {
 				let decrypted = aes_decrypt(&key, &mut vc.vc_payload).unwrap();
-				let credential: Credential = serde_json::from_slice(&decrypted).unwrap();
+				let credential_str = String::from_utf8(decrypted).expect("Found invalid UTF-8");
 				println!("----Generated VC-----");
-				println!("{:?}", credential);
+				println!("{}", credential_str);
 			},
 			Err(e) => {
 				println!("{:?}", e);

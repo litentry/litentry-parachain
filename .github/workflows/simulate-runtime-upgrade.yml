@@ -17,7 +17,7 @@ env:
 jobs:
   simulate-runtime-upgrade:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -36,7 +36,7 @@ jobs:
         run: corepack enable && corepack enable pnpm
 
       - name: Fork ${{ matrix.chain }} and launch parachain
-        timeout-minutes: 10
+        timeout-minutes: 20
         run: |
           ./scripts/fork-parachain-and-launch.sh ${{ matrix.chain }}
 

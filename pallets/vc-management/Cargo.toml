@@ -43,6 +43,8 @@ runtime-benchmarks = [
     "frame-benchmarking/runtime-benchmarks",
     "frame-support/runtime-benchmarks",
     "frame-system/runtime-benchmarks",
+    "pallet-balances/runtime-benchmarks",
+    "pallet-group/runtime-benchmarks",
     "test-utils",
 ]
 std = [
@@ -56,5 +58,7 @@ std = [
     "frame-benchmarking?/std",
     "core-primitives/std",
     "teerex-primitives/std",
+    "pallet-balances/std",
+    "pallet-group/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

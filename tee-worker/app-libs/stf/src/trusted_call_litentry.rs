@@ -20,16 +20,18 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_self,
-		get_expected_raw_message, verify_web3_identity,
+		ensure_enclave_signer_account, ensure_enclave_signer_or_self, get_expected_raw_message,
+		verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
-	AccountId, ConvertAccountId, SgxParentchainTypeConverter, ShardIdentifier, StfError, StfResult,
-	H256,
+	AccountId, ShardIdentifier, StfError, StfResult, H256,
 };
 use codec::Encode;
-use frame_support::{dispatch::UnfilteredDispatchable, ensure};
-use ita_sgx_runtime::{IDGraph, RuntimeOrigin, System};
+use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
+use ita_sgx_runtime::{
+	pallet_imt::{get_eligible_identities, IdentityContext},
+	BlockNumber, Parentchain, RuntimeOrigin, System,
+};
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
@@ -40,11 +42,9 @@ use lc_stf_task_sender::{
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
 use litentry_primitives::{
-	Assertion, ErrorDetail, Identity, IdentityNetworkTuple, RequestAesKey, ValidationData,
-	Web3Network,
+	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };
 use log::*;
-use sp_core::blake2_256;
 use std::{sync::Arc, vec::Vec};
 
 #[cfg(not(feature = "production"))]
@@ -169,30 +169,34 @@ impl TrustedCallSigned {
 			),
 		}
 
-		let id_graph = IMT::get_id_graph(&who);
+		let mut id_graph = IMT::id_graph(&who);
+		if id_graph.is_empty() {
+			// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
+			id_graph.push((
+				who.clone(),
+				IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
+			));
+		}
 		let assertion_networks = assertion.get_supported_web3networks();
-		let identities: Vec<IdentityNetworkTuple> = id_graph
-			.into_iter()
-			.filter(|item| item.1.is_active())
-			.map(|item| {
-				let mut networks = item.1.web3networks.to_vec();
-				// filter out the web3networks which are not supported by this specific `assertion`.
-				// We do it here before every request sending because:
-				// - it's a common step for all assertion buildings, for those assertions which only
-				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
-				// - it helps to reduce the request size a bit
-				networks.retain(|n| assertion_networks.contains(n));
-				(item.0, networks)
-			})
-			.collect();
+		let identities = get_eligible_identities(id_graph, assertion_networks);
+
+		ensure!(
+			!identities.is_empty(),
+			StfError::RequestVCFailed(assertion, ErrorDetail::NoEligibleIdentity)
+		);
+
+		let parachain_block_number = Parentchain::block_number();
+		let sidechain_block_number = System::block_number();
+
 		let assertion_build: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			signer,
-			enclave_account: enclave_signer_account(),
 			who,
 			assertion: assertion.clone(),
 			identities,
 			top_hash,
+			parachain_block_number,
+			sidechain_block_number,
 			maybe_key,
 			req_ext_hash,
 		}
@@ -256,19 +260,14 @@ impl TrustedCallSigned {
 		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	{
 		debug!("link_identity_callback, who: {}", account_id_to_string(&who));
-		let account = SgxParentchainTypeConverter::convert(
-			who.to_account_id().ok_or(StfError::InvalidAccount)?,
-		);
-
 		// the pallet extrinsic doesn't accept customised return type, so
 		// we have to do the if-condition outside of extrinsic call
-		let old_id_graph_len = IMT::id_graph_lens(&who);
-		let mut mutated_id_graph = IDGraph::<Runtime>::default();
+		let old_id_graph = IMT::id_graph(&who);
 
 		Self::link_identity_callback_internal(
 			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
-			identity.clone(),
+			identity,
 			web3networks,
 		)
 		.map_err(|e| {
@@ -276,35 +275,28 @@ impl TrustedCallSigned {
 			push_call_imp_some_error(
 				calls,
 				node_metadata_repo.clone(),
-				Some(account.clone()),
+				Some(who.clone()),
 				e.to_imp_error(),
 				req_ext_hash,
 			);
 			e
 		})?;
 
-		debug!("pushing identity_linked event ...");
-		let id_graph = IMT::get_id_graph(&who);
-		let id_graph_hash: H256 = blake2_256(&id_graph.encode()).into();
+		let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 
+		debug!("pushing identity_linked event ...");
 		// push `identity_linked` call
 		let call_index =
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 		calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			who.clone(),
 			id_graph_hash,
 			req_ext_hash,
 		))));
 
-		if old_id_graph_len == 0 {
-			mutated_id_graph = id_graph;
-		} else if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
-			mutated_id_graph.push((identity, identity_context))
-		} else {
-			// if should not happen, so we just log the error here
-			error!("failed to get identity_context for {:?}, {:?}", &who, &identity);
-		}
+		let mut mutated_id_graph = IMT::id_graph(&who);
+		mutated_id_graph.retain(|i| !old_id_graph.contains(i));
 
 		if let Some(key) = maybe_key {
 			return Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {

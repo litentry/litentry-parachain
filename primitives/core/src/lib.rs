@@ -38,6 +38,9 @@ pub use error::*;
 mod vc;
 pub use vc::*;
 
+pub mod identity;
+pub use identity::*;
+
 mod oneblock;
 pub use oneblock::*;
 
@@ -52,6 +55,10 @@ pub use bnb_domain::*;
 
 mod generic_discord_role;
 pub use generic_discord_role::*;
+
+mod evm_amount_holding;
+pub use evm_amount_holding::*;
+
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{
