@@ -24,14 +24,13 @@ use crate::{
 		get_expected_raw_message, verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
-	AccountId, ConvertAccountId, SgxParentchainTypeConverter, ShardIdentifier, StfError, StfResult,
-	H256,
+	AccountId, ShardIdentifier, StfError, StfResult, H256,
 };
 use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{
 	pallet_imt::{get_eligible_identities, IdentityContext},
-	BlockNumber, IDGraph, RuntimeOrigin, System,
+	BlockNumber, RuntimeOrigin, System,
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
@@ -257,19 +256,14 @@ impl TrustedCallSigned {
 		NodeMetadataRepository::MetadataType: NodeMetadataTrait,
 	{
 		debug!("link_identity_callback, who: {}", account_id_to_string(&who));
-		let account = SgxParentchainTypeConverter::convert(
-			who.to_account_id().ok_or(StfError::InvalidAccount)?,
-		);
-
 		// the pallet extrinsic doesn't accept customised return type, so
 		// we have to do the if-condition outside of extrinsic call
-		let old_id_graph_len = IMT::id_graph_lens(&who);
-		let mut mutated_id_graph = IDGraph::<Runtime>::default();
+		let old_id_graph = IMT::id_graph(&who);
 
 		Self::link_identity_callback_internal(
 			signer.to_account_id().ok_or(StfError::InvalidAccount)?,
 			who.clone(),
-			identity.clone(),
+			identity,
 			web3networks,
 		)
 		.map_err(|e| {
@@ -277,7 +271,7 @@ impl TrustedCallSigned {
 			push_call_imp_some_error(
 				calls,
 				node_metadata_repo.clone(),
-				Some(account.clone()),
+				Some(who.clone()),
 				e.to_imp_error(),
 				req_ext_hash,
 			);
@@ -292,19 +286,13 @@ impl TrustedCallSigned {
 			node_metadata_repo.get_from_metadata(|m| m.identity_linked_call_indexes())??;
 		calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			who.clone(),
 			id_graph_hash,
 			req_ext_hash,
 		))));
 
-		if old_id_graph_len == 0 {
-			mutated_id_graph = IMT::id_graph(&who);
-		} else if let Some(identity_context) = IMT::id_graphs(&who, &identity) {
-			mutated_id_graph.push((identity, identity_context))
-		} else {
-			// if should not happen, so we just log the error here
-			error!("failed to get identity_context for {:?}, {:?}", &who, &identity);
-		}
+		let mut mutated_id_graph = IMT::id_graph(&who);
+		mutated_id_graph.retain(|i| !old_id_graph.contains(i));
 
 		if let Some(key) = maybe_key {
 			return Ok(TrustedCallResult::LinkIdentity(LinkIdentityResult {

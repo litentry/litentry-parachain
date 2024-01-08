@@ -14,7 +14,7 @@ import {
 import { buildIdentityHelper, buildValidations } from './common/utils';
 import type { IntegrationTestContext } from './common/common-types';
 import { aesKey } from './common/call';
-import { LitentryPrimitivesIdentity } from 'sidechain-api';
+import { CorePrimitivesIdentity } from 'parachain-api';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { defaultAssertions, unconfiguredAssertions } from './common/utils/vc-helper';
 import { LitentryValidationData, Web3Network } from 'parachain-api';
@@ -23,7 +23,7 @@ import { Vec } from '@polkadot/types';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
-    let aliceSubstrateIdentity: LitentryPrimitivesIdentity = undefined as any;
+    let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
 
     // Alice links:
     // - a `mock_user` twitter
@@ -33,7 +33,7 @@ describe('Test Vc (direct invocation)', function () {
     // We need this linking to not have empty eligible identities for any vc request
     const linkIdentityRequestParams: {
         nonce: number;
-        identity: LitentryPrimitivesIdentity;
+        identity: CorePrimitivesIdentity;
         validation: LitentryValidationData;
         networks: Vec<Web3Network>;
     }[] = [];

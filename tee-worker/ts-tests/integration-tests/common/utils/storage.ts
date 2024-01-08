@@ -4,7 +4,8 @@ import { StorageEntryMetadataV14, SiLookupTypeId, StorageHasherV14 } from '@polk
 import { sendRequest } from '../call';
 import { blake2128Concat, twox64Concat, identity, createJsonRpcRequest, nextRequestId } from '../helpers';
 import type { IntegrationTestContext } from '../common-types';
-import type { PalletIdentityManagementTeeIdentityContext, LitentryPrimitivesIdentity } from 'sidechain-api';
+import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import type { CorePrimitivesIdentity } from 'parachain-api';
 import type { HexString } from '@polkadot/util/types';
 import type { Metadata } from '@polkadot/types';
 
@@ -94,7 +95,7 @@ export async function checkIdGraph(
     context: IntegrationTestContext,
     pallet: string,
     method: string,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     identity: HexString
 ): Promise<PalletIdentityManagementTeeIdentityContext> {
     await sleep(6000);

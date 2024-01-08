@@ -91,6 +91,7 @@ pub enum Command {
 	A13(A13Arg),
 	A14,
 	A20,
+	BnbDomainHolding,
 	#[clap(subcommand)]
 	Oneblock(OneblockCommand),
 	#[clap(subcommand)]
@@ -317,6 +318,7 @@ impl RequestVcCommand {
 			},
 			Command::A14 => Assertion::A14,
 			Command::A20 => Assertion::A20,
+			Command::BnbDomainHolding => Assertion::BnbDomainHolding,
 			Command::Oneblock(c) => match c {
 				OneblockCommand::Completion =>
 					Assertion::Oneblock(OneBlockCourseType::CourseCompletion),

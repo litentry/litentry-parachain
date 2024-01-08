@@ -34,7 +34,6 @@ pub mod weights;
 
 pub use crate::weights::WeightInfo;
 
-use core_primitives::{Assertion, SchemaIndex, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN};
 pub use pallet::*;
 use sp_core::H256;
 use sp_std::vec::Vec;
@@ -51,7 +50,9 @@ pub type VCIndex = H256;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use core_primitives::{ErrorDetail, VCMPError};
+	use core_primitives::{
+		Assertion, ErrorDetail, Identity, SchemaIndex, VCMPError, SCHEMA_CONTENT_LEN, SCHEMA_ID_LEN,
+	};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -73,9 +74,10 @@ pub mod pallet {
 	}
 
 	// a map VCIndex -> VC context
+	// TODO: to be removed in P-350
 	#[pallet::storage]
 	#[pallet::getter(fn vc_registry)]
-	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext<T>>;
+	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext>;
 
 	// the admin account
 	#[pallet::storage]
@@ -128,7 +130,7 @@ pub mod pallet {
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
 		VCIssued {
-			account: T::AccountId,
+			identity: Identity,
 			assertion: Assertion,
 			index: VCIndex,
 			req_ext_hash: H256,
@@ -166,18 +168,18 @@ pub mod pallet {
 		// copied from core_primitives::VCMPError, we use events instead of pallet::errors,
 		// see https://github.com/litentry/litentry-parachain/issues/1275
 		RequestVCFailed {
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			assertion: Assertion,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		UnclassifiedError {
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
 		VCRegistryItemAdded {
-			account: T::AccountId,
+			identity: Identity,
 			assertion: Assertion,
 			index: VCIndex,
 		},
@@ -280,7 +282,10 @@ pub mod pallet {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			VCRegistry::<T>::try_mutate(index, |context| {
 				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
-				ensure!(who == c.subject, Error::<T>::VCSubjectMismatch);
+				ensure!(
+					Some(who.clone()).encode() == c.subject.to_account_id().encode(),
+					Error::<T>::VCSubjectMismatch
+				);
 				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
 				c.status = Status::Disabled;
 				*context = Some(c);
@@ -294,7 +299,10 @@ pub mod pallet {
 		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
 			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
 			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
-			ensure!(who == context.subject, Error::<T>::VCSubjectMismatch);
+			ensure!(
+				Some(who.clone()).encode() == context.subject.to_account_id().encode(),
+				Error::<T>::VCSubjectMismatch
+			);
 			VCRegistry::<T>::remove(index);
 			Self::deposit_event(Event::VCRevoked { account: who, index });
 			Ok(().into())
@@ -396,7 +404,7 @@ pub mod pallet {
 		pub fn add_vc_registry_item(
 			origin: OriginFor<T>,
 			index: VCIndex,
-			subject: T::AccountId,
+			identity: Identity,
 			assertion: Assertion,
 			hash: H256,
 		) -> DispatchResultWithPostInfo {
@@ -405,9 +413,9 @@ pub mod pallet {
 			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
 			VCRegistry::<T>::insert(
 				index,
-				VCContext::<T>::new(subject.clone(), assertion.clone(), hash),
+				VCContext::new(identity.clone(), assertion.clone(), hash),
 			);
-			Self::deposit_event(Event::VCRegistryItemAdded { account: subject, assertion, index });
+			Self::deposit_event(Event::VCRegistryItemAdded { identity, assertion, index });
 			Ok(().into())
 		}
 
@@ -443,7 +451,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::vc_issued())]
 		pub fn vc_issued(
 			origin: OriginFor<T>,
-			account: T::AccountId,
+			identity: Identity,
 			assertion: Assertion,
 			index: H256,
 			hash: H256,
@@ -453,9 +461,9 @@ pub mod pallet {
 			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
 			VCRegistry::<T>::insert(
 				index,
-				VCContext::<T>::new(account.clone(), assertion.clone(), hash),
+				VCContext::new(identity.clone(), assertion.clone(), hash),
 			);
-			Self::deposit_event(Event::VCIssued { account, assertion, index, req_ext_hash });
+			Self::deposit_event(Event::VCIssued { identity, assertion, index, req_ext_hash });
 			Ok(Pays::No.into())
 		}
 
@@ -463,7 +471,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::some_error())]
 		pub fn some_error(
 			origin: OriginFor<T>,
-			account: Option<T::AccountId>,
+			identity: Option<Identity>,
 			error: VCMPError,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
@@ -471,13 +479,13 @@ pub mod pallet {
 			match error {
 				VCMPError::RequestVCFailed(assertion, detail) =>
 					Self::deposit_event(Event::RequestVCFailed {
-						account,
+						identity,
 						assertion,
 						detail,
 						req_ext_hash,
 					}),
 				VCMPError::UnclassifiedError(detail) =>
-					Self::deposit_event(Event::UnclassifiedError { account, detail, req_ext_hash }),
+					Self::deposit_event(Event::UnclassifiedError { identity, detail, req_ext_hash }),
 			}
 			Ok(Pays::No.into())
 		}
