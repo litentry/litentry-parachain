@@ -332,15 +332,17 @@ where
 async fn submit_vc_request_inner(params: Params) -> Result<RpcReturnValue, String> {
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
-
 	let request = AesRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
+
 	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
+
 	let vc_request = VCRequest {
 		encrypted_trusted_call: request.payload,
 		sender,
 		shard: request.shard,
 		key: request.key,
 	};
+
 	if let Err(e) = VcRequestSender::new().send_vc_request(vc_request) {
 		return Err(compute_hex_encoded_return_error(&e))
 	}
