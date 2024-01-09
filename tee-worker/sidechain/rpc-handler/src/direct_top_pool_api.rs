@@ -277,12 +277,12 @@ where
 	debug!("Author submit and watch trusted operation..");
 
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 
-	info!("Got request hex: {:?}", &hex_encoded_params[0]);
-	std::println!("Got request hex: {:?}", &hex_encoded_params[0]);
+	info!("Got request hex: {:?}", param);
+	std::println!("Got request hex: {:?}", param);
 
-	let request =
-		RsaRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+	let request = RsaRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let response: Result<Hash, RpcError> = if let Some(method) = json_rpc_method {
 		executor::block_on(async { author.watch_and_broadcast_top(request, method).await })
@@ -309,10 +309,11 @@ where
 	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 {
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
-	info!("author_submitAndWatchAesRequest, request hex: {:?}", &hex_encoded_params[0]);
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 
-	let request =
-		AesRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+	info!("author_submitAndWatchAesRequest, request hex: {:?}", param);
+
+	let request = AesRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let response: Result<Hash, RpcError> = if let Some(method) = json_rpc_method {
 		executor::block_on(async { author.watch_and_broadcast_top(request, method).await })
@@ -330,12 +331,9 @@ where
 
 async fn submit_vc_request_inner(params: Params) -> Result<RpcReturnValue, String> {
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
-	if hex_encoded_params.is_empty() {
-		return Err("Invalid Request params format".to_string())
-	}
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 
-	let request =
-		AesRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+	let request = AesRequest::from_hex(param).map_err(|e| format!("{:?}", e))?;
 	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
 	let vc_request = VCRequest {
 		encrypted_trusted_call: request.payload,
