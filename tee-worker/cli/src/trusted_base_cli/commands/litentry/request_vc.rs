@@ -105,6 +105,7 @@ pub enum Command {
 	EVMAmountHolding(EVMAmountHoldingCommand),
 	CryptoSummary,
 	LITStaking,
+	BRC20AmountHolder,
 }
 
 #[derive(Args, Debug)]
@@ -478,6 +479,7 @@ impl RequestVcCommand {
 			},
 			Command::CryptoSummary => Assertion::CryptoSummary,
 			Command::LITStaking => Assertion::LITStaking,
+			Command::BRC20AmountHolder => Assertion::BRC20AmountHolder,
 		};
 
 		let key = Self::random_aes_key();
