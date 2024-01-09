@@ -19,7 +19,7 @@
 
 use crate::{
 	AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType, GenericDiscordRoleType,
-	OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
+	OneBlockCourseType, VIP3MembershipCardLevel, Web3Network, all_web3networks,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -263,14 +263,13 @@ impl Assertion {
 				vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// BRC20 Holder
 			Self::BRC20AmountHolder => vec![Web3Network::BitcoinP2tr],
-			// we don't care about any specific web3 network
-			Self::A1 |
-			Self::A2(..) |
-			Self::A3(..) |
-			Self::A6 |
-			Self::A13(..) |
-			Self::A20 |
-			Self::GenericDiscordRole(..) => vec![],
+			//
+			// general rules
+			//
+			// any web3 network is allowed
+			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
+			// no web3 network is allowed
+			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
 		}
 	}
 }
