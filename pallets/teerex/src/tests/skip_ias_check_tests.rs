@@ -35,7 +35,6 @@ fn test_enclave() -> Enclave<AccountId, Vec<u8>> {
 }
 
 #[test]
-#[cfg(feature = "skip-scheduled-enclave-check")]
 fn register_enclave_with_empty_mrenclave_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::register_enclave(
@@ -52,7 +51,6 @@ fn register_enclave_with_empty_mrenclave_works() {
 }
 
 #[test]
-#[cfg(feature = "skip-scheduled-enclave-check")]
 fn register_enclave_with_mrenclave_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::register_enclave(
@@ -71,7 +69,6 @@ fn register_enclave_with_mrenclave_works() {
 }
 
 #[test]
-#[cfg(feature = "skip-scheduled-enclave-check")]
 fn register_enclave_with_faulty_mrenclave_inserts_default() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::register_enclave(
@@ -88,7 +85,6 @@ fn register_enclave_with_faulty_mrenclave_inserts_default() {
 }
 
 #[test]
-#[cfg(feature = "skip-scheduled-enclave-check")]
 fn register_enclave_with_empty_url_inserts_default() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::register_enclave(
@@ -107,7 +103,6 @@ fn register_enclave_with_empty_url_inserts_default() {
 }
 
 #[test]
-#[cfg(not(feature = "skip-scheduled-enclave-check"))]
 fn register_enclave_with_scheduled_enclave_works() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(Teerex::update_scheduled_enclave(
@@ -126,11 +121,11 @@ fn register_enclave_with_scheduled_enclave_works() {
 }
 
 #[test]
-#[cfg(not(feature = "skip-scheduled-enclave-check"))]
 fn register_enclave_without_scheduled_enclave_fails() {
 	use crate::Error;
 	use frame_support::assert_noop;
 	new_test_ext().execute_with(|| {
+		assert_ok!(Teerex::set_schedule_enclave(RuntimeOrigin::root(), true));
 		assert_noop!(
 			Teerex::register_enclave(
 				RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),

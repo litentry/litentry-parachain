@@ -646,16 +646,18 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		/// This extrinsic is used to set ScheduleEnclave storage item
+		/// This storage item is used to perform feature control during register_enclave
 		#[pallet::call_index(31)]
-		#[pallet::weight(100)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn set_schedule_enclave(
 			origin: OriginFor<T>,
 			schedule_enclave: bool,
 		) -> DispatchResultWithPostInfo {
-			let sender = ensure_root(origin)?;
+			let _ = ensure_root(origin)?;
 
 			<ScheduleEnclave<T>>::set(schedule_enclave);
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 	}
 
