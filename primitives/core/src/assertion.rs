@@ -271,8 +271,6 @@ impl Assertion {
 	// the broader `Web3Network` (see network.rs)
 	pub fn get_supported_web3networks(&self) -> Vec<Web3Network> {
 		match self {
-			// A1, any web3 network is allowed
-			Self::A1 => all_web3networks(),
 			// LIT holder, not including `LitentryRococo` as it's not supported by any data provider
 			Self::A4(..) => vec![Web3Network::Litentry, Web3Network::Litmus, Web3Network::Ethereum],
 			// DOT holder
@@ -299,13 +297,13 @@ impl Assertion {
 				vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// BRC20 Holder
 			Self::BRC20AmountHolder => vec![Web3Network::BitcoinP2tr],
-			// we don't care about any specific web3 network
-			Self::A2(..) |
-			Self::A3(..) |
-			Self::A6 |
-			Self::A13(..) |
-			Self::A20 |
-			Self::GenericDiscordRole(..) => vec![],
+			//
+			// general rules
+			//
+			// any web3 network is allowed
+			Self::A1 | Self::A20 | Self::A13(..) => all_web3networks(),
+			// no web3 network is allowed
+			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
 		}
 	}
 }
