@@ -301,7 +301,7 @@ impl Assertion {
 			// general rules
 			//
 			// any web3 network is allowed
-			Self::A1 | Self::A20 | Self::A13(..) => all_web3networks(),
+			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
 			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
 		}
