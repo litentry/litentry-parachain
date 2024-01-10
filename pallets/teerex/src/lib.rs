@@ -654,7 +654,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			schedule_enclave: bool,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_root(origin)?;
+			ensure_root(origin)?;
 
 			<ScheduleEnclave<T>>::set(schedule_enclave);
 			Ok(Pays::No.into())
