@@ -348,11 +348,8 @@ async fn submit_vc_request_inner(params: Params) -> Result<RpcReturnValue, Strin
 	}
 
 	match receiver.await {
-		Ok(Ok(response)) => Ok(RpcReturnValue {
-			do_watch: false,
-			value: response,
-			status: DirectRequestStatus::Ok,
-		}),
+		Ok(Ok(response)) =>
+			Ok(RpcReturnValue { do_watch: false, value: response, status: DirectRequestStatus::Ok }),
 		Ok(Err(e)) => {
 			log::error!("Received error in jsonresponse: {:?} ", e);
 			Err(compute_hex_encoded_return_error(&e))
