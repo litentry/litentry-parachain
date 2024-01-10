@@ -42,6 +42,7 @@ use its_primitives::{
 };
 use sp_core::H256;
 use sp_io::KillStorageResult;
+use sp_runtime::traits::Header as ParentchainHeaderTrait;
 
 /// Contains the necessary data to update the `SidechainDB` when importing a `SidechainBlock`.
 #[derive(PartialEq, Eq, Clone, Debug, Encode, Decode)]
@@ -160,6 +161,14 @@ pub trait SidechainSystemExt {
 
 	/// Resets the events.
 	fn reset_events(&mut self);
+
+	/// Litentry: set the parentchain block number from the parentchain header
+	/// The reasons to put it here instead of calling `ParentchainPalletInterface::update_parentchain_block` somewhere are:
+	///   1. The Stf::update_parentchain_block is too heavy weighted, where the whole state is loaded upon each parentchain
+	///      block import - btw it's not reachable for now as `storage_hashes_to_update_on_block` is always empty
+	///   2. It represents the parentchain block number on which the current sidechain block is built, it's more natural to
+	///      call it in the state preprocessing before proposing a sidechain block
+	fn set_parentchain_block_number<PH: ParentchainHeaderTrait>(&mut self, header: &PH);
 }
 
 impl<T: SidechainState> SidechainSystemExt for T {
@@ -191,5 +200,9 @@ impl<T: SidechainState> SidechainSystemExt for T {
 		self.clear_with_name("System", "Events");
 		self.clear_with_name("System", "EventCount");
 		self.clear_prefix_with_name("System", "EventTopics");
+	}
+
+	fn set_parentchain_block_number<PH: ParentchainHeaderTrait>(&mut self, header: &PH) {
+		self.set_with_name("Parentchain", "Number", header.number())
 	}
 }

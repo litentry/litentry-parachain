@@ -20,8 +20,8 @@ extern crate sgx_tstd as std;
 use super::*;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_self,
-		get_expected_raw_message, verify_web3_identity,
+		ensure_enclave_signer_account, ensure_enclave_signer_or_self, get_expected_raw_message,
+		verify_web3_identity,
 	},
 	trusted_call_result::{LinkIdentityResult, TrustedCallResult},
 	AccountId, ShardIdentifier, StfError, StfResult, H256,
@@ -30,7 +30,7 @@ use codec::Encode;
 use frame_support::{dispatch::UnfilteredDispatchable, ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{
 	pallet_imt::{get_eligible_identities, IdentityContext},
-	BlockNumber, RuntimeOrigin, System,
+	BlockNumber, Parentchain, RuntimeOrigin, System,
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
@@ -185,14 +185,18 @@ impl TrustedCallSigned {
 			StfError::RequestVCFailed(assertion, ErrorDetail::NoEligibleIdentity)
 		);
 
+		let parachain_block_number = Parentchain::block_number();
+		let sidechain_block_number = System::block_number();
+
 		let assertion_build: RequestType = AssertionBuildRequest {
 			shard: *shard,
 			signer,
-			enclave_account: enclave_signer_account(),
 			who,
 			assertion: assertion.clone(),
 			identities,
 			top_hash,
+			parachain_block_number,
+			sidechain_block_number,
 			maybe_key,
 			req_ext_hash,
 		}

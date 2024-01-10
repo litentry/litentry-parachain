@@ -136,11 +136,12 @@ mod tests {
 		let req = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
 			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::A3(guild_id.clone(), channel_id.clone(), role_id.clone()),
 			identities,
 			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
