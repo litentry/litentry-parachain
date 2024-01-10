@@ -129,10 +129,12 @@ pub mod pallet {
 		},
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
+		// we have `id_graph_hash` field since vc request could create the IDGraph
 		VCIssued {
 			identity: Identity,
 			assertion: Assertion,
 			index: VCIndex,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
 		// Admin account was changed
@@ -455,6 +457,7 @@ pub mod pallet {
 			assertion: Assertion,
 			index: H256,
 			hash: H256,
+			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
@@ -463,7 +466,13 @@ pub mod pallet {
 				index,
 				VCContext::new(identity.clone(), assertion.clone(), hash),
 			);
-			Self::deposit_event(Event::VCIssued { identity, assertion, index, req_ext_hash });
+			Self::deposit_event(Event::VCIssued {
+				identity,
+				assertion,
+				index,
+				id_graph_hash,
+				req_ext_hash,
+			});
 			Ok(Pays::No.into())
 		}
 

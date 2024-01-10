@@ -139,6 +139,7 @@ pub enum TrustedCall {
 		H256,
 		Vec<u8>,
 		Option<RequestAesKey>,
+		bool,
 		H256,
 	),
 	#[codec(index = 22)]
@@ -872,17 +873,21 @@ where
 				vc_hash,
 				vc_payload,
 				maybe_key,
+				should_create_id_graph,
 				req_ext_hash,
 			) => {
 				debug!(
-					"request_vc_callback, who: {}, assertion: {:?}",
+					"request_vc_callback, who: {}, should_create_id_graph: {}, assertion: {:?}",
 					account_id_to_string(&who),
+					should_create_id_graph,
 					assertion
 				);
 
 				Self::request_vc_callback_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who.clone(),
 					assertion.clone(),
+					should_create_id_graph,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
@@ -900,12 +905,18 @@ where
 				let call_index =
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
+				// IDGraph hash can't be `None` as we should have created it otherwise
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+				let mutated_id_graph =
+					if should_create_id_graph { IMT::id_graph(&who) } else { vec![] };
+
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					who,
 					assertion,
 					vc_index,
 					vc_hash,
+					id_graph_hash,
 					req_ext_hash,
 				))));
 
@@ -914,6 +925,8 @@ where
 						vc_index,
 						vc_hash,
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
+						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						id_graph_hash,
 					}))
 				} else {
 					Ok(TrustedCallResult::Empty)

@@ -98,4 +98,6 @@ pub struct RequestVCResult {
 	pub vc_index: H256,
 	pub vc_hash: H256,
 	pub vc_payload: AesOutput,
+	pub mutated_id_graph: AesOutput,
+	pub id_graph_hash: H256,
 }

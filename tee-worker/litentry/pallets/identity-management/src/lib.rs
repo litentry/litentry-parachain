@@ -261,7 +261,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		// try to create an IDGraph if there's none - `who` will be the prime identity
 		// please note the web3networks for the prime identity will be all avaiable networks
-		fn maybe_create_id_graph(who: &Identity) -> Result<(), DispatchError> {
+		pub fn maybe_create_id_graph(who: &Identity) -> Result<(), DispatchError> {
 			if IDGraphs::<T>::get(who, who).is_none() {
 				ensure!(
 					!LinkedIdentities::<T>::contains_key(who),

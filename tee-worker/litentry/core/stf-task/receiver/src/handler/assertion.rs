@@ -215,6 +215,7 @@ where
 				vc_hash,
 				vc_payload,
 				self.req.maybe_key,
+				self.req.should_create_id_graph,
 				self.req.req_ext_hash,
 			);
 			if let Err(e) = sender.send((self.req.shard, self.req.top_hash, c)) {

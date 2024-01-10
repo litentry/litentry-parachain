@@ -94,6 +94,7 @@ fn vc_issued_works() {
 			VC_INDEX,
 			VC_HASH,
 			H256::default(),
+			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
@@ -116,6 +117,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 				H256::default(),
 				H256::default(),
 				H256::default(),
+				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
@@ -134,6 +136,7 @@ fn vc_issued_with_duplicated_index_fails() {
 			VC_INDEX,
 			VC_HASH,
 			H256::default(),
+			H256::default(),
 		));
 		assert_noop!(
 			VCManagement::vc_issued(
@@ -142,6 +145,7 @@ fn vc_issued_with_duplicated_index_fails() {
 				Assertion::A1,
 				VC_INDEX,
 				VC_HASH,
+				H256::default(),
 				H256::default(),
 			),
 			Error::<Test>::VCAlreadyExists
@@ -160,6 +164,7 @@ fn disable_vc_works() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
+			H256::default(),
 			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
@@ -195,6 +200,7 @@ fn disable_vc_with_other_subject_fails() {
 			VC_INDEX,
 			VC_HASH,
 			H256::default(),
+			H256::default(),
 		));
 		assert_noop!(
 			VCManagement::disable_vc(RuntimeOrigin::signed(alice), VC_HASH),
@@ -216,6 +222,7 @@ fn revoke_vc_works() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
+			H256::default(),
 			H256::default(),
 		));
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
@@ -248,6 +255,7 @@ fn revoke_vc_with_other_subject_fails() {
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
+			H256::default(),
 			H256::default(),
 		));
 		assert_noop!(
