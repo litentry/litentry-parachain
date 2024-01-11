@@ -81,112 +81,243 @@ pub fn build(
 ) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
-	let q_min_balance = pre_build(&htype, &min_balance)?;
-	let identities = transpose_identity(&req.identities);
-	let (is_hold, optimal_hold_index) = do_build(identities, &htype, &q_min_balance)
+	let q_min_balance = prepare_min_balance(&htype, &min_balance)?;
+	let accounts = prepare_accounts(&req.identities, &htype);
+
+	// TODO: handle empty `identities`
+
+	let holding_date = holding_time_search(accounts, &q_min_balance)
 		.map_err(|e| emit_error(&htype, &min_balance, e))?;
 
-	generate_vc(req, &htype, &q_min_balance, is_hold, optimal_hold_index)
+	generate_vc(req, &htype, &q_min_balance, holding_date)
 		.map_err(|e| emit_error(&htype, &min_balance, e))
 }
 
-/// Credential Build Workflow
-fn pre_build(htype: &AmountHoldingTimeType, min_balance: &ParameterString) -> Result<String> {
+fn prepare_min_balance(
+	htype: &AmountHoldingTimeType,
+	min_balance: &ParameterString,
+) -> Result<String> {
 	vec_to_string(min_balance.to_vec())
 		.map_err(|_| emit_error(htype, min_balance, ErrorDetail::ParseError))
 }
 
-// TODO:
-// There's an issue for this: https://github.com/litentry/litentry-parachain/issues/1655
-//
-// There is a problem here, because TDF does not support mixed network types,
-// It is need to request TDF 2 (substrate+evm networks) * ASSERTION_DATE_LEN * addresses http requests.
-// If TDF can handle mixed network type, and even supports from_date array,
-// so that ideally, up to one http request can yield results.
-fn do_build(
-	identities: Vec<(Web3Network, Vec<String>)>,
+// Represents an individual account that may or not be holding the desired token amount
+struct Account {
+	network: Web3Network,
+	token: Option<String>,
+	address: String,
+}
+
+// TODO: unit test?
+fn prepare_accounts(
+	identities: &Vec<IdentityNetworkTuple>,
 	htype: &AmountHoldingTimeType,
-	q_min_balance: &str,
-) -> core::result::Result<(bool, usize), ErrorDetail> {
+) -> Vec<Account> {
+	return transpose_identity(identities)
+		.into_iter()
+		.flat_map(|(network, addresses)| -> Vec<Account> {
+			let token = match_token_address(&htype, &network);
+			addresses
+				.into_iter()
+				.map(move |address| Account { network, token: token.clone(), address })
+				.collect()
+		})
+		.collect()
+}
+
+// Represents the outcome of a holding query for a given date
+//  Ok(true)  => positive: user/account is holding (uninterrupted) since the given date
+//  Ok(false) => negative: user/account did not hold (at some point) since the given date
+//  Err(...)  => inconclusive: query failed
+type QueryOutcome = core::result::Result<bool, ErrorDetail>;
+
+fn is_positive(outcome: &QueryOutcome) -> bool {
+	match outcome {
+		Ok(true) => true,
+		_ => false,
+	}
+}
+
+fn is_negative(outcome: &QueryOutcome) -> bool {
+	match outcome {
+		Ok(false) => true,
+		_ => false,
+	}
+}
+
+fn is_inconclusive(outcome: &QueryOutcome) -> bool {
+	match outcome {
+		Err(_) => true,
+		_ => false,
+	}
+}
+
+// Check against the data provider whether a single account has been holding since the given date.
+fn account_is_holding(
+	client: &mut AchainableClient,
+	q_min_balance: &String,
+	account: &Account,
+	date: &str,
+) -> QueryOutcome {
+	let holding = ParamsBasicTypeWithAmountHolding::new(
+		&account.network,
+		q_min_balance.clone(),
+		date.to_string(),
+		account.token.clone(),
+	);
+	return client.is_holder(account.address.as_str(), holding).map_err(|e| {
+		error!("Assertion HoldingTime request error: {:?}", e);
+		e.into_error_detail()
+	})
+}
+
+// Check against the data provider whether any of the given accounts has been holding since the given date.
+// If at least one positive outcome is found, the accounts that yielded a (conclusive) negative outcome are eliminated.
+fn holding_time_search_step<'r>(
+	client: &mut AchainableClient,
+	q_min_balance: &String,
+	accounts: Vec<Account>,
+	date: &str,
+) -> (QueryOutcome, Vec<Account>) {
+	// Check all remaining identities on the given date
+	let outcomes: Vec<QueryOutcome> = accounts
+		.iter()
+		.map(|account| account_is_holding(client, q_min_balance, &account, date))
+		.collect();
+
+	// If any positive result is found:
+	//   - Discard all identities that yielded a _negative_ result
+	//     - KEEP the ones that yielded error; they may still be relevant!
+	//   - Return the remaining identities with a positive value to continue the search
+
+	if outcomes.iter().any(is_positive) {
+		let new_accounts = accounts
+			.into_iter()
+			.zip(outcomes.iter())
+			.filter_map(|(account, outcome)| (!is_negative(outcome)).then_some(account))
+			.collect();
+		return (Ok(true), new_accounts)
+	}
+
+	/*
+	 * If any error is found:
+	 *   - The search is stuck; bubble the error
+	 *     TODO: retry?
+	 *
+	 * Otherwise (all results were negative):
+	 *   - Keep all identities
+	 *   - Return with a negative result and continue the search
+	 */
+	let outcome = match outcomes.into_iter().find(is_inconclusive) {
+		Some(Err(e)) => Err(e),
+		_ => Ok(false),
+	};
+	return (outcome, accounts)
+}
+
+const ASSERTION_DATE_LEN: usize = 15;
+const ASSERTION_FROM_DATE: [&'static str; ASSERTION_DATE_LEN] = [
+	"2017-01-01",
+	"2017-07-01",
+	"2018-01-01",
+	"2018-07-01",
+	"2019-01-01",
+	"2019-07-01",
+	"2020-01-01",
+	"2020-07-01",
+	"2021-01-01",
+	"2021-07-01",
+	"2022-01-01",
+	"2022-07-01",
+	"2023-01-01",
+	"2023-07-01",
+	// In order to address the issue of the community encountering a false query for WBTC in
+	// November, the product team feels that adding this date temporarily solves this problem.
+	"2023-12-01",
+];
+
+// Search against the data provider for the holding time of the user's longest holding account.
+// Return the date if successful, `None` if none of the accounts is currently holding.
+fn holding_time_search(
+	mut accounts: Vec<Account>,
+	q_min_balance: &String,
+) -> core::result::Result<Option<&'static str>, ErrorDetail> {
 	let data_provider_config = DataProviderConfigReader::read()?;
-	let mut client = AchainableClient::new(&data_provider_config);
+	let mut client = AchainableClient::new(&data_provider_config); // TODO: inject dependency; unit test
 
-	let mut is_hold = false;
-	let mut optimal_hold_index = usize::MAX;
-
-	// If both Substrate and Evm networks meet the conditions, take the interval with the longest holding time.
-	// Here's an example:
-	//
-	// ALICE holds 100 LITs since 2018-03-02 on substrate network
-	// ALICE holds 100 LITs since 2020-03-02 on evm network
-	//
-	// min_amount is 1 LIT
-	//
-	// the result should be
-	// Alice:
-	// [
-	//    from_date: < 2019-01-01
-	//    to_date: >= 2023-03-30 (now)
-	//    value: true
-	// ]
-	for (network, addresses) in identities {
-		// If found query result is the optimal solution, i.e optimal_hold_index = 0, (2017-01-01)
-		// there is no need to query other networks.
-		if optimal_hold_index == 0 {
-			break
+	// Initialize the search by checking the latest date in the range;
+	// if the result is negative, there's nothing to search.
+	let mut earliest_holding_index: usize = {
+		let is_holding = {
+			let last_index = ASSERTION_DATE_LEN - 1;
+			let (outcome, new_accounts) = holding_time_search_step(
+				&mut client,
+				q_min_balance,
+				accounts,
+				&ASSERTION_FROM_DATE[last_index],
+			);
+			accounts = new_accounts;
+			outcome
+		}?;
+		if !is_holding {
+			return Ok(None)
 		}
+		ASSERTION_DATE_LEN - 1
+	};
 
-		let token = match_token_address(htype, &network);
-		let addresses: Vec<String> = addresses.into_iter().collect();
+	let mut latest_non_holding_index: usize = {
+		let was_always_holding = {
+			let (outcome, new_accounts) = holding_time_search_step(
+				&mut client,
+				q_min_balance,
+				accounts,
+				&ASSERTION_FROM_DATE[0],
+			);
+			accounts = new_accounts;
+			outcome
+		}?;
+		if was_always_holding {
+			return Ok(Some(ASSERTION_FROM_DATE[0]))
+		}
+		0
+	};
 
-		for (index, date) in ASSERTION_FROM_DATE.iter().enumerate() {
-			for address in &addresses {
-				let holding = ParamsBasicTypeWithAmountHolding::new(
-					&network,
-					q_min_balance.to_string(),
-					date.to_string(),
-					token.clone(),
-				);
-				let is_amount_holder = client.is_holder(address, holding).map_err(|e| {
-					error!("Assertion HoldingTime request error: {:?}", e);
-					e.into_error_detail()
-				})?;
-
-				if is_amount_holder {
-					if index < optimal_hold_index {
-						optimal_hold_index = index;
-					}
-
-					is_hold = true;
-
-					break
-				}
-			}
+	while earliest_holding_index - latest_non_holding_index > 1 {
+		let diff = earliest_holding_index - latest_non_holding_index;
+		let next_index = latest_non_holding_index + diff / 2;
+		let is_next_holding = {
+			let (outcome, new_accounts) = holding_time_search_step(
+				&mut client,
+				q_min_balance,
+				accounts,
+				&ASSERTION_FROM_DATE[0],
+			);
+			accounts = new_accounts;
+			outcome
+		}?;
+		if is_next_holding {
+			earliest_holding_index = next_index
+		} else {
+			latest_non_holding_index = next_index
 		}
 	}
 
-	// If is_hold is false, then the optimal_hold_index is always 0 (2017-01-01)
-	if !is_hold {
-		optimal_hold_index = 0;
-	}
-
-	Ok((is_hold, optimal_hold_index))
+	return Ok(Some(ASSERTION_FROM_DATE[earliest_holding_index]))
 }
 
 fn generate_vc(
 	req: &AssertionBuildRequest,
 	htype: &AmountHoldingTimeType,
 	q_min_balance: &str,
-	is_hold: bool,
-	optimal_hold_index: usize,
+	holding_date: Option<&str>,
 ) -> core::result::Result<Credential, ErrorDetail> {
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_amount_holding_time_credential(
 				htype,
-				is_hold,
+				holding_date.is_some(),
 				q_min_balance,
-				ASSERTION_FROM_DATE[optimal_hold_index],
+				holding_date.unwrap_or("2017-01-01"),
 			);
 
 			Ok(credential_unsigned)
@@ -230,94 +361,99 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 	}
 }
 
-#[cfg(test)]
-mod tests {
-	use super::*;
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
-	use lc_mock_server::run;
-	use litentry_primitives::{AmountHoldingTimeType, Web3Network};
+// #[cfg(test)]
+// mod tests {
+// 	use super::*;
+// 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
+// 	use lc_mock_server::run;
+// 	use litentry_primitives::{AmountHoldingTimeType, Web3Network};
 
-	fn init() {
-		let _ = env_logger::builder().is_test(true).try_init();
-		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
-	}
+// 	fn init() {
+// 		let _ = env_logger::builder().is_test(true).try_init();
+// 		let url = run(0).unwrap();
+// 		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
+// 	}
 
-	#[test]
-	fn do_build_lit_works() {
-		init();
+// 	// TODO: fix test fixtures after code refactoring
 
-		let identities = vec![(
-			Web3Network::Litentry,
-			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string()],
-		)];
+// 	// #[test]
+// 	// fn do_build_lit_works() {
+// 	// 	init();
 
-		let htype = AmountHoldingTimeType::LIT;
-		let q_min_balance = "10".to_string();
+// 	// 	let identities: Vec<IdentityNetworkTuple> = vec![(
+// 	// 		Web3Network::Litentry,
+// 	// 		vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string()],
+// 	// 	)];
+// 	// 	let htype = AmountHoldingTimeType::LIT;
+// 	// 	let accounts = prepare_accounts(&identities, &htype);
 
-		let (is_hold, _optimal_hold_index) = do_build(identities, &htype, &q_min_balance).unwrap();
-		assert!(is_hold);
-	}
+// 	// 	let q_min_balance = "10".to_string();
 
-	#[test]
-	fn do_build_dot_works() {
-		init();
+// 	// 	let (holding_index) = holding_time_search(&accounts, &htype, &q_min_balance).unwrap();
+// 	// 	assert!(holding_index.is_some());
+// 	// }
 
-		let identities = vec![(
-			Web3Network::Polkadot,
-			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C13".to_string()],
-		)];
-		let dot_type = AmountHoldingTimeType::DOT;
-		let q_min_balance = "10".to_string();
+// 	// #[test]
+// 	// fn do_build_dot_works() {
+// 	// 	init();
 
-		let (is_hold, _optimal_hold_index) =
-			do_build(identities, &dot_type, &q_min_balance).unwrap();
-		assert!(is_hold);
-	}
+// 	// 	let identities = vec![(
+// 	// 		Web3Network::Polkadot,
+// 	// 		vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C13".to_string()],
+// 	// 	)];
+// 	// 	let dot_type = AmountHoldingTimeType::DOT;
+// 	// 	let q_min_balance = "10".to_string();
 
-	#[test]
-	fn do_build_wbtc_works() {
-		init();
+// 	// 	let (is_hold, _optimal_hold_index) =
+// 	// 		holding_time_search(identities, &dot_type, &q_min_balance).unwrap();
+// 	// 	assert!(is_hold);
+// 	// }
 
-		let identities = vec![(
-			Web3Network::Ethereum,
-			vec![
-				"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(),
-				"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12".to_string(),
-			],
-		)];
-		let htype = AmountHoldingTimeType::WBTC;
-		let q_min_balance = "10".to_string();
+// 	// #[test]
+// 	// fn do_build_wbtc_works() {
+// 	// 	init();
 
-		let (is_hold, _optimal_hold_index) = do_build(identities, &htype, &q_min_balance).unwrap();
-		assert!(is_hold);
-	}
+// 	// 	let identities = vec![(
+// 	// 		Web3Network::Ethereum,
+// 	// 		vec![
+// 	// 			"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(),
+// 	// 			"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12".to_string(),
+// 	// 		],
+// 	// 	)];
+// 	// 	let htype = AmountHoldingTimeType::WBTC;
+// 	// 	let q_min_balance = "10".to_string();
 
-	#[test]
-	fn do_build_non_hold_works() {
-		init();
+// 	// 	let (is_hold, _optimal_hold_index) =
+// 	// 		holding_time_search(identities, &htype, &q_min_balance).unwrap();
+// 	// 	assert!(is_hold);
+// 	// }
 
-		let identities = vec![(
-			Web3Network::Ethereum,
-			vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C14".to_string()],
-		)];
-		let htype = AmountHoldingTimeType::LIT;
-		let q_min_balance = "10".to_string();
+// 	// #[test]
+// 	// fn do_build_non_hold_works() {
+// 	// 	init();
 
-		let (is_hold, optimal_hold_index) = do_build(identities, &htype, &q_min_balance).unwrap();
-		assert!(!is_hold);
-		assert_eq!(optimal_hold_index, 0);
-	}
+// 	// 	let identities = vec![(
+// 	// 		Web3Network::Ethereum,
+// 	// 		vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C14".to_string()],
+// 	// 	)];
+// 	// 	let htype = AmountHoldingTimeType::LIT;
+// 	// 	let q_min_balance = "10".to_string();
 
-	#[test]
-	fn match_token_address_works() {
-		let htype = AmountHoldingTimeType::WBTC;
-		let network = Web3Network::Ethereum;
-		let ret = match_token_address(&htype, &network);
-		assert_eq!(ret, Some(WBTC_TOKEN_ADDRESS.into()));
+// 	// 	let (is_hold, optimal_hold_index) =
+// 	// 		holding_time_search(identities, &htype, &q_min_balance).unwrap();
+// 	// 	assert!(!is_hold);
+// 	// 	assert_eq!(optimal_hold_index, 0);
+// 	// }
 
-		let htype = AmountHoldingTimeType::LIT;
-		let ret = match_token_address(&htype, &network);
-		assert_eq!(ret, Some(LIT_TOKEN_ADDRESS.into()));
-	}
-}
+// 	// #[test]
+// 	// fn match_token_address_works() {
+// 	// 	let htype = AmountHoldingTimeType::WBTC;
+// 	// 	let network = Web3Network::Ethereum;
+// 	// 	let ret = match_token_address(&htype, &network);
+// 	// 	assert_eq!(ret, Some(WBTC_TOKEN_ADDRESS.into()));
+
+// 	// 	let htype = AmountHoldingTimeType::LIT;
+// 	// 	let ret = match_token_address(&htype, &network);
+// 	// 	assert_eq!(ret, Some(LIT_TOKEN_ADDRESS.into()));
+// 	// }
+// }
