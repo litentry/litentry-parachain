@@ -19,6 +19,7 @@
 // Creating mock runtime here
 use crate as pallet_teerex;
 use frame_support::{
+	assert_ok,
 	pallet_prelude::GenesisBuild,
 	parameter_types,
 	traits::{OnFinalize, OnInitialize},
@@ -153,14 +154,17 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	let teerex_config = crate::GenesisConfig {
+	let teerex_config: pallet_teerex::GenesisConfig<Test> = crate::GenesisConfig {
 		allow_sgx_debug_mode: true,
 		admin: Some(AccountKeyring::Alice.to_account_id()),
 	};
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		assert_ok!(Teerex::set_scheduled_enclave_check(RuntimeOrigin::root(), true));
+	});
 	ext
 }
 
@@ -177,7 +181,10 @@ pub fn new_test_production_ext() -> sp_io::TestExternalities {
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		assert_ok!(Teerex::set_scheduled_enclave_check(RuntimeOrigin::root(), true));
+	});
 	ext
 }
 

@@ -105,6 +105,8 @@ pub mod pallet {
 			new_mrenclave: MrEnclave,
 		},
 		RegisteredEnclaveLimitSet(u64),
+		/// Flag used only in dev to skip scheduled check
+		SkipScheduledEnclaveCheck(bool),
 	}
 
 	#[pallet::storage]
@@ -133,8 +135,8 @@ pub mod pallet {
 	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn schedule_enclave)]
-	pub type ScheduleEnclave<T: Config> = StorageValue<_, bool, ValueQuery>;
+	#[pallet::getter(fn is_skip_scheduled_enclave)]
+	pub type SkipScheduledEnclaveCheck<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn quoting_enclave)]
@@ -288,8 +290,8 @@ pub mod pallet {
 			// sidechain_blocknumber?
 			// Dev setup -> SkipScheduledEnclave Extrinsic -> Does it make sense to set in dev
 			// setup?
-			let schedule_enclave = ScheduleEnclave::<T>::get();
-			if schedule_enclave {
+			let schedule_enclave = SkipScheduledEnclaveCheck::<T>::get();
+			if !schedule_enclave {
 				ensure!(
 					ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
 					Error::<T>::EnclaveNotInSchedule
@@ -648,15 +650,18 @@ pub mod pallet {
 
 		/// This extrinsic is used to set ScheduleEnclave storage item
 		/// This storage item is used to perform feature control during register_enclave
+		/// Can only be called by the Teerex Admin
 		#[pallet::call_index(31)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_schedule_enclave(
+		pub fn set_scheduled_enclave_check(
 			origin: OriginFor<T>,
 			schedule_enclave: bool,
 		) -> DispatchResultWithPostInfo {
-			ensure_root(origin)?;
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 
-			<ScheduleEnclave<T>>::set(schedule_enclave);
+			<SkipScheduledEnclaveCheck<T>>::set(schedule_enclave);
+			Self::deposit_event(Event::SkipScheduledEnclaveCheck { schedule_enclave });
 			Ok(Pays::No.into())
 		}
 	}
