@@ -28,4 +28,14 @@ $PARACHAIN_BIN --dev --unsafe-ws-external --unsafe-rpc-external \
   --port "${CollatorPort:-30333}" --ws-port "${CollatorWSPort:-9944}" --rpc-port "${CollatorRPCPort:-9933}" \
   &> "$LITENTRY_PARACHAIN_DIR/para.alice.log" &
 
+echo "Setting skip-schedule-enclave-check flag ..." 
+cd "$ROOTDIR/ts-tests"
+if [[ -z "${NODE_ENV}" ]]; then
+    echo "NODE_ENV=ci" > .env
+else
+    echo "NODE_ENV=${NODE_ENV}" > .env
+fi
+corepack pnpm install
+corepack pnpm run skip-schedule-enclave-check 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/register-parathread.log"
+
 sleep 10
