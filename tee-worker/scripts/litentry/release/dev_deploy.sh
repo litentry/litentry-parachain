@@ -63,23 +63,12 @@ SGX_ENCLAVE_SIGNER=$SGX_SDK/bin/x64/sgx_sign
 # ------------------------------
 
 function main {
-  # 0/ check if $USER has sudo
-  if sudo -l -U $USER 2>/dev/null | grep -q 'may run the following'; then
-    source "$SGX_SDK/environment"
-  else
-    echo "$USER doesn't have sudo permission"
-    exit 1
+  if [ "$#" -eq 0 ]; then
+      display_help
+      exit 0
   fi
 
-  # 1/ create folders if missing
-  sudo mkdir -p "$BASEDIR"
-  sudo chown $USER:$GROUPS "$BASEDIR" 
-  for d in "$LOG_BACKUP_BASEDIR" "$WORKER_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
-    "$PARACHAIN_ALICE_BASEDIR" "$WORKER_BASEDIR"; do
-    mkdir -p "$d"
-  done
-
-  # 2/ parse command lines
+  # 0/ parse command lines
   echo "Parsing command line ..."
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -136,6 +125,31 @@ function main {
     esac
   done
 
+  # TODO: check flags conflict, e.g.
+  # - having `--discard` together with `upgrade-worker` doesn't make sense
+  # - `upgrade-worker` should ignore the `--only-worker` flag
+  if [[ "$DISCARD" == true && "$ACTION" == "upgrade-worker" ]]; then
+      echo "Option \"--discard\" and subcommand \"upgrade-worker\" should not be used together"
+      exit 1
+  fi
+
+
+  # 1/ check if $USER has sudo
+  if sudo -l -U $USER 2>/dev/null | grep -q 'may run the following'; then
+    source "$SGX_SDK/environment"
+  else
+    echo "$USER doesn't have sudo permission"
+    exit 1
+  fi
+
+  # 2/ create folders if missing
+  sudo mkdir -p "$BASEDIR"
+  sudo chown -R $USER:$GROUPS "$BASEDIR"
+  for d in "$LOG_BACKUP_BASEDIR" "$WORKER_BACKUP_BASEDIR" "$RELAYCHAIN_ALICE_BASEDIR" "$RELAYCHAIN_BOB_BASEDIR" \
+    "$PARACHAIN_ALICE_BASEDIR" "$WORKER_BASEDIR"; do
+    mkdir -p "$d"
+  done
+
   # 3/ sanity checks
   if [ ! -f "$WORKER_CONFIG" ]; then
     echo "Worker config not found: $WORKER_CONFIG"
@@ -144,10 +158,6 @@ function main {
 
   WORKER_COUNT=$(cat "$WORKER_CONFIG" | jq '.workers | length')
   echo "Worker count: $WORKER_COUNT"
-
-  # TODO: check flags conflict, e.g.
-  # - having `--discard` together with `upgrade-worker` doesn't make sense
-  # - `upgrade-worker` should ignore the `--only-worker` flag
 
   # 4/ main business logic
   case "$ACTION" in
@@ -184,7 +194,7 @@ function main {
       setup_working_dir
       migrate_shard
       remove_clean_reset
-      restart_services
+      restart_worker_services
       exit
       ;;
     *)
@@ -236,7 +246,7 @@ function display_help {
 }
 
 # TODO: in fact, this function only backs up the parachain logs
-#       maybe we want to remove it as it's not so critical anyway 
+#       maybe we want to remove it as it's not so critical anyway
 function backup_logs {
   echo "Backing up logs ..."
   now=$(date +"%Y%m%d-%H%M%S")
@@ -278,37 +288,37 @@ function prune {
 
 function generate_services {
   echo "Generating systemd service files ..."
-    cd "$ROOTDIR/tee-worker/scripts/litentry/release"
-    cp template/* .
-    sed -i "s/CHAIN/$CHAIN/g" *.service
-    sed -i "s/USER/$USER/g" *.service
-    for ((i = 0; i < WORKER_COUNT; i++)); do
-      cp worker.service worker$i.service
-      sed -i "s/NUMBER/$i/g" worker$i.service
-      # populate args
-      flags=$(cat "$WORKER_CONFIG" | jq -r ".workers[$i].flags[]")
-      subcommand_flags=$(cat "$WORKER_CONFIG" | jq -r ".workers[$i].subcommand_flags[]")
-      args=
-      for flag in $flags; do
-        args+=" $flag"
-      done
-      args+=" run"
-      for subcommand_flag in $subcommand_flags; do
-        args+=" $subcommand_flag"
-      done
-      sed -i "s;ARGS;$args;" worker$i.service
+  cd "$ROOTDIR/tee-worker/scripts/litentry/release"
+  cp template/* .
+  sed -i "s/CHAIN/$CHAIN/g" *.service
+  sed -i "s/USER/$USER/g" *.service
+  for ((i = 0; i < $WORKER_COUNT; i++)); do
+    cp worker.service worker$i.service
+    sed -i "s/NUMBER/$i/g" worker$i.service
+    # populate args
+    flags=$(cat "$WORKER_CONFIG" | jq -r ".workers[$i].flags[]")
+    subcommand_flags=$(cat "$WORKER_CONFIG" | jq -r ".workers[$i].subcommand_flags[]")
+    args=
+    for flag in $flags; do
+      args+=" $flag"
     done
-    rm worker.service
-    sudo cp *.service -f /etc/systemd/system/
-    rm *.service
-    sudo systemctl daemon-reload
-    echo "Done, please check files under /etc/systemd/system/"
-    echo "Restart the services to take effect"
+    args+=" run"
+    for subcommand_flag in $subcommand_flags; do
+      args+=" $subcommand_flag"
+    done
+    sed -i "s;ARGS;$args;" worker$i.service
+  done
+  rm worker.service
+  sudo cp *.service -f /etc/systemd/system/
+  rm *.service
+  sudo systemctl daemon-reload
+  echo "Done, please check files under /etc/systemd/system/"
+  echo "Restart the services to take effect"
 }
 
 function build_worker {
   echo "Building worker ..."
-  cd $ROOTDIR/tee-worker/ || exit 
+  cd $ROOTDIR/tee-worker/ || exit
   if [ "$PRODUCTION" = true ]; then
     # we will get an error if SGX_COMMERCIAL_KEY is not set for prod
     SGX_PRODUCTION=1 make
@@ -353,11 +363,20 @@ function build {
       cp "$ROOTDIR/target/release/litentry-collator" "$PARACHAIN_BASEDIR"
     fi
     chmod a+x "$PARACHAIN_BASEDIR/litentry-collator"
+
+    # build worker
+    build_worker
   fi
 }
 
 function restart_services {
   sudo systemctl daemon-reload
+  restart_parachain_services
+  restart_worker_services
+  echo "Done"
+}
+
+function restart_parachain_services {
   if [ "$ONLY_WORKER" = false ]; then
     echo "Restarting parachain services ..."
 
@@ -372,20 +391,21 @@ function restart_services {
     sleep 5
     sudo systemctl restart para-alice.service
     sleep 5
-    register_parachain    
+    register_parachain
   fi
+}
 
+function restart_worker_services {
   echo "Restarting worker services ..."
-  for ((i = 0; i < WORKER_COUNT; i++)); do
+  for ((i = 0; i < $WORKER_COUNT; i++)); do
     sudo systemctl restart "worker$i.service"
     sleep 5
   done
-  echo "Done"
 }
 
 function stop_worker_services {
   echo "Stopping worker services ..."
-  for ((i = 0; i < WORKER_COUNT; i++)); do
+  for ((i = 0; i < $WORKER_COUNT; i++)); do
     sudo systemctl stop "worker$i.service"
     sleep 5
   done
@@ -410,13 +430,13 @@ function register_parachain {
   echo "Register parathread now ..."
   cd "$ROOTDIR" || exit
   export PARACHAIN_ID=$(grep DEFAULT_PARA_ID node/src/chain_specs/$CHAIN.rs  | grep u32 | sed 's/.* = //;s/\;//')
-  cd "$ROOTDIR/ts-tests" || exit 
+  cd "$ROOTDIR/ts-tests" || exit
   if [[ -z "$NODE_ENV" ]]; then
       echo "NODE_ENV=ci" > .env
   else
       echo "NODE_ENV=$NODE_ENV" > .env
   fi
-  # The genesis state path file needs to be updated as it is hardcoded to be /tmp/parachain_dev 
+  # The genesis state path file needs to be updated as it is hardcoded to be /tmp/parachain_dev
   jq --arg genesis_state "$PARACHAIN_BASEDIR/genesis-state" --arg genesis_wasm "$PARACHAIN_BASEDIR/genesis-wasm" '.genesis_state_path = $genesis_state | .genesis_wasm_path = $genesis_wasm' config.ci.json > config.ci.json.1
   mv config.ci.json.1 config.ci.json
   pnpm install
@@ -435,34 +455,38 @@ function register_parachain {
 }
 
 function setup_working_dir {
-    echo "Setting up working dir ..."
-    cd "$ROOTDIR/tee-worker/bin" || exit
+  echo "Setting up working dir ..."
+  cd "$ROOTDIR/tee-worker/bin" || exit
 
-    if [ "$PRODUCTION" = false ]; then
-      for f in 'key.txt' 'spid.txt'; do
-        [ -f "$f" ] || touch "$f"
-      done
-    fi
-
-    for ((i = 0; i < WORKER_COUNT; i++)); do
-      worker_dir="$WORKER_BASEDIR/w$i"
-      mkdir -p "$worker_dir"
-      for f in 'key.txt' 'spid.txt' 'enclave.signed.so' 'litentry-worker'; do
-        [ -f "$f" ] && cp -f "$f" "$worker_dir"
-      done
-
-      cd "$worker_dir"
-      [ -f light_client_db.bin/db.bin.backup ] && cp -f light_client_db.bin/db.bin.backup light_client_db.bin/db.bin
-
-      enclave_account=$(./litentry-worker signing-key | grep -oP '^Enclave account: \K.*$$')
-
-      if [ "$PRODUCTION" = true ]; then
-        echo "Transferring balance to the enclave account $enclave_account ..."
-        cd $ROOTDIR/scripts/ts-utils/ || exit
-        pnpm install
-        pnpm exec ts-node transfer.ts $enclave_account
-      fi
+  if [ "$PRODUCTION" = false ]; then
+    for f in 'key.txt' 'spid.txt'; do
+      [ -f "$f" ] || touch "$f"
     done
+  else
+    if [ -e 'key_production.txt' ] && [ -e 'spid_production.txt' ]; then
+      echo "Please make sure 'key_production.txt' and 'spid_production.txt' are existed within $PWD."
+    fi
+  fi
+
+  for ((i = 0; i < $WORKER_COUNT; i++)); do
+    worker_dir="$WORKER_BASEDIR/w$i"
+    mkdir -p "$worker_dir"
+    for f in 'key.txt' 'spid.txt' 'enclave.signed.so' 'litentry-worker'; do
+      [ -f "$f" ] && cp -f "$f" "$worker_dir"
+    done
+
+    cd "$worker_dir"
+    [ -f litentry_lcdb/db.bin.backup ] && cp -f litentry_lcdb/db.bin.backup litentry_lcdb/db.bin
+
+    enclave_account=$(./litentry-worker signing-key | grep -oP '^Enclave account: \K.*$$')
+
+    if [ "$PRODUCTION" = true ]; then
+      echo "Transferring balance to the enclave account $enclave_account ..."
+      cd $ROOTDIR/scripts/ts-utils/ || exit
+      pnpm install
+      pnpm exec ts-node transfer.ts $enclave_account
+    fi
+  done
 }
 
 function get_old_mrenclave {
@@ -477,14 +501,14 @@ function get_old_mrenclave {
 
 function set_scheduled_enclave {
   echo "Setting scheduled enclave ..."
-  cd $ROOTDIR/tee-worker || exit 
+  cd $ROOTDIR/tee-worker || exit
   NEW_MRENCLAVE=$(make mrenclave 2>&1 | grep MRENCLAVE | awk '{print $2}')
   echo "new mrenclave: $NEW_MRENCLAVE"
 
   latest_sidechain_block
 
   echo "Setting up the new worker on chain ..."
-  cd $ROOTDIR/ts-tests/ || exit 
+  cd $ROOTDIR/ts-tests/ || exit
   pnpm install
   pnpm run setup-enclave $NEW_MRENCLAVE $SCHEDULED_UPDATE_BLOCK
 }
@@ -513,7 +537,7 @@ function wait_for_sidechain {
 
 function migrate_shard {
   echo "Migrating shards for workers ..."
-  for ((i = 0; i < WORKER_COUNT; i++)); do
+  for ((i = 0; i < $WORKER_COUNT; i++)); do
     cd "$WORKER_BASEDIR/w$i" || exit
     echo "old MRENCLAVE: $OLD_MRENCLAVE"
     echo "new MRENCLAVE: $NEW_MRENCLAVE"
@@ -527,7 +551,7 @@ function migrate_shard {
 
 function remove_clean_reset {
   echo "Removing --clean-reset flag for workers ..."
-  for ((i = 0; i < WORKER_COUNT; i++)); do
+  for ((i = 0; i < $WORKER_COUNT; i++)); do
     sudo sed -i 's/--clean-reset//' /etc/systemd/system/worker$i.service
   done
   echo "Done"
