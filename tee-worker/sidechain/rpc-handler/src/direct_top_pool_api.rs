@@ -178,9 +178,10 @@ fn author_submit_extrinsic_inner<R: AuthorApi<Hash, Hash> + Send + Sync + 'stati
 	debug!("Author submit and watch trusted operation..");
 
 	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
+	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 
 	let request =
-		Request::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+		Request::from_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let shard: ShardIdentifier = request.shard;
 	let encrypted_trusted_call: Vec<u8> = request.cyphertext;
