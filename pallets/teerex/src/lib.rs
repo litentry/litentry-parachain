@@ -661,7 +661,7 @@ pub mod pallet {
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 
 			<SkipScheduledEnclaveCheck<T>>::set(schedule_enclave);
-			Self::deposit_event(Event::SkipScheduledEnclaveCheck { schedule_enclave });
+			Self::deposit_event(Event::SkipScheduledEnclaveCheck(schedule_enclave));
 			Ok(Pays::No.into())
 		}
 	}
