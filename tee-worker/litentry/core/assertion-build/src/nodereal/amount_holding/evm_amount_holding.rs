@@ -25,7 +25,7 @@ use core::result;
 use crate::*;
 use lc_credentials::{
 	nodereal::amount_holding::evm_amount_holding::{
-		EVMAmountHoldingAssertionUpdate, EVMTokenAddress,
+		EVMAmountHoldingAssertionUpdate, EVMTokenAddress, TokenDecimals,
 	},
 	Credential,
 };
@@ -44,6 +44,8 @@ fn get_holding_balance(
 	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth);
 	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc);
 	let mut total_balance = 0_f64;
+
+	let decimals = token_type.get_decimals();
 
 	for address in addresses.iter() {
 		let param = GetTokenBalance20Param {
@@ -68,7 +70,7 @@ fn get_holding_balance(
 		}
 	}
 
-	Ok(total_balance)
+	Ok(total_balance / decimals)
 }
 
 pub fn build(req: &AssertionBuildRequest, token_type: EVMTokenType) -> Result<Credential> {
@@ -182,64 +184,12 @@ mod tests {
 		let req: AssertionBuildRequest = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
 			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::EVMAmountHolding(EVMTokenType::Ton),
 			identities,
 			top_hash: Default::default(),
-			maybe_key: None,
-			req_ext_hash: Default::default(),
-		};
-
-		match build(&req, EVMTokenType::Ton) {
-			Ok(credential) => {
-				log::info!("build EVMAmount holding done");
-				assert_eq!(
-					*(credential.credential_subject.assertions.first().unwrap()),
-					AssertionLogic::And {
-						items: vec![
-							create_ton_token_assertion_logic(),
-							create_ton_network_assertion_logic(),
-							Box::new(AssertionLogic::Item {
-								src: "$holding_amount".into(),
-								op: Op::GreaterEq,
-								dst: "1600".into()
-							}),
-							Box::new(AssertionLogic::Item {
-								src: "$holding_amount".into(),
-								op: Op::LessThan,
-								dst: "3000".into()
-							})
-						]
-					}
-				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
-			},
-			Err(e) => {
-				panic!("build EVMAmount holding failed with error {:?}", e);
-			},
-		}
-	}
-
-	#[test]
-	fn build_evm_amount_holding_lt_min_works() {
-		init();
-		let address = decode_hex("0x85be4e2ccc9c85be8783798b6e8a101bdac6467f".as_bytes().to_vec())
-			.unwrap()
-			.as_slice()
-			.try_into()
-			.unwrap();
-		let identities: Vec<IdentityNetworkTuple> =
-			vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
-
-		let req: AssertionBuildRequest = AssertionBuildRequest {
-			shard: ShardIdentifier::default(),
-			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
-			who: AccountId::from([0; 32]).into(),
-			assertion: Assertion::EVMAmountHolding(EVMTokenType::Ton),
-			identities,
-			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
@@ -261,12 +211,66 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::LessThan,
-								dst: "100".into()
+								dst: "1".into()
 							})
 						]
 					}
 				);
 				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
+			},
+			Err(e) => {
+				panic!("build EVMAmount holding failed with error {:?}", e);
+			},
+		}
+	}
+
+	#[test]
+	fn build_evm_amount_holding_lt_min_works() {
+		init();
+		let address = decode_hex("0x85be4e2ccc9c85be8783798b6e8a101bdac6467f".as_bytes().to_vec())
+			.unwrap()
+			.as_slice()
+			.try_into()
+			.unwrap();
+		let identities: Vec<IdentityNetworkTuple> =
+			vec![(Identity::Evm(address), vec![Web3Network::Ethereum])];
+
+		let req: AssertionBuildRequest = AssertionBuildRequest {
+			shard: ShardIdentifier::default(),
+			signer: AccountId::from([0; 32]),
+			who: AccountId::from([0; 32]).into(),
+			assertion: Assertion::EVMAmountHolding(EVMTokenType::Ton),
+			identities,
+			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
+			maybe_key: None,
+			req_ext_hash: Default::default(),
+		};
+
+		match build(&req, EVMTokenType::Ton) {
+			Ok(credential) => {
+				log::info!("build EVMAmount holding done");
+				assert_eq!(
+					*(credential.credential_subject.assertions.first().unwrap()),
+					AssertionLogic::And {
+						items: vec![
+							create_ton_token_assertion_logic(),
+							create_ton_network_assertion_logic(),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::GreaterEq,
+								dst: "100".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "200".into()
+							})
+						]
+					}
+				);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);
@@ -288,11 +292,12 @@ mod tests {
 		let req: AssertionBuildRequest = AssertionBuildRequest {
 			shard: ShardIdentifier::default(),
 			signer: AccountId::from([0; 32]),
-			enclave_account: AccountId::from([0; 32]),
 			who: AccountId::from([0; 32]).into(),
 			assertion: Assertion::EVMAmountHolding(EVMTokenType::Ton),
 			identities,
 			top_hash: Default::default(),
+			parachain_block_number: 0u32,
+			sidechain_block_number: 0u32,
 			maybe_key: None,
 			req_ext_hash: Default::default(),
 		};
@@ -309,12 +314,17 @@ mod tests {
 							Box::new(AssertionLogic::Item {
 								src: "$holding_amount".into(),
 								op: Op::GreaterEq,
-								dst: "3000".into()
+								dst: "0".into()
+							}),
+							Box::new(AssertionLogic::Item {
+								src: "$holding_amount".into(),
+								op: Op::LessThan,
+								dst: "1".into()
 							})
 						]
 					}
 				);
-				assert_eq!(*(credential.credential_subject.values.first().unwrap()), true);
+				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);
 			},
 			Err(e) => {
 				panic!("build EVMAmount holding failed with error {:?}", e);

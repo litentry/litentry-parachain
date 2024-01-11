@@ -91,6 +91,7 @@ pub enum Command {
 	A13(A13Arg),
 	A14,
 	A20,
+	BnbDomainHolding,
 	#[clap(subcommand)]
 	Oneblock(OneblockCommand),
 	#[clap(subcommand)]
@@ -102,6 +103,9 @@ pub enum Command {
 	WeirdoGhostGangHolder,
 	#[clap(subcommand)]
 	EVMAmountHolding(EVMAmountHoldingCommand),
+	CryptoSummary,
+	LITStaking,
+	BRC20AmountHolder,
 }
 
 #[derive(Args, Debug)]
@@ -316,6 +320,7 @@ impl RequestVcCommand {
 			},
 			Command::A14 => Assertion::A14,
 			Command::A20 => Assertion::A20,
+			Command::BnbDomainHolding => Assertion::BnbDomainHolding,
 			Command::Oneblock(c) => match c {
 				OneblockCommand::Completion =>
 					Assertion::Oneblock(OneBlockCourseType::CourseCompletion),
@@ -472,6 +477,9 @@ impl RequestVcCommand {
 				EVMAmountHoldingCommand::Ton => Assertion::EVMAmountHolding(EVMTokenType::Ton),
 				EVMAmountHoldingCommand::Trx => Assertion::EVMAmountHolding(EVMTokenType::Trx),
 			},
+			Command::CryptoSummary => Assertion::CryptoSummary,
+			Command::LITStaking => Assertion::LITStaking,
+			Command::BRC20AmountHolder => Assertion::BRC20AmountHolder,
 		};
 
 		let key = Self::random_aes_key();

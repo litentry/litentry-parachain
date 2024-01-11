@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{BlockNumberOf, Config, Web3Network};
+use crate::{BlockNumberOf, Config, IDGraph, Web3Network};
 use codec::{Decode, Encode};
 use core::cmp::Ordering;
-use litentry_primitives::Identity;
+use litentry_primitives::{Identity, IdentityNetworkTuple};
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
 
@@ -82,4 +82,33 @@ pub fn sort_id_graph<T: Config>(id_graph: &mut [(Identity, IdentityContext<T>)])
 			order
 		}
 	});
+}
+
+// get the active identities in the `id_graph` whose web3networks match the `desired_web3networks`,
+// return a `Vec<(Identity, Vec<Web3Network>)` with retained web3networks
+pub fn get_eligible_identities<T: Config>(
+	id_graph: IDGraph<T>,
+	desired_web3networks: Vec<Web3Network>,
+) -> Vec<IdentityNetworkTuple> {
+	id_graph
+		.into_iter()
+		.filter_map(|item| {
+			if item.1.is_active() {
+				let mut networks = item.1.web3networks.to_vec();
+				// filter out identities whose web3networks are not supported by this specific `assertion`.
+				// We do it here before every request sending because:
+				// - it's a common step for all assertion buildings, for those assertions which only
+				//   care about web2 identities, this step will empty `IdentityContext.web3networks`
+				// - it helps to reduce the request size a bit
+				networks.retain(|n| desired_web3networks.contains(n));
+				if networks.is_empty() && item.0.is_web3() {
+					None
+				} else {
+					Some((item.0, networks))
+				}
+			} else {
+				None
+			}
+		})
+		.collect()
 }

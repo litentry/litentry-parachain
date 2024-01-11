@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, Assertion, Error, ShardIdentifier, Status};
+use crate::{mock::*, Error, ShardIdentifier, Status};
+use core_primitives::{Assertion, Identity};
 use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
@@ -85,7 +86,7 @@ fn request_vc_13_with_unauthorized_delegatee_fails() {
 fn vc_issued_works() {
 	new_test_ext().execute_with(|| {
 		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
+		let alice: Identity = test_utils::get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
 			alice.clone(),
@@ -110,7 +111,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 		assert_noop!(
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(bob),
-				alice,
+				alice.into(),
 				Assertion::A1,
 				H256::default(),
 				H256::default(),
@@ -128,7 +129,7 @@ fn vc_issued_with_duplicated_index_fails() {
 		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer.clone()),
-			alice.clone(),
+			alice.clone().into(),
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
@@ -137,7 +138,7 @@ fn vc_issued_with_duplicated_index_fails() {
 		assert_noop!(
 			VCManagement::vc_issued(
 				RuntimeOrigin::signed(teerex_signer),
-				alice,
+				alice.into(),
 				Assertion::A1,
 				VC_INDEX,
 				VC_HASH,
@@ -155,7 +156,7 @@ fn disable_vc_works() {
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
-			bob.clone(),
+			bob.clone().into(),
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
@@ -189,7 +190,7 @@ fn disable_vc_with_other_subject_fails() {
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
-			bob,
+			bob.into(),
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
@@ -211,7 +212,7 @@ fn revoke_vc_works() {
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
-			bob.clone(),
+			bob.clone().into(),
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
@@ -243,7 +244,7 @@ fn revoke_vc_with_other_subject_fails() {
 		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
-			bob,
+			bob.into(),
 			Assertion::A1,
 			VC_INDEX,
 			VC_HASH,
@@ -508,7 +509,7 @@ fn manual_add_remove_vc_registry_item_works() {
 			VCManagement::add_vc_registry_item(
 				RuntimeOrigin::signed(bob.clone()),
 				VC_INDEX,
-				bob.clone(),
+				bob.clone().into(),
 				Assertion::A1,
 				VC_HASH
 			),
@@ -518,14 +519,14 @@ fn manual_add_remove_vc_registry_item_works() {
 		assert_ok!(VCManagement::add_vc_registry_item(
 			RuntimeOrigin::signed(alice.clone()),
 			VC_INDEX,
-			alice.clone(),
+			alice.clone().into(),
 			Assertion::A1,
 			VC_HASH
 		));
 		// Check result
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
-			account: alice.clone(),
+			identity: alice.clone().into(),
 			assertion: Assertion::A1,
 			index: VC_INDEX,
 		}));
@@ -554,7 +555,7 @@ fn manual_add_clear_vc_registry_item_works() {
 			VCManagement::add_vc_registry_item(
 				RuntimeOrigin::signed(bob.clone()),
 				VC_INDEX,
-				bob.clone(),
+				bob.clone().into(),
 				Assertion::A1,
 				VC_HASH
 			),
@@ -564,14 +565,14 @@ fn manual_add_clear_vc_registry_item_works() {
 		assert_ok!(VCManagement::add_vc_registry_item(
 			RuntimeOrigin::signed(alice.clone()),
 			VC_INDEX,
-			alice.clone(),
+			alice.clone().into(),
 			Assertion::A1,
 			VC_HASH
 		));
 		// Check result
 		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
 		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
-			account: alice.clone(),
+			identity: alice.clone().into(),
 			assertion: Assertion::A1,
 			index: VC_INDEX,
 		}));

@@ -28,7 +28,6 @@ mod aes_request;
 mod bitcoin_address;
 mod bitcoin_signature;
 mod ethereum_signature;
-mod identity;
 mod validation_data;
 
 pub use aes::*;
@@ -36,7 +35,6 @@ pub use aes_request::*;
 pub use bitcoin_address::*;
 pub use bitcoin_signature::*;
 pub use ethereum_signature::*;
-pub use identity::*;
 use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 pub use validation_data::*;
 
@@ -47,7 +45,7 @@ use itp_utils::hex::hex_encode;
 use log::error;
 pub use parentchain_primitives::{
 	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
-	AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
+	identity::*, AccountId as ParentchainAccountId, AchainableAmount, AchainableAmountHolding,
 	AchainableAmountToken, AchainableAmounts, AchainableBasic, AchainableBetweenPercents,
 	AchainableClassOfYear, AchainableDate, AchainableDateInterval, AchainableDatePercent,
 	AchainableMirror, AchainableParams, AchainableToken, AmountHoldingTimeType, Assertion,
@@ -66,7 +64,7 @@ use sp_io::{
 };
 use sp_runtime::traits::Verify;
 use std::string::{String, ToString};
-pub use teerex_primitives::{decl_rsa_request, ShardIdentifier};
+pub use teerex_primitives::{decl_rsa_request, ShardIdentifier, SidechainBlockNumber};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};

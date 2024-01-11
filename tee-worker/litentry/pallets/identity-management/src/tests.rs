@@ -14,12 +14,37 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus, Web3Network};
+use crate::{
+	get_eligible_identities, mock::*, Error, IDGraph, Identity, IdentityContext, IdentityStatus,
+	Web3Network,
+};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Get};
 use sp_runtime::AccountId32;
 pub const ALICE: AccountId32 = AccountId32::new([1u8; 32]);
 pub const BOB: AccountId32 = AccountId32::new([2u8; 32]);
 pub const CHARLIE: AccountId32 = AccountId32::new([3u8; 32]);
+
+#[test]
+fn get_eligible_identities_works() {
+	let mut id_graph = IDGraph::<Test>::default();
+	id_graph.push((
+		alice_substrate_identity(),
+		IdentityContext::new(1u64, vec![Web3Network::Litentry, Web3Network::Khala]),
+	));
+	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64, vec![])));
+	let desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
+	let mut identities = get_eligible_identities(id_graph.clone(), desired_web3networks.clone());
+	assert_eq!(identities.len(), 2);
+	assert_eq!(identities[0].1, vec![Web3Network::Litentry]);
+	assert_eq!(identities[1].1, vec![]);
+
+	// `alice_evm_identity` should be filtered out
+	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64, vec![Web3Network::Bsc])));
+	identities = get_eligible_identities(id_graph, desired_web3networks);
+	assert_eq!(identities.len(), 2);
+	assert_eq!(identities[0].1, vec![Web3Network::Litentry]);
+	assert_eq!(identities[1].1, vec![]);
+}
 
 #[test]
 fn link_twitter_identity_works() {
@@ -266,14 +291,11 @@ fn deactivate_identity_works() {
 		// identity is only deactivated, so it still exists
 		assert_eq!(crate::IDGraphLens::<Test>::get(&who.clone()), 2);
 
-		assert_noop!(
-			IMT::deactivate_identity(
-				RuntimeOrigin::signed(ALICE),
-				who.clone(),
-				bob_substrate_identity(),
-			),
-			Error::<Test>::DeactivatePrimeIdentityDisallowed
-		);
+		assert_ok!(IMT::deactivate_identity(
+			RuntimeOrigin::signed(ALICE),
+			who.clone(),
+			bob_substrate_identity(),
+		));
 	});
 }
 

@@ -38,9 +38,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 use codec::{Decode, Encode};
 use itp_stf_primitives::types::ShardIdentifier;
 use itp_time_utils::{from_iso8601, now_as_iso8601};
-use itp_types::AccountId;
+use itp_types::{AccountId, BlockNumber as SidechainBlockNumber};
 use itp_utils::stringify::account_id_to_string;
-use litentry_primitives::{Identity, Web3Network};
+use litentry_primitives::{Identity, ParentchainBlockNumber, Web3Network};
 use log::*;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -141,6 +141,7 @@ pub struct CredentialSubject {
 	pub description: String,
 	#[serde(rename = "type")]
 	pub types: String,
+	pub assertion_text: String,
 	/// (Optional) Data source definitions for trusted data providers
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub data_source: Option<Vec<DataSource>>,
@@ -157,10 +158,6 @@ pub struct CredentialSubject {
 impl CredentialSubject {
 	pub fn is_empty(&self) -> bool {
 		self.id.is_empty()
-	}
-
-	pub fn set_endpoint(&mut self, endpoint: String) {
-		self.endpoint = endpoint;
 	}
 }
 
@@ -224,6 +221,9 @@ pub struct Credential {
 	/// The TEE enclave who issued the credential
 	pub issuer: Issuer,
 	pub issuance_date: String,
+	/// The parachain and sidechain block number on which the state is read and calculated
+	pub parachain_block_number: ParentchainBlockNumber,
+	pub sidechain_block_number: SidechainBlockNumber,
 	/// Digital proof with the signature of Issuer
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub proof: Option<Proof>,
@@ -251,7 +251,7 @@ impl Credential {
 		vc.issuer.mrenclave = shard.encode().to_base58();
 		vc.issuer.name = LITENTRY_ISSUER_NAME.to_string();
 		vc.credential_subject.id =
-			subject.to_did().map_err(|err| Error::ParseError(format!("{}", err)))?;
+			subject.to_did().map_err(|err| Error::ParseError(err.to_string()))?;
 		vc.issuance_date = now_as_iso8601();
 		vc.credential_schema = None;
 		vc.proof = None;
@@ -320,10 +320,11 @@ impl Credential {
 			return Err(Error::EmptyCredentialIssuer)
 		}
 
-		let exported = vc.to_json()?;
-		if exported.len() > MAX_CREDENTIAL_SIZE {
-			return Err(Error::CredentialIsTooLong)
-		}
+		// TODO: Do we need to set size restrictions
+		// let exported = vc.to_json()?;
+		// if exported.len() > MAX_CREDENTIAL_SIZE {
+		// 	return Err(Error::CredentialIsTooLong)
+		// }
 
 		if vc.proof.is_none() {
 			return Err(Error::InvalidProof)

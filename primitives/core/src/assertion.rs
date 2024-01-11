@@ -18,8 +18,8 @@
 // when requesting VCs.
 
 use crate::{
-	AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType, GenericDiscordRoleType,
-	OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
+	all_web3networks, AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType,
+	GenericDiscordRoleType, OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -254,6 +254,9 @@ pub enum Assertion {
 
 	#[codec(index = 22)]
 	BRC20AmountHolder,
+
+	#[codec(index = 23)]
+	CryptoSummary,
 }
 
 impl Assertion {
@@ -290,17 +293,17 @@ impl Assertion {
 			// LITStaking
 			Self::LITStaking => vec![Web3Network::Litentry],
 			// EVM Amount Holding
-			Self::EVMAmountHolding(_) => vec![Web3Network::Ethereum, Web3Network::Bsc],
+			Self::EVMAmountHolding(_) | Self::CryptoSummary =>
+				vec![Web3Network::Ethereum, Web3Network::Bsc],
 			// BRC20 Holder
 			Self::BRC20AmountHolder => vec![Web3Network::BitcoinP2tr],
-			// we don't care about any specific web3 network
-			Self::A1 |
-			Self::A2(..) |
-			Self::A3(..) |
-			Self::A6 |
-			Self::A13(..) |
-			Self::A20 |
-			Self::GenericDiscordRole(..) => vec![],
+			//
+			// general rules
+			//
+			// any web3 network is allowed
+			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
+			// no web3 network is allowed
+			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
 		}
 	}
 }

@@ -4,14 +4,14 @@ import { Codec } from '@polkadot/types/types';
 import { TypeRegistry } from '@polkadot/types';
 import { Bytes } from '@polkadot/types-codec';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
-import { WorkerRpcReturnValue, TrustedCallSigned, Getter } from 'parachain-api';
+import { WorkerRpcReturnValue, TrustedCallSigned, Getter, CorePrimitivesIdentity } from 'parachain-api';
 import { encryptWithTeeShieldingKey, Signer, encryptWithAes, sleep } from './utils';
 import { aesKey, decodeRpcBytesAsString, keyNonce } from './call';
 import { createPublicKey, KeyObject } from 'crypto';
 import WebSocketAsPromised from 'websocket-as-promised';
 import { H256, Index } from '@polkadot/types/interfaces';
 import { blake2AsHex } from '@polkadot/util-crypto';
-import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { createJsonRpcRequest, nextRequestId } from './helpers';
 
 // Send the request to worker ws
@@ -158,7 +158,7 @@ export async function createSignedTrustedCallLinkIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    primeIdentity: LitentryPrimitivesIdentity,
+    primeIdentity: CorePrimitivesIdentity,
     identity: string,
     validationData: string,
     web3networks: string,
@@ -183,7 +183,7 @@ export async function createSignedTrustedCallSetIdentityNetworks(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    primeIdentity: LitentryPrimitivesIdentity,
+    primeIdentity: CorePrimitivesIdentity,
     identity: string,
     web3networks: string,
     aesKey: string,
@@ -207,7 +207,7 @@ export async function createSignedTrustedCallRequestVc(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    primeIdentity: LitentryPrimitivesIdentity,
+    primeIdentity: CorePrimitivesIdentity,
     assertion: string,
     aesKey: string,
     hash: string
@@ -226,7 +226,7 @@ export async function createSignedTrustedCallDeactivateIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    primeIdentity: LitentryPrimitivesIdentity,
+    primeIdentity: CorePrimitivesIdentity,
     identity: string,
     aesKey: string,
     hash: string
@@ -245,7 +245,7 @@ export async function createSignedTrustedCallActivateIdentity(
     mrenclave: string,
     nonce: Codec,
     signer: Signer,
-    primeIdentity: LitentryPrimitivesIdentity,
+    primeIdentity: CorePrimitivesIdentity,
     identity: string,
     aesKey: string,
     hash: string
@@ -263,7 +263,7 @@ export async function createSignedTrustedCallActivateIdentity(
 export async function createSignedTrustedGetterIdGraph(
     parachainApi: ApiPromise,
     signer: Signer,
-    primeIdentity: LitentryPrimitivesIdentity
+    primeIdentity: CorePrimitivesIdentity
 ): Promise<Getter> {
     const getterSigned = await createSignedTrustedGetter(
         parachainApi,
@@ -277,7 +277,7 @@ export async function createSignedTrustedGetterIdGraph(
 export const getSidechainNonce = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
-    primeIdentity: LitentryPrimitivesIdentity
+    primeIdentity: CorePrimitivesIdentity
 ): Promise<Index> => {
     const getterPublic = createPublicGetter(context.api, ['nonce', '(LitentryIdentity)'], primeIdentity.toHuman());
     const getter = context.api.createType('Getter', { public: getterPublic }) as unknown as Getter; // @fixme 1878
@@ -289,7 +289,7 @@ export const getSidechainNonce = async (
 export const getIdGraphHash = async (
     context: IntegrationTestContext,
     teeShieldingKey: KeyObject,
-    primeIdentity: LitentryPrimitivesIdentity
+    primeIdentity: CorePrimitivesIdentity
 ): Promise<H256> => {
     const getterPublic = createPublicGetter(
         context.api,
@@ -410,9 +410,9 @@ export const createAesRequest = async (
 export function decodeIdGraph(sidechainRegistry: TypeRegistry, value: Bytes) {
     const idgraphBytes = sidechainRegistry.createType('Option<Bytes>', hexToU8a(value.toHex()));
     return sidechainRegistry.createType(
-        'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+        'Vec<(CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
         idgraphBytes.unwrap()
-    ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+    ) as unknown as [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
 }
 
 export function getTopHash(parachainApi: ApiPromise, call: TrustedCallSigned) {

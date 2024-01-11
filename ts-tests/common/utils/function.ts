@@ -1,6 +1,6 @@
 import { AddressOrPair, ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import { ApiPromise } from '@polkadot/api';
-
+import { FrameSystemEventRecord } from '@polkadot/types/lookup';
 export function sleep(secs: number) {
     return new Promise((resolve) => {
         setTimeout(resolve, secs * 1000);
@@ -40,3 +40,35 @@ export async function sudoWrapper(api: ApiPromise, tx: SubmittableExtrinsic<ApiT
         return api.tx.sudo.sudo(tx);
     }
 }
+
+export const subscribeToEvents = async (
+    section: string,
+    method: string,
+    api: ApiPromise
+): Promise<FrameSystemEventRecord[]> => {
+    return new Promise<FrameSystemEventRecord[]>((resolve, reject) => {
+        let blocksToScan = 15;
+        const unsubscribe = api.rpc.chain.subscribeNewHeads(async (blockHeader) => {
+            const shiftedApi = await api.at(blockHeader.hash);
+
+            const allBlockEvents = await shiftedApi.query.system.events();
+            const allExtrinsicEvents = allBlockEvents.filter(({ phase }) => phase.isApplyExtrinsic);
+
+            const matchingEvent = allExtrinsicEvents.filter(({ event, phase }) => {
+                return event.section === section && event.method === method;
+            });
+
+            if (matchingEvent.length == 0) {
+                blocksToScan -= 1;
+                if (blocksToScan < 1) {
+                    reject(new Error(`timed out listening for event ${section}.${method}`));
+                    (await unsubscribe)();
+                }
+                return;
+            }
+
+            resolve(matchingEvent);
+            (await unsubscribe)();
+        });
+    });
+};

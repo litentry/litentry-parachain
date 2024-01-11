@@ -7,7 +7,7 @@ export async function handleVcEvents(
         switch (method) {
             case 'VCIssued':
                 results.push({
-                    account: events[k].data.account.toHex(),
+                    identity: events[k].data.identity.toHex(),
                     index: events[k].data.index.toHex(),
                 });
                 break;
@@ -54,12 +54,6 @@ export const defaultAssertions = [
         description: 'The length of time a user continues to hold LIT token',
         assertion: {
             A4: '10',
-        },
-    },
-    {
-        description: "The range of the user's Twitter follower count",
-        assertion: {
-            A6: 'A6',
         },
     },
     {
