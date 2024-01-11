@@ -41,6 +41,7 @@ export default {
                 "Litmus",
                 "LitentryRococo",
                 "Khala",
+                __Unused6: "Null",
                 "Ethereum",
                 "Bsc",
                 "BitcoinP2tr",
