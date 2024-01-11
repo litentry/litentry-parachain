@@ -98,8 +98,8 @@ pub unsafe extern "C" fn execute_trusted_calls() -> sgx_status_t {
 fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 	let start_time = Instant::now();
 
-	debug!("----------------------------------------");
-	debug!("Start sidechain block production cycle");
+	info!("----------------------------------------");
+	info!("Start sidechain block production cycle");
 
 	// We acquire lock explicitly (variable binding), since '_' will drop the lock after the statement.
 	// See https://medium.com/codechain/rust-underscore-does-not-bind-fec6a18115a8

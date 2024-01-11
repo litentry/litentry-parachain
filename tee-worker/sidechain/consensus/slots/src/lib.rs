@@ -380,7 +380,6 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 
 		if !scheduled_enclave.is_mrenclave_matching(next_sidechain_number) {
 			warn!(
-				target: logging_target,
 				"Skipping sidechain block {} due to mismatch MRENCLAVE, current: {:?}, expect: {:?}",
 				next_sidechain_number,
 				scheduled_enclave.get_current_mrenclave().map(hex::encode),
