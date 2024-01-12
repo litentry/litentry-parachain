@@ -24,13 +24,13 @@ on:
         required: true
         default: true
       parachain_release_tag:
-        description: an existing tag for creating release (e.g. v1.2.3)
+        description: Parachain release tag (e.g. v1.2.3)
         required: true
-      tee_release_tag:
-        description: an existing tag for creating release (e.g. v1.2.3)
+      worker_release_tag:
+        description: Worker release tag (e.g. w0.0.1-102)
         required: true
       diff_tag:
-        description: an existing tag to run diff against (e.g. v1.2.0)
+        description: an existing tag to run diff against (e.g. v1.2.0-w0.0.1-101)
         default: ""
         required: false
       genesis_release:
@@ -44,7 +44,7 @@ on:
 
 env:
   PARACHAIN_RELEASE_TAG: ${{ github.event.inputs.parachain_release_tag }}
-  WORKER_RELEASE_TAG: ${{ github.event.inputs.tee_release_tag }}
+  WORKER_RELEASE_TAG: ${{ github.event.inputs.worker_release_tag }}
   DIFF_TAG: ${{ github.event.inputs.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.genesis_release }}
   DOCKER_BUILDKIT: 1
