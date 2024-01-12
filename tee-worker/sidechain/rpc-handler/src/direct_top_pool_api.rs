@@ -207,7 +207,7 @@ where
 					return Ok(json!(compute_hex_encoded_return_error(format!("{:?}", e).as_str()))),
 			};
 
-			// if id_graph is empty, we delegate the vc handling to the STF version, otherwise we use the threaded version which
+			// If id_graph is empty, we delegate the vc handling to the STF version, otherwise we use the threaded version which
 			// doesn't need to wait for a sidechain block. The downside of this method is that the first vc_request processing time
 			// is limited to the sidechain block interval, but it ensures the correctness.
 			//
@@ -217,11 +217,15 @@ where
 			// would fail afterwards. The abortion isn't so critical per se, but `RequestVCResult` will carry with wrong `mutated_id_graph`
 			// and `id_graph_hash` which are pre-filled when building VCs.
 			//
-			// please note we can't mutate the state inside vc-task-receiver via `load_for_mutation` even
+			// So the current impl weights correctness over performance. If the client doesn't see a problem with the performant variant,
+			// we can go for it too.
+			//
+			// Please note we can't mutate the state inside vc-task-receiver via `load_for_mutation` even
 			// though it's lock guarded, because: a) it intereferes with the block import on another thread, which eventually
 			// cause state mismatch before/after applying the state diff b) it's not guaranteed to be broadcasted to other workers
 
 			if id_graph_is_empty {
+				info!("IDGraph is empty, signer = {}", signer.to_did().unwrap());
 				let json_value = match author_submit_aes_request_inner(
 					author_cloned.clone(),
 					params,
@@ -240,6 +244,7 @@ where
 				};
 				return Ok(json!(json_value))
 			} else {
+				info!("IDGraph is not empty, signer = {}", signer.to_did().unwrap());
 				let vc_request_sender = VcRequestSender::new();
 				let (sender, receiver) = channel::<Result<Vec<u8>, String>>();
 				if let Err(e) = vc_request_sender.send(VCRequest {
