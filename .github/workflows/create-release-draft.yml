@@ -23,7 +23,10 @@ on:
         description: tee-enclave
         required: true
         default: true
-      release_tag:
+      parachain_release_tag:
+        description: an existing tag for creating release (e.g. v1.2.3)
+        required: true
+      tee_release_tag:
         description: an existing tag for creating release (e.g. v1.2.3)
         required: true
       diff_tag:
@@ -40,7 +43,8 @@ on:
           - litentry
 
 env:
-  RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+  PARACHAIN_RELEASE_TAG: ${{ github.event.inputs.parachain_release_tag }}
+  WORKER_RELEASE_TAG: ${{ github.event.inputs.tee_release_tag }}
   DIFF_TAG: ${{ github.event.inputs.diff_tag }}
   GENESIS_RELEASE: ${{ github.event.inputs.genesis_release }}
   DOCKER_BUILDKIT: 1
@@ -120,15 +124,15 @@ jobs:
     if: ${{ github.event.inputs.release_client == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+      - name: Checkout codes on ${{ env.PARACHAIN_RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ env.PARACHAIN_RELEASE_TAG }}
           fetch-depth: 0
 
       - name: Set env
         run: |
-          DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          DOCKER_TAG=$(echo ${{ env.PARACHAIN_RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Build docker image
@@ -171,15 +175,14 @@ jobs:
     if: ${{ github.event.inputs.release_worker == 'true' }}
     runs-on: ubuntu-latest
     steps:
-          
-      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+      - name: Checkout codes on ${{ env.WORKER_RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ env.WORKER_RELEASE_TAG }}
           fetch-depth: 0
       - name: Set env
         run: |
-          WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f3- | sed 's/w/v/')
+          WORKER_TAG=$(echo ${{ env.WORKER_RELEASE_TAG }} | cut -d'-' -f3- | sed 's/w/v/')
           echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
 
       - name: Free up disk space
@@ -197,7 +200,7 @@ jobs:
           # we don't need external caches or multi platforms here
           # see https://docs.docker.com/build/drivers/
           driver: docker
-          
+
       - name: Cache worker-cache
         uses: actions/cache@v3
         with:
@@ -231,7 +234,7 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
-      
+
       - name: Copy caches from the built image
         run: |
           echo "::group::Show disk usage"
@@ -253,7 +256,7 @@ jobs:
           echo "::group::df -h ."
           df -h .
           echo "::endgroup::"
-      
+
       - name: Build worker
         uses: docker/build-push-action@v5
         with:
@@ -269,7 +272,7 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-cli:${{ env.WORKER_TAG }}
           target: deployed-client
-      
+
       - run: docker images --all
 
       - name: Dockerhub login
@@ -292,14 +295,14 @@ jobs:
       enclave_sha1sum: ${{ steps.shasum.outputs.enclave_sha1sum }}
       worker_sha1sum: ${{ steps.shasum.outputs.worker_sha1sum }}
     steps:
-      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+      - name: Checkout codes on ${{ env.WORKER_RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ env.WORKER_RELEASE_TAG }}
           fetch-depth: 0
 
-      - name: Build release artefacts 
-        run: | 
+      - name: Build release artefacts
+        run: |
           source /opt/intel/sgxsdk/environment 
           ./tee-worker/scripts/litentry/release/build.sh ${{ github.event.inputs.release_worker }} ${{ github.event.inputs.release_enclave }}
 
@@ -331,7 +334,7 @@ jobs:
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
-  
+
   ## test again the built docker image ##
   run-ts-tests:
     runs-on: ubuntu-latest
@@ -352,7 +355,7 @@ jobs:
 
       - name: Download and tag docker image
         run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          export DOCKER_TAG=$(echo ${{ env.PARACHAIN_RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           docker pull litentry/litentry-parachain:$DOCKER_TAG
           docker tag litentry/litentry-parachain:$DOCKER_TAG litentry/litentry-parachain:latest
 
@@ -392,12 +395,12 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ env.PARACHAIN_RELEASE_TAG }}
 
       - name: Prepare output and compare the metadata
         timeout-minutes: 3
         run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          export DOCKER_TAG=$(echo ${{ env.PARACHAIN_RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
           PARACHAIN_NAME=local-parachain
           BASE_URL=ws://127.0.0.1:9944
           chain=${{ matrix.chain }}
@@ -406,7 +409,7 @@ jobs:
           echo "Date: $(date)" >> output-$chain.txt
           echo "Base: $BASE_URL" >> output-$chain.txt
           echo "Reference: $REF_URL" >> output-$chain.txt
-          echo "Target Tag: ${{ env.RELEASE_TAG }}" >> output-$chain.txt
+          echo "Target Tag: ${{ env.PARACHAIN_RELEASE_TAG }}" >> output-$chain.txt
           echo "Chain: $chain" >> output-$chain.txt
           echo "----------------------------------------------------------------------" >> output-$chain.txt
           echo "Running parachain: $chain"
@@ -427,16 +430,16 @@ jobs:
         uses: actions-cool/issues-helper@v3
         id: findissueid
         with:
-          actions: 'find-issues'
+          actions: "find-issues"
           token: ${{ secrets.GITHUB_TOKEN }}
-          issue-state: 'open'
-          title-includes: Litentry-parachain ${{ env.RELEASE_TAG }} Release checklist
-  
+          issue-state: "open"
+          title-includes: Litentry-parachain ${{ env.PARACHAIN_RELEASE_TAG }} Release checklist
+
       - name: Create comment
         if: ${{ steps.findissueid.outputs.issues }} != '[]'
         uses: actions-cool/issues-helper@v3
         with:
-          actions: 'create-comment'
+          actions: "create-comment"
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ fromJson(steps.findissueid.outputs.issues)[0].number }}
           body: |
@@ -451,12 +454,12 @@ jobs:
       - set-release-type
       - build-tee
       - run-ts-tests
-      - build-wasm 
+      - build-wasm
     if: |
       !failure()  &&
       (success('build-wasm') || success('run-ts-tests') || success('build-tee'))
     steps:
-      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+      - name: Checkout codes on ${{ env.WORKER_RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_TAG }}
@@ -464,7 +467,7 @@ jobs:
 
       - name: Download all artefacts
         uses: actions/download-artifact@v3
-      
+
       - name: Generate release notes
         run: |
           export MRENCLAVE="${{ needs.build-tee.outputs.mrenclave }}"
@@ -478,8 +481,8 @@ jobs:
         id: create-release-draft
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: Litentry-parachain ${{ env.RELEASE_TAG }}
+          tag_name: ${{ env.PARACHAIN_RELEASE_TAG }}-${{ env.WORKER_RELEASE_TAG }}
+          name: Litentry-parachain ${{ env.PARACHAIN_RELEASE_TAG }}-${{ env.WORKER_RELEASE_TAG }}
           body_path: ${{ github.workspace }}/.github/release_notes.md
           draft: true
           files: |
