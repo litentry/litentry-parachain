@@ -19,9 +19,9 @@ pub mod sgx_reexport_prelude {
 pub use crate::sgx_reexport_prelude::*;
 
 use codec::{Decode, Encode};
-use itp_types::{ShardIdentifier, H256};
+use itp_types::H256;
 use lazy_static::lazy_static;
-use litentry_primitives::{Assertion, Identity, RequestAesKey};
+use litentry_primitives::AesRequest;
 use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -40,12 +40,7 @@ use std::{
 #[derive(Debug)]
 pub struct VCRequest {
 	pub sender: Sender<Result<Vec<u8>, String>>,
-	pub shard: ShardIdentifier,
-	pub signer: Identity,
-	pub who: Identity,
-	pub assertion: Assertion,
-	pub maybe_key: Option<RequestAesKey>,
-	pub req_ext_hash: H256,
+	pub request: AesRequest,
 }
 
 #[derive(Encode, Decode, Clone)]

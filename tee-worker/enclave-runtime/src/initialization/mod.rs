@@ -241,8 +241,7 @@ pub(crate) fn init_enclave_sidechain_components(
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
 
-	// intialise the scheduled enlcave, must be after the attestation_handler and enclave initialisation
-	// get the scheduled mr enclaves and initialize the scheduled enclaves
+	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let mrenclave = attestation_handler.get_mrenclave()?;
 	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;

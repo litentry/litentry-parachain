@@ -2766,13 +2766,8 @@ dependencies = [
 name = "its-rpc-handler"
 version = "0.9.0"
 dependencies = [
- "ita-stf",
  "itp-rpc",
- "itp-sgx-crypto",
- "itp-sgx-externalities",
  "itp-stf-primitives",
- "itp-stf-state-handler",
- "itp-storage",
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
@@ -3059,7 +3054,6 @@ name = "lc-vc-task-receiver"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "futures 0.3.8",
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",

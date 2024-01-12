@@ -281,11 +281,11 @@ pub fn read_shard(trusted_args: &TrustedCli, cli: &Cli) -> Result<ShardIdentifie
 fn send_direct_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 ) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args, cli).unwrap();
-	let jsonrpc_call: String = get_json_request(shard, operation_call, encryption_key);
+	let jsonrpc_call: String = get_json_request(shard, top, encryption_key);
 
 	debug!("get direct api");
 	let direct_api = get_worker_api_direct(cli);
@@ -361,12 +361,12 @@ fn send_direct_request<T: Decode + Debug>(
 fn send_direct_vc_request<T: Decode + Debug>(
 	cli: &Cli,
 	trusted_args: &TrustedCli,
-	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	key: RequestAesKey,
 ) -> TrustedOpResult<T> {
 	let encryption_key = get_shielding_key(cli).unwrap();
 	let shard = read_shard(trusted_args, cli).unwrap();
-	let jsonrpc_call: String = get_vc_json_request(shard, operation_call, encryption_key, key);
+	let jsonrpc_call: String = get_vc_json_request(shard, top, encryption_key, key);
 
 	debug!("get direct api");
 	let direct_api = get_worker_api_direct(cli);
@@ -419,15 +419,15 @@ fn send_direct_vc_request<T: Decode + Debug>(
 
 pub(crate) fn get_vc_json_request(
 	shard: ShardIdentifier,
-	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 	key: RequestAesKey,
 ) -> String {
 	let encrypted_key = shielding_pubkey.encrypt(&key).unwrap();
-	let operation_call_encrypted = aes_encrypt_default(&key, &operation_call.encode());
+	let encrypted_top = aes_encrypt_default(&key, &top.encode());
 
 	// compose jsonrpc call
-	let request = AesRequest { shard, payload: operation_call_encrypted, key: encrypted_key };
+	let request = AesRequest { shard, key: encrypted_key, payload: encrypted_top };
 	RpcRequest::compose_jsonrpc_call(
 		Id::Number(1),
 		"author_requestVc".to_string(),
@@ -446,13 +446,13 @@ fn decode_response_value<T: Decode, I: Input>(
 
 pub(crate) fn get_json_request(
 	shard: ShardIdentifier,
-	operation_call: &TrustedOperation<TrustedCallSigned, Getter>,
+	top: &TrustedOperation<TrustedCallSigned, Getter>,
 	shielding_pubkey: sgx_crypto_helper::rsa3072::Rsa3072PubKey,
 ) -> String {
-	let operation_call_encrypted = shielding_pubkey.encrypt(&operation_call.encode()).unwrap();
+	let encrypted_top = shielding_pubkey.encrypt(&top.encode()).unwrap();
 
 	// compose jsonrpc call
-	let request = RsaRequest::new(shard, operation_call_encrypted);
+	let request = RsaRequest::new(shard, encrypted_top);
 	RpcRequest::compose_jsonrpc_call(
 		Id::Text("1".to_string()),
 		"author_submitAndWatchRsaRequest".to_string(),

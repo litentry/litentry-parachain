@@ -925,8 +925,8 @@ where
 						vc_index,
 						vc_hash,
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
-						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
-						id_graph_hash,
+						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						pre_id_graph_hash: id_graph_hash,
 					}))
 				} else {
 					Ok(TrustedCallResult::Empty)

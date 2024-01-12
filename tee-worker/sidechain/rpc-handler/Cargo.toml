@@ -9,18 +9,14 @@ edition = "2021"
 sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true }
 
 # local dependencies
-ita-stf = { path = "../../app-libs/stf", default-features = false }
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
-itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
-itp-sgx-externalities = { path = "../../core-primitives/substrate-sgx/externalities", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
-itp-stf-state-handler = { path = "../../core-primitives/stf-state-handler", default-features = false }
-itp-storage = { path = "../../core-primitives/storage", default-features = false }
 itp-top-pool-author = { path = "../../core-primitives/top-pool-author", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
 its-primitives = { path = "../primitives", default-features = false }
 
+lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 # sgx enabled external libraries
@@ -33,7 +29,6 @@ rust-base58 = { package = "rust-base58", version = "0.0.4", optional = true }
 
 # no-std compatible libraries
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
 log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
@@ -50,11 +45,6 @@ std = [
     "log/std",
     "rust-base58",
     "lc-vc-task-sender/std",
-    "itp-sgx-externalities/std",
-    "itp-stf-state-handler/std",
-    "itp-sgx-crypto/std",
-    "ita-stf/std",
-    "itp-storage/std",
 ]
 sgx = [
     "sgx_tstd",
@@ -63,9 +53,4 @@ sgx = [
     "jsonrpc-core_sgx",
     "rust-base58_sgx",
     "lc-vc-task-sender/sgx",
-    "itp-sgx-externalities/sgx",
-    "itp-stf-state-handler/sgx",
-    "itp-sgx-crypto/sgx",
-    "ita-stf/sgx",
-    "itp-storage/sgx",
 ]
