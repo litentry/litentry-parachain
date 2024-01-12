@@ -143,6 +143,7 @@ mod tests {
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
 			maybe_key: None,
+			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
 		};
 
