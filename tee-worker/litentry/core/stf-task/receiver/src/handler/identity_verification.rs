@@ -29,8 +29,7 @@ use itp_types::ShardIdentifier;
 use lc_stf_task_sender::Web2IdentityVerificationRequest;
 use litentry_primitives::IMPError;
 use log::*;
-use std::sync::Arc;
-
+use std::sync::{mpsc::Sender, Arc};
 pub(crate) struct IdentityVerificationHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
@@ -61,7 +60,7 @@ where
 	fn on_success(
 		&self,
 		_result: Self::Result,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
+		sender: Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		debug!("verify identity OK");
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
@@ -81,11 +80,7 @@ where
 		}
 	}
 
-	fn on_failure(
-		&self,
-		error: Self::Error,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
-	) {
+	fn on_failure(&self, error: Self::Error, sender: Sender<(ShardIdentifier, H256, TrustedCall)>) {
 		error!("verify identity failed:{:?}", error);
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::handle_imp_error(

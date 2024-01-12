@@ -163,12 +163,8 @@ where
 		})?;
 		let vc_hash: H256 = blake2_256(credential_str.as_bytes()).into();
 
-		let vc_response = VCResponse {
-			assertion_request: self.req.clone(),
-			vc_hash,
-			vc_payload: credential_str.as_bytes().to_vec(),
-			vc_index,
-		};
+		let vc_response =
+			VCResponse { vc_hash, vc_payload: credential_str.as_bytes().to_vec(), vc_index };
 
 		Ok(vc_response)
 	}

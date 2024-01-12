@@ -90,6 +90,9 @@ where
 	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(
 		top_pool_author.clone(),
 		IoHandler::new(),
+		GLOBAL_SCHEDULED_ENCLAVE.get_current_mrenclave().ok(),
+		state.clone(),
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get().ok(),
 	);
 
 	io.add_sync_method("author_getShieldingKey", move |_: Params| {

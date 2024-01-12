@@ -430,7 +430,7 @@ pub(crate) fn get_vc_json_request(
 	let request = AesRequest { shard, payload: operation_call_encrypted, key: encrypted_key };
 	RpcRequest::compose_jsonrpc_call(
 		Id::Number(1),
-		"author_submitVCRequest".to_string(),
+		"author_requestVc".to_string(),
 		vec![request.to_hex()],
 	)
 	.unwrap()

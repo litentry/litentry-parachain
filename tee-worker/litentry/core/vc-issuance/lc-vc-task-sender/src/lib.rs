@@ -19,11 +19,9 @@ pub mod sgx_reexport_prelude {
 pub use crate::sgx_reexport_prelude::*;
 
 use codec::{Decode, Encode};
-use futures::channel::oneshot;
 use itp_types::{ShardIdentifier, H256};
 use lazy_static::lazy_static;
-use lc_stf_task_sender::AssertionBuildRequest;
-use litentry_primitives::AesOutput;
+use litentry_primitives::{Assertion, Identity, RequestAesKey};
 use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -41,15 +39,17 @@ use std::{
 
 #[derive(Debug)]
 pub struct VCRequest {
-	pub encrypted_trusted_call: AesOutput,
-	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
+	pub sender: Sender<Result<Vec<u8>, String>>,
 	pub shard: ShardIdentifier,
-	pub key: Vec<u8>,
+	pub signer: Identity,
+	pub who: Identity,
+	pub assertion: Assertion,
+	pub maybe_key: Option<RequestAesKey>,
+	pub req_ext_hash: H256,
 }
 
 #[derive(Encode, Decode, Clone)]
 pub struct VCResponse {
-	pub assertion_request: AssertionBuildRequest,
 	pub vc_hash: H256,
 	pub vc_payload: Vec<u8>,
 	pub vc_index: H256,
@@ -59,7 +59,7 @@ pub type VcSender = Sender<VCRequest>;
 
 // Global storage of the sender. Should not be accessed directly.
 lazy_static! {
-	static ref GLOBAL_VC_REQUEST_TASK: Arc<Mutex<Option<VcTaskSender>>> =
+	static ref GLOBAL_VC_TASK_SENDER: Arc<Mutex<Option<VcTaskSender>>> =
 		Arc::new(Mutex::new(Default::default()));
 }
 
@@ -77,14 +77,12 @@ impl Default for VcRequestSender {
 }
 
 impl VcRequestSender {
-	pub fn send_vc_request(&self, request: VCRequest) -> Result<(), String> {
+	pub fn send(&self, request: VCRequest) -> Result<(), String> {
 		debug!("send vc request: {:?}", request);
 
 		// Acquire lock on extrinsic sender
-		let mutex_guard = GLOBAL_VC_REQUEST_TASK.lock().unwrap();
-
+		let mutex_guard = GLOBAL_VC_TASK_SENDER.lock().unwrap();
 		let vc_task_sender = mutex_guard.clone().unwrap();
-
 		// Release mutex lock, so we don't block the lock longer than necessary.
 		drop(mutex_guard);
 
@@ -100,7 +98,7 @@ pub fn init_vc_task_sender_storage() -> Receiver<VCRequest> {
 	let (sender, receiver) = channel();
 	// It makes no sense to handle the unwrap, as this statement fails only if the lock has been poisoned
 	// I believe at that point it is an unrecoverable error
-	let mut vc_task_storage = GLOBAL_VC_REQUEST_TASK.lock().unwrap();
+	let mut vc_task_storage = GLOBAL_VC_TASK_SENDER.lock().unwrap();
 	*vc_task_storage = Some(VcTaskSender::new(sender));
 	receiver
 }

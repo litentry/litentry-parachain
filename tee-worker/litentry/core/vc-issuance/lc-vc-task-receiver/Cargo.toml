@@ -28,10 +28,8 @@ sp-core = { default-features = false, features = ["full_crypto"], git = "https:/
 # internal dependencies
 ita-sgx-runtime = { path = "../../../../app-libs/sgx-runtime", default-features = false }
 ita-stf = { path = "../../../../app-libs/stf", default-features = false }
-itp-extrinsics-factory = { path = "../../../../core-primitives/extrinsics-factory", default-features = false }
-itp-types = { path = "../../../../core-primitives/types", default-features = false }
-
 itp-enclave-metrics = { path = "../../../../core-primitives/enclave-metrics", default-features = false }
+itp-extrinsics-factory = { path = "../../../../core-primitives/extrinsics-factory", default-features = false }
 itp-node-api = { path = "../../../../core-primitives/node-api", default-features = false }
 itp-ocall-api = { path = "../../../../core-primitives/ocall-api", default-features = false }
 itp-sgx-crypto = { path = "../../../../core-primitives/sgx/crypto", default-features = false }
@@ -40,8 +38,9 @@ itp-stf-executor = { path = "../../../../core-primitives/stf-executor", default-
 itp-stf-state-handler = { path = "../../../../core-primitives/stf-state-handler", default-features = false }
 itp-storage = { path = "../../../../core-primitives/storage", default-features = false }
 itp-top-pool-author = { path = "../../../../core-primitives/top-pool-author", default-features = false }
+itp-types = { path = "../../../../core-primitives/types", default-features = false }
+itp-utils = { path = "../../../../core-primitives/utils", default-features = false }
 
-# litentry
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 lc-assertion-build = { path = "../../assertion-build", default-features = false }
 lc-credentials = { path = "../../credentials", default-features = false }

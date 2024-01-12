@@ -54,12 +54,14 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use log::{debug, error, info};
+use log::*;
 use std::{
 	boxed::Box,
 	format,
 	string::{String, ToString},
-	sync::Arc,
+	sync::{mpsc::channel, Arc},
+	thread,
+	time::Instant,
 };
 use threadpool::ThreadPool;
 
@@ -190,17 +192,17 @@ where
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
 {
-	let receiver = stf_task_sender::init_stf_task_sender_storage()
+	let stf_task_receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
 
-	let (sender, to_receiver) = std::sync::mpsc::channel::<(ShardIdentifier, H256, TrustedCall)>();
+	let (sender, receiver) = channel::<(ShardIdentifier, H256, TrustedCall)>();
 
 	// Spawn thread to handle received tasks
-	let context_for_thread = context.clone();
-	std::thread::spawn(move || loop {
-		if let Ok((shard, hash, call)) = to_receiver.recv() {
+	let context_cloned = context.clone();
+	thread::spawn(move || loop {
+		if let Ok((shard, hash, call)) = receiver.recv() {
 			info!("Submitting trusted call to the pool");
-			if let Err(e) = context_for_thread.submit_trusted_call(&shard, &hash, &call) {
+			if let Err(e) = context_cloned.submit_trusted_call(&shard, &hash, &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}
 		}
@@ -211,15 +213,15 @@ where
 	let pool = ThreadPool::new(n_workers);
 
 	loop {
-		let req = receiver
+		let req = stf_task_receiver
 			.recv()
-			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
+			.map_err(|e| Error::OtherError(format!("stf_task_receiver error:{:?}", e)))?;
 
 		let context_pool = context.clone();
 		let sender_pool = sender.clone();
 
 		pool.execute(move || {
-			let start_time = std::time::Instant::now();
+			let start_time = Instant::now();
 
 			match &req {
 				RequestType::IdentityVerification(req) =>

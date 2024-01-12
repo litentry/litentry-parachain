@@ -908,7 +908,7 @@ where
 				// IDGraph hash can't be `None` as we should have created it otherwise
 				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
 				let mutated_id_graph =
-					if should_create_id_graph { IMT::id_graph(&who) } else { vec![] };
+					if should_create_id_graph { IMT::id_graph(&who) } else { Vec::new() };
 
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,

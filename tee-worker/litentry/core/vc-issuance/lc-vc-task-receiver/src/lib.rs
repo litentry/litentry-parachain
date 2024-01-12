@@ -21,12 +21,14 @@ pub use crate::sgx_reexport_prelude::*;
 
 use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
-use frame_support::{ensure, sp_runtime::traits::One};
+use frame_support::ensure;
 pub use futures;
-use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
+use ita_sgx_runtime::{pallet_imt::get_eligible_identities, Hash, Runtime};
 use ita_stf::{
-	aes_encrypt_default, trusted_call_result::RequestVCResult, Getter, OpaqueCall, TrustedCall,
-	TrustedCallSigned, TrustedOperation, H256,
+	aes_encrypt_default,
+	helpers::{ensure_alice, ensure_enclave_signer_or_self},
+	trusted_call_result::RequestVCResult,
+	Getter, OpaqueCall, TrustedCallSigned, H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{
@@ -40,14 +42,14 @@ use itp_stf_state_handler::handle_state::HandleState;
 use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{parentchain::ParentchainId, BlockNumber as SidechainBlockNumber};
+use itp_utils::if_production_or;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
-use lc_vc_task_sender::init_vc_task_sender_storage;
-use litentry_primitives::{
-	aes_decrypt, AesOutput, Identity, ParentchainBlockNumber, RequestAesKey, ShardIdentifier,
-};
+use lc_vc_task_sender::{init_vc_task_sender_storage, VCRequest};
+use litentry_primitives::{Assertion, Identity, ParentchainBlockNumber};
 use log::*;
 use pallet_identity_management_tee::{identity_context::sort_id_graph, IdentityContext};
+use sp_core::blake2_256;
 use std::{
 	format,
 	string::{String, ToString},
@@ -77,15 +79,13 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	let n_workers = 4;
 	let pool = ThreadPool::new(n_workers);
 
-	while let Ok(req) = receiver.recv() {
+	while let Ok(request) = receiver.recv() {
 		let context_pool = context.clone();
 		let extrinsic_factory_pool = extrinsic_factory.clone();
 		let node_metadata_repo_pool = node_metadata_repo.clone();
 		pool.execute(move || {
-			if let Err(e) = req.sender.send(handle_request(
-				req.key,
-				req.encrypted_trusted_call,
-				req.shard,
+			if let Err(e) = request.sender.send(handle_request(
+				&request,
 				context_pool,
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
@@ -94,12 +94,13 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 			}
 		});
 	}
+
+	pool.join();
+	info!("Terminate the vc handler loop");
 }
 
 pub fn handle_request<K, A, S, H, O, Z, N>(
-	key: Vec<u8>,
-	mut encrypted_trusted_call: AesOutput,
-	shard: ShardIdentifier,
+	request: &VCRequest,
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
@@ -115,127 +116,119 @@ where
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
-	let aes_key: RequestAesKey = context
-		.shielding_key
-		.decrypt(&key)
-		.map_err(|e| format!("Failed to decrypted AES Key: {:?}", e))?
-		.try_into()
-		.map_err(|e| format!("Failed to convert to UserShieldingKeyType: {:?}", e))?;
+	let (id_graph, parachain_block_number, sidechain_block_number) = context
+		.state_handler
+		.execute_on_current(&request.shard, |state, _| {
+			let prefix_key = storage_map_key(
+				"IdentityManagement",
+				"IDGraphs",
+				&request.who,
+				&StorageHasher::Blake2_128Concat,
+			);
 
-	let decrypted_trusted_operation = aes_decrypt(&aes_key, &mut encrypted_trusted_call)
-		.ok_or_else(|| "Failed to decrypt trusted operation".to_string())?;
+			// `None` means empty IDGraph, thus `unwrap_or_default`
+			let mut id_graph: Vec<(Identity, IdentityContext<Runtime>)> = state
+				.iter_prefix::<Identity, IdentityContext<Runtime>>(&prefix_key)
+				.unwrap_or_default();
 
-	let trusted_operation = TrustedOperation::<TrustedCallSigned, Getter>::decode(
-		&mut decrypted_trusted_operation.as_slice(),
-	)
-	.map_err(|e| format!("Failed to decode trusted operation, {:?}", e))?;
+			// Sorts the IDGraph in place
+			sort_id_graph::<Runtime>(&mut id_graph);
 
-	let trusted_call: &TrustedCallSigned = trusted_operation
-		.to_call()
-		.ok_or_else(|| "Failed to convert trusted operation to trusted call".to_string())?;
+			// should never be `None`, but use `unwrap_or_default` to not panic
+			let parachain_block_number = state
+				.get(&storage_value_key("Parentchain", "Number"))
+				.and_then(|v| ParentchainBlockNumber::decode(&mut v.as_slice()).ok())
+				.unwrap_or_default();
+			let sidechain_block_number = state
+				.get(&storage_value_key("System", "Number"))
+				.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
+				.unwrap_or_default();
 
-	if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) =
-		trusted_call.call.clone()
-	{
-		let key = maybe_key.ok_or_else(|| "User shielding key not provided".to_string())?;
-		let (identities, parachain_block_number, sidechain_block_number) = context
-			.state_handler
-			.execute_on_current(&shard, |state, _| {
-				let prefix_key = storage_map_key(
-					"IdentityManagement",
-					"IDGraphs",
-					&who,
-					&StorageHasher::Blake2_128Concat,
-				);
+			(id_graph, parachain_block_number, sidechain_block_number)
+		})
+		.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
 
-				// `None` means empty IDGraph, thus `unwrap_or_default`
-				let mut id_graph = state
-					.iter_prefix::<Identity, IdentityContext<Runtime>>(&prefix_key)
-					.unwrap_or_default();
+	// an empty id graph is unexpected, it should have landed in the top pool handling
+	ensure!(!id_graph.is_empty(), "Unexpected empty IDGraph".to_string());
 
-				// Sorts the IDGraph in place
-				sort_id_graph::<Runtime>(&mut id_graph);
+	let id_graph_hash = H256::from(blake2_256(&id_graph.encode()));
+	let assertion_networks = request.assertion.get_supported_web3networks();
+	let identities = get_eligible_identities(id_graph, assertion_networks);
+	ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
-				if id_graph.is_empty() {
-					// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
-					id_graph.push((
-						who.clone(),
-						IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
-					));
-				}
+	let signer = request
+		.signer
+		.to_account_id()
+		.ok_or_else(|| "Invalid signer account, failed to convert".to_string())?;
 
-				// should never be `None`, but use `unwrap_or_default` to not panic
-				let parachain_block_number = state
-					.get(&storage_value_key("Parentchain", "Number"))
-					.and_then(|v| ParentchainBlockNumber::decode(&mut v.as_slice()).ok())
-					.unwrap_or_default();
-				let sidechain_block_number = state
-					.get(&storage_value_key("System", "Number"))
-					.and_then(|v| SidechainBlockNumber::decode(&mut v.as_slice()).ok())
-					.unwrap_or_default();
-
-				let assertion_networks = assertion.clone().get_supported_web3networks();
-				(
-					get_eligible_identities(id_graph, assertion_networks),
-					parachain_block_number,
-					sidechain_block_number,
-				)
-			})
-			.map_err(|e| format!("Failed to fetch sidechain data due to: {:?}", e))?;
-
-		ensure!(!identities.is_empty(), "No eligible identity".to_string());
-
-		let signer = signer
-			.to_account_id()
-			.ok_or_else(|| "Invalid signer account, failed to convert".to_string())?;
-
-		let req = AssertionBuildRequest {
-			shard,
-			signer,
-			who,
-			assertion,
-			identities,
-			top_hash: H256::zero(),
-			parachain_block_number,
-			sidechain_block_number,
-			maybe_key,
-			req_ext_hash,
-		};
-
-		let vc_request_handler = VCRequestHandler { req, context: context.clone() };
-		let response = vc_request_handler
-			.process()
-			.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
-
-		let call_index = node_metadata_repo
-			.get_from_metadata(|m| m.vc_issued_call_indexes())
-			.unwrap()
-			.unwrap();
-		let result = aes_encrypt_default(&key, &response.vc_payload);
-		let call = OpaqueCall::from_tuple(&(
-			call_index,
-			response.assertion_request.who,
-			response.assertion_request.assertion,
-			response.vc_index,
-			response.vc_hash,
-			H256::zero(),
-		));
-		let res = RequestVCResult {
-			vc_index: response.vc_index,
-			vc_hash: response.vc_hash,
-			vc_payload: result,
-		};
-		// This internally fetches nonce from a Mutex and then updates it thereby ensuring ordering
-		let xt = extrinsic_factory
-			.create_extrinsics(&[call], None)
-			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
-		context
-			.ocall_api
-			.send_to_parentchain(xt, &ParentchainId::Litentry, false)
-			.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
-
-		Ok(res.encode())
-	} else {
-		Err("Invalid Trusted Operation send to VC Request handler".to_string())
+	match request.assertion {
+		// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
+		Assertion::A13(_) => (),
+		_ => if_production_or!(
+			ensure!(
+				ensure_enclave_signer_or_self(&signer, request.who.to_account_id()),
+				"Unauthorized signer",
+			),
+			ensure!(
+				ensure_enclave_signer_or_self(&signer, request.who.to_account_id())
+					|| ensure_alice(&signer),
+				"Unauthorized signer",
+			)
+		),
 	}
+
+	let req = AssertionBuildRequest {
+		shard: request.shard,
+		signer,
+		who: request.who.clone(),
+		assertion: request.assertion.clone(),
+		identities,
+		top_hash: H256::zero(),
+		parachain_block_number,
+		sidechain_block_number,
+		maybe_key: request.maybe_key,
+		should_create_id_graph: false, // non-empty id graph
+		req_ext_hash: request.req_ext_hash,
+	};
+
+	let vc_request_handler = VCRequestHandler { req: req.clone(), context: context.clone() };
+	let res = vc_request_handler
+		.process()
+		.map_err(|e| format!("Failed to build assertion due to: {:?}", e))?;
+
+	let call_index = node_metadata_repo
+		.get_from_metadata(|m| m.vc_issued_call_indexes())
+		.map_err(|_| "Failed to get vc_issued_call_indexes".to_string())?
+		.map_err(|_| "Failed to get metadata".to_string())?;
+
+	let key = request.maybe_key.ok_or_else(|| "Invalid aes key".to_string())?;
+	let result = aes_encrypt_default(&key, &res.vc_payload);
+	let call = OpaqueCall::from_tuple(&(
+		call_index,
+		req.who,
+		req.assertion,
+		res.vc_index,
+		res.vc_hash,
+		req.req_ext_hash,
+	));
+
+	// for non-empty id graph, no mutation has happended, and id_graph_hash is guaranteed to be `Some(..)`
+	let empty_mutated_id_graph = Vec::<(Identity, IdentityContext<Runtime>)>::new();
+	let res = RequestVCResult {
+		vc_index: res.vc_index,
+		vc_hash: res.vc_hash,
+		vc_payload: result,
+		mutated_id_graph: aes_encrypt_default(&key, &empty_mutated_id_graph.encode()),
+		id_graph_hash,
+	};
+	// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering
+	let xt = extrinsic_factory
+		.create_extrinsics(&[call], None)
+		.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
+	context
+		.ocall_api
+		.send_to_parentchain(xt, &ParentchainId::Litentry, false)
+		.map_err(|e| format!("Unable to send extrinsic to parentchain: {:?}", e))?;
+
+	Ok(res.encode())
 }

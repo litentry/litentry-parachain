@@ -5644,10 +5644,13 @@ dependencies = [
 name = "its-rpc-handler"
 version = "0.9.0"
 dependencies = [
- "futures 0.3.28",
- "futures 0.3.8",
+ "ita-stf",
  "itp-rpc",
+ "itp-sgx-crypto",
+ "itp-sgx-externalities",
  "itp-stf-primitives",
+ "itp-stf-state-handler",
+ "itp-storage",
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
@@ -6351,6 +6354,7 @@ dependencies = [
  "itp-storage",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "lazy_static",
  "lc-assertion-build",
  "lc-credentials",
