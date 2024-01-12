@@ -136,6 +136,7 @@ where
 	});
 
 	// TODO: optimise the error handling
+	let author_cloned = top_pool_author.clone();
 	io_handler.add_sync_method("author_requestVc", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_requestVc");
 		let (state, shielding_key_repository) =
@@ -148,7 +149,7 @@ where
 			};
 
 		// try to decrypt the request
-		let payload = match get_request_payload(params) {
+		let payload = match get_request_payload(params.clone()) {
 			Ok(v) => v,
 			Err(e) =>
 				return Ok(json!(compute_hex_encoded_return_error(
@@ -190,10 +191,6 @@ where
 		}
 
 		if let TrustedCall::request_vc(signer, who, assertion, maybe_key, req_ext_hash) = tcs.call {
-			// check if id_graph is empty
-			// please note we can't mutate the state inside vc-task-receiver via `load_for_mutation` even
-			// though it's lock guarded, because: a) it intereferes with the block import on another thread, which eventually
-			// cause state mismatch before/after applying the state diff b) it's not guaranteed to be broadcasted to other workers
 			let id_graph_is_empty = match state.execute_on_current(&request.shard, |s, _| {
 				let storage_key =
 					storage_map_key("IdentityManagement", "IDGraphLens", &who, &Blake2_128Concat);
@@ -210,7 +207,38 @@ where
 					return Ok(json!(compute_hex_encoded_return_error(format!("{:?}", e).as_str()))),
 			};
 
+			// if id_graph is empty, we delegate the vc handling to the STF version, otherwise we use the threaded version which
+			// doesn't need to wait for a sidechain block. The downside of this method is that the first vc_request processing time
+			// is limited to the sidechain block interval, but it ensures the correctness.
+			//
+			// An alternative is to check if an IDGraph **could** be created and then process the VC request right away. The actual
+			// creation of IDGraph is done async (by submitting a trusted call to top pool). This should work most of the time, but
+			// there's a small chance that some IDGraph mutation was injectd before that (e.g. link_identity) so that creation of IDGraph
+			// would fail afterwards. The abortion isn't so critical per se, but `RequestVCResult` will carry with wrong `mutated_id_graph`
+			// and `id_graph_hash` which are pre-filled when building VCs.
+			//
+			// please note we can't mutate the state inside vc-task-receiver via `load_for_mutation` even
+			// though it's lock guarded, because: a) it intereferes with the block import on another thread, which eventually
+			// cause state mismatch before/after applying the state diff b) it's not guaranteed to be broadcasted to other workers
+
 			if id_graph_is_empty {
+				let json_value = match author_submit_aes_request_inner(
+					author_cloned.clone(),
+					params,
+					Some("author_submitAndWatchBroadcastedAesRequest".to_owned()),
+				) {
+					Ok(hash_value) => RpcReturnValue {
+						do_watch: true,
+						value: vec![],
+						status: DirectRequestStatus::TrustedOperationStatus(
+							TrustedOperationStatus::Submitted,
+							hash_value,
+						),
+					}
+					.to_hex(),
+					Err(error) => compute_hex_encoded_return_error(error.as_str()),
+				};
+				return Ok(json!(json_value))
 			} else {
 				let vc_request_sender = VcRequestSender::new();
 				let (sender, receiver) = channel::<Result<Vec<u8>, String>>();
