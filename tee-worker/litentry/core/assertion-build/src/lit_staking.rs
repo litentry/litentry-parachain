@@ -175,9 +175,12 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 	debug!("Assertion building LIT staking amount");
 
 	let mut identities = vec![];
-	req.identities.iter().for_each(|identity| {
-		identities.push(identity.0.clone());
-	});
+	req.identities
+		.iter()
+		.filter(|(identity, _)| identity.is_substrate())
+		.for_each(|identity| {
+			identities.push(identity.0.clone());
+		});
 
 	let mut client = LitentryStakingClient::new();
 	let staking_amount = DelegatorState.query_lit_staking(&mut client, &identities)?;
