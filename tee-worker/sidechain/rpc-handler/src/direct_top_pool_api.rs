@@ -150,7 +150,7 @@ where
 			Ok(Ok(response)) => {
 				let json_value = RpcReturnValue {
 					do_watch: false,
-					value: response.encode(),
+					value: response,
 					status: DirectRequestStatus::Ok,
 				};
 				Ok(json!(json_value.to_hex()))

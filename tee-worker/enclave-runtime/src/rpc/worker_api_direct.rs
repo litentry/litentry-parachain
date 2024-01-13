@@ -377,9 +377,8 @@ where
 		});
 
 		// state_getStorage
-		let local_state = state.clone();
 		io.add_sync_method("state_getStorage", move |params: Params| {
-			let local_state = match local_state.clone() {
+			let local_state = match state.clone() {
 				Some(s) => s,
 				None =>
 					return Ok(json!(compute_hex_encoded_return_error(

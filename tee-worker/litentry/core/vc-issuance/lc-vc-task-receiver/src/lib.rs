@@ -24,7 +24,7 @@ use frame_support::{ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
 use ita_stf::{
 	aes_encrypt_default,
-	helpers::{ensure_alice, ensure_enclave_signer_or_self},
+	helpers::{ensure_alice, ensure_self},
 	trusted_call_result::RequestVCResult,
 	Getter, OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation,
 	H256,
@@ -40,7 +40,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{parentchain::ParentchainId, BlockNumber as SidechainBlockNumber};
+use itp_types::{parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber};
 use itp_utils::if_production_or;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -180,6 +180,7 @@ where
 
 		let mut should_create_id_graph = false;
 		if id_graph.is_empty() {
+			info!("IDGraph is empty, will pre-create one");
 			// To create IDGraph upon first vc request (see P-410), there're two options:
 			//
 			// 1. synchronous creation:
@@ -211,12 +212,14 @@ where
 			));
 			should_create_id_graph = true;
 		}
+		info!("should_create_id_graph: {}", should_create_id_graph);
 
+		let id_graph_hash = H256::from(blake2_256(&id_graph.encode()));
 		let assertion_networks = assertion.get_supported_web3networks();
 		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
 		ensure!(!identities.is_empty(), "No eligible identity".to_string());
 
-		let signer = signer
+		let signer_account = signer
 			.to_account_id()
 			.ok_or_else(|| "Invalid signer account, failed to convert".to_string())?;
 
@@ -224,13 +227,9 @@ where
 			// the signer will be checked inside A13, as we don't seem to have access to ocall_api here
 			Assertion::A13(_) => (),
 			_ => if_production_or!(
+				ensure!(ensure_self(&signer, &who), "Unauthorized signer",),
 				ensure!(
-					ensure_enclave_signer_or_self(&signer, who.to_account_id()),
-					"Unauthorized signer",
-				),
-				ensure!(
-					ensure_enclave_signer_or_self(&signer, who.to_account_id())
-						|| ensure_alice(&signer),
+					ensure_self(&signer, &who) || ensure_alice(&signer_account),
 					"Unauthorized signer",
 				)
 			),
@@ -238,7 +237,7 @@ where
 
 		let req = AssertionBuildRequest {
 			shard: request.shard,
-			signer,
+			signer: signer_account,
 			who: who.clone(),
 			assertion: assertion.clone(),
 			identities,
@@ -263,24 +262,39 @@ where
 		let key = maybe_key.ok_or_else(|| "Invalid aes key".to_string())?;
 		let call = OpaqueCall::from_tuple(&(
 			call_index,
-			who,
+			who.clone(),
 			assertion,
 			res.vc_index,
 			res.vc_hash,
+			id_graph_hash,
 			req_ext_hash,
 		));
+
+		let mutated_id_graph = if should_create_id_graph { id_graph } else { Default::default() };
 
 		let res = RequestVCResult {
 			vc_index: res.vc_index,
 			vc_hash: res.vc_hash,
 			vc_payload: aes_encrypt_default(&key, &res.vc_payload),
-			pre_mutated_id_graph: aes_encrypt_default(&key, &id_graph.encode()),
-			pre_id_graph_hash: H256::from(blake2_256(&id_graph.encode())),
+			pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+			pre_id_graph_hash: id_graph_hash,
 		};
+
+		// submit TrustedCall::maybe_create_id_graph
+		let enclave_signer: AccountId = context
+			.enclave_signer
+			.get_enclave_account()
+			.map_err(|_| "Failed to get enclave signer".to_string())?;
+		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who);
+		context
+			.submit_trusted_call(&request.shard, None, &c)
+			.map_err(|_| "Failed to submit trusted call".to_string())?;
+
 		// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering
 		let xt = extrinsic_factory
 			.create_extrinsics(&[call], None)
 			.map_err(|e| format!("Failed to construct extrinsic for parentchain: {:?}", e))?;
+
 		context
 			.ocall_api
 			.send_to_parentchain(xt, &ParentchainId::Litentry, false)

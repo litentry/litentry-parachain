@@ -148,6 +148,8 @@ pub enum TrustedCall {
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
 	#[codec(index = 24)]
 	send_erroneous_parentchain_call(Identity),
+	#[codec(index = 25)]
+	maybe_create_id_graph(Identity, Identity),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
@@ -236,6 +238,7 @@ impl TrustedCall {
 			Self::handle_imp_error(sender_identity, ..) => sender_identity,
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
+			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
 			#[cfg(not(feature = "production"))]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
 		}
@@ -251,6 +254,7 @@ impl TrustedCall {
 			Self::handle_imp_error(..) => "handle_imp_error",
 			Self::deactivate_identity(..) => "deactivate_identity",
 			Self::activate_identity(..) => "activate_identity",
+			Self::maybe_create_id_graph(..) => "maybe_create_id_graph",
 			_ => "unsupported_trusted_call",
 		}
 	}
@@ -1009,35 +1013,26 @@ where
 				))));
 				Ok(TrustedCallResult::Empty)
 			},
+			TrustedCall::maybe_create_id_graph(signer, who) => {
+				debug!("maybe_create_id_graph, who: {:?}", who);
+				let signer_account: AccountId32 =
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer_account(&signer_account)?;
+
+				// we only log the error
+				match IMT::maybe_create_id_graph(&who) {
+					Ok(()) => info!("maybe_create_id_graph OK"),
+					Err(e) => warn!("maybe_create_id_graph NOK: {:?}", e),
+				};
+
+				Ok(TrustedCallResult::Empty)
+			},
 		}
 	}
 
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
-		let key_hashes = Vec::new();
-		match self.call {
-			TrustedCall::noop(_) => debug!("No storage updates needed..."),
-			TrustedCall::balance_set_balance(..) => debug!("No storage updates needed..."),
-			TrustedCall::balance_transfer(..) => debug!("No storage updates needed..."),
-			TrustedCall::balance_unshield(..) => debug!("No storage updates needed..."),
-			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
-			// litentry
-			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-			#[cfg(not(feature = "production"))]
-			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
-			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
-			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
-			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
-			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
-			TrustedCall::send_erroneous_parentchain_call(..) =>
-				debug!("No storage updates needed..."),
-			#[cfg(feature = "evm")]
-			_ => debug!("No storage updates needed..."),
-		};
-		key_hashes
+		debug!("No storage updates needed...");
+		Vec::new()
 	}
 }
 

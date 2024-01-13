@@ -118,10 +118,10 @@ where
 		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api }
 	}
 
-	fn submit_trusted_call(
+	pub fn submit_trusted_call(
 		&self,
 		shard: &ShardIdentifier,
-		old_top_hash: &H256,
+		maybe_old_top_hash: Option<H256>,
 		trusted_call: &TrustedCall,
 	) -> Result<(), Error> {
 		let signed_trusted_call = self
@@ -156,7 +156,9 @@ where
 
 		// swap the hash in the rpc connection registry to make sure furthre RPC responses go to
 		// the right channel
-		self.author_api.swap_rpc_connection_hash(*old_top_hash, top.hash());
+		if let Some(old_hash) = maybe_old_top_hash {
+			self.author_api.swap_rpc_connection_hash(old_hash, top.hash());
+		}
 
 		let encrypted_trusted_call = self
 			.shielding_key
@@ -202,7 +204,7 @@ where
 	thread::spawn(move || loop {
 		if let Ok((shard, hash, call)) = receiver.recv() {
 			info!("Submitting trusted call to the pool");
-			if let Err(e) = context_cloned.submit_trusted_call(&shard, &hash, &call) {
+			if let Err(e) = context_cloned.submit_trusted_call(&shard, Some(hash), &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}
 		}
