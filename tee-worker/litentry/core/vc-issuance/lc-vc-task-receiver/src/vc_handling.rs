@@ -111,6 +111,9 @@ where
 
 			Assertion::CryptoSummary =>
 				lc_assertion_build::nodereal::crypto_summary::build(&self.req),
+
+			Assertion::Dynamic =>
+				lc_assertion_build::dynamic::build(&self.req)
 		}?;
 
 		// post-process the credential

@@ -524,6 +524,13 @@ impl Credential {
 		self.credential_subject.assertions.push(and_logic);
 		self.credential_subject.values.push(ret);
 	}
+
+	pub fn update_dynamic(&mut self, description: String, assertion_type: String, assertion: String, result: bool) {
+		self.credential_subject.description = description;
+		self.credential_subject.types = assertion_type;
+		self.credential_subject.assertions = vec![AssertionLogic::Item {src: assertion, op: Op::Equal, dst: "sommething".to_string()}];
+		self.credential_subject.values = vec![result]
+	}
 }
 
 /// Assertion To-Date

@@ -89,11 +89,17 @@ use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+use crate::evm::test;
+
+
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
 	base_dir: PathBuf,
 ) -> EnclaveResult<()> {
+
+	test();
+
 	let signing_key_repository = Arc::new(get_ed25519_repository(base_dir.clone())?);
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
 	let signer = signing_key_repository.retrieve_key()?;

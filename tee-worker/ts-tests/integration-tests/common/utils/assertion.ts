@@ -26,6 +26,7 @@ import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
+import { sleep } from './common';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -222,6 +223,7 @@ export async function assertIdGraphMutationResult(
     assert.isNotNull(decodedResult.mutated_id_graph);
     const idGraph = parseIdGraph(context.sidechainRegistry, decodedResult.mutated_id_graph, aesKey);
     assertIdGraph(idGraph, expectedIdGraph);
+    await sleep(3);
     const queriedIdGraphHash = (await getIdGraphHash(context, teeShieldingKey, identity)).toHex();
     assert.equal(u8aToHex(decodedResult.id_graph_hash), queriedIdGraphHash);
 

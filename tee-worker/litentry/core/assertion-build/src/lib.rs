@@ -53,6 +53,7 @@ pub mod lit_staking;
 pub mod nodereal;
 pub mod oneblock;
 pub mod vip3;
+pub mod dynamic;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;

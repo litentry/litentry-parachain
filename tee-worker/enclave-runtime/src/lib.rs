@@ -40,6 +40,7 @@
 #[cfg(not(target_env = "sgx"))]
 #[macro_use]
 extern crate sgx_tstd as std;
+extern crate alloc;
 
 use crate::{
 	error::{Error, Result},
@@ -100,6 +101,7 @@ pub mod error;
 pub mod rpc;
 mod sync;
 mod tls_ra;
+mod evm;
 pub mod top_pool_execution;
 
 #[cfg(feature = "teeracle")]

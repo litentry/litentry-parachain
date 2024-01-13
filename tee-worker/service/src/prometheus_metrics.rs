@@ -291,6 +291,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::EVMAmountHolding(_) => "EVMAmountHolding",
 			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
 			Assertion::CryptoSummary => "CryptoSummary",
+			Assertion::Dynamic => "Dynamic"
 		},
 	};
 	inc_stf_calls(category, label);

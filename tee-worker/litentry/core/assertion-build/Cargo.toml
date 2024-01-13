@@ -30,12 +30,19 @@ log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
+evm = { version = "0.41.1", default-features = false, features = ["with-codec", "tracing"] }
+ethabi = { version = "18.0.0", default-features = false}
+
+primitive-types = { version = "0.12.1", default-features = false }
+
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
+itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-stf-primitives = { default-features = false, path = "../../../core-primitives/stf-primitives" }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
+
 
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
@@ -61,6 +68,7 @@ sgx = [
     "http_req-sgx",
     "rust-base58-sgx",
     "itc-rest-client/sgx",
+    "itc-direct-rpc-client/sgx",
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
@@ -68,12 +76,15 @@ sgx = [
     "lc-stf-task-sender/sgx",
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
+    "primitive-types/codec",
+    "primitive-types/serde_no_std"
 ]
 std = [
     "hex",
     "http",
     "http_req",
     "itc-rest-client/std",
+    "itc-direct-rpc-client/std",
     "log/std",
     "serde/std",
     "serde_json/std",
