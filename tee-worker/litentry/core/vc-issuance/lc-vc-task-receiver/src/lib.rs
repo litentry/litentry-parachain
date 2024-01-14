@@ -216,15 +216,9 @@ where
 			call_index,
 			response.assertion_request.who,
 			response.assertion_request.assertion,
-			response.vc_index,
-			response.vc_hash,
 			H256::zero(),
 		));
-		let res = RequestVCResult {
-			vc_index: response.vc_index,
-			vc_hash: response.vc_hash,
-			vc_payload: result,
-		};
+		let res = RequestVCResult { vc_payload: result };
 		// This internally fetches nonce from a Mutex and then updates it thereby ensuring ordering
 		let xt = extrinsic_factory
 			.create_extrinsics(&[call], None)

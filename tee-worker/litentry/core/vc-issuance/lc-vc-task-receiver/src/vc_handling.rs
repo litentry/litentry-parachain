@@ -133,8 +133,11 @@ where
 					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 				)
 			})?;
-		let payload = credential.issuer.mrenclave.clone();
-		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
+		let json_string = credential.to_json().map_err(|_| {
+			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
+		})?;
+		let payload = json_string.as_bytes();
+		let (enclave_account, sig) = signer.sign(payload).map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -149,25 +152,13 @@ where
 			)
 		})?;
 
-		let vc_index: H256 = credential
-			.get_index()
-			.map_err(|e| {
-				VCMPError::RequestVCFailed(
-					self.req.assertion.clone(),
-					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
-				)
-			})?
-			.into();
 		let credential_str = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
-		let vc_hash: H256 = blake2_256(credential_str.as_bytes()).into();
 
 		let vc_response = VCResponse {
 			assertion_request: self.req.clone(),
-			vc_hash,
 			vc_payload: credential_str.as_bytes().to_vec(),
-			vc_index,
 		};
 
 		Ok(vc_response)

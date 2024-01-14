@@ -145,7 +145,7 @@ where
 		))
 	}
 
-	fn sign_vc_with_self(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
+	fn sign(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
 		let enclave_account = self.get_enclave_account()?;
 		let enclave_call_signing_key = self.get_enclave_call_signing_key()?;
 
