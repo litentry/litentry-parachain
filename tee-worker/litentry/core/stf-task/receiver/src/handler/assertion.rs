@@ -32,7 +32,6 @@ use litentry_primitives::{
 	VCMPError,
 };
 use log::*;
-use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
