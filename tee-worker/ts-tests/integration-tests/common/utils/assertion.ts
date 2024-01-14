@@ -18,7 +18,6 @@ import {
     FrameSystemEventRecord,
     WorkerRpcReturnValue,
     RequestVCResult,
-    PalletVcManagementVcContext,
     StfError,
 } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
