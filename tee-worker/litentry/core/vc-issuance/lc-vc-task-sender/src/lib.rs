@@ -19,6 +19,7 @@ pub mod sgx_reexport_prelude {
 pub use crate::sgx_reexport_prelude::*;
 
 use codec::{Decode, Encode};
+use futures::channel::oneshot;
 use itp_types::H256;
 use lazy_static::lazy_static;
 use litentry_primitives::AesRequest;
@@ -31,7 +32,7 @@ use std::{
 	format,
 	string::String,
 	sync::{
-		mpsc::{channel, Receiver, Sender},
+		mpsc::{channel, Receiver, Sender as MpscSender},
 		Arc,
 	},
 	vec::Vec,
@@ -39,7 +40,7 @@ use std::{
 
 #[derive(Debug)]
 pub struct VCRequest {
-	pub sender: Sender<Result<Vec<u8>, String>>,
+	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
 	pub request: AesRequest,
 }
 
@@ -50,7 +51,7 @@ pub struct VCResponse {
 	pub vc_index: H256,
 }
 
-pub type VcSender = Sender<VCRequest>;
+pub type VcSender = MpscSender<VCRequest>;
 
 // Global storage of the sender. Should not be accessed directly.
 lazy_static! {

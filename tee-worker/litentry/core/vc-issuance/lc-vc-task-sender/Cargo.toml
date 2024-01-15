@@ -37,6 +37,7 @@ litentry-primitives = { path = "../../../primitives", default-features = false }
 [features]
 default = ["std"]
 sgx = [
+    "futures_sgx",
     "sgx_tstd",
     "thiserror_sgx",
     "url_sgx",
@@ -44,6 +45,7 @@ sgx = [
     "futures_sgx",
 ]
 std = [
+    "futures",
     "log/std",
     "sp-runtime/std",
     "sp-std/std",
