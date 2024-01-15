@@ -39,9 +39,6 @@ use sp_core::H256;
 use sp_std::vec::Vec;
 use teerex_primitives::ShardIdentifier;
 
-mod vc_context;
-pub use vc_context::*;
-
 mod schema;
 pub use schema::*;
 
@@ -73,11 +70,6 @@ pub mod pallet {
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
-	// a map VCIndex -> VC context
-	#[pallet::storage]
-	#[pallet::getter(fn vc_registry)]
-	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext>;
-
 	// the admin account
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
@@ -86,7 +78,7 @@ pub mod pallet {
 	// delegatees who can request (and receive) VCs on users' behalf,
 	// some VCs can only be requested by delegatee accounts (e.g. A13)
 	// delegatees and admins are different:
-	// - admins are meant to manage the pallet state manually, e.g. schema, vcRegistry
+	// - admins are meant to manage the pallet state manually, e.g. schema
 	// - delegatees can request VCs for users, similar to `proxied account`
 	#[pallet::storage]
 	#[pallet::getter(fn delegatee)]
@@ -115,16 +107,6 @@ pub mod pallet {
 			account: T::AccountId,
 			shard: ShardIdentifier,
 			assertion: Assertion,
-		},
-		// a VC is disabled on chain
-		VCDisabled {
-			account: T::AccountId,
-			index: VCIndex,
-		},
-		// a VC is revoked on chain
-		VCRevoked {
-			account: T::AccountId,
-			index: VCIndex,
 		},
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
