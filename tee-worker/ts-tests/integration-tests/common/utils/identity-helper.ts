@@ -5,8 +5,8 @@ import { AesOutput } from 'parachain-api';
 import { decryptWithAes, encryptWithTeeShieldingKey, Signer } from './crypto';
 import { ethers } from 'ethers';
 import type { TypeRegistry } from '@polkadot/types';
-import type { LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
-import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import type { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
+import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { ApiTypes, SubmittableExtrinsic } from '@polkadot/api/types';
 import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
@@ -16,12 +16,12 @@ import bitcore from 'bitcore-lib';
 // blake2_256(<sidechain nonce> + <primary AccountId> + <identity-to-be-linked>)
 export function generateVerificationMessage(
     context: IntegrationTestContext,
-    signer: LitentryPrimitivesIdentity,
-    identity: LitentryPrimitivesIdentity,
+    signer: CorePrimitivesIdentity,
+    identity: CorePrimitivesIdentity,
     sidechainNonce: number
 ): HexString {
-    const encodedIdentity = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', identity).toU8a();
-    const encodedWho = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', signer).toU8a();
+    const encodedIdentity = context.api.createType('CorePrimitivesIdentity', identity).toU8a();
+    const encodedWho = context.api.createType('CorePrimitivesIdentity', signer).toU8a();
     const encodedSidechainNonce = context.api.createType('Index', sidechainNonce);
     const msg = Buffer.concat([encodedSidechainNonce.toU8a(), encodedWho, encodedIdentity]);
     return blake2AsHex(msg, 256);
@@ -29,22 +29,19 @@ export function generateVerificationMessage(
 
 export async function buildIdentityHelper(
     address: HexString | string,
-    type: LitentryPrimitivesIdentity['type'],
+    type: CorePrimitivesIdentity['type'],
     context: IntegrationTestContext
-): Promise<LitentryPrimitivesIdentity> {
+): Promise<CorePrimitivesIdentity> {
     const identity = {
         [type]: address,
     };
-    return context.sidechainRegistry.createType(
-        'LitentryPrimitivesIdentity',
-        identity
-    ) as unknown as LitentryPrimitivesIdentity;
+    return context.api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
 }
 
 export async function buildIdentityFromKeypair(
     signer: Signer,
     context: IntegrationTestContext
-): Promise<LitentryPrimitivesIdentity> {
+): Promise<CorePrimitivesIdentity> {
     const type: string = (() => {
         switch (signer.type()) {
             case 'ethereum':
@@ -67,10 +64,7 @@ export async function buildIdentityFromKeypair(
         [type]: address,
     };
 
-    return context.sidechainRegistry.createType(
-        'LitentryPrimitivesIdentity',
-        identity
-    ) as unknown as LitentryPrimitivesIdentity;
+    return context.api.createType('CorePrimitivesIdentity', identity) as unknown as CorePrimitivesIdentity;
 }
 
 // If multiple transactions are built from multiple accounts, pass the signers as an array.
@@ -80,7 +74,7 @@ export async function buildIdentityFromKeypair(
 export async function buildIdentityTxs(
     context: IntegrationTestContext,
     signers: KeyringPair[] | KeyringPair,
-    identities: LitentryPrimitivesIdentity[],
+    identities: CorePrimitivesIdentity[],
     method: 'linkIdentity' | 'deactivateIdentity' | 'activateIdentity',
     validations?: LitentryValidationData[],
     web3networks?: Web3Network[][]
@@ -138,36 +132,23 @@ export function parseIdGraph(
     sidechainRegistry: TypeRegistry,
     idGraphOutput: AesOutput,
     aesKey: HexString
-): [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] {
+): [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] {
     const decryptedIdGraph = decryptWithAes(aesKey, idGraphOutput, 'hex');
-    const idGraph: [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
+    const idGraph: [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][] =
         sidechainRegistry.createType(
-            'Vec<(LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
+            'Vec<(CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext)>',
             decryptedIdGraph
-        ) as unknown as [LitentryPrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
+        ) as unknown as [CorePrimitivesIdentity, PalletIdentityManagementTeeIdentityContext][];
 
     return idGraph;
 }
 
-export function parseIdentity(
-    sidechainRegistry: TypeRegistry,
-    identityOutput: AesOutput,
-    aesKey: HexString
-): LitentryPrimitivesIdentity {
-    const decryptedIdentity = decryptWithAes(aesKey, identityOutput, 'hex');
-    const identity = sidechainRegistry.createType(
-        'LitentryPrimitivesIdentity',
-        decryptedIdentity
-    ) as unknown as LitentryPrimitivesIdentity;
-    return identity;
-}
-
 export async function buildValidations(
     context: IntegrationTestContext,
-    signerIdentities: LitentryPrimitivesIdentity[],
-    identities: LitentryPrimitivesIdentity[],
+    signerIdentities: CorePrimitivesIdentity[],
+    identities: CorePrimitivesIdentity[],
     startingSidechainNonce: number,
-    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin',
+    network: 'ethereum' | 'substrate' | 'twitter' | 'bitcoin' | 'bitcoinPrettified',
     substrateSigners?: KeyringPair[] | KeyringPair,
     evmSigners?: ethers.Wallet[],
     bitcoinSigners?: bitcore.PrivateKey[] | bitcore.PrivateKey
@@ -246,6 +227,31 @@ export async function buildValidations(
             const sig = new bitcore.Message(msg.substring(2)).sign(bitcoinSigner);
             bitcoinSignature = bufferToU8a(Buffer.from(sig, 'base64'));
             bitcoinValidationData!.Web3Validation.Bitcoin.signature.Bitcoin = u8aToHex(bitcoinSignature);
+            console.log('bitcoin pubkey: ', u8aToHex(bufferToU8a(bitcoinSigner.toPublicKey().toBuffer())));
+            console.log('bitcoin sig (base64): ', sig);
+            console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));
+            const encodedVerifyIdentityValidation: LitentryValidationData = context.api.createType(
+                'LitentryValidationData',
+                bitcoinValidationData
+            ) as unknown as LitentryValidationData;
+            validations.push(encodedVerifyIdentityValidation);
+        } else if (network === 'bitcoinPrettified') {
+            const bitcoinValidationData = {
+                Web3Validation: {
+                    Bitcoin: {
+                        message: '' as HexString,
+                        signature: {
+                            BitcoinPrettified: '' as HexString,
+                        },
+                    },
+                },
+            };
+            console.log('post verification msg to bitcoin: ', msg);
+            bitcoinValidationData.Web3Validation.Bitcoin.message = msg;
+            const bitcoinSigner = Array.isArray(bitcoinSigners!) ? bitcoinSigners![index] : bitcoinSigners!;
+            const sig = new bitcore.Message('Litentry authorization token: ' + msg).sign(bitcoinSigner);
+            bitcoinSignature = bufferToU8a(Buffer.from(sig, 'base64'));
+            bitcoinValidationData!.Web3Validation.Bitcoin.signature.BitcoinPrettified = u8aToHex(bitcoinSignature);
             console.log('bitcoin pubkey: ', u8aToHex(bufferToU8a(bitcoinSigner.toPublicKey().toBuffer())));
             console.log('bitcoin sig (base64): ', sig);
             console.log('bitcoin sig (hex): ', u8aToHex(bitcoinSignature));

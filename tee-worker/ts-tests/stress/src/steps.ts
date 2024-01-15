@@ -1,4 +1,4 @@
-import { LitentryPrimitivesIdentity, TypeRegistry as SidechainTypeRegistry } from 'sidechain-api';
+import { TypeRegistry as SidechainTypeRegistry } from 'sidechain-api';
 import {
     Wallet,
     buildIdentityFromWallet,
@@ -12,7 +12,7 @@ import {
     subscribeToEventsWithExtHash,
 } from './litentry-api';
 import WebSocketAsPromised from 'websocket-as-promised';
-import { ApiPromise as ParachainApiPromise } from 'parachain-api';
+import { ApiPromise as ParachainApiPromise, CorePrimitivesIdentity } from 'parachain-api';
 import crypto, { randomBytes } from 'crypto';
 import { Index } from '@polkadot/types/interfaces';
 import { Measurement, Runner } from './measurement';
@@ -29,7 +29,7 @@ export async function setShieldingKey(
     teeShieldingKey: crypto.KeyObject,
     userShieldingKey: string,
     nonce: Index,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -74,7 +74,7 @@ export async function linkIdentity(
     mrEnclave: string,
     teeShieldingKey: crypto.KeyObject,
     nonce: Index,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -127,7 +127,7 @@ export async function requestVc1(
     mrEnclave: string,
     teeShieldingKey: crypto.KeyObject,
     nonce: Index,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -162,7 +162,7 @@ export async function requestVc4(
     mrEnclave: string,
     teeShieldingKey: crypto.KeyObject,
     nonce: Index,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -199,7 +199,7 @@ export async function deactivateIdentity(
     teeShieldingKey: crypto.KeyObject,
     userShieldingKey: string,
     nonce: Index,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
@@ -242,7 +242,7 @@ export async function activateIdentity(
     mrEnclave: string,
     teeShieldingKey: crypto.KeyObject,
     nonce: Index,
-    subject: LitentryPrimitivesIdentity,
+    subject: CorePrimitivesIdentity,
     log: WritableStream<string>
 ): Promise<void> {
     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;

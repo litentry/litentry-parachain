@@ -30,7 +30,16 @@ pub type BoundedWeb3Network = BoundedVec<Web3Network, ConstU32<MAX_WEB3NETWORK_L
 ///   Substrate(SubstrateNetwork),
 ///   Evm(EvmNetwork),
 /// }
+///
 /// TODO: theoretically this should the the union of the supported networks of all data providers
+///
+/// Since the incorporation of Bitcoin network, the name `Web3Network` might not be the best word,
+/// as different kinds of bitcoin types (BitcoinP2tr, BitcoinP2pkh, ...) still belong to the same
+/// network (bitcoin mainnet) despite of having 5 entries in this enum.
+///
+/// More precisely, it should reflect "the way" how the same identity handle (e.g. pubkey) is
+/// differently used: either in different networks (e.g. eth vs bsc), or as different addresses in
+/// the same network or not (e.g. bitcoin/substrate)
 #[derive(
 	Encode,
 	Decode,
@@ -61,9 +70,7 @@ pub enum Web3Network {
 	LitentryRococo,
 	#[codec(index = 5)]
 	Khala,
-	#[codec(index = 6)]
-	SubstrateTestnet, // when launched it with standalone (integritee-)node
-
+	// Index 6 used to SubstrateTestnet, So let's not break the indexing...
 	// evm
 	#[codec(index = 7)]
 	Ethereum,
@@ -100,7 +107,7 @@ impl Web3Network {
 			Self::Polkadot |
 				Self::Kusama | Self::Litentry |
 				Self::Litmus | Self::LitentryRococo |
-				Self::Khala | Self::SubstrateTestnet
+				Self::Khala
 		)
 	}
 
@@ -158,7 +165,6 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
-					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
 					Web3Network::Bsc => true,
 					Web3Network::BitcoinP2tr => false,
@@ -183,7 +189,6 @@ mod tests {
 					Web3Network::Litmus => true,
 					Web3Network::LitentryRococo => true,
 					Web3Network::Khala => true,
-					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
 					Web3Network::BitcoinP2tr => false,
@@ -208,7 +213,6 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
-					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
 					Web3Network::BitcoinP2tr => true,
