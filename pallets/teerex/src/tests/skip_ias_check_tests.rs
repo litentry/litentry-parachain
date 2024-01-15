@@ -125,7 +125,10 @@ fn register_enclave_without_scheduled_enclave_fails() {
 	use crate::Error;
 	use frame_support::assert_noop;
 	new_test_ext().execute_with(|| {
-		assert_ok!(Teerex::set_scheduled_enclave_check(RuntimeOrigin::root(), false));
+		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
+			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			false
+		));
 		assert_noop!(
 			Teerex::register_enclave(
 				RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
