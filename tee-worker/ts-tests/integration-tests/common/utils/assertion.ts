@@ -276,9 +276,10 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
 
     // step 5
     // prepare teerex enclave registry data for further checks
-    const enclaveCount = await context.api.query.teerex.enclaveCount();
     const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
     const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
+    const enclaveCount = await apiAtVcIssuedBlock.query.teerex.enclaveCount();
+
     const lastRegisteredEnclave = (await apiAtVcIssuedBlock.query.teerex.enclaveRegistry(enclaveCount))
         .value as TeerexPrimitivesEnclave;
 
