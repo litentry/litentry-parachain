@@ -24,10 +24,10 @@ on:
         required: true
         default: true
       release_tag:
-        description: Parachain release tag (e.g. 1.2.3-101)
+        description: an existing tag for creating release (e.g. p1.2.0-w0.0.1-101)
         required: true
       diff_tag:
-        description: an existing tag to run diff against (e.g. p1.2.0-w0.0.1-101)
+        description: an existing tag to run diff against (e.g. p1.1.0-w0.0.1-100)
         default: ""
         required: false
       genesis_release:
@@ -396,7 +396,7 @@ jobs:
       - name: Prepare output and compare the metadata
         timeout-minutes: 3
         run: |
-          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1 | sed 's/p/v/')
+          export DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | cut -d'-' -f1-2 | sed 's/p/v/')
           PARACHAIN_NAME=local-parachain
           BASE_URL=ws://127.0.0.1:9944
           chain=${{ matrix.chain }}
