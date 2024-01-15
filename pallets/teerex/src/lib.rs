@@ -653,15 +653,15 @@ pub mod pallet {
 		/// Can only be called by the Teerex Admin
 		#[pallet::call_index(31)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_scheduled_enclave_check(
+		pub fn set_skip_scheduled_enclave_check(
 			origin: OriginFor<T>,
-			schedule_enclave: bool,
+			should_skip: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
 
-			<SkipScheduledEnclaveCheck<T>>::set(schedule_enclave);
-			Self::deposit_event(Event::SkipScheduledEnclaveCheck(schedule_enclave));
+			<SkipScheduledEnclaveCheck<T>>::set(should_skip);
+			Self::deposit_event(Event::SkipScheduledEnclaveCheck(should_skip));
 			Ok(Pays::No.into())
 		}
 	}

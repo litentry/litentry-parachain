@@ -21,9 +21,9 @@ async function updateSkipScheduledEnclaveCheck(api: ApiPromise, config: any) {
     const keyring = new Keyring({ type: 'sr25519' });
     const alice = keyring.addFromUri('//Alice');
 
-    const tx = api.tx.teerex.setScheduledEnclaveCheck(true);
+    const tx = api.tx.teerex.setSkipScheduledEnclaveCheck(true);
 
-    console.log('Schedule Enclave Extrinsic sent');
+    console.log('set Skip Schedule Enclave Extrinsic sent');
     return signAndSend(tx, alice);
 }
 
