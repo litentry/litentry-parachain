@@ -392,7 +392,6 @@ describe('Resume worker', function () {
 
     let worker1State: WorkerState | undefined = undefined;
 
-    // #fixme #1524 multiworker not supported
     step('Two workers & resume worker1', async function () {
         assert(worker0State);
 
@@ -425,7 +424,6 @@ describe('Resume worker', function () {
         console.log('=========== worker1 produced blocks ==================');
     });
 
-    // #fixme #1524 multiworker not supported
     step('Kill and resume both workers', async function () {
         assert(worker0State);
         assert(worker1State);
