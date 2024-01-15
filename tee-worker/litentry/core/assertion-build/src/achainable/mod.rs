@@ -28,11 +28,15 @@ use self::{
 };
 use crate::*;
 use lc_data_providers::{
-	achainable::{AchainableClient, AchainableTagDeFi, HoldingAmount, Params},
-	DataProviderConfig,
+	achainable::{
+		AchainableClient, AchainableTagDeFi, HoldingAmount, Params, ParamsBasicTypeWithAmountToken,
+	},
+	achainable_names::{AchainableNameAmountToken, GetAchainableName},
+	DataProviderConfig, LIT_TOKEN_ADDRESS,
 };
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
+use std::string::ToString;
 
 pub mod amount;
 pub mod amount_holding;
@@ -162,4 +166,60 @@ pub fn request_achainable_balance(
 	})?;
 
 	Ok(balance)
+}
+
+pub fn query_lit_holding_amount(
+	aparam: &AchainableParams,
+	identities: &Vec<(Web3Network, Vec<String>)>,
+	data_provider_config: &DataProviderConfig,
+) -> Result<usize> {
+	let mut total_lit_balance = 0_f64;
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
+
+	for (network, addresses) in identities {
+		let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {
+			(
+				AchainableNameAmountToken::ERC20BalanceOverAmount,
+				Web3Network::Ethereum,
+				Some(LIT_TOKEN_ADDRESS.to_string()),
+			)
+		} else if *network == Web3Network::Bsc {
+			(
+				AchainableNameAmountToken::BEP20BalanceOverAmount,
+				Web3Network::Bsc,
+				Some(LIT_TOKEN_ADDRESS.to_string()),
+			)
+		} else if *network == Web3Network::Litentry {
+			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litentry, None)
+		} else if *network == Web3Network::Litmus {
+			(AchainableNameAmountToken::BalanceOverAmount, Web3Network::Litmus, None)
+		} else {
+			continue
+		};
+
+		let q_param = ParamsBasicTypeWithAmountToken::new(
+			q_name.name().to_string(),
+			&q_network,
+			"0".to_string(),
+			q_token,
+		);
+
+		let params = Params::ParamsBasicTypeWithAmountToken(q_param);
+		let balance = client
+			.holding_amount(addresses.clone(), params)
+			.map_err(|e| {
+				Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e.into_error_detail())
+			})?
+			.parse::<f64>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(aparam.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
+
+		total_lit_balance += balance;
+	}
+
+	Ok(total_lit_balance as usize)
 }

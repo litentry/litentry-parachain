@@ -37,6 +37,7 @@ export default {
             _enum: {
                 some_value: "u32",
                 nonce: "(LitentryIdentity)",
+                id_graph_hash: "(LitentryIdentity)",
             },
         },
 
@@ -58,6 +59,8 @@ export default {
                 SetIdentityNetworksFailed: "(ErrorDetail)",
                 InvalidAccount: "Null",
                 UnclassifiedError: "Null",
+                RemoveIdentityFailed: "(ErrorDetail)",
+                EmptyIDGraph: "Null",
             },
         },
         ErrorDetail: {
@@ -73,6 +76,7 @@ export default {
                 UnexpectedMessage: "Null",
                 __Unused_WrongSignatureType: "Null",
                 VerifyWeb3SignatureFailed: "Null",
+                NoEligibleIdentity: "Null",
             },
         },
         // teerex

@@ -158,6 +158,10 @@ impl ReqBody {
 	pub fn new(address: String, params: Params) -> Self {
 		ReqBody { name: params.name(), address, params, include_metadata: true }
 	}
+
+	pub fn new_with_false_metadata(address: String, params: Params) -> Self {
+		ReqBody { name: params.name(), address, params, include_metadata: false }
+	}
 }
 
 pub trait AchainableSystemLabelName {
@@ -172,9 +176,13 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 		Web3Network::Litmus => "litmus".into(),
 		Web3Network::LitentryRococo => "litentry_rococo".into(),
 		Web3Network::Khala => "khala".into(),
-		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
 		Web3Network::Ethereum => "ethereum".into(),
 		Web3Network::Bsc => "bsc".into(),
+		Web3Network::BitcoinP2tr => "bitcoin_p2tr".into(),
+		Web3Network::BitcoinP2pkh => "bitcoin_p2pkh".into(),
+		Web3Network::BitcoinP2sh => "bitcoin_p2sh".into(),
+		Web3Network::BitcoinP2wpkh => "bitcoin_p2wpkh".into(),
+		Web3Network::BitcoinP2wsh => "bitcoin_p2wsh".into(),
 	}
 }
 
@@ -236,7 +244,9 @@ impl TryFrom<AchainableParams> for Params {
 				let token =
 					if p.token.is_some() { Some(ap.to_string(&p.token.unwrap())?) } else { None };
 
-				let p = ParamsBasicTypeWithAmountToken::new(name, network, amount, token);
+				// At this step, we do not care about the content inside the chains and instead use real chain data to fill in the request
+				// so use network[0] as a placehold.
+				let p = ParamsBasicTypeWithAmountToken::new(name, &network[0], amount, token);
 				Ok(Params::ParamsBasicTypeWithAmountToken(p))
 			},
 			AchainableParams::Amount(p) => {
@@ -807,6 +817,12 @@ impl AchainableUtils for AchainableClient {
 			})
 			.flatten();
 		if let Some(display_text) = display_text {
+			// If it is a newly created brand new account, Achainable returns `Address has no [token] balance`,
+			// so it will not be parsed and will directly return 0
+			if display_text.contains("Address has no") {
+				return Ok(0_f64)
+			}
+
 			// TODO:
 			// text field format: Balance over 0 (Balance is 588.504602529)
 			let split_text = display_text.split("Balance is ").collect::<Vec<&str>>();
@@ -837,7 +853,7 @@ impl HoldingAmount for AchainableClient {
 	fn holding_amount(&mut self, addresses: Vec<String>, param: Params) -> Result<String, Error> {
 		let mut total_balance = 0_f64;
 		for address in addresses.iter() {
-			let body = ReqBody::new(address.into(), param.clone());
+			let body = ReqBody::new_with_false_metadata(address.into(), param.clone());
 			let balance =
 				self.post(SystemLabelReqPath::default(), &body).and_then(Self::get_balance)?;
 			total_balance += balance;

@@ -158,6 +158,7 @@ pub(crate) fn main() {
 		enclave_metrics_receiver,
 	)));
 
+	#[cfg(feature = "dcap")]
 	let quoting_enclave_target_info = match enclave.qe_get_target_info() {
 		Ok(target_info) => Some(target_info),
 		Err(e) => {
@@ -165,6 +166,7 @@ pub(crate) fn main() {
 			None
 		},
 	};
+	#[cfg(feature = "dcap")]
 	let quote_size = match enclave.qe_get_quote_size() {
 		Ok(size) => Some(size),
 		Err(e) => {
@@ -172,6 +174,11 @@ pub(crate) fn main() {
 			None
 		},
 	};
+
+	#[cfg(not(feature = "dcap"))]
+	let quoting_enclave_target_info = None;
+	#[cfg(not(feature = "dcap"))]
+	let quote_size = None;
 
 	if let Some(run_config) = config.run_config() {
 		let shard = extract_shard(run_config.shard(), enclave.as_ref());

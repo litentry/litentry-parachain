@@ -20,32 +20,29 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{achainable::request_achainable_balance, *};
-use lc_credentials::litentry_profile::token_balance::TokenBalanceInfo;
-use lc_data_providers::{DataProviderConfig, ETokenAddress, TokenFromString};
+use crate::{
+	achainable::{query_lit_holding_amount, request_achainable_balance},
+	*,
+};
+use lc_credentials::{
+	achainable::lit_holding_amount::AchainableLitHoldingAmountUpdate,
+	litentry_profile::token_balance::TokenBalanceInfo,
+};
+use lc_data_providers::{
+	achainable_names::AchainableNameAmountToken, DataProviderConfig, ETokenAddress, TokenFromString,
+};
 
-// Input params:
-// {
-//     "name": "ERC20 balance over {amount}",
-//     "address": "0xb59490ab09a0f526cc7305822ac65f2ab12f9723",
-//     "params": {
-//         "chain": "ethereum",
-//         "amount": "0",
-//         "token": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-//     }
-// }
-
-/// LIT / USDC / USDT Holder
+/// ERC20 Holder: USDC and others
 /// assertions:[
 /// {
 ///    and:[
 ///        {
-///            src:$lit_holding_amount,
+///            src:$usdc_holding_amount,
 ///            op: >=,
 ///            dst:100
 ///        },
 ///        {
-///            src:$lit_holding_amount,
+///            src:$usdc_holding_amount,
 ///            op: <,
 ///            dst:200
 ///        },
@@ -58,18 +55,43 @@ pub fn build_amount_token(
 	param: AchainableAmountToken,
 	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
-	debug!("Assertion Achainable build_amount_token, who: {:?}", account_id_to_string(&req.who));
+	debug!("Assertion Building AchainableAmountToken");
 
 	let identities = transpose_identity(&req.identities);
-	let addresses = identities
-		.into_iter()
-		.flat_map(|(_, addresses)| addresses)
-		.collect::<Vec<String>>();
+	let achainable_param = AchainableParams::AmountToken(param.clone());
 
-	let token = ETokenAddress::from_vec(param.clone().token.unwrap_or_default());
-	let achainable_param = AchainableParams::AmountToken(param);
-	let balance =
-		request_achainable_balance(addresses, achainable_param.clone(), data_provider_config)?
+	let mut credential = Credential::new(&req.who, &req.shard).map_err(|e| {
+		Error::RequestVCFailed(
+			Assertion::Achainable(achainable_param.clone()),
+			e.into_error_detail(),
+		)
+	})?;
+
+	let amount_token_name =
+		AchainableNameAmountToken::from(achainable_param.name()).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::Achainable(achainable_param.clone()),
+				e.into_error_detail(),
+			)
+		})?;
+	match amount_token_name {
+		AchainableNameAmountToken::LITHoldingAmount => {
+			let lit_holding_amount =
+				query_lit_holding_amount(&achainable_param, &identities, data_provider_config)?;
+			credential.update_lit_holding_amount(lit_holding_amount);
+		},
+		_ => {
+			// Token Holder
+			let addresses = identities
+				.into_iter()
+				.flat_map(|(_, addresses)| addresses)
+				.collect::<Vec<String>>();
+			let token = ETokenAddress::from_vec(param.token.unwrap_or_default());
+			let balance = request_achainable_balance(
+				addresses,
+				achainable_param.clone(),
+				data_provider_config,
+			)?
 			.parse::<f64>()
 			.map_err(|_| {
 				Error::RequestVCFailed(
@@ -77,17 +99,10 @@ pub fn build_amount_token(
 					ErrorDetail::ParseError,
 				)
 			})?;
-	match Credential::new(&req.who, &req.shard) {
-		Ok(mut credential_unsigned) => {
-			credential_unsigned.update_token_balance(token, balance);
-			Ok(credential_unsigned)
-		},
-		Err(e) => {
-			error!("Generate unsigned credential failed {:?}", e);
-			Err(Error::RequestVCFailed(
-				Assertion::Achainable(achainable_param),
-				e.into_error_detail(),
-			))
+
+			credential.update_token_balance(token, balance);
 		},
 	}
+
+	Ok(credential)
 }

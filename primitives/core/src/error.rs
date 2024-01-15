@@ -62,6 +62,9 @@ pub enum ErrorDetail {
 	// of verification data
 	#[codec(index = 10)]
 	VerifyWeb3SignatureFailed,
+	// error when trying to build vc but no eligible identity is found
+	#[codec(index = 11)]
+	NoEligibleIdentity,
 }
 
 // We could have used Into<ErrorDetail>, but we want it to be more explicit, similar to `into_iter`

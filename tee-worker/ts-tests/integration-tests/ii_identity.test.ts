@@ -9,15 +9,14 @@ import {
     assertIdentityDeactivated,
     buildIdentityFromKeypair,
     assertIdentityActivated,
-    assertLinkedEvent,
+    assertIdGraphMutationEvent,
     PolkadotSigner,
 } from './common/utils';
 import { u8aConcat, u8aToHex, u8aToU8a, stringToU8a } from '@polkadot/util';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { sendTxsWithUtility } from './common/transactions';
-import type { LitentryPrimitivesIdentity } from 'sidechain-api';
-import type { LitentryValidationData, Web3Network } from 'parachain-api';
+import type { LitentryValidationData, Web3Network, CorePrimitivesIdentity } from 'parachain-api';
 import type { IntegrationTestContext } from './common/common-types';
 import type { HexString } from '@polkadot/util/types';
 import { ethers } from 'ethers';
@@ -51,12 +50,12 @@ async function getNonce(base58mrEnclave: string, workerAddr: string, context: In
     return nonce;
 }
 
-describeLitentry('Test Identity', 0, (context) => {
+describeLitentry('Test Identity', (context) => {
     // random wrong msg
     const wrongMsg = '0x693d9131808e7a8574c7ea5eb7813bdf356223263e61fa8fe2ee8e434508bc75';
     let signatureSubstrate;
-    let eveIdentities: LitentryPrimitivesIdentity[] = [];
-    let charlieIdentities: LitentryPrimitivesIdentity[] = [];
+    let eveIdentities: CorePrimitivesIdentity[] = [];
+    let charlieIdentities: CorePrimitivesIdentity[] = [];
     let eveValidations: LitentryValidationData[] = [];
     let bobValidations: LitentryValidationData[] = [];
     let web3networks: Web3Network[][] = [];
@@ -94,11 +93,14 @@ describeLitentry('Test Identity', 0, (context) => {
         eveIdentities = [evmIdentity, eveSubstrateIdentity, twitterIdentity];
         charlieIdentities = [charlieSubstrateIdentity];
 
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
         const evmValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [evmIdentity],
             nonce,
             'ethereum',
@@ -108,7 +110,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const eveSubstrateValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [eveSubstrateIdentity],
             nonce + 1,
             'substrate',
@@ -117,7 +119,7 @@ describeLitentry('Test Identity', 0, (context) => {
 
         const twitterValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [twitterIdentity],
             nonce + 2,
             'twitter'
@@ -155,9 +157,11 @@ describeLitentry('Test Identity', 0, (context) => {
             context.api.events.identityManagement.IdentityLinked.is(e)
         );
 
-        await assertLinkedEvent(
+        await assertIdGraphMutationEvent(
+            context,
             new PolkadotSigner(context.substrateWallet.alice),
             identityLinkedEvents,
+            undefined,
             aliceTxs.length
         );
 
@@ -173,10 +177,13 @@ describeLitentry('Test Identity', 0, (context) => {
                 },
             },
         };
-        const bobSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.bob), context);
+        const bobSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.bob),
+            context
+        );
         nonce = await getNonce(base58mrEnclave, workerAddress, context);
         console.log('nonce for step link identities', nonce);
-        const msg = generateVerificationMessage(context, bobSubject, charlieSubstrateIdentity, nonce);
+        const msg = generateVerificationMessage(context, bobSubstrateIdentity, charlieSubstrateIdentity, nonce);
         console.log('post verification msg to substrate: ', msg);
         substrateExtensionValidationData.Web3Validation.Substrate.message = msg;
         // sign the wrapped version as in polkadot-extension
@@ -213,15 +220,30 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         identityLinkedEvents = bobRespEvents.filter((e) => context.api.events.identityManagement.IdentityLinked.is(e));
-        await assertLinkedEvent(new PolkadotSigner(context.substrateWallet.bob), identityLinkedEvents, bobTxs.length);
+        await assertIdGraphMutationEvent(
+            context,
+            new PolkadotSigner(context.substrateWallet.bob),
+            identityLinkedEvents,
+            undefined,
+            bobTxs.length
+        );
     });
 
     step('check IDGraph after LinkIdentity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const identityHex = context.sidechainRegistry.createType('LitentryPrimitivesIdentity', twitterIdentity).toHex();
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const identityHex = context.api.createType('CorePrimitivesIdentity', twitterIdentity).toHex();
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
-        const respIdGraph = await checkIdGraph(context, 'IdentityManagement', 'IDGraphs', aliceSubject, identityHex);
+        const respIdGraph = await checkIdGraph(
+            context,
+            'IdentityManagement',
+            'IDGraphs',
+            aliceSubstrateIdentity,
+            identityHex
+        );
         assert.isTrue(respIdGraph.linkBlock.toNumber() > 0, 'linkBlock should be greater than 0');
         assert.isTrue(respIdGraph.status.isActive, 'status should be active');
     });
@@ -293,7 +315,10 @@ describeLitentry('Test Identity', 0, (context) => {
 
     step('link already linked identity', async function () {
         const twitterIdentity = await buildIdentityHelper('mock_user', 'Twitter', context);
-        const aliceSubject = await buildIdentityFromKeypair(new PolkadotSigner(context.substrateWallet.alice), context);
+        const aliceSubstrateIdentity = await buildIdentityFromKeypair(
+            new PolkadotSigner(context.substrateWallet.alice),
+            context
+        );
 
         const aliceIdentities = [twitterIdentity];
 
@@ -301,7 +326,7 @@ describeLitentry('Test Identity', 0, (context) => {
         console.log('nonce for step link already linked identity', nonce);
         const aliceTwitterValidations = await buildValidations(
             context,
-            [aliceSubject],
+            [aliceSubstrateIdentity],
             [twitterIdentity],
             nonce,
             'twitter',
@@ -365,10 +390,10 @@ describeLitentry('Test Identity', 0, (context) => {
         );
 
         // Alice check identity
-        assertIdentityDeactivated(context.substrateWallet.alice, aliceDeactivatedEvents);
+        assertIdentityDeactivated(context, new PolkadotSigner(context.substrateWallet.alice), aliceDeactivatedEvents);
 
         // Bob check identity
-        assertIdentityDeactivated(context.substrateWallet.bob, bobDeactivatedEvents);
+        assertIdentityDeactivated(context, new PolkadotSigner(context.substrateWallet.bob), bobDeactivatedEvents);
     });
 
     step('check IDGraph after deactivateIdentity', async function () {
@@ -392,32 +417,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['IdentityActivated']
         );
         // Alice check identity
-        await assertIdentityActivated(context, context.substrateWallet.alice, aliceActivatedEvents);
-    });
-
-    step('deactivate prime identity is disallowed', async function () {
-        // deactivate prime identity
-        const substratePrimeIdentity = await buildIdentityHelper(
-            u8aToHex(context.substrateWallet.alice.addressRaw),
-            'Substrate',
-            context
-        );
-
-        const primeTxs = await buildIdentityTxs(
-            context,
-            context.substrateWallet.alice,
-            [substratePrimeIdentity],
-            'deactivateIdentity'
-        );
-        const primeEvents = await sendTxsWithUtility(
-            context,
-            context.substrateWallet.alice,
-            primeTxs,
-            'identityManagement',
-            ['DeactivateIdentityFailed']
-        );
-
-        await checkErrorDetail(primeEvents, 'DeactivatePrimeIdentityDisallowed');
+        await assertIdentityActivated(context, new PolkadotSigner(context.substrateWallet.alice), aliceActivatedEvents);
     });
 
     step('deactivate error identities', async function () {
@@ -440,7 +440,8 @@ describeLitentry('Test Identity', 0, (context) => {
 
         await checkErrorDetail(aliceDeactivatedEvents, 'IdentityNotExist');
 
-        // deactivate a wrong identity (alice) for charlie
+        // deactivate a idneity for charlie, who is already linked to another IDGraph
+        // so creation of charlie's IDGraph should fail
         const charlieDeactivateTxs = await buildIdentityTxs(
             context,
             context.substrateWallet.charlie,
@@ -455,7 +456,7 @@ describeLitentry('Test Identity', 0, (context) => {
             ['DeactivateIdentityFailed']
         );
 
-        await checkErrorDetail(charlieDeactivateEvents, 'IdentityNotExist');
+        await checkErrorDetail(charlieDeactivateEvents, 'IdentityAlreadyLinked');
     });
 
     step('exceeding IDGraph limit not allowed', async function () {

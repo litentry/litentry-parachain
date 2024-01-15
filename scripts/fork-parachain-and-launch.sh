@@ -52,7 +52,7 @@ FORK_CHAIN=${ORIG_CHAIN}-dev
 
 case "$ORIG_CHAIN" in
   rococo)
-    ENDPOINT="${2:-wss://rpc.rococo-parachain-sg.litentry.io}"
+    ENDPOINT="${2:-wss://rpc.rococo-parachain.litentry.io}"
     ;;
   litmus)
     ENDPOINT="${2:-wss://rpc.litmus-parachain.litentry.io}"

@@ -56,7 +56,12 @@ use itp_types::{RsaRequest, ShardIdentifier, H256};
 use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
 use log::{debug, error, info};
-use std::{boxed::Box, format, string::String, sync::Arc};
+use std::{
+	boxed::Box,
+	format,
+	string::{String, ToString},
+	sync::Arc,
+};
 use threadpool::ThreadPool;
 
 #[cfg(test)]
@@ -171,9 +176,10 @@ where
 			encrypted_trusted_call.len(),
 			top.encode().len()
 		);
-		executor::block_on(
-			self.author_api.watch_top(RsaRequest::new(*shard, encrypted_trusted_call)),
-		)
+		executor::block_on(self.author_api.watch_and_broadcast_top(
+			RsaRequest::new(*shard, encrypted_trusted_call),
+			"author_submitAndWatchBroadcastedRsaRequest".to_string(),
+		))
 		.map_err(|e| {
 			Error::OtherError(format!("error submitting trusted call to top pool: {:?}", e))
 		})?;

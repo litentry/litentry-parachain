@@ -28,16 +28,17 @@ use crate::{
 		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_alice,
 		ensure_self, get_storage_by_key_hash,
 	},
-	trusted_call_result::{RequestVCResult, TrustedCallResult},
+	trusted_call_result::{
+		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
+		SetIdentityNetworksResult, TrustedCallResult,
+	},
 	Getter,
 };
 use codec::{Compact, Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 #[cfg(feature = "evm")]
 use ita_sgx_runtime::{AddressMapping, HashedAddressMapping};
-pub use ita_sgx_runtime::{
-	Balance, ConvertAccountId, Index, Runtime, SgxParentchainTypeConverter, System,
-};
+pub use ita_sgx_runtime::{Balance, IDGraph, Index, Runtime, System};
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_node_api_metadata::{
 	pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
@@ -57,9 +58,8 @@ pub use itp_types::{OpaqueCall, H256};
 use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
-	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainAccountId,
-	ParentchainBlockNumber, RequestAesKey, RequestAesKeyNonce, VCMPError, ValidationData,
-	Web3Network,
+	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainBlockNumber, RequestAesKey,
+	RequestAesKeyNonce, VCMPError, ValidationData, Web3Network,
 };
 use log::*;
 use sp_core::{
@@ -101,13 +101,20 @@ pub enum TrustedCall {
 		H256,
 	),
 	#[codec(index = 1)]
-	deactivate_identity(Identity, Identity, Identity, H256),
+	deactivate_identity(Identity, Identity, Identity, Option<RequestAesKey>, H256),
 	#[codec(index = 2)]
-	activate_identity(Identity, Identity, Identity, H256),
+	activate_identity(Identity, Identity, Identity, Option<RequestAesKey>, H256),
 	#[codec(index = 3)]
 	request_vc(Identity, Identity, Assertion, Option<RequestAesKey>, H256),
 	#[codec(index = 4)]
-	set_identity_networks(Identity, Identity, Identity, Vec<Web3Network>, H256),
+	set_identity_networks(
+		Identity,
+		Identity,
+		Identity,
+		Vec<Web3Network>,
+		Option<RequestAesKey>,
+		H256,
+	),
 	#[cfg(not(feature = "production"))]
 	#[codec(index = 5)]
 	remove_identity(Identity, Identity, Vec<Identity>),
@@ -668,9 +675,6 @@ where
 				req_ext_hash,
 			) => {
 				debug!("link_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
 				let verification_done = Self::link_identity_internal(
 					shard,
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -686,7 +690,7 @@ where
 					push_call_imp_some_error(
 						calls,
 						node_metadata_repo.clone(),
-						Some(account),
+						Some(who.clone()),
 						e.to_imp_error(),
 						req_ext_hash,
 					);
@@ -724,14 +728,12 @@ where
 
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::deactivate_identity(signer, who, identity, req_ext_hash) => {
+			TrustedCall::deactivate_identity(signer, who, identity, maybe_key, req_ext_hash) => {
 				debug!("deactivate_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_deactivated_call_indexes())??;
 
+				let old_id_graph = IMT::id_graph(&who);
 				Self::deactivate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
 					who.clone(),
@@ -742,30 +744,40 @@ where
 					push_call_imp_some_error(
 						calls,
 						node_metadata_repo.clone(),
-						Some(account.clone()),
+						Some(who.clone()),
 						e.to_imp_error(),
 						req_ext_hash,
 					);
 					e
 				})?;
 
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+
 				debug!("pushing identity_deactivated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
-					account,
+					who.clone(),
 					id_graph_hash,
 					req_ext_hash,
 				))));
+
+				let mut mutated_id_graph = IMT::id_graph(&who);
+				mutated_id_graph.retain(|i| !old_id_graph.contains(i));
+
+				if let Some(key) = maybe_key {
+					return Ok(TrustedCallResult::DeactivateIdentity(DeactivateIdentityResult {
+						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						id_graph_hash,
+					}))
+				}
+
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::activate_identity(signer, who, identity, req_ext_hash) => {
+			TrustedCall::activate_identity(signer, who, identity, maybe_key, req_ext_hash) => {
 				debug!("activate_identity, who: {}", account_id_to_string(&who));
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_activated_call_indexes())??;
+				let old_id_graph = IMT::id_graph(&who);
 
 				Self::activate_identity_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -777,21 +789,33 @@ where
 					push_call_imp_some_error(
 						calls,
 						node_metadata_repo.clone(),
-						Some(account.clone()),
+						Some(who.clone()),
 						e.to_imp_error(),
 						req_ext_hash,
 					);
 					e
 				})?;
 
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+
 				debug!("pushing identity_activated event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
-					account,
+					who.clone(),
 					id_graph_hash,
 					req_ext_hash,
 				))));
+
+				let mut mutated_id_graph = IMT::id_graph(&who);
+				mutated_id_graph.retain(|i| !old_id_graph.contains(i));
+
+				if let Some(key) = maybe_key {
+					return Ok(TrustedCallResult::ActivateIdentity(ActivateIdentityResult {
+						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						id_graph_hash,
+					}))
+				}
+
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::link_identity_callback(
@@ -818,12 +842,9 @@ where
 					assertion
 				);
 
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
 				Self::request_vc_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					who,
+					who.clone(),
 					assertion,
 					top_hash,
 					req_ext_hash,
@@ -835,7 +856,7 @@ where
 					push_call_vcmp_some_error(
 						calls,
 						node_metadata_repo,
-						Some(account),
+						Some(who),
 						e.to_vcmp_error(),
 						req_ext_hash,
 					);
@@ -858,9 +879,6 @@ where
 					account_id_to_string(&who),
 					assertion
 				);
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
 
 				Self::request_vc_callback_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
@@ -871,7 +889,7 @@ where
 					push_call_vcmp_some_error(
 						calls,
 						node_metadata_repo.clone(),
-						Some(account.clone()),
+						Some(who.clone()),
 						e.to_vcmp_error(),
 						req_ext_hash,
 					);
@@ -884,7 +902,7 @@ where
 
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
-					account,
+					who,
 					assertion,
 					vc_index,
 					vc_hash,
@@ -906,6 +924,7 @@ where
 				who,
 				identity,
 				web3networks,
+				maybe_key,
 				req_ext_hash,
 			) => {
 				debug!("set_identity_networks, networks: {:?}", web3networks);
@@ -914,46 +933,55 @@ where
 					ensure_self(&signer, &who),
 					Self::Error::Dispatch("Unauthorized signer".to_string())
 				);
-				let account = SgxParentchainTypeConverter::convert(
-					who.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
 				let call_index = node_metadata_repo
 					.get_from_metadata(|m| m.identity_networks_set_call_indexes())??;
+				let old_id_graph = IMT::id_graph(&who);
 
 				IMTCall::set_identity_networks { who: who.clone(), identity, web3networks }
 					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::root())
 					.map_err(|e| Self::Error::Dispatch(format!(" error: {:?}", e.error)))?;
 
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+
 				debug!("pushing identity_networks_set event ...");
-				let id_graph_hash: H256 = blake2_256(&IMT::get_id_graph(&who).encode()).into();
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
-					account,
+					who.clone(),
 					id_graph_hash,
 					req_ext_hash,
 				))));
 
+				let mut mutated_id_graph = IMT::id_graph(&who);
+				mutated_id_graph.retain(|i| !old_id_graph.contains(i));
+
+				if let Some(key) = maybe_key {
+					return Ok(TrustedCallResult::SetIdentityNetworks(SetIdentityNetworksResult {
+						mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						id_graph_hash,
+					}))
+				}
+
 				Ok(TrustedCallResult::Empty)
 			},
-			TrustedCall::handle_imp_error(_enclave_account, account, e, req_ext_hash) => {
+			TrustedCall::handle_imp_error(_enclave_account, identity, e, req_ext_hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
 				push_call_imp_some_error(
 					calls,
 					node_metadata_repo,
-					account.and_then(|g| g.to_account_id()),
+					identity,
 					e.clone(),
 					req_ext_hash,
 				);
 				Err(e.into())
 			},
-			TrustedCall::handle_vcmp_error(_enclave_account, account, e, req_ext_hash) => {
+			TrustedCall::handle_vcmp_error(_enclave_account, identity, e, req_ext_hash) => {
 				// checking of `_enclave_account` is not strictly needed, as this trusted call can
 				// only be constructed internally
 				push_call_vcmp_some_error(
 					calls,
 					node_metadata_repo,
-					account.and_then(|g| g.to_account_id()),
+					identity,
 					e.clone(),
 					req_ext_hash,
 				);
@@ -1053,7 +1081,7 @@ where
 pub fn push_call_imp_some_error<NodeMetadataRepository>(
 	calls: &mut Vec<ParentchainCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
-	account: Option<ParentchainAccountId>,
+	identity: Option<Identity>,
 	e: IMPError,
 	req_ext_hash: H256,
 ) where
@@ -1065,7 +1093,7 @@ pub fn push_call_imp_some_error<NodeMetadataRepository>(
 	match node_metadata_repo.get_from_metadata(|m| m.imp_some_error_call_indexes()) {
 		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			identity,
 			e,
 			req_ext_hash,
 		)))),
@@ -1077,7 +1105,7 @@ pub fn push_call_imp_some_error<NodeMetadataRepository>(
 pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
 	calls: &mut Vec<ParentchainCall>,
 	node_metadata_repo: Arc<NodeMetadataRepository>,
-	account: Option<ParentchainAccountId>,
+	identity: Option<Identity>,
 	e: VCMPError,
 	req_ext_hash: H256,
 ) where
@@ -1088,35 +1116,12 @@ pub fn push_call_vcmp_some_error<NodeMetadataRepository>(
 	match node_metadata_repo.get_from_metadata(|m| m.vcmp_some_error_call_indexes()) {
 		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 			call_index,
-			account,
+			identity,
 			e,
 			req_ext_hash,
 		)))),
 		Ok(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
 		Err(e) => warn!("error getting VCMP::some_error call indexes: {:?}", e),
-	}
-}
-
-pub fn push_call_imp_update_id_graph_hash<NodeMetadataRepository>(
-	calls: &mut Vec<ParentchainCall>,
-	node_metadata_repo: Arc<NodeMetadataRepository>,
-	account: ParentchainAccountId,
-	id_graph_hash: H256,
-	req_ext_hash: H256,
-) where
-	NodeMetadataRepository: AccessNodeMetadata,
-	NodeMetadataRepository::MetadataType: NodeMetadataTrait,
-{
-	debug!("pushing IMP::update_id_graph_hash call ...");
-	match node_metadata_repo.get_from_metadata(|m| m.update_id_graph_hash_call_indexes()) {
-		Ok(Ok(call_index)) => calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
-			call_index,
-			account,
-			id_graph_hash,
-			req_ext_hash,
-		)))),
-		Ok(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
-		Err(e) => warn!("error getting IMP::update_id_graph_hash call indexes: {:?}", e),
 	}
 }
 

@@ -27,6 +27,10 @@ export default {
                 BnbDigitDomainClub: "BnbDigitDomainType",
                 VIP3MembershipCard: "VIP3MembershipCardLevel",
                 WeirdoGhostGangHolder: "Null",
+                LITStaking: "Null",
+                EVMAmountHolding: "EVMTokenType",
+                BRC20AmountHolder: "Null",
+                CyptoSummary: "Null",
             },
         },
         AssertionSupportedNetwork: {
@@ -138,6 +142,10 @@ export default {
         // VIP3MembershipCard
         VIP3MembershipCardLevel: {
             _enum: ["Gold", "Silver"],
+        },
+        // EVMAmountHolding
+        EVMTokenType: {
+            _enum: ["Ton", "Trx"],
         },
     },
 };

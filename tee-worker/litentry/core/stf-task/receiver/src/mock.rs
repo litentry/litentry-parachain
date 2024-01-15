@@ -37,11 +37,12 @@ pub fn construct_assertion_request(assertion: Assertion) -> RequestType {
 	let request: RequestType = AssertionBuildRequest {
 		shard,
 		signer: public_id.into(),
-		enclave_account: public_id.into(),
 		who: public_id.into(),
 		assertion,
 		identities: vec![],
 		maybe_key: Some(key),
+		parachain_block_number: 0u32,
+		sidechain_block_number: 0u32,
 		top_hash: H256::zero(),
 		req_ext_hash: H256::zero(),
 	}
