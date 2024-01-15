@@ -196,10 +196,13 @@ where
 {
 	let stf_task_receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
+	let n_workers = 4;
+	let pool = ThreadPool::new(n_workers);
 
 	let (sender, receiver) = channel::<(ShardIdentifier, H256, TrustedCall)>();
 
-	// Spawn thread to handle received tasks
+	// Spawn thread to handle received tasks, to serialize the nonce increase even if multiple threads
+	// are submitting trusted calls simultaneously
 	let context_cloned = context.clone();
 	thread::spawn(move || loop {
 		if let Ok((shard, hash, call)) = receiver.recv() {
@@ -210,15 +213,7 @@ where
 		}
 	});
 
-	// The total number of threads that will be used to spawn tasks in the ThreadPool
-	let n_workers = 4;
-	let pool = ThreadPool::new(n_workers);
-
-	loop {
-		let req = stf_task_receiver
-			.recv()
-			.map_err(|e| Error::OtherError(format!("stf_task_receiver error:{:?}", e)))?;
-
+	while let Ok(req) = stf_task_receiver.recv() {
 		let context_pool = context.clone();
 		let sender_pool = sender.clone();
 
@@ -243,4 +238,8 @@ where
 			}
 		});
 	}
+
+	pool.join();
+	warn!("stf_task_receiver loop terminated");
+	Ok(())
 }

@@ -40,7 +40,9 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber};
+use itp_types::{
+	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, ShardIdentifier,
+};
 use itp_utils::if_production_or;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -55,7 +57,11 @@ use std::{
 	boxed::Box,
 	format,
 	string::{String, ToString},
-	sync::Arc,
+	sync::{
+		mpsc::{channel, Sender},
+		Arc,
+	},
+	thread,
 	vec::Vec,
 };
 use threadpool::ThreadPool;
@@ -77,20 +83,37 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
-	let receiver = init_vc_task_sender_storage();
+	let vc_task_receiver = init_vc_task_sender_storage();
 	let n_workers = 4;
 	let pool = ThreadPool::new(n_workers);
 
-	while let Ok(mut req) = receiver.recv() {
+	let (sender, receiver) = channel::<(ShardIdentifier, TrustedCall)>();
+
+	// Spawn thread to handle received tasks, to serialize the nonce increase even if multiple threads
+	// are submitting trusted calls simultaneously
+	let context_cloned = context.clone();
+	thread::spawn(move || loop {
+		if let Ok((shard, call)) = receiver.recv() {
+			info!("Submitting trusted call to the pool");
+			if let Err(e) = context_cloned.submit_trusted_call(&shard, None, &call) {
+				error!("Submit Trusted Call failed: {:?}", e);
+			}
+		}
+	});
+
+	while let Ok(mut req) = vc_task_receiver.recv() {
 		let context_pool = context.clone();
 		let extrinsic_factory_pool = extrinsic_factory.clone();
 		let node_metadata_repo_pool = node_metadata_repo.clone();
+		let sender_pool = sender.clone();
+
 		pool.execute(move || {
 			if let Err(e) = req.sender.send(handle_request(
 				&mut req.request,
 				context_pool,
 				extrinsic_factory_pool,
 				node_metadata_repo_pool,
+				sender_pool,
 			)) {
 				warn!("Unable to submit response back to the handler: {:?}", e);
 			}
@@ -98,7 +121,7 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	}
 
 	pool.join();
-	info!("Terminate the vc handler loop");
+	warn!("vc_task_receiver loop terminated");
 }
 
 pub fn handle_request<K, A, S, H, O, Z, N>(
@@ -106,6 +129,7 @@ pub fn handle_request<K, A, S, H, O, Z, N>(
 	context: Arc<StfTaskContext<K, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
+	sender: Sender<(ShardIdentifier, TrustedCall)>,
 ) -> Result<Vec<u8>, String>
 where
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
@@ -280,15 +304,15 @@ where
 			pre_id_graph_hash: id_graph_hash,
 		};
 
-		// submit TrustedCall::maybe_create_id_graph
+		// submit TrustedCall::maybe_create_id_graph to the reciever thread
 		let enclave_signer: AccountId = context
 			.enclave_signer
 			.get_enclave_account()
 			.map_err(|_| "Failed to get enclave signer".to_string())?;
 		let c = TrustedCall::maybe_create_id_graph(enclave_signer.into(), who);
-		context
-			.submit_trusted_call(&request.shard, None, &c)
-			.map_err(|_| "Failed to submit trusted call".to_string())?;
+		sender
+			.send((request.shard, c))
+			.map_err(|e| format!("Failed to send trusted call: {}", e))?;
 
 		// this internally fetches nonce from a mutex and then updates it thereby ensuring ordering
 		let xt = extrinsic_factory
