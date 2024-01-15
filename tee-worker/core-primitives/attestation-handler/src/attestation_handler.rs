@@ -65,10 +65,11 @@ use std::{
 
 pub const DEV_HOSTNAME: &str = "api.trustedservices.intel.com";
 
+// Litentry TODO: use `dev` for production temporary. Will switch to dcap later.
 #[cfg(feature = "production")]
-pub const SIGRL_SUFFIX: &str = "/sgx/attestation/v4/sigrl/";
+pub const SIGRL_SUFFIX: &str = "/sgx/dev/attestation/v4/sigrl/";
 #[cfg(feature = "production")]
-pub const REPORT_SUFFIX: &str = "/sgx/attestation/v4/report";
+pub const REPORT_SUFFIX: &str = "/sgx/dev/attestation/v4/report";
 
 #[cfg(not(feature = "production"))]
 pub const SIGRL_SUFFIX: &str = "/sgx/dev/attestation/v4/sigrl/";
