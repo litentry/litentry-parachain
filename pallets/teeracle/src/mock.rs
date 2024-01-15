@@ -15,7 +15,7 @@
 
 */
 use crate as pallet_teeracle;
-use frame_support::{pallet_prelude::GenesisBuild, parameter_types};
+use frame_support::{assert_ok, pallet_prelude::GenesisBuild, parameter_types};
 use frame_system as system;
 use frame_system::EnsureRoot;
 use pallet_teeracle::Config;
@@ -160,6 +160,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
-	ext.execute_with(|| System::set_block_number(1));
+	ext.execute_with(|| {
+		System::set_block_number(1);
+		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), AccountKeyring::Alice.to_account_id()));
+		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
+			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			true
+		));
+	});
 	ext
 }

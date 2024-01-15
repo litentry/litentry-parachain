@@ -163,7 +163,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		assert_ok!(Teerex::set_scheduled_enclave_check(RuntimeOrigin::root(), true));
+		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), AccountKeyring::Alice.to_account_id()));
+		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
+			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			true
+		));
 	});
 	ext
 }
@@ -183,7 +187,11 @@ pub fn new_test_production_ext() -> sp_io::TestExternalities {
 	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		assert_ok!(Teerex::set_scheduled_enclave_check(RuntimeOrigin::root(), true));
+		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), AccountKeyring::Alice.to_account_id()));
+		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
+			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
+			true
+		));
 	});
 	ext
 }
