@@ -31,7 +31,6 @@ use sp_runtime::{
 };
 use sp_std::marker::PhantomData;
 use system::EnsureRoot;
-use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 
 pub type Signature = sp_runtime::MultiSignature;
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
@@ -184,6 +183,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		// add `5` to delegatee
 		let _ = IdentityManagement::add_delegatee(RuntimeOrigin::root(), eddie);
 		System::set_block_number(1);
+		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
 		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), teerex_signer.clone()));
 		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
