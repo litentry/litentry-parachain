@@ -41,7 +41,7 @@ export default {
                 "Litmus",
                 "LitentryRococo",
                 "Khala",
-                "SubstrateTestnet",
+                "Null",
                 "Ethereum",
                 "Bsc",
                 "BitcoinP2tr",
