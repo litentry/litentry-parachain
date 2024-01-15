@@ -97,7 +97,6 @@ const BALANCE_OVER_AMOUNT: &str = "Balance over {amount}";
 ///        }
 ///        ]
 /// }
-///
 pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Result<Credential> {
 	debug!("Assertion Achainable build_amount, who: {:?}", account_id_to_string(&req.who));
 	let identities = transpose_identity(&req.identities);
@@ -151,6 +150,9 @@ pub fn build_amount(req: &AssertionBuildRequest, param: AchainableAmount) -> Res
 	}
 }
 
+pub const CONTRACT_CREATOR_TYPE: &str = "Contract Creator";
+pub const TOKEN_HOLDER_TYPE: &str = "Token Holder";
+
 fn get_assertion_content(
 	name: &String,
 	chain: &Web3Network,
@@ -158,7 +160,7 @@ fn get_assertion_content(
 	if name == CREATED_OVER_AMOUNT_CONTRACTS {
 		return (
 			"You are a deployer of a smart contract on these networks: Ethereum",
-			"Contract Creator",
+			CONTRACT_CREATOR_TYPE,
 			"$is_contract_creator",
 		)
 	}
@@ -174,7 +176,7 @@ fn get_assertion_content(
 			"Unsupported"
 		};
 
-		return ("The number of a particular token you hold > 0", "Token Holder", c)
+		return ("The number of a particular token you hold > 0", TOKEN_HOLDER_TYPE, c)
 	}
 
 	("", "", "")

@@ -25,6 +25,7 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::ShardIdentifier;
+use lc_credentials::jsonschema;
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{
@@ -82,7 +83,8 @@ where
 			Assertion::A7(min_balance) =>
 				build_holding_time(&self.req, AmountHoldingTimeType::DOT, min_balance),
 
-			// no need to pass `networks` again because it's the same as the `get_supported_web3networks`
+			// no need to pass `networks` again because it's the same as the
+			// `get_supported_web3networks`
 			Assertion::A8(_networks) => lc_assertion_build::a8::build(&self.req),
 
 			Assertion::A10(min_balance) =>
@@ -155,6 +157,9 @@ where
 
 		credential.credential_subject.assertion_text = format!("{:?}", self.req.assertion);
 
+		credential.jsonschema =
+			jsonschema::get_json_schema_url(self.req.assertion.clone(), credential);
+
 		credential.issuer.id =
 			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
 				VCMPError::RequestVCFailed(
@@ -203,8 +208,8 @@ where
 		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		debug!("Assertion build OK");
-		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
-		// using enclave's shielding key is encrypted in chunks
+		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the
+		// payload using enclave's shielding key is encrypted in chunks
 		let (vc_index, vc_hash, vc_payload) = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
