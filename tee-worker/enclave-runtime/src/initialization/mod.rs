@@ -254,19 +254,17 @@ fn run_stf_task_handler() -> Result<(), Error> {
 	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
-	#[allow(clippy::unwrap_used)]
-	let shielding_key = shielding_key_repository.retrieve_key().unwrap();
 
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
 		ocall_api.clone(),
-		shielding_key_repository,
+		shielding_key_repository.clone(),
 		author_api.clone(),
 	));
 
 	let stf_task_context = StfTaskContext::new(
-		shielding_key,
+		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
 		state_handler,
@@ -285,18 +283,16 @@ fn run_vc_issuance() -> Result<(), Error> {
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	#[allow(clippy::unwrap_used)]
-	let shielding_key = shielding_key_repository.retrieve_key().unwrap();
-
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
 	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
 		state_observer,
 		ocall_api.clone(),
-		shielding_key_repository,
+		shielding_key_repository.clone(),
 		author_api.clone(),
 	));
 
 	let stf_task_context = StfTaskContext::new(
-		shielding_key,
+		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
 		state_handler,

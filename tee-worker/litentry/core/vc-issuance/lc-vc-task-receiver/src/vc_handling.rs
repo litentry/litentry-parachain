@@ -4,7 +4,7 @@ use crate::{Getter, TrustedCallSigned};
 use ita_sgx_runtime::Hash;
 pub use ita_stf::aes_encrypt_default;
 use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
@@ -22,19 +22,25 @@ use sp_core::hashing::blake2_256;
 use std::{format, string::ToString, sync::Arc};
 
 pub(crate) struct VCRequestHandler<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	ShieldingKeyRepository,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-> {
+> where
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType:
+		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + 'static,
+{
 	pub(crate) req: AssertionBuildRequest,
-	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
+	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 }
 
-impl<K, A, S, H, O> VCRequestHandler<K, A, S, H, O>
+impl<ShieldingKeyRepository, A, S, H, O> VCRequestHandler<ShieldingKeyRepository, A, S, H, O>
 where
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType:
+		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + 'static,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,

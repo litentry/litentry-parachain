@@ -31,7 +31,7 @@ use itp_node_api::metadata::{
 	pallet_vcmp::VCMPCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
@@ -56,12 +56,14 @@ use threadpool::ThreadPool;
 
 mod vc_handling;
 
-pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
-	context: Arc<StfTaskContext<K, A, S, H, O>>,
+pub fn run_vc_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 ) where
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
+	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
+	<ShieldingKeyRepository as AccessKey>::KeyType:
+		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
@@ -94,16 +96,18 @@ pub fn run_vc_handler_runner<K, A, S, H, O, Z, N>(
 	}
 }
 
-pub fn handle_request<K, A, S, H, O, Z, N>(
+pub fn handle_request<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	key: Vec<u8>,
 	mut encrypted_trusted_call: AesOutput,
 	shard: ShardIdentifier,
-	context: Arc<StfTaskContext<K, A, S, H, O>>,
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 	extrinsic_factory: Arc<Z>,
 	node_metadata_repo: Arc<N>,
 ) -> Result<Vec<u8>, String>
 where
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType:
+		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
@@ -113,8 +117,12 @@ where
 	N: AccessNodeMetadata + Send + Sync + 'static,
 	N::MetadataType: NodeMetadataTrait,
 {
-	let aes_key: RequestAesKey = context
+	let shielding_key = context
 		.shielding_key
+		.retrieve_key()
+		.map_err(|e| format!("Failed to retrieve shielding key: {:?}", e))?;
+
+	let aes_key: RequestAesKey = shielding_key
 		.decrypt(&key)
 		.map_err(|e| format!("Failed to decrypted AES Key: {:?}", e))?
 		.try_into()

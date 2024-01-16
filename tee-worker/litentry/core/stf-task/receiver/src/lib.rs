@@ -47,7 +47,7 @@ use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
@@ -84,13 +84,16 @@ pub enum Error {
 
 #[allow(dead_code)]
 pub struct StfTaskContext<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	ShieldingKeyRepository,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-> {
-	pub shielding_key: K,
+> where
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
+{
+	pub shielding_key: Arc<ShieldingKeyRepository>,
 	author_api: Arc<A>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
@@ -99,17 +102,19 @@ pub struct StfTaskContext<
 }
 
 impl<
-		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+		ShieldingKeyRepository,
 		A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-	> StfTaskContext<K, A, S, H, O>
+	> StfTaskContext<ShieldingKeyRepository, A, S, H, O>
 where
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	H::StateT: SgxExternalitiesTrait,
 {
 	pub fn new(
-		shielding_key: K,
+		shielding_key: Arc<ShieldingKeyRepository>,
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
@@ -166,8 +171,12 @@ where
 		// the right channel
 		self.author_api.swap_rpc_connection_hash(*old_top_hash, top.hash());
 
-		let encrypted_trusted_call = self
+		let shielding_key = self
 			.shielding_key
+			.retrieve_key()
+			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
+
+		let encrypted_trusted_call = shielding_key
 			.encrypt(&top.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
@@ -189,11 +198,12 @@ where
 }
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, A, S, H, O>(
-	context: Arc<StfTaskContext<K, A, S, H, O>>,
+pub fn run_stf_task_receiver<ShieldingKeyRepository, A, S, H, O>(
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 ) -> Result<(), Error>
 where
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
+	ShieldingKeyRepository: AccessKey + Sync + Send + 'static,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
