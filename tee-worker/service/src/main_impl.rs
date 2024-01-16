@@ -65,6 +65,9 @@ use substrate_api_client::{
 };
 use teerex_primitives::{Enclave as TeerexEnclave, ShardIdentifier};
 
+#[cfg(feature = "attesteer")]
+use crate::prometheus_metrics;
+
 #[cfg(feature = "dcap")]
 use sgx_verify::extract_tcb_info_from_raw_dcap_quote;
 
