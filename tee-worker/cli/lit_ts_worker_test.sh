@@ -13,6 +13,13 @@ function usage() {
 [ $# -ne 1 ] && (usage; exit 1)
 TEST=$1
 
+
+BINARY_DIR="/usr/local/bin"
+NODE_ENDPOINT="ws://litentry-node:9912"
+
+echo "Using binary dir: $BINARY_DIR"
+echo "Using node endpoint: $NODE_ENDPOINT"
+
 cd /ts-tests
 pnpm install
 pnpm --filter worker run $TEST:staging
