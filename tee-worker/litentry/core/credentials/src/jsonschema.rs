@@ -67,40 +67,33 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 				}
 			},
 
-			/// Unused. Has no implementation. Generates generic Credential
-			AchainableParams::Amounts(_) => format!("{}", NOT_IMPLEMENTED),
-
 			/// Generates both BAB Holder and Uniswap V2/V2 user.
 			AchainableParams::Basic(_) => match credential.credential_subject.types {
 				achainable::uniswap_user::UNISWAP_USER_TYPE =>
 					format!("{BASE_URL}/15-uniswap-v2-v3-user/1-0-0.json"),
+
 				achainable::bab_holder::BAB_HOLDER_TYPE =>
 					format!("{BASE_URL}/11-token-holder/1-0-0.json"),
+
 				_ => Err(format!(
 					"Unknown JSON Schema for Achainable::Basic {}",
 					credential.credential_subject.types
 				)),
 			},
 
-			/// Unused. Has no implementation. Generates generic Credential
-			AchainableParams::BetweenPercents(_) => format!("{}", NOT_IMPLEMENTED),
-
 			AchainableParams::ClassOfYear(_) =>
 				format!("{BASE_URL}/10-account-class-of-year/1-0-0.json"),
 
-			/// Unused. Has no implementation. Generates generic Credential
-			AchainableParams::DateInterval(_) => format!("{}", NOT_IMPLEMENTED),
-
-			/// Unused. Has no implementation. Generates generic Credential
-			AchainableParams::DatePercent(_) => format!("{}", NOT_IMPLEMENTED),
-
-			/// Unused. Has no implementation. Generates generic Credential
-			AchainableParams::Date(_) => format!("{}", NOT_IMPLEMENTED),
-
-			/// Unused. Has no implementation. Generates generic Credential
-			AchainableParams::Token(_) => format!("{}", NOT_IMPLEMENTED),
-
 			AchainableParams::Mirror(_) => format!("{BASE_URL}/24-mirror-contributor/1-0-0.json"),
+
+			/// The following assertions are Unused and produce no specific claims. They Generates
+			/// generic JSON Credentials
+			AchainableParams::Amounts(_) => format!("{}", NOT_IMPLEMENTED),
+			AchainableParams::BetweenPercents(_) => format!("{}", NOT_IMPLEMENTED),
+			AchainableParams::Date(_) => format!("{}", NOT_IMPLEMENTED),
+			AchainableParams::DateInterval(_) => format!("{}", NOT_IMPLEMENTED),
+			AchainableParams::DatePercent(_) => format!("{}", NOT_IMPLEMENTED),
+			AchainableParams::Token(_) => format!("{}", NOT_IMPLEMENTED),
 		},
 
 		Assertion::A20 => format!("{BASE_URL}/13-idhub-evm-version-early-bird/1-0-0.json"),
