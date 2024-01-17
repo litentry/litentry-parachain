@@ -12,6 +12,10 @@ import type { HexString } from '@polkadot/util/types';
 import * as base58 from 'micro-base58';
 import { u8aToHex } from '@polkadot/util';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+console.log(withRetry);
+
 type WorkerConfig = {
     name: string;
     muRaPort: number;
