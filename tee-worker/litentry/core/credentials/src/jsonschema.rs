@@ -117,7 +117,7 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 		Assertion::WeirdoGhostGangHolder =>
 			format!("{BASE_URL}/20-weirdoghostgang-holder/1-0-0.json"),
 
-		Assertion::LITStaking => format!("{BASE_URL}/0-base/1-0-0.json"),
+		Assertion::LITStaking => format!("{BASE_URL}/19-token-holding-amount/1-0-0.json"),
 
 		Assertion::EVMAmountHolding(_) => format!("{BASE_URL}/23-evm-holding-amount/1-0-0.json"),
 
