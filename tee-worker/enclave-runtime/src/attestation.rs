@@ -58,7 +58,6 @@ use sgx_types::*;
 use sp_core::Pair;
 use sp_runtime::OpaqueExtrinsic;
 use std::{prelude::v1::*, slice, vec::Vec};
-use teerex_primitives::SgxAttestationMethod;
 
 #[no_mangle]
 pub unsafe extern "C" fn get_mrenclave(mrenclave: *mut u8, mrenclave_size: usize) -> sgx_status_t {
