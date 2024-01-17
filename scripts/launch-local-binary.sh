@@ -131,8 +131,11 @@ else
 fi
 corepack pnpm install
 corepack pnpm run upgrade-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/upgrade-parathread.log"
-print_divider
-corepack pnpm run skip-schedule-enclave-check 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/skip-schedule-enclave-check.log"
+
+if [[ "$1" = "rococo" ]]; then
+  print_divider
+  corepack pnpm run skip-schedule-enclave-check 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/skip-schedule-enclave-check.log"
+fi
 print_divider
 
 echo "done. please check $LITENTRY_PARACHAIN_DIR for generated files if need"
