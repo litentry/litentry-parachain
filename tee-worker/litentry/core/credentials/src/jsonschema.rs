@@ -100,8 +100,7 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 			/// Unused. Has no implementation. Generates generic Credential
 			AchainableParams::Token(_) => format!("{}", NOT_IMPLEMENTED),
 
-			/// @TODO: Missing JSON Schema
-			AchainableParams::Mirror(_) => format!("{BASE_URL}/----/1-0-0.json"),
+			AchainableParams::Mirror(_) => format!("{BASE_URL}/24-mirror-contributor/1-0-0.json"),
 		},
 
 		Assertion::A20 => format!("{BASE_URL}/13-idhub-evm-version-early-bird/1-0-0.json"),
