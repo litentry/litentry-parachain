@@ -84,18 +84,25 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 				}
 			},
 
-			AchainableParams::BetweenPercents(_) => format!("{BASE_URL}/----/1-0-0.json"),
+			/// Unused. Has no implementation. Generates generic Credential
+			AchainableParams::BetweenPercents(_) => format!("{}", NOT_IMPLEMENTED),
 
-			AchainableParams::ClassOfYear(_) => format!("{BASE_URL}/----/1-0-0.json"),
+			AchainableParams::ClassOfYear(_) =>
+				format!("{BASE_URL}/10-account-class-of-year/1-0-0.json"),
 
-			AchainableParams::DateInterval(_) => format!("{BASE_URL}/----/1-0-0.json"),
+			/// Unused. Has no implementation. Generates generic Credential
+			AchainableParams::DateInterval(_) => format!("{}", NOT_IMPLEMENTED),
 
-			AchainableParams::DatePercent(_) => format!("{BASE_URL}/----/1-0-0.json"),
+			/// Unused. Has no implementation. Generates generic Credential
+			AchainableParams::DatePercent(_) => format!("{}", NOT_IMPLEMENTED),
 
-			AchainableParams::Date(_) => format!("{BASE_URL}/----/1-0-0.json"),
+			/// Unused. Has no implementation. Generates generic Credential
+			AchainableParams::Date(_) => format!("{}", NOT_IMPLEMENTED),
 
-			AchainableParams::Token(_) => format!("{BASE_URL}/----/1-0-0.json"),
+			/// Unused. Has no implementation. Generates generic Credential
+			AchainableParams::Token(_) => format!("{}", NOT_IMPLEMENTED),
 
+			/// @TODO: Missing JSON Schema
 			AchainableParams::Mirror(_) => format!("{BASE_URL}/----/1-0-0.json"),
 		},
 
