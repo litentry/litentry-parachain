@@ -71,17 +71,15 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 			AchainableParams::Amounts(_) => format!("{}", NOT_IMPLEMENTED),
 
 			/// Generates both BAB Holder and Uniswap V2/V2 user.
-			AchainableParams::Basic(_) => {
-				match credential.credential_subject.types {
-					achainable::uniswap_user::UNISWAP_USER_TYPE =>
-						format!("{BASE_URL}/15-uniswap-v2-v3-user/1-0-0.json"),
-					/// @TODO: Missing JSON Schema
-					achainable::bab_holder::BAB_HOLDER_TYPE => format!("{}", NOT_IMPLEMENTED),
-					_ => Err(format!(
-						"Unknown JSON Schema for Achainable::Basic {}",
-						credential.credential_subject.types
-					)),
-				}
+			AchainableParams::Basic(_) => match credential.credential_subject.types {
+				achainable::uniswap_user::UNISWAP_USER_TYPE =>
+					format!("{BASE_URL}/15-uniswap-v2-v3-user/1-0-0.json"),
+				achainable::bab_holder::BAB_HOLDER_TYPE =>
+					format!("{BASE_URL}/11-token-holder/1-0-0.json"),
+				_ => Err(format!(
+					"Unknown JSON Schema for Achainable::Basic {}",
+					credential.credential_subject.types
+				)),
 			},
 
 			/// Unused. Has no implementation. Generates generic Credential
