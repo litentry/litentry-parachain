@@ -5,8 +5,8 @@
     "scripts": {
         "format": "pnpm exec prettier --write .",
         "check-format": "pnpm exec prettier --check .",
-        "test-resuming-worker:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --trace-warnings --full-trace --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'",
-        "test-resuming-worker:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'resuming_worker.test.ts'"
+        "test-resuming-worker:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha resuming_worker.test.ts",
+        "test-resuming-worker:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha resuming_worker.test.ts"
     },
     "dependencies": {
         "chai": "^4.3.6",
@@ -52,7 +52,8 @@
         "ethers": "^5.7.2",
         "prettier": "2.8.1",
         "ts-node": "^10.9.1",
-        "typescript": "5.0.4"
+        "typescript": "5.0.4",
+        "tsx": "4.7.0"
     },
     "packageManager": "pnpm@8.7.6"
 }
