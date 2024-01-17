@@ -322,12 +322,11 @@ pub fn generate_dcap_ra_extrinsic_from_quote_internal(
 		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 	info!("    [Enclave] Compose register enclave call DCAP IDs: {:?}", call_ids);
-	let call = OpaqueCall::from_tuple(&(
-		call_ids,
-		quote,
-		Some(url),
-		SgxAttestationMethod::Dcap { proxied: false },
-	));
+
+	let shielding_pubkey = get_shielding_pubkey()?;
+	let vc_pubkey = get_vc_pubkey()?;
+
+	let call = OpaqueCall::from_tuple(&(call_ids, quote, url, shielding_pubkey, vc_pubkey));
 
 	info!("    [Enclave] Compose register enclave got extrinsic, returning");
 	create_extrinsics(call)
@@ -344,12 +343,11 @@ pub fn generate_dcap_skip_ra_extrinsic_from_mr_enclave(
 		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 	info!("    [Enclave] Compose register enclave (skip-ra) call DCAP IDs: {:?}", call_ids);
-	let call = OpaqueCall::from_tuple(&(
-		call_ids,
-		quote,
-		Some(url),
-		SgxAttestationMethod::Skip { proxied: false },
-	));
+
+	let shielding_pubkey = get_shielding_pubkey()?;
+	let vc_pubkey = get_vc_pubkey()?;
+
+	let call = OpaqueCall::from_tuple(&(call_ids, quote, url, shielding_pubkey, vc_pubkey));
 
 	info!("    [Enclave] Compose register enclave (skip-ra) got extrinsic, returning");
 	create_extrinsics(call)
@@ -376,29 +374,8 @@ pub fn generate_ias_ra_extrinsic_from_der_cert_internal(
 		.get_from_metadata(|m| m.register_enclave_call_indexes())?
 		.map_err(MetadataProviderError::MetadataError)?;
 
-	let shielding_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
-		.get()?
-		.retrieve_key()
-		.and_then(|keypair| {
-			keypair
-				.export_pubkey()
-				.and_then(|pubkey| {
-					serde_json::to_vec(&pubkey).map_err(|e| SgxCryptoError::Serialization(e).into())
-				})
-				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
-		})
-		.ok();
-	debug!("[Enclave] shielding_pubkey size: {:?}", shielding_pubkey.clone().map(|key| key.len()));
-
-	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
-		.get()?
-		.retrieve_key()
-		.and_then(|keypair| {
-			// vc signing pubkey
-			keypair.derive_ed25519().map(|keypair| keypair.public().to_vec())
-		})
-		.ok();
-	debug!("[Enclave] VC pubkey: {:?}", vc_pubkey);
+	let shielding_pubkey = get_shielding_pubkey()?;
+	let vc_pubkey = get_vc_pubkey()?;
 
 	let call = OpaqueCall::from_tuple(&(call_ids, cert_der, url, shielding_pubkey, vc_pubkey));
 
@@ -541,4 +518,38 @@ pub unsafe extern "C" fn dump_dcap_collateral_to_disk(
 	let collateral = SgxQlQveCollateral::from_c_type(&*collateral);
 	collateral.dump_to_disk();
 	sgx_status_t::SGX_SUCCESS
+}
+
+fn get_shielding_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
+	let shielding_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
+		.get()?
+		.retrieve_key()
+		.and_then(|keypair| {
+			keypair
+				.export_pubkey()
+				.and_then(|pubkey| {
+					serde_json::to_vec(&pubkey).map_err(|e| SgxCryptoError::Serialization(e).into())
+				})
+				.map_err(|e| SgxCryptoError::Other(Box::new(e)))
+		})
+		.ok();
+
+	debug!("[Enclave] shielding_pubkey size: {:?}", shielding_pubkey.clone().map(|key| key.len()));
+
+	Ok(shielding_pubkey)
+}
+
+fn get_vc_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
+	let vc_pubkey = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT
+		.get()?
+		.retrieve_key()
+		.and_then(|keypair| {
+			// vc signing pubkey
+			keypair.derive_ed25519().map(|keypair| keypair.public().to_vec())
+		})
+		.ok();
+
+	debug!("[Enclave] VC pubkey: {:?}", vc_pubkey);
+
+	Ok(vc_pubkey)
 }
