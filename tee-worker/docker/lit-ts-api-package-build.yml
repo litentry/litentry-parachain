@@ -13,11 +13,10 @@ services:
             litentry-node:
                 condition: service_healthy
             litentry-worker-1:
-                condition: service_healthy
+                condition: service_started
         networks:
             - litentry-test-network
-        entrypoint:
-            "/usr/local/worker-cli/lit_ts_api_package_build.sh -p 9912 -u ws://litentry-node
+        entrypoint: "/usr/local/worker-cli/lit_ts_api_package_build.sh -p 9912 -u ws://litentry-node
             -W http://litentry-node -V wss://litentry-worker-1 -A 2011 -C /usr/local/bin/litentry-cli 2>&1"
         restart: "no"
 networks:
