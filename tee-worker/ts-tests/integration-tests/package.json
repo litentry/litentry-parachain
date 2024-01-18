@@ -20,7 +20,8 @@
         "test-ii-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
         "test-ii-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
         "test-ii-batch:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
-        "test-ii-batch:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'"
+        "test-ii-batch:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
+        "test-data-provider:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'data-provider-tests/vip3.test.ts'"
     },
     "dependencies": {
         "@noble/ed25519": "^1.7.3",
