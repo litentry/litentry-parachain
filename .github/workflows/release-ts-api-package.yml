@@ -42,16 +42,7 @@ jobs:
 
       - name: Generate parachain artefacts
         run: |
-          echo "checking docker volumes and generated artifacts"
-          docker volume ls 
-          ls -la docker
-          ls -la tee-worker/docker
           ./tee-worker/scripts/litentry/generate_parachain_artefacts.sh
-
-          echo "checking docker volumes and generated artifacts after"
-          docker volume ls 
-          ls -la docker
-          ls -la tee-worker/docker
 
       - name: Build litentry parachain docker images
         run: |
