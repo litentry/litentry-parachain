@@ -79,8 +79,7 @@ jobs:
               echo "$api dist and build files do not exist. Publishing failed."
               exit 1
             fi
-            echo release tag: ${{ inputs.release-tag }} for $api
-            # hide for now npm publish --tag ${{ inputs.release-tag }}
+            npm publish --tag ${{ inputs.release-tag }}
 
             echo "------------------------$api published------------------------"
             cd ..
