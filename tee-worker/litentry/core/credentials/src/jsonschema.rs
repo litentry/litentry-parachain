@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry. If not, see <https://www.gnu.org/licenses/>.
 
-use crate::{achainable, Credential};
+use crate::achainable;
 use litentry_primitives::{AchainableParams, Assertion};
 use std::string::String;
 
@@ -22,8 +22,8 @@ const BASE_URL: &str = "https://raw.githubusercontent.com/litentry/vc-jsonschema
 const NOT_IMPLEMENTED: &str =
 	"https://raw.githubusercontent.com/litentry/vc-jsonschema/main/dist/schemas/0-base.json";
 
-// Returns the respective JSON Schema for the given assertion and its credential.
-pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> String {
+/// Returns the respective JSON Schema for the given assertion and its credential.
+pub fn get_json_schema_url(assertion: Assertion, credential_subject_type: String) -> String {
 	match assertion {
 		Assertion::A1 => format!("{BASE_URL}/1-basic-identity-verification/1-0-0.json"),
 
@@ -55,30 +55,26 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 			AchainableParams::AmountToken(_) =>
 				format!("{BASE_URL}/19-token-holding-amount/1-0-0.json"),
 
-			/// Generates both contract-creator and token-holder credentials.
+			// Generates both contract-creator and token-holder credentials.
 			AchainableParams::Amount(_) => {
-				/// @TODO: Import from assertion_build::amount
-				let contract_creator_type = String::from("Contract Creator");
-
-				match credential.credential_subject.types {
-					contract_creator_type => format!("{BASE_URL}/12-contract-creator/1-0-0.json"),
-					/// @TODO narrow down match and err
-					_ => format!("{BASE_URL}/11-token-holder/1-0-0.json"),
+				// @TODO: Import from assertion_build::amount
+				if credential_subject_type == String::from("Contract Creator") {
+					return format!("{BASE_URL}/12-contract-creator/1-0-0.json")
+				} else {
+					// @TODO narrow down match and err
+					return format!("{BASE_URL}/11-token-holder/1-0-0.json")
 				}
 			},
 
-			/// Generates both BAB Holder and Uniswap V2/V2 user.
-			AchainableParams::Basic(_) => match credential.credential_subject.types {
+			// Generates both BAB Holder and Uniswap V2/V2 user.
+			AchainableParams::Basic(_) => match credential_subject_type.as_str() {
 				achainable::uniswap_user::UNISWAP_USER_TYPE =>
 					format!("{BASE_URL}/15-uniswap-v2-v3-user/1-0-0.json"),
 
 				achainable::bab_holder::BAB_HOLDER_TYPE =>
 					format!("{BASE_URL}/11-token-holder/1-0-0.json"),
 
-				_ => Err(format!(
-					"Unknown JSON Schema for Achainable::Basic {}",
-					credential.credential_subject.types
-				)),
+				&_ => format!("{BASE_URL}/todo-todo/1-0-0.json"),
 			},
 
 			AchainableParams::ClassOfYear(_) =>
@@ -86,8 +82,8 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 
 			AchainableParams::Mirror(_) => format!("{BASE_URL}/24-mirror-contributor/1-0-0.json"),
 
-			/// The following assertions are Unused and produce no specific claims. They Generates
-			/// generic JSON Credentials
+			// The following assertions are Unused and produce no specific claims. They Generates
+			// generic JSON Credentials
 			AchainableParams::Amounts(_) => format!("{}", NOT_IMPLEMENTED),
 			AchainableParams::BetweenPercents(_) => format!("{}", NOT_IMPLEMENTED),
 			AchainableParams::Date(_) => format!("{}", NOT_IMPLEMENTED),

@@ -157,8 +157,10 @@ where
 
 		credential.credential_subject.assertion_text = format!("{:?}", self.req.assertion);
 
-		credential.jsonschema =
-			jsonschema::get_json_schema_url(self.req.assertion.clone(), credential);
+		credential.jsonschema = jsonschema::get_json_schema_url(
+			self.req.assertion.clone(),
+			credential.credential_subject.types.clone(),
+		);
 
 		credential.issuer.id =
 			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
