@@ -57,13 +57,13 @@ pub fn get_json_schema_url(assertion: Assertion, credential_subject_type: String
 
 			// Generates both contract-creator and token-holder credentials.
 			AchainableParams::Amount(_) => {
-				// @TODO: Import from assertion_build::amount
 				if credential_subject_type == String::from("Contract Creator") {
 					return format!("{BASE_URL}/12-contract-creator/1-0-0.json")
-				} else {
-					// @TODO narrow down match and err
+				} else if credential_subject_type == String::from("Token Holder") {
 					return format!("{BASE_URL}/11-token-holder/1-0-0.json")
 				}
+
+				return format!("{}", NOT_IMPLEMENTED)
 			},
 
 			// Generates both BAB Holder and Uniswap V2/V2 user.
@@ -74,7 +74,7 @@ pub fn get_json_schema_url(assertion: Assertion, credential_subject_type: String
 				achainable::bab_holder::BAB_HOLDER_TYPE =>
 					format!("{BASE_URL}/11-token-holder/1-0-0.json"),
 
-				&_ => format!("{BASE_URL}/todo-todo/1-0-0.json"),
+				&_ => format!("{}", NOT_IMPLEMENTED),
 			},
 
 			AchainableParams::ClassOfYear(_) =>
