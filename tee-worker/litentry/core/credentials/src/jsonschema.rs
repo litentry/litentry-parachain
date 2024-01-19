@@ -121,6 +121,6 @@ pub fn get_json_schema_url(assertion: Assertion, credential: Credential) -> Stri
 		Assertion::BRC20AmountHolder =>
 			format!("{BASE_URL}/22-token-holding-amount-list/1-0-0.json"),
 
-		Assertion::CryptoSummary => format!("{BASE_URL}/0-base/1-0-0.json"),
+		Assertion::CryptoSummary => format!("{BASE_URL}/25-crypto-summary/1-0-0.json"),
 	}
 }
