@@ -285,13 +285,6 @@ impl Credential {
 		Ok(json_str)
 	}
 
-	pub fn get_index(&self) -> Result<[u8; 32], Error> {
-		let bytes = &self.id.as_bytes()[b"0x".len()..];
-		let index = hex::decode(bytes).map_err(|err| Error::ParseError(format!("{}", err)))?;
-		let vi: [u8; 32] = index.try_into().unwrap();
-		Ok(vi)
-	}
-
 	pub fn validate_unsigned(&self) -> Result<(), Error> {
 		if !self.types.contains(&CredentialType::VerifiableCredential) {
 			return Err(Error::EmptyCredentialType)
