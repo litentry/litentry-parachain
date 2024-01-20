@@ -95,7 +95,5 @@ pub struct SetIdentityNetworksResult {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct RequestVCResult {
-	pub vc_index: H256,
-	pub vc_hash: H256,
 	pub vc_payload: AesOutput,
 }
