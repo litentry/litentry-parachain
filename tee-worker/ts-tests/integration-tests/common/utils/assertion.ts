@@ -18,7 +18,6 @@ import {
     FrameSystemEventRecord,
     WorkerRpcReturnValue,
     RequestVCResult,
-    PalletVcManagementVcContext,
     StfError,
 } from 'parachain-api';
 import { Bytes } from '@polkadot/types-codec';
@@ -26,6 +25,7 @@ import { Signer, decryptWithAes } from './crypto';
 import { blake2AsHex } from '@polkadot/util-crypto';
 import { PalletIdentityManagementTeeIdentityContext } from 'sidechain-api';
 import { KeyObject } from 'crypto';
+import * as base58 from 'micro-base58';
 
 export async function assertFailedEvent(
     context: IntegrationTestContext,
@@ -244,23 +244,10 @@ export async function assertIdGraphMutationResult(
 
 export async function assertVc(context: IntegrationTestContext, subject: CorePrimitivesIdentity, data: Bytes) {
     const results = context.api.createType('RequestVCResult', data) as unknown as RequestVCResult;
-    const vcHash = results.vc_hash.toString();
-
     // step 1
-    const vcIndex = results.vc_index.toString();
-    const vcRegistry = (await context.api.query.vcManagement.vcRegistry(
-        vcIndex
-    )) as unknown as PalletVcManagementVcContext;
-    const vcStatus = vcRegistry.toHuman()['status'];
-    assert.equal(vcStatus, 'Active', 'Check VcRegistry error:status should be equal to Active');
-
-    // step 2
     // decryptWithAes function added 0x prefix
     const vcPayload = results.vc_payload;
     const decryptVcPayload = decryptWithAes(aesKey, vcPayload, 'utf-8').replace('0x', '');
-
-    const vcPayloadHash = blake2AsHex(Buffer.from(decryptVcPayload));
-    assert.equal(vcPayloadHash, vcHash, 'Check VcPayload error: vcPayloadHash should be equal to vcHash');
 
     /* DID format
     did:litentry:substrate:0x12345...
@@ -268,40 +255,61 @@ export async function assertVc(context: IntegrationTestContext, subject: CorePri
     did:litentry:twitter:my_twitter_handle
     */
 
-    // step 3
+    // step 2
+    // check credential subject's DID
     const credentialSubjectId = JSON.parse(decryptVcPayload).credentialSubject.id;
     const expectSubject = Object.entries(JSON.parse(subject.toString()));
 
+    // step 3
     // convert to DID format
     const expectDid = 'did:litentry:' + expectSubject[0][0] + ':' + expectSubject[0][1];
     assert.equal(
         expectDid,
         credentialSubjectId,
-        'Check credentialSubjec error: expectDid should be equal to credentialSubject id'
+        'Check credentialSubject error: expectDid should be equal to credentialSubject id'
     );
 
     // step 4
+    // extrac proof and vc without proof json
     const vcPayloadJson = JSON.parse(decryptVcPayload);
     const { proof, ...vcWithoutProof } = vcPayloadJson;
-    assert.equal(vcIndex, vcPayloadJson.id, 'Check VcIndex error: VcIndex should be equal to vcPayload id');
 
     // step 5
-    const enclaveCount = await context.api.query.teerex.enclaveCount();
+    // prepare teerex enclave registry data for further checks
+    const parachainBlockHash = await context.api.query.system.blockHash(vcPayloadJson.parachainBlockNumber);
+    const apiAtVcIssuedBlock = await context.api.at(parachainBlockHash);
+    const enclaveCount = await apiAtVcIssuedBlock.query.teerex.enclaveCount();
 
-    const enclaveRegistry = (await context.api.query.teerex.enclaveRegistry(
-        enclaveCount
-    )) as unknown as TeerexPrimitivesEnclave;
+    const lastRegisteredEnclave = (await apiAtVcIssuedBlock.query.teerex.enclaveRegistry(enclaveCount))
+        .value as TeerexPrimitivesEnclave;
 
+    // step 6
+    // check vc signature
     const signature = Buffer.from(hexToU8a(`0x${proof.proofValue}`));
-
-    const message = Buffer.from(vcWithoutProof.issuer.mrenclave);
-
-    const vcPubkey = Buffer.from(hexToU8a(enclaveRegistry.toHuman()['vcPubkey'] as HexString));
+    const message = Buffer.from(JSON.stringify(vcWithoutProof));
+    const vcPubkey = Buffer.from(lastRegisteredEnclave.vcPubkey.value);
     const signatureStatus = await ed.verify(signature, message, vcPubkey);
 
     assert.isTrue(signatureStatus, 'Check Vc signature error: signature should be valid');
 
-    // step 6
+    // step 7
+    // check VC mrenclave with enclave's mrenclave from registry
+    assert.equal(
+        base58.encode(lastRegisteredEnclave.mrEnclave),
+        vcPayloadJson.issuer.mrenclave,
+        'Check VC mrenclave: it should equals enclaves mrenclave from parachains enclave registry'
+    );
+
+    // step 8
+    // check vc issuer id
+    assert.equal(
+        `did:litentry:substrate:${lastRegisteredEnclave.vcPubkey.value.toHex()}`,
+        vcPayloadJson.issuer.id,
+        'Check VC id: it should equals enclaves pubkey from parachains enclave registry'
+    );
+
+    // step 9
+    // validate VC aganist schema
     const ajv = new Ajv();
 
     const validate = ajv.compile(jsonSchema);
