@@ -157,6 +157,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let teerex_config: pallet_teerex::GenesisConfig<Test> = crate::GenesisConfig {
 		allow_sgx_debug_mode: true,
 		admin: Some(AccountKeyring::Alice.to_account_id()),
+		skip_scheduled_enclave_check: true,
 	};
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
@@ -181,7 +182,11 @@ pub fn new_test_production_ext() -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 
-	let teerex_config = crate::GenesisConfig { allow_sgx_debug_mode: false, admin: None };
+	let teerex_config = crate::GenesisConfig {
+		allow_sgx_debug_mode: false,
+		admin: None,
+		skip_scheduled_enclave_check: true,
+	};
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();

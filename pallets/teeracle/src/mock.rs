@@ -156,7 +156,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	let teerex_config = pallet_teerex::GenesisConfig { allow_sgx_debug_mode: true, admin: None };
+	let teerex_config = pallet_teerex::GenesisConfig {
+		allow_sgx_debug_mode: true,
+		admin: None,
+		skip_scheduled_enclave_check: true,
+	};
 	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
