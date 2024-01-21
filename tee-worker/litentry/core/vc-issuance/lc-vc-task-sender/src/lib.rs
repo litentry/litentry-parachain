@@ -20,7 +20,7 @@ pub use crate::sgx_reexport_prelude::*;
 
 use codec::{Decode, Encode};
 use futures::channel::oneshot;
-use itp_types::{ShardIdentifier, H256};
+use itp_types::ShardIdentifier;
 use lazy_static::lazy_static;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AesOutput;
@@ -50,9 +50,7 @@ pub struct VCRequest {
 #[derive(Encode, Decode, Clone)]
 pub struct VCResponse {
 	pub assertion_request: AssertionBuildRequest,
-	pub vc_hash: H256,
 	pub vc_payload: Vec<u8>,
-	pub vc_index: H256,
 }
 
 pub type VcSender = Sender<VCRequest>;
