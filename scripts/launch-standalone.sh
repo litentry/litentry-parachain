@@ -35,7 +35,5 @@ if [[ -z "${NODE_ENV}" ]]; then
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
-corepack pnpm install
-corepack pnpm run skip-schedule-enclave-check 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/register-parathread.log"
 
 sleep 10
