@@ -73,11 +73,11 @@ for _ in $(seq 1 $WAIT_ROUNDS); do
     fi
     pnpm install
     pnpm run upgrade-parathread 2>&1
-    if [[ "$1" = "rococo" ]]; then
-      pnpm run skip-schedule-enclave-check 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/skip-schedule-enclave-check.log"
-      print_divider
+    # if [[ "$1" = "rococo" ]]; then
+    #  pnpm run skip-schedule-enclave-check 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/skip-schedule-enclave-check.log"
+    #  print_divider
 
-    fi
+    # fi
     echo "Done."
     exit 0
   fi

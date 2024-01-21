@@ -191,12 +191,13 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub allow_sgx_debug_mode: bool,
 		pub admin: Option<T::AccountId>,
+		pub skip_scheduled_enclave_check: bool,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { allow_sgx_debug_mode: false, admin: None }
+			Self { allow_sgx_debug_mode: false, admin: None, skip_scheduled_enclave_check: false }
 		}
 	}
 
@@ -204,6 +205,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
+			SkipScheduledEnclaveCheck::<T>::put(self.skip_scheduled_enclave_check);
 			if let Some(ref admin) = self.admin {
 				Admin::<T>::put(admin);
 			}

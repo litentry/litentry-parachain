@@ -237,7 +237,11 @@ fn generate_genesis(
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
 		// use sudo key as genesis admin for teerex and VCMP
-		teerex: TeerexConfig { allow_sgx_debug_mode: true, admin: Some(root_key.clone()) },
+		teerex: TeerexConfig {
+			allow_sgx_debug_mode: true,
+			admin: Some(root_key.clone()),
+			skip_scheduled_enclave_check: true,
+		},
 		vc_management: VCManagementConfig { admin: Some(root_key) },
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
