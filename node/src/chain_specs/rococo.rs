@@ -93,6 +93,7 @@ pub fn get_chain_spec_dev(is_standalone: bool) -> ChainSpec {
 				],
 				vec![get_account_id_from_seed::<sr25519::Public>("Alice")],
 				DEFAULT_PARA_ID.into(),
+				true,
 			)
 		},
 		Vec::new(),
@@ -165,6 +166,7 @@ fn get_chain_spec_from_genesis_info(
 				genesis_info_cloned.council,
 				genesis_info_cloned.technical_committee,
 				para_id,
+				false,
 			)
 		},
 		boot_nodes
@@ -194,6 +196,7 @@ fn generate_genesis(
 	council_members: Vec<AccountId>,
 	technical_committee_members: Vec<AccountId>,
 	id: ParaId,
+	skip_scheduled_enclave_check: bool,
 ) -> GenesisConfig {
 	GenesisConfig {
 		system: SystemConfig {
@@ -240,7 +243,7 @@ fn generate_genesis(
 		teerex: TeerexConfig {
 			allow_sgx_debug_mode: true,
 			admin: Some(root_key.clone()),
-			skip_scheduled_enclave_check: true,
+			skip_scheduled_enclave_check,
 		},
 		vc_management: VCManagementConfig { admin: Some(root_key) },
 		transaction_payment: Default::default(),
