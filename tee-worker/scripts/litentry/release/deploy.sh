@@ -429,11 +429,6 @@ function register_parachain {
   pnpm run upgrade-parathread 2>&1 | tee "$PARACHAIN_BASEDIR/upgrade-parathread.log"
   print_divider
 
-  if [ "$PRODUCTION" = false ]; then
-    print_divider
-    corepack pnpm run skip-schedule-enclave-check 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/skip-schedule-enclave-check.log"
-  fi
-
   echo "done. please check $PARACHAIN_BASEDIR for generated files if need"
   print_divider
   git restore config.ci.json
