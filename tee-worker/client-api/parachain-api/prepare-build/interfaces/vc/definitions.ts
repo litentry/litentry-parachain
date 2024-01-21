@@ -37,8 +37,6 @@ export default {
             _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
         RequestVCResult: {
-            vc_index: "H256",
-            vc_hash: "H256",
             vc_payload: "AesOutput",
         },
         // Achainable
