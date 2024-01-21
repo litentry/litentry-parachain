@@ -20,6 +20,7 @@ use std::{
 	format,
 	hash::{BuildHasher, Hasher},
 	path::{Path, PathBuf},
+	println,
 	string::String,
 };
 
@@ -178,6 +179,7 @@ impl TempDir {
 impl Drop for TempDir {
 	fn drop(&mut self) {
 		if let Some(path) = self.path_buf.take() {
+			println!("temp-dir dropping {:?}", path);
 			let result = Self::remove_dir(&path);
 			if self.panic_on_delete_err {
 				if let Err(e) = result {

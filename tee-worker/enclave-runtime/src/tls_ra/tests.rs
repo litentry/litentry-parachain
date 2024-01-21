@@ -26,7 +26,9 @@ use crate::{
 	tls_ra::seal_handler::{SealHandler, SealStateAndKeys, UnsealStateAndKeys},
 };
 use ita_stf::State;
-use itc_parentchain::light_client::mocks::validator_mock_seal::LightValidationStateSealMock;
+use itc_parentchain::light_client::{
+	mocks::validator_mock_seal::LightValidationStateSealMock, LightClientSealing,
+};
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, Aes};
 use itp_stf_interface::InitState;
@@ -175,7 +177,7 @@ pub fn test_state_and_key_provisioning() {
 
 	// Ensure server thread has finished.
 	server_thread_handle.join().unwrap();
-
+	println!("server thread joined");
 	assert!(result.is_ok());
 }
 
@@ -191,6 +193,8 @@ fn create_seal_handler(
 	let state_handler = Arc::new(HandleStateMock::default());
 	state_handler.reset(state, shard).unwrap();
 	let seal = Arc::new(LightValidationStateSealMock::new());
+
+	println!("seal.tempdir = {:?}", seal.path());
 
 	SealHandler::new(state_handler, state_key_repository, shielding_key_repository, seal)
 }
