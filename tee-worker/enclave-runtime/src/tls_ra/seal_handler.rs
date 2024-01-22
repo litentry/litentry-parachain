@@ -85,14 +85,14 @@ where
 			EnclaveError::Other(e.into())
 		})?;
 		self.shielding_key_repository.update_key(key)?;
-		info!("Successfully stored a new shielding key");
+		warn!("Successfully stored a new shielding key");
 		Ok(())
 	}
 
 	fn seal_state_key(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
 		let aes = Aes::decode(&mut bytes)?;
 		self.state_key_repository.update_key(aes)?;
-		info!("Successfully stored a new state key");
+		warn!("Successfully stored a new state key");
 		Ok(())
 	}
 
@@ -101,14 +101,14 @@ where
 		let state_with_empty_diff = StfState::new(state);
 
 		self.state_handler.reset(state_with_empty_diff, shard)?;
-		info!("Successfully updated shard {:?} with provisioned state", shard);
+		warn!("Successfully updated shard {:?} with provisioned state", shard);
 		Ok(())
 	}
 
 	fn seal_light_client_state(&self, mut bytes: &[u8]) -> EnclaveResult<()> {
 		let state = <LightClientSeal as LightClientSealing>::LightClientState::decode(&mut bytes)?;
 		self.light_client_seal.seal(&state)?;
-		info!("Successfully sealed light client state");
+		warn!("Successfully sealed light client state");
 		Ok(())
 	}
 
@@ -121,7 +121,7 @@ where
 	/// newly initialize the state with the updated shielding key.
 	fn seal_new_empty_state(&self, shard: &ShardIdentifier) -> EnclaveResult<()> {
 		self.state_handler.initialize_shard(*shard)?;
-		info!("Successfully reset state with new enclave account, for shard {:?}", shard);
+		warn!("Successfully reset state with new enclave account, for shard {:?}", shard);
 		Ok(())
 	}
 }
