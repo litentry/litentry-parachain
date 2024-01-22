@@ -10,6 +10,7 @@
         "register-parathread": "pnpm exec ts-node common/setup/register-parathread.ts",
         "skip-schedule-enclave-check": "pnpm exec ts-node common/setup/skip-schedule-enclave-check.ts",
         "upgrade-parathread": "pnpm exec ts-node common/setup/upgrade-parathread.ts",
+        "wait-finalized-block": "pnpm exec ts-node common/setup/wait-finalized-block.ts",
         "setup-enclave": "pnpm exec ts-node common/setup/setup-enclave.ts",
         "test-filter": "pnpm exec mocha --exit --sort -r ts-node/register 'integration-tests/base-filter.test.ts'",
         "test-bridge": "pnpm exec mocha --exit --sort -r ts-node/register 'integration-tests/bridge.test.ts'",

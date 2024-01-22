@@ -10,13 +10,6 @@ function usage() {
 
 CHAIN=$1
 
-# interval and rounds to wait to check the block production and finalization of parachain
-WAIT_INTERVAL_SECONDS=10
-WAIT_ROUNDS=30
-
-# if the parachain has produced the first block
-BLOCK_PRODUCED=false
-
 function print_divider() {
   echo "------------------------------------------------------------"
 }
@@ -31,53 +24,30 @@ cd "$ROOTDIR/docker/generated-$CHAIN/"
 
 docker compose up -d --build
 
-# sleep for a while to make sure `docker compose` is ready
-# otherwise `docker compose logs` could print empty output
-sleep 10
-
-parachain_service=$(docker compose ps --services --filter 'status=running' | grep -F 'parachain-')
-
 print_divider
 
-echo "waiting for parachain to produce blocks ..."
-
-for _ in $(seq 1 $WAIT_ROUNDS); do
-  sleep $WAIT_INTERVAL_SECONDS
-  if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "best: #1" 2>/dev/null; then
-    echo "parachain produced #1"
-    BLOCK_PRODUCED=true
-    break
-  fi
-done
-
-if [ "$BLOCK_PRODUCED" = "false" ]; then
-  echo "no block production detected, you might want to check it manually. Quit now"
-  exit 1
+# Install Node.js dependencies in the middle.
+# It also buys `docker compose` some time.
+cd "$ROOTDIR/ts-tests"
+if [[ -z "${NODE_ENV}" ]]; then
+    echo "NODE_ENV=ci" > .env
+else
+    echo "NODE_ENV=${NODE_ENV}" > .env
 fi
 
+pnpm install
+
 print_divider
 
-echo "waiting for parachain to finalize blocks ..."
+echo "Waiting for parachain to produce block #1..."
+pnpm run wait-finalized-block 2>&1
 
-for _ in $(seq 1 $WAIT_ROUNDS); do
-  sleep $WAIT_INTERVAL_SECONDS
-  if docker compose logs "$parachain_service" 2>&1 | grep -F '0 peers' 2>/dev/null | grep -Fq "finalized #1" 2>/dev/null; then
-    echo "parachain finalized #1, all good."
-    print_divider
-    echo "extend leasing period now ..."
-    cd "$ROOTDIR/ts-tests"
-    if [[ -z "${NODE_ENV}" ]]; then
-        echo "NODE_ENV=ci" > .env
-    else
-        echo "NODE_ENV=${NODE_ENV}" > .env
-    fi
-    pnpm install
-    pnpm run upgrade-parathread 2>&1
+print_divider
 
-    echo "Done."
-    exit 0
-  fi
-done
+echo "Extending leasing period..."
+pnpm run upgrade-parathread 2>&1
 
-echo "no block finalization detected, you might want to check it manually. Quit now"
-exit 1
+print_divider
+
+echo "Done."
+exit 0
