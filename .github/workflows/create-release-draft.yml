@@ -115,7 +115,7 @@ jobs:
             ${{ matrix.chain }}-parachain-srtool-digest.json
             ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
-  # build docker image of parachain binary ##
+  ## build docker image of parachain binary ##
   build-parachain-docker:
     if: ${{ github.event.inputs.release_client == 'true' }}
     runs-on: ubuntu-latest
@@ -128,12 +128,12 @@ jobs:
 
       - name: Set env
         run: |
-          DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/p/v/;s/\(.*\)-w.*/\1/')
-          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          PARACHAIN_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/p/v/;s/\(.*\)-w.*/\1/')
+          echo "PARACHAIN_DOCKER_TAG=$PARACHAIN_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Build docker image
         run: |
-          ./scripts/build-docker.sh production $DOCKER_TAG
+          ./scripts/build-docker.sh production $PARACHAIN_DOCKER_TAG
           echo "============================="
           docker images
 
@@ -145,17 +145,17 @@ jobs:
 
       - name: Push docker image
         run: |
-          docker push litentry/litentry-parachain:$DOCKER_TAG
+          docker push litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG
 
       - name: Generate genesis artefacts if need
         if: github.event.inputs.genesis_release != 'none'
         run: |
-          docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
-          docker run --rm litentry/litentry-parachain:$DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
+          docker run --rm litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG export-genesis-state --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-state
+          docker run --rm litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG export-genesis-wasm --chain=${{ env.GENESIS_RELEASE }} > ${{ env.GENESIS_RELEASE }}-genesis-wasm
 
       - name: Copy client binary to disk
         run: |
-          docker cp $(docker create --rm litentry/litentry-parachain:$DOCKER_TAG):/usr/local/bin/litentry-collator .
+          docker cp $(docker create --rm litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG):/usr/local/bin/litentry-collator .
 
       - name: Upload the client binary
         uses: actions/upload-artifact@v3
@@ -178,8 +178,8 @@ jobs:
           fetch-depth: 0
       - name: Set env
         run: |
-          WORKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
-          echo "WORKER_TAG=$WORKER_TAG" >> $GITHUB_ENV
+          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
+          echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
@@ -197,29 +197,6 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
 
-      - name: Cache worker-cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            worker-cache
-          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('tee-worker/**/Cargo.lock', 'tee-worker/**/Cargo.toml') }}
-          restore-keys: |
-            worker-cache-${{ env.REF_VERSION }}-
-            worker-cache-
-
-      - name: Create cache folder if not exist
-        run: |
-          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
-            [ ! -d "worker-cache/$i" ] && mkdir -p "worker-cache/$i" || true
-            echo "hello" > worker-cache/$i/nix
-          done
-          echo "::group::List worker-cache size"
-          du -sh worker-cache/*
-          echo "::endgroup::"
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-
       - name: Build local builder
         uses: docker/build-push-action@v5
         with:
@@ -231,34 +208,12 @@ jobs:
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
 
-      - name: Copy caches from the built image
-        run: |
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-          echo "::group::docker images"
-          docker images --all
-          echo "::endgroup::"
-          echo "::group::copy cache out"
-          for i in 'git/db' 'registry/cache' 'registry/index'; do
-            b="${i%/*}"
-            rm -rf worker-cache/$i
-            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" worker-cache/$b
-          done
-          rm -rf worker-cache/sccache
-          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" worker-cache
-          du -sh worker-cache/*
-          echo "::endgroup::"
-          echo "::group::df -h ."
-          df -h .
-          echo "::endgroup::"
-
       - name: Build worker
         uses: docker/build-push-action@v5
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-worker:${{ env.WORKER_TAG }}
+          tags: litentry/litentry-worker:${{ env.WORKER_DOCKER_TAG }}
           target: deployed-worker
 
       - name: Build cli
@@ -266,7 +221,7 @@ jobs:
         with:
           context: .
           file: tee-worker/build.Dockerfile
-          tags: litentry/litentry-cli:${{ env.WORKER_TAG }}
+          tags: litentry/litentry-cli:${{ env.WORKER_DOCKER_TAG }}
           target: deployed-client
 
       - run: docker images --all
@@ -279,8 +234,8 @@ jobs:
 
       - name: Push worker image
         run: |
-          docker push litentry/litentry-worker:$WORKER_TAG
-          docker push litentry/litentry-cli:$WORKER_TAG
+          docker push litentry/litentry-worker:$WORKER_DOCKER_TAG
+          docker push litentry/litentry-cli:$WORKER_DOCKER_TAG
 
   ## Build the enclave and package config files
   build-tee:
