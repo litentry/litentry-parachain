@@ -156,9 +156,12 @@ pub fn test_state_and_key_provisioning() {
 	let port: u16 = 3150;
 
 	// Start server.
-	let server_thread_handle = thread::spawn(move || {
-		run_state_provisioning_server(server_seal_handler, port);
-	});
+	let server_thread = thread::Builder::new().name("Server thread".into());
+	let server_thread_handle = server_thread
+		.spawn(move || {
+			run_state_provisioning_server(server_seal_handler, port);
+		})
+		.unwrap();
 	thread::sleep(Duration::from_secs(1));
 
 	// Start client.
