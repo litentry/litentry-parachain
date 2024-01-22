@@ -458,9 +458,9 @@ jobs:
         # cargo test is not supported in the enclave
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
         run: |
-          for i in $(seq 50); do
+          for i in $(seq 250); do
             docker run litentry/litentry-worker:latest test --all
-            sleep 20
+            sleep 10
           done
 
       - name: Save docker images
