@@ -93,6 +93,7 @@ where
 		println!("    [Enclave] (MU-RA-Server) handle_shard_request_from_client, write_all()");
 		self.write_provisioning_payloads(&request.shard)?;
 
+		println!("    [Enclave] (MU-RA-Server) write_all finished");
 		info!(
 			"will make client account 0x{} a proxy of vault for shard {:?}",
 			hex::encode(request.account.clone()),
@@ -104,6 +105,7 @@ where
 			// retry if it failed
 			error!("failed to add shard vault proxy for {:?}: {:?}", request.account, e);
 		};
+		println!("    [Enclave] (MU-RA-Server) server thread returns");
 		Ok(())
 	}
 
