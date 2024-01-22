@@ -9,7 +9,6 @@ use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::H256;
 use lc_data_providers::{DataProviderConfigReader, ReadDataProviderConfig};
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
@@ -18,7 +17,6 @@ use litentry_primitives::{
 	AmountHoldingTimeType, Assertion, ErrorDetail, ErrorString, Identity, ParameterString,
 	VCMPError,
 };
-use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc};
 
 pub(crate) struct VCRequestHandler<
@@ -133,8 +131,11 @@ where
 					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 				)
 			})?;
-		let payload = credential.issuer.mrenclave.clone();
-		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
+		let json_string = credential.to_json().map_err(|_| {
+			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
+		})?;
+		let payload = json_string.as_bytes();
+		let (enclave_account, sig) = signer.sign(payload).map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -149,25 +150,13 @@ where
 			)
 		})?;
 
-		let vc_index: H256 = credential
-			.get_index()
-			.map_err(|e| {
-				VCMPError::RequestVCFailed(
-					self.req.assertion.clone(),
-					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
-				)
-			})?
-			.into();
 		let credential_str = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
-		let vc_hash: H256 = blake2_256(credential_str.as_bytes()).into();
 
 		let vc_response = VCResponse {
 			assertion_request: self.req.clone(),
-			vc_hash,
 			vc_payload: credential_str.as_bytes().to_vec(),
-			vc_index,
 		};
 
 		Ok(vc_response)
