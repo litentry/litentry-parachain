@@ -120,7 +120,7 @@ where
 
 	/// Sends all relevant data to the client.
 	fn write_provisioning_payloads(&mut self, shard: &ShardIdentifier) -> EnclaveResult<()> {
-		debug!("Provisioning is set to: {:?}", self.provisioning_payload);
+		warn!("Provisioning is set to: {:?}", self.provisioning_payload);
 		match self.provisioning_payload {
 			ProvisioningPayload::Everything => {
 				self.write_shielding_key()?;
@@ -134,7 +134,7 @@ where
 			},
 		}
 
-		debug!("Successfully provisioned all payloads to peer");
+		warn!("Successfully provisioned all payloads to peer");
 		Ok(())
 	}
 

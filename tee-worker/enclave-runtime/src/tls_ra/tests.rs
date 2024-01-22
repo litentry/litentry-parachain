@@ -176,6 +176,7 @@ pub fn test_state_and_key_provisioning() {
 	);
 
 	// Ensure server thread has finished.
+	println!("wait for server thread to join");
 	server_thread_handle.join().unwrap();
 	println!("server thread joined");
 	assert!(result.is_ok());
