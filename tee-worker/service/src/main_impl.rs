@@ -908,7 +908,7 @@ fn register_quotes_from_marblerun(
 	marblerun_base_url: &str,
 ) {
 	let enclave = enclave.as_ref();
-	let events = prometheus_metrics::fetch_marblerun_events(marblerun_base_url)
+	let events = crate::prometheus_metrics::fetch_marblerun_events(marblerun_base_url)
 		.map_err(|e| {
 			info!("Fetching events from Marblerun failed with: {:?}, continuing with 0 events.", e);
 		})
