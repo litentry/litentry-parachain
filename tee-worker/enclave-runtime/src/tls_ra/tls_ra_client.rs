@@ -76,20 +76,20 @@ where
 	/// We trust here that the server sends us the correct data, as
 	/// we do not have any way to test it.
 	fn obtain_provisioning_for_shard(&mut self, account: AccountId) -> EnclaveResult<()> {
-		debug!(
+		warn!(
 			"obtain_provisioning_for_shard called, about to call self.send_provisioning_request()."
 		);
 		self.send_provisioning_request(account)?;
-		debug!("self.send_provisioning_request() succeeded.");
+		warn!("self.send_provisioning_request() succeeded.");
 		self.read_and_seal_all()
 	}
 
 	/// Send the shard of the state we want to receive to the provisioning server.
 	fn send_provisioning_request(&mut self, account: AccountId) -> EnclaveResult<()> {
-		debug!("self.send_provisioning_request() called.");
+		warn!("self.send_provisioning_request() called.");
 		self.tls_stream
 			.write_all(&ClientProvisioningRequest { shard: self.shard, account }.encode())?;
-		debug!("write_all succeeded.");
+		warn!("write_all succeeded.");
 		Ok(())
 	}
 
@@ -106,7 +106,7 @@ where
 				},
 			}
 		}
-		info!("Successfully read and sealed all data sent by the state provisioning server.");
+		warn!("Successfully read and sealed all data sent by the state provisioning server.");
 
 		// In case we receive a shielding key, but no state, we need to reset our state
 		// to update the enclave account.
