@@ -28,7 +28,7 @@ use lc_data_providers::nodereal_jsonrpc::{
 };
 
 use crate::*;
-use lc_data_providers::Error as DataProviderError;
+use lc_data_providers::{DataProviderConfig, Error as DataProviderError};
 
 const NFT_TOKEN_ADDRESS: &str = "0x9401518f4EBBA857BAA879D9f76E1Cc8b31ed197";
 
@@ -54,11 +54,14 @@ fn check_has_nft(
 	}
 }
 
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("WeirdoGhostGang holder");
 
 	let mut has_nft = false;
-	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+	let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
 	let addresses = identities
@@ -112,25 +115,21 @@ mod tests {
 	use super::*;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use lc_credentials::assertion_logic::{AssertionLogic, Op};
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use lc_mock_server::run;
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap() + "/nodereal_jsonrpc/";
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_nodereal_api_chain_network_url(url);
+		let mut config = DataProviderConfig::new();
+
+		config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".to_string());
+		config.set_nodereal_api_chain_network_url(url);
+		config
 	}
 
 	#[test]
 	fn build_weirdo_ghost_gang_holder_works() {
-		init();
+		let config = init();
 		let identities: Vec<IdentityNetworkTuple> =
 			vec![(Identity::Evm([0; 20].into()), vec![Web3Network::Ethereum])];
 
@@ -147,7 +146,7 @@ mod tests {
 			req_ext_hash: Default::default(),
 		};
 
-		match build(&req) {
+		match build(&req, &config) {
 			Ok(credential) => {
 				log::info!("build WeirdoGhostGang holder done");
 				assert_eq!(

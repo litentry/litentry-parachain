@@ -91,6 +91,7 @@ use its_sidechain::{
 	slots::FailSlotOnDemand,
 };
 use lazy_static::lazy_static;
+use lc_data_providers::DataProviderConfig;
 use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::rsa3072::Rsa3072KeyPair;
 use sgx_tstd::vec::Vec;
@@ -499,3 +500,6 @@ pub static GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT: ComponentContainer<
 pub static GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT: ComponentContainer<
 	Option<FailSlotOnDemand>,
 > = ComponentContainer::new("sidechain_fail_slot_on_demand");
+
+pub static GLOBAL_DATA_PROVIDER_CONFIG: ComponentContainer<DataProviderConfig> =
+	ComponentContainer::new("data_provider_config");
