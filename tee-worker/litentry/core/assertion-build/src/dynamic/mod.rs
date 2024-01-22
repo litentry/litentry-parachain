@@ -30,11 +30,13 @@ extern crate sgx_tstd as std;
 pub fn build(
     req: &AssertionBuildRequest) -> Result<Credential> {
 
-    let identities = transpose_identity(&req.identities);
-    let addresses = identities
-        .into_iter()
-        .flat_map(|(_, addresses)| addresses)
-        .collect::<Vec<String>>();
+    let identities = &req.identities.iter()
+        .map(|identity| {
+            identity.
+        })
+
+
+
 
 
     let (description, assertion_type, assertion, result) = execute_smart_contract();
@@ -163,11 +165,15 @@ fn hash(a: u64) -> H160 {
     hash
 }
 
-pub fn execute_smart_contract() -> (String, String, String, bool) {
+fn prepare_config() -> Config {
     let mut config = Config::frontier();
     config.has_bitwise_shifting = true;
     config.err_on_call_with_more_gas = false;
-    let vicinity = MemoryVicinity {
+    config
+}
+
+fn prepare_memory() -> MemoryVicinity {
+    MemoryVicinity {
         gas_price: U256::zero(),
         origin: H160::default(),
         block_hashes: Vec::new(),
@@ -179,7 +185,12 @@ pub fn execute_smart_contract() -> (String, String, String, bool) {
         chain_id: U256::one(),
         block_base_fee_per_gas: U256::zero(),
         block_randomness: None,
-    };
+    }
+}
+
+pub fn execute_smart_contract() -> (String, String, String, bool) {
+    let config = prepare_config();
+    let vicinity = prepare_memory();
     let mut state = BTreeMap::new();
     let mut backend = MemoryBackend::new(&vicinity, state);
     let metadata = StackSubstateMetadata::new(u64::MAX, &config);
@@ -187,7 +198,7 @@ pub fn execute_smart_contract() -> (String, String, String, bool) {
     let mut precompiles = Precompiles {};
     let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
 
-    // run example
+    // caller
     let caller = hash(4);
 
     // deploy smart contract
@@ -200,7 +211,7 @@ pub fn execute_smart_contract() -> (String, String, String, bool) {
         Vec::new(),
     );
     // call function
-    let another_reason = executor.transact_call(
+    let call_reason = executor.transact_call(
         caller,
         address,
         U256::zero(),
@@ -209,11 +220,11 @@ pub fn execute_smart_contract() -> (String, String, String, bool) {
         Vec::new(),
     );
 
-    info!("Contract execution result {:?}", &another_reason);
+    info!("Contract execution result {:?}", &call_reason);
 
     let types = vec![ParamType::String, ParamType::String, ParamType::String, ParamType::Bool];
 
-    let decoded = decode(&types, &another_reason.1).unwrap();
+    let decoded = decode(&types, &call_reason.1).unwrap();
 
     (decoded[0].clone().into_string().unwrap(), decoded[1].clone().into_string().unwrap(), decoded[2].clone().into_string().unwrap(), decoded[3].clone().into_bool().unwrap())
 }

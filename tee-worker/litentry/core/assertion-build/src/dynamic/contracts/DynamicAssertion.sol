@@ -1,10 +1,37 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.8;
 
+import {Identity} from "Identity.sol";
 
-contract HttpClient {
-    function GetI64(string memory url, string memory jsonPointer) public returns (int64) {
+abstract contract DynamicAssertion {
+    function execute(bytes memory input)
+        public
+        returns (
+            string memory,
+            string memory,
+            string memory,
+            bool
+        )
+    {
+        Identity[] memory identities = abi.decode(input, (Identity[]));
+        return doExecute(identities);
+    }
+
+    function doExecute(Identity[] memory identities)
+        internal
+        virtual
+        returns (
+            string memory,
+            string memory,
+            string memory,
+            bool
+        );
+
+    function GetI64(string memory url, string memory jsonPointer)
+        internal
+        returns (int64)
+    {
         int64 value;
 
         assembly {

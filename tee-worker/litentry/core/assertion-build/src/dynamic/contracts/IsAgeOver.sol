@@ -1,20 +1,23 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.8;
 
-import {HttpClient} from "HttpClient.sol";
+import {DynamicAssertion} from "DynamicAssertion.sol";
+import {Identity, IdentityUtils} from "Identity.sol";
 
-struct GetInput {
-    string url;
-}
-
-
-contract GetRequest is HttpClient {
-    function Get() public returns (string memory, string memory, string memory, bool) {
-
+contract IsAgeOver is DynamicAssertion {
+    function doExecute(Identity[] memory identities)
+        internal
+        override
+        returns (
+            string memory,
+            string memory,
+            string memory,
+            bool
+        )
+    {
         string memory url = "https://dummy.restapiexample.com/api/v1/employees";
         string memory pointer = "/data/3/employee_age";
-
 
         int64 age = GetI64(url, pointer);
         string memory description = "Is the employee over 50 years old ?";
@@ -22,7 +25,7 @@ contract GetRequest is HttpClient {
         string memory assertion = "age > 50";
         bool result;
 
-        if (age > 50) {
+        if (IdentityUtils.is_web3(identities[0])) {
             result = true;
         } else {
             result = false;

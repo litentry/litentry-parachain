@@ -257,6 +257,9 @@ pub enum Assertion {
 
 	#[codec(index = 23)]
 	CryptoSummary,
+
+	#[codec(index = 24)]
+	Dynamic
 }
 
 impl Assertion {
@@ -304,6 +307,7 @@ impl Assertion {
 			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
 			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
+			Self::Dynamic => all_web3networks(),
 		}
 	}
 }
