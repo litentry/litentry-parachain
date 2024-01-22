@@ -212,10 +212,7 @@ where
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
 
-		let vc_response = VCResponse {
-			assertion_request: self.req.clone(),
-			vc_payload: credential_str.as_bytes().to_vec(),
-		};
+		let vc_response = VCResponse { vc_payload: credential_str.as_bytes().to_vec() };
 
 		Ok(vc_response)
 	}

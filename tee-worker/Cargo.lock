@@ -6333,11 +6333,10 @@ name = "lc-vc-task-receiver"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "futures 0.3.28",
- "futures 0.3.8",
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
+ "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-node-api",
  "itp-ocall-api",
@@ -6348,6 +6347,7 @@ dependencies = [
  "itp-storage",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "lc-assertion-build",
  "lc-credentials",
  "lc-data-providers",
@@ -6360,6 +6360,7 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
+ "thiserror 1.0.44",
  "threadpool 1.8.0",
  "threadpool 1.8.1",
 ]

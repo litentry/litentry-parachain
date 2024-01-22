@@ -31,6 +31,7 @@ use litentry_primitives::{
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
 	OneBlockCourseType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
+	REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -258,12 +259,7 @@ impl RequestVcDirectCommand {
 			Command::BRC20AmountHolder => Assertion::BRC20AmountHolder,
 		};
 
-		let mut key: RequestAesKey = RequestAesKey::default();
-		hex::decode_to_slice(
-			"22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12",
-			&mut key,
-		)
-		.expect("decoding shielding_key failed");
+		let key: [u8; 32] = Self::random_aes_key();
 
 		let top = TrustedCall::request_vc(
 			alice.public().into(),
@@ -288,5 +284,10 @@ impl RequestVcDirectCommand {
 			},
 		}
 		Ok(CliResultOk::None)
+	}
+
+	fn random_aes_key() -> RequestAesKey {
+		let random: Vec<u8> = (0..REQUEST_AES_KEY_LEN).map(|_| rand::random::<u8>()).collect();
+		random[0..REQUEST_AES_KEY_LEN].try_into().unwrap()
 	}
 }
