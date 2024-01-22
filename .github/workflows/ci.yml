@@ -459,7 +459,7 @@ jobs:
         # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
         run: |
           for i in $(seq 250); do
-            docker run litentry/litentry-worker:latest test --all
+            docker run --env RUST_BACKTRACE=1 litentry/litentry-worker:latest test --all
             sleep 10
           done
 
