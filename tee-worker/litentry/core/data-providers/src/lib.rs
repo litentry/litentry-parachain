@@ -285,7 +285,7 @@ impl DataProviderConfig {
 				config.set_vip3_url(v);
 			}
 			if let Ok(v) = env::var("GENIIDATA_URL") {
-				config.set_vip3_url(v);
+				config.set_geniidata_url(v);
 			}
 		});
 		// set secrets from env variables
