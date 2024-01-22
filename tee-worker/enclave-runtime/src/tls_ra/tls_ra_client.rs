@@ -258,7 +258,7 @@ pub(crate) fn request_state_provisioning_internal<StateAndKeySealer: SealStateAn
 	seal_handler: StateAndKeySealer,
 	client_account: AccountId,
 ) -> EnclaveResult<()> {
-	debug!("Client config generate...");
+	println!("Client config generate...");
 	let client_config = tls_client_config(
 		sign_type,
 		quoting_enclave_target_info,
@@ -266,9 +266,9 @@ pub(crate) fn request_state_provisioning_internal<StateAndKeySealer: SealStateAn
 		OcallApi,
 		skip_ra == 1,
 	)?;
-	debug!("Client config retrieved");
+	println!("Client config retrieved");
 	let (mut client_session, mut tcp_stream) = tls_client_session_stream(socket_fd, client_config)?;
-	debug!("Client sesssion established.");
+	println!("Client sesssion established.");
 
 	let mut client = TlsClient::new(
 		rustls::Stream::new(&mut client_session, &mut tcp_stream),
@@ -276,7 +276,7 @@ pub(crate) fn request_state_provisioning_internal<StateAndKeySealer: SealStateAn
 		shard,
 	);
 
-	info!("Requesting keys and state from mu-ra server of fellow validateer");
+	println!("Requesting keys and state from mu-ra server of fellow validateer");
 	client.obtain_provisioning_for_shard(client_account)
 }
 

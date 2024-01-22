@@ -164,6 +164,9 @@ pub fn test_state_and_key_provisioning() {
 	// Start client.
 	let socket = TcpStream::connect(server_addr(port)).unwrap();
 	let sgx_target_info: sgx_target_info_t = sgx_target_info_t::default();
+
+	println!("connected, before request provisioning");
+
 	let result = request_state_provisioning_internal(
 		socket.as_raw_fd(),
 		SIGN_TYPE,
