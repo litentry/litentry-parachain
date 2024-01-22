@@ -116,6 +116,8 @@ where
 			self.seal_handler.seal_new_empty_state(&self.shard)?;
 		}
 
+		println!("Client requester thread returns");
+
 		Ok(())
 	}
 

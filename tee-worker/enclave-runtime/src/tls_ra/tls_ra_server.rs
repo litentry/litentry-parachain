@@ -103,7 +103,7 @@ where
 			// we can't be sure that registering the proxy will succeed onchain at this point,
 			// therefore we can accept an error here as the client has to verify anyway and
 			// retry if it failed
-			error!("failed to add shard vault proxy for {:?}: {:?}", request.account, e);
+			println!("failed to add shard vault proxy for {:?}: {:?}", request.account, e);
 		};
 		println!("    [Enclave] (MU-RA-Server) server thread returns");
 		Ok(())
