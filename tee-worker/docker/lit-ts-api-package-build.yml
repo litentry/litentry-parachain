@@ -13,11 +13,13 @@ services:
             litentry-node:
                 condition: service_healthy
             litentry-worker-1:
-                condition: service_healthy
+                # using +service_started+ over +service_healthy+ since worker runs successfully but can not connect to parachain
+                # as requires additional pre-setup for parachain image which built in production mode
+                # for generating types there is no need for fully workable interaction between worker and parachain
+                condition: service_started
         networks:
             - litentry-test-network
-        entrypoint:
-            "/usr/local/worker-cli/lit_ts_api_package_build.sh -p 9912 -u ws://litentry-node
+        entrypoint: "/usr/local/worker-cli/lit_ts_api_package_build.sh -p 9912 -u ws://litentry-node
             -W http://litentry-node -V wss://litentry-worker-1 -A 2011 -C /usr/local/bin/litentry-cli 2>&1"
         restart: "no"
 networks:
