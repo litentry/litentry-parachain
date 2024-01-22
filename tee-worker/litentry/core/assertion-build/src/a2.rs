@@ -21,14 +21,20 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
+use lc_data_providers::{
+	discord_litentry::DiscordLitentryClient, vec_to_string, DataProviderConfig,
+};
 
 const VC_A2_SUBJECT_DESCRIPTION: &str = "The user is a member of Litentry Discord. 
 Server link: https://discord.gg/phBSa3eMX9
 Guild ID: 807161594245152800.";
 const VC_A2_SUBJECT_TYPE: &str = "Litentry Discord Member";
 
-pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	guild_id: ParameterString,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("Assertion A2 build, who: {:?}", account_id_to_string(&req.who));
 
 	let mut discord_cnt: i32 = 0;
@@ -38,7 +44,7 @@ pub fn build(req: &AssertionBuildRequest, guild_id: ParameterString) -> Result<C
 		Error::RequestVCFailed(Assertion::A2(guild_id.clone()), ErrorDetail::ParseError)
 	})?;
 
-	let mut client = DiscordLitentryClient::new();
+	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			discord_cnt += 1;
@@ -80,17 +86,15 @@ mod tests {
 	use crate::{a2::build, AccountId, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
+	use lc_data_providers::DataProviderConfig;
 	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
 	use std::{format, vec, vec::Vec};
 
 	#[test]
 	fn build_a2_works() {
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_discord_litentry_url("http://localhost:19527".to_string());
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_discord_litentry_url("http://localhost:19527".to_string());
 		let guild_id_u: u64 = 919848390156767232;
 		let guild_id_vec: Vec<u8> = format!("{}", guild_id_u).as_bytes().to_vec();
 
@@ -113,7 +117,7 @@ mod tests {
 			req_ext_hash: Default::default(),
 		};
 
-		let _ = build(&req, guild_id);
+		let _ = build(&req, guild_id, &data_provider_config);
 		log::info!("build A2 done");
 	}
 }

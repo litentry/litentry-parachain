@@ -1,1 +1,1 @@
-packages: ["integration-tests", "stress"]
+packages: ["integration-tests", "stress", "worker"]

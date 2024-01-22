@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, hex_to_decimal, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
+use crate::{build_client, hex_to_decimal, DataProviderConfig, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -100,15 +100,11 @@ pub struct NoderealJsonrpcClient {
 }
 
 impl NoderealJsonrpcClient {
-	pub fn new(chain: NoderealChain) -> Self {
-		let api_key = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_key.clone();
-		let api_retry_delay = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_delay;
-		let api_retry_times = GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().nodereal_api_retry_times;
-		let api_url = GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.nodereal_api_chain_network_url
-			.clone();
+	pub fn new(chain: NoderealChain, data_provider_config: &DataProviderConfig) -> Self {
+		let api_key = data_provider_config.nodereal_api_key.clone();
+		let api_retry_delay = data_provider_config.nodereal_api_retry_delay;
+		let api_retry_times = data_provider_config.nodereal_api_retry_times;
+		let api_url = data_provider_config.nodereal_api_chain_network_url.clone();
 		let base_url = api_url.replace("{chain}", chain.to_string());
 
 		let mut headers = Headers::new();
@@ -415,23 +411,20 @@ mod tests {
 	use super::*;
 	use lc_mock_server::run;
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap() + "/nodereal_jsonrpc/";
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_nodereal_api_chain_network_url(url);
+
+		let mut config = DataProviderConfig::new();
+		config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".to_string());
+		config.set_nodereal_api_chain_network_url(url);
+		config
 	}
 
 	#[test]
 	fn does_get_nft_holdings_works() {
-		init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let config = init();
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
 		let param = GetNFTHoldingsParam {
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
 			token_type: "ERC721".into(),
@@ -449,8 +442,8 @@ mod tests {
 
 	#[test]
 	fn does_get_token_balance_721_works() {
-		init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let config = init();
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
 		let param = GetTokenBalance721Param {
 			token_address: "0x07D971C03553011a48E951a53F48632D37652Ba1".into(),
 			account_address: "0x49AD262C49C7aA708Cc2DF262eD53B64A17Dd5EE".into(),
@@ -462,8 +455,8 @@ mod tests {
 
 	#[test]
 	fn does_get_token_balance_20_works() {
-		init();
-		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth);
+		let config = init();
+		let mut client = NoderealJsonrpcClient::new(NoderealChain::Eth, &config);
 		let param = GetTokenBalance20Param {
 			contract_address: "0x76A797A59Ba2C17726896976B7B3747BfD1d220f".into(),
 			address: "0x85Be4e2ccc9c85BE8783798B6e8A101BDaC6467F".into(),

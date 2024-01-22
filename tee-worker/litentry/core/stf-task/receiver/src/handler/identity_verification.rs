@@ -20,7 +20,7 @@ use crate::{
 };
 use ita_sgx_runtime::Hash;
 use ita_stf::H256;
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
@@ -32,19 +32,24 @@ use log::*;
 use std::sync::Arc;
 
 pub(crate) struct IdentityVerificationHandler<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	ShieldingKeyRepository,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-> {
+> where
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
+{
 	pub(crate) req: Web2IdentityVerificationRequest,
-	pub(crate) context: Arc<StfTaskContext<K, A, S, H, O>>,
+	pub(crate) context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 }
 
-impl<K, A, S, H, O> TaskHandler for IdentityVerificationHandler<K, A, S, H, O>
+impl<ShieldingKeyRepository, A, S, H, O> TaskHandler
+	for IdentityVerificationHandler<ShieldingKeyRepository, A, S, H, O>
 where
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
@@ -55,7 +60,7 @@ where
 	type Result = ();
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
-		lc_identity_verification::verify(&self.req)
+		lc_identity_verification::verify(&self.req, &self.context.data_provider_config)
 	}
 
 	fn on_success(
