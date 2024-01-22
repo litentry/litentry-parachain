@@ -1922,7 +1922,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "lc-vc-task-sender",
  "litentry-primitives",
  "log",
  "pallet-balances",
@@ -2954,7 +2953,7 @@ dependencies = [
  "http_req",
  "itc-rest-client",
  "itp-rpc",
- "lazy_static",
+ "itp-utils",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -3070,11 +3069,9 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
- "lazy_static",
  "lc-assertion-build",
  "lc-credentials",
  "lc-data-providers",
- "lc-identity-verification",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
@@ -3084,9 +3081,7 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
- "thiserror",
  "threadpool",
- "url",
 ]
 
 [[package]]
@@ -3094,7 +3089,6 @@ name = "lc-vc-task-sender"
 version = "0.1.0"
 dependencies = [
  "futures 0.3.8",
- "itp-stf-primitives",
  "itp-types",
  "lazy_static",
  "lc-stf-task-sender",
@@ -3104,8 +3098,6 @@ dependencies = [
  "sgx_tstd",
  "sp-runtime",
  "sp-std",
- "thiserror",
- "url",
 ]
 
 [[package]]

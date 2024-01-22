@@ -4577,7 +4577,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "lc-vc-task-sender",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -4995,7 +4994,6 @@ dependencies = [
  "itp-settings",
  "itp-storage",
  "itp-types",
- "lc-data-providers",
  "log 0.4.20",
  "parity-scale-codec",
  "serde_json 1.0.103",
@@ -6201,7 +6199,7 @@ dependencies = [
  "itc-rest-client",
  "itp-rpc",
  "itp-stf-primitives",
- "lazy_static",
+ "itp-utils",
  "lc-mock-server",
  "litentry-primitives",
  "log 0.4.20",
@@ -6350,11 +6348,9 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
- "lazy_static",
  "lc-assertion-build",
  "lc-credentials",
  "lc-data-providers",
- "lc-identity-verification",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
@@ -6365,10 +6361,8 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "thiserror 1.0.44",
- "thiserror 1.0.9",
  "threadpool 1.8.0",
  "threadpool 1.8.1",
- "url 2.1.1",
 ]
 
 [[package]]
@@ -6377,7 +6371,6 @@ version = "0.1.0"
 dependencies = [
  "futures 0.3.28",
  "futures 0.3.8",
- "itp-stf-primitives",
  "itp-types",
  "lazy_static",
  "lc-stf-task-sender",
@@ -6387,10 +6380,6 @@ dependencies = [
  "sgx_tstd",
  "sp-runtime",
  "sp-std 5.0.0",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.4.0",
 ]
 
 [[package]]
@@ -7119,6 +7108,7 @@ dependencies = [
  "futures 0.3.28",
  "hex 0.4.3",
  "ipfs-api",
+ "ita-stf",
  "itc-parentchain",
  "itc-parentchain-test",
  "itc-rest-client",

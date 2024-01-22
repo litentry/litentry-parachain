@@ -22,19 +22,23 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_credentials::{generic_discord_role::GenericDiscordRoleAssertionUpdate, Credential};
-use lc_data_providers::{
-	discord_litentry::DiscordLitentryClient, DataProviderConfigReader, ReadDataProviderConfig,
-};
+use lc_data_providers::{discord_litentry::DiscordLitentryClient, DataProviderConfig};
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{ContestType, GenericDiscordRoleType, SoraQuizType};
+use std::string::ToString;
 
-pub fn build(req: &AssertionBuildRequest, rtype: GenericDiscordRoleType) -> Result<Credential> {
-	let role_id = get_generic_discord_role_id(&rtype).map_err(|error_detail| {
-		Error::RequestVCFailed(Assertion::GenericDiscordRole(rtype.clone()), error_detail)
-	})?;
+pub fn build(
+	req: &AssertionBuildRequest,
+	rtype: GenericDiscordRoleType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
+	let role_id =
+		get_generic_discord_role_id(&rtype, data_provider_config).map_err(|error_detail| {
+			Error::RequestVCFailed(Assertion::GenericDiscordRole(rtype.clone()), error_detail)
+		})?;
 
 	let mut has_role_value = false;
-	let mut client = DiscordLitentryClient::new();
+	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp =
@@ -69,18 +73,20 @@ pub fn build(req: &AssertionBuildRequest, rtype: GenericDiscordRoleType) -> Resu
 
 fn get_generic_discord_role_id(
 	rtype: &GenericDiscordRoleType,
+	data_provider_config: &DataProviderConfig,
 ) -> core::result::Result<String, ErrorDetail> {
-	let data_provider_config = DataProviderConfigReader::read()?;
 	match rtype {
 		GenericDiscordRoleType::Contest(ctype) => match ctype {
-			ContestType::Legend => Ok(data_provider_config.contest_legend_discord_role_id),
-			ContestType::Popularity => Ok(data_provider_config.contest_popularity_discord_role_id),
+			ContestType::Legend =>
+				Ok(data_provider_config.contest_legend_discord_role_id.to_string()),
+			ContestType::Popularity =>
+				Ok(data_provider_config.contest_popularity_discord_role_id.to_string()),
 			ContestType::Participant =>
-				Ok(data_provider_config.contest_participant_discord_role_id),
+				Ok(data_provider_config.contest_participant_discord_role_id.to_string()),
 		},
 		GenericDiscordRoleType::SoraQuiz(qtype) => match qtype {
-			SoraQuizType::Attendee => Ok(data_provider_config.sora_quiz_attendee_id),
-			SoraQuizType::Master => Ok(data_provider_config.sora_quiz_master_id),
+			SoraQuizType::Attendee => Ok(data_provider_config.sora_quiz_attendee_id.to_string()),
+			SoraQuizType::Master => Ok(data_provider_config.sora_quiz_master_id.to_string()),
 		},
 	}
 }
@@ -90,7 +96,7 @@ mod tests {
 	use crate::{generic_discord_role::build, AccountId, AssertionBuildRequest};
 	use itp_stf_primitives::types::ShardIdentifier;
 	use lc_credentials::assertion_logic::{AssertionLogic, Op};
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
+	use lc_data_providers::DataProviderConfig;
 	use lc_mock_server::run;
 	use litentry_primitives::{
 		Assertion, ContestType, GenericDiscordRoleType, Identity, IdentityNetworkTuple,
@@ -99,23 +105,20 @@ mod tests {
 	use log;
 	use std::{vec, vec::Vec};
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_discord_litentry_url(url);
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_contest_legend_discord_role_id("1034083718425493544".to_string());
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_sora_quiz_attendee_id("1034083718425493544".to_string());
+		let mut data_provider_conifg = DataProviderConfig::new();
+
+		data_provider_conifg.set_discord_litentry_url(url);
+		data_provider_conifg.set_contest_legend_discord_role_id("1034083718425493544".to_string());
+		data_provider_conifg.set_sora_quiz_attendee_id("1034083718425493544".to_string());
+		data_provider_conifg
 	}
 
 	#[test]
 	fn build_contest_role_works() {
-		init();
+		let data_provider_config = init();
 
 		let handler_vec: Vec<u8> = "againstwar".to_string().as_bytes().to_vec();
 
@@ -138,7 +141,11 @@ mod tests {
 			req_ext_hash: Default::default(),
 		};
 
-		match build(&req, GenericDiscordRoleType::Contest(ContestType::Legend)) {
+		match build(
+			&req,
+			GenericDiscordRoleType::Contest(ContestType::Legend),
+			&data_provider_config,
+		) {
 			Ok(credential) => {
 				log::info!("build GenericDiscordRole Contest done");
 				assert_eq!(
@@ -159,7 +166,7 @@ mod tests {
 
 	#[test]
 	fn build_sora_quiz_role_works() {
-		init();
+		let data_provider_config = init();
 
 		let handler_vec: Vec<u8> = "ericzhang.eth".to_string().as_bytes().to_vec();
 
@@ -182,7 +189,11 @@ mod tests {
 			req_ext_hash: Default::default(),
 		};
 
-		match build(&req, GenericDiscordRoleType::SoraQuiz(SoraQuizType::Attendee)) {
+		match build(
+			&req,
+			GenericDiscordRoleType::SoraQuiz(SoraQuizType::Attendee),
+			&data_provider_config,
+		) {
 			Ok(credential) => {
 				log::info!("build GenericDiscordRole SoraQuiz done");
 				assert_eq!(*(credential.credential_subject.values.first().unwrap()), false);

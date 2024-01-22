@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, vec_to_string, Error, HttpError, GLOBAL_DATA_PROVIDER_CONFIG};
+use crate::{build_client, vec_to_string, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -28,7 +28,6 @@ use itc_rest_client::{
 use log::*;
 use serde::{Deserialize, Serialize};
 use std::{
-	default::Default,
 	format,
 	string::{String, ToString},
 	vec,
@@ -54,25 +53,11 @@ pub struct DiscordLitentryClient {
 	client: RestClient<HttpClient<DefaultSend>>,
 }
 
-impl Default for DiscordLitentryClient {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl DiscordLitentryClient {
-	pub fn new() -> Self {
+	pub fn new(url: &str) -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		let client = build_client(
-			GLOBAL_DATA_PROVIDER_CONFIG
-				.write()
-				.unwrap()
-				.discord_litentry_url
-				.clone()
-				.as_str(),
-			headers,
-		);
+		let client = build_client(url, headers);
 		DiscordLitentryClient { client }
 	}
 
@@ -170,32 +155,35 @@ impl DiscordLitentryClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::DataProviderConfig;
 	use lc_mock_server::run;
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_discord_litentry_url(url);
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_discord_litentry_url(url);
+		data_provider_config
 	}
 
 	#[test]
 	fn check_join_work() {
-		init();
+		let data_provider_config = init();
 		let guild_id = "919848390156767232".as_bytes().to_vec();
 		let handler = "againstwar".as_bytes().to_vec();
-		let mut client = DiscordLitentryClient::new();
+		let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
 		let response = client.check_join(guild_id, handler);
 		assert!(response.is_ok(), "check join discord error: {:?}", response);
 	}
 
 	#[test]
 	fn check_id_hubber_work() {
-		init();
+		let data_provider_config = init();
 		let guild_id = "919848390156767232".as_bytes().to_vec();
 		let channel_id = "919848392035794945".as_bytes().to_vec();
 		let role_id = "1034083718425493544".as_bytes().to_vec();
 		let handler = "ericzhang.eth".as_bytes().to_vec();
-		let mut client = DiscordLitentryClient::new();
+		let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
 		let response = client.check_id_hubber(guild_id, channel_id, role_id, handler);
 		assert!(response.is_ok(), "check discord id hubber error: {:?}", response);
 	}

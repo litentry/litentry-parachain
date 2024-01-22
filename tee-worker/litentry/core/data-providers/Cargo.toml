@@ -15,7 +15,6 @@ thiserror = { version = "1.0.26", optional = true }
 url = { version = "2.0.0", optional = true }
 
 # no_std dependencies
-lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
@@ -23,6 +22,7 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # sgx dependencies
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
@@ -61,6 +61,7 @@ std = [
     "url",
     "itc-rest-client/std",
     "itp-rpc/std",
+    "itp-utils/std",
     "log/std",
     "serde/std",
     "serde_json/std",
