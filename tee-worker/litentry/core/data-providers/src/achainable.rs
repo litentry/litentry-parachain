@@ -1425,7 +1425,7 @@ mod tests {
 			AchainableAccountTotalTransactions, AchainableClient, AchainableTagAccount,
 			AchainableTagBalance, AchainableTagDeFi, AchainableTagDotsama, AchainableUtils,
 		},
-		DataProviderConfigReader, ReadDataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG,
+		DataProviderConfig,
 	};
 	use lc_mock_server::run;
 	use litentry_primitives::Web3Network;
@@ -1434,9 +1434,9 @@ mod tests {
 	fn new_achainable_client() -> AchainableClient {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
 
-		let data_provider_config = DataProviderConfigReader::read().unwrap();
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_achainable_url(url);
 		AchainableClient::new(&data_provider_config)
 	}
 

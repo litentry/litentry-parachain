@@ -15,8 +15,6 @@
         "$UntrustedHttpPort",
         "-p",
         "$CollatorWSPort",
-        "--running-mode",
-        "mock",
         "--enable-mock-server",
         "--parentchain-start-block",
         "0",

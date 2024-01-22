@@ -22,15 +22,20 @@ extern crate sgx_tstd as std;
 
 use crate::{oneblock::query_oneblock_status, *};
 use lc_credentials::oneblock::OneBlockAssertionUpdate;
+use lc_data_providers::DataProviderConfig;
 
-pub fn build(req: &AssertionBuildRequest, course_type: OneBlockCourseType) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	course_type: OneBlockCourseType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let value = query_oneblock_status(&course_type, addresses)?;
+	let value = query_oneblock_status(&course_type, addresses, data_provider_config)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_notion_assertion(&course_type, value);
