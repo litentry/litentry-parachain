@@ -71,6 +71,12 @@ struct TlsServer<StateAndKeyUnsealer> {
 	provisioning_payload: ProvisioningPayload,
 }
 
+impl<StateAndKeyUnsealer> Drop for TlsServer<StateAndKeyUnsealer> {
+	fn drop(&mut self) {
+		println!("> Dropping tlsserver");
+	}
+}
+
 impl<StateAndKeyUnsealer> TlsServer<StateAndKeyUnsealer>
 where
 	StateAndKeyUnsealer: UnsealStateAndKeys,

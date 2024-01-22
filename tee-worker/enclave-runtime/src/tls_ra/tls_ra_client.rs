@@ -59,6 +59,15 @@ where
 	shard: ShardIdentifier,
 }
 
+impl<StateAndKeySealer> Drop for TlsClient<'_, StateAndKeySealer>
+where
+	StateAndKeySealer: SealStateAndKeys,
+{
+	fn drop(&mut self) {
+		println!("> Dropping tlsclient");
+	}
+}
+
 impl<'a, StateAndKeySealer> TlsClient<'a, StateAndKeySealer>
 where
 	StateAndKeySealer: SealStateAndKeys,
