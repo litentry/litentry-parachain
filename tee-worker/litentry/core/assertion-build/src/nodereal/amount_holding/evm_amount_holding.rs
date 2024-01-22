@@ -33,16 +33,17 @@ use lc_data_providers::{
 	nodereal_jsonrpc::{
 		FungibleApiList, GetTokenBalance20Param, NoderealChain, NoderealJsonrpcClient,
 	},
-	Error as DataProviderError,
+	DataProviderConfig, Error as DataProviderError,
 };
 use litentry_primitives::EVMTokenType;
 
 fn get_holding_balance(
 	token_type: EVMTokenType,
 	addresses: Vec<(Web3Network, String)>,
+	data_provider_config: &DataProviderConfig,
 ) -> result::Result<f64, DataProviderError> {
-	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth);
-	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc);
+	let mut eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
+	let mut bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
 	let mut total_balance = 0_f64;
 
 	let decimals = token_type.get_decimals();
@@ -73,7 +74,11 @@ fn get_holding_balance(
 	Ok(total_balance / decimals)
 }
 
-pub fn build(req: &AssertionBuildRequest, token_type: EVMTokenType) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	token_type: EVMTokenType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("evm amount holding: {:?}", token_type);
 
 	let identities: Vec<(Web3Network, Vec<String>)> = transpose_identity(&req.identities);
@@ -85,14 +90,15 @@ pub fn build(req: &AssertionBuildRequest, token_type: EVMTokenType) -> Result<Cr
 		})
 		.collect::<Vec<(Web3Network, String)>>();
 
-	let result = get_holding_balance(token_type.clone(), addresses).map_err(|e| {
-		Error::RequestVCFailed(
-			Assertion::EVMAmountHolding(token_type.clone()),
-			ErrorDetail::DataProviderError(ErrorString::truncate_from(
-				format!("{e:?}").as_bytes().to_vec(),
-			)),
-		)
-	});
+	let result =
+		get_holding_balance(token_type.clone(), addresses, data_provider_config).map_err(|e| {
+			Error::RequestVCFailed(
+				Assertion::EVMAmountHolding(token_type.clone()),
+				ErrorDetail::DataProviderError(ErrorString::truncate_from(
+					format!("{e:?}").as_bytes().to_vec(),
+				)),
+			)
+		});
 
 	match result {
 		Ok(value) => match Credential::new(&req.who, &req.shard) {
@@ -118,7 +124,6 @@ mod tests {
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_utils::hex::decode_hex;
 	use lc_credentials::assertion_logic::{AssertionLogic, Op};
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use lc_mock_server::run;
 
 	fn create_ton_token_assertion_logic() -> Box<AssertionLogic> {
@@ -160,22 +165,19 @@ mod tests {
 		})
 	}
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap() + "/nodereal_jsonrpc/";
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_nodereal_api_chain_network_url(url);
+		let mut data_provider_config = DataProviderConfig::default();
+
+		data_provider_config.set_nodereal_api_key("d416f55179dbd0e45b1a8ed030e3".into());
+		data_provider_config.set_nodereal_api_chain_network_url(url);
+		data_provider_config
 	}
 
 	#[test]
 	fn build_evm_amount_holding_works() {
-		init();
+		let data_provider_config = init();
 		let identities: Vec<IdentityNetworkTuple> = vec![
 			(Identity::Evm([0; 20].into()), vec![Web3Network::Ethereum]),
 			(Identity::Evm([0; 20].into()), vec![Web3Network::Ethereum, Web3Network::Bsc]),
@@ -191,10 +193,11 @@ mod tests {
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
 			maybe_key: None,
+			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
 		};
 
-		match build(&req, EVMTokenType::Ton) {
+		match build(&req, EVMTokenType::Ton, &data_provider_config) {
 			Ok(credential) => {
 				log::info!("build EVMAmount holding done");
 				assert_eq!(
@@ -226,7 +229,7 @@ mod tests {
 
 	#[test]
 	fn build_evm_amount_holding_lt_min_works() {
-		init();
+		let data_provider_config = init();
 		let address = decode_hex("0x85be4e2ccc9c85be8783798b6e8a101bdac6467f".as_bytes().to_vec())
 			.unwrap()
 			.as_slice()
@@ -245,10 +248,11 @@ mod tests {
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
 			maybe_key: None,
+			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
 		};
 
-		match build(&req, EVMTokenType::Ton) {
+		match build(&req, EVMTokenType::Ton, &data_provider_config) {
 			Ok(credential) => {
 				log::info!("build EVMAmount holding done");
 				assert_eq!(
@@ -280,7 +284,7 @@ mod tests {
 
 	#[test]
 	fn build_evm_amount_holding_gte_max_works() {
-		init();
+		let data_provider_config = init();
 		let address = decode_hex("0x90d53026a47ac20609accc3f2ddc9fb9b29bb310".as_bytes().to_vec())
 			.unwrap()
 			.as_slice()
@@ -299,10 +303,11 @@ mod tests {
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
 			maybe_key: None,
+			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
 		};
 
-		match build(&req, EVMTokenType::Ton) {
+		match build(&req, EVMTokenType::Ton, &data_provider_config) {
 			Ok(credential) => {
 				log::info!("build EVMAmount holding done");
 				assert_eq!(

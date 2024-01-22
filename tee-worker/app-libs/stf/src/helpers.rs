@@ -113,10 +113,7 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
-pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
-	signer: &AccountId,
-	who: &AccountId,
-) -> bool {
+pub fn ensure_self<AccountId: PartialEq>(signer: &AccountId, who: &AccountId) -> bool {
 	signer == who
 }
 
