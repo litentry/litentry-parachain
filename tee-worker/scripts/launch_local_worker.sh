@@ -27,8 +27,6 @@ WORKER_NUM=${worker_num:-1}
 NODE_URL=${node_url:-"ws://127.0.0.1"}	# "ws://host.docker.internal"
 NODE_PORT=${node_port:-"9944"}			# "9946"
 
-RUNNING_MODE=${mode:-"mock"}
-
 # Fixed values:
 WORKER_ENDPOINT="localhost"
 MU_RA_PORT="3443"
@@ -130,7 +128,6 @@ for ((i = 0; i < ${WORKER_NUM}; i++)); do
 --untrusted-external-address ws://${WORKER_ENDPOINT} \
 --untrusted-http-port ${untrusted_http_port} \
 --untrusted-worker-port ${untrusted_worker_port} \
---running-mode ${RUNNING_MODE} ${MOCK_SERVER} \
 run --skip-ra ${FSUBCMD_DEV} ${FSUBCMD_REQ_STATE}"
 
 	echo "${worker_name} command: ${launch_command}"
