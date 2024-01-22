@@ -4577,7 +4577,6 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "lc-vc-task-sender",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -4995,7 +4994,6 @@ dependencies = [
  "itp-settings",
  "itp-storage",
  "itp-types",
- "lc-data-providers",
  "log 0.4.20",
  "parity-scale-codec",
  "serde_json 1.0.103",
@@ -6201,7 +6199,7 @@ dependencies = [
  "itc-rest-client",
  "itp-rpc",
  "itp-stf-primitives",
- "lazy_static",
+ "itp-utils",
  "lc-mock-server",
  "litentry-primitives",
  "log 0.4.20",
@@ -6340,7 +6338,6 @@ dependencies = [
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
- "itp-enclave-metrics",
  "itp-extrinsics-factory",
  "itp-node-api",
  "itp-ocall-api",
@@ -6351,11 +6348,9 @@ dependencies = [
  "itp-storage",
  "itp-top-pool-author",
  "itp-types",
- "lazy_static",
  "lc-assertion-build",
  "lc-credentials",
  "lc-data-providers",
- "lc-identity-verification",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
@@ -6365,11 +6360,8 @@ dependencies = [
  "parity-scale-codec",
  "sgx_tstd",
  "sp-core",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
  "threadpool 1.8.0",
  "threadpool 1.8.1",
- "url 2.1.1",
 ]
 
 [[package]]
@@ -6378,7 +6370,6 @@ version = "0.1.0"
 dependencies = [
  "futures 0.3.28",
  "futures 0.3.8",
- "itp-stf-primitives",
  "itp-types",
  "lazy_static",
  "lc-stf-task-sender",
@@ -6388,10 +6379,6 @@ dependencies = [
  "sgx_tstd",
  "sp-runtime",
  "sp-std 5.0.0",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.4.0",
 ]
 
 [[package]]
@@ -7120,6 +7107,7 @@ dependencies = [
  "futures 0.3.28",
  "hex 0.4.3",
  "ipfs-api",
+ "ita-stf",
  "itc-parentchain",
  "itc-parentchain-test",
  "itc-rest-client",
@@ -8195,11 +8183,11 @@ dependencies = [
 
 [[package]]
 name = "num_enum"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "683751d591e6d81200c39fb0d1032608b77724f34114db54f571ff1317b337c0"
+checksum = "02339744ee7253741199f897151b38e72257d13802d4ee837285cc2990a90845"
 dependencies = [
- "num_enum_derive 0.7.1",
+ "num_enum_derive 0.7.2",
 ]
 
 [[package]]
@@ -8216,9 +8204,9 @@ dependencies = [
 
 [[package]]
 name = "num_enum_derive"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c11e44798ad209ccdd91fc192f0526a369a01234f7373e1b141c96d7cee4f0e"
+checksum = "681030a937600a36906c185595136d26abfebb4aa9c65701cefcaf8578bb982b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8868,7 +8856,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.20",
- "num_enum 0.7.1",
+ "num_enum 0.7.2",
  "pallet-bridge",
  "pallet-bridge-transfer",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
@@ -8917,7 +8905,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.20",
- "num_enum 0.7.1",
+ "num_enum 0.7.2",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "pallet-parachain-staking",
  "parity-scale-codec",
@@ -10191,7 +10179,7 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "log 0.4.20",
- "num_enum 0.7.1",
+ "num_enum 0.7.2",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "precompile-utils-macro",
@@ -10207,7 +10195,7 @@ dependencies = [
 name = "precompile-utils-macro"
 version = "0.9.17"
 dependencies = [
- "num_enum 0.7.1",
+ "num_enum 0.7.2",
  "proc-macro2",
  "quote",
  "sha3",

@@ -22,6 +22,7 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_classofyear, *};
 use lc_credentials::Credential;
+use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::{AchainableClassOfYear, AchainableParams};
 use log::debug;
@@ -59,6 +60,7 @@ const VC_SUBJECT_TYPE: &str = "Account Class Of Year";
 pub fn build_class_of_year(
 	req: &AssertionBuildRequest,
 	param: AchainableClassOfYear,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_class_of_year, who: {:?}", account_id_to_string(&req.who));
 	let identities = transpose_identity(&req.identities);
@@ -68,7 +70,8 @@ pub fn build_class_of_year(
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::ClassOfYear(param);
-	let (ret, created_date) = request_achainable_classofyear(addresses, achainable_param.clone())?;
+	let (ret, created_date) =
+		request_achainable_classofyear(addresses, achainable_param.clone(), data_provider_config)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.add_subject_info(VC_SUBJECT_DESCRIPTION, VC_SUBJECT_TYPE);

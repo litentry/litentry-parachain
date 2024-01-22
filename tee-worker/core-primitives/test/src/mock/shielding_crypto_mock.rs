@@ -22,10 +22,6 @@ use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::ed25519::Pair as Ed25519Pair;
 use std::vec::Vec;
 
-/// Crypto key mock
-///
-/// mock implementation that does not encrypt
-/// encrypt/decrypt return the input as is
 #[derive(Clone)]
 pub struct ShieldingCryptoMock {
 	key: Rsa3072KeyPair,

@@ -33,7 +33,7 @@ pub enum StatePostProcessing {
 	Prune,
 }
 
-/// Allows signing of a trusted call or a credential with the enclave account that is registered in the STF.
+/// Allows signing of a trusted call or a raw bytes with the enclave account that is registered in the STF.
 ///
 /// The signing key is derived from the shielding key, which guarantees that all enclaves sign the same key.
 pub trait StfEnclaveSigning<TCS>
@@ -49,7 +49,7 @@ where
 	) -> Result<TCS>;
 
 	// litentry
-	fn sign_vc_with_self(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
+	fn sign(&self, payload: &[u8]) -> Result<(AccountId, Vec<u8>)>;
 }
 
 pub trait StfShardVaultQuery {

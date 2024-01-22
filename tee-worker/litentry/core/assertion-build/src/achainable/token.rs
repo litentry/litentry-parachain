@@ -21,8 +21,13 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
+use lc_data_providers::DataProviderConfig;
 
-pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Result<Credential> {
+pub fn build_token(
+	req: &AssertionBuildRequest,
+	param: AchainableToken,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("Assertion Achainable build_token, who: {:?}", account_id_to_string(&req.who));
 
 	let identities = transpose_identity(&req.identities);
@@ -32,7 +37,7 @@ pub fn build_token(req: &AssertionBuildRequest, param: AchainableToken) -> Resul
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::Token(param.clone());
-	let _flag = request_achainable(addresses, achainable_param)?;
+	let _flag = request_achainable(addresses, achainable_param, data_provider_config)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {
