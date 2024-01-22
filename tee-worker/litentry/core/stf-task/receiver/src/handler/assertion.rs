@@ -32,7 +32,6 @@ use litentry_primitives::{
 	VCMPError,
 };
 use log::*;
-use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
 
 pub(crate) struct AssertionHandler<
@@ -56,7 +55,7 @@ where
 	O: EnclaveOnChainOCallApi,
 {
 	type Error = VCMPError;
-	type Result = (H256, H256, Vec<u8>); // (vc_index, vc_hash, vc_byte_array)
+	type Result = Vec<u8>; // vc_byte_array
 
 	fn on_process(&self) -> Result<Self::Result, Self::Error> {
 		// create the initial credential
@@ -162,8 +161,12 @@ where
 					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
 				)
 			})?;
-		let payload = credential.issuer.mrenclave.clone();
-		let (enclave_account, sig) = signer.sign_vc_with_self(payload.as_bytes()).map_err(|e| {
+
+		let json_string = credential.to_json().map_err(|_| {
+			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
+		})?;
+		let payload = json_string.as_bytes();
+		let (enclave_account, sig) = signer.sign(payload).map_err(|e| {
 			VCMPError::RequestVCFailed(
 				self.req.assertion.clone(),
 				ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
@@ -179,22 +182,11 @@ where
 			)
 		})?;
 
-		let vc_index = credential
-			.get_index()
-			.map_err(|e| {
-				VCMPError::RequestVCFailed(
-					self.req.assertion.clone(),
-					ErrorDetail::StfError(ErrorString::truncate_from(format!("{e:?}").into())),
-				)
-			})?
-			.into();
 		let credential_str = credential.to_json().map_err(|_| {
 			VCMPError::RequestVCFailed(self.req.assertion.clone(), ErrorDetail::ParseError)
 		})?;
 		debug!("Credential: {}, length: {}", credential_str, credential_str.len());
-		let vc_hash = blake2_256(credential_str.as_bytes()).into();
-		debug!("VC hash: {:?}", vc_hash);
-		Ok((vc_index, vc_hash, credential_str.as_bytes().to_vec()))
+		Ok(credential_str.as_bytes().to_vec())
 	}
 
 	fn on_success(
@@ -205,14 +197,12 @@ where
 		debug!("Assertion build OK");
 		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
 		// using enclave's shielding key is encrypted in chunks
-		let (vc_index, vc_hash, vc_payload) = result;
+		let vc_payload = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
 				enclave_signer.into(),
 				self.req.who.clone(),
 				self.req.assertion.clone(),
-				vc_index,
-				vc_hash,
 				vc_payload,
 				self.req.maybe_key,
 				self.req.should_create_id_graph,

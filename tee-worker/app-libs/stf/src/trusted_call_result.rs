@@ -95,8 +95,6 @@ pub struct SetIdentityNetworksResult {
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct RequestVCResult {
-	pub vc_index: H256,
-	pub vc_hash: H256,
 	pub vc_payload: AesOutput,
 	// see comments in `lc-vc-task-receiver` why it's prefixed with `pre...`
 	// they should be referenced/used only when the client's local IDGraph is empty

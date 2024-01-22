@@ -20,8 +20,6 @@ use frame_support::{assert_noop, assert_ok};
 use sp_core::H256;
 
 use test_utils::ias::consts::{TEST8_MRENCLAVE, TEST8_SIGNER_PUB};
-const VC_HASH: H256 = H256::zero();
-const VC_INDEX: H256 = H256::zero();
 
 type SystemAccountId = <Test as frame_system::Config>::AccountId;
 const ALICE_PUBKEY: &[u8; 32] = &[1u8; 32];
@@ -89,18 +87,11 @@ fn vc_issued_works() {
 		let alice: Identity = test_utils::get_signer(ALICE_PUBKEY);
 		assert_ok!(VCManagement::vc_issued(
 			RuntimeOrigin::signed(teerex_signer),
-			alice.clone(),
+			alice,
 			Assertion::A1,
-			VC_INDEX,
-			VC_HASH,
 			H256::default(),
 			H256::default(),
 		));
-		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
-		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
-		assert_eq!(context.subject, alice);
-		assert_eq!(context.assertion, Assertion::A1);
-		assert_eq!(context.status, Status::Active);
 	});
 }
 
@@ -116,153 +107,9 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 				Assertion::A1,
 				H256::default(),
 				H256::default(),
-				H256::default(),
-				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
-	});
-}
-
-#[test]
-fn vc_issued_with_duplicated_index_fails() {
-	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(teerex_signer.clone()),
-			alice.clone().into(),
-			Assertion::A1,
-			VC_INDEX,
-			VC_HASH,
-			H256::default(),
-			H256::default(),
-		));
-		assert_noop!(
-			VCManagement::vc_issued(
-				RuntimeOrigin::signed(teerex_signer),
-				alice.into(),
-				Assertion::A1,
-				VC_INDEX,
-				VC_HASH,
-				H256::default(),
-				H256::default(),
-			),
-			Error::<Test>::VCAlreadyExists
-		);
-	});
-}
-
-#[test]
-fn disable_vc_works() {
-	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
-		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(teerex_signer),
-			bob.clone().into(),
-			Assertion::A1,
-			VC_INDEX,
-			VC_HASH,
-			H256::default(),
-			H256::default(),
-		));
-		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
-		assert_ok!(VCManagement::disable_vc(RuntimeOrigin::signed(bob), VC_INDEX));
-		// vc is not deleted
-		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
-		let context = VCManagement::vc_registry(VC_INDEX).unwrap();
-		assert_eq!(context.status, Status::Disabled);
-	});
-}
-
-#[test]
-fn disable_vc_with_non_existent_vc_event() {
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		assert_noop!(
-			VCManagement::disable_vc(RuntimeOrigin::signed(alice), VC_INDEX),
-			Error::<Test>::VCNotExist
-		);
-	});
-}
-
-#[test]
-fn disable_vc_with_other_subject_fails() {
-	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
-		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(teerex_signer),
-			bob.into(),
-			Assertion::A1,
-			VC_INDEX,
-			VC_HASH,
-			H256::default(),
-			H256::default(),
-		));
-		assert_noop!(
-			VCManagement::disable_vc(RuntimeOrigin::signed(alice), VC_HASH),
-			Error::<Test>::VCSubjectMismatch
-		);
-
-		assert_eq!(VCManagement::vc_registry(VC_INDEX).unwrap().status, Status::Active);
-	});
-}
-
-#[test]
-fn revoke_vc_works() {
-	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
-		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(teerex_signer),
-			bob.clone().into(),
-			Assertion::A1,
-			VC_INDEX,
-			VC_HASH,
-			H256::default(),
-			H256::default(),
-		));
-		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
-		assert_ok!(VCManagement::revoke_vc(RuntimeOrigin::signed(bob), VC_INDEX));
-		// vc is deleted
-		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
-	});
-}
-
-#[test]
-fn revokevc_with_non_existent_vc_fails() {
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		assert_noop!(
-			VCManagement::revoke_vc(RuntimeOrigin::signed(alice), VC_INDEX),
-			Error::<Test>::VCNotExist
-		);
-	});
-}
-
-#[test]
-fn revoke_vc_with_other_subject_fails() {
-	new_test_ext().execute_with(|| {
-		let teerex_signer: SystemAccountId = test_utils::get_signer(TEST8_SIGNER_PUB);
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
-		assert_ok!(VCManagement::vc_issued(
-			RuntimeOrigin::signed(teerex_signer),
-			bob.into(),
-			Assertion::A1,
-			VC_INDEX,
-			VC_HASH,
-			H256::default(),
-			H256::default(),
-		));
-		assert_noop!(
-			VCManagement::revoke_vc(RuntimeOrigin::signed(alice), VC_HASH),
-			Error::<Test>::VCSubjectMismatch
-		);
-		assert_eq!(VCManagement::vc_registry(VC_INDEX).unwrap().status, Status::Active);
 	});
 }
 
@@ -499,100 +346,5 @@ fn revoke_schema_with_unprivileged_origin_fails() {
 			VCManagement::revoke_schema(RuntimeOrigin::signed(bob), shard, 0),
 			Error::<Test>::RequireAdmin
 		);
-	});
-}
-
-#[test]
-fn manual_add_remove_vc_registry_item_works() {
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
-		// Can not remove non-existing vc
-		assert_noop!(
-			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(alice.clone()), VC_INDEX),
-			Error::<Test>::VCNotExist
-		);
-		// Unauthorized party can not add vc
-		assert_noop!(
-			VCManagement::add_vc_registry_item(
-				RuntimeOrigin::signed(bob.clone()),
-				VC_INDEX,
-				bob.clone().into(),
-				Assertion::A1,
-				VC_HASH
-			),
-			Error::<Test>::RequireAdmin
-		);
-		// Successfully add vc
-		assert_ok!(VCManagement::add_vc_registry_item(
-			RuntimeOrigin::signed(alice.clone()),
-			VC_INDEX,
-			alice.clone().into(),
-			Assertion::A1,
-			VC_HASH
-		));
-		// Check result
-		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
-		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
-			identity: alice.clone().into(),
-			assertion: Assertion::A1,
-			index: VC_INDEX,
-		}));
-		// Unauthorized party can not remove vc
-		assert_noop!(
-			VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(bob), VC_INDEX),
-			Error::<Test>::RequireAdmin
-		);
-		// Successfully remove vc
-		assert_ok!(VCManagement::remove_vc_registry_item(RuntimeOrigin::signed(alice), VC_INDEX));
-		// Check result and events
-		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
-		System::assert_last_event(RuntimeEvent::VCManagement(
-			crate::Event::VCRegistryItemRemoved { index: VC_INDEX },
-		));
-	});
-}
-
-#[test]
-fn manual_add_clear_vc_registry_item_works() {
-	new_test_ext().execute_with(|| {
-		let alice: SystemAccountId = test_utils::get_signer(ALICE_PUBKEY);
-		let bob: SystemAccountId = test_utils::get_signer(BOB_PUBKEY);
-		// Unauthorized party can not add vc
-		assert_noop!(
-			VCManagement::add_vc_registry_item(
-				RuntimeOrigin::signed(bob.clone()),
-				VC_INDEX,
-				bob.clone().into(),
-				Assertion::A1,
-				VC_HASH
-			),
-			Error::<Test>::RequireAdmin
-		);
-		// Successfully add vc
-		assert_ok!(VCManagement::add_vc_registry_item(
-			RuntimeOrigin::signed(alice.clone()),
-			VC_INDEX,
-			alice.clone().into(),
-			Assertion::A1,
-			VC_HASH
-		));
-		// Check result
-		assert!(VCManagement::vc_registry(VC_INDEX).is_some());
-		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryItemAdded {
-			identity: alice.clone().into(),
-			assertion: Assertion::A1,
-			index: VC_INDEX,
-		}));
-		// Unauthorized party can not clear vc
-		assert_noop!(
-			VCManagement::clear_vc_registry(RuntimeOrigin::signed(bob)),
-			Error::<Test>::RequireAdmin
-		);
-		// Successfully clear vc
-		assert_ok!(VCManagement::clear_vc_registry(RuntimeOrigin::signed(alice)));
-		// Check result and events
-		assert!(VCManagement::vc_registry(VC_INDEX).is_none());
-		System::assert_last_event(RuntimeEvent::VCManagement(crate::Event::VCRegistryCleared));
 	});
 }

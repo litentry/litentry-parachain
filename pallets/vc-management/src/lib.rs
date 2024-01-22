@@ -39,9 +39,6 @@ use sp_core::H256;
 use sp_std::vec::Vec;
 use teerex_primitives::ShardIdentifier;
 
-mod vc_context;
-pub use vc_context::*;
-
 mod schema;
 pub use schema::*;
 
@@ -73,12 +70,6 @@ pub mod pallet {
 		type ExtrinsicWhitelistOrigin: EnsureOrigin<Self::RuntimeOrigin, Success = Self::AccountId>;
 	}
 
-	// a map VCIndex -> VC context
-	// TODO: to be removed in P-350
-	#[pallet::storage]
-	#[pallet::getter(fn vc_registry)]
-	pub type VCRegistry<T: Config> = StorageMap<_, Blake2_128Concat, VCIndex, VCContext>;
-
 	// the admin account
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
@@ -87,7 +78,7 @@ pub mod pallet {
 	// delegatees who can request (and receive) VCs on users' behalf,
 	// some VCs can only be requested by delegatee accounts (e.g. A13)
 	// delegatees and admins are different:
-	// - admins are meant to manage the pallet state manually, e.g. schema, vcRegistry
+	// - admins are meant to manage the pallet state manually, e.g. schema
 	// - delegatees can request VCs for users, similar to `proxied account`
 	#[pallet::storage]
 	#[pallet::getter(fn delegatee)]
@@ -117,23 +108,12 @@ pub mod pallet {
 			shard: ShardIdentifier,
 			assertion: Assertion,
 		},
-		// a VC is disabled on chain
-		VCDisabled {
-			account: T::AccountId,
-			index: VCIndex,
-		},
-		// a VC is revoked on chain
-		VCRevoked {
-			account: T::AccountId,
-			index: VCIndex,
-		},
 		// event that should be triggered by TEECallOrigin
 		// a VC is just issued
 		// we have `id_graph_hash` field since vc request could create the IDGraph
 		VCIssued {
 			identity: Identity,
 			assertion: Assertion,
-			index: VCIndex,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		},
@@ -180,15 +160,6 @@ pub mod pallet {
 			detail: ErrorDetail,
 			req_ext_hash: H256,
 		},
-		VCRegistryItemAdded {
-			identity: Identity,
-			assertion: Assertion,
-			index: VCIndex,
-		},
-		VCRegistryItemRemoved {
-			index: VCIndex,
-		},
-		VCRegistryCleared,
 	}
 
 	#[pallet::error]
@@ -275,38 +246,6 @@ pub mod pallet {
 				ensure!(Delegatee::<T>::contains_key(&who), Error::<T>::UnauthorizedUser);
 			}
 			Self::deposit_event(Event::VCRequested { account: who, shard, assertion });
-			Ok(().into())
-		}
-
-		#[pallet::call_index(3)]
-		#[pallet::weight(<T as Config>::WeightInfo::disable_vc())]
-		pub fn disable_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			VCRegistry::<T>::try_mutate(index, |context| {
-				let mut c = context.take().ok_or(Error::<T>::VCNotExist)?;
-				ensure!(
-					Some(who.clone()).encode() == c.subject.to_account_id().encode(),
-					Error::<T>::VCSubjectMismatch
-				);
-				ensure!(c.status == Status::Active, Error::<T>::VCAlreadyDisabled);
-				c.status = Status::Disabled;
-				*context = Some(c);
-				Self::deposit_event(Event::VCDisabled { account: who, index });
-				Ok(().into())
-			})
-		}
-
-		#[pallet::call_index(4)]
-		#[pallet::weight(<T as Config>::WeightInfo::revoke_vc())]
-		pub fn revoke_vc(origin: OriginFor<T>, index: VCIndex) -> DispatchResultWithPostInfo {
-			let who = T::ExtrinsicWhitelistOrigin::ensure_origin(origin)?;
-			let context = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
-			ensure!(
-				Some(who.clone()).encode() == context.subject.to_account_id().encode(),
-				Error::<T>::VCSubjectMismatch
-			);
-			VCRegistry::<T>::remove(index);
-			Self::deposit_event(Event::VCRevoked { account: who, index });
 			Ok(().into())
 		}
 
@@ -401,51 +340,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(10)]
-		#[pallet::weight(<T as Config>::WeightInfo::add_vc_registry_item())]
-		pub fn add_vc_registry_item(
-			origin: OriginFor<T>,
-			index: VCIndex,
-			identity: Identity,
-			assertion: Assertion,
-			hash: H256,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
-			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(
-				index,
-				VCContext::new(identity.clone(), assertion.clone(), hash),
-			);
-			Self::deposit_event(Event::VCRegistryItemAdded { identity, assertion, index });
-			Ok(().into())
-		}
-
-		#[pallet::call_index(11)]
-		#[pallet::weight(<T as Config>::WeightInfo::remove_vc_registry_item())]
-		pub fn remove_vc_registry_item(
-			origin: OriginFor<T>,
-			index: VCIndex,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
-			let _ = VCRegistry::<T>::get(index).ok_or(Error::<T>::VCNotExist)?;
-			VCRegistry::<T>::remove(index);
-			Self::deposit_event(Event::VCRegistryItemRemoved { index });
-			Ok(().into())
-		}
-
-		#[pallet::call_index(12)]
-		#[pallet::weight(<T as Config>::WeightInfo::clear_vc_registry(u32::max_value()))]
-		pub fn clear_vc_registry(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
-			// If more than u32 max, the map itself is overflow, so no worry
-			let _ = VCRegistry::<T>::clear(u32::max_value(), None);
-			Self::deposit_event(Event::VCRegistryCleared);
-			Ok(Pays::No.into())
-		}
-
 		/// ---------------------------------------------------
 		/// The following extrinsics are supposed to be called by TEE only
 		/// ---------------------------------------------------
@@ -455,21 +349,13 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			identity: Identity,
 			assertion: Assertion,
-			index: H256,
-			hash: H256,
 			id_graph_hash: H256,
 			req_ext_hash: H256,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::TEECallOrigin::ensure_origin(origin)?;
-			ensure!(!VCRegistry::<T>::contains_key(index), Error::<T>::VCAlreadyExists);
-			VCRegistry::<T>::insert(
-				index,
-				VCContext::new(identity.clone(), assertion.clone(), hash),
-			);
 			Self::deposit_event(Event::VCIssued {
 				identity,
 				assertion,
-				index,
 				id_graph_hash,
 				req_ext_hash,
 			});

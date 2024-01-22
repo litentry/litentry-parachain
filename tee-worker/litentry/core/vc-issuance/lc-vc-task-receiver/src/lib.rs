@@ -288,8 +288,6 @@ where
 			call_index,
 			who.clone(),
 			assertion,
-			res.vc_index,
-			res.vc_hash,
 			id_graph_hash,
 			req_ext_hash,
 		));
@@ -297,8 +295,6 @@ where
 		let mutated_id_graph = if should_create_id_graph { id_graph } else { Default::default() };
 
 		let res = RequestVCResult {
-			vc_index: res.vc_index,
-			vc_hash: res.vc_hash,
 			vc_payload: aes_encrypt_default(&key, &res.vc_payload),
 			pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
 			pre_id_graph_hash: id_graph_hash,

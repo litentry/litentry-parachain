@@ -20,7 +20,6 @@ pub use crate::sgx_reexport_prelude::*;
 
 use codec::{Decode, Encode};
 use futures::channel::oneshot;
-use itp_types::H256;
 use lazy_static::lazy_static;
 use litentry_primitives::AesRequest;
 use log::*;
@@ -46,9 +45,7 @@ pub struct VCRequest {
 
 #[derive(Encode, Decode, Clone)]
 pub struct VCResponse {
-	pub vc_hash: H256,
 	pub vc_payload: Vec<u8>,
-	pub vc_index: H256,
 }
 
 pub type VcSender = MpscSender<VCRequest>;
