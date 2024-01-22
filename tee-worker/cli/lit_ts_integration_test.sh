@@ -40,7 +40,7 @@ CLIENT="${CLIENT_BIN} -p ${NPORT} -P ${WORKER1PORT} -u ${NODEURL} -U ${WORKER1UR
 
 function usage() {
     echo ""
-    echo "This is a script for tee-worker ts-test. Preparing to test: $1"
+    echo "This is a script for tee-worker integration ts tests. Pass test name as first argument"
     echo ""
 
 }

@@ -1,14 +1,21 @@
+import dotenv from 'dotenv';
 import { ChildProcess, spawn } from 'child_process';
 import * as readline from 'readline';
 import fs from 'fs';
 import * as path from 'path';
 import * as process from 'process';
-import { step, xstep } from 'mocha-steps';
+import { step } from 'mocha-steps';
 import WebSocketAsPromised from 'websocket-as-promised';
 import os from 'os';
-import { initWorkerConnection, sleep } from './common/utils';
 import { assert } from 'chai';
 import type { HexString } from '@polkadot/util/types';
+import * as base58 from 'micro-base58';
+import { u8aToHex } from '@polkadot/util';
+import Options from 'websocket-as-promised/types/options';
+import WebSocket from 'ws';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 type WorkerConfig = {
     name: string;
@@ -168,7 +175,7 @@ async function spawnWorkerJob(
             const errorStream = readline.createInterface(job.stderr);
             errorStream.on('line', (line: string) => {
                 console.warn(name, line);
-                if (line.includes('lock file: sidechain_db/LOCK: Resource temporarily unavailable')) {
+                if (line.includes('sidechain_db/LOCK: Resource temporarily unavailable')) {
                     reject(new SidechainDbLockUnavailable());
                 }
             });
@@ -178,7 +185,7 @@ async function spawnWorkerJob(
             outputStream.on('line', (line: string) => {
                 console.log(name, line);
 
-                const match = line.match(/^Successfully initialized shard (?<shard>0x[\w\d]{64}).*/);
+                const match = line.match(/^Successfully initialized shard "(?<shard>[\w].*).*"/);
                 if (match !== null) {
                     /**
                      * Assertions needed because regex contents aren't reflected in function typing;
@@ -188,7 +195,8 @@ async function spawnWorkerJob(
                      * as well as the corresponding named capturing groups. See
                      * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match
                      */
-                    shard = match.groups!.shard as HexString;
+                    const base58shard = match.groups!.shard;
+                    shard = u8aToHex(base58.decode(base58shard)) as HexString;
                     return;
                 }
 
@@ -389,8 +397,7 @@ describe('Resume worker', function () {
 
     let worker1State: WorkerState | undefined = undefined;
 
-    // #fixme #1524 multiworker not supported
-    xstep('Two workers & resume worker1', async function () {
+    step('Two workers & resume worker1', async function () {
         assert(worker0State);
 
         // first launch worker1
@@ -422,8 +429,7 @@ describe('Resume worker', function () {
         console.log('=========== worker1 produced blocks ==================');
     });
 
-    // #fixme #1524 multiworker not supported
-    xstep('Kill and resume both workers', async function () {
+    step('Kill and resume both workers', async function () {
         assert(worker0State);
         assert(worker1State);
 
@@ -474,3 +480,22 @@ describe('Resume worker', function () {
         }
     });
 });
+
+export async function initWorkerConnection(endpoint: string): Promise<WebSocketAsPromised> {
+    const wsp = new WebSocketAsPromised(endpoint, <Options>(<unknown>{
+        createWebSocket: (url: any) => new WebSocket(url),
+        extractMessageData: (event: any) => event,
+        packMessage: (data: any) => JSON.stringify(data),
+        unpackMessage: (data: string | ArrayBuffer | Blob) => JSON.parse(data.toString()),
+        attachRequestId: (data: any, requestId: string | number) => Object.assign({ id: requestId }, data),
+        extractRequestId: (data: any) => data && data.id, // read requestId from message `id` field
+    }));
+    await wsp.open();
+    return wsp;
+}
+
+export function sleep(secs: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, secs * 1000);
+    });
+}
