@@ -26,14 +26,15 @@ const TIMEOUT_MIN = 1000 * 60 * 3; // 1min
     console.log(`Connecting to parachain ${config.parachain_ws}`);
 
     timeout = global.setTimeout(async () => {
+        if (typeof unsub === 'function') unsub();
 
-      if (typeof unsub === 'function') unsub();
-
-      if (api) api.disconnect();
-      provider.on('disconnected', () => {
-          console.log(`\nno block production detected after ${TIMEOUT_MIN}min, you might want to check it manually. Quit now`);
-          process.exit(1);
-      });
+        if (api) api.disconnect();
+        provider.on('disconnected', () => {
+            console.log(
+                `\nno block production detected after ${TIMEOUT_MIN}min, you might want to check it manually. Quit now`
+            );
+            process.exit(1);
+        });
     }, TIMEOUT_MIN);
 
     api = await ApiPromise.create({
@@ -41,19 +42,19 @@ const TIMEOUT_MIN = 1000 * 60 * 3; // 1min
     });
 
     unsub = await api.rpc.chain.subscribeFinalizedHeads(async (head) => {
-      const blockNumber = head.number.toNumber();
-      console.log(`Parachain finalized block #${blockNumber} with hash ${head.hash}`);
-      count += 1;
+        const blockNumber = head.number.toNumber();
+        console.log(`Parachain finalized block #${blockNumber} with hash ${head.hash}`);
+        count += 1;
 
-      if (blockNumber >= 1 && count >= FINALIZED_BLOCKS_COUNT) {
-        unsub();
-        if (timeout) global.clearTimeout(timeout)
+        if (blockNumber >= 1 && count >= FINALIZED_BLOCKS_COUNT) {
+            unsub();
+            if (timeout) global.clearTimeout(timeout);
 
-        await api.disconnect();
-        provider.on('disconnected', () => {
-            console.log('Done.');
-            process.exit(0);
-        });
-      }
-    })
+            await api.disconnect();
+            provider.on('disconnected', () => {
+                console.log('Done.');
+                process.exit(0);
+            });
+        }
+    });
 })();

@@ -68,13 +68,28 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 						"0x85be4e2ccc9c85be8783798b6e8a101bdac6467f" => "0x174876E800",
 						// 3000
 						"0x90d53026a47ac20609accc3f2ddc9fb9b29bb310" => "0xBB8",
-						// 800.1
-						_ => "0x320.1",
+						// 50 * 10^18
+						"0x45cdb67696802b9d01ed156b883269dbdb9c6239" => "0x2b5e3af16b1880000",
+						// 400 * 10^18
+						"0x75438d34c9125839c8b08d21b7f3167281659e7c" => "0x15af1d78b58c400000",
+						// 2199 * 10^18
+						"0xba359c153ad11aa17c3122b05a4db8b46bb3191b" => "0x7735416132dbfc0000",
+						// 800
+						_ => "0x320",
 					};
 					let body = RpcResponse {
 						jsonrpc: "2.0".into(),
 						id: Id::Number(1),
 						result: serde_json::to_value(value).unwrap(),
+					};
+					Response::builder().body(serde_json::to_string(&body).unwrap())
+				},
+				"eth_getBalance" => {
+					let body = RpcResponse {
+						jsonrpc: "2.0".into(),
+						id: Id::Number(1),
+						// 1 * 10^18
+						result: serde_json::to_value("0xde0b6b3a7640000").unwrap(),
 					};
 					Response::builder().body(serde_json::to_string(&body).unwrap())
 				},
