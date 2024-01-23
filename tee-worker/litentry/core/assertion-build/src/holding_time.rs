@@ -84,7 +84,10 @@ pub fn build(
 	let q_min_balance = prepare_min_balance(&htype, &min_balance)?;
 	let accounts = prepare_accounts(&req.identities, &htype);
 
-	// TODO: handle empty `identities`
+	// Redundant check in principle, but better safe than sorry :)
+	if accounts.is_empty() {
+		return Err(emit_error(&htype, &min_balance, ErrorDetail::NoEligibleIdentity))
+	}
 
 	let holding_date = search_holding_date(accounts, &q_min_balance)
 		.map_err(|e| emit_error(&htype, &min_balance, e))?;
