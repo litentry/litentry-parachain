@@ -25,6 +25,7 @@ PARACHAIN_ALICE_BASEDIR="$PARACHAIN_BASEDIR/para-alice"
 # ------------------------------
 DISCARD=false
 WORKER_CONFIG="$CONFIG_DIR/config.json"
+WORKER_ENV="$CONFIG_DIR/worker_env"
 INTEL_KEY="$CONFIG_DIR/key_production.txt"
 INTEL_SPID="$CONFIG_DIR/spid_production.txt"
 CHAIN=rococo
@@ -125,7 +126,7 @@ function main {
   done
 
   # 1/ sanity checks
-  for f in "$WORKER_CONFIG" "$INTEL_KEY" "$INTEL_SPID"; do
+  for f in "$WORKER_CONFIG" "$WORKER_ENV" "$INTEL_KEY" "$INTEL_SPID"; do
     if [ ! -f "$f" ]; then
       echo "file not found: $f"
       exit 1
