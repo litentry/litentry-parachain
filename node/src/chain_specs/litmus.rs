@@ -237,7 +237,11 @@ fn generate_genesis(
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
-		teerex: TeerexConfig { allow_sgx_debug_mode: true, admin: None },
+		teerex: TeerexConfig {
+			allow_sgx_debug_mode: true,
+			admin: None,
+			skip_scheduled_enclave_check: true,
+		},
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
 	}
