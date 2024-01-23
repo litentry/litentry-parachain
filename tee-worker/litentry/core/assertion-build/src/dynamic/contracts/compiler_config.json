@@ -1,0 +1,21 @@
+
+{
+  "language": "Solidity",
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "": ["ast"],
+        "*": ["abi", "metadata", "devdoc", "userdoc", "storageLayout", "evm.legacyAssembly", "evm.bytecode", "evm.deployedBytecode", "evm.methodIdentifiers", "evm.gasEstimates", "evm.assembly"]
+      }
+    },
+    "libraries": {
+      "Identity.sol": {
+        "IdentityUtils": "0x78a3d3258f9353517c4df2e11b2a36924d97d744"
+      }
+    }
+  }
+}

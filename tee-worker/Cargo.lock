@@ -2633,7 +2633,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "767f43e9630cc36cf8ff2777cbb0121b055f0d1fd6eaaa13b46a1808f0d0e7e9"
 dependencies = [
  "auto_impl",
- "environmental 1.1.4",
  "ethereum 0.15.0",
  "evm-core 0.41.0",
  "evm-gasometer 0.41.0",
@@ -2733,7 +2732,6 @@ version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1dc0eb591abc5cd7b05bef6a036c2bb6c66ab6c5e0c5ce94bfe377ab670b1fd7"
 dependencies = [
- "environmental 1.1.4",
  "evm-core 0.41.0",
  "evm-runtime 0.41.0",
  "primitive-types",
@@ -2784,7 +2782,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84bbe09b64ae13a29514048c1bb6fda6374ac0b4f6a1f15a443348ab88ef42cd"
 dependencies = [
  "auto_impl",
- "environmental 1.1.4",
  "evm-core 0.41.0",
  "primitive-types",
  "sha3",
@@ -6242,6 +6239,7 @@ dependencies = [
  "ss58-registry",
  "thiserror 1.0.9",
  "url 2.1.1",
+ "url 2.4.0",
 ]
 
 [[package]]
