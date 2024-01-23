@@ -155,9 +155,9 @@ fn account_is_holding(
 ) -> QueryOutcome {
 	let holding = ParamsBasicTypeWithAmountHolding::new(
 		&account.network,
-		q_min_balance.to_owned(),
+		q_min_balance.to_string(),
 		date.to_string(),
-		account.token.to_owned(),
+		account.token.clone(),
 	);
 	return client.is_holder(account.address.as_str(), holding).map_err(|e| {
 		error!("Assertion HoldingTime request error: {:?}", e);
