@@ -448,7 +448,12 @@ mod tests {
 		let holding_date =
 			search_holding_date(&data_provider_config, accounts, &q_min_balance).unwrap();
 		assert!(holding_date.is_none());
+	}
 
+	#[test]
+	fn match_token_address_works() {
+		let htype = AmountHoldingTimeType::WBTC;
+		let network = Web3Network::Ethereum;
 		let ret = match_token_address(&htype, &network);
 		assert_eq!(ret, Some(WBTC_TOKEN_ADDRESS.into()));
 
