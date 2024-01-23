@@ -38,6 +38,7 @@ itp-utils = { path = "../../../../core-primitives/utils", default-features = fal
 
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 lc-assertion-build = { path = "../../assertion-build", default-features = false }
+lc-assertion-build-v2 = { path = "../../assertion-build-v2", default-features = false }
 lc-credentials = { path = "../../credentials", default-features = false }
 lc-data-providers = { path = "../../data-providers", default-features = false }
 lc-stf-task-receiver = { path = "../../stf-task/receiver", default-features = false }
@@ -60,6 +61,7 @@ sgx = [
     "sp-core/full_crypto",
     "litentry-primitives/sgx",
     "lc-assertion-build/sgx",
+    "lc-assertion-build-v2/sgx",
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
     "lc-stf-task-receiver/sgx",
@@ -79,6 +81,7 @@ std = [
     "sp-core/std",
     "litentry-primitives/std",
     "lc-assertion-build/std",
+    "lc-assertion-build-v2/std",
     "ita-sgx-runtime/std",
     "frame-support/std",
     "lc-credentials/std",

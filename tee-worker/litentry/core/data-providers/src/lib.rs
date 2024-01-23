@@ -481,28 +481,56 @@ impl ConvertParameterString for AchainableParams {
 	}
 }
 
-pub fn hex_to_decimal(hex_string: &str) -> f64 {
-	let parts: Vec<&str> = hex_string.split('.').collect();
-
-	let integer_part = u64::from_str_radix(parts[0], 16).unwrap_or_default();
-
-	if parts.len() > 1 {
-		let decimal_part = u64::from_str_radix(parts[1], 16).unwrap();
-		let decimal_str = format!("{}.{}", integer_part, decimal_part);
-		decimal_str.parse::<f64>().unwrap_or_default()
-	} else {
-		integer_part as f64
+pub fn convert_balance_hex_to_u128(result: serde_json::Value) -> Result<u128, Error> {
+	match result.as_str() {
+		Some(result) => match u128::from_str_radix(&result[2..], 16) {
+			Ok(balance) => Ok(balance),
+			Err(_) => Err(Error::RequestError(format!("Cannot parse result {:?} to u128", result))),
+		},
+		None => Err(Error::RequestError(format!("Cannot tansform result {:?} to &str", result))),
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::hex_to_decimal;
+	use super::*;
 
 	#[test]
-	fn hex_to_decimal_works() {
-		let hex_string = "0000000000000000000000000000000000000000000000000000000babf2cf8b";
-		let d = hex_to_decimal(hex_string);
-		assert_eq!(d, 50129457035.0);
+	fn should_return_correct_value_when_param_is_valid() {
+		assert_eq!(
+			convert_balance_hex_to_u128(serde_json::Value::String("0x0".into())).unwrap(),
+			0_u128
+		);
+
+		assert_eq!(
+			convert_balance_hex_to_u128(serde_json::Value::String("0x320".into())).unwrap(),
+			800_u128
+		);
+
+		assert_eq!(
+			convert_balance_hex_to_u128(serde_json::Value::String("0x2b5e3af16b1880000".into()))
+				.unwrap(),
+			50_000_000_000_000_000_000_u128
+		);
+	}
+
+	#[test]
+	fn shoud_return_error_when_param_is_not_a_str() {
+		match convert_balance_hex_to_u128(serde_json::Value::Bool(true)) {
+			Ok(_) => panic!("Expected an error, but got Ok"),
+			Err(err) => assert_eq!(
+				err.to_string(),
+				"Request error: Cannot tansform result Bool(true) to &str"
+			),
+		}
+	}
+
+	#[test]
+	fn shoud_return_error_when_param_is_not_a_hex_str() {
+		match convert_balance_hex_to_u128(serde_json::Value::String("qwexyz".into())) {
+			Ok(_) => panic!("Expected an error, but got Ok"),
+			Err(err) =>
+				assert_eq!(err.to_string(), "Request error: Cannot parse result \"qwexyz\" to u128"),
+		}
 	}
 }
