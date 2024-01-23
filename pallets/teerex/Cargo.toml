@@ -70,7 +70,5 @@ runtime-benchmarks = [
 ]
 # allow workers to register without remote attestation for dev purposes
 skip-ias-check = []
-# allow workers to register without checking the scheduled enclave, should only used in dev/tests
-skip-scheduled-enclave-check = []
 
 try-runtime = ["frame-support/try-runtime"]

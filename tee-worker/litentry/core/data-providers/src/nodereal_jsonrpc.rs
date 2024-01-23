@@ -17,7 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{build_client, hex_to_decimal, DataProviderConfig, Error, HttpError};
+use crate::{build_client, convert_balance_hex_to_u128, DataProviderConfig, Error, HttpError};
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -26,6 +26,7 @@ use itc_rest_client::{
 	RestPath, RestPost,
 };
 use itp_rpc::{Id, RpcRequest};
+use litentry_primitives::Web3Network;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -34,6 +35,28 @@ use std::{
 	thread, time, vec,
 	vec::Vec,
 };
+
+pub trait Web3NetworkNoderealJsonrpcClient {
+	fn create_nodereal_jsonrpc_client(
+		&self,
+		data_provider_config: &DataProviderConfig,
+	) -> Option<NoderealJsonrpcClient>;
+}
+
+impl Web3NetworkNoderealJsonrpcClient for Web3Network {
+	fn create_nodereal_jsonrpc_client(
+		&self,
+		data_provider_config: &DataProviderConfig,
+	) -> Option<NoderealJsonrpcClient> {
+		match self {
+			Web3Network::Bsc =>
+				Some(NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config)),
+			Web3Network::Ethereum =>
+				Some(NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config)),
+			_ => None,
+		}
+	}
+}
 
 // https://docs.nodereal.io/reference/getting-started-with-your-api
 pub enum NoderealChain {
@@ -219,7 +242,7 @@ pub trait NftApiList {
 		param: &GetNFTHoldingsParam,
 	) -> Result<GetNFTHoldingsResult, Error>;
 
-	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<usize, Error>;
+	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<u128, Error>;
 }
 
 // NFT API
@@ -251,7 +274,7 @@ impl NftApiList for NoderealJsonrpcClient {
 	}
 
 	// https://docs.nodereal.io/reference/nr_gettokenbalance721
-	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<usize, Error> {
+	fn get_token_balance_721(&mut self, param: &GetTokenBalance721Param) -> Result<u128, Error> {
 		let params: Vec<String> = vec![
 			param.token_address.clone(),
 			param.account_address.clone(),
@@ -269,13 +292,7 @@ impl NftApiList for NoderealJsonrpcClient {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_721, response: {:?}", resp);
-				match resp.result.as_str() {
-					Some(result) => Ok(usize::from_str_radix(&result[2..], 16).unwrap_or_default()),
-					None => Err(Error::RequestError(format!(
-						"Cannot tansform response result {:?} to &str",
-						resp.result
-					))),
-				}
+				convert_balance_hex_to_u128(resp.result)
 			},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -294,13 +311,13 @@ pub struct GetTokenBalance20Param {
 
 // Fungible Tokens API
 pub trait FungibleApiList {
-	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error>;
+	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<u128, Error>;
 	fn get_token_holdings(&mut self, address: &str) -> Result<RpcResponse, Error>;
 }
 
 impl FungibleApiList for NoderealJsonrpcClient {
 	// https://docs.nodereal.io/reference/nr_gettokenbalance20
-	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<f64, Error> {
+	fn get_token_balance_20(&mut self, param: &GetTokenBalance20Param) -> Result<u128, Error> {
 		let params: Vec<String> =
 			vec![param.contract_address.clone(), param.address.clone(), param.block_number.clone()];
 		debug!("get_token_balance_20: {:?}", param);
@@ -315,13 +332,7 @@ impl FungibleApiList for NoderealJsonrpcClient {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("get_token_balance_20, response: {:?}", resp);
-				match resp.result.as_str() {
-					Some(result) => Ok(hex_to_decimal(&result[2..])),
-					None => Err(Error::RequestError(format!(
-						"Cannot tansform response result {:?} to &str",
-						resp.result
-					))),
-				}
+				convert_balance_hex_to_u128(resp.result)
 			},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -343,11 +354,11 @@ impl FungibleApiList for NoderealJsonrpcClient {
 }
 
 pub trait EthBalance {
-	fn get_balance(&mut self, address: &str) -> Result<f64, Error>;
+	fn get_balance(&mut self, address: &str) -> Result<u128, Error>;
 }
 
 impl EthBalance for NoderealJsonrpcClient {
-	fn get_balance(&mut self, address: &str) -> Result<f64, Error> {
+	fn get_balance(&mut self, address: &str) -> Result<u128, Error> {
 		let params = vec![address.to_string(), "latest".to_string()];
 
 		let req_body = RpcRequest {
@@ -361,13 +372,7 @@ impl EthBalance for NoderealJsonrpcClient {
 			Ok(resp) => {
 				// result example: '0x', '0x8'
 				debug!("eth_getBalance, response: {:?}", resp);
-				match resp.result.as_str() {
-					Some(result) => Ok(hex_to_decimal(&result[2..])),
-					None => Err(Error::RequestError(format!(
-						"Cannot tansform response result {:?} to &str",
-						resp.result
-					))),
-				}
+				convert_balance_hex_to_u128(resp.result)
 			},
 			Err(e) => Err(Error::RequestError(format!("{:?}", e))),
 		}
@@ -394,7 +399,13 @@ impl TransactionCount for NoderealJsonrpcClient {
 				// result example: '0x', '0x8'
 				debug!("eth_getTransactionCount, response: {:?}", resp);
 				match resp.result.as_str() {
-					Some(result) => Ok(hex_to_decimal(&result[2..]) as u64),
+					Some(result) => match u64::from_str_radix(&result[2..], 16) {
+						Ok(balance) => Ok(balance),
+						Err(_) => Err(Error::RequestError(format!(
+							"Cannot parse result {:?} to u64",
+							result
+						))),
+					},
 					None => Err(Error::RequestError(format!(
 						"Cannot tansform response result {:?} to &str",
 						resp.result
@@ -463,6 +474,6 @@ mod tests {
 			block_number: "latest".into(),
 		};
 		let result = client.get_token_balance_20(&param).unwrap();
-		assert_eq!(result, 800.1);
+		assert_eq!(result, 800);
 	}
 }
