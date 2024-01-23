@@ -192,6 +192,13 @@ where
 				&self.req,
 				&self.context.data_provider_config,
 			),
+
+			Assertion::TokenHoldingAmount(token_type) =>
+				lc_assertion_build_v2::token_holding_amount::build(
+					&self.req,
+					token_type,
+					&self.context.data_provider_config,
+				),
 		}?;
 
 		// post-process the credential

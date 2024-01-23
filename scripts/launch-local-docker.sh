@@ -48,5 +48,6 @@ echo "Extending leasing period..."
 pnpm run upgrade-parathread 2>&1
 
 print_divider
+
 echo "Done."
 exit 0
