@@ -90,6 +90,7 @@ fn vc_issued_works() {
 			alice,
 			Assertion::A1,
 			H256::default(),
+			H256::default(),
 		));
 	});
 }
@@ -104,6 +105,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 				RuntimeOrigin::signed(bob),
 				alice.into(),
 				Assertion::A1,
+				H256::default(),
 				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin
