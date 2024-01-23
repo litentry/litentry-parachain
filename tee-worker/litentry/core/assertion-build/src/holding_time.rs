@@ -116,10 +116,10 @@ fn prepare_accounts(
 	identities: &Vec<IdentityNetworkTuple>,
 	htype: &AmountHoldingTimeType,
 ) -> Vec<Account> {
-	return transpose_identity(identities)
+	transpose_identity(identities)
 		.into_iter()
 		.flat_map(|(network, addresses)| -> Vec<Account> {
-			let token = match_token_address(&htype, &network);
+			let token = match_token_address(htype, &network);
 			addresses
 				.into_iter()
 				.map(move |address| Account { network, token: token.clone(), address })
@@ -135,24 +135,15 @@ fn prepare_accounts(
 type QueryOutcome = core::result::Result<bool, ErrorDetail>;
 
 fn is_positive(outcome: &QueryOutcome) -> bool {
-	match outcome {
-		Ok(true) => true,
-		_ => false,
-	}
+	matches!(outcome, Ok(true))
 }
 
 fn is_negative(outcome: &QueryOutcome) -> bool {
-	match outcome {
-		Ok(false) => true,
-		_ => false,
-	}
+	matches!(outcome, Ok(false))
 }
 
 fn is_inconclusive(outcome: &QueryOutcome) -> bool {
-	match outcome {
-		Err(_) => true,
-		_ => false,
-	}
+	matches!(outcome, Err(_))
 }
 
 // Check against the data provider whether a single account has been holding since the given date.
@@ -164,9 +155,9 @@ fn account_is_holding(
 ) -> QueryOutcome {
 	let holding = ParamsBasicTypeWithAmountHolding::new(
 		&account.network,
-		q_min_balance.clone(),
+		q_min_balance.to_owned(),
 		date.to_string(),
-		account.token.clone(),
+		account.token.to_owned(),
 	);
 	return client.is_holder(account.address.as_str(), holding).map_err(|e| {
 		error!("Assertion HoldingTime request error: {:?}", e);
@@ -185,7 +176,7 @@ fn holding_time_search_step(
 	// Check all remaining identities on the given date
 	let outcomes: Vec<QueryOutcome> = accounts
 		.iter()
-		.map(|account| account_is_holding(client, q_min_balance, &account, date))
+		.map(|account| account_is_holding(client, q_min_balance, account, date))
 		.collect();
 
 	// If any positive result is found:
@@ -214,11 +205,12 @@ fn holding_time_search_step(
 		Some(Err(e)) => Err(e),
 		_ => Ok(false),
 	};
-	return (outcome, accounts)
+
+	(outcome, accounts)
 }
 
 const ASSERTION_DATE_LEN: usize = 15;
-const ASSERTION_FROM_DATE: [&'static str; ASSERTION_DATE_LEN] = [
+const ASSERTION_FROM_DATE: [&str; ASSERTION_DATE_LEN] = [
 	"2017-01-01",
 	"2017-07-01",
 	"2018-01-01",
@@ -245,7 +237,7 @@ fn search_holding_date(
 	mut accounts: Vec<Account>,
 	q_min_balance: &String,
 ) -> core::result::Result<Option<&'static str>, ErrorDetail> {
-	let mut client = AchainableClient::new(&data_provider_config); // TODO: inject dependency; unit test
+	let mut client = AchainableClient::new(data_provider_config);
 
 	// Initialize the search by checking the latest date in the range;
 	// if the result is negative, there's nothing to search.
@@ -256,7 +248,7 @@ fn search_holding_date(
 				&mut client,
 				q_min_balance,
 				accounts,
-				&ASSERTION_FROM_DATE[last_index],
+				ASSERTION_FROM_DATE[last_index],
 			);
 			accounts = new_accounts;
 			outcome
@@ -273,7 +265,7 @@ fn search_holding_date(
 				&mut client,
 				q_min_balance,
 				accounts,
-				&ASSERTION_FROM_DATE[0],
+				ASSERTION_FROM_DATE[0],
 			);
 			accounts = new_accounts;
 			outcome
@@ -292,7 +284,7 @@ fn search_holding_date(
 				&mut client,
 				q_min_balance,
 				accounts,
-				&ASSERTION_FROM_DATE[0],
+				ASSERTION_FROM_DATE[0],
 			);
 			accounts = new_accounts;
 			outcome
@@ -304,7 +296,7 @@ fn search_holding_date(
 		}
 	}
 
-	return Ok(Some(ASSERTION_FROM_DATE[earliest_holding_index]))
+	Ok(Some(ASSERTION_FROM_DATE[earliest_holding_index]))
 }
 
 fn generate_vc(

@@ -25,7 +25,7 @@ use crate::{
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::{str, vec, vec::Vec};
+use sp_std::{vec, vec::Vec};
 
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
