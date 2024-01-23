@@ -24,8 +24,7 @@ use crate::*;
 use lc_credentials::achainable::amount_holding_time::AchainableAmountHoldingTimeUpdate;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
-	vec_to_string, DataProviderConfigReader, ReadDataProviderConfig, LIT_TOKEN_ADDRESS,
-	WBTC_TOKEN_ADDRESS,
+	vec_to_string, DataProviderConfig, LIT_TOKEN_ADDRESS, WBTC_TOKEN_ADDRESS,
 };
 use litentry_primitives::AmountHoldingTimeType;
 use std::string::ToString;
@@ -78,6 +77,7 @@ pub fn build(
 	req: &AssertionBuildRequest,
 	htype: AmountHoldingTimeType,
 	min_balance: ParameterString,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
@@ -89,7 +89,7 @@ pub fn build(
 		return Err(emit_error(&htype, &min_balance, ErrorDetail::NoEligibleIdentity))
 	}
 
-	let holding_date = search_holding_date(accounts, &q_min_balance)
+	let holding_date = search_holding_date(data_provider_config, accounts, &q_min_balance)
 		.map_err(|e| emit_error(&htype, &min_balance, e))?;
 
 	generate_vc(req, &htype, &q_min_balance, holding_date)
@@ -241,10 +241,10 @@ const ASSERTION_FROM_DATE: [&'static str; ASSERTION_DATE_LEN] = [
 // Search against the data provider for the holding time of the user's longest holding account.
 // Return the date if successful, `None` if none of the accounts is currently holding.
 fn search_holding_date(
+	data_provider_config: &DataProviderConfig,
 	mut accounts: Vec<Account>,
 	q_min_balance: &String,
 ) -> core::result::Result<Option<&'static str>, ErrorDetail> {
-	let data_provider_config = DataProviderConfigReader::read()?;
 	let mut client = AchainableClient::new(&data_provider_config); // TODO: inject dependency; unit test
 
 	// Initialize the search by checking the latest date in the range;
@@ -366,19 +366,20 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use lc_mock_server::run;
 	use litentry_primitives::{AmountHoldingTimeType, Web3Network};
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_achainable_url(url);
+		data_provider_config
 	}
 
 	#[test]
 	fn do_build_lit_works() {
-		init();
+		let data_provider_config = init();
 
 		let htype = AmountHoldingTimeType::LIT;
 		let network = Web3Network::Litentry;
@@ -390,13 +391,14 @@ mod tests {
 
 		let q_min_balance = "10".to_string();
 
-		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		let holding_date =
+			search_holding_date(&data_provider_config, accounts, &q_min_balance).unwrap();
 		assert!(holding_date.is_some());
 	}
 
 	#[test]
 	fn do_build_dot_works() {
-		init();
+		let data_provider_config = init();
 
 		let htype = AmountHoldingTimeType::DOT;
 		let network = Web3Network::Polkadot;
@@ -407,13 +409,14 @@ mod tests {
 		}];
 		let q_min_balance = "10".to_string();
 
-		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		let holding_date =
+			search_holding_date(&data_provider_config, accounts, &q_min_balance).unwrap();
 		assert!(holding_date.is_some());
 	}
 
 	#[test]
 	fn do_build_wbtc_works() {
-		init();
+		let data_provider_config = init();
 
 		let htype = AmountHoldingTimeType::WBTC;
 		let network = Web3Network::Ethereum;
@@ -431,13 +434,14 @@ mod tests {
 
 		let q_min_balance = "10".to_string();
 
-		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		let holding_date =
+			search_holding_date(&data_provider_config, accounts, &q_min_balance).unwrap();
 		assert!(holding_date.is_some());
 	}
 
 	#[test]
 	fn do_build_non_hold_works() {
-		init();
+		let data_provider_config = init();
 
 		let htype = AmountHoldingTimeType::LIT;
 		let network = Web3Network::Ethereum;
@@ -449,14 +453,10 @@ mod tests {
 
 		let q_min_balance = "10".to_string();
 
-		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		let holding_date =
+			search_holding_date(&data_provider_config, accounts, &q_min_balance).unwrap();
 		assert!(holding_date.is_none());
-	}
 
-	#[test]
-	fn match_token_address_works() {
-		let htype = AmountHoldingTimeType::WBTC;
-		let network = Web3Network::Ethereum;
 		let ret = match_token_address(&htype, &network);
 		assert_eq!(ret, Some(WBTC_TOKEN_ADDRESS.into()));
 

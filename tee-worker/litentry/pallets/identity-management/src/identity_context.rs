@@ -87,11 +87,11 @@ pub fn sort_id_graph<T: Config>(id_graph: &mut [(Identity, IdentityContext<T>)])
 // get the active identities in the `id_graph` whose web3networks match the `desired_web3networks`,
 // return a `Vec<(Identity, Vec<Web3Network>)` with retained web3networks
 pub fn get_eligible_identities<T: Config>(
-	id_graph: IDGraph<T>,
+	id_graph: &IDGraph<T>,
 	desired_web3networks: Vec<Web3Network>,
 ) -> Vec<IdentityNetworkTuple> {
 	id_graph
-		.into_iter()
+		.iter()
 		.filter_map(|item| {
 			if item.1.is_active() {
 				let mut networks = item.1.web3networks.to_vec();
@@ -104,7 +104,7 @@ pub fn get_eligible_identities<T: Config>(
 				if networks.is_empty() && item.0.is_web3() {
 					None
 				} else {
-					Some((item.0, networks))
+					Some((item.0.clone(), networks))
 				}
 			} else {
 				None

@@ -25,9 +25,13 @@ use crate::{
 	*,
 };
 use lc_credentials::achainable::{bab_holder::UpdateBABHolder, uniswap_user::UpdateUniswapUser};
-use lc_data_providers::achainable_names::AchainableNameBasic;
+use lc_data_providers::{achainable_names::AchainableNameBasic, DataProviderConfig};
 
-pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Result<Credential> {
+pub fn build_basic(
+	req: &AssertionBuildRequest,
+	param: AchainableBasic,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("Assertion Achainable building Basic");
 
 	let identities = transpose_identity(&req.identities);
@@ -52,11 +56,13 @@ pub fn build_basic(req: &AssertionBuildRequest, param: AchainableBasic) -> Resul
 	})?;
 	match basic_name {
 		AchainableNameBasic::UniswapV23User => {
-			let (v2_user, v3_user) = request_uniswap_v2_or_v3_user(addresses, achainable_param)?;
+			let (v2_user, v3_user) =
+				request_uniswap_v2_or_v3_user(addresses, achainable_param, data_provider_config)?;
 			credential.update_uniswap_user(v2_user, v3_user);
 		},
 		AchainableNameBasic::BABHolder => {
-			let is_bab_holder = request_achainable(addresses, achainable_param)?;
+			let is_bab_holder =
+				request_achainable(addresses, achainable_param, data_provider_config)?;
 			credential.update_bab_holder(is_bab_holder);
 		},
 	}

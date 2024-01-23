@@ -21,7 +21,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 extern crate sgx_tstd as std;
 
 use crate::*;
-use lc_data_providers::{discord_litentry::DiscordLitentryClient, vec_to_string};
+use lc_data_providers::{
+	discord_litentry::DiscordLitentryClient, vec_to_string, DataProviderConfig,
+};
 
 const VC_A3_SUBJECT_DESCRIPTION: &str =
 	"You have commented in Litentry Discord #🪂id-hubber channel. Channel link: https://discord.com/channels/807161594245152800/1093886939746291882";
@@ -32,6 +34,7 @@ pub fn build(
 	guild_id: ParameterString,
 	channel_id: ParameterString,
 	role_id: ParameterString,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("Assertion A3 build, who: {:?}", account_id_to_string(&req.who),);
 
@@ -56,7 +59,7 @@ pub fn build(
 		)
 	})?;
 
-	let mut client = DiscordLitentryClient::new();
+	let mut client = DiscordLitentryClient::new(&data_provider_config.discord_litentry_url);
 	for identity in &req.identities {
 		if let Identity::Discord(address) = &identity.0 {
 			let resp = client
@@ -106,17 +109,15 @@ mod tests {
 	use crate::{a3::build, AccountId, AssertionBuildRequest};
 	use frame_support::BoundedVec;
 	use itp_stf_primitives::types::ShardIdentifier;
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
+	use lc_data_providers::DataProviderConfig;
 	use litentry_primitives::{Assertion, Identity, IdentityNetworkTuple, IdentityString};
 	use log;
 	use std::{format, vec, vec::Vec};
 
 	#[test]
 	fn build_a3_works() {
-		GLOBAL_DATA_PROVIDER_CONFIG
-			.write()
-			.unwrap()
-			.set_discord_litentry_url("http://localhost:19527".to_string());
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_discord_litentry_url("http://localhost:19527".to_string());
 		let guild_id_u: u64 = 919848390156767232;
 		let channel_id_u: u64 = 919848392035794945;
 		let role_id_u: u64 = 1034083718425493544;
@@ -143,10 +144,11 @@ mod tests {
 			parachain_block_number: 0u32,
 			sidechain_block_number: 0u32,
 			maybe_key: None,
+			should_create_id_graph: false,
 			req_ext_hash: Default::default(),
 		};
 
-		let _ = build(&req, guild_id, channel_id, role_id);
+		let _ = build(&req, guild_id, channel_id, role_id, &data_provider_config);
 		log::info!("build A3 done");
 	}
 }

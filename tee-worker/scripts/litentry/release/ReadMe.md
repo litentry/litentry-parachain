@@ -45,7 +45,7 @@ Before starting the workers, please make sure the target parachain is already up
 
     The service will start up like this example:
     ```
-    RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug ./litentry-worker --clean-reset --ws-external --mu-ra-external-address localhost --mu-ra-port 3443 --node-port 9944 --node-url ws://127.0.0.1 --trusted-external-address wss://localhost --trusted-worker-port 2000 --untrusted-external-address ws://localhost --untrusted-http-port 4545 --untrusted-worker-port 3000 --running-mode dev --enable-mock-server run --skip-ra --dev
+    RUST_LOG=info,litentry_worker=debug,ws=warn,sp_io=error,substrate_api_client=warn,itc_parentchain_light_client=info,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=debug,ita_stf=debug,its_rpc_handler=warn,itc_rpc_client=warn,its_consensus_common=debug,its_state=warn,its_consensus_aura=warn,aura*=warn,its_consensus_slots=warn,itp_attestation_handler=debug,http_req=debug,lc_mock_server=warn,itc_rest_client=debug,lc_credentials=debug,lc_identity_verification=debug,lc_stf_task_receiver=debug,lc_stf_task_sender=debug,lc_data_providers=debug,itp_top_pool=debug,itc_parentchain_indirect_calls_executor=debug ./litentry-worker --clean-reset --ws-external --mu-ra-external-address localhost --mu-ra-port 3443 --node-port 9944 --node-url ws://127.0.0.1 --trusted-external-address wss://localhost --trusted-worker-port 2000 --untrusted-external-address ws://localhost --untrusted-http-port 4545 --untrusted-worker-port 3000 --enable-mock-server run --skip-ra --dev
     ```
     The first part is RUST_LOG info. In production env, most of them will be disabled. Or `RUST_LOG=info` is enough.
 
@@ -80,9 +80,6 @@ Before starting the workers, please make sure the target parachain is already up
 
         -u, --node-url <node-server>
                 Set the node server protocol and IP address [default: ws://127.0.0.1]
-
-            --running-mode <running-mode>
-                Litentry TEE service running mode <dev|staging|prod|mock> [default: dev]
 
         -T, --trusted-external-address <trusted-external-address>
                 Set the trusted worker address to be advertised on the parentchain. If no port is given, the same as in

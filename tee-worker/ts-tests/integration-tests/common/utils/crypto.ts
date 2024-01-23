@@ -7,7 +7,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { ethers } from 'ethers';
 import { blake2AsU8a } from '@polkadot/util-crypto';
 import bitcore from 'bitcore-lib';
-import { IntegrationTestContext } from 'common/common-types';
+import { IntegrationTestContext } from './../common-types';
 import { buildIdentityHelper } from './identity-helper';
 
 export type KeypairType = 'ed25519' | 'sr25519' | 'ecdsa' | 'ethereum' | 'bitcoin';

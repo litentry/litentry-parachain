@@ -177,7 +177,6 @@ fn pubkey_to_address(network: &Web3Network, pubkey: &str) -> String {
 		| Web3Network::Litmus
 		| Web3Network::LitentryRococo
 		| Web3Network::Khala
-		| Web3Network::SubstrateTestnet
 		| Web3Network::Ethereum
 		| Web3Network::Bsc => "".to_string(),
 	}

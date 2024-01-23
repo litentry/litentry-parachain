@@ -59,6 +59,9 @@ pub use generic_discord_role::*;
 mod evm_amount_holding;
 pub use evm_amount_holding::*;
 
+mod web3_token;
+pub use web3_token::*;
+
 /// Common types of parachains.
 mod types {
 	use sp_runtime::{
