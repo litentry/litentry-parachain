@@ -86,7 +86,7 @@ pub fn build(
 
 	// TODO: handle empty `identities`
 
-	let holding_date = holding_time_search(accounts, &q_min_balance)
+	let holding_date = search_holding_date(accounts, &q_min_balance)
 		.map_err(|e| emit_error(&htype, &min_balance, e))?;
 
 	generate_vc(req, &htype, &q_min_balance, holding_date)
@@ -173,7 +173,7 @@ fn account_is_holding(
 
 // Check against the data provider whether any of the given accounts has been holding since the given date.
 // If at least one positive outcome is found, the accounts that yielded a (conclusive) negative outcome are eliminated.
-fn holding_time_search_step<'r>(
+fn holding_time_search_step(
 	client: &mut AchainableClient,
 	q_min_balance: &String,
 	accounts: Vec<Account>,
@@ -187,9 +187,8 @@ fn holding_time_search_step<'r>(
 
 	// If any positive result is found:
 	//   - Discard all identities that yielded a _negative_ result
-	//     - KEEP the ones that yielded error; they may still be relevant!
+	//     - but KEEP the ones that yielded error; they may still be relevant!
 	//   - Return the remaining identities with a positive value to continue the search
-
 	if outcomes.iter().any(is_positive) {
 		let new_accounts = accounts
 			.into_iter()
@@ -238,7 +237,7 @@ const ASSERTION_FROM_DATE: [&'static str; ASSERTION_DATE_LEN] = [
 
 // Search against the data provider for the holding time of the user's longest holding account.
 // Return the date if successful, `None` if none of the accounts is currently holding.
-fn holding_time_search(
+fn search_holding_date(
 	mut accounts: Vec<Account>,
 	q_min_balance: &String,
 ) -> core::result::Result<Option<&'static str>, ErrorDetail> {
@@ -361,99 +360,105 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 	}
 }
 
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
-// 	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
-// 	use lc_mock_server::run;
-// 	use litentry_primitives::{AmountHoldingTimeType, Web3Network};
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
+	use lc_mock_server::run;
+	use litentry_primitives::{AmountHoldingTimeType, Web3Network};
 
-// 	fn init() {
-// 		let _ = env_logger::builder().is_test(true).try_init();
-// 		let url = run(0).unwrap();
-// 		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
-// 	}
+	fn init() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		let url = run(0).unwrap();
+		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
+	}
 
-// 	// TODO: fix test fixtures after code refactoring
+	#[test]
+	fn do_build_lit_works() {
+		init();
 
-// 	// #[test]
-// 	// fn do_build_lit_works() {
-// 	// 	init();
+		let htype = AmountHoldingTimeType::LIT;
+		let network = Web3Network::Litentry;
+		let accounts: Vec<Account> = vec![Account {
+			address: "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(),
+			network,
+			token: match_token_address(&htype, &network),
+		}];
 
-// 	// 	let identities: Vec<IdentityNetworkTuple> = vec![(
-// 	// 		Web3Network::Litentry,
-// 	// 		vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string()],
-// 	// 	)];
-// 	// 	let htype = AmountHoldingTimeType::LIT;
-// 	// 	let accounts = prepare_accounts(&identities, &htype);
+		let q_min_balance = "10".to_string();
 
-// 	// 	let q_min_balance = "10".to_string();
+		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		assert!(holding_date.is_some());
+	}
 
-// 	// 	let (holding_index) = holding_time_search(&accounts, &htype, &q_min_balance).unwrap();
-// 	// 	assert!(holding_index.is_some());
-// 	// }
+	#[test]
+	fn do_build_dot_works() {
+		init();
 
-// 	// #[test]
-// 	// fn do_build_dot_works() {
-// 	// 	init();
+		let htype = AmountHoldingTimeType::DOT;
+		let network = Web3Network::Polkadot;
+		let accounts = vec![Account {
+			address: "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C13".to_string(),
+			network,
+			token: match_token_address(&htype, &network),
+		}];
+		let q_min_balance = "10".to_string();
 
-// 	// 	let identities = vec![(
-// 	// 		Web3Network::Polkadot,
-// 	// 		vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C13".to_string()],
-// 	// 	)];
-// 	// 	let dot_type = AmountHoldingTimeType::DOT;
-// 	// 	let q_min_balance = "10".to_string();
+		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		assert!(holding_date.is_some());
+	}
 
-// 	// 	let (is_hold, _optimal_hold_index) =
-// 	// 		holding_time_search(identities, &dot_type, &q_min_balance).unwrap();
-// 	// 	assert!(is_hold);
-// 	// }
+	#[test]
+	fn do_build_wbtc_works() {
+		init();
 
-// 	// #[test]
-// 	// fn do_build_wbtc_works() {
-// 	// 	init();
+		let htype = AmountHoldingTimeType::WBTC;
+		let network = Web3Network::Ethereum;
+		let accounts = vec![
+			"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11",
+			"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12",
+		]
+		.iter()
+		.map(|address| Account {
+			address: address.to_string(),
+			network,
+			token: match_token_address(&htype, &network),
+		})
+		.collect();
 
-// 	// 	let identities = vec![(
-// 	// 		Web3Network::Ethereum,
-// 	// 		vec![
-// 	// 			"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C11".to_string(),
-// 	// 			"0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C12".to_string(),
-// 	// 		],
-// 	// 	)];
-// 	// 	let htype = AmountHoldingTimeType::WBTC;
-// 	// 	let q_min_balance = "10".to_string();
+		let q_min_balance = "10".to_string();
 
-// 	// 	let (is_hold, _optimal_hold_index) =
-// 	// 		holding_time_search(identities, &htype, &q_min_balance).unwrap();
-// 	// 	assert!(is_hold);
-// 	// }
+		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		assert!(holding_date.is_some());
+	}
 
-// 	// #[test]
-// 	// fn do_build_non_hold_works() {
-// 	// 	init();
+	#[test]
+	fn do_build_non_hold_works() {
+		init();
 
-// 	// 	let identities = vec![(
-// 	// 		Web3Network::Ethereum,
-// 	// 		vec!["0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C14".to_string()],
-// 	// 	)];
-// 	// 	let htype = AmountHoldingTimeType::LIT;
-// 	// 	let q_min_balance = "10".to_string();
+		let htype = AmountHoldingTimeType::LIT;
+		let network = Web3Network::Ethereum;
+		let accounts = vec![Account {
+			address: "0x1A64eD145A3CFAB3AA3D08721D520B4FD6Cf2C14".to_string(),
+			network,
+			token: match_token_address(&htype, &network),
+		}];
 
-// 	// 	let (is_hold, optimal_hold_index) =
-// 	// 		holding_time_search(identities, &htype, &q_min_balance).unwrap();
-// 	// 	assert!(!is_hold);
-// 	// 	assert_eq!(optimal_hold_index, 0);
-// 	// }
+		let q_min_balance = "10".to_string();
 
-// 	// #[test]
-// 	// fn match_token_address_works() {
-// 	// 	let htype = AmountHoldingTimeType::WBTC;
-// 	// 	let network = Web3Network::Ethereum;
-// 	// 	let ret = match_token_address(&htype, &network);
-// 	// 	assert_eq!(ret, Some(WBTC_TOKEN_ADDRESS.into()));
+		let holding_date = search_holding_date(accounts, &q_min_balance).unwrap();
+		assert!(holding_date.is_none());
+	}
 
-// 	// 	let htype = AmountHoldingTimeType::LIT;
-// 	// 	let ret = match_token_address(&htype, &network);
-// 	// 	assert_eq!(ret, Some(LIT_TOKEN_ADDRESS.into()));
-// 	// }
-// }
+	#[test]
+	fn match_token_address_works() {
+		let htype = AmountHoldingTimeType::WBTC;
+		let network = Web3Network::Ethereum;
+		let ret = match_token_address(&htype, &network);
+		assert_eq!(ret, Some(WBTC_TOKEN_ADDRESS.into()));
+
+		let htype = AmountHoldingTimeType::LIT;
+		let ret = match_token_address(&htype, &network);
+		assert_eq!(ret, Some(LIT_TOKEN_ADDRESS.into()));
+	}
+}
