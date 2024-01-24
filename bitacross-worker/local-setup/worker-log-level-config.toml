@@ -1,4 +1,4 @@
-[litentry-worker]
+[bitacross-worker]
 RUST_LOG="info"
 litentry_worker="debug"
 ws="warn"

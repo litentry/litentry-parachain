@@ -11,14 +11,14 @@ from .helpers import run_subprocess, setup_working_dir, mkdir_p
 class Worker:
     def __init__(
         self,
-        worker_bin: str = "./litentry-worker",
+        worker_bin: str = "./bitacross-worker",
         cwd: str = "./",
         source_dir: str = "./",
         std_err: Union[None, int, IO] = STDOUT,
         log_level_dic: {} = {},
     ):
         """
-        litentry-worker wrapper.
+        bitacross-worker wrapper.
 
         Args:
             worker_bin: Path to the worker bin relative to `cwd` or as absolute path.
@@ -195,7 +195,7 @@ class Worker:
 
         env = dict(
             os.environ,
-            RUST_LOG=self.log_level_dic['litentry-worker'],
+            RUST_LOG=self.log_level_dic['bitacross-worker'],
         )
 
         worker_cmd = self._assemble_cmd(flags=flags, subcommand_flags=subcommand_flags)

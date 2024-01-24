@@ -30,7 +30,7 @@ def setup_working_dir(source_dir: str, target_dir: str):
     """Setup the working dir such that the necessary files to run a worker are contained.
 
     Args:
-        source_dir: the directory containing the files the be copied. Usually this is the litentry-worker/bin dir.
+        source_dir: the directory containing the files the be copied. Usually this is the bitacross-worker/bin dir.
         target_dir: the working directory of the worker to be run.
     """
 
@@ -45,7 +45,7 @@ def setup_working_dir(source_dir: str, target_dir: str):
         else:
             print(f'{source} does not exist, this may be fine for DCAP or skip-ra, but you can\'t perform IAS remote attestation without this file.')
 
-    mandatory = ["enclave.signed.so", "litentry-worker"]
+    mandatory = ["enclave.signed.so", "bitacross-worker"]
 
     for file in mandatory:
         source = f"{source_dir}/{file}"
