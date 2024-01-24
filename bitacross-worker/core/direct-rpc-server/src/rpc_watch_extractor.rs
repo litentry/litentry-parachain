@@ -17,10 +17,10 @@
 
 use crate::{DetermineWatch, DirectRpcError, DirectRpcResult, RpcHash};
 use alloc::format;
+use ba_itp_utils::FromHexPrefixed;
 use codec::Decode;
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
-use ba_itp_utils::FromHexPrefixed;
 use std::marker::PhantomData;
 
 pub struct RpcWatchExtractor<Hash>

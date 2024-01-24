@@ -25,8 +25,8 @@ use codec::Decode;
 use itc_rpc_client::direct_client::DirectApi;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 
-use itp_types::{AccountId, DirectRequestStatus};
 use ba_itp_utils::FromHexPrefixed;
+use itp_types::{AccountId, DirectRequestStatus};
 use log::*;
 
 use sp_core::crypto::Ss58Codec;

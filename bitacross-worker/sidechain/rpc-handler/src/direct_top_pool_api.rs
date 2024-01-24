@@ -25,12 +25,12 @@ use rust_base58::base58::FromBase58;
 #[cfg(feature = "sgx")]
 use base58::FromBase58;
 
+use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use codec::{Decode, Encode};
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperationStatus};
-use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use litentry_primitives::AesRequest;
 use log::*;

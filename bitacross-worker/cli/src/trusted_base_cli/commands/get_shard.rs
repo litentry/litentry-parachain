@@ -25,8 +25,8 @@ use codec::{Decode, Encode};
 use itc_rpc_client::direct_client::DirectApi;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 
-use itp_types::DirectRequestStatus;
 use ba_itp_utils::FromHexPrefixed;
+use itp_types::DirectRequestStatus;
 use log::*;
 
 use sp_core::H256;

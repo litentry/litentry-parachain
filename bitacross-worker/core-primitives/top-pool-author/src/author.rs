@@ -25,6 +25,7 @@ use crate::{
 	top_filter::Filter,
 	traits::{AuthorApi, OnBlockImported},
 };
+use ba_itp_utils::hex::ToHexPrefixed;
 use codec::{Decode, Encode};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::EnclaveMetricsOCallApi;
@@ -42,7 +43,6 @@ use itp_top_pool::{
 	},
 };
 use itp_types::{BlockHash as SidechainBlockHash, DecryptableRequest, ShardIdentifier};
-use ba_itp_utils::hex::ToHexPrefixed;
 use jsonrpc_core::{
 	futures::future::{ready, TryFutureExt},
 	Error as RpcError,

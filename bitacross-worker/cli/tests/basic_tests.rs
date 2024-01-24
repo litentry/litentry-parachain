@@ -1,5 +1,5 @@
-use clap::Parser;
 use bitacross_cli::Cli;
+use clap::Parser;
 
 fn init() {
 	let _ = env_logger::try_init();

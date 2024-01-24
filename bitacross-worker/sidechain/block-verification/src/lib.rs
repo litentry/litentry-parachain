@@ -28,9 +28,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be disabled at the sa
 extern crate sgx_tstd as std;
 
 use crate::slot::{slot_author, slot_from_timestamp_and_duration};
+use ba_itp_utils::stringify::public_to_string;
 use error::Error as ConsensusError;
 use frame_support::ensure;
-use ba_itp_utils::stringify::public_to_string;
 use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, BlockData, Header as HeaderTrait,

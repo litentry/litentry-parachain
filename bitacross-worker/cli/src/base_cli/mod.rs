@@ -17,14 +17,9 @@
 
 use crate::{
 	base_cli::commands::{
-		balance::BalanceCommand,
-		faucet::FaucetCommand,
-		listen::ListenCommand,
-		litentry::{
-			set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
-		},
-		register_tcb_info::RegisterTcbInfoCommand,
-		shield_funds::ShieldFundsCommand,
+		balance::BalanceCommand, faucet::FaucetCommand, listen::ListenCommand,
+		litentry::set_heartbeat_timeout::SetHeartbeatTimeoutCommand,
+		register_tcb_info::RegisterTcbInfoCommand, shield_funds::ShieldFundsCommand,
 		transfer::TransferCommand,
 	},
 	command_utils::*,

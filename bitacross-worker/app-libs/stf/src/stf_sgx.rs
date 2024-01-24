@@ -18,6 +18,7 @@
 #[cfg(feature = "test")]
 use crate::test_genesis::test_genesis_setup;
 use crate::{helpers::enclave_signer_account, Stf, ENCLAVE_ACCOUNT_KEY};
+use ba_itp_utils::stringify::account_id_to_string;
 use codec::{Decode, Encode};
 use frame_support::traits::{OriginTrait, UnfilteredDispatchable};
 use ita_sgx_runtime::Executive;
@@ -39,7 +40,6 @@ use itp_types::{
 	parentchain::{AccountId, ParentchainCall, ParentchainId},
 	H256,
 };
-use ba_itp_utils::stringify::account_id_to_string;
 use log::*;
 use sp_runtime::traits::StaticLookup;
 use std::{fmt::Debug, format, prelude::v1::*, sync::Arc, vec};

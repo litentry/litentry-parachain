@@ -26,7 +26,7 @@ extern crate sgx_tstd as std;
 
 use codec::{Decode, Encode};
 use core::time::Duration;
-use std::{string::String};
+use std::string::String;
 use substrate_fixed::types::U32F32;
 
 // FIXME: Copied from ita-oracle because of cyclic deps. Should be removed after integritee-network/pallets#71

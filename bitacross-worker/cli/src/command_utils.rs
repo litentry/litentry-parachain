@@ -16,7 +16,7 @@
 */
 
 use crate::Cli;
-use base58::{FromBase58};
+use base58::FromBase58;
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_node_api::api_client::{ParentchainApi, TungsteniteRpcClient};
 use litentry_primitives::{ParentchainAccountId as AccountId, ParentchainSignature as Signature};

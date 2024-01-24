@@ -17,6 +17,7 @@
 */
 
 use crate::{rpc::worker_api_direct::public_api_rpc_handler, Hash};
+use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use codec::{Decode, Encode};
 use ita_stf::{Getter, PublicGetter};
 use itc_direct_rpc_server::{
@@ -32,7 +33,6 @@ use itp_stf_state_observer::mock::ObserveStateMock;
 use itp_test::mock::handle_state_mock::HandleStateMock;
 use itp_top_pool_author::mocks::AuthorApiMock;
 use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier};
-use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use litentry_primitives::{Address32, Identity};
 use std::{string::ToString, sync::Arc, vec::Vec};
 

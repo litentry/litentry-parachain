@@ -18,11 +18,11 @@
 use codec::Encode;
 pub use ita_sgx_runtime::{Balance, Index};
 
+use ba_itp_utils::hex::hex_encode;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::parentchain::{AccountId, FilterEvents, HandleParentchainEvents, ParentchainError};
-use ba_itp_utils::hex::hex_encode;
 use log::*;
 
 pub struct ParentchainEventHandler {}

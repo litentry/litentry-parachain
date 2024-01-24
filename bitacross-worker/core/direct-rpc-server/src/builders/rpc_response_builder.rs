@@ -16,8 +16,8 @@
 */
 
 use crate::builders::rpc_return_value_builder::RpcReturnValueBuilder;
-use itp_rpc::{Id, RpcResponse, RpcReturnValue};
 use ba_itp_utils::ToHexPrefixed;
+use itp_rpc::{Id, RpcResponse, RpcReturnValue};
 
 /// builder pattern for RpcResponse
 pub struct RpcResponseBuilder {

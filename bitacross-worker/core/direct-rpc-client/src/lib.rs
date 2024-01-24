@@ -228,9 +228,9 @@ impl RpcClient for DirectRpcClient {
 #[cfg(test)]
 mod tests {
 	use crate::DirectRpcClient;
+	use ba_itp_utils::ToHexPrefixed;
 	use itp_rpc::{Id, RpcResponse, RpcReturnValue};
 	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
-	use ba_itp_utils::ToHexPrefixed;
 	use tungstenite::Message;
 
 	#[test]

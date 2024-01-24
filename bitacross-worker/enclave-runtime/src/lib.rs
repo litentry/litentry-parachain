@@ -60,6 +60,7 @@ use crate::{
 		get_validator_accessor_from_integritee_solo_or_parachain, utf8_str_from_raw, DecodeRaw,
 	},
 };
+use ba_itp_utils::{if_production_or, write_slice_and_whitespace_pad};
 use codec::Decode;
 use core::ffi::c_int;
 use itc_parentchain::{
@@ -75,7 +76,6 @@ use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvide
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
-use ba_itp_utils::{if_production_or, write_slice_and_whitespace_pad};
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;

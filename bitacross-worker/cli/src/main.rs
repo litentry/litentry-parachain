@@ -15,8 +15,8 @@
 
 */
 
-use clap::Parser;
 use bitacross_cli::{commands, Cli};
+use clap::Parser;
 
 fn main() {
 	env_logger::init();

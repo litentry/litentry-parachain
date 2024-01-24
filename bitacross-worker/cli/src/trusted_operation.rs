@@ -21,6 +21,7 @@ use crate::{
 	trusted_cli::TrustedCli,
 	Cli,
 };
+use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use base58::{FromBase58, ToBase58};
 use codec::{Decode, Encode, Input};
 use ita_stf::{Getter, StfError, TrustedCallSigned};
@@ -30,10 +31,7 @@ use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_sgx_crypto::ShieldingCryptoEncrypt;
 use itp_stf_primitives::types::{ShardIdentifier, TrustedOperation};
 use itp_types::{BlockNumber, DirectRequestStatus, RsaRequest, TrustedOperationStatus};
-use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
-use litentry_primitives::{
-	ParentchainHash as Hash
-};
+use litentry_primitives::ParentchainHash as Hash;
 use log::*;
 use my_node_runtime::RuntimeEvent;
 use pallet_teerex::Event as TeerexEvent;

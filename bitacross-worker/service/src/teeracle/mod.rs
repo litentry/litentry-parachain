@@ -16,11 +16,11 @@
 */
 
 use crate::{error::ServiceResult, teeracle::schedule_periodic::schedule_periodic};
+use ba_itp_utils::hex::hex_encode;
 use codec::{Decode, Encode};
 use itp_enclave_api::teeracle_api::TeeracleApi;
 use itp_node_api::api_client::ParentchainApi;
 use itp_types::parentchain::Hash;
-use ba_itp_utils::hex::hex_encode;
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::time::Duration;

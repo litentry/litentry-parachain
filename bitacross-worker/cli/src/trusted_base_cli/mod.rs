@@ -17,12 +17,8 @@
 
 use crate::{
 	trusted_base_cli::commands::{
-		balance::BalanceCommand,
-		get_shard::GetShardCommand,
-		get_shard_vault::GetShardVaultCommand,
-		nonce::NonceCommand,
-		set_balance::SetBalanceCommand,
-		transfer::TransferCommand,
+		balance::BalanceCommand, get_shard::GetShardCommand, get_shard_vault::GetShardVaultCommand,
+		nonce::NonceCommand, set_balance::SetBalanceCommand, transfer::TransferCommand,
 		unshield_funds::UnshieldFundsCommand,
 	},
 	trusted_cli::TrustedCli,

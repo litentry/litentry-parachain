@@ -39,7 +39,7 @@ use itc_parentchain_indirect_calls_executor::{
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
-use itp_types::{CallIndex};
+use itp_types::CallIndex;
 use log::trace;
 use sp_std::vec::Vec;
 
@@ -60,7 +60,7 @@ pub enum IndirectCall {
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
-IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
+	IndirectDispatch<Executor, TrustedCallSigned> for IndirectCall
 {
 	type Args = ();
 	fn dispatch(&self, executor: &Executor, _args: Self::Args) -> Result<()> {
@@ -92,9 +92,9 @@ pub struct ShieldFundsAndInvokeFilter<ExtrinsicParser> {
 }
 
 impl<ExtrinsicParser, NodeMetadata: NodeMetadataTrait> FilterIntoDataFrom<NodeMetadata>
-for ShieldFundsAndInvokeFilter<ExtrinsicParser>
-	where
-		ExtrinsicParser: ParseExtrinsic,
+	for ShieldFundsAndInvokeFilter<ExtrinsicParser>
+where
+	ExtrinsicParser: ParseExtrinsic,
 {
 	type Output = IndirectCall;
 	type ParseParentchainMetadata = ExtrinsicParser;
@@ -131,7 +131,7 @@ for ShieldFundsAndInvokeFilter<ExtrinsicParser>
 			log::debug!("executing invoke call");
 			let args = decode_and_log_error::<InvokeArgs>(call_args)?;
 			Some(IndirectCall::Invoke(args))
-			// Litentry
+		// Litentry
 		} else if index == metadata.update_scheduled_enclave().ok()? {
 			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
 			Some(IndirectCall::UpdateScheduledEnclave(args))

@@ -32,6 +32,7 @@ use std::sync::SgxMutex as Mutex;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
+use ba_itp_utils::FromHexPrefixed;
 use itc_direct_rpc_client::{DirectRpcClientFactory, Response, RpcClient, RpcClientFactory};
 use itc_direct_rpc_server::{
 	response_channel::ResponseChannel, rpc_responder::RpcResponder, RpcConnectionRegistry,
@@ -40,7 +41,6 @@ use itc_direct_rpc_server::{
 use itp_rpc::{Id, RpcRequest};
 use itp_stf_primitives::types::Hash;
 use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
-use ba_itp_utils::FromHexPrefixed;
 use litentry_primitives::BroadcastedRequest;
 use std::{
 	collections::HashMap,
@@ -252,6 +252,7 @@ where
 pub mod tests {
 	use crate::{DirectRpcBroadcaster, PeerUpdater};
 	use alloc::sync::Arc;
+	use ba_itp_utils::ToHexPrefixed;
 	use itc_direct_rpc_client::{Response, RpcClient, RpcClientFactory};
 	use itc_direct_rpc_server::{
 		mocks::response_channel_mock::ResponseChannelMock,
@@ -260,7 +261,6 @@ pub mod tests {
 	use itp_rpc::{Id, RpcRequest, RpcReturnValue};
 	use itp_stf_primitives::types::Hash;
 	use itp_types::H256;
-	use ba_itp_utils::ToHexPrefixed;
 	use litentry_primitives::BroadcastedRequest;
 	use std::{error::Error, sync::mpsc::SyncSender};
 

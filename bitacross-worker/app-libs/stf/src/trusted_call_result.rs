@@ -42,5 +42,3 @@ impl StfExecutionResult for TrustedCallResult {
 		matches!(self, Self::Streamed)
 	}
 }
-
-

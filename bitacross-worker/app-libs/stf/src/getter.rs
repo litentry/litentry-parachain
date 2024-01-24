@@ -15,11 +15,11 @@
 
 */
 
+use ba_itp_utils::{if_production_or, stringify::account_id_to_string};
 use codec::{Decode, Encode};
-use ita_sgx_runtime::{System};
+use ita_sgx_runtime::System;
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::{traits::GetterAuthorization, types::KeyPair};
-use ba_itp_utils::{if_production_or, stringify::account_id_to_string};
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use sp_std::vec;
@@ -238,7 +238,7 @@ impl ExecuteGetter for TrustedGetterSigned {
 					Some(value.encode())
 				} else {
 					None
-				}
+				},
 		}
 	}
 
@@ -259,7 +259,7 @@ impl ExecuteGetter for PublicGetter {
 					Some(nonce.encode())
 				} else {
 					None
-				}
+				},
 		}
 	}
 

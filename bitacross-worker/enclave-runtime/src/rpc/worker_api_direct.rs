@@ -25,6 +25,7 @@ use crate::{
 		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
+use ba_itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
@@ -45,7 +46,6 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	DirectRequestStatus, Index, MrEnclave, RsaRequest, ShardIdentifier, SidechainBlockNumber, H256,
 };
-use ba_itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
 use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
