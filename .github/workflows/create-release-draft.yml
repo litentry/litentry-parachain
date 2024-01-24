@@ -181,34 +181,6 @@ jobs:
           WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
           echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
-      - name: Free up disk space
-        if: startsWith(runner.name, 'GitHub Actions')
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: true
-          swap-storage: false
-          large-packages: false
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          # use the docker driver to access the local image
-          # we don't need external caches or multi platforms here
-          # see https://docs.docker.com/build/drivers/
-          driver: docker
-
-      - name: Build local builder
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: tee-worker/build.Dockerfile
-          tags: local-builder:latest
-          target: builder
-          build-args: |
-            WORKER_MODE_ARG=sidechain
-            ADDITIONAL_FEATURES_ARG=
-            IMAGE_FOR_RELEASE=true
-
       - name: Build worker
         uses: docker/build-push-action@v5
         with:
@@ -216,6 +188,9 @@ jobs:
           file: tee-worker/build.Dockerfile
           tags: litentry/litentry-worker:${{ env.WORKER_DOCKER_TAG }}
           target: deployed-worker
+          build-args: |
+            WORKER_MODE_ARG=sidechain
+            IMAGE_FOR_RELEASE=true
 
       - name: Build cli
         uses: docker/build-push-action@v5
