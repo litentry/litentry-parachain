@@ -645,12 +645,12 @@ jobs:
       - name: Save docker images
         run: docker save litentry/bitacross-worker:latest litentry/bitacross-cli:latest | gzip > bitacross-tee.tar.gz
 
-      - name: Upload docker images
-        uses: actions/upload-artifact@v3
-        with:
-          name: bitacross-tee
-          path: bitacross-tee.tar.gz
-          if-no-files-found: error
+#      - name: Upload docker images
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: bitacross-tee
+#          path: bitacross-tee.tar.gz
+#          if-no-files-found: error
 
       - name: Fail early
         if: failure()
