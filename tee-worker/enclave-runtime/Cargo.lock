@@ -2918,6 +2918,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-assertion-build-v2"
+version = "0.1.0"
+dependencies = [
+ "itc-rest-client",
+ "itp-ocall-api",
+ "itp-stf-primitives",
+ "itp-types",
+ "itp-utils",
+ "lc-assertion-build",
+ "lc-common",
+ "lc-credentials-v2",
+ "lc-service",
+ "lc-stf-task-sender",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-common"
+version = "0.1.0"
+dependencies = [
+ "litentry-primitives",
+ "sgx_tstd",
+]
+
+[[package]]
 name = "lc-credentials"
 version = "0.1.0"
 dependencies = [
@@ -2940,6 +2969,23 @@ dependencies = [
  "serde_json 1.0.60 (git+https://github.com/mesalock-linux/serde-json-sgx?tag=sgx_1.1.3)",
  "sgx_tstd",
  "sp-core",
+ "thiserror",
+]
+
+[[package]]
+name = "lc-credentials-v2"
+version = "0.1.0"
+dependencies = [
+ "itp-stf-primitives",
+ "itp-time-utils",
+ "itp-types",
+ "itp-utils",
+ "lc-common",
+ "lc-credentials",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
  "thiserror",
 ]
 
@@ -2999,6 +3045,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-service"
+version = "0.1.0"
+dependencies = [
+ "itp-stf-primitives",
+ "itp-time-utils",
+ "itp-types",
+ "itp-utils",
+ "lc-common",
+ "lc-data-providers",
+ "litentry-primitives",
+ "log",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "thiserror",
+]
+
+[[package]]
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
@@ -3018,6 +3081,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-assertion-build",
+ "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
  "lc-identity-verification",
@@ -3070,6 +3134,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-assertion-build",
+ "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
  "lc-stf-task-receiver",
