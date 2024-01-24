@@ -1,0 +1,69 @@
+[package]
+name = "bitacross-cli"
+version = "0.0.1"
+authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
+edition = "2021"
+
+[dependencies]
+array-bytes = { version = "6.0.0" }
+base58 = "0.2"
+chrono = "*"
+clap = { version = "=4.1.0", features = ["derive"] }
+codec = { version = "3.0.0", package = "parity-scale-codec", features = ["derive"] }
+env_logger = "0.9"
+hdrhistogram = "7.5.0"
+hex = "0.4.2"
+log = "0.4"
+rand = "0.8.5"
+rayon = "1.5.1"
+regex = "1.9.5"
+reqwest = { version = "0.11", features = ["blocking", "json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
+thiserror = "1.0"
+urlencoding = "2.1.3"
+
+# scs / integritee
+pallet-evm = { optional = true, git = "https://github.com/integritee-network/frontier.git", branch = "bar/polkadot-v0.9.42" }
+# `default-features = false` to remove the jsonrpsee dependency.
+substrate-api-client = { default-features = false, features = ["std", "sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
+substrate-client-keystore = { git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
+
+# substrate dependencies
+pallet-balances = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-application-crypto = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-keyring = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-keystore = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+
+# local dependencies
+ba-itp-utils = { path = "../core-primitives/utils" }
+ita-stf = { path = "../app-libs/stf" }
+itc-rpc-client = { path = "../core/rpc-client" }
+itp-node-api = { path = "../core-primitives/node-api" }
+itp-rpc = { path = "../core-primitives/rpc" }
+itp-sgx-crypto = { path = "../core-primitives/sgx/crypto" }
+itp-stf-primitives = { path = "../core-primitives/stf-primitives" }
+itp-time-utils = { path = "../core-primitives/time-utils" }
+itp-types = { path = "../core-primitives/types" }
+
+# litentry
+frame-metadata = "15.0.0"
+ita-sgx-runtime = { path = "../app-libs/sgx-runtime" }
+litentry-primitives = { path = "../litentry/primitives" }
+my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
+pallet-teerex = { path = "../../pallets/teerex", default-features = false }
+scale-value = "0.6.0"
+sp-core-hashing = "6.0.0"
+
+[features]
+default = []
+evm = ["ita-stf/evm_std", "pallet-evm"]
+teeracle = []
+sidechain = []
+offchain-worker = []
+production = []
+# dcap feature flag is not used in this crate, but for easier build purposes only it present here as well
+dcap = []

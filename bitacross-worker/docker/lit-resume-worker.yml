@@ -1,0 +1,22 @@
+services:
+    lit-resume-worker:
+        image: litentry/bitacross-worker:latest
+        container_name: bitacross-worker
+        volumes:
+            - ../ts-tests:/ts-tests
+            - ../client-api:/client-api
+            - ../cli:/usr/local/worker-cli
+        build:
+            context: ..
+            dockerfile: build.Dockerfile
+            target: deployed-worker
+        depends_on:
+            litentry-node:
+                condition: service_healthy
+        networks:
+            - litentry-test-network
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_worker_test.sh test-resuming-worker 2>&1' "
+        restart: "no"
+networks:
+    litentry-test-network:
+        driver: bridge
