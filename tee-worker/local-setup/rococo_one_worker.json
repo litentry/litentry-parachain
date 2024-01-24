@@ -17,8 +17,6 @@
         "wss://rpc.rococo-parachain.litentry.io",
         "-p",
         "443",
-        "--running-mode",
-        "mock",
         "--parentchain-start-block",
         "3299860"
       ],

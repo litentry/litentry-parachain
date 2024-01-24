@@ -25,17 +25,17 @@ const BNB_DOMAIN_HOLDING_AMOUNT_INFOS: (&str, &str) =
 // [x-y)
 pub const BNB_DOMAIN_HOLDING_AMOUNT_RANGE: [usize; 8] = [0, 1, 5, 10, 20, 50, 100, 200];
 
-pub struct BnbDomainHodingAmount {
+pub struct BnbDomainHoldingAmount {
 	pub amount: usize,
 }
 
-impl BnbDomainHodingAmount {
+impl BnbDomainHoldingAmount {
 	pub fn new(amount: usize) -> Self {
 		Self { amount }
 	}
 }
 
-impl RangeCredentialDetail for BnbDomainHodingAmount {
+impl RangeCredentialDetail for BnbDomainHoldingAmount {
 	fn get_info(&self) -> (&'static str, &'static str) {
 		BNB_DOMAIN_HOLDING_AMOUNT_INFOS
 	}
@@ -49,7 +49,7 @@ impl RangeCredentialDetail for BnbDomainHodingAmount {
 	}
 
 	fn get_breakdown(&self) -> &'static str {
-		"$bnb_domain_hoding_amount"
+		"$bnb_domain_holding_amount"
 	}
 }
 
@@ -59,7 +59,7 @@ pub trait UpdateBnbDomainHoldingAmountCredential {
 
 impl UpdateBnbDomainHoldingAmountCredential for Credential {
 	fn update_bnb_holding_amount(&mut self, amount: usize) {
-		let bnb_amount = BnbDomainHodingAmount::new(amount);
+		let bnb_amount = BnbDomainHoldingAmount::new(amount);
 		let items = bnb_amount.get_assertion_items(amount);
 		let mut assertion = AssertionLogic::new_and();
 		for item in items {
