@@ -311,7 +311,8 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-    container: "litentry/litentry-bitacross-dev:latest"
+#    todo: we might want to change this image in the future
+    container: "litentry/litentry-tee-dev:latest"
     steps:
       - uses: actions/checkout@v4
 
@@ -320,7 +321,7 @@ jobs:
           sudo apt-get update && \
           sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
 
-      - name: Tee-worker clippy
+      - name: bitacross-worker clippy
         working-directory: ./bitacross-worker
         run: |
           echo "::group::cargo clippy all"
@@ -446,17 +447,6 @@ jobs:
             worker-cache-${{ env.REF_VERSION }}-
             worker-cache-
 
-      - name: Cache bitacross-worker-cache
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        uses: actions/cache@v3
-        with:
-          path: |
-            worker-cache
-          key: worker-cache-${{ env.REF_VERSION }}-${{ hashFiles('bitacross-worker/**/Cargo.lock', 'bitacross-worker/**/Cargo.toml') }}
-          restore-keys: |
-            bitacross-worker-cache-${{ env.REF_VERSION }}-
-            bitacross-worker-cache-            
-
       - name: Create cache folder if not exist
         if: needs.set-condition.outputs.rebuild_tee == 'true'
         run: |
@@ -470,21 +460,6 @@ jobs:
           echo "::group::Show disk usage"
           df -h .
           echo "::endgroup::"
-
-      - name: Create bitacross-worker cache folder if not exist
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        run: |
-          for i in 'git/db' 'registry/cache' 'registry/index' 'sccache'; do
-            [ ! -d "bitacross-worker-cache/$i" ] && mkdir -p "bitacross-worker-cache/$i" || true
-            echo "hello" > bitacross-worker-cache/$i/nix
-          done
-          echo "::group::List bitacross-worker-cache size"
-          du -sh bitacross-worker-cache/*
-          echo "::endgroup::"
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"          
-
       # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
       # https://github.com/moby/buildkit/issues/1512
       # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
@@ -574,84 +549,6 @@ jobs:
           name: litentry-tee
           path: litentry-tee.tar.gz
           if-no-files-found: error
-
-      - name: Build local bitacross-worker builder
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: bitacross-worker/build.Dockerfile
-          tags: local-builder:latest
-          target: builder
-          build-args: |
-            WORKER_MODE_ARG=sidechain
-            ADDITIONAL_FEATURES_ARG=
-
-      - name: Copy bitacross-worker caches from the built image
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        run: |
-          echo "::group::Show disk usage"
-          df -h .
-          echo "::endgroup::"
-          echo "::group::docker images"
-          docker images --all
-          echo "::endgroup::"
-          echo "::group::copy cache out"
-          for i in 'git/db' 'registry/cache' 'registry/index'; do
-            b="${i%/*}"
-            rm -rf bitacross-worker-cache/$i
-            docker cp "$(docker create --rm local-builder:latest):/opt/rust/$i" bitacross-worker-cache/$b
-          done
-          rm -rf bitacross-worker-cache/sccache
-          docker cp "$(docker create --rm local-builder:latest):/opt/rust/sccache" bitacross-worker-cache
-          du -sh bitacross-worker-cache/*
-          echo "::endgroup::"
-          echo "::group::df -h ."
-          df -h .
-          echo "::endgroup::"
-
-      - name: Build bitacross-worker
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: bitacross-worker/build.Dockerfile
-          tags: litentry/bitacross-worker:latest
-          target: deployed-worker
-
-      - name: Build cli
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: bitacross-worker/build.Dockerfile
-          tags: litentry/bitacross-cli:latest
-          target: deployed-client
-
-      - name: Pull and tag bitacross-worker and cli image optionally
-        if: needs.set-condition.outputs.rebuild_bitacross == 'false'
-        run: |
-          docker pull litentry/bitacross-worker:latest
-          docker pull litentry/bitacross-cli:latest
-
-      - run: docker images --all
-
-      - name: Test enclave
-        if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-        # cargo test is not supported in the enclave
-        # see https://github.com/apache/incubator-teaclave-sgx-sdk/issues/232
-        run: docker run litentry/bitacross-worker:latest test --all
-
-      - name: Save docker images
-        run: docker save litentry/bitacross-worker:latest litentry/bitacross-cli:latest | gzip > bitacross-tee.tar.gz
-
-#      - name: Upload docker images
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: bitacross-tee
-#          path: bitacross-tee.tar.gz
-#          if-no-files-found: error
-
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3

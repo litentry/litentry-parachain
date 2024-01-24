@@ -18,6 +18,7 @@
 
 ### Builder Stage
 ##################################################
+# todo: we might need to change this image in future
 FROM litentry/litentry-tee-dev:latest AS builder
 LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 
@@ -49,7 +50,7 @@ ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
 ARG FINGERPRINT=none
 
-WORKDIR $HOME/tee-worker
+WORKDIR $HOME/bitacross-worker
 COPY . $HOME
 
 RUN \
@@ -81,8 +82,8 @@ ARG LOG_DIR=/usr/local/log
 ENV SCRIPT_DIR ${SCRIPT_DIR}
 ENV LOG_DIR ${LOG_DIR}
 
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/bitacross-cli /usr/local/bin
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/bin/bitacross-cli /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/cli/*.sh /usr/local/worker-cli/
 
 RUN chmod +x /usr/local/bin/bitacross-cli ${SCRIPT_DIR}/*.sh
 RUN mkdir ${LOG_DIR}
@@ -100,8 +101,8 @@ LABEL maintainer="Trust Computing GmbH <info@litentry.com>"
 WORKDIR /usr/local/bin
 
 COPY --from=local-builder:latest /opt/sgxsdk /opt/sgxsdk
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/bin/* /usr/local/bin
-COPY --from=local-builder:latest /home/ubuntu/tee-worker/cli/*.sh /usr/local/worker-cli/
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/bin/* /usr/local/bin
+COPY --from=local-builder:latest /home/ubuntu/bitacross-worker/cli/*.sh /usr/local/worker-cli/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libsgx* /lib/x86_64-linux-gnu/
 COPY --from=local-builder:latest /lib/x86_64-linux-gnu/libdcap* /lib/x86_64-linux-gnu/
 
