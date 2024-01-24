@@ -131,6 +131,36 @@ pub mod pallet {
 			Self::finalize_block(shard_id, confirmation, &sender, sender_index);
 			Ok(().into())
 		}
+
+		/// Only meant for staging or dev environment
+		/// Used to manually set the storage item WorkerForShard
+		#[pallet::call_index(1)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn override_set_worker_for_shard(
+			origin: OriginFor<T>,
+			shard_id: ShardIdentifier,
+			block_number: u64,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<WorkerForShard<T>>::insert(shard_id, block_number);
+			Ok(().into())
+		}
+
+		/// Only meant for staging or dev environment
+		/// Used to manually set the storage item LatestSidechainBlockConfirmation
+		#[pallet::call_index(2)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal))]
+		pub fn override_set_latest_block_confirmations(
+			origin: OriginFor<T>,
+			shard_id: ShardIdentifier,
+			block_confirmation: SidechainBlockConfirmation,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+
+			<LatestSidechainBlockConfirmation<T>>::insert(shard_id, block_confirmation);
+			Ok(().into())
+		}
 	}
 
 	#[pallet::error]
