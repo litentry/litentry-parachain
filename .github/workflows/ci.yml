@@ -170,10 +170,21 @@ jobs:
           cargo fmt --all -- --check
           taplo fmt --check
 
-      - name: Enclave-runtime fmt check
+      - name: Tee-worker enclave-runtime fmt check
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
+
+      - name: bitacross-worker fmt check
+        working-directory: ./bitacross-worker
+        run: |
+          cargo fmt --all -- --check
+          taplo fmt --check
+
+      - name: bitacross-worker enclave-runtime fmt check
+        working-directory: ./bitacross-worker/enclave-runtime
+        run: |
+          cargo fmt --all -- --check          
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
