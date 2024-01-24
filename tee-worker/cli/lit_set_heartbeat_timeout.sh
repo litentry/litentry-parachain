@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2020-2023 Trust Computing GmbH.
+# Copyright 2020-2024 Trust Computing GmbH.
 
 while getopts ":p:A:B:u:W:V:C:" opt; do
     case $opt in
