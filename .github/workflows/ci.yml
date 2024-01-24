@@ -625,8 +625,6 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
           - test_name: lit-test-stress-script
-          # disabled due to P-208
-          # - test_name: lit-resume-worker
     steps:
       - uses: actions/checkout@v4
 
@@ -709,6 +707,7 @@ jobs:
           - test_name: lit-ii-batch-test-multiworker
           - test_name: lit-ii-identity-multiworker-test
           - test_name: lit-ii-vc-multiworker-test
+          - test_name: lit-resume-worker
     steps:
       - uses: actions/checkout@v4
 

@@ -142,7 +142,7 @@ impl<TCS: PartialEq + Encode + Debug> StfEnclaveSigning<TCS> for StfEnclaveSigne
 		Ok(trusted_call.sign(&KeyPair::Ed25519(Box::new(self.signer)), 1, &self.mr_enclave, shard))
 	}
 
-	fn sign_vc_with_self(&self, _payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
+	fn sign(&self, _payload: &[u8]) -> Result<(AccountId, Vec<u8>)> {
 		Ok((self.signer.public().into(), [0u8; 32].to_vec()))
 	}
 }

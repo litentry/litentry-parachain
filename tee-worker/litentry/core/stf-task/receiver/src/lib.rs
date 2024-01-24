@@ -47,19 +47,22 @@ use ita_sgx_runtime::Hash;
 use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation};
 use itp_enclave_metrics::EnclaveMetric;
 use itp_ocall_api::{EnclaveMetricsOCallApi, EnclaveOnChainOCallApi};
-use itp_sgx_crypto::{ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
+use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoEncrypt};
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{RsaRequest, ShardIdentifier, H256};
+use lc_data_providers::DataProviderConfig;
 use lc_stf_task_sender::{stf_task_sender, RequestType};
-use log::{debug, error, info};
+use log::*;
 use std::{
 	boxed::Box,
 	format,
 	string::{String, ToString},
-	sync::Arc,
+	sync::{mpsc::channel, Arc},
+	thread,
+	time::Instant,
 };
 use threadpool::ThreadPool;
 
@@ -83,43 +86,57 @@ pub enum Error {
 
 #[allow(dead_code)]
 pub struct StfTaskContext<
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+	ShieldingKeyRepository,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
-> {
-	pub shielding_key: K,
+> where
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
+{
+	pub shielding_key: Arc<ShieldingKeyRepository>,
 	author_api: Arc<A>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
+	pub data_provider_config: Arc<DataProviderConfig>,
 }
 
 impl<
-		K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
+		ShieldingKeyRepository,
 		A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-	> StfTaskContext<K, A, S, H, O>
+	> StfTaskContext<ShieldingKeyRepository, A, S, H, O>
 where
+	ShieldingKeyRepository: AccessKey,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	H::StateT: SgxExternalitiesTrait,
 {
 	pub fn new(
-		shielding_key: K,
+		shielding_key: Arc<ShieldingKeyRepository>,
 		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
+		data_provider_config: Arc<DataProviderConfig>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api }
+		Self {
+			shielding_key,
+			author_api,
+			enclave_signer,
+			state_handler,
+			ocall_api,
+			data_provider_config,
+		}
 	}
 
-	fn submit_trusted_call(
+	pub fn submit_trusted_call(
 		&self,
 		shard: &ShardIdentifier,
-		old_top_hash: &H256,
+		maybe_old_top_hash: Option<H256>,
 		trusted_call: &TrustedCall,
 	) -> Result<(), Error> {
 		let signed_trusted_call = self
@@ -154,10 +171,16 @@ where
 
 		// swap the hash in the rpc connection registry to make sure furthre RPC responses go to
 		// the right channel
-		self.author_api.swap_rpc_connection_hash(*old_top_hash, top.hash());
+		if let Some(old_hash) = maybe_old_top_hash {
+			self.author_api.swap_rpc_connection_hash(old_hash, top.hash());
+		}
 
-		let encrypted_trusted_call = self
+		let shielding_key = self
 			.shielding_key
+			.retrieve_key()
+			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
+
+		let encrypted_trusted_call = shielding_key
 			.encrypt(&top.encode())
 			.map_err(|e| Error::OtherError(format!("{:?}", e)))?;
 
@@ -179,47 +202,43 @@ where
 }
 
 // lifetime elision: StfTaskContext is guaranteed to outlive the fn
-pub fn run_stf_task_receiver<K, A, S, H, O>(
-	context: Arc<StfTaskContext<K, A, S, H, O>>,
+pub fn run_stf_task_receiver<ShieldingKeyRepository, A, S, H, O>(
+	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
 ) -> Result<(), Error>
 where
-	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone + Send + Sync + 'static,
+	ShieldingKeyRepository: AccessKey + Sync + Send + 'static,
+	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt,
 	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + 'static,
 {
-	let receiver = stf_task_sender::init_stf_task_sender_storage()
+	let stf_task_receiver = stf_task_sender::init_stf_task_sender_storage()
 		.map_err(|e| Error::OtherError(format!("read storage error:{:?}", e)))?;
+	let n_workers = 4;
+	let pool = ThreadPool::new(n_workers);
 
-	let (sender, to_receiver) = std::sync::mpsc::channel::<(ShardIdentifier, H256, TrustedCall)>();
+	let (sender, receiver) = channel::<(ShardIdentifier, H256, TrustedCall)>();
 
-	// Spawn thread to handle received tasks
-	let context_for_thread = context.clone();
-	std::thread::spawn(move || loop {
-		if let Ok((shard, hash, call)) = to_receiver.recv() {
+	// Spawn thread to handle received tasks, to serialize the nonce increase even if multiple threads
+	// are submitting trusted calls simultaneously
+	let context_cloned = context.clone();
+	thread::spawn(move || loop {
+		if let Ok((shard, hash, call)) = receiver.recv() {
 			info!("Submitting trusted call to the pool");
-			if let Err(e) = context_for_thread.submit_trusted_call(&shard, &hash, &call) {
+			if let Err(e) = context_cloned.submit_trusted_call(&shard, Some(hash), &call) {
 				error!("Submit Trusted Call failed: {:?}", e);
 			}
 		}
 	});
 
-	// The total number of threads that will be used to spawn tasks in the ThreadPool
-	let n_workers = 4;
-	let pool = ThreadPool::new(n_workers);
-
-	loop {
-		let req = receiver
-			.recv()
-			.map_err(|e| Error::OtherError(format!("receiver error:{:?}", e)))?;
-
+	while let Ok(req) = stf_task_receiver.recv() {
 		let context_pool = context.clone();
 		let sender_pool = sender.clone();
 
 		pool.execute(move || {
-			let start_time = std::time::Instant::now();
+			let start_time = Instant::now();
 
 			match &req {
 				RequestType::IdentityVerification(req) =>
@@ -239,4 +258,8 @@ where
 			}
 		});
 	}
+
+	pool.join();
+	warn!("stf_task_receiver loop terminated");
+	Ok(())
 }
