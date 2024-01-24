@@ -207,6 +207,7 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
+            IMAGE_FOR_RELEASE=true
 
       - name: Build worker
         uses: docker/build-push-action@v5

@@ -47,17 +47,26 @@ ENV WORKER_MODE=$WORKER_MODE_ARG
 ARG ADDITIONAL_FEATURES_ARG
 ENV ADDITIONAL_FEATURES=$ADDITIONAL_FEATURES_ARG
 
+ARG IMAGE_FOR_RELEASE=false
+ENV IMAGE_FOR_RELEASE=$IMAGE_FOR_RELEASE
+
 ARG FINGERPRINT=none
 
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
 RUN \
-  rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
-  rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
-  rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
-  rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
-  make && sccache --show-stats
+  if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
+    echo "Omit chache for release image"; \
+    make;
+  else \
+    rm -rf /opt/rust/registry/cache && mv /home/ubuntu/worker-cache/registry/cache /opt/rust/registry && \
+    rm -rf /opt/rust/registry/index && mv /home/ubuntu/worker-cache/registry/index /opt/rust/registry && \
+    rm -rf /opt/rust/git/db && mv /home/ubuntu/worker-cache/git/db /opt/rust/git && \
+    rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
+    make && sccache --show-stats;
+  fi
+
 
 RUN cargo test --release
 
