@@ -39,15 +39,12 @@ pnpm install
 
 print_divider
 
-echo "Waiting for parachain to produce block #1..."
-pnpm run wait-finalized-block 2>&1
-
-print_divider
-
 echo "Extending leasing period..."
 pnpm run upgrade-parathread 2>&1
 
 print_divider
 
-echo "Done."
+echo "Waiting for parachain to produce block #1..."
+pnpm run wait-finalized-block 2>&1
+
 exit 0
