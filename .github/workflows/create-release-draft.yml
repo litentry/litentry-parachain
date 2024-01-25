@@ -171,16 +171,6 @@ jobs:
     if: ${{ github.event.inputs.release_worker == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout codes on ${{ env.RELEASE_TAG }}
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-          fetch-depth: 0
-      - name: Set env
-        run: |
-          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
-          echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
-
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
         uses: jlumbroso/free-disk-space@main
@@ -189,13 +179,21 @@ jobs:
           swap-storage: false
           large-packages: false
 
+      - name: Checkout codes on ${{ env.RELEASE_TAG }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          # use the docker driver to access the local image
-          # we don't need external caches or multi platforms here
-          # see https://docs.docker.com/build/drivers/
-          driver: docker
+          driver: docker-container
+
+      - name: Set env
+        run: |
+          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
+          echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Build local builder
         uses: docker/build-push-action@v5
