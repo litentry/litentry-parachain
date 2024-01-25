@@ -32,7 +32,7 @@ test-utils = { path = "../test-utils", default-features = false, optional = true
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 pallet-group = { path = "../../pallets/group" }
-pallet-teerex = { path = "../../pallets/teerex", features = ["skip-scheduled-enclave-check"] }
+pallet-teerex = { path = "../../pallets/teerex" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 test-utils = { path = "../test-utils" }

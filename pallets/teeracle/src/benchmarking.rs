@@ -108,6 +108,11 @@ benchmarks! {
 			TEST4_MRENCLAVE,
 		).unwrap();
 
+		Teerex::<T>::set_skip_scheduled_enclave_check(
+			RawOrigin::Signed(signer.clone()).into(),
+			true
+		).unwrap();
+
 		// simply register the enclave before to make sure it already
 		// exists when running the benchmark
 		Teerex::<T>::register_enclave(

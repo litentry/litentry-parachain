@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 use crate::{
 	all_web3networks, AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType,
 	GenericDiscordRoleType, OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
+	Web3TokenType,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -257,6 +258,9 @@ pub enum Assertion {
 
 	#[codec(index = 23)]
 	CryptoSummary,
+
+	#[codec(index = 24)]
+	TokenHoldingAmount(Web3TokenType),
 }
 
 impl Assertion {
@@ -304,6 +308,7 @@ impl Assertion {
 			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
 			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
+			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 		}
 	}
 }

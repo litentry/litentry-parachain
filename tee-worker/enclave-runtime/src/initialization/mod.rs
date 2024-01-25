@@ -27,14 +27,15 @@ use crate::{
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
 		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT,
-		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
-		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT,
-		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_STATE_KEY_REPOSITORY_COMPONENT,
-		GLOBAL_STATE_OBSERVER_COMPONENT, GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DATA_PROVIDER_CONFIG,
+		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL,
+		GLOBAL_OCALL_API_COMPONENT, GLOBAL_RPC_WS_HANDLER_COMPONENT,
+		GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
+		GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT, GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
+		GLOBAL_SIDECHAIN_IMPORT_QUEUE_COMPONENT, GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT,
+		GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_HANDLER_COMPONENT,
+		GLOBAL_STATE_KEY_REPOSITORY_COMPONENT, GLOBAL_STATE_OBSERVER_COMPONENT,
+		GLOBAL_TARGET_A_PARENTCHAIN_LIGHT_CLIENT_SEAL,
 		GLOBAL_TARGET_B_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 		GLOBAL_WEB_SOCKET_SERVER_COMPONENT,
 	},
@@ -83,7 +84,10 @@ use its_sidechain::{
 	block_composer::BlockComposer,
 	slots::{FailSlotMode, FailSlotOnDemand},
 };
+use lc_data_providers::DataProviderConfig;
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use lc_stf_task_receiver::{run_stf_task_receiver, StfTaskContext};
+use lc_vc_task_receiver::run_vc_handler_runner;
 use litentry_primitives::BroadcastedRequest;
 use log::*;
 use sgx_types::sgx_status_t;
@@ -212,6 +216,19 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
+	let data_provider_config = DataProviderConfig::new();
+	GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
+
+	std::thread::spawn(move || {
+		#[allow(clippy::unwrap_used)]
+		run_stf_task_handler().unwrap();
+	});
+
+	std::thread::spawn(move || {
+		#[allow(clippy::unwrap_used)]
+		run_vc_issuance().unwrap();
+	});
+
 	Ok(())
 }
 
@@ -230,6 +247,64 @@ fn initialize_state_observer(
 	Ok(Arc::new(EnclaveStateObserver::from_map(states_map)))
 }
 
+fn run_stf_task_handler() -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository.clone(),
+		author_api.clone(),
+	));
+
+	let stf_task_context = StfTaskContext::new(
+		shielding_key_repository,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+		data_provider_config,
+	);
+
+	run_stf_task_receiver(Arc::new(stf_task_context)).map_err(Error::StfTaskReceiver)
+}
+
+fn run_vc_issuance() -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+	let data_provider_config = GLOBAL_DATA_PROVIDER_CONFIG.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository.clone(),
+		author_api.clone(),
+	));
+
+	let stf_task_context = StfTaskContext::new(
+		shielding_key_repository,
+		author_api,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+		data_provider_config,
+	);
+	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
+	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
+	run_vc_handler_runner(Arc::new(stf_task_context), extrinsic_factory, node_metadata_repo);
+	Ok(())
+}
+
 pub(crate) fn init_enclave_sidechain_components(
 	fail_mode: Option<String>,
 	fail_at: u64,
@@ -241,8 +316,7 @@ pub(crate) fn init_enclave_sidechain_components(
 	let top_pool_author = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
 	let state_key_repository = GLOBAL_STATE_KEY_REPOSITORY_COMPONENT.get()?;
 
-	// intialise the scheduled enlcave, must be after the attestation_handler and enclave initialisation
-	// get the scheduled mr enclaves and initialize the scheduled enclaves
+	// GLOBAL_SCHEDULED_ENCLAVE must be initialized after attestation_handler and enclave
 	let attestation_handler = GLOBAL_ATTESTATION_HANDLER_COMPONENT.get()?;
 	let mrenclave = attestation_handler.get_mrenclave()?;
 	GLOBAL_SCHEDULED_ENCLAVE.init(mrenclave).map_err(|e| Error::Other(e.into()))?;

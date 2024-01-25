@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -17,9 +17,7 @@
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 use crate::sgx_reexport_prelude::*;
 
-use crate::{
-	build_client_with_cert, vec_to_string, Error, HttpError, UserInfo, GLOBAL_DATA_PROVIDER_CONFIG,
-};
+use crate::{build_client_with_cert, vec_to_string, Error, HttpError, UserInfo};
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -157,27 +155,11 @@ impl TargetUser {
 
 /// rate limit: https://developer.twitter.com/en/docs/twitter-api/rate-limits
 impl TwitterOfficialClient {
-	pub fn v2() -> Self {
+	pub fn v2(url: &str, token: &str) -> Self {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
-		headers.insert(
-			AUTHORIZATION.as_str(),
-			GLOBAL_DATA_PROVIDER_CONFIG
-				.read()
-				.unwrap()
-				.twitter_auth_token_v2
-				.clone()
-				.as_str(),
-		);
-		let client = build_client_with_cert(
-			GLOBAL_DATA_PROVIDER_CONFIG
-				.read()
-				.unwrap()
-				.twitter_official_url
-				.clone()
-				.as_str(),
-			headers.clone(),
-		);
+		headers.insert(AUTHORIZATION.as_str(), token);
+		let client = build_client_with_cert(url, headers.clone());
 
 		TwitterOfficialClient { client }
 	}
@@ -267,20 +249,24 @@ impl TwitterOfficialClient {
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::DataProviderConfig;
 	use lc_mock_server::run;
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_twitter_official_url(url);
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_twitter_official_url(url);
+		data_provider_config
 	}
 
 	#[test]
 	fn query_tweet_work() {
-		init();
+		let data_provider_config = init();
 		let tweet_id = "100";
 
-		let mut client = TwitterOfficialClient::v2();
+		let mut client =
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
 		let result = client.query_tweet(tweet_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 		let tweet = result.unwrap();
@@ -292,9 +278,10 @@ mod tests {
 
 	#[test]
 	fn query_retweeted_work() {
-		init();
+		let data_provider_config = init();
 
-		let mut client = TwitterOfficialClient::v2();
+		let mut client =
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
 		let original_tweet_id = "100".as_bytes().to_vec();
 		let response = client.query_retweeted_by(original_tweet_id);
 
@@ -303,20 +290,22 @@ mod tests {
 
 	#[test]
 	fn query_user_by_name_work() {
-		init();
+		let data_provider_config = init();
 
 		let user = "twitterdev";
-		let mut client = TwitterOfficialClient::v2();
+		let mut client =
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
 		let result = client.query_user_by_name(user.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}
 
 	#[test]
 	fn query_user_by_id_work() {
-		init();
+		let data_provider_config = init();
 
 		let user_id = "2244994945";
-		let mut client = TwitterOfficialClient::v2();
+		let mut client =
+			TwitterOfficialClient::v2(&data_provider_config.twitter_official_url, "token");
 		let result = client.query_user_by_id(user_id.as_bytes().to_vec());
 		assert!(result.is_ok(), "error: {:?}", result);
 	}

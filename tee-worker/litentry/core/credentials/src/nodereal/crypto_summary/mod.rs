@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ use lc_data_providers::{
 		FungibleApiList, GetNFTHoldingsParam, NftApiList, NoderealChain, NoderealJsonrpcClient,
 		TransactionCount,
 	},
+	DataProviderConfig,
 };
 use litentry_primitives::{ErrorDetail, IntoErrorDetail};
 use serde::{Deserialize, Serialize};
@@ -213,16 +214,10 @@ pub struct CryptoSummaryClient {
 	pub bsc_client: NoderealJsonrpcClient,
 }
 
-impl Default for CryptoSummaryClient {
-	fn default() -> Self {
-		Self::new()
-	}
-}
-
 impl CryptoSummaryClient {
-	pub fn new() -> Self {
-		let eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth);
-		let bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc);
+	pub fn new(data_provider_config: &DataProviderConfig) -> Self {
+		let eth_client = NoderealJsonrpcClient::new(NoderealChain::Eth, data_provider_config);
+		let bsc_client = NoderealJsonrpcClient::new(NoderealChain::Bsc, data_provider_config);
 
 		Self { eth_client, bsc_client }
 	}

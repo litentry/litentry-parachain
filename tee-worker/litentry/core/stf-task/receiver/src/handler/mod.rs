@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -19,25 +19,18 @@ pub mod identity_verification;
 
 use ita_stf::{TrustedCall, H256};
 use itp_types::ShardIdentifier;
+use std::sync::mpsc::Sender;
 
 pub trait TaskHandler {
 	type Error;
 	type Result;
-	fn start(&self, sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>) {
+	fn start(&self, sender: Sender<(ShardIdentifier, H256, TrustedCall)>) {
 		match self.on_process() {
 			Ok(r) => self.on_success(r, sender),
 			Err(e) => self.on_failure(e, sender),
 		}
 	}
 	fn on_process(&self) -> Result<Self::Result, Self::Error>;
-	fn on_success(
-		&self,
-		r: Self::Result,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
-	);
-	fn on_failure(
-		&self,
-		e: Self::Error,
-		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
-	);
+	fn on_success(&self, r: Self::Result, sender: Sender<(ShardIdentifier, H256, TrustedCall)>);
+	fn on_failure(&self, e: Self::Error, sender: Sender<(ShardIdentifier, H256, TrustedCall)>);
 }

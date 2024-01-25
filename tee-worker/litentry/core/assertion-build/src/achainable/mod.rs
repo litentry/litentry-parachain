@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -32,7 +32,7 @@ use lc_data_providers::{
 		AchainableClient, AchainableTagDeFi, HoldingAmount, Params, ParamsBasicTypeWithAmountToken,
 	},
 	achainable_names::{AchainableNameAmountToken, GetAchainableName},
-	DataProviderConfigReader, ReadDataProviderConfig, LIT_TOKEN_ADDRESS,
+	DataProviderConfig, LIT_TOKEN_ADDRESS,
 };
 use lc_stf_task_sender::AssertionBuildRequest;
 use litentry_primitives::AchainableParams;
@@ -51,29 +51,41 @@ pub mod date_percent;
 pub mod mirror;
 pub mod token;
 
-pub fn build(req: &AssertionBuildRequest, param: AchainableParams) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	match param {
-		AchainableParams::AmountHolding(param) => build_amount_holding(req, param),
-		AchainableParams::AmountToken(param) => build_amount_token(req, param),
-		AchainableParams::Amount(param) => build_amount(req, param),
-		AchainableParams::Amounts(param) => build_amounts(req, param),
-		AchainableParams::Basic(param) => build_basic(req, param),
-		AchainableParams::BetweenPercents(param) => build_between_percents(req, param),
-		AchainableParams::ClassOfYear(param) => build_class_of_year(req, param),
-		AchainableParams::DateInterval(param) => build_date_interval(req, param),
-		AchainableParams::DatePercent(param) => build_date_percent(req, param),
-		AchainableParams::Date(param) => build_date(req, param),
-		AchainableParams::Token(param) => build_token(req, param),
-		AchainableParams::Mirror(param) => build_on_mirror(req, param),
+		AchainableParams::AmountHolding(param) =>
+			build_amount_holding(req, param, data_provider_config),
+		AchainableParams::AmountToken(param) =>
+			build_amount_token(req, param, data_provider_config),
+		AchainableParams::Amount(param) => build_amount(req, param, data_provider_config),
+		AchainableParams::Amounts(param) => build_amounts(req, param, data_provider_config),
+		AchainableParams::Basic(param) => build_basic(req, param, data_provider_config),
+		AchainableParams::BetweenPercents(param) =>
+			build_between_percents(req, param, data_provider_config),
+		AchainableParams::ClassOfYear(param) =>
+			build_class_of_year(req, param, data_provider_config),
+		AchainableParams::DateInterval(param) =>
+			build_date_interval(req, param, data_provider_config),
+		AchainableParams::DatePercent(param) =>
+			build_date_percent(req, param, data_provider_config),
+		AchainableParams::Date(param) => build_date(req, param, data_provider_config),
+		AchainableParams::Token(param) => build_token(req, param, data_provider_config),
+		AchainableParams::Mirror(param) => build_on_mirror(req, param, data_provider_config),
 	}
 }
 
-pub fn request_achainable(addresses: Vec<String>, param: AchainableParams) -> Result<bool> {
+pub fn request_achainable(
+	addresses: Vec<String>,
+	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
+) -> Result<bool> {
 	let request_param = Params::try_from(param.clone())?;
 
-	let data_provider_config = DataProviderConfigReader::read()
-		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
-	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
 	for address in &addresses {
 		let ret = client.query_system_label(address, request_param.clone()).map_err(|e| {
@@ -93,12 +105,11 @@ pub fn request_achainable(addresses: Vec<String>, param: AchainableParams) -> Re
 pub fn request_uniswap_v2_or_v3_user(
 	addresses: Vec<String>,
 	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<(bool, bool)> {
 	let _request_param = Params::try_from(param.clone())?;
-	let data_provider_config = DataProviderConfigReader::read()
-		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
 
-	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
 	let mut v2_user = false;
 	let mut v3_user = false;
@@ -119,12 +130,10 @@ const INVALID_CLASS_OF_YEAR: &str = "Invalid";
 pub fn request_achainable_classofyear(
 	addresses: Vec<String>,
 	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<(bool, String)> {
 	let request_param = Params::try_from(param.clone())?;
-
-	let data_provider_config = DataProviderConfigReader::read()
-		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
-	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
 	let mut longest_created_year = INVALID_CLASS_OF_YEAR.into();
 	for address in &addresses {
@@ -148,12 +157,10 @@ pub fn request_achainable_classofyear(
 pub fn request_achainable_balance(
 	addresses: Vec<String>,
 	param: AchainableParams,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<String> {
 	let request_param = Params::try_from(param.clone())?;
-
-	let data_provider_config = DataProviderConfigReader::read()
-		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(param.clone()), e))?;
-	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 	let balance = client.holding_amount(addresses, request_param).map_err(|e| {
 		Error::RequestVCFailed(Assertion::Achainable(param.clone()), e.into_error_detail())
 	})?;
@@ -164,12 +171,10 @@ pub fn request_achainable_balance(
 pub fn query_lit_holding_amount(
 	aparam: &AchainableParams,
 	identities: &Vec<(Web3Network, Vec<String>)>,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<usize> {
 	let mut total_lit_balance = 0_f64;
-
-	let data_provider_config = DataProviderConfigReader::read()
-		.map_err(|e| Error::RequestVCFailed(Assertion::Achainable(aparam.clone()), e))?;
-	let mut client: AchainableClient = AchainableClient::new(&data_provider_config);
+	let mut client: AchainableClient = AchainableClient::new(data_provider_config);
 
 	for (network, addresses) in identities {
 		let (q_name, q_network, q_token) = if *network == Web3Network::Ethereum {

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -22,11 +22,12 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable_balance, *};
 use lc_credentials::litentry_profile::token_balance::TokenBalanceInfo;
-use lc_data_providers::{ETokenAddress, TokenFromString};
+use lc_data_providers::{DataProviderConfig, ETokenAddress, TokenFromString};
 
 pub fn build_amount_holding(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountHolding,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
@@ -36,14 +37,15 @@ pub fn build_amount_holding(
 
 	let token = ETokenAddress::from_vec(param.clone().token.unwrap_or_default());
 	let achainable_param = AchainableParams::AmountHolding(param);
-	let balance = request_achainable_balance(addresses, achainable_param.clone())?
-		.parse::<f64>()
-		.map_err(|_| {
-			Error::RequestVCFailed(
-				Assertion::Achainable(achainable_param.clone()),
-				ErrorDetail::ParseError,
-			)
-		})?;
+	let balance =
+		request_achainable_balance(addresses, achainable_param.clone(), data_provider_config)?
+			.parse::<f64>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(achainable_param.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
 
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {

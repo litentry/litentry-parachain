@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -58,6 +58,9 @@ pub use generic_discord_role::*;
 
 mod evm_amount_holding;
 pub use evm_amount_holding::*;
+
+mod web3_token;
+pub use web3_token::*;
 
 /// Common types of parachains.
 mod types {

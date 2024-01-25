@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -90,6 +90,7 @@ fn vc_issued_works() {
 			alice,
 			Assertion::A1,
 			H256::default(),
+			H256::default(),
 		));
 	});
 }
@@ -104,6 +105,7 @@ fn vc_issued_with_unpriviledged_origin_fails() {
 				RuntimeOrigin::signed(bob),
 				alice.into(),
 				Assertion::A1,
+				H256::default(),
 				H256::default(),
 			),
 			sp_runtime::DispatchError::BadOrigin

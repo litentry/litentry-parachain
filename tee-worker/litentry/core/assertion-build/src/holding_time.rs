@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -24,8 +24,7 @@ use crate::*;
 use lc_credentials::achainable::amount_holding_time::AchainableAmountHoldingTimeUpdate;
 use lc_data_providers::{
 	achainable::{AchainableClient, AchainableHolder, ParamsBasicTypeWithAmountHolding},
-	vec_to_string, DataProviderConfigReader, ReadDataProviderConfig, LIT_TOKEN_ADDRESS,
-	WBTC_TOKEN_ADDRESS,
+	vec_to_string, DataProviderConfig, LIT_TOKEN_ADDRESS, WBTC_TOKEN_ADDRESS,
 };
 use litentry_primitives::AmountHoldingTimeType;
 use std::string::ToString;
@@ -78,13 +77,15 @@ pub fn build(
 	req: &AssertionBuildRequest,
 	htype: AmountHoldingTimeType,
 	min_balance: ParameterString,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("Assertion A4 build, who: {:?}", account_id_to_string(&req.who));
 
 	let q_min_balance = pre_build(&htype, &min_balance)?;
 	let identities = transpose_identity(&req.identities);
-	let (is_hold, optimal_hold_index) = do_build(identities, &htype, &q_min_balance)
-		.map_err(|e| emit_error(&htype, &min_balance, e))?;
+	let (is_hold, optimal_hold_index) =
+		do_build(identities, &htype, &q_min_balance, data_provider_config)
+			.map_err(|e| emit_error(&htype, &min_balance, e))?;
 
 	generate_vc(req, &htype, &q_min_balance, is_hold, optimal_hold_index)
 		.map_err(|e| emit_error(&htype, &min_balance, e))
@@ -107,9 +108,9 @@ fn do_build(
 	identities: Vec<(Web3Network, Vec<String>)>,
 	htype: &AmountHoldingTimeType,
 	q_min_balance: &str,
+	data_provider_config: &DataProviderConfig,
 ) -> core::result::Result<(bool, usize), ErrorDetail> {
-	let data_provider_config = DataProviderConfigReader::read()?;
-	let mut client = AchainableClient::new(&data_provider_config);
+	let mut client = AchainableClient::new(data_provider_config);
 
 	let mut is_hold = false;
 	let mut optimal_hold_index = usize::MAX;
@@ -233,19 +234,20 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use lc_data_providers::GLOBAL_DATA_PROVIDER_CONFIG;
 	use lc_mock_server::run;
 	use litentry_primitives::{AmountHoldingTimeType, Web3Network};
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_achainable_url(url);
+		data_provider_config
 	}
 
 	#[test]
 	fn do_build_lit_works() {
-		init();
+		let data_provider_config = init();
 
 		let identities = vec![(
 			Web3Network::Litentry,
@@ -255,13 +257,14 @@ mod tests {
 		let htype = AmountHoldingTimeType::LIT;
 		let q_min_balance = "10".to_string();
 
-		let (is_hold, _optimal_hold_index) = do_build(identities, &htype, &q_min_balance).unwrap();
+		let (is_hold, _optimal_hold_index) =
+			do_build(identities, &htype, &q_min_balance, &data_provider_config).unwrap();
 		assert!(is_hold);
 	}
 
 	#[test]
 	fn do_build_dot_works() {
-		init();
+		let data_provider_config = init();
 
 		let identities = vec![(
 			Web3Network::Polkadot,
@@ -271,13 +274,13 @@ mod tests {
 		let q_min_balance = "10".to_string();
 
 		let (is_hold, _optimal_hold_index) =
-			do_build(identities, &dot_type, &q_min_balance).unwrap();
+			do_build(identities, &dot_type, &q_min_balance, &data_provider_config).unwrap();
 		assert!(is_hold);
 	}
 
 	#[test]
 	fn do_build_wbtc_works() {
-		init();
+		let data_provider_config = init();
 
 		let identities = vec![(
 			Web3Network::Ethereum,
@@ -289,13 +292,14 @@ mod tests {
 		let htype = AmountHoldingTimeType::WBTC;
 		let q_min_balance = "10".to_string();
 
-		let (is_hold, _optimal_hold_index) = do_build(identities, &htype, &q_min_balance).unwrap();
+		let (is_hold, _optimal_hold_index) =
+			do_build(identities, &htype, &q_min_balance, &data_provider_config).unwrap();
 		assert!(is_hold);
 	}
 
 	#[test]
 	fn do_build_non_hold_works() {
-		init();
+		let data_provider_config = init();
 
 		let identities = vec![(
 			Web3Network::Ethereum,
@@ -304,7 +308,8 @@ mod tests {
 		let htype = AmountHoldingTimeType::LIT;
 		let q_min_balance = "10".to_string();
 
-		let (is_hold, optimal_hold_index) = do_build(identities, &htype, &q_min_balance).unwrap();
+		let (is_hold, optimal_hold_index) =
+			do_build(identities, &htype, &q_min_balance, &data_provider_config).unwrap();
 		assert!(!is_hold);
 		assert_eq!(optimal_hold_index, 0);
 	}

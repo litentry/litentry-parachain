@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -22,9 +22,12 @@ extern crate sgx_tstd as std;
 
 use crate::*;
 use lc_credentials::brc20::amount_holder::BRC20AmountHolderCredential;
-use lc_data_providers::geniidata::GeniidataClient;
+use lc_data_providers::{geniidata::GeniidataClient, DataProviderConfig};
 
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
 	let addresses = identities
 		.into_iter()
@@ -35,7 +38,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 		error!("Generate unsigned credential failed {:?}", e);
 		Error::RequestVCFailed(Assertion::BRC20AmountHolder, e.into_error_detail())
 	})?;
-	let mut client = GeniidataClient::new()
+	let mut client = GeniidataClient::new(data_provider_config)
 		.map_err(|e| Error::RequestVCFailed(Assertion::BRC20AmountHolder, e))?;
 	let response = client.create_brc20_amount_holder_sum(addresses).map_err(|e| {
 		Error::RequestVCFailed(

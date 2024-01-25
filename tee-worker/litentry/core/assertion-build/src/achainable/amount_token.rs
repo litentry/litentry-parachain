@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -29,7 +29,7 @@ use lc_credentials::{
 	litentry_profile::token_balance::TokenBalanceInfo,
 };
 use lc_data_providers::{
-	achainable_names::AchainableNameAmountToken, ETokenAddress, TokenFromString,
+	achainable_names::AchainableNameAmountToken, DataProviderConfig, ETokenAddress, TokenFromString,
 };
 
 /// ERC20 Holder: USDC and others
@@ -53,6 +53,7 @@ use lc_data_providers::{
 pub fn build_amount_token(
 	req: &AssertionBuildRequest,
 	param: AchainableAmountToken,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("Assertion Building AchainableAmountToken");
 
@@ -75,7 +76,8 @@ pub fn build_amount_token(
 		})?;
 	match amount_token_name {
 		AchainableNameAmountToken::LITHoldingAmount => {
-			let lit_holding_amount = query_lit_holding_amount(&achainable_param, &identities)?;
+			let lit_holding_amount =
+				query_lit_holding_amount(&achainable_param, &identities, data_provider_config)?;
 			credential.update_lit_holding_amount(lit_holding_amount);
 		},
 		_ => {
@@ -85,14 +87,18 @@ pub fn build_amount_token(
 				.flat_map(|(_, addresses)| addresses)
 				.collect::<Vec<String>>();
 			let token = ETokenAddress::from_vec(param.token.unwrap_or_default());
-			let balance = request_achainable_balance(addresses, achainable_param.clone())?
-				.parse::<f64>()
-				.map_err(|_| {
-					Error::RequestVCFailed(
-						Assertion::Achainable(achainable_param.clone()),
-						ErrorDetail::ParseError,
-					)
-				})?;
+			let balance = request_achainable_balance(
+				addresses,
+				achainable_param.clone(),
+				data_provider_config,
+			)?
+			.parse::<f64>()
+			.map_err(|_| {
+				Error::RequestVCFailed(
+					Assertion::Achainable(achainable_param.clone()),
+					ErrorDetail::ParseError,
+				)
+			})?;
 
 			credential.update_token_balance(token, balance);
 		},
