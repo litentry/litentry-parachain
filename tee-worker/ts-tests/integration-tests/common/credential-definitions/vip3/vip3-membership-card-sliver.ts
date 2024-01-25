@@ -10,7 +10,7 @@ export const vip3MembershipCardSliver: CredentialDefinition = {
     description: 'VIP3 Membership Card Sliver',
     assertion: {
         id: 'Vip3MembershipCard',
-        payload: 'sliver',
+        payload: 'Sliver',
     },
     dataProvider: dataProviders.vip3,
     network: Networks['ethereum'],
