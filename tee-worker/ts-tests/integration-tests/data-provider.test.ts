@@ -1,25 +1,20 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { u8aToHex, bufferToU8a } from '@polkadot/util';
-import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
+import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner, sleep } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
-    createSignedTrustedCallLinkIdentity,
     getTeeShieldingKey,
     sendRequestFromTrustedCall,
     createSignedTrustedCallRequestVc,
 } from './common/di-utils'; // @fixme move to a better place
 import type { IntegrationTestContext } from './common/common-types';
 import { CorePrimitivesIdentity } from 'parachain-api';
-import { LitentryValidationData, Web3Network } from 'parachain-api';
-import { Vec } from '@polkadot/types';
-import { spawn } from 'child_process';
 import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
 
-import {credentialDefinitionMap} from './common/credential-definitions'
+import { credentialDefinitionMap } from './common/credential-definitions';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -29,10 +24,7 @@ describe('Test Vc (direct invocation)', function () {
     this.timeout(6000000);
 
     before(async () => {
-        context = await initIntegrationTestContext(
-            process.env.WORKER_ENDPOINT!, // @fixme evil assertion; centralize env access
-            process.env.NODE_ENDPOINT! // @fixme evil assertion; centralize env access
-        );
+        context = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
         teeShieldingKey = await getTeeShieldingKey(context);
         aliceSubstrateIdentity = await buildIdentityFromKeypair(
             new PolkadotSigner(context.substrateWallet.alice),
@@ -40,36 +32,29 @@ describe('Test Vc (direct invocation)', function () {
         );
     });
 
-
     step(`create idGrapgh via cli`, async function () {
-        //         console.log(process.argv);
+        // todo: get process args from command line
 
-        //       const evmIndex = process.argv.indexOf('--evm');
-        // if (evmIndex > -1) {
-        //   const evmAddress = process.argv[evmIndex + 1];
-        //   console.log(evmAddress);
-        // }
+        try {
+            const linkResult = await zx`${client} trusted -d link-identity did:litentry:substrate:${aliceAddressFormat}\
+            did:${credentialDefinitionMap['vip3-membership-card-gold'].mockDid}\
+            ${credentialDefinitionMap['vip3-membership-card-gold'].mockWeb3Network}`;
 
-        // todo: check idgrpah ,if exist, skip, else create
-        
-        // check idgraph if identity exist
-        
-        
-        // try {
-        //     const linkResult = await zx`${client} trusted -d link-identity did:litentry:substrate:${aliceAddressFormat} did:litentry:evm:0x651614cA9097C5ba189Ef85e7851Ef9cff592B2b bsc,ethereum`;
-        //     console.log(linkResult);
-            
-        // } catch (error: any) {
-        //     console.log(`Exit code: ${error.exitCode}`);
-        //     console.log(`Error: ${error.stderr}`);
-        // }
+            console.log(linkResult);
+        } catch (error: any) {
+            console.log(`Exit code: ${error.exitCode}`);
+            console.log(`Error: ${error.stderr}`);
+        }
+        await sleep(10);
 
+        // todo: listen to event
     });
 
     step(`request vc`, async function () {
         const assertion = {
-            [credentialDefinitionMap['vip3-membership-card-gold'].assertion.id]: credentialDefinitionMap['vip3-membership-card-gold'].assertion.payload
-        }
+            [credentialDefinitionMap['vip3-membership-card-gold'].assertion.id]:
+                credentialDefinitionMap['vip3-membership-card-gold'].assertion.payload,
+        };
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, aliceSubstrateIdentity)).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
