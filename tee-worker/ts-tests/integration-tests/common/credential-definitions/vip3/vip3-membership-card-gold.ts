@@ -3,7 +3,7 @@ import * as dataProviders from '../config/data-providers';
 import { Networks, AccountNetworks } from '../config/networks';
 import { CredentialDefinition } from '../config/types';
 
-const mockAddress: HexString = '0x651614cA9097C5ba189Ef85e7851Ef9cff592B2c';
+const mockAddress: HexString = '0x651614cA9097C5ba189Ef85e7851Ef9cff592B22';
 export const vip3MembershipCardGold: CredentialDefinition = {
     id: 'vip3-membership-card-gold',
     name: 'VIP3 Membership Card Gold',

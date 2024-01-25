@@ -13,16 +13,16 @@ import type { IntegrationTestContext } from './common/common-types';
 import { CorePrimitivesIdentity } from 'parachain-api';
 import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
-
 import { credentialDefinitionMap } from './common/credential-definitions';
+import { subscribeToEventsWithExtHash } from './common/transactions';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
     let aliceSubstrateIdentity: CorePrimitivesIdentity = undefined as any;
     const client = process.env.BINARY_DIR + '/litentry-cli';
     const aliceAddressFormat = '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d';
+    const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     this.timeout(6000000);
-
     before(async () => {
         context = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
         teeShieldingKey = await getTeeShieldingKey(context);
@@ -34,6 +34,7 @@ describe('Test Vc (direct invocation)', function () {
 
     step(`create idGrapgh via cli`, async function () {
         // todo: get process args from command line
+        const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
 
         try {
             const linkResult = await zx`${client} trusted -d link-identity did:litentry:substrate:${aliceAddressFormat}\
@@ -44,9 +45,11 @@ describe('Test Vc (direct invocation)', function () {
         } catch (error: any) {
             console.log(`Exit code: ${error.exitCode}`);
             console.log(`Error: ${error.stderr}`);
+            throw error;
         }
-        await sleep(10);
 
+        const events = (await eventsPromise).map(({ event }) => event);
+        assert.equal(events.length, 1);
         // todo: listen to event
     });
 
