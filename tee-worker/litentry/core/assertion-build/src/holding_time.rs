@@ -239,64 +239,20 @@ fn search_holding_date(
 ) -> core::result::Result<Option<&'static str>, ErrorDetail> {
 	let mut client = AchainableClient::new(data_provider_config);
 
-	// Initialize the search by checking the latest date in the range;
-	// if the result is negative, there's nothing to search.
-	let mut earliest_holding_index: usize = {
-		let is_holding = {
-			let last_index = ASSERTION_DATE_LEN - 1;
-			let (outcome, new_accounts) = holding_time_search_step(
-				&mut client,
-				q_min_balance,
-				accounts,
-				ASSERTION_FROM_DATE[last_index],
-			);
-			accounts = new_accounts;
-			outcome
-		}?;
-		if !is_holding {
-			return Ok(None)
-		}
-		ASSERTION_DATE_LEN - 1
+	let mut pred = |date| {
+		let (outcome, new_accounts) =
+			holding_time_search_step(&mut client, q_min_balance, accounts, date);
+		accounts = new_accounts;
+		outcome.map(|is_holding| !is_holding) // negated to match the partition_point API
 	};
 
-	let mut latest_non_holding_index: usize = {
-		let was_always_holding = {
-			let (outcome, new_accounts) = holding_time_search_step(
-				&mut client,
-				q_min_balance,
-				accounts,
-				ASSERTION_FROM_DATE[0],
-			);
-			accounts = new_accounts;
-			outcome
-		}?;
-		if was_always_holding {
-			return Ok(Some(ASSERTION_FROM_DATE[0]))
-		}
-		0
-	};
-
-	while earliest_holding_index - latest_non_holding_index > 1 {
-		let diff = earliest_holding_index - latest_non_holding_index;
-		let next_index = latest_non_holding_index + diff / 2;
-		let is_next_holding = {
-			let (outcome, new_accounts) = holding_time_search_step(
-				&mut client,
-				q_min_balance,
-				accounts,
-				ASSERTION_FROM_DATE[0],
-			);
-			accounts = new_accounts;
-			outcome
-		}?;
-		if is_next_holding {
-			earliest_holding_index = next_index
+	partition_point(&ASSERTION_FROM_DATE.to_vec(), &mut pred).map(|index| {
+		if index < ASSERTION_DATE_LEN {
+			Some(ASSERTION_FROM_DATE[index])
 		} else {
-			latest_non_holding_index = next_index
+			None
 		}
-	}
-
-	Ok(Some(ASSERTION_FROM_DATE[earliest_holding_index]))
+	})
 }
 
 fn generate_vc(
@@ -352,6 +308,30 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 				None
 			},
 		_ => None,
+	}
+}
+
+fn partition_point<T, E>(
+	vector: &Vec<T>,
+	pred: &mut dyn FnMut(&T) -> core::result::Result<bool, E>,
+) -> core::result::Result<usize, E> {
+	let mut trapped_error: Option<E> = None;
+	let wrapped_pred = |element: &T| -> bool {
+		if trapped_error.is_some() {
+			return true
+		}
+		match pred(element) {
+			Ok(result) => result,
+			Err(error) => {
+				trapped_error = Some(error);
+				true
+			},
+		}
+	};
+	let index = vector.partition_point(wrapped_pred);
+	match trapped_error {
+		Some(error) => Err(error),
+		None => Ok(index),
 	}
 }
 
