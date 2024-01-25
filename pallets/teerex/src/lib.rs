@@ -88,6 +88,7 @@ pub mod pallet {
 		},
 		AddedEnclave(T::AccountId, Vec<u8>),
 		RemovedEnclave(T::AccountId),
+		RemovedAllEnclaves,
 		Forwarded(ShardIdentifier),
 		ShieldFunds(Vec<u8>),
 		UnshieldedFunds(T::AccountId),
@@ -664,6 +665,20 @@ pub mod pallet {
 
 			<SkipScheduledEnclaveCheck<T>>::set(should_skip);
 			Self::deposit_event(Event::SkipScheduledEnclaveCheck(should_skip));
+			Ok(Pays::No.into())
+		}
+
+		#[pallet::call_index(32)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn unregister_all_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+
+			for index in <EnclaveRegistry<T>>::iter_keys() {
+				<EnclaveRegistry<T>>::remove(index);
+			}
+
+			Self::deposit_event(Event::RemovedAllEnclaves);
 			Ok(Pays::No.into())
 		}
 	}
