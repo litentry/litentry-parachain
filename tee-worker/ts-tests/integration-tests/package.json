@@ -50,7 +50,8 @@
         "scale-ts": "^0.2.11",
         "sidechain-api": "file:../../client-api/sidechain-api",
         "websocket-as-promised": "^2.0.1",
-        "ws": "^8.8.1"
+        "ws": "^8.8.1",
+        "zx": "^7.2.3"
     },
     "devDependencies": {
         "@ethersproject/providers": "^5.7.2",
