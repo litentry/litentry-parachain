@@ -629,6 +629,10 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
+impl pallet_account_fix::Config for Runtime {
+	type Currency = Balances;
+}
+
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
@@ -929,6 +933,7 @@ construct_runtime! {
 		AssetManager: pallet_asset_manager = 64,
 
 		// TMP
+		AccountFix: pallet_account_fix = 254,
 		Sudo: pallet_sudo = 255,
 	}
 }
