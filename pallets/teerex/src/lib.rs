@@ -677,6 +677,10 @@ pub mod pallet {
 			for index in <EnclaveRegistry<T>>::iter_keys() {
 				<EnclaveRegistry<T>>::remove(index);
 			}
+			for index in <EnclaveIndex<T>>::iter_keys() {
+				<EnclaveIndex<T>>::remove(index);
+			}
+			<EnclaveCount<T>>::put(0);
 
 			Self::deposit_event(Event::RemovedAllEnclaves);
 			Ok(Pays::No.into())
