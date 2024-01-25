@@ -181,9 +181,9 @@ jobs:
 
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.RELEASE_TAG }}
-          fetch-depth: 0
+        # with:
+        # ref: ${{ env.RELEASE_TAG }}
+        # fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
