@@ -1,7 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner, sleep } from './common/utils';
+import { buildIdentityFromKeypair, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
 import {
     getSidechainNonce,
@@ -32,6 +32,8 @@ describe('Test Vc (direct invocation)', function () {
         );
     });
 
+
+    // todo: test in parallel or another way
     step(`create idGrapgh via cli`, async function () {
         // todo: get process args from command line
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
@@ -50,7 +52,6 @@ describe('Test Vc (direct invocation)', function () {
 
         const events = (await eventsPromise).map(({ event }) => event);
         assert.equal(events.length, 1);
-        // todo: listen to event
     });
 
     step(`request vc`, async function () {
