@@ -104,6 +104,7 @@ fn prepare_min_balance(
 		.map_err(|_| emit_error(htype, min_balance, ErrorDetail::ParseError))
 }
 
+#[derive(Clone)]
 // Represents an individual account that may or not be holding the desired token amount
 struct Account {
 	network: Web3Network,
@@ -239,9 +240,9 @@ fn search_holding_date(
 ) -> core::result::Result<Option<&'static str>, ErrorDetail> {
 	let mut client = AchainableClient::new(data_provider_config);
 
-	let mut pred = |date| {
+	let mut pred = |date: &&str| {
 		let (outcome, new_accounts) =
-			holding_time_search_step(&mut client, q_min_balance, accounts, date);
+			holding_time_search_step(&mut client, q_min_balance, accounts.clone(), *date);
 		accounts = new_accounts;
 		outcome.map(|is_holding| !is_holding) // negated to match the partition_point API
 	};
@@ -311,10 +312,10 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 	}
 }
 
-fn partition_point<T, E>(
-	vector: &Vec<T>,
-	pred: &mut dyn FnMut(&T) -> core::result::Result<bool, E>,
-) -> core::result::Result<usize, E> {
+fn partition_point<T, E, P>(vector: &Vec<T>, pred: &mut P) -> core::result::Result<usize, E>
+where
+	P: FnMut(&T) -> core::result::Result<bool, E>,
+{
 	let mut trapped_error: Option<E> = None;
 	let wrapped_pred = |element: &T| -> bool {
 		if trapped_error.is_some() {
