@@ -135,8 +135,7 @@ print_divider
 echo "wait for parachain to produce block #1..."
 pnpm run wait-finalized-block 2>&1
 
-print_divider
-
-echo "done. please check $LITENTRY_PARACHAIN_DIR for generated files if need"
+echo
+echo "Check $LITENTRY_PARACHAIN_DIR for generated files if need"
 
 print_divider
