@@ -65,6 +65,10 @@ describe('Test Vc (direct invocation)', function () {
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
+
+            await zx`ls /usr/local/`
+            await zx`ls /usr/local/bin`
+
             const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
                 nodeProtocal + nodeHostname
             } -U ${workerProtocal + workerHostname}\
