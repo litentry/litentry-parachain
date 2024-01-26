@@ -225,9 +225,9 @@ pub enum Assertion {
 	#[codec(index = 12)]
 	A20,
 
-	// For Oneblock
+	// For OneBlock
 	#[codec(index = 13)]
-	Oneblock(OneBlockCourseType),
+	OneBlock(OneBlockCourseType),
 
 	// GenericDiscordRole
 	#[codec(index = 14)]
@@ -290,8 +290,8 @@ impl Assertion {
 			Self::A14 => vec![Web3Network::Polkadot],
 			// Achainable Assertions
 			Self::Achainable(arg) => arg.chains(),
-			// Oneblock Assertion
-			Self::Oneblock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
+			// OneBlock Assertion
+			Self::OneBlock(..) => vec![Web3Network::Polkadot, Web3Network::Kusama],
 			// SPACEID Assertions
 			Self::BnbDomainHolding | Self::BnbDigitDomainClub(..) => vec![Web3Network::Bsc],
 			// LITStaking

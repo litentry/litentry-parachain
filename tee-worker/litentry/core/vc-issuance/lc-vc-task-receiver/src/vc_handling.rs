@@ -112,7 +112,7 @@ where
 
 			Assertion::A20 => lc_assertion_build::a20::build(&self.req),
 
-			Assertion::Oneblock(course_type) => lc_assertion_build::oneblock::course::build(
+			Assertion::OneBlock(course_type) => lc_assertion_build::oneblock::course::build(
 				&self.req,
 				course_type,
 				&self.context.data_provider_config,
