@@ -30,7 +30,7 @@ describe('Test Vc (direct invocation)', function () {
     let teeShieldingKey: KeyObject = undefined as any;
     const substrateIdentities: CorePrimitivesIdentity[] = [];
 
-    const client = process.env.BINARY_DIR + '/litentry-cli';
+    const clientDir = process.env.BINARY_DIR + '/litentry-cli';
 
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
@@ -59,6 +59,8 @@ describe('Test Vc (direct invocation)', function () {
         substrateIdentities.push(substrateIdentity);
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
+            // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
+            const client = zx`${clientDir} -p 9912 -P 2011 -u ws://litentry-node -U wss://litentry-worker-1`;
             await zx`${client} trusted -d link-identity did:litentry:substrate:${formatAddress}\
                   did:${credentialDefinitionMap[id].mockDid}\
                   ${credentialDefinitionMap[id].mockWeb3Network}`;
