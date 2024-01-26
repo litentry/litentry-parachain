@@ -247,7 +247,7 @@ fn search_holding_date(
 		outcome.map(|is_holding| !is_holding) // negated to match the partition_point API
 	};
 
-	partition_point(&ASSERTION_FROM_DATE.to_vec(), &mut pred).map(|index| {
+	partition_point(ASSERTION_FROM_DATE.as_ref(), &mut pred).map(|index| {
 		if index < ASSERTION_DATE_LEN {
 			Some(ASSERTION_FROM_DATE[index])
 		} else {
