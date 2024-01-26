@@ -54,7 +54,7 @@ pub mod pallet {
 		/// Change the admin account
 		/// similar to sudo.set_key, the old account will be supplied in event
 		#[pallet::call_index(0)]
-		#[pallet::weight({10_000})]
+		#[pallet::weight({20_000_000 * who.len()})]
 		pub fn upgrade_accounts(
 			origin: OriginFor<T>,
 			who: Vec<T::AccountId>,
