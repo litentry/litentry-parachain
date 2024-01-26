@@ -3,16 +3,23 @@ import * as dataProviders from '../config/data-providers';
 import { Networks, AccountNetworks } from '../config/networks';
 import { CredentialDefinition } from '../config/types';
 
-const mockAddress: HexString = '0x651614cA9097C5ba189Ef85e7851Ef9cff592B2c';
-export const vip3MembershipCardGold: CredentialDefinition = {
-    id: 'vip3-membership-card-gold',
-    name: 'VIP3 Membership Card Gold',
-    description: 'VIP3 Membership Card Gold',
+// https://polkadot.subscan.io/tools/format_transform
+const mockAddress: HexString = '0xbB613509f2590ca489863551E7A27E89B863A8BD';
+export const tokenHolderEth: CredentialDefinition = {
+    id: 'token-holder-eth',
+    name: 'ETH Holder',
+    description: `The number of ETH tokens you hold > 0`,
     assertion: {
-        id: 'Vip3MembershipCard',
-        payload: 'Gold',
+        id: 'Achainable',
+        payload: {
+            Amount: {
+                name: 'Balance over {amount}',
+                chain: 'Ethereum',
+                amount: '0',
+            },
+        },
     },
-    dataProvider: dataProviders.vip3,
+    dataProvider: dataProviders.achainable,
     network: Networks['ethereum'],
 
     // mock data for link-identity via cli

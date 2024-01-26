@@ -708,6 +708,8 @@ jobs:
           - test_name: lit-ii-identity-multiworker-test
           - test_name: lit-ii-vc-multiworker-test
           - test_name: lit-resume-worker
+          - test_name: lit-data-providers-test
+
     steps:
       - uses: actions/checkout@v4
 

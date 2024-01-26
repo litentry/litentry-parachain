@@ -17,4 +17,5 @@ export interface CredentialDefinition {
     network: CorePrimitivesNetworkWeb3Network['type'];
     mockDid: string;
     mockWeb3Network: string;
+    expectedCredentialValue: boolean;
 }
