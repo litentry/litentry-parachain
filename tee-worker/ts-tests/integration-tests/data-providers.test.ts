@@ -30,8 +30,7 @@ describe('Test Vc (direct invocation)', function () {
     let teeShieldingKey: KeyObject = undefined as any;
     const substrateIdentities: CorePrimitivesIdentity[] = [];
 
-    const clientDir = process.env.BINARY_DIR + '/litentry-cli';
-
+    const clientDir = process.env.LITENTRY_CLI_DIR;
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
@@ -46,6 +45,12 @@ describe('Test Vc (direct invocation)', function () {
     // `pnpm run test-data-providers:local` for all tests
     const argv = process.argv.indexOf('--id');
     argvId = process.argv[argv + 1];
+    const {
+        protocol: workerProtocal,
+        hostname: workerHostname,
+        port: workerPort,
+    } = new URL(process.env.WORKER_ENDPOINT!);
+    const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
 
     async function linkIdentityViaCli(id: string) {
         const keyringPair = randomSubstrateWallet();
@@ -60,10 +65,14 @@ describe('Test Vc (direct invocation)', function () {
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
             // CLIENT = "$CLIENT_BIN -p $NPORT -P $WORKER1PORT -u $NODEURL -U $WORKER1URL"
-            const client = zx`${clientDir} -p 9912 -P 2011 -u ws://litentry-node -U wss://litentry-worker-1`;
-            await zx`${client} trusted -d link-identity did:litentry:substrate:${formatAddress}\
+            const commandPromise = zx`${clientDir} -p ${nodePort} -P ${workerPort} -u ${
+                nodeProtocal + nodeHostname
+            } -U ${workerProtocal + workerHostname}\
+                  trusted -d link-identity did:litentry:substrate:${formatAddress}\
                   did:${credentialDefinitionMap[id].mockDid}\
                   ${credentialDefinitionMap[id].mockWeb3Network}`;
+
+            await commandPromise;
         } catch (error: any) {
             console.log(`Exit code: ${error.exitCode}`);
             console.log(`Error: ${error.stderr}`);
