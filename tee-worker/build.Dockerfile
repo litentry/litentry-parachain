@@ -55,7 +55,6 @@ ARG FINGERPRINT=none
 WORKDIR $HOME/tee-worker
 COPY . $HOME
 
-RUN echo "IMAGE_FOR_RELEASE: $IMAGE_FOR_RELEASE" 
 RUN \
   if [ "$IMAGE_FOR_RELEASE" = "true" ]; then \
   echo "Omit cache for release image"; \
@@ -67,8 +66,6 @@ RUN \
   rm -rf /opt/rust/sccache && mv /home/ubuntu/worker-cache/sccache /opt/rust && \
   make && sccache --show-stats; \
   fi
-
-
 
 RUN cargo test --release
 
