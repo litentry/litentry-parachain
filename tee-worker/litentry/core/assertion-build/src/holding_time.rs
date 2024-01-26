@@ -100,7 +100,7 @@ fn prepare_min_balance(
 	htype: &AmountHoldingTimeType,
 	min_balance: &ParameterString,
 ) -> Result<String> {
-	vec_to_string(min_balance.to_vec())
+	vec_to_string(min_balance.as_ref())
 		.map_err(|_| emit_error(htype, min_balance, ErrorDetail::ParseError))
 }
 
