@@ -36,11 +36,12 @@ use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_types::parentchain::ParentchainCall;
-use itp_utils::{if_production_or, stringify::account_id_to_string};
+use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
+use litentry_macros::if_production_or;
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };

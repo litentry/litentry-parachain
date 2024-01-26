@@ -44,7 +44,7 @@ use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 };
-use itp_utils::if_not_production;
+use litentry_macros::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::vec;
