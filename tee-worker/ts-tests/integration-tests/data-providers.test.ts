@@ -22,10 +22,8 @@ describe('Test Vc (direct invocation)', function () {
 
     // CLIENT="${CLIENT_BIN} -p ${LITENTRY_RPC_PORT} -P ${WORKER_1_PORT} -u ${LITENTRY_RPC_URL} -U ${WORKER_1_URL}"
 
-    const binPath = process.env.BINARY_DIR + '/litentry-cli';
-    const client =
-        binPath + ' -p ' + 9912 + ' -P ' + 2011 + ' -u ' + 'ws://litentry-node' + ' -U ' + 'wss://litentry-worker-1';
-
+    const client = process.env.BINARY_DIR + '/litentry-cli';
+    
     const aliceAddressFormat = '0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d';
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     let argvId = '';
