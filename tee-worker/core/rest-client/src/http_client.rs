@@ -61,7 +61,6 @@ pub trait SendHttpRequest {
 		method: Method,
 		maybe_body: Option<String>,
 	) -> Result<(Response, EncodedBody), Error>;
-
 }
 
 /// Send trait used by the http client to send HTTP request, based on `http_req`.
@@ -267,7 +266,12 @@ where
 		Ok((response, writer))
 	}
 
-	fn send_request_raw(&self, url: Url, method: Method, maybe_body: Option<String>) -> Result<(Response, EncodedBody), Error> {
+	fn send_request_raw(
+		&self,
+		url: Url,
+		method: Method,
+		maybe_body: Option<String>,
+	) -> Result<(Response, EncodedBody), Error> {
 		let uri = Uri::try_from(url.as_str()).map_err(Error::HttpReqError)?;
 
 		trace!("uri: {:?}", uri);

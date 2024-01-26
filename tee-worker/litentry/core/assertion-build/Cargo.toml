@@ -31,14 +31,14 @@ log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 
+ethabi = { version = "18.0.0", default-features = false }
 evm = { version = "0.41.1", default-features = false, features = ["with-codec"] }
-ethabi = { version = "18.0.0", default-features = false}
 
 primitive-types = { version = "0.12.1", default-features = false }
 
 # internal dependencies
-itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itc-direct-rpc-client = { path = "../../../core/direct-rpc-client", default-features = false }
+itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-ocall-api = { path = "../../../core-primitives/ocall-api", default-features = false }
 itp-stf-primitives = { default-features = false, path = "../../../core-primitives/stf-primitives" }
 itp-types = { path = "../../../core-primitives/types", default-features = false }
@@ -78,7 +78,7 @@ sgx = [
     "lc-credentials/sgx",
     "lc-data-providers/sgx",
     "primitive-types/codec",
-    "primitive-types/serde_no_std"
+    "primitive-types/serde_no_std",
 ]
 std = [
     "hex",

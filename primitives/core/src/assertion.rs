@@ -23,6 +23,7 @@ use crate::{
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use sp_core::H160;
 use sp_runtime::{traits::ConstU32, BoundedVec};
 use sp_std::{str, vec, vec::Vec};
 
@@ -259,7 +260,7 @@ pub enum Assertion {
 	CryptoSummary,
 
 	#[codec(index = 24)]
-	Dynamic
+	Dynamic(H160) // smart contract code identifier
 }
 
 impl Assertion {
@@ -307,7 +308,7 @@ impl Assertion {
 			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
 			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
-			Self::Dynamic => all_web3networks(),
+			Self::Dynamic(_) => all_web3networks(),
 		}
 	}
 }

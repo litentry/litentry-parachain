@@ -34,6 +34,7 @@ use litentry_primitives::{
 use log::*;
 use sp_core::hashing::blake2_256;
 use std::{format, sync::Arc, vec::Vec};
+use lc_assertion_build::dynamic::repository::InMemorySmartContractRepo;
 
 pub(crate) struct AssertionHandler<
 	K: ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + Clone,
@@ -136,8 +137,10 @@ where
 			Assertion::CryptoSummary =>
 				lc_assertion_build::nodereal::crypto_summary::build(&self.req),
 
-			Assertion::Dynamic => lc_assertion_build::dynamic::build(&self.req)
-
+			Assertion::Dynamic(smart_contract_id) => {
+				let repository = InMemorySmartContractRepo::new();
+				lc_assertion_build::dynamic::build(&self.req, smart_contract_id, repository)
+			},
 		}?;
 
 		// post-process the credential

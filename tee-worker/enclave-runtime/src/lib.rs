@@ -101,7 +101,6 @@ pub mod error;
 pub mod rpc;
 mod sync;
 mod tls_ra;
-mod evm;
 pub mod top_pool_execution;
 
 #[cfg(feature = "teeracle")]

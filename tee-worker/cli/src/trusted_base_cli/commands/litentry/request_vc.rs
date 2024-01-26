@@ -33,6 +33,7 @@ use litentry_primitives::{
 	SoraQuizType, VIP3MembershipCardLevel, Web3Network, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
+use sp_core::H160;
 
 // usage example (you can always use --help on subcommands to see more details)
 //
@@ -106,12 +107,18 @@ pub enum Command {
 	CryptoSummary,
 	LITStaking,
 	BRC20AmountHolder,
-	Dynamic,
+	Dynamic(DynamicArg),
 }
 
 #[derive(Args, Debug)]
 pub struct A2Arg {
 	pub guild_id: String,
+}
+
+#[derive(Args, Debug)]
+pub struct DynamicArg {
+	//hex encoded smart contract id
+	pub smart_contract_id: String,
 }
 
 #[derive(Args, Debug)]
@@ -481,7 +488,11 @@ impl RequestVcCommand {
 			Command::CryptoSummary => Assertion::CryptoSummary,
 			Command::LITStaking => Assertion::LITStaking,
 			Command::BRC20AmountHolder => Assertion::BRC20AmountHolder,
-			Command::Dynamic => Assertion::Dynamic,
+			Command::Dynamic(arg) => {
+				let decoded_id = hex::decode(&arg.smart_contract_id.clone()).unwrap();
+				let id_bytes: [u8; 20] = decoded_id.try_into().unwrap();
+				Assertion::Dynamic(H160::from(id_bytes))
+			},
 		};
 
 		let key = Self::random_aes_key();

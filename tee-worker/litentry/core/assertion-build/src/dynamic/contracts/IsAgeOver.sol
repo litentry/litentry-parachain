@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.8;
 
-import {DynamicAssertion} from "DynamicAssertion.sol";
-import "./Identity.sol";
+import {DynamicAssertion, Identity} from "DynamicAssertion.sol";
 
 contract IsAgeOver is DynamicAssertion {
     function doExecute(Identity[] memory identities)

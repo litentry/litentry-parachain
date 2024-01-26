@@ -47,13 +47,13 @@ pub mod a6;
 pub mod a8;
 pub mod achainable;
 pub mod brc20;
+pub mod dynamic;
 pub mod generic_discord_role;
 pub mod holding_time;
 pub mod lit_staking;
 pub mod nodereal;
 pub mod oneblock;
 pub mod vip3;
-pub mod dynamic;
 
 use blake2_rfc::blake2b::Blake2b;
 use itp_types::AccountId;
