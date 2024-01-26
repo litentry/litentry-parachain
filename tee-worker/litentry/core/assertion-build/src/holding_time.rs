@@ -242,7 +242,7 @@ fn search_holding_date(
 
 	let mut pred = |date: &&str| {
 		let (outcome, new_accounts) =
-			holding_time_search_step(&mut client, q_min_balance, accounts.clone(), *date);
+			holding_time_search_step(&mut client, q_min_balance, accounts.clone(), date);
 		accounts = new_accounts;
 		outcome.map(|is_holding| !is_holding) // negated to match the partition_point API
 	};
@@ -312,7 +312,7 @@ fn match_token_address(htype: &AmountHoldingTimeType, network: &Web3Network) -> 
 	}
 }
 
-fn partition_point<T, E, P>(vector: &Vec<T>, pred: &mut P) -> core::result::Result<usize, E>
+fn partition_point<T, E, P>(vector: &[T], pred: &mut P) -> core::result::Result<usize, E>
 where
 	P: FnMut(&T) -> core::result::Result<bool, E>,
 {
