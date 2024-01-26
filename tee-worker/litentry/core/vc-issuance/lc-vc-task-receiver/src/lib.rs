@@ -41,10 +41,10 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, ShardIdentifier,
 };
-use itp_utils::if_production_or;
 use lc_stf_task_receiver::StfTaskContext;
 use lc_stf_task_sender::AssertionBuildRequest;
 use lc_vc_task_sender::init_vc_task_sender_storage;
+use litentry_macros::if_production_or;
 use litentry_primitives::{
 	AesRequest, Assertion, DecryptableRequest, Identity, ParentchainBlockNumber,
 };
