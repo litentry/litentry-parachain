@@ -44,13 +44,13 @@ use itp_node_api::{
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
-use itp_utils::if_production_or;
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
+use litentry_macros::if_production_or;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use regex::Regex;

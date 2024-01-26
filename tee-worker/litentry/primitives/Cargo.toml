@@ -30,6 +30,7 @@ sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "m
 # internal dependencies
 itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
 itp-utils = { path = "../../core-primitives/utils", default-features = false }
+litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
 teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 

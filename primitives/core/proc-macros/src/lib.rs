@@ -14,10 +14,86 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+#![allow(clippy::tabs_in_doc_comments)]
+
 use cargo_toml::{Dependency, Manifest};
 use proc_macro::TokenStream;
 use quote::quote;
+use reuse::handle_reuse;
 use std::fs;
+use syn::{parse_macro_input, Error};
+
+mod reuse;
+
+/**
+This macro is used to reuse implementations when the rust's trait system cannot gracefully express the abstraction.
+
+This works similar with `#[cfg(..)]` that sets the target only appear on the specified cases.
+
+# Usage:
+
+```
+use litentry_proc_macros::reuse;
+
+#[reuse(x, y)] . // Define the cases that the following implementation expands for each one
+mod __ {  // Leave mod name with double discards, which is to be replaced by the cases
+	#[x]  // This item would only appear on case `x`
+	fn u() {
+		__
+	}
+
+	#[y]  // This item would only appear on case `y`
+	fn v(a: String) {
+		println!("hello world!")
+	}
+
+	#[x]  // Specifying multiple cases indicates that the item would appear on all of them
+	#[y] .// This behaviour is designed to be different from `#[cfg(..)]`
+	fn a() -> i32 {
+		#[x]  // This statement would only appear on case `x`
+		let p = 1;
+		#[y]  // This statement would only appear on case `y`
+		let p = 2;
+		p + 1
+	}
+
+
+	fn g<#[x] 'a, #[y] T>(#[x] a: i32, #[y] a: u32) {}
+}
+
+```
+Expands to:
+```
+mod x {
+	fn a() -> i32 {
+		let p = 1;
+		p + 1
+	}
+	fn u() {
+		println!("hello world!");
+	}
+	fn g<'a>(a: i32) {}
+}
+
+mod y {
+	fn a() -> i32 {
+		let p = 2;
+		p + 1
+	}
+	fn v(a: String) {
+		println!("hello world!");
+	}
+	fn g<T>(a: u32) {}
+}
+
+```
+*/
+#[proc_macro_attribute]
+pub fn reuse(args: TokenStream, input: TokenStream) -> TokenStream {
+	handle_reuse(parse_macro_input!(args), parse_macro_input!(input))
+		.unwrap_or_else(Error::into_compile_error)
+		.into()
+}
 
 #[proc_macro]
 pub fn local_modules(_item: TokenStream) -> TokenStream {
@@ -46,7 +122,8 @@ fn read_module_names(path: &str, relative_to: &str, module_names: &mut Vec<Strin
 		// skip package if it is unnamed or it was already visited
 		if !package.name.is_empty() && !module_names.contains(&module_name) {
 			module_names.push(module_name);
-			// go through all dependencies and visit the ones that has `path`, which means they are local
+			// go through all dependencies and visit the ones that has `path`, which means they are
+			// local
 			manifest.dependencies.values().for_each(|dep| {
 				if let Dependency::Detailed(details) = dep {
 					if let Some(path) = &details.path {
