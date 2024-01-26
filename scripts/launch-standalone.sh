@@ -22,6 +22,10 @@ if ! "$PARACHAIN_BIN" --version &> /dev/null; then
   exit 1
 fi
 
+function print_divider() {
+  echo "------------------------------------------------------------"
+}
+
 echo "Starting litentry-collator in standalone mode ..."
 
 $PARACHAIN_BIN --dev --unsafe-ws-external --unsafe-rpc-external \
@@ -29,3 +33,19 @@ $PARACHAIN_BIN --dev --unsafe-ws-external --unsafe-rpc-external \
   &> "$LITENTRY_PARACHAIN_DIR/para.alice.log" &
 
 sleep 10
+
+print_divider
+
+# Check parachain status
+echo "wait for parachain to produce block #1..."
+cd "$ROOTDIR/ts-tests"
+
+if [[ -z "${NODE_ENV}" ]]; then
+    echo "NODE_ENV=ci" > .env
+else
+    echo "NODE_ENV=${NODE_ENV}" > .env
+fi
+corepack pnpm install
+pnpm run wait-finalized-block 2>&1
+
+print_divider
