@@ -2,7 +2,7 @@ import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
 import { buildIdentityFromKeypair, decryptWithAes, initIntegrationTestContext, PolkadotSigner } from './common/utils';
-import { assertIsInSidechainBlock, assertVc } from './common/utils/assertion';
+import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
     getSidechainNonce,
     getTeeShieldingKey,
@@ -38,38 +38,32 @@ describe('Test Vc (direct invocation)', function () {
     // pnpm run test-data-providers:local for all tests
     const argv = process.argv.indexOf('--id');
     argvId = process.argv[argv + 1];
+
+    async function linkIdentityViaCli(id: string) {
+        const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
+        try {
+            await zx`${client} trusted -d link-identity did:litentry:substrate:${aliceAddressFormat}\
+                  did:${credentialDefinitionMap[id].mockDid}\
+                  ${credentialDefinitionMap[id].mockWeb3Network}`;
+        } catch (error: any) {
+            console.log(`Exit code: ${error.exitCode}`);
+            console.log(`Error: ${error.stderr}`);
+            throw error;
+        }
+
+        const events = (await eventsPromise).map(({ event }) => event);
+        assert.equal(events.length, 1);
+    }
+
     // eslint-disable-next-line no-prototype-builtins
     if (argvId && credentialDefinitionMap.hasOwnProperty(argvId)) {
-        step(`linking identity-${credentialDefinitionMap[argvId].mockAddress} via cli`, async function () {
-            const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
-            try {
-                await zx`${client} trusted -d link-identity did:litentry:substrate:${aliceAddressFormat}\
-            did:${credentialDefinitionMap[argvId].mockDid}\
-            ${credentialDefinitionMap[argvId].mockWeb3Network}`;
-            } catch (error: any) {
-                console.log(`Exit code: ${error.exitCode}`);
-                console.log(`Error: ${error.stderr}`);
-                throw error;
-            }
-
-            const events = (await eventsPromise).map(({ event }) => event);
-            assert.equal(events.length, 1);
+        step(`linking identity-${credentialDefinitionMap[argvId].mockDid} via cli`, async function () {
+            await linkIdentityViaCli(argvId);
         });
     } else {
         Object.keys(credentialDefinitionMap).forEach((id) => {
             step(`linking identity-${credentialDefinitionMap[id].mockAddress} via cli`, async function () {
-                const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
-                try {
-                    await zx`${client} trusted -d link-identity did:litentry:substrate:${aliceAddressFormat}\
-                did:${credentialDefinitionMap[id].mockDid}\
-                ${credentialDefinitionMap[id].mockWeb3Network}`;
-                } catch (error: any) {
-                    console.log(`Exit code: ${error.exitCode}`);
-                    console.log(`Error: ${error.stderr}`);
-                    throw error;
-                }
-                const events = (await eventsPromise).map(({ event }) => event);
-                assert.equal(events.length, 1);
+                await linkIdentityViaCli(id);
             });
         });
     }
