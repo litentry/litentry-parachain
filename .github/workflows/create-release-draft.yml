@@ -188,8 +188,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker-container
-          buildkitd-flags: --debug
+          driver: docker
 
       - name: Set env
         run: |
@@ -405,6 +404,7 @@ jobs:
       - build-tee
       - run-ts-tests
       - build-wasm
+      - build-worker-docker
     if: |
       !failure()  &&
       (success('build-wasm') || success('run-ts-tests') || success('build-tee'))
