@@ -137,8 +137,10 @@ lc-data-providers = { path = "../litentry/core/data-providers", default-features
 lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-features = false, features = ["sgx"] }
 lc-stf-task-receiver = { path = "../litentry/core/stf-task/receiver", default-features = false, features = ["sgx"] }
 lc-vc-task-receiver = { path = "../litentry/core/vc-issuance/lc-vc-task-receiver", default-features = false, features = ["sgx"] }
-litentry-macros = { path = "../litentry/macros" }
+litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
+litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
+litentry-proc-macros = { path = "../../primitives/core/proc-macros", default-features = false }
 
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

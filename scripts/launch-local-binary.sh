@@ -109,31 +109,33 @@ $PARACHAIN_BIN --alice --collator --force-authoring --tmp --chain $CHAIN-dev \
   --bootnodes /ip4/127.0.0.1/tcp/${AlicePort:-30336}/p2p/$RELAY_ALICE_IDENTITY &> "para.alice.log" &
 sleep 10
 
-echo "register parathread now ..."
+# Prepare Node.js enviroment
 cd "$ROOTDIR/ts-tests"
+
 if [[ -z "${NODE_ENV}" ]]; then
     echo "NODE_ENV=ci" > .env
 else
     echo "NODE_ENV=${NODE_ENV}" > .env
 fi
 corepack pnpm install
+
+
+echo "register parathread now ..."
 corepack pnpm run register-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/register-parathread.log"
+
 print_divider
 
-echo "upgrade parathread to parachain now ..."
+echo "upgrade parathread to parachain in 90s..."
 # Wait for 90s to allow onboarding finish, after that we do the upgrade
 sleep 90
-cd "$ROOTDIR/ts-tests"
-if [[ -z "${NODE_ENV}" ]]; then
-    echo "NODE_ENV=ci" > .env
-else
-    echo "NODE_ENV=${NODE_ENV}" > .env
-fi
-corepack pnpm install
 corepack pnpm run upgrade-parathread 2>&1 | tee "$LITENTRY_PARACHAIN_DIR/upgrade-parathread.log"
 
 print_divider
 
-echo "done. please check $LITENTRY_PARACHAIN_DIR for generated files if need"
+echo "wait for parachain to produce block #1..."
+pnpm run wait-finalized-block 2>&1
+
+echo
+echo "Check $LITENTRY_PARACHAIN_DIR for generated files if need"
 
 print_divider

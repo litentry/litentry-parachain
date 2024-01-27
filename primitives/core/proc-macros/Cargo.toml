@@ -1,0 +1,15 @@
+[package]
+authors = ['Trust Computing GmbH <info@litentry.com>']
+description = 'Proc-macros used by Litentry crates.'
+name = "litentry-proc-macros"
+version = "0.9.12"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+cargo_toml = "0.16.3"
+proc-macro2 = { version = "1" }
+quote = { version = "1" }
+syn = { version = "2", features = ["full", "visit-mut"] }

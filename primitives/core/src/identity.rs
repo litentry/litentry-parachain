@@ -23,10 +23,8 @@ use crate::{
 use alloc::{format, str, string::String};
 use codec::{Decode, Encode, Error, Input, MaxEncodedLen};
 use core::fmt::{Debug, Formatter};
-use itp_utils::{
-	hex::{decode_hex, hex_encode},
-	if_production_or,
-};
+use litentry_hex_utils::{decode_hex, hex_encode};
+use litentry_macros::if_production_or;
 use pallet_evm::{AddressMapping, HashedAddressMapping as GenericHashedAddressMapping};
 use scale_info::{meta_type, Type, TypeDefSequence, TypeInfo};
 use sp_core::{

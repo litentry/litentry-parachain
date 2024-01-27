@@ -42,6 +42,7 @@ its-validateer-fetch = { path = "../../validateer-fetch", default-features = fal
 # litentry
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false }
+litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
 
 [dev-dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
