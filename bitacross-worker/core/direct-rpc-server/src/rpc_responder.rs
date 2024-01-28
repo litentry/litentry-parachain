@@ -20,9 +20,9 @@ use crate::{
 	RpcHash, SendRpcResponse,
 };
 use alloc::format;
-use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use itp_rpc::{RpcResponse, RpcReturnValue};
 use itp_types::{DirectRequestStatus, TrustedOperationStatus};
+use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
 use std::{sync::Arc, vec::Vec};
 

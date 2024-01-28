@@ -28,8 +28,8 @@ base64_sgx = { package = "base64", rev = "sgx_1.1.3", git = "https://github.com/
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git", branch = "master", optional = true, features = ["net", "thread"] }
 
 # internal dependencies
-ba-itp-utils = { path = "../../core-primitives/utils", default-features = false }
 itp-sgx-crypto = { path = "../../core-primitives/sgx/crypto", default-features = false }
+itp-utils = { path = "../../core-primitives/utils", default-features = false }
 parentchain-primitives = { package = "core-primitives", path = "../../../primitives/core", default-features = false }
 teerex-primitives = { path = "../../../primitives/teerex", default-features = false }
 
@@ -49,7 +49,7 @@ std = [
     "hex/std",
     "serde/std",
     "itp-sgx-crypto/std",
-    "ba-itp-utils/std",
+    "itp-utils/std",
     "sp-core/std",
     "sp-std/std",
     "sp-io/std",

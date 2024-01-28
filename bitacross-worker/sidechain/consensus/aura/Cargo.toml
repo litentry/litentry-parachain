@@ -40,7 +40,7 @@ its-state = { path = "../../state", default-features = false }
 its-validateer-fetch = { path = "../../validateer-fetch", default-features = false }
 
 # litentry
-ba-itp-utils = { path = "../../../core-primitives/utils", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 lc-scheduled-enclave = { path = "../../../litentry/core/scheduled-enclave", default-features = false }
 
 [dev-dependencies]

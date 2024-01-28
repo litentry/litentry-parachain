@@ -50,7 +50,7 @@ pub enum Error {
 	MutexAccess,
 	Attestation(itp_attestation_handler::error::Error),
 	Metadata(itp_node_api_metadata::error::Error),
-	BufferError(ba_itp_utils::buffer::BufferError),
+	BufferError(itp_utils::buffer::BufferError),
 	Other(Box<dyn std::error::Error>),
 }
 

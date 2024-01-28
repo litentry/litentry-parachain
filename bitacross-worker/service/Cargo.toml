@@ -39,7 +39,6 @@ sgx_crypto_helper = { branch = "master", git = "https://github.com/apache/teacla
 sgx_types = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 
 # local
-ba-itp-utils = { path = "../core-primitives/utils" }
 itc-parentchain = { path = "../core/parentchain/parentchain-crate" }
 itc-rest-client = { path = "../core/rest-client" }
 itc-rpc-client = { path = "../core/rpc-client" }
@@ -51,6 +50,7 @@ itp-node-api = { path = "../core-primitives/node-api" }
 itp-settings = { path = "../core-primitives/settings" }
 itp-storage = { path = "../core-primitives/storage" }
 itp-types = { path = "../core-primitives/types" }
+itp-utils = { path = "../core-primitives/utils" }
 its-consensus-slots = { path = "../sidechain/consensus/slots" }
 its-peer-fetch = { path = "../sidechain/peer-fetch" }
 its-primitives = { path = "../sidechain/primitives" }

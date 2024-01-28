@@ -11,10 +11,10 @@ edition = "2021"
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 
 # local dependencies
-ba-itp-utils = { path = "../../core-primitives/utils", default-features = false }
 itp-sgx-crypto = { path = "../sgx/crypto", default-features = false }
 itp-sgx-runtime-primitives = { path = "../../core-primitives/sgx-runtime-primitives", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
+itp-utils = { path = "../../core-primitives/utils", default-features = false }
 
 # scs
 substrate-api-client = { default-features = false, features = ["sync-api"], git = "https://github.com/scs/substrate-api-client.git", branch = "polkadot-v0.9.42-tag-v0.14.0" }
@@ -36,7 +36,7 @@ std = [
     "itp-sgx-crypto/std",
     "itp-sgx-runtime-primitives/std",
     "itp-stf-primitives/std",
-    "ba-itp-utils/std",
+    "itp-utils/std",
     "substrate-api-client/std",
     # substrate
     "frame-system/std",

@@ -22,10 +22,10 @@ frame-metadata = { version = "15.1.0", features = ["v14"] }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42", default-features = false }
 
 # local
-ba-itp-utils = { path = "../../core-primitives/utils" }
 itp-api-client-types = { path = "../../core-primitives/node-api/api-client-types" }
 itp-rpc = { path = "../../core-primitives/rpc" }
 itp-types = { path = "../../core-primitives/types" }
+itp-utils = { path = "../../core-primitives/utils" }
 
 # litentry
 ita-stf = { path = "../../app-libs/stf" }

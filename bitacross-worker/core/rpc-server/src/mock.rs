@@ -15,9 +15,9 @@
 
 */
 
-use ba_itp_utils::ToHexPrefixed;
 use itp_enclave_api::{direct_request::DirectRequest, EnclaveResult};
 use itp_rpc::{Id, RpcResponse};
+use itp_utils::ToHexPrefixed;
 use its_primitives::{
 	traits::ShardIdentifierFor,
 	types::{BlockHash, BlockNumber, SignedBlock, SignedBlock as SignedSidechainBlock},

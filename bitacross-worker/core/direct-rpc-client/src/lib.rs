@@ -46,7 +46,7 @@ use serde_json::from_str;
 
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 
-use ba_itp_utils::FromHexPrefixed;
+use itp_utils::FromHexPrefixed;
 
 use std::{
 	boxed::Box,
@@ -228,9 +228,9 @@ impl RpcClient for DirectRpcClient {
 #[cfg(test)]
 mod tests {
 	use crate::DirectRpcClient;
-	use ba_itp_utils::ToHexPrefixed;
 	use itp_rpc::{Id, RpcResponse, RpcReturnValue};
 	use itp_types::{DirectRequestStatus, TrustedOperationStatus, H256};
+	use itp_utils::ToHexPrefixed;
 	use tungstenite::Message;
 
 	#[test]

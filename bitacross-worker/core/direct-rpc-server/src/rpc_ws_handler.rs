@@ -93,11 +93,11 @@ pub mod tests {
 		mocks::determine_watch_mock::DetermineWatchMock,
 		rpc_connection_registry::ConnectionRegistry,
 	};
-	use ba_itp_utils::ToHexPrefixed;
 	use codec::Encode;
 	use itc_tls_websocket_server::ConnectionToken;
 	use itp_rpc::RpcReturnValue;
 	use itp_types::DirectRequestStatus;
+	use itp_utils::ToHexPrefixed;
 	use jsonrpc_core::Params;
 	use serde_json::json;
 

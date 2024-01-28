@@ -208,14 +208,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "ba-itp-utils"
-version = "0.9.0"
-dependencies = [
- "hex",
- "parity-scale-codec",
-]
-
-[[package]]
 name = "base-x"
 version = "0.2.6"
 source = "git+https://github.com/whalelephant/base-x-rs?branch=no_std#906c9ac59282ff5a2eec86efd25d50ad9927b147"
@@ -597,8 +589,9 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
- "itp-utils",
+ "litentry-hex-utils",
  "litentry-macros 0.9.12",
+ "litentry-proc-macros",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "ring 0.16.20",
@@ -845,7 +838,6 @@ name = "enclave-runtime"
 version = "0.0.1"
 dependencies = [
  "array-bytes 6.1.0",
- "ba-itp-utils",
  "cid",
  "derive_more",
  "env_logger",
@@ -891,6 +883,7 @@ dependencies = [
  "itp-top-pool",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "its-block-verification",
  "its-primitives",
  "its-sidechain",
@@ -1837,7 +1830,6 @@ dependencies = [
 name = "ita-parentchain-interface"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "bs58",
  "ita-sgx-runtime",
  "ita-stf",
@@ -1846,6 +1838,7 @@ dependencies = [
  "itp-node-api",
  "itp-stf-primitives",
  "itp-types",
+ "itp-utils",
  "lc-scheduled-enclave",
  "litentry-primitives",
  "log",
@@ -1883,7 +1876,6 @@ dependencies = [
 name = "ita-stf"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "frame-support",
  "frame-system",
  "hex",
@@ -1898,6 +1890,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-storage",
  "itp-types",
+ "itp-utils",
  "litentry-primitives",
  "log",
  "pallet-balances",
@@ -1917,9 +1910,9 @@ dependencies = [
 name = "itc-direct-rpc-client"
 version = "0.1.0"
 dependencies = [
- "ba-itp-utils",
  "itp-rpc",
  "itp-types",
+ "itp-utils",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -1935,10 +1928,10 @@ dependencies = [
 name = "itc-direct-rpc-server"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "itc-tls-websocket-server",
  "itp-rpc",
  "itp-types",
+ "itp-utils",
  "jsonrpc-core",
  "log",
  "parity-scale-codec",
@@ -2016,7 +2009,6 @@ dependencies = [
 name = "itc-parentchain-indirect-calls-executor"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "binary-merkle-tree",
  "bs58",
  "core-primitives",
@@ -2030,6 +2022,7 @@ dependencies = [
  "itp-test",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "lc-scheduled-enclave",
  "litentry-primitives",
  "log",
@@ -2075,12 +2068,12 @@ dependencies = [
 name = "itc-peer-top-broadcaster"
 version = "0.1.0"
 dependencies = [
- "ba-itp-utils",
  "itc-direct-rpc-client",
  "itc-direct-rpc-server",
  "itp-rpc",
  "itp-stf-primitives",
  "itp-types",
+ "itp-utils",
  "litentry-primitives",
  "log",
  "sgx_tstd",
@@ -2553,7 +2546,6 @@ dependencies = [
 name = "itp-top-pool-author"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "derive_more",
  "itp-enclave-metrics",
  "itp-ocall-api",
@@ -2563,6 +2555,7 @@ dependencies = [
  "itp-test",
  "itp-top-pool",
  "itp-types",
+ "itp-utils",
  "jsonrpc-core",
  "lazy_static",
  "litentry-primitives",
@@ -2577,11 +2570,11 @@ dependencies = [
 name = "itp-types"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "frame-system",
  "itp-sgx-crypto",
  "itp-sgx-runtime-primitives",
  "itp-stf-primitives",
+ "itp-utils",
  "litentry-primitives",
  "pallet-balances",
  "parity-scale-codec",
@@ -2627,9 +2620,9 @@ dependencies = [
 name = "its-block-verification"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "frame-support",
  "itp-types",
+ "itp-utils",
  "its-primitives",
  "log",
  "sgx_tstd",
@@ -2643,7 +2636,6 @@ dependencies = [
 name = "its-consensus-aura"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "finality-grandpa",
  "ita-stf",
  "itc-parentchain-block-import-dispatcher",
@@ -2659,6 +2651,7 @@ dependencies = [
  "itp-time-utils",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "its-block-composer",
  "its-block-verification",
  "its-consensus-common",
@@ -2740,12 +2733,12 @@ dependencies = [
 name = "its-rpc-handler"
 version = "0.9.0"
 dependencies = [
- "ba-itp-utils",
  "futures 0.3.8",
  "itp-rpc",
  "itp-stf-primitives",
  "itp-top-pool-author",
  "itp-types",
+ "itp-utils",
  "its-primitives",
  "jsonrpc-core",
  "litentry-primitives",
@@ -2934,6 +2927,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "litentry-hex-utils"
+version = "0.9.12"
+dependencies = [
+ "hex",
+]
+
+[[package]]
 name = "litentry-macros"
 version = "0.1.0"
 dependencies = [
@@ -2944,21 +2944,16 @@ dependencies = [
 [[package]]
 name = "litentry-macros"
 version = "0.9.12"
-dependencies = [
- "proc-macro2",
- "quote 1.0.33",
- "syn 2.0.37",
-]
 
 [[package]]
 name = "litentry-primitives"
 version = "0.1.0"
 dependencies = [
- "ba-itp-utils",
  "bitcoin",
  "core-primitives",
  "hex",
  "itp-sgx-crypto",
+ "itp-utils",
  "log",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",
@@ -2975,6 +2970,16 @@ dependencies = [
  "strum",
  "strum_macros",
  "teerex-primitives 0.1.0",
+]
+
+[[package]]
+name = "litentry-proc-macros"
+version = "0.9.12"
+dependencies = [
+ "cargo_toml",
+ "proc-macro2",
+ "quote 1.0.33",
+ "syn 2.0.37",
 ]
 
 [[package]]

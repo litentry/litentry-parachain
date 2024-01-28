@@ -1,5 +1,5 @@
 [package]
-name = "ba-itp-utils"
+name = "itp-utils"
 version = "0.9.0"
 authors = ['Trust Computing GmbH <info@litentry.com>', 'Integritee AG <hello@integritee.network>']
 homepage = "https://litentry.com/"

@@ -1,5 +1,5 @@
 use crate::ocall_bridge::bridge_api::{Bridge, SidechainBridge};
-use ba_itp_utils::write_slice_and_whitespace_pad;
+use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::sgx_status_t;
 use std::{slice, sync::Arc};

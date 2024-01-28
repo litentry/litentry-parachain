@@ -28,7 +28,6 @@ use crate::{
 	worker::Worker,
 	worker_peers_registry::WorkerPeersRegistry,
 };
-use ba_itp_utils::if_production_or;
 use base58::ToBase58;
 use clap::{load_yaml, App, ArgMatches};
 use codec::{Decode, Encode};
@@ -45,6 +44,7 @@ use itp_node_api::{
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
+use itp_utils::if_production_or;
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };

@@ -16,10 +16,10 @@
 */
 
 use crate::{command_utils::get_worker_api_direct, Cli};
-use ba_itp_utils::FromHexPrefixed;
 use itc_rpc_client::direct_client::DirectApi;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_types::DirectRequestStatus;
+use itp_utils::FromHexPrefixed;
 use log::*;
 use std::fs::read_to_string;
 

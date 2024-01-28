@@ -13,8 +13,8 @@ log = { version = "0.4.17", default-features = false }
 thiserror = { version = "1.0.26", optional = true }
 
 # local deps
-ba-itp-utils = { default-features = false, path = "../../core-primitives/utils" }
 itp-types = { default-features = false, path = "../../core-primitives/types" }
+itp-utils = { default-features = false, path = "../../core-primitives/utils" }
 its-primitives = { default-features = false, path = "../primitives" }
 
 # substrate deps

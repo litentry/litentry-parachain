@@ -15,13 +15,13 @@
 
 */
 use crate::ENCLAVE_ACCOUNT_KEY;
-use ba_itp_utils::stringify::account_id_to_string;
 use codec::{Decode, Encode};
 use frame_support::ensure;
 use hex_literal::hex;
 use itp_stf_primitives::error::{StfError, StfResult};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_types::Index;
+use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{ErrorDetail, Identity, Web3ValidationData};
 use log::*;
 use sp_core::blake2_256;

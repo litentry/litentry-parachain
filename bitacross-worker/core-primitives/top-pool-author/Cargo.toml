@@ -34,7 +34,7 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 lazy_static = { version = "1.1.0", optional = true }
 
 # litentry
-ba-itp-utils = { path = "../utils", default-features = false }
+itp-utils = { path = "../utils", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 
 [dev-dependencies]
@@ -59,7 +59,7 @@ std = [
     "log/std",
     # litentry
     "litentry-primitives/std",
-    "ba-itp-utils/std",
+    "itp-utils/std",
 ]
 sgx = [
     "sgx_tstd",

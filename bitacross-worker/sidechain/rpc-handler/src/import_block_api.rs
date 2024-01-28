@@ -19,7 +19,7 @@
 use crate::sgx_reexport_prelude::*;
 
 use crate::constants::RPC_METHOD_NAME_IMPORT_BLOCKS;
-use ba_itp_utils::FromHexPrefixed;
+use itp_utils::FromHexPrefixed;
 use its_primitives::types::SignedBlock;
 use jsonrpc_core::{IoHandler, Params, Value};
 use log::*;

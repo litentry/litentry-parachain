@@ -23,7 +23,6 @@ use crate::{
 		get_node_metadata_repository_from_integritee_solo_or_parachain,
 	},
 };
-use ba_itp_utils::write_slice_and_whitespace_pad;
 use codec::{Decode, Encode};
 use core::slice;
 use ita_oracle::{
@@ -40,6 +39,7 @@ use itp_component_container::ComponentGetter;
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{pallet_teeracle::TeeracleCallIndexes, provider::AccessNodeMetadata};
 use itp_types::OpaqueCall;
+use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_runtime::OpaqueExtrinsic;

@@ -37,7 +37,6 @@ use crate::{
 		get_validator_accessor_from_target_b_solo_or_parachain,
 	},
 };
-use ba_itp_utils::if_not_production;
 use codec::Encode;
 use itc_parentchain::{
 	block_import_dispatcher::triggered_dispatcher::TriggerParentchainBlockImport,
@@ -56,6 +55,7 @@ use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{parentchain::ParentchainCall, Block, OpaqueCall, H256};
+use itp_utils::if_not_production;
 use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor, SignedBlock,

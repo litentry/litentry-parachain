@@ -37,7 +37,7 @@ use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_time_utils::duration_now;
 
-use ba_itp_utils::hex::hex_encode;
+use itp_utils::hex::hex_encode;
 use its_block_verification::slot::slot_author;
 use its_consensus_common::{Environment, Error as ConsensusError, Proposer};
 use its_consensus_slots::{SimpleSlotWorker, Slot, SlotInfo};

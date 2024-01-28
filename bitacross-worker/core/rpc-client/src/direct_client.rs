@@ -18,7 +18,6 @@
 //! Interface for direct access to a workers rpc.
 
 use crate::ws_client::{WsClient, WsClientControl};
-use ba_itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use base58::ToBase58;
 use codec::{Decode, Encode};
 use frame_metadata::RuntimeMetadataPrefixed;
@@ -27,6 +26,7 @@ use itp_api_client_types::Metadata;
 use itp_rpc::{Id, RpcRequest, RpcResponse, RpcReturnValue};
 use itp_stf_primitives::types::{AccountId, ShardIdentifier};
 use itp_types::{DirectRequestStatus, RsaRequest};
+use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use log::*;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use std::{

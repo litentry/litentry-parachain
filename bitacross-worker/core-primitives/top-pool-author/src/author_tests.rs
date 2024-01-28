@@ -25,7 +25,6 @@ use crate::{
 use codec::{Decode, Encode};
 use itp_sgx_crypto::{mocks::KeyRepositoryMock, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 
-use ba_itp_utils::ToHexPrefixed;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_test::mock::{
 	handle_state_mock::HandleStateMock,
@@ -37,6 +36,7 @@ use itp_test::mock::{
 	},
 };
 use itp_top_pool::mocks::trusted_operation_pool_mock::TrustedOperationPoolMock;
+use itp_utils::ToHexPrefixed;
 use litentry_primitives::BroadcastedRequest;
 use sgx_crypto_helper::{rsa3072::Rsa3072KeyPair, RsaKeyPair};
 use sp_core::H256;

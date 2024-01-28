@@ -12,12 +12,12 @@ sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sd
 log = { version = "0.4", default-features = false }
 
 # local dependencies
-ba-itp-utils = { path = "../../core-primitives/utils", default-features = false }
 itc-direct-rpc-client = { path = "../direct-rpc-client", default-features = false }
 itc-direct-rpc-server = { path = "../direct-rpc-server", default-features = false }
 itp-rpc = { path = "../../core-primitives/rpc", default-features = false }
 itp-stf-primitives = { path = "../../core-primitives/stf-primitives", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
+itp-utils = { path = "../../core-primitives/utils", default-features = false }
 
 # litentry
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
@@ -38,7 +38,7 @@ sgx = [
 std = [
     "itp-stf-primitives/std",
     "itp-types/std",
-    "ba-itp-utils/std",
+    "itp-utils/std",
     "log/std",
     "itc-direct-rpc-server/std",
     "itc-direct-rpc-client/std",

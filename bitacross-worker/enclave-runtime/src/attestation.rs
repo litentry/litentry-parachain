@@ -37,7 +37,6 @@ use crate::{
 	},
 	Error as EnclaveError, Result as EnclaveResult,
 };
-use ba_itp_utils::write_slice_and_whitespace_pad;
 use codec::{Decode, Encode};
 use itp_attestation_handler::{AttestationHandler, RemoteAttestationType, SgxQlQveCollateral};
 use itp_component_container::ComponentGetter;
@@ -53,6 +52,7 @@ use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519, key_repository::AccessKey, Error as SgxCryptoError,
 };
 use itp_types::OpaqueCall;
+use itp_utils::write_slice_and_whitespace_pad;
 use log::*;
 use sgx_types::*;
 use sp_core::Pair;

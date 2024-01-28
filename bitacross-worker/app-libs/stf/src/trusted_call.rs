@@ -28,7 +28,6 @@ use crate::{
 	trusted_call_result::TrustedCallResult,
 	Getter,
 };
-use ba_itp_utils::stringify::account_id_to_string;
 use codec::{Compact, Decode, Encode};
 use frame_support::{ensure, traits::UnfilteredDispatchable};
 #[cfg(feature = "evm")]
@@ -50,6 +49,7 @@ use itp_types::{
 	Address,
 };
 pub use itp_types::{OpaqueCall, H256};
+use itp_utils::stringify::account_id_to_string;
 pub use litentry_primitives::{
 	aes_encrypt_default, all_evm_web3networks, all_substrate_web3networks, AesOutput, Assertion,
 	ErrorDetail, IMPError, Identity, LitentryMultiSignature, ParentchainBlockNumber, RequestAesKey,

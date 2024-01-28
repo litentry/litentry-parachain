@@ -19,9 +19,9 @@ use crate::{
 	command_utils::{get_chain_api, *},
 	Cli, CliResult, CliResultOk,
 };
-use ba_itp_utils::ToHexPrefixed;
 use itp_node_api::api_client::TEEREX;
 use itp_types::{parentchain::Hash, OpaqueCall};
+use itp_utils::ToHexPrefixed;
 use log::*;
 use regex::Regex;
 use serde::Deserialize;

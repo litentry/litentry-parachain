@@ -25,7 +25,6 @@ use crate::{
 		get_validator_accessor_from_integritee_solo_or_parachain,
 	},
 };
-use ba_itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use codec::Encode;
 use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
@@ -46,6 +45,7 @@ use itp_top_pool_author::traits::AuthorApi;
 use itp_types::{
 	DirectRequestStatus, Index, MrEnclave, RsaRequest, ShardIdentifier, SidechainBlockNumber, H256,
 };
+use itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
 use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
@@ -489,7 +489,7 @@ fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
 
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let encoded_quote_to_forward: Vec<u8> =
-		ba_itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
 	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
@@ -519,7 +519,7 @@ fn attesteer_forward_ias_attestation_report_inner(
 
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let ias_attestation_report =
-		ba_itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
 	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)
