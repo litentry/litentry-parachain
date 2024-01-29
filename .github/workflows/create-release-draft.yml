@@ -108,7 +108,7 @@ jobs:
           cp ${{ steps.srtool_build.outputs.wasm_compressed }} ${{ matrix.chain }}-parachain-runtime.compact.compressed.wasm
 
       - name: Upload wasm artefacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.chain }}-parachain-runtime
           path: |
@@ -158,7 +158,7 @@ jobs:
           docker cp $(docker create --rm litentry/litentry-parachain:$PARACHAIN_DOCKER_TAG):/usr/local/bin/litentry-collator .
 
       - name: Upload the client binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-collator
           if-no-files-found: ignore
@@ -277,7 +277,7 @@ jobs:
           echo "worker_sha1sum=$WORKER_SHA1SUM" >> $GITHUB_OUTPUT
 
       - name: Upload artefacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-tee
           path: ./tee-worker/enclave_release/*
@@ -316,7 +316,7 @@ jobs:
           make test-ts-docker-${{ matrix.chain }}
 
       - name: Archive logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
           name: ${{ matrix.chain }}-ts-tests-artifacts
@@ -417,7 +417,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download all artefacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Generate release notes
         run: |
