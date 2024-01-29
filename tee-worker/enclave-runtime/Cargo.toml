@@ -18,6 +18,7 @@ evm = [
     "ita-stf/evm",
 ]
 production = [
+    "ita-stf/production",
     "itp-settings/production",
     "itp-attestation-handler/production",
     "lc-data-providers/production",

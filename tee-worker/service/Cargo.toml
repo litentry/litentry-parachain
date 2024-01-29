@@ -87,6 +87,7 @@ evm = []
 sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
 production = [
+    "ita-stf/production",
     "itp-settings/production",
     "lc-data-providers/production",
     "litentry-macros/production",

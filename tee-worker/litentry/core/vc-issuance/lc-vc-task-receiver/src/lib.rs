@@ -20,12 +20,11 @@ use crate::vc_handling::VCRequestHandler;
 use codec::{Decode, Encode};
 use frame_support::{ensure, sp_runtime::traits::One};
 use ita_sgx_runtime::{pallet_imt::get_eligible_identities, BlockNumber, Hash, Runtime};
+#[cfg(not(feature = "production"))]
+use ita_stf::helpers::ensure_alice;
 use ita_stf::{
-	aes_encrypt_default,
-	helpers::{ensure_alice, ensure_self},
-	trusted_call_result::RequestVCResult,
-	Getter, OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation,
-	H256,
+	aes_encrypt_default, helpers::ensure_self, trusted_call_result::RequestVCResult, Getter,
+	OpaqueCall, TrustedCall, TrustedCallSigned, TrustedCallVerification, TrustedOperation, H256,
 };
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{

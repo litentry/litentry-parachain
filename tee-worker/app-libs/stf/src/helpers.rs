@@ -28,6 +28,7 @@ use sp_core::blake2_256;
 use sp_runtime::AccountId32;
 use std::prelude::v1::*;
 
+#[cfg(not(feature = "production"))]
 pub const ALICE_ACCOUNTID32: AccountId32 =
 	AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
 
