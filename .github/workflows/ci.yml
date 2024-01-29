@@ -356,7 +356,7 @@ jobs:
 
       - name: Cache worker-cache
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             worker-cache
