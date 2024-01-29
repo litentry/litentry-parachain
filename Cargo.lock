@@ -5476,6 +5476,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
+ "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-aura",
  "pallet-authorship",
@@ -6752,6 +6753,21 @@ dependencies = [
  "ecdsa 0.14.8",
  "elliptic-curve 0.12.3",
  "sha2 0.10.7",
+]
+
+[[package]]
+name = "pallet-account-fix"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
