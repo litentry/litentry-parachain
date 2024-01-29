@@ -38,3 +38,6 @@ std = [
     "ring/std",
     "pallet-evm/std",
 ]
+production = [
+    "litentry-macros/production",
+]
