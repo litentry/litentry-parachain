@@ -71,7 +71,7 @@ pub enum Web3Network {
 	#[codec(index = 5)]
 	Khala,
 	#[codec(index = 6)]
-	SubstrateTestnet, // when launched it with standalone (integritee-)node
+	SubstrateTestnet,
 
 	// evm
 	#[codec(index = 7)]
