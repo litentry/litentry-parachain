@@ -319,7 +319,7 @@ jobs:
           docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload docker image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
           path: litentry-parachain-dev.tar.gz
@@ -463,7 +463,7 @@ jobs:
         run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
 
       - name: Upload docker images
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-tee
           path: litentry-tee.tar.gz
@@ -513,7 +513,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.chain }}-ts-tests-docker-logs
@@ -522,7 +522,7 @@ jobs:
           retention-days: 3
 
       - name: Archive logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.chain }}-ts-tests-artifact
@@ -682,7 +682,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
@@ -765,7 +765,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
