@@ -76,10 +76,10 @@ mod tests {
 	use super::*;
 	use itp_stf_primitives::types::ShardIdentifier;
 	use itp_types::AccountId;
-	use itp_utils::hex::decode_hex;
 	use lc_common::web3_token::{TokenAddress, TokenName};
 	use lc_credentials_v2::assertion_logic::{AssertionLogic, Op};
 	use lc_mock_server::run;
+	use litentry_hex_utils::decode_hex;
 	use litentry_primitives::{Identity, IdentityNetworkTuple};
 
 	fn crate_assertion_build_request(

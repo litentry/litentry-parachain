@@ -52,6 +52,7 @@ pallet-parachain-staking = { path = "../../../../pallets/parachain-staking", def
 [dev-dependencies]
 env_logger = "0.10.0"
 lc-mock-server = { path = "../mock-server" }
+litentry-hex-utils = { path = "../../../../primitives/hex" }
 
 [features]
 default = ["std"]
