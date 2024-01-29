@@ -224,11 +224,6 @@ pub(crate) fn init_enclave(
 		run_stf_task_handler().unwrap();
 	});
 
-	std::thread::spawn(move || {
-		#[allow(clippy::unwrap_used)]
-		run_vc_issuance().unwrap();
-	});
-
 	Ok(())
 }
 
@@ -371,6 +366,11 @@ pub(crate) fn init_enclave_sidechain_components(
 	} else {
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(Arc::new(None));
 	}
+
+	std::thread::spawn(move || {
+		#[allow(clippy::unwrap_used)]
+		run_vc_issuance().unwrap();
+	});
 
 	Ok(())
 }
