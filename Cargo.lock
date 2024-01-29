@@ -876,6 +876,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo_toml"
+version = "0.16.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3f9629bc6c4388ea699781dc988c2b99766d7679b151c81990b4fa1208fafd3"
+dependencies = [
+ "serde",
+ "toml 0.8.2",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1186,8 +1196,9 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
- "itp-utils",
+ "litentry-hex-utils",
  "litentry-macros",
+ "litentry-proc-macros",
  "pallet-evm",
  "parity-scale-codec",
  "ring 0.16.20",
@@ -4403,14 +4414,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
 
 [[package]]
-name = "itp-utils"
-version = "0.9.0"
-dependencies = [
- "hex",
- "parity-scale-codec",
-]
-
-[[package]]
 name = "jobserver"
 version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5435,13 +5438,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "litentry-macros"
+name = "litentry-hex-utils"
 version = "0.9.12"
 dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.48",
+ "hex",
+ "parity-scale-codec",
 ]
+
+[[package]]
+name = "litentry-macros"
+version = "0.9.12"
 
 [[package]]
 name = "litentry-parachain-runtime"
@@ -5470,6 +5476,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
+ "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-aura",
  "pallet-authorship",
@@ -5522,6 +5529,16 @@ dependencies = [
  "xcm-builder",
  "xcm-executor",
  "xcm-simulator",
+]
+
+[[package]]
+name = "litentry-proc-macros"
+version = "0.9.12"
+dependencies = [
+ "cargo_toml",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.48",
 ]
 
 [[package]]
@@ -6736,6 +6753,21 @@ dependencies = [
  "ecdsa 0.14.8",
  "elliptic-curve 0.12.3",
  "sha2 0.10.7",
+]
+
+[[package]]
+name = "pallet-account-fix"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -9823,7 +9855,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f4c021e1093a56626774e81216a4ce732a735e5bad4868a03f3ed65ca0c3919"
 dependencies = [
  "once_cell",
- "toml_edit",
+ "toml_edit 0.19.14",
 ]
 
 [[package]]
@@ -14027,7 +14059,19 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit",
+ "toml_edit 0.19.14",
+]
+
+[[package]]
+name = "toml"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "185d8ab0dfbb35cf1399a6344d8484209c088f75f8f68230da55d48d95d43e3d"
+dependencies = [
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_edit 0.20.2",
 ]
 
 [[package]]
@@ -14044,6 +14088,19 @@ name = "toml_edit"
 version = "0.19.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8123f27e969974a3dfba720fdb560be359f57b44302d280ba72e76a74480e8a"
+dependencies = [
+ "indexmap 2.0.0",
+ "serde",
+ "serde_spanned",
+ "toml_datetime",
+ "winnow",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.20.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "396e4d48bbb2b7554c944bde63101b5ae446cff6ec4a24227428f15eb72ef338"
 dependencies = [
  "indexmap 2.0.0",
  "serde",

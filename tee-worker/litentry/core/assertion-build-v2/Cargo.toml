@@ -31,6 +31,7 @@ lc-common = { path = "../common", default-features = false }
 lc-credentials-v2 = { path = "../credentials-v2", default-features = false }
 lc-service = { path = "../service", default-features = false }
 lc-stf-task-sender = { path = "../stf-task/sender", default-features = false }
+litentry-hex-utils = { path = "../../../../primitives/hex", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
