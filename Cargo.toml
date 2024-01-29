@@ -1,6 +1,7 @@
 [workspace]
 members = [
     'node',
+    'pallets/account-fix',
     'pallets/bridge',
     'pallets/bridge-transfer',
     'pallets/drop3',
