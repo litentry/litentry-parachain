@@ -1,13 +1,7 @@
 import { randomBytes, KeyObject } from 'crypto';
 import { step } from 'mocha-steps';
 import { assert } from 'chai';
-import {
-    buildIdentityFromKeypair,
-    decryptWithAes,
-    initIntegrationTestContext,
-    PolkadotSigner,
-    sleep,
-} from './common/utils';
+import { buildIdentityFromKeypair, decryptWithAes, initIntegrationTestContext, PolkadotSigner } from './common/utils';
 import { randomSubstrateWallet } from './common/helpers';
 import { assertIsInSidechainBlock } from './common/utils/assertion';
 import {
@@ -20,11 +14,10 @@ import type { IntegrationTestContext } from './common/common-types';
 import { CorePrimitivesIdentity, RequestVCResult } from 'parachain-api';
 import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
-import { credentialDefinitionMap } from './common/credential-definitions';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { u8aToHex } from '@polkadot/util';
-
+import { vip3CredentialJson, CredentialDefinition } from './common/credential-json';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -53,6 +46,8 @@ describe('Test Vc (direct invocation)', function () {
     const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
 
     async function linkIdentityViaCli(id: string) {
+        const credentialDefinition = vip3CredentialJson.find((item) => item.id === id) as CredentialDefinition;
+
         const keyringPair = randomSubstrateWallet();
         keyringPairs.push(keyringPair);
         const formatAddress = u8aToHex(keyringPair.publicKey);
@@ -70,8 +65,8 @@ describe('Test Vc (direct invocation)', function () {
                 nodeProtocal + nodeHostname
             } -U ${workerProtocal + workerHostname}\
                   trusted -d link-identity did:litentry:substrate:${formatAddress}\
-                  did:${credentialDefinitionMap[id].mockDid}\
-                  ${credentialDefinitionMap[id].mockWeb3Network}`;
+                  did:${credentialDefinition.mockDid}\
+                  ${credentialDefinition.mockWeb3Network}`;
 
             await commandPromise;
         } catch (error: any) {
@@ -85,8 +80,10 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     async function requestVc(id: string, index: number) {
+        const credentialDefinition = vip3CredentialJson.find((item) => item.id === id) as CredentialDefinition;
+
         const assertion = {
-            [credentialDefinitionMap[id].assertion.id]: credentialDefinitionMap[id].assertion.payload,
+            [credentialDefinition.assertion.id]: credentialDefinition.assertion.payload,
         };
 
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, substrateIdentities[index])).toNumber();
@@ -112,22 +109,25 @@ describe('Test Vc (direct invocation)', function () {
         const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
         const vcPayloadJson = JSON.parse(decryptVcPayload);
 
-        assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinitionMap[id].expectedCredentialValue);
+        assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinition.expectedCredentialValue);
     }
 
     // eslint-disable-next-line no-prototype-builtins
-    if (argvId && credentialDefinitionMap.hasOwnProperty(argvId)) {
+    if (argvId && vip3CredentialJson.find((item) => item.id === argvId)) {
+        const credentialDefinition = vip3CredentialJson.find((item) => item.id === argvId) as CredentialDefinition;
         step(
-            `linking identity::${credentialDefinitionMap[argvId].mockDid} via cli and request vc::${credentialDefinitionMap[argvId].id}`,
+            `linking identity::${credentialDefinition.mockDid} via cli and request vc::${credentialDefinition.mockDid}`,
             async function () {
                 await linkIdentityViaCli(argvId);
                 await requestVc(argvId, 0);
             }
         );
     } else {
-        Object.keys(credentialDefinitionMap).forEach((id, index) => {
+        vip3CredentialJson.forEach(({ id }, index) => {
+            console.log(id);
+
             step(
-                `linking identity::${credentialDefinitionMap[id].mockDid} via cli and request vc::${credentialDefinitionMap[id].id}`,
+                `linking identity::${vip3CredentialJson[index].mockDid} via cli and request vc::${vip3CredentialJson[index].id}`,
                 async function () {
                     await linkIdentityViaCli(id);
                     await requestVc(id, index);
