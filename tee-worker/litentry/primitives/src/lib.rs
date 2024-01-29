@@ -41,7 +41,7 @@ pub use validation_data::*;
 use bitcoin::sign_message::{signed_msg_hash, MessageSignature};
 use codec::{Decode, Encode, MaxEncodedLen};
 use itp_sgx_crypto::ShieldingCryptoDecrypt;
-use itp_utils::hex::hex_encode;
+use litentry_hex_utils::hex_encode;
 use log::error;
 pub use parentchain_primitives::{
 	all_bitcoin_web3networks, all_evm_web3networks, all_substrate_web3networks, all_web3networks,
@@ -54,7 +54,7 @@ pub use parentchain_primitives::{
 	GenericDiscordRoleType, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
 	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
 	SchemaContentString, SchemaIdString, Signature as ParentchainSignature, SoraQuizType,
-	VCMPError, VIP3MembershipCardLevel, Web3Network, Web3TokenType, ASSERTION_FROM_DATE, MINUTES,
+	VCMPError, VIP3MembershipCardLevel, Web3Network, Web3TokenType, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
