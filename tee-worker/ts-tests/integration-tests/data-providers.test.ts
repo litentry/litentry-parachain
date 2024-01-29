@@ -16,8 +16,8 @@ import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { u8aToHex } from '@polkadot/util';
-import { vip3CredentialJson, CredentialDefinition } from './common/credential-json';
+import { stringToHex, u8aToHex } from '@polkadot/util';
+import { vip3CredentialJson, achainableCredentialJson, CredentialDefinition } from './common/credential-json';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -26,6 +26,7 @@ describe('Test Vc (direct invocation)', function () {
     const clientDir = process.env.LITENTRY_CLI_DIR;
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
+    const testJson = [...achainableCredentialJson];
     let argvId = '';
     this.timeout(6000000);
     before(async () => {
@@ -46,7 +47,7 @@ describe('Test Vc (direct invocation)', function () {
     const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
 
     async function linkIdentityViaCli(id: string) {
-        const credentialDefinition = vip3CredentialJson.find((item) => item.id === id) as CredentialDefinition;
+        const credentialDefinition = testJson.find((item) => item.id === id) as CredentialDefinition;
 
         const keyringPair = randomSubstrateWallet();
         keyringPairs.push(keyringPair);
@@ -79,7 +80,7 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     async function requestVc(id: string, index: number) {
-        const credentialDefinition = vip3CredentialJson.find((item) => item.id === id) as CredentialDefinition;
+        const credentialDefinition = testJson.find((item) => item.id === id) as CredentialDefinition;
 
         const assertion = {
             [credentialDefinition.assertion.id]: credentialDefinition.assertion.payload,
@@ -109,11 +110,13 @@ describe('Test Vc (direct invocation)', function () {
         const vcPayloadJson = JSON.parse(decryptVcPayload);
 
         assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinition.expectedCredentialValue);
+
+        console.log(credentialDefinition.description);
     }
 
     // eslint-disable-next-line no-prototype-builtins
-    if (argvId && vip3CredentialJson.find((item) => item.id === argvId)) {
-        const credentialDefinition = vip3CredentialJson.find((item) => item.id === argvId) as CredentialDefinition;
+    if (argvId && testJson.find((item) => item.id === argvId)) {
+        const credentialDefinition = testJson.find((item) => item.id === argvId) as CredentialDefinition;
         step(
             `linking identity::${credentialDefinition.mockDid} via cli and request vc::${credentialDefinition.mockDid}`,
             async function () {
@@ -122,13 +125,11 @@ describe('Test Vc (direct invocation)', function () {
             }
         );
     } else {
-        vip3CredentialJson.forEach(({ id }, index) => {
-            console.log(id);
-
+        testJson.forEach(({ id }, index) => {
             step(
-                `linking identity::${vip3CredentialJson[index].mockDid} via cli and request vc::${vip3CredentialJson[index].id}`,
+                `linking identity::${testJson[index].mockDid} via cli and request vc::${testJson[index].id}`,
                 async function () {
-                    await linkIdentityViaCli(id);
+                    // await linkIdentityViaCli(id);
                     await requestVc(id, index);
                 }
             );

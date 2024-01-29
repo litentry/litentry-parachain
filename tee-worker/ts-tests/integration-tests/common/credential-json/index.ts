@@ -10,7 +10,9 @@ type DataProvider = {
 type AssertionGenericPayload = string | Array<string | number | Codec | U8aLike> | Record<string, unknown>;
 
 import vip3Json from './vip3-credential-test.json' assert { type: 'json' };
+import achainableJson from './achainable-credential-test.json' assert { type: 'json' };
 export const vip3CredentialJson = vip3Json as unknown as CredentialDefinition[];
+export const achainableCredentialJson = achainableJson as unknown as CredentialDefinition[];
 
 export interface CredentialDefinition {
     id: string;
