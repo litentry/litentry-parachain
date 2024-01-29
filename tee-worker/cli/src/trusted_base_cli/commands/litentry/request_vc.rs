@@ -42,7 +42,7 @@ use sp_core::Pair;
 //
 // OneBlock VC:
 // ./bin/litentry-cli trusted -d request-vc \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 OneBlock completion
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 one-block completion
 //
 // achainable VC:
 // ./bin/litentry-cli trusted -d request-vc \
