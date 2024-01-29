@@ -91,3 +91,6 @@ std = [
     "itp-node-api-metadata-provider/std",
 ]
 test = []
+production = [
+    "litentry-macros/production",
+]

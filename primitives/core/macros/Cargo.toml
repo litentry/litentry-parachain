@@ -4,3 +4,6 @@ description = 'Proc-macros used by Litentry crates.'
 name = "litentry-macros"
 version = "0.9.12"
 edition = "2021"
+
+[features]
+production = []

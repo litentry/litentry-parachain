@@ -94,3 +94,6 @@ std = [
     "itp-storage/std",
     "lc-vc-task-sender/std",
 ]
+production = [
+    "litentry-macros/production",
+]

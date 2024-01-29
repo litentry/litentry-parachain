@@ -86,7 +86,12 @@ default = []
 evm = []
 sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
-production = ["itp-settings/production"]
+production = [
+    "itp-settings/production",
+    "lc-data-providers/production",
+    "litentry-macros/production",
+    "litentry-primitives/production",
+]
 teeracle = ["itp-settings/teeracle"]
 dcap = []
 attesteer = ["dcap"]
