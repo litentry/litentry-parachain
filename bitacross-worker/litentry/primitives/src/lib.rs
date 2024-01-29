@@ -54,7 +54,7 @@ pub use parentchain_primitives::{
 	GenericDiscordRoleType, Hash as ParentchainHash, Header as ParentchainHeader, IMPError,
 	Index as ParentchainIndex, IntoErrorDetail, OneBlockCourseType, ParameterString,
 	SchemaContentString, SchemaIdString, Signature as ParentchainSignature, SoraQuizType,
-	VCMPError, VIP3MembershipCardLevel, Web3Network, ASSERTION_FROM_DATE, MINUTES,
+	VCMPError, VIP3MembershipCardLevel, Web3Network, MINUTES,
 };
 use scale_info::TypeInfo;
 use sp_core::{ecdsa, ed25519, sr25519, ByteArray};
