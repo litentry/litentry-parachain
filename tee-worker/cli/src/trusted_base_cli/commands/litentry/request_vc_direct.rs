@@ -41,9 +41,9 @@ use sp_core::Pair;
 // ./bin/litentry-cli trusted -d request-vc-direct \
 //   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 a8 litentry,litmus
 //
-// oneblock VC:
+// OneBlock VC:
 // ./bin/litentry-cli trusted -d request-vc-direct \
-//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 oneblock completion
+//   did:litentry:substrate:0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48 OneBlock completion
 //
 // achainable VC:
 // ./bin/litentry-cli trusted -d request-vc-direct \
