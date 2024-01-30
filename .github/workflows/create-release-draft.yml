@@ -174,8 +174,8 @@ jobs:
       - name: Checkout codes on ${{ env.RELEASE_TAG }}
         uses: actions/checkout@v4
         with:
-        ref: ${{ env.RELEASE_TAG }}
-        fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
+          fetch-depth: 0
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
