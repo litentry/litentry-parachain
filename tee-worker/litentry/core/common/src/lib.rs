@@ -34,6 +34,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> &'static str {
 		Web3Network::Litmus => "litmus",
 		Web3Network::LitentryRococo => "litentry_rococo",
 		Web3Network::Khala => "khala",
+		Web3Network::SubstrateTestnet => "substrate_testnet",
 		Web3Network::Ethereum => "ethereum",
 		Web3Network::Bsc => "bsc",
 		Web3Network::BitcoinP2tr => "bitcoin_p2tr",

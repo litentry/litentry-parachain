@@ -5,24 +5,24 @@ on:
     inputs:
       ref:
         description: The commit SHA or tag for checking out code
-        default: ''
+        default: ""
         required: false
       cargo_profile:
         type: choice
         description: which profile to use in cargo
         options:
-        - release
-        - production
+          - release
+          - production
       docker_tag:
         description: The tag for the built docker image
         required: true
       args:
         description: Args to pass to `cargo build`, e.g. --features=runtime-benchmarks
-        default: ''
+        default: ""
         required: false
 
 env:
-    DOCKER_BUILDKIT: 1
+  DOCKER_BUILDKIT: 1
 
 jobs:
   ## build docker image of client binary with args ##
@@ -56,7 +56,7 @@ jobs:
           docker cp $(docker create --rm litentry/litentry-parachain:${{ github.event.inputs.docker_tag }}):/usr/local/bin/litentry-collator .
 
       - name: Upload the client binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-collator
           path: |

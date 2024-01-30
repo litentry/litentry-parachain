@@ -69,3 +69,6 @@ std = [
     "litentry-primitives/std",
     "chrono",
 ]
+production = [
+    "litentry-macros/production",
+]
