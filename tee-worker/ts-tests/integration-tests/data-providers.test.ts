@@ -113,13 +113,13 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     if (argvId && credentialsJson.find((item) => item.id === argvId)) {
-        step(`link identity && request vc`, async function () {
+        step(`link identity && request vc with specific credentials`, async function () {
             await linkIdentityViaCli(argvId);
             await requestVc(argvId, 0);
         });
     } else {
         credentialsJson.forEach(({ id }, index) => {
-            step(`link identity && request vc`, async function () {
+            step(`link identity && request vc with all credentials`, async function () {
                 await linkIdentityViaCli(id);
                 await requestVc(id, index);
             });
