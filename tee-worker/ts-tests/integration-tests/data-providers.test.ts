@@ -16,7 +16,7 @@ import { aesKey } from './common/call';
 import { $ as zx } from 'zx';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
-import { stringToHex, u8aToHex } from '@polkadot/util';
+import { u8aToHex } from '@polkadot/util';
 import { vip3CredentialJson, achainableCredentialJson, CredentialDefinition } from './common/credential-json';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
@@ -26,8 +26,9 @@ describe('Test Vc (direct invocation)', function () {
     const clientDir = process.env.LITENTRY_CLI_DIR;
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
-    const testJson = [...achainableCredentialJson];
     let argvId = '';
+    const credentialsJson: CredentialDefinition[] = [...vip3CredentialJson,...achainableCredentialJson];
+
     this.timeout(6000000);
     before(async () => {
         context = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
@@ -38,6 +39,7 @@ describe('Test Vc (direct invocation)', function () {
     // `pnpm run test-data-providers:local --id=vip3-membership-card-gold` for single test
     // `pnpm run test-data-providers:local` for all tests
     const argv = process.argv.indexOf('--id');
+    
     argvId = process.argv[argv + 1];
     const {
         protocol: workerProtocal,
@@ -47,16 +49,13 @@ describe('Test Vc (direct invocation)', function () {
     const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
 
     async function linkIdentityViaCli(id: string) {
-        const credentialDefinition = testJson.find((item) => item.id === id) as CredentialDefinition;
+        const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
 
         const keyringPair = randomSubstrateWallet();
         keyringPairs.push(keyringPair);
         const formatAddress = u8aToHex(keyringPair.publicKey);
 
-        const substrateIdentity = (await buildIdentityFromKeypair(
-            new PolkadotSigner(keyringPair),
-            context
-        )) as CorePrimitivesIdentity;
+        const substrateIdentity = await buildIdentityFromKeypair(new PolkadotSigner(keyringPair), context);
         substrateIdentities.push(substrateIdentity);
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
@@ -65,8 +64,8 @@ describe('Test Vc (direct invocation)', function () {
                 nodeProtocal + nodeHostname
             } -U ${workerProtocal + workerHostname}\
                   trusted -d link-identity did:litentry:substrate:${formatAddress}\
-                  did:${credentialDefinition.mockDid}\
-                  ${credentialDefinition.mockWeb3Network}`;
+                  did:${credentialDefinitions.mockDid}\
+                  ${credentialDefinitions.mockWeb3Network}`;
 
             await commandPromise;
         } catch (error: any) {
@@ -80,16 +79,15 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     async function requestVc(id: string, index: number) {
-        const credentialDefinition = testJson.find((item) => item.id === id) as CredentialDefinition;
+        const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
 
         const assertion = {
-            [credentialDefinition.assertion.id]: credentialDefinition.assertion.payload,
+            [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
         };
 
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, substrateIdentities[index])).toNumber();
         const getNextNonce = () => currentNonce++;
         const nonce = getNextNonce();
-        console.log(nonce, substrateIdentities[index].toHuman(), u8aToHex(keyringPairs[index].publicKey));
 
         const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
         const requestVcCall = await createSignedTrustedCallRequestVc(
@@ -109,25 +107,23 @@ describe('Test Vc (direct invocation)', function () {
         const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
         const vcPayloadJson = JSON.parse(decryptVcPayload);
 
-        assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinition.expectedCredentialValue);
-
-        console.log(credentialDefinition.description);
+        assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinitions.expectedCredentialValue);
     }
 
-    // eslint-disable-next-line no-prototype-builtins
-    if (argvId && testJson.find((item) => item.id === argvId)) {
-        const credentialDefinition = testJson.find((item) => item.id === argvId) as CredentialDefinition;
+    if (argvId && credentialsJson.find((item) => item.id === argvId)) {
+        const credentialDefinitions = credentialsJson.find((item) => item.id === argvId) as CredentialDefinition;
+
         step(
-            `linking identity::${credentialDefinition.mockDid} via cli and request vc::${credentialDefinition.mockDid}`,
+            `linking identity::${credentialDefinitions.mockDid} via cli and request vc::${credentialDefinitions.mockDid}`,
             async function () {
                 await linkIdentityViaCli(argvId);
                 await requestVc(argvId, 0);
             }
         );
     } else {
-        testJson.forEach(({ id }, index) => {
+        credentialsJson.forEach(({ id }, index) => {
             step(
-                `linking identity::${testJson[index].mockDid} via cli and request vc::${testJson[index].id}`,
+                `linking identity::${credentialsJson[index].mockDid} via cli and request vc::${credentialsJson[index].id}`,
                 async function () {
                     // await linkIdentityViaCli(id);
                     await requestVc(id, index);
