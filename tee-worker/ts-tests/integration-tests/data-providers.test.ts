@@ -17,7 +17,7 @@ import { $ as zx } from 'zx';
 import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { u8aToHex } from '@polkadot/util';
-import { vip3CredentialJson, achainableCredentialJson, CredentialDefinition } from './common/credential-json';
+import { CredentialDefinition, credentialsJson } from './common/credential-json';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -27,7 +27,6 @@ describe('Test Vc (direct invocation)', function () {
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
-    const credentialsJson: CredentialDefinition[] = [...vip3CredentialJson, ...achainableCredentialJson];
 
     this.timeout(6000000);
     before(async () => {
@@ -120,8 +119,8 @@ describe('Test Vc (direct invocation)', function () {
     } else {
         credentialsJson.forEach(({ id }, index) => {
             step(`link identity && request vc with all credentials`, async function () {
-                await linkIdentityViaCli('token-holding-amount-amp');
-                await requestVc('token-holding-amount-amp', index);
+                await linkIdentityViaCli(id);
+                await requestVc(id, index);
             });
         });
     }
