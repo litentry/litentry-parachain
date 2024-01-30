@@ -27,7 +27,7 @@ describe('Test Vc (direct invocation)', function () {
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
-    const credentialsJson: CredentialDefinition[] = [...vip3CredentialJson,...achainableCredentialJson];
+    const credentialsJson: CredentialDefinition[] = [...vip3CredentialJson, ...achainableCredentialJson];
 
     this.timeout(6000000);
     before(async () => {
@@ -39,7 +39,7 @@ describe('Test Vc (direct invocation)', function () {
     // `pnpm run test-data-providers:local --id=vip3-membership-card-gold` for single test
     // `pnpm run test-data-providers:local` for all tests
     const argv = process.argv.indexOf('--id');
-    
+
     argvId = process.argv[argv + 1];
     const {
         protocol: workerProtocal,
@@ -50,6 +50,7 @@ describe('Test Vc (direct invocation)', function () {
 
     async function linkIdentityViaCli(id: string) {
         const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
+        console.log(`linking identity-${credentialDefinitions.mockDid} via cli`);
 
         const keyringPair = randomSubstrateWallet();
         keyringPairs.push(keyringPair);
@@ -80,10 +81,10 @@ describe('Test Vc (direct invocation)', function () {
 
     async function requestVc(id: string, index: number) {
         const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
-
         const assertion = {
             [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
         };
+        console.log('assertion: ', assertion);
 
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, substrateIdentities[index])).toNumber();
         const getNextNonce = () => currentNonce++;
@@ -106,29 +107,22 @@ describe('Test Vc (direct invocation)', function () {
         const vcResults = context.api.createType('RequestVCResult', res.value) as unknown as RequestVCResult;
         const decryptVcPayload = decryptWithAes(aesKey, vcResults.vc_payload, 'utf-8').replace('0x', '');
         const vcPayloadJson = JSON.parse(decryptVcPayload);
+        console.log('vcPayload: ', vcPayloadJson);
 
         assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinitions.expectedCredentialValue);
     }
 
     if (argvId && credentialsJson.find((item) => item.id === argvId)) {
-        const credentialDefinitions = credentialsJson.find((item) => item.id === argvId) as CredentialDefinition;
-
-        step(
-            `linking identity::${credentialDefinitions.mockDid} via cli and request vc::${credentialDefinitions.mockDid}`,
-            async function () {
-                await linkIdentityViaCli(argvId);
-                await requestVc(argvId, 0);
-            }
-        );
+        step(`link identity && request vc`, async function () {
+            await linkIdentityViaCli(argvId);
+            await requestVc(argvId, 0);
+        });
     } else {
         credentialsJson.forEach(({ id }, index) => {
-            step(
-                `linking identity::${credentialsJson[index].mockDid} via cli and request vc::${credentialsJson[index].id}`,
-                async function () {
-                    // await linkIdentityViaCli(id);
-                    await requestVc(id, index);
-                }
-            );
+            step(`link identity && request vc`, async function () {
+                await linkIdentityViaCli(id);
+                await requestVc(id, index);
+            });
         });
     }
 });
