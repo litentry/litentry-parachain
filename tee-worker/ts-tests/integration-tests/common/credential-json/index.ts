@@ -14,17 +14,20 @@ import achainableJson from './achainable-credential-test.json' assert { type: 'j
 import noderealJson from './spaceId-credential-test.json' assert { type: 'json' };
 import discordJson from './discord-credential-test.json' assert { type: 'json' };
 import litentryJson from './litentry-credential-test.json' assert { type: 'json' };
+import twitterJson from './twitter-credential-test.json' assert { type: 'json' };
 export const vip3CredentialJson = vip3Json as unknown as CredentialDefinition[];
 export const achainableCredentialJson = achainableJson as unknown as CredentialDefinition[];
 export const spaceIdCredentialJson = noderealJson as unknown as CredentialDefinition[];
 export const discordCredentialJson = discordJson as unknown as CredentialDefinition[];
 export const litentryCredentialJson = litentryJson as unknown as CredentialDefinition[];
+export const twitterCredentialJson = twitterJson as unknown as CredentialDefinition[];
 export const credentialsJson = [
     ...vip3CredentialJson,
     ...achainableCredentialJson,
     ...spaceIdCredentialJson,
     ...discordCredentialJson,
     ...litentryCredentialJson,
+    ...twitterCredentialJson,
 ];
 
 export interface CredentialDefinition {
