@@ -5268,6 +5268,7 @@ dependencies = [
  "derive_more",
  "itp-sgx-io",
  "itp-sgx-temp-dir",
+ "libsecp256k1",
  "log 0.4.20",
  "ofb",
  "parity-scale-codec",
