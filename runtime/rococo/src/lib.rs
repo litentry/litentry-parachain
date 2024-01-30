@@ -1261,6 +1261,7 @@ construct_runtime! {
 		Ethereum: pallet_ethereum = 121,
 
 		// TMP
+		AccountFix: pallet_account_fix = 254,
 		Sudo: pallet_sudo = 255,
 	}
 }
