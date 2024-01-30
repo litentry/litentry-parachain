@@ -18,7 +18,6 @@ import { subscribeToEventsWithExtHash } from './common/transactions';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { u8aToHex } from '@polkadot/util';
 import { vip3CredentialJson, CredentialDefinition } from './common/credential-json';
-import colors from 'colors';
 describe('Test Vc (direct invocation)', function () {
     let context: IntegrationTestContext = undefined as any;
     let teeShieldingKey: KeyObject = undefined as any;
@@ -28,6 +27,8 @@ describe('Test Vc (direct invocation)', function () {
     const reqExtHash = '0x0000000000000000000000000000000000000000000000000000000000000000';
     const keyringPairs: KeyringPair[] = [];
     let argvId = '';
+    const credentialsJson: CredentialDefinition[] = [...vip3CredentialJson];
+
     this.timeout(6000000);
     before(async () => {
         context = await initIntegrationTestContext(process.env.WORKER_ENDPOINT!, process.env.NODE_ENDPOINT!);
@@ -47,16 +48,13 @@ describe('Test Vc (direct invocation)', function () {
     const { protocol: nodeProtocal, hostname: nodeHostname, port: nodePort } = new URL(process.env.NODE_ENDPOINT!);
 
     async function linkIdentityViaCli(id: string) {
-        const credentialDefinitions = vip3CredentialJson.find((item) => item.id === id) as CredentialDefinition;
+        const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
 
         const keyringPair = randomSubstrateWallet();
         keyringPairs.push(keyringPair);
         const formatAddress = u8aToHex(keyringPair.publicKey);
 
-        const substrateIdentity = (await buildIdentityFromKeypair(
-            new PolkadotSigner(keyringPair),
-            context
-        )) as CorePrimitivesIdentity;
+        const substrateIdentity = await buildIdentityFromKeypair(new PolkadotSigner(keyringPair), context);
         substrateIdentities.push(substrateIdentity);
         const eventsPromise = subscribeToEventsWithExtHash(reqExtHash, context);
         try {
@@ -80,7 +78,7 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     async function requestVc(id: string, index: number) {
-        const credentialDefinitions = vip3CredentialJson.find((item) => item.id === id) as CredentialDefinition;
+        const credentialDefinitions = credentialsJson.find((item) => item.id === id) as CredentialDefinition;
 
         const assertion = {
             [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
@@ -112,24 +110,20 @@ describe('Test Vc (direct invocation)', function () {
         assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinitions.expectedCredentialValue);
     }
 
-    if (argvId) {
-        const credentialDefinitions = vip3CredentialJson.find((item) => item.id === argvId) as CredentialDefinition;
-        if (credentialDefinitions) {
-            const credentialDefinitions = vip3CredentialJson.find((item) => item.id === argvId) as CredentialDefinition;
-            step(
-                `linking identity::${credentialDefinitions.mockDid} via cli and request vc::${credentialDefinitions.mockDid}`,
-                async function () {
-                    await linkIdentityViaCli(argvId);
-                    await requestVc(argvId, 0);
-                }
-            );
-        } else {
-            console.log(colors.red(`credential id: ${argvId} not found`));
-        }
+    if (argvId && credentialsJson.find((item) => item.id === argvId)) {
+        const credentialDefinitions = credentialsJson.find((item) => item.id === argvId) as CredentialDefinition;
+
+        step(
+            `linking identity::${credentialDefinitions.mockDid} via cli and request vc::${credentialDefinitions.mockDid}`,
+            async function () {
+                await linkIdentityViaCli(argvId);
+                await requestVc(argvId, 0);
+            }
+        );
     } else {
-        vip3CredentialJson.forEach(({ id }, index) => {
+        credentialsJson.forEach(({ id }, index) => {
             step(
-                `linking identity::${vip3CredentialJson[index].mockDid} via cli and request vc::${vip3CredentialJson[index].id}`,
+                `linking identity::${credentialsJson[index].mockDid} via cli and request vc::${credentialsJson[index].id}`,
                 async function () {
                     await linkIdentityViaCli(id);
                     await requestVc(id, index);
