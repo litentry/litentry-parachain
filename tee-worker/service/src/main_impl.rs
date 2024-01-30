@@ -241,9 +241,9 @@ pub(crate) fn main() {
 	} else if matches.is_present("shielding-key") {
 		setup::generate_shielding_key_file(enclave.as_ref());
 	} else if matches.is_present("signing-key") {
-		let tee_accountid = enclave_account(enclave.as_ref());
-		println!("Enclave account: {:}", &tee_accountid.to_ss58check());
 		setup::generate_signing_key_file(enclave.as_ref());
+		let tee_accountid = enclave_account(enclave.as_ref());
+		println!("Enclave signing account: {:}", &tee_accountid.to_ss58check());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
 		#[cfg(not(feature = "dcap"))]
