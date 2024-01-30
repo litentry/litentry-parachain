@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -63,6 +63,20 @@ const RES_BODY_OK_CLASS_OF_YEAR: &str = r#"
     "runningCost": 1
 }
 "#;
+const RES_BODY_OK_HOLDING_AMOUNT: &str = r#"
+{
+	"name": "Balance over {amount}",
+	"result": true,
+	"display": [
+		{
+			"text": "Balance over 0 (Balance is 800)",
+			"result": true
+		}
+	],
+	"analyticsDisplay": [],
+	"runningCost": 1
+}
+"#;
 const RES_ERRBODY: &str = r#"Error request."#;
 
 use lc_data_providers::achainable::ReqBody;
@@ -105,6 +119,10 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 				} else {
 					Response::builder().body(RES_BODY_FALSE.to_string())
 				}
+			}
+			// HoldingAmount
+			else if body.name == "Balance over {amount}" {
+				Response::builder().body(RES_BODY_OK_HOLDING_AMOUNT.to_string())
 			} else {
 				Response::builder().body(RES_BODY_TRUE.to_string())
 			}

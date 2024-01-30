@@ -20,7 +20,6 @@ use crate::{
 		generate_dcap_ra_extrinsic_from_quote_internal,
 		generate_ias_ra_extrinsic_from_der_cert_internal,
 	},
-	initialization::global_components::GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 	utils::{
 		get_stf_enclave_signer_from_solo_or_parachain,
 		get_validator_accessor_from_integritee_solo_or_parachain,
@@ -31,28 +30,27 @@ use core::result::Result;
 use ita_sgx_runtime::{Runtime, System};
 use ita_stf::{Getter, TrustedCallSigned};
 use itc_parentchain::light_client::{concurrent_access::ValidatorAccess, ExtrinsicSender};
-use itp_component_container::ComponentGetter;
 use itp_primitives_cache::{GetPrimitives, GLOBAL_PRIMITIVES_CACHE};
 use itp_rpc::RpcReturnValue;
 use itp_sgx_crypto::{
 	ed25519_derivation::DeriveEd25519,
 	key_repository::{AccessKey, AccessPubkey},
+	ShieldingCryptoDecrypt, ShieldingCryptoEncrypt,
 };
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuery};
 use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{
-	DirectRequestStatus, Index, MrEnclave, RsaRequest, ShardIdentifier, SidechainBlockNumber, H256,
-};
-use itp_utils::{if_not_production, FromHexPrefixed, ToHexPrefixed};
+use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
+use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
 use its_sidechain::rpc_handler::{
 	direct_top_pool_api, direct_top_pool_api::decode_shard_from_base58, import_block_api,
 };
 use jsonrpc_core::{serde_json::json, IoHandler, Params, Value};
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_macros::if_not_production;
 use litentry_primitives::DecryptableRequest;
 use log::debug;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
@@ -74,27 +72,30 @@ fn get_all_rpc_methods_string(io_handler: &IoHandler) -> String {
 	format!("methods: [{}]", method_string)
 }
 
-pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, S>(
+pub fn public_api_rpc_handler<Author, GetterExecutor, AccessShieldingKey, State>(
 	top_pool_author: Arc<Author>,
 	getter_executor: Arc<GetterExecutor>,
 	shielding_key: Arc<AccessShieldingKey>,
-	state: Option<Arc<S>>,
+	state: Option<Arc<State>>,
 ) -> IoHandler
 where
 	Author: AuthorApi<H256, H256, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	GetterExecutor: ExecuteGetter + Send + Sync + 'static,
-	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + Send + Sync + 'static,
-	S: HandleState + Send + Sync + 'static,
-	S::StateT: SgxExternalitiesTrait,
+	AccessShieldingKey: AccessPubkey<KeyType = Rsa3072PubKey> + AccessKey + Send + Sync + 'static,
+	<AccessShieldingKey as AccessKey>::KeyType:
+		ShieldingCryptoDecrypt + ShieldingCryptoEncrypt + DeriveEd25519 + Send + Sync + 'static,
+	State: HandleState + Send + Sync + 'static,
+	State::StateT: SgxExternalitiesTrait,
 {
 	let mut io = direct_top_pool_api::add_top_pool_direct_rpc_methods(
 		top_pool_author.clone(),
 		IoHandler::new(),
 	);
 
+	let shielding_key_cloned = shielding_key.clone();
 	io.add_sync_method("author_getShieldingKey", move |_: Params| {
 		debug!("worker_api_direct rpc was called: author_getShieldingKey");
-		let rsa_pubkey = match shielding_key.retrieve_pubkey() {
+		let rsa_pubkey = match shielding_key_cloned.retrieve_pubkey() {
 			Ok(key) => key,
 			Err(status) => {
 				let error_msg: String = format!("Could not get rsa pubkey due to: {}", status);
@@ -118,15 +119,7 @@ where
 	// author_getEnclaveSignerAccount
 	let rsa_pubkey_name: &str = "author_getEnclaveSignerAccount";
 	io.add_sync_method(rsa_pubkey_name, move |_: Params| {
-		let shielding_key_repository = match GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get() {
-			Ok(s) => s,
-			Err(e) => {
-				let error_msg: String = format!("{:?}", e);
-				debug!("{:?}", e);
-				return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
-			},
-		};
-		let enclave_signer_public_key = match shielding_key_repository
+		let enclave_signer_public_key = match shielding_key
 			.retrieve_key()
 			.and_then(|keypair| keypair.derive_ed25519().map(|keypair| keypair.public().to_hex()))
 		{
@@ -148,16 +141,16 @@ where
 	});
 
 	let local_top_pool_author = top_pool_author.clone();
-	let state_storage = state.clone();
+	let local_state = state.clone();
 	io.add_sync_method("author_getNextNonce", move |params: Params| {
-		let state_nonce = state.clone();
-		if state_nonce.is_none() {
-			return Ok(json!(compute_hex_encoded_return_error(
-				"author_getNextNonce is not avaiable"
-			)))
-		}
-		#[allow(clippy::unwrap_used)]
-		let state_nonce_unwrap = state_nonce.unwrap();
+		let local_state = match local_state.clone() {
+			Some(s) => s,
+			None =>
+				return Ok(json!(compute_hex_encoded_return_error(
+					"author_getNextNonce is not avaiable"
+				))),
+		};
+
 		match params.parse::<(String, String)>() {
 			Ok((shard_base58, account_hex)) => {
 				let shard = match decode_shard_from_base58(shard_base58.as_str()) {
@@ -179,7 +172,7 @@ where
 					},
 				};
 
-				match state_nonce_unwrap.load_cloned(&shard) {
+				match local_state.load_cloned(&shard) {
 					Ok((mut state, _hash)) => {
 						let trusted_calls =
 							local_top_pool_author.get_pending_trusted_calls_for(shard, &account);
@@ -345,6 +338,7 @@ where
 	});
 
 	if_not_production!({
+		use itp_types::{MrEnclave, SidechainBlockNumber};
 		// state_updateScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_updateScheduledEnclave", move |params: Params| {
 			match params.parse::<(SidechainBlockNumber, String)>() {
@@ -384,14 +378,13 @@ where
 
 		// state_getStorage
 		io.add_sync_method("state_getStorage", move |params: Params| {
-			if state_storage.is_none() {
-				return Ok(json!(compute_hex_encoded_return_error(
-					"state_getStorage is not avaiable"
-				)))
-			}
-
-			#[allow(clippy::unwrap_used)]
-			let state_storage = state_storage.clone().unwrap();
+			let local_state = match state.clone() {
+				Some(s) => s,
+				None =>
+					return Ok(json!(compute_hex_encoded_return_error(
+						"state_getStorage is not avaiable"
+					))),
+			};
 			match params.parse::<(String, String)>() {
 				Ok((shard_str, key_hash)) => {
 					let key_hash = if key_hash.starts_with("0x") {
@@ -414,11 +407,10 @@ where
 							return Ok(json!(compute_hex_encoded_return_error(error_msg.as_str())))
 						},
 					};
-					match state_storage.load_cloned(&shard) {
-						Ok((state_storage, _hash)) => {
+					match local_state.load_cloned(&shard) {
+						Ok((state, _)) => {
 							// Get storage by key hash
-							let value =
-								state_storage.get(key_hash.as_slice()).cloned().unwrap_or_default();
+							let value = state.get(key_hash.as_slice()).cloned().unwrap_or_default();
 							debug!("query storage value:{:?}", &value);
 							let json_value =
 								RpcReturnValue::new(value, false, DirectRequestStatus::Ok);
@@ -497,7 +489,7 @@ fn forward_dcap_quote_inner(params: Params) -> Result<OpaqueExtrinsic, String> {
 
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let encoded_quote_to_forward: Vec<u8> =
-		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+		litentry_hex_utils::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
 	let ext = generate_dcap_ra_extrinsic_from_quote_internal(url, &encoded_quote_to_forward)
@@ -527,7 +519,7 @@ fn attesteer_forward_ias_attestation_report_inner(
 
 	let param = &hex_encoded_params.get(0).ok_or("Could not get first param")?;
 	let ias_attestation_report =
-		itp_utils::hex::decode_hex(param).map_err(|e| format!("{:?}", e))?;
+		litentry_hex_utils::decode_hex(param).map_err(|e| format!("{:?}", e))?;
 
 	let url = String::new();
 	let ext = generate_ias_ra_extrinsic_from_der_cert_internal(url, &ias_attestation_report)

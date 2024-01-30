@@ -973,7 +973,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3f9629bc6c4388ea699781dc988c2b99766d7679b151c81990b4fa1208fafd3"
 dependencies = [
  "serde 1.0.193",
- "toml 0.8.0",
+ "toml 0.8.2",
 ]
 
 [[package]]
@@ -1305,8 +1305,9 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
- "itp-utils",
- "litentry-macros 0.9.12",
+ "litentry-hex-utils",
+ "litentry-macros",
+ "litentry-proc-macros",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "ring 0.16.20",
@@ -4524,6 +4525,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4577,7 +4579,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
- "lc-vc-task-sender",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -4995,7 +4997,6 @@ dependencies = [
  "itp-settings",
  "itp-storage",
  "itp-types",
- "lc-data-providers",
  "log 0.4.20",
  "parity-scale-codec",
  "serde_json 1.0.103",
@@ -5455,6 +5456,7 @@ name = "itp-utils"
 version = "0.9.0"
 dependencies = [
  "hex 0.4.3",
+ "litentry-hex-utils",
  "parity-scale-codec",
 ]
 
@@ -5536,6 +5538,7 @@ dependencies = [
  "its-test",
  "its-validateer-fetch",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
@@ -6141,6 +6144,7 @@ dependencies = [
  "lc-data-providers",
  "lc-mock-server",
  "lc-stf-task-sender",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-parachain-staking",
@@ -6154,6 +6158,39 @@ dependencies = [
  "ss58-registry",
  "thiserror 1.0.9",
  "url 2.1.1",
+]
+
+[[package]]
+name = "lc-assertion-build-v2"
+version = "0.1.0"
+dependencies = [
+ "env_logger 0.10.0",
+ "itc-rest-client",
+ "itp-ocall-api",
+ "itp-stf-primitives",
+ "itp-types",
+ "itp-utils",
+ "lc-assertion-build",
+ "lc-common",
+ "lc-credentials-v2",
+ "lc-mock-server",
+ "lc-service",
+ "lc-stf-task-sender",
+ "litentry-hex-utils",
+ "litentry-primitives",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+]
+
+[[package]]
+name = "lc-common"
+version = "0.1.0"
+dependencies = [
+ "litentry-primitives",
+ "sgx_tstd",
 ]
 
 [[package]]
@@ -6187,6 +6224,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-credentials-v2"
+version = "0.1.0"
+dependencies = [
+ "itp-stf-primitives",
+ "itp-time-utils",
+ "itp-types",
+ "itp-utils",
+ "lc-common",
+ "lc-credentials",
+ "litentry-primitives",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+]
+
+[[package]]
 name = "lc-data-providers"
 version = "0.1.0"
 dependencies = [
@@ -6201,8 +6256,9 @@ dependencies = [
  "itc-rest-client",
  "itp-rpc",
  "itp-stf-primitives",
- "lazy_static",
+ "itp-utils",
  "lc-mock-server",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -6268,6 +6324,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "lc-service"
+version = "0.1.0"
+dependencies = [
+ "itp-stf-primitives",
+ "itp-time-utils",
+ "itp-types",
+ "itp-utils",
+ "lc-common",
+ "lc-data-providers",
+ "litentry-primitives",
+ "log 0.4.20",
+ "parity-scale-codec",
+ "sgx_tstd",
+ "thiserror 1.0.44",
+ "thiserror 1.0.9",
+]
+
+[[package]]
 name = "lc-stf-task-receiver"
 version = "0.1.0"
 dependencies = [
@@ -6294,6 +6368,7 @@ dependencies = [
  "jsonrpc-core 18.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static",
  "lc-assertion-build",
+ "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
  "lc-identity-verification",
@@ -6335,8 +6410,6 @@ name = "lc-vc-task-receiver"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "futures 0.3.28",
- "futures 0.3.8",
  "hex 0.4.0",
  "ita-sgx-runtime",
  "ita-stf",
@@ -6351,14 +6424,15 @@ dependencies = [
  "itp-storage",
  "itp-top-pool-author",
  "itp-types",
- "lazy_static",
+ "itp-utils",
  "lc-assertion-build",
+ "lc-assertion-build-v2",
  "lc-credentials",
  "lc-data-providers",
- "lc-identity-verification",
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-identity-management-tee",
@@ -6366,10 +6440,8 @@ dependencies = [
  "sgx_tstd",
  "sp-core",
  "thiserror 1.0.44",
- "thiserror 1.0.9",
  "threadpool 1.8.0",
  "threadpool 1.8.1",
- "url 2.1.1",
 ]
 
 [[package]]
@@ -6378,7 +6450,6 @@ version = "0.1.0"
 dependencies = [
  "futures 0.3.28",
  "futures 0.3.8",
- "itp-stf-primitives",
  "itp-types",
  "lazy_static",
  "lc-stf-task-sender",
@@ -6388,10 +6459,6 @@ dependencies = [
  "sgx_tstd",
  "sp-runtime",
  "sp-std 5.0.0",
- "thiserror 1.0.44",
- "thiserror 1.0.9",
- "url 2.1.1",
- "url 2.4.0",
 ]
 
 [[package]]
@@ -7031,6 +7098,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-credentials",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -7059,21 +7127,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "litentry-macros"
-version = "0.1.0"
+name = "litentry-hex-utils"
+version = "0.9.12"
 dependencies = [
- "cargo_toml",
- "quote",
+ "hex 0.4.3",
 ]
 
 [[package]]
 name = "litentry-macros"
 version = "0.9.12"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.32",
-]
 
 [[package]]
 name = "litentry-primitives"
@@ -7086,6 +7148,7 @@ dependencies = [
  "hex 0.4.3",
  "itp-sgx-crypto",
  "itp-utils",
+ "litentry-hex-utils",
  "log 0.4.20",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",
@@ -7106,6 +7169,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "litentry-proc-macros"
+version = "0.9.12"
+dependencies = [
+ "cargo_toml",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.32",
+]
+
+[[package]]
 name = "litentry-worker"
 version = "0.0.1"
 dependencies = [
@@ -7120,6 +7193,7 @@ dependencies = [
  "futures 0.3.28",
  "hex 0.4.3",
  "ipfs-api",
+ "ita-stf",
  "itc-parentchain",
  "itc-parentchain-test",
  "itc-rest-client",
@@ -7144,6 +7218,8 @@ dependencies = [
  "lc-data-providers",
  "lc-mock-server",
  "lc-stf-task-sender",
+ "litentry-hex-utils",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "mockall",
@@ -14740,14 +14816,14 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c226a7bba6d859b63c92c4b4fe69c5b6b72d0cb897dbc8e6012298e6154cb56e"
+checksum = "185d8ab0dfbb35cf1399a6344d8484209c088f75f8f68230da55d48d95d43e3d"
 dependencies = [
  "serde 1.0.193",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.20.0",
+ "toml_edit 0.20.2",
 ]
 
 [[package]]
@@ -14774,9 +14850,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.20.0"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ff63e60a958cefbb518ae1fd6566af80d9d4be430a33f3723dfc47d1d411d95"
+checksum = "396e4d48bbb2b7554c944bde63101b5ae446cff6ec4a24227428f15eb72ef338"
 dependencies = [
  "indexmap 2.0.0",
  "serde 1.0.193",

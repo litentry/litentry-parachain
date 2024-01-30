@@ -23,10 +23,11 @@ use std::vec::Vec;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
+#[cfg(not(feature = "production"))]
+use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_alice,
-		ensure_self, get_storage_by_key_hash,
+		enclave_signer_account, ensure_enclave_signer_account, ensure_self, get_storage_by_key_hash,
 	},
 	trusted_call_result::{
 		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,
@@ -131,13 +132,15 @@ pub enum TrustedCall {
 		H256,
 	),
 	#[codec(index = 21)]
-	request_vc_callback(Identity, Identity, Assertion, Vec<u8>, Option<RequestAesKey>, H256),
+	request_vc_callback(Identity, Identity, Assertion, Vec<u8>, Option<RequestAesKey>, bool, H256),
 	#[codec(index = 22)]
 	handle_imp_error(Identity, Option<Identity>, IMPError, H256),
 	#[codec(index = 23)]
 	handle_vcmp_error(Identity, Option<Identity>, VCMPError, H256),
 	#[codec(index = 24)]
 	send_erroneous_parentchain_call(Identity),
+	#[codec(index = 25)]
+	maybe_create_id_graph(Identity, Identity),
 
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
@@ -226,6 +229,7 @@ impl TrustedCall {
 			Self::handle_imp_error(sender_identity, ..) => sender_identity,
 			Self::handle_vcmp_error(sender_identity, ..) => sender_identity,
 			Self::send_erroneous_parentchain_call(sender_identity) => sender_identity,
+			Self::maybe_create_id_graph(sender_identity, ..) => sender_identity,
 			#[cfg(not(feature = "production"))]
 			Self::remove_identity(sender_identity, ..) => sender_identity,
 		}
@@ -241,6 +245,7 @@ impl TrustedCall {
 			Self::handle_imp_error(..) => "handle_imp_error",
 			Self::deactivate_identity(..) => "deactivate_identity",
 			Self::activate_identity(..) => "activate_identity",
+			Self::maybe_create_id_graph(..) => "maybe_create_id_graph",
 			_ => "unsupported_trusted_call",
 		}
 	}
@@ -861,17 +866,21 @@ where
 				assertion,
 				vc_payload,
 				maybe_key,
+				should_create_id_graph,
 				req_ext_hash,
 			) => {
 				debug!(
-					"request_vc_callback, who: {}, assertion: {:?}",
+					"request_vc_callback, who: {}, should_create_id_graph: {}, assertion: {:?}",
 					account_id_to_string(&who),
+					should_create_id_graph,
 					assertion
 				);
 
 				Self::request_vc_callback_internal(
 					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?,
+					who.clone(),
 					assertion.clone(),
+					should_create_id_graph,
 				)
 				.map_err(|e| {
 					debug!("pushing error event ... error: {}", e);
@@ -889,16 +898,24 @@ where
 				let call_index =
 					node_metadata_repo.get_from_metadata(|m| m.vc_issued_call_indexes())??;
 
+				// IDGraph hash can't be `None` as we should have created it otherwise
+				let id_graph_hash: H256 = IMT::id_graph_hash(&who).ok_or(StfError::EmptyIDGraph)?;
+				let mutated_id_graph =
+					if should_create_id_graph { IMT::id_graph(&who) } else { Vec::new() };
+
 				calls.push(ParentchainCall::Litentry(OpaqueCall::from_tuple(&(
 					call_index,
 					who,
 					assertion,
+					id_graph_hash,
 					req_ext_hash,
 				))));
 
 				if let Some(key) = maybe_key {
 					Ok(TrustedCallResult::RequestVC(RequestVCResult {
 						vc_payload: aes_encrypt_default(&key, &vc_payload),
+						pre_mutated_id_graph: aes_encrypt_default(&key, &mutated_id_graph.encode()),
+						pre_id_graph_hash: id_graph_hash,
 					}))
 				} else {
 					Ok(TrustedCallResult::Empty)
@@ -981,35 +998,26 @@ where
 				))));
 				Ok(TrustedCallResult::Empty)
 			},
+			TrustedCall::maybe_create_id_graph(signer, who) => {
+				debug!("maybe_create_id_graph, who: {:?}", who);
+				let signer_account: AccountId32 =
+					signer.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				ensure_enclave_signer_account(&signer_account)?;
+
+				// we only log the error
+				match IMT::maybe_create_id_graph(&who) {
+					Ok(()) => info!("maybe_create_id_graph OK"),
+					Err(e) => warn!("maybe_create_id_graph NOK: {:?}", e),
+				};
+
+				Ok(TrustedCallResult::Empty)
+			},
 		}
 	}
 
 	fn get_storage_hashes_to_update(self) -> Vec<Vec<u8>> {
-		let key_hashes = Vec::new();
-		match self.call {
-			TrustedCall::noop(_) => debug!("No storage updates needed..."),
-			TrustedCall::balance_set_balance(..) => debug!("No storage updates needed..."),
-			TrustedCall::balance_transfer(..) => debug!("No storage updates needed..."),
-			TrustedCall::balance_unshield(..) => debug!("No storage updates needed..."),
-			TrustedCall::balance_shield(..) => debug!("No storage updates needed..."),
-			// litentry
-			TrustedCall::link_identity(..) => debug!("No storage updates needed..."),
-			#[cfg(not(feature = "production"))]
-			TrustedCall::remove_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::deactivate_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::activate_identity(..) => debug!("No storage updates needed..."),
-			TrustedCall::request_vc(..) => debug!("No storage updates needed..."),
-			TrustedCall::link_identity_callback(..) => debug!("No storage updates needed..."),
-			TrustedCall::request_vc_callback(..) => debug!("No storage updates needed..."),
-			TrustedCall::set_identity_networks(..) => debug!("No storage updates needed..."),
-			TrustedCall::handle_imp_error(..) => debug!("No storage updates needed..."),
-			TrustedCall::handle_vcmp_error(..) => debug!("No storage updates needed..."),
-			TrustedCall::send_erroneous_parentchain_call(..) =>
-				debug!("No storage updates needed..."),
-			#[cfg(feature = "evm")]
-			_ => debug!("No storage updates needed..."),
-		};
-		key_hashes
+		debug!("No storage updates needed...");
+		Vec::new()
 	}
 }
 

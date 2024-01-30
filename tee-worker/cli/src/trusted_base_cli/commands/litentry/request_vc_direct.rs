@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -24,13 +24,14 @@ use crate::{
 };
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
-use itp_utils::hex::decode_hex;
+use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
 	OneBlockCourseType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
+	Web3TokenType, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -256,14 +257,45 @@ impl RequestVcDirectCommand {
 			Command::CryptoSummary => Assertion::CryptoSummary,
 			Command::LITStaking => Assertion::LITStaking,
 			Command::BRC20AmountHolder => Assertion::BRC20AmountHolder,
+			Command::TokenHoldingAmount(arg) => match arg {
+				TokenHoldingAmountCommand::Bnb => Assertion::TokenHoldingAmount(Web3TokenType::Bnb),
+				TokenHoldingAmountCommand::Eth => Assertion::TokenHoldingAmount(Web3TokenType::Eth),
+				TokenHoldingAmountCommand::SpaceId =>
+					Assertion::TokenHoldingAmount(Web3TokenType::SpaceId),
+				TokenHoldingAmountCommand::Lit => Assertion::TokenHoldingAmount(Web3TokenType::Lit),
+				TokenHoldingAmountCommand::Wbtc =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Wbtc),
+				TokenHoldingAmountCommand::Usdc =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Usdc),
+				TokenHoldingAmountCommand::Usdt =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Usdt),
+				TokenHoldingAmountCommand::Crv => Assertion::TokenHoldingAmount(Web3TokenType::Crv),
+				TokenHoldingAmountCommand::Matic =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Matic),
+				TokenHoldingAmountCommand::Dydx =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Dydx),
+				TokenHoldingAmountCommand::Amp => Assertion::TokenHoldingAmount(Web3TokenType::Amp),
+				TokenHoldingAmountCommand::Cvx => Assertion::TokenHoldingAmount(Web3TokenType::Cvx),
+				TokenHoldingAmountCommand::Tusd =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Tusd),
+				TokenHoldingAmountCommand::Usdd =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Usdd),
+				TokenHoldingAmountCommand::Gusd =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Gusd),
+				TokenHoldingAmountCommand::Link =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Link),
+				TokenHoldingAmountCommand::Grt => Assertion::TokenHoldingAmount(Web3TokenType::Grt),
+				TokenHoldingAmountCommand::Comp =>
+					Assertion::TokenHoldingAmount(Web3TokenType::Comp),
+				TokenHoldingAmountCommand::People =>
+					Assertion::TokenHoldingAmount(Web3TokenType::People),
+				TokenHoldingAmountCommand::Gtc => Assertion::TokenHoldingAmount(Web3TokenType::Gtc),
+				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
+				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
+			},
 		};
 
-		let mut key: RequestAesKey = RequestAesKey::default();
-		hex::decode_to_slice(
-			"22fc82db5b606998ad45099b7978b5b4f9dd4ea6017e57370ac56141caaabd12",
-			&mut key,
-		)
-		.expect("decoding shielding_key failed");
+		let key: [u8; 32] = Self::random_aes_key();
 
 		let top = TrustedCall::request_vc(
 			alice.public().into(),
@@ -288,5 +320,10 @@ impl RequestVcDirectCommand {
 			},
 		}
 		Ok(CliResultOk::None)
+	}
+
+	fn random_aes_key() -> RequestAesKey {
+		let random: Vec<u8> = (0..REQUEST_AES_KEY_LEN).map(|_| rand::random::<u8>()).collect();
+		random[0..REQUEST_AES_KEY_LEN].try_into().unwrap()
 	}
 }

@@ -1,0 +1,104 @@
+version: "3.7"
+services:
+  relaychain-alice:
+    image: docker_relaychain-alice:latest
+    networks:
+      - litentry-test-network
+    ports:
+      - 9946:9944
+      - 9936:9933
+      - 30336:30333
+    volumes:
+      - relaychain-alice:/data
+    build:
+      context: litentry
+      dockerfile: relaychain.Dockerfile
+    command:
+      - --base-path=/data
+      - --chain=/app/rococo-local.json
+      - --validator
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=alice
+      - --alice
+      - --rpc-methods=unsafe
+      - --execution=wasm
+    environment:
+      RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
+    ulimits:
+      &a1
+      nofile:
+        soft: 65536
+        hard: 65536
+  relaychain-bob:
+    image: docker_relaychain-bob:latest
+    networks:
+      - litentry-test-network
+    ports:
+      - 9947:9944
+      - 9937:9933
+      - 30337:30333
+    volumes:
+      - relaychain-bob:/data
+    build:
+      context: litentry
+      dockerfile: relaychain.Dockerfile
+    command:
+      - --base-path=/data
+      - --chain=/app/rococo-local.json
+      - --validator
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=bob
+      - --bob
+      - --rpc-methods=unsafe
+      - --execution=wasm
+    environment:
+      RUST_LOG: parachain::candidate-backing=trace,parachain::candidate-selection=trace,parachain::pvf=trace,parachain::collator-protocol=trace,parachain::provisioner=trace
+    ulimits: *a1
+  litentry-node:
+    image: docker_litentry-node:latest
+    networks:
+      - litentry-test-network
+    ports:
+      # TODO: maybe not use 9912 as port
+      - 9944:9912
+      - 9933:9933
+      - 30333:30333
+    volumes:
+      - parachain-2106-0:/data
+    build:
+      context: litentry
+      dockerfile: parachain-2106.Dockerfile
+    depends_on: ['relaychain-alice', 'relaychain-bob']
+    command:
+      - --base-path=/data
+      - --chain=/app/rococo-dev-2106.json
+      - --ws-external
+      - --rpc-external
+      - --rpc-cors=all
+      - --name=parachain-2106-0
+      - --ws-port=9912
+      - --collator
+      - --rpc-methods=unsafe
+      - --force-authoring
+      - --execution=wasm
+      - --alice
+      - --node-key=e998e728d8bf5bff6670c5e2b20455f6de1742b7ca564057680c9781cf037dd1
+      - --listen-addr=/ip4/0.0.0.0/tcp/30333
+      - --
+      - --chain=/app/rococo-local.json
+      - --execution=wasm
+    environment:
+      RUST_LOG: sc_basic_authorship=trace,cumulus-consensus=trace,cumulus-collator=trace,collator_protocol=trace,collation_generation=trace,aura=debug
+    ulimits: *a1
+volumes:
+  ? relaychain-alice
+  ? relaychain-bob
+  ? parachain-2106-0
+networks:
+  # to be aligned with other yml files => same network
+  litentry-test-network:
+    driver: bridge

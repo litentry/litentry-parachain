@@ -44,7 +44,7 @@ test-utils = { path = "../test-utils" }
 timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 # litentry
-pallet-teerex = { path = "../teerex", features = ["skip-scheduled-enclave-check"] }
+pallet-teerex = { path = "../teerex" }
 
 [features]
 default = ["std"]

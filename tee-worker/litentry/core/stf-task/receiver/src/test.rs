@@ -3,6 +3,7 @@ use mock::*;
 
 use codec::Decode;
 use ita_stf::{TrustedCall, TrustedCallSigned};
+use itp_sgx_crypto::{mocks::KeyRepositoryMock, ShieldingCryptoDecrypt};
 use itp_stf_executor::mocks::StfEnclaveSignerMock;
 use itp_test::mock::{
 	handle_state_mock::HandleStateMock, onchain_mock::OnchainMock,
@@ -15,16 +16,19 @@ use litentry_primitives::Assertion;
 #[test]
 fn test_threadpool_behaviour() {
 	let shielding_key = ShieldingCryptoMock::default();
+	let shielding_key_repository_mock = KeyRepositoryMock::new(shielding_key.clone());
 	let author_mock = AuthorApiMock::default();
 	let stf_enclave_signer_mock = StfEnclaveSignerMock::default();
 	let handle_state_mock = HandleStateMock::default();
 	let onchain_mock = OnchainMock::default();
+	let data_provider_conifg = DataProviderConfig::new();
 	let context = StfTaskContext::new(
-		shielding_key.clone(),
+		Arc::new(shielding_key_repository_mock),
 		author_mock.into(),
 		stf_enclave_signer_mock.into(),
 		handle_state_mock.into(),
 		onchain_mock.into(),
+		data_provider_conifg.into(),
 	);
 	let _handle = std::thread::spawn(move || {
 		run_stf_task_receiver(Arc::new(context)).unwrap();

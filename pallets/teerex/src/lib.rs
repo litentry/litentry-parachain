@@ -105,6 +105,8 @@ pub mod pallet {
 			new_mrenclave: MrEnclave,
 		},
 		RegisteredEnclaveLimitSet(u64),
+		/// Flag used only in dev to skip scheduled check
+		SkipScheduledEnclaveCheck(bool),
 	}
 
 	#[pallet::storage]
@@ -131,6 +133,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn enclave_count)]
 	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn is_skip_scheduled_enclave)]
+	pub type SkipScheduledEnclaveCheck<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn quoting_enclave)]
@@ -185,12 +191,13 @@ pub mod pallet {
 	pub struct GenesisConfig<T: Config> {
 		pub allow_sgx_debug_mode: bool,
 		pub admin: Option<T::AccountId>,
+		pub skip_scheduled_enclave_check: bool,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { allow_sgx_debug_mode: false, admin: None }
+			Self { allow_sgx_debug_mode: false, admin: None, skip_scheduled_enclave_check: false }
 		}
 	}
 
@@ -198,6 +205,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
+			SkipScheduledEnclaveCheck::<T>::put(self.skip_scheduled_enclave_check);
 			if let Some(ref admin) = self.admin {
 				Admin::<T>::put(admin);
 			}
@@ -282,11 +290,15 @@ pub mod pallet {
 			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
 			//       should we check the current sidechain_blocknumber >= registered
 			// sidechain_blocknumber?
-			#[cfg(not(feature = "skip-scheduled-enclave-check"))]
-			ensure!(
-				ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
-				Error::<T>::EnclaveNotInSchedule
-			);
+			// Dev setup -> SkipScheduledEnclave Extrinsic -> Does it make sense to set in dev
+			// setup?
+			let schedule_enclave = SkipScheduledEnclaveCheck::<T>::get();
+			if !schedule_enclave {
+				ensure!(
+					ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
+					Error::<T>::EnclaveNotInSchedule
+				);
+			}
 
 			Self::add_enclave(&sender, &enclave)?;
 			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
@@ -635,6 +647,23 @@ pub mod pallet {
 			}
 			Self::deposit_event(Event::NewMrenclaveSet { new_mrenclave });
 			// Do not pay a fee
+			Ok(Pays::No.into())
+		}
+
+		/// This extrinsic is used to set ScheduleEnclave storage item
+		/// This storage item is used to perform feature control during register_enclave
+		/// Can only be called by the Teerex Admin
+		#[pallet::call_index(31)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn set_skip_scheduled_enclave_check(
+			origin: OriginFor<T>,
+			should_skip: bool,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdmin);
+
+			<SkipScheduledEnclaveCheck<T>>::set(should_skip);
+			Self::deposit_event(Event::SkipScheduledEnclaveCheck(should_skip));
 			Ok(Pays::No.into())
 		}
 	}

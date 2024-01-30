@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -237,7 +237,11 @@ fn generate_genesis(
 		aura_ext: Default::default(),
 		parachain_system: Default::default(),
 		polkadot_xcm: PolkadotXcmConfig { safe_xcm_version: Some(SAFE_XCM_VERSION) },
-		teerex: TeerexConfig { allow_sgx_debug_mode: true, admin: None },
+		teerex: TeerexConfig {
+			allow_sgx_debug_mode: true,
+			admin: None,
+			skip_scheduled_enclave_check: true,
+		},
 		transaction_payment: Default::default(),
 		tokens: Default::default(),
 	}

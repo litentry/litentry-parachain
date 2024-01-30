@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -176,6 +176,7 @@ pub fn web3_network_to_chain(network: &Web3Network) -> String {
 		Web3Network::Litmus => "litmus".into(),
 		Web3Network::LitentryRococo => "litentry_rococo".into(),
 		Web3Network::Khala => "khala".into(),
+		Web3Network::SubstrateTestnet => "substrate_testnet".into(),
 		Web3Network::Ethereum => "ethereum".into(),
 		Web3Network::Bsc => "bsc".into(),
 		Web3Network::BitcoinP2tr => "bitcoin_p2tr".into(),
@@ -1425,7 +1426,7 @@ mod tests {
 			AchainableAccountTotalTransactions, AchainableClient, AchainableTagAccount,
 			AchainableTagBalance, AchainableTagDeFi, AchainableTagDotsama, AchainableUtils,
 		},
-		DataProviderConfigReader, ReadDataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG,
+		DataProviderConfig,
 	};
 	use lc_mock_server::run;
 	use litentry_primitives::Web3Network;
@@ -1434,9 +1435,9 @@ mod tests {
 	fn new_achainable_client() -> AchainableClient {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_achainable_url(url);
 
-		let data_provider_config = DataProviderConfigReader::read().unwrap();
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_achainable_url(url);
 		AchainableClient::new(&data_provider_config)
 	}
 

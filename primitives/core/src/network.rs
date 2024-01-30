@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -70,7 +70,9 @@ pub enum Web3Network {
 	LitentryRococo,
 	#[codec(index = 5)]
 	Khala,
-	// Index 6 used to SubstrateTestnet, So let's not break the indexing...
+	#[codec(index = 6)]
+	SubstrateTestnet,
+
 	// evm
 	#[codec(index = 7)]
 	Ethereum,
@@ -107,7 +109,7 @@ impl Web3Network {
 			Self::Polkadot |
 				Self::Kusama | Self::Litentry |
 				Self::Litmus | Self::LitentryRococo |
-				Self::Khala
+				Self::Khala | Self::SubstrateTestnet
 		)
 	}
 
@@ -165,6 +167,7 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
+					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => true,
 					Web3Network::Bsc => true,
 					Web3Network::BitcoinP2tr => false,
@@ -189,6 +192,7 @@ mod tests {
 					Web3Network::Litmus => true,
 					Web3Network::LitentryRococo => true,
 					Web3Network::Khala => true,
+					Web3Network::SubstrateTestnet => true,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
 					Web3Network::BitcoinP2tr => false,
@@ -213,6 +217,7 @@ mod tests {
 					Web3Network::Litmus => false,
 					Web3Network::LitentryRococo => false,
 					Web3Network::Khala => false,
+					Web3Network::SubstrateTestnet => false,
 					Web3Network::Ethereum => false,
 					Web3Network::Bsc => false,
 					Web3Network::BitcoinP2tr => true,

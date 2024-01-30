@@ -16,5 +16,5 @@
 */
 #[cfg(feature = "skip-ias-check")]
 mod skip_ias_check_tests;
-#[cfg(all(not(feature = "skip-ias-check"), feature = "skip-scheduled-enclave-check"))]
+#[cfg(all(not(feature = "skip-ias-check")))]
 mod test_cases;

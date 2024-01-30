@@ -41,7 +41,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 # litentry
 itp-node-api-metadata-provider = { path = "../../core-primitives/node-api/metadata-provider", default-features = false }
 lc-stf-task-sender = { path = "../../litentry/core/stf-task/sender", default-features = false }
-lc-vc-task-sender = { path = "../../litentry/core/vc-issuance/lc-vc-task-sender", default-features = false }
+litentry-macros = { path = "../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
 
@@ -60,7 +60,6 @@ sgx = [
     # litentry
     "litentry-primitives/sgx",
     "lc-stf-task-sender/sgx",
-    "lc-vc-task-sender/sgx",
     "itp-node-api-metadata-provider/sgx",
 ]
 std = [
@@ -89,7 +88,9 @@ std = [
     # litentry
     "litentry-primitives/std",
     "lc-stf-task-sender/std",
-    "lc-vc-task-sender/std",
     "itp-node-api-metadata-provider/std",
 ]
 test = []
+production = [
+    "litentry-macros/production",
+]

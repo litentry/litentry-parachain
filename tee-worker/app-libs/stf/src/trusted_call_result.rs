@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -96,4 +96,8 @@ pub struct SetIdentityNetworksResult {
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 pub struct RequestVCResult {
 	pub vc_payload: AesOutput,
+	// see comments in `lc-vc-task-receiver` why it's prefixed with `pre...`
+	// they should be referenced/used only when the client's local IDGraph is empty
+	pub pre_mutated_id_graph: AesOutput,
+	pub pre_id_graph_hash: H256,
 }

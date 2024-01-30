@@ -84,9 +84,11 @@ jobs:
     outputs:
       rebuild_parachain: ${{ steps.env.outputs.rebuild_parachain }}
       rebuild_tee: ${{ steps.env.outputs.rebuild_tee }}
+      rebuild_bitacross: ${{ steps.env.outputs.rebuild_bitacross }}
       push_docker: ${{ steps.env.outputs.push_docker }}
       run_parachain_test: ${{ steps.env.outputs.run_parachain_test }}
       run_tee_test: ${{ steps.env.outputs.run_tee_test }}
+      run_bitacross_test: ${{ steps.env.outputs.run_bitacross_test }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -94,7 +96,7 @@ jobs:
 
       # Checks to see if any files in the PR/commit match one of the listed file types.
       # We can use this filter to decide whether or not to build docker images
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: .github/file-filter.yml
@@ -105,6 +107,7 @@ jobs:
         run: |
           rebuild_parachain=false
           rebuild_tee=false
+          rebuild_bitacross=false
           push_docker=false
           run_parachain_test=false
           run_tee_test=false
@@ -114,6 +117,9 @@ jobs:
           if [ "${{ github.event.inputs.rebuild-tee-docker }}" = "true" ] || [ "${{ steps.filter.outputs.tee_src }}" = "true" ]; then
             rebuild_tee=true
           fi
+          if [ "${{ github.event.inputs.rebuild-bitacross-docker }}" = "true" ] || [ "${{ steps.filter.outputs.bitacross_src }}" = "true" ]; then
+            rebuild_bitacross=true
+          fi          
           if [ "${{ github.event.inputs.push-docker }}" = "true" ]; then
             push_docker=true
           elif [ "${{ github.event_name }}" = 'push' ] && [ "${{ github.ref }}" = 'refs/heads/dev' ]; then
@@ -125,11 +131,16 @@ jobs:
           if [ "${{ steps.filter.outputs.tee_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_tee" = "true" ]; then
             run_tee_test=true
           fi
+          if [ "${{ steps.filter.outputs.bitacross_test }}" = "true" ] || [ "$rebuild_parachain" = "true" ] || [ "$rebuild_bitacross" = "true" ]; then
+            run_bitacross_test=true
+          fi          
           echo "rebuild_parachain=$rebuild_parachain" | tee -a $GITHUB_OUTPUT
           echo "rebuild_tee=$rebuild_tee" | tee -a $GITHUB_OUTPUT
+          echo "rebuild_bitacross=$rebuild_bitacross" | tee -a $GITHUB_OUTPUT
           echo "push_docker=$push_docker" | tee -a $GITHUB_OUTPUT
           echo "run_parachain_test=$run_parachain_test" | tee -a $GITHUB_OUTPUT
           echo "run_tee_test=$run_tee_test" | tee -a $GITHUB_OUTPUT
+          echo "run_bitacross_test=$$run_tee_test" | tee -a $GITHUB_OUTPUT
 
   fmt:
     runs-on: ubuntu-latest
@@ -159,10 +170,21 @@ jobs:
           cargo fmt --all -- --check
           taplo fmt --check
 
-      - name: Enclave-runtime fmt check
+      - name: Tee-worker enclave-runtime fmt check
         working-directory: ./tee-worker/enclave-runtime
         run: |
           cargo fmt --all -- --check
+
+      - name: bitacross-worker fmt check
+        working-directory: ./bitacross-worker
+        run: |
+          cargo fmt --all -- --check
+          taplo fmt --check
+
+      - name: bitacross-worker enclave-runtime fmt check
+        working-directory: ./bitacross-worker/enclave-runtime
+        run: |
+          cargo fmt --all -- --check          
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
@@ -282,6 +304,66 @@ jobs:
         if: failure()
         uses: andymckay/cancel-action@0.3
 
+  bitacross-clippy:
+    runs-on: ubuntu-latest
+    needs:
+      - fmt
+      - set-condition
+      - sequentialise
+    if: needs.set-condition.outputs.rebuild_bitacross == 'true'
+#    todo: we might want to change this image in the future
+    container: "litentry/litentry-tee-dev:latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && \
+          sudo apt-get install -yq openssl clang libclang-dev cmake protobuf-compiler
+
+      - name: bitacross-worker clippy
+        working-directory: ./bitacross-worker
+        run: |
+          echo "::group::cargo clippy all"
+          cargo clippy --release -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain"
+          cargo clippy --release --features sidechain -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::endgroup::"
+
+      - name: Clean up disk
+        working-directory: ./bitacross-worker
+        run: |
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+          cargo clean --profile release
+          echo "::group::Show disk usage"
+          df -h .
+          echo "::endgroup::"
+
+      - name: bitacross-enclave clippy
+        working-directory: ./bitacross-worker/enclave-runtime
+        run: |
+          echo "::group::cargo clippy all"
+          cargo clippy --release -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy sidechain"
+          cargo clippy --release --features sidechain -- -D warnings
+          echo "::endgroup::"
+          echo "::group::cargo clippy offchain-worker"
+          cargo clean --profile release
+          cargo clippy --release --features offchain-worker -- -D warnings
+          echo "::endgroup::"
+
+      - name: Fail early
+        if: failure()
+        uses: andymckay/cancel-action@0.3
+
   parachain-build-dev:
     runs-on: ubuntu-latest
     needs:
@@ -319,7 +401,7 @@ jobs:
           docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload docker image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
           path: litentry-parachain-dev.tar.gz
@@ -356,7 +438,7 @@ jobs:
 
       - name: Cache worker-cache
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             worker-cache
@@ -378,7 +460,6 @@ jobs:
           echo "::group::Show disk usage"
           df -h .
           echo "::endgroup::"
-
       # cache mount in buildkit won't be exported as image layers, so it doesn't work well with GHA cache, see
       # https://github.com/moby/buildkit/issues/1512
       # https://www.reddit.com/r/rust/comments/126xeyx/exploring_the_problem_of_faster_cargo_docker/
@@ -463,12 +544,11 @@ jobs:
         run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
 
       - name: Upload docker images
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-tee
           path: litentry-tee.tar.gz
           if-no-files-found: error
-
       - name: Fail early
         if: failure()
         uses: andymckay/cancel-action@0.3
@@ -487,7 +567,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
@@ -513,7 +593,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.chain }}-ts-tests-docker-logs
@@ -522,7 +602,7 @@ jobs:
           retention-days: 3
 
       - name: Archive logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.chain }}-ts-tests-artifact
@@ -625,8 +705,6 @@ jobs:
           - test_name: lit-parentchain-nonce
           - test_name: lit-ii-batch-test
           - test_name: lit-test-stress-script
-          # disabled due to P-208
-          # - test_name: lit-resume-worker
     steps:
       - uses: actions/checkout@v4
 
@@ -634,11 +712,11 @@ jobs:
         run: |
           docker pull parity/polkadot
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-tee
 
@@ -684,7 +762,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
@@ -709,6 +787,7 @@ jobs:
           - test_name: lit-ii-batch-test-multiworker
           - test_name: lit-ii-identity-multiworker-test
           - test_name: lit-ii-vc-multiworker-test
+          - test_name: lit-resume-worker
     steps:
       - uses: actions/checkout@v4
 
@@ -716,11 +795,11 @@ jobs:
         run: |
           docker pull parity/polkadot
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-tee
 
@@ -766,7 +845,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
@@ -796,11 +875,11 @@ jobs:
       - tee-single-worker-test
     if: ${{ !failure() && needs.set-condition.outputs.push_docker == 'true' }}
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-tee
 

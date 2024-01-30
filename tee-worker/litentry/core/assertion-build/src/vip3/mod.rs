@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ pub mod card;
 use crate::*;
 use lc_data_providers::{
 	vip3::{VIP3Client, VIP3QuerySet},
-	DataProviderConfigReader, ReadDataProviderConfig,
+	DataProviderConfig,
 };
 use litentry_primitives::VIP3MembershipCardLevel;
 
@@ -34,9 +34,10 @@ pub struct VIP3SBTInfo {
 }
 
 impl VIP3SBTInfo {
-	pub fn new() -> core::result::Result<VIP3SBTInfo, ErrorDetail> {
-		let data_provider_config = DataProviderConfigReader::read()?;
-		let client = VIP3Client::new(&data_provider_config);
+	pub fn new(
+		data_provider_config: &DataProviderConfig,
+	) -> core::result::Result<VIP3SBTInfo, ErrorDetail> {
+		let client = VIP3Client::new(data_provider_config);
 
 		Ok(VIP3SBTInfo { client })
 	}

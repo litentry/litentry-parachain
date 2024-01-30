@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ use crate::*;
 use http::header::{AUTHORIZATION, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_data_providers::{build_client, DataProviderConfigReader, ReadDataProviderConfig};
+use lc_data_providers::{build_client, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
 
@@ -43,11 +43,12 @@ impl RestPath<String> for OneBlockResponse {
 	}
 }
 
-fn fetch_data_from_notion(course_type: &OneBlockCourseType) -> Result<OneBlockResponse> {
-	let data_provider_config = DataProviderConfigReader::read()
-		.map_err(|e| Error::RequestVCFailed(Assertion::Oneblock(course_type.clone()), e))?;
-	let oneblock_notion_key = data_provider_config.oneblock_notion_key;
-	let oneblock_notion_url = data_provider_config.oneblock_notion_url;
+fn fetch_data_from_notion(
+	course_type: &OneBlockCourseType,
+	data_provider_config: &DataProviderConfig,
+) -> Result<OneBlockResponse> {
+	let oneblock_notion_key = data_provider_config.oneblock_notion_key.to_string();
+	let oneblock_notion_url = data_provider_config.oneblock_notion_url.to_string();
 
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
@@ -174,8 +175,9 @@ impl OneBlockAssertionQualify for OneBlockData {
 pub fn query_oneblock_status(
 	course_type: &OneBlockCourseType,
 	addresses: Vec<String>,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<bool> {
-	let oneblock_response = fetch_data_from_notion(course_type)?;
+	let oneblock_response = fetch_data_from_notion(course_type, data_provider_config)?;
 	debug!("OneBlock Assertion Response: {oneblock_response:?}");
 
 	Ok(check_oneblock_data(&oneblock_response, course_type, addresses))

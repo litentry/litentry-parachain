@@ -72,7 +72,6 @@ members = [
     "sidechain/state",
     "sidechain/validateer-fetch",
     "litentry/primitives",
-    "litentry/macros",
     "litentry/pallets/identity-management",
     "litentry/core/stf-task/sender",
     "litentry/core/stf-task/receiver",
