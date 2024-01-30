@@ -42,9 +42,7 @@ use itp_stf_executor::{getter_executor::ExecuteGetter, traits::StfShardVaultQuer
 use itp_stf_primitives::types::AccountId;
 use itp_stf_state_handler::handle_state::HandleState;
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{
-	DirectRequestStatus, Index, MrEnclave, RsaRequest, ShardIdentifier, SidechainBlockNumber, H256,
-};
+use itp_types::{DirectRequestStatus, Index, RsaRequest, ShardIdentifier, H256};
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use its_primitives::types::block::SignedBlock;
 use its_sidechain::rpc_handler::{
@@ -340,6 +338,7 @@ where
 	});
 
 	if_not_production!({
+		use itp_types::{MrEnclave, SidechainBlockNumber};
 		// state_updateScheduledEnclave, params: sidechainBlockNumber, hex encoded mrenclave
 		io.add_sync_method("state_updateScheduledEnclave", move |params: Params| {
 			match params.parse::<(SidechainBlockNumber, String)>() {

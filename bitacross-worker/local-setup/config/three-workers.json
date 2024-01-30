@@ -1,0 +1,76 @@
+{
+  "workers": [
+    {
+      "id": 1,
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "-T",
+        "wss://localhost",
+        "-P",
+        "2000",
+        "-w",
+        "2001",
+        "-r",
+        "3443",
+        "-h",
+        "4545",
+        "--parentchain-start-block",
+        "0",
+        "--enable-metrics"
+      ],
+      "subcommand_flags": [
+        "--skip-ra",
+        "--dev"
+      ]
+    },
+    {
+      "id": "2",
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "-T",
+        "wss://localhost",
+        "-P",
+        "2010",
+        "-w",
+        "2011",
+        "-r",
+        "3453",
+        "-h",
+        "4555",
+        "--parentchain-start-block",
+        "0"
+      ],
+      "subcommand_flags": [
+        "--skip-ra",
+        "--dev",
+        "--request-state"
+      ]
+    },
+    {
+      "id": "3",
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "-T",
+        "wss://localhost",
+        "-P",
+        "2020",
+        "-w",
+        "2021",
+        "-r",
+        "3463",
+        "-h",
+        "4565",
+        "--parentchain-start-block",
+        "0"
+      ],
+      "subcommand_flags": [
+        "--skip-ra",
+        "--dev",
+        "--request-state"
+      ]
+    }
+  ]
+}
