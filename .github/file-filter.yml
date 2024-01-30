@@ -33,3 +33,17 @@ tee_test: &tee_test
   - 'tee-worker/cli/*.sh'
   - 'docker/**'
   - 'tee-worker/docker/*.yml'
+
+bitacross_src: &bitacross_src
+  - 'bitacross-worker/**/*.rs'
+  - 'bitacross-worker/**/Cargo.toml'
+  - 'bitacross-worker/**/Cargo.lock'
+  - 'bitacross-worker/**/rust-toolchain.toml'
+  - 'bitacross-worker/build.Dockerfile'
+  - 'bitacross-worker/enclave-runtime/**'
+
+bitacross_test: &bitacross_src
+  - 'bitacross-worker/ts-tests/**'
+  - 'bitacross-worker/cli/*.sh'
+  - 'docker/**'
+  - 'bitacross-worker/docker/*.yml'

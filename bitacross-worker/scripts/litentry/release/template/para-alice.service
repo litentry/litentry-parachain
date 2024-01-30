@@ -1,0 +1,15 @@
+[Unit]
+Description=Litentry Parachain
+
+[Service]
+Type=simple
+User=USER
+WorkingDirectory=/opt/litentry/parachain
+ExecStart=/opt/litentry/parachain/litentry-collator --base-path /opt/litentry/parachain/para-alice --alice --collator --force-authoring --chain CHAIN-dev --unsafe-ws-external --unsafe-rpc-external --rpc-cors=all --ws-max-connections 3000 --port 30333 --ws-port 9944 --rpc-port 9933 --execution wasm --state-pruning archive --blocks-pruning archive -- --execution wasm --chain /opt/litentry/parachain/rococo-local-chain-spec.json --port 30332 --ws-port 9943 --rpc-port 9932
+Restart=always
+RestartSec=120
+StandardOutput=append:/opt/litentry/parachain/para.alice.log
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

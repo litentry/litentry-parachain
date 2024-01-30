@@ -219,11 +219,6 @@ pub(crate) fn init_enclave(
 	let data_provider_config = DataProviderConfig::new();
 	GLOBAL_DATA_PROVIDER_CONFIG.initialize(data_provider_config.into());
 
-	std::thread::spawn(move || {
-		#[allow(clippy::unwrap_used)]
-		run_stf_task_handler().unwrap();
-	});
-
 	Ok(())
 }
 
@@ -368,6 +363,13 @@ pub(crate) fn init_enclave_sidechain_components(
 	}
 
 	std::thread::spawn(move || {
+		println!("running stf task handler");
+		#[allow(clippy::unwrap_used)]
+		run_stf_task_handler().unwrap();
+	});
+
+	std::thread::spawn(move || {
+		println!("running vc issuance");
 		#[allow(clippy::unwrap_used)]
 		run_vc_issuance().unwrap();
 	});
