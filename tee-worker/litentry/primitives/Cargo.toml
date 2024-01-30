@@ -39,7 +39,9 @@ base64 = { version = "0.13", features = ["alloc"] }
 
 [features]
 default = ["std"]
-production = []
+production = [
+    "parentchain-primitives/production",
+]
 sgx = [
     "sgx_tstd",
     "rand-sgx",

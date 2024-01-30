@@ -96,7 +96,7 @@ jobs:
 
       # Checks to see if any files in the PR/commit match one of the listed file types.
       # We can use this filter to decide whether or not to build docker images
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: .github/file-filter.yml
@@ -401,7 +401,7 @@ jobs:
           docker save litentry/litentry-parachain:latest | gzip > litentry-parachain-dev.tar.gz
 
       - name: Upload docker image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-parachain-dev
           path: litentry-parachain-dev.tar.gz
@@ -438,7 +438,7 @@ jobs:
 
       - name: Cache worker-cache
         if: needs.set-condition.outputs.rebuild_tee == 'true'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             worker-cache
@@ -544,7 +544,7 @@ jobs:
         run: docker save litentry/litentry-worker:latest litentry/litentry-cli:latest | gzip > litentry-tee.tar.gz
 
       - name: Upload docker images
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: litentry-tee
           path: litentry-tee.tar.gz
@@ -567,7 +567,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
@@ -593,7 +593,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.chain }}-ts-tests-docker-logs
@@ -602,7 +602,7 @@ jobs:
           retention-days: 3
 
       - name: Archive logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.chain }}-ts-tests-artifact
@@ -712,11 +712,11 @@ jobs:
         run: |
           docker pull parity/polkadot
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-tee
 
@@ -762,7 +762,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
@@ -795,11 +795,11 @@ jobs:
         run: |
           docker pull parity/polkadot
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-tee
 
@@ -845,7 +845,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.test_name }}-docker-logs
@@ -875,11 +875,11 @@ jobs:
       - tee-single-worker-test
     if: ${{ !failure() && needs.set-condition.outputs.push_docker == 'true' }}
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-parachain-dev
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: litentry-tee
 
