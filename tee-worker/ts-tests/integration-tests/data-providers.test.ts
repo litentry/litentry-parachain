@@ -120,8 +120,8 @@ describe('Test Vc (direct invocation)', function () {
     } else {
         credentialsJson.forEach(({ id }, index) => {
             step(`link identity && request vc with all credentials`, async function () {
-                await linkIdentityViaCli(id);
-                await requestVc(id, index);
+                await linkIdentityViaCli('token-holding-amount-amp');
+                await requestVc('token-holding-amount-amp', index);
             });
         });
     }
