@@ -5,6 +5,7 @@ import type { KeyringPair } from '@polkadot/keyring/types';
 import type { HexString } from '@polkadot/util/types';
 import './config';
 import { IntegrationTestContext, JsonRpcRequest } from './common-types';
+import { randomBytes } from 'crypto';
 
 // format and setup
 const keyring = new Keyring({ type: 'sr25519' });
@@ -70,4 +71,9 @@ export function nextRequestId(context: IntegrationTestContext): number {
     const nextId = context.requestId + 1;
     context.requestId = nextId;
     return nextId;
+}
+
+export function randomSubstrateWallet(): KeyringPair {
+    const keyring = new Keyring({ type: 'sr25519' });
+    return keyring.addFromSeed(randomBytes(32));
 }
