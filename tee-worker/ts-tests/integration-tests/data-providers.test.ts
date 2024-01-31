@@ -83,6 +83,8 @@ describe('Test Vc (direct invocation)', function () {
         const assertion = {
             [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
         };
+        console.log("vc description: ", credentialDefinitions.description);
+        
         console.log('assertion: ', assertion);
 
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, substrateIdentities[index])).toNumber();
@@ -112,13 +114,13 @@ describe('Test Vc (direct invocation)', function () {
     }
 
     if (argvId && credentialsJson.find((item) => item.id === argvId)) {
-        step(`link identity && request vc with specific credentials`, async function () {
+        step(`link identity && request vc with specific credentials for ${argvId}`, async function () {
             await linkIdentityViaCli(argvId);
             await requestVc(argvId, 0);
         });
     } else {
         credentialsJson.forEach(({ id }, index) => {
-            step(`link identity && request vc with all credentials`, async function () {
+            step(`link identity && request vc with all credentials for ${id}`, async function () {
                 await linkIdentityViaCli(id);
                 await requestVc(id, index);
             });

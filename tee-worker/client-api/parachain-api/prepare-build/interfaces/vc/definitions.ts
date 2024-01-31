@@ -54,6 +54,7 @@ export default {
                 DatePercent: "AchainableDatePercent",
                 Date: "AchainableDate",
                 Token: "AchainableToken",
+                Mirror: "AchainableMirror",
             },
         },
         AchainableAmountHolding: {
@@ -116,6 +117,11 @@ export default {
             name: "Bytes",
             chain: "Web3Network",
             token: "Bytes",
+        },
+        AchainableMirror: {
+            name: "Bytes",
+            chain: "Web3Network",
+            postQuantity: "Option<Bytes>",
         },
         // Oneblock
         OneBlockCourseType: {
