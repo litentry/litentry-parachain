@@ -12,6 +12,7 @@ import json
 import signal
 from subprocess import Popen, PIPE, STDOUT, run
 import os
+import shutil
 import sys
 from time import sleep
 from typing import Union, IO
@@ -156,10 +157,16 @@ def offset_port(offset):
 
 
 def setup_environment(offset, config, parachain_dir):
+    if not os.path.isfile("./local-setup/.env"):
+        shutil.copy("./local-setup/.env.dev", "./local-setup/.env")
+
     load_dotenv("./local-setup/.env.dev")
     offset_port(offset)
     check_all_ports_and_reallocate()
-    generate_config_local_json(parachain_dir)
+
+    if parachain_dir != "":
+        generate_config_local_json(parachain_dir)
+
     generate_env_local()
 
     # TODO: only works for single worker for now
@@ -219,6 +226,7 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
         setup_environment(offset, config, parachain_dir)
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
     elif parachain_type == "remote":
+        setup_environment(offset, config, "")
         print("Litentry parachain should be started remotely")
     else:
         sys.exit("Unsupported parachain_type")
