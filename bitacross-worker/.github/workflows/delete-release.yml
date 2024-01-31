@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         #binary: ["integritee-client", "integritee-demo-validateer"]
-        binary: ["teeracle"]
+        binary: []
     steps:
       - uses: actions/checkout@v2
 
