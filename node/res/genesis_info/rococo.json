@@ -38,7 +38,7 @@
     "jcSQcu5RXtWXKPN78zJogNyqsff1j4ffgoJ2njNcDbZ3qNEh5"
   ],
   "bootNodes": [
-    "/dns/rpc.rococo-parachain-sg.litentry.io/tcp/40333/ws/p2p/12D3KooWC9WbcoS2fuaohQXfk3RwXH1hwffEG7iudbJRfNK54hTT"
+    "/dns/rpc.rococo-parachain.litentry.io/tcp/40333/ws/p2p/12D3KooWD9t5jsf5m2g4acXfyVf2KxR5j11F9SLC5wKhv6JRquyv"
   ],
   "telemetryEndpoints": [
     "wss://telemetry.polkadot.io/submit/"
