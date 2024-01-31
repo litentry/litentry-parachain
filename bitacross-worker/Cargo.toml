@@ -71,7 +71,6 @@ members = [
     "sidechain/state",
     "sidechain/validateer-fetch",
     "litentry/primitives",
-    "litentry/macros",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]

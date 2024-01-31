@@ -735,6 +735,8 @@ dependencies = [
  "its-test",
  "jsonrpsee 0.2.0",
  "lazy_static",
+ "litentry-hex-utils",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "mockall",
@@ -1421,7 +1423,7 @@ version = "0.9.12"
 dependencies = [
  "frame-support",
  "litentry-hex-utils",
- "litentry-macros 0.9.12",
+ "litentry-macros",
  "litentry-proc-macros",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
@@ -4613,6 +4615,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4664,6 +4667,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "itp-utils",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -5539,6 +5543,7 @@ name = "itp-utils"
 version = "0.9.0"
 dependencies = [
  "hex",
+ "litentry-hex-utils",
  "parity-scale-codec",
 ]
 
@@ -5620,6 +5625,7 @@ dependencies = [
  "its-test",
  "its-validateer-fetch",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
@@ -6840,14 +6846,6 @@ dependencies = [
 
 [[package]]
 name = "litentry-macros"
-version = "0.1.0"
-dependencies = [
- "cargo_toml",
- "quote",
-]
-
-[[package]]
-name = "litentry-macros"
 version = "0.9.12"
 
 [[package]]
@@ -6861,6 +6859,7 @@ dependencies = [
  "hex",
  "itp-sgx-crypto",
  "itp-utils",
+ "litentry-hex-utils",
  "log 0.4.20",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",

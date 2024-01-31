@@ -71,6 +71,8 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 # litentry
 config = "0.13.3"
 ita-stf = { path = "../app-libs/stf", default-features = false }
+litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
+litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
@@ -81,7 +83,12 @@ default = []
 evm = []
 sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
-production = ["itp-settings/production"]
+production = [
+    "ita-stf/production",
+    "itp-settings/production",
+    "litentry-macros/production",
+    "litentry-primitives/production",
+]
 dcap = []
 attesteer = ["dcap"]
 # Must be enabled to build a binary and link it with the enclave successfully.

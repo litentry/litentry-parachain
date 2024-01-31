@@ -75,7 +75,8 @@ use itp_settings::worker_mode::{ProvideWorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
-use itp_utils::{if_production_or, write_slice_and_whitespace_pad};
+use itp_utils::write_slice_and_whitespace_pad;
+use litentry_macros::if_production_or;
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
@@ -129,7 +130,7 @@ pub unsafe extern "C" fn init(
 	// Initialize the logging environment in the enclave.
 	if_production_or!(
 		{
-			let module_names = litentry_macros::local_modules!();
+			let module_names = litentry_proc_macros::local_modules!();
 			println!(
 				"Initializing logger to filter only following local modules: {:?}",
 				module_names
