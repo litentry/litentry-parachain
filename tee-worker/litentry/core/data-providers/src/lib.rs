@@ -199,7 +199,7 @@ impl Default for DataProviderConfig {
 
 impl DataProviderConfig {
 	pub fn new() -> Self {
-		std::println!("Initializing data providers config");
+		log::debug!("Initializing data providers config");
 
 		// default prod config
 		let mut config = DataProviderConfig {

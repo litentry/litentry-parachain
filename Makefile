@@ -195,6 +195,8 @@ fmt-cargo:
 	@cargo fmt --all
 	@cd tee-worker && cargo fmt --all
 	@cd tee-worker/enclave-runtime && cargo fmt --all
+	@cd bitacross-worker && cargo fmt --all
+	@cd bitacross-worker/enclave-runtime && cargo fmt --all
 
 .PHONY: fmt-taplo ## taplo fmt
 fmt-taplo:
