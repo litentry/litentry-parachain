@@ -17,9 +17,6 @@
 
 //! Service for prometheus metrics, hosted on a http server.
 
-#[cfg(feature = "teeracle")]
-use crate::teeracle::teeracle_metrics::update_teeracle_metrics;
-
 use crate::{
 	account_funding::EnclaveAccountInfo,
 	error::{Error, ServiceResult},
@@ -225,12 +222,6 @@ impl ReceiveEnclaveMetrics for EnclaveMetricsReceiver {
 				ENCLAVE_SIDECHAIN_SLOT_BLOCK_COMPOSITION_TIME.observe(time.as_secs_f64()),
 			EnclaveMetric::SidechainBlockBroadcastingTime(time) =>
 				ENCLAVE_SIDECHAIN_BLOCK_BROADCASTING_TIME.observe(time.as_secs_f64()),
-			#[cfg(feature = "teeracle")]
-			EnclaveMetric::ExchangeRateOracle(m) => update_teeracle_metrics(m)?,
-			#[cfg(not(feature = "teeracle"))]
-			EnclaveMetric::ExchangeRateOracle(_) => {
-				error!("Received Teeracle metric, but Teeracle feature is not enabled, ignoring metric item.")
-			},
 		}
 		Ok(())
 	}

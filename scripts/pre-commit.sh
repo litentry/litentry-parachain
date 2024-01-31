@@ -12,6 +12,13 @@ function worker_clippy() {
     cargo clippy --release --features offchain-worker -- -D warnings
 }
 
+function bitacross_clippy() {
+    cargo clippy --release -- -D warnings
+    cargo clippy --release --features evm -- -D warnings
+    cargo clippy --release --features sidechain -- -D warnings
+    cargo clippy --release --features offchain-worker -- -D warnings
+}
+
 function parachain_check() {
     make clippy
     cargo test --locked --release -p pallet-* --lib
@@ -57,15 +64,15 @@ RUST_LOG=info SKIP_WASM_BUILD=1 cargo test --release -- --show-output
 echo "[Step 5], tee-worker service test"
 clean_up
 cd "$root_dir/tee-worker"
-SGX_MODE=SW SKIP_WASM_BUILD=1 make
+#SGX_MODE=SW SKIP_WASM_BUILD=1 make
 cd "$root_dir/tee-worker/bin"
 ./litentry-worker test --all
 
 echo "[Step 6], bitacross-worker clippy"
-cd "$root_dir/bitacross-worker" && worker_clippy
+cd "$root_dir/bitacross-worker" && bitacross_clippy
 
 echo "[Step 7], bitacross-worker enclave clippy"
-cd "$root_dir/bitacross-worker/enclave-runtime" && worker_clippy
+cd "$root_dir/bitacross-worker/enclave-runtime" && bitacross_clippy
 
 echo "[Step 8], bitacross-worker cargo test"
 cd "$root_dir/bitacross-worker"

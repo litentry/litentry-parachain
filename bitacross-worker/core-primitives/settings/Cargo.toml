@@ -11,4 +11,3 @@ edition = "2021"
 production = []
 sidechain = []
 offchain-worker = []
-teeracle = []

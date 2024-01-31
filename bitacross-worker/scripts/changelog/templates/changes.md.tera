@@ -19,6 +19,5 @@
 
 {% include "changes_sidechain.md.tera" %}
 
-{% include "changes_teeracle.md.tera" %}
 
 {% include "changes_misc.md.tera" %}
