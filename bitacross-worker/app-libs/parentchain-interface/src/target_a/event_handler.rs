@@ -22,7 +22,7 @@ use ita_stf::{Getter, TrustedCall, TrustedCallSigned};
 use itc_parentchain_indirect_calls_executor::error::Error;
 use itp_stf_primitives::{traits::IndirectExecutor, types::TrustedOperation};
 use itp_types::parentchain::{AccountId, FilterEvents, HandleParentchainEvents, ParentchainError};
-use itp_utils::hex::hex_encode;
+use litentry_hex_utils::hex_encode;
 use log::*;
 
 pub struct ParentchainEventHandler {}
