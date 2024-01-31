@@ -25,6 +25,7 @@ use rust_base58::base58::FromBase58;
 #[cfg(feature = "sgx")]
 use base58::FromBase58;
 
+use bc_task_sender::{BitAcrossRequestSender, BitAcrossTaskSender};
 use codec::{Decode, Encode};
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
@@ -55,6 +56,18 @@ where
 	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 {
 	let watch_author = top_pool_author.clone();
+
+	// Submit BitAcross Request
+	io_handler.add_sync_method("bitacross_submitRequest", move |params: Params| {
+		debug!("worker_api_direct rpc was called: bitacross_submitRequest");
+		async move {
+			let json_value = match request_bitacross_inner(params).await {
+				Ok(value) => value.to_hex(),
+				Err(error) => compute_hex_encoded_return_error(&error),
+			};
+			Ok(json!(json_value))
+		}
+	});
 	io_handler.add_sync_method("author_submitAndWatchRsaRequest", move |params: Params| {
 		debug!("worker_api_direct rpc was called: author_submitAndWatchRsaRequest");
 		let json_value = match author_submit_extrinsic_inner(
@@ -317,4 +330,29 @@ where
 	}
 
 	response.map_err(|e| format!("{:?}", e))
+}
+
+async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, String> {
+	let payload = get_request_payload(params)?;
+	let request = AesRequest::from_hex(&payload)
+		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+
+	let bit_across_request_sender = BitAcrossRequestSender::new();
+	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
+
+	// vc_request_sender.send(VCRequest { sender, request })?;
+
+	// // we only expect one response, hence no loop
+	// match receiver.await {
+	// 	Ok(Ok(response)) =>
+	// 		Ok(RpcReturnValue { do_watch: false, value: response, status: DirectRequestStatus::Ok }),
+	// 	Ok(Err(e)) => {
+	// 		log::error!("Received error in jsonresponse: {:?} ", e);
+	// 		Err(compute_hex_encoded_return_error(&e))
+	// 	},
+	// 	Err(_) => {
+	// 		// This case will only happen if the sender has been dropped
+	// 		Err(compute_hex_encoded_return_error("The sender has been dropped"))
+	// 	},
+	// }
 }

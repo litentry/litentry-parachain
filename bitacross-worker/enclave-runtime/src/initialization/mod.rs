@@ -49,6 +49,7 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
+use bc_task_receiver::run_bit_across_handler_runner;
 use codec::Encode;
 use core::str::FromStr;
 use ita_stf::{Getter, TrustedCallSigned};
@@ -296,6 +297,10 @@ pub(crate) fn init_enclave_sidechain_components(
 	} else {
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(Arc::new(None));
 	}
+
+	std::thread::spawn(move || {
+		run_bit_across_handler_runner();
+	});
 
 	Ok(())
 }

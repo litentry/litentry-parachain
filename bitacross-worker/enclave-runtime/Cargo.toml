@@ -137,6 +137,9 @@ lc-scheduled-enclave = { path = "../litentry/core/scheduled-enclave", default-fe
 litentry-macros = { path = "../litentry/macros" }
 litentry-primitives = { path = "../litentry/primitives", default-features = false, features = ["sgx"] }
 
+# bitacross
+bc-task-receiver = { path = "../bitacross/core/bc-task-receiver", default-features = false, features = ["sgx"] }
+
 # substrate deps
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 frame-system = { optional = true, default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }

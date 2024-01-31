@@ -121,7 +121,7 @@ def offset_port(offset):
 def setup_environment(offset, config, parachain_dir):
     load_dotenv(".env.dev")
     offset_port(offset)
-    check_all_ports_and_reallocate()
+    # check_all_ports_and_reallocate()
 
     # TODO: only works for single worker for now
     for p in [
@@ -181,6 +181,7 @@ def main(processes, config_path, parachain_type, log_config_path, offset, parach
         run(["../scripts/launch-local-binary.sh", "rococo"], check=True)
     elif parachain_type == "remote":
         print("Litentry parachain should be started remotely")
+        setup_environment(offset, config, parachain_dir)
     else:
         sys.exit("Unsupported parachain_type")
 
