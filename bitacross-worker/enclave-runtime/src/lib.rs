@@ -71,11 +71,12 @@ use itp_component_container::ComponentGetter;
 use itp_import_queue::PushToQueue;
 use itp_node_api::metadata::NodeMetadata;
 use itp_nonce_cache::{MutateNonce, Nonce};
-use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
+use itp_settings::worker_mode::{ProvideWorkerMode, WorkerModeProvider};
 use itp_sgx_crypto::key_repository::AccessPubkey;
 use itp_storage::{StorageProof, StorageProofChecker};
 use itp_types::{ShardIdentifier, SignedBlock};
-use itp_utils::{if_production_or, write_slice_and_whitespace_pad};
+use itp_utils::write_slice_and_whitespace_pad;
+use litentry_macros::if_production_or;
 use log::*;
 use once_cell::sync::OnceCell;
 use sgx_types::sgx_status_t;
@@ -98,14 +99,10 @@ mod utils;
 pub mod error;
 pub mod rpc;
 mod sync;
-mod tls_ra;
-pub mod top_pool_execution;
-
-#[cfg(feature = "teeracle")]
-pub mod teeracle;
-
 #[cfg(feature = "test")]
 pub mod test;
+mod tls_ra;
+pub mod top_pool_execution;
 
 pub type Hash = sp_core::H256;
 pub type AuthorityPair = sp_core::ed25519::Pair;
@@ -133,7 +130,7 @@ pub unsafe extern "C" fn init(
 	// Initialize the logging environment in the enclave.
 	if_production_or!(
 		{
-			let module_names = litentry_macros::local_modules!();
+			let module_names = litentry_proc_macros::local_modules!();
 			println!(
 				"Initializing logger to filter only following local modules: {:?}",
 				module_names
@@ -589,10 +586,6 @@ fn dispatch_parentchain_blocks_for_import<WorkerModeProvider: ProvideWorkerMode>
 	id: &ParentchainId,
 	is_syncing: bool,
 ) -> Result<()> {
-	if WorkerModeProvider::worker_mode() == WorkerMode::Teeracle {
-		trace!("Not importing any parentchain blocks");
-		return Ok(())
-	}
 	trace!(
 		"[{:?}] Dispatching Import of {} blocks and {} events",
 		id,

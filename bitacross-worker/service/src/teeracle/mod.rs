@@ -20,7 +20,7 @@ use codec::{Decode, Encode};
 use itp_enclave_api::teeracle_api::TeeracleApi;
 use itp_node_api::api_client::ParentchainApi;
 use itp_types::parentchain::Hash;
-use itp_utils::hex::hex_encode;
+use litentry_hex_utils::hex_encode;
 use log::*;
 use sp_runtime::OpaqueExtrinsic;
 use std::time::Duration;
