@@ -27,10 +27,6 @@ extern crate sgx_tstd as std;
 use codec::{Decode, Encode};
 use core::time::Duration;
 use std::string::String;
-use substrate_fixed::types::U32F32;
-
-// FIXME: Copied from ita-oracle because of cyclic deps. Should be removed after integritee-network/pallets#71
-pub type ExchangeRate = U32F32;
 
 #[derive(Encode, Decode, Debug)]
 pub enum EnclaveMetric {
@@ -38,7 +34,6 @@ pub enum EnclaveMetric {
 	TopPoolSizeSet(u64),
 	TopPoolSizeIncrement,
 	TopPoolSizeDecrement,
-	ExchangeRateOracle(ExchangeRateOracleMetric),
 	SuccessfulTrustedOperationIncrement(String),
 	FailedTrustedOperationIncrement(String),
 	ParentchainBlockImportTime(Duration),
@@ -47,22 +42,4 @@ pub enum EnclaveMetric {
 	SidechainSlotStfExecutionTime(Duration),
 	SidechainSlotBlockCompositionTime(Duration),
 	SidechainBlockBroadcastingTime(Duration),
-	// OracleMetric(OracleMetric<MetricsInfo>),
-}
-
-#[derive(Encode, Decode, Debug)]
-pub enum ExchangeRateOracleMetric {
-	/// Exchange Rate from CoinGecko - (Source, TradingPair, ExchangeRate)
-	ExchangeRate(String, String, ExchangeRate),
-	/// Response time of the request in [ms]. (Source, ResponseTime)
-	ResponseTime(String, u128),
-	/// Increment the number of requests (Source)
-	NumberRequestsIncrement(String),
-}
-
-#[derive(Encode, Decode, Debug)]
-pub enum OracleMetric<MetricsInfo> {
-	OracleSpecificMetric(MetricsInfo),
-	ResponseTime(String, u128),
-	NumberRequestsIncrement(String),
 }

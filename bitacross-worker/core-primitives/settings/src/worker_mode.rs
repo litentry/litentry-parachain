@@ -19,7 +19,6 @@
 pub enum WorkerMode {
 	OffChainWorker,
 	Sidechain,
-	Teeracle,
 }
 
 pub trait ProvideWorkerMode {
@@ -36,13 +35,6 @@ impl ProvideWorkerMode for WorkerModeProvider {
 	}
 }
 
-#[cfg(feature = "teeracle")]
-impl ProvideWorkerMode for WorkerModeProvider {
-	fn worker_mode() -> WorkerMode {
-		WorkerMode::Teeracle
-	}
-}
-
 #[cfg(feature = "sidechain")]
 impl ProvideWorkerMode for WorkerModeProvider {
 	fn worker_mode() -> WorkerMode {
@@ -51,7 +43,7 @@ impl ProvideWorkerMode for WorkerModeProvider {
 }
 
 // Default to `Sidechain` worker mode when no cargo features are set.
-#[cfg(not(any(feature = "sidechain", feature = "teeracle", feature = "offchain-worker")))]
+#[cfg(not(any(feature = "sidechain", feature = "offchain-worker")))]
 impl ProvideWorkerMode for WorkerModeProvider {
 	fn worker_mode() -> WorkerMode {
 		WorkerMode::Sidechain
