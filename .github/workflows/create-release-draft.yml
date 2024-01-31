@@ -176,10 +176,6 @@ jobs:
         with:
           ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
-      - name: Set env
-        run: |
-          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
-          echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
 
       - name: Free up disk space
         if: startsWith(runner.name, 'GitHub Actions')
@@ -197,6 +193,11 @@ jobs:
           # see https://docs.docker.com/build/drivers/
           driver: docker
 
+      - name: Set env
+        run: |
+          WORKER_DOCKER_TAG=$(echo ${{ env.RELEASE_TAG }} | sed 's/.*\(w.*\)/\1/;s/w/v/')
+          echo "WORKER_DOCKER_TAG=$WORKER_DOCKER_TAG" >> $GITHUB_ENV
+
       - name: Build local builder
         uses: docker/build-push-action@v5
         with:
@@ -207,6 +208,7 @@ jobs:
           build-args: |
             WORKER_MODE_ARG=sidechain
             ADDITIONAL_FEATURES_ARG=
+            IMAGE_FOR_RELEASE=true
 
       - name: Build worker
         uses: docker/build-push-action@v5
