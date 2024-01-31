@@ -10547,6 +10547,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
+ "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-aura",
  "pallet-authorship",
