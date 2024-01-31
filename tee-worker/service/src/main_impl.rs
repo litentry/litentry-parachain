@@ -44,13 +44,13 @@ use itp_node_api::{
 	node_api_factory::{CreateNodeApi, NodeApiFactory},
 };
 use itp_settings::worker_mode::{ProvideWorkerMode, WorkerMode, WorkerModeProvider};
-use itp_utils::if_production_or;
 use its_peer_fetch::{
 	block_fetch_client::BlockFetcher, untrusted_peer_fetch::UntrustedPeerFetcher,
 };
 use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
+use litentry_macros::if_production_or;
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use regex::Regex;
@@ -243,7 +243,7 @@ pub(crate) fn main() {
 	} else if matches.is_present("signing-key") {
 		setup::generate_signing_key_file(enclave.as_ref());
 		let tee_accountid = enclave_account(enclave.as_ref());
-		println!("Enclave account: {:}", &tee_accountid.to_ss58check());
+		println!("Enclave signing account: {:}", &tee_accountid.to_ss58check());
 	} else if matches.is_present("dump-ra") {
 		info!("*** Perform RA and dump cert to disk");
 		#[cfg(not(feature = "dcap"))]

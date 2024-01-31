@@ -968,12 +968,12 @@ dependencies = [
 
 [[package]]
 name = "cargo_toml"
-version = "0.16.3"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3f9629bc6c4388ea699781dc988c2b99766d7679b151c81990b4fa1208fafd3"
+checksum = "3dc9f7a067415ab5058020f04c60ec7b557084dbec0e021217bbabc7a8d38d14"
 dependencies = [
  "serde 1.0.193",
- "toml 0.8.0",
+ "toml 0.8.2",
 ]
 
 [[package]]
@@ -1305,8 +1305,9 @@ name = "core-primitives"
 version = "0.9.12"
 dependencies = [
  "frame-support",
- "itp-utils",
- "litentry-macros 0.9.12",
+ "litentry-hex-utils",
+ "litentry-macros",
+ "litentry-proc-macros",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
  "ring 0.16.20",
@@ -1316,8 +1317,8 @@ dependencies = [
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
- "strum 0.25.0",
- "strum_macros 0.25.3",
+ "strum 0.26.1",
+ "strum_macros 0.26.1",
 ]
 
 [[package]]
@@ -4524,6 +4525,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -4577,6 +4579,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-stf-task-sender",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -5453,6 +5456,7 @@ name = "itp-utils"
 version = "0.9.0"
 dependencies = [
  "hex 0.4.3",
+ "litentry-hex-utils",
  "parity-scale-codec",
 ]
 
@@ -5534,6 +5538,7 @@ dependencies = [
  "its-test",
  "its-validateer-fetch",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "log 0.4.20",
  "parity-scale-codec",
  "sgx_tstd",
@@ -6139,6 +6144,7 @@ dependencies = [
  "lc-data-providers",
  "lc-mock-server",
  "lc-stf-task-sender",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-parachain-staking",
@@ -6170,6 +6176,7 @@ dependencies = [
  "lc-mock-server",
  "lc-service",
  "lc-stf-task-sender",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -6251,6 +6258,7 @@ dependencies = [
  "itp-stf-primitives",
  "itp-utils",
  "lc-mock-server",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "parity-scale-codec",
@@ -6424,6 +6432,7 @@ dependencies = [
  "lc-stf-task-receiver",
  "lc-stf-task-sender",
  "lc-vc-task-sender",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-identity-management-tee",
@@ -7089,6 +7098,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-credentials",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log 0.4.20",
  "pallet-balances",
@@ -7117,21 +7127,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "litentry-macros"
-version = "0.1.0"
+name = "litentry-hex-utils"
+version = "0.9.12"
 dependencies = [
- "cargo_toml",
- "quote",
+ "hex 0.4.3",
 ]
 
 [[package]]
 name = "litentry-macros"
 version = "0.9.12"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.32",
-]
 
 [[package]]
 name = "litentry-primitives"
@@ -7144,6 +7148,7 @@ dependencies = [
  "hex 0.4.3",
  "itp-sgx-crypto",
  "itp-utils",
+ "litentry-hex-utils",
  "log 0.4.20",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",
@@ -7158,9 +7163,19 @@ dependencies = [
  "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "sp-std 5.0.0",
- "strum 0.25.0",
- "strum_macros 0.25.3",
+ "strum 0.26.1",
+ "strum_macros 0.26.1",
  "teerex-primitives",
+]
+
+[[package]]
+name = "litentry-proc-macros"
+version = "0.9.12"
+dependencies = [
+ "cargo_toml",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.32",
 ]
 
 [[package]]
@@ -7203,6 +7218,8 @@ dependencies = [
  "lc-data-providers",
  "lc-mock-server",
  "lc-stf-task-sender",
+ "litentry-hex-utils",
+ "litentry-macros",
  "litentry-primitives",
  "log 0.4.20",
  "mockall",
@@ -8573,6 +8590,21 @@ checksum = "a1914cd452d8fccd6f9db48147b29fd4ae05bea9dc5d9ad578509f72415de282"
 dependencies = [
  "cfg-if 1.0.0",
  "libm 0.1.4",
+]
+
+[[package]]
+name = "pallet-account-fix"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
+ "sp-runtime",
+ "sp-std 5.0.0",
 ]
 
 [[package]]
@@ -11143,6 +11175,7 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "orml-xtokens",
+ "pallet-account-fix",
  "pallet-asset-manager",
  "pallet-aura",
  "pallet-authorship",
@@ -14159,9 +14192,9 @@ dependencies = [
 
 [[package]]
 name = "strum"
-version = "0.25.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
+checksum = "723b93e8addf9aa965ebe2d11da6d7540fa2283fcea14b3371ff055f7ba13f5f"
 
 [[package]]
 name = "strum_macros"
@@ -14178,9 +14211,9 @@ dependencies = [
 
 [[package]]
 name = "strum_macros"
-version = "0.25.3"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23dc1fa9ac9c169a78ba62f0b841814b7abae11bdd047b9c58f893439e309ea0"
+checksum = "7a3417fc93d76740d974a01654a09777cb500428cc874ca9f45edfe0c4d4cd18"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -14799,14 +14832,14 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.8.0"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c226a7bba6d859b63c92c4b4fe69c5b6b72d0cb897dbc8e6012298e6154cb56e"
+checksum = "185d8ab0dfbb35cf1399a6344d8484209c088f75f8f68230da55d48d95d43e3d"
 dependencies = [
  "serde 1.0.193",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.20.0",
+ "toml_edit 0.20.2",
 ]
 
 [[package]]
@@ -14833,9 +14866,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.20.0"
+version = "0.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ff63e60a958cefbb518ae1fd6566af80d9d4be430a33f3723dfc47d1d411d95"
+checksum = "396e4d48bbb2b7554c944bde63101b5ae446cff6ec4a24227428f15eb72ef338"
 dependencies = [
  "indexmap 2.0.0",
  "serde 1.0.193",

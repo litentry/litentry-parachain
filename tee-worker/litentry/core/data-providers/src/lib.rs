@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -44,7 +44,7 @@ use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 };
-use itp_utils::if_not_production;
+use litentry_macros::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::vec;
@@ -199,7 +199,7 @@ impl Default for DataProviderConfig {
 
 impl DataProviderConfig {
 	pub fn new() -> Self {
-		std::println!("Initializing data providers config");
+		log::debug!("Initializing data providers config");
 
 		// default prod config
 		let mut config = DataProviderConfig {
@@ -211,18 +211,18 @@ impl DataProviderConfig {
 			discord_auth_token: "".to_string(),
 			achainable_url: "https://label-production.graph.tdf-labs.io/".to_string(),
 			achainable_auth_key: "".to_string(),
-			credential_endpoint: "wss://tee-staging.litentry.io".to_string(),
+			credential_endpoint: "wss://rpc.rococo-parachain.litentry.io".to_string(),
 			oneblock_notion_key: "".to_string(),
 			oneblock_notion_url:
 				"https://api.notion.com/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children"
 					.to_string(),
 			sora_quiz_master_id: "1164463721989554218".to_string(),
 			sora_quiz_attendee_id: "1166941149219532800".to_string(),
-			nodereal_api_key: "https://{chain}-{network}.nodereal.io/".to_string(),
+			nodereal_api_key: "".to_string(),
 			nodereal_api_retry_delay: 5000,
 			nodereal_api_retry_times: 2,
 			nodereal_api_url: "https://open-platform.nodereal.io/".to_string(),
-			nodereal_api_chain_network_url: "".to_string(),
+			nodereal_api_chain_network_url: "https://{chain}-mainnet.nodereal.io/".to_string(),
 			contest_legend_discord_role_id: "1172576273063739462".to_string(),
 			contest_popularity_discord_role_id: "1172576681119195208".to_string(),
 			contest_participant_discord_role_id: "1172576734135210104".to_string(),

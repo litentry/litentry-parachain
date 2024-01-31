@@ -15,11 +15,12 @@
 
 */
 
+#[cfg(not(feature = "production"))]
+use crate::initialization::global_components::GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT;
 use crate::{
 	error::Result,
 	initialization::global_components::{
 		GLOBAL_OCALL_API_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT,
-		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT,
 		GLOBAL_SIDECHAIN_IMPORT_QUEUE_WORKER_COMPONENT, GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_STATE_HANDLER_COMPONENT, GLOBAL_TOP_POOL_AUTHOR_COMPONENT,
 	},
@@ -55,7 +56,6 @@ use itp_sgx_externalities::SgxExternalities;
 use itp_stf_state_handler::{handle_state::HandleState, query_shard_state::QueryShardState};
 use itp_time_utils::duration_now;
 use itp_types::{parentchain::ParentchainCall, Block, OpaqueCall, H256};
-use itp_utils::if_not_production;
 use its_primitives::{
 	traits::{
 		Block as SidechainBlockTrait, Header as HeaderTrait, ShardIdentifierFor, SignedBlock,
@@ -69,6 +69,7 @@ use its_sidechain::{
 	validateer_fetch::ValidateerFetch,
 };
 use lc_scheduled_enclave::{ScheduledEnclaveUpdater, GLOBAL_SCHEDULED_ENCLAVE};
+use litentry_macros::if_not_production;
 use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::{crypto::UncheckedFrom, Pair};
@@ -172,6 +173,7 @@ fn execute_top_pool_trusted_calls_internal() -> Result<()> {
 
 	let authority = GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.get()?.retrieve_key()?;
 
+	#[cfg(not(feature = "production"))]
 	let fail_on_demand = GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.get()?;
 
 	match yield_next_slot(

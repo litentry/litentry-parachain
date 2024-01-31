@@ -23,10 +23,11 @@ use std::vec::Vec;
 
 #[cfg(feature = "evm")]
 use crate::evm_helpers::{create_code_hash, evm_create2_address, evm_create_address};
+#[cfg(not(feature = "production"))]
+use crate::helpers::ensure_enclave_signer_or_alice;
 use crate::{
 	helpers::{
-		enclave_signer_account, ensure_enclave_signer_account, ensure_enclave_signer_or_alice,
-		ensure_self, get_storage_by_key_hash,
+		enclave_signer_account, ensure_enclave_signer_account, ensure_self, get_storage_by_key_hash,
 	},
 	trusted_call_result::{
 		ActivateIdentityResult, DeactivateIdentityResult, RequestVCResult,

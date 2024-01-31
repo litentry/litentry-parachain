@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -66,7 +66,7 @@ use litentry_primitives::{
 	AchainableBetweenPercents, AchainableDate, AchainableDateInterval, AchainableDatePercent,
 	AchainableParams, AchainableToken, Assertion, ErrorDetail, ErrorString, Identity,
 	IdentityNetworkTuple, IntoErrorDetail, OneBlockCourseType, ParameterString, VCMPError as Error,
-	Web3Network, ASSERTION_FROM_DATE,
+	Web3Network,
 };
 use log::*;
 use rust_base58::ToBase58;
@@ -177,6 +177,7 @@ fn pubkey_to_address(network: &Web3Network, pubkey: &str) -> String {
 		| Web3Network::Litmus
 		| Web3Network::LitentryRococo
 		| Web3Network::Khala
+		| Web3Network::SubstrateTestnet
 		| Web3Network::Ethereum
 		| Web3Network::Bsc => "".to_string(),
 	}

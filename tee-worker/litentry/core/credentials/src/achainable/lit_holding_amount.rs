@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -22,7 +22,7 @@ use std::vec::Vec;
 // Type / Info
 const LIT_HOLDING_AMOUNT_INFO: (&str, &str) =
 	("Token holding amount", "The amount of a particular token you are holding");
-const LIT_HOLDING_AMOUNT_BREAKDOWN: &str = "lit_holding_amount";
+const LIT_HOLDING_AMOUNT_BREAKDOWN: &str = "$lit_holding_amount";
 const LIT_BALANCE_RANGE: [usize; 10] = [0, 1, 50, 100, 200, 500, 800, 1200, 1600, 3000];
 
 pub struct LitHoldingAmount {

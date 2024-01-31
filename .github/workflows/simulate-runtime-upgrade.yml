@@ -62,7 +62,7 @@ jobs:
           dest: docker-logs
 
       - name: Upload docker logs if test fails
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: ${{ matrix.chain }}-docker-logs

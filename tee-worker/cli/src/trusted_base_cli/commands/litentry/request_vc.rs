@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ use crate::{
 };
 use ita_stf::{trusted_call_result::RequestVCResult, Index, TrustedCall, TrustedCallSigning};
 use itp_stf_primitives::types::KeyPair;
-use itp_utils::hex::decode_hex;
+use litentry_hex_utils::decode_hex;
 use litentry_primitives::{
 	aes_decrypt, AchainableAmount, AchainableAmountHolding, AchainableAmountToken,
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,

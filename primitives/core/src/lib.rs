@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
 
-pub use litentry_macros::*;
+pub use litentry_proc_macros::*;
 
 pub use constants::*;
 pub use opaque::*;

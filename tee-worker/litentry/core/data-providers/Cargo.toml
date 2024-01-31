@@ -34,6 +34,7 @@ thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 url_sgx = { package = "url", git = "https://github.com/mesalock-linux/rust-url-sgx", tag = "sgx_1.1.3", optional = true }
 
 # litentry
+litentry-macros = { path = "../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
@@ -67,4 +68,7 @@ std = [
     "serde_json/std",
     "litentry-primitives/std",
     "chrono",
+]
+production = [
+    "litentry-macros/production",
 ]

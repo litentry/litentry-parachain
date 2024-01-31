@@ -74,6 +74,8 @@ ita-stf = { path = "../app-libs/stf", default-features = false }
 lc-data-providers = { path = "../litentry/core/data-providers" }
 lc-mock-server = { path = "../litentry/core/mock-server" }
 lc-stf-task-sender = { path = "../litentry/core/stf-task/sender", default-features = false }
+litentry-hex-utils = { path = "../../primitives/hex", default-features = false }
+litentry-macros = { path = "../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../litentry/primitives" }
 my-node-runtime = { package = "rococo-parachain-runtime", path = "../../runtime/rococo" }
 sgx-verify = { path = "../../pallets/teerex/sgx-verify", default-features = false }
@@ -84,7 +86,13 @@ default = []
 evm = []
 sidechain = ["itp-settings/sidechain"]
 offchain-worker = ["itp-settings/offchain-worker"]
-production = ["itp-settings/production"]
+production = [
+    "ita-stf/production",
+    "itp-settings/production",
+    "lc-data-providers/production",
+    "litentry-macros/production",
+    "litentry-primitives/production",
+]
 teeracle = ["itp-settings/teeracle"]
 dcap = []
 attesteer = ["dcap"]

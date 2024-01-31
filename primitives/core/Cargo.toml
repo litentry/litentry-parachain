@@ -6,8 +6,8 @@ version = '0.9.12'
 
 [dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-strum = { version = "0.25.0", default-features = false }
-strum_macros = { version = "0.25.3", default-features = false }
+strum = { version = "0.26", default-features = false }
+strum_macros = { version = "0.26", default-features = false }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive", "max-encoded-len"] }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
@@ -19,8 +19,9 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", default-features = false }
 
-itp-utils = { path = "../../tee-worker/core-primitives/utils", default-features = false }
+litentry-hex-utils = { path = "../hex", default-features = false }
 litentry-macros = { path = "macros" }
+litentry-proc-macros = { path = "proc-macros" }
 
 [features]
 default = ["std"]
@@ -35,6 +36,8 @@ std = [
     "sp-std/std",
     "sp-io/std",
     "ring/std",
-    "itp-utils/std",
     "pallet-evm/std",
+]
+production = [
+    "litentry-macros/production",
 ]

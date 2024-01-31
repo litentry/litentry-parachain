@@ -44,6 +44,7 @@ lc-data-providers = { path = "../../data-providers", default-features = false }
 lc-stf-task-receiver = { path = "../../stf-task/receiver", default-features = false }
 lc-stf-task-sender = { path = "../../stf-task/sender", default-features = false }
 lc-vc-task-sender = { path = "../lc-vc-task-sender", default-features = false }
+litentry-macros = { path = "../../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../../primitives", default-features = false }
 pallet-identity-management-tee = { path = "../../../pallets/identity-management", default-features = false }
 
@@ -92,4 +93,9 @@ std = [
     "itp-node-api/std",
     "itp-storage/std",
     "lc-vc-task-sender/std",
+]
+production = [
+    "ita-stf/production",
+    "lc-data-providers/production",
+    "litentry-macros/production",
 ]
