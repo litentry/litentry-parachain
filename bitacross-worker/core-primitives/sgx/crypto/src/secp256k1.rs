@@ -140,7 +140,8 @@ pub mod sgx_tests {
 	#[test]
 	pub fn seal_init_should_create_new_key_if_not_present() {
 		//given
-		let temp_dir = TempDir::with_prefix("seal_init_should_create_new_key_if_not_present").unwrap();
+		let temp_dir =
+			TempDir::with_prefix("seal_init_should_create_new_key_if_not_present").unwrap();
 		let seal = Seal::new(temp_dir.path().to_path_buf(), "test".to_string());
 		assert!(!seal.exists());
 
