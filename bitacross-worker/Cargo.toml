@@ -1,7 +1,6 @@
 [workspace]
 
 members = [
-    "app-libs/oracle",
     "app-libs/parentchain-interface",
     "app-libs/sgx-runtime",
     "app-libs/stf",
@@ -72,7 +71,6 @@ members = [
     "sidechain/state",
     "sidechain/validateer-fetch",
     "litentry/primitives",
-    "litentry/macros",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
@@ -103,10 +101,8 @@ ring = { git = "https://github.com/betrusted-io/ring-xous", branch = "0.16.20-cl
 #pallet-teerex = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #pallet-sidechain = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #sgx-verify = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
-#pallet-teeracle = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #test-utils = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #claims-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #enclave-bridge-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #teerex-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
-#teeracle-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }
 #common-primitives = { git = "https://github.com/integritee-network//pallets", branch = "ab/shard-config-upgradability-2" }

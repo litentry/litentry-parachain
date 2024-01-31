@@ -20,8 +20,9 @@
 // Todo: merge with hex_display
 
 use crate::error::{Error, Result};
-use alloc::{string::String, vec::Vec};
+use alloc::string::String;
 use codec::{Decode, Encode};
+use litentry_hex_utils::{decode_hex, hex_encode};
 
 /// Trait to encode a given value to a hex string, prefixed with "0x".
 pub trait ToHexPrefixed {
@@ -45,56 +46,15 @@ impl<T: Decode> FromHexPrefixed for T {
 	type Output = T;
 
 	fn from_hex(msg: &str) -> Result<Self::Output> {
-		let byte_array = decode_hex(msg)?;
+		let byte_array = decode_hex(msg).map_err(Error::Hex)?;
 		Decode::decode(&mut byte_array.as_slice()).map_err(Error::Codec)
 	}
-}
-
-/// Hex encodes given data and preappends a "0x".
-pub fn hex_encode(data: &[u8]) -> String {
-	let mut hex_str = hex::encode(data);
-	hex_str.insert_str(0, "0x");
-	hex_str
-}
-
-/// Helper method for decoding hex.
-pub fn decode_hex<T: AsRef<[u8]>>(message: T) -> Result<Vec<u8>> {
-	let message = message.as_ref();
-	let message = match message {
-		[b'0', b'x', hex_value @ ..] => hex_value,
-		_ => message,
-	};
-
-	let decoded_message = hex::decode(message).map_err(Error::Hex)?;
-	Ok(decoded_message)
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
 	use alloc::string::ToString;
-
-	#[test]
-	fn hex_encode_decode_works() {
-		let data = "Hello World!".to_string();
-
-		let hex_encoded_data = hex_encode(&data.encode());
-		let decoded_data =
-			String::decode(&mut decode_hex(hex_encoded_data).unwrap().as_slice()).unwrap();
-
-		assert_eq!(data, decoded_data);
-	}
-
-	#[test]
-	fn hex_encode_decode_works_empty_input() {
-		let data = String::new();
-
-		let hex_encoded_data = hex_encode(&data.encode());
-		let decoded_data =
-			String::decode(&mut decode_hex(hex_encoded_data).unwrap().as_slice()).unwrap();
-
-		assert_eq!(data, decoded_data);
-	}
 
 	#[test]
 	fn hex_encode_decode_works_empty_input_for_decode() {

@@ -61,7 +61,6 @@ sp-core-hashing = "6.0.0"
 [features]
 default = []
 evm = ["ita-stf/evm_std", "pallet-evm"]
-teeracle = []
 sidechain = []
 offchain-worker = []
 production = []
