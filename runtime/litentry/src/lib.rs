@@ -996,7 +996,9 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// Identity
 			RuntimeCall::ParachainIdentity(_) |
 			// Balance
-			RuntimeCall::Balances(_)
+			RuntimeCall::Balances(_) |
+			// AccountFix
+			RuntimeCall::AccountFix(_)
 		)
 	}
 }
