@@ -845,7 +845,6 @@ dependencies = [
  "frame-system",
  "hex",
  "ipfs-unixfs",
- "ita-oracle",
  "ita-parentchain-interface",
  "ita-sgx-runtime",
  "ita-stf",
@@ -1678,19 +1677,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "http_req"
-version = "0.8.1"
-source = "git+https://github.com/integritee-network/http_req#3723e88235f2b29bc1a31835853b072ffd0455fd"
-dependencies = [
- "log",
- "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?branch=mesalock_sgx)",
- "sgx_tstd",
- "unicase",
- "webpki",
- "webpki-roots 0.21.0 (git+https://github.com/mesalock-linux/webpki-roots?branch=mesalock_sgx)",
-]
-
-[[package]]
 name = "httparse"
 version = "1.4.1"
 source = "git+https://github.com/integritee-network/httparse-sgx?branch=sgx-experimental#cc97e4b34d2c44a1e3df5bdebef446b9771f5cc3"
@@ -1809,23 +1795,6 @@ dependencies = [
  "multihash",
  "quick-protobuf",
  "sha2 0.9.9",
-]
-
-[[package]]
-name = "ita-oracle"
-version = "0.9.0"
-dependencies = [
- "itc-rest-client",
- "itp-enclave-metrics",
- "itp-ocall-api",
- "lazy_static",
- "log",
- "parity-scale-codec",
- "serde 1.0.193",
- "sgx_tstd",
- "substrate-fixed",
- "thiserror",
- "url",
 ]
 
 [[package]]
@@ -2081,21 +2050,6 @@ dependencies = [
  "litentry-primitives",
  "log",
  "sgx_tstd",
-]
-
-[[package]]
-name = "itc-rest-client"
-version = "0.9.0"
-dependencies = [
- "base64 0.13.1",
- "http",
- "http_req",
- "log",
- "serde 1.0.193",
- "serde_json 1.0.107",
- "sgx_tstd",
- "thiserror",
- "url",
 ]
 
 [[package]]
@@ -5091,15 +5045,6 @@ dependencies = [
  "crunchy",
  "hex",
  "static_assertions",
-]
-
-[[package]]
-name = "unicase"
-version = "2.6.0"
-source = "git+https://github.com/mesalock-linux/unicase-sgx#0b0519348572927118af47af3da4da9ffdca8ec6"
-dependencies = [
- "sgx_tstd",
- "version_check",
 ]
 
 [[package]]

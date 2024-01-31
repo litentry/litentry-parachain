@@ -22,35 +22,3 @@
 pub extern "C" fn test_main_entrance() -> sgx_types::size_t {
 	unreachable!("Tests are not available when compiled in production mode.")
 }
-
-/// Empty Teeracle market data implementation.
-#[cfg(not(feature = "teeracle"))]
-#[no_mangle]
-#[allow(clippy::unreachable)]
-pub unsafe extern "C" fn update_market_data_xt(
-	_crypto_currency_ptr: *const u8,
-	_crypto_currency_size: u32,
-	_fiat_currency_ptr: *const u8,
-	_fiat_currency_size: u32,
-	_unchecked_extrinsic: *mut u8,
-	_unchecked_extrinsic_max_size: u32,
-	_unchecked_extrinsic_size: *mut u32,
-) -> sgx_types::sgx_status_t {
-	unreachable!("Cannot update market data, teeracle feature is not enabled.")
-}
-
-/// Empty Teeracle Weather data implementation.
-#[cfg(not(feature = "teeracle"))]
-#[no_mangle]
-#[allow(clippy::unreachable)]
-pub unsafe extern "C" fn update_weather_data_xt(
-	_weather_info_longitude: *const u8,
-	_weather_info_longitude_size: u32,
-	_weather_info_latitude: *const u8,
-	_weather_info_latitude_size: u32,
-	_unchecked_extrinsic: *mut u8,
-	_unchecked_extrinsic_max_size: u32,
-	_unchecked_extrinsic_size: *mut u32,
-) -> sgx_types::sgx_status_t {
-	unreachable!("Cannot update weather data, teeracle feature is not enabled.")
-}

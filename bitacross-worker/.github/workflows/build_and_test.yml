@@ -43,11 +43,6 @@ jobs:
             host: integritee-builder-sgx
             sgx_mode: HW
             additional_features: dcap
-          - flavor_id: teeracle
-            mode: teeracle
-            host: integritee-builder-sgx
-            sgx_mode: HW
-            additional_features: dcap
           - flavor_id: sidechain-evm
             mode: sidechain
             additional_features: evm,dcap
@@ -135,11 +130,6 @@ jobs:
             host: integritee-builder-sgx
             sgx_mode: HW
             additional_features: dcap
-          - flavor_id: teeracle
-            mode: teeracle
-            host: integritee-builder-sgx
-            sgx_mode: HW
-            additional_features: dcap
           - flavor_id: sidechain-evm
             mode: sidechain
             additional_features: evm,dcap
@@ -211,14 +201,12 @@ jobs:
           cargo clippy --release -- -D warnings,
           cargo clippy --release --features evm -- -D warnings,
           cargo clippy --release --features sidechain -- -D warnings,
-          cargo clippy --release --features teeracle -- -D warnings,
           cargo clippy --release --features offchain-worker -- -D warnings,
 
           # Enclave
           cd enclave-runtime && cargo clippy -- -D warnings,
           cd enclave-runtime && cargo clippy --features evm -- -D warnings,
           cd enclave-runtime && cargo clippy --features sidechain -- -D warnings,
-          cd enclave-runtime && cargo clippy --features teeracle -- -D warnings,
           cd enclave-runtime && cargo clippy --features offchain-worker -- -D warnings,
 
           # Fmt
@@ -261,10 +249,6 @@ jobs:
     env:
       WORKER_IMAGE_TAG: integritee-worker:dev
       CLIENT_IMAGE_TAG: integritee-cli:dev
-      COINMARKETCAP_KEY: ${{ secrets.COINMARKETCAP_KEY }}
-      # IAS_EPID_SPID: ${{ secrets.IAS_SPID }}
-      # IAS_EPID_KEY: ${{ secrets.IAS_PRIMARY_KEY }}
-      TEERACLE_INTERVAL_SECONDS: 10
 
     strategy:
       fail-fast: false
@@ -288,16 +272,6 @@ jobs:
           - test: M6
             flavor_id: offchain-worker
             demo_name: demo-shielding-unshielding-multiworker
-            host: test-runner-sgx
-            sgx_mode: HW
-          - test: Teeracle
-            flavor_id: teeracle
-            demo_name: demo-teeracle
-            host: test-runner-sgx
-            sgx_mode: HW
-          - test: Teeracle
-            flavor_id: teeracle
-            demo_name: demo-teeracle-generic
             host: test-runner-sgx
             sgx_mode: HW
           - test: Benchmark
@@ -440,10 +414,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - flavor_id: teeracle
-            mode: teeracle
-            sgx_mode: HW
-            additional_features: dcap
           - flavor_id: sidechain
             mode: sidechain
             sgx_mode: HW
@@ -540,12 +510,6 @@ jobs:
       - name: Download Worker Image
         uses: actions/download-artifact@v3
         with:
-          name: integritee-worker-teeracle-${{ github.ref_name }}.tar.gz
-          path: .
-
-      - name: Download Worker Image
-        uses: actions/download-artifact@v3
-        with:
           name: integritee-worker-sidechain-${{ github.ref_name }}.tar.gz
           path: .
 
@@ -592,7 +556,6 @@ jobs:
           draft: true
           name: Docker ${{ github.ref_name }}
           files: |
-            integritee-worker-teeracle-${{ github.ref_name }}.tar.gz
             integritee-worker-sidechain-${{ github.ref_name }}.tar.gz
             integritee-client
             integritee-demo-validateer
