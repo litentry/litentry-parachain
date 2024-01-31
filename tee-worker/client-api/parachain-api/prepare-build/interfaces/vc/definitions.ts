@@ -31,14 +31,13 @@ export default {
                 EVMAmountHolding: "EVMTokenType",
                 BRC20AmountHolder: "Null",
                 CyptoSummary: "Null",
+                TokenHoldingAmount: "Web3TokenType",
             },
         },
         AssertionSupportedNetwork: {
             _enum: ["Litentry", "Litmus", "LitentryRococo", "Polkadot", "Kusama", "Khala", "Ethereum", "TestNet"],
         },
         RequestVCResult: {
-            vc_index: "H256",
-            vc_hash: "H256",
             vc_payload: "AesOutput",
         },
         // Achainable
@@ -146,6 +145,33 @@ export default {
         // EVMAmountHolding
         EVMTokenType: {
             _enum: ["Ton", "Trx"],
+        },
+        // Web3TokenType
+        Web3TokenType: {
+            _enum: [
+                "Bnb",
+                "Eth",
+                "SpaceId",
+                "Lit",
+                "Wbtc",
+                "Usdc",
+                "Usdt",
+                "Crv",
+                "Matic",
+                "Dydx",
+                "Amp",
+                "Cvx",
+                "Tusd",
+                "Usdd",
+                "Gusd",
+                "Link",
+                "Grt",
+                "Comp",
+                "People",
+                "Gtc",
+                "Ton",
+                "Trx",
+            ],
         },
     },
 };

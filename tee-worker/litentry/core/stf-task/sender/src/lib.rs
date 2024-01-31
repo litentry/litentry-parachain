@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -93,6 +93,7 @@ pub struct AssertionBuildRequest {
 	pub parachain_block_number: ParentchainBlockNumber,
 	pub sidechain_block_number: SidechainBlockNumber,
 	pub maybe_key: Option<RequestAesKey>,
+	pub should_create_id_graph: bool,
 	pub req_ext_hash: H256,
 }
 

@@ -1,7 +1,4 @@
-export async function handleVcEvents(
-    events: any[],
-    method: 'VCIssued' | 'VCDisabled' | 'VCRevoked' | 'Failed'
-): Promise<any> {
+export async function handleVcEvents(events: any[], method: 'VCIssued' | 'Failed'): Promise<any> {
     const results: any = [];
     for (let k = 0; k < events.length; k++) {
         switch (method) {
@@ -10,12 +7,6 @@ export async function handleVcEvents(
                     identity: events[k].data.identity.toHex(),
                     index: events[k].data.index.toHex(),
                 });
-                break;
-            case 'VCDisabled':
-                results.push(events[k].data.index.toHex());
-                break;
-            case 'VCRevoked':
-                results.push(events[k].data.index.toHex());
                 break;
             case 'Failed':
                 results.push(events[k].data.detail.toHuman());

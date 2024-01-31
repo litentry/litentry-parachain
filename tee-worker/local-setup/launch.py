@@ -156,7 +156,7 @@ def offset_port(offset):
 
 
 def setup_environment(offset, config, parachain_dir):
-    load_dotenv(".env.dev")
+    load_dotenv("./local-setup/.env.dev")
     offset_port(offset)
     check_all_ports_and_reallocate()
     generate_config_local_json(parachain_dir)

@@ -56,7 +56,6 @@ pub fn local_worker_config(
 		"4545".to_string(),
 		crate::config::pwd(),
 		None,
-		Default::default(),
 		false,
 		"19527".to_string(),
 		"0".to_string(),

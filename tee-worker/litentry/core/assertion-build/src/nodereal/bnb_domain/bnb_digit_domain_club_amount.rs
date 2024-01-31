@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -23,11 +23,13 @@ extern crate sgx_tstd as std;
 use super::{BnbDomainInfo, BnbDomainInfoInterface};
 use crate::*;
 use lc_credentials::nodereal::bnb_domain::bnb_digit_domain_club_amount::UpdateDigitDomainClubAmountCredential;
+use lc_data_providers::DataProviderConfig;
 use litentry_primitives::BnbDigitDomainType;
 
 pub fn build(
 	req: &AssertionBuildRequest,
 	digit_domain_type: BnbDigitDomainType,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("building digit_domain credential: {:?}", digit_domain_type);
 
@@ -37,7 +39,11 @@ pub fn build(
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let amount = BnbDomainInfo.get_bnb_digit_domain_club_amount(&addresses, &digit_domain_type)?;
+	let amount = BnbDomainInfo.get_bnb_digit_domain_club_amount(
+		&addresses,
+		&digit_domain_type,
+		data_provider_config,
+	)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut credential_unsigned) => {
 			credential_unsigned.update_digit_domain_club_amount(&digit_domain_type, amount);

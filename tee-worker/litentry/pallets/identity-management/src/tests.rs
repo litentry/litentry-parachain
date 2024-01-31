@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -33,14 +33,14 @@ fn get_eligible_identities_works() {
 	));
 	id_graph.push((alice_twitter_identity(1), IdentityContext::new(2u64, vec![])));
 	let desired_web3networks = vec![Web3Network::Litentry, Web3Network::Polkadot];
-	let mut identities = get_eligible_identities(id_graph.clone(), desired_web3networks.clone());
+	let mut identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks.clone());
 	assert_eq!(identities.len(), 2);
 	assert_eq!(identities[0].1, vec![Web3Network::Litentry]);
 	assert_eq!(identities[1].1, vec![]);
 
 	// `alice_evm_identity` should be filtered out
 	id_graph.push((alice_evm_identity(), IdentityContext::new(1u64, vec![Web3Network::Bsc])));
-	identities = get_eligible_identities(id_graph, desired_web3networks);
+	identities = get_eligible_identities(id_graph.as_ref(), desired_web3networks);
 	assert_eq!(identities.len(), 2);
 	assert_eq!(identities[0].1, vec![Web3Network::Litentry]);
 	assert_eq!(identities[1].1, vec![]);

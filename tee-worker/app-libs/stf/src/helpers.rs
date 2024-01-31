@@ -17,7 +17,6 @@
 use crate::ENCLAVE_ACCOUNT_KEY;
 use codec::{Decode, Encode};
 use frame_support::ensure;
-use hex_literal::hex;
 use itp_stf_primitives::error::{StfError, StfResult};
 use itp_storage::{storage_double_map_key, storage_map_key, storage_value_key, StorageHasher};
 use itp_types::Index;
@@ -25,11 +24,10 @@ use itp_utils::stringify::account_id_to_string;
 use litentry_primitives::{ErrorDetail, Identity, Web3ValidationData};
 use log::*;
 use sp_core::blake2_256;
-use sp_runtime::AccountId32;
 use std::prelude::v1::*;
 
-pub const ALICE_ACCOUNTID32: AccountId32 =
-	AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
+#[cfg(not(feature = "production"))]
+pub use non_prod::*;
 
 pub fn get_storage_value<V: Decode>(
 	storage_prefix: &'static str,
@@ -113,10 +111,7 @@ pub fn set_block_number(block_number: u32) {
 	sp_io::storage::set(&storage_value_key("System", "Number"), &block_number.encode());
 }
 
-pub fn ensure_self<AccountId: Encode + Decode + PartialEq>(
-	signer: &AccountId,
-	who: &AccountId,
-) -> bool {
+pub fn ensure_self<AccountId: PartialEq>(signer: &AccountId, who: &AccountId) -> bool {
 	signer == who
 }
 
@@ -129,16 +124,6 @@ pub fn ensure_enclave_signer_or_self<AccountId: Encode + Decode + PartialEq>(
 			signer == &enclave_signer_account::<AccountId>() || ensure_self(signer, who),
 		None => false,
 	}
-}
-
-#[cfg(not(feature = "production"))]
-pub fn ensure_alice(signer: &AccountId32) -> bool {
-	signer == &ALICE_ACCOUNTID32
-}
-
-#[cfg(not(feature = "production"))]
-pub fn ensure_enclave_signer_or_alice(signer: &AccountId32) -> bool {
-	signer == &enclave_signer_account::<AccountId32>() || ensure_alice(signer)
 }
 
 // verification message format:
@@ -175,4 +160,22 @@ pub fn verify_web3_identity(
 	);
 
 	Ok(())
+}
+
+#[cfg(not(feature = "production"))]
+mod non_prod {
+	use super::*;
+	use hex_literal::hex;
+	use sp_runtime::AccountId32;
+
+	pub const ALICE_ACCOUNTID32: AccountId32 =
+		AccountId32::new(hex!["d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d"]);
+
+	pub fn ensure_alice(signer: &AccountId32) -> bool {
+		signer == &ALICE_ACCOUNTID32
+	}
+
+	pub fn ensure_enclave_signer_or_alice(signer: &AccountId32) -> bool {
+		signer == &enclave_signer_account::<AccountId32>() || ensure_alice(signer)
+	}
 }

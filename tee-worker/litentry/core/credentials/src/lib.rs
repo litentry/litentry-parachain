@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -279,13 +279,6 @@ impl Credential {
 		let json_str =
 			serde_json::to_string(&self).map_err(|err| Error::ParseError(format!("{}", err)))?;
 		Ok(json_str)
-	}
-
-	pub fn get_index(&self) -> Result<[u8; 32], Error> {
-		let bytes = &self.id.as_bytes()[b"0x".len()..];
-		let index = hex::decode(bytes).map_err(|err| Error::ParseError(format!("{}", err)))?;
-		let vi: [u8; 32] = index.try_into().unwrap();
-		Ok(vi)
 	}
 
 	pub fn validate_unsigned(&self) -> Result<(), Error> {

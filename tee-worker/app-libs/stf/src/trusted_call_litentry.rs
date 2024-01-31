@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -36,11 +36,12 @@ use itp_node_api::metadata::NodeMetadataTrait;
 use itp_node_api_metadata::pallet_imp::IMPCallIndexes;
 use itp_node_api_metadata_provider::AccessNodeMetadata;
 use itp_types::parentchain::ParentchainCall;
-use itp_utils::{if_production_or, stringify::account_id_to_string};
+use itp_utils::stringify::account_id_to_string;
 use lc_stf_task_sender::{
 	stf_task_sender::{SendStfRequest, StfRequestSender},
 	AssertionBuildRequest, RequestType, Web2IdentityVerificationRequest,
 };
+use litentry_macros::if_production_or;
 use litentry_primitives::{
 	Assertion, ErrorDetail, Identity, RequestAesKey, ValidationData, Web3Network,
 };
@@ -170,15 +171,24 @@ impl TrustedCallSigned {
 		}
 
 		let mut id_graph = IMT::id_graph(&who);
+		let mut should_create_id_graph = false;
 		if id_graph.is_empty() {
+			// create a "virtual" IDGraph now for VC building, the "real" IDGraph will be created
+			// in `request_vc_callback` when a VC is guaranteed to be issued
+			//
+			// we don't mutate the IDGraph here as the transaction is **not** atomic: imagine the VC
+			// building fails (e.g. due to data provider error), the client won't expect the IDGraph
+			// to be updated, they can't get the latest IDGraph hash either
+			//
 			// we are safe to use `default_web3networks` and `Active` as IDGraph would be non-empty otherwise
 			id_graph.push((
 				who.clone(),
 				IdentityContext::new(BlockNumber::one(), who.default_web3networks()),
 			));
+			should_create_id_graph = true;
 		}
 		let assertion_networks = assertion.get_supported_web3networks();
-		let identities = get_eligible_identities(id_graph, assertion_networks);
+		let identities = get_eligible_identities(id_graph.as_ref(), assertion_networks);
 
 		ensure!(
 			!identities.is_empty(),
@@ -198,6 +208,7 @@ impl TrustedCallSigned {
 			parachain_block_number,
 			sidechain_block_number,
 			maybe_key,
+			should_create_id_graph,
 			req_ext_hash,
 		}
 		.into();
@@ -235,10 +246,21 @@ impl TrustedCallSigned {
 		Ok(())
 	}
 
-	pub fn request_vc_callback_internal(signer: AccountId, assertion: Assertion) -> StfResult<()> {
+	pub fn request_vc_callback_internal(
+		signer: AccountId,
+		who: Identity,
+		assertion: Assertion,
+		should_create_id_graph: bool,
+	) -> StfResult<()> {
 		// important! The signer has to be enclave_signer_account, as this TrustedCall can only be constructed internally
-		ensure_enclave_signer_account(&signer)
-			.map_err(|_| StfError::RequestVCFailed(assertion, ErrorDetail::UnauthorizedSigner))?;
+		ensure_enclave_signer_account(&signer).map_err(|_| {
+			StfError::RequestVCFailed(assertion.clone(), ErrorDetail::UnauthorizedSigner)
+		})?;
+
+		if should_create_id_graph {
+			IMT::maybe_create_id_graph(&who)
+				.map_err(|e| StfError::RequestVCFailed(assertion, e.into()))?;
+		}
 
 		Ok(())
 	}

@@ -99,7 +99,7 @@ async function deployBridgeContracts(wallet: Wallet) {
     console.log('GenericHandler: ', genericHandler.address);
     console.log('ERC20:          ', erc20.address);
 
-    await sleep(1);
+    await sleep(10);
     return { bridge, erc20Handler, erc721Handler, genericHandler, erc20 };
 }
 

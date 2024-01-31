@@ -1,0 +1,28 @@
+{
+  "workers": [
+    {
+      "id": "dev",
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "-P",
+        "$TrustedWorkerPort",
+        "-w",
+        "$UntrustedWorkerPort",
+        "-r",
+        "$MuRaPort",
+        "-h",
+        "$UntrustedHttpPort",
+        "-p",
+        "$CollatorWSPort",
+        "--parentchain-start-block",
+        "0",
+        "--enable-metrics"
+      ],
+      "subcommand_flags": [
+        "--skip-ra",
+        "--dev"
+      ]
+    }
+  ]
+}

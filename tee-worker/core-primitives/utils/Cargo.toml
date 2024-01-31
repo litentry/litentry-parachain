@@ -10,6 +10,7 @@ edition = "2021"
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+litentry-hex-utils = { path = "../../../primitives/hex", default-features = false }
 
 [features]
 default = ["std"]

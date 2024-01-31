@@ -1,0 +1,32 @@
+services:
+  demo-sidechain:
+    image: litentry/bitacross-cli:latest
+    devices:
+      - "${SGX_PROVISION:-/dev/null}:/dev/sgx/provision"
+      - "${SGX_ENCLAVE:-/dev/null}:/dev/sgx/enclave"
+    volumes:
+      - "${AESMD:-/dev/null}:/var/run/aesmd"
+      - "${SGX_QCNL:-/dev/null}:/etc/sgx_default_qcnl.conf"
+
+    build:
+      context: ${PWD}/..
+      dockerfile: build.Dockerfile
+      target: deployed-client
+    depends_on:
+      litentry-node:
+        condition: service_healthy
+      bitacross-worker-1:
+        condition: service_healthy
+      bitacross-worker-2:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=warn,ws=warn,sp_io=warn,substrate_api_client=warn,jsonrpsee_ws_client=warn,jsonrpsee_ws_server=warn,enclave_runtime=warn,integritee_service=info,integritee_service::sidechain=debug,ita_stf=warn
+    networks:
+      - litentry-test-network
+    entrypoint:
+      "/usr/local/worker-cli/demo_sidechain.sh -p 9912 -A 2011 -B 2012 -u ws://litentry-node
+      -V wss://bitacross-worker-1 -W wss://bitacross-worker-2 -C /usr/local/bin/bitacross-cli 2>&1"
+    restart: "no"
+networks:
+  litentry-test-network:
+    driver: bridge

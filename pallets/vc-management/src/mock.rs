@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -181,8 +181,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		let _ = VCManagement::set_admin(RuntimeOrigin::root(), alice);
+		let _ = VCManagement::set_admin(RuntimeOrigin::root(), alice.clone());
 		let _ = VCManagement::add_delegatee(RuntimeOrigin::root(), eddie);
+		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), alice.clone()));
+		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
+			RuntimeOrigin::signed(alice.clone()),
+			true
+		));
 
 		use test_utils::ias::consts::{TEST8_CERT, TEST8_SIGNER_PUB, TEST8_TIMESTAMP, URL};
 		Timestamp::set_timestamp(TEST8_TIMESTAMP);

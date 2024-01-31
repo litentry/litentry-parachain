@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -44,15 +44,10 @@ use itc_rest_client::{
 	http_client::{DefaultSend, HttpClient},
 	rest_client::RestClient,
 };
-use lazy_static::lazy_static;
+use litentry_macros::if_not_production;
 use log::debug;
 use serde::{Deserialize, Serialize};
 use std::vec;
-
-#[cfg(feature = "std")]
-use std::sync::RwLock;
-#[cfg(feature = "sgx")]
-use std::sync::SgxRwLock as RwLock;
 
 use itc_rest_client::http_client::SendWithCertificateVerification;
 use litentry_primitives::{
@@ -60,7 +55,7 @@ use litentry_primitives::{
 	VCMPError,
 };
 use std::{
-	format,
+	env, format,
 	string::{String, ToString},
 	vec::Vec,
 };
@@ -168,7 +163,7 @@ impl TokenFromString for ETokenAddress {
 	}
 }
 
-#[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Serialize, Deserialize, Debug)]
 pub struct DataProviderConfig {
 	pub twitter_official_url: String,
 	pub twitter_litentry_url: String,
@@ -204,32 +199,115 @@ impl Default for DataProviderConfig {
 
 impl DataProviderConfig {
 	pub fn new() -> Self {
-		DataProviderConfig {
+		log::debug!("Initializing data providers config");
+
+		// default prod config
+		let mut config = DataProviderConfig {
 			twitter_official_url: "https://api.twitter.com".to_string(),
-			twitter_litentry_url: "".to_string(),
-			twitter_auth_token_v2: "Bearer ".to_string(),
+			twitter_litentry_url: "http://127.0.0.1:9527”".to_string(),
+			twitter_auth_token_v2: "".to_string(),
 			discord_official_url: "https://discordapp.com".to_string(),
-			discord_litentry_url: "".to_string(),
+			discord_litentry_url: "http://127.0.0.1:9527”".to_string(),
 			discord_auth_token: "".to_string(),
-			achainable_url: "https://graph.tdf-labs.io/".to_string(),
+			achainable_url: "https://label-production.graph.tdf-labs.io/".to_string(),
 			achainable_auth_key: "".to_string(),
-			credential_endpoint: "".to_string(),
+			credential_endpoint: "wss://rpc.rococo-parachain.litentry.io".to_string(),
 			oneblock_notion_key: "".to_string(),
-			oneblock_notion_url: "".to_string(),
-			sora_quiz_master_id: "".to_string(),
-			sora_quiz_attendee_id: "".to_string(),
+			oneblock_notion_url:
+				"https://api.notion.com/v1/blocks/e4068e6a326243468f35dcdc0c43f686/children"
+					.to_string(),
+			sora_quiz_master_id: "1164463721989554218".to_string(),
+			sora_quiz_attendee_id: "1166941149219532800".to_string(),
 			nodereal_api_key: "".to_string(),
 			nodereal_api_retry_delay: 5000,
 			nodereal_api_retry_times: 2,
-			nodereal_api_url: "".to_string(),
-			nodereal_api_chain_network_url: "".to_string(),
-			contest_legend_discord_role_id: "".to_string(),
-			contest_popularity_discord_role_id: "".to_string(),
-			contest_participant_discord_role_id: "".to_string(),
-			vip3_url: "".to_string(),
-			geniidata_url: "".to_string(),
+			nodereal_api_url: "https://open-platform.nodereal.io/".to_string(),
+			nodereal_api_chain_network_url: "https://{chain}-mainnet.nodereal.io/".to_string(),
+			contest_legend_discord_role_id: "1172576273063739462".to_string(),
+			contest_popularity_discord_role_id: "1172576681119195208".to_string(),
+			contest_participant_discord_role_id: "1172576734135210104".to_string(),
+			vip3_url: "https://dappapi.vip3.io/".to_string(),
+			geniidata_url: "https://api.geniidata.com/api/1/brc20/balance?".to_string(),
 			geniidata_api_key: "".to_string(),
+		};
+
+		// we allow to override following config properties for non prod dev
+		if_not_production!({
+			if let Ok(v) = env::var("TWITTER_OFFICIAL_URL") {
+				config.set_twitter_official_url(v);
+			}
+			if let Ok(v) = env::var("TWITTER_LITENTRY_URL") {
+				config.set_twitter_litentry_url(v);
+			}
+			if let Ok(v) = env::var("DISCORD_OFFICIAL_URL") {
+				config.set_discord_official_url(v);
+			}
+			if let Ok(v) = env::var("DISCORD_LITENTRY_URL") {
+				config.set_discord_litentry_url(v);
+			}
+			if let Ok(v) = env::var("ACHAINABLE_URL") {
+				config.set_achainable_url(v);
+			}
+			if let Ok(v) = env::var("CREDENTIAL_ENDPOINT") {
+				config.set_credential_endpoint(v);
+			}
+			if let Ok(v) = env::var("ONEBLOCK_NOTION_URL") {
+				config.set_oneblock_notion_url(v);
+			}
+			if let Ok(v) = env::var("SORA_QUIZ_MASTER_ID") {
+				config.set_sora_quiz_master_id(v);
+			}
+			if let Ok(v) = env::var("SORA_QUIZ_ATTENDEE_ID") {
+				config.set_sora_quiz_attendee_id(v);
+			}
+			if let Ok(v) = env::var("NODEREAL_API_URL") {
+				config.set_nodereal_api_url(v);
+			}
+			if let Ok(v) = env::var("NODEREAL_API_RETRY_DELAY") {
+				config.set_nodereal_api_retry_delay(v.parse::<u64>().unwrap());
+			}
+			if let Ok(v) = env::var("NODEREAL_API_RETRY_TIME") {
+				config.set_nodereal_api_retry_times(v.parse::<u16>().unwrap());
+			}
+			if let Ok(v) = env::var("NODEREAL_API_CHAIN_NETWORK_URL") {
+				config.set_nodereal_api_chain_network_url(v);
+			}
+			if let Ok(v) = env::var("CONTEST_LEGEND_DISCORD_ROLE_ID") {
+				config.set_contest_legend_discord_role_id(v);
+			}
+			if let Ok(v) = env::var("CONTEST_POPULARITY_DISCORD_ROLE_ID") {
+				config.set_contest_popularity_discord_role_id(v);
+			}
+			if let Ok(v) = env::var("CONTEST_PARTICIPANT_DISCORD_ROLE_ID") {
+				config.set_contest_participant_discord_role_id(v);
+			}
+			if let Ok(v) = env::var("VIP3_URL") {
+				config.set_vip3_url(v);
+			}
+			if let Ok(v) = env::var("GENIIDATA_URL") {
+				config.set_geniidata_url(v);
+			}
+		});
+		// set secrets from env variables
+		if let Ok(v) = env::var("TWITTER_AUTH_TOKEN_V2") {
+			config.set_twitter_auth_token_v2(v);
 		}
+		if let Ok(v) = env::var("DISCORD_AUTH_TOKEN") {
+			config.set_discord_auth_token(v);
+		}
+		if let Ok(v) = env::var("ACHAINABLE_AUTH_KEY") {
+			config.set_achainable_auth_key(v);
+		}
+		if let Ok(v) = env::var("ONEBLOCK_NOTION_KEY") {
+			config.set_oneblock_notion_key(v);
+		}
+		if let Ok(v) = env::var("NODEREAL_API_KEY") {
+			config.set_nodereal_api_key(v);
+		}
+		if let Ok(v) = env::var("GENIIDATA_API_KEY") {
+			config.set_geniidata_api_key(v);
+		}
+		config
 	}
 	pub fn set_twitter_official_url(&mut self, v: String) {
 		debug!("set_twitter_official_url: {:?}", v);
@@ -329,27 +407,6 @@ impl DataProviderConfig {
 	}
 }
 
-lazy_static! {
-	pub static ref GLOBAL_DATA_PROVIDER_CONFIG: RwLock<DataProviderConfig> =
-		RwLock::new(DataProviderConfig::new());
-}
-
-pub struct DataProviderConfigReader;
-pub trait ReadDataProviderConfig {
-	fn read() -> Result<DataProviderConfig, ErrorDetail>;
-}
-
-impl ReadDataProviderConfig for DataProviderConfigReader {
-	fn read() -> Result<DataProviderConfig, ErrorDetail> {
-		match GLOBAL_DATA_PROVIDER_CONFIG.read() {
-			Ok(c) => Ok(c.clone()),
-			Err(e) => Err(ErrorDetail::DataProviderError(ErrorString::truncate_from(
-				format!("{e:?}").as_bytes().to_vec(),
-			))),
-		}
-	}
-}
-
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
 	#[error("Request error: {0}")]
@@ -424,28 +481,56 @@ impl ConvertParameterString for AchainableParams {
 	}
 }
 
-pub fn hex_to_decimal(hex_string: &str) -> f64 {
-	let parts: Vec<&str> = hex_string.split('.').collect();
-
-	let integer_part = u64::from_str_radix(parts[0], 16).unwrap_or_default();
-
-	if parts.len() > 1 {
-		let decimal_part = u64::from_str_radix(parts[1], 16).unwrap();
-		let decimal_str = format!("{}.{}", integer_part, decimal_part);
-		decimal_str.parse::<f64>().unwrap_or_default()
-	} else {
-		integer_part as f64
+pub fn convert_balance_hex_to_u128(result: serde_json::Value) -> Result<u128, Error> {
+	match result.as_str() {
+		Some(result) => match u128::from_str_radix(&result[2..], 16) {
+			Ok(balance) => Ok(balance),
+			Err(_) => Err(Error::RequestError(format!("Cannot parse result {:?} to u128", result))),
+		},
+		None => Err(Error::RequestError(format!("Cannot tansform result {:?} to &str", result))),
 	}
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::hex_to_decimal;
+	use super::*;
 
 	#[test]
-	fn hex_to_decimal_works() {
-		let hex_string = "0000000000000000000000000000000000000000000000000000000babf2cf8b";
-		let d = hex_to_decimal(hex_string);
-		assert_eq!(d, 50129457035.0);
+	fn should_return_correct_value_when_param_is_valid() {
+		assert_eq!(
+			convert_balance_hex_to_u128(serde_json::Value::String("0x0".into())).unwrap(),
+			0_u128
+		);
+
+		assert_eq!(
+			convert_balance_hex_to_u128(serde_json::Value::String("0x320".into())).unwrap(),
+			800_u128
+		);
+
+		assert_eq!(
+			convert_balance_hex_to_u128(serde_json::Value::String("0x2b5e3af16b1880000".into()))
+				.unwrap(),
+			50_000_000_000_000_000_000_u128
+		);
+	}
+
+	#[test]
+	fn shoud_return_error_when_param_is_not_a_str() {
+		match convert_balance_hex_to_u128(serde_json::Value::Bool(true)) {
+			Ok(_) => panic!("Expected an error, but got Ok"),
+			Err(err) => assert_eq!(
+				err.to_string(),
+				"Request error: Cannot tansform result Bool(true) to &str"
+			),
+		}
+	}
+
+	#[test]
+	fn shoud_return_error_when_param_is_not_a_hex_str() {
+		match convert_balance_hex_to_u128(serde_json::Value::String("qwexyz".into())) {
+			Ok(_) => panic!("Expected an error, but got Ok"),
+			Err(err) =>
+				assert_eq!(err.to_string(), "Request error: Cannot parse result \"qwexyz\" to u128"),
+		}
 	}
 }

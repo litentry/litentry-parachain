@@ -1,0 +1,19 @@
+[package]
+authors = ['Trust Computing GmbH <info@litentry.com>']
+description = 'Litentry hex utils'
+name = "litentry-hex-utils"
+version = "0.9.12"
+edition = "2021"
+
+[dependencies]
+hex = { version = "0.4.3", default-features = false, features = ["alloc"] }
+
+[dev-dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+
+
+[features]
+default = ["std"]
+std = [
+    "hex/std",
+]

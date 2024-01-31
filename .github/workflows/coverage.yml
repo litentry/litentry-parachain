@@ -21,7 +21,7 @@ jobs:
 
       # Checks to see if any files in the PR/commit match one of the listed file types.
       # We can use this filter to decide whether or not to build docker images
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: .github/file-filter.yml
@@ -63,4 +63,3 @@ jobs:
         with:
           fail_ci_if_error: false
           verbose: true
-

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -19,9 +19,14 @@ use crate::{
 	*,
 };
 use lc_credentials::vip3::UpdateVIP3MembershipCardCredential;
+use lc_data_providers::DataProviderConfig;
 use litentry_primitives::VIP3MembershipCardLevel;
 
-pub fn build(req: &AssertionBuildRequest, level: VIP3MembershipCardLevel) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	level: VIP3MembershipCardLevel,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("Building VIP3 membership card level: {:?}", level);
 
 	let identities = transpose_identity(&req.identities);
@@ -30,7 +35,7 @@ pub fn build(req: &AssertionBuildRequest, level: VIP3MembershipCardLevel) -> Res
 		.flat_map(|(_, addresses)| addresses)
 		.collect::<Vec<String>>();
 
-	let mut sbt = VIP3SBTInfo::new()
+	let mut sbt = VIP3SBTInfo::new(data_provider_config)
 		.map_err(|e| Error::RequestVCFailed(Assertion::VIP3MembershipCard(level.clone()), e))?;
 	let value = sbt
 		.has_card_level(addresses, &level)

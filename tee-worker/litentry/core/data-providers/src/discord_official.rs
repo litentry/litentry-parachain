@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -118,25 +118,25 @@ impl DiscordOfficialClient {
 
 #[cfg(test)]
 mod tests {
-	use crate::{DataProviderConfigReader, ReadDataProviderConfig, GLOBAL_DATA_PROVIDER_CONFIG};
 
 	use super::*;
 	use lc_mock_server::run;
 
-	fn init() {
+	fn init() -> DataProviderConfig {
 		let _ = env_logger::builder().is_test(true).try_init();
 		let url = run(0).unwrap();
-		GLOBAL_DATA_PROVIDER_CONFIG.write().unwrap().set_discord_official_url(url);
+		let mut data_provider_config = DataProviderConfig::new();
+		data_provider_config.set_discord_official_url(url);
+		data_provider_config
 	}
 
 	#[test]
 	fn query_message_work() {
-		init();
+		let data_provider_config = init();
 
 		let channel_id = "919848392035794945";
 		let message_id = "1";
 
-		let data_provider_config = DataProviderConfigReader::read().unwrap();
 		let mut client = DiscordOfficialClient::new(&data_provider_config);
 		let result =
 			client.query_message(channel_id.as_bytes().to_vec(), message_id.as_bytes().to_vec());
