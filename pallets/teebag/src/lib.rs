@@ -15,32 +15,27 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::too_many_arguments)]
 
 use codec::Decode;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResult, DispatchResultWithPostInfo},
 	ensure,
 	pallet_prelude::*,
-	traits::{Get, OnTimestampSet},
+	traits::Get,
 };
 use frame_system::pallet_prelude::*;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_core::H256;
-use sp_runtime::traits::SaturatedConversion;
+use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
-
-#[cfg(not(feature = "skip-ias-check"))]
-use sp_runtime::traits::CheckedSub;
 
 mod sgx_verify;
 use sgx_verify::{
 	deserialize_enclave_identity, deserialize_tcb_info, extract_certs, verify_certificate_chain,
+	verify_dcap_quote, verify_ias_report, SgxReport,
 };
-
-#[cfg(not(feature = "skip-ias-check"))]
-use sgx_verify::{verify_dcap_quote, verify_ias_report, SgxReport};
-
-// Disambiguate associated types
-pub type AccountId<T> = <T as frame_system::Config>::AccountId;
 
 pub use pallet::*;
 
@@ -56,10 +51,24 @@ pub use tcb::*;
 const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_DCAP_QUOTE_LEN: usize = 5000;
 const MAX_URL_LEN: usize = 256;
-/// Maximum number of topics for the `publish_hash` call.
-const TOPICS_LIMIT: usize = 5;
-/// Maximum number of bytes for the `data` in the `publish_hash` call.
-const DATA_LENGTH_LIMIT: usize = 100;
+
+/// Different modes that control enclave registration and running:
+/// - `Production`: default value. It perfroms all checks for enclave registration and runtime
+/// - `Development`: the most lenient, no check is performed during registration or runtime
+/// - `Maintenance`: a placeholder value for now - maybe to stall sidechain block production
+///
+/// `Attestation::Ignore` is only possible under `OperationalMode::Development`
+#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum OperationalMode {
+	#[default]
+	#[codec(index = 0)]
+	Production,
+	#[codec(index = 1)]
+	Development,
+	#[codec(index = 2)]
+	Maintenance,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -76,7 +85,6 @@ pub mod pallet {
 	pub trait Config: frame_system::Config + timestamp::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type MomentsPerDay: Get<Self::Moment>;
-		type MaxSilenceTime: Get<Self::Moment>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
@@ -84,55 +92,84 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AdminChanged {
-			old_admin: Option<T::AccountId>,
+		ModeSet {
+			new_mode: OperationalMode,
 		},
-		AddedEnclave(T::AccountId, Vec<u8>),
-		RemovedEnclave(T::AccountId),
-		Forwarded(ShardIdentifier),
-		ProcessedParentchainBlock(T::AccountId, H256, H256, T::BlockNumber),
-		SetHeartbeatTimeout(u64),
-		UpdatedScheduledEnclave(SidechainBlockNumber, MrEnclave),
-		RemovedScheduledEnclave(SidechainBlockNumber),
-		NewMrenclaveSet {
-			new_mrenclave: MrEnclave,
+		AdminSet {
+			new_admin: Option<T::AccountId>,
 		},
-		RegisteredEnclaveLimitSet(u64),
-		/// Flag used only in dev to skip scheduled check
-		SkipScheduledEnclaveCheck(bool),
+		MaxEnclaveCountSet {
+			worker_type: WorkerType,
+			new_count: u64,
+		},
+		EnclaveAdded {
+			who: T::AccountId,
+			worker_type: WorkerType,
+			url: Vec<u8>,
+		},
+		EnclaveRemoved {
+			who: T::AccountId,
+		},
+		OpaqueTaskPosted {
+			shard: ShardIdentifier,
+		},
+		ParentchainBlockProcessed {
+			who: T::AccountId,
+			block_number: T::BlockNumber,
+			block_hash: H256,
+			task_merkle_root: H256,
+		},
+		ScheduledEnclaveSet {
+			worker_type: WorkerType,
+			sidechain_block_number: SidechainBlockNumber,
+			mrenclave: MrEnclave,
+		},
+		ScheduledEnclaveRemoved {
+			worker_type: WorkerType,
+			sidechain_block_number: SidechainBlockNumber,
+		},
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn admin)]
 	pub type Admin<T: Config> = StorageValue<_, T::AccountId, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn mode)]
+	pub type Mode<T: Config> = StorageValue<_, OperationalMode, ValueQuery>;
+
 	#[pallet::type_value]
-	pub fn DefaultRegisteredEnclaveLimit() -> u64 {
+	pub fn DefaultMaxEnclaveCount() -> u64 {
 		3
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn registered_enclave_limit)]
-	pub type RegisteredEnclaveLimit<T: Config> =
-		StorageValue<_, u64, ValueQuery, DefaultRegisteredEnclaveLimit>;
-
-	// Watch out: we start indexing with 1 instead of zero in order to
-	// avoid ambiguity between Null and 0.
-	#[pallet::storage]
-	#[pallet::getter(fn enclave)]
-	pub type EnclaveRegistry<T: Config> =
-		StorageMap<_, Blake2_128Concat, u64, Enclave<T::AccountId, Vec<u8>>, OptionQuery>;
+	#[pallet::getter(fn max_enclave_count)]
+	pub type MaxEnclaveCount<T: Config> =
+		StorageMap<_, Blake2_128Concat, WorkerType, u64, ValueQuery, DefaultMaxEnclaveCount>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn enclave_count)]
-	pub type EnclaveCount<T: Config> = StorageValue<_, u64, ValueQuery>;
+	pub type EnclaveCount<T: Config> = StorageMap<_, Blake2_128Concat, WorkerType, u64, ValueQuery>;
+
+	// registry that holds all registered enclaves, using T::AccountId as the key
+	// having `worker_type` and `mrenclave` in each `Enclave` instance might seem a bit redundant,
+	// but it increases flexibility where we **could** allow the same type of worker to have
+	// different mrenclaves - e.g. when more than one version of an enclave is permitted in TEE-node
+	// cluster.
+	//
+	// It simplifies the lookup a bit too, otherwise we might need several storages.
+	#[pallet::storage]
+	#[pallet::getter(fn enclave_registry)]
+	pub type EnclaveRegistry<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, Enclave, OptionQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn is_skip_scheduled_enclave)]
-	pub type SkipScheduledEnclaveCheck<T: Config> = StorageValue<_, bool, ValueQuery>;
+	#[pallet::getter(fn allow_sgx_debug_mode)]
+	pub type AllowSGXDebugMode<T: Config> = StorageValue<_, bool, ValueQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn quoting_enclave)]
+	#[pallet::getter(fn quoting_enclave_registry)]
 	pub type QuotingEnclaveRegistry<T: Config> = StorageValue<_, QuotingEnclave, ValueQuery>;
 
 	#[pallet::storage]
@@ -140,57 +177,35 @@ pub mod pallet {
 	pub type TcbInfo<T: Config> =
 		StorageMap<_, Blake2_128Concat, Fmspc, TcbInfoOnChain, ValueQuery>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn enclave_index)]
-	pub type EnclaveIndex<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, u64, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn confirmed_calls)]
-	pub type ExecutedCalls<T: Config> = StorageMap<_, Blake2_128Concat, H256, u64, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn allow_sgx_debug_mode)]
-	pub type AllowSGXDebugMode<T: Config> = StorageValue<_, bool, ValueQuery>;
-
-	#[pallet::type_value]
-	pub fn HeartbeatTimeoutDefault<T: Config>() -> T::Moment {
-		T::Moment::saturated_from::<u64>(172_800_000) // default 48h
-	}
-
 	// keep track of a list of scheduled/allowed enchalves, mainly used for enclave updates,
 	// can only be modified by AdminOrigin
-	// sidechain_block_number -> expected MrEnclave
+	// (worker_type, sidechain_block_number) -> expected MrEnclave
 	//
 	// about the first time enclave registration:
-	// prior to `register_enclave` this map needs to be populated with (0, expected-mrenclave),
-	// otherwise the registration will fail
+	// prior to `register_enclave` this map needs to be populated with ((worker_type, 0),
+	// expected-mrenclave), otherwise the registration will fail
 	//
-	// Theorectically we could always push the enclave in `register_enclave`, but the problem is
-	// anyone could try to register it as long as the enclave is remotely attested:
-	// see https://github.com/litentry/litentry-parachain/issues/1163
-	// so we need an "enclave whitelist" anyway
+	// the workertype.is_sidechain() must be true.
+	//
+	// Theorectically we could always push the enclave in `register_enclave`, but we want to
+	// limit the mrenclave that can be registered, as the parachain is supposed to process enclaves
+	// with specific mrenclaves.
 	#[pallet::storage]
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> =
-		StorageMap<_, Blake2_128Concat, SidechainBlockNumber, MrEnclave>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn heartbeat_timeout)]
-	pub type HeartbeatTimeout<T: Config> =
-		StorageValue<_, T::Moment, ValueQuery, HeartbeatTimeoutDefault<T>>;
+		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub allow_sgx_debug_mode: bool,
 		pub admin: Option<T::AccountId>,
-		pub skip_scheduled_enclave_check: bool,
+		pub mode: OperationalMode,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { allow_sgx_debug_mode: false, admin: None, skip_scheduled_enclave_check: false }
+			Self { allow_sgx_debug_mode: false, admin: None, mode: OperationalMode::Production }
 		}
 	}
 
@@ -198,7 +213,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			AllowSGXDebugMode::<T>::put(self.allow_sgx_debug_mode);
-			SkipScheduledEnclaveCheck::<T>::put(self.skip_scheduled_enclave_check);
+			Mode::<T>::put(self.mode);
 			if let Some(ref admin) = self.admin {
 				Admin::<T>::put(admin);
 			}
@@ -208,239 +223,246 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		// Needed for the conversion of `mr_enclave` to a `Hash`.
+		// Needed for the conversion of `mrenclave` to a `Hash`.
 		// The condition holds for all known chains.
 		<T as frame_system::Config>::Hash: From<[u8; 32]>,
 	{
-		// the litentry-worker wants to register his enclave
+		/// Set the admin account
+		///
+		/// Weights should be 2 DB writes: 1 for mode and 1 for event
 		#[pallet::call_index(0)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
-		pub fn register_enclave(
+		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal, Pays::No))]
+		pub fn set_admin(
 			origin: OriginFor<T>,
-			ra_report: Vec<u8>,
-			worker_url: Vec<u8>,
-			shielding_key: Option<Vec<u8>>,
-			vc_pubkey: Option<Vec<u8>>,
+			new_admin: T::AccountId,
 		) -> DispatchResultWithPostInfo {
-			log::info!("teerex: called into runtime call register_enclave()");
-
-			let sender = ensure_signed(origin)?;
-			ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::RaReportTooLong);
-			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
-			log::info!("teerex: parameter length ok");
-
-			#[cfg(not(feature = "skip-ias-check"))]
-			let enclave = Self::verify_report(&sender, ra_report.clone()).map(|report| {
-				#[cfg(test)]
-				{
-					return Enclave::new(
-						sender.clone(),
-						report.mr_enclave,
-						report.timestamp,
-						worker_url.clone(),
-						shielding_key,
-						vc_pubkey,
-						report.build_mode,
-						Default::default(),
-					)
-				}
-
-				#[cfg(not(test))]
-				Enclave::new(
-					sender.clone(),
-					report.mr_enclave,
-					report.timestamp,
-					worker_url.clone(),
-					shielding_key,
-					vc_pubkey,
-					report.build_mode,
-					report.metadata,
-				)
-			})?;
-
-			#[cfg(not(feature = "skip-ias-check"))]
-			if !<AllowSGXDebugMode<T>>::get() && enclave.sgx_mode == SgxBuildMode::Debug {
-				log::error!("substraTEE_registry: debug mode is not allowed to attest!");
-				return Err(<Error<T>>::SgxModeNotAllowed.into())
-			}
-
-			#[cfg(feature = "skip-ias-check")]
-			log::warn!("[teerex]: Skipping remote attestation check. Only dev-chains are allowed to do this!");
-
-			#[cfg(feature = "skip-ias-check")]
-			let enclave = Enclave::new(
-				sender.clone(),
-				// insert mrenclave if the ra_report represents one, otherwise insert default
-				<MrEnclave>::decode(&mut ra_report.as_slice()).unwrap_or_default(),
-				<timestamp::Pallet<T>>::get().saturated_into(),
-				worker_url.clone(),
-				shielding_key,
-				vc_pubkey,
-				SgxBuildMode::default(),
-				SgxEnclaveMetadata::default(),
-			);
-
-			// TODO: imagine this fn is not called for the first time (e.g. when worker restarts),
-			//       should we check the current sidechain_blocknumber >= registered
-			// sidechain_blocknumber?
-			// Dev setup -> SkipScheduledEnclave Extrinsic -> Does it make sense to set in dev
-			// setup?
-			let schedule_enclave = SkipScheduledEnclaveCheck::<T>::get();
-			if !schedule_enclave {
-				ensure!(
-					ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mr_enclave),
-					Error::<T>::EnclaveNotInSchedule
-				);
-			}
-
-			Self::add_enclave(&sender, &enclave)?;
-			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
-
-			Ok(().into())
+			T::SetAdminOrigin::ensure_origin(origin)?;
+			Admin::<T>::put(new_admin.clone());
+			Self::deposit_event(Event::AdminSet { new_admin: Some(new_admin) });
+			Ok(Pays::No.into())
 		}
 
+		/// Set the mode
+		///
+		/// Weights should be 2 DB writes: 1 for mode and 1 for event
 		#[pallet::call_index(1)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
-		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			log::info!("teerex: called into runtime call unregister_enclave()");
-			let sender = ensure_signed(origin)?;
-
-			Self::remove_enclave(&sender)?;
-			Self::deposit_event(Event::RemovedEnclave(sender));
-
+		#[pallet::weight((2 * T::DbWeight::get().write, DispatchClass::Normal, Pays::Yes))]
+		pub fn set_mode(
+			origin: OriginFor<T>,
+			new_mode: OperationalMode,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_admin_or_root(origin)?;
+			Mode::<T>::put(new_mode);
+			Self::deposit_event(Event::ModeSet { new_mode });
 			Ok(().into())
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
-		pub fn call_worker(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
-			let _sender = ensure_signed(origin)?;
-			log::info!("call_worker with {:?}", request);
-			Self::deposit_event(Event::Forwarded(request.shard));
-			Ok(())
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn set_max_enclave_count(
+			origin: OriginFor<T>,
+			worker_type: WorkerType,
+			new_count: u64,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_admin_or_root(origin)?;
+			ensure!(
+				new_count > Self::max_enclave_count(worker_type),
+				Error::<T>::MaxEnclaveCountUnderFlow
+			);
+
+			MaxEnclaveCount::<T>::insert(worker_type, new_count);
+			Self::deposit_event(Event::MaxEnclaveCountSet { worker_type, new_count });
+			Ok(Pays::No.into())
 		}
 
-		/// The litentry worker calls this function for every processed parentchain_block to
-		/// confirm a state update.
 		#[pallet::call_index(3)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn confirm_processed_parentchain_block(
+		pub fn force_add_enclave(
 			origin: OriginFor<T>,
-			block_hash: H256,
-			block_number: T::BlockNumber,
-			trusted_calls_merkle_root: H256,
+			who: T::AccountId,
+			enclave: Enclave,
 		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			log::debug!(
-				"Processed parentchain block confirmed for enclave {:?}, block_hash {:?}, block_number {:?}",
-				sender,
-				block_hash,
-				block_number
-			);
-			Self::ensure_registered_enclave(&sender)?;
+			Self::ensure_admin_or_root(origin)?;
+			Self::add_enclave(&who, &enclave)?;
+			Ok(Pays::No.into())
+		}
 
-			let mut enclave = Self::get_enclave(&sender)?;
-			enclave.timestamp = <timestamp::Pallet<T>>::get().saturated_into();
-			Self::add_enclave(&sender, &enclave)?;
+		#[pallet::call_index(4)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn force_remove_enclave(
+			origin: OriginFor<T>,
+			who: T::AccountId,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_admin_or_root(origin)?;
+			Self::remove_enclave(&who)?;
+			Ok(Pays::No.into())
+		}
 
-			Self::deposit_event(Event::ProcessedParentchainBlock(
-				sender,
-				block_hash,
-				trusted_calls_merkle_root,
-				block_number,
-			));
-			Ok(().into())
+		#[pallet::call_index(5)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn force_remove_enclave_by_mrenclave(
+			origin: OriginFor<T>,
+			mrenclave: MrEnclave,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_admin_or_root(origin)?;
+			let accounts = EnclaveRegistry::<T>::iter()
+				.filter_map(
+					|(who, enclave)| {
+						if enclave.mrenclave == mrenclave {
+							Some(who)
+						} else {
+							None
+						}
+					},
+				)
+				.collect::<Vec<T::AccountId>>();
+
+			for who in accounts.into_iter() {
+				Self::remove_enclave(&who)?;
+			}
+			Ok(Pays::No.into())
 		}
 
 		#[pallet::call_index(6)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_heartbeat_timeout(
+		pub fn force_remove_enclave_by_worker_type(
 			origin: OriginFor<T>,
-			#[pallet::compact] timeout: u64,
+			worker_type: WorkerType,
 		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdminOrRoot);
-			<HeartbeatTimeout<T>>::put(T::Moment::saturated_from(timeout));
-			Self::deposit_event(Event::SetHeartbeatTimeout(timeout));
-			Ok(().into())
-		}
-
-		// TODO(Litentry): if needed, benchmarking
-		// 	- `register_dcap_enclave`
-		// 	- `register_quoting_enclave`
-		// 	- `register_tcb_info`
-		#[pallet::call_index(7)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn register_dcap_enclave(
-			origin: OriginFor<T>,
-			dcap_quote: Vec<u8>,
-			worker_url: Vec<u8>,
-		) -> DispatchResultWithPostInfo {
-			log::info!("teerex: called into runtime call register_dcap_enclave()");
-			let sender = ensure_signed(origin)?;
-			ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, <Error<T>>::RaReportTooLong);
-			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
-			log::info!("teerex: parameter length ok");
-
-			let dummy_shielding_key: Option<Vec<u8>> = Default::default();
-			let dummy_vc_pubkey: Option<Vec<u8>> = Default::default();
-			let dummy_meta = Default::default();
-			#[cfg(not(feature = "skip-ias-check"))]
-			let enclave = Self::verify_dcap_quote(&sender, dcap_quote).map(|report| {
-				Enclave::new(
-					sender.clone(),
-					report.mr_enclave,
-					report.timestamp,
-					worker_url.clone(),
-					dummy_shielding_key,
-					dummy_vc_pubkey,
-					report.build_mode,
-					dummy_meta,
+			Self::ensure_admin_or_root(origin)?;
+			let accounts = EnclaveRegistry::<T>::iter()
+				.filter_map(
+					|(who, enclave)| {
+						if enclave.worker_type == worker_type {
+							Some(who)
+						} else {
+							None
+						}
+					},
 				)
-			})?;
+				.collect::<Vec<T::AccountId>>();
 
-			#[cfg(not(feature = "skip-ias-check"))]
-			if !<AllowSGXDebugMode<T>>::get() && enclave.sgx_mode == SgxBuildMode::Debug {
-				log::error!("substraTEE_registry: debug mode is not allowed to attest!");
-				return Err(<Error<T>>::SgxModeNotAllowed.into())
+			for who in accounts.into_iter() {
+				Self::remove_enclave(&who)?;
 			}
 
-			#[cfg(feature = "skip-ias-check")]
-			log::warn!("[teerex]: Skipping remote attestation check. Only dev-chains are allowed to do this!");
+			Ok(Pays::No.into())
+		}
 
-			#[cfg(feature = "skip-ias-check")]
-			let enclave = Enclave::new(
-				sender.clone(),
-				// insert mrenclave if the ra_report represents one, otherwise insert default
-				<MrEnclave>::decode(&mut dcap_quote.as_slice()).unwrap_or_default(),
-				<timestamp::Pallet<T>>::get().saturated_into(),
-				worker_url.clone(),
-				dummy_shielding_key,
-				dummy_vc_pubkey,
-				SgxBuildMode::default(),
-				dummy_meta,
-			);
-
-			Self::add_enclave(&sender, &enclave)?;
-			Self::deposit_event(Event::AddedEnclave(sender, worker_url));
+		#[pallet::call_index(7)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn set_scheduled_enclave(
+			origin: OriginFor<T>,
+			worker_type: WorkerType,
+			sidechain_block_number: SidechainBlockNumber,
+			mrenclave: MrEnclave,
+		) -> DispatchResultWithPostInfo {
+			Self::ensure_admin_or_root(origin)?;
+			ensure!(worker_type.is_sidechain(), Error::<T>::ScheduledEnclaveNotApplicable,);
+			ScheduledEnclave::<T>::insert((worker_type, sidechain_block_number), mrenclave);
+			Self::deposit_event(Event::ScheduledEnclaveSet {
+				worker_type,
+				sidechain_block_number,
+				mrenclave,
+			});
 			Ok(().into())
 		}
 
 		#[pallet::call_index(8)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn update_scheduled_enclave(
+		pub fn remove_scheduled_enclave(
 			origin: OriginFor<T>,
-			#[pallet::compact] sidechain_block_number: SidechainBlockNumber,
-			mr_enclave: MrEnclave,
+			worker_type: WorkerType,
+			sidechain_block_number: SidechainBlockNumber,
 		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdminOrRoot);
-			ScheduledEnclave::<T>::insert(sidechain_block_number, mr_enclave);
-			Self::deposit_event(Event::UpdatedScheduledEnclave(sidechain_block_number, mr_enclave));
+			Self::ensure_admin_or_root(origin)?;
+			ensure!(worker_type.is_sidechain(), Error::<T>::ScheduledEnclaveNotApplicable,);
+			ensure!(
+				ScheduledEnclave::<T>::contains_key((worker_type, sidechain_block_number)),
+				Error::<T>::ScheduledEnclaveNotExist
+			);
+			ScheduledEnclave::<T>::remove((worker_type, sidechain_block_number));
+			Self::deposit_event(Event::ScheduledEnclaveRemoved {
+				worker_type,
+				sidechain_block_number,
+			});
 			Ok(().into())
 		}
 
 		#[pallet::call_index(9)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
+		pub fn register_enclave(
+			origin: OriginFor<T>,
+			worker_type: WorkerType,
+			attestation: Vec<u8>,
+			worker_url: Vec<u8>,
+			shielding_pubkey: Option<Vec<u8>>,
+			vc_pubkey: Option<Vec<u8>>,
+			attestation_type: AttestationType,
+		) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+
+			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
+
+			let mut enclave = Enclave::new(
+				worker_type,
+				worker_url,
+				shielding_pubkey,
+				vc_pubkey,
+				attestation_type,
+			);
+			match attestation_type {
+				AttestationType::Ignore => {
+					enclave.mrenclave =
+						<MrEnclave>::decode(&mut attestation.as_slice()).unwrap_or_default();
+					enclave.last_updated = <timestamp::Pallet<T>>::get().saturated_into();
+					enclave.sgx_build_mode = SgxBuildMode::default();
+				},
+				AttestationType::Ias => {
+					let report = Self::verify_ias(&sender, attestation)?;
+					enclave.mrenclave = report.mr_enclave;
+					enclave.last_updated = report.timestamp;
+					enclave.sgx_build_mode = report.build_mode;
+				},
+				AttestationType::Dcap(_) => {
+					let report = Self::verify_dcap(&sender, attestation)?;
+					enclave.mrenclave = report.mr_enclave;
+					enclave.last_updated = report.timestamp;
+					enclave.sgx_build_mode = report.build_mode;
+				},
+			};
+
+			#[allow(clippy::single_match)]
+			match Self::mode() {
+				OperationalMode::Production => {
+					if !Self::allow_sgx_debug_mode() &&
+						enclave.sgx_build_mode == SgxBuildMode::Debug
+					{
+						return Err(<Error<T>>::InvalidSgxMode.into())
+					}
+					if worker_type.is_sidechain() {
+						// TODO: we might need to take the sidechain number into consideration
+						ensure!(
+							ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mrenclave),
+							Error::<T>::EnclaveNotInSchedule
+						);
+					}
+				},
+				_ => (),
+			};
+			Self::add_enclave(&sender, &enclave)?;
+			Ok(().into())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
+		pub fn unregister_enclave(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let sender = ensure_signed(origin)?;
+			Self::remove_enclave(&sender)?;
+			Ok(().into())
+		}
+
+		#[pallet::call_index(11)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn register_quoting_enclave(
 			origin: OriginFor<T>,
@@ -448,33 +470,15 @@ pub mod pallet {
 			signature: Vec<u8>,
 			certificate_chain: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			log::info!("teerex: called into runtime call register_quoting_enclave()");
 			// Quoting enclaves are registered globally and not for a specific sender
-			let _sender = ensure_signed(origin)?;
+			let _ = ensure_signed(origin)?;
 			let quoting_enclave =
 				Self::verify_quoting_enclave(enclave_identity, signature, certificate_chain)?;
 			<QuotingEnclaveRegistry<T>>::put(quoting_enclave);
 			Ok(().into())
 		}
 
-		#[pallet::call_index(10)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn remove_scheduled_enclave(
-			origin: OriginFor<T>,
-			#[pallet::compact] sidechain_block_number: SidechainBlockNumber,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdminOrRoot);
-			ensure!(
-				ScheduledEnclave::<T>::contains_key(sidechain_block_number),
-				Error::<T>::ScheduledEnclaveNotExist
-			);
-			ScheduledEnclave::<T>::remove(sidechain_block_number);
-			Self::deposit_event(Event::RemovedScheduledEnclave(sidechain_block_number));
-			Ok(().into())
-		}
-
-		#[pallet::call_index(11)]
+		#[pallet::call_index(12)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
 		pub fn register_tcb_info(
 			origin: OriginFor<T>,
@@ -482,87 +486,45 @@ pub mod pallet {
 			signature: Vec<u8>,
 			certificate_chain: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			log::info!("teerex: called into runtime call register_tcb_info()");
 			// TCB info is registered globally and not for a specific sender
-			let _sender = ensure_signed(origin)?;
+			let _ = ensure_signed(origin)?;
 			let (fmspc, on_chain_info) =
 				Self::verify_tcb_info(tcb_info, signature, certificate_chain)?;
-			<TcbInfo<T>>::insert(fmspc, on_chain_info);
+			TcbInfo::<T>::insert(fmspc, on_chain_info);
 			Ok(().into())
 		}
 
-		/// Set the admin account, the old admin account is supplied in the event
-		#[pallet::call_index(13)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_admin(origin: OriginFor<T>, new: T::AccountId) -> DispatchResultWithPostInfo {
-			T::SetAdminOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::AdminChanged { old_admin: Self::admin() });
-			<Admin<T>>::put(new);
-			// Do not pay a fee
-			Ok(Pays::No.into())
+		// ===============================================================================
+		// Following extrinsics are for runtime communication between parachain and worker
+		// ===============================================================================
+
+		#[pallet::call_index(20)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::Yes))]
+		pub fn post_opaque_task(origin: OriginFor<T>, request: RsaRequest) -> DispatchResult {
+			let _ = ensure_signed(origin)?;
+			Self::deposit_event(Event::OpaqueTaskPosted { shard: request.shard });
+			Ok(())
 		}
 
-		/// Sets new registerd enclave limit, can be called only by admin.
-		#[pallet::call_index(14)]
+		#[pallet::call_index(21)]
 		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_registered_enclave_limit(
+		pub fn parentchain_block_processed(
 			origin: OriginFor<T>,
-			new_limit: u64,
+			block_hash: H256,
+			block_number: T::BlockNumber,
+			task_merkle_root: H256,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdminOrRoot);
-
-			ensure!(
-				new_limit >= Self::enclave_count(),
-				<Error<T>>::CannotLowerRegisteredEnclaveLimit
-			);
-
-			RegisteredEnclaveLimit::<T>::put(new_limit);
-			Self::deposit_event(Event::RegisteredEnclaveLimitSet(new_limit));
+			let mut enclave =
+				EnclaveRegistry::<T>::get(&sender).ok_or(Error::<T>::EnclaveNotExist)?;
+			enclave.last_updated = <timestamp::Pallet<T>>::get().saturated_into();
+			Self::deposit_event(Event::ParentchainBlockProcessed {
+				who: sender,
+				block_number,
+				block_hash,
+				task_merkle_root,
+			});
 			Ok(().into())
-		}
-
-		/// Set registered mrenclave
-		/// This is a workaround to overcome the problem that the ra-report seems to contain
-		/// the old mrenclave after doing enclave update, which breaks the client/IDHub.
-		/// See https://github.com/litentry/litentry-parachain/issues/1820
-		///
-		/// To be removed once the issue is solved
-		#[pallet::call_index(30)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_mrenclave(
-			origin: OriginFor<T>,
-			new_mrenclave: MrEnclave,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdminOrRoot);
-			// not the best way but just to get the job done
-			for index in <EnclaveRegistry<T>>::iter_keys() {
-				let mut enclave =
-					<EnclaveRegistry<T>>::get(index).ok_or(Error::<T>::EmptyEnclaveRegistry)?;
-				enclave.mr_enclave = new_mrenclave;
-				<EnclaveRegistry<T>>::insert(index, enclave);
-			}
-			Self::deposit_event(Event::NewMrenclaveSet { new_mrenclave });
-			// Do not pay a fee
-			Ok(Pays::No.into())
-		}
-
-		/// This extrinsic is used to set ScheduleEnclave storage item
-		/// This storage item is used to perform feature control during register_enclave
-		/// Can only be called by the Teerex Admin
-		#[pallet::call_index(31)]
-		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
-		pub fn set_skip_scheduled_enclave_check(
-			origin: OriginFor<T>,
-			should_skip: bool,
-		) -> DispatchResultWithPostInfo {
-			let sender = ensure_signed(origin)?;
-			ensure!(Some(sender) == Self::admin(), Error::<T>::RequireAdminOrRoot);
-
-			<SkipScheduledEnclaveCheck<T>>::set(should_skip);
-			Self::deposit_event(Event::SkipScheduledEnclaveCheck(should_skip));
-			Ok(Pays::No.into())
 		}
 	}
 
@@ -576,23 +538,22 @@ pub mod pallet {
 		SenderIsNotAttestedEnclave,
 		/// Verifying RA report failed.
 		RemoteAttestationVerificationFailed,
+		// RA report is too old.
 		RemoteAttestationTooOld,
 		/// The enclave cannot attest, because its building mode is not allowed.
-		SgxModeNotAllowed,
-		/// The enclave is not registered.
-		EnclaveIsNotRegistered,
-		/// The bonding account doesn't match the enclave.
-		WrongMrenclaveForBondingAccount,
+		InvalidSgxMode,
+		/// The enclave doesn't exist.
+		EnclaveNotExist,
 		/// The shard doesn't match the enclave.
 		WrongMrenclaveForShard,
 		/// The worker url is too long.
 		EnclaveUrlTooLong,
-		/// The Remote Attestation report is too long.
-		RaReportTooLong,
-		/// No enclave is registered.
-		EmptyEnclaveRegistry,
+		/// The raw attestation data is too long.
+		AttestationTooLong,
 		/// Can not found the desired scheduled enclave.
 		ScheduledEnclaveNotExist,
+		/// Scheduled enclave isn't applicable for current worker type.
+		ScheduledEnclaveNotApplicable,
 		/// Enclave not in the scheduled list, therefore unexpected.
 		EnclaveNotInSchedule,
 		/// The provided collateral data is invalid
@@ -601,166 +562,86 @@ pub mod pallet {
 		TooManyTopics,
 		/// The length of the `data` passed to `publish_hash` exceeds the limit.
 		DataTooLong,
-		/// The number of registered enclaves reached the limit
-		RegisteredEnclaveLimitReached,
-		/// The limit cannot be lower than actual registered enclaves count
-		CannotLowerRegisteredEnclaveLimit,
+		/// max_enclave_count overflows
+		MaxEnclaveCountOverflow,
+		/// max_enclave_count underflows (than 0 or currently registered enclave count)
+		MaxEnclaveCountUnderFlow,
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn add_enclave(
-		sender: &T::AccountId,
-		enclave: &Enclave<T::AccountId, Vec<u8>>,
-	) -> DispatchResultWithPostInfo {
-		let enclave_idx = if <EnclaveIndex<T>>::contains_key(sender) {
-			log::info!("Updating already registered enclave");
-			<EnclaveIndex<T>>::get(sender)
-		} else {
-			// we are about to register new enclave so we don't check equality, it will eventually
-			// be reached
-			ensure!(
-				Self::enclave_count() < Self::registered_enclave_limit(),
-				<Error<T>>::RegisteredEnclaveLimitReached
-			);
-			let enclaves_count = Self::enclave_count()
-				.checked_add(1)
-				.ok_or("[Teerex]: Overflow adding new enclave to registry")?;
-			<EnclaveIndex<T>>::insert(sender, enclaves_count);
-			<EnclaveCount<T>>::put(enclaves_count);
-			enclaves_count
-		};
+	pub fn add_enclave(sender: &T::AccountId, enclave: &Enclave) -> DispatchResultWithPostInfo {
+		let count = Self::enclave_count(enclave.worker_type);
 
-		<EnclaveRegistry<T>>::insert(enclave_idx, enclave);
+		if !EnclaveRegistry::<T>::contains_key(sender) {
+			ensure!(
+				count < Self::max_enclave_count(enclave.worker_type),
+				Error::<T>::MaxEnclaveCountOverflow
+			);
+			EnclaveCount::<T>::insert(
+				enclave.worker_type,
+				count.checked_add(1u64).ok_or(Error::<T>::MaxEnclaveCountOverflow)?,
+			);
+		}
+		EnclaveRegistry::<T>::insert(sender, enclave);
+		Self::deposit_event(Event::<T>::EnclaveAdded {
+			who: sender.clone(),
+			worker_type: enclave.worker_type,
+			url: enclave.url.clone(),
+		});
 		Ok(().into())
 	}
 
 	fn remove_enclave(sender: &T::AccountId) -> DispatchResultWithPostInfo {
-		ensure!(<EnclaveIndex<T>>::contains_key(sender), <Error<T>>::EnclaveIsNotRegistered);
-		let index_to_remove = <EnclaveIndex<T>>::take(sender);
+		let enclave = EnclaveRegistry::<T>::get(sender).ok_or(Error::<T>::EnclaveNotExist)?;
+		let count = EnclaveCount::<T>::get(enclave.worker_type);
 
-		let enclaves_count = Self::enclave_count();
-		let new_enclaves_count = enclaves_count
-			.checked_sub(1)
-			.ok_or("[Teerex]: Underflow removing an enclave from the registry")?;
+		EnclaveCount::<T>::insert(
+			enclave.worker_type,
+			count.checked_sub(1u64).ok_or(Error::<T>::MaxEnclaveCountOverflow)?,
+		);
 
-		Self::swap_and_pop(index_to_remove, new_enclaves_count + 1)?;
-		<EnclaveCount<T>>::put(new_enclaves_count);
-
+		<EnclaveRegistry<T>>::remove(sender);
+		Self::deposit_event(Event::<T>::EnclaveRemoved { who: sender.clone() });
 		Ok(().into())
 	}
 
-	pub(crate) fn get_enclave(
-		sender: &T::AccountId,
-	) -> Result<Enclave<T::AccountId, Vec<u8>>, Error<T>> {
-		let sender_index = <EnclaveIndex<T>>::get(sender);
-		<EnclaveRegistry<T>>::get(sender_index).ok_or(Error::<T>::EmptyEnclaveRegistry)
-	}
-
-	/// Our list implementation would introduce holes in out list if if we try to remove elements
-	/// from the middle. As the order of the enclave entries is not important, we use the swap and
-	/// pop method to remove elements from the registry.
-	fn swap_and_pop(index_to_remove: u64, new_enclaves_count: u64) -> DispatchResultWithPostInfo {
-		if index_to_remove != new_enclaves_count {
-			let last_enclave = <EnclaveRegistry<T>>::get(new_enclaves_count)
-				.ok_or(Error::<T>::EmptyEnclaveRegistry)?;
-			<EnclaveRegistry<T>>::insert(index_to_remove, &last_enclave);
-			<EnclaveIndex<T>>::insert(last_enclave.pubkey, index_to_remove);
-		}
-
-		<EnclaveRegistry<T>>::remove(new_enclaves_count);
-
-		Ok(().into())
-	}
-
-	fn unregister_silent_workers(now: T::Moment) {
-		let minimum = (now - Self::heartbeat_timeout()).saturated_into::<u64>();
-		let silent_workers = <EnclaveRegistry<T>>::iter()
-			.filter(|e| e.1.timestamp < minimum)
-			.map(|e| e.1.pubkey);
-		for index in silent_workers {
-			let result = Self::remove_enclave(&index);
-			match result {
-				Ok(_) => {
-					log::info!("Unregister enclave because silent worker : {:?}", index);
-					Self::deposit_event(Event::RemovedEnclave(index.clone()));
-				},
-				Err(e) => {
-					log::error!("Cannot unregister enclave : {:?}", e);
-				},
-			};
-		}
-	}
-
-	/// Check if the sender is a registered enclave
-	pub fn ensure_registered_enclave(
-		account: &T::AccountId,
-	) -> Result<(), DispatchErrorWithPostInfo> {
-		ensure!(<EnclaveIndex<T>>::contains_key(account), <Error<T>>::EnclaveIsNotRegistered);
-		Ok(())
-	}
-
-	/// Deposit a pallets teerex event with the corresponding topics.
-	///
-	/// Handles the conversion to the overarching event type.
-	fn deposit_event_indexed(topics: &[T::Hash], event: Event<T>) {
-		<frame_system::Pallet<T>>::deposit_event_indexed(
-			topics,
-			<T as Config>::RuntimeEvent::from(event).into(),
-		)
-	}
-
-	#[cfg(not(feature = "skip-ias-check"))]
-	fn verify_report(
+	fn verify_ias(
 		sender: &T::AccountId,
 		ra_report: Vec<u8>,
 	) -> Result<SgxReport, DispatchErrorWithPostInfo> {
+		ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::AttestationTooLong);
 		let report = verify_ias_report(&ra_report)
 			.map_err(|_| <Error<T>>::RemoteAttestationVerificationFailed)?;
-		log::info!("teerex: IAS report successfully verified");
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
 			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
 
 		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
 
-		// TODO: activate state checks as soon as we've fixed our setup #83
-		// ensure!((report.status == SgxStatus::Ok) | (report.status ==
-		// SgxStatus::ConfigurationNeeded),     "RA status is insufficient");
-		// log::info!("teerex: status is acceptable");
-
 		Self::ensure_timestamp_within_24_hours(report.timestamp)?;
 		Ok(report)
 	}
 
-	#[cfg(not(feature = "skip-ias-check"))]
-	fn verify_dcap_quote(
+	fn verify_dcap(
 		sender: &T::AccountId,
 		dcap_quote: Vec<u8>,
 	) -> Result<SgxReport, DispatchErrorWithPostInfo> {
-		let verification_time = <timestamp::Pallet<T>>::get();
-
+		ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, Error::<T>::AttestationTooLong);
+		let timestamp = <timestamp::Pallet<T>>::get();
 		let qe = <QuotingEnclaveRegistry<T>>::get();
 		let (fmspc, tcb_info, report) =
-			verify_dcap_quote(&dcap_quote, verification_time.saturated_into(), &qe).map_err(
-				|e| {
-					log::warn!("verify_dcap_quote failed: {:?}", e);
-					<Error<T>>::RemoteAttestationVerificationFailed
-				},
-			)?;
+			verify_dcap_quote(&dcap_quote, timestamp.saturated_into(), &qe).map_err(|e| {
+				log::warn!("verify_dcap_quote failed: {:?}", e);
+				<Error<T>>::RemoteAttestationVerificationFailed
+			})?;
 
-		log::info!("teerex: DCAP quote verified. FMSPC from quote: {:?}", fmspc);
 		let tcb_info_on_chain = <TcbInfo<T>>::get(fmspc);
 		ensure!(tcb_info_on_chain.verify_examinee(&tcb_info), "tcb_info is outdated");
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
 			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
 		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
-
-		// TODO: activate state checks as soon as we've fixed our setup #83
-		// ensure!((report.status == SgxStatus::Ok) | (report.status ==
-		// SgxStatus::ConfigurationNeeded),     "RA status is insufficient");
-		// log::info!("teerex: status is acceptable");
 
 		Ok(report)
 	}
@@ -785,7 +666,7 @@ impl<T: Config> Pallet<T> {
 		if enclave_identity.is_valid(verification_time.try_into().unwrap()) {
 			Ok(enclave_identity.to_quoting_enclave())
 		} else {
-			Err(<Error<T>>::CollateralInvalid.into())
+			Err(Error::<T>::CollateralInvalid.into())
 		}
 	}
 
@@ -807,11 +688,10 @@ impl<T: Config> Pallet<T> {
 		if tcb_info.is_valid(verification_time.try_into().unwrap()) {
 			Ok(tcb_info.to_chain_tcb_info())
 		} else {
-			Err(<Error<T>>::CollateralInvalid.into())
+			Err(Error::<T>::CollateralInvalid.into())
 		}
 	}
 
-	#[cfg(not(feature = "skip-ias-check"))]
 	fn ensure_timestamp_within_24_hours(report_timestamp: u64) -> DispatchResultWithPostInfo {
 		let elapsed_time = <timestamp::Pallet<T>>::get()
 			.checked_sub(&T::Moment::saturated_from(report_timestamp))
@@ -825,18 +705,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn ensure_admin_or_root(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-		let sender = ensure_signed(origin.clone())?;
 		ensure!(
-			ensure_root(origin).is_ok() || Some(sender) == Self::admin(),
+			ensure_root(origin.clone()).is_ok() || Some(ensure_signed(origin)?) == Self::admin(),
 			Error::<T>::RequireAdminOrRoot
 		);
 		Ok(().into())
-	}
-}
-
-impl<T: Config> OnTimestampSet<T::Moment> for Pallet<T> {
-	fn on_timestamp_set(moment: T::Moment) {
-		Self::unregister_silent_workers(moment)
 	}
 }
 

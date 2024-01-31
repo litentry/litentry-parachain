@@ -30,7 +30,7 @@ pub type ShardIdentifier = H256;
 pub type EnclaveFingerprint = H256;
 pub type SidechainBlockNumber = u64;
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+#[derive(Encode, Decode, Default, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum DcapProvider {
 	#[default]
 	MAA,
@@ -39,71 +39,86 @@ pub enum DcapProvider {
 	Integritee,
 }
 
-#[derive(Encode, Decode, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub enum RemoteAttestationType {
+#[derive(Encode, Decode, Clone, Copy, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub enum AttestationType {
 	#[default]
 	Ignore,
 	Ias,
 	Dcap(DcapProvider),
 }
 
-#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub enum SgxBuildMode {
-	#[codec(index = 0)]
-	Debug,
+#[derive(Encode, Decode, Clone, Copy, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub enum WorkerType {
 	#[default]
-	#[codec(index = 1)]
-	Production,
+	Identity,
+	BitAcross,
 }
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct Enclave<PubKey, Url> {
-	pub pubkey: PubKey, // FIXME: this is redundant information
-	pub mr_enclave: MrEnclave,
-	// Todo: make timestamp: Moment
-	pub timestamp: u64,                 // unix epoch in milliseconds
-	pub url: Url,                       // utf8 encoded url
-	pub shielding_key: Option<Vec<u8>>, // JSON serialised enclave shielding key
-	pub vc_pubkey: Option<Vec<u8>>,
-	pub sgx_mode: SgxBuildMode,
-	pub sgx_metadata: SgxEnclaveMetadata,
-}
-
-impl<PubKey, Url> Enclave<PubKey, Url> {
-	#[allow(clippy::too_many_arguments)]
-	pub fn new(
-		pubkey: PubKey,
-		mr_enclave: MrEnclave,
-		timestamp: u64,
-		url: Url,
-		shielding_key: Option<Vec<u8>>,
-		vc_pubkey: Option<Vec<u8>>,
-		sgx_build_mode: SgxBuildMode,
-		sgx_metadata: SgxEnclaveMetadata,
-	) -> Self {
-		Enclave {
-			pubkey,
-			mr_enclave,
-			timestamp,
-			url,
-			shielding_key,
-			vc_pubkey,
-			sgx_mode: sgx_build_mode,
-			sgx_metadata,
-		}
+impl WorkerType {
+	pub fn is_sidechain(&self) -> bool {
+		self == &Self::Identity
 	}
 }
 
-#[derive(Encode, Decode, Clone, TypeInfo, PartialEq, Eq, Default, RuntimeDebug)]
-pub struct SgxEnclaveMetadata {
-	pub quote: Vec<u8>,
-	pub quote_sig: Vec<u8>,
-	pub quote_cert: Vec<u8>,
+#[derive(Encode, Decode, Copy, Clone, Default, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub enum SgxBuildMode {
+	#[default]
+	#[codec(index = 0)]
+	Production,
+	#[codec(index = 1)]
+	Debug,
 }
 
-impl SgxEnclaveMetadata {
-	pub fn new(quote: Vec<u8>, quote_sig: Vec<u8>, quote_cert: Vec<u8>) -> Self {
-		SgxEnclaveMetadata { quote, quote_sig, quote_cert }
+#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct Enclave {
+	pub worker_type: WorkerType,
+	pub mrenclave: MrEnclave,
+	pub last_updated: u64,                 // unix epoch in milliseconds
+	pub url: Vec<u8>,                      // utf8 encoded url
+	pub shielding_pubkey: Option<Vec<u8>>, // JSON serialised enclave shielding pub key
+	pub vc_pubkey: Option<Vec<u8>>,
+	pub sgx_build_mode: SgxBuildMode,
+	pub attestation_type: AttestationType,
+}
+
+impl Enclave {
+	pub fn new(
+		worker_type: WorkerType,
+		url: Vec<u8>,
+		shielding_pubkey: Option<Vec<u8>>,
+		vc_pubkey: Option<Vec<u8>>,
+		attestation_type: AttestationType,
+	) -> Self {
+		Enclave {
+			worker_type,
+			url,
+			shielding_pubkey,
+			vc_pubkey,
+			attestation_type,
+			..Default::default()
+		}
+	}
+
+	pub fn new_full(
+		worker_type: WorkerType,
+		mrenclave: MrEnclave,
+		last_updated: u64,
+		url: Vec<u8>,
+		shielding_pubkey: Option<Vec<u8>>,
+		vc_pubkey: Option<Vec<u8>>,
+		sgx_build_mode: SgxBuildMode,
+		attestation_type: AttestationType,
+	) -> Self {
+		Enclave {
+			worker_type,
+			mrenclave,
+			last_updated,
+			url,
+			shielding_pubkey,
+			vc_pubkey,
+			sgx_build_mode,
+			attestation_type,
+		}
 	}
 }
 

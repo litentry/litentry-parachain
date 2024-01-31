@@ -37,8 +37,7 @@ use self::{
 	utils::length_from_raw_data,
 };
 use crate::{
-	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, SgxEnclaveMetadata,
-	TcbVersionStatus,
+	Cpusvn, Fmspc, MrEnclave, MrSigner, Pcesvn, QuotingEnclave, SgxBuildMode, TcbVersionStatus,
 };
 use alloc::string::String;
 use chrono::DateTime;
@@ -352,7 +351,6 @@ pub struct SgxReport {
 	pub status: SgxStatus,
 	pub timestamp: u64, // unix timestamp in milliseconds
 	pub build_mode: SgxBuildMode,
-	pub metadata: SgxEnclaveMetadata, // for vc verification
 }
 
 type SignatureAlgorithms = &'static [&'static dyn webpki::types::SignatureVerificationAlgorithm];
@@ -516,7 +514,7 @@ pub fn verify_certificate_chain<'a>(
 		.map_err(|_| "Invalid certificate chain")?;
 	Ok(())
 }
-
+#[allow(unused)]
 pub fn extract_tcb_info_from_raw_dcap_quote(
 	dcap_quote_raw: &[u8],
 ) -> Result<(Fmspc, TcbVersionStatus), &'static str> {
@@ -637,7 +635,6 @@ pub fn verify_dcap_quote(
 		pubkey: xt_signer_array,
 		timestamp: verification_time,
 		build_mode: quote.body.sgx_build_mode(),
-		metadata: SgxEnclaveMetadata::default(),
 	};
 	Ok((fmspc, tcb_info, report))
 }
@@ -743,11 +740,6 @@ fn parse_report(netscape: &NetscapeComment) -> Result<SgxReport, &'static str> {
 			pubkey: xt_signer_array,
 			timestamp: ra_timestamp,
 			build_mode: sgx_quote.report_body.sgx_build_mode(),
-			metadata: SgxEnclaveMetadata::new(
-				base64::encode(netscape.attestation_raw).as_bytes().to_vec(),
-				netscape.sig.clone(),
-				netscape.sig_cert.clone(),
-			),
 		})
 	} else {
 		Err("Failed to parse isvEnclaveQuoteBody from attestation report")
