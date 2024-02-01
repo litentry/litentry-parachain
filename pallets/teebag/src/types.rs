@@ -89,12 +89,20 @@ pub enum SgxBuildMode {
 	Debug,
 }
 
+#[derive(PartialEq, Eq, Clone, Encode, Decode, Debug, Copy, Default, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct SidechainBlockConfirmation {
+	pub block_number: SidechainBlockNumber,
+	pub block_header_hash: H256,
+}
+
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub struct Enclave {
 	pub worker_type: WorkerType,
 	pub mrenclave: MrEnclave,
-	pub last_updated: u64,                 // unix epoch in milliseconds
-	pub url: Vec<u8>,                      // utf8 encoded url
+	pub last_seen_timestamp: u64, // unix epoch in milliseconds when it's last seen
+	pub register_timestamp: u64,  // unix epoch in milliseconds when it's registered
+	pub url: Vec<u8>,             // utf8 encoded url
 	pub shielding_pubkey: Option<Vec<u8>>, // JSON serialised enclave shielding pub key
 	pub vc_pubkey: Option<Vec<u8>>,
 	pub sgx_build_mode: SgxBuildMode,
@@ -129,8 +137,8 @@ impl Enclave {
 		self
 	}
 
-	pub fn with_last_updated(mut self, last_updated: u64) -> Self {
-		self.last_updated = last_updated;
+	pub fn with_last_seen_timestamp(mut self, t: u64) -> Self {
+		self.last_seen_timestamp = t;
 		self
 	}
 
@@ -142,28 +150,6 @@ impl Enclave {
 	pub fn with_sgx_build_mode(mut self, sgx_build_mode: SgxBuildMode) -> Self {
 		self.sgx_build_mode = sgx_build_mode;
 		self
-	}
-
-	pub fn new_full(
-		worker_type: WorkerType,
-		mrenclave: MrEnclave,
-		last_updated: u64,
-		url: Vec<u8>,
-		shielding_pubkey: Option<Vec<u8>>,
-		vc_pubkey: Option<Vec<u8>>,
-		sgx_build_mode: SgxBuildMode,
-		attestation_type: AttestationType,
-	) -> Self {
-		Enclave {
-			worker_type,
-			mrenclave,
-			last_updated,
-			url,
-			shielding_pubkey,
-			vc_pubkey,
-			sgx_build_mode,
-			attestation_type,
-		}
 	}
 }
 

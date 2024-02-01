@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
+// TODO: add `sidechain_block_imported` tests
+
 #![allow(dead_code, unused_imports)]
 use crate::{
 	mock::*, AttestationType, DcapProvider, Enclave, EnclaveRegistry, Error, Event as TeebagEvent,

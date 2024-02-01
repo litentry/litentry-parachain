@@ -9350,6 +9350,7 @@ dependencies = [
  "frame-system",
  "hex 0.4.3",
  "log 0.4.20",
+ "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
  "ring 0.16.20",

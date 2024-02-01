@@ -58,17 +58,15 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(PhantomData<T>);
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
-
 	#[pallet::config]
-	pub trait Config: frame_system::Config + timestamp::Config {
+	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		type MomentsPerDay: Get<Self::Moment>;
 		/// The origin who can set the admin account
 		type SetAdminOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
+	// TODO: maybe add more sidechain lifecycle events
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -99,6 +97,10 @@ pub mod pallet {
 			block_hash: H256,
 			task_merkle_root: H256,
 		},
+		SidechainBlockFinalized {
+			who: T::AccountId,
+			sidechain_block_number: SidechainBlockNumber,
+		},
 		ScheduledEnclaveSet {
 			worker_type: WorkerType,
 			sidechain_block_number: SidechainBlockNumber,
@@ -108,6 +110,55 @@ pub mod pallet {
 			worker_type: WorkerType,
 			sidechain_block_number: SidechainBlockNumber,
 		},
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		/// This operation needs the admin permission
+		RequireAdminOrRoot,
+		/// Failed to decode enclave signer.
+		EnclaveSignerDecodeError,
+		/// Sender does not match attested enclave in report.
+		SenderIsNotAttestedEnclave,
+		/// Verifying RA report failed.
+		RemoteAttestationVerificationFailed,
+		/// RA report is too old.
+		RemoteAttestationTooOld,
+		/// Invalid attestion type, e.g., an `Ignore` type under non-dev mode
+		InvalidAttestationType,
+		/// The enclave cannot attest, because its building mode is not allowed.
+		InvalidSgxMode,
+		/// The enclave doesn't exist.
+		EnclaveNotExist,
+		/// The shard doesn't match the enclave.
+		WrongMrenclaveForShard,
+		/// The worker url is too long.
+		EnclaveUrlTooLong,
+		/// The raw attestation data is too long.
+		AttestationTooLong,
+		/// The worker type is unexpected, because e.g. a non-sidechain worker calls sidechain
+		/// specific extrinsic
+		UnexpectedWorkerType,
+		/// Can not found the desired scheduled enclave.
+		ScheduledEnclaveNotExist,
+		/// Scheduled enclave isn't applicable for current worker type.
+		ScheduledEnclaveNotApplicable,
+		/// Enclave not in the scheduled list, therefore unexpected.
+		EnclaveNotInSchedule,
+		/// The provided collateral data is invalid
+		CollateralInvalid,
+		/// The number of `extra_topics` passed to `publish_hash` exceeds the limit.
+		TooManyTopics,
+		/// The length of the `data` passed to `publish_hash` exceeds the limit.
+		DataTooLong,
+		/// max_enclave_count overflows
+		MaxEnclaveCountOverflow,
+		/// max_enclave_count underflows (than 0 or currently registered enclave count)
+		MaxEnclaveCountUnderflow,
+		/// A proposed block is unexpected.
+		ReceivedUnexpectedSidechainBlock,
+		/// The value for the next finalization candidate is invalid.
+		InvalidNextFinalizationCandidateBlockNumber,
 	}
 
 	#[pallet::storage]
@@ -175,6 +226,21 @@ pub mod pallet {
 	#[pallet::getter(fn scheduled_enclave)]
 	pub type ScheduledEnclave<T: Config> =
 		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn worker_for_shard)]
+	pub type WorkerForShard<T: Config> =
+		StorageMap<_, Blake2_128Concat, ShardIdentifier, T::AccountId, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn latest_sidechain_block_confirmation)]
+	pub type LatestSidechainBlockConfirmation<T: Config> =
+		StorageMap<_, Blake2_128Concat, ShardIdentifier, SidechainBlockConfirmation, ValueQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn sidechain_block_finalization_candidate)]
+	pub type SidechainBlockFinalizationCandidate<T: Config> =
+		StorageMap<_, Blake2_128Concat, ShardIdentifier, SidechainBlockNumber, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
@@ -383,7 +449,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 
-			ensure!(worker_url.len() <= MAX_URL_LEN, <Error<T>>::EnclaveUrlTooLong);
+			ensure!(worker_url.len() <= MAX_URL_LEN, Error::<T>::EnclaveUrlTooLong);
 
 			let mut enclave = Enclave::new(
 				worker_type,
@@ -400,19 +466,19 @@ pub mod pallet {
 					);
 					enclave.mrenclave =
 						<MrEnclave>::decode(&mut attestation.as_slice()).unwrap_or_default();
-					enclave.last_updated = <timestamp::Pallet<T>>::get().saturated_into();
+					enclave.last_seen_timestamp = Self::now().saturated_into();
 					enclave.sgx_build_mode = SgxBuildMode::default();
 				},
 				AttestationType::Ias => {
 					let report = Self::verify_ias(&sender, attestation)?;
 					enclave.mrenclave = report.mr_enclave;
-					enclave.last_updated = report.timestamp;
+					enclave.last_seen_timestamp = report.timestamp;
 					enclave.sgx_build_mode = report.build_mode;
 				},
 				AttestationType::Dcap(_) => {
 					let report = Self::verify_dcap(&sender, attestation)?;
 					enclave.mrenclave = report.mr_enclave;
-					enclave.last_updated = report.timestamp;
+					enclave.last_seen_timestamp = report.timestamp;
 					enclave.sgx_build_mode = report.build_mode;
 				},
 			};
@@ -432,6 +498,7 @@ pub mod pallet {
 				},
 				OperationalMode::Development => (),
 			};
+			enclave.register_timestamp = Self::now().saturated_into();
 			Self::add_enclave(&sender, &enclave)?;
 			Ok(().into())
 		}
@@ -499,7 +566,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin)?;
 			let mut enclave =
 				EnclaveRegistry::<T>::get(&sender).ok_or(Error::<T>::EnclaveNotExist)?;
-			enclave.last_updated = <timestamp::Pallet<T>>::get().saturated_into();
+			enclave.last_seen_timestamp = Self::now().saturated_into();
 			Self::deposit_event(Event::ParentchainBlockProcessed {
 				who: sender,
 				block_number,
@@ -508,52 +575,76 @@ pub mod pallet {
 			});
 			Ok(().into())
 		}
-	}
 
-	#[pallet::error]
-	pub enum Error<T> {
-		/// This operation needs the admin permission
-		RequireAdminOrRoot,
-		/// Failed to decode enclave signer.
-		EnclaveSignerDecodeError,
-		/// Sender does not match attested enclave in report.
-		SenderIsNotAttestedEnclave,
-		/// Verifying RA report failed.
-		RemoteAttestationVerificationFailed,
-		/// RA report is too old.
-		RemoteAttestationTooOld,
-		/// Invalid attestion type, e.g., an `Ignore` type under non-dev mode
-		InvalidAttestationType,
-		/// The enclave cannot attest, because its building mode is not allowed.
-		InvalidSgxMode,
-		/// The enclave doesn't exist.
-		EnclaveNotExist,
-		/// The shard doesn't match the enclave.
-		WrongMrenclaveForShard,
-		/// The worker url is too long.
-		EnclaveUrlTooLong,
-		/// The raw attestation data is too long.
-		AttestationTooLong,
-		/// Can not found the desired scheduled enclave.
-		ScheduledEnclaveNotExist,
-		/// Scheduled enclave isn't applicable for current worker type.
-		ScheduledEnclaveNotApplicable,
-		/// Enclave not in the scheduled list, therefore unexpected.
-		EnclaveNotInSchedule,
-		/// The provided collateral data is invalid
-		CollateralInvalid,
-		/// The number of `extra_topics` passed to `publish_hash` exceeds the limit.
-		TooManyTopics,
-		/// The length of the `data` passed to `publish_hash` exceeds the limit.
-		DataTooLong,
-		/// max_enclave_count overflows
-		MaxEnclaveCountOverflow,
-		/// max_enclave_count underflows (than 0 or currently registered enclave count)
-		MaxEnclaveCountUnderflow,
+		#[pallet::call_index(22)]
+		#[pallet::weight((195_000_000, DispatchClass::Normal, Pays::No))]
+		pub fn sidechain_block_imported(
+			origin: OriginFor<T>,
+			shard: ShardIdentifier,
+			block_number: u64,
+			next_finalization_candidate_block_number: u64,
+			block_header_hash: H256,
+		) -> DispatchResultWithPostInfo {
+			let confirmation = SidechainBlockConfirmation { block_number, block_header_hash };
+
+			let sender = ensure_signed(origin)?;
+			let mut sender_enclave =
+				EnclaveRegistry::<T>::get(&sender).ok_or(Error::<T>::EnclaveNotExist)?;
+
+			ensure!(
+				sender_enclave.mrenclave.as_ref() == shard.as_ref(),
+				Error::<T>::WrongMrenclaveForShard
+			);
+
+			ensure!(sender_enclave.worker_type.is_sidechain(), Error::<T>::UnexpectedWorkerType,);
+
+			sender_enclave.last_seen_timestamp = Self::now().saturated_into();
+
+			// Simple logic for now: only accept blocks from first registered enclave.
+			let primary_enclave = Self::primary_enclave(sender_enclave.worker_type)
+				.ok_or(Error::<T>::EnclaveNotExist)?;
+
+			if sender_enclave.register_timestamp > primary_enclave.register_timestamp {
+				log::debug!(
+					"Ignore block confirmation from registered enclave with timestamp {}",
+					sender_enclave.register_timestamp
+				);
+				return Ok(().into())
+			}
+
+			let block_number = confirmation.block_number;
+			let finalization_candidate_block_number =
+				SidechainBlockFinalizationCandidate::<T>::try_get(shard).unwrap_or(1);
+
+			ensure!(
+				block_number == finalization_candidate_block_number,
+				Error::<T>::ReceivedUnexpectedSidechainBlock
+			);
+			ensure!(
+				next_finalization_candidate_block_number > finalization_candidate_block_number,
+				Error::<T>::InvalidNextFinalizationCandidateBlockNumber
+			);
+
+			SidechainBlockFinalizationCandidate::<T>::insert(
+				shard,
+				next_finalization_candidate_block_number,
+			);
+
+			Self::finalize_block(sender, shard, confirmation);
+			Ok(().into())
+		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
+	fn ensure_admin_or_root(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+		ensure!(
+			ensure_root(origin.clone()).is_ok() || Some(ensure_signed(origin)?) == Self::admin(),
+			Error::<T>::RequireAdminOrRoot
+		);
+		Ok(().into())
+	}
+
 	fn increment_count(worker_type: WorkerType) -> Result<(), DispatchErrorWithPostInfo> {
 		let count = Self::enclave_count(worker_type);
 		ensure!(count < Self::max_enclave_count(worker_type), Error::<T>::MaxEnclaveCountOverflow);
@@ -607,23 +698,31 @@ impl<T: Config> Pallet<T> {
 			count.checked_sub(1u64).ok_or(Error::<T>::MaxEnclaveCountOverflow)?,
 		);
 
-		<EnclaveRegistry<T>>::remove(sender);
+		EnclaveRegistry::<T>::remove(sender);
 		Self::deposit_event(Event::<T>::EnclaveRemoved { who: sender.clone() });
 		Ok(().into())
+	}
+
+	pub fn primary_enclave(worker_type: WorkerType) -> Option<Enclave> {
+		let mut enclaves = EnclaveRegistry::<T>::iter_values()
+			.filter(|e| e.worker_type == worker_type)
+			.collect::<Vec<Enclave>>();
+		enclaves.sort_by(|a, b| Ord::cmp(&a.register_timestamp, &b.register_timestamp));
+		enclaves.get(0).cloned()
 	}
 
 	fn verify_ias(
 		sender: &T::AccountId,
 		ra_report: Vec<u8>,
 	) -> Result<SgxReport, DispatchErrorWithPostInfo> {
-		ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, <Error<T>>::AttestationTooLong);
+		ensure!(ra_report.len() <= MAX_RA_REPORT_LEN, Error::<T>::AttestationTooLong);
 		let report = verify_ias_report(&ra_report)
-			.map_err(|_| <Error<T>>::RemoteAttestationVerificationFailed)?;
+			.map_err(|_| Error::<T>::RemoteAttestationVerificationFailed)?;
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
-			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
+			.map_err(|_| Error::<T>::EnclaveSignerDecodeError)?;
 
-		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
+		ensure!(sender == &enclave_signer, Error::<T>::SenderIsNotAttestedEnclave);
 
 		Self::ensure_timestamp_within_24_hours(report.timestamp)?;
 		Ok(report)
@@ -634,20 +733,20 @@ impl<T: Config> Pallet<T> {
 		dcap_quote: Vec<u8>,
 	) -> Result<SgxReport, DispatchErrorWithPostInfo> {
 		ensure!(dcap_quote.len() <= MAX_DCAP_QUOTE_LEN, Error::<T>::AttestationTooLong);
-		let timestamp = <timestamp::Pallet<T>>::get();
+		let timestamp = Self::now();
 		let qe = <QuotingEnclaveRegistry<T>>::get();
 		let (fmspc, tcb_info, report) =
 			verify_dcap_quote(&dcap_quote, timestamp.saturated_into(), &qe).map_err(|e| {
 				log::warn!("verify_dcap_quote failed: {:?}", e);
-				<Error<T>>::RemoteAttestationVerificationFailed
+				Error::<T>::RemoteAttestationVerificationFailed
 			})?;
 
 		let tcb_info_on_chain = <TcbInfo<T>>::get(fmspc);
 		ensure!(tcb_info_on_chain.verify_examinee(&tcb_info), "tcb_info is outdated");
 
 		let enclave_signer = T::AccountId::decode(&mut &report.pubkey[..])
-			.map_err(|_| <Error<T>>::EnclaveSignerDecodeError)?;
-		ensure!(sender == &enclave_signer, <Error<T>>::SenderIsNotAttestedEnclave);
+			.map_err(|_| Error::<T>::EnclaveSignerDecodeError)?;
+		ensure!(sender == &enclave_signer, Error::<T>::SenderIsNotAttestedEnclave);
 
 		Ok(report)
 	}
@@ -657,7 +756,7 @@ impl<T: Config> Pallet<T> {
 		signature: Vec<u8>,
 		certificate_chain: Vec<u8>,
 	) -> Result<QuotingEnclave, DispatchErrorWithPostInfo> {
-		let verification_time: u64 = <timestamp::Pallet<T>>::get().saturated_into();
+		let verification_time: u64 = Self::now().saturated_into();
 		let certs = extract_certs(&certificate_chain);
 		ensure!(certs.len() >= 2, "Certificate chain must have at least two certificates");
 		let intermediate_slices: Vec<webpki::types::CertificateDer> =
@@ -681,7 +780,7 @@ impl<T: Config> Pallet<T> {
 		signature: Vec<u8>,
 		certificate_chain: Vec<u8>,
 	) -> Result<(Fmspc, TcbInfoOnChain), DispatchErrorWithPostInfo> {
-		let verification_time: u64 = <timestamp::Pallet<T>>::get().saturated_into();
+		let verification_time: u64 = Self::now().saturated_into();
 		let certs = extract_certs(&certificate_chain);
 		ensure!(certs.len() >= 2, "Certificate chain must have at least two certificates");
 		let intermediate_slices: Vec<webpki::types::CertificateDer> =
@@ -699,23 +798,32 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn ensure_timestamp_within_24_hours(report_timestamp: u64) -> DispatchResultWithPostInfo {
-		let elapsed_time = <timestamp::Pallet<T>>::get()
+		let elapsed_time = Self::now()
 			.checked_sub(&T::Moment::saturated_from(report_timestamp))
 			.ok_or("Underflow while calculating elapsed time since report creation")?;
 
 		if elapsed_time < T::MomentsPerDay::get() {
 			Ok(().into())
 		} else {
-			Err(<Error<T>>::RemoteAttestationTooOld.into())
+			Err(Error::<T>::RemoteAttestationTooOld.into())
 		}
 	}
 
-	fn ensure_admin_or_root(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-		ensure!(
-			ensure_root(origin.clone()).is_ok() || Some(ensure_signed(origin)?) == Self::admin(),
-			Error::<T>::RequireAdminOrRoot
-		);
-		Ok(().into())
+	fn finalize_block(
+		sender: T::AccountId,
+		shard: ShardIdentifier,
+		confirmation: SidechainBlockConfirmation,
+	) {
+		LatestSidechainBlockConfirmation::<T>::insert(shard, confirmation);
+		WorkerForShard::<T>::insert(shard, sender.clone());
+		Self::deposit_event(Event::SidechainBlockFinalized {
+			who: sender,
+			sidechain_block_number: confirmation.block_number,
+		});
+	}
+
+	fn now() -> T::Moment {
+		pallet_timestamp::Pallet::<T>::now()
 	}
 }
 

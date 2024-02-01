@@ -24,11 +24,11 @@ x509-cert = { default-features = false, version = "0.1.0", features = ["alloc"] 
 
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
-timestamp = { package = "pallet-timestamp", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 hex-literal = { version = "0.4.1", optional = true }
@@ -65,13 +65,14 @@ std = [
     "sp-io/std",
     "sp-runtime/std",
     "sp-std/std",
-    "timestamp/std",
+    "pallet-timestamp/std",
+    "pallet-balances?/std",
 ]
 runtime-benchmarks = [
-    "frame-benchmarking",
+    "frame-benchmarking/runtime-benchmarks",
     "hex-literal",
-    "pallet-balances",
+    "pallet-balances?/runtime-benchmarks",
     "test-utils",
-    "timestamp/runtime-benchmarks",
+    "pallet-timestamp/runtime-benchmarks",
 ]
 try-runtime = ["frame-support/try-runtime"]
