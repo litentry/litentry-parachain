@@ -96,7 +96,7 @@ pub fn init_bit_across_task_sender_storage() -> Receiver<BitAcrossRequest> {
 
 /// Wrapping struct around the actual sender. Should not be accessed directly. (unnecessary)
 #[derive(Clone, Debug)]
-struct BitAcrossTaskSender {
+pub struct BitAcrossTaskSender {
 	sender: BitAcrossSender,
 }
 
