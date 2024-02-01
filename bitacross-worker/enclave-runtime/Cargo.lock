@@ -471,9 +471,9 @@ checksum = "a2bd12c1caf447e69cd4528f47f94d203fd2582878ecb9e9465484c4148a8223"
 
 [[package]]
 name = "cargo_toml"
-version = "0.16.3"
+version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3f9629bc6c4388ea699781dc988c2b99766d7679b151c81990b4fa1208fafd3"
+checksum = "3dc9f7a067415ab5058020f04c60ec7b557084dbec0e021217bbabc7a8d38d14"
 dependencies = [
  "serde 1.0.193",
  "toml",
@@ -590,7 +590,7 @@ version = "0.9.12"
 dependencies = [
  "frame-support",
  "litentry-hex-utils",
- "litentry-macros 0.9.12",
+ "litentry-macros",
  "litentry-proc-macros",
  "pallet-evm 6.0.0-dev (git+https://github.com/paritytech/frontier?branch=polkadot-v0.9.42)",
  "parity-scale-codec",
@@ -845,7 +845,6 @@ dependencies = [
  "frame-system",
  "hex",
  "ipfs-unixfs",
- "ita-oracle",
  "ita-parentchain-interface",
  "ita-sgx-runtime",
  "ita-stf",
@@ -890,8 +889,10 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "lc-scheduled-enclave",
- "litentry-macros 0.1.0",
+ "litentry-hex-utils",
+ "litentry-macros",
  "litentry-primitives",
+ "litentry-proc-macros",
  "log",
  "multibase",
  "once_cell 1.4.0",
@@ -1676,19 +1677,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "http_req"
-version = "0.8.1"
-source = "git+https://github.com/integritee-network/http_req#3723e88235f2b29bc1a31835853b072ffd0455fd"
-dependencies = [
- "log",
- "rustls 0.19.0 (git+https://github.com/mesalock-linux/rustls?branch=mesalock_sgx)",
- "sgx_tstd",
- "unicase",
- "webpki",
- "webpki-roots 0.21.0 (git+https://github.com/mesalock-linux/webpki-roots?branch=mesalock_sgx)",
-]
-
-[[package]]
 name = "httparse"
 version = "1.4.1"
 source = "git+https://github.com/integritee-network/httparse-sgx?branch=sgx-experimental#cc97e4b34d2c44a1e3df5bdebef446b9771f5cc3"
@@ -1810,23 +1798,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ita-oracle"
-version = "0.9.0"
-dependencies = [
- "itc-rest-client",
- "itp-enclave-metrics",
- "itp-ocall-api",
- "lazy_static",
- "log",
- "parity-scale-codec",
- "serde 1.0.193",
- "sgx_tstd",
- "substrate-fixed",
- "thiserror",
- "url",
-]
-
-[[package]]
 name = "ita-parentchain-interface"
 version = "0.9.0"
 dependencies = [
@@ -1840,6 +1811,7 @@ dependencies = [
  "itp-types",
  "itp-utils",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -1891,6 +1863,7 @@ dependencies = [
  "itp-storage",
  "itp-types",
  "itp-utils",
+ "litentry-macros",
  "litentry-primitives",
  "log",
  "pallet-balances",
@@ -2077,21 +2050,6 @@ dependencies = [
  "litentry-primitives",
  "log",
  "sgx_tstd",
-]
-
-[[package]]
-name = "itc-rest-client"
-version = "0.9.0"
-dependencies = [
- "base64 0.13.1",
- "http",
- "http_req",
- "log",
- "serde 1.0.193",
- "serde_json 1.0.107",
- "sgx_tstd",
- "thiserror",
- "url",
 ]
 
 [[package]]
@@ -2589,6 +2547,7 @@ name = "itp-utils"
 version = "0.9.0"
 dependencies = [
  "hex",
+ "litentry-hex-utils",
  "parity-scale-codec",
 ]
 
@@ -2660,6 +2619,7 @@ dependencies = [
  "its-state",
  "its-validateer-fetch",
  "lc-scheduled-enclave",
+ "litentry-hex-utils",
  "log",
  "parity-scale-codec",
  "sgx_tstd",
@@ -2935,14 +2895,6 @@ dependencies = [
 
 [[package]]
 name = "litentry-macros"
-version = "0.1.0"
-dependencies = [
- "cargo_toml",
- "quote 1.0.33",
-]
-
-[[package]]
-name = "litentry-macros"
 version = "0.9.12"
 
 [[package]]
@@ -2954,6 +2906,7 @@ dependencies = [
  "hex",
  "itp-sgx-crypto",
  "itp-utils",
+ "litentry-hex-utils",
  "log",
  "pallet-evm 6.0.0-dev (git+https://github.com/integritee-network/frontier.git?branch=bar/polkadot-v0.9.42)",
  "parity-scale-codec",
@@ -4760,15 +4713,15 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "strum"
-version = "0.25.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
+checksum = "723b93e8addf9aa965ebe2d11da6d7540fa2283fcea14b3371ff055f7ba13f5f"
 
 [[package]]
 name = "strum_macros"
-version = "0.25.3"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23dc1fa9ac9c169a78ba62f0b841814b7abae11bdd047b9c58f893439e309ea0"
+checksum = "7a3417fc93d76740d974a01654a09777cb500428cc874ca9f45edfe0c4d4cd18"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -5091,15 +5044,6 @@ dependencies = [
  "crunchy",
  "hex",
  "static_assertions",
-]
-
-[[package]]
-name = "unicase"
-version = "2.6.0"
-source = "git+https://github.com/mesalock-linux/unicase-sgx#0b0519348572927118af47af3da4da9ffdca8ec6"
-dependencies = [
- "sgx_tstd",
- "version_check",
 ]
 
 [[package]]

@@ -245,7 +245,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("rococo-parachain"),
 	authoring_version: 1,
 	// same versioning-mechanism as polkadot: use last digit for minor updates
-	spec_version: 9172,
+	spec_version: 9173,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -775,6 +775,10 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 }
 
+impl pallet_account_fix::Config for Runtime {
+	type Currency = Balances;
+}
+
 parameter_types! {
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
@@ -1257,6 +1261,7 @@ construct_runtime! {
 		Ethereum: pallet_ethereum = 121,
 
 		// TMP
+		AccountFix: pallet_account_fix = 254,
 		Sudo: pallet_sudo = 255,
 	}
 }
@@ -1344,7 +1349,9 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			// EVM
 			// Substrate EVM extrinsic not allowed
 			// So no EVM pallet
-			RuntimeCall::Ethereum(_)
+			RuntimeCall::Ethereum(_) |
+			// AccountFix
+			RuntimeCall::AccountFix(_)
 		)
 	}
 }

@@ -99,8 +99,6 @@ impl IntegriteeSolochainHandler {
 				extrinsics_factory.clone(),
 			)?,
 			WorkerMode::Sidechain => create_sidechain_triggered_import_dispatcher(block_importer),
-			WorkerMode::Teeracle =>
-				Arc::new(IntegriteeParentchainBlockImportDispatcher::new_empty_dispatcher()),
 		};
 
 		let solochain_handler = Self {
