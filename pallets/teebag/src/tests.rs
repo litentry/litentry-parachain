@@ -123,6 +123,7 @@ fn register_enclave_dev_works_with_sgx_build_mode_debug() {
 		let enclave = default_enclave()
 			.with_mrenclave(TEST4_MRENCLAVE)
 			.with_last_seen_timestamp(TEST4_TIMESTAMP)
+			.with_register_timestamp(TEST4_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Debug)
 			.with_attestation_type(AttestationType::Ias);
 
@@ -236,6 +237,7 @@ fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 		let enclave = default_enclave()
 			.with_mrenclave(TEST4_MRENCLAVE)
 			.with_last_seen_timestamp(TEST4_TIMESTAMP)
+			.with_register_timestamp(TEST4_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Debug)
 			.with_attestation_type(AttestationType::Ias);
 
@@ -270,6 +272,7 @@ fn register_enclave_prod_works_with_sgx_build_mode_production() {
 		let enclave = default_enclave()
 			.with_mrenclave(TEST8_MRENCLAVE)
 			.with_last_seen_timestamp(TEST8_TIMESTAMP)
+			.with_register_timestamp(TEST8_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Production)
 			.with_attestation_type(AttestationType::Ias);
 

@@ -151,6 +151,11 @@ impl Enclave {
 		self.sgx_build_mode = sgx_build_mode;
 		self
 	}
+
+	pub fn with_register_timestamp(mut self, t: u64) -> Self {
+		self.register_timestamp = t;
+		self
+	}
 }
 
 // use the name `RsaRequest` to differentiate from `AesRequest` (see aes_request.rs in
