@@ -413,6 +413,10 @@ pub mod pallet {
 			);
 			match attestation_type {
 				AttestationType::Ignore => {
+					ensure!(
+						Self::mode() == OperationalMode::Development,
+						Error::<T>::InvalidAttestationType
+					);
 					enclave.mrenclave =
 						<MrEnclave>::decode(&mut attestation.as_slice()).unwrap_or_default();
 					enclave.last_updated = <timestamp::Pallet<T>>::get().saturated_into();
@@ -438,7 +442,7 @@ pub mod pallet {
 					if !Self::allow_sgx_debug_mode() &&
 						enclave.sgx_build_mode == SgxBuildMode::Debug
 					{
-						return Err(<Error<T>>::InvalidSgxMode.into())
+						return Err(Error::<T>::InvalidSgxMode.into())
 					}
 					if worker_type.is_sidechain() {
 						// TODO: we might need to take the sidechain number into consideration
@@ -538,8 +542,10 @@ pub mod pallet {
 		SenderIsNotAttestedEnclave,
 		/// Verifying RA report failed.
 		RemoteAttestationVerificationFailed,
-		// RA report is too old.
+		/// RA report is too old.
 		RemoteAttestationTooOld,
+		/// Invalid attestion type, e.g., an `Ignore` type under non-dev mode
+		InvalidAttestationType,
 		/// The enclave cannot attest, because its building mode is not allowed.
 		InvalidSgxMode,
 		/// The enclave doesn't exist.

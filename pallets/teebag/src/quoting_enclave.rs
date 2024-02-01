@@ -17,7 +17,7 @@ limitations under the License.
 
 // `QuotingEnclave` primitive part, copied from Integritee
 
-use crate::{MrSigner, QeTcb};
+use crate::{MrSigner, QeTcb, Vec};
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_core::RuntimeDebug;

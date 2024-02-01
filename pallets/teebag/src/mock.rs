@@ -1,23 +1,21 @@
-/*
-	Copyright 2021 Integritee AG and Supercomputing Systems AG
+// Copyright 2020-2024 Trust Computing GmbH.
+// This file is part of Litentry.
+//
+// Litentry is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Litentry is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
-
-		http://www.apache.org/licenses/LICENSE-2.0
-
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
-
-*/
 #![allow(dead_code, unused_imports, const_item_mutation)]
-
-// Creating mock runtime here
-use crate as pallet_teerex;
+use crate::{self as pallet_teebag, OperationalMode};
 use frame_support::{
 	assert_ok,
 	pallet_prelude::GenesisBuild,
@@ -62,7 +60,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: timestamp::{Pallet, Call, Storage, Inherent},
-		Teerex: pallet_teerex::{Pallet, Call, Storage, Event<T>},
+		Teebag: pallet_teebag::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -126,77 +124,46 @@ pub type Moment = u64;
 
 impl timestamp::Config for Test {
 	type Moment = Moment;
-	type OnTimestampSet = Teerex;
+	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
 parameter_types! {
 	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
-	pub const MaxSilenceTime: u64 = 172_800_000; // 48h
 }
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
 	type MomentsPerDay = MomentsPerDay;
-	type MaxSilenceTime = MaxSilenceTime;
-	type WeightInfo = ();
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // This function basically just builds a genesis storage key/value store according to
 // our desired mockup. RA from enclave compiled in debug mode is allowed
-pub fn new_test_ext() -> sp_io::TestExternalities {
+pub fn new_test_ext(is_dev_mode: bool) -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![(AccountKeyring::Alice.to_account_id(), 1 << 60)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
-	let teerex_config: pallet_teerex::GenesisConfig<Test> = crate::GenesisConfig {
+
+	let mut genesis_config: pallet_teerex::GenesisConfig<Test> = crate::GenesisConfig {
 		allow_sgx_debug_mode: true,
 		admin: Some(AccountKeyring::Alice.to_account_id()),
-		skip_scheduled_enclave_check: true,
+		mode: OperationalMode::Production,
 	};
-	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
 
-	let mut ext: sp_io::TestExternalities = t.into();
-	ext.execute_with(|| {
-		System::set_block_number(1);
-		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), AccountKeyring::Alice.to_account_id()));
-		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
-			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
-			true
-		));
-	});
-	ext
-}
-
-//Build genesis storage for mockup, where RA from enclave compiled in debug mode is NOT allowed
-pub fn new_test_production_ext() -> sp_io::TestExternalities {
-	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(AccountKeyring::Alice.to_account_id(), 1 << 60)],
+	if is_dev_mode {
+		genesis_config.mode = OperationalMode::Development;
 	}
-	.assimilate_storage(&mut t)
-	.unwrap();
 
-	let teerex_config = crate::GenesisConfig {
-		allow_sgx_debug_mode: false,
-		admin: None,
-		skip_scheduled_enclave_check: true,
-	};
-	GenesisBuild::<Test>::assimilate_storage(&teerex_config, &mut t).unwrap();
+	GenesisBuild::<Test>::assimilate_storage(&genesis_config, &mut t).unwrap();
 
 	let mut ext: sp_io::TestExternalities = t.into();
 	ext.execute_with(|| {
 		System::set_block_number(1);
-		assert_ok!(Teerex::set_admin(RuntimeOrigin::root(), AccountKeyring::Alice.to_account_id()));
-		assert_ok!(Teerex::set_skip_scheduled_enclave_check(
-			RuntimeOrigin::signed(AccountKeyring::Alice.to_account_id()),
-			true
-		));
 	});
 	ext
 }

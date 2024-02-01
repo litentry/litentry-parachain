@@ -17,7 +17,7 @@ limitations under the License.
 
 // `Tcb...` primitive part, copied from Integritee
 
-use crate::{Cpusvn, Pcesvn};
+use crate::{Cpusvn, Pcesvn, Vec};
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_core::RuntimeDebug;
