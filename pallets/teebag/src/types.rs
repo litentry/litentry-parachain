@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_core::{RuntimeDebug, H256};
 use sp_std::prelude::*;
 
@@ -29,6 +29,26 @@ pub type Pcesvn = u16;
 pub type ShardIdentifier = H256;
 pub type EnclaveFingerprint = H256;
 pub type SidechainBlockNumber = u64;
+
+/// Different modes that control enclave registration and running:
+/// - `Production`: default value. It perfroms all checks for enclave registration and runtime
+/// - `Development`: the most lenient, most check are skipped during registration or runtime
+/// - `Maintenance`: a placeholder value for now - maybe to stall sidechain block production
+///
+/// please note:
+/// `Attestation::Ignore` is only possible under `OperationalMode::Development`, but not vice versa.
+/// So if you define `Attestation::Ias`, the attestation will be verified even in `Development` mode
+#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub enum OperationalMode {
+	#[default]
+	#[codec(index = 0)]
+	Production,
+	#[codec(index = 1)]
+	Development,
+	#[codec(index = 2)]
+	Maintenance,
+}
 
 #[derive(Encode, Decode, Default, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 pub enum DcapProvider {
@@ -97,6 +117,31 @@ impl Enclave {
 			attestation_type,
 			..Default::default()
 		}
+	}
+
+	pub fn with_mrenclave(mut self, mrenclave: MrEnclave) -> Self {
+		self.mrenclave = mrenclave;
+		self
+	}
+
+	pub fn with_url(mut self, url: Vec<u8>) -> Self {
+		self.url = url;
+		self
+	}
+
+	pub fn with_last_updated(mut self, last_updated: u64) -> Self {
+		self.last_updated = last_updated;
+		self
+	}
+
+	pub fn with_attestation_type(mut self, attestation_type: AttestationType) -> Self {
+		self.attestation_type = attestation_type;
+		self
+	}
+
+	pub fn with_sgx_build_mode(mut self, sgx_build_mode: SgxBuildMode) -> Self {
+		self.sgx_build_mode = sgx_build_mode;
+		self
 	}
 
 	pub fn new_full(

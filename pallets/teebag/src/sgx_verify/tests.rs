@@ -1,43 +1,45 @@
 #![allow(dead_code, unused_imports, const_item_mutation)]
 
-use super::*;
-use crate::collateral::{EnclaveIdentitySigned, TcbInfoSigned};
+use super::{
+	collateral::{EnclaveIdentitySigned, TcbInfoSigned},
+	*,
+};
 use codec::Decode;
 use frame_support::assert_err;
 use hex_literal::hex;
 
 // reproduce with "litentry-worker dump_ra"
-const TEST1_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER1_MRENCLAVE1.der");
-const TEST2_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER2_MRENCLAVE2.der");
-const TEST3_CERT: &[u8] = include_bytes!("../test/test_ra_cert_MRSIGNER3_MRENCLAVE2.der");
-const TEST4_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST4.der");
-const TEST5_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST5.der");
-const TEST6_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST6.der");
-const TEST7_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST7.der");
-const TEST8_CERT: &[u8] = include_bytes!("../test/ra_dump_cert_TEST8_PRODUCTION.der");
+const TEST1_CERT: &[u8] = include_bytes!("./test/test_ra_cert_MRSIGNER1_MRENCLAVE1.der");
+const TEST2_CERT: &[u8] = include_bytes!("./test/test_ra_cert_MRSIGNER2_MRENCLAVE2.der");
+const TEST3_CERT: &[u8] = include_bytes!("./test/test_ra_cert_MRSIGNER3_MRENCLAVE2.der");
+const TEST4_CERT: &[u8] = include_bytes!("./test/ra_dump_cert_TEST4.der");
+const TEST5_CERT: &[u8] = include_bytes!("./test/ra_dump_cert_TEST5.der");
+const TEST6_CERT: &[u8] = include_bytes!("./test/ra_dump_cert_TEST6.der");
+const TEST7_CERT: &[u8] = include_bytes!("./test/ra_dump_cert_TEST7.der");
+const TEST8_CERT: &[u8] = include_bytes!("./test/ra_dump_cert_TEST8_PRODUCTION.der");
 
 const TEST1_SIGNER_ATTN: &[u8] =
-	include_bytes!("../test/test_ra_signer_attn_MRSIGNER1_MRENCLAVE1.bin");
+	include_bytes!("./test/test_ra_signer_attn_MRSIGNER1_MRENCLAVE1.bin");
 const TEST2_SIGNER_ATTN: &[u8] =
-	include_bytes!("../test/test_ra_signer_attn_MRSIGNER2_MRENCLAVE2.bin");
+	include_bytes!("./test/test_ra_signer_attn_MRSIGNER2_MRENCLAVE2.bin");
 const TEST3_SIGNER_ATTN: &[u8] =
-	include_bytes!("../test/test_ra_signer_attn_MRSIGNER3_MRENCLAVE2.bin");
+	include_bytes!("./test/test_ra_signer_attn_MRSIGNER3_MRENCLAVE2.bin");
 
 // reproduce with "litentry-worker signing-key"
 const TEST1_SIGNER_PUB: &[u8] =
-	include_bytes!("../test/test_ra_signer_pubkey_MRSIGNER1_MRENCLAVE1.bin");
+	include_bytes!("./test/test_ra_signer_pubkey_MRSIGNER1_MRENCLAVE1.bin");
 const TEST2_SIGNER_PUB: &[u8] =
-	include_bytes!("../test/test_ra_signer_pubkey_MRSIGNER2_MRENCLAVE2.bin");
+	include_bytes!("./test/test_ra_signer_pubkey_MRSIGNER2_MRENCLAVE2.bin");
 const TEST3_SIGNER_PUB: &[u8] =
-	include_bytes!("../test/test_ra_signer_pubkey_MRSIGNER3_MRENCLAVE2.bin");
-const TEST4_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-TEST4.bin");
+	include_bytes!("./test/test_ra_signer_pubkey_MRSIGNER3_MRENCLAVE2.bin");
+const TEST4_SIGNER_PUB: &[u8] = include_bytes!("./test/enclave-signing-pubkey-TEST4.bin");
 // equal to TEST4!
-const TEST5_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-TEST5.bin");
-const TEST6_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-TEST6.bin");
-const TEST7_SIGNER_PUB: &[u8] = include_bytes!("../test/enclave-signing-pubkey-TEST7.bin");
-const QE_IDENTITY_CERT: &str = include_str!("../test/dcap/qe_identity_cert.pem");
-const DCAP_QUOTE_CERT: &str = include_str!("../test/dcap/dcap_quote_cert.der");
-const PCK_CRL: &[u8] = include_bytes!("../test/dcap/pck_crl.der");
+const TEST5_SIGNER_PUB: &[u8] = include_bytes!("./test/enclave-signing-pubkey-TEST5.bin");
+const TEST6_SIGNER_PUB: &[u8] = include_bytes!("./test/enclave-signing-pubkey-TEST6.bin");
+const TEST7_SIGNER_PUB: &[u8] = include_bytes!("./test/enclave-signing-pubkey-TEST7.bin");
+const QE_IDENTITY_CERT: &str = include_str!("./test/dcap/qe_identity_cert.pem");
+const DCAP_QUOTE_CERT: &str = include_str!("./test/dcap/dcap_quote_cert.der");
+const PCK_CRL: &[u8] = include_bytes!("./test/dcap/pck_crl.der");
 
 // reproduce with "make mrenclave" in worker repo root
 const TEST1_MRENCLAVE: &[u8] = &[
@@ -211,7 +213,7 @@ fn decode_qe_certification_data() {
 
 #[test]
 fn deserialize_qe_identity_works() {
-	let certs = extract_certs(include_bytes!("../test/dcap/qe_identity_issuer_chain.pem"));
+	let certs = extract_certs(include_bytes!("./test/dcap/qe_identity_issuer_chain.pem"));
 	let intermediate_slices: Vec<webpki::types::CertificateDer> =
 		certs[1..].iter().map(|c| c.as_slice().into()).collect();
 	let leaf_cert_der = webpki::types::CertificateDer::from(certs[0].as_slice());
@@ -219,7 +221,7 @@ fn deserialize_qe_identity_works() {
 	verify_certificate_chain(&leaf_cert, &intermediate_slices, COLLATERAL_VERIFICATION_TIMESTAMP)
 		.unwrap();
 	let json: EnclaveIdentitySigned =
-		serde_json::from_slice(include_bytes!("../test/dcap/qe_identity.json")).unwrap();
+		serde_json::from_slice(include_bytes!("./test/dcap/qe_identity.json")).unwrap();
 	let json_data = serde_json::to_vec(&json.enclave_identity).unwrap();
 	let signature = hex::decode(json.signature).unwrap();
 
@@ -230,7 +232,7 @@ fn deserialize_qe_identity_works() {
 
 #[test]
 fn deserialize_tcb_info_works() {
-	let certs = extract_certs(include_bytes!("../test/dcap/tcb_info_issuer_chain.pem"));
+	let certs = extract_certs(include_bytes!("./test/dcap/tcb_info_issuer_chain.pem"));
 	let intermediate_slices: Vec<webpki::types::CertificateDer> =
 		certs[1..].iter().map(|c| c.as_slice().into()).collect();
 	let leaf_cert_der = webpki::types::CertificateDer::from(certs[0].as_slice());
@@ -238,7 +240,7 @@ fn deserialize_tcb_info_works() {
 	verify_certificate_chain(&leaf_cert, &intermediate_slices, COLLATERAL_VERIFICATION_TIMESTAMP)
 		.unwrap();
 	let json: TcbInfoSigned =
-		serde_json::from_slice(include_bytes!("../test/dcap/tcb_info.json")).unwrap();
+		serde_json::from_slice(include_bytes!("./test/dcap/tcb_info.json")).unwrap();
 
 	let json_data = serde_json::to_vec(&json.tcb_info).unwrap();
 	let signature = hex::decode(json.signature).unwrap();

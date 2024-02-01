@@ -25,8 +25,6 @@ use frame_support::{
 	traits::Get,
 };
 use frame_system::pallet_prelude::*;
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
 use sp_core::H256;
 use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
@@ -51,24 +49,6 @@ pub use tcb::*;
 const MAX_RA_REPORT_LEN: usize = 5244;
 const MAX_DCAP_QUOTE_LEN: usize = 5000;
 const MAX_URL_LEN: usize = 256;
-
-/// Different modes that control enclave registration and running:
-/// - `Production`: default value. It perfroms all checks for enclave registration and runtime
-/// - `Development`: the most lenient, no check is performed during registration or runtime
-/// - `Maintenance`: a placeholder value for now - maybe to stall sidechain block production
-///
-/// `Attestation::Ignore` is only possible under `OperationalMode::Development`
-#[derive(PartialEq, Eq, Clone, Copy, Default, Encode, Decode, Debug, TypeInfo)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum OperationalMode {
-	#[default]
-	#[codec(index = 0)]
-	Production,
-	#[codec(index = 1)]
-	Development,
-	#[codec(index = 2)]
-	Maintenance,
-}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -185,7 +165,8 @@ pub mod pallet {
 	// prior to `register_enclave` this map needs to be populated with ((worker_type, 0),
 	// expected-mrenclave), otherwise the registration will fail
 	//
-	// the workertype.is_sidechain() must be true.
+	// For NON-sidechain worker_type, we still use this storage to whitelist mrenclave, in this case
+	// the `SidechainBlockNumber` is ignored - you could always set it to 0.
 	//
 	// Theorectically we could always push the enclave in `register_enclave`, but we want to
 	// limit the mrenclave that can be registered, as the parachain is supposed to process enclaves
@@ -267,7 +248,7 @@ pub mod pallet {
 			Self::ensure_admin_or_root(origin)?;
 			ensure!(
 				new_count > Self::max_enclave_count(worker_type),
-				Error::<T>::MaxEnclaveCountUnderFlow
+				Error::<T>::MaxEnclaveCountUnderflow
 			);
 
 			MaxEnclaveCount::<T>::insert(worker_type, new_count);
@@ -436,23 +417,20 @@ pub mod pallet {
 				},
 			};
 
-			#[allow(clippy::single_match)]
 			match Self::mode() {
-				OperationalMode::Production => {
+				OperationalMode::Production | OperationalMode::Maintenance => {
 					if !Self::allow_sgx_debug_mode() &&
 						enclave.sgx_build_mode == SgxBuildMode::Debug
 					{
 						return Err(Error::<T>::InvalidSgxMode.into())
 					}
-					if worker_type.is_sidechain() {
-						// TODO: we might need to take the sidechain number into consideration
-						ensure!(
-							ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mrenclave),
-							Error::<T>::EnclaveNotInSchedule
-						);
-					}
+					// TODO: shall we take the sidechain number into consideration?
+					ensure!(
+						ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mrenclave),
+						Error::<T>::EnclaveNotInSchedule
+					);
 				},
-				_ => (),
+				OperationalMode::Development => (),
 			};
 			Self::add_enclave(&sender, &enclave)?;
 			Ok(().into())
@@ -571,24 +549,46 @@ pub mod pallet {
 		/// max_enclave_count overflows
 		MaxEnclaveCountOverflow,
 		/// max_enclave_count underflows (than 0 or currently registered enclave count)
-		MaxEnclaveCountUnderFlow,
+		MaxEnclaveCountUnderflow,
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn add_enclave(sender: &T::AccountId, enclave: &Enclave) -> DispatchResultWithPostInfo {
-		let count = Self::enclave_count(enclave.worker_type);
+	fn increment_count(worker_type: WorkerType) -> Result<(), DispatchErrorWithPostInfo> {
+		let count = Self::enclave_count(worker_type);
+		ensure!(count < Self::max_enclave_count(worker_type), Error::<T>::MaxEnclaveCountOverflow);
 
-		if !EnclaveRegistry::<T>::contains_key(sender) {
-			ensure!(
-				count < Self::max_enclave_count(enclave.worker_type),
-				Error::<T>::MaxEnclaveCountOverflow
-			);
-			EnclaveCount::<T>::insert(
-				enclave.worker_type,
-				count.checked_add(1u64).ok_or(Error::<T>::MaxEnclaveCountOverflow)?,
-			);
-		}
+		EnclaveCount::<T>::insert(
+			worker_type,
+			count.checked_add(1u64).ok_or(Error::<T>::MaxEnclaveCountOverflow)?,
+		);
+
+		Ok(())
+	}
+
+	fn decrement_count(worker_type: WorkerType) -> Result<(), DispatchErrorWithPostInfo> {
+		let count = Self::enclave_count(worker_type);
+		EnclaveCount::<T>::insert(
+			worker_type,
+			count.checked_sub(1u64).ok_or(Error::<T>::MaxEnclaveCountUnderflow)?,
+		);
+
+		Ok(())
+	}
+
+	pub fn add_enclave(sender: &T::AccountId, enclave: &Enclave) -> DispatchResultWithPostInfo {
+		match EnclaveRegistry::<T>::get(sender) {
+			Some(old_enclave) => {
+				if old_enclave.worker_type != enclave.worker_type {
+					// a tricky situation - we are re-registering the enclave with a different
+					// worker type
+					Self::decrement_count(old_enclave.worker_type)?;
+					Self::increment_count(enclave.worker_type)?;
+				}
+				// else - do nothing
+			},
+			None => Self::increment_count(enclave.worker_type)?,
+		};
 		EnclaveRegistry::<T>::insert(sender, enclave);
 		Self::deposit_event(Event::<T>::EnclaveAdded {
 			who: sender.clone(),

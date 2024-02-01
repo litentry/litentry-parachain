@@ -24,7 +24,6 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureRoot;
-use pallet_teerex::Config;
 use sp_core::H256;
 use sp_keyring::AccountKeyring;
 use sp_runtime::{
@@ -133,7 +132,7 @@ parameter_types! {
 	pub const MomentsPerDay: u64 = 86_400_000; // [ms/d]
 }
 
-impl Config for Test {
+impl pallet_teebag::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRoot<Self::AccountId>;
@@ -149,7 +148,7 @@ pub fn new_test_ext(is_dev_mode: bool) -> sp_io::TestExternalities {
 	.assimilate_storage(&mut t)
 	.unwrap();
 
-	let mut genesis_config: pallet_teerex::GenesisConfig<Test> = crate::GenesisConfig {
+	let mut genesis_config: pallet_teebag::GenesisConfig<Test> = crate::GenesisConfig {
 		allow_sgx_debug_mode: true,
 		admin: Some(AccountKeyring::Alice.to_account_id()),
 		mode: OperationalMode::Production,
