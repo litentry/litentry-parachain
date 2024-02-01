@@ -39,9 +39,9 @@
         },
         "dataProvider": "discord",
         "network": "discord",
-        "mockDid": "litentry:discord:0xverin",
+        "mockDid": "litentry:discord:light_bearer01",
         "mockWeb3Network": "",
-        "expectedCredentialValue": true
+        "expectedCredentialValue": false
     },
     {
         "id": "litentry-and-ordinals-user",
@@ -55,9 +55,9 @@
         },
         "dataProvider": "discord",
         "network": "discord",
-        "mockDid": "litentry:discord:0xverin",
+        "mockDid": "litentry:discord:cynthian09021",
         "mockWeb3Network": "",
-        "expectedCredentialValue": true
+        "expectedCredentialValue": false
     },
     {
         "id": "score-contest-legend",
@@ -71,9 +71,9 @@
         },
         "dataProvider": "discord",
         "network": "discord",
-        "mockDid": "litentry:discord:0xverin",
+        "mockDid": "litentry:discord:zawmyosatservice0737",
         "mockWeb3Network": "",
-        "expectedCredentialValue": true
+        "expectedCredentialValue": false
     },
     {
         "id": "score-contest-popularity",
@@ -87,9 +87,9 @@
         },
         "dataProvider": "discord",
         "network": "discord",
-        "mockDid": "litentry:discord:0xverin",
+        "mockDid": "litentry:discord:eudizjr",
         "mockWeb3Network": "",
-        "expectedCredentialValue": true
+        "expectedCredentialValue": false
     },
     {
         "id": "score-contest-participant",
@@ -103,8 +103,8 @@
         },
         "dataProvider": "discord",
         "network": "discord",
-        "mockDid": "litentry:discord:0xverin",
+        "mockDid": "litentry:discord:neo_travolta",
         "mockWeb3Network": "",
-        "expectedCredentialValue": true
+        "expectedCredentialValue": false
     }
 ]
