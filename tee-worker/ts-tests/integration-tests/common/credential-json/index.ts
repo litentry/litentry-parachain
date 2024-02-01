@@ -4,29 +4,21 @@ import type { U8aLike } from '@polkadot/util/types';
 
 type AssertionGenericPayload = string | Array<string | number | Codec | U8aLike> | Record<string, unknown>;
 
-import vip3Json from './vip3-credential-test.json' assert { type: 'json' };
-import achainableJson from './achainable-credential-test.json' assert { type: 'json' };
-import noderealJson from './nodereal-credential-test.json' assert { type: 'json' };
-import discordJson from './discord-credential-test.json' assert { type: 'json' };
-import litentryJson from './litentry-credential-test.json' assert { type: 'json' };
-import twitterJson from './twitter-credential-test.json' assert { type: 'json' };
-import oneblockJson from './oneblock-credential-test.json' assert { type: 'json' };
-export const vip3CredentialJson = vip3Json as unknown as CredentialDefinition[];
-export const achainableCredentialJson = achainableJson as unknown as CredentialDefinition[];
-export const noderealCredentialJson = noderealJson as unknown as CredentialDefinition[];
-export const discordCredentialJson = discordJson as unknown as CredentialDefinition[];
-export const litentryCredentialJson = litentryJson as unknown as CredentialDefinition[];
-export const twitterCredentialJson = twitterJson as unknown as CredentialDefinition[];
-export const oneblockCredentialJson = oneblockJson as unknown as CredentialDefinition[];
-export const credentialsJson = [
-    ...vip3CredentialJson,
-    ...achainableCredentialJson,
-    ...noderealCredentialJson,
-    ...litentryCredentialJson,
-    ...twitterCredentialJson,
-    ...oneblockCredentialJson,
-    ...discordCredentialJson
-];
+import vip3Json from './vip3.json' assert { type: 'json' };
+import achainableJson from './achainable.json' assert { type: 'json' };
+import noderealJson from './nodereal.json' assert { type: 'json' };
+import discordJson from './discord.json' assert { type: 'json' };
+import litentryJson from './litentry.json' assert { type: 'json' };
+import twitterJson from './twitter.json' assert { type: 'json' };
+import oneblockJson from './oneblock.json' assert { type: 'json' };
+export const vip3 = vip3Json as unknown as CredentialDefinition[];
+export const achainable = achainableJson as unknown as CredentialDefinition[];
+export const nodereal = noderealJson as unknown as CredentialDefinition[];
+export const discord = discordJson as unknown as CredentialDefinition[];
+export const litentry = litentryJson as unknown as CredentialDefinition[];
+export const twitter = twitterJson as unknown as CredentialDefinition[];
+export const oneblock = oneblockJson as unknown as CredentialDefinition[];
+export const credentialsJson = [...vip3, ...achainable, ...nodereal, ...litentry, ...twitter, ...oneblock, ...discord];
 
 export interface CredentialDefinition {
     id: string;

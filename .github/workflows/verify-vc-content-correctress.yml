@@ -7,7 +7,6 @@ on:
       release-tag:
         description: 'Client-api release tag (e.g. p1.2.0-9701-w0.0.1-101)'
         required: true
-        default: 'latest'
 env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
 

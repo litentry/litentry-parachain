@@ -8,27 +8,13 @@ on:
         description: 'Client-api release tag (e.g. p1.2.0-9701-w0.0.1-101)'
         required: true
         default: 'latest'
-      credential-id:
-        description: 'credential id in tee-worker/ts-tests/integration-tests/common/credential-json/*.json  (e.g. vip3-membership-card-gold)'
-        required: true
-      address:
-        description: 'pubkey format address'
-        required: true
-      expected-value:
-        type: choice
-        description: 'expected vc values'
-        required: true
-        default: true
-        options:
-          - true
-          - false
 env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
   CREDENTIAL_ID: ${{ inputs.credential-id }}
   ADDRESS: ${{ inputs.address }}
   EXPECTED_VALUE: ${{ inputs.expected-value }}
 jobs:
-  update-publish:
+  test-data-provider:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,15 +52,15 @@ jobs:
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
 
-      - name: Run data-providers-test
+      - name: Run data-provider-test
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-data-providers-test.yml up --no-build --exit-code-from lit-data-providers-test lit-data-providers-test
+          docker compose -f docker-compose.yml -f lit-data-provider-test.yml up --no-build --exit-code-from lit-data-provider-test lit-data-provider-test
 
       - name: Stop docker containers
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-data-providers-test.yml stop
+          docker compose -f docker-compose.yml -f lit-data-provider-test.yml stop
 
       - name: Collect Docker Logs
         continue-on-error: true
@@ -88,6 +74,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-lit-data-providers-test
+          name: logs-lit-data-provider-test
           path: logs
           if-no-files-found: ignore
