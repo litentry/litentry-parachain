@@ -21,7 +21,7 @@ services:
                 condition: service_healthy
         networks:
             - litentry-test-network
-        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_integration_test.sh test-data-providers --credentialId=CREDENTIAL_ID --address=ADDRESS --expectValue=EXPECTED_VALUE 2>&1' "
+        entrypoint: "bash -c '/usr/local/worker-cli/lit_ts_dataprovider_test.sh -c $CREDENTIAL_ID -a $ADDRESS -e $EXPECTED_VALUE 2>&1' "
         restart: "no"
 networks:
     litentry-test-network:

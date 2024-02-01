@@ -17,6 +17,7 @@ on:
       expected-value:
         description: 'expected vc values'
         required: true
+        default: true
         options:
           - true
           - false
