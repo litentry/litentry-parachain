@@ -37,6 +37,7 @@ describe('Test Vc (direct invocation)', function () {
     // usage example:
     // `pnpm run test-data-providers:local --id=vip3-membership-card-gold` for single test
     // `pnpm run test-data-providers:local` for all tests
+    console.log(process.argv);
     const argv = process.argv.indexOf('--id');
     argvId = process.argv[argv + 1];
     const {
