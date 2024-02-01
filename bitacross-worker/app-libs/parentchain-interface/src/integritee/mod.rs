@@ -140,6 +140,9 @@ where
 			Some(IndirectCall::RemoveScheduledEnclave(args))
 		} else if index == metadata.batch_all_call_indexes().ok()? {
 			parse_batch_all(call_args, metadata)
+		} else if index == metadata.placeholder_call_indexes().ok()? {
+			log::error!("Able to parse placeholder pallet extrinsic");
+			None
 		} else {
 			None
 		}
