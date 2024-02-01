@@ -33,7 +33,7 @@ fn default_enclave() -> Enclave {
 	Enclave::default()
 		.with_attestation_type(AttestationType::Ignore)
 		.with_url(URL.to_vec())
-		.with_last_updated(<timestamp::Pallet<Test>>::get())
+		.with_last_seen_timestamp(pallet_timestamp::Pallet::<Test>::now())
 }
 
 fn register_quoting_enclave() {
@@ -47,7 +47,7 @@ fn register_quoting_enclave() {
 	];
 	let signer: AccountId32 = get_signer(&pubkey);
 	assert_ok!(Teebag::register_quoting_enclave(
-		RuntimeOrigin::signed(signer.clone()),
+		RuntimeOrigin::signed(signer),
 		quoting_enclave.to_vec(),
 		signature.to_vec(),
 		certificate_chain.to_vec(),
@@ -65,7 +65,7 @@ fn register_tcb_info() {
 	];
 	let signer: AccountId32 = get_signer(&pubkey);
 	assert_ok!(Teebag::register_tcb_info(
-		RuntimeOrigin::signed(signer.clone()),
+		RuntimeOrigin::signed(signer),
 		tcb_info.to_vec(),
 		signature.to_vec(),
 		certificate_chain.to_vec(),
@@ -122,7 +122,7 @@ fn register_enclave_dev_works_with_sgx_build_mode_debug() {
 
 		let enclave = default_enclave()
 			.with_mrenclave(TEST4_MRENCLAVE)
-			.with_last_updated(TEST4_TIMESTAMP)
+			.with_last_seen_timestamp(TEST4_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Debug)
 			.with_attestation_type(AttestationType::Ias);
 
@@ -201,7 +201,7 @@ fn register_dcap_enclave_works() {
 			AttestationType::Dcap(DcapProvider::Integritee)
 		));
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 1);
-		assert_eq!(Teebag::enclave_registry(&signer).unwrap().last_updated, VALID_TIMESTAMP);
+		assert_eq!(Teebag::enclave_registry(&signer).unwrap().last_seen_timestamp, VALID_TIMESTAMP);
 		assert_ok!(Teebag::unregister_enclave(RuntimeOrigin::signed(signer)));
 		assert_eq!(Teebag::enclave_count(WorkerType::Identity), 0);
 	})
@@ -235,7 +235,7 @@ fn register_enclave_prod_works_with_sgx_build_mode_debug() {
 
 		let enclave = default_enclave()
 			.with_mrenclave(TEST4_MRENCLAVE)
-			.with_last_updated(TEST4_TIMESTAMP)
+			.with_last_seen_timestamp(TEST4_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Debug)
 			.with_attestation_type(AttestationType::Ias);
 
@@ -269,7 +269,7 @@ fn register_enclave_prod_works_with_sgx_build_mode_production() {
 
 		let enclave = default_enclave()
 			.with_mrenclave(TEST8_MRENCLAVE)
-			.with_last_updated(TEST8_TIMESTAMP)
+			.with_last_seen_timestamp(TEST8_TIMESTAMP)
 			.with_sgx_build_mode(SgxBuildMode::Production)
 			.with_attestation_type(AttestationType::Ias);
 

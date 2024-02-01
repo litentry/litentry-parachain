@@ -370,8 +370,7 @@ where
 		}
 
 		if !pallet_teebag::EnclaveRegistry::<T>::contains_key(signer.clone()) {
-			let mut enclave = pallet_teebag::Enclave::default();
-			enclave.mrenclave = TEST8_MRENCLAVE;
+			let enclave = pallet_teebag::Enclave::default().with_mrenclave(TEST8_MRENCLAVE);
 			assert_ok!(pallet_teebag::Pallet::<T>::add_enclave(&signer, &enclave));
 		}
 		Ok(frame_system::RawOrigin::Signed(signer).into())

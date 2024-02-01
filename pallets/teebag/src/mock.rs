@@ -17,7 +17,7 @@
 #![allow(dead_code, unused_imports, const_item_mutation)]
 use crate::{self as pallet_teebag, OperationalMode};
 use frame_support::{
-	assert_ok,
+	assert_ok, construct_runtime,
 	pallet_prelude::GenesisBuild,
 	parameter_types,
 	traits::{OnFinalize, OnInitialize},
@@ -50,16 +50,16 @@ pub type SignedExtra = (
 	frame_system::CheckWeight<Test>,
 );
 
-frame_support::construct_runtime!(
+construct_runtime!(
 	pub enum Test where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent},
-		Teebag: pallet_teebag::{Pallet, Call, Storage, Event<T>},
+		System: frame_system,
+		Balances: pallet_balances,
+		Timestamp: pallet_timestamp,
+		Teebag: pallet_teebag,
 	}
 );
 
@@ -121,7 +121,7 @@ parameter_types! {
 
 pub type Moment = u64;
 
-impl timestamp::Config for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = Moment;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -169,7 +169,7 @@ pub fn new_test_ext(is_dev_mode: bool) -> sp_io::TestExternalities {
 
 /// Helper method for the OnTimestampSet to be called
 pub fn set_timestamp(t: u64) {
-	let _ = timestamp::Pallet::<Test>::set(RuntimeOrigin::none(), t);
+	let _ = pallet_timestamp::Pallet::<Test>::set(RuntimeOrigin::none(), t);
 }
 
 /// Run until a particular block.
