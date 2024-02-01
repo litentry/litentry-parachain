@@ -27,7 +27,8 @@ use crate::{
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
 		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
@@ -70,6 +71,7 @@ use itp_settings::files::{
 };
 use itp_sgx_crypto::{
 	get_aes_repository, get_ed25519_repository, get_rsa3072_repository, key_repository::AccessKey,
+	secp256k1::create_secp256k1_repository,
 };
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
@@ -98,6 +100,18 @@ pub(crate) fn init_enclave(
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);
+
+	let bitcoin_key_repository =
+		Arc::new(create_secp256k1_repository(base_dir.clone(), "bitcoin")?);
+	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.initialize(bitcoin_key_repository.clone());
+	let bitcoin_key = bitcoin_key_repository.retrieve_key()?;
+	info!("[Enclave initialized] Bitcoin public key raw : {:?}", bitcoin_key.public.serialize());
+
+	let ethereum_key_repository =
+		Arc::new(create_secp256k1_repository(base_dir.clone(), "ethereum")?);
+	GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.initialize(ethereum_key_repository.clone());
+	let ethereum_key = ethereum_key_repository.retrieve_key()?;
+	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public.serialize());
 
 	let shielding_key_repository = Arc::new(get_rsa3072_repository(base_dir.clone())?);
 	GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.initialize(shielding_key_repository.clone());
