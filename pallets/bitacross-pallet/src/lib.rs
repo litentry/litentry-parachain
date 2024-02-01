@@ -40,7 +40,6 @@ pub use teerex_primitives::ShardIdentifier;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::{ShardIdentifier, Vec, H256};
-	use core_primitives::{ErrorDetail, IMPError, Identity};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -68,7 +67,7 @@ pub mod pallet {
 		/// add an account to the delegatees
 		#[pallet::call_index(0)]
 		#[pallet::weight(10000000)]
-		pub fn add_delegatee(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
+		pub fn placeholder(origin: OriginFor<T>, account: T::AccountId) -> DispatchResult {
 			Ok(())
 		}
 	}
