@@ -15,6 +15,7 @@ on:
         description: 'pubkey format address'
         required: true
       expected-value:
+        type: choice
         description: 'expected vc values'
         required: true
         default: true
