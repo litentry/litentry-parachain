@@ -16,7 +16,7 @@
         "network": "ethereum",
         "mockDid": "litentry:evm:0xdB01C6a38E780a2644b3B26961b14313b019714a",
         "mockWeb3Network": "bsc,ethereum",
-        "expectedCredentialValue": false
+        "expectedCredentialValue": true
     },
     {
         "id": "contract-creator",
