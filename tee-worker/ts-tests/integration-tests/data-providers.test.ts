@@ -82,8 +82,8 @@ describe('Test Vc (direct invocation)', function () {
         const assertion = {
             [credentialDefinitions.assertion.id]: credentialDefinitions.assertion.payload,
         };
-        console.log("vc description: ", credentialDefinitions.description);
-        
+        console.log('vc description: ', credentialDefinitions.description);
+
         console.log('assertion: ', assertion);
 
         let currentNonce = (await getSidechainNonce(context, teeShieldingKey, substrateIdentities[index])).toNumber();
@@ -109,7 +109,11 @@ describe('Test Vc (direct invocation)', function () {
         const vcPayloadJson = JSON.parse(decryptVcPayload);
         console.log('vcPayload: ', vcPayloadJson);
 
-        assert.equal(vcPayloadJson.credentialSubject.values[0], credentialDefinitions.expectedCredentialValue);
+        assert.equal(
+            vcPayloadJson.credentialSubject.values[0],
+            credentialDefinitions.expectedCredentialValue,
+            "credential value doesn't match, please check the credential json expectedCredentialValue"
+        );
     }
 
     if (argvId && credentialsJson.find((item) => item.id === argvId)) {

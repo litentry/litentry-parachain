@@ -21,11 +21,11 @@ export const oneblockCredentialJson = oneblockJson as unknown as CredentialDefin
 export const credentialsJson = [
     ...vip3CredentialJson,
     // ...achainableCredentialJson,
-    ...noderealCredentialJson,
-    ...litentryCredentialJson,
-    ...twitterCredentialJson,
-    ...oneblockCredentialJson,
-    ...discordCredentialJson
+    // ...noderealCredentialJson,
+    // ...litentryCredentialJson,
+    // ...twitterCredentialJson,
+    // ...oneblockCredentialJson,
+    // ...discordCredentialJson
 ];
 
 export interface CredentialDefinition {
