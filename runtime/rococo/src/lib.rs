@@ -1032,6 +1032,13 @@ impl pallet_identity_management::Config for Runtime {
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
 
+// NOTE: Use this for bitacross-pallet
+impl pallet_bitacross::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
+	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+}
+
 impl pallet_group::Config<IMPExtrinsicWhitelistInstance> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type GroupManagerOrigin = EnsureRootOrAllCouncil;
@@ -1250,6 +1257,7 @@ construct_runtime! {
 		VCManagement: pallet_vc_management = 66,
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
+		BitAcross: pallet_bitacross = 70,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
