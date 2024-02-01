@@ -1,4 +1,4 @@
-name: Verify VC content correctress
+name: Verify the correctness of VC content
 
 on:
   workflow_dispatch:
