@@ -78,4 +78,4 @@ pnpm run build
 
 cd /ts-tests
 pnpm install
-pnpm --filter integration-tests run $TEST:staging  --credentialId=$credentialId --address=$address --expectValue=$expectValue
+pnpm --filter integration-tests run test-data-providers:staging  --credentialId=$credentialId --address=$address --expectValue=$expectValue
