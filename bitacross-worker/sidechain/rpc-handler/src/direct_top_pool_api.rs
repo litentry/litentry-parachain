@@ -342,7 +342,7 @@ async fn request_bit_across_inner(params: Params) -> Result<RpcReturnValue, Stri
 	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
 
 	// TODO: Needs to be refactored to use AESRequest
-	bit_across_request_sender.send(BitAcrossRequest { sender, request: vec![] })?;
+	bit_across_request_sender.send(BitAcrossRequest { sender, request })?;
 
 	// we only expect one response, hence no loop
 	match receiver.await {

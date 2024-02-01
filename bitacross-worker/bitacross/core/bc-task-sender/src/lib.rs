@@ -19,6 +19,7 @@ pub use crate::sgx_reexport_prelude::*;
 use codec::{Decode, Encode};
 use futures::channel::oneshot;
 use lazy_static::lazy_static;
+use litentry_primitives::AesRequest;
 use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
@@ -38,7 +39,7 @@ use std::{
 #[derive(Debug)]
 pub struct BitAcrossRequest {
 	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
-	pub request: Vec<u8>,
+	pub request: AesRequest,
 }
 
 #[derive(Encode, Decode, Clone)]

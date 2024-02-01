@@ -17,6 +17,7 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 pub use crate::sgx_reexport_prelude::*;
 
 use bc_task_sender::init_bit_across_task_sender_storage;
+use litentry_primitives::AesRequest;
 use log::*;
 use std::{
 	string::{String, ToString},
@@ -41,7 +42,7 @@ pub fn run_bit_across_handler_runner() {
 	warn!("bit_across_task_receiver loop terminated");
 }
 
-pub fn handle_request(_request: &mut Vec<u8>) -> Result<Vec<u8>, String>
+pub fn handle_request(_request: &mut AesRequest) -> Result<Vec<u8>, String>
 where
 {
 	Err("Not Implemented".to_string())

@@ -18,15 +18,20 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 lazy_static = { version = "1.1.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 
+# litentry primities 
+litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
+
 [features]
 default = ["std"]
 sgx = [
     "futures_sgx",
     "sgx_tstd",
     "futures_sgx",
+    "litentry-primitives/sgx",
 ]
 std = [
     "futures",
     "log/std",
     "futures",
+    "litentry-primitives/std",
 ]
