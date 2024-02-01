@@ -4,12 +4,27 @@ name: Release Ts API Package
 on:
   workflow_dispatch:
     inputs:
-      release-tag:
-        description: "Client-api release tag (e.g. p1.2.0-9701-w0.0.1-101)"
+      docker-tag:
+        description: 'Client-api release tag (e.g. p1.2.0-9701-w0.0.1-101)'
         required: true
+        default: 'latest'
+      credential-id:
+        description: 'credential id in tee-worker/ts-tests/integration-tests/common/credential-json/*.json  (e.g. vip3-membership-card-gold)'
+        required: true
+      address:
+        description: 'pubkey format address'
+        required: true
+      expected-value:
+        description: 'expected vc values'
+        required: true
+        options:
+          - true
+          - false
 env:
   NODE_AUTH_TOKEN: ${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}
-
+  CREDENTIAL_ID: ${{ inputs.credential-id }}
+  ADDRESS: ${{ inputs.address }}
+  EXPECTED_VALUE: ${{ inputs.expected-value }}
 jobs:
   update-publish:
     runs-on: ubuntu-latest
@@ -19,8 +34,8 @@ jobs:
       - name: Set ENV
         run: |
           # extracting parachain version and worker version from release tag
-          echo "PARACHAIN_TAG=$(echo ${{inputs.release-tag}} | sed 's/p/v/;s/\(.*\)-w.*/\1/')" >> $GITHUB_ENV
-          echo "WORKER_TAG=$(echo ${{inputs.release-tag}} | sed 's/.*\(w.*\)/\1/;s/w/v/')" >> $GITHUB_ENV
+          echo "PARACHAIN_TAG=$(echo ${{inputs.docker-tag}} | sed 's/p/v/;s/\(.*\)-w.*/\1/')" >> $GITHUB_ENV
+          echo "WORKER_TAG=$(echo ${{inputs.docker-tag}} | sed 's/.*\(w.*\)/\1/;s/w/v/')" >> $GITHUB_ENV
 
       - name: Pull litentry image optionally
         run: |
@@ -49,46 +64,15 @@ jobs:
           cd tee-worker/docker
           docker compose -f litentry-parachain.build.yml build
 
-      - name: Update metadata and generate types
+      - name: Run data-providers-test
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml up --no-build --exit-code-from lit-ts-api-package-build lit-ts-api-package-build
-
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: https://npm.pkg.github.com/
-
-      - name: Setup npm config
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=\${{ secrets.RELEASE_TS_API_PACKAGE_TOKEN }}" > .npmrc
-          npm config set @litentry:registry https://npm.pkg.github.com
-
-      - name: Publish parachain API and sidechain API
-        working-directory: ./tee-worker/client-api
-        run: |
-          apis=("parachain-api" "sidechain-api")
-          for api in "${apis[@]}"; do
-            cd "$api"
-
-            # Check if dist and build files exist
-            if [ -d "dist" ] && [ -d "build" ]; then
-              echo "$api dist and build files exist."
-            else
-              echo "$api dist and build files do not exist. Publishing failed."
-              exit 1
-            fi
-            npm publish --tag ${{ inputs.release-tag }}
-
-            echo "------------------------$api published------------------------"
-            cd ..
-          done
+          docker compose -f docker-compose.yml -f lit-data-providers-test.yml up --no-build --exit-code-from lit-data-providers-test lit-data-providers-test
 
       - name: Stop docker containers
         run: |
           cd tee-worker/docker
-          docker compose -f docker-compose.yml -f lit-ts-api-package-build.yml stop
+          docker compose -f docker-compose.yml -f lit-data-providers-test.yml stop
 
       - name: Collect Docker Logs
         continue-on-error: true
@@ -102,6 +86,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-lit-ts-api-package-build
+          name: logs-lit-data-providers-test
           path: logs
           if-no-files-found: ignore
