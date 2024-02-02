@@ -141,8 +141,6 @@ pub mod pallet {
 		UnexpectedWorkerType,
 		/// Can not found the desired scheduled enclave.
 		ScheduledEnclaveNotExist,
-		/// Scheduled enclave isn't applicable for current worker type.
-		ScheduledEnclaveNotApplicable,
 		/// Enclave not in the scheduled list, therefore unexpected.
 		EnclaveNotInSchedule,
 		/// The provided collateral data is invalid
@@ -405,7 +403,6 @@ pub mod pallet {
 			mrenclave: MrEnclave,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
-			ensure!(worker_type.is_sidechain(), Error::<T>::ScheduledEnclaveNotApplicable,);
 			ScheduledEnclave::<T>::insert((worker_type, sidechain_block_number), mrenclave);
 			Self::deposit_event(Event::ScheduledEnclaveSet {
 				worker_type,
@@ -423,7 +420,6 @@ pub mod pallet {
 			sidechain_block_number: SidechainBlockNumber,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
-			ensure!(worker_type.is_sidechain(), Error::<T>::ScheduledEnclaveNotApplicable,);
 			ensure!(
 				ScheduledEnclave::<T>::contains_key((worker_type, sidechain_block_number)),
 				Error::<T>::ScheduledEnclaveNotExist
