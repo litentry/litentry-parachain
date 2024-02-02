@@ -50,7 +50,7 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
-use bc_task_receiver::{run_bit_across_handler_runner, StfTaskContext};
+use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use core::str::FromStr;
 use ita_stf::{Getter, TrustedCallSigned};
@@ -263,7 +263,7 @@ fn run_bit_across_handler() -> Result<(), Error> {
 		author_api.clone(),
 	));
 
-	let stf_task_context = StfTaskContext::new(
+	let stf_task_context = BitAcrossTaskContext::new(
 		shielding_key_repository,
 		author_api,
 		stf_enclave_signer,
