@@ -19,22 +19,21 @@
         "expectedCredentialValue": true
     },
     {
-        "id": "contract-creator",
-        "name": "Ethereum Contract Creator",
-        "description": "You are a deployer of a smart contract on these networks: Ethereum",
+        "id": "uniswap-v2-v3-user",
+        "name": "Uniswap V2/V3 User",
+        "description": "You are a trader or liquidity provider of Uniswap V2 or V3\nUniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f\nUniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984",
         "assertion": {
             "id": "Achainable",
             "payload": {
-                "Amount": {
-                    "name": "Created over {amount} contracts",
-                    "chain": "Ethereum",
-                    "amount": "0"
+                "Basic": {
+                    "name": "Uniswap V2/V3 user",
+                    "chain": "Ethereum"
                 }
             }
         },
         "dataProvider": "achainable",
         "network": "ethereum",
-        "mockDid": "litentry:evm:0x11fBffc1F3dF23E7219e2B3036fe2A12C10cD3AD",
+        "mockDid": "litentry:evm:0x7031a420603a83EFBE85503e5A4BF562121A85ab",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
@@ -65,6 +64,34 @@
         "mockDid": "litentry:evm:0x6887246668a3b87F54DeB3b94Ba47a6f63F32985",
         "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": false
+    },
+    {
+        "id": "wbtc-holder",
+        "name": "WBTC Holding Time",
+        "description": "The length of time a user continues to hold WBTC token (threshold WBTC > 0.001)",
+        "assertion": {
+            "id": "A10",
+            "payload": 0.001
+        },
+        "dataProvider": "achainable",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x5680b3FcBB64FB161adbD347BC92e8DDEDA97008",
+        "mockWeb3Network": "bsc,ethereum",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "lit-holder",
+        "name": "LIT Holding Time",
+        "description": "The length of time a user continues to hold LIT token (threshold LIT > 10)",
+        "assertion": {
+            "id": "A4",
+            "payload": "10"
+        },
+        "dataProvider": "achainable",
+        "network": "litentry",
+        "mockDid": "litentry:substrate:0x6c7fdb8b8eaad1af9faaf918493606e1a3e8c20f9d852773ab5ebfbb93bd1948",
+        "mockWeb3Network": "litentry,polkadot",
+        "expectedCredentialValue": true
     },
     {
         "id": "ethereum-account-class-of-year",
@@ -100,20 +127,6 @@
         "expectedCredentialValue": false
     },
     {
-        "id": "lit-holder",
-        "name": "LIT Holding Time",
-        "description": "The length of time a user continues to hold LIT token (threshold LIT > 10)",
-        "assertion": {
-            "id": "A4",
-            "payload": "10"
-        },
-        "dataProvider": "achainable",
-        "network": "litentry",
-        "mockDid": "litentry:substrate:0x6c7fdb8b8eaad1af9faaf918493606e1a3e8c20f9d852773ab5ebfbb93bd1948",
-        "mockWeb3Network": "litentry,polkadot",
-        "expectedCredentialValue": true
-    },
-    {
         "id": "litentry-transaction-count",
         "name": "LIT Transaction Count",
         "description": "Your total transaction amount on these Substrate networks: Litentry, Litmus, Ethereum.",
@@ -139,6 +152,26 @@
         "network": "litentry",
         "mockDid": "litentry:substrate:0x5FeEE1E799015A22EbD216d43484FCB3BA88de20",
         "mockWeb3Network": "litentry,polkadot",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "contract-creator",
+        "name": "Ethereum Contract Creator",
+        "description": "You are a deployer of a smart contract on these networks: Ethereum",
+        "assertion": {
+            "id": "Achainable",
+            "payload": {
+                "Amount": {
+                    "name": "Created over {amount} contracts",
+                    "chain": "Ethereum",
+                    "amount": "0"
+                }
+            }
+        },
+        "dataProvider": "achainable",
+        "network": "ethereum",
+        "mockDid": "litentry:evm:0x11fBffc1F3dF23E7219e2B3036fe2A12C10cD3AD",
+        "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
     {
@@ -199,39 +232,6 @@
         "network": "litentry",
         "mockDid": "litentry:substrate:0xc0103c4b56ce752d05b16a88260e3a9e2c44306602a74c5edd1cd4ff56356f7c",
         "mockWeb3Network": "litentry,polkadot",
-        "expectedCredentialValue": true
-    },
-    {
-        "id": "uniswap-v2-v3-user",
-        "name": "Uniswap V2/V3 User",
-        "description": "You are a trader or liquidity provider of Uniswap V2 or V3\nUniswap V2 Factory Contract: 0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f\nUniswap V3 Factory Contract: 0x1f98431c8ad98523631ae4a59f267346ea31f984",
-        "assertion": {
-            "id": "Achainable",
-            "payload": {
-                "Basic": {
-                    "name": "Uniswap V2/V3 user",
-                    "chain": "Ethereum"
-                }
-            }
-        },
-        "dataProvider": "achainable",
-        "network": "ethereum",
-        "mockDid": "litentry:evm:0x7031a420603a83EFBE85503e5A4BF562121A85ab",
-        "mockWeb3Network": "bsc,ethereum",
-        "expectedCredentialValue": true
-    },
-    {
-        "id": "wbtc-holder",
-        "name": "WBTC Holding Time",
-        "description": "The length of time a user continues to hold WBTC token (threshold WBTC > 0.001)",
-        "assertion": {
-            "id": "A10",
-            "payload": 0.001
-        },
-        "dataProvider": "achainable",
-        "network": "ethereum",
-        "mockDid": "litentry:evm:0x5680b3FcBB64FB161adbD347BC92e8DDEDA97008",
-        "mockWeb3Network": "bsc,ethereum",
         "expectedCredentialValue": true
     },
     {
