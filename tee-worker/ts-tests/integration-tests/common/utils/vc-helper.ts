@@ -60,13 +60,6 @@ export const defaultAssertions = [
             A8: ['Litentry'],
         },
     },
-    {
-        description:
-            'The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.',
-        assertion: {
-            A20: 'A20',
-        },
-    },
 
     // Achainable
     // https://www.notion.so/web3builders/Assertion-interface-9126ba85a925417a922f2c6ae5d62e87
