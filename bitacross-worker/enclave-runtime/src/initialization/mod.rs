@@ -228,6 +228,8 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
+	std::thread::spawn(move || run_bit_across_handler().unwrap());
+
 	Ok(())
 }
 
@@ -268,13 +270,7 @@ fn run_bit_across_handler() -> Result<(), Error> {
 		state_handler,
 		ocall_api,
 	);
-	let extrinsic_factory = get_extrinsic_factory_from_integritee_solo_or_parachain()?;
-	let node_metadata_repo = get_node_metadata_repository_from_integritee_solo_or_parachain()?;
-	run_bit_across_handler_runner(
-		Arc::new(stf_task_context),
-		extrinsic_factory,
-		node_metadata_repo,
-	);
+	run_bit_across_handler_runner(Arc::new(stf_task_context));
 	Ok(())
 }
 
@@ -344,8 +340,6 @@ pub(crate) fn init_enclave_sidechain_components(
 	} else {
 		GLOBAL_SIDECHAIN_FAIL_SLOT_ON_DEMAND_COMPONENT.initialize(Arc::new(None));
 	}
-
-	std::thread::spawn(move || run_bit_across_handler().unwrap());
 
 	Ok(())
 }

@@ -164,10 +164,8 @@ where
 	}
 }
 
-pub fn run_bit_across_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
+pub fn run_bit_across_handler_runner<ShieldingKeyRepository, A, S, H, O>(
 	_context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
-	_extrinsic_factory: Arc<Z>,
-	_node_metadata_repo: Arc<N>,
 ) where
 	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
@@ -177,9 +175,6 @@ pub fn run_bit_across_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
 	O: EnclaveOnChainOCallApi + EnclaveMetricsOCallApi + EnclaveAttestationOCallApi + 'static,
-	Z: CreateExtrinsics + Send + Sync + 'static,
-	N: AccessNodeMetadata + Send + Sync + 'static,
-	N::MetadataType: NodeMetadataTrait,
 {
 	let bit_across_task_receiver = init_bit_across_task_sender_storage();
 	let n_workers = 2;
