@@ -9340,6 +9340,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-teebag"
+version = "0.1.0"
+dependencies = [
+ "base64 0.13.1",
+ "chrono 0.4.26",
+ "der 0.6.1",
+ "frame-support",
+ "frame-system",
+ "hex 0.4.3",
+ "log 0.4.20",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "ring 0.16.20",
+ "rustls-webpki",
+ "scale-info",
+ "serde 1.0.193",
+ "serde_json 1.0.103",
+ "sp-core",
+ "sp-io 7.0.0 (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.42)",
+ "sp-runtime",
+ "sp-std 5.0.0",
+ "x509-cert",
+]
+
+[[package]]
 name = "pallet-teeracle"
 version = "0.1.0"
 dependencies = [
@@ -11210,6 +11236,7 @@ dependencies = [
  "pallet-session",
  "pallet-sidechain",
  "pallet-sudo",
+ "pallet-teebag",
  "pallet-teeracle",
  "pallet-teerex",
  "pallet-timestamp",
@@ -11338,6 +11365,7 @@ dependencies = [
  "pallet-group",
  "pallet-membership",
  "pallet-multisig",
+ "pallet-teebag",
  "pallet-teerex",
  "pallet-transaction-payment",
  "pallet-treasury",
