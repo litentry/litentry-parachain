@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ######## Worker Feature Settings ########
-# Set sidechain as default feature mode
+# Set offchain-worker as default feature mode
 WORKER_MODE ?= offchain-worker
 
 Rust_Enclave_Name := libenclave.a
