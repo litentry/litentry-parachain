@@ -486,7 +486,6 @@ pub mod pallet {
 					{
 						return Err(Error::<T>::InvalidSgxMode.into())
 					}
-					// TODO: shall we take the sidechain number into consideration?
 					ensure!(
 						ScheduledEnclave::<T>::iter_values().any(|m| m == enclave.mrenclave),
 						Error::<T>::EnclaveNotInSchedule
