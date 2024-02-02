@@ -265,7 +265,6 @@ fn run_bit_across_handler() -> Result<(), Error> {
 
 	let stf_task_context = BitAcrossTaskContext::new(
 		shielding_key_repository,
-		author_api,
 		stf_enclave_signer,
 		state_handler,
 		ocall_api,

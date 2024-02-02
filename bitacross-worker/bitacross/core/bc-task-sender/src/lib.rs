@@ -20,7 +20,6 @@ use codec::{Decode, Encode};
 use futures::channel::oneshot;
 use lazy_static::lazy_static;
 use litentry_primitives::AesRequest;
-use log::*;
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 #[cfg(feature = "sgx")]

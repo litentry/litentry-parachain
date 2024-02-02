@@ -19,11 +19,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 pub use crate::sgx_reexport_prelude::*;
 
 use bc_task_sender::init_bit_across_task_sender_storage;
-use futures::executor;
 use litentry_primitives::AesRequest;
 use log::*;
 use std::{
-	format,
 	string::{String, ToString},
 	sync::Arc,
 	vec::Vec,
@@ -35,15 +33,8 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_top_pool_author::traits::AuthorApi;
-use itp_types::ShardIdentifier;
 
-use codec::Encode;
-use ita_sgx_runtime::Hash;
-use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation, H256};
-use itp_extrinsics_factory::CreateExtrinsics;
-use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
-use itp_types::RsaRequest;
+use ita_stf::TrustedCallSigned;
 
 #[derive(Debug, thiserror::Error, Clone)]
 pub enum Error {
@@ -59,7 +50,6 @@ pub enum Error {
 
 pub struct BitAcrossTaskContext<
 	ShieldingKeyRepository,
-	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
@@ -68,7 +58,6 @@ pub struct BitAcrossTaskContext<
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub shielding_key: Arc<ShieldingKeyRepository>,
-	author_api: Arc<A>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
@@ -76,11 +65,10 @@ pub struct BitAcrossTaskContext<
 
 impl<
 		ShieldingKeyRepository,
-		A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter>,
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-	> BitAcrossTaskContext<ShieldingKeyRepository, A, S, H, O>
+	> BitAcrossTaskContext<ShieldingKeyRepository, S, H, O>
 where
 	ShieldingKeyRepository: AccessKey,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
@@ -88,22 +76,20 @@ where
 {
 	pub fn new(
 		shielding_key: Arc<ShieldingKeyRepository>,
-		author_api: Arc<A>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
 	) -> Self {
-		Self { shielding_key, author_api, enclave_signer, state_handler, ocall_api }
+		Self { shielding_key, enclave_signer, state_handler, ocall_api }
 	}
 }
 
-pub fn run_bit_across_handler_runner<ShieldingKeyRepository, A, S, H, O>(
-	_context: Arc<BitAcrossTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+pub fn run_bit_across_handler_runner<ShieldingKeyRepository, S, H, O>(
+	_context: Arc<BitAcrossTaskContext<ShieldingKeyRepository, S, H, O>>,
 ) where
 	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
 		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
-	A: AuthorApi<Hash, Hash, TrustedCallSigned, Getter> + Send + Sync + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
 	H: HandleState + Send + Sync + 'static,
 	H::StateT: SgxExternalitiesTrait,
