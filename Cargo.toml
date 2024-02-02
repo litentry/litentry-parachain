@@ -10,6 +10,7 @@ members = [
     'pallets/identity-management',
     'pallets/vc-management',
     'pallets/sidechain',
+    'pallets/teebag',
     'pallets/teeracle',
     'pallets/teerex',
     'pallets/teerex/sgx-verify',
