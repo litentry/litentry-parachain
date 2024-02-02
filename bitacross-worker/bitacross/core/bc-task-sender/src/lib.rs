@@ -35,7 +35,6 @@ use std::{
 	vec::Vec,
 };
 
-// TODO: Request should be changed to AesRequest
 #[derive(Debug)]
 pub struct BitAcrossRequest {
 	pub sender: oneshot::Sender<Result<Vec<u8>, String>>,
@@ -70,8 +69,6 @@ impl Default for BitAcrossRequestSender {
 
 impl BitAcrossRequestSender {
 	pub fn send(&self, request: BitAcrossRequest) -> Result<(), String> {
-		debug!("send vc request: {:?}", request);
-
 		// Acquire lock on extrinsic sender
 		let mutex_guard = GLOBAL_BIT_ACROSS_TASK_SENDER.lock().unwrap();
 		let bit_across_task_sender = mutex_guard.clone().unwrap();
@@ -109,6 +106,6 @@ impl BitAcrossTaskSender {
 	fn send(&self, request: BitAcrossRequest) -> Result<(), String> {
 		self.sender
 			.send(request)
-			.map_err(|e| format!("Failed to send message to VC Handler: {:?}", e))
+			.map_err(|e| format!("Failed to send message to BitAcross Handler: {:?}", e))
 	}
 }
