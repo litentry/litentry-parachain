@@ -28,7 +28,7 @@
 
 ######## Worker Feature Settings ########
 # Set sidechain as default feature mode
-WORKER_MODE ?= offchain-worker
+WORKER_MODE ?= sidechain
 
 Rust_Enclave_Name := libenclave.a
 Rust_Enclave_Files := $(wildcard src/*.rs) $(wildcard ../stf/src/*.rs)
