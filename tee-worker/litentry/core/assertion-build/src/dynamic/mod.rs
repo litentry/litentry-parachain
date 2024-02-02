@@ -175,7 +175,7 @@ pub mod tests {
 
 		let repository = InMemorySmartContractRepo::new();
 
-		let credential = build(&request, hash(0), repository).unwrap();
+		let credential = build(&request, hash(1), repository).unwrap();
 
 		// assert!(credential.credential_subject.values.iter().all(|v| v == true))
 	}
