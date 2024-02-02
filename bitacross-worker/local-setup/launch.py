@@ -102,6 +102,26 @@ def check_all_ports_and_reallocate():
             reallocate_ports(x, os.environ.get(x))
 
     print("All preliminary port checks completed")
+    
+# Generate `config.local.json` used by parachain ts utils
+def generate_config_local_json(parachain_dir):
+    data = {
+        "eth_endpoint": "http://127.0.0.1:8545",
+        "eth_address": "[0x4d88dc5d528a33e4b8be579e9476715f60060582]",
+        "private_key": "0xe82c0c4259710bb0d6cf9f9e8d0ad73419c1278a14d375e5ca691e7618103011",
+        "ocw_account": "5FEYX9NES9mAJt1Xg4WebmHWywxyeGQK8G3oEBXtyfZrRePX",
+        "genesis_state_path": parachain_dir+"/genesis-state",
+        "genesis_wasm_path": parachain_dir+"/genesis-wasm",
+        "parachain_ws": "ws://localhost:" + os.environ.get("CollatorWSPort", "9944"),
+        "relaychain_ws": "ws://localhost:" + os.environ.get("AliceWSPort", "9946"),
+        "bridge_path": "/tmp/parachain_dev/chainbridge",
+    }
+    config_file = "../ts-tests/config.local.json"
+
+    with open(config_file, "w") as f:
+        json.dump(data, f, indent=4)
+
+    print("Successfully written ", config_file)
 
 
 def run_node(config, i: int):
@@ -122,6 +142,7 @@ def setup_environment(offset, config, parachain_dir):
     load_dotenv(".env.dev")
     offset_port(offset)
     check_all_ports_and_reallocate()
+    generate_config_local_json(parachain_dir)
 
     # TODO: only works for single worker for now
     for p in [
