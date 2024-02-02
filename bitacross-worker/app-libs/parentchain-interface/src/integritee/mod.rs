@@ -19,7 +19,11 @@ mod event_filter;
 mod event_handler;
 mod extrinsic_parser;
 
-use crate::{decode_and_log_error, integritee::extrinsic_parser::ParseExtrinsic};
+use crate::{
+	decode_and_log_error,
+	indirect_calls::{RemoveScheduledEnclaveArgs, UpdateScheduledEnclaveArgs},
+	integritee::extrinsic_parser::ParseExtrinsic,
+};
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 pub use event_filter::FilterableEvents;
@@ -41,6 +45,10 @@ use sp_core::crypto::AccountId32;
 pub enum IndirectCall {
 	#[codec(index = 0)]
 	BitAcross(BitAcrossArgs),
+	#[codec(index = 1)]
+	UpdateScheduledEnclave(UpdateScheduledEnclaveArgs),
+	#[codec(index = 2)]
+	RemoveScheduledEnclave(RemoveScheduledEnclaveArgs),
 }
 
 impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
@@ -51,6 +59,10 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 		trace!("dispatching indirect call {:?}", self);
 		match self {
 			IndirectCall::BitAcross(bitacross_args) => bitacross_args.dispatch(executor, ()),
+			IndirectCall::UpdateScheduledEnclave(update_scheduled_enclave_args) =>
+				update_scheduled_enclave_args.dispatch(executor, ()),
+			IndirectCall::RemoveScheduledEnclave(remove_scheduled_enclave_args) =>
+				remove_scheduled_enclave_args.dispatch(executor, ()),
 		}
 	}
 }
@@ -107,6 +119,12 @@ where
 		if index == metadata.placeholder_call_indexes().ok()? {
 			let args = decode_and_log_error::<BitAcrossArgs>(call_args)?;
 			Some(IndirectCall::BitAcross(args))
+		} else if index == metadata.update_scheduled_enclave().ok()? {
+			let args = decode_and_log_error::<UpdateScheduledEnclaveArgs>(call_args)?;
+			Some(IndirectCall::UpdateScheduledEnclave(args))
+		} else if index == metadata.remove_scheduled_enclave().ok()? {
+			let args = decode_and_log_error::<RemoveScheduledEnclaveArgs>(call_args)?;
+			Some(IndirectCall::RemoveScheduledEnclave(args))
 		} else {
 			None
 		}
