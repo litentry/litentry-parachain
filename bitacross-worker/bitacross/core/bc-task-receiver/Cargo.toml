@@ -88,4 +88,5 @@ std = [
     "itp-types/std",
     "itp-utils/std",
     "futures",
+    "thiserror",
 ]

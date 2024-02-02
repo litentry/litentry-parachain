@@ -25,7 +25,7 @@ use rust_base58::base58::FromBase58;
 #[cfg(feature = "sgx")]
 use base58::FromBase58;
 
-use bc_task_sender::{BitAcrossRequest, BitAcrossRequestSender, BitAcrossTaskSender};
+use bc_task_sender::{BitAcrossRequest, BitAcrossRequestSender};
 use codec::{Decode, Encode};
 use futures::channel::oneshot;
 use itp_rpc::RpcReturnValue;

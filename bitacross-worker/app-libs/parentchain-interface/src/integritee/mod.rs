@@ -19,13 +19,7 @@ mod event_filter;
 mod event_handler;
 mod extrinsic_parser;
 
-use crate::{
-	decode_and_log_error,
-	indirect_calls::{
-		InvokeArgs, RemoveScheduledEnclaveArgs, ShieldFundsArgs, UpdateScheduledEnclaveArgs,
-	},
-	integritee::extrinsic_parser::ParseExtrinsic,
-};
+use crate::{decode_and_log_error, integritee::extrinsic_parser::ParseExtrinsic};
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 pub use event_filter::FilterableEvents;
@@ -39,10 +33,8 @@ use itc_parentchain_indirect_calls_executor::{
 };
 use itp_node_api::metadata::NodeMetadataTrait;
 use itp_stf_primitives::traits::IndirectExecutor;
-use itp_types::CallIndex;
 use log::trace;
 use sp_core::crypto::AccountId32;
-use sp_std::vec::Vec;
 
 /// The default indirect call (extrinsic-triggered) of the Integritee-Parachain.
 #[derive(Debug, Clone, Encode, Decode, Eq, PartialEq)]

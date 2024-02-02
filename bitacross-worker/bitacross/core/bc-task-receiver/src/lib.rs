@@ -35,21 +35,12 @@ use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, Shieldin
 use itp_sgx_externalities::SgxExternalitiesTrait;
 use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
-use itp_storage::{storage_map_key, storage_value_key, StorageHasher};
 use itp_top_pool_author::traits::AuthorApi;
-use itp_types::{
-	parentchain::ParentchainId, AccountId, BlockNumber as SidechainBlockNumber, ShardIdentifier,
-};
+use itp_types::ShardIdentifier;
 
-use codec::{Decode, Encode};
-use frame_support::{ensure, sp_runtime::traits::One};
-use ita_sgx_runtime::{BlockNumber, Hash, Runtime};
-#[cfg(not(feature = "production"))]
-use ita_stf::helpers::ensure_alice;
-use ita_stf::{
-	aes_encrypt_default, helpers::ensure_self, Getter, OpaqueCall, TrustedCall, TrustedCallSigned,
-	TrustedCallVerification, TrustedOperation, H256,
-};
+use codec::Encode;
+use ita_sgx_runtime::Hash;
+use ita_stf::{Getter, TrustedCall, TrustedCallSigned, TrustedOperation, H256};
 use itp_extrinsics_factory::CreateExtrinsics;
 use itp_node_api::metadata::{provider::AccessNodeMetadata, NodeMetadataTrait};
 use itp_types::RsaRequest;
@@ -173,11 +164,10 @@ where
 	}
 }
 
-// TODO: Need to add context for more things
 pub fn run_bit_across_handler_runner<ShieldingKeyRepository, A, S, H, O, Z, N>(
-	context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
-	extrinsic_factory: Arc<Z>,
-	node_metadata_repo: Arc<N>,
+	_context: Arc<StfTaskContext<ShieldingKeyRepository, A, S, H, O>>,
+	_extrinsic_factory: Arc<Z>,
+	_node_metadata_repo: Arc<N>,
 ) where
 	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
