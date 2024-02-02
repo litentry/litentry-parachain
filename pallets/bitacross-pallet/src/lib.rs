@@ -30,16 +30,11 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused_variables)]
+#![allow(clippy::let_unit_value, deprecated)]
 
 pub use pallet::*;
-
-use sp_core::H256;
-use sp_std::vec::Vec;
-pub use teerex_primitives::ShardIdentifier;
-
 #[frame_support::pallet]
 pub mod pallet {
-	use super::{ShardIdentifier, Vec, H256};
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -56,7 +51,6 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {}
 
 	#[pallet::error]
