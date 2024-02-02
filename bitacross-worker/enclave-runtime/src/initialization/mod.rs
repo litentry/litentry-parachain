@@ -15,6 +15,8 @@
 
 */
 
+#![allow(clippy::unwrap_used)]
+
 pub mod global_components;
 pub mod parentchain;
 use crate::{
@@ -260,7 +262,7 @@ fn run_bit_across_handler() -> Result<(), Error> {
 		state_observer,
 		ocall_api.clone(),
 		shielding_key_repository.clone(),
-		author_api.clone(),
+		author_api,
 	));
 
 	let stf_task_context = BitAcrossTaskContext::new(
