@@ -162,7 +162,8 @@ pub mod tests {
 
 	#[test]
 	pub fn test_it() {
-		run(19527);
+		let _ = env_logger::builder().is_test(true).try_init();
+		run(19527).unwrap();
 		let twitter_identity = Identity::Discord(IdentityString::new(vec![]));
 		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
 
