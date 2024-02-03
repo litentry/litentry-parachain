@@ -533,8 +533,6 @@ fn get_shielding_pubkey() -> EnclaveResult<Option<Vec<u8>>> {
 		})
 		.ok();
 
-	debug!("[Enclave] shielding_pubkey size: {:?}", shielding_pubkey.clone().map(|key| key.len()));
-
 	Ok(shielding_pubkey)
 }
 
