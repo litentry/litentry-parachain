@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -50,8 +50,6 @@ pub trait WeightInfo {
 	fn add_delegatee() -> Weight;
 	fn remove_delegatee() -> Weight;
 	fn request_vc() -> Weight;
-	fn disable_vc() -> Weight;
-	fn revoke_vc() -> Weight;
 	fn vc_issued() -> Weight;
 	fn some_error() -> Weight;
 	fn set_admin() -> Weight;
@@ -59,9 +57,6 @@ pub trait WeightInfo {
 	fn disable_schema() -> Weight;
 	fn activate_schema() -> Weight;
 	fn revoke_schema() -> Weight;
-	fn add_vc_registry_item() -> Weight;
-	fn remove_vc_registry_item() -> Weight;
-	fn clear_vc_registry(x: u32, ) -> Weight;
 }
 
 /// Weights for pallet_vc_management using the Litentry node and recommended hardware.
@@ -85,24 +80,6 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 	fn request_vc() -> Weight {
 		Weight::from_parts(35_640_000 as u64, 0)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
-	}
-	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: VCMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn disable_vc() -> Weight {
-		Weight::from_parts(24_542_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
-	}
-	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: VCMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn revoke_vc() -> Weight {
-		Weight::from_parts(53_908_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
@@ -164,36 +141,6 @@ impl<T: frame_system::Config> WeightInfo for LitentryWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	// Storage: VCManagement Admin (r:1 w:0)
-	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn add_vc_registry_item() -> Weight {
-		Weight::from_parts(22_937_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
-	}
-	// Storage: VCManagement Admin (r:1 w:0)
-	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn remove_vc_registry_item() -> Weight {
-		Weight::from_parts(23_555_000 as u64, 0)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
-	}
-	// Storage: VCManagement Admin (r:1 w:0)
-	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	// Storage: VCManagement VCRegistry (r:100 w:100)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn clear_vc_registry(x: u32, ) -> Weight {
-		Weight::from_parts(22_760_592 as u64, 0)
-			// Standard Error: 3_714
-			.saturating_add(Weight::from_parts(856_025 as u64, 0).saturating_mul(x as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
-			.saturating_add(T::DbWeight::get().writes((1 as u64).saturating_mul(x as u64)))
-	}
 }
 
 // For backwards compatibility and tests
@@ -216,24 +163,6 @@ impl WeightInfo for () {
 	fn request_vc() -> Weight {
 		Weight::from_parts(35_640_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-	}
-	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: VCMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn disable_vc() -> Weight {
-		Weight::from_parts(24_542_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
-	// Storage: VCMPExtrinsicWhitelist GroupControlOn (r:1 w:0)
-	// Proof Skipped: VCMPExtrinsicWhitelist GroupControlOn (max_values: Some(1), max_size: None, mode: Measured)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn revoke_vc() -> Weight {
-		Weight::from_parts(53_908_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Teerex EnclaveIndex (r:1 w:0)
 	// Proof Skipped: Teerex EnclaveIndex (max_values: None, max_size: None, mode: Measured)
@@ -294,36 +223,6 @@ impl WeightInfo for () {
 		Weight::from_parts(23_754_000 as u64, 0)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
-	// Storage: VCManagement Admin (r:1 w:0)
-	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn add_vc_registry_item() -> Weight {
-		Weight::from_parts(22_937_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
-	// Storage: VCManagement Admin (r:1 w:0)
-	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	// Storage: VCManagement VCRegistry (r:1 w:1)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn remove_vc_registry_item() -> Weight {
-		Weight::from_parts(23_555_000 as u64, 0)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
-	}
-	// Storage: VCManagement Admin (r:1 w:0)
-	// Proof: VCManagement Admin (max_values: Some(1), max_size: Some(32), added: 527, mode: MaxEncodedLen)
-	// Storage: VCManagement VCRegistry (r:100 w:100)
-	// Proof: VCManagement VCRegistry (max_values: None, max_size: Some(312), added: 2787, mode: MaxEncodedLen)
-	fn clear_vc_registry(x: u32, ) -> Weight {
-		Weight::from_parts(22_760_592 as u64, 0)
-			// Standard Error: 3_714
-			.saturating_add(Weight::from_parts(856_025 as u64, 0).saturating_mul(x as u64))
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().reads((1 as u64).saturating_mul(x as u64)))
-			.saturating_add(RocksDbWeight::get().writes((1 as u64).saturating_mul(x as u64)))
 	}
 }
 

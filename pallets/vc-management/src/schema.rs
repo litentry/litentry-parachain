@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -17,11 +17,20 @@
 // VC Schema
 // According to https://w3c-ccg.github.io/vc-json-schemas/, it defines JSON Schema for W3C Verifiable Credential.
 
-use crate::{vc_context::Status, Config};
+use crate::Config;
 use codec::{Decode, Encode, MaxEncodedLen};
 use core_primitives::{SchemaContentString, SchemaIdString};
 use scale_info::TypeInfo;
 use sp_std::vec::Vec;
+
+#[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+pub enum Status {
+	#[codec(index = 0)]
+	Active,
+	#[codec(index = 1)]
+	Disabled,
+	// Revoked, // commented out for now, we can delete the VC entry when revoked
+}
 
 #[derive(Clone, Eq, PartialEq, Debug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]

@@ -1,0 +1,23 @@
+[package]
+edition = "2021"
+name = "lc-common"
+version = "0.1.0"
+
+[dependencies]
+# std dependencies
+
+# sgx dependencies
+sgx_tstd = { branch = "master", git = "https://github.com/apache/teaclave-sgx-sdk.git", optional = true, features = ["net", "thread"] }
+
+# Internal dependencies
+litentry-primitives = { path = "../../primitives", default-features = false }
+
+[features]
+default = ["std"]
+sgx = [
+    "sgx_tstd",
+    "litentry-primitives/sgx",
+]
+std = [
+    "litentry-primitives/std",
+]

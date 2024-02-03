@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ use warp::Filter;
 pub mod achainable;
 pub mod discord_litentry;
 pub mod discord_official;
+pub mod litentry_archive;
 pub mod nodereal_jsonrpc;
 pub mod twitter_litentry;
 pub mod twitter_official;
@@ -63,6 +64,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(discord_litentry::has_role())
 					.or(nodereal_jsonrpc::query())
 					.or(achainable::query())
+					.or(litentry_archive::query_user_joined_evm_campaign())
 					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());

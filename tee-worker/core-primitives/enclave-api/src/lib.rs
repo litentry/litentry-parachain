@@ -23,11 +23,6 @@ pub mod teeracle_api;
 pub mod utils;
 
 #[cfg(feature = "implement-ffi")]
-pub mod stf_task_handler;
-#[cfg(feature = "implement-ffi")]
-pub mod vc_issuance;
-
-#[cfg(feature = "implement-ffi")]
 pub use sgx_urts::SgxEnclave;
 
 #[cfg(feature = "implement-ffi")]

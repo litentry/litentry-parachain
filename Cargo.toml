@@ -1,6 +1,7 @@
 [workspace]
 members = [
     'node',
+    'pallets/account-fix',
     'pallets/bridge',
     'pallets/bridge-transfer',
     'pallets/drop3',
@@ -18,7 +19,9 @@ members = [
     'precompiles/*',
     'primitives/common',
     'primitives/core',
+    'primitives/core/proc-macros',
     'primitives/core/macros',
+    'primitives/hex',
     'primitives/sidechain',
     'primitives/teeracle',
     'primitives/teerex',

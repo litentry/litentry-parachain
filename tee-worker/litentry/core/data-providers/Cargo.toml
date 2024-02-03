@@ -15,7 +15,6 @@ thiserror = { version = "1.0.26", optional = true }
 url = { version = "2.0.0", optional = true }
 
 # no_std dependencies
-lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
 log = { version = "0.4", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
@@ -23,6 +22,7 @@ serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 # internal dependencies
 itc-rest-client = { path = "../../../core/rest-client", default-features = false }
 itp-rpc = { path = "../../../core-primitives/rpc", default-features = false }
+itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # sgx dependencies
 chrono_sgx = { package = "chrono", git = "https://github.com/mesalock-linux/chrono-sgx", optional = true }
@@ -34,6 +34,7 @@ thiserror_sgx = { package = "thiserror", git = "https://github.com/mesalock-linu
 url_sgx = { package = "url", git = "https://github.com/mesalock-linux/rust-url-sgx", tag = "sgx_1.1.3", optional = true }
 
 # litentry
+litentry-macros = { path = "../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../primitives", default-features = false }
 
 [dev-dependencies]
@@ -61,9 +62,13 @@ std = [
     "url",
     "itc-rest-client/std",
     "itp-rpc/std",
+    "itp-utils/std",
     "log/std",
     "serde/std",
     "serde_json/std",
     "litentry-primitives/std",
     "chrono",
+]
+production = [
+    "litentry-macros/production",
 ]

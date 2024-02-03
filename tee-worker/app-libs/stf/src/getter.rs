@@ -19,9 +19,11 @@ use codec::{Decode, Encode};
 use ita_sgx_runtime::{IdentityManagement, System};
 use itp_stf_interface::ExecuteGetter;
 use itp_stf_primitives::{traits::GetterAuthorization, types::KeyPair};
-use itp_utils::{if_production_or, stringify::account_id_to_string};
+use itp_utils::stringify::account_id_to_string;
+use litentry_macros::if_production_or;
 use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
+use sp_core::blake2_256;
 use sp_std::vec;
 use std::prelude::v1::*;
 
@@ -144,7 +146,7 @@ impl TrustedGetter {
 	}
 
 	pub fn sign(&self, pair: &KeyPair) -> TrustedGetterSigned {
-		let signature = pair.sign(self.encode().as_slice());
+		let signature = pair.sign(&blake2_256(self.encode().as_slice()));
 		TrustedGetterSigned { getter: self.clone(), signature }
 	}
 }
@@ -161,18 +163,18 @@ impl TrustedGetterSigned {
 	}
 
 	pub fn verify_signature(&self) -> bool {
+		let payload = self.getter.encode();
 		// in non-prod, we accept signature from Alice too
 		if_production_or!(
 			{
-				self.signature
-					.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
+				self.signature.verify(&payload, self.getter.sender_identity())
+					|| self.signature.verify(&blake2_256(&payload), self.getter.sender_identity())
 			},
 			{
-				self.signature
-					.verify(self.getter.encode().as_slice(), self.getter.sender_identity())
-					|| self
-						.signature
-						.verify(self.getter.encode().as_slice(), &ALICE_ACCOUNTID32.into())
+				self.signature.verify(&payload, self.getter.sender_identity())
+					|| self.signature.verify(&blake2_256(&payload), self.getter.sender_identity())
+					|| self.signature.verify(&payload, &ALICE_ACCOUNTID32.into())
+					|| self.signature.verify(&blake2_256(&payload), &ALICE_ACCOUNTID32.into())
 			}
 		)
 	}

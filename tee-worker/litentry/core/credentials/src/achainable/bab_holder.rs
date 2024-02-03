@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ use crate::{
 
 const BAB_HOLDER_DESCRIPTIONS: &str = "You are a holder of a certain kind of NFT";
 const BAB_HOLDER_TYPE: &str = "NFT Holder";
-const BAB_HOLDER_BREAKDOWN: &str = "is_bab_holder";
+const BAB_HOLDER_BREAKDOWN: &str = "$is_bab_holder";
 
 pub trait UpdateBABHolder {
 	fn update_bab_holder(&mut self, is_bab_holder: bool);

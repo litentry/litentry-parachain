@@ -135,6 +135,7 @@ services:
       - CONTEST_LEGEND_DISCORD_ROLE_ID=CONTEST_LEGEND_DISCORD_ROLE_ID
       - CONTEST_POPULARITY_DISCORD_ROLE_ID=CONTEST_POPULARITY_DISCORD_ROLE_ID
       - CONTEST_PARTICIPANT_DISCORD_ROLE_ID=CONTEST_PARTICIPANT_DISCORD_ROLE_ID
+      - LITENTRY_ARCHIVE_URL=http://localhost:19527
     networks:
       - litentry-test-network
     healthcheck:
@@ -144,7 +145,7 @@ services:
       retries: 20
     entrypoint:
       "/usr/local/bin/litentry-worker --clean-reset --ws-external -M litentry-worker-1 -T wss://litentry-worker-1
-      -u ws://litentry-node -U ws://litentry-worker-1 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server --running-mode mock
+      -u ws://litentry-node -U ws://litentry-worker-1 -P 2011 -w 2101 -p 9912 -h 4645 --enable-mock-server
       run --dev --skip-ra"
     restart: "no"
 volumes:

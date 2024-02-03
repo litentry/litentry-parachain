@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -20,10 +20,7 @@ use crate::sgx_reexport_prelude::*;
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
-use crate::{
-	build_client_with_cert, DataProviderConfigReader, Error as DataProviderError,
-	ReadDataProviderConfig,
-};
+use crate::{build_client_with_cert, DataProviderConfig, Error as DataProviderError};
 use http::header::{ACCEPT, CONNECTION};
 use http_req::response::Headers;
 use itc_rest_client::{
@@ -79,9 +76,9 @@ pub struct GeniidataClient {
 }
 
 impl GeniidataClient {
-	pub fn new() -> core::result::Result<Self, ErrorDetail> {
-		let data_provider_config = DataProviderConfigReader::read()?;
-
+	pub fn new(
+		data_provider_config: &DataProviderConfig,
+	) -> core::result::Result<Self, ErrorDetail> {
 		let mut headers = Headers::new();
 		headers.insert(CONNECTION.as_str(), "close");
 		headers.insert(ACCEPT.as_str(), "application/json");

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -20,12 +20,13 @@
 use crate::{
 	all_web3networks, AccountId, BnbDigitDomainType, BoundedWeb3Network, EVMTokenType,
 	GenericDiscordRoleType, OneBlockCourseType, VIP3MembershipCardLevel, Web3Network,
+	Web3TokenType,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::H160;
 use sp_runtime::{traits::ConstU32, BoundedVec};
-use sp_std::{str, vec, vec::Vec};
+use sp_std::{vec, vec::Vec};
 
 pub type ParameterString = BoundedVec<u8, ConstU32<64>>;
 
@@ -260,6 +261,9 @@ pub enum Assertion {
 	CryptoSummary,
 
 	#[codec(index = 24)]
+	TokenHoldingAmount(Web3TokenType),
+
+	#[codec(index = 25)]
 	Dynamic(H160) // smart contract code identifier
 }
 
@@ -308,31 +312,11 @@ impl Assertion {
 			Self::A1 | Self::A13(..) | Self::A20 => all_web3networks(),
 			// no web3 network is allowed
 			Self::A2(..) | Self::A3(..) | Self::A6 | Self::GenericDiscordRole(..) => vec![],
+			Self::TokenHoldingAmount(t_type) => t_type.get_supported_networks(),
 			Self::Dynamic(_) => all_web3networks(),
 		}
 	}
 }
-
-pub const ASSERTION_DATE_LEN: usize = 15;
-pub const ASSERTION_FROM_DATE: [&str; ASSERTION_DATE_LEN] = [
-	"2017-01-01",
-	"2017-07-01",
-	"2018-01-01",
-	"2018-07-01",
-	"2019-01-01",
-	"2019-07-01",
-	"2020-01-01",
-	"2020-07-01",
-	"2021-01-01",
-	"2021-07-01",
-	"2022-01-01",
-	"2022-07-01",
-	"2023-01-01",
-	"2023-07-01",
-	// In order to address the issue of the community encountering a false query for WBTC in
-	// November, the product team feels that adding this date temporarily solves this problem.
-	"2023-12-01",
-];
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AmountHoldingTimeType {

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -23,7 +23,7 @@ extern crate sgx_tstd as std;
 use http::header::CONNECTION;
 use http_req::response::Headers;
 use itc_rest_client::{error::Error as RestClientError, RestGet, RestPath};
-use lc_data_providers::build_client;
+use lc_data_providers::{build_client, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
@@ -42,12 +42,15 @@ pub struct EarlyBirdResponse {
 	has_joined: bool,
 }
 impl RestPath<String> for EarlyBirdResponse {
-	fn get_path(path: String) -> core::result::Result<String, RestClientError> {
-		Ok(path)
+	fn get_path(_path: String) -> core::result::Result<String, RestClientError> {
+		Ok("events/does-user-joined-evm-campaign".to_string())
 	}
 }
 
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	// Note: it's not perfectly implemented here
 	//       it only attests if the main address meets the criteria, but we should have implemented
 	//       the supported web3networks and attested the linked identities.
@@ -62,10 +65,7 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 
 	let mut headers = Headers::new();
 	headers.insert(CONNECTION.as_str(), "close");
-	let mut client = build_client(
-		"https://archive-test.litentry.io/events/does-user-joined-evm-campaign",
-		headers,
-	);
+	let mut client = build_client(&data_provider_config.litentry_archive_url, headers);
 	let query = vec![("account", who.as_str())];
 	let value = client
 		.get_with::<String, EarlyBirdResponse>("".to_string(), query.as_slice())

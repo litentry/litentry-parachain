@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -32,9 +32,7 @@ use itc_rest_client::{
 	rest_client::RestClient,
 	RestPath, RestPost,
 };
-use lc_data_providers::{
-	build_client, DataProviderConfig, DataProviderConfigReader, ReadDataProviderConfig,
-};
+use lc_data_providers::{build_client, DataProviderConfig};
 use serde::{Deserialize, Serialize};
 
 const VC_A14_SUBJECT_DESCRIPTION: &str =
@@ -99,7 +97,10 @@ impl A14Client {
 	}
 }
 
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	debug!("Assertion A14 build, who: {:?}", account_id_to_string(&req.who));
 
 	// achainable expects polkadot addresses (those start with 1...)
@@ -111,12 +112,8 @@ pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
 			polkadot_addresses.push(address);
 		}
 	}
-
-	let data_provider_config =
-		DataProviderConfigReader::read().map_err(|e| Error::RequestVCFailed(Assertion::A14, e))?;
-
 	let mut value = false;
-	let mut client = A14Client::new(&data_provider_config);
+	let mut client = A14Client::new(data_provider_config);
 
 	for address in polkadot_addresses {
 		let data = A14Data {

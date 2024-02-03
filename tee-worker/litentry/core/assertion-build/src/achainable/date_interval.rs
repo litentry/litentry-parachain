@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -22,10 +22,12 @@ extern crate sgx_tstd as std;
 
 use crate::{achainable::request_achainable, *};
 use lc_credentials::Credential;
+use lc_data_providers::DataProviderConfig;
 
 pub fn build_date_interval(
 	req: &AssertionBuildRequest,
 	param: AchainableDateInterval,
+	data_provider_config: &DataProviderConfig,
 ) -> Result<Credential> {
 	debug!("Assertion Achainable build_date_interval, who: {:?}", account_id_to_string(&req.who));
 
@@ -36,7 +38,7 @@ pub fn build_date_interval(
 		.collect::<Vec<String>>();
 
 	let achainable_param = AchainableParams::DateInterval(param.clone());
-	let _flag = request_achainable(addresses, achainable_param)?;
+	let _flag = request_achainable(addresses, achainable_param, data_provider_config)?;
 	match Credential::new(&req.who, &req.shard) {
 		Ok(mut _credential_unsigned) => Ok(_credential_unsigned),
 		Err(e) => {

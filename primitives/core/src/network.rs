@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -71,7 +71,7 @@ pub enum Web3Network {
 	#[codec(index = 5)]
 	Khala,
 	#[codec(index = 6)]
-	SubstrateTestnet, // when launched it with standalone (integritee-)node
+	SubstrateTestnet,
 
 	// evm
 	#[codec(index = 7)]

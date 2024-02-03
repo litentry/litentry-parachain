@@ -85,6 +85,7 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42", optional = true }
 
 # Litentry pallets
+pallet-account-fix = { path = "../../pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
@@ -137,6 +138,7 @@ runtime-benchmarks = [
     "pallet-drop3/runtime-benchmarks",
     "pallet-extrinsic-filter/runtime-benchmarks",
     "cumulus-pallet-xcmp-queue/runtime-benchmarks",
+    "pallet-account-fix/runtime-benchmarks",
     "pallet-asset-manager/runtime-benchmarks",
 ]
 std = [
@@ -162,6 +164,7 @@ std = [
     "orml-tokens/std",
     "orml-traits/std",
     "orml-xtokens/std",
+    "pallet-account-fix/std",
     "pallet-asset-manager/std",
     "pallet-aura/std",
     "pallet-authorship/std",
@@ -219,6 +222,7 @@ try-runtime = [
     "frame-try-runtime",
     "orml-tokens/try-runtime",
     "orml-xtokens/try-runtime",
+    "pallet-account-fix/try-runtime",
     "pallet-asset-manager/try-runtime",
     "pallet-aura/try-runtime",
     "pallet-authorship/try-runtime",

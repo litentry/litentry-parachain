@@ -24,7 +24,7 @@ contract A20 is DynamicAssertion {
         string memory jsonPointer = "has_joined";
         for (uint256 i = 0; i < identities.length; i++) {
             string
-                memory url = "https://archive-test.litentry.io/events/does-user-joined-evm-campaign?account=test";
+                memory url = "http://localhost:19527/events/does-user-joined-evm-campaign?account=test";
             result = GetBool(url, jsonPointer);
             if (result) {
                 break;

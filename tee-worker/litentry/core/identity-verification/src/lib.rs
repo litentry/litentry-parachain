@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -40,7 +40,8 @@ mod web2;
 
 mod error;
 use error::{Error, Result};
+use lc_data_providers::DataProviderConfig;
 
-pub fn verify(r: &Web2IdentityVerificationRequest) -> Result<()> {
-	web2::verify(&r.who, &r.identity, &r.raw_msg, &r.validation_data)
+pub fn verify(r: &Web2IdentityVerificationRequest, config: &DataProviderConfig) -> Result<()> {
+	web2::verify(&r.who, &r.identity, &r.raw_msg, &r.validation_data, config)
 }

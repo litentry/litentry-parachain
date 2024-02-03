@@ -1116,7 +1116,9 @@ fn can_set_registered_enclave_limit_to_equal_actual_registered_enclaves_count() 
 			new_limit
 		));
 		System::assert_last_event(TeerexEvent::RegisteredEnclaveLimitSet(new_limit).into());
-		assert_eq!(System::events().len(), 1)
+		// Note: There are going to be 3 events in total, We are setting the admin and setting the
+		// skip_scheduled_enclave_check flag, which emits 2 events in total.
+		assert_eq!(System::events().len(), 3)
 	});
 }
 

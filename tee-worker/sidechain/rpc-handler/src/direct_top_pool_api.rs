@@ -26,7 +26,7 @@ use rust_base58::base58::FromBase58;
 use base58::FromBase58;
 
 use codec::{Decode, Encode};
-use futures::{channel::oneshot, FutureExt};
+use futures::channel::oneshot;
 use itp_rpc::RpcReturnValue;
 use itp_stf_primitives::types::AccountId;
 use itp_top_pool_author::traits::AuthorApi;
@@ -34,9 +34,16 @@ use itp_types::{DirectRequestStatus, RsaRequest, ShardIdentifier, TrustedOperati
 use itp_utils::{FromHexPrefixed, ToHexPrefixed};
 use jsonrpc_core::{futures::executor, serde_json::json, Error as RpcError, IoHandler, Params};
 use lc_vc_task_sender::{VCRequest, VcRequestSender};
-use litentry_primitives::{AesOutput, AesRequest};
+use litentry_primitives::AesRequest;
 use log::*;
-use std::{borrow::ToOwned, format, string::String, sync::Arc, vec, vec::Vec};
+use std::{
+	borrow::ToOwned,
+	format,
+	string::{String, ToString},
+	sync::Arc,
+	vec,
+	vec::Vec,
+};
 
 type Hash = sp_core::H256;
 
@@ -114,40 +121,16 @@ where
 		Ok(json!(json_value))
 	});
 
-	io_handler.add_method("author_submitVCRequest", move |params: Params| {
-		debug!("worker_api_direct rpc was called: author_submitVCRequest");
+	io_handler.add_method("author_requestVc", move |params: Params| {
+		debug!("worker_api_direct rpc was called: author_requestVc");
+
 		async move {
-			let hex_encoded_params = params.parse::<Vec<String>>().unwrap();
-			let request = AesRequest::from_hex(&hex_encoded_params[0].clone()).unwrap();
-			let shard: ShardIdentifier = request.shard;
-			let key = request.key;
-			let encrypted_trusted_call: AesOutput = request.payload;
-			let request_sender = VcRequestSender::new();
-			let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
-			let vc_request = VCRequest { encrypted_trusted_call, sender, shard, key };
-			if let Err(e) = request_sender.send_vc_request(vc_request) {
-				return Ok(json!(compute_hex_encoded_return_error(&e)))
-			}
-			match receiver.await {
-				Ok(Ok(response)) => {
-					let json_value = RpcReturnValue {
-						do_watch: false,
-						value: response,
-						status: DirectRequestStatus::Ok,
-					};
-					Ok(json!(json_value.to_hex()))
-				},
-				Ok(Err(e)) => {
-					log::error!("Received error in jsonresponse: {:?} ", e);
-					Ok(json!(compute_hex_encoded_return_error(&e)))
-				},
-				Err(_) => {
-					// This case will only happen if the sender has been dropped
-					Ok(json!(compute_hex_encoded_return_error("The sender has been dropped")))
-				},
-			}
+			let json_value = match request_vc_inner(params).await {
+				Ok(value) => value.to_hex(),
+				Err(error) => compute_hex_encoded_return_error(&error),
+			};
+			Ok(json!(json_value))
 		}
-		.boxed()
 	});
 
 	// Litentry: a morphling of `author_submitAndWatchRsaRequest`
@@ -286,6 +269,16 @@ fn compute_hex_encoded_return_error(error_msg: &str) -> String {
 	RpcReturnValue::from_error_message(error_msg).to_hex()
 }
 
+// we expect our `params` to be "by-position array"
+// see https://www.jsonrpc.org/specification#parameter_structures
+fn get_request_payload(params: Params) -> Result<String, String> {
+	let s_vec = params.parse::<Vec<String>>().map_err(|e| format!("{}", e))?;
+
+	let s = s_vec.get(0).ok_or_else(|| "Empty params".to_string())?;
+	debug!("Request payload: {}", s);
+	Ok(s.to_owned())
+}
+
 fn author_submit_extrinsic_inner<R, TCS, G>(
 	author: Arc<R>,
 	params: Params,
@@ -296,15 +289,8 @@ where
 	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 {
-	debug!("Author submit and watch trusted operation..");
-
-	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
-
-	info!("Got request hex: {:?}", &hex_encoded_params[0]);
-	std::println!("Got request hex: {:?}", &hex_encoded_params[0]);
-
-	let request =
-		RsaRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+	let payload = get_request_payload(params)?;
+	let request = RsaRequest::from_hex(&payload).map_err(|e| format!("{:?}", e))?;
 
 	let response: Result<Hash, RpcError> = if let Some(method) = json_rpc_method {
 		executor::block_on(async { author.watch_and_broadcast_top(request, method).await })
@@ -330,11 +316,8 @@ where
 	TCS: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 	G: PartialEq + Encode + Decode + Debug + Send + Sync + 'static,
 {
-	let hex_encoded_params = params.parse::<Vec<String>>().map_err(|e| format!("{:?}", e))?;
-	info!("author_submitAndWatchAesRequest, request hex: {:?}", &hex_encoded_params[0]);
-
-	let request =
-		AesRequest::from_hex(&hex_encoded_params[0].clone()).map_err(|e| format!("{:?}", e))?;
+	let payload = get_request_payload(params)?;
+	let request = AesRequest::from_hex(&payload).map_err(|e| format!("{:?}", e))?;
 
 	let response: Result<Hash, RpcError> = if let Some(method) = json_rpc_method {
 		executor::block_on(async { author.watch_and_broadcast_top(request, method).await })
@@ -348,4 +331,29 @@ where
 	}
 
 	response.map_err(|e| format!("{:?}", e))
+}
+
+async fn request_vc_inner(params: Params) -> Result<RpcReturnValue, String> {
+	let payload = get_request_payload(params)?;
+	let request = AesRequest::from_hex(&payload)
+		.map_err(|e| format!("AesRequest construction error: {:?}", e))?;
+
+	let vc_request_sender = VcRequestSender::new();
+	let (sender, receiver) = oneshot::channel::<Result<Vec<u8>, String>>();
+
+	vc_request_sender.send(VCRequest { sender, request })?;
+
+	// we only expect one response, hence no loop
+	match receiver.await {
+		Ok(Ok(response)) =>
+			Ok(RpcReturnValue { do_watch: false, value: response, status: DirectRequestStatus::Ok }),
+		Ok(Err(e)) => {
+			log::error!("Received error in jsonresponse: {:?} ", e);
+			Err(compute_hex_encoded_return_error(&e))
+		},
+		Err(_) => {
+			// This case will only happen if the sender has been dropped
+			Err(compute_hex_encoded_return_error("The sender has been dropped"))
+		},
+	}
 }

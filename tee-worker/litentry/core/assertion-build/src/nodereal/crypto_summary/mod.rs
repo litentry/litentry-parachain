@@ -1,4 +1,4 @@
-// Copyright 2020-2023 Trust Computing GmbH.
+// Copyright 2020-2024 Trust Computing GmbH.
 // This file is part of Litentry.
 //
 // Litentry is free software: you can redistribute it and/or modify
@@ -23,12 +23,16 @@ extern crate sgx_tstd as std;
 use lc_credentials::nodereal::crypto_summary::{
 	summary::CryptoSummaryCredentialUpdate, CryptoSummaryClient,
 };
+use lc_data_providers::DataProviderConfig;
 
 use crate::*;
 
-pub fn build(req: &AssertionBuildRequest) -> Result<Credential> {
+pub fn build(
+	req: &AssertionBuildRequest,
+	data_provider_config: &DataProviderConfig,
+) -> Result<Credential> {
 	let identities = transpose_identity(&req.identities);
-	let (txs, summary) = CryptoSummaryClient::new()
+	let (txs, summary) = CryptoSummaryClient::new(data_provider_config)
 		.logic(&identities)
 		.map_err(|e| Error::RequestVCFailed(Assertion::CryptoSummary, e))?;
 
