@@ -30,9 +30,10 @@ use sp_runtime::traits::{CheckedSub, SaturatedConversion};
 use sp_std::{prelude::*, str};
 
 mod sgx_verify;
-use sgx_verify::{
-	deserialize_enclave_identity, deserialize_tcb_info, extract_certs, verify_certificate_chain,
-	verify_dcap_quote, verify_ias_report, SgxReport,
+pub use sgx_verify::{
+	deserialize_enclave_identity, deserialize_tcb_info, extract_certs,
+	extract_tcb_info_from_raw_dcap_quote, verify_certificate_chain, verify_dcap_quote,
+	verify_ias_report, SgxReport,
 };
 
 pub use pallet::*;
@@ -191,7 +192,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn enclave_registry)]
 	pub type EnclaveRegistry<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, Enclave, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, T::AccountId, Enclave<T::AccountId>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn allow_sgx_debug_mode)]
@@ -325,7 +326,7 @@ pub mod pallet {
 		pub fn force_add_enclave(
 			origin: OriginFor<T>,
 			who: T::AccountId,
-			enclave: Enclave,
+			enclave: Enclave<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_admin_or_root(origin)?;
 			Self::add_enclave(&who, &enclave)?;
@@ -447,13 +448,12 @@ pub mod pallet {
 
 			ensure!(worker_url.len() <= MAX_URL_LEN, Error::<T>::EnclaveUrlTooLong);
 
-			let mut enclave = Enclave::new(
-				worker_type,
-				worker_url,
-				shielding_pubkey,
-				vc_pubkey,
-				attestation_type,
-			);
+			let mut enclave = Enclave::new(sender.clone(), worker_type)
+				.with_url(worker_url)
+				.with_shielding_pubkey(shielding_pubkey)
+				.with_vc_pubkey(vc_pubkey)
+				.with_attestation_type(attestation_type);
+
 			match attestation_type {
 				AttestationType::Ignore => {
 					ensure!(
@@ -662,7 +662,10 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn add_enclave(sender: &T::AccountId, enclave: &Enclave) -> DispatchResultWithPostInfo {
+	pub fn add_enclave(
+		sender: &T::AccountId,
+		enclave: &Enclave<T::AccountId>,
+	) -> DispatchResultWithPostInfo {
 		match EnclaveRegistry::<T>::get(sender) {
 			Some(old_enclave) => {
 				if old_enclave.worker_type != enclave.worker_type {
@@ -698,10 +701,10 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 	}
 
-	pub fn primary_enclave(worker_type: WorkerType) -> Option<Enclave> {
+	pub fn primary_enclave(worker_type: WorkerType) -> Option<Enclave<T::AccountId>> {
 		let mut enclaves = EnclaveRegistry::<T>::iter_values()
 			.filter(|e| e.worker_type == worker_type)
-			.collect::<Vec<Enclave>>();
+			.collect::<Vec<Enclave<T::AccountId>>>();
 		enclaves.sort_by(|a, b| Ord::cmp(&a.register_timestamp, &b.register_timestamp));
 		enclaves.get(0).cloned()
 	}

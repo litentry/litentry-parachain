@@ -96,8 +96,9 @@ pub struct SidechainBlockConfirmation {
 	pub block_header_hash: H256,
 }
 
-#[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct Enclave {
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub struct Enclave<AccountId> {
+	pub account: AccountId,
 	pub worker_type: WorkerType,
 	pub mrenclave: MrEnclave,
 	pub last_seen_timestamp: u64, // unix epoch in milliseconds when it's last seen
@@ -109,22 +110,25 @@ pub struct Enclave {
 	pub attestation_type: AttestationType,
 }
 
-impl Enclave {
-	pub fn new(
-		worker_type: WorkerType,
-		url: Vec<u8>,
-		shielding_pubkey: Option<Vec<u8>>,
-		vc_pubkey: Option<Vec<u8>>,
-		attestation_type: AttestationType,
-	) -> Self {
+impl<AccountId> Enclave<AccountId> {
+	pub fn new(account: AccountId, worker_type: WorkerType) -> Self {
 		Enclave {
+			account,
 			worker_type,
-			url,
-			shielding_pubkey,
-			vc_pubkey,
-			attestation_type,
-			..Default::default()
+			mrenclave: Default::default(),
+			last_seen_timestamp: 0u64,
+			register_timestamp: 0u64,
+			url: Default::default(),
+			shielding_pubkey: None,
+			vc_pubkey: None,
+			sgx_build_mode: Default::default(),
+			attestation_type: Default::default(),
 		}
+	}
+
+	pub fn with_account(mut self, account: AccountId) -> Self {
+		self.account = account;
+		self
 	}
 
 	pub fn with_mrenclave(mut self, mrenclave: MrEnclave) -> Self {
@@ -134,6 +138,16 @@ impl Enclave {
 
 	pub fn with_url(mut self, url: Vec<u8>) -> Self {
 		self.url = url;
+		self
+	}
+
+	pub fn with_shielding_pubkey(mut self, shielding_pubkey: Option<Vec<u8>>) -> Self {
+		self.shielding_pubkey = shielding_pubkey;
+		self
+	}
+
+	pub fn with_vc_pubkey(mut self, vc_pubkey: Option<Vec<u8>>) -> Self {
+		self.vc_pubkey = vc_pubkey;
 		self
 	}
 
