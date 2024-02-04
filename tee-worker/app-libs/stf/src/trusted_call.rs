@@ -264,7 +264,8 @@ impl TrustedCallSigning<TrustedCallSigned> for TrustedCall {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(payload.as_slice()) }
+		// use blake2_256 hash to shorten the payload - see `verify_signature` below
+		TrustedCallSigned { call: self.clone(), nonce, signature: pair.sign(&blake2_256(&payload)) }
 	}
 }
 
@@ -317,7 +318,9 @@ impl TrustedCallVerification for TrustedCallSigned {
 		payload.append(&mut mrenclave.encode());
 		payload.append(&mut shard.encode());
 
-		self.signature.verify(payload.as_slice(), self.call.sender_identity())
+		// make it backwards compatible for now - will deprecate the old way later
+		self.signature.verify(&blake2_256(&payload), self.call.sender_identity())
+			|| self.signature.verify(&payload, self.call.sender_identity())
 	}
 
 	fn metric_name(&self) -> &'static str {
