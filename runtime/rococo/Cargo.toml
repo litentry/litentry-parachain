@@ -88,6 +88,7 @@ frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", d
 # Rococo pallets
 pallet-account-fix = { path = "../../pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
+pallet-bitacross = { path = "../../pallets/bitacross-pallet", default-features = false }
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
@@ -277,6 +278,7 @@ std = [
     "moonbeam-evm-tracer/std",
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
+    "pallet-bitacross/std",
 ]
 tee-dev = [
     "pallet-teerex/skip-ias-check",
@@ -331,4 +333,5 @@ try-runtime = [
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",
     "pallet-account-fix/try-runtime",
+    "pallet-bitacross/try-runtime",
 ]
