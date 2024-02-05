@@ -1,0 +1,17 @@
+{
+	"name": "local-setup-cli",
+	"version": "1.0.0",
+	"main": "cli.js",
+	"scripts": {
+		"start": "node cli.js run"
+	},
+	"type": "module",
+	"dependencies": {
+		"dotenv": "^16.4.1",
+		"inquirer": "^9.2.12",
+		"zx": "^7.2.3"
+	},
+	"pnpm": {
+		"packageManager": "pnpm"
+	}
+}

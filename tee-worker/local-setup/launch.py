@@ -125,13 +125,6 @@ def generate_config_local_json(parachain_dir):
 
     print("Successfully written ", config_file)
 
-def run_node(config, i: int):
-    node_log = open(f'{log_dir}/node{i}.log', 'w+')
-    node_cmd = [config["bin"]] + config["flags"]
-    print(f'Run node {i} with command: {node_cmd}')
-    return Popen(node_cmd, stdout=node_log, stderr=STDOUT, bufsize=1)
-
-
 
 # Generate `.env.local` used by local enclave ts-tests
 def generate_env_local():
