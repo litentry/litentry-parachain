@@ -66,7 +66,7 @@ pub fn execute_smart_contract(
 	let mut executor = StackExecutor::new_with_precompiles(state, &config, &precompiles);
 
 	// caller
-	let caller = hash(4);
+	let caller = hash(4); //0x04
 
 	// deploy smart contract
 	let address = executor.create_address(evm::CreateScheme::Legacy { caller: hash(4) });
@@ -156,15 +156,43 @@ pub mod tests {
 	use crate::dynamic::{build, repository::InMemorySmartContractRepo};
 	use itp_types::Assertion;
 	use lc_stf_task_sender::AssertionBuildRequest;
-	use litentry_primitives::{Address32, Identity, IdentityString};
+	use litentry_primitives::{Identity, IdentityString};
 	use sp_core::{crypto::AccountId32, H160};
 	use lc_mock_server::run;
 
 	#[test]
-	pub fn test_it() {
+	pub fn false_because_no_twitter() {
 		let _ = env_logger::builder().is_test(true).try_init();
 		run(19527).unwrap();
-		let twitter_identity = Identity::Discord(IdentityString::new(vec![]));
+		let discord = Identity::Discord(IdentityString::new(vec![]));
+		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
+
+		let request = AssertionBuildRequest {
+			shard: Default::default(),
+			signer: AccountId32::new([0; 32]),
+			who: Identity::Twitter(IdentityString::new(vec![])),
+			assertion: Assertion::Dynamic(hash(0)),
+			identities: vec![(discord, vec![]), (substrate_identity, vec![])],
+			top_hash: Default::default(),
+			parachain_block_number: Default::default(),
+			sidechain_block_number: Default::default(),
+			maybe_key: None,
+			req_ext_hash: Default::default(),
+			should_create_id_graph: Default::default(),
+		};
+
+		let repository = InMemorySmartContractRepo::new();
+		let credential = build(&request, hash(1), repository).unwrap();
+		println!("Generated credential: {:?}", credential);
+
+		assert!(!credential.credential_subject.values[0]);
+	}
+
+	#[test]
+	pub fn true_because_twitter() {
+		let _ = env_logger::builder().is_test(true).try_init();
+		run(19527).unwrap();
+		let twitter_identity = Identity::Twitter(IdentityString::new(vec![]));
 		let substrate_identity = Identity::Substrate(AccountId32::new([0; 32]).into());
 
 		let request = AssertionBuildRequest {
@@ -184,9 +212,11 @@ pub mod tests {
 		let repository = InMemorySmartContractRepo::new();
 
 		let credential = build(&request, hash(1), repository).unwrap();
+		println!("Generated credential: {:?}", credential);
 
-		// assert!(credential.credential_subject.values.iter().all(|v| v == true))
+		assert!(credential.credential_subject.values[0]);
 	}
+
 
 	fn hash(a: u64) -> H160 {
 		H160::from_low_u64_be(a)

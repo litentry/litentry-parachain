@@ -21,11 +21,18 @@ contract A20 is DynamicAssertion {
         string memory assertion = "$has_joined == true";
         bool result;
 
-        string memory jsonPointer = "has_joined";
         for (uint256 i = 0; i < identities.length; i++) {
-            string
-                memory url = "http://localhost:19527/events/does-user-joined-evm-campaign?account=test";
-            result = GetBool(url, jsonPointer);
+            if (is_twitter(identities[i])) {
+                string
+                    memory url = "http://localhost:19527/events/does-user-joined-evm-campaign?account=0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d";
+                string memory jsonPointer = "/hasJoined";
+                result = GetBool(url, jsonPointer);
+            } else {
+                string
+                    memory url = "http://localhost:19527/events/does-user-joined-evm-campaign?account=test";
+                string memory jsonPointer = "/hasJoined";
+                result = GetBool(url, jsonPointer);
+            }
             if (result) {
                 break;
             }

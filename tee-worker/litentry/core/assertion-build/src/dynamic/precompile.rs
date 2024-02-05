@@ -4,6 +4,9 @@ compile_error!("feature \"std\" and feature \"sgx\" cannot be enabled at the sam
 #[cfg(all(not(feature = "std"), feature = "sgx"))]
 extern crate sgx_tstd as std;
 
+#[cfg(all(not(feature = "std"), feature = "sgx"))]
+use crate::sgx_reexport_prelude::*;
+
 use core::time::Duration;
 use ethabi::{encode, Token};
 use evm::{
@@ -13,7 +16,7 @@ use evm::{
 	ExitSucceed,
 };
 use itc_rest_client::{
-	http_client::{DefaultSend, HttpClient, SendHttpRequest},
+	http_client::{DefaultSend, HttpClient, SendHttpRequest, SendWithCertificateVerification},
 	rest_client::{Method, Url},
 };
 use primitive_types::{H160, U256};
@@ -21,8 +24,10 @@ use serde_json::Value;
 use std::{
 	result::Result as StdResult,
 	string::{String, ToString},
-	vec::Vec,
+	vec, vec::Vec,
 };
+use http::header::CONNECTION;
+use http_req::response::Headers;
 
 /* This is precompile contract for making http get requests.
 It will send HTTP GET request to hardcoded URL, parse JSON response, extract value using JSON Pointer and pass it back to calle contract.
@@ -39,11 +44,34 @@ impl HttpGetI64Precompile {
 		let url = reader.read_string();
 		let pointer = reader.read_string();
 
-		let client = HttpClient::new(DefaultSend, true, Some(Duration::from_secs(10)), None, None);
+		let client = HttpClient::new(SendWithCertificateVerification::new(vec![]), true, Some(Duration::from_secs(5)), None, None);
 		let resp = client.send_request_raw(Url::parse(&url).unwrap(), Method::GET, None).unwrap();
 		let value: Value = serde_json::from_slice(&resp.1).unwrap();
 		let result = value.pointer(&pointer).unwrap();
 		let encoded = encode(&[Token::Uint(result.as_i64().unwrap().into())]);
+		Ok(PrecompileOutput { exit_status: ExitSucceed::Returned, output: encoded })
+	}
+}
+
+pub struct HttpGetBoolPrecompile;
+
+impl HttpGetBoolPrecompile {
+	// 256 bytes for url, 256 bytes for json pointer, total 512 bytes
+	fn execute(input: Vec<u8>) -> PrecompileResult {
+		let mut reader = InputReader::new(input);
+		let url = reader.read_string();
+		let pointer = reader.read_string();
+		//todo: allow for customizing headers
+		let mut headers = Headers::new();
+		headers.insert(CONNECTION.as_str(), "close");
+		println!("Url: {:?}", url);
+		let client = HttpClient::new(DefaultSend {}, true, Some(Duration::from_secs(5)), Some(headers), None);
+		let resp = client.send_request_raw(Url::parse(&url).unwrap(), Method::GET, None).unwrap();
+		println!("Got response: {:?}", resp);
+		let value: Value = serde_json::from_slice(&resp.1).unwrap();
+		println!("Response value {:?}", value);
+		let result = value.pointer(&pointer).unwrap();
+		let encoded = encode(&[Token::Bool(result.as_bool().unwrap().into())]);
 		Ok(PrecompileOutput { exit_status: ExitSucceed::Returned, output: encoded })
 	}
 }
@@ -54,6 +82,7 @@ impl PrecompileSet for Precompiles {
 	fn execute(&self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		match handle.code_address() {
 			a if a == hash(2) => Some(HttpGetI64Precompile::execute(handle.input().to_vec())),
+			a if a == hash(3) => Some(HttpGetBoolPrecompile::execute(handle.input().to_vec())),
 			_ => None,
 		}
 	}
@@ -61,6 +90,7 @@ impl PrecompileSet for Precompiles {
 	fn is_precompile(&self, address: H160, _remaining_gas: u64) -> IsPrecompileResult {
 		match address {
 			a if a == hash(2) => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
+			a if a == hash(3) => IsPrecompileResult::Answer { is_precompile: false, extra_cost: 0 },
 			_ => IsPrecompileResult::Answer { is_precompile: true, extra_cost: 0 },
 		}
 	}

@@ -70,7 +70,7 @@ abstract contract DynamicAssertion {
             let input_len := add(url, jsonPointer)
             // call inputs are: gas, address, wei, input_start, input size, output_start, output_size
             // use pointer to url as start, we assume both values (url and pointer) are placed next to each other in the memory
-            if iszero(call(not(0), 0x02, 0, url, input_len, memPtr, 0x20)) {
+            if iszero(call(not(0), 0x03, 0, url, input_len, memPtr, 0x20)) {
                 revert(0, 0)
             }
             // advance free memory pointer
