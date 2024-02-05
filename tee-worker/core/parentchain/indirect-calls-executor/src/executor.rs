@@ -29,7 +29,7 @@ use binary_merkle_tree::merkle_root;
 use codec::{Decode, Encode};
 use core::marker::PhantomData;
 use itp_node_api::metadata::{
-	pallet_teerex::TeerexCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
+	pallet_teebag::TeebagCallIndexes, provider::AccessNodeMetadata, NodeMetadataTrait,
 };
 use itp_sgx_crypto::{key_repository::AccessKey, ShieldingCryptoDecrypt, ShieldingCryptoEncrypt};
 use itp_stf_executor::traits::{StfEnclaveSigning, StfShardVaultQuery};
@@ -217,7 +217,7 @@ impl<
 		ParentchainBlock: ParentchainBlockTrait<Hash = H256>,
 	{
 		let call = self.node_meta_data_provider.get_from_metadata(|meta_data| {
-			meta_data.confirm_processed_parentchain_block_call_indexes()
+			meta_data.parentchain_block_processed_call_indexes()
 		})??;
 		let root: H256 = merkle_root::<Keccak256, _>(extrinsics);
 		trace!("prepared confirm_processed_parentchain_block() call for block {:?} with index {:?} and merkle root {}", block_number, call, root);

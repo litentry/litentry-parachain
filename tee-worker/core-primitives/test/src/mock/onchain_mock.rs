@@ -22,11 +22,12 @@ use itp_ocall_api::{
 	EnclaveAttestationOCallApi, EnclaveMetricsOCallApi, EnclaveOnChainOCallApi,
 	EnclaveSidechainOCallApi,
 };
-use itp_storage::{storage_map_key, Error::StorageValueUnavailable, StorageHasher};
+use itp_storage::Error::StorageValueUnavailable;
 use itp_types::{
 	parentchain::ParentchainId, storage::StorageEntryVerified, AccountId, BlockHash,
 	ShardIdentifier, WorkerRequest, WorkerResponse, WorkerType,
 };
+use lc_teebag_storage::{TeebagStorage, TeebagStorageKeys};
 use sgx_types::*;
 use sp_core::H256;
 use sp_runtime::{traits::Header as HeaderTrait, OpaqueExtrinsic};
@@ -59,12 +60,7 @@ impl OnchainMock {
 		let set: Vec<AccountId> = set.unwrap_or_else(validateer_set);
 		self.insert_at_header(
 			header,
-			storage_map_key(
-				"Teebag",
-				"EnclaveIdentifier",
-				&WorkerType::Identity,
-				&StorageHasher::Blake2_128Concat,
-			),
+			TeebagStorage::enclave_identifier(WorkerType::Identity),
 			set.encode(),
 		);
 		self

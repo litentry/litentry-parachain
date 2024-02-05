@@ -17,8 +17,8 @@
 
 use crate::error::{Error, Result};
 use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_storage::{storage_map_key, StorageHasher};
 use itp_types::{parentchain::ParentchainId, AccountId, WorkerType};
+use lc_teebag_storage::{TeebagStorage, TeebagStorageKeys};
 use sp_core::H256;
 use sp_runtime::traits::Header as HeaderT;
 use sp_std::prelude::Vec;
@@ -40,12 +40,7 @@ impl<OnchainStorage: EnclaveOnChainOCallApi> ValidateerFetch for OnchainStorage 
 	) -> Result<Vec<AccountId>> {
 		let identifiers = self
 			.get_storage_verified(
-				storage_map_key(
-					"Teebag",
-					"EnclaveIdentifier",
-					&WorkerType::Identity,
-					&StorageHasher::Blake2_128Concat,
-				),
+				TeebagStorage::enclave_identifier(WorkerType::Identity),
 				header,
 				&ParentchainId::Litentry,
 			)?

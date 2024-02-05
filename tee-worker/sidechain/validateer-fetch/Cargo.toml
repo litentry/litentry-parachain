@@ -15,8 +15,8 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # local deps
 itp-ocall-api = { path = "../../core-primitives/ocall-api", default-features = false }
-itp-storage = { path = "../../core-primitives/storage", default-features = false }
 itp-types = { path = "../../core-primitives/types", default-features = false }
+lc-teebag-storage = { path = "../../litentry/core/teebag-storage", default-features = false }
 
 [features]
 default = ["std"]
@@ -27,7 +27,7 @@ std = [
     "sp-std/std",
     "itp-types/std",
     "itp-ocall-api/std",
-    "itp-storage/std",
+    "lc-teebag-storage/std",
 ]
 
 [dev-dependencies]

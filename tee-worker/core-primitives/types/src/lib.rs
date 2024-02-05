@@ -37,7 +37,9 @@ pub type PalletString = Vec<u8>;
 pub type PalletString = String;
 
 pub use itp_sgx_runtime_primitives::types::*;
-pub use litentry_primitives::{Assertion, DecryptableRequest, Enclave, MrEnclave, WorkerType};
+pub use litentry_primitives::{
+	Assertion, AttestationType, DecryptableRequest, Enclave, MrEnclave, WorkerType,
+};
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
 pub type IpfsHash = [u8; 46];
@@ -48,7 +50,7 @@ pub type ConfirmCallFn = (CallIndex, ShardIdentifier, H256, Vec<u8>);
 pub type ShieldFundsFn = (CallIndex, Vec<u8>, Balance, ShardIdentifier);
 pub type CallWorkerFn = (CallIndex, RsaRequest);
 
-pub type UpdateScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
+pub type SetScheduledEnclaveFn = (CallIndex, SidechainBlockNumber, MrEnclave);
 pub type RemoveScheduledEnclaveFn = (CallIndex, SidechainBlockNumber);
 
 // pallet IMP

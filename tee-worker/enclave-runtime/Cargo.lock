@@ -2426,7 +2426,6 @@ name = "itp-sgx-runtime-primitives"
 version = "0.9.0"
 dependencies = [
  "frame-system",
- "litentry-primitives",
  "pallet-balances",
  "sp-core",
  "sp-runtime",
@@ -2561,6 +2560,7 @@ dependencies = [
  "itp-time-utils",
  "itp-types",
  "jsonrpc-core",
+ "lc-teebag-storage",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
@@ -2847,8 +2847,8 @@ version = "0.9.0"
 dependencies = [
  "derive_more",
  "itp-ocall-api",
- "itp-storage",
  "itp-types",
+ "lc-teebag-storage",
  "parity-scale-codec",
  "sp-core",
  "sp-runtime",
@@ -3140,6 +3140,15 @@ dependencies = [
  "sp-std",
  "thiserror",
  "url",
+]
+
+[[package]]
+name = "lc-teebag-storage"
+version = "0.1.0"
+dependencies = [
+ "itp-storage",
+ "itp-types",
+ "sp-std",
 ]
 
 [[package]]

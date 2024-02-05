@@ -191,7 +191,7 @@ fn list_workers(cli: &Cli) -> CliResult {
 				UNIX_EPOCH + Duration::from_millis(enclave.last_seen_timestamp),
 			);
 			println!("   Last seen: {}", timestamp);
-			println!("   URL: {}", String::from_utf8_lossy(enclave.url.as_slice()).to_string());
+			println!("   URL: {}", String::from_utf8_lossy(enclave.url.as_slice()));
 			enclave.mrenclave.to_base58()
 		})
 		.collect();
