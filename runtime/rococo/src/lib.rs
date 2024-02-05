@@ -17,7 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::identity_op)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 #[cfg(feature = "runtime-benchmarks")]
 #[macro_use]
@@ -41,6 +41,7 @@ use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
+pub use pallet_teebag;
 pub use pallet_teeracle;
 pub use pallet_teerex;
 
@@ -1024,11 +1025,24 @@ impl pallet_teeracle::Config for Runtime {
 	type MaxOracleBlobLen = ConstU32<4096>;
 }
 
+impl pallet_teebag::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MomentsPerDay = MomentsPerDay;
+	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+}
+
 impl pallet_identity_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = ();
 	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type DelegateeAdminOrigin = EnsureRootOrAllCouncil;
+	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
+}
+
+// NOTE: Use this for bitacross-pallet
+impl pallet_bitacross::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type TEECallOrigin = EnsureEnclaveSigner<Runtime>;
 	type ExtrinsicWhitelistOrigin = IMPExtrinsicWhitelist;
 }
 
@@ -1250,11 +1264,13 @@ construct_runtime! {
 		VCManagement: pallet_vc_management = 66,
 		IMPExtrinsicWhitelist: pallet_group::<Instance1> = 67,
 		VCMPExtrinsicWhitelist: pallet_group::<Instance2> = 68,
+		BitAcross: pallet_bitacross = 70,
 
 		// TEE
 		Teerex: pallet_teerex = 90,
 		Sidechain: pallet_sidechain = 91,
 		Teeracle: pallet_teeracle = 92,
+		Teebag: pallet_teebag = 93,
 
 		// Frontier
 		EVM: pallet_evm = 120,
@@ -1332,6 +1348,7 @@ impl Contains<RuntimeCall> for NormalModeFilter {
 			RuntimeCall::Teerex(_) |
 			RuntimeCall::Sidechain(_) |
 			RuntimeCall::Teeracle(_) |
+			RuntimeCall::Teebag(_) |
 			// ParachainStaking; Only the collator part
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::join_candidates { .. }) |
 			RuntimeCall::ParachainStaking(pallet_parachain_staking::Call::schedule_leave_candidates { .. }) |

@@ -180,7 +180,7 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	integritee::ShieldFundsAndInvokeFilter<integritee::ParentchainExtrinsicParser>,
+	integritee::BitAcrossIndirectCallsFilter<integritee::ParentchainExtrinsicParser>,
 	EventCreator<integritee::FilterableEvents>,
 	integritee::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,

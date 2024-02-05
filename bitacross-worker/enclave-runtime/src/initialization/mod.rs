@@ -15,6 +15,8 @@
 
 */
 
+#![allow(clippy::unwrap_used)]
+
 pub mod global_components;
 pub mod parentchain;
 use crate::{
@@ -50,6 +52,7 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
+use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use core::str::FromStr;
 use ita_stf::{Getter, TrustedCallSigned};
@@ -91,6 +94,7 @@ use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
@@ -226,6 +230,8 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
+	std::thread::spawn(move || run_bit_across_handler().unwrap());
+
 	Ok(())
 }
 
@@ -242,6 +248,31 @@ fn initialize_state_observer(
 		states_map.insert(shard, state);
 	}
 	Ok(Arc::new(EnclaveStateObserver::from_map(states_map)))
+}
+
+fn run_bit_across_handler() -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository.clone(),
+		author_api,
+	));
+
+	let stf_task_context = BitAcrossTaskContext::new(
+		shielding_key_repository,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+	);
+	run_bit_across_handler_runner(Arc::new(stf_task_context));
+	Ok(())
 }
 
 pub(crate) fn init_enclave_sidechain_components(

@@ -71,6 +71,8 @@ members = [
     "sidechain/state",
     "sidechain/validateer-fetch",
     "litentry/primitives",
+    "bitacross/core/bc-task-receiver",
+    "bitacross/core/bc-task-sender",
 ]
 
 [patch."https://github.com/apache/teaclave-sgx-sdk.git"]
