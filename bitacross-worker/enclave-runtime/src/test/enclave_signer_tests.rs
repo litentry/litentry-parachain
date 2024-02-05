@@ -74,11 +74,8 @@ pub fn enclave_signer_signatures_are_valid() {
 		shielding_key_repo,
 		top_pool_author,
 	);
-	let trusted_call = TrustedCall::balance_shield(
-		Identity::Substrate(enclave_account.into()),
-		AccountId::new([3u8; 32]),
-		200u128,
-	);
+	let trusted_call =
+		TrustedCall::balance_shield(enclave_account, AccountId::new([3u8; 32]), 200u128);
 
 	let trusted_call_signed = enclave_signer.sign_call_with_self(&trusted_call, &shard).unwrap();
 	assert!(trusted_call_signed.verify_signature(&mr_enclave.m, &shard));
@@ -109,11 +106,8 @@ pub fn nonce_is_computed_correctly() {
 	assert_eq!(enclave_account, enclave_signer.get_enclave_account().unwrap());
 
 	// create the first trusted_call and submit it
-	let trusted_call_1 = TrustedCall::balance_shield(
-		Identity::Substrate(enclave_account.clone().into()),
-		AccountId::new([1u8; 32]),
-		100u128,
-	);
+	let trusted_call_1 =
+		TrustedCall::balance_shield(enclave_account.clone(), AccountId::new([1u8; 32]), 100u128);
 	let trusted_call_1_signed =
 		enclave_signer.sign_call_with_self(&trusted_call_1, &shard).unwrap();
 	top_pool_author.submit_top(RsaRequest::new(
@@ -124,7 +118,7 @@ pub fn nonce_is_computed_correctly() {
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls_for(shard, &enclave_account).len());
 	// create the second trusted_call and submit it
 	let trusted_call_2 = TrustedCall::balance_shield(
-		Identity::Substrate(enclave_account.clone().into()),
+		enclave_account.clone().into(),
 		AccountId::new([2u8; 32]),
 		200u128,
 	);

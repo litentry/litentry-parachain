@@ -35,11 +35,8 @@ impl ParentchainEventHandler {
 	) -> Result<(), Error> {
 		log::info!("shielding for {:?} amount {}", account, amount,);
 		let shard = executor.get_default_shard();
-		let trusted_call = TrustedCall::balance_shield(
-			executor.get_enclave_account()?.into(),
-			account.clone(),
-			amount,
-		);
+		let trusted_call =
+			TrustedCall::balance_shield(executor.get_enclave_account()?, account.clone(), amount);
 		let signed_trusted_call = executor.sign_call_with_self(&trusted_call, &shard)?;
 		let trusted_operation =
 			TrustedOperation::<TrustedCallSigned, Getter>::indirect_call(signed_trusted_call);

@@ -19,7 +19,6 @@ use crate::traits::{PoolTransactionValidation, TrustedCallVerification};
 use alloc::boxed::Box;
 use codec::{Compact, Decode, Encode};
 use core::fmt::Debug;
-use litentry_primitives::LitentryMultiSignature;
 use sp_core::{blake2_256, crypto::AccountId32, ed25519, sr25519, Pair, H256};
 use sp_runtime::{
 	traits::Verify,
@@ -43,7 +42,7 @@ pub enum KeyPair {
 }
 
 impl KeyPair {
-	pub fn sign(&self, payload: &[u8]) -> LitentryMultiSignature {
+	pub fn sign(&self, payload: &[u8]) -> Signature {
 		match self {
 			Self::Sr25519(pair) => pair.sign(payload).into(),
 			Self::Ed25519(pair) => pair.sign(payload).into(),
@@ -109,8 +108,8 @@ where
 
 	pub fn signed_caller_account(&self) -> Option<AccountId> {
 		match self {
-			TrustedOperation::direct_call(c) => c.sender_identity().to_account_id(),
-			TrustedOperation::indirect_call(c) => c.sender_identity().to_account_id(),
+			TrustedOperation::direct_call(c) => Some(c.sender_identity().clone()),
+			TrustedOperation::indirect_call(c) => Some(c.sender_identity().clone()),
 			_ => None,
 		}
 	}

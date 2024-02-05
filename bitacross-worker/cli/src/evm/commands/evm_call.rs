@@ -68,7 +68,7 @@ impl EvmCallCommands {
 
 		println!("calling smart contract function");
 		let function_call = TrustedCall::evm_call(
-			sender_acc.into(),
+			sender_acc,
 			sender_evm_acc,
 			execution_address,
 			function_hash,

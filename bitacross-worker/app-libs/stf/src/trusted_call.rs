@@ -61,7 +61,7 @@ use sp_core::{
 	ed25519,
 };
 use sp_io::hashing::blake2_256;
-use sp_runtime::MultiAddress;
+use sp_runtime::{traits::Verify, MultiAddress, MultiSignature};
 use std::{format, prelude::v1::*, sync::Arc};
 
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
@@ -69,23 +69,23 @@ use std::{format, prelude::v1::*, sync::Arc};
 pub enum TrustedCall {
 	// original integritee trusted calls, starting from index 50
 	#[codec(index = 50)]
-	noop(Identity),
+	noop(AccountId),
 	#[codec(index = 51)]
-	balance_set_balance(Identity, AccountId, Balance, Balance),
+	balance_set_balance(AccountId, AccountId, Balance, Balance),
 	#[codec(index = 52)]
-	balance_transfer(Identity, AccountId, Balance),
+	balance_transfer(AccountId, AccountId, Balance),
 	#[codec(index = 53)]
-	balance_unshield(Identity, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
+	balance_unshield(AccountId, AccountId, Balance, ShardIdentifier), // (AccountIncognito, BeneficiaryPublicAccount, Amount, Shard)
 	#[codec(index = 54)]
-	balance_shield(Identity, AccountId, Balance), // (Root, AccountIncognito, Amount)
+	balance_shield(AccountId, AccountId, Balance), // (Root, AccountIncognito, Amount)
 	#[cfg(feature = "evm")]
 	#[codec(index = 55)]
-	evm_withdraw(Identity, H160, Balance), // (Origin, Address EVM Account, Value)
+	evm_withdraw(AccountId, H160, Balance), // (Origin, Address EVM Account, Value)
 	// (Origin, Source, Target, Input, Value, Gas limit, Max fee per gas, Max priority fee per gas, Nonce, Access list)
 	#[cfg(feature = "evm")]
 	#[codec(index = 56)]
 	evm_call(
-		Identity,
+		AccountId,
 		H160,
 		H160,
 		Vec<u8>,
@@ -100,7 +100,7 @@ pub enum TrustedCall {
 	#[cfg(feature = "evm")]
 	#[codec(index = 57)]
 	evm_create(
-		Identity,
+		AccountId,
 		H160,
 		Vec<u8>,
 		U256,
@@ -114,7 +114,7 @@ pub enum TrustedCall {
 	#[cfg(feature = "evm")]
 	#[codec(index = 58)]
 	evm_create2(
-		Identity,
+		AccountId,
 		H160,
 		Vec<u8>,
 		H256,
@@ -128,21 +128,21 @@ pub enum TrustedCall {
 }
 
 impl TrustedCall {
-	pub fn sender_identity(&self) -> &Identity {
+	pub fn sender_identity(&self) -> &AccountId {
 		match self {
-			Self::noop(sender_identity) => sender_identity,
-			Self::balance_set_balance(sender_identity, ..) => sender_identity,
-			Self::balance_transfer(sender_identity, ..) => sender_identity,
-			Self::balance_unshield(sender_identity, ..) => sender_identity,
-			Self::balance_shield(sender_identity, ..) => sender_identity,
+			Self::noop(signer) => signer,
+			Self::balance_set_balance(signer, ..) => signer,
+			Self::balance_transfer(signer, ..) => signer,
+			Self::balance_unshield(signer, ..) => signer,
+			Self::balance_shield(signer, ..) => signer,
 			#[cfg(feature = "evm")]
-			Self::evm_withdraw(sender_identity, ..) => sender_identity,
+			Self::evm_withdraw(signer, ..) => signer,
 			#[cfg(feature = "evm")]
-			Self::evm_call(sender_identity, ..) => sender_identity,
+			Self::evm_call(signer, ..) => signer,
 			#[cfg(feature = "evm")]
-			Self::evm_create(sender_identity, ..) => sender_identity,
+			Self::evm_create(signer, ..) => signer,
 			#[cfg(feature = "evm")]
-			Self::evm_create2(sender_identity, ..) => sender_identity,
+			Self::evm_create2(signer, ..) => signer,
 		}
 	}
 }
@@ -168,11 +168,11 @@ impl TrustedCallSigning<TrustedCallSigned> for TrustedCall {
 pub struct TrustedCallSigned {
 	pub call: TrustedCall,
 	pub nonce: Index,
-	pub signature: LitentryMultiSignature,
+	pub signature: MultiSignature,
 }
 
 impl TrustedCallSigned {
-	pub fn new(call: TrustedCall, nonce: Index, signature: LitentryMultiSignature) -> Self {
+	pub fn new(call: TrustedCall, nonce: Index, signature: MultiSignature) -> Self {
 		TrustedCallSigned { call, nonce, signature }
 	}
 
@@ -190,16 +190,14 @@ impl TrustedCallSigned {
 impl Default for TrustedCallSigned {
 	fn default() -> Self {
 		Self {
-			call: TrustedCall::noop(AccountId32::unchecked_from([0u8; 32].into()).into()),
+			call: TrustedCall::noop(AccountId32::unchecked_from([0u8; 32].into())),
 			nonce: 0,
-			signature: LitentryMultiSignature::Ed25519(ed25519::Signature::unchecked_from(
-				[0u8; 64],
-			)),
+			signature: MultiSignature::Ed25519(ed25519::Signature::unchecked_from([0u8; 64])),
 		}
 	}
 }
 impl TrustedCallVerification for TrustedCallSigned {
-	fn sender_identity(&self) -> &Identity {
+	fn sender_identity(&self) -> &AccountId {
 		self.call.sender_identity()
 	}
 
@@ -267,7 +265,7 @@ where
 	) -> Result<Self::Result, Self::Error> {
 		let sender = self.call.sender_identity().clone();
 		let call_hash = blake2_256(&self.call.encode());
-		let account_id: AccountId = sender.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+		let account_id: AccountId = sender;
 		let system_nonce = System::account_nonce(&account_id);
 		ensure!(self.nonce == system_nonce, Self::Error::InvalidNonce(self.nonce, system_nonce));
 
@@ -282,8 +280,7 @@ where
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_set_balance(root, who, free_balance, reserved_balance) => {
-				let root_account_id: AccountId =
-					root.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				let root_account_id: AccountId = root;
 				ensure!(
 					is_root::<Runtime, AccountId>(&root_account_id),
 					Self::Error::MissingPrivileges(root_account_id)
@@ -312,9 +309,7 @@ where
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_transfer(from, to, value) => {
-				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				);
+				let origin = ita_sgx_runtime::RuntimeOrigin::signed(from.clone());
 				std::println!("⣿STF⣿ 🔄 balance_transfer from ⣿⣿⣿ to ⣿⣿⣿ amount ⣿⣿⣿");
 				// endow fee to enclave (self)
 				let fee_recipient: AccountId = enclave_signer_account();
@@ -365,9 +360,7 @@ where
 					shard
 				);
 
-				let origin = ita_sgx_runtime::RuntimeOrigin::signed(
-					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
-				);
+				let origin = ita_sgx_runtime::RuntimeOrigin::signed(account_incognito.clone());
 				ita_sgx_runtime::BalancesCall::<Runtime>::transfer {
 					dest: MultiAddress::Id(fee_recipient),
 					value: fee,
@@ -376,10 +369,7 @@ where
 				.map_err(|e| {
 					Self::Error::Dispatch(format!("Balance Unshielding error: {:?}", e.error))
 				})?;
-				burn_funds(
-					account_incognito.to_account_id().ok_or(StfError::InvalidAccount)?,
-					value,
-				)?;
+				burn_funds(account_incognito, value)?;
 
 				let vault_pubkey: [u8; 32] = get_storage_by_key_hash(SHARD_VAULT_KEY.into())
 					.ok_or_else(|| {
@@ -407,8 +397,7 @@ where
 				Ok(TrustedCallResult::Empty)
 			},
 			TrustedCall::balance_shield(enclave_account, who, value) => {
-				let account_id: AccountId32 =
-					enclave_account.to_account_id().ok_or(Self::Error::InvalidAccount)?;
+				let account_id: AccountId32 = enclave_account;
 				ensure_enclave_signer_account(&account_id)?;
 				debug!("balance_shield({}, {})", account_id_to_string(&who), value);
 				shield_funds(who, value)?;
@@ -429,9 +418,7 @@ where
 			TrustedCall::evm_withdraw(from, address, value) => {
 				debug!("evm_withdraw({}, {}, {})", account_id_to_string(&from), address, value);
 				ita_sgx_runtime::EvmCall::<Runtime>::withdraw { address, value }
-					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-						from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-					))
+					.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 					.map_err(|e| {
 						Self::Error::Dispatch(format!("Evm Withdraw error: {:?}", e.error))
 					})?;
@@ -467,9 +454,7 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Call error: {:?}", e.error)))?;
 				Ok(TrustedCallResult::Empty)
 			},
@@ -503,9 +488,7 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create error: {:?}", e.error)))?;
 				let contract_address = evm_create_address(source, nonce_evm_account);
 				info!("Trying to create evm contract with address {:?}", contract_address);
@@ -542,9 +525,7 @@ where
 					nonce,
 					access_list,
 				}
-				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(
-					from.to_account_id().ok_or(Self::Error::InvalidAccount)?,
-				))
+				.dispatch_bypass_filter(ita_sgx_runtime::RuntimeOrigin::signed(from))
 				.map_err(|e| Self::Error::Dispatch(format!("Evm Create2 error: {:?}", e.error)))?;
 				let contract_address = evm_create2_address(source, salt, code_hash);
 				info!("Trying to create evm contract with address {:?}", contract_address);

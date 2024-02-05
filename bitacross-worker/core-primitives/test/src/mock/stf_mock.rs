@@ -34,11 +34,11 @@ use itp_types::{
 	parentchain::{ParentchainCall, ParentchainId},
 	AccountId, Balance, Index, ShardIdentifier, H256,
 };
-use litentry_primitives::{Identity, LitentryMultiSignature};
 use log::*;
 use sp_core::{sr25519, Pair};
-use sp_runtime::transaction_validity::{
-	TransactionValidityError, UnknownTransaction, ValidTransaction,
+use sp_runtime::{
+	transaction_validity::{TransactionValidityError, UnknownTransaction, ValidTransaction},
+	MultiSignature,
 };
 use sp_std::{vec, vec::Vec};
 use std::{thread::sleep, time::Duration};
@@ -105,13 +105,13 @@ pub type TrustedOperationMock = TrustedOperation<TrustedCallSignedMock, GetterMo
 #[derive(Encode, Decode, Clone, Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrustedCallMock {
-	noop(Identity),
-	balance_transfer(Identity, AccountId, Balance),
-	waste_time_ms(Identity, u64),
+	noop(AccountId),
+	balance_transfer(AccountId, AccountId, Balance),
+	waste_time_ms(AccountId, u64),
 }
 
 impl TrustedCallMock {
-	pub fn sender_identity(&self) -> &Identity {
+	pub fn sender_identity(&self) -> &AccountId {
 		match self {
 			Self::noop(sender_identity) => sender_identity,
 			Self::balance_transfer(sender_identity, ..) => sender_identity,
@@ -145,11 +145,11 @@ impl TrustedCallSigning<TrustedCallSignedMock> for TrustedCallMock {
 pub struct TrustedCallSignedMock {
 	pub call: TrustedCallMock,
 	pub nonce: Index,
-	pub signature: LitentryMultiSignature,
+	pub signature: MultiSignature,
 }
 
 impl TrustedCallSignedMock {
-	pub fn new(call: TrustedCallMock, nonce: Index, signature: LitentryMultiSignature) -> Self {
+	pub fn new(call: TrustedCallMock, nonce: Index, signature: MultiSignature) -> Self {
 		TrustedCallSignedMock { call, nonce, signature }
 	}
 
@@ -203,7 +203,7 @@ impl ExecuteCall<NodeMetadataRepositoryMock> for TrustedCallSignedMock {
 }
 
 impl TrustedCallVerification for TrustedCallSignedMock {
-	fn sender_identity(&self) -> &Identity {
+	fn sender_identity(&self) -> &AccountId {
 		self.call.sender_identity()
 	}
 
@@ -270,7 +270,7 @@ pub fn mock_key_pair() -> KeyPair {
 
 pub fn mock_trusted_call_signed(nonce: Nonce) -> TrustedCallSignedMock {
 	TrustedCallMock::balance_transfer(
-		mock_key_pair().account_id().into(),
+		mock_key_pair().account_id(),
 		mock_key_pair().account_id(),
 		42,
 	)

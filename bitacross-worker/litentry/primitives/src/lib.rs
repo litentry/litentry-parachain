@@ -27,6 +27,7 @@ mod aes;
 mod aes_request;
 mod bitcoin_address;
 mod bitcoin_signature;
+mod direct_call;
 mod ethereum_signature;
 mod validation_data;
 
@@ -34,6 +35,7 @@ pub use aes::*;
 pub use aes_request::*;
 pub use bitcoin_address::*;
 pub use bitcoin_signature::*;
+pub use direct_call::*;
 pub use ethereum_signature::*;
 use sp_std::{boxed::Box, fmt::Debug, vec::Vec};
 pub use validation_data::*;

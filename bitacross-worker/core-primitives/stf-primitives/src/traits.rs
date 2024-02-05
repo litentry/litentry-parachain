@@ -19,7 +19,6 @@ use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use itp_sgx_runtime_primitives::types::Index;
-use litentry_primitives::Identity;
 use sp_runtime::transaction_validity::{TransactionValidityError, ValidTransaction};
 
 /// checks authorization of stf getters
@@ -40,7 +39,7 @@ pub trait TrustedCallSigning<TCS> {
 
 /// enables TrustedCallSigned verification
 pub trait TrustedCallVerification {
-	fn sender_identity(&self) -> &Identity;
+	fn sender_identity(&self) -> &AccountId;
 
 	fn nonce(&self) -> Index;
 

@@ -67,7 +67,7 @@ impl<Executor: IndirectExecutor<TrustedCallSigned, Error>>
 
 			let shard = executor.get_default_shard();
 			let trusted_call = TrustedCall::balance_shield(
-				executor.get_enclave_account()?.into(),
+				executor.get_enclave_account()?,
 				ALICE_ACCOUNT_ID,
 				self.value,
 			);

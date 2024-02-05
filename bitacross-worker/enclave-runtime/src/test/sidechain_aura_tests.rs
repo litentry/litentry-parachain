@@ -263,7 +263,7 @@ fn encrypted_trusted_operation_transfer_balance<
 	to: AccountId,
 	amount: Balance,
 ) -> Vec<u8> {
-	let call = TrustedCall::balance_transfer(Identity::Substrate(from.public().into()), to, amount);
+	let call = TrustedCall::balance_transfer(from.public().into(), to, amount);
 	let call_signed = sign_trusted_call(&call, attestation_api, shard_id, from);
 	let trusted_operation = TrustedOperation::<TrustedCallSigned, Getter>::direct_call(call_signed);
 	encrypt_trusted_operation(shielding_key, &trusted_operation)
