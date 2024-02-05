@@ -222,8 +222,8 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, (WorkerType, SidechainBlockNumber), MrEnclave>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn worker_for_shard)]
-	pub type WorkerForShard<T: Config> =
+	#[pallet::getter(fn enclave_identifier_for_shard)]
+	pub type EnclaveIdentifierForShard<T: Config> =
 		StorageMap<_, Blake2_128Concat, ShardIdentifier, T::AccountId, OptionQuery>;
 
 	#[pallet::storage]
@@ -782,7 +782,7 @@ impl<T: Config> Pallet<T> {
 		confirmation: SidechainBlockConfirmation,
 	) {
 		LatestSidechainBlockConfirmation::<T>::insert(shard, confirmation);
-		WorkerForShard::<T>::insert(shard, sender.clone());
+		EnclaveIdentifierForShard::<T>::insert(shard, sender.clone());
 		Self::deposit_event(Event::SidechainBlockFinalized {
 			who: sender,
 			sidechain_block_number: confirmation.block_number,

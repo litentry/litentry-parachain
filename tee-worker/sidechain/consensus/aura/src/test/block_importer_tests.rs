@@ -87,10 +87,10 @@ fn test_fixtures(
 ) -> (TestBlockImporter, Arc<HandleStateMock>, Arc<TestTopPoolAuthor>) {
 	let state_handler = Arc::new(HandleStateMock::from_shard(shard()).unwrap());
 	let top_pool_author = Arc::new(TestTopPoolAuthor::default());
-	let ocall_api = Arc::new(OnchainMock::default().add_validateer_set(
-		parentchain_header,
-		Some(vec![validateer(Keyring::Alice.public().into())]),
-	));
+	let ocall_api = Arc::new(
+		OnchainMock::default()
+			.add_validateer_set(parentchain_header, Some(vec![Keyring::Alice.public().into()])),
+	);
 	let state_key_repository = Arc::new(TestStateKeyRepo::new(state_key()));
 
 	let peer_updater_mock = Arc::new(PeerUpdaterMock {});

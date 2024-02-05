@@ -1029,6 +1029,7 @@ impl pallet_teebag::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MomentsPerDay = MomentsPerDay;
 	type SetAdminOrigin = EnsureRootOrHalfCouncil;
+	type MaxEnclaveIdentifier = ConstU32<3>;
 }
 
 impl pallet_identity_management::Config for Runtime {

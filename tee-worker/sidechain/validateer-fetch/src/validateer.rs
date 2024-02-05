@@ -16,10 +16,9 @@
 */
 
 use crate::error::{Error, Result};
-use frame_support::ensure;
 use itp_ocall_api::EnclaveOnChainOCallApi;
-use itp_teerex_storage::{TeeRexStorage, TeerexStorageKeys};
-use itp_types::{parentchain::ParentchainId, Enclave};
+use itp_storage::{storage_map_key, StorageHasher};
+use itp_types::{parentchain::ParentchainId, AccountId, WorkerType};
 use sp_core::H256;
 use sp_runtime::traits::Header as HeaderT;
 use sp_std::prelude::Vec;
@@ -28,7 +27,8 @@ pub trait ValidateerFetch {
 	fn current_validateers<Header: HeaderT<Hash = H256>>(
 		&self,
 		latest_header: &Header,
-	) -> Result<Vec<Enclave>>;
+	) -> Result<Vec<AccountId>>;
+
 	fn validateer_count<Header: HeaderT<Hash = H256>>(&self, latest_header: &Header)
 		-> Result<u64>;
 }
@@ -37,31 +37,26 @@ impl<OnchainStorage: EnclaveOnChainOCallApi> ValidateerFetch for OnchainStorage 
 	fn current_validateers<Header: HeaderT<Hash = H256>>(
 		&self,
 		header: &Header,
-	) -> Result<Vec<Enclave>> {
-		let count = self.validateer_count(header)?;
-
-		let mut hashes = Vec::with_capacity(count as usize);
-		for i in 1..=count {
-			hashes.push(TeeRexStorage::enclave(i))
-		}
-
-		let enclaves: Vec<Enclave> = self
-			.get_multiple_storages_verified(hashes, header, &ParentchainId::Litentry)?
-			.into_iter()
-			.filter_map(|e| e.into_tuple().1)
-			.collect();
-		ensure!(
-			enclaves.len() == count as usize,
-			Error::Other("Found less validateers onchain than validateer count")
-		);
-		Ok(enclaves)
+	) -> Result<Vec<AccountId>> {
+		let identifiers = self
+			.get_storage_verified(
+				storage_map_key(
+					"Teebag",
+					"EnclaveIdentifier",
+					&WorkerType::Identity,
+					&StorageHasher::Blake2_128Concat,
+				),
+				header,
+				&ParentchainId::Litentry,
+			)?
+			.into_tuple()
+			.1
+			.ok_or_else(|| Error::Other("Could not get validateer list from chain"))?;
+		Ok(identifiers)
 	}
 
 	fn validateer_count<Header: HeaderT<Hash = H256>>(&self, header: &Header) -> Result<u64> {
-		self.get_storage_verified(TeeRexStorage::enclave_count(), header, &ParentchainId::Litentry)?
-			.into_tuple()
-			.1
-			.ok_or_else(|| Error::Other("Could not get validateer count from chain"))
+		Ok(self.current_validateers::<Header>(header)?.len() as u64)
 	}
 }
 
@@ -84,21 +79,7 @@ mod tests {
 	pub fn get_validateer_set_works() {
 		let header = ParentchainHeaderBuilder::default().build();
 		let mock = OnchainMock::default().add_validateer_set(&header, None);
-
 		let validateers = validateer_set();
-
 		assert_eq!(mock.current_validateers(&header).unwrap(), validateers);
-	}
-
-	#[test]
-	pub fn if_validateer_count_bigger_than_returned_validateers_return_err() {
-		let header = ParentchainHeaderBuilder::default().build();
-		let mut mock = OnchainMock::default().add_validateer_set(&header, None);
-		mock.insert_at_header(&header, TeeRexStorage::enclave_count(), 5u64.encode());
-
-		assert_eq!(
-			mock.current_validateers(&header).unwrap_err().to_string(),
-			"Found less validateers onchain than validateer count".to_string()
-		);
 	}
 }

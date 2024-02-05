@@ -37,12 +37,10 @@ pub type PalletString = Vec<u8>;
 pub type PalletString = String;
 
 pub use itp_sgx_runtime_primitives::types::*;
-pub use litentry_primitives::{Assertion, DecryptableRequest};
+pub use litentry_primitives::{Assertion, DecryptableRequest, Enclave, MrEnclave, WorkerType};
 pub use sp_core::{crypto::AccountId32 as AccountId, H256};
 
 pub type IpfsHash = [u8; 46];
-pub type MrEnclave = [u8; 32];
-
 pub type CallIndex = [u8; 2];
 
 // pallet teerex
@@ -66,8 +64,6 @@ pub type ActivateIdentityFn = (CallIndex, DeactivateIdentityParams);
 // pallet VCMP
 pub type RequestVCParams = (ShardIdentifier, Assertion);
 pub type RequestVCFn = (CallIndex, RequestVCParams);
-
-pub type Enclave = EnclaveGen<AccountId>;
 
 /// Simple blob to hold an encoded call
 #[derive(Debug, PartialEq, Eq, Clone, Default)]
@@ -105,23 +101,6 @@ impl DecryptableRequest for RsaRequest {
 		enclave_shielding_key: Box<dyn ShieldingCryptoDecrypt<Error = T>>,
 	) -> core::result::Result<Vec<u8>, ()> {
 		enclave_shielding_key.decrypt(self.payload.as_slice()).map_err(|_| ())
-	}
-}
-
-// Todo: move this improved enclave definition into a primitives crate in the pallet_teerex repo.
-#[derive(Encode, Decode, Clone, PartialEq, sp_core::RuntimeDebug)]
-pub struct EnclaveGen<AccountId> {
-	pub pubkey: AccountId,
-	// FIXME: this is redundant information
-	pub mr_enclave: [u8; 32],
-	pub timestamp: u64,
-	// unix epoch in milliseconds
-	pub url: PalletString, // utf8 encoded url
-}
-
-impl<AccountId> EnclaveGen<AccountId> {
-	pub fn new(pubkey: AccountId, mr_enclave: [u8; 32], timestamp: u64, url: PalletString) -> Self {
-		Self { pubkey, mr_enclave, timestamp, url }
 	}
 }
 

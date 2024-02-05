@@ -25,9 +25,9 @@ use itp_enclave_api::{enclave_base::EnclaveBase, sidechain::Sidechain, EnclaveRe
 use itp_settings::worker::MR_ENCLAVE_SIZE;
 use itp_storage::StorageProof;
 use itp_types::ShardIdentifier;
+use pallet_teebag::EnclaveFingerprint;
 use sgx_crypto_helper::rsa3072::Rsa3072PubKey;
 use sp_core::ed25519;
-use teerex_primitives::EnclaveFingerprint;
 
 /// mock for EnclaveBase - use in tests
 pub struct EnclaveMock;
