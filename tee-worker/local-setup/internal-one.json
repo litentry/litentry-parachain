@@ -1,0 +1,27 @@
+{
+  "workers": [
+    {
+      "source": "bin",
+      "flags": [
+        "--clean-reset",
+        "--ws-external",
+        "-P",
+        "2000",
+        "-w",
+        "2001",
+        "-r",
+        "3443",
+        "-h",
+        "4545",
+        "-u",
+        "wss://tee-internal.litentry.io",
+        "-p",
+        "443",
+        "--parentchain-start-block",
+        "27"
+      ],
+      "subcommand_flags": [
+      ]
+    }
+  ]
+}
