@@ -18,6 +18,7 @@
 use crate::error::{Error, Result};
 use itc_rpc_client::direct_client::{DirectApi, DirectClient as DirectWorkerApi};
 use itp_node_api::{api_client::PalletTeebagApi, node_api_factory::CreateNodeApi};
+use itp_types::WorkerType;
 use its_primitives::types::ShardIdentifier;
 use std::sync::Arc;
 
@@ -50,7 +51,7 @@ where
 		let node_api = self.node_api_factory.create_api()?;
 
 		let validateer = node_api
-			.primary_enclave_for_shard(shard, None)?
+			.primary_enclave_for_shard(WorkerType::Identity, shard, None)?
 			.ok_or_else(|| Error::NoPeerFoundForShard(*shard))?;
 
 		let trusted_worker_client =

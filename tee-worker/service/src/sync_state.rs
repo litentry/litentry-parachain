@@ -75,7 +75,7 @@ async fn get_author_url_of_last_finalized_sidechain_block<NodeApi: PalletTeebagA
 	shard: &ShardIdentifier,
 ) -> Result<String> {
 	let enclave = node_api
-		.primary_enclave_for_shard(shard, None)?
+		.primary_enclave_for_shard(WorkerType::Identity, shard, None)?
 		.ok_or_else(|| Error::NoWorkerForShardFound(*shard))?;
 	let worker_api_direct =
 		DirectWorkerApi::new(String::from_utf8_lossy(enclave.url.as_slice()).to_string());

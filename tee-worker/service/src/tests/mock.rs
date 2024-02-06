@@ -51,6 +51,7 @@ impl PalletTeebagApi for TestNodeApi {
 
 	fn primary_enclave_identifier_for_shard(
 		&self,
+		worker_type: WorkerType,
 		shard: &ShardIdentifier,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<AccountId>> {
@@ -59,15 +60,10 @@ impl PalletTeebagApi for TestNodeApi {
 
 	fn primary_enclave_for_shard(
 		&self,
+		worker_type: WorkerType,
 		shard: &ShardIdentifier,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<Enclave>> {
 		unreachable!()
-	}
-
-	fn all_scheduled_mrenclaves(&self, _at_block: Option<Hash>) -> ApiResult<Vec<MrEnclave>> {
-		let enclaves = enclaves();
-		let mrenclaves: HashSet<_> = enclaves.into_iter().map(|e| e.mrenclave).collect();
-		Ok(mrenclaves.into_iter().collect())
 	}
 }

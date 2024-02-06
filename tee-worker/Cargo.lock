@@ -5616,6 +5616,7 @@ dependencies = [
  "itc-rpc-client",
  "itp-node-api",
  "itp-test",
+ "itp-types",
  "its-primitives",
  "its-rpc-handler",
  "its-storage",

@@ -51,7 +51,7 @@ use its_primitives::types::block::SignedBlock as SignedSidechainBlock;
 use its_storage::{interface::FetchBlocks, BlockPruner, SidechainStorageLock};
 use lc_data_providers::DataProviderConfig;
 use litentry_macros::if_production_or;
-use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier};
+use litentry_primitives::{Enclave as TeebagEnclave, ShardIdentifier, WorkerType};
 use log::*;
 use my_node_runtime::{Hash, Header, RuntimeEvent};
 use regex::Regex;
@@ -554,16 +554,18 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 		.expect("our enclave should be registered at this point");
 	trace!("verified that our enclave is registered: {:?}", my_enclave);
 
-	let we_are_primary_validateer =
-		match litentry_rpc_api.primary_enclave_identifier_for_shard(shard, None).unwrap() {
-			Some(account) => account == tee_accountid,
-			None => false,
-		};
+	let is_primary_enclave = match litentry_rpc_api
+		.primary_enclave_identifier_for_shard(WorkerType::Identity, shard, None)
+		.unwrap()
+	{
+		Some(account) => account == tee_accountid,
+		None => false,
+	};
 
-	if we_are_primary_validateer {
-		println!("[+] We are the primary worker");
+	if is_primary_enclave {
+		println!("[+] We are the primary enclave");
 	} else {
-		println!("[+] We are NOT the primary worker");
+		println!("[+] We are NOT the primary enclave");
 	}
 
 	initialization_handler.registered_on_parentchain();
@@ -615,7 +617,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 			let last_synced_header = sidechain_init_block_production(
 				enclave.clone(),
 				register_enclave_xt_header,
-				we_are_primary_validateer,
+				is_primary_enclave,
 				parentchain_handler.clone(),
 				sidechain_storage,
 				&last_synced_header,
@@ -627,7 +629,7 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 
 			start_parentchain_header_subscription_thread(parentchain_handler, last_synced_header);
 
-			init_provided_shard_vault(shard, &enclave, we_are_primary_validateer);
+			init_provided_shard_vault(shard, &enclave, is_primary_enclave);
 
 			spawn_worker_for_shard_polling(shard, litentry_rpc_api.clone(), initialization_handler);
 		},
@@ -670,14 +672,14 @@ fn start_worker<E, T, D, InitializationHandler, WorkerModeProvider>(
 fn init_provided_shard_vault<E: EnclaveBase>(
 	shard: &ShardIdentifier,
 	enclave: &Arc<E>,
-	we_are_primary_validateer: bool,
+	is_primary_enclave: bool,
 ) {
 	if let Ok(shard_vault) = enclave.get_ecc_vault_pubkey(shard) {
 		println!(
 			"[Litentry] shard vault account is already initialized in state: {}",
 			shard_vault.to_ss58check()
 		);
-	} else if we_are_primary_validateer {
+	} else if is_primary_enclave {
 		println!("[Litentry] initializing proxied shard vault account now");
 		enclave.init_proxied_shard_vault(shard, &ParentchainId::Litentry).unwrap();
 		println!(
@@ -803,9 +805,11 @@ fn spawn_worker_for_shard_polling<InitializationHandler>(
 
 		loop {
 			info!("Polling for worker for shard ({} seconds interval)", POLL_INTERVAL_SECS);
-			if let Ok(Some(_account)) =
-				node_api.primary_enclave_identifier_for_shard(&shard_for_initialized, None)
-			{
+			if let Ok(Some(_account)) = node_api.primary_enclave_identifier_for_shard(
+				WorkerType::Identity,
+				&shard_for_initialized,
+				None,
+			) {
 				// Set that the service is initialized.
 				initialization_handler.worker_for_shard_registered();
 				println!("[+] Found `WorkerForShard` on parentchain state",);

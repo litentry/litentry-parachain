@@ -15,9 +15,8 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::ApiResult;
-use itp_api_client_types::{storage_key, traits::GetStorage, Api, Config, Request};
-use itp_types::{AccountId, Enclave, MrEnclave, ShardIdentifier, WorkerType};
-use sp_core::storage::StorageKey;
+use itp_api_client_types::{traits::GetStorage, Api, Config, Request};
+use itp_types::{AccountId, Enclave, ShardIdentifier, WorkerType};
 
 pub const TEEBAG: &str = "Teebag";
 
@@ -37,11 +36,13 @@ pub trait PalletTeebagApi {
 	) -> ApiResult<u64>;
 	fn primary_enclave_identifier_for_shard(
 		&self,
+		worker_type: WorkerType,
 		shard: &ShardIdentifier,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<AccountId>>;
 	fn primary_enclave_for_shard(
 		&self,
+		worker_type: WorkerType,
 		shard: &ShardIdentifier,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<Enclave>>;
@@ -50,7 +51,6 @@ pub trait PalletTeebagApi {
 		worker_type: WorkerType,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Vec<Enclave>>;
-	fn all_scheduled_mrenclaves(&self, at_block: Option<Self::Hash>) -> ApiResult<Vec<MrEnclave>>;
 }
 
 impl<RuntimeConfig, Client> PalletTeebagApi for Api<RuntimeConfig, Client>
@@ -85,6 +85,7 @@ where
 	// Wheter it meets our needs needs to be further evaluated
 	fn primary_enclave_identifier_for_shard(
 		&self,
+		worker_type: WorkerType,
 		shard: &ShardIdentifier,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<AccountId>> {
@@ -93,7 +94,7 @@ where
 			.unwrap_or_default();
 		let maybe_account =
 			identifiers.iter().find(|account| match self.enclave(*account, at_block) {
-				Ok(Some(e)) => e.mrenclave.as_ref() == shard.as_ref(),
+				Ok(Some(e)) => &e.mrenclave == shard.as_ref(),
 				_ => false,
 			});
 		Ok(maybe_account.cloned())
@@ -101,10 +102,11 @@ where
 
 	fn primary_enclave_for_shard(
 		&self,
+		worker_type: WorkerType,
 		shard: &ShardIdentifier,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<Enclave>> {
-		self.primary_enclave_identifier_for_shard(shard, at_block)?
+		self.primary_enclave_identifier_for_shard(worker_type, shard, at_block)?
 			.map_or_else(|| Ok(None), |account| self.enclave(&account, at_block))
 	}
 
@@ -122,21 +124,5 @@ where
 			.filter_map(|account| self.enclave(&account, at_block).ok()?)
 			.collect();
 		Ok(enclaves)
-	}
-
-	fn all_scheduled_mrenclaves(&self, at_block: Option<Self::Hash>) -> ApiResult<Vec<MrEnclave>> {
-		let keys: Vec<_> = self
-			.get_keys(storage_key(TEEBAG, "ScheduledEnclave"), at_block)?
-			.unwrap_or_default()
-			.iter()
-			.map(|key| {
-				let key = key.strip_prefix("0x").unwrap_or(key);
-				let raw_key = hex::decode(key).unwrap();
-				self.get_storage_by_key::<MrEnclave>(StorageKey(raw_key).into(), at_block)
-			})
-			.filter(|enclave| matches!(enclave, Ok(Some(_))))
-			.map(|enclave| enclave.unwrap().unwrap())
-			.collect();
-		Ok(keys)
 	}
 }
