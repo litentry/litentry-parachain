@@ -93,8 +93,8 @@ where
 			.get_storage_map(TEEBAG, "EnclaveIdentifier", worker_type, at_block)?
 			.unwrap_or_default();
 		let maybe_account =
-			identifiers.iter().find(|account| match self.enclave(*account, at_block) {
-				Ok(Some(e)) => &e.mrenclave == shard.as_ref(),
+			identifiers.iter().find(|account| match self.enclave(account, at_block) {
+				Ok(Some(e)) => e.mrenclave == shard.as_ref(),
 				_ => false,
 			});
 		Ok(maybe_account.cloned())

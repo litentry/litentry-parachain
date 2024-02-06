@@ -341,27 +341,23 @@ export async function getEnclave(api: ParachainApiPromise): Promise<{
     mrEnclave: `0x${string}`;
     teeShieldingKey: KeyObject;
 }> {
-    const count = await api.query.teerex.enclaveCount();
-
-    const res = (await api.query.teerex.enclaveRegistry(count)).toHuman() as {
-        mrEnclave: `0x${string}`;
-        shieldingKey: `0x${string}`;
-        vcPubkey: `0x${string}`;
-        sgxMetadata: object;
-    };
+    const enclaveIdentifier = api.createType('Vec<AccountId>', await api.query.teebag.enclaveIdentifier('Identity'));
+    const primaryEnclave = (
+        await api.query.teebag.enclaveRegistry(enclaveIdentifier[0])
+    ).toHuman() as unknown as PalletTeebagEnclave;
 
     const teeShieldingKey = crypto.createPublicKey({
         key: {
             alg: 'RSA-OAEP-256',
             kty: 'RSA',
             use: 'enc',
-            n: Buffer.from(JSON.parse(res.shieldingKey).n.reverse()).toString('base64url'),
-            e: Buffer.from(JSON.parse(res.shieldingKey).e.reverse()).toString('base64url'),
+            n: Buffer.from(JSON.parse(primaryEnclave.shieldingPubkey).n.reverse()).toString('base64url'),
+            e: Buffer.from(JSON.parse(primaryEnclave.shieldingPubkey).e.reverse()).toString('base64url'),
         },
         format: 'jwk',
     });
     //@TODO mrEnclave should verify from storage
-    const mrEnclave = res.mrEnclave;
+    const mrEnclave = primaryEnclave.mrenclave;
     return {
         mrEnclave,
         teeShieldingKey,
