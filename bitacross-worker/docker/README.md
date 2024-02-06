@@ -55,16 +55,6 @@ Run
 docker compose -f <(envsubst < docker-compose.yml) -f <(envsubst < demo-sidechain.yml) up demo-sidechain --exit-code-from demo-sidechain
 ```
 
-### Demo Teeracle
-Build
-```
-COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker compose -f <(envsubst < docker-compose.yml) -f <(envsubst < demo-teeracle.yml) build --build-arg WORKER_MODE_ARG=teeracle
-```
-Run
-```
-docker compose -f <(envsubst < docker-compose.yml) -f <(envsubst < demo-teeracle.yml) up demo-teeracle --exit-code-from demo-teeracle
-```
-
 
 ## Run the benchmarks
 Build with

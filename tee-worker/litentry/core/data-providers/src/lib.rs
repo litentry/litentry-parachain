@@ -189,6 +189,7 @@ pub struct DataProviderConfig {
 	pub vip3_url: String,
 	pub geniidata_url: String,
 	pub geniidata_api_key: String,
+	pub litentry_archive_url: String,
 }
 
 impl Default for DataProviderConfig {
@@ -222,13 +223,14 @@ impl DataProviderConfig {
 			nodereal_api_retry_delay: 5000,
 			nodereal_api_retry_times: 2,
 			nodereal_api_url: "https://open-platform.nodereal.io/".to_string(),
-			nodereal_api_chain_network_url: "https://{chain}-{network}.nodereal.io/".to_string(),
+			nodereal_api_chain_network_url: "https://{chain}-mainnet.nodereal.io/".to_string(),
 			contest_legend_discord_role_id: "1172576273063739462".to_string(),
 			contest_popularity_discord_role_id: "1172576681119195208".to_string(),
 			contest_participant_discord_role_id: "1172576734135210104".to_string(),
 			vip3_url: "https://dappapi.vip3.io/".to_string(),
 			geniidata_url: "https://api.geniidata.com/api/1/brc20/balance?".to_string(),
 			geniidata_api_key: "".to_string(),
+			litentry_archive_url: "https://archive-test.litentry.io".to_string(),
 		};
 
 		// we allow to override following config properties for non prod dev
@@ -286,6 +288,9 @@ impl DataProviderConfig {
 			}
 			if let Ok(v) = env::var("GENIIDATA_URL") {
 				config.set_geniidata_url(v);
+			}
+			if let Ok(v) = env::var("LITENTRY_ARCHIVE_URL") {
+				config.set_litentry_archive_url(v);
 			}
 		});
 		// set secrets from env variables
@@ -404,6 +409,10 @@ impl DataProviderConfig {
 	pub fn set_geniidata_api_key(&mut self, v: String) {
 		debug!("set_geniidata_api_key: {:?}", v);
 		self.geniidata_api_key = v;
+	}
+	pub fn set_litentry_archive_url(&mut self, v: String) {
+		debug!("set_litentry_archive_url: {:?}", v);
+		self.litentry_archive_url = v;
 	}
 }
 

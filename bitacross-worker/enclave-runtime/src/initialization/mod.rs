@@ -15,6 +15,8 @@
 
 */
 
+#![allow(clippy::unwrap_used)]
+
 pub mod global_components;
 pub mod parentchain;
 use crate::{
@@ -27,7 +29,8 @@ use crate::{
 		EnclaveStateHandler, EnclaveStateInitializer, EnclaveStateObserver,
 		EnclaveStateSnapshotRepository, EnclaveStfEnclaveSigner, EnclaveTopPool,
 		EnclaveTopPoolAuthor, DIRECT_RPC_REQUEST_SINK_COMPONENT,
-		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT,
+		GLOBAL_ATTESTATION_HANDLER_COMPONENT, GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT,
+		GLOBAL_DIRECT_RPC_BROADCASTER_COMPONENT, GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL, GLOBAL_OCALL_API_COMPONENT,
 		GLOBAL_RPC_WS_HANDLER_COMPONENT, GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT,
 		GLOBAL_SIDECHAIN_BLOCK_COMPOSER_COMPONENT, GLOBAL_SIDECHAIN_BLOCK_SYNCER_COMPONENT,
@@ -49,6 +52,7 @@ use crate::{
 	Hash,
 };
 use base58::ToBase58;
+use bc_task_receiver::{run_bit_across_handler_runner, BitAcrossTaskContext};
 use codec::Encode;
 use core::str::FromStr;
 use ita_stf::{Getter, TrustedCallSigned};
@@ -70,6 +74,7 @@ use itp_settings::files::{
 };
 use itp_sgx_crypto::{
 	get_aes_repository, get_ed25519_repository, get_rsa3072_repository, key_repository::AccessKey,
+	secp256k1::create_secp256k1_repository,
 };
 use itp_stf_state_handler::{
 	file_io::StateDir, handle_state::HandleState, query_shard_state::QueryShardState,
@@ -89,6 +94,7 @@ use log::*;
 use sgx_types::sgx_status_t;
 use sp_core::crypto::Pair;
 use std::{collections::HashMap, path::PathBuf, string::String, sync::Arc};
+
 pub(crate) fn init_enclave(
 	mu_ra_url: String,
 	untrusted_worker_url: String,
@@ -98,6 +104,18 @@ pub(crate) fn init_enclave(
 	GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT.initialize(signing_key_repository.clone());
 	let signer = signing_key_repository.retrieve_key()?;
 	info!("[Enclave initialized] Ed25519 prim raw : {:?}", signer.public().0);
+
+	let bitcoin_key_repository =
+		Arc::new(create_secp256k1_repository(base_dir.clone(), "bitcoin")?);
+	GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.initialize(bitcoin_key_repository.clone());
+	let bitcoin_key = bitcoin_key_repository.retrieve_key()?;
+	info!("[Enclave initialized] Bitcoin public key raw : {:?}", bitcoin_key.public.serialize());
+
+	let ethereum_key_repository =
+		Arc::new(create_secp256k1_repository(base_dir.clone(), "ethereum")?);
+	GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.initialize(ethereum_key_repository.clone());
+	let ethereum_key = ethereum_key_repository.retrieve_key()?;
+	info!("[Enclave initialized] Ethereum public key raw : {:?}", ethereum_key.public.serialize());
 
 	let shielding_key_repository = Arc::new(get_rsa3072_repository(base_dir.clone())?);
 	GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.initialize(shielding_key_repository.clone());
@@ -212,6 +230,8 @@ pub(crate) fn init_enclave(
 		Arc::new(IntelAttestationHandler::new(ocall_api, signing_key_repository));
 	GLOBAL_ATTESTATION_HANDLER_COMPONENT.initialize(attestation_handler);
 
+	std::thread::spawn(move || run_bit_across_handler().unwrap());
+
 	Ok(())
 }
 
@@ -228,6 +248,31 @@ fn initialize_state_observer(
 		states_map.insert(shard, state);
 	}
 	Ok(Arc::new(EnclaveStateObserver::from_map(states_map)))
+}
+
+fn run_bit_across_handler() -> Result<(), Error> {
+	let author_api = GLOBAL_TOP_POOL_AUTHOR_COMPONENT.get()?;
+	let state_handler = GLOBAL_STATE_HANDLER_COMPONENT.get()?;
+	let state_observer = GLOBAL_STATE_OBSERVER_COMPONENT.get()?;
+
+	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
+	#[allow(clippy::unwrap_used)]
+	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
+	let stf_enclave_signer = Arc::new(EnclaveStfEnclaveSigner::new(
+		state_observer,
+		ocall_api.clone(),
+		shielding_key_repository.clone(),
+		author_api,
+	));
+
+	let stf_task_context = BitAcrossTaskContext::new(
+		shielding_key_repository,
+		stf_enclave_signer,
+		state_handler,
+		ocall_api,
+	);
+	run_bit_across_handler_runner(Arc::new(stf_task_context));
+	Ok(())
 }
 
 pub(crate) fn init_enclave_sidechain_components(

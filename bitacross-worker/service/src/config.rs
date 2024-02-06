@@ -17,7 +17,6 @@
 
 use clap::ArgMatches;
 use itc_rest_client::rest_client::Url;
-use itp_settings::teeracle::{DEFAULT_MARKET_DATA_UPDATE_INTERVAL, ONE_DAY, THIRTY_MINUTES};
 use parse_duration::parse;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -295,10 +294,6 @@ pub struct RunConfig {
 	request_state: bool,
 	/// Shard identifier base58 encoded. Defines the shard that this worker operates on. Default is mrenclave.
 	shard: Option<String>,
-	/// Optional teeracle update interval
-	teeracle_update_interval: Option<Duration>,
-	/// Optional teeracle reregistration interval
-	reregister_teeracle_interval: Option<Duration>,
 	/// Marblerun's Prometheus endpoint base URL
 	marblerun_base_url: Option<String>,
 }
@@ -320,19 +315,6 @@ impl RunConfig {
 		self.shard.as_deref()
 	}
 
-	pub fn teeracle_update_interval(&self) -> Duration {
-		self.teeracle_update_interval.unwrap_or(DEFAULT_MARKET_DATA_UPDATE_INTERVAL)
-	}
-
-	/// The periodic registration period of the teeracle.
-	///
-	/// Defaults to 23h30m, as this is slightly below the currently configured automatic
-	/// deregistration period on the Integritee chains.
-	pub fn reregister_teeracle_interval(&self) -> Duration {
-		// Todo: Derive this from chain https://github.com/integritee-network/worker/issues/1351
-		self.reregister_teeracle_interval.unwrap_or(ONE_DAY - THIRTY_MINUTES)
-	}
-
 	pub fn marblerun_base_url(&self) -> &str {
 		// This conflicts with the default port of a substrate node, but it is indeed the
 		// default port of marblerun too:
@@ -347,12 +329,6 @@ impl From<&ArgMatches<'_>> for RunConfig {
 		let dev = m.is_present("dev");
 		let request_state = m.is_present("request-state");
 		let shard = m.value_of("shard").map(|s| s.to_string());
-		let teeracle_update_interval = m.value_of("teeracle-interval").map(|i| {
-			parse(i).unwrap_or_else(|e| panic!("teeracle-interval parsing error {:?}", e))
-		});
-		let reregister_teeracle_interval = m.value_of("reregister-teeracle-interval").map(|i| {
-			parse(i).unwrap_or_else(|e| panic!("teeracle-interval parsing error {:?}", e))
-		});
 
 		let marblerun_base_url = m.value_of("marblerun-url").map(|i| {
 			Url::parse(i)
@@ -360,15 +336,7 @@ impl From<&ArgMatches<'_>> for RunConfig {
 				.to_string()
 		});
 
-		Self {
-			skip_ra,
-			dev,
-			request_state,
-			shard,
-			teeracle_update_interval,
-			reregister_teeracle_interval,
-			marblerun_base_url,
-		}
+		Self { skip_ra, dev, request_state, shard, marblerun_base_url }
 	}
 }
 
@@ -504,7 +472,6 @@ mod test {
 		assert_eq!(run_config.dev, false);
 		assert_eq!(run_config.skip_ra, false);
 		assert!(run_config.shard.is_none());
-		assert!(run_config.teeracle_update_interval.is_none());
 	}
 
 	#[test]
@@ -517,11 +484,9 @@ mod test {
 			("dev", Default::default()),
 			("skip-ra", Default::default()),
 			("shard", Default::default()),
-			("teeracle-interval", Default::default()),
 		]);
 		// Workaround because MatchedArg is private.
 		args.args.get_mut("shard").unwrap().vals = vec![shard_identifier.into()];
-		args.args.get_mut("teeracle-interval").unwrap().vals = vec!["42s".into()];
 
 		let run_config = RunConfig::from(&args);
 
@@ -529,7 +494,6 @@ mod test {
 		assert_eq!(run_config.dev, true);
 		assert_eq!(run_config.skip_ra, true);
 		assert_eq!(run_config.shard.unwrap(), shard_identifier.to_string());
-		assert_eq!(run_config.teeracle_update_interval.unwrap(), Duration::from_secs(42));
 	}
 
 	#[test]
@@ -561,17 +525,6 @@ mod test {
 			format!("ws://{}:{}", expected_worker_ip, untrusted_port)
 		);
 		assert_eq!(config.mu_ra_url_external(), format!("{}:{}", expected_worker_ip, mu_ra_port));
-	}
-
-	#[test]
-	fn teeracle_interval_parsing_panics_if_format_is_invalid() {
-		let teeracle_interval = "24s_invalid-format";
-		let mut args = ArgMatches::default();
-		args.args = HashMap::from([("teeracle-interval", Default::default())]);
-		args.args.get_mut("teeracle-interval").unwrap().vals = vec![teeracle_interval.into()];
-
-		let result = std::panic::catch_unwind(|| RunConfig::from(&args));
-		assert!(result.is_err());
 	}
 
 	#[test]

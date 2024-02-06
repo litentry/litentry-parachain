@@ -211,10 +211,6 @@ impl<
 	type ScheduledEnclave = ScheduledEnclave;
 	type StateHandler = StateHandler;
 
-	fn logging_target(&self) -> &'static str {
-		"aura"
-	}
-
 	fn get_scheduled_enclave(&mut self) -> Arc<Self::ScheduledEnclave> {
 		self.scheduled_enclave.clone()
 	}
@@ -246,15 +242,12 @@ impl<
 		let expected_author = slot_author::<AuthorityPair>(slot, epoch_data)?;
 
 		if expected_author == &self.authority_pair.public() {
-			log::info!(target: self.logging_target(), "Claiming slot ({})", *slot);
+			log::info!("Claiming slot ({})", *slot);
 			return Some(self.authority_pair.public())
 		}
 
 		if self.claim_strategy == SlotClaimStrategy::Always {
-			log::debug!(
-				target: self.logging_target(),
-				"Not our slot but we still claim it."
-			);
+			log::debug!("Not our slot but we still claim it.");
 			return Some(self.authority_pair.public())
 		}
 
@@ -281,7 +274,10 @@ impl<
 		&self,
 		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
-		log::trace!(target: self.logging_target(), "import Integritee blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		log::trace!(
+			"import Integritee blocks until {}",
+			hex_encode(parentchain_header_hash.encode().as_ref())
+		);
 		let maybe_parentchain_block = self
 			.parentchain_integritee_import_trigger
 			.import_until(|parentchain_block| {
@@ -296,7 +292,10 @@ impl<
 		&self,
 		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
-		log::trace!(target: self.logging_target(), "import TargetA blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		log::trace!(
+			"import TargetA blocks until {}",
+			hex_encode(parentchain_header_hash.encode().as_ref())
+		);
 		let maybe_parentchain_block = self
 			.maybe_parentchain_target_a_import_trigger
 			.clone()
@@ -313,7 +312,10 @@ impl<
 		&self,
 		parentchain_header_hash: &<ParentchainBlock::Header as ParentchainHeaderTrait>::Hash,
 	) -> Result<Option<ParentchainBlock::Header>, ConsensusError> {
-		log::trace!(target: self.logging_target(), "import TargetB blocks until {}", hex_encode(parentchain_header_hash.encode().as_ref()));
+		log::trace!(
+			"import TargetB blocks until {}",
+			hex_encode(parentchain_header_hash.encode().as_ref())
+		);
 		let maybe_parentchain_block = self
 			.maybe_parentchain_target_b_import_trigger
 			.clone()

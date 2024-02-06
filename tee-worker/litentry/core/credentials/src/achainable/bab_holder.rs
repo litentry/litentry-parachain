@@ -20,8 +20,8 @@ use crate::{
 };
 
 const BAB_HOLDER_DESCRIPTIONS: &str = "You are a holder of a certain kind of NFT";
-const BAB_HOLDER_BREAKDOWN: &str = "is_bab_holder";
-pub const BAB_HOLDER_TYPE: &str = "NFT Holder";
+const BAB_HOLDER_TYPE: &str = "NFT Holder";
+const BAB_HOLDER_BREAKDOWN: &str = "$is_bab_holder";
 
 pub trait UpdateBABHolder {
 	fn update_bab_holder(&mut self, is_bab_holder: bool);

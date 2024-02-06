@@ -18,7 +18,9 @@
         "test-ii-vc:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
         "test-ii-vc:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_vc.test.ts'",
         "test-ii-batch:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
-        "test-ii-batch:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'"
+        "test-ii-batch:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'ii_batch.test.ts'",
+        "test-data-provider:local": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=local mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'data-provider.test.ts'",
+        "test-data-provider:staging": "pnpm exec eslint . && pnpm exec cross-env NODE_ENV=staging mocha --exit --sort -r ts-node/register --loader=ts-node/esm 'data-provider.test.ts'"
     },
     "dependencies": {
         "@noble/ed25519": "^1.7.3",
@@ -49,7 +51,8 @@
         "scale-ts": "^0.2.11",
         "sidechain-api": "file:../../client-api/sidechain-api",
         "websocket-as-promised": "^2.0.1",
-        "ws": "^8.8.1"
+        "ws": "^8.8.1",
+        "zx": "^7.2.3"
     },
     "devDependencies": {
         "@ethersproject/providers": "^5.7.2",

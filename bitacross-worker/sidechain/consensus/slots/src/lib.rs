@@ -497,7 +497,7 @@ pub trait SimpleSlotWorker<ParentchainBlock: ParentchainBlockTrait> {
 		};
 
 		if is_single_worker {
-			error!("Running as single worker, skipping timestamp within slot check")
+			warn!("Running as single worker, skipping timestamp within slot check")
 		} else if !timestamp_within_slot(&slot_info, &proposing.block) {
 			warn!(
 				target: logging_target,

@@ -215,30 +215,6 @@ extern "C" {
 		response_len: u32,
 	) -> sgx_status_t;
 
-	pub fn update_market_data_xt(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		crypto_currency: *const u8,
-		crypto_currency_size: u32,
-		fiat_currency: *const u8,
-		fiat_currency_size: u32,
-		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_max_size: u32,
-		unchecked_extrinsic_size: *mut u32,
-	) -> sgx_status_t;
-
-	pub fn update_weather_data_xt(
-		eid: sgx_enclave_id_t,
-		retval: *mut sgx_status_t,
-		weather_info_longitude: *const u8,
-		weather_info_longitude_size: u32,
-		weather_info_latitude: *const u8,
-		weather_info_latitude_size: u32,
-		unchecked_extrinsic: *mut u8,
-		unchecked_extrinsic_max_size: u32,
-		unchecked_extrinsic_size: *mut u32,
-	) -> sgx_status_t;
-
 	pub fn run_state_provisioning_server(
 		eid: sgx_enclave_id_t,
 		retval: *mut sgx_status_t,
