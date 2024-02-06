@@ -136,6 +136,8 @@ services:
       - CONTEST_POPULARITY_DISCORD_ROLE_ID=CONTEST_POPULARITY_DISCORD_ROLE_ID
       - CONTEST_PARTICIPANT_DISCORD_ROLE_ID=CONTEST_PARTICIPANT_DISCORD_ROLE_ID
       - LITENTRY_ARCHIVE_URL=http://localhost:19527
+      - VIP3_URL=http://localhost:19527
+
     networks:
       - litentry-test-network
     healthcheck:
