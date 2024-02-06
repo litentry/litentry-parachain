@@ -1,6 +1,5 @@
 import inquirer from "inquirer";
 import { isPortAvailable } from "../utils/port.js";
-import { exec } from "../utils/index.js";
 import fs from "fs";
 import { $, cd, sleep } from "zx";
 
@@ -43,12 +42,14 @@ export async function runParachainAndWorker() {
 
 	const answers = await questionary();
 
-	// await runParachain(answers);
+	await runParachain(answers);
 	const workers = await runWorkers(answers);
 	process.on("SIGINT", () => {
 		workers.map((worker) => {
-			// worker.kill()
 			console.log("killing worker");
+			console.log(worker);
+
+			worker.kill();
 		});
 
 		process.exit();
@@ -57,25 +58,26 @@ export async function runParachainAndWorker() {
 	await sleep(100000);
 }
 
-function buildWorkerOpts(workerNumber, offset = 0) {
+function buildWorkerOpts(workerNumber) {
 	// run worker
 	const flags = [
 		"--clean-reset",
 		"-T",
 		"wss://localhost",
 		"-P",
-		Number(process.env.TrustedWorkerPort) + offset + workerNumber * 10,
+		Number(process.env.TrustedWorkerPort) + workerNumber * 10,
 		"-w",
-		Number(process.env.UntrustedWorkerPort) + offset + workerNumber * 10,
+		Number(process.env.UntrustedWorkerPort) + workerNumber * 10,
 		"-r",
-		Number(process.env.MuRaPort) + offset + workerNumber * 10,
+		Number(process.env.MuRaPort) + workerNumber * 10,
 		"-h",
-		Number(process.env.UntrustedHttpPort) + offset + workerNumber * 10,
+		Number(process.env.UntrustedHttpPort) + workerNumber * 10,
 		"--enable-mock-server",
 		"--parentchain-start-block",
 		"0",
 		workerNumber === 0 && "--enable-metrics",
 	].filter(Boolean);
+	console.log("index", workerNumber, flags);
 
 	const subcommandFlags = ["--skip-ra", "--dev", workerNumber !== 0 && "--request-state"].filter(
 		Boolean
@@ -96,26 +98,28 @@ async function runWorker(index, { flags, subcommandFlags }) {
 	}
 
 	const logStream = fs.createWriteStream(logFile, { flags: "a" });
-	// await $`touch ${logFile}`;
-	await $`cp ${sidechainPath}/bin/litentry-worker ${sidechainPath}/bin/enclave.signed.so ${cwd}`;
-	cd(cwd);
-	const workerProcess = $`./litentry-worker ${flags} run ${subcommandFlags}`;
-	workerProcess.stdout.on("data", (data) => {
-		// Write script output to the log file
-		console.log(data);
 
+	await $`cp ${sidechainPath}/bin/litentry-worker ${sidechainPath}/bin/enclave.signed.so ${cwd}`;
+
+	cd(cwd);
+
+	const workerProcess = $`./litentry-worker ${flags} run ${subcommandFlags}`;
+
+	workerProcess.stdout.on("data", (data) => {
 		logStream.write(data);
 	});
-
+	await sleep(5000);
 	return workerProcess;
 }
 
 async function runWorkers(answers) {
-	const workers = [...Array(answers.workersCount)].map((_, index) => {
+	const workers = [];
+	for (let index = 0; index < answers.workersCount; index++) {
 		const options = buildWorkerOpts(index);
-		console.log("🚀 ~ workers ~ options:", options);
-		return runWorker(index, options);
-	});
+		const result = await runWorker(index, options);
+		workers.push(result);
+	}
+	console.log("PROCESS ENV", workers);
 
 	return workers;
 }
@@ -142,7 +146,7 @@ function questionary() {
 			type: "list",
 			name: "mode",
 			message: "Which mode you want to run?",
-			choices: ["local-docker", "local-binary-standalone", "local-binary", "remote"],
+			choices: ["local-binary-standalone", "local-binary", "local-docker", "remote"],
 		},
 		{
 			type: "input",
