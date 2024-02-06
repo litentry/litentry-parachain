@@ -26,9 +26,8 @@ function checkPort(port) {
 
 export async function isPortAvailable(port) {
 	try {
-		await checkPort(port);
-		return true;
+		return await checkPort(port);
 	} catch (e) {
-		return "port is busy try another one" + e.message;
+		return false;
 	}
 }
