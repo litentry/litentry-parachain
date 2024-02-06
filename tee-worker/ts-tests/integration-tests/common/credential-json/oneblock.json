@@ -1,0 +1,44 @@
+[
+    {
+        "id": "oneblock-course-participation",
+        "name": "OneBlock+ Substrate Blockchain Development Course Participation",
+        "description": "You were a participant to the course co-created by OneBlock+ and Parity: \"Introduction to Substrate Blockchain Development, Phase 12\".",
+        "assertion": {
+            "id": "Oneblock",
+            "payload": "CourseParticipation"
+        },
+        "dataProvider": "oneblock",
+        "network": "oneblock",
+        "mockDid": "litentry:substrate:0xf26f4f77ccb38173185242cd1199696e5df5201666aae383de86eeb9e8251b3b",
+        "mockWeb3Network": "polkadot,kusama",
+        "expectedCredentialValue": false
+    },
+    {
+        "id": "oneblock-course-completion",
+        "name": "OneBlock+ Substrate Blockchain Development Course Completion",
+        "description": "You have completed the course co-created by OneBlock+ and Parity: \"Introduction to Substrate Blockchain Development, Phase 12\". \n\n OneBlock+: “We hope you will keep your enthusiasm and continue to explore on the road ahead.”",
+        "assertion": {
+            "id": "Oneblock",
+            "payload": "CourseCompletion"
+        },
+        "dataProvider": "oneblock",
+        "network": "oneblock",
+        "mockDid": "litentry:substrate:0xaa639b158b45acd0f4315be3a074aee110979f34123828a0c8ef74c24925d96f",
+        "mockWeb3Network": "polkadot,kusama",
+        "expectedCredentialValue": true
+    },
+    {
+        "id": "oneblock-course-outstanding",
+        "name": "OneBlock+ Substrate Blockchain Development Course Outstanding Student",
+        "description": "You were awarded the title \"Outstanding Student\" in the course \"Introduction to Substrate Blockchain Development, Phase 12” co-created by OneBlock+ and Parity.",
+        "assertion": {
+            "id": "Oneblock",
+            "payload": "CourseOutstanding"
+        },
+        "dataProvider": "oneblock",
+        "network": "oneblock",
+        "mockDid": "litentry:substrate:0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+        "mockWeb3Network": "polkadot,kusama",
+        "expectedCredentialValue": true
+    }
+]
