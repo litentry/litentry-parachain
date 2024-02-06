@@ -20,10 +20,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use crate::{
-	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_sidechain::SidechainCallIndexes,
-	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes,
+	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
+	pallet_imp::IMPCallIndexes, pallet_proxy::ProxyCallIndexes,
+	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes,
 };
 use codec::{Decode, Encode};
 use sp_core::storage::StorageKey;
@@ -33,6 +34,7 @@ pub use itp_api_client_types::{Metadata, MetadataError};
 
 pub mod error;
 pub mod pallet_balances;
+pub mod pallet_bitacross;
 pub mod pallet_imp;
 pub mod pallet_proxy;
 pub mod pallet_sidechain;
@@ -54,6 +56,7 @@ pub trait NodeMetadataTrait:
 	+ UtilityCallIndexes
 	+ ProxyCallIndexes
 	+ BalancesCallIndexes
+	+ BitAcrossCallIndexes
 {
 }
 impl<
@@ -64,7 +67,8 @@ impl<
 			+ SystemSs58Prefix
 			+ UtilityCallIndexes
 			+ ProxyCallIndexes
-			+ BalancesCallIndexes,
+			+ BalancesCallIndexes
+			+ BitAcrossCallIndexes,
 	> NodeMetadataTrait for T
 {
 }
