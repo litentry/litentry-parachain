@@ -33,6 +33,9 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 log = { version = "0.4", default-features = false }
 sp-core = { default-features = false, features = ["full_crypto"], git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
 
+# bitacross
+bc-task-sender = { path = "../../bitacross/core/bc-task-sender", default-features = false }
+
 [features]
 default = ["std"]
 std = [
@@ -46,6 +49,7 @@ std = [
     "jsonrpc-core",
     "log/std",
     "rust-base58",
+    "bc-task-sender/std",
 ]
 sgx = [
     "futures_sgx",
@@ -54,4 +58,5 @@ sgx = [
     "itp-top-pool-author/sgx",
     "jsonrpc-core_sgx",
     "rust-base58_sgx",
+    "bc-task-sender/sgx",
 ]
