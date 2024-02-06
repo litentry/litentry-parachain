@@ -160,7 +160,7 @@ def setup_environment(offset, config, parachain_dir):
     if not os.path.isfile("./local-setup/.env"):
         shutil.copy("./local-setup/.env.dev", "./local-setup/.env")
 
-    load_dotenv("./local-setup/.env.dev")
+    load_dotenv("./local-setup/.env")
     offset_port(offset)
     check_all_ports_and_reallocate()
 
