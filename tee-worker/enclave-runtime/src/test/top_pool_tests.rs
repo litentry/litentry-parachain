@@ -105,6 +105,10 @@ pub fn process_indirect_call_in_top_pool() {
 	assert_eq!(1, top_pool_author.get_pending_trusted_calls(shard_id).len());
 }
 
+/*
+
+// TODO: use our trusted call for testing - see P-494
+
 pub fn submit_shielding_call_to_top_pool() {
 	let _ = env_logger::builder().is_test(true).try_init();
 
@@ -169,6 +173,7 @@ pub fn submit_shielding_call_to_top_pool() {
 	let trusted_call = trusted_operation.to_call().unwrap();
 	assert!(trusted_call.verify_signature(&mr_enclave.m, &shard_id));
 }
+*/
 
 fn encrypted_indirect_call<
 	AttestationApi: EnclaveAttestationOCallApi,
