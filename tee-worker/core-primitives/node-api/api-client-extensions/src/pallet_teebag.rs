@@ -80,12 +80,23 @@ where
 		Ok(identifiers.len() as u64)
 	}
 
+	// please note we don't use dedicated on-chain storage for this (like the upstream `WorkerForShard`)
+	// so this API will always return the "first" registered and qualified enclave.
+	// Wheter it meets our needs needs to be further evaluated
 	fn primary_enclave_identifier_for_shard(
 		&self,
 		shard: &ShardIdentifier,
 		at_block: Option<Self::Hash>,
 	) -> ApiResult<Option<AccountId>> {
-		self.get_storage_map(TEEBAG, "EnclaveIdentifierForShard", shard, at_block)
+		let identifiers: Vec<AccountId> = self
+			.get_storage_map(TEEBAG, "EnclaveIdentifier", worker_type, at_block)?
+			.unwrap_or_default();
+		let maybe_account =
+			identifiers.iter().find(|account| match self.enclave(*account, at_block) {
+				Ok(Some(e)) => e.mrenclave.as_ref() == shard.as_ref(),
+				_ => false,
+			});
+		Ok(maybe_account.cloned())
 	}
 
 	fn primary_enclave_for_shard(
