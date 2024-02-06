@@ -42,8 +42,8 @@ pub mod files {
 	pub static SIDECHAIN_PURGE_LIMIT: u64 = 100; // keep the last.. sidechainblocks when purging
 
 	// used by enclave
-	/// Path to the light-client db for the Integritee parentchain.
-	pub const LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "integritee_lcdb";
+	/// Path to the light-client db for the Litentry parentchain.
+	pub const LITENTRY_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "litentry_lcdb";
 
 	/// Path to the light-client db for the Target A parentchain.
 	pub const TARGET_A_PARENTCHAIN_LIGHT_CLIENT_DB_PATH: &str = "target_a_lcdb";
