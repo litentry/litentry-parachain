@@ -134,7 +134,7 @@ export const defaultAssertions = [
     {
         description: 'VIP3 Gold Card Holder',
         assertion: {
-            VIP3MembershipCard: 'Gold',
+            VIP3MembershipCard: 'Silver',
         },
     },
 ];

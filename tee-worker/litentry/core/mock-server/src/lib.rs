@@ -26,10 +26,10 @@ pub mod discord_litentry;
 pub mod discord_official;
 pub mod karat_dao;
 pub mod litentry_archive;
+pub mod vip3;
 pub mod nodereal_jsonrpc;
 pub mod twitter_litentry;
 pub mod twitter_official;
-
 // It should only works on UNIX.
 async fn shutdown_signal() {
 	let mut hangup_stream = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup())
@@ -67,6 +67,7 @@ pub fn run(port: u16) -> Result<String, RecvError> {
 					.or(karat_dao::query())
 					.or(achainable::query())
 					.or(litentry_archive::query_user_joined_evm_campaign())
+					.or(vip3::query_user_sbt_level())
 					.boxed(),
 			)
 			.bind_with_graceful_shutdown(([127, 0, 0, 1], port), shutdown_signal());
