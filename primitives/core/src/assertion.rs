@@ -143,16 +143,16 @@ impl AchainableParams {
 		match self {
 			AchainableParams::AmountHolding(arg) => arg.chain.to_vec(),
 			AchainableParams::AmountToken(arg) => arg.chain.to_vec(),
-			AchainableParams::Amount(arg) => vec![arg.chain],
-			AchainableParams::Amounts(arg) => vec![arg.chain],
-			AchainableParams::Basic(arg) => vec![arg.chain],
-			AchainableParams::BetweenPercents(arg) => vec![arg.chain],
-			AchainableParams::ClassOfYear(arg) => vec![arg.chain],
-			AchainableParams::DateInterval(arg) => vec![arg.chain],
-			AchainableParams::DatePercent(arg) => vec![arg.chain],
-			AchainableParams::Date(arg) => vec![arg.chain],
-			AchainableParams::Token(arg) => vec![arg.chain],
-			AchainableParams::Mirror(arg) => vec![arg.chain],
+			AchainableParams::Amount(arg) => arg.chain.to_vec(),
+			AchainableParams::Amounts(arg) => arg.chain.to_vec(),
+			AchainableParams::Basic(arg) => arg.chain.to_vec(),
+			AchainableParams::BetweenPercents(arg) => arg.chain.to_vec(),
+			AchainableParams::ClassOfYear(arg) => arg.chain.to_vec(),
+			AchainableParams::DateInterval(arg) => arg.chain.to_vec(),
+			AchainableParams::DatePercent(arg) => arg.chain.to_vec(),
+			AchainableParams::Date(arg) => arg.chain.to_vec(),
+			AchainableParams::Token(arg) => arg.chain.to_vec(),
+			AchainableParams::Mirror(arg) => arg.chain.to_vec(),
 		}
 	}
 }
