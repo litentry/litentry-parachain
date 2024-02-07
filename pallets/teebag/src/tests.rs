@@ -353,8 +353,24 @@ fn register_enclave_prod_fails_with_max_limit_reached() {
 			Error::<Test>::MaxEnclaveIdentifierOverflow
 		);
 
-		// re-register them as WorkerType::Identity should work though
+		// re-register them as WorkerType::Identity is not allowed
 		Timestamp::set_timestamp(TEST5_TIMESTAMP);
+		assert_noop!(
+			Teebag::register_enclave(
+				RuntimeOrigin::signed(signer5.clone()),
+				WorkerType::Identity,
+				TEST5_CERT.to_vec(),
+				URL.to_vec(),
+				None,
+				None,
+				AttestationType::Ias,
+			),
+			Error::<Test>::WorkerTypeNotAllowed
+		);
+
+		// remove and re-register it should work
+		assert_ok!(Teebag::force_remove_enclave(RuntimeOrigin::signed(alice()), signer5.clone(),));
+
 		assert_ok!(Teebag::register_enclave(
 			RuntimeOrigin::signed(signer5),
 			WorkerType::Identity,

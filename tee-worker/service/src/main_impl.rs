@@ -789,9 +789,8 @@ where
 }
 
 /// Start polling loop to wait until we have a worker for a shard registered on
-/// the parentchain (TEEBAG WorkerForShard). This is the pre-requisite to be
+/// the parentchain (TEEBAG EnclaveIdentifier). This is the pre-requisite to be
 /// considered initialized and ready for the next worker to start (in sidechain mode only).
-/// considered initialized and ready for the next worker to start.
 fn spawn_worker_for_shard_polling<InitializationHandler>(
 	shard: &ShardIdentifier,
 	node_api: ParentchainApi,

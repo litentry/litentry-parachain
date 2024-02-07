@@ -41,7 +41,7 @@ use runtime_common::EnsureEnclaveSigner;
 // for TEE
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_sidechain;
-pub use pallet_teebag::OperationalMode as TeebagOperationalMode;
+pub use pallet_teebag::{self, OperationalMode as TeebagOperationalMode};
 pub use pallet_teeracle;
 pub use pallet_teerex;
 

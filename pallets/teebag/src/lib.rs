@@ -135,6 +135,8 @@ pub mod pallet {
 		EnclaveIdentifierNotExist,
 		/// The enclave identifier already exists.
 		EnclaveIdentifierAlreadyExist,
+		/// when we try to re-register an existing enclave with a differnet worker type
+		WorkerTypeNotAllowed,
 		/// The shard doesn't match the enclave.
 		WrongMrenclaveForShard,
 		/// The worker url is too long.
@@ -148,9 +150,9 @@ pub mod pallet {
 		ScheduledEnclaveNotExist,
 		/// Enclave not in the scheduled list, therefore unexpected.
 		EnclaveNotInSchedule,
-		/// The provided collateral data is invalid
+		/// The provided collateral data is invalid.
 		CollateralInvalid,
-		/// MaxEnclaveIdentifierO overflows
+		/// MaxEnclaveIdentifier overflow.
 		MaxEnclaveIdentifierOverflow,
 		/// A proposed block is unexpected.
 		ReceivedUnexpectedSidechainBlock,
@@ -620,32 +622,14 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	fn remove_enclave_identifier(
-		worker_type: WorkerType,
-		who: &T::AccountId,
-	) -> Result<(), Error<T>> {
-		EnclaveIdentifier::<T>::try_mutate(worker_type, |v| {
-			ensure!(v.contains(who), Error::<T>::EnclaveIdentifierNotExist);
-			v.retain(|e| e != who);
-			Ok(())
-		})
-	}
-
 	pub fn add_enclave(sender: &T::AccountId, enclave: &Enclave) -> Result<(), Error<T>> {
 		match EnclaveRegistry::<T>::get(sender) {
-			Some(old_enclave) => {
-				if old_enclave.worker_type != enclave.worker_type {
-					// a tricky situation - an old enclave is registered with a different
-					// worker_type
-					Self::remove_enclave_identifier(old_enclave.worker_type, sender)?;
-					Self::add_enclave_identifier(enclave.worker_type, sender)
-				} else {
-					// else - do nothing
-					Ok(())
-				}
-			},
-			None => Self::add_enclave_identifier(enclave.worker_type, sender),
-		}?;
+			Some(old_enclave) => ensure!(
+				old_enclave.worker_type == enclave.worker_type,
+				Error::<T>::WorkerTypeNotAllowed
+			),
+			None => Self::add_enclave_identifier(enclave.worker_type, sender)?,
+		};
 		EnclaveRegistry::<T>::insert(sender, enclave);
 		Self::deposit_event(Event::<T>::EnclaveAdded {
 			who: sender.clone(),
