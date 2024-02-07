@@ -201,6 +201,13 @@ where
 					token_type,
 					&self.context.data_provider_config,
 				),
+
+			Assertion::PlatformUser(platform_user_type) =>
+				lc_assertion_build_v2::platform_user::build(
+					&self.req,
+					platform_user_type,
+					&self.context.data_provider_config,
+				),
 		}?;
 
 		// post-process the credential

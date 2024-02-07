@@ -292,6 +292,7 @@ fn handle_stf_call_request(req: RequestType, time: f64) {
 			Assertion::BRC20AmountHolder => "BRC20AmountHolder",
 			Assertion::CryptoSummary => "CryptoSummary",
 			Assertion::TokenHoldingAmount(_) => "TokenHoldingAmount",
+			Assertion::PlatformUser(_) => "PlatformUser",
 		},
 	};
 	inc_stf_calls(category, label);
