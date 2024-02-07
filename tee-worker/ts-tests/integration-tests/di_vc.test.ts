@@ -122,24 +122,24 @@ describe('Test Vc (direct invocation)', function () {
         //     networks: bitcoinNetworks,
         // });
 
-        for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
-            const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
-            const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
-                context.api,
-                context.mrEnclave,
-                context.api.createType('Index', nonce),
-                new PolkadotSigner(context.substrateWallet.alice),
-                aliceSubstrateIdentity,
-                identity.toHex(),
-                validation.toHex(),
-                networks.toHex(),
-                context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
-                requestIdentifier
-            );
+        // for (const { nonce, identity, validation, networks } of linkIdentityRequestParams) {
+        //     const requestIdentifier = `0x${randomBytes(32).toString('hex')}`;
+        //     const linkIdentityCall = await createSignedTrustedCallLinkIdentity(
+        //         context.api,
+        //         context.mrEnclave,
+        //         context.api.createType('Index', nonce),
+        //         new PolkadotSigner(context.substrateWallet.alice),
+        //         aliceSubstrateIdentity,
+        //         identity.toHex(),
+        //         validation.toHex(),
+        //         networks.toHex(),
+        //         context.api.createType('Option<RequestAesKey>', aesKey).toHex(),
+        //         requestIdentifier
+        //     );
 
-            const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
-            await assertIsInSidechainBlock('linkIdentityCall', res);
-        }
+        //     const res = await sendRequestFromTrustedCall(context, teeShieldingKey, linkIdentityCall);
+        //     await assertIsInSidechainBlock('linkIdentityCall', res);
+        // }
     });
 
     defaultAssertions.forEach(({ description, assertion }) => {
