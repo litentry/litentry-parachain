@@ -26,10 +26,10 @@ pub mod discord_litentry;
 pub mod discord_official;
 pub mod karat_dao;
 pub mod litentry_archive;
-pub mod vip3;
 pub mod nodereal_jsonrpc;
 pub mod twitter_litentry;
 pub mod twitter_official;
+pub mod vip3;
 // It should only works on UNIX.
 async fn shutdown_signal() {
 	let mut hangup_stream = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::hangup())
