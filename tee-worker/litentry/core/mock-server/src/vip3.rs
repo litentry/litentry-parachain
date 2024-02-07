@@ -17,22 +17,33 @@
 
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
-
+use lc_data_providers::vip3::{VIP3SBTInfoResponse, LevelEntity};
 pub(crate) fn query_user_sbt_level(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
-		.and(warp::path!("api" / "v1/sbt/info"))
+		.and(warp::path!("api" / "v1" / "sbt" / "info"))
 		.and(warp::query::<HashMap<String, String>>())
 		.map(move |p: HashMap<String, String>| {
 			let default = String::default();
-			let account = p.get("account").unwrap_or(&default);
-            println!("query_user_sbt_level, account");
+			let account = p.get("addr").unwrap_or(&default);
 			if account == "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d" {
-				let body = r#"{ "level": 2 }"#;
-				Response::builder().body(body.to_string())
+				let body = VIP3SBTInfoResponse {
+					code: 0,
+					msg: "success".to_string(),
+					data: LevelEntity {
+						level: 2,
+					},
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
 			} else {
-				let body = r#"{ "level": 0 }"#;
-				Response::builder().body(body.to_string())
+				let body = VIP3SBTInfoResponse {
+					code: 0,
+					msg: "success".to_string(),
+					data: LevelEntity {
+						level: 0,
+					},
+				};
+				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
 		})
 }
