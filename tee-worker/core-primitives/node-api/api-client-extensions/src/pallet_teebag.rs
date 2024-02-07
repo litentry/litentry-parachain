@@ -92,12 +92,18 @@ where
 		let identifiers: Vec<AccountId> = self
 			.get_storage_map(TEEBAG, "EnclaveIdentifier", worker_type, at_block)?
 			.unwrap_or_default();
-		let maybe_account =
-			identifiers.iter().find(|account| match self.enclave(account, at_block) {
-				Ok(Some(e)) => e.mrenclave == shard.as_ref(),
-				_ => false,
-			});
-		Ok(maybe_account.cloned())
+		let mut maybe_account: Option<AccountId> = None;
+		for account in identifiers {
+			match self.enclave(&account, at_block)? {
+				Some(e) =>
+					if e.mrenclave == shard.as_ref() {
+						maybe_account = Some(account.clone());
+						break
+					},
+				None => continue,
+			}
+		}
+		Ok(maybe_account)
 	}
 
 	fn primary_enclave_for_shard(
