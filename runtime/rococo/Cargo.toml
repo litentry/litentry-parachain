@@ -86,7 +86,9 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-
 frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.42", optional = true }
 
 # Rococo pallets
+pallet-account-fix = { path = "../../pallets/account-fix", default-features = false }
 pallet-asset-manager = { path = "../../pallets/xcm-asset-manager", default-features = false }
+pallet-bitacross = { path = "../../pallets/bitacross-pallet", default-features = false }
 pallet-bridge = { path = "../../pallets/bridge", default-features = false }
 pallet-bridge-transfer = { path = "../../pallets/bridge-transfer", default-features = false }
 pallet-drop3 = { path = "../../pallets/drop3", default-features = false }
@@ -99,6 +101,7 @@ runtime-common = { path = '../common', default-features = false }
 # TEE pallets
 pallet-group = { path = "../../pallets/group", default-features = false }
 pallet-sidechain = { path = "../../pallets/sidechain", default-features = false }
+pallet-teebag = { path = "../../pallets/teebag", default-features = false }
 pallet-teeracle = { path = "../../pallets/teeracle", default-features = false }
 pallet-teerex = { path = "../../pallets/teerex", default-features = false }
 
@@ -176,9 +179,11 @@ runtime-benchmarks = [
     "pallet-group/runtime-benchmarks",
     "pallet-identity-management/runtime-benchmarks",
     "pallet-teerex/runtime-benchmarks",
+    "pallet-teebag/runtime-benchmarks",
     "pallet-sidechain/runtime-benchmarks",
     "pallet-teeracle/runtime-benchmarks",
     "pallet-vc-management/runtime-benchmarks",
+    "pallet-account-fix/runtime-benchmarks",
 ]
 std = [
     "codec/std",
@@ -265,12 +270,15 @@ std = [
     "pallet-group/std",
     "pallet-identity-management/std",
     "pallet-teerex/std",
+    "pallet-teebag/std",
     "pallet-sidechain/std",
     "pallet-teeracle/std",
     "pallet-vc-management/std",
+    "pallet-account-fix/std",
     "moonbeam-evm-tracer/std",
     "moonbeam-rpc-primitives-debug/std",
     "moonbeam-rpc-primitives-txpool/std",
+    "pallet-bitacross/std",
 ]
 tee-dev = [
     "pallet-teerex/skip-ias-check",
@@ -314,6 +322,7 @@ try-runtime = [
     "pallet-sudo/try-runtime",
     "pallet-teeracle/try-runtime",
     "pallet-teerex/try-runtime",
+    "pallet-teebag/try-runtime",
     "pallet-timestamp/try-runtime",
     "pallet-tips/try-runtime",
     "pallet-transaction-payment/try-runtime",
@@ -323,4 +332,6 @@ try-runtime = [
     "pallet-vesting/try-runtime",
     "pallet-xcm/try-runtime",
     "parachain-info/try-runtime",
+    "pallet-account-fix/try-runtime",
+    "pallet-bitacross/try-runtime",
 ]

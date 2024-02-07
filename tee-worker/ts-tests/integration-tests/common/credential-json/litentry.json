@@ -1,0 +1,16 @@
+[
+    {
+        "id": "evm-version-early-bird",
+        "name": "IDHub EVM Version Early Bird",
+        "description": "The user is an early bird user of the IdentityHub EVM version and has generated at least 1 credential during 2023 Aug 14th ~ Aug 21st.",
+        "assertion": {
+            "id": "A20",
+            "payload": []
+        },
+        "dataProvider": "litentryIndexer",
+        "network": "litentry",
+        "mockDid": "litentry:substrate:0xa20d2c66bd88271ce78b2d8b7367c025e108944fda26a5a4e95b5efcc3f26b45",
+        "mockWeb3Network": "litentry,polkadot",
+        "expectedCredentialValue": false
+    }
+]

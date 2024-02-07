@@ -153,7 +153,7 @@ jobs:
       - name: Install pre-built taplo
         run: |
           mkdir -p $HOME/.local/bin
-          wget -q https://github.com/tamasfe/taplo/releases/latest/download/taplo-linux-x86_64.gz
+          wget -q https://github.com/tamasfe/taplo/releases/download/0.8.1/taplo-linux-x86_64.gz                    
           gzip -d taplo-linux-x86_64.gz
           cp taplo-linux-x86_64 $HOME/.local/bin/taplo
           chmod a+x $HOME/.local/bin/taplo
@@ -184,7 +184,7 @@ jobs:
       - name: bitacross-worker enclave-runtime fmt check
         working-directory: ./bitacross-worker/enclave-runtime
         run: |
-          cargo fmt --all -- --check          
+          cargo fmt --all -- --check
 
       - name: Enable corepack and pnpm
         run: corepack enable && corepack enable pnpm
@@ -311,7 +311,7 @@ jobs:
       - set-condition
       - sequentialise
     if: needs.set-condition.outputs.rebuild_bitacross == 'true'
-#    todo: we might want to change this image in the future
+    #    todo: we might want to change this image in the future
     container: "litentry/litentry-tee-dev:latest"
     steps:
       - uses: actions/checkout@v4
