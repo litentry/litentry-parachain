@@ -104,7 +104,8 @@ pub fn get_json_schema_url(assertion: Assertion, credential_subject_type: String
 
 		Assertion::LITStaking => format!("{BASE_URL}/18-token-holding-amount/1-0-0.json"),
 
-		Assertion::EVMAmountHolding(_) => format!("{BASE_URL}/22-evm-holding-amount/1-0-0.json"),
+		Assertion::TokenHoldingAmount(_) | Assertion::EVMAmountHolding(_) =>
+			format!("{BASE_URL}/22-evm-holding-amount/1-0-0.json"),
 
 		Assertion::BRC20AmountHolder =>
 			format!("{BASE_URL}/21-token-holding-amount-list/1-0-0.json"),
