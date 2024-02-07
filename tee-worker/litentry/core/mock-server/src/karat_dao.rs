@@ -29,7 +29,7 @@ pub(crate) fn query() -> impl Filter<Extract = impl warp::Reply, Error = warp::R
 			let default = String::default();
 			let address = p.get("address").unwrap_or(&default);
 
-			if address == "0x49ad262c49c7aa708cc2df262ed53b64a17dd5ee" {
+			if address == "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d" {
 				let body =
 					UserVerificationResponse { result: UserVerificationResult { is_valid: true } };
 				Response::builder().body(serde_json::to_string(&body).unwrap())

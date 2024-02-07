@@ -137,6 +137,12 @@ export const defaultAssertions = [
             VIP3MembershipCard: 'Gold',
         },
     },
+    {
+        description: 'PlatformUser',
+        assertion: {
+            PlatformUser: 'KaratDaoUser',
+        }
+    }
 ];
 
 // In both cases as below, it's sufficient to check if the condition is valid, should be invalid.
