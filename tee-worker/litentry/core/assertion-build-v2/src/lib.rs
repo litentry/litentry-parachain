@@ -41,4 +41,5 @@ use lc_assertion_build::{transpose_identity, Result};
 use lc_service::DataProviderConfig;
 use log::*;
 
+pub mod platform_user;
 pub mod token_holding_amount;

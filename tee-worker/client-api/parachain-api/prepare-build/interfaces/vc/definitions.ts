@@ -32,6 +32,7 @@ export default {
                 BRC20AmountHolder: "Null",
                 CyptoSummary: "Null",
                 TokenHoldingAmount: "Web3TokenType",
+                PlatformUser: "PlatformUserType",
             },
         },
         AssertionSupportedNetwork: {
@@ -172,6 +173,10 @@ export default {
                 "Ton",
                 "Trx",
             ],
+        },
+        // PlatformUserType
+        PlatformUserType: {
+            _enum: ["KaratDaoUser"],
         },
     },
 };
