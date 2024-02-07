@@ -228,16 +228,6 @@ pub enum PlatformUserCommand {
 	KaratDaoUser,
 }
 
-// I haven't found a good way to use common args for subcommands
-#[derive(Args, Debug)]
-pub struct AmountHoldingArg {
-	pub name: String,
-	pub chain: String,
-	pub amount: String,
-	pub date: String,
-	pub token: Option<String>,
-}
-
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
 // additionally, only the last positional argument, or second to last positional argument may be set to `.num_args()`
 //
