@@ -16,10 +16,11 @@
 */
 
 use crate::{
-	error::Result, pallet_balances::BalancesCallIndexes, pallet_imp::IMPCallIndexes,
-	pallet_proxy::ProxyCallIndexes, pallet_sidechain::SidechainCallIndexes,
-	pallet_system::SystemSs58Prefix, pallet_teerex::TeerexCallIndexes,
-	pallet_utility::UtilityCallIndexes, pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
+	error::Result, pallet_balances::BalancesCallIndexes, pallet_bitacross::BitAcrossCallIndexes,
+	pallet_imp::IMPCallIndexes, pallet_proxy::ProxyCallIndexes,
+	pallet_sidechain::SidechainCallIndexes, pallet_system::SystemSs58Prefix,
+	pallet_teerex::TeerexCallIndexes, pallet_utility::UtilityCallIndexes,
+	pallet_vcmp::VCMPCallIndexes, runtime_call::RuntimeCall,
 };
 use codec::{Decode, Encode};
 
@@ -86,6 +87,9 @@ pub struct NodeMetadataMock {
 	transfer_allow_death: u8,
 	runtime_spec_version: u32,
 	runtime_transaction_version: u32,
+
+	bitacross_module: u8,
+	bitacross_placeholder: u8,
 }
 
 impl NodeMetadataMock {
@@ -142,6 +146,9 @@ impl NodeMetadataMock {
 			transfer_allow_death: 0u8,
 			runtime_spec_version: 25,
 			runtime_transaction_version: 4,
+
+			bitacross_module: 69u8,
+			bitacross_placeholder: 70u8,
 		}
 	}
 }
@@ -313,5 +320,11 @@ impl BalancesCallIndexes for NodeMetadataMock {
 
 	fn transfer_allow_death_call_indexes(&self) -> Result<[u8; 2]> {
 		Ok([self.balances_module, self.transfer_allow_death])
+	}
+}
+
+impl BitAcrossCallIndexes for NodeMetadataMock {
+	fn placeholder_call_indexes(&self) -> Result<[u8; 2]> {
+		Ok([self.bitacross_module, self.bitacross_placeholder])
 	}
 }

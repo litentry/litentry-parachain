@@ -40,6 +40,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 # litentry
 itp-node-api-metadata-provider = { path = "../../core-primitives/node-api/metadata-provider", default-features = false }
+litentry-macros = { path = "../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../litentry/primitives", default-features = false }
 pallet-parentchain = { path = "../../../pallets/parentchain", default-features = false }
 
@@ -87,3 +88,6 @@ std = [
     "itp-node-api-metadata-provider/std",
 ]
 test = []
+production = [
+    "litentry-macros/production",
+]

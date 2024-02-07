@@ -29,8 +29,9 @@ use litentry_primitives::{
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, BoundedWeb3Network, ContestType, EVMTokenType,
-	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, RequestAesKey,
-	SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3TokenType, REQUEST_AES_KEY_LEN,
+	GenericDiscordRoleType, Identity, OneBlockCourseType, ParameterString, PlatformUserType,
+	RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network, Web3TokenType,
+	REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -108,6 +109,8 @@ pub enum Command {
 	BRC20AmountHolder,
 	#[clap(subcommand)]
 	TokenHoldingAmount(TokenHoldingAmountCommand),
+	#[clap(subcommand)]
+	PlatformUser(PlatformUserCommand),
 }
 
 #[derive(Args, Debug)]
@@ -218,6 +221,21 @@ pub enum TokenHoldingAmountCommand {
 	Gtc,
 	Ton,
 	Trx,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum PlatformUserCommand {
+	KaratDaoUser,
+}
+
+// I haven't found a good way to use common args for subcommands
+#[derive(Args, Debug)]
+pub struct AmountHoldingArg {
+	pub name: String,
+	pub chain: String,
+	pub amount: String,
+	pub date: String,
+	pub token: Option<String>,
 }
 
 // positional args (to vec) + required arg + optional arg is a nightmare combination for clap parser,
@@ -478,6 +496,10 @@ impl RequestVcCommand {
 				TokenHoldingAmountCommand::Gtc => Assertion::TokenHoldingAmount(Web3TokenType::Gtc),
 				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
 				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
+			},
+			Command::PlatformUser(arg) => match arg {
+				PlatformUserCommand::KaratDaoUser =>
+					Assertion::PlatformUser(PlatformUserType::KaratDaoUser),
 			},
 		};
 

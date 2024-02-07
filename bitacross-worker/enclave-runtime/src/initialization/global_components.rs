@@ -63,7 +63,11 @@ use itp_node_api::{
 	metadata::{provider::NodeMetadataRepository, NodeMetadata},
 };
 use itp_nonce_cache::NonceCache;
-use itp_sgx_crypto::{key_repository::KeyRepository, Aes, AesSeal, Ed25519Seal, Rsa3072Seal};
+use itp_sgx_crypto::{
+	key_repository::KeyRepository,
+	secp256k1::{Pair as Secp256k1Pair, Seal as Secp256k1Seal},
+	Aes, AesSeal, Ed25519Seal, Rsa3072Seal,
+};
 use itp_stf_executor::{
 	enclave_signer::StfEnclaveSigner, executor::StfExecutor, getter_executor::GetterExecutor,
 	state_getter::StfStateGetter,
@@ -106,6 +110,8 @@ pub type EnclaveStf = Stf<EnclaveTrustedCallSigned, EnclaveGetter, StfState, Run
 pub type EnclaveStateKeyRepository = KeyRepository<Aes, AesSeal>;
 pub type EnclaveShieldingKeyRepository = KeyRepository<Rsa3072KeyPair, Rsa3072Seal>;
 pub type EnclaveSigningKeyRepository = KeyRepository<ed25519::Pair, Ed25519Seal>;
+pub type EnclaveBitcoinKeyRepository = KeyRepository<Secp256k1Pair, Secp256k1Seal>;
+pub type EnclaveEthereumKeyRepository = KeyRepository<Secp256k1Pair, Secp256k1Seal>;
 pub type EnclaveStateFileIo = SgxStateFileIo<EnclaveStateKeyRepository, StfState>;
 pub type EnclaveStateSnapshotRepository = StateSnapshotRepository<EnclaveStateFileIo>;
 pub type EnclaveStateObserver = StateObserver<StfState>;
@@ -174,7 +180,7 @@ pub type IntegriteeParentchainIndirectCallsExecutor = IndirectCallsExecutor<
 	EnclaveStfEnclaveSigner,
 	EnclaveTopPoolAuthor,
 	EnclaveNodeMetadataRepository,
-	integritee::ShieldFundsAndInvokeFilter<integritee::ParentchainExtrinsicParser>,
+	integritee::BitAcrossIndirectCallsFilter<integritee::ParentchainExtrinsicParser>,
 	EventCreator<integritee::FilterableEvents>,
 	integritee::ParentchainEventHandler,
 	EnclaveTrustedCallSigned,
@@ -380,6 +386,16 @@ pub static GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 pub static GLOBAL_SIGNING_KEY_REPOSITORY_COMPONENT: ComponentContainer<
 	EnclaveSigningKeyRepository,
 > = ComponentContainer::new("Signing key repository");
+
+/// Bitcoin key repository
+pub static GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT: ComponentContainer<
+	EnclaveBitcoinKeyRepository,
+> = ComponentContainer::new("Bitcoin key repository");
+
+/// Ethereum key repository
+pub static GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT: ComponentContainer<
+	EnclaveEthereumKeyRepository,
+> = ComponentContainer::new("Ethereum key repository");
 
 /// Light client db seal for the Integritee parentchain
 pub static GLOBAL_INTEGRITEE_PARENTCHAIN_LIGHT_CLIENT_SEAL: ComponentContainer<

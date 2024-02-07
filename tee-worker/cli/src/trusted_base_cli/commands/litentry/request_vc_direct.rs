@@ -30,8 +30,8 @@ use litentry_primitives::{
 	AchainableAmounts, AchainableBasic, AchainableBetweenPercents, AchainableClassOfYear,
 	AchainableDate, AchainableDateInterval, AchainableDatePercent, AchainableParams,
 	AchainableToken, Assertion, ContestType, EVMTokenType, GenericDiscordRoleType, Identity,
-	OneBlockCourseType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel, Web3Network,
-	Web3TokenType, REQUEST_AES_KEY_LEN,
+	OneBlockCourseType, PlatformUserType, RequestAesKey, SoraQuizType, VIP3MembershipCardLevel,
+	Web3Network, Web3TokenType, REQUEST_AES_KEY_LEN,
 };
 use sp_core::Pair;
 
@@ -252,6 +252,10 @@ impl RequestVcDirectCommand {
 				TokenHoldingAmountCommand::Gtc => Assertion::TokenHoldingAmount(Web3TokenType::Gtc),
 				TokenHoldingAmountCommand::Ton => Assertion::TokenHoldingAmount(Web3TokenType::Ton),
 				TokenHoldingAmountCommand::Trx => Assertion::TokenHoldingAmount(Web3TokenType::Trx),
+			},
+			Command::PlatformUser(arg) => match arg {
+				PlatformUserCommand::KaratDaoUser =>
+					Assertion::PlatformUser(PlatformUserType::KaratDaoUser),
 			},
 		};
 

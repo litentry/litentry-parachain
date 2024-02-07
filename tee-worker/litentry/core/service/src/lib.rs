@@ -34,4 +34,5 @@ use litentry_primitives::{ErrorDetail as Error, IntoErrorDetail, Web3Network, We
 
 pub use lc_data_providers::DataProviderConfig;
 
+pub mod platform_user;
 pub mod web3_token;

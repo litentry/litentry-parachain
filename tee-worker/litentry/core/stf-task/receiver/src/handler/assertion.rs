@@ -134,7 +134,8 @@ where
 				&self.context.data_provider_config,
 			),
 
-			Assertion::A20 => lc_assertion_build::a20::build(&self.req),
+			Assertion::A20 =>
+				lc_assertion_build::a20::build(&self.req, &self.context.data_provider_config),
 
 			Assertion::Oneblock(course_type) => lc_assertion_build::oneblock::course::build(
 				&self.req,
@@ -197,6 +198,13 @@ where
 				lc_assertion_build_v2::token_holding_amount::build(
 					&self.req,
 					token_type,
+					&self.context.data_provider_config,
+				),
+
+			Assertion::PlatformUser(platform_user_type) =>
+				lc_assertion_build_v2::platform_user::build(
+					&self.req,
+					platform_user_type,
 					&self.context.data_provider_config,
 				),
 		}?;
