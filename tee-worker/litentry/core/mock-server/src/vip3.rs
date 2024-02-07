@@ -15,9 +15,9 @@
 // along with Litentry.  If not, see <https://www.gnu.org/licenses/>.
 #![allow(opaque_hidden_inferred_bound)]
 
+use lc_data_providers::vip3::{LevelEntity, VIP3SBTInfoResponse};
 use std::collections::HashMap;
 use warp::{http::Response, Filter};
-use lc_data_providers::vip3::{VIP3SBTInfoResponse, LevelEntity};
 pub(crate) fn query_user_sbt_level(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
 	warp::get()
@@ -30,18 +30,14 @@ pub(crate) fn query_user_sbt_level(
 				let body = VIP3SBTInfoResponse {
 					code: 0,
 					msg: "success".to_string(),
-					data: LevelEntity {
-						level: 2,
-					},
+					data: LevelEntity { level: 2 },
 				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			} else {
 				let body = VIP3SBTInfoResponse {
 					code: 0,
 					msg: "success".to_string(),
-					data: LevelEntity {
-						level: 0,
-					},
+					data: LevelEntity { level: 0 },
 				};
 				Response::builder().body(serde_json::to_string(&body).unwrap())
 			}
