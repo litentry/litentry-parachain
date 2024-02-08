@@ -51,10 +51,10 @@ pub fn get_json_schema_url(assertion: Assertion) -> String {
 
 		Assertion::Achainable(params) => match params {
 			AchainableParams::AmountHolding(_) =>
-				format!("{BASE_URL}/18-token-holding-amount/1-0-0.json"),
+				format!("{BASE_URL}/17-token-holding-amount/1-0-0.json"),
 
 			AchainableParams::AmountToken(_) =>
-				format!("{BASE_URL}/18-token-holding-amount/1-0-0.json"),
+				format!("{BASE_URL}/17-token-holding-amount/1-0-0.json"),
 
 			AchainableParams::Amount(_) => format!("{BASE_URL}/11-token-holder/1-0-0.json"),
 
@@ -63,7 +63,7 @@ pub fn get_json_schema_url(assertion: Assertion) -> String {
 			AchainableParams::ClassOfYear(_) =>
 				format!("{BASE_URL}/10-account-class-of-year/1-0-0.json"),
 
-			AchainableParams::Mirror(_) => format!("{BASE_URL}/23-mirror-contributor/1-0-0.json"),
+			AchainableParams::Mirror(_) => format!("{BASE_URL}/22-mirror-contributor/1-0-0.json"),
 
 			// The following assertions are Unused and produce no specific claims. They Generates
 			// generic JSON Credentials
@@ -80,29 +80,29 @@ pub fn get_json_schema_url(assertion: Assertion) -> String {
 		Assertion::Oneblock(_) => format!("{BASE_URL}/13-oneblock-student-phase-12/1-0-0.json"),
 
 		Assertion::GenericDiscordRole(_) =>
-			format!("{BASE_URL}/15-generic-discord-role/1-0-0.json"),
+			format!("{BASE_URL}/14-generic-discord-role/1-0-0.json"),
 
 		Assertion::BnbDomainHolding =>
-			format!("{BASE_URL}/16-bnb-domain-holding-amount/1-0-0.json"),
+			format!("{BASE_URL}/15-bnb-domain-holding-amount/1-0-0.json"),
 
 		Assertion::BnbDigitDomainClub(_) =>
-			format!("{BASE_URL}/17-bnb-3d-4d-club-domain-holding-amount/1-0-0.json"),
+			format!("{BASE_URL}/16-bnb-3d-4d-club-domain-holding-amount/1-0-0.json"),
 
-		Assertion::VIP3MembershipCard(_) => format!("{BASE_URL}/20-vip3-card-holder/1-0-0.json"),
+		Assertion::VIP3MembershipCard(_) => format!("{BASE_URL}/19-vip3-card-holder/1-0-0.json"),
 
 		Assertion::WeirdoGhostGangHolder =>
-			format!("{BASE_URL}/19-weirdoghostgang-holder/1-0-0.json"),
+			format!("{BASE_URL}/18-weirdoghostgang-holder/1-0-0.json"),
 
-		Assertion::LITStaking => format!("{BASE_URL}/18-token-holding-amount/1-0-0.json"),
+		Assertion::LITStaking => format!("{BASE_URL}/17-token-holding-amount/1-0-0.json"),
 
 		Assertion::TokenHoldingAmount(_) | Assertion::EVMAmountHolding(_) =>
-			format!("{BASE_URL}/22-evm-holding-amount/1-0-0.json"),
+			format!("{BASE_URL}/21-evm-holding-amount/1-0-0.json"),
 
 		Assertion::BRC20AmountHolder =>
-			format!("{BASE_URL}/21-token-holding-amount-list/1-0-0.json"),
+			format!("{BASE_URL}/20-token-holding-amount-list/1-0-0.json"),
 
-		Assertion::CryptoSummary => format!("{BASE_URL}/24-crypto-summary/1-0-0.json"),
+		Assertion::CryptoSummary => format!("{BASE_URL}/23-crypto-summary/1-0-0.json"),
 
-		Assertion::PlatformUser(_) => format!("{BASE_URL}/25-platform-user/1-0-0.json"),
+		Assertion::PlatformUser(_) => format!("{BASE_URL}/24-platform-user/1-0-0.json"),
 	}
 }
