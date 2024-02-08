@@ -767,7 +767,7 @@ where
 	let last_synced_header = parentchain_handler.init_parentchain_components().unwrap();
 	println!("[{:?}] last synced parentchain block: {}", parentchain_id, last_synced_header.number);
 
-	let nonce = node_api.get_nonce_of(tee_account_id).unwrap();
+	let nonce = node_api.get_account_next_index(tee_account_id).unwrap();
 	info!("[{:?}] Enclave nonce = {:?}", parentchain_id, nonce);
 	enclave.set_nonce(nonce, parentchain_id).unwrap_or_else(|_| {
 		panic!("[{:?}] Could not set nonce of enclave. Returning here...", parentchain_id)
