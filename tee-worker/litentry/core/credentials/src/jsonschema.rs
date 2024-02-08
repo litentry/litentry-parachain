@@ -24,7 +24,7 @@ const NOT_IMPLEMENTED: &str =
 
 /// Returns the respective JSON Schema for the given assertion and its credential.
 /// JSON Schemas can be found on https://github.com/litentry/vc-jsonschema
-pub fn get_json_schema_url(assertion: Assertion, credential_subject_type: String) -> String {
+pub fn get_json_schema_url(assertion: Assertion) -> String {
 	match assertion {
 		Assertion::A1 => format!("{BASE_URL}/1-basic-identity-verification/1-0-0.json"),
 
@@ -58,16 +58,7 @@ pub fn get_json_schema_url(assertion: Assertion, credential_subject_type: String
 
 			AchainableParams::Amount(_) => format!("{BASE_URL}/11-token-holder/1-0-0.json"),
 
-			// Generates both BAB Holder and Uniswap V2/V2 user.
-			AchainableParams::Basic(_) => match credential_subject_type.as_str() {
-				achainable::uniswap_user::UNISWAP_USER_TYPE =>
-					format!("{BASE_URL}/14-uniswap-v2-v3-user/1-0-0.json"),
-
-				achainable::bab_holder::BAB_HOLDER_TYPE =>
-					format!("{BASE_URL}/11-token-holder/1-0-0.json"),
-
-				&_ => format!("{}", NOT_IMPLEMENTED),
-			},
+			AchainableParams::Basic(_) => format!("{BASE_URL}/11-token-holder/1-0-0.json"),
 
 			AchainableParams::ClassOfYear(_) =>
 				format!("{BASE_URL}/10-account-class-of-year/1-0-0.json"),

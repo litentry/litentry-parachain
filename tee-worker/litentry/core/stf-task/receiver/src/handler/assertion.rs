@@ -105,7 +105,8 @@ where
 				&self.context.data_provider_config,
 			),
 
-			// no need to pass `networks` again because it's the same as the `get_supported_web3networks`
+			// no need to pass `networks` again because it's the same as the
+			// `get_supported_web3networks`
 			Assertion::A8(_networks) =>
 				lc_assertion_build::a8::build(&self.req, &self.context.data_provider_config),
 
@@ -227,10 +228,7 @@ where
 
 		credential.credential_subject.assertion_text = format!("{:?}", self.req.assertion);
 
-		credential.jsonschema = jsonschema::get_json_schema_url(
-			self.req.assertion.clone(),
-			credential.credential_subject.types.clone(),
-		);
+		credential.jsonschema = jsonschema::get_json_schema_url(self.req.assertion.clone());
 
 		credential.issuer.id =
 			Identity::Substrate(enclave_account.into()).to_did().map_err(|e| {
@@ -273,8 +271,8 @@ where
 		sender: std::sync::mpsc::Sender<(ShardIdentifier, H256, TrustedCall)>,
 	) {
 		debug!("Assertion build OK");
-		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the payload
-		// using enclave's shielding key is encrypted in chunks
+		// we shouldn't have the maximum text length limit in normal RSA3072 encryption, as the
+		// payload using enclave's shielding key is encrypted in chunks
 		let vc_payload = result;
 		if let Ok(enclave_signer) = self.context.enclave_signer.get_enclave_account() {
 			let c = TrustedCall::request_vc_callback(
