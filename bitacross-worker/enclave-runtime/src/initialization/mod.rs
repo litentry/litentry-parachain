@@ -255,6 +255,7 @@ fn run_bit_across_handler() -> Result<(), Error> {
 
 	let shielding_key_repository = GLOBAL_SHIELDING_KEY_REPOSITORY_COMPONENT.get()?;
 	let ethereum_key_repository = GLOBAL_ETHEREUM_KEY_REPOSITORY_COMPONENT.get()?;
+	let bitcoin_key_repository = GLOBAL_BITCOIN_KEY_REPOSITORY_COMPONENT.get()?;
 
 	#[allow(clippy::unwrap_used)]
 	let ocall_api = GLOBAL_OCALL_API_COMPONENT.get()?;
@@ -268,6 +269,7 @@ fn run_bit_across_handler() -> Result<(), Error> {
 	let stf_task_context = BitAcrossTaskContext::new(
 		shielding_key_repository,
 		ethereum_key_repository,
+		bitcoin_key_repository,
 		stf_enclave_signer,
 		state_handler,
 		ocall_api,

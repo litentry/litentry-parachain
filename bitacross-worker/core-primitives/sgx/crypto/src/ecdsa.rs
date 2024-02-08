@@ -16,13 +16,13 @@
 #[cfg(feature = "sgx")]
 pub use sgx::*;
 
-use aes::cipher::generic_array::GenericArray;
+use crate::error::{Error, Result};
 use k256::{
-	ecdsa::{SigningKey, VerifyingKey},
-	elliptic_curve::{group::GroupEncoding, point::AffineCoordinates, sec1::ToEncodedPoint},
-	AffinePoint, PublicKey, Secp256k1,
+	ecdsa::{signature::Signer, Signature, SigningKey},
+	elliptic_curve::group::GroupEncoding,
+	PublicKey,
 };
-use std::{println, vec::Vec};
+use std::{string::ToString, vec::Vec};
 
 /// File name of the sealed seed file.
 pub const SEALED_SIGNER_SEED_FILE: &str = "ecdsa_key_sealed.bin";
@@ -30,12 +30,18 @@ pub const SEALED_SIGNER_SEED_FILE: &str = "ecdsa_key_sealed.bin";
 #[derive(Clone, PartialEq)]
 pub struct Pair {
 	pub public: PublicKey,
-	pub secret: SigningKey,
+	private: SigningKey,
 }
 
 impl Pair {
 	pub fn public_bytes(&self) -> Vec<u8> {
 		self.public.as_affine().to_bytes().as_slice().to_vec()
+	}
+
+	pub fn sign(&self, payload: &[u8]) -> Result<[u8; 64]> {
+		let signature: Signature =
+			self.private.try_sign(payload).map_err(|e| Error::Other(e.to_string().into()))?;
+		Ok(signature.to_bytes().into())
 	}
 }
 
@@ -50,20 +56,12 @@ pub mod sgx {
 	};
 	use itp_sgx_io::{seal, unseal, SealedIO};
 	use k256::{
-		ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
-		elliptic_curve::group::GroupEncoding,
+		ecdsa::{SigningKey, VerifyingKey},
 		PublicKey,
 	};
 	use log::*;
 	use sgx_rand::{Rng, StdRng};
 	use std::{path::PathBuf, string::String};
-
-	pub fn ecdsa_sign(pair: Pair, payload: &[u8]) -> Result<[u8; 64]> {
-		let signature: Signature =
-			pair.secret.try_sign(payload).map_err(|e| Error::Other(e.to_string().into()))?;
-
-		Ok(signature.to_bytes().into())
-	}
 
 	/// Creates a repository for ecdsa keypair and initializes
 	/// a fresh private key if it doesn't exist at `path`.
@@ -123,11 +121,11 @@ pub mod sgx {
 				.map_err(|e| Error::Other(format!("{:?}", e).into()))?;
 
 			let public = PublicKey::from(VerifyingKey::from(&secret));
-			Ok(Pair { public, secret })
+			Ok(Pair { public, private: secret })
 		}
 
 		fn seal(&self, unsealed: &Self::Unsealed) -> Result<()> {
-			let raw = unsealed.secret.to_bytes();
+			let raw = unsealed.private.to_bytes();
 			seal(&raw, self.path()).map_err(|e| e.into())
 		}
 	}

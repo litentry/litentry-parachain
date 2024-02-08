@@ -43,6 +43,7 @@ itp-types = { path = "../../../core-primitives/types", default-features = false 
 itp-utils = { path = "../../../core-primitives/utils", default-features = false }
 
 # litentry primities 
+litentry-macros = { path = "../../../../primitives/core/macros", default-features = false }
 litentry-primitives = { path = "../../../litentry/primitives", default-features = false }
 
 bc-task-sender = { path = "../bc-task-sender", default-features = false }
@@ -89,4 +90,7 @@ std = [
     "itp-utils/std",
     "futures",
     "thiserror",
+]
+production = [
+    "litentry-macros/production",
 ]

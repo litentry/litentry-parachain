@@ -28,7 +28,6 @@ use std::{
 	format,
 	string::{String, ToString},
 	sync::Arc,
-	vec,
 	vec::Vec,
 };
 use threadpool::ThreadPool;
@@ -40,7 +39,8 @@ use itp_stf_executor::traits::StfEnclaveSigning;
 use itp_stf_state_handler::handle_state::HandleState;
 
 use ita_stf::TrustedCallSigned;
-use itp_sgx_crypto::ecdsa::{ecdsa_sign, Pair};
+use itp_sgx_crypto::{ecdsa::Pair as EcdsaPair, schnorr::Pair as SchnorrPair};
+use litentry_macros::if_production_or;
 use litentry_primitives::{DecryptableRequest, DirectCallSigned};
 
 #[derive(Debug, thiserror::Error, Clone)]
@@ -58,16 +58,19 @@ pub enum Error {
 pub struct BitAcrossTaskContext<
 	ShieldingKeyRepository,
 	EthereumKeyRepository,
+	BitcoinKeyRepository,
 	S: StfEnclaveSigning<TrustedCallSigned>,
 	H: HandleState,
 	O: EnclaveOnChainOCallApi,
 > where
 	ShieldingKeyRepository: AccessKey,
-	EthereumKeyRepository: AccessKey<KeyType = Pair>,
+	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair>,
+	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair>,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 {
 	pub shielding_key: Arc<ShieldingKeyRepository>,
 	pub ethereum_key_repository: Arc<EthereumKeyRepository>,
+	pub bitcoin_key_repository: Arc<BitcoinKeyRepository>,
 	pub enclave_signer: Arc<S>,
 	pub state_handler: Arc<H>,
 	pub ocall_api: Arc<O>,
@@ -76,32 +79,59 @@ pub struct BitAcrossTaskContext<
 impl<
 		ShieldingKeyRepository,
 		EthereumKeyRepository,
+		BitcoinKeyRepository,
 		S: StfEnclaveSigning<TrustedCallSigned>,
 		H: HandleState,
 		O: EnclaveOnChainOCallApi,
-	> BitAcrossTaskContext<ShieldingKeyRepository, EthereumKeyRepository, S, H, O>
+	> BitAcrossTaskContext<ShieldingKeyRepository, EthereumKeyRepository, BitcoinKeyRepository, S, H, O>
 where
 	ShieldingKeyRepository: AccessKey,
-	EthereumKeyRepository: AccessKey<KeyType = Pair>,
+	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair>,
+	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair>,
 	<ShieldingKeyRepository as AccessKey>::KeyType: ShieldingCryptoEncrypt + 'static,
 	H::StateT: SgxExternalitiesTrait,
 {
 	pub fn new(
 		shielding_key: Arc<ShieldingKeyRepository>,
 		ethereum_key_repository: Arc<EthereumKeyRepository>,
+		bitcoin_key_repository: Arc<BitcoinKeyRepository>,
 		enclave_signer: Arc<S>,
 		state_handler: Arc<H>,
 		ocall_api: Arc<O>,
 	) -> Self {
-		Self { shielding_key, ethereum_key_repository, enclave_signer, state_handler, ocall_api }
+		Self {
+			shielding_key,
+			ethereum_key_repository,
+			bitcoin_key_repository,
+			enclave_signer,
+			state_handler,
+			ocall_api,
+		}
 	}
 }
 
-pub fn run_bit_across_handler_runner<ShieldingKeyRepository, EthereumKeyRepository, S, H, O>(
-	context: Arc<BitAcrossTaskContext<ShieldingKeyRepository, EthereumKeyRepository, S, H, O>>,
+pub fn run_bit_across_handler_runner<
+	ShieldingKeyRepository,
+	EthereumKeyRepository,
+	BitcoinKeyRepository,
+	S,
+	H,
+	O,
+>(
+	context: Arc<
+		BitAcrossTaskContext<
+			ShieldingKeyRepository,
+			EthereumKeyRepository,
+			BitcoinKeyRepository,
+			S,
+			H,
+			O,
+		>,
+	>,
 ) where
 	ShieldingKeyRepository: AccessKey + Send + Sync + 'static,
-	EthereumKeyRepository: AccessKey<KeyType = Pair> + Send + Sync + 'static,
+	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair> + Send + Sync + 'static,
+	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair> + Send + Sync + 'static,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
 		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
@@ -126,13 +156,30 @@ pub fn run_bit_across_handler_runner<ShieldingKeyRepository, EthereumKeyReposito
 	warn!("bit_across_task_receiver loop terminated");
 }
 
-pub fn handle_request<ShieldingKeyRepository, EthereumKeyRepository, S, H, O>(
+pub fn handle_request<
+	ShieldingKeyRepository,
+	EthereumKeyRepository,
+	BitcoinKeyRepository,
+	S,
+	H,
+	O,
+>(
 	request: &mut AesRequest,
-	context: Arc<BitAcrossTaskContext<ShieldingKeyRepository, EthereumKeyRepository, S, H, O>>,
+	context: Arc<
+		BitAcrossTaskContext<
+			ShieldingKeyRepository,
+			EthereumKeyRepository,
+			BitcoinKeyRepository,
+			S,
+			H,
+			O,
+		>,
+	>,
 ) -> Result<Vec<u8>, String>
 where
 	ShieldingKeyRepository: AccessKey,
-	EthereumKeyRepository: AccessKey<KeyType = Pair>,
+	EthereumKeyRepository: AccessKey<KeyType = EcdsaPair>,
+	BitcoinKeyRepository: AccessKey<KeyType = SchnorrPair>,
 	<ShieldingKeyRepository as AccessKey>::KeyType:
 		ShieldingCryptoEncrypt + ShieldingCryptoDecrypt + 'static,
 	S: StfEnclaveSigning<TrustedCallSigned> + Send + Sync + 'static,
@@ -155,11 +202,19 @@ where
 	};
 	ensure!(dc.verify_signature(&mrenclave, &request.shard), "Failed to verify sig".to_string());
 	match dc.call {
-		DirectCall::SignBitcoin(_, _payload) => Ok(vec![]),
+		DirectCall::SignBitcoin(_, payload) => {
+			if_production_or!(unimplemented!(), {
+				let key = context.bitcoin_key_repository.retrieve_key().unwrap();
+				let signature = key.sign(&payload).unwrap();
+				Ok(signature.to_vec())
+			})
+		},
 		DirectCall::SignEthereum(_, payload) => {
-			let key = context.ethereum_key_repository.retrieve_key().unwrap();
-			let signature = ecdsa_sign(key, &payload).unwrap();
-			Ok(signature.to_vec())
+			if_production_or!(unimplemented!(), {
+				let key = context.ethereum_key_repository.retrieve_key().unwrap();
+				let signature = key.sign(&payload).unwrap();
+				Ok(signature.to_vec())
+			})
 		},
 	}
 }

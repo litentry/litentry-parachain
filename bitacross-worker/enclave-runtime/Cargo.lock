@@ -270,6 +270,7 @@ dependencies = [
  "itp-top-pool-author",
  "itp-types",
  "itp-utils",
+ "litentry-macros",
  "litentry-primitives",
  "log",
  "parity-scale-codec",
